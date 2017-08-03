@@ -1,0 +1,124 @@
+AC_INIT([casa], [4.6.0])
+AC_COPYRIGHT([Copyright (C) 2015 Associated Universities, Inc. Washington DC, USA.])
+AC_REVISION([syscmd([ac/scripts/configure.commit])])
+
+AC_CONFIG_MACRO_DIRS([ac/m4])
+
+dnl setup cannonical host variables without requiring
+dnl install.sh et al. as AC_CANONICAL_HOST does
+AX_CANONICAL_NAME
+AC_MSG_NOTICE([host os is ${host_osname}])
+
+AC_LANG(C++)
+
+AX_CXX11($PATH)
+
+if [[ "${ac_success}" = "no" ]]; then
+    dnl#############################################################################################
+    dnl###  could not find a C++ compiler that supported C++11 in user's PATH                    ###
+    dnl#############################################################################################
+    case $host_osname in
+    linux)
+        AX_CXX11_CLEAR_CACHE
+        AC_MSG_NOTICE([could not find a C++ compiler that supports C++11, in your PATH... trying other possible linux paths...])
+        AX_CXX11([/opt/rh/devtoolset-3/root/usr/bin:/opt/rh/devtoolset-2/root/usr/bin:/usr/local/bin:/opt/local/bin:/usr/bin:/bin])
+        ;;
+    darwin)
+        AX_CXX11_CLEAR_CACHE
+        AC_MSG_NOTICE([could not find a C++ compiler that supports C++11, in your PATH... trying other possible osx paths...])
+        AX_CXX11([/usr/bin:/opt/local/bin:/opt/macports/bin:/bin])
+        ;;
+    *)
+        AC_MSG_ERROR([cannot find a C++ compiler that supports C++11, please include the path to one in your PATH environment variable])
+        ;;
+    esac
+
+    if [[ "${ac_success}" = "no" ]]; then
+        AC_MSG_ERROR([cannot find a C++ compiler that supports C++11, please include the path to one in your PATH environment variable])
+    fi
+fi
+
+if [[ -x "${CXX}" ]]; then
+    AC_MSG_NOTICE([C++11 compiler ${CXX}])
+else
+    AC_MSG_ERROR([failed to find viable C++11 compiler, please include the path to one in your PATH environment variable])
+fi
+
+dnl# use faster fortran rules for complex operations, removes restoring complex infinities
+dnl# if naive computation results in NAN + NAN * I  Handling complex multiplication and
+dnl# division with correct treating of complex infinities (one element Inf regardless of
+dnl# the other) according to the C is complicated, e.g
+dnl#
+dnl#     if a = NaN + 1e30 i; a * a is not NaN but a complex infinity (-Inf - NaN).
+dnl#
+dnl# Treating this situation correctly has large performance impact. In GCC's implementation
+dnl# it is about 4 times slower than the naive implementation, with vectorization enabled the
+dnl# impact is even larger. As correct treatment of complex infinities when NaN appear in
+dnl# results is seldom accounted for, or not required and most other languages do not have
+dnl# these rules, the correct treatmeant can be disabled with the -fcx-fortran-rules flag.
+dnl# This changes the semantics to those of the FORTRAN language which is removes the need for
+dnl# rescuing the result when NaN appear. Python also follows FORTRAN rules.
+dnl#
+dnl# Additionally the correct behavior is not implemented in all compilers, most notably clang
+dnl# which is the default compiler on MacOS. So turning off correct treatment with GCC does
+dnl# not only make our code faster but also behave the same on more compilers.
+dnl#
+AX_CHECK_COMPILE_FLAG(-fcx-fortran-rules,[CXX_FORTRAN_COMPLEX=-fcx-fortran-rules],[CXX_FORTRAN_COMPLEX=])
+AC_SUBST(CXX_FORTRAN_COMPLEX)
+AX_LIB_STDCXX
+
+dnl#################################################################################################
+dnl###  add C++ compiler path to start of PATH to try and find matching c/fortran compilers      ###
+dnl#################################################################################################
+PATH=$(dirname $CXX)${PATH_SEPARATOR}${PATH}
+
+AC_PROG_CC
+AX_PATH_TO_BINARY(${CC},CC)
+AC_MSG_NOTICE([C compiler ${CC}])
+
+AC_LANG_PUSH([C])
+AX_CHECK_COMPILE_FLAG(-fcx-fortran-rules,[CC_FORTRAN_COMPLEX=-fcx-fortran-rules],[CC_FORTRAN_COMPLEX=])
+AC_SUBST(CC_FORTRAN_COMPLEX)
+AC_LANG_POP([C])
+
+AC_PROG_FC([gfortran-mp-4.9 gfortran-mp-4.8])
+AX_PATH_TO_BINARY(${FC},FC)
+AC_MSG_NOTICE([Fortran compiler ${FC}])
+
+for func in pread pwrite; do
+    AC_CHECK_FUNC([$func],[],AC_MSG_ERROR([$func function is required by casacore]))
+done
+
+AX_BOOST_BASE(1.41)
+AC_SUBST(BOOST_INCLUDE_PATH)
+
+AX_PYTHON_DEVEL(>= '2.7.0')
+dnl#AX_BOOST_PYTHON
+AX_PYTHON_NUMPY
+AC_CHECK_LIB(readline,readline)
+
+AC_PROG_LEX
+if [[ "x$LEX" != xflex ]]; then
+    AC_MSG_ERROR([cannot find a version of flex to use, please adjust your PATH])
+fi
+AX_PATH_TO_BINARY(${LEX},FLEX)
+
+AC_PROG_YACC
+if [[ "$YACC" != "bison -y" ]]; then
+    AC_MSG_ERROR([cannot find a version of bison to use, please adjust your PATH])
+fi
+AX_PATH_TO_BINARY(bison,BISON)
+
+AX_PTHREAD
+AX_CFITSIO
+
+AC_SUBST([CASA_VERSION],[5.1.3])
+
+AX_DBUS
+AX_DBUSCPP
+AX_LIBXML
+AX_LIBSAKURA
+
+AC_CONFIG_FILES(build.properties:ac/templates/build.in)
+AC_CONFIG_FILES([setup.py:ac/templates/setup.py.in],[chmod +x setup.py])
+AC_OUTPUT( )
