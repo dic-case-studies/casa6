@@ -24,3 +24,4 @@ build.flags.compile.libsakura=@LIBSAKURA_CFLAGS@
 build.flags.link.libsakura=@LIBSAKURA_LDFLAGS@
 build.flags.compile.libxml=@LIBXML_CFLAGS@
 build.flags.link.libxml=@LIBXML_LDFLAGS@
+build.compiler.xml_casa=@PWD@/scripts/xml-casa

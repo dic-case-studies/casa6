@@ -1,5 +1,5 @@
 AC_INIT([casa], [4.6.0])
-AC_COPYRIGHT([Copyright (C) 2015 Associated Universities, Inc. Washington DC, USA.])
+AC_COPYRIGHT([Copyright (C) 2017 Associated Universities, Inc. Washington DC, USA.])
 AC_REVISION([syscmd([ac/scripts/configure.commit])])
 
 AC_CONFIG_MACRO_DIRS([ac/m4])
@@ -8,6 +8,9 @@ dnl setup cannonical host variables without requiring
 dnl install.sh et al. as AC_CANONICAL_HOST does
 AX_CANONICAL_NAME
 AC_MSG_NOTICE([host os is ${host_osname}])
+
+PWD=`pwd`
+AC_SUBST(PWD)
 
 AC_LANG(C++)
 
@@ -81,9 +84,13 @@ AX_CHECK_COMPILE_FLAG(-fcx-fortran-rules,[CC_FORTRAN_COMPLEX=-fcx-fortran-rules]
 AC_SUBST(CC_FORTRAN_COMPLEX)
 AC_LANG_POP([C])
 
-AC_PROG_FC([gfortran-mp-4.9 gfortran-mp-4.8])
+AC_PROG_FC([gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
 AX_PATH_TO_BINARY(${FC},FC)
 AC_MSG_NOTICE([Fortran compiler ${FC}])
+if test -f "$FC" -a ! -x "$FC"; then
+   echo "could not find fortran compiler..."
+   exit 1
+fi
 
 for func in pread pwrite; do
     AC_CHECK_FUNC([$func],[],AC_MSG_ERROR([$func function is required by casacore]))
@@ -112,13 +119,31 @@ AX_PATH_TO_BINARY(bison,BISON)
 AX_PTHREAD
 AX_CFITSIO
 
-AC_SUBST([CASA_VERSION],[5.1.3])
+AC_MSG_CHECKING([for casa version number])
+read -a full_version <<< "`(cd casa-source && code/install/resolvegitrevision.sh --pretty-print) | perl -pe 's|^(\d+)\.(\d+)\.(\d+).*?(\d+).?$|$1 $2 $3 $4|'`"
+CASA_VERSION_MAJOR=${full_version[[0]]}
+CASA_VERSION_MINOR=${full_version[[1]]}
+CASA_VERSION_PATCH=${full_version[[2]]}
+CASA_VERSION_FEATURE=${full_version[[3]]}
+CASA_VERSION_DESC="CASAtools (v1)"
+CASA_VERSION="${CASA_VERSION_MAJOR}.${CASA_VERSION_MINOR}.${CASA_VERSION_PATCH}-${CASA_VERSION_FEATURE}"
+AC_MSG_RESULT($CASA_VERSION)
+
+
+AC_SUBST(CASA_VERSION_MAJOR)
+AC_SUBST(CASA_VERSION_MINOR)
+AC_SUBST(CASA_VERSION_PATCH)
+AC_SUBST(CASA_VERSION_FEATURE)
+AC_SUBST(CASA_VERSION_DESC)
+AC_SUBST(CASA_VERSION)
 
 AX_DBUS
 AX_DBUSCPP
 AX_LIBXML
 AX_LIBSAKURA
 
+
 AC_CONFIG_FILES(build.properties:ac/templates/build.in)
+AC_CONFIG_FILES(binding/source/version.cc:casa-source/code/stdcasa/version.cc.in)
 AC_CONFIG_FILES([setup.py:ac/templates/setup.py.in],[chmod +x setup.py])
 AC_OUTPUT( )

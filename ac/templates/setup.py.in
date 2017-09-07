@@ -43,20 +43,29 @@ Operating System :: MacOS :: MacOS X
 Operating System :: POSIX
 """
 
-from distutils import sysconfig
 from distutils.ccompiler import new_compiler, customize_compiler
 from distutils.core import setup, Extension
 from distutils.ccompiler import get_default_compiler
 from distutils.ccompiler import show_compilers
 from distutils.command.build_ext import build_ext
+from distutils.errors import DistutilsExecError, CompileError
+
 import subprocess
+import platform
 import errno    
 import time
 import sys
 import re
 import os
 
-a_priori_exclusions = ['tTableRecord.cc','tXMLToRecord.cc','tArrayIteratorSTL.cc','tStokesConverter.cc','value_variant.cc','tSymLink.cc','tImageExpr2.cc','tRefTable.cc','tPBMath1DEVLA.cc','SingleDishMS_GTest.cc','dRGBTestPattern.cc','tMSReader.cc','tChoice.cc','tCFCache.cc','tImageAnalysis.cc','tPBTable.cc','tLatticeExprNode.cc','tRecursiveVi2LayersWithCal_GT.cc','tCopy.cc','tKJones.cc','tFlagAgentDisplay.cc','tArrayIO3.cc','tTime.cc','tBeamSquint.cc','tImageDecomposer.cc','tStatWtTVI.cc','tCalSolVi2Organizer_GT.cc','tReadBigBDF.cc','tComponentType.cc','tFITSErrorImage.cc','tStatisticsUtilities.cc','tAppInfo.cc','LineFinder_GTest.cc','tMSDataDescBuffer.cc','tMFrequency.cc','tLockFile.cc','tWCBox.cc','tLatConvEquation.cc','tList.cc','dDataSelection.cc','tmeas.cc','tPrimes.cc','VisibilityIteratorImplAsync2.cc','tReadAsciiTable.cc','tImageUtilities.cc','FillMetadata.cc','tSimpleSimVi2_GT.cc','MSCheckerTest.cc','tMSScanGram.cc','tStdLogical.cc','tImageRegrid.cc','tObjectPool.cc','tCoordinateSystem.cc','tLatticePerf.cc','SingleDishMSFiller_GTest.cc','tFFTServer2.cc','tUnit.cc','tRegex2.cc','tFlagAgentTimeFreqCrop.cc','tCTIter.cc','tRegionHandler.cc','tRecordTransformable.cc','tFitGaussian.cc','tPrecision.cc','tVirtColEng.cc','tTableLock.cc','tRecordDesc.cc','tHashMapIter.cc','dVarRefMdirCol.cc','tLatticeApply2.cc','dAveragingTime.cc','tStokesImageUtil.cc','tImageExprParse_addDir.cc','tLEL.cc','tVLADiskInput.cc','tfitsskip_hdu.cc','tLatticeRegion.cc','tMSAntennaGram3.cc','tMatrixMath.cc','tVLATapeInput.cc','tfits_ascTbl2.cc','AtmosphereTest.cc','dPagedArray.cc','tFluxStandard4.cc','tFlagger.cc','tFluxStandard3.cc','tMaskArrExcp.cc','tAttribute_Gtest.cc','tMultiHDF5.cc','tError.cc','tVisCal_GT.cc','tImageFFT.cc','asdm2msfillertask_cmpt.cc','dGridPlacementMultipleRuns.cc','tSIIterBot.cc','tRegionTextParser.cc','tSynthesisUtils.cc','tMeasureHolder.cc','tImager.cc','tHanningSmooth.cc','tIDL.cc','tByteSinkSource.cc','tfits_binTbl1.cc','tAipsrcValue.cc','tDataType.cc','tImagePolarimetry.cc','makeAsdmIndex.cc','dTimeIteration.cc','tLatticeIterator.cc','tFunctionHolder.cc','tCalStats7.cc','tTiledShape.cc','tLCRegion.cc','tMArrayUtil.cc','tArrayBase.cc','tSort_1.cc','tTiledDataStMan.cc','tBucketCache.cc','tPtrHolder.cc','tLinearXform.cc','tSynthesisImager.cc','tIAU2000.cc','dAutoDiff.cc','SDMaskHandler_GTest.cc','3DWindow.cc','tFitter5689.cc','tLatticeExpr2Node.cc','tComponentList.cc','ascii2Table.cc','tUVContSubTVI.cc','tExtendSpecifier.cc','dPanelDisplay.cc','tLCMask.cc','tMSTimeGram.cc','tMutex.cc','tExprUnitNode.cc','tNutation.cc','tFluxStandard.cc','tLatticeExpr3Node.cc','QtParamGUI.cc','tfits2.cc','tTblAsRaster.cc','tArrayOpsDiffShapes.cc','casadrawer.cc','tAsdmStMan.cc','tSlice.cc','tTiledBool.cc','tLCExtension.cc','tMSSummary.cc','tStatWt2.cc','dLatticeAsVector.cc','tChannelAverageTVI.cc','tLCPolygon.cc','tImageExprGram.cc','dAveragingChannel.cc','tHyperPlane.cc','dSymbol.cc','tIPosition.cc','tTapeIO.cc','tTabularCoordinate.cc','dVSCEngine.cc','tMeasurementSet.cc','tSpectralCoordinate.cc','VisBufferImplAsync2.cc','tImageConvolver.cc','tBinTable.cc','tSpectralIndex.cc','tfits3.cc','tStack.cc','VLAT2.cc','tExtendImage.cc','tLinearFitSVD.cc','tSSMStringHandler.cc','tMaskArrMath2.cc','tMDirection.cc','tArrayLogical.cc','tFITSKeywordUtil.cc','tfits2ms.cc','dInterpolate1D.cc','tHashMapIO.cc','tGaussianND.cc','tTSMShape.cc','tFeather.cc','tRecursiveVi2Layers_GT.cc','tTableQuantum.cc','tSmooth.cc','tMMapIO.cc','dCoordinates.cc','tSakuraArrayConverter.cc','tfits_binTbl2.cc','ParamPanel.cc','dImageStatistics.cc','tHDF5DataSet.cc','CrashReportPoster.cc','tString.cc','tArrayAsRaster.cc','tPrecTimer.cc','tEarthMagneticMachine.cc','Subtable.cc','tCTTimeInterp1.cc','tTiledCellStMan.cc','dImageSummary.cc','tVisModelData.cc','tTiledStMan.cc','tCalibraterSolve_GT.cc','tTable_2.cc','tCoordinateUtil.cc','tTableIter.cc','tGaussianShape.cc','SlideEditor.cc','tBitVector.cc','tGaussianDeconvolver.cc','dTwoSidedShape.cc','tDisplayOptions.cc','tVisModelDataRefim.cc','tfits_imgExt2.cc','Subtables.cc','dImageInterface.cc','tGenSort.cc','tPBMath2D.cc','tTypes.cc','tTrVI2.cc','tMEarthMagnetic.cc','tMSDerivedValues.cc','dMeasure.cc','dDBusViewerProxy.cc','tCOWPtr.cc','type_record.cc','dImageHistograms.cc','tArrayIter.cc','parasdm2MS.cc','dRegionFile.cc','SampleReaderDemo.cc','PointingDirectionCache_Test.cc','tValueHolder.cc','dRemoveAxes.cc','tLatticeConvolver.cc','tCEMemModel.cc','tMSTransformIterator.cc','tTableInfo.cc','tAipsrc.cc','tLogTransformedPolynomialSpectralElement.cc','tStatWt.cc','tMVAngle.cc','tCanonicalConversion.cc','tHashMap.cc','tMSFieldGram.cc','tLogging.cc','tCalInterpolation.cc','MatrixMath.cc','tSkyComponentFactory.cc','tSpectralFit.cc','ImageMaskHandler_Gtest.cc','tFITSExtImage.cc','tUVSub.cc','tAnnRotBox.cc','tZScoreCalculator.cc','flagger_cmpt.cc','dQtDataManager.cc','tPoolStack.cc','ValuePanel.cc','tImageRegion.cc','dSparseDiff.cc','tQueue.cc','tImageFitter.cc','tGaussianConvert.cc','tVisVectorJonesMueller_GT.cc','tImageCollapser.cc','tVPSkyJones.cc','tImageStatistics.cc','dGLDemo.cc','tScalarRecordColumn.cc','tRecordGram.cc','tFFT2D.cc','tRegex_1.cc','tLatticeAddNoise.cc','tMArray.cc','tArrayMath.cc','tLatticeCache.cc','tLatticeIndexer.cc','VisBufferAsyncWrapper2.cc','tAWPFTM.cc','tVectorSTLIterator.cc','tScaledComplexData.cc','tEnvVar.cc','tMBaseline.cc','MirTypeAssert.cc','tOrdMap.cc','tAttribute.cc','tCoordinate.cc','dConstraints.cc','tAttValPoi.cc','tFit2D.cc','tSampledFunctional.cc','tImageFit1D.cc','dWorldMap.cc','tConversion.cc','tBitFlagsEngine.cc','tLCPixelSet.cc','tRebinImage.cc','nISMBucket.cc','tExprGroup.cc','tFFTServer.cc','tRIorAPArray.cc','tHDF5Lattice.cc','tArray.cc','tCompoundFunction.cc','tMArrayMath.cc','tHDF5Image.cc','tFunctors.cc','tAnnRectBox.cc','tMath.cc','tfits_priGrp.cc','dExportRangeRightBottom.cc','tUDFMSCal.cc','tfitsread_data.cc','tSort.cc','Colorbar.cc','tMSColumns.cc','tLatticeApply.cc','use_EditlineGuiProxy.cc','tFlagAgentClipping.cc','tStokes.cc','FluxStandard2_GTest.cc','tHDF5Iterator.cc','tRowCopier.cc','tStokesUtil.cc','tVisCalGlobals_GT.cc','tCompare.cc','tFlagAgentBase.cc','tAnnText.cc','tBucketMapped.cc','tLatticeFractile.cc','tLatticeStatistics.cc','tParam.cc','dM1950_2000.cc','tImageProxy.cc','tWCExtension.cc','tMeasMath.cc','tMSSpwGram.cc','dLSQFit.cc','Antennas.cc','tTableVector.cc','tCalStats3.cc','tRecordExpr.cc','dCEMemModel.cc','AveragingTvi2_Test.cc','tImageStatistics2.cc','tTableLockSync.cc','tImageSourceFinder.cc','tPowerLogarithmicPolynomial.cc','tMappedIO.cc','dPSWorldCanvasApp.cc','AlignMemory.cc','tLSQaips.cc','tConstants.cc','tUVWMachine.cc','tNewCalTable.cc','tSakuraAlignedArray.cc','dExportRangeRightTop.cc','dExportRangePipeline.cc','tStArrayFile.cc','tBucketBuffered.cc','tRegionManager.cc','PythonInterpreter.cc','tArrayUtilPerf.cc','tConvertArray.cc','dExportRangeInternal.cc','tRegularFile.cc','dAveraging.cc','tfitsskip_all.cc','tQuantum.cc','tVAXConversion.cc','tArrayMath2.cc','tCombinatorics.cc','tViff.cc','tRebinLattice.cc','tAntennaResponses.cc','tSkyCompRep.cc','harvestrr.cc','tRFCubeLattice.cc','tTableLockSync_2.cc','tFITSImage.cc','tTiledShapeStMan.cc','tPJones_GT.cc','tExprNodeSet.cc','tMemory.cc','tVector.cc','tViiLayerFactory_GT.cc','tTableTrace.cc','tMSMetaData.cc','tfitsskip.cc','tFitterEstimatesFileParser.cc','tHDF5Record.cc','CrashReporter.cc','tLELAttribute.cc','tKJones_GT.cc','tVelocityMachine.cc','tQVector.cc','tLCUnion.cc','tSPolynomial.cc','tLCConcatenation.cc','tMSFITSInput.cc','tMSMetaInfoForCal_GT.cc','tDlHandle.cc','tArrayUtil.cc','tAgentFlagger.cc','3DController.cc','tAnnLine.cc','tCombiFunction.cc','LineFindingUtils_GTest.cc','tImageConcat.cc','tImageTransposer.cc','tCountedPtr.cc','dLogging2.cc','dLattice.cc','tEarthField.cc','tArrayIter1.cc','tTempImage.cc','DemoDummy.cc','tSubLattice.cc','tMVPosition.cc','SofaTest.cc','tTiledEmpty.cc','tTileStepper.cc','tLCLELMask.cc','tGaussianMultipletSpectralElement.cc','FluxStandard_GTest.cc','tImageExpr3Gram.cc','tSparseDiff.cc','tCompositeNumber.cc','tTable.cc','tLCIntersection.cc','dPagedImage.cc','tSTLMath.cc','tCTGenericFill.cc','tArrayAccessor.cc','tMaskArrLogi.cc','tJsonValue.cc','dOverPlot.cc','tLatticeHistograms.cc','tFITSQualityImage.cc','tImageInputProcessor.cc','dExportRangeLeftTop.cc','tImageAnalysis2.cc','tLatticeUtilities.cc','tTblAsXY.cc','tMedianSlider.cc','tMSPolBuffer.cc','tStatAcc.cc','tCalStats0.cc','tArrayColumnCellSlices.cc','tGlinXphJones_GT.cc','tDataConversion.cc','tBinarySearch.cc','tFlagAgentElevation.cc','tAlgoPClark.cc','tFlagAgentExtension.cc','tLCPolygon2.cc','tGaussianBeam.cc','tTiledCellStM_1.cc','ProtoVR.cc','tTaQLNode.cc','tAnnVector.cc','VisBufferImpl.cc','tBoxedArrayMath.cc','LUdecomp.cc','dLogging.cc','synthesisparsync_cmpt.cc','tAnnCircle.cc','tTiledShapeStM_1.cc','tExprNodeUDF.cc','AWConvFunc2.cc','tTableExprData.cc','tByteSink.cc','tImagePrimaryBeamCorrector.cc','tImageExpr2Gram.cc','tMultiFile.cc','tJsonOut.cc','tMeasJPL.cc','MirExceptions.cc','tDiagonal.cc','tChannelAverageTransformEngine_GT.cc','tTableDesc.cc','dQtPlotter.cc','tMMueller_GT.cc','tqlayout.cc','tPolynomial.cc','tCTPatchedInterp.cc','tProfileFit1D.cc','tLCEllipsoid.cc','tHanningSmoothTVI.cc','dLegend.cc','tFitToHalfStatistics.cc','tSakuraUtils.cc','tApplicator.cc','tPointComponent.cc','tInterpolate2D.cc','tConcatTable3.cc','tQualityCoordinate.cc','tVanVleck.cc','tGridFT.cc','dOverPlot2Files.cc','tLinearCoordinate.cc','MirVisReader.cc','tCalLibraryParse.cc','tTempLattice.cc','tClarkCleanLatModel.cc','tMSFieldEphem.cc','tTableDescHyper.cc','tMaskArrIO.cc','dVirtColEng.cc','tRegex.cc','tTiledLineStepper.cc','SDPosInterpolator_GTest.cc','tTable_3.cc','tPowerLogPolynomialSpectralElement.cc','tMathNaN.cc','t2xReadASDM.cc','tImageExprParse.cc','tSlidingArrayMath.cc','tLargeFilebufIO.cc','tCTSelection.cc','tFITSImgParser.cc','tGeometry.cc','tJsonKVMap.cc','tVSCEngine.cc','tCurvedLattice2D.cc','tGaussian1D.cc','tLatticeConcat.cc','tInterpolate1D.cc','tfits_ascTbl.cc','tTypeIO.cc','tDerivedMSCal.cc','MsFactory.cc','tMeasure.cc','tComponentImager.cc','tSinusoid1D.cc','tLogSink.cc','tFITS.cc','tConvolver.cc','tForwardCol.cc','tMSSelection.cc','tArrayMathPerf.cc','tRegister.cc','dOverIterationPlot.cc','tStMan.cc','tAipsIOCarray.cc','tBucketFile.cc','tComplex.cc','AsynchronousInterface2.cc','tInput.cc','tConversionPerf.cc','tFile.cc','TestUtilsTVI.cc','tCasacRegionManager.cc','tLineFinder.cc','tfitsreader.cc','tTableGram.cc','tImageStatsCalculator.cc','casaparamgui.cc','tGaussianComponent.cc','PolAverageTVI_GTest.cc','tPagedImage2.cc','tConstantSpectrum.cc','3v.cc','tLatticeExpr3.cc','3DDisplayData.cc','tVLALogicalRecord.cc','dGridPlacementMultiplePlots.cc','tConvert.cc','tCalibraterSolveSimData_GT.cc','tIncrementalStMan2.cc','tTableRow.cc','tModcompConversion.cc','tCompareBoxedPartial.cc','IDIndex.cc','tMemoryStMan.cc','tCasaImageBeamSet.cc','accumulateFromGrid.cc','tTiledFileAccess.cc','tALMAAperture.cc','tLECanonicalConversion.cc','tMSConcat.cc','tMatrixMathLA.cc','tMathFunc.cc','tFuncExpression.cc','tWCEllipsoid.cc','tNonLinearFitLM.cc','tCLPatchPanel.cc','Viff.cc','tStandardStMan.cc','tFunctionOrder.cc','tFrequencyAligner.cc','tTableStreamReader.cc','tAttVal.cc','tDiskShape.cc','tHostInfo.cc','tAutoDiff.cc','dGaussianND.cc','tDirectionCoordinate.cc','tcal_cmpt2.cc','tMSCalEnums.cc','tAxesSpecifier.cc','tRecordGramTable.cc','tAutoflag.cc','tCasarc01.cc','dExportRangeLeftBottom.cc','tHingesFencesStatistics.cc','harvestrn.cc','tImageInfo.cc','tMemoryTrace.cc','tBlock.cc','tParAngleMachine.cc','tCasaImageOpener.cc','tTable_4.cc','tWCLELMask.cc','tSTLIO.cc','tDJones_GT.cc','tFringeJones_GT.cc','FortranizedLoopsFromGrid.cc','tImage2DConvolver.cc','tMappedArrayEngine.cc','dLatticeAsRaster.cc','tSimButterworthBandpass.cc','tMuvw.cc','tByteIO.cc','tTiledColumnStMan.cc','tPixelCurve1D.cc','DataLoadingBuf.cc','tForwardColRow.cc','tMSUvDistGram.cc','tMSIter.cc','tLatticeTwoPtCorr.cc','tRegionTextList.cc','tCalStats6.cc','tReadAsciiTable2.cc','tCalStats1.cc','tPhaseShiftingTVI.cc','tPBMath.cc','tConvolutionEquation.cc','tLatticeStatsDataProvider.cc','tLattStatsSpecialize.cc','tInterpolateArray1D.cc','tLimbDarkenedDiskShape.cc','dMultiplePlotTypes.cc','dRetypedArrayEngine.cc','tTableCopy.cc','tConcatTable2.cc','dArrayAccessor.cc','dRGBWCRaster.cc','tFlagDataHandler.cc','tExtendLattice.cc','dProfile2dDD.cc','tDynBuffer.cc','tFJones.cc','tVectorKernel.cc','tSubImage.cc','tProfileFitterEstimatesFileParser.cc','tLatticeFit.cc','tColumnsIndexArray.cc','tClassicalStatistics.cc','tArrayAndDrawing.cc','tTiledDataStM_1.cc','tHistAcc.cc','tAnnAnnulus.cc','MakeMS.cc','tMSAntennaGram2.cc','tSolveDataBuffer_GT.cc','dTimeColorization.cc','tSimOrdMap.cc','tArrayIO2.cc','dPointShape.cc','tFITSExtImageII.cc','tBlockTrace.cc','tVisibilityIterator.cc','tCalibrater.cc','tVisibilityIteratorAsync.cc','tFITSSpectralUtil.cc','tStringDistance.cc','tfits5.cc','tLabelandFindRegions.cc','dMUString.cc','importmiriad.cc','dSpectralModel.cc','dExportRange.cc','tTable_1.cc','tArrayColumnSlices.cc','tLELSpectralIndex.cc','tTimer.cc','tCalStats5.cc','tStatisticsAlgorithmFactory.cc','tShadow.cc','tObjectStack.cc','tExprGroupArray.cc','tPath.cc','tSlicer.cc','tLCComplement.cc','tLCDifference.cc','tClarkCleanModel.cc','tStMan1.cc','tConcatRows.cc','tMSFitsSelection.cc','tMeasIERS.cc','tLUdecomp.cc','dImagingWeightViaGridFT.cc','tTableCopyPerf.cc','tOrdMap2.cc','tMSKeys.cc','tLELMedian.cc','tFileIO.cc','tIncrementalStMan.cc','tArrayIO.cc','ImageMaskHandlerTest.cc','tMSCorrGram.cc','tFilebufIO.cc','tStringArray.cc','paramgui_python.cc','tCompressComplex.cc','tConcatTable.cc','tMSMainBuffer.cc','tFlagAgentSummary.cc','FortranizedLoopsToGrid.cc','tPointShape.cc','tObjectID.cc','dTimeColorizationAveraging.cc','tAipsIO.cc','tPerfTransform.cc','CalTableFromAIPS.cc','tFlagAgentQuack.cc','tCalStats4.cc','dPSLatticeAsRaster.cc','dFunction.cc','dCOWptr.cc','tSepImageConvolver.cc','tMSFITSOutput.cc','tGaussian3D.cc','tMaskedArray.cc','tImageExpr.cc','dVLAArchiveInput.cc','tRNG.cc','tMSFieldBuffer.cc','tReadSeqBDFs.cc','tEVLAAperture.cc','tLatticeFFT.cc','SDAlgorithmTest.cc','tArrayPosIter.cc','tDirectoryIterator.cc','tFITSDateUtil.cc','tVirtualTaQLColumn.cc','tReadAllBDFs.cc','interrupt_python.cc','tDirectory.cc','tcal_cmpt.cc','tCalIntpMatch.cc','tTblAsContour.cc','tSumPerformance.cc','tImageMetaData.cc','VisibilityIterator_Test.cc','tTableAccess.cc','tTableKeywords.cc','SDDoubleCircleGainCalImpl_GTest.cc','tStokesCoordinate.cc','tMVTime.cc','tFunctionWrapper.cc','tFallible.cc','FluxStandardTest.cc','tVisIter.cc','tFlagAgentManual.cc','EphemObjFluxStandard_GTest.cc','dSkyCompBase.cc','tVisVectorJonesMueller.cc','tImageAttrHandler.cc','tFITSHistoryUtil.cc','dImageMoments.cc','MirFiller.cc','tIBMConversion.cc','tTabularSpectrum.cc','tSSMAddRemove.cc','tCompressFloat.cc','tPagedArray.cc','dDBus.cc','tPagedImage.cc','version2.cc','tfits1.cc','tObsInfo.cc','dExportPlot.cc','tMeasComet.cc','dGridPlacement.cc','tHDF5File.cc','VisibilityProcessing_Test.cc','dTimeAveragingIteration.cc','bimafiller.cc','tPixonProcessor.cc','tStatisticsTypes.cc','tMemoryTable.cc','tVLABuffer.cc','tFlagAgentShadow.cc','tMSFeedGram.cc','tIncCEMemModel.cc','tMSAntennaGram.cc','tAnnEllipse.cc','value_record.cc','tChebyshev.cc','tScaledArrayEngine.cc','tCalStats2.cc','tLCStretch.cc','tMaskArrMath1.cc','tfits4.cc','tAnnCenterBox.cc','tMIRIADImage.cc','tLoggerHolder.cc','tColumnsIndex.cc','tProjection.cc','tDisplayEvent.cc','dOverLeftRightPlot.cc','tCCList.cc','tMaskArrMath0.cc','tAnnSymbol.cc','tImageProfileFitter.cc','tWCUnion.cc','tFlagAgentRFlag.cc','SingleDishSkyCal_GTest.cc','tMSBin.cc','tPoisson.cc','tFTMachine.cc','tMFFileIO.cc','tSpectralFitter.cc','tConstantND.cc','tLinearSearch.cc','dMultichannelRaster.cc','tLinAlgebra.cc','t_priArr_imgExt.cc','tQuality.cc','tRefRows.cc','tFluxStandard2.cc','tRFASelector.cc','tLatticeExpr2.cc','MSChecker_Gtest.cc','tSubImageFactory.cc','dDBusSession.cc','tMsPlot.cc','tSynthesisImagerVi2.cc','tGaussian2D.cc','tExprNode.cc','tLatticeStepper.cc','conversions.cc','tImageMoments.cc','tHDF5.cc','tRegriddingTVI.cc','tFlagIndex.cc','VisibilityIterator_Gtest.cc','tChauvenetCriterionStatistics.cc','tPixelValueManipulator.cc','tLSQFit.cc','type_variant.cc','tReadParBDFs.cc','dNBody.cc','tImageEmpty.cc','tLCPagedMask.cc','tArrayMathTransform.cc','tLatticeLocker.cc','tLatticeSlice1D.cc','tLargeFileIO.cc','tRecord.cc','tTableMeasures.cc','tLatticeExpr.cc','tQuantumHolder.cc','tDisplayTool.cc','tNewCalTableIterNick.cc','tImageBeamSet.cc','DOmirfiller.cc','tDefaultValue.cc','tCalStatsTab.cc','tLorentzianSpectralElement.cc','CTSelection.cc','tLCSlicer.cc','tLatticeMathUtil.cc','tAnnPolygon.cc','tMedianSmooth.cc','tArrayLattice.cc','dProgressMeter.cc']
+from os import listdir
+from os.path import isfile, join
+from itertools import chain, imap, ifilter
+
+a_priori_exclusions = ['tTableRecord.cc','tXMLToRecord.cc','tArrayIteratorSTL.cc','tStokesConverter.cc','value_variant.cc','tSymLink.cc','tImageExpr2.cc','tRefTable.cc','tPBMath1DEVLA.cc','SingleDishMS_GTest.cc','dRGBTestPattern.cc','tMSReader.cc','tChoice.cc','tCFCache.cc','tImageAnalysis.cc','tPBTable.cc','tLatticeExprNode.cc','tRecursiveVi2LayersWithCal_GT.cc','tCopy.cc','tKJones.cc','tFlagAgentDisplay.cc','tArrayIO3.cc','tTime.cc','tBeamSquint.cc','tImageDecomposer.cc','tStatWtTVI.cc','tCalSolVi2Organizer_GT.cc','tReadBigBDF.cc','tComponentType.cc','tFITSErrorImage.cc','tStatisticsUtilities.cc','tAppInfo.cc','LineFinder_GTest.cc','tMSDataDescBuffer.cc','tMFrequency.cc','tLockFile.cc','tWCBox.cc','tLatConvEquation.cc','tList.cc','dDataSelection.cc','tmeas.cc','tPrimes.cc','VisibilityIteratorImplAsync2.cc','tReadAsciiTable.cc','tImageUtilities.cc','FillMetadata.cc','tSimpleSimVi2_GT.cc','MSCheckerTest.cc','tMSScanGram.cc','tStdLogical.cc','tImageRegrid.cc','tObjectPool.cc','tCoordinateSystem.cc','tLatticePerf.cc','SingleDishMSFiller_GTest.cc','tFFTServer2.cc','tUnit.cc','tRegex2.cc','tFlagAgentTimeFreqCrop.cc','tCTIter.cc','tRegionHandler.cc','tRecordTransformable.cc','tFitGaussian.cc','tPrecision.cc','tVirtColEng.cc','tTableLock.cc','tRecordDesc.cc','tHashMapIter.cc','dVarRefMdirCol.cc','tLatticeApply2.cc','dAveragingTime.cc','tStokesImageUtil.cc','tImageExprParse_addDir.cc','tLEL.cc','tVLADiskInput.cc','tfitsskip_hdu.cc','tLatticeRegion.cc','tMSAntennaGram3.cc','tMatrixMath.cc','tVLATapeInput.cc','tfits_ascTbl2.cc','AtmosphereTest.cc','dPagedArray.cc','tFluxStandard4.cc','tFlagger.cc','tFluxStandard3.cc','tMaskArrExcp.cc','tAttribute_Gtest.cc','tMultiHDF5.cc','tError.cc','tVisCal_GT.cc','tImageFFT.cc','asdm2msfillertask_cmpt.cc','dGridPlacementMultipleRuns.cc','tSIIterBot.cc','tRegionTextParser.cc','tSynthesisUtils.cc','tMeasureHolder.cc','tImager.cc','tHanningSmooth.cc','tIDL.cc','tByteSinkSource.cc','tfits_binTbl1.cc','tAipsrcValue.cc','tDataType.cc','tImagePolarimetry.cc','makeAsdmIndex.cc','dTimeIteration.cc','tLatticeIterator.cc','tFunctionHolder.cc','tCalStats7.cc','tTiledShape.cc','tLCRegion.cc','tMArrayUtil.cc','tArrayBase.cc','tSort_1.cc','tTiledDataStMan.cc','tBucketCache.cc','tPtrHolder.cc','tLinearXform.cc','tSynthesisImager.cc','tIAU2000.cc','dAutoDiff.cc','SDMaskHandler_GTest.cc','3DWindow.cc','tFitter5689.cc','tLatticeExpr2Node.cc','tComponentList.cc','ascii2Table.cc','tUVContSubTVI.cc','tExtendSpecifier.cc','dPanelDisplay.cc','tLCMask.cc','tMSTimeGram.cc','tMutex.cc','tExprUnitNode.cc','tNutation.cc','tFluxStandard.cc','tLatticeExpr3Node.cc','QtParamGUI.cc','tfits2.cc','tTblAsRaster.cc','tArrayOpsDiffShapes.cc','casadrawer.cc','tAsdmStMan.cc','tSlice.cc','tTiledBool.cc','tLCExtension.cc','tMSSummary.cc','tStatWt2.cc','dLatticeAsVector.cc','tChannelAverageTVI.cc','tLCPolygon.cc','tImageExprGram.cc','dAveragingChannel.cc','tHyperPlane.cc','dSymbol.cc','tIPosition.cc','tTapeIO.cc','tTabularCoordinate.cc','dVSCEngine.cc','tMeasurementSet.cc','tSpectralCoordinate.cc','VisBufferImplAsync2.cc','tImageConvolver.cc','tBinTable.cc','tSpectralIndex.cc','tfits3.cc','tStack.cc','VLAT2.cc','tExtendImage.cc','tLinearFitSVD.cc','tSSMStringHandler.cc','tMaskArrMath2.cc','tMDirection.cc','tArrayLogical.cc','tFITSKeywordUtil.cc','tfits2ms.cc','dInterpolate1D.cc','tHashMapIO.cc','tGaussianND.cc','tTSMShape.cc','tFeather.cc','tRecursiveVi2Layers_GT.cc','tTableQuantum.cc','tSmooth.cc','tMMapIO.cc','dCoordinates.cc','tSakuraArrayConverter.cc','tfits_binTbl2.cc','ParamPanel.cc','dImageStatistics.cc','tHDF5DataSet.cc','CrashReportPoster.cc','tString.cc','tArrayAsRaster.cc','tPrecTimer.cc','tEarthMagneticMachine.cc','Subtable.cc','tCTTimeInterp1.cc','tTiledCellStMan.cc','dImageSummary.cc','tVisModelData.cc','tTiledStMan.cc','tCalibraterSolve_GT.cc','tTable_2.cc','tCoordinateUtil.cc','tTableIter.cc','tGaussianShape.cc','SlideEditor.cc','tBitVector.cc','tGaussianDeconvolver.cc','dTwoSidedShape.cc','tDisplayOptions.cc','tVisModelDataRefim.cc','tfits_imgExt2.cc','Subtables.cc','dImageInterface.cc','tGenSort.cc','tPBMath2D.cc','tTypes.cc','tTrVI2.cc','tMEarthMagnetic.cc','tMSDerivedValues.cc','dMeasure.cc','dDBusViewerProxy.cc','tCOWPtr.cc','type_record.cc','dImageHistograms.cc','tArrayIter.cc','parasdm2MS.cc','dRegionFile.cc','SampleReaderDemo.cc','PointingDirectionCache_Test.cc','tValueHolder.cc','dRemoveAxes.cc','tLatticeConvolver.cc','tCEMemModel.cc','tMSTransformIterator.cc','tTableInfo.cc','tAipsrc.cc','tLogTransformedPolynomialSpectralElement.cc','tStatWt.cc','tMVAngle.cc','tCanonicalConversion.cc','tHashMap.cc','tMSFieldGram.cc','tLogging.cc','tCalInterpolation.cc','MatrixMath.cc','tSkyComponentFactory.cc','tSpectralFit.cc','ImageMaskHandler_Gtest.cc','tFITSExtImage.cc','tUVSub.cc','tAnnRotBox.cc','tZScoreCalculator.cc','flagger_cmpt.cc','dQtDataManager.cc','tPoolStack.cc','ValuePanel.cc','tImageRegion.cc','dSparseDiff.cc','tQueue.cc','tImageFitter.cc','tGaussianConvert.cc','tVisVectorJonesMueller_GT.cc','tImageCollapser.cc','tVPSkyJones.cc','tImageStatistics.cc','dGLDemo.cc','tScalarRecordColumn.cc','tRecordGram.cc','tFFT2D.cc','tRegex_1.cc','tLatticeAddNoise.cc','tMArray.cc','tArrayMath.cc','tLatticeCache.cc','tLatticeIndexer.cc','VisBufferAsyncWrapper2.cc','tAWPFTM.cc','tVectorSTLIterator.cc','tScaledComplexData.cc','tEnvVar.cc','tMBaseline.cc','MirTypeAssert.cc','tOrdMap.cc','tAttribute.cc','tCoordinate.cc','dConstraints.cc','tAttValPoi.cc','tFit2D.cc','tSampledFunctional.cc','tImageFit1D.cc','dWorldMap.cc','tConversion.cc','tBitFlagsEngine.cc','tLCPixelSet.cc','tRebinImage.cc','nISMBucket.cc','tExprGroup.cc','tFFTServer.cc','tRIorAPArray.cc','tHDF5Lattice.cc','tArray.cc','tCompoundFunction.cc','tMArrayMath.cc','tHDF5Image.cc','tFunctors.cc','tAnnRectBox.cc','tMath.cc','tfits_priGrp.cc','dExportRangeRightBottom.cc','tUDFMSCal.cc','tfitsread_data.cc','tSort.cc','Colorbar.cc','tMSColumns.cc','tLatticeApply.cc','use_EditlineGuiProxy.cc','tFlagAgentClipping.cc','tStokes.cc','FluxStandard2_GTest.cc','tHDF5Iterator.cc','tRowCopier.cc','tStokesUtil.cc','tVisCalGlobals_GT.cc','tCompare.cc','tFlagAgentBase.cc','tAnnText.cc','tBucketMapped.cc','tLatticeFractile.cc','tLatticeStatistics.cc','tParam.cc','dM1950_2000.cc','tImageProxy.cc','tWCExtension.cc','tMeasMath.cc','tMSSpwGram.cc','dLSQFit.cc','Antennas.cc','tTableVector.cc','tCalStats3.cc','tRecordExpr.cc','dCEMemModel.cc','AveragingTvi2_Test.cc','tImageStatistics2.cc','tTableLockSync.cc','tImageSourceFinder.cc','tPowerLogarithmicPolynomial.cc','tMappedIO.cc','dPSWorldCanvasApp.cc','AlignMemory.cc','tLSQaips.cc','tConstants.cc','tUVWMachine.cc','tNewCalTable.cc','tSakuraAlignedArray.cc','dExportRangeRightTop.cc','dExportRangePipeline.cc','tStArrayFile.cc','tBucketBuffered.cc','tRegionManager.cc','PythonInterpreter.cc','tArrayUtilPerf.cc','tConvertArray.cc','dExportRangeInternal.cc','tRegularFile.cc','dAveraging.cc','tfitsskip_all.cc','tQuantum.cc','tVAXConversion.cc','tArrayMath2.cc','tCombinatorics.cc','tViff.cc','tRebinLattice.cc','tAntennaResponses.cc','tSkyCompRep.cc','harvestrr.cc','tRFCubeLattice.cc','tTableLockSync_2.cc','tFITSImage.cc','tTiledShapeStMan.cc','tPJones_GT.cc','tExprNodeSet.cc','tMemory.cc','tVector.cc','tViiLayerFactory_GT.cc','tTableTrace.cc','tMSMetaData.cc','tfitsskip.cc','tFitterEstimatesFileParser.cc','tHDF5Record.cc','CrashReporter.cc','tLELAttribute.cc','tKJones_GT.cc','tVelocityMachine.cc','tQVector.cc','tLCUnion.cc','tSPolynomial.cc','tLCConcatenation.cc','tMSFITSInput.cc','tMSMetaInfoForCal_GT.cc','tDlHandle.cc','tArrayUtil.cc','tAgentFlagger.cc','3DController.cc','tAnnLine.cc','tCombiFunction.cc','LineFindingUtils_GTest.cc','tImageConcat.cc','tImageTransposer.cc','tCountedPtr.cc','dLogging2.cc','dLattice.cc','tEarthField.cc','tArrayIter1.cc','tTempImage.cc','DemoDummy.cc','tSubLattice.cc','tMVPosition.cc','SofaTest.cc','tTiledEmpty.cc','tTileStepper.cc','tLCLELMask.cc','tGaussianMultipletSpectralElement.cc','FluxStandard_GTest.cc','tImageExpr3Gram.cc','tSparseDiff.cc','tCompositeNumber.cc','tTable.cc','tLCIntersection.cc','dPagedImage.cc','tSTLMath.cc','tCTGenericFill.cc','tArrayAccessor.cc','tMaskArrLogi.cc','tJsonValue.cc','dOverPlot.cc','tLatticeHistograms.cc','tFITSQualityImage.cc','tImageInputProcessor.cc','dExportRangeLeftTop.cc','tImageAnalysis2.cc','tLatticeUtilities.cc','tTblAsXY.cc','tMedianSlider.cc','tMSPolBuffer.cc','tStatAcc.cc','tCalStats0.cc','tArrayColumnCellSlices.cc','tGlinXphJones_GT.cc','tDataConversion.cc','tBinarySearch.cc','tFlagAgentElevation.cc','tAlgoPClark.cc','tFlagAgentExtension.cc','tLCPolygon2.cc','tGaussianBeam.cc','tTiledCellStM_1.cc','ProtoVR.cc','tTaQLNode.cc','tAnnVector.cc','VisBufferImpl.cc','tBoxedArrayMath.cc','LUdecomp.cc','dLogging.cc','synthesisparsync_cmpt.cc','tAnnCircle.cc','tTiledShapeStM_1.cc','tExprNodeUDF.cc','AWConvFunc2.cc','tTableExprData.cc','tByteSink.cc','tImagePrimaryBeamCorrector.cc','tImageExpr2Gram.cc','tMultiFile.cc','tJsonOut.cc','tMeasJPL.cc','MirExceptions.cc','tDiagonal.cc','tChannelAverageTransformEngine_GT.cc','tTableDesc.cc','dQtPlotter.cc','tMMueller_GT.cc','tqlayout.cc','tPolynomial.cc','tCTPatchedInterp.cc','tProfileFit1D.cc','tLCEllipsoid.cc','tHanningSmoothTVI.cc','dLegend.cc','tFitToHalfStatistics.cc','tSakuraUtils.cc','tApplicator.cc','tPointComponent.cc','tInterpolate2D.cc','tConcatTable3.cc','tQualityCoordinate.cc','tVanVleck.cc','tGridFT.cc','dOverPlot2Files.cc','tLinearCoordinate.cc','MirVisReader.cc','tCalLibraryParse.cc','tTempLattice.cc','tClarkCleanLatModel.cc','tMSFieldEphem.cc','tTableDescHyper.cc','tMaskArrIO.cc','dVirtColEng.cc','tRegex.cc','tTiledLineStepper.cc','SDPosInterpolator_GTest.cc','tTable_3.cc','tPowerLogPolynomialSpectralElement.cc','tMathNaN.cc','t2xReadASDM.cc','tImageExprParse.cc','tSlidingArrayMath.cc','tLargeFilebufIO.cc','tCTSelection.cc','tFITSImgParser.cc','tGeometry.cc','tJsonKVMap.cc','tVSCEngine.cc','tCurvedLattice2D.cc','tGaussian1D.cc','tLatticeConcat.cc','tInterpolate1D.cc','tfits_ascTbl.cc','tTypeIO.cc','tDerivedMSCal.cc','MsFactory.cc','tMeasure.cc','tComponentImager.cc','tSinusoid1D.cc','tLogSink.cc','tFITS.cc','tConvolver.cc','tForwardCol.cc','tMSSelection.cc','tArrayMathPerf.cc','tRegister.cc','dOverIterationPlot.cc','tStMan.cc','tAipsIOCarray.cc','tBucketFile.cc','tComplex.cc','AsynchronousInterface2.cc','tInput.cc','tConversionPerf.cc','tFile.cc','TestUtilsTVI.cc','tCasacRegionManager.cc','tLineFinder.cc','tfitsreader.cc','tTableGram.cc','tImageStatsCalculator.cc','casaparamgui.cc','tGaussianComponent.cc','PolAverageTVI_GTest.cc','tPagedImage2.cc','tConstantSpectrum.cc','3v.cc','tLatticeExpr3.cc','3DDisplayData.cc','tVLALogicalRecord.cc','dGridPlacementMultiplePlots.cc','tConvert.cc','tCalibraterSolveSimData_GT.cc','tIncrementalStMan2.cc','tTableRow.cc','tModcompConversion.cc','tCompareBoxedPartial.cc','IDIndex.cc','tMemoryStMan.cc','tCasaImageBeamSet.cc','accumulateFromGrid.cc','tTiledFileAccess.cc','tALMAAperture.cc','tLECanonicalConversion.cc','tMSConcat.cc','tMatrixMathLA.cc','tMathFunc.cc','tFuncExpression.cc','tWCEllipsoid.cc','tNonLinearFitLM.cc','tCLPatchPanel.cc','Viff.cc','tStandardStMan.cc','tFunctionOrder.cc','tFrequencyAligner.cc','tTableStreamReader.cc','tAttVal.cc','tDiskShape.cc','tHostInfo.cc','tAutoDiff.cc','dGaussianND.cc','tDirectionCoordinate.cc','tcal_cmpt2.cc','tMSCalEnums.cc','tAxesSpecifier.cc','tRecordGramTable.cc','tAutoflag.cc','tCasarc01.cc','dExportRangeLeftBottom.cc','tHingesFencesStatistics.cc','harvestrn.cc','tImageInfo.cc','tMemoryTrace.cc','tBlock.cc','tParAngleMachine.cc','tCasaImageOpener.cc','tTable_4.cc','tWCLELMask.cc','tSTLIO.cc','tDJones_GT.cc','tFringeJones_GT.cc','FortranizedLoopsFromGrid.cc','tImage2DConvolver.cc','tMappedArrayEngine.cc','dLatticeAsRaster.cc','tSimButterworthBandpass.cc','tMuvw.cc','tByteIO.cc','tTiledColumnStMan.cc','tPixelCurve1D.cc','DataLoadingBuf.cc','tForwardColRow.cc','tMSUvDistGram.cc','tMSIter.cc','tLatticeTwoPtCorr.cc','tRegionTextList.cc','tCalStats6.cc','tReadAsciiTable2.cc','tCalStats1.cc','tPhaseShiftingTVI.cc','tPBMath.cc','tConvolutionEquation.cc','tLatticeStatsDataProvider.cc','tLattStatsSpecialize.cc','tInterpolateArray1D.cc','tLimbDarkenedDiskShape.cc','dMultiplePlotTypes.cc','dRetypedArrayEngine.cc','tTableCopy.cc','tConcatTable2.cc','dArrayAccessor.cc','dRGBWCRaster.cc','tFlagDataHandler.cc','tExtendLattice.cc','dProfile2dDD.cc','tDynBuffer.cc','tFJones.cc','tVectorKernel.cc','tSubImage.cc','tProfileFitterEstimatesFileParser.cc','tLatticeFit.cc','tColumnsIndexArray.cc','tClassicalStatistics.cc','tArrayAndDrawing.cc','tTiledDataStM_1.cc','tHistAcc.cc','tAnnAnnulus.cc','MakeMS.cc','tMSAntennaGram2.cc','tSolveDataBuffer_GT.cc','dTimeColorization.cc','tSimOrdMap.cc','tArrayIO2.cc','dPointShape.cc','tFITSExtImageII.cc','tBlockTrace.cc','tVisibilityIterator.cc','tCalibrater.cc','tVisibilityIteratorAsync.cc','tFITSSpectralUtil.cc','tStringDistance.cc','tfits5.cc','tLabelandFindRegions.cc','dMUString.cc','importmiriad.cc','dSpectralModel.cc','dExportRange.cc','tTable_1.cc','tArrayColumnSlices.cc','tLELSpectralIndex.cc','tTimer.cc','tCalStats5.cc','tStatisticsAlgorithmFactory.cc','tShadow.cc','tObjectStack.cc','tExprGroupArray.cc','tPath.cc','tSlicer.cc','tLCComplement.cc','tLCDifference.cc','tClarkCleanModel.cc','tStMan1.cc','tConcatRows.cc','tMSFitsSelection.cc','tMeasIERS.cc','tLUdecomp.cc','dImagingWeightViaGridFT.cc','tTableCopyPerf.cc','tOrdMap2.cc','tMSKeys.cc','tLELMedian.cc','tFileIO.cc','tIncrementalStMan.cc','tArrayIO.cc','ImageMaskHandlerTest.cc','tMSCorrGram.cc','tFilebufIO.cc','tStringArray.cc','paramgui_python.cc','tCompressComplex.cc','tConcatTable.cc','tMSMainBuffer.cc','tFlagAgentSummary.cc','FortranizedLoopsToGrid.cc','tPointShape.cc','tObjectID.cc','dTimeColorizationAveraging.cc','tAipsIO.cc','tPerfTransform.cc','CalTableFromAIPS.cc','tFlagAgentQuack.cc','tCalStats4.cc','dPSLatticeAsRaster.cc','dFunction.cc','dCOWptr.cc','tSepImageConvolver.cc','tMSFITSOutput.cc','tGaussian3D.cc','tMaskedArray.cc','tImageExpr.cc','dVLAArchiveInput.cc','tRNG.cc','tMSFieldBuffer.cc','tReadSeqBDFs.cc','tEVLAAperture.cc','tLatticeFFT.cc','SDAlgorithmTest.cc','tArrayPosIter.cc','tDirectoryIterator.cc','tFITSDateUtil.cc','tVirtualTaQLColumn.cc','tReadAllBDFs.cc','interrupt_python.cc','tDirectory.cc','tcal_cmpt.cc','tCalIntpMatch.cc','tTblAsContour.cc','tSumPerformance.cc','tImageMetaData.cc','VisibilityIterator_Test.cc','tTableAccess.cc','tTableKeywords.cc','SDDoubleCircleGainCalImpl_GTest.cc','tStokesCoordinate.cc','tMVTime.cc','tFunctionWrapper.cc','tFallible.cc','FluxStandardTest.cc','tVisIter.cc','tFlagAgentManual.cc','EphemObjFluxStandard_GTest.cc','dSkyCompBase.cc','tVisVectorJonesMueller.cc','tImageAttrHandler.cc','tFITSHistoryUtil.cc','dImageMoments.cc','MirFiller.cc','tIBMConversion.cc','tTabularSpectrum.cc','tSSMAddRemove.cc','tCompressFloat.cc','tPagedArray.cc','dDBus.cc','tPagedImage.cc','version2.cc','tfits1.cc','tObsInfo.cc','dExportPlot.cc','tMeasComet.cc','dGridPlacement.cc','tHDF5File.cc','VisibilityProcessing_Test.cc','dTimeAveragingIteration.cc','bimafiller.cc','tPixonProcessor.cc','tStatisticsTypes.cc','tMemoryTable.cc','tVLABuffer.cc','tFlagAgentShadow.cc','tMSFeedGram.cc','tIncCEMemModel.cc','tMSAntennaGram.cc','tAnnEllipse.cc','value_record.cc','tChebyshev.cc','tScaledArrayEngine.cc','tCalStats2.cc','tLCStretch.cc','tMaskArrMath1.cc','tfits4.cc','tAnnCenterBox.cc','tMIRIADImage.cc','tLoggerHolder.cc','tColumnsIndex.cc','tProjection.cc','tDisplayEvent.cc','dOverLeftRightPlot.cc','tCCList.cc','tMaskArrMath0.cc','tAnnSymbol.cc','tImageProfileFitter.cc','tWCUnion.cc','tFlagAgentRFlag.cc','SingleDishSkyCal_GTest.cc','tMSBin.cc','tPoisson.cc','tFTMachine.cc','tMFFileIO.cc','tSpectralFitter.cc','tConstantND.cc','tLinearSearch.cc','dMultichannelRaster.cc','tLinAlgebra.cc','t_priArr_imgExt.cc','tQuality.cc','tRefRows.cc','tFluxStandard2.cc','tRFASelector.cc','tLatticeExpr2.cc','MSChecker_Gtest.cc','tSubImageFactory.cc','dDBusSession.cc','tMsPlot.cc','tSynthesisImagerVi2.cc','tGaussian2D.cc','tExprNode.cc','tLatticeStepper.cc','conversions.cc','tImageMoments.cc','tHDF5.cc','tRegriddingTVI.cc','tFlagIndex.cc','VisibilityIterator_Gtest.cc','tChauvenetCriterionStatistics.cc','tPixelValueManipulator.cc','tLSQFit.cc','type_variant.cc','tReadParBDFs.cc','dNBody.cc','tImageEmpty.cc','tLCPagedMask.cc','tArrayMathTransform.cc','tLatticeLocker.cc','tLatticeSlice1D.cc','tLargeFileIO.cc','tRecord.cc','tTableMeasures.cc','tLatticeExpr.cc','tQuantumHolder.cc','tDisplayTool.cc','tNewCalTableIterNick.cc','tImageBeamSet.cc','DOmirfiller.cc','tDefaultValue.cc','tCalStatsTab.cc','tLorentzianSpectralElement.cc','CTSelection.cc','tLCSlicer.cc','tLatticeMathUtil.cc','tAnnPolygon.cc','tMedianSmooth.cc','tArrayLattice.cc','dProgressMeter.cc','PGPlotterLocal.cc']
+
+def flatmap(f, items):
+    return chain.from_iterable(imap(f, items))
 
 def mkpath(path):
     try:
@@ -82,7 +91,7 @@ def source_files(path,root_filter=[ ],path_filter=[ ],subdir_filter=['tests','te
         for file in files:
             if any(map(lambda x: x in root+os.sep+file, path_filter)):
                 continue
-            if file.endswith(file_suffix_filter) and not file in file_filter and not file in a_priori_exclusions:
+            if file.endswith(file_suffix_filter) and not any(map(lambda s: (root + os.sep + file).endswith(s),file_filter)) and not file in a_priori_exclusions:
                 result.append(root + os.sep + file)
     return result
 
@@ -115,7 +124,7 @@ def so_version( ):
 def xml2cpp_proxy(input,output):
     """Convert dbus-cpp XML interface definition to a header file for the proxy object
     """
-    out_root="include/generated/casadbus"
+    out_root="libcasatools/generated/include/casadbus"
     in_root="casa-source/code/casadbus"
     subdir=os.path.dirname(output)
     mkpath("%s%s%s" % (out_root,os.sep,subdir))
@@ -123,7 +132,7 @@ def xml2cpp_proxy(input,output):
                          "--proxy=%s%s%s" % (out_root,os.sep,output) ]) != 0:
         sys.exit('dbus proxy generation of %s%s%s failed' % (out_root,os.sep,output))
 
-def generate_lex(sources,output_dir='include/generated'):
+def generate_lex(sources,output_dir='libcasatools/generated/include'):
     """Generate lex compilation files...
     """
     for file in sources:
@@ -132,7 +141,7 @@ def generate_lex(sources,output_dir='include/generated'):
         if subprocess.call([props['build.compiler.flex'], "-P%s" % base, "-o", "%s%s%s.lcc" % (output_dir,os.sep,base), file]) != 0:
             sys.exit('lex generation of %s%s%s.lcc failed' % (output_dir,os.sep,base))
 
-def generate_yacc(sources,output_dir='include/generated'):
+def generate_yacc(sources,output_dir='libcasatools/generated/include'):
     """Generate yacc compilation files...
     """
     for file in sources:
@@ -141,7 +150,15 @@ def generate_yacc(sources,output_dir='include/generated'):
         if subprocess.call([props['build.compiler.bison'], "-y", "-p", base, "-o", "%s%s%s.ycc" % (output_dir,os.sep,base), file]) != 0:
             sys.exit('lex generation of %s%s%s.ycc failed' % (output_dir,os.sep,base))
 
-module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', \
+def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='binding/generated/tools',source_dir='binding/generated/tools'):
+    """Generate swig binding code from CASA XML files...
+    """
+    xml_casa = props['build.compiler.xml_casa']
+    assert os.path.isfile(xml_casa) and os.access(xml_casa,os.X_OK), "casa xml generation script not found..."
+    if subprocess.call([xml_casa, '-all', '-output-tool-subdir','output-i=%s' % swig_dir, 'output-h=%s' % header_dir, 'output-c=%s' % source_dir ] + sources) != 0:
+        sys.exit('casa xml generation failed')
+
+module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
                                       '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
                                       '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
                                       '-DWCSLIB_VERSION_MINOR=15', '-fcx-fortran-rules', '-fsigned-char', '-fopenmp' ],
@@ -150,7 +167,13 @@ module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION
                                       '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
                                       '-DDBUS_CPP', '-DQWT6', '-DUseCasacoreNamespace', \
                                       '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-fcx-fortran-rules', \
-                                      '-DNO_CRASH_REPORTER', '-fopenmp', '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ] }
+                                      '-DNO_CRASH_REPORTER', '-fopenmp', '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ],
+                       'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
+                                        '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
+                                        '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
+                                        '-DDBUS_CPP', '-DQWT6', '-DUseCasacoreNamespace', \
+                                        '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-fcx-fortran-rules', \
+                                        '-DNO_CRASH_REPORTER', '-fopenmp', '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ] }
 
 def customize_compiler(self):
     """inject customization into distutils.
@@ -164,22 +187,66 @@ def customize_compiler(self):
     https://github.com/rmcgibbo/npcuda-example/blob/master/cython/setup.py
     """
 
+    # make it swallow fortran files....
+    self.src_extensions.extend( [".f",".f90"] )
+
     # save references to the default compiler_so and _comple methods
     default_compiler_so = self.compiler_so
     super = self._compile
     cflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.compile'),props.iteritems()))
     cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
-    new_compiler_so = ['/usr/bin/ccache', props['build.compiler.cxx'], '-std=c++11','-Iinclude','-Iinclude/generated','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore'] + cflags + default_compiler_so[1:]
+    new_compiler_cxx = ['/usr/bin/ccache', props['build.compiler.cxx'], '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
+    new_compiler_cc = ['/usr/bin/ccache', props['build.compiler.cc'], '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
+    new_compiler_fortran = [props['build.compiler.fortran']]
+    
+
 
     # now redefine the _compile method. This gets executed for each
     # object but distutils doesn't have the ability to change compilers
     # based on source extension: we add it.
     def _compile(obj, src, ext, cc_args, postargs, pp_opts):
-        ## get the cflags for the module being built; key is a subdir, value are flags
-        m_cflags = map(lambda x: x[1] if x[0] in src else [], module_cflags.iteritems())
-        m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
-        self.set_executable('compiler_so', new_compiler_so + m_cflags)
-        super(obj, src, ext, cc_args, postargs, pp_opts)
+        if ext == ".f" or ext == ".f90" :
+            print("fortran compile...")
+            arch = platform.architecture()[0].lower()
+            if sys.platform == 'darwin' or sys.platform.startswith('linux'):
+                compiler_so = new_compiler_fortran
+                if (ext == ".f90"):
+                    cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+                if (ext == ".f"):
+                    cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]            
+                # Force architecture of shared library.
+                if arch == "32bit":
+                    cc_args.append("-m32")
+                elif arch == "64bit":
+                    cc_args.append("-m64")
+                else:
+                    print("\nPlatform has architecture '%s' which is unknown to "
+                          "the setup script. Proceed with caution\n" % arch)
+
+            try:
+                if src.endswith('fgridsd.f'):
+                    tobj = "/tmp/fgridsd_%d.o" % os.getpid( )
+                    print("localizing multiply defined symbols...")
+                    self.spawn(compiler_so + cc_args + [src, '-o', tobj] + postargs)
+                    self.spawn(['objcopy','--localize-symbol=ogridsd_','--localize-symbol=sgridsd_',tobj,obj])
+                    os.remove(tobj)
+                else:
+                    self.spawn(compiler_so + cc_args + [src, '-o', obj] + postargs)
+            except DistutilsExecError as msg:
+                raise CompileError(msg)
+        else:
+            if ext == ".c" :
+                print("c compile...")
+                new_compiler = new_compiler_cc
+            else:
+                print("c++ compile...")
+                new_compiler = new_compiler_cxx
+            ## get the cflags for the module being built; key is a subdir, value are flags
+            m_cflags = map(lambda x: x[1] if x[0] in src else [], module_cflags.iteritems())
+            m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
+            self.set_executable('compiler_so', new_compiler + m_cflags)
+            super(obj, src, ext, cc_args, postargs, pp_opts)
+
         # reset the default compiler_so (may not be necessary)
         self.compiler_so = default_compiler_so
 
@@ -194,19 +261,6 @@ class casa_build_ext(build_ext):
         build_ext.build_extensions(self)
 
 
-ext = [ ]
-CASACORE_SOURCES = source_files("casa-source/casacore",file_suffix_filter=".cc")
-CASACORE_YACC = source_files("casa-source/casacore",file_suffix_filter=".yy")
-CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
-
-CODE_SOURCES = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['rGridFT.cc'],path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc'])
-CODE_YACC = source_files("casa-source/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
-CODE_LEX = source_files("casa-source/code",file_suffix_filter=".ll",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
-DBUS_INTERFACE = source_files("casa-source/code",file_suffix_filter=".interface.xml")
-
-
-ext.append(Extension("casa._casac", language='c++', sources=CASACORE_SOURCES + CODE_SOURCES))
-
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
     if sys.executable != "@PYTHON@":
@@ -220,8 +274,61 @@ if __name__ == '__main__':
         xml2cpp_proxy('xml/PlotServerProxy.interface.xml', 'plotserver/PlotServerProxy.proxy.h')
         xml2cpp_proxy('xml/DBusSession.interface.xml', 'session/DBusSession.proxy.h')
         xml2cpp_proxy('xml/ViewerProxy.interface.xml', 'viewer/ViewerProxy.proxy.h')
+
+        CASACORE_YACC = source_files("casa-source/casacore",file_suffix_filter=".yy")
+        CODE_YACC = source_files("casa-source/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
+        CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
+        CODE_LEX = source_files("casa-source/code",file_suffix_filter=".ll",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
+
+        TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
+
         generate_lex(CASACORE_LEX + CODE_LEX)
         generate_yacc(CASACORE_YACC + CODE_YACC)
+        generate_binding(TOOL_XML)
+
+        CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
+        MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
+        CORE_F77 = source_files("casa-source/casacore",file_suffix_filter=".f",
+                                #file_filter=['fgridsd.f']
+        )
+        BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")]
+        CODE_SRC = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
+                                path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc'])
+        CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
+        #CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",file_filter=['fgridsdclip.f'])
+        CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",
+                                #file_filter=['fgridsdclip.f']
+        )
+
+        SWIG_SRC = [ ]
+        SWIG_INC = [ 'binding/include' ]
+        SWIG_DEV = [ ]
+        for xml in TOOL_XML:
+            name = os.path.basename(xml)
+            base = os.path.splitext(name)[0]
+
+            SWIG_SRC += ['binding/tools/%s/%s' % (base,f) for f in listdir('binding/tools/%s' % base) if f.endswith(".cc")]
+            SWIG_SRC += ['binding/generated/tools/%s/%s' % (base,f) for f in listdir('binding/generated/tools/%s' % base) if f.endswith(".cc")]
+            SWIG_SRC += ['binding/generated/tools/%s/%s' % (base,f) for f in listdir('binding/generated/tools/%s' % base) if f.endswith(".i")]
+            incs = ['binding/generated/tools/%s/%s' % (base,f) for f in listdir('binding/generated/tools/%s' % base) if f.endswith(".h")]
+            if len(incs) > 0:
+                SWIG_INC.append('binding/generated/tools/%s' % base)
+            incs = ['binding/tools/%s/%s' % (base,f) for f in listdir('binding/tools/%s' % base) if f.endswith(".h")]
+            if len(incs) > 0:
+                SWIG_DEV.append('binding/tools/%s' % base)
+
+
+        #INC = map(lambda x: props['build.flags.compile.%s' % x],['libsakura','dbuscpp','dbus'])
+        #print(">>>>>---------------------->> ",INC)
+        #SAKURA_INC=[f[2:] for f in props['build.flags.compile.libsakura'] if f.startswith("-I")]
+        #SAKURA_LINK=[f for f in props['build.flags.link.libsakura'] if f != "-lsakura"]
+#        ext = [ Extension("CASAtools.casac.libcasatools", language='c++', sources=CORE_SRC + CODE_SRC, extra_link_args=['-Wl,-rpath,'+'/Users/dtamayo/Documents/workspace/rebound']),
+#                Extension("CASAtools.casac", language='c++', sources=SWIG_SRC, libraries=['casatools'], include_dirs=['binding'] + SWIG_INC + SWIG_DEV, extra_link_args=['-L.', '-Wl,-rpath,'+'/Users/dtamayo/Documents/workspace/rebound'], swig_opts=[ '-c++', '-threads', "-Ibinding/include"] ) ]
+
+        ldflags = list(set(ifilter(lambda x: len(x) > 0 and not x.startswith('-l'),chain.from_iterable(imap(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.iteritems()))))))
+
+        ext = [ Extension("CASAtools.casac", language='c++', sources=BINDING_SRC + SWIG_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding'] + SWIG_INC + SWIG_DEV + SWIG_INC, extra_link_args=ldflags + ['-Wl,-z,defs', '-Wl,-rpath,'+'/Users/dtamayo/Documents/workspace/rebound'], swig_opts=[ '-c++', '-threads', "-Ibinding/include"], libraries=['boost_python', 'boost_regex', 'boost_filesystem', 'boost_system', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gomp','fftw3f_omp','fftw3f','fftw3_omp','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ) ]
+
         setup( name="casa",version="@CASA_VERSION@",
                maintainer="Darrell Schiebel",
                maintainer_email="drs@nrao.edu",
@@ -239,7 +346,7 @@ if __name__ == '__main__':
                cmdclass={ 'build_ext': casa_build_ext },
                ext_modules=ext)
     else:
-        print(CODE_SOURCES)
+        print(CODE_SRC)
         print(CODE_YACC)
         print(CODE_LEX)
            
