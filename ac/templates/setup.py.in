@@ -208,8 +208,8 @@ def customize_compiler(self):
     new_compiler_cc = ['/usr/bin/ccache', props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
     
-    new_compiler_cxx = filter(lambda flag: not flag.startswith('-O') and not 'FORTIFY_SOURCE' in flag,new_compiler_cxx)
-    new_compiler_ccc = filter(lambda flag: not flag.startswith('-O') and not 'FORTIFY_SOURCE' in flag,new_compiler_cc)
+    new_compiler_cxx = filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx)
+    new_compiler_ccc = filter(lambda flag: not flag.startswith('-O'),new_compiler_cc)
 
 
     # now redefine the _compile method. This gets executed for each
@@ -316,7 +316,7 @@ if __name__ == '__main__':
         ldflags = list(set(ifilter(lambda x: len(x) > 0 and not x.startswith('-l'),chain.from_iterable(imap(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.iteritems()))))))
         rpath = ":".join(['$ORIGIN/lib'] + map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))
 
-        ext = [ Extension( module_name + ".casac.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding'], extra_link_args=ldflags, libraries=['boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt', 'boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ) ]
+        ext = [ Extension( module_name + ".casac.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding'], extra_link_args=ldflags+['-Wl,-rpath,'+rpath], libraries=['boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt', 'boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ) ]
 
         swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
         for xml in TOOL_XML:
