@@ -236,14 +236,7 @@ def customize_compiler(self):
                           "the setup script. Proceed with caution\n" % arch)
 
             try:
-                if src.endswith('fgridsd.f'):
-                    tobj = "/tmp/fgridsd_%d.o" % os.getpid( )
-                    print("localizing multiply defined symbols...")
-                    self.spawn(compiler_so + cc_args + [src, '-o', tobj] + postargs)
-                    self.spawn(['objcopy','--localize-symbol=ogridsd_','--localize-symbol=sgridsd_',tobj,obj])
-                    os.remove(tobj)
-                else:
-                    self.spawn(compiler_so + cc_args + [src, '-o', obj] + postargs)
+                self.spawn(compiler_so + cc_args + [src, '-o', obj] + postargs)
             except DistutilsExecError as msg:
                 raise CompileError(msg)
         else:
