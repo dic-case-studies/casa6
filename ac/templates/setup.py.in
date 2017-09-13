@@ -49,6 +49,7 @@ from distutils.ccompiler import get_default_compiler
 from distutils.ccompiler import show_compilers
 from distutils.command.build_ext import build_ext
 from distutils.errors import DistutilsExecError, CompileError
+from distutils.dir_util import copy_tree, remove_tree
 
 import subprocess
 import sysconfig
@@ -311,18 +312,21 @@ if __name__ == '__main__':
                                 #file_filter=['fgridsdclip.f']
         )
 
-        casacdir = os.path.join('build', distutils_dir_name('lib'), module_name, 'casac')
+        cerberusdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__cerberus__')
+        casacdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__')
         libdir = os.path.join(casacdir, 'lib')
         ldflags = list(set(ifilter(lambda x: len(x) > 0 and not x.startswith('-l'),chain.from_iterable(imap(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.iteritems()))))))
         rpath = ":".join(['$ORIGIN/lib'] + map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))
 
-        ext = [ Extension( module_name + ".casac.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding'], extra_link_args=ldflags+['-Wl,-rpath,'+rpath], libraries=['boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt', 'boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ) ]
+        ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding'], extra_link_args=ldflags+['-Wl,-rpath,'+rpath], libraries=['boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt', 'boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ) ]
 
         swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
+        tool_names = [ ]
         for xml in TOOL_XML:
             name = os.path.basename(xml)
             base = os.path.splitext(name)[0]
 
+            tool_names.append(base)
             src = ['binding/tools/%s/%s' % (base,f) for f in listdir('binding/tools/%s' % base) if f.endswith(".cc")]
             src += ['binding/generated/tools/%s/%s' % (base,f) for f in listdir('binding/generated/tools/%s' % base) if f.endswith(".cc")]
             src += ['binding/generated/tools/%s/%s' % (base,f) for f in listdir('binding/generated/tools/%s' % base) if f.endswith(".i")]
@@ -337,7 +341,7 @@ if __name__ == '__main__':
                 inc.append('binding/tools/%s' % base)
 
             # no undefined ,'-Wl,-z,defs'     + ['-Wl,-z,defs']
-            ext.append(Extension( module_name + ".casac._%s" % base, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir, '-Wl,-rpath,'+rpath], swig_opts=swig_opt, libraries=[module_name,'boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt','boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ))
+            ext.append(Extension( module_name + ".__casac__._%s" % base, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir, '-Wl,-rpath,'+rpath], swig_opts=swig_opt, libraries=[module_name,'boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt','boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ))
 
         setup( name="casa",version="@CASA_VERSION@",
                maintainer="Darrell Schiebel",
@@ -355,6 +359,27 @@ if __name__ == '__main__':
                packages=['casa'],
                cmdclass={ 'build_ext': casa_build_ext },
                ext_modules=ext)
+
+        if os.path.exists(cerberusdir):
+            remove_tree(cerberusdir)
+        copy_tree("cerberus/cerberus",cerberusdir)
+        for root, dirs, files in os.walk(cerberusdir):
+            for file in files:
+                fpath = os.path.join(root, file)
+                with open(fpath) as fd:
+                    s = fd.read()
+                s = s.replace("from cerberus", "from CASAtools.__cerberus__")
+                with open(fpath, "w") as fd:
+                    fd.write(s)
+
+        imports = "\n".join([ "from %s.__casac__.%s import %s" % (module_name,t,t) for t in tool_names ])
+        alllist = ",\n            ".join([ "'%s'" % t for t in tool_names ])
+        with open(os.path.join(casacdir,'__init__.py'),"w") as fd:
+            fd.write("from __future__ import absolute_import\n")
+            fd.write("__name__ = '__casac__'\n")
+            fd.write("__all__ = [ %s ]\n\n" % alllist)
+            fd.write("%s\n" % imports)
+
     else:
         print(CODE_SRC)
         print(CODE_YACC)
