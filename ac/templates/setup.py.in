@@ -142,6 +142,19 @@ def xml2cpp_proxy(input,output):
                          "--proxy=%s%s%s" % (out_root,os.sep,output) ]) != 0:
         sys.exit('dbus proxy generation of %s%s%s failed' % (out_root,os.sep,output))
 
+def generate_pyinit(moduledir,tools):
+    """Generate __init__.py for the module
+    """
+    outfile = os.path.join(moduledir,'__init__.py')
+    with open(outfile, "w") as fd:
+        fd.write("__name__ = '%s'\n" % module_name)
+        fd.write("__all__ = [\n")
+        for tool in tools:
+            fd.write("            '%s'\n" % tool)
+        fd.write("          ]\n")
+        for tool in tools:
+            fd.write("from %s import %s\n" % (tool,tool))
+
 def generate_lex(sources,output_dir='libcasatools/generated/include'):
     """Generate lex compilation files...
     """
@@ -160,12 +173,12 @@ def generate_yacc(sources,output_dir='libcasatools/generated/include'):
         if subprocess.call([props['build.compiler.bison'], "-y", "-p", base, "-o", "%s%s%s.ycc" % (output_dir,os.sep,base), file]) != 0:
             sys.exit('lex generation of %s%s%s.ycc failed' % (output_dir,os.sep,base))
 
-def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='binding/generated/tools',source_dir='binding/generated/tools'):
+def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='binding/generated/tools',source_dir='binding/generated/tools', tool_dir=''):
     """Generate swig binding code from CASA XML files...
     """
     xml_casa = props['build.compiler.xml_casa']
     assert os.path.isfile(xml_casa) and os.access(xml_casa,os.X_OK), "casa xml generation script not found..."
-    if subprocess.call([xml_casa, '-all', '-output-tool-subdir','output-i=%s' % swig_dir, 'output-h=%s' % header_dir, 'output-c=%s' % source_dir ] + sources) != 0:
+    if subprocess.call([xml_casa, '-all', '-output-tool-subdir','output-i=%s' % swig_dir, 'output-h=%s' % header_dir, 'output-c=%s' % source_dir, 'output-tool=%s' % tool_dir ] + sources) != 0:
         sys.exit('casa xml generation failed')
 
 module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
@@ -276,6 +289,19 @@ if __name__ == '__main__':
     if not props.has_key('build.compiler.cxx'):
         sys.exit('Configuration error, not compiler found... try again...')
     if True:
+        moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
+        cerberusdir = os.path.join(moduledir, '__cerberus__')
+        casacdir = os.path.join(moduledir, '__casac__')
+        libdir = os.path.join(casacdir, 'lib')
+
+        if os.path.exists(moduledir):
+            remove_tree(moduledir)
+        copy_tree("src/python",moduledir)
+
+        TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
+        tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]
+        generate_pyinit(moduledir,tools)
+
         xml2cpp_proxy('xml/PlotServerProxy.interface.xml', 'plotserver/PlotServerProxy.proxy.h')
         xml2cpp_proxy('xml/DBusSession.interface.xml', 'session/DBusSession.proxy.h')
         xml2cpp_proxy('xml/ViewerProxy.interface.xml', 'viewer/ViewerProxy.proxy.h')
@@ -285,11 +311,10 @@ if __name__ == '__main__':
         CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
         CODE_LEX = source_files("casa-source/code",file_suffix_filter=".ll",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
 
-        TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
 
         generate_lex(CASACORE_LEX + CODE_LEX)
         generate_yacc(CASACORE_YACC + CODE_YACC)
-        generate_binding(TOOL_XML)
+        generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
 
         CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
         MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
@@ -305,9 +330,6 @@ if __name__ == '__main__':
                                 #file_filter=['fgridsdclip.f']
         )
 
-        cerberusdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__cerberus__')
-        casacdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__')
-        libdir = os.path.join(casacdir, 'lib')
         ldflags = list(set(ifilter(lambda x: len(x) > 0 and not x.startswith('-l'),chain.from_iterable(imap(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.iteritems()))))))
         rpath = ":".join(['$ORIGIN/lib'] + map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))
 
