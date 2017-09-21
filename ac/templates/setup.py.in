@@ -51,7 +51,8 @@ from distutils.command.build_ext import build_ext
 from distutils.errors import DistutilsExecError, CompileError
 from distutils.dir_util import copy_tree, remove_tree
 
-import subprocess
+from subprocess import Popen, PIPE
+from subprocess import call as Proc
 import sysconfig
 import platform
 import errno    
@@ -138,7 +139,7 @@ def xml2cpp_proxy(input,output):
     in_root="casa-source/code/casadbus"
     subdir=os.path.dirname(output)
     mkpath("%s%s%s" % (out_root,os.sep,subdir))
-    if subprocess.call([ props['build.compiler.dbuscpp'], "%s%s%s" % (in_root,os.sep,input), \
+    if Proc([ props['build.compiler.dbuscpp'], "%s%s%s" % (in_root,os.sep,input), \
                          "--proxy=%s%s%s" % (out_root,os.sep,output) ]) != 0:
         sys.exit('dbus proxy generation of %s%s%s failed' % (out_root,os.sep,output))
 
@@ -161,7 +162,7 @@ def generate_lex(sources,output_dir='libcasatools/generated/include'):
     for file in sources:
         name = os.path.basename(file)
         base = os.path.splitext(name)[0]
-        if subprocess.call([props['build.compiler.flex'], "-P%s" % base, "-o", "%s%s%s.lcc" % (output_dir,os.sep,base), file]) != 0:
+        if Proc([props['build.compiler.flex'], "-P%s" % base, "-o", "%s%s%s.lcc" % (output_dir,os.sep,base), file]) != 0:
             sys.exit('lex generation of %s%s%s.lcc failed' % (output_dir,os.sep,base))
 
 def generate_yacc(sources,output_dir='libcasatools/generated/include'):
@@ -170,7 +171,7 @@ def generate_yacc(sources,output_dir='libcasatools/generated/include'):
     for file in sources:
         name = os.path.basename(file)
         base = os.path.splitext(name)[0]
-        if subprocess.call([props['build.compiler.bison'], "-y", "-p", base, "-o", "%s%s%s.ycc" % (output_dir,os.sep,base), file]) != 0:
+        if Proc([props['build.compiler.bison'], "-y", "-p", base, "-o", "%s%s%s.ycc" % (output_dir,os.sep,base), file]) != 0:
             sys.exit('lex generation of %s%s%s.ycc failed' % (output_dir,os.sep,base))
 
 def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='binding/generated/tools',source_dir='binding/generated/tools', tool_dir=''):
@@ -178,8 +179,51 @@ def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='bin
     """
     xml_casa = props['build.compiler.xml_casa']
     assert os.path.isfile(xml_casa) and os.access(xml_casa,os.X_OK), "casa xml generation script not found..."
-    if subprocess.call([xml_casa, '-all', '-output-tool-subdir','output-i=%s' % swig_dir, 'output-h=%s' % header_dir, 'output-c=%s' % source_dir, 'output-tool=%s' % tool_dir ] + sources) != 0:
+    proc = Popen([xml_casa, '-all', '-output-tool-subdir','output-i=%s' % swig_dir, 'output-h=%s' % header_dir, 'output-c=%s' % source_dir, 'output-tool=%s' % tool_dir ] + sources, stdout=PIPE, stderr=PIPE)
+    out,err = proc.communicate( )
+    if proc.returncode != 0:
+        print(err)
         sys.exit('casa xml generation failed')
+    print(out)
+    lines = out.split('\n')
+    needed = [ tool.strip( ) for line in lines  for tool in line[5:].split(',') if line.startswith('<inc>') ]
+    tool_lines = [ line[5:].strip( ) for line in lines if line.startswith('<tgt>') and ':' in line[5:] ]
+    lib_lines = [ line[5:].strip( ) for line in lines if line.startswith('<tgt>') and '<' in line[5:] ]
+
+    libs = { }
+    for l in lib_lines:
+        x = [i.strip( ) for i in l.split('<')]
+        if len(x) != 2:
+            sys.exit( "error in library target: %s" % l )
+        libs[x[0]] = [ t.strip( ) for t in x[1].split( ) ]
+
+    tools = { }
+    for l in tool_lines:
+        x = [i.strip( ) for i in l.split(':')]
+        if len(x) != 2:
+            sys.exit( "error in tool target: %s" % l )
+        tools[x[0]] = [ t.strip( ) for t in x[1].split( ) ]
+
+    ##  needed  -  tools that are used (returned, accepted as parameters, etc.) by other tools
+    ##  libs    -  libraries to be created for building the tools (i.e. shared tool object modules)
+    ##  tools   -  all tools along with what they need to be built against
+    return (needed,libs,tools)
+
+def tool_files(tool):
+    src = ['binding/tools/%s/%s' % (tool,f) for f in listdir('binding/tools/%s' % tool) if f.endswith(".cc")]
+    src += ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".cc")]
+    src += ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".i")]
+
+    inc = [ ]
+    incs = ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".h")]
+    if len(incs) > 0:
+        inc.append('binding/generated/tools/%s' % tool)
+
+    incs = ['binding/tools/%s/%s' % (tool,f) for f in listdir('binding/tools/%s' % tool) if f.endswith(".h")]
+    if len(incs) > 0:
+        inc.append('binding/tools/%s' % tool)
+    return (inc,src)
+
 
 module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
                                       '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
@@ -314,7 +358,7 @@ if __name__ == '__main__':
 
         generate_lex(CASACORE_LEX + CODE_LEX)
         generate_yacc(CASACORE_YACC + CODE_YACC)
-        generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
+        (NEEDED,LIBS,TOOLS) = generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
 
         CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
         MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
@@ -336,27 +380,39 @@ if __name__ == '__main__':
         ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding'], extra_link_args=ldflags+['-Wl,-rpath,'+rpath], libraries=['boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt', 'boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ) ]
 
         swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
-        tool_names = [ ]
-        for xml in TOOL_XML:
-            name = os.path.basename(xml)
-            base = os.path.splitext(name)[0]
+        incdirs = { }
+        libsrc = { }
+        for t in TOOLS:
+            (I,L) = tool_files(t)
+            incdirs[t] = I
+            libsrc[t] = L
+        for lb in LIBS:
+            print("\t>>>>>>>>>>>>>>>>>>>>>>> %s" % lb)
+            print("\tLIBS[%s]:\t" % lb,LIBS[lb])
+            for xxx in LIBS[lb]:
+                print("\t\t--- %s ---" % xxx )
+                for yyy in incdirs[xxx]:
+                    print("\t\t\t<%s>" % yyy)
+            incdirs[lb] = [ i for t in LIBS[lb] for i in incdirs[t] ]
+            libsrc[lb] = [ l for t in LIBS[lb] for l in libsrc[t] ]
 
-            tool_names.append(base)
-            src = ['binding/tools/%s/%s' % (base,f) for f in listdir('binding/tools/%s' % base) if f.endswith(".cc")]
-            src += ['binding/generated/tools/%s/%s' % (base,f) for f in listdir('binding/generated/tools/%s' % base) if f.endswith(".cc")]
-            src += ['binding/generated/tools/%s/%s' % (base,f) for f in listdir('binding/generated/tools/%s' % base) if f.endswith(".i")]
+        for lb in LIBS:
+            ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir, '-Wl,-rpath,'+rpath], swig_opts=swig_opt, libraries=[module_name,'boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt','boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ))
 
-            inc = [ ]
-            incs = ['binding/generated/tools/%s/%s' % (base,f) for f in listdir('binding/generated/tools/%s' % base) if f.endswith(".h")]
-            if len(incs) > 0:
-                inc.append('binding/generated/tools/%s' % base)
-
-            incs = ['binding/tools/%s/%s' % (base,f) for f in listdir('binding/tools/%s' % base) if f.endswith(".h")]
-            if len(incs) > 0:
-                inc.append('binding/tools/%s' % base)
-
-            # no undefined ,'-Wl,-z,defs'     + ['-Wl,-z,defs']
-            ext.append(Extension( module_name + ".__casac__._%s" % base, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir, '-Wl,-rpath,'+rpath], swig_opts=swig_opt, libraries=[module_name,'boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt','boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ))
+        for t in TOOLS:
+            inc = [ ]; lib = [ ]; src = [ ]
+            for dep in TOOLS[t]:
+                inc += incdirs[dep]
+                if dep.startswith('lib'):
+                    lib += [ dep[3:] ]
+                else:
+                    src += libsrc[dep]
+            print("************************************************** %s **************************************************" % t)
+            print("\tinc:\t",inc)
+            print("\tsrc:\t",src)
+            print("\tlib:\t",lib)
+            print("************************************************************************************************************************")
+            ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir, '-Wl,-rpath,'+rpath], swig_opts=swig_opt, libraries=[module_name,'boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt','boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] + lib ))
 
         setup( name="casa",version="@CASA_VERSION@",
                maintainer="Darrell Schiebel",
@@ -387,8 +443,8 @@ if __name__ == '__main__':
                 with open(fpath, "w") as fd:
                     fd.write(s)
 
-        imports = "\n".join([ "from %s.__casac__.%s import %s" % (module_name,t,t) for t in tool_names ])
-        alllist = ",\n            ".join([ "'%s'" % t for t in tool_names ])
+        imports = "\n".join([ "from %s.__casac__.%s import %s" % (module_name,t,t) for t in TOOLS ])
+        alllist = ",\n            ".join([ "'%s'" % t for t in TOOLS ])
         with open(os.path.join(casacdir,'__init__.py'),"w") as fd:
             fd.write("from __future__ import absolute_import\n")
             fd.write("__name__ = '__casac__'\n")

@@ -30,6 +30,9 @@ class CasaValidator(Validator):
         if isinstance(value,list) and \
            all([self._validate_type_cBool(e) for e in value]):
             return True
+    def _validate_type_cDict(self,value):
+        if isinstance(value,dict):
+            return True
     def _validate_type_cVariant(self,value):
         if isinstance(value,str) or \
            isinstance(value,int) or \
