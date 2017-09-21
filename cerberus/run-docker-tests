@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd "$(dirname ${0})"
+
+docker build -t cerberus-tox --build-arg uid=$(id -u) . && \
+if [ -d ".tox" ]; then
+    docker run --rm --entrypoint="tox" -v "$(pwd)/.tox:/src/.tox" cerberus-tox "${@}"
+else
+    docker run --rm --entrypoint="tox" cerberus-tox "${@}"
+fi
+
+cd -

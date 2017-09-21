@@ -1,0 +1,3 @@
+[submodule "casa-source"]
+	path = casa-source
+	url = https://open-bitbucket.nrao.edu/scm/casa/casa.git
