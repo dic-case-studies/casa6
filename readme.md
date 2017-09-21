@@ -14,6 +14,8 @@ This is alpha software in every sense of the word.
 ## Build
 
 * scripts/gcw-pick
+* aclocal
+* autoconf
 * ./configure
 * ./setup.py build
 
