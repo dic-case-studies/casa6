@@ -7,6 +7,10 @@ CASAtools is a self-contained python module that provides the tools from the [CA
 
 This is alpha software in every sense of the word.
 
+## Check Out
+
+* git clone https://open-bitbucket.nrao.edu/scm/casa/CASAtools.git
+
 ## Build
 
 * scripts/gcw-pick
