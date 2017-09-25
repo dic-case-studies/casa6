@@ -1,0 +1,4 @@
+#ifndef CASA_CONFIG_H
+#define CASA_CONFIG_H
+#define CASA_DEFAULT_ALIGNMENT (32UL)
+#endif

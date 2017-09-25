@@ -1,0 +1,154 @@
+#!/usr/bin/perl
+
+use File::Find;
+use POSIX;
+use File::Basename;
+use File::Copy;
+use Cwd qw(abs_path getcwd);
+use File::Path qw(make_path remove_tree);
+
+$exe = abs_path($0);
+$path = abs_path(dirname($exe));
+$java = '/usr/bin/java';
+$jarfile_name = "xml-casa-assembly-1.0.jar";
+
+### install path
+$jarfile = "$path/java/$jarfile_name";
+### development path
+if ( ! -e $jarfile ) { $jarfile = "$path/../target/scala-2.12/$jarfile_name" }
+die "configuration error, cannot find jar file ($jarfile_name)" unless -e $jarfile;
+
+$path = getcwd( );
+
+die "expected ./casa-source/ directory" unless -d "./casa-source/";
+unless ( -d "./xml/tools/" ) { make_path("xml/tools") or die "could not create 'xml/tools': $!" }
+
+$xml_dir = "xml/tools";
+$tool_dir = "binding/tools";
+$src_dir = "binding/source";
+$hdr_dir = "binding/include";
+
+%xml_files = ( 'utils' => 'casa-source/gcwrap/tools/utils/utils.xml',
+               'quanta' => 'casa-source/gcwrap/tools/casa/quanta.xml',
+               'image' => 'casa-source/gcwrap/tools/images/image.xml',
+               'coordsys' => 'casa-source/gcwrap/tools/images/coordsys.xml',
+               'imagepol' => 'casa-source/gcwrap/tools/images/imagepol.xml',
+               'synthesisimstore' => 'casa-source/gcwrap/tools/synthesis/synthesisimstore.xml',
+               'synthesisnormalizer' => 'casa-source/gcwrap/tools/synthesis/synthesisnormalizer.xml',
+               'synthesisimager' => 'casa-source/gcwrap/tools/synthesis/synthesisimager.xml',
+               'synthesisutils' => 'casa-source/gcwrap/tools/synthesis/synthesisutils.xml',
+               'atmosphere' => 'casa-source/gcwrap/tools/atmosphere/atmosphere.xml',
+             );
+%src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
+                            'casa-source/gcwrap/tools/utils/utils_private.h',
+                            'casa-source/gcwrap/tools/utils/utils_forward.h',
+                            'casa-source/gcwrap/tools/utils/stdBaseInterface.h',
+                            'casa-source/gcwrap/tools/utils/stdBaseInterface.cc',
+                            'casa-source/gcwrap/tools/utils/BaseInterface.h',
+                            'casa-source/gcwrap/tools/utils/BaseInterface.cc',
+                            'casa-source/gcwrap/tools/xerces/stdcasaXMLUtil.h',
+                            'casa-source/gcwrap/tools/xerces/stdcasaXMLUtil.cc' ],
+               'quanta' => [ 'casa-source/gcwrap/tools/casa/quanta_cmpt.cc',
+                             'casa-source/gcwrap/tools/casa/quanta_private.h',
+                             'casa-source/gcwrap/tools/casa/quanta_forward.h' ],
+               'image' =>  [ 'casa-source/gcwrap/tools/images/image_cmpt.cc',
+                             'casa-source/gcwrap/tools/images/image_forward.h',
+                             'casa-source/gcwrap/tools/images/image_private.h' ],
+               'coordsys' =>  [ 'casa-source/gcwrap/tools/images/coordsys_cmpt.cc',
+                                'casa-source/gcwrap/tools/images/coordsys_forward.h',
+                                'casa-source/gcwrap/tools/images/coordsys_private.h' ],
+               'imagepol' =>  [ 'casa-source/gcwrap/tools/images/imagepol_cmpt.cc',
+                                'casa-source/gcwrap/tools/images/imagepol_forward.h',
+                                'casa-source/gcwrap/tools/images/imagepol_private.h' ],
+               'synthesisimstore' =>  [ 'casa-source/gcwrap/tools/synthesis/synthesisimstore_cmpt.cc',
+                                        'casa-source/gcwrap/tools/synthesis/synthesisimstore_forward.h',
+                                        'casa-source/gcwrap/tools/synthesis/synthesisimstore_private.h' ],
+               'synthesisnormalizer' =>  [ 'casa-source/gcwrap/tools/synthesis/synthesisnormalizer_cmpt.cc',
+                                           'casa-source/gcwrap/tools/synthesis/synthesisnormalizer_forward.h',
+                                           'casa-source/gcwrap/tools/synthesis/synthesisnormalizer_private.h' ],
+               'synthesisimager' =>  [ 'casa-source/gcwrap/tools/synthesis/synthesisimager_cmpt.cc',
+                                       'casa-source/gcwrap/tools/synthesis/synthesisimager_forward.h',
+                                       'casa-source/gcwrap/tools/synthesis/synthesisimager_private.h' ],
+               'synthesisutils' =>  [ 'casa-source/gcwrap/tools/synthesis/synthesisutils_cmpt.cc',
+                                      'casa-source/gcwrap/tools/synthesis/synthesisutils_forward.h',
+                                      'casa-source/gcwrap/tools/synthesis/synthesisutils_private.h' ],
+               'atmosphere' => [ 'casa-source/gcwrap/tools/atmosphere/atmosphere_forward.h',
+                                 'casa-source/gcwrap/tools/atmosphere/atmosphere_private.h',
+                                 'casa-source/gcwrap/tools/atmosphere/atmosphere_cmpt.cc' ],
+
+             );
+
+unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
+foreach $k ( keys %xml_files ) { install($xml_files{$k},"$xml_dir/$k.xml") }
+foreach $k ( keys %xml_files ) {                                 ### always using the xml_files keys ensures consistency
+    my $src = $src_files{$k};
+    unless ( -d "$tool_dir/$k" ) { make_path("$tool_dir/$k") }
+    foreach my $f ( @$src ) {
+        my $base = basename($f);
+        open( my $in, "< $f" );
+        open( my $out, "> $tool_dir/$k/$base" );
+        while ( my $line = <$in> ) {
+            $line =~ s|tools/xerces/stdcasaXMLUtil.h|stdcasaXMLUtil.h|g;
+            print $out $line;
+        }
+        close($out);
+        close($in);
+    }
+}
+    
+@headers = ( 'casa-source/gcwrap/tools/casaswig_types.h', 
+             'casa-source/gcwrap/tools/casa_typemaps.i',
+             'casa-source/gcwrap/tools/swigconvert_python.h' );
+#@source = ( 'casa-source/gcwrap/tools/StdCasa/conversions.cc',
+#            'casa-source/gcwrap/tools/StdCasa/conversions_python.cc',
+#            'casa-source/gcwrap/tools/StdCasa/interrupt.cc',
+#            'casa-source/gcwrap/tools/StdCasa/type_record.cc',
+#            'casa-source/gcwrap/tools/StdCasa/type_variant.cc',
+#            'casa-source/gcwrap/tools/StdCasa/value_record.cc',
+#            'casa-source/gcwrap/tools/StdCasa/value_variant.cc' );
+@source = ( 'casa-source/gcwrap/tools/StdCasa/conversions_python.cc' );
+
+unless ( -d "$hdr_dir" ) { make_path("$hdr_dir") }
+foreach ( @headers ) {
+    my $base = basename($_);
+    open(my $in,"< $_");
+    open(my $out,"> $hdr_dir/$base");
+    while ( my $line = <$in> ) {
+        $line =~ s|tools/swigconvert_python.h|swigconvert_python.h|g;
+        $line =~ s|tools/casaswig_types.h|casaswig_types.h|g;
+        print $out $line;
+    }
+    close($out);
+    close($in);
+}
+unless ( -d "$src_dir" ) { make_path("$src_dir") }
+foreach ( @source ) {
+    my $base = basename($_);
+    open(my $in,"< $_");
+    open(my $out, "> $src_dir/$base");
+    while (my $line = <$in> ) {
+        $line =~ s|tools/swigconvert_python.h|swigconvert_python.h|g;
+        $line =~ s|tools/casaswig_types.h|casaswig_types.h|;
+        print $out $line;
+    }
+    close($out);
+    close($in);
+}
+
+foreach ( keys %xml_files ) {
+    unless ( -d "binding/generated/tools/$_" ) { make_path("binding/generated/tools/$_") or die "could not create binding/generated/tools/$_: $!" }
+}
+    
+foreach ( 'libcasatools/generated/source', 'libcasatools/generated/include' ) {
+    unless ( -d $_ ) { make_path($_) or die "could not create $_: $!" }
+}
+
+sub install {
+    my $input = shift(@_);
+    my $output = shift(@_);
+    open(OUTPUT,"> $output");
+    open(UPDATED,"$java -jar $jarfile -upgrade $input |");
+    while( <UPDATED> ) { print OUTPUT $_ }
+    close(UPDATED);
+    close(OUTPUT);
+}
