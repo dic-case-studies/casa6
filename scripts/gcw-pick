@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use File::Find;
+use File::Fetch;
 use POSIX;
 use File::Basename;
 use File::Copy;
@@ -13,15 +14,26 @@ $java = '/usr/bin/java';
 $jarfile_name = "xml-casa-assembly-1.0.jar";
 
 ### install path
-$jarfile = "$path/java/$jarfile_name";
-### development path
-if ( ! -e $jarfile ) { $jarfile = "$path/../target/scala-2.12/$jarfile_name" }
+$distro_jarfile = $jarfile = "$path/java/$jarfile_name";
+if ( ! -e $jarfile ) {
+    ### development path
+    $jarfile = "$path/../target/scala-2.12/$jarfile_name";
+    if ( ! -e $jarfile ) {
+        $jarfile = $distro_jarfile;
+        ### pull from download url
+        my $jardir = dirname($jarfile);
+        make_path($jardir);
+        my $ff = File::Fetch->new(uri => 'http://casa.nrao.edu/download/devel/xml-casa/java/xml-casa-assembly-1.0.jar');
+        my $where = $ff->fetch( to => $jardir );
+    }
+}
 die "configuration error, cannot find jar file ($jarfile_name)" unless -e $jarfile;
 
 $path = getcwd( );
 
 die "expected ./casa-source/ directory" unless -d "./casa-source/";
 unless ( -d "./xml/tools/" ) { make_path("xml/tools") or die "could not create 'xml/tools': $!" }
+unless ( -d "./lib/" ) { make_path("lib") or die "could not create 'lib': $!" }
 
 $xml_dir = "xml/tools";
 $tool_dir = "binding/tools";
@@ -143,6 +155,8 @@ foreach ( 'libcasatools/generated/source', 'libcasatools/generated/include' ) {
     unless ( -d $_ ) { make_path($_) or die "could not create $_: $!" }
 }
 
+fix_asdm_source("casa-source/code/alma");
+
 sub install {
     my $input = shift(@_);
     my $output = shift(@_);
@@ -152,3 +166,46 @@ sub install {
     close(UPDATED);
     close(OUTPUT);
 }
+
+sub fix_asdm_source {
+    my $find_path = shift(@_);
+    my %subst = ( );
+
+    my $asdm_find_headers = sub {
+        if ( -f $_ && m|\.h$| ) {
+            my $p = "$File::Find::dir/$_";
+            $p =~ s|^.*?/code/alma/(.*)|alma/$1|;
+            $subst{$_} = $p;
+        }
+    };
+
+    my $asdm_substitute = sub {
+        if ( -f $_ && m/\.cc$|\.h$/ ) {
+            my $file = $_;
+            my @lines = ( );
+            open( my $fd, "< $file" ) || die "cannot open $File::Find::dir/$file: $!";
+            while( my $line = <$fd> ) {
+                foreach my $inc ( keys %subst ) {
+                    my $newinc = $subst{$inc};
+                    $line =~ s|[<"]$inc[">]|<$newinc>|g;
+                }
+                push(@lines,$line);
+            }
+            close( $fd );
+            open( $fd, "> $file" );
+            print $fd @lines;
+            close( $fd );
+        }
+    };
+
+    if ( ! -f "$path/.updated.alma.includes" ) {
+        find( { wanted => $asdm_find_headers }, $find_path );
+        find({ wanted => $asdm_substitute }, $find_path );
+        
+        my ($sec,$min,$hour,$day,$month,$yr19,@rest) =   localtime(time);
+        open( my $fd, "> $path/.updated.alma.includes" );
+        print $fd sprintf("%d %d %d %02d:%02d:%02d\n",$day,$month,$yr19,$hour,$min,$sec);
+        close( $fd );
+    }
+}
+
