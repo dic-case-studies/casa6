@@ -50,6 +50,7 @@ from distutils.ccompiler import show_compilers
 from distutils.command.build_ext import build_ext
 from distutils.errors import DistutilsExecError, CompileError
 from distutils.dir_util import copy_tree, remove_tree
+from distutils.util import spawn
 
 from subprocess import Popen, PIPE
 from subprocess import call as Proc
@@ -155,6 +156,10 @@ def generate_pyinit(moduledir,tools):
         fd.write("          ]\n")
         for tool in tools:
             fd.write("from %s import %s\n" % (tool,tool))
+        fd.write("\nimport os as __os\n")
+        fd.write("__ut = utils( )\n")
+        fd.write("__ut.setpath([__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'])\n")
+
 
 def generate_lex(sources,output_dir='libcasatools/generated/include'):
     """Generate lex compilation files...
@@ -450,6 +455,8 @@ if __name__ == '__main__':
             fd.write("__name__ = '__casac__'\n")
             fd.write("__all__ = [ %s ]\n\n" % alllist)
             fd.write("%s\n" % imports)
+
+        spawn(["rsync", "-avz", "rsync://casa-rsync.nrao.edu/casa-data", "%s/__data__" % moduledir])
 
     else:
         print(CODE_SRC)
