@@ -343,9 +343,7 @@ if __name__ == '__main__':
         casacdir = os.path.join(moduledir, '__casac__')
         libdir = os.path.join(casacdir, 'lib')
 
-        if os.path.exists(moduledir):
-            remove_tree(moduledir)
-        copy_tree("src/python",moduledir)
+        mkpath(moduledir)
 
         TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
         tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]
@@ -392,12 +390,6 @@ if __name__ == '__main__':
             incdirs[t] = I
             libsrc[t] = L
         for lb in LIBS:
-            print("\t>>>>>>>>>>>>>>>>>>>>>>> %s" % lb)
-            print("\tLIBS[%s]:\t" % lb,LIBS[lb])
-            for xxx in LIBS[lb]:
-                print("\t\t--- %s ---" % xxx )
-                for yyy in incdirs[xxx]:
-                    print("\t\t\t<%s>" % yyy)
             incdirs[lb] = [ i for t in LIBS[lb] for i in incdirs[t] ]
             libsrc[lb] = [ l for t in LIBS[lb] for l in libsrc[t] ]
 
@@ -412,11 +404,7 @@ if __name__ == '__main__':
                     lib += [ dep[3:] ]
                 else:
                     src += libsrc[dep]
-            print("************************************************** %s **************************************************" % t)
-            print("\tinc:\t",inc)
-            print("\tsrc:\t",src)
-            print("\tlib:\t",lib)
-            print("************************************************************************************************************************")
+
             ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir, '-Wl,-rpath,'+rpath], swig_opts=swig_opt, libraries=[module_name,'boost_python-mt', 'boost_regex-mt', 'boost_filesystem-mt', 'boost_system-mt','boost_thread-mt', 'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] + lib ))
 
         setup( name="casa",version="@CASA_VERSION@",
