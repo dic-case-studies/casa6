@@ -50,6 +50,9 @@ $hdr_dir = "binding/include";
                'synthesisimager' => 'casa-source/gcwrap/tools/synthesis/synthesisimager.xml',
                'synthesisutils' => 'casa-source/gcwrap/tools/synthesis/synthesisutils.xml',
                'atmosphere' => 'casa-source/gcwrap/tools/atmosphere/atmosphere.xml',
+               'table' => 'casa-source/gcwrap/tools/tables/table.xml',
+               'componentlist' => './casa-source/gcwrap/tools/components/componentlist.xml',
+               'measures' => 'casa-source/gcwrap/tools/measures/measures.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -87,7 +90,22 @@ $hdr_dir = "binding/include";
                'atmosphere' => [ 'casa-source/gcwrap/tools/atmosphere/atmosphere_forward.h',
                                  'casa-source/gcwrap/tools/atmosphere/atmosphere_private.h',
                                  'casa-source/gcwrap/tools/atmosphere/atmosphere_cmpt.cc' ],
-
+               'table' => [ 'casa-source/gcwrap/tools/tables/table_forward.h',
+                            'casa-source/gcwrap/tools/tables/table_private.h',
+                            'casa-source/gcwrap/tools/xerces/asdmCasaSaxHandler.h',
+                            'casa-source/gcwrap/tools/xerces/asdmCasaSaxHandler.cc',
+                            'casa-source/gcwrap/tools/xerces/asdmCasaXMLUtil.h',
+                            'casa-source/gcwrap/tools/xerces/asdmCasaXMLUtil.cc',
+                            'casa-source/gcwrap/tools/ms/Statistics.h',
+                            'casa-source/gcwrap/tools/ms/Statistics.cc',
+                            'casa-source/gcwrap/tools/ms/Statistics.tcc',
+                            'casa-source/gcwrap/tools/tables/table_cmpt.cc' ],
+               'componentlist' => [ 'casa-source/gcwrap/tools/components/componentlist_forward.h',
+                                    'casa-source/gcwrap/tools/components/componentlist_private.h',
+                                    'casa-source/gcwrap/tools/components/componentlist_cmpt.cc' ],
+               'measures' => [ 'casa-source/gcwrap/tools/measures/measures_forward.h',
+                               'casa-source/gcwrap/tools/measures/measures_private.h',
+                               'casa-source/gcwrap/tools/measures/measures_cmpt.cc' ],
              );
 
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
@@ -146,6 +164,25 @@ foreach ( @source ) {
     close($out);
     close($in);
 }
+
+my $table_subst = sub {
+    if ( -f $_ ) {
+        my @lines = ( );
+        open( my $in, "< $_" );
+        while (my $line = <$in>) {
+            $line =~ s|tools/xerces/asdmCasaXMLUtil.h|tools/table/asdmCasaXMLUtil.h|g;
+            $line =~ s|tools/xerces/asdmCasaSaxHandler.h|tools/table/asdmCasaSaxHandler.h|g;
+            $line =~ s|tools/ms/Statistics.h|tools/table/Statistics.h|g;
+            $line =~ s|tools/ms/Statistics.tcc|tools/table/Statistics.tcc|g;
+            push(@lines,$line);
+        }
+        close($in);
+        open( my $out, "> $_" );
+        print $out @lines;
+        close($out);
+    }
+};
+find( { wanted => $table_subst }, 'binding/tools/table' );
 
 foreach ( keys %xml_files ) {
     unless ( -d "binding/generated/tools/$_" ) { make_path("binding/generated/tools/$_") or die "could not create binding/generated/tools/$_: $!" }
