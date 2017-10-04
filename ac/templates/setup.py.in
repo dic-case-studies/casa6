@@ -54,6 +54,7 @@ from distutils.util import spawn
 
 from subprocess import Popen, PIPE
 from subprocess import call as Proc
+from textwrap import dedent
 import sysconfig
 import platform
 import errno    
@@ -150,15 +151,42 @@ def generate_pyinit(moduledir,tools):
     outfile = os.path.join(moduledir,'__init__.py')
     with open(outfile, "w") as fd:
         fd.write("__name__ = '%s'\n" % module_name)
-        fd.write("__all__ = [\n")
+        fd.write("__all__ = [ \"ctsys\"\n")
         for tool in tools:
-            fd.write("            '%s'\n" % tool)
+            if tool != "utils":
+                fd.write("            '%s'\n" % tool)
         fd.write("          ]\n")
         for tool in tools:
-            fd.write("from %s import %s\n" % (tool,tool))
-        fd.write("\nimport os as __os\n")
-        fd.write("__ut = utils( )\n")
-        fd.write("__ut.setpath([__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'])\n")
+            if tool != "utils":
+                fd.write("from %s import %s\n" % (tool,tool))
+
+        config='''\
+
+               from utils import utils as __utils
+               import os as __os
+               def __find_data_path( ):
+
+                   def find_mount_point(path):
+                       path = __os.path.abspath(path)
+                       while not __os.path.ismount(path):
+                           path = __os.path.dirname(path)
+                       return path
+
+                   potential_data_paths = ['/opt/casa/data', '/home/casa/data/master', '/home/casa/data', '/export/data_1/casa/data']
+                   casadata = [ d for d in (__os.environ['CASADATA'].split(':') if __os.environ.has_key('CASADATA') else [ ]) if __os.path.isdir(d) ]
+                   potential = [ d for d in potential_data_paths if __os.path.isdir(d) ]
+                   potential_local = [ d for d in potential if find_mount_point(d) == '/' ]
+                   potential_remote = [ d for d in potential if find_mount_point(d) != '/' ]
+                   used = set( )
+                   return [ x for x in casadata + potential_local + potential_remote if x not in used and (used.add(x) or True)]
+
+               ctsys = __utils( )
+               ctsys.setpath( __find_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] )
+               from CASAtools.coercetype import coerce as __coerce
+
+               __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
+              '''
+        fd.write(dedent(config))
 
 
 def generate_lex(sources,output_dir='libcasatools/generated/include'):
@@ -344,6 +372,7 @@ if __name__ == '__main__':
         libdir = os.path.join(casacdir, 'lib')
 
         mkpath(moduledir)
+        copy_tree("src/python",moduledir)
 
         TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
         tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]
@@ -436,6 +465,9 @@ if __name__ == '__main__':
                 with open(fpath, "w") as fd:
                     fd.write(s)
 
+        ###
+        ### this generates the __init__.py for the __casac__ submodule...
+        ###
         imports = "\n".join([ "from %s.__casac__.%s import %s" % (module_name,t,t) for t in TOOLS ])
         alllist = ",\n            ".join([ "'%s'" % t for t in TOOLS ])
         with open(os.path.join(casacdir,'__init__.py'),"w") as fd:
