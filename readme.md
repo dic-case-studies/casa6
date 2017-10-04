@@ -15,6 +15,7 @@ This is alpha software in every sense of the word. Currently the goal is just to
 
 The CASA development RPMs must be installed. This can be accomplished by adding the CASA [YUM](https://en.wikipedia.org/wiki/Yum_(.rpm)) repository to /etc/yum.repos.d and installing:
 
+* -bash-4.2# yum install ccache
 * -bash-4.2# yum install casa-toolset-2
 
 After the CASA build environment is installed, the CASAtools module can be built like:
