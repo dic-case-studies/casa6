@@ -4,6 +4,7 @@
 from __future__ import absolute_import
 import sys
 import os
+import numpy
 
 class CasaCoerce:
 
@@ -13,11 +14,26 @@ class CasaCoerce:
     def set_ctsys(self, util_obj):
         self.ctsys = util_obj
 
+    def to_int(self,value):
+        if isinstance(value,numpy.int32):
+            return int(value)
+        return value
+
+    def to_intvec(self,value):
+        if isinstance(value,list) or isinstance(value,numpy.ndarray):
+            if all([isinstance(v,numpy.int32) for v in value]):
+                return [int(v) for v in value]
+        return value
+
     def to_float(self,value):
         if isinstance(value,int):
             return float(value)
-        else:
-            return value
+        return value
+
+    def to_floatvec(self,value):
+        if isinstance(value,list) or isinstance(value,numpy.ndarray):
+            return [float(v) for v in value]
+        return value
 
     def expand_path(self,value):
         if os.path.exists(value):
