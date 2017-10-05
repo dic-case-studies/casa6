@@ -181,7 +181,7 @@ def generate_pyinit(moduledir,tools):
                    return [ x for x in casadata + potential_local + potential_remote if x not in used and (used.add(x) or True)]
 
                ctsys = __utils( )
-               ctsys.setpath( __find_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] )
+               ctsys.initialize( __find_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] )
                from CASAtools.coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
