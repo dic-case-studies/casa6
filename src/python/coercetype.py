@@ -21,7 +21,8 @@ class CasaCoerce:
 
     def to_intvec(self,value):
         if isinstance(value,list) or isinstance(value,numpy.ndarray):
-            if all([isinstance(v,numpy.int32) for v in value]):
+            ## there is the issue of precision loss from 64bit to 32bit here...
+            if all([isinstance(v,numpy.int32) or isinstance(v,numpy.int64) for v in value]):
                 return [int(v) for v in value]
         return value
 
