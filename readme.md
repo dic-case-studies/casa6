@@ -26,3 +26,21 @@ After the CASA build environment is installed, the CASAtools module can be built
 * ./configure
 * ./setup.py build
 
+## Available Tools
+
+| Tool                  | Description                |
+| --------------------- | -------------------------- |
+| quanta                |                            |
+| image                 |                            |
+| coordsys              |                            |
+| imagepol              |                            |
+| synthesisimstore      |                            |
+| synthesisnormalizer   |                            |
+| synthesisimager       |                            |
+| synthesisutils        |                            |
+| atmosphere            |                            |
+| table                 |                            |
+| componentlist         |                            |
+| measures              |                            |
+| regionmanager         |                            |
+| functional            |                            |
