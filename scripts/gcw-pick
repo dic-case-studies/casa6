@@ -54,6 +54,7 @@ $hdr_dir = "binding/include";
                'componentlist' => './casa-source/gcwrap/tools/components/componentlist.xml',
                'measures' => 'casa-source/gcwrap/tools/measures/measures.xml',
                'regionmanager' => 'casa-source/gcwrap/tools/images/regionmanager.xml',
+               'functional' => 'casa-source/gcwrap/tools/scimath/functional.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -110,6 +111,9 @@ $hdr_dir = "binding/include";
                'regionmanager' => [ 'casa-source/gcwrap/tools/images/regionmanager_forward.h',
                                     'casa-source/gcwrap/tools/images/regionmanager_private.h',
                                     'casa-source/gcwrap/tools/images/regionmanager_cmpt.cc' ],
+               'functional' => [ 'casa-source/gcwrap/tools/scimath/functional_forward.h',
+                                 'casa-source/gcwrap/tools/scimath/functional_private.h',
+                                 'casa-source/gcwrap/tools/scimath/functional_cmpt.cc' ],
              );
 
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
