@@ -28,19 +28,19 @@ After the CASA build environment is installed, the CASAtools module can be built
 
 ## Available Tools
 
-| Tool                  | Description                |
-| --------------------- | -------------------------- |
-| quanta                |                            |
-| image                 |                            |
-| coordsys              |                            |
-| imagepol              |                            |
-| synthesisimstore      |                            |
-| synthesisnormalizer   |                            |
-| synthesisimager       |                            |
-| synthesisutils        |                            |
-| atmosphere            |                            |
-| table                 |                            |
-| componentlist         |                            |
-| measures              |                            |
-| regionmanager         |                            |
-| functional            |                            |
+| Tool Name           | Description                                         |
+| ------------------- | --------------------------------------------------- |
+| atmosphere          | Atmosphere model                                    |
+| componentlist       | A tool for the manipulation of groups of components |
+| coordsys            | Operations on CoordinateSystems                     |
+| functional          | Functionals handling                                |
+| imagepol            | Polarimetric analysis of images                     |
+| image               | Operations on images                                |
+| measures            | measures tool                                       |
+| quanta              | quanta tool handles units and quantities            |
+| regionmanager       | Create and manipulate regions of interest           |
+| synthesisimager     | tool for synthesis imaging                          |
+| synthesisimstore    | tool for synthesis imaging                          |
+| synthesisnormalizer | tool for synthesis imaging                          |
+| synthesisutils      | tool for synthesis imaging                          |
+| table               | Access tables from casapy                           |
