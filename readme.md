@@ -59,12 +59,12 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 2. __Path Type Added__ -- (**developer**/**automatic**) a new parameter type called *path* was added to CASAtools. This *path* type evolved from the standard CASA convention of adding the *mustexist* attribute to string typed parameters. The *automatic* XML translation converts string parameters which include the *mustexist* attribute to path parameters. C++ receives the *path* parameters as a string, but when the *mustexist* attribut of the *path* parameter is set to *true*, the CASAtools binding layer will expand the required path using the **CASADATA** (colon separated) path list to locate the required file or directory. In the cases where the *mustexist* attribute was not used, developers must make any changes to convert a *string* parameter to a *path* parameter.
 
-3. __Type Element Added__ -- (**developer**) CASAtools adds a new *<type>* XML element which has precedence over the *type* attribute, e.g. *<param type="...">*. This addition allows types that can be passed to a *any*/*variant* param to be enumerated. This allows *path* strings to be expanded by the CASAtools binding layer when the *path* is part of an *any*/*variant* parameter. When more than one *<type>* is specified for a parameter, the parameter is assumed to be an *any*/*variant* parameter.
+3. __Type Element Added__ -- (**developer**) CASAtools adds a new *`<type>`* XML element which has precedence over the *type* attribute, e.g. *`<param type="...">`*. This addition allows types that can be passed to a *any*/*variant* param to be enumerated. This allows *path* strings to be expanded by the CASAtools binding layer when the *path* is part of an *any*/*variant* parameter. When more than one *`<type>`* is specified for a parameter, the parameter is assumed to be an *any*/*variant* parameter.
 
 4. __Bool__ -- (**automatic**) The majority of standard CASA XML files indicate boolean type parameters with *bool*. However, a small number of them use *boolean*. With CASAtools, only *bool* is accepted.
 
-5. __Array Values__ -- (**automatic**) With CASAtools, the behavior *<value>* elements for vector initialization has been rationalized:
+5. __Array Values__ -- (**automatic**) With CASAtools, the behavior *`<value>`* elements for vector initialization has been rationalized:
     * **`<value/>`** -- empty vector (zero elements)
     * **`<value><value/></value>`** -- vector with one element initalized to the default initialization for the vector element type
-    * **`<value><value>0.0</value></value>`** -- vector with one element initialized as specified, more internal *<value>* elements can be used to increase the default size of the vector
+    * **`<value><value>0.0</value></value>`** -- vector with one element initialized as specified, more internal *`<value>`* elements can be used to increase the default size of the vector
 
