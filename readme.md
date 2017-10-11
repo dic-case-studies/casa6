@@ -70,22 +70,23 @@ In [4]: exit
 
 ## Available Tools
 
-| Tool Name           | Description                                         |
-| ------------------- | --------------------------------------------------- |
-| atmosphere          | Atmosphere model                                    |
-| componentlist       | A tool for the manipulation of groups of components |
-| coordsys            | Operations on CoordinateSystems                     |
-| functional          | Functionals handling                                |
-| imagepol            | Polarimetric analysis of images                     |
-| image               | Operations on images                                |
-| measures            | measures tool                                       |
-| quanta              | quanta tool handles units and quantities            |
-| regionmanager       | Create and manipulate regions of interest           |
-| synthesisimager     | tool for synthesis imaging                          |
-| synthesisimstore    | tool for synthesis imaging                          |
-| synthesisnormalizer | tool for synthesis imaging                          |
-| synthesisutils      | tool for synthesis imaging                          |
-| table               | Access tables from casapy                           |
+| Tool Name           | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| atmosphere          | Atmosphere model                                                |
+| calanalysis         | Get and fit data from a calibration table (CASA 3.4 and later). |
+| componentlist       | A tool for the manipulation of groups of components             |
+| coordsys            | Operations on CoordinateSystems                                 |
+| functional          | Functionals handling                                            |
+| imagepol            | Polarimetric analysis of images                                 |
+| image               | Operations on images                                            |
+| measures            | measures tool                                                   |
+| quanta              | quanta tool handles units and quantities                        |
+| regionmanager       | Create and manipulate regions of interest                       |
+| synthesisimager     | tool for synthesis imaging                                      |
+| synthesisimstore    | tool for synthesis imaging                                      |
+| synthesisnormalizer | tool for synthesis imaging                                      |
+| synthesisutils      | tool for synthesis imaging                                      |
+| table               | Access tables from casapy                                       |
 
 ## Changes from Standard CASA
 
