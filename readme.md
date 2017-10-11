@@ -39,7 +39,7 @@ After the CASA build environment is installed, the CASAtools module can be built
 
 If the build completes successfully, try loading the CASAtools module:
 
-```shell
+```python
 -bash-4.2$ type ipython
 ipython is hashed (/opt/casa/02/bin/ipython)
 -bash-4.2$ PYTHONPATH=build/lib.linux-x86_64-2.7 ipython 
