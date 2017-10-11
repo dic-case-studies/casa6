@@ -47,7 +47,7 @@ After the CASA build environment is installed, the CASAtools module can be built
 
 ## Changes from Standard CASA
 
-While the goal was to simply reconstitute the [CASA tools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse/gcwrap/tools) within a unencumbered python module, deviations were required as work progressed. These deviations are divided into categories based upon whether the change relates to the way the tools behave or the way the XML files are structured.
+While the goal was to simply reconstitute the [CASA tools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse/gcwrap/tools) within a unencumbered python module, deviations were required as work progressed. These deviations are divided into categories based upon whether the change relates to the way the tools behave or the way the XML files are structured. The *gcw-pick* script includes an automatic XML update function which is able to make some of the more basic changes to the XML code automatically as the XML files are pulled from the *casa-source/gcwrap* tree into CASAtools.
 
 ### Changes to Behavior
 
