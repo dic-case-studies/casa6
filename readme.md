@@ -64,7 +64,7 @@ In [3]: ia.fromshape("mytest.im",[20,20])
 2017-10-11 20:49:13	INFO		Created Paged image 'mytest.im' of shape [20, 20] with float valued pixels.
 Out[3]: True
 
-In [4]:                                                                                                                                                                                      
+In [4]: 
 Do you really want to exit ([y]/n)? y
 -bash-4.2$ 
 ```
