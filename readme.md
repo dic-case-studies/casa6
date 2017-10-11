@@ -9,22 +9,61 @@ This is alpha software in every sense of the word. Currently the goal is just to
 
 ## Check Out
 
-* git clone --recursive https://open-bitbucket.nrao.edu/scm/casa/CASAtools.git
+
 
 ## Build
 
 The CASA development RPMs must be installed. This can be accomplished by adding the CASA [YUM](https://en.wikipedia.org/wiki/Yum_(.rpm)) repository to /etc/yum.repos.d and installing:
 
-* -bash-4.2# yum install ccache
-* -bash-4.2# yum install casa-toolset-2
+```shell
+-bash-4.2# yum install ccache
+-bash-4.2# yum install casa-toolset-2
+```
+
+Checkout the CASAtools source code:
+
+```shell
+-bash-4.2$ git clone --recursive https://open-bitbucket.nrao.edu/scm/casa/CASAtools.git
+```
 
 After the CASA build environment is installed, the CASAtools module can be built like:
 
-* scripts/gcw-pick
-* aclocal
-* autoconf
-* ./configure
-* ./setup.py build
+```shell
+-bash-4.2$ cd CASAtools
+-bash-4.2$ scripts/gcw-pick
+-bash-4.2$ aclocal
+-bash-4.2$ autoconf
+-bash-4.2$ ./configure
+-bash-4.2$ ./setup.py build
+```
+
+If the build completes successfully, try loading the CASAtools module:
+
+```shell
+-bash-4.2$ type ipython
+ipython is hashed (/opt/casa/02/bin/ipython)
+-bash-4.2$ PYTHONPATH=build/lib.linux-x86_64-2.7 ipython 
+Python 2.7.12 (default, Apr  4 2017, 16:53:53) 
+Type "copyright", "credits" or "license" for more information.
+
+IPython 5.1.0 -- An enhanced Interactive Python.
+?         -> Introduction and overview of IPython's features.
+%quickref -> Quick reference.
+help      -> Python's own help system.
+object?   -> Details about 'object', use 'object??' for extra details.
+
+In [1]: from CASAtools import image
+
+In [2]: ia = image( )
+
+In [3]: ia.fromshape("mytest.im",[20,20])
+2017-10-11 20:49:13	INFO		Created Paged image 'mytest.im' of shape [20, 20] with float valued pixels.
+Out[3]: True
+
+In [4]:                                                                                                                                                                                      
+Do you really want to exit ([y]/n)? y
+-bash-4.2$ 
+```
 
 ## Available Tools
 
