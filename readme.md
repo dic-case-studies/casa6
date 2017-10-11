@@ -9,7 +9,7 @@ This is alpha software in every sense of the word. Currently the goal is just to
 
 ## Check Out
 
-* git clone https://open-bitbucket.nrao.edu/scm/casa/CASAtools.git
+* git clone --recursive https://open-bitbucket.nrao.edu/scm/casa/CASAtools.git
 
 ## Build
 
