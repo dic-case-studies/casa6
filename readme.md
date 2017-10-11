@@ -64,7 +64,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 4. __Bool__ -- (**automatic**) The majority of standard CASA XML files indicate boolean type parameters with *bool*. However, a small number of them use *boolean*. With CASAtools, only *bool* is accepted.
 
 5. __Array Values__ -- (**automatic**) With CASAtools, the behavior *<value>* elements for vector initialization has been rationalized:
-    * **```<value/>```** -- empty vector (zero elements)
-    * **```<value><value/></value>```** -- vector with one element initalized to the default initialization for the vector element type
-    * **```<value><value>0.0</value></value>```** -- vector with one element initialized as specified, more internal *<value>* elements can be used to increase the default size of the vector
+    * **`<value/>`** -- empty vector (zero elements)
+    * **`<value><value/></value>`** -- vector with one element initalized to the default initialization for the vector element type
+    * **`<value><value>0.0</value></value>`** -- vector with one element initialized as specified, more internal *<value>* elements can be used to increase the default size of the vector
 
