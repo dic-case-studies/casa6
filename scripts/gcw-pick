@@ -55,6 +55,10 @@ $hdr_dir = "binding/include";
                'measures' => 'casa-source/gcwrap/tools/measures/measures.xml',
                'regionmanager' => 'casa-source/gcwrap/tools/images/regionmanager.xml',
                'functional' => 'casa-source/gcwrap/tools/scimath/functional.xml',
+               'calanalysis' => 'casa-source/gcwrap/tools/calanalysis/calanalysis.xml',
+               'ms' => 'casa-source/gcwrap/tools/ms/ms.xml',
+               'msmetadata' => 'casa-source/gcwrap/tools/ms/msmetadata.xml',
+               'calibrater' => 'casa-source/gcwrap/tools/synthesis/calibrater.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -114,6 +118,19 @@ $hdr_dir = "binding/include";
                'functional' => [ 'casa-source/gcwrap/tools/scimath/functional_forward.h',
                                  'casa-source/gcwrap/tools/scimath/functional_private.h',
                                  'casa-source/gcwrap/tools/scimath/functional_cmpt.cc' ],
+               'calanalysis' => [ 'casa-source/gcwrap/tools/calanalysis/calanalysis_forward.h',
+                                  'casa-source/gcwrap/tools/calanalysis/calanalysis_private.h',
+                                  'casa-source/gcwrap/tools/calanalysis/calanalysis_template.h',
+                                  'casa-source/gcwrap/tools/calanalysis/calanalysis_cmpt.cc' ],
+               'ms' => [ 'casa-source/gcwrap/tools/ms/ms_private.h',
+                         'casa-source/gcwrap/tools/ms/ms_forward.h',
+                         'casa-source/gcwrap/tools/ms/ms_cmpt.cc' ],
+               'msmetadata' => [ 'casa-source/gcwrap/tools/ms/msmetadata_private.h',
+                                 'casa-source/gcwrap/tools/ms/msmetadata_forward.h',
+                                 'casa-source/gcwrap/tools/ms/msmetadata_cmpt.cc' ],
+               'calibrater' => [ 'casa-source/gcwrap/tools/synthesis/calibrater_private.h',
+                                 'casa-source/gcwrap/tools/synthesis/calibrater_forward.h',
+                                 'casa-source/gcwrap/tools/synthesis/calibrater_cmpt.cc' ],
              );
 
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
@@ -190,7 +207,24 @@ my $table_subst = sub {
         close($out);
     }
 };
+my $ms_subst = sub {
+    if ( -f $_ ) {
+        my @lines = ( );
+        open( my $in, "< $_" );
+        while (my $line = <$in>) {
+            $line =~ s|tools/ms/msmetadata_forward.h|msmetadata_forward.h|g;
+            $line =~ s|tools/ms/Statistics.h|tools/table/Statistics.h|g;
+            push(@lines,$line);
+        }
+        close($in);
+        open( my $out, "> $_" );
+        print $out @lines;
+        close($out);
+    }
+};
 find( { wanted => $table_subst }, 'binding/tools/table' );
+find( { wanted => $ms_subst }, 'binding/tools/msmetadata' );
+find( { wanted => $ms_subst }, 'binding/tools/ms' );
 
 foreach ( keys %xml_files ) {
     unless ( -d "binding/generated/tools/$_" ) { make_path("binding/generated/tools/$_") or die "could not create binding/generated/tools/$_: $!" }

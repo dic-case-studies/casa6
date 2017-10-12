@@ -74,12 +74,15 @@ In [4]: exit
 | ------------------- | --------------------------------------------------------------- |
 | atmosphere          | Atmosphere model                                                |
 | calanalysis         | Get and fit data from a calibration table (CASA 3.4 and later). |
+| calibrater          | Synthesis calibration (self- and cross-)                        |
 | componentlist       | A tool for the manipulation of groups of components             |
 | coordsys            | Operations on CoordinateSystems                                 |
 | functional          | Functionals handling                                            |
 | imagepol            | Polarimetric analysis of images                                 |
 | image               | Operations on images                                            |
 | measures            | measures tool                                                   |
+| msmetadata          | Operations to retrieve metadata from a measurment set           |
+| ms                  | Operations on measurement sets                                  |
 | quanta              | quanta tool handles units and quantities                        |
 | regionmanager       | Create and manipulate regions of interest                       |
 | synthesisimager     | tool for synthesis imaging                                      |
@@ -105,6 +108,8 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 3. __Type Element Added__ --- (**developer**) CASAtools adds a new *`<type>`* XML element which has precedence over the *type* attribute, e.g. *`<param type="...">`*. This addition allows types that can be passed to a *any*/*variant* param to be enumerated. This allows *path* strings to be expanded by the CASAtools binding layer when the *path* is part of an *any*/*variant* parameter. When more than one *`<type>`* is specified for a parameter, the parameter is assumed to be an *any*/*variant* parameter.
 
 4. __Bool__ --- (**automatic**) The majority of standard CASA XML files indicate boolean type parameters with *bool*. However, a small number of them use *boolean*. With CASAtools, only *bool* is accepted.
+
+5. __StringArray__ --- (**automatic**) The majority of standard CASA XML files indicate the vector of strings type parameters with *stringArray*. However, a small number of them use *stringarray*. With CASAtools, only *stringArray* is accepted.
 
 5. __Array Values__ --- (**automatic**) With CASAtools, the behavior *`<value>`* elements for vector initialization has been rationalized:
     * **`<value/>`** --- empty vector (zero elements)

@@ -14,12 +14,19 @@ class CasaCoerce:
     def set_ctsys(self, util_obj):
         self.ctsys = util_obj
 
+    def to_strvec(self,value):
+        if isinstance(value,str):
+            return [value]
+        return value
+
     def to_int(self,value):
         if isinstance(value,numpy.int32):
             return int(value)
         return value
 
     def to_intvec(self,value):
+        if isinstance(value,int):
+            return [value]
         if isinstance(value,list) or isinstance(value,numpy.ndarray):
             ## there is the issue of precision loss from 64bit to 32bit here...
             if all([isinstance(v,numpy.int32) or isinstance(v,numpy.int64) for v in value]):
@@ -32,6 +39,8 @@ class CasaCoerce:
         return value
 
     def to_floatvec(self,value):
+        if isinstance(value,float):
+            return [value]
         if isinstance(value,list) or isinstance(value,numpy.ndarray):
             return [float(v) for v in value]
         return value
