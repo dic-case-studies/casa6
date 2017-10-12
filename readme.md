@@ -108,6 +108,11 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 1. __Parameter Order__ --- with standard CASA, the [SWIG](http://swig.org) binding is exposed directly to the user. While this is often fine, for CASAtools more control was desired over how parameter checking happens and how coersion happens. Because of this, a wrapper is created over the SWIG binding. This wrapper explicitly specifies the order of the parameters. The input parameters come first, followed by the output parameters. Within the input and output parameters, the order is determined by the XML file. With standard CASA, all parameters are largely unordered with binding controlled by the way [python argument lists](https://stackoverflow.com/questions/3394835/args-and-kwargs) are handled.
 
+2. __Utils Tool__ --- the standard CASA *uttool* (AKA *utils* or just *ut*), has been converted from a toolbox/grab bag **tool** to a **singleton object** called *ctsys* in CASAtools, e.g.:
+```
+In [1]: from CASAtools import ctsys
+```
+
 ### XML Changes
 
 1. __String Constants__ --- (**developer**) default values for strings, should **not** include quotes. The standard CASA XML processing would strip out opening and closing quotes, but CASAtools XML processing does not.
