@@ -45,6 +45,7 @@ class Ganymede(unittest.TestCase):
         self.me.doframe(self.me.observatory("ALMA"))
 
     def tearDown(self):
+        self.me.done( )
         pass
 
 class me_test_cometdist(Ganymede):
