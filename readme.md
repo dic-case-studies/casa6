@@ -132,3 +132,6 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
     * **`<value><value/></value>`** --- vector with one element initalized to the default initialization for the vector element type
     * **`<value><value>0.0</value></value>`** --- vector with one element initialized as specified, more internal *`<value>`* elements can be used to increase the default size of the vector
 
+### To Do
+
+1. __<type resolve="true">__ --- resolve strings without requiring **mustexist="true"**
