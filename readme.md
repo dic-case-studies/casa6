@@ -134,4 +134,4 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 ### To Do
 
-1. __<type resolve="true">__ --- resolve strings without requiring **mustexist="true"**
+1. __`<type resolve="true">`__ --- resolve strings without requiring **mustexist="true"**
