@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use File::Find;
 use Cwd qw(abs_path getcwd);
-use File::Path qw(make_path);
+use File::Path qw(make_path remove_tree);
 use POSIX qw(strftime);
 
 die "expected 'scripts/xml-casa' executable to exist" unless -x 'scripts/xml-casa';
@@ -34,9 +34,13 @@ sub find_xml {
 @xml_files = ( );
 find( sub { find_xml( \@xml_files ) }, 'xml/tools');
 
+if ( -e "$outdir/tool" ) { remove_tree("$outdir/tool") or die "could not remove $outdir/tool" }
 make_path("$outdir/tool") or die "could not create $outdir/tool";
+if ( -e "$outdir/swig" ) { remove_tree("$outdir/swig") or die "could not remove $outdir/swig" }
 make_path("$outdir/swig") or die "could not create $outdir/swig";
+if ( -e "$outdir/source" ) { remove_tree("$outdir/source") or die "could not remove $outdir/source" }
 make_path("$outdir/source") or die "could not create $outdir/source";
+if ( -e "$outdir/include" ) { remove_tree("$outdir/include") or die "could not remove $outdir/include" }
 make_path("$outdir/include") or die "could not create $outdir/include";
 open( $log, "> $outdir/log.txt" );
 
