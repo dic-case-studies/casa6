@@ -46,17 +46,20 @@ class CasaCoerce:
         return value
 
     def expand_path(self,value):
+        if not isinstance(value,str):
+            return value
+        if len(value) == 0 or value.startswith("/") or value.startswith("./") or value.startswith("../"):
+            return value
         if os.path.exists(value):
             return value
 
         if self.ctsys is None:
             sys.exit("configuration error in CasaCoerce.expand_path( )...")
 
-        for i in self.ctsys.getpath( ):
-            if os.path.exists( i + os.sep + value ):
-                return i + os.sep + value
-
-        return value
+        ###
+        ### cerberus validation is not reentrant...
+        ###
+        return self.ctsys._swigobj.resolve(value)
 
 coerce = CasaCoerce( )
 

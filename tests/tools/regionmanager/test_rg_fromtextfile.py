@@ -290,7 +290,7 @@ class rg_fromtextfile_test(unittest.TestCase):
         """Test a large number of regions, CAS-7405"""
         self.ia.open(datapath + "1000regtest.im")
         self.assertTrue(self.ia.statistics()['npts'][0] == 331*331)
-        self.assertTrue(self.ia.statistics(region=ctsys.resolve(datapath + "1000circles.txt"))['npts'][0] == 13679)
+        self.assertTrue(self.ia.statistics(region=datapath + "1000circles.txt")['npts'][0] == 13679)
         self.ia.done()
         
     def test_CAS_8072(self):
