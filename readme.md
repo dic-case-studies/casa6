@@ -131,7 +131,8 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
     * **`<value/>`** --- empty vector (zero elements)
     * **`<value><value/></value>`** --- vector with one element initalized to the default initialization for the vector element type
     * **`<value><value>0.0</value></value>`** --- vector with one element initialized as specified, more internal *`<value>`* elements can be used to increase the default size of the vector
-It is not possible to automatically adjust these because with the old XML translation `<value/>` will sometimes result in a one element vector and other times a zero element vector.
+
+   It is not possible to automatically adjust these because with the old XML translation `<value/>` will sometimes result in a one element vector and other times a zero element vector.
 
 ### To Do
 
