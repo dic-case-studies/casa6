@@ -144,7 +144,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
         &lt;method name="<i><font color="red">tool-name</font></i>"&gt;
             <font color="blue">&lt;needs&gt;<i>tool-name-1</i>&lt;needs/&gt;</font>
             <font color="lightblue">&lt;needs&gt;<i>tool-name-2</i>&lt;needs/&gt;</font>
-            <span style="color:lightblue">&lt;needs&gt;<i>tool-name-2</i>&lt;needs/&gt;</span>
+            <font color="#ADD8E6">&lt;needs&gt;<i>tool-name-2</i>&lt;needs/&gt;</font>
         &lt;method/&gt;
     &lt;tool/&gt;
 </pre>
