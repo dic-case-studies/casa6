@@ -86,7 +86,7 @@ class po_sigmalinpolposang_test(unittest.TestCase):
         """Test multibeam images for correct behavior"""
         mypo = self.mypo
         mypo.open(eq_beams)
-        self.assertTrue(mypo.sigmalinpolposang("g"))
+        self.assertTrue(mypo.sigmalinpolposang(outfile="g"))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.sigmalinpolposang, "hh")
         

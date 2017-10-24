@@ -59,6 +59,7 @@ $hdr_dir = "binding/include";
                'ms' => 'casa-source/gcwrap/tools/ms/ms.xml',
                'msmetadata' => 'casa-source/gcwrap/tools/ms/msmetadata.xml',
                'calibrater' => 'casa-source/gcwrap/tools/synthesis/calibrater.xml',
+               'vpmanager' => 'casa-source/gcwrap/tools/synthesis/vpmanager.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -131,6 +132,9 @@ $hdr_dir = "binding/include";
                'calibrater' => [ 'casa-source/gcwrap/tools/synthesis/calibrater_private.h',
                                  'casa-source/gcwrap/tools/synthesis/calibrater_forward.h',
                                  'casa-source/gcwrap/tools/synthesis/calibrater_cmpt.cc' ],
+               'vpmanager' => [ 'casa-source/gcwrap/tools/synthesis/vpmanager_private.h',
+                                'casa-source/gcwrap/tools/synthesis/vpmanager_forward.h',
+                                'casa-source/gcwrap/tools/synthesis/vpmanager_cmpt.cc' ],
              );
 
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }

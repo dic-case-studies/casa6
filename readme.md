@@ -127,10 +127,11 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 5. __StringArray__ --- (**automatic**) The majority of standard CASA XML files indicate the vector of strings type parameters with *stringArray*. However, a small number of them use *stringarray*. With CASAtools, only *stringArray* is accepted.
 
-5. __Array Values__ --- (**automatic**) With CASAtools, the behavior *`<value>`* elements for vector initialization has been rationalized:
+5. __Array Values__ --- (**developer**) With CASAtools, the behavior *`<value>`* elements for vector initialization has been rationalized:
     * **`<value/>`** --- empty vector (zero elements)
     * **`<value><value/></value>`** --- vector with one element initalized to the default initialization for the vector element type
     * **`<value><value>0.0</value></value>`** --- vector with one element initialized as specified, more internal *`<value>`* elements can be used to increase the default size of the vector
+It is not possible to automatically adjust these because with the old XML translation `<value/>` will sometimes result in a one element vector and other times a zero element vector.
 
 ### To Do
 
