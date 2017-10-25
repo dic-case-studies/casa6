@@ -176,3 +176,8 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
         <font color="#7CFC00">&lt;/method&gt;</font>
     &lt;/tool&gt;
 </pre>
+
+* <font color="red">Red</font> XML elements indicate unique names. They may be developer specified (e.g. tool-name), they may be predefined enumerations (e.g. unit-name), or they may be both (e.g. type-name).
+* <font color="blue">Blue</font> XML elements indicates optional elements (zero or one).
+* <font color="#7CFC00">Green</font> XML elements can be repeated.
+
