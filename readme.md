@@ -151,6 +151,10 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
                     <font color="#ADD8E6">&lt;type units="<i>unit-name</i>" mustexist="true"&gt;<i>type-name-2</i>&lt;type/&gt;</font>
                     <font color="blue">&lt;value&gt;<b>value-content</b>&lt;value/&gt;</font>
                 &lt;/param&gt;
+                <font color="#ADD8E6">&lt;param&gt;
+                    &lt;type units="<i>unit-name</i>" mustexist="true"&gt;<i>type-name</i>&lt;type&gt;
+                    &lt;value&gt;<b>value-content</b>&lt;value/&gt;
+                &lt;/param&gt;</font>
             <font color="blue">&lt;/input&gt;</font>
         &lt;/method&gt;
     &lt;/tool&gt;
