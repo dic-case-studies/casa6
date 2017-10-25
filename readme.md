@@ -17,13 +17,21 @@ The CASA development RPMs must be installed. This can be accomplished by adding 
 -bash-4.2# yum install ccache
 -bash-4.2# yum install casa-toolset-2
 ```
+In addition, [Java 8](https://java.com/en/download/) or greater is required. You can check this by looking for 1.8 in the Java version output:
+```
+-bash-4.2$ /usr/bin/java -version
+java version "1.8.0_121"
+Java(TM) SE Runtime Environment (build 1.8.0_121-b13)
+Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
+-bash-4.2$ 
+```
 
 #### Checkout
 
 Checkout the CASAtools source code:
 
 ```
--bash-4.2$ git clone --recursive https://open-bitbucket.nrao.edu/scm/casa/CASAtools.git
+-bash-4.2$ git clone -q --recursive https://open-bitbucket.nrao.edu/scm/casa/CASAtools.git
 ```
 
 #### Build
