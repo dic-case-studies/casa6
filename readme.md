@@ -145,7 +145,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
         <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
         <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
         
-        <font color="#7CFC00">&lt;needs&gt;</font><i><font color="red">tool-name</font></i><font color="#7CFC00">&lt;needs/&gt;</font>
+        <font color="#7CFC00">&lt;needs&gt;</font><i><font color="red">tool-name</font></i><font color="#7CFC00">&lt;/needs&gt;</font>
         
         <font color="blue">&lt;code&gt;</font>
             <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
@@ -160,14 +160,14 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
             <font color="blue">&lt;input&gt;</font>
                 <font color="#7CFC00">&lt;param</font> name="<font color="red">param-name</font>"<font color="#7CFC00">&gt;</font>
                     <font color="blue">&lt;description&gt;</font><i>short description</i><font color="blue">&lt;/description&gt;</font>
-                    <font color="#7CFC00">&lt;/type</font> <font color="blue">units="<i><font color="red">unit-name</font></i>" mustexist="true"</font><font color="#7CFC00">&gt;</font><i><font color="red">type-name</font></i><font color="#7CFC00">&lt;/type&gt;</font>
+                    <font color="#7CFC00">&lt;type</font> <font color="blue">units="<i><font color="red">unit-name</font></i>" mustexist="true"</font><font color="#7CFC00">&gt;</font><i><font color="red">type-name</font></i><font color="#7CFC00">&lt;/type&gt;</font>
                     <b><font color="blue">&lt;value&gt;value-content&lt;/value&gt;</font></b>
                 <font color="#7CFC00">&lt;/param&gt;</font>
             <font color="blue">&lt;/input&gt;</font>
             <font color="blue">&lt;output&gt;</font>
                 <font color="#7CFC00">&lt;param</font> name="<font color="red">param-name</font>"<font color="#7CFC00">&gt;</font>
                     <font color="blue">&lt;description&gt;</font><i>short description</i><font color="blue">&lt;/description&gt;</font>
-                    <font color="#7CFC00">&lt;/type</font> <font color="blue">units="<i><font color="red">unit-name</font></i>" mustexist="true"</font><font color="#7CFC00">&gt;</font><i><font color="red">type-name</font></i><font color="#7CFC00">&lt;/type&gt;</font>
+                    <font color="#7CFC00">&lt;type</font> <font color="blue">units="<i><font color="red">unit-name</font></i>" mustexist="true"</font><font color="#7CFC00">&gt;</font><i><font color="red">type-name</font></i><font color="#7CFC00">&lt;/type&gt;</font>
                     <b><font color="blue">&lt;value&gt;value-content&lt;/value&gt;</font></b>
                 <font color="#7CFC00">&lt;/param&gt;</font>
             <font color="blue">&lt;/output&gt;</font>
