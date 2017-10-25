@@ -12,6 +12,16 @@ $exe = abs_path($0);
 $path = abs_path(dirname($exe));
 $java = '/usr/bin/java';
 $jarfile_name = "xml-casa-assembly-1.0.jar";
+@java_version = ( );
+open(JAVAVER, "$java -version 2>&1 |");
+foreach ( <JAVAVER> ) {
+    if ( m|version "?(\d+)\.(\d+)|i ) {
+        @java_version = ($1,$2);
+        print "found java version ", join('.',@java_version), "\n";
+    }
+}
+die "cannot run $java" unless scalar(@java_version) > 0;
+die "java version 1.8 or greater is required\n" unless $java_version[0] == 1 && $java_version[1] >= 8;
 
 ### install path
 $distro_jarfile = $jarfile = "$path/java/$jarfile_name";
@@ -137,6 +147,7 @@ $hdr_dir = "binding/include";
                                 'casa-source/gcwrap/tools/synthesis/vpmanager_cmpt.cc' ],
              );
 
+print "configuring CASAtools... this may take a few moments...\n";
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
 foreach $k ( keys %xml_files ) { install($xml_files{$k},"$xml_dir/$k.xml") }
 foreach $k ( keys %xml_files ) {                                 ### always using the xml_files keys ensures consistency
