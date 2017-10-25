@@ -148,12 +148,14 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
             <font color="#7CFC00">&lt;needs&gt;</font><i><font color="red">tool-name-1</font></i><font color="#7CFC00">&lt;needs/&gt;</font>
             <font color="blue">&lt;input&gt;</font>
                 <font color="#7CFC00">&lt;param</font> name="<font color="red">param-name</font>"<font color="#7CFC00">&gt;</font>
+                    <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
                     <font color="#7CFC00">&lt;type</font> <font color="blue">units="<i><font color="red">unit-name</font></i>" mustexist="true"</font><font color="#7CFC00">&gt;</font><i><font color="red">type-name</font></i><font color="#7CFC00">&lt;type&gt;</font>
                     <b><font color="blue">&lt;value&gt;value-content&lt;/value&gt;</font></b>
                 <font color="#7CFC00">&lt;/param&gt;</font>
             <font color="blue">&lt;/input&gt;</font>
             <font color="blue">&lt;output&gt;</font>
                 <font color="#7CFC00">&lt;param</font> name="<font color="red">param-name</font>"<font color="#7CFC00">&gt;</font>
+                    <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
                     <font color="#7CFC00">&lt;type</font> <font color="blue">units="<i><font color="red">unit-name</font></i>" mustexist="true"</font><font color="#7CFC00">&gt;</font><i><font color="red">type-name</font></i><font color="#7CFC00">&lt;type&gt;</font>
                     <b><font color="blue">&lt;value&gt;value-content&lt;/value&gt;</font></b>
                 <font color="#7CFC00">&lt;/param&gt;</font>
