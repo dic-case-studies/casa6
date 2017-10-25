@@ -145,6 +145,13 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
         &lt;method name="<i><font color="red">tool-name</font></i>"&gt;
             <font color="blue">&lt;needs&gt;<i>tool-name-1</i>&lt;needs/&gt;</font>
             <font color="#ADD8E6">&lt;needs&gt;<i>tool-name-2</i>&lt;needs/&gt;</font>
-        &lt;method/&gt;
-    &lt;tool/&gt;
+            <font color="blue">&lt;input&gt;</font>
+                &lt;param&gt;
+                    &lt;type <font color="#ADD8E6">units="<i>unit-name</i>"</font> <font color="#ADD8E6">mustexist="true"</font>&gt;<i>type-name-1</i>&lt;type&gt;
+                    <font color="#ADD8E6">&lt;type units="<i>unit-name</i>" mustexist="true"&gt;<i>type-name-2</i>&lt;type/&gt;</font>
+                    <font color="blue">&lt;value&gt;<b>value-content</b>&lt;value/&gt;</font>
+                &lt;/param&gt;
+            <font color="blue">&lt;/input&gt;</font>
+        &lt;/method&gt;
+    &lt;/tool&gt;
 </pre>
