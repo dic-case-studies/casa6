@@ -141,8 +141,10 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 ### Tool Specification
 
 <pre>
-    &lt;tool&gt;
-        &lt;method name="<i><font color="red">tool-name</font></i>"&gt;
+    &lt;tool name="<i><font color="red">tool-name</font></i>"&gt;
+        &lt;method name="<i><font color="red">method-name</font></i>"&gt;
+            <font color="blue">&lt;shortdescription&gt;<i>one-line description</i>&lt;shortdescription/&gt;</font>
+            <font color="blue">&lt;description&gt;<i>paragraph description</i>&lt;description/&gt;</font>
             <font color="blue">&lt;needs&gt;<i>tool-name-1</i>&lt;needs/&gt;</font>
             <font color="#ADD8E6">&lt;needs&gt;<i>tool-name-2</i>&lt;needs/&gt;</font>
             <font color="blue">&lt;input&gt;</font>
@@ -156,6 +158,12 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
                     &lt;value&gt;<b>value-content</b>&lt;value/&gt;
                 &lt;/param&gt;</font>
             <font color="blue">&lt;/input&gt;</font>
+            <font color="blue">&lt;code&gt;</font>
+                <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
+                <font color="blue">&lt;private&gt;</font>
+                    <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
+                <font color="blue">&lt;/private&gt;</font>
+            <font color="blue">&lt;/code&gt;</font>
         &lt;/method&gt;
     &lt;/tool&gt;
 </pre>
