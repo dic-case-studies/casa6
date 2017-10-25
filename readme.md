@@ -145,6 +145,8 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
         <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
         <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
         
+        <font color="#7CFC00">&lt;needs&gt;</font><i><font color="red">tool-name-1</font></i><font color="#7CFC00">&lt;needs/&gt;</font>
+        
         <font color="blue">&lt;code&gt;</font>
             <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
             <font color="blue">&lt;private&gt;</font>
@@ -155,7 +157,6 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
         &lt;method name="<i><font color="red">method-name</font></i>"&gt;
             <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
             <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
-            <font color="#7CFC00">&lt;needs&gt;</font><i><font color="red">tool-name-1</font></i><font color="#7CFC00">&lt;needs/&gt;</font>
             <font color="blue">&lt;input&gt;</font>
                 <font color="#7CFC00">&lt;param</font> name="<font color="red">param-name</font>"<font color="#7CFC00">&gt;</font>
                     <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
