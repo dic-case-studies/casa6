@@ -45,13 +45,6 @@ After the CASA build environment is installed, the CASAtools module can be built
 -bash-4.2$ ./configure
 -bash-4.2$ ./setup.py build
 ```
-When you run `autoconf`, if you get this message:
-```
-configure.ac:5: error: possibly undefined macro: AC_CONFIG_MACRO_DIRS
-      If this token and others are legitimate, please use m4_pattern_allow.
-      See the Autoconf documentation.
-```
-run `autoreconf --install` before rerunning `autoconf`.
 
 #### See If It Works
 
