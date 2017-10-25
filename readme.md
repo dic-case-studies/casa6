@@ -99,6 +99,7 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | synthesisnormalizer | tool for synthesis imaging                                      |
 | synthesisutils      | tool for synthesis imaging                                      |
 | table               | Access tables from casapy                                       |
+| vpmanager           | Tool for specifying voltage patterns and primary beams          |
 
 
 ## Changes from Standard CASA
