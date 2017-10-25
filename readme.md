@@ -144,6 +144,14 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
     &lt;tool name="<i><font color="red">tool-name</font></i>"&gt;
         <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
         <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
+        
+        <font color="blue">&lt;code&gt;</font>
+            <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
+            <font color="blue">&lt;private&gt;</font>
+                <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
+            <font color="blue">&lt;/private&gt;</font>
+        <font color="blue">&lt;/code&gt;</font>
+        
         &lt;method name="<i><font color="red">method-name</font></i>"&gt;
             <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
             <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
@@ -162,12 +170,6 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
                     <b><font color="blue">&lt;value&gt;value-content&lt;/value&gt;</font></b>
                 <font color="#7CFC00">&lt;/param&gt;</font>
             <font color="blue">&lt;/output&gt;</font>
-            <font color="blue">&lt;code&gt;</font>
-                <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
-                <font color="blue">&lt;private&gt;</font>
-                    <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
-                <font color="blue">&lt;/private&gt;</font>
-            <font color="blue">&lt;/code&gt;</font>
         &lt;/method&gt;
     &lt;/tool&gt;
 </pre>
