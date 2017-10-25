@@ -172,7 +172,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
                 <font color="#7CFC00">&lt;/param&gt;</font>
             <font color="blue">&lt;/output&gt;</font>
 
-            <font color="blue">&lt;returns</font> type="<font color="red">type-name</font>"<font color="blue">&gt;</font>
+            <font color="blue">&lt;returns</font> type="<font color="red">type-name</font>"<font color="blue">/&gt;</font>
         <font color="#7CFC00">&lt;/method&gt;</font>
     &lt;/tool&gt;
 </pre>
