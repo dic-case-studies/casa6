@@ -141,10 +141,44 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 ### Tool Specification
 
 <pre>
-    &lt;tool&gt;
-        &lt;method name="<i><font color="red">tool-name</font></i>"&gt;
-            <font color="blue">&lt;needs&gt;<i>tool-name-1</i>&lt;needs/&gt;</font>
-            <font color="#ADD8E6">&lt;needs&gt;<i>tool-name-2</i>&lt;needs/&gt;</font>
-        &lt;method/&gt;
-    &lt;tool/&gt;
+    &lt;tool name="<i><font color="red">tool-name</font></i>"&gt;
+        <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
+        <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
+        
+        <font color="#7CFC00">&lt;needs&gt;</font><i><font color="red">tool-name</font></i><font color="#7CFC00">&lt;/needs&gt;</font>
+        
+        <font color="blue">&lt;code&gt;</font>
+            <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
+            <font color="blue">&lt;private&gt;</font>
+                <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
+            <font color="blue">&lt;/private&gt;</font>
+        <font color="blue">&lt;/code&gt;</font>
+        
+        <font color="#7CFC00">&lt;method</font> name="<i><font color="red">method-name</font></i>"<font color="#7CFC00">&gt;</font>
+            <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
+            <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
+            <font color="blue">&lt;input&gt;</font>
+                <font color="#7CFC00">&lt;param</font> name="<font color="red">param-name</font>"<font color="#7CFC00">&gt;</font>
+                    <font color="blue">&lt;description&gt;</font><i>short description</i><font color="blue">&lt;/description&gt;</font>
+                    <font color="#7CFC00">&lt;type</font> <font color="blue">units="<i><font color="red">unit-name</font></i>" mustexist="true"</font><font color="#7CFC00">&gt;</font><i><font color="red">type-name</font></i><font color="#7CFC00">&lt;/type&gt;</font>
+                    <b><font color="blue">&lt;value&gt;value-content&lt;/value&gt;</font></b>
+                <font color="#7CFC00">&lt;/param&gt;</font>
+            <font color="blue">&lt;/input&gt;</font>
+            <font color="blue">&lt;output&gt;</font>
+                <font color="#7CFC00">&lt;param</font> name="<font color="red">param-name</font>"<font color="#7CFC00">&gt;</font>
+                    <font color="blue">&lt;description&gt;</font><i>short description</i><font color="blue">&lt;/description&gt;</font>
+                    <font color="#7CFC00">&lt;type</font> <font color="blue">units="<i><font color="red">unit-name</font></i>" mustexist="true"</font><font color="#7CFC00">&gt;</font><i><font color="red">type-name</font></i><font color="#7CFC00">&lt;/type&gt;</font>
+                    <b><font color="blue">&lt;value&gt;value-content&lt;/value&gt;</font></b>
+                <font color="#7CFC00">&lt;/param&gt;</font>
+            <font color="blue">&lt;/output&gt;</font>
+
+            <font color="blue">&lt;returns</font> type="<font color="red">type-name</font>"<font color="blue">/&gt;</font>
+        <font color="#7CFC00">&lt;/method&gt;</font>
+    &lt;/tool&gt;
 </pre>
+
+* <font color="red">Red</font> text indicate unique names. They may be developer specified (e.g. tool-name), they may be predefined enumerations (e.g. unit-name), or they may be both (e.g. type-name).
+* <font color="blue">Blue</font> XML elements or attributes indicates optional items (zero or one).
+* <font color="#7CFC00">Green</font> XML elements can be repeated.
+* Black XML elements or attributes must be supplied (once)
+
