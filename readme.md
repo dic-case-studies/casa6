@@ -145,12 +145,12 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
         &lt;method name="<i><font color="red">method-name</font></i>"&gt;
             <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font>
             <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
-            <font color="green">&lt;needs&gt;</font><i>tool-name</i><font color="green">&lt;needs/&gt;></font>
+            <font color="#4B0082">&lt;needs&gt;</font><i>tool-name</i><font color="#4B0082">&lt;needs/&gt;></font>
             <font color="blue">&lt;input&gt;</font>
-                <font color="green">&lt;param&gt;</font>
-                    <font color="green">&lt;type</font> <font color="blue">units="<i>unit-name</i>" mustexist="true"</font><font color="green">&gt;</font><i>type-name</i><font color="green">&lt;type&gt;</font>
+                <font color="#4B0082">&lt;param&gt;</font>
+                    <font color="#4B0082">&lt;type</font> <font color="blue">units="<i>unit-name</i>" mustexist="true"</font><font color="#4B0082">&gt;</font><i>type-name</i><font color="#4B0082">&lt;type&gt;</font>
                     <font color="blue">&lt;value&gt;<b>value-content</b>&lt;value/&gt;</font>
-                <font color="green">&lt;/param&gt;</font>
+                <font color="#4B0082">&lt;/param&gt;</font>
                 <font color="#ADD8E6">&lt;param&gt;
                     &lt;type units="<i>unit-name</i>" mustexist="true"&gt;<i>type-name</i>&lt;type&gt;
                     &lt;value&gt;<b>value-content</b>&lt;value/&gt;
