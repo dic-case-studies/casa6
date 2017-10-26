@@ -295,6 +295,9 @@ def customize_compiler(self):
     super = self._compile
     cflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.compile'),props.iteritems()))
     cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
+    if props.has_key('build.python.numpy_dir') and len(props['build.python.numpy_dir']) > 0:
+        cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
+                                                                      ###     /usr/include (e.g. rhel6)
     new_compiler_cxx = ['/usr/bin/ccache', props['build.compiler.cxx'], '-g', '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
     new_compiler_cc = ['/usr/bin/ccache', props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
@@ -339,7 +342,7 @@ def customize_compiler(self):
             ## get the cflags for the module being built; key is a subdir, value are flags
             m_cflags = map(lambda x: x[1] if x[0] in src else [], module_cflags.iteritems())
             m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
-            self.set_executable('compiler_so', new_compiler + m_cflags)
+            self.set_executable('compiler_so', new_compiler + [a for a in m_cflags if len(a) > 0])
             super(obj, src, ext, cc_args, postargs, pp_opts)
 
         # reset the default compiler_so (may not be necessary)
