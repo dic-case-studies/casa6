@@ -40,7 +40,6 @@ After the CASA build environment is installed, the CASAtools module can be built
 ```
 -bash-4.2$ cd CASAtools
 -bash-4.2$ scripts/gcw-pick
--bash-4.2$ aclocal
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
 -bash-4.2$ ./setup.py build
