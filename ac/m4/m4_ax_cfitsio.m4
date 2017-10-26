@@ -57,6 +57,14 @@ ax_cfitsio_ok=no
 
 PKG_CHECK_MODULES(CFITSIO, cfitsio, [ax_cfitsio_ok=yes], [ax_cfitsio_ok=no])
 
+###
+### if PKG_CHECK_MODULES fails, this code is of little help...
+### it seems like it needs to:
+###        (1) find the default libcfitsio.so
+###        (2) ascertain it's fully qualified path
+###        (3) use the path to the library as the starting
+###            point for finding fitsio.h
+###
 if test x"$ax_cfitsio_ok" = x"no"; then
    # if neither pkg-config file found, nor CFITSIO_LIBS defined
    if test x$CFITSIO_LIBS = x ; then
