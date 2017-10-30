@@ -13,12 +13,12 @@ foreach ( @ARGV ) {
 }
 
 unless ( $outdir ) {
-    die "expected 'tests/output' directory to exist (and be a directory)" unless -d 'tests/output';
+    die "expected 'tests/output-regression' directory to exist (and be a directory)" unless -d 'tests/output-regression';
 
     ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     $year = ($year + 1900) % 100;
     $mon += 1;
-    $outdir = sprintf("tests/output/%02d%02d%02d",$year,$mon,$mday);
+    $outdir = sprintf("tests/output-regression/%02d%02d%02d",$year,$mon,$mday);
     make_path($outdir) or die "could not create $outdir";
 
 }
