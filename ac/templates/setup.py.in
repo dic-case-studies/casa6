@@ -86,6 +86,9 @@ def decodestr(s):
 def flatmap(f, items):
     return chain.from_iterable(map(f, items))
 
+def isexe(f):
+    return os.path.isfile(f) and os.access(f, os.X_OK)
+
 def mkpath(path):
     try:
         os.makedirs(path)
@@ -418,57 +421,123 @@ class casa_test(Command):
         self.__lib_dir = os.path.abspath("build/%s" % distutils_dir_name('lib'))
         self.__env = os.environ.copy( )
         self.__env['PYTHONPATH'] = self.__lib_dir
+        self.__regression_dir = "build/%s" % distutils_dir_name('regression')
+        self.__regression_ref_dir = "tests/output-regression/reference-%d.%d" % (sys.version_info[0],sys.version_info[1])
+        self.__regression_sample_gen = "scripts/output-snapshot"
+        self.__regression_sample_dir = "%s/%s" % (self.__regression_dir,"output")
 
 
     def finalize_options(self):
         pass
 
+    def __dump_output(self, working_dir, bname, out, err):
+        stdout_path = "%s/%s-stdout.txt" % (working_dir,bname)
+        stdout_fd = open(stdout_path, 'w')
+        stdout_fd.write(out)
+        stdout_fd.close( )
+        stderr_path = "%s/%s-stderr.txt" % (working_dir,bname)
+        stderr_fd = open(stderr_path, 'w')
+        stderr_fd.write(err)
+        stderr_fd.close( )
+        return (stdout_path,stderr_path)
+
     def __run_test(self,tabwidth,test_path,working_dir):
         label = '.'.join(os.path.basename(test_path).split('.')[:-1])
         sys.stdout.write(label + '.' * (tabwidth - len(label)))
         sys.stdout.flush( )
-        proc = Popen([sys.executable,test_path],cwd=working_dir,env=self.__env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = Popen( [sys.executable,test_path], cwd=working_dir, env=self.__env,
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE )
         (output, error) = proc.communicate( )
         exit_code = proc.wait( )
-        stdout_path = "%s/log-stdout.txt" % working_dir
-        stdout_fd = open(stdout_path, 'w')
-        stdout_fd.write(output)
-        stdout_fd.close( )
-        stderr_path = "%s/log-stderr.txt" % working_dir
-        stderr_fd = open(stderr_path, 'w')
-        stderr_fd.write(error)
-        stderr_fd.close( )
+        (stdout_path,stderr_path) = self.__dump_output(working_dir,"log",output,error)
         print(" ok" if exit_code == 0 else " fail")
-        return (exit_code, stdout_path, stderr_path)
+        return (exit_code, label, stdout_path, stderr_path)
 
-    def run(self):
-        if os.path.exists(self.__test_dir):
-            remove_tree(self.__test_dir)
-        mkpath(self.__test_dir)
-        results = [ ]
+    def __generate_sample(self):
+        if os.path.exists(self.__regression_dir):
+            remove_tree(self.__regression_dir)
+        mkpath(self.__regression_sample_dir)
+        proc = Popen( [self.__regression_sample_gen,"out=%s" % self.__regression_sample_dir],
+                      env=self.__env, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        (output, error) = proc.communicate( )
+        exit_code = proc.wait( )
+        self.__dump_output(self.__regression_dir,"sample-generation",output,error)
+        return exit_code
+
+    def __compare_reg(self, tabwidth, label, refpath, samplepath):
+        sys.stdout.write(label + '.' * (tabwidth - len(label)))
+        sys.stdout.flush( )
+        proc = Popen( ["/usr/bin/diff",refpath,samplepath], env=self.__env,
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        (output, error) = proc.communicate( )
+        exit_code = proc.wait( )
+        print(" ok" if exit_code == 0 else " fail")
+        (op,ep) = self.__dump_output(os.path.dirname(samplepath),label,output,error)
+        return (exit_code, label, op, ep)
+
+    def __collect_tests(self, testdir):
         tests = [ ]
-        for dir, subdir, files in os.walk("tests/tools"):
+        for dir, subdirs, files in os.walk(testdir):
             for f in files:
                 if f.endswith(".py"):
                     workingdir = "%s/%s" % (self.__test_dir,f[:-3])
                     mkpath(workingdir)
                     tests.append((os.path.abspath("%s/%s" % (dir,f)),workingdir))
-        tabwidth = max(map(lambda x: len(os.path.basename(x[0]))+3,tests))
-        results = map(lambda params: self.__run_test(max(tabwidth,45),*params),tests)
-        #for dir, subdir, files in os.walk("tests/tools"):
-        #    for f in files:
-        #        if f.endswith(".py"):
-        #            workingdir = "%s/%s" % (self.__test_dir,f[:-3])
-        #            mkpath(workingdir)
-        #            results.append(self.__run_test(os.path.abspath("%s/%s" % (dir,f)),workingdir))
-        print(results)
-        sys.exit(0)
-        #import sys, subprocess
-        #
-        #raise SystemExit(
-        #    subprocess.call([sys.executable,
-        #                     '-m',
-        #                     'pisces.test']))
+        return tests
+
+    def __collect_regression_files(self, regdir):
+        regression = { }
+        for dir, subdirs, files in os.walk(regdir):
+            for f in files:
+                if f != "log.txt":
+                    regression[f] = "%s/%s" % (dir,f)
+        return regression
+
+    def __collect_regression(self):
+        regression_ref = { }
+        regression_sample = { }
+        if os.path.isdir(self.__regression_ref_dir):
+            if isexe(self.__regression_sample_gen):
+                if self.__generate_sample( ) == 0:
+                    regression_ref = self.__collect_regression_files(self.__regression_ref_dir)
+                    regression_sample = self.__collect_regression_files(self.__regression_sample_dir)
+                else:
+                    print("warning, generation of regression sample failed; skipping regression test")
+            else:
+                print( "warning, regression sample generator (%s) does not exist; skipping regression test" %
+                       self.__regression_sample_gen)
+        else:
+            print("warning, regression reference (%s) does not exist; skipping regression test" % regressino_ref)
+        return (regression_ref, regression_sample)
+
+    def run(self):
+        if os.path.exists(self.__test_dir):
+            remove_tree(self.__test_dir)
+        mkpath(self.__test_dir)
+        tests = self.__collect_tests("tests/tools")
+
+        (regression_ref, regression_sample) = self.__collect_regression( )
+
+        testwidth = 0 if len(tests) == 0 else max(map(lambda x: len(os.path.basename(x[0]))+3,tests))
+        regressionwidth = 0 if len(regression_ref) == 0 else max(map(lambda x: len(x)+3,regression_ref.keys( )))
+        tabwidth = max(testwidth,regressionwidth,45)
+
+        testresults = map(lambda params: self.__run_test(tabwidth,*params),tests)
+
+        len_message = "regression file count"
+        print( len_message + '.' * (tabwidth - len(len_message)) +
+               (" ok" if len(regression_ref) == len(regression_sample) else " fail") )
+
+        regression_keys = filter(lambda k: k in regression_sample, regression_ref.keys( ))
+        regressionresults = map(lambda k: self.__compare_reg(tabwidth,k,regression_ref[k],regression_sample[k]), regression_keys)
+
+        results = testresults + regressionresults
+        print('-' * (tabwidth + 8))
+        passed = filter(lambda v: v[0] == 0,results)
+        failed = filter(lambda v: v[0] != 0,results)
+        print("test summary %d passed, %d failed" % (len(passed),len(failed)))
+        print("OK" if len(failed) == 0 else "FAIL")
+        sys.exit(0 if len(failed) == 0 else 1)
 
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
