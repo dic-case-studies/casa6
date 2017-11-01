@@ -2,6 +2,8 @@
 ##################### fbc52629736076868eee1cda9265f924 ##############################
 from __future__ import absolute_import 
 from .__casac__ import vpmanager as _vpmanager
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -22,7 +24,7 @@ class vpmanager:
         schema = {'tablename': {'type': 'cStr'}}
         doc = {'tablename': tablename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.saveastable(_pc.document['tablename'])
+        return self._swigobj.saveastable(_str_encode(_pc.document['tablename']))
 
     def loadfromtable(self, tablename=''):
         """Load the vp or pb descriptions from a table created, e.g., with saveastable().
@@ -30,7 +32,7 @@ class vpmanager:
         schema = {'tablename': {'type': 'cStr'}}
         doc = {'tablename': tablename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.loadfromtable(_pc.document['tablename'])
+        return self._swigobj.loadfromtable(_str_encode(_pc.document['tablename']))
 
     def summarizevps(self, verbose=False):
         """Summarize the currently accumulated VP descriptions to the logger.
@@ -46,7 +48,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'commonpb': {'type': 'cStr'}, 'dosquint': {'type': 'cBool'}, 'paincrement': {'type': 'cVariant'}, 'usesymmetricbeam': {'type': 'cBool'}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'commonpb': commonpb, 'dosquint': dosquint, 'paincrement': paincrement, 'usesymmetricbeam': usesymmetricbeam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setcannedpb(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['commonpb'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
+        return self._swigobj.setcannedpb(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _str_encode(_pc.document['commonpb']), _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
 
     def setpbairy(self, telescope='VLA', othertelescope='', dopb=True, dishdiam=[ ], blockagediam=[ ], maxrad=[ ], reffreq=[ ], squintdir=[ ], squintreffreq=[ ], dosquint=False, paincrement=[ ], usesymmetricbeam=False):
         """Information sufficient to create a portion of the Airy disk voltage pattern.
@@ -65,7 +67,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'dishdiam': {'type': 'cVariant'}, 'blockagediam': {'type': 'cVariant'}, 'maxrad': {'type': 'cVariant'}, 'reffreq': {'type': 'cVariant'}, 'squintdir': {'type': 'cVariant'}, 'squintreffreq': {'type': 'cVariant'}, 'dosquint': {'type': 'cBool'}, 'paincrement': {'type': 'cVariant'}, 'usesymmetricbeam': {'type': 'cBool'}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'dishdiam': dishdiam, 'blockagediam': blockagediam, 'maxrad': maxrad, 'reffreq': reffreq, 'squintdir': squintdir, 'squintreffreq': squintreffreq, 'dosquint': dosquint, 'paincrement': paincrement, 'usesymmetricbeam': usesymmetricbeam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpbairy(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['dishdiam'], _pc.document['blockagediam'], _pc.document['maxrad'], _pc.document['reffreq'], _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
+        return self._swigobj.setpbairy(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _pc.document['dishdiam'], _pc.document['blockagediam'], _pc.document['maxrad'], _pc.document['reffreq'], _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
 
     def setpbcospoly(self, telescope='VLA', othertelescope='', dopb=True, coeff=[ float(-1) ], scale=[ float(-1) ], maxrad=[ ], reffreq=[ ], isthispb='PB', squintdir=[ ], squintreffreq=[ ], dosquint=False, paincrement=[ ], usesymmetricbeam=False):
         """A voltage pattern or primary beam of the form
@@ -77,7 +79,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'coeff': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'scale': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'maxrad': {'type': 'cVariant'}, 'reffreq': {'type': 'cVariant'}, 'isthispb': {'type': 'cStr'}, 'squintdir': {'type': 'cVariant'}, 'squintreffreq': {'type': 'cVariant'}, 'dosquint': {'type': 'cBool'}, 'paincrement': {'type': 'cVariant'}, 'usesymmetricbeam': {'type': 'cBool'}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'coeff': coeff, 'scale': scale, 'maxrad': maxrad, 'reffreq': reffreq, 'isthispb': isthispb, 'squintdir': squintdir, 'squintreffreq': squintreffreq, 'dosquint': dosquint, 'paincrement': paincrement, 'usesymmetricbeam': usesymmetricbeam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpbcospoly(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['coeff'], _pc.document['scale'], _pc.document['maxrad'], _pc.document['reffreq'], _pc.document['isthispb'], _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
+        return self._swigobj.setpbcospoly(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _pc.document['coeff'], _pc.document['scale'], _pc.document['maxrad'], _pc.document['reffreq'], _str_encode(_pc.document['isthispb']), _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
 
     def setpbgauss(self, telescope='VLA', othertelescope='', dopb=True, halfwidth=[ ], maxrad=[ ], reffreq=[ ], isthispb='PB', squintdir=[ ], squintreffreq=[ ], dosquint=False, paincrement=[ ], usesymmetricbeam=False):
         """Make a Gaussian primary beam given by
@@ -88,7 +90,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'halfwidth': {'type': 'cVariant'}, 'maxrad': {'type': 'cVariant'}, 'reffreq': {'type': 'cVariant'}, 'isthispb': {'type': 'cStr'}, 'squintdir': {'type': 'cVariant'}, 'squintreffreq': {'type': 'cVariant'}, 'dosquint': {'type': 'cBool'}, 'paincrement': {'type': 'cVariant'}, 'usesymmetricbeam': {'type': 'cBool'}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'halfwidth': halfwidth, 'maxrad': maxrad, 'reffreq': reffreq, 'isthispb': isthispb, 'squintdir': squintdir, 'squintreffreq': squintreffreq, 'dosquint': dosquint, 'paincrement': paincrement, 'usesymmetricbeam': usesymmetricbeam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpbgauss(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['halfwidth'], _pc.document['maxrad'], _pc.document['reffreq'], _pc.document['isthispb'], _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
+        return self._swigobj.setpbgauss(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _pc.document['halfwidth'], _pc.document['maxrad'], _pc.document['reffreq'], _str_encode(_pc.document['isthispb']), _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
 
     def setpbinvpoly(self, telescope='VLA', othertelescope='', dopb=True, coeff=[ float(-1) ], maxrad=[ ], reffreq=[ ], isthispb='PB', squintdir=[ ], squintreffreq=[ ], dosquint=False, paincrement=[ ], usesymmetricbeam=False):
         """The inverse polynomial describes the inverse of the VP or PB
@@ -100,7 +102,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'coeff': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'maxrad': {'type': 'cVariant'}, 'reffreq': {'type': 'cVariant'}, 'isthispb': {'type': 'cStr'}, 'squintdir': {'type': 'cVariant'}, 'squintreffreq': {'type': 'cVariant'}, 'dosquint': {'type': 'cBool'}, 'paincrement': {'type': 'cVariant'}, 'usesymmetricbeam': {'type': 'cBool'}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'coeff': coeff, 'maxrad': maxrad, 'reffreq': reffreq, 'isthispb': isthispb, 'squintdir': squintdir, 'squintreffreq': squintreffreq, 'dosquint': dosquint, 'paincrement': paincrement, 'usesymmetricbeam': usesymmetricbeam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpbinvpoly(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['coeff'], _pc.document['maxrad'], _pc.document['reffreq'], _pc.document['isthispb'], _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
+        return self._swigobj.setpbinvpoly(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _pc.document['coeff'], _pc.document['maxrad'], _pc.document['reffreq'], _str_encode(_pc.document['isthispb']), _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
 
     def setpbnumeric(self, telescope='VLA', othertelescope='', dopb=True, vect=[ float(-1) ], maxrad=[ ], reffreq=[ ], isthispb='PB', squintdir=[ ], squintreffreq=[ ], dosquint=False, paincrement=[ ], usesymmetricbeam=False):
         """Supply a vector of vp/pb sample values taken on a regular grid between x=0 and
@@ -109,7 +111,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'vect': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'maxrad': {'type': 'cVariant'}, 'reffreq': {'type': 'cVariant'}, 'isthispb': {'type': 'cStr'}, 'squintdir': {'type': 'cVariant'}, 'squintreffreq': {'type': 'cVariant'}, 'dosquint': {'type': 'cBool'}, 'paincrement': {'type': 'cVariant'}, 'usesymmetricbeam': {'type': 'cBool'}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'vect': vect, 'maxrad': maxrad, 'reffreq': reffreq, 'isthispb': isthispb, 'squintdir': squintdir, 'squintreffreq': squintreffreq, 'dosquint': dosquint, 'paincrement': paincrement, 'usesymmetricbeam': usesymmetricbeam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpbnumeric(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['vect'], _pc.document['maxrad'], _pc.document['reffreq'], _pc.document['isthispb'], _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
+        return self._swigobj.setpbnumeric(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _pc.document['vect'], _pc.document['maxrad'], _pc.document['reffreq'], _str_encode(_pc.document['isthispb']), _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
 
     def setpbimage(self, telescope='VLA', othertelescope='', dopb=True, realimage='', imagimage='', compleximage='', antnames=[ '*' ]):
         """Experimental: Supply an image of the E Jones elements. The format of the
@@ -142,7 +144,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'realimage': {'type': 'cStr'}, 'imagimage': {'type': 'cStr'}, 'compleximage': {'type': 'cStr'}, 'antnames': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'realimage': realimage, 'imagimage': imagimage, 'compleximage': compleximage, 'antnames': antnames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpbimage(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['realimage'], _pc.document['imagimage'], _pc.document['compleximage'], _pc.document['antnames'])
+        return self._swigobj.setpbimage(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _str_encode(_pc.document['realimage']), _str_encode(_pc.document['imagimage']), _str_encode(_pc.document['compleximage']), [_str_encode(_x) for _x in _pc.document['antnames']])
 
     def setpbpoly(self, telescope='VLA', othertelescope='', dopb=True, coeff=[ float(-1) ], maxrad=[ ], reffreq=[ ], isthispb='PB', squintdir=[ ], squintreffreq=[ ], dosquint=False, paincrement=[ ], usesymmetricbeam=False):
         """The VP or PB is described as a polynomial of even powers:
@@ -153,7 +155,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'coeff': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'maxrad': {'type': 'cVariant'}, 'reffreq': {'type': 'cVariant'}, 'isthispb': {'type': 'cStr'}, 'squintdir': {'type': 'cVariant'}, 'squintreffreq': {'type': 'cVariant'}, 'dosquint': {'type': 'cBool'}, 'paincrement': {'type': 'cVariant'}, 'usesymmetricbeam': {'type': 'cBool'}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'coeff': coeff, 'maxrad': maxrad, 'reffreq': reffreq, 'isthispb': isthispb, 'squintdir': squintdir, 'squintreffreq': squintreffreq, 'dosquint': dosquint, 'paincrement': paincrement, 'usesymmetricbeam': usesymmetricbeam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpbpoly(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['coeff'], _pc.document['maxrad'], _pc.document['reffreq'], _pc.document['isthispb'], _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
+        return self._swigobj.setpbpoly(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _pc.document['coeff'], _pc.document['maxrad'], _pc.document['reffreq'], _str_encode(_pc.document['isthispb']), _pc.document['squintdir'], _pc.document['squintreffreq'], _pc.document['dosquint'], _pc.document['paincrement'], _pc.document['usesymmetricbeam'])
 
     def setpbantresptable(self, telescope='', othertelescope='', dopb=True, antresppath=''):
         """Declare a reference to an antenna responses table containing a set of VP/PB definitions.
@@ -161,7 +163,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'othertelescope': {'type': 'cStr'}, 'dopb': {'type': 'cBool'}, 'antresppath': {'type': 'cReqPath', 'coerce': _coerce.expand_path}}
         doc = {'telescope': telescope, 'othertelescope': othertelescope, 'dopb': dopb, 'antresppath': antresppath}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpbantresptable(_pc.document['telescope'], _pc.document['othertelescope'], _pc.document['dopb'], _pc.document['antresppath'])
+        return self._swigobj.setpbantresptable(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['othertelescope']), _pc.document['dopb'], _pc.document['antresppath'])
 
     def reset(self):
         """Reinitialize the VPManager database.
@@ -176,7 +178,7 @@ class vpmanager:
         schema = {'vplistnum': {'type': 'cInt'}, 'telescope': {'type': 'cStr'}, 'anttype': {'type': 'cStr'}}
         doc = {'vplistnum': vplistnum, 'telescope': telescope, 'anttype': anttype}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setuserdefault(_pc.document['vplistnum'], _pc.document['telescope'], _pc.document['anttype'])
+        return self._swigobj.setuserdefault(_pc.document['vplistnum'], _str_encode(_pc.document['telescope']), _str_encode(_pc.document['anttype']))
 
     def getuserdefault(self, telescope='', anttype=''):
         """Get the vp list number of the present default VP/PB for the given parameters.
@@ -184,7 +186,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'anttype': {'type': 'cStr'}}
         doc = {'telescope': telescope, 'anttype': anttype}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getuserdefault(_pc.document['telescope'], _pc.document['anttype'])
+        return self._swigobj.getuserdefault(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['anttype']))
 
     def getanttypes(self, telescope='', obstime=[ ], freq=[ ], obsdirection=[ ]):
         """Get a list of the available antenna types.
@@ -192,7 +194,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'obstime': {'type': 'cVariant'}, 'freq': {'type': 'cVariant'}, 'obsdirection': {'type': 'cVariant'}}
         doc = {'telescope': telescope, 'obstime': obstime, 'freq': freq, 'obsdirection': obsdirection}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getanttypes(_pc.document['telescope'], _pc.document['obstime'], _pc.document['freq'], _pc.document['obsdirection'])
+        return self._swigobj.getanttypes(_str_encode(_pc.document['telescope']), _pc.document['obstime'], _pc.document['freq'], _pc.document['obsdirection'])
 
     def numvps(self, telescope='', obstime=[ ], freq=[ ], obsdirection=[ ]):
         """Can be used to, e.g., determine the number of antenna types.
@@ -202,7 +204,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'obstime': {'type': 'cVariant'}, 'freq': {'type': 'cVariant'}, 'obsdirection': {'type': 'cVariant'}}
         doc = {'telescope': telescope, 'obstime': obstime, 'freq': freq, 'obsdirection': obsdirection}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.numvps(_pc.document['telescope'], _pc.document['obstime'], _pc.document['freq'], _pc.document['obsdirection'])
+        return self._swigobj.numvps(_str_encode(_pc.document['telescope']), _pc.document['obstime'], _pc.document['freq'], _pc.document['obsdirection'])
 
     def getvp(self, telescope='', antennatype='', obstime=[ ], freq=[ ], obsdirection='AZEL 0deg 90deg'):
         """Record is empty if no matching vp/pb could be found.
@@ -210,7 +212,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'antennatype': {'type': 'cStr'}, 'obstime': {'type': 'cVariant'}, 'freq': {'type': 'cVariant'}, 'obsdirection': {'type': 'cVariant'}}
         doc = {'telescope': telescope, 'antennatype': antennatype, 'obstime': obstime, 'freq': freq, 'obsdirection': obsdirection}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getvp(_pc.document['telescope'], _pc.document['antennatype'], _pc.document['obstime'], _pc.document['freq'], _pc.document['obsdirection'])
+        return self._swigobj.getvp(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['antennatype']), _pc.document['obstime'], _pc.document['freq'], _pc.document['obsdirection'])
 
     def getvps(self, telescope='', antennas=[  ], obstimestart='1970/01/01T00:00:00', obstimeend='1970/01/01T00:00:00', minfreq='1GHz', maxfreq='1GHz', obsdirection='AZEL 0deg 90deg'):
         """Record is empty if no matching vp/pb could be found.
@@ -218,7 +220,7 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'antennas': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'obstimestart': {'type': 'cVariant'}, 'obstimeend': {'type': 'cVariant'}, 'minfreq': {'type': 'cVariant'}, 'maxfreq': {'type': 'cVariant'}, 'obsdirection': {'type': 'cVariant'}}
         doc = {'telescope': telescope, 'antennas': antennas, 'obstimestart': obstimestart, 'obstimeend': obstimeend, 'minfreq': minfreq, 'maxfreq': maxfreq, 'obsdirection': obsdirection}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getvps(_pc.document['telescope'], _pc.document['antennas'], _pc.document['obstimestart'], _pc.document['obstimeend'], _pc.document['minfreq'], _pc.document['maxfreq'], _pc.document['obsdirection'])
+        return self._swigobj.getvps(_str_encode(_pc.document['telescope']), [_str_encode(_x) for _x in _pc.document['antennas']], _pc.document['obstimestart'], _pc.document['obstimeend'], _pc.document['minfreq'], _pc.document['maxfreq'], _pc.document['obsdirection'])
 
     def createantresp(self, imdir='', starttime='', bandnames=[  ], bandminfreq=[  ], bandmaxfreq=[  ]):
         """The AntennaResponses table serves CASA to look up the location of images describing the
@@ -258,7 +260,7 @@ class vpmanager:
         schema = {'imdir': {'type': 'cStr'}, 'starttime': {'type': 'cStr'}, 'bandnames': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'bandminfreq': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'bandmaxfreq': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'imdir': imdir, 'starttime': starttime, 'bandnames': bandnames, 'bandminfreq': bandminfreq, 'bandmaxfreq': bandmaxfreq}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.createantresp(_pc.document['imdir'], _pc.document['starttime'], _pc.document['bandnames'], _pc.document['bandminfreq'], _pc.document['bandmaxfreq'])
+        return self._swigobj.createantresp(_str_encode(_pc.document['imdir']), _str_encode(_pc.document['starttime']), [_str_encode(_x) for _x in _pc.document['bandnames']], [_str_encode(_x) for _x in _pc.document['bandminfreq']], [_str_encode(_x) for _x in _pc.document['bandmaxfreq']])
 
     def getrespimagename(self, telescope='', starttime='', frequency='', functype='ANY', anttype='', azimuth='0deg', elevation='45deg', rectype='', beamnumber=int(0)):
         """Given the observatory name, the antenna type, the receiver type, the observing frequency, the
@@ -267,5 +269,5 @@ class vpmanager:
         schema = {'telescope': {'type': 'cStr'}, 'starttime': {'type': 'cStr'}, 'frequency': {'type': 'cStr'}, 'functype': {'type': 'cStr'}, 'anttype': {'type': 'cStr'}, 'azimuth': {'type': 'cStr'}, 'elevation': {'type': 'cStr'}, 'rectype': {'type': 'cStr'}, 'beamnumber': {'type': 'cInt'}}
         doc = {'telescope': telescope, 'starttime': starttime, 'frequency': frequency, 'functype': functype, 'anttype': anttype, 'azimuth': azimuth, 'elevation': elevation, 'rectype': rectype, 'beamnumber': beamnumber}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getrespimagename(_pc.document['telescope'], _pc.document['starttime'], _pc.document['frequency'], _pc.document['functype'], _pc.document['anttype'], _pc.document['azimuth'], _pc.document['elevation'], _pc.document['rectype'], _pc.document['beamnumber'])
+        return self._swigobj.getrespimagename(_str_encode(_pc.document['telescope']), _str_encode(_pc.document['starttime']), _str_encode(_pc.document['frequency']), _str_encode(_pc.document['functype']), _str_encode(_pc.document['anttype']), _str_encode(_pc.document['azimuth']), _str_encode(_pc.document['elevation']), _str_encode(_pc.document['rectype']), _pc.document['beamnumber'])
 

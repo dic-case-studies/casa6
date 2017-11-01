@@ -2,6 +2,8 @@
 ##################### 6027fdcee2daf9c77e67911b3056537d ##############################
 from __future__ import absolute_import 
 from .__casac__ import calanalysis as _calanalysis
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -162,7 +164,7 @@ class calanalysis:
         schema = {'field': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'timerange': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'feed': {'type': 'cVariant'}, 'axis': {'type': 'cStr'}, 'ap': {'type': 'cStr'}, 'norm': {'type': 'cBool'}, 'unwrap': {'type': 'cBool'}, 'jumpmax': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'field': field, 'antenna': antenna, 'timerange': timerange, 'spw': spw, 'feed': feed, 'axis': axis, 'ap': ap, 'norm': norm, 'unwrap': unwrap, 'jumpmax': jumpmax}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.get(_pc.document['field'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['spw'], _pc.document['feed'], _pc.document['axis'], _pc.document['ap'], _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax'])
+        return self._swigobj.get(_pc.document['field'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['spw'], _pc.document['feed'], _str_encode(_pc.document['axis']), _str_encode(_pc.document['ap']), _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax'])
 
     def fit(self, field=[ ], antenna=[ ], timerange=[ ], spw=[ ], feed=[ ], axis='TIME', ap='AMPLITUDE', norm=False, unwrap=False, jumpmax=float(0.0), order='AVERAGE', type='LSQ', weight=False):
         """This member function returns the calibration data and fits along the
@@ -171,5 +173,5 @@ class calanalysis:
         schema = {'field': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'timerange': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'feed': {'type': 'cVariant'}, 'axis': {'type': 'cStr'}, 'ap': {'type': 'cStr'}, 'norm': {'type': 'cBool'}, 'unwrap': {'type': 'cBool'}, 'jumpmax': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'order': {'type': 'cStr'}, 'type': {'type': 'cStr'}, 'weight': {'type': 'cBool'}}
         doc = {'field': field, 'antenna': antenna, 'timerange': timerange, 'spw': spw, 'feed': feed, 'axis': axis, 'ap': ap, 'norm': norm, 'unwrap': unwrap, 'jumpmax': jumpmax, 'order': order, 'type': type, 'weight': weight}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fit(_pc.document['field'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['spw'], _pc.document['feed'], _pc.document['axis'], _pc.document['ap'], _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax'], _pc.document['order'], _pc.document['type'], _pc.document['weight'])
+        return self._swigobj.fit(_pc.document['field'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['spw'], _pc.document['feed'], _str_encode(_pc.document['axis']), _str_encode(_pc.document['ap']), _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax'], _str_encode(_pc.document['order']), _str_encode(_pc.document['type']), _pc.document['weight'])
 

@@ -2,6 +2,8 @@
 ##################### 5ccab30b635836b46780dc0a327121ac ##############################
 from __future__ import absolute_import 
 from .__casac__ import calibrater as _calibrater
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -25,7 +27,7 @@ class calibrater:
         schema = {'filename': {'type': 'cStr'}, 'compress': {'type': 'cBool'}, 'addcorr': {'type': 'cBool'}, 'addmodel': {'type': 'cBool'}}
         doc = {'filename': filename, 'compress': compress, 'addcorr': addcorr, 'addmodel': addmodel}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.open(_pc.document['filename'], _pc.document['compress'], _pc.document['addcorr'], _pc.document['addmodel'])
+        return self._swigobj.open(_str_encode(_pc.document['filename']), _pc.document['compress'], _pc.document['addcorr'], _pc.document['addmodel'])
 
     def selectvis(self, time=[ ], spw=[ ], scan=[ ], field=[ ], intent=[ ], observation=[ ], baseline=[ ], uvrange=[ ], chanmode='none', nchan=int(1), start=int(0), step=int(1), mstart={'value': float(0.0), 'unit': 'km/s'}, mstep={'value': float(0.0), 'unit': 'km/s'}, msselect=''):
         """This function provids for selection of the visibility data from the MS
@@ -80,7 +82,7 @@ class calibrater:
         schema = {'time': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'scan': {'type': 'cVariant'}, 'field': {'type': 'cVariant'}, 'intent': {'type': 'cVariant'}, 'observation': {'type': 'cVariant'}, 'baseline': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'chanmode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cInt'}, 'step': {'type': 'cInt'}, 'mstart': {'type': 'cFloatQuant'}, 'mstep': {'type': 'cFloatQuant'}, 'msselect': {'type': 'cStr'}}
         doc = {'time': time, 'spw': spw, 'scan': scan, 'field': field, 'intent': intent, 'observation': observation, 'baseline': baseline, 'uvrange': uvrange, 'chanmode': chanmode, 'nchan': nchan, 'start': start, 'step': step, 'mstart': mstart, 'mstep': mstep, 'msselect': msselect}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.selectvis(_pc.document['time'], _pc.document['spw'], _pc.document['scan'], _pc.document['field'], _pc.document['intent'], _pc.document['observation'], _pc.document['baseline'], _pc.document['uvrange'], _pc.document['chanmode'], _pc.document['nchan'], _pc.document['start'], _pc.document['step'], _pc.document['mstart'], _pc.document['mstep'], _pc.document['msselect'])
+        return self._swigobj.selectvis(_pc.document['time'], _pc.document['spw'], _pc.document['scan'], _pc.document['field'], _pc.document['intent'], _pc.document['observation'], _pc.document['baseline'], _pc.document['uvrange'], _str_encode(_pc.document['chanmode']), _pc.document['nchan'], _pc.document['start'], _pc.document['step'], _pc.document['mstart'], _pc.document['mstep'], _str_encode(_pc.document['msselect']))
 
     def setmodel(self, modelimage):
         """Name of the model image to be used as a sky model for model visibility
@@ -89,7 +91,7 @@ class calibrater:
         schema = {'modelimage': {'type': 'cStr'}}
         doc = {'modelimage': modelimage}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setmodel(_pc.document['modelimage'])
+        return self._swigobj.setmodel(_str_encode(_pc.document['modelimage']))
 
     def setptmodel(self, stokes=[ float(0.0),float(0.0),float(0.0),float(0.0) ]):
         """Set a global point source model Stokes parameters to use in solving operations.
@@ -219,7 +221,7 @@ class calibrater:
         schema = {'type': {'type': 'cStr'}, 't': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'table': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'interp': {'type': 'cStr'}, 'select': {'type': 'cStr'}, 'calwt': {'type': 'cBool'}, 'spwmap': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'opacity': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
         doc = {'type': type, 't': t, 'table': table, 'field': field, 'interp': interp, 'select': select, 'calwt': calwt, 'spwmap': spwmap, 'opacity': opacity}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setapply(_pc.document['type'], _pc.document['t'], _pc.document['table'], _pc.document['field'], _pc.document['interp'], _pc.document['select'], _pc.document['calwt'], _pc.document['spwmap'], _pc.document['opacity'])
+        return self._swigobj.setapply(_str_encode(_pc.document['type']), _pc.document['t'], _str_encode(_pc.document['table']), _pc.document['field'], _str_encode(_pc.document['interp']), _str_encode(_pc.document['select']), _pc.document['calwt'], _pc.document['spwmap'], _pc.document['opacity'])
 
     def setcallib(self, callib={ }):
         """TBD
@@ -316,7 +318,7 @@ class calibrater:
         schema = {'type': {'type': 'cStr'}, 't': {'type': 'cVariant'}, 'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'preavg': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'phaseonly': {'type': 'cBool'}, 'apmode': {'type': 'cStr'}, 'refant': {'type': 'cVariant'}, 'refantmode': {'type': 'cStr'}, 'minblperant': {'type': 'cInt'}, 'solnorm': {'type': 'cBool'}, 'minsnr': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'combine': {'type': 'cStr'}, 'fillgaps': {'type': 'cInt'}, 'cfcache': {'type': 'cStr'}, 'painc': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'fitorder': {'type': 'cInt'}, 'fraction': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'numedge': {'type': 'cInt'}, 'radius': {'type': 'cStr'}, 'smooth': {'type': 'cBool'}}
         doc = {'type': type, 't': t, 'table': table, 'append': append, 'preavg': preavg, 'phaseonly': phaseonly, 'apmode': apmode, 'refant': refant, 'refantmode': refantmode, 'minblperant': minblperant, 'solnorm': solnorm, 'minsnr': minsnr, 'combine': combine, 'fillgaps': fillgaps, 'cfcache': cfcache, 'painc': painc, 'fitorder': fitorder, 'fraction': fraction, 'numedge': numedge, 'radius': radius, 'smooth': smooth}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setsolve(_pc.document['type'], _pc.document['t'], _pc.document['table'], _pc.document['append'], _pc.document['preavg'], _pc.document['phaseonly'], _pc.document['apmode'], _pc.document['refant'], _pc.document['refantmode'], _pc.document['minblperant'], _pc.document['solnorm'], _pc.document['minsnr'], _pc.document['combine'], _pc.document['fillgaps'], _pc.document['cfcache'], _pc.document['painc'], _pc.document['fitorder'], _pc.document['fraction'], _pc.document['numedge'], _pc.document['radius'], _pc.document['smooth'])
+        return self._swigobj.setsolve(_str_encode(_pc.document['type']), _pc.document['t'], _str_encode(_pc.document['table']), _pc.document['append'], _pc.document['preavg'], _pc.document['phaseonly'], _str_encode(_pc.document['apmode']), _pc.document['refant'], _str_encode(_pc.document['refantmode']), _pc.document['minblperant'], _pc.document['solnorm'], _pc.document['minsnr'], _str_encode(_pc.document['combine']), _pc.document['fillgaps'], _str_encode(_pc.document['cfcache']), _pc.document['painc'], _pc.document['fitorder'], _pc.document['fraction'], _pc.document['numedge'], _str_encode(_pc.document['radius']), _pc.document['smooth'])
 
     def setsolvegainspline(self, table='', append=False, mode='PHAS', splinetime=float(10800), preavg=float(0.0), npointaver=int(10), phasewrap=float(250), refant=[ ]):
         """This function is a specialization of the {stfaf setsolve} method which
@@ -374,7 +376,7 @@ class calibrater:
         schema = {'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'mode': {'type': 'cStr'}, 'splinetime': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'preavg': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'npointaver': {'type': 'cInt'}, 'phasewrap': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'refant': {'type': 'cVariant'}}
         doc = {'table': table, 'append': append, 'mode': mode, 'splinetime': splinetime, 'preavg': preavg, 'npointaver': npointaver, 'phasewrap': phasewrap, 'refant': refant}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setsolvegainspline(_pc.document['table'], _pc.document['append'], _pc.document['mode'], _pc.document['splinetime'], _pc.document['preavg'], _pc.document['npointaver'], _pc.document['phasewrap'], _pc.document['refant'])
+        return self._swigobj.setsolvegainspline(_str_encode(_pc.document['table']), _pc.document['append'], _str_encode(_pc.document['mode']), _pc.document['splinetime'], _pc.document['preavg'], _pc.document['npointaver'], _pc.document['phasewrap'], _pc.document['refant'])
 
     def setsolvebandpoly(self, table='', append=False, t=[ ], combine='', degamp=int(3), degphase=int(3), visnorm=False, solnorm=True, maskcenter=int(0), maskedge=float(5.0), refant=[ ]):
         """This function is a specialization of the {stfaf setsolve} method
@@ -442,7 +444,7 @@ class calibrater:
         schema = {'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 't': {'type': 'cVariant'}, 'combine': {'type': 'cStr'}, 'degamp': {'type': 'cInt'}, 'degphase': {'type': 'cInt'}, 'visnorm': {'type': 'cBool'}, 'solnorm': {'type': 'cBool'}, 'maskcenter': {'type': 'cInt'}, 'maskedge': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'refant': {'type': 'cVariant'}}
         doc = {'table': table, 'append': append, 't': t, 'combine': combine, 'degamp': degamp, 'degphase': degphase, 'visnorm': visnorm, 'solnorm': solnorm, 'maskcenter': maskcenter, 'maskedge': maskedge, 'refant': refant}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setsolvebandpoly(_pc.document['table'], _pc.document['append'], _pc.document['t'], _pc.document['combine'], _pc.document['degamp'], _pc.document['degphase'], _pc.document['visnorm'], _pc.document['solnorm'], _pc.document['maskcenter'], _pc.document['maskedge'], _pc.document['refant'])
+        return self._swigobj.setsolvebandpoly(_str_encode(_pc.document['table']), _pc.document['append'], _pc.document['t'], _str_encode(_pc.document['combine']), _pc.document['degamp'], _pc.document['degphase'], _pc.document['visnorm'], _pc.document['solnorm'], _pc.document['maskcenter'], _pc.document['maskedge'], _pc.document['refant'])
 
     def state(self):
         """Request the apply/solve state of the calibrater tool.  A listing of
@@ -516,7 +518,7 @@ class calibrater:
         schema = {'applymode': {'type': 'cStr'}}
         doc = {'applymode': applymode}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.correct(_pc.document['applymode'])
+        return self._swigobj.correct(_str_encode(_pc.document['applymode']))
 
     def corrupt(self):
         """This function applies the calibration components specified via one or
@@ -561,7 +563,7 @@ class calibrater:
         schema = {'wtmode': {'type': 'cStr'}, 'dowtsp': {'type': 'cBool'}, 'tsystable': {'type': 'cStr'}, 'gainfield': {'type': 'cStr'}, 'interp': {'type': 'cStr'}, 'spwmap': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
         doc = {'wtmode': wtmode, 'dowtsp': dowtsp, 'tsystable': tsystable, 'gainfield': gainfield, 'interp': interp, 'spwmap': spwmap}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.initweights(_pc.document['wtmode'], _pc.document['dowtsp'], _pc.document['tsystable'], _pc.document['gainfield'], _pc.document['interp'], _pc.document['spwmap'])
+        return self._swigobj.initweights(_str_encode(_pc.document['wtmode']), _pc.document['dowtsp'], _str_encode(_pc.document['tsystable']), _str_encode(_pc.document['gainfield']), _str_encode(_pc.document['interp']), _pc.document['spwmap'])
 
     def fluxscale(self, tablein, reference=[ ], tableout='', transfer=[ ], listfile='', append=False, refspwmap=[ int(-1) ], gainthreshold=float(-1.0), antenna='', timerange='', scan='', incremental=False, fitorder=int(1), display=False):
         """This function is used to bootstrap the amplitude scale the
@@ -647,7 +649,7 @@ class calibrater:
         schema = {'tablein': {'type': 'cStr'}, 'reference': {'type': 'cVariant'}, 'tableout': {'type': 'cStr'}, 'transfer': {'type': 'cVariant'}, 'listfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'refspwmap': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'gainthreshold': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'antenna': {'type': 'cStr'}, 'timerange': {'type': 'cStr'}, 'scan': {'type': 'cStr'}, 'incremental': {'type': 'cBool'}, 'fitorder': {'type': 'cInt'}, 'display': {'type': 'cBool'}}
         doc = {'tablein': tablein, 'reference': reference, 'tableout': tableout, 'transfer': transfer, 'listfile': listfile, 'append': append, 'refspwmap': refspwmap, 'gainthreshold': gainthreshold, 'antenna': antenna, 'timerange': timerange, 'scan': scan, 'incremental': incremental, 'fitorder': fitorder, 'display': display}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fluxscale(_pc.document['tablein'], _pc.document['reference'], _pc.document['tableout'], _pc.document['transfer'], _pc.document['listfile'], _pc.document['append'], _pc.document['refspwmap'], _pc.document['gainthreshold'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['scan'], _pc.document['incremental'], _pc.document['fitorder'], _pc.document['display'])
+        return self._swigobj.fluxscale(_str_encode(_pc.document['tablein']), _pc.document['reference'], _str_encode(_pc.document['tableout']), _pc.document['transfer'], _str_encode(_pc.document['listfile']), _pc.document['append'], _pc.document['refspwmap'], _pc.document['gainthreshold'], _str_encode(_pc.document['antenna']), _str_encode(_pc.document['timerange']), _str_encode(_pc.document['scan']), _pc.document['incremental'], _pc.document['fitorder'], _pc.document['display'])
 
     def accumulate(self, tablein='', incrtable='', tableout='', field=[ ], calfield=[ ], interp='linear', t=float(-1.0), spwmap=[ int(-1) ]):
         """This function enables cumulative calibration using {tt calibrater}.
@@ -795,7 +797,7 @@ class calibrater:
         schema = {'tablein': {'type': 'cStr'}, 'incrtable': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'calfield': {'type': 'cVariant'}, 'interp': {'type': 'cStr'}, 't': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'spwmap': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
         doc = {'tablein': tablein, 'incrtable': incrtable, 'tableout': tableout, 'field': field, 'calfield': calfield, 'interp': interp, 't': t, 'spwmap': spwmap}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.accumulate(_pc.document['tablein'], _pc.document['incrtable'], _pc.document['tableout'], _pc.document['field'], _pc.document['calfield'], _pc.document['interp'], _pc.document['t'], _pc.document['spwmap'])
+        return self._swigobj.accumulate(_str_encode(_pc.document['tablein']), _str_encode(_pc.document['incrtable']), _str_encode(_pc.document['tableout']), _pc.document['field'], _pc.document['calfield'], _str_encode(_pc.document['interp']), _pc.document['t'], _pc.document['spwmap'])
 
     def activityrec(self):
         """This funtion enables returning generic information about recent activity.
@@ -815,7 +817,7 @@ class calibrater:
         schema = {'caltable': {'type': 'cStr'}, 'time': {'type': 'cStr'}, 'spw': {'type': 'cStr'}, 'antenna': {'type': 'cStr'}, 'pol': {'type': 'cStr'}, 'caltype': {'type': 'cStr'}, 'parameter': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'infile': {'type': 'cStr'}, 'uniform': {'type': 'cBool'}}
         doc = {'caltable': caltable, 'time': time, 'spw': spw, 'antenna': antenna, 'pol': pol, 'caltype': caltype, 'parameter': parameter, 'infile': infile, 'uniform': uniform}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.specifycal(_pc.document['caltable'], _pc.document['time'], _pc.document['spw'], _pc.document['antenna'], _pc.document['pol'], _pc.document['caltype'], _pc.document['parameter'], _pc.document['infile'], _pc.document['uniform'])
+        return self._swigobj.specifycal(_str_encode(_pc.document['caltable']), _str_encode(_pc.document['time']), _str_encode(_pc.document['spw']), _str_encode(_pc.document['antenna']), _str_encode(_pc.document['pol']), _str_encode(_pc.document['caltype']), _pc.document['parameter'], _str_encode(_pc.document['infile']), _pc.document['uniform'])
 
     def smooth(self, tablein, tableout, field=[ ], smoothtype='median', smoothtime=float(60.0)):
         """This function provides for time-dependent smoothing of sampled
@@ -854,7 +856,7 @@ class calibrater:
         schema = {'tablein': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'smoothtype': {'type': 'cStr'}, 'smoothtime': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'tablein': tablein, 'tableout': tableout, 'field': field, 'smoothtype': smoothtype, 'smoothtime': smoothtime}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.smooth(_pc.document['tablein'], _pc.document['tableout'], _pc.document['field'], _pc.document['smoothtype'], _pc.document['smoothtime'])
+        return self._swigobj.smooth(_str_encode(_pc.document['tablein']), _str_encode(_pc.document['tableout']), _pc.document['field'], _str_encode(_pc.document['smoothtype']), _pc.document['smoothtime'])
 
     def rerefant(self, tablein, tableout, refantmode='flexible', refant=[ ]):
         """TBD
@@ -868,7 +870,7 @@ class calibrater:
         schema = {'tablein': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'refantmode': {'type': 'cStr'}, 'refant': {'type': 'cVariant'}}
         doc = {'tablein': tablein, 'tableout': tableout, 'refantmode': refantmode, 'refant': refant}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.rerefant(_pc.document['tablein'], _pc.document['tableout'], _pc.document['refantmode'], _pc.document['refant'])
+        return self._swigobj.rerefant(_str_encode(_pc.document['tablein']), _str_encode(_pc.document['tableout']), _str_encode(_pc.document['refantmode']), _pc.document['refant'])
 
     def listcal(self, caltable, field=[ ], antenna=[ ], spw=[ ], listfile='', pagerows=int(50)):
         """calibrater.listcal() lists antenna gain solutions in tabular
@@ -912,7 +914,7 @@ class calibrater:
         schema = {'caltable': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'listfile': {'type': 'cStr'}, 'pagerows': {'type': 'cInt'}}
         doc = {'caltable': caltable, 'field': field, 'antenna': antenna, 'spw': spw, 'listfile': listfile, 'pagerows': pagerows}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.listcal(_pc.document['caltable'], _pc.document['field'], _pc.document['antenna'], _pc.document['spw'], _pc.document['listfile'], _pc.document['pagerows'])
+        return self._swigobj.listcal(_str_encode(_pc.document['caltable']), _pc.document['field'], _pc.document['antenna'], _pc.document['spw'], _str_encode(_pc.document['listfile']), _pc.document['pagerows'])
 
     def posangcal(self, posangcor, tablein, tableout=''):
         """This function is used to apply position angle calibration for
@@ -949,7 +951,7 @@ class calibrater:
         schema = {'posangcor': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tablein': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}}
         doc = {'posangcor': posangcor, 'tablein': tablein, 'tableout': tableout}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.posangcal(_pc.document['posangcor'], _pc.document['tablein'], _pc.document['tableout'])
+        return self._swigobj.posangcal(_pc.document['posangcor'], _str_encode(_pc.document['tablein']), _str_encode(_pc.document['tableout']))
 
     def linpolcor(self, tablein='', tableout='', fields=[  ]):
         """THIS METHOD IS CURRENTLY DISABLED.
@@ -975,7 +977,7 @@ class calibrater:
         schema = {'tablein': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'fields': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'tablein': tablein, 'tableout': tableout, 'fields': fields}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.linpolcor(_pc.document['tablein'], _pc.document['tableout'], _pc.document['fields'])
+        return self._swigobj.linpolcor(_str_encode(_pc.document['tablein']), _str_encode(_pc.document['tableout']), [_str_encode(_x) for _x in _pc.document['fields']])
 
     def plotcal(self, antennas, fields, spwids, plottype='AMP', tablename='', polarization=int(1), multiplot=False, nx=int(1), ny=int(1), psfile=''):
         """This function plots a calibration table either to a plotter or
@@ -1032,7 +1034,7 @@ class calibrater:
         schema = {'antennas': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'fields': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'spwids': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'plottype': {'type': 'cStr'}, 'tablename': {'type': 'cStr'}, 'polarization': {'type': 'cInt'}, 'multiplot': {'type': 'cBool'}, 'nx': {'type': 'cInt'}, 'ny': {'type': 'cInt'}, 'psfile': {'type': 'cStr'}}
         doc = {'antennas': antennas, 'fields': fields, 'spwids': spwids, 'plottype': plottype, 'tablename': tablename, 'polarization': polarization, 'multiplot': multiplot, 'nx': nx, 'ny': ny, 'psfile': psfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.plotcal(_pc.document['antennas'], _pc.document['fields'], _pc.document['spwids'], _pc.document['plottype'], _pc.document['tablename'], _pc.document['polarization'], _pc.document['multiplot'], _pc.document['nx'], _pc.document['ny'], _pc.document['psfile'])
+        return self._swigobj.plotcal(_pc.document['antennas'], _pc.document['fields'], _pc.document['spwids'], _str_encode(_pc.document['plottype']), _str_encode(_pc.document['tablename']), _pc.document['polarization'], _pc.document['multiplot'], _pc.document['nx'], _pc.document['ny'], _str_encode(_pc.document['psfile']))
 
     def modelfit(self, vary, niter=int(0), compshape='P', par=[ float(1.0),float(0.0),float(0.0) ], file=''):
         """This method fits single-component models (points, elliptical Gaussians or elliptical Disks_
@@ -1042,7 +1044,7 @@ class calibrater:
         schema = {'vary': {'type': 'cBoolVec'}, 'niter': {'type': 'cInt'}, 'compshape': {'type': 'cStr'}, 'par': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'file': {'type': 'cStr'}}
         doc = {'vary': vary, 'niter': niter, 'compshape': compshape, 'par': par, 'file': file}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.modelfit(_pc.document['vary'], _pc.document['niter'], _pc.document['compshape'], _pc.document['par'], _pc.document['file'])
+        return self._swigobj.modelfit(_pc.document['vary'], _pc.document['niter'], _str_encode(_pc.document['compshape']), _pc.document['par'], _str_encode(_pc.document['file']))
 
     def createcaltable(self, caltable, partype, caltype, singlechan):
         """Creates an empty calibration table that can subsequently be filled
@@ -1051,7 +1053,7 @@ class calibrater:
         schema = {'caltable': {'type': 'cStr'}, 'partype': {'type': 'cStr'}, 'caltype': {'type': 'cStr'}, 'singlechan': {'type': 'cBool'}}
         doc = {'caltable': caltable, 'partype': partype, 'caltype': caltype, 'singlechan': singlechan}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.createcaltable(_pc.document['caltable'], _pc.document['partype'], _pc.document['caltype'], _pc.document['singlechan'])
+        return self._swigobj.createcaltable(_str_encode(_pc.document['caltable']), _str_encode(_pc.document['partype']), _str_encode(_pc.document['caltype']), _pc.document['singlechan'])
 
     def updatecaltable(self, caltable):
         """This method can be used to update a caltable (from v3.4 or later)
@@ -1066,7 +1068,7 @@ class calibrater:
         schema = {'caltable': {'type': 'cStr'}}
         doc = {'caltable': caltable}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.updatecaltable(_pc.document['caltable'])
+        return self._swigobj.updatecaltable(_str_encode(_pc.document['caltable']))
 
     def close(self):
         """Close the {tt calibrater} tool, which is hardly ever necessary.

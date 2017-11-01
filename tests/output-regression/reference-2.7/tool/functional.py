@@ -2,6 +2,8 @@
 ##################### 0f13b59a4d4f695c2b3330fbedc6740d ##############################
 from __future__ import absolute_import 
 from .__casac__ import functional as _functional
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 _wrap_functional = lambda swig_object: functional(swig_object=swig_object)

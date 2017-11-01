@@ -2,6 +2,8 @@
 ##################### 18150fd18af6d56f92e5cf7a8abb1e3d ##############################
 from __future__ import absolute_import 
 from .__casac__ import quanta as _quanta
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -22,7 +24,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'outunit': {'type': 'cStr'}}
         doc = {'v': v, 'outunit': outunit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.convertfreq(_pc.document['v'], _pc.document['outunit'])
+        return self._swigobj.convertfreq(_pc.document['v'], _str_encode(_pc.document['outunit']))
 
     def convertdop(self, v=[ ], outunit='km/s'):
         """convertfreq converts a velocity quantity to another unit. Units are either
@@ -31,7 +33,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'outunit': {'type': 'cStr'}}
         doc = {'v': v, 'outunit': outunit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.convertdop(_pc.document['v'], _pc.document['outunit'])
+        return self._swigobj.convertdop(_pc.document['v'], _str_encode(_pc.document['outunit']))
 
     def quantity(self, v=[ ], unitname=''):
         """quantity makes a quantity from a string, or from a value and a
@@ -48,7 +50,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'unitname': {'type': 'cStr'}}
         doc = {'v': v, 'unitname': unitname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.quantity(_pc.document['v'], _pc.document['unitname'])
+        return self._swigobj.quantity(_pc.document['v'], _str_encode(_pc.document['unitname']))
 
     def getvalue(self, v=[ ]):
         """getvalue returns the internal value of a quantity. It also can handle an array
@@ -98,7 +100,7 @@ class quanta:
         schema = {'name': {'type': 'cStr'}, 'v': {'type': 'cVariant'}}
         doc = {'name': name, 'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.define(_pc.document['name'], _pc.document['v'])
+        return self._swigobj.define(_str_encode(_pc.document['name']), _pc.document['v'])
 
     def map(self, v='all'):
         """map lists the known mapping of units and constants. It has a single argument,
@@ -116,7 +118,7 @@ class quanta:
         schema = {'v': {'type': 'cStr'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.map(_pc.document['v'])
+        return self._swigobj.map(_str_encode(_pc.document['v']))
 
     def maprec(self, v='all'):
         """maprec returns a record with the known mapping of units and constants. It has a single argument,
@@ -132,7 +134,7 @@ class quanta:
         schema = {'v': {'type': 'cStr'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.maprec(_pc.document['v'])
+        return self._swigobj.maprec(_str_encode(_pc.document['v']))
 
     def fits(self):
         """fits defines some unit names used in reading and writing FITS files.
@@ -161,7 +163,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'prec': {'type': 'cInt'}, 'form': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'showform': {'type': 'cBool'}}
         doc = {'v': v, 'prec': prec, 'form': form, 'showform': showform}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.angle(_pc.document['v'], _pc.document['prec'], _pc.document['form'], _pc.document['showform'])
+        return self._swigobj.angle(_pc.document['v'], _pc.document['prec'], [_str_encode(_x) for _x in _pc.document['form']], _pc.document['showform'])
 
     def time(self, v=[ ], prec=int(0), form=[  ], showform=False):
         """time converts a time quantity to a formatted string. The formatting
@@ -191,7 +193,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'prec': {'type': 'cInt'}, 'form': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'showform': {'type': 'cBool'}}
         doc = {'v': v, 'prec': prec, 'form': form, 'showform': showform}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.time(_pc.document['v'], _pc.document['prec'], _pc.document['form'], _pc.document['showform'])
+        return self._swigobj.time(_pc.document['v'], _pc.document['prec'], [_str_encode(_x) for _x in _pc.document['form']], _pc.document['showform'])
 
     def add(self, v=[ ], a=[ ]):
         """add adds two quantities
@@ -417,7 +419,7 @@ class quanta:
         schema = {'v': {'type': 'cStr'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.check(_pc.document['v'])
+        return self._swigobj.check(_str_encode(_pc.document['v']))
 
     def checkfreq(self, cm=[ ]):
         """checkfreq checks if the argument has a properly defined frequency interpretable
@@ -463,7 +465,7 @@ class quanta:
         schema = {'v': {'type': 'cStr'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.constants(_pc.document['v'])
+        return self._swigobj.constants(_str_encode(_pc.document['v']))
 
     def isangle(self, v=[ ]):
         """isangle checks if the argument is a valid angle/time quantity.
@@ -531,7 +533,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'unitname': {'type': 'cStr'}}
         doc = {'v': v, 'unitname': unitname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.unit(_pc.document['v'], _pc.document['unitname'])
+        return self._swigobj.unit(_pc.document['v'], _str_encode(_pc.document['unitname']))
 
     def isquantity(self, v=[ ]):
         """Checks if the operand is a correct quantity
@@ -547,7 +549,7 @@ class quanta:
         schema = {'t': {'type': 'cStr'}, 'v': {'type': 'cStr'}}
         doc = {'t': t, 'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setformat(_pc.document['t'], _pc.document['v'])
+        return self._swigobj.setformat(_str_encode(_pc.document['t']), _str_encode(_pc.document['v']))
 
     def getformat(self, t=''):
         """getformat returns the current format value set for the different
@@ -560,7 +562,7 @@ class quanta:
         schema = {'t': {'type': 'cStr'}}
         doc = {'t': t}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getformat(_pc.document['t'])
+        return self._swigobj.getformat(_str_encode(_pc.document['t']))
 
     def formxxx(self, v=[ ], format='dms', prec=int(2)):
         """form.xxx (xxx can be lat, long, len, vel, freq, dtime, unit) will format the
@@ -569,5 +571,5 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'format': {'type': 'cStr'}, 'prec': {'type': 'cInt'}}
         doc = {'v': v, 'format': format, 'prec': prec}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.formxxx(_pc.document['v'], _pc.document['format'], _pc.document['prec'])
+        return self._swigobj.formxxx(_pc.document['v'], _str_encode(_pc.document['format']), _pc.document['prec'])
 

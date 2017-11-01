@@ -2,6 +2,8 @@
 ##################### 340a5c6599bfe9bf8b9157218eca622e ##############################
 from __future__ import absolute_import 
 from .__casac__ import imagepol as _imagepol
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 from .image import image as _wrap_image
@@ -61,7 +63,7 @@ class imagepol:
         schema = {'outfile': {'type': 'cStr'}, 'rm': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'pa0': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'nx': {'type': 'cInt'}, 'ny': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'f0': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'bw': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'outfile': outfile, 'rm': rm, 'pa0': pa0, 'sigma': sigma, 'nx': nx, 'ny': ny, 'nf': nf, 'f0': f0, 'bw': bw}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.imagepoltestimage(_pc.document['outfile'], _pc.document['rm'], _pc.document['pa0'], _pc.document['sigma'], _pc.document['nx'], _pc.document['ny'], _pc.document['nf'], _pc.document['f0'], _pc.document['bw'])
+        return self._swigobj.imagepoltestimage(_str_encode(_pc.document['outfile']), _pc.document['rm'], _pc.document['pa0'], _pc.document['sigma'], _pc.document['nx'], _pc.document['ny'], _pc.document['nf'], _pc.document['f0'], _pc.document['bw'])
 
     def complexlinpol(self, outfile):
         """This function  produces
@@ -76,7 +78,7 @@ class imagepol:
         schema = {'outfile': {'type': 'cStr'}}
         doc = {'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.complexlinpol(_pc.document['outfile'])
+        return self._swigobj.complexlinpol(_str_encode(_pc.document['outfile']))
 
     def complexfraclinpol(self, outfile):
         """This function produces
@@ -91,7 +93,7 @@ class imagepol:
         schema = {'outfile': {'type': 'cStr'}}
         doc = {'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.complexfraclinpol(_pc.document['outfile'])
+        return self._swigobj.complexfraclinpol(_str_encode(_pc.document['outfile']))
 
     def depolratio(self, infile, debias=False, clip=float(10.0), sigma=float(-1), outfile=''):
         """This function  returns the linear
@@ -120,7 +122,7 @@ class imagepol:
         schema = {'infile': {'type': 'cReqPath', 'coerce': _coerce.expand_path}, 'debias': {'type': 'cBool'}, 'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'infile': infile, 'debias': debias, 'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.depolratio(_pc.document['infile'], _pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.depolratio(_pc.document['infile'], _pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def close(self):
         """This function closes the imagepol tool.  This means that it detaches
@@ -169,7 +171,7 @@ class imagepol:
         schema = {'complex': {'type': 'cStr'}, 'amp': {'type': 'cStr'}, 'pa': {'type': 'cStr'}, 'real': {'type': 'cStr'}, 'imag': {'type': 'cStr'}, 'zerolag0': {'type': 'cBool'}}
         doc = {'complex': complex, 'amp': amp, 'pa': pa, 'real': real, 'imag': imag, 'zerolag0': zerolag0}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fourierrotationmeasure(_pc.document['complex'], _pc.document['amp'], _pc.document['pa'], _pc.document['real'], _pc.document['imag'], _pc.document['zerolag0'])
+        return self._swigobj.fourierrotationmeasure(_str_encode(_pc.document['complex']), _str_encode(_pc.document['amp']), _str_encode(_pc.document['pa']), _str_encode(_pc.document['real']), _str_encode(_pc.document['imag']), _pc.document['zerolag0'])
 
     def fraclinpol(self, debias=False, clip=float(10.0), sigma=float(-1), outfile=''):
         """This function
@@ -183,7 +185,7 @@ class imagepol:
         schema = {'debias': {'type': 'cBool'}, 'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'debias': debias, 'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.fraclinpol(_pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.fraclinpol(_pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def fractotpol(self, debias=False, clip=float(10.0), sigma=float(-1), outfile=''):
         """This function
@@ -200,7 +202,7 @@ class imagepol:
         schema = {'debias': {'type': 'cBool'}, 'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'debias': debias, 'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.fractotpol(_pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.fractotpol(_pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def linpolint(self, debias=False, clip=float(10.0), sigma=float(-1), outfile=''):
         """This function
@@ -214,7 +216,7 @@ class imagepol:
         schema = {'debias': {'type': 'cBool'}, 'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'debias': debias, 'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.linpolint(_pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.linpolint(_pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def linpolposang(self, outfile=''):
         """This function  returns the linearly
@@ -223,7 +225,7 @@ class imagepol:
         schema = {'outfile': {'type': 'cStr'}}
         doc = {'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.linpolposang(_pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.linpolposang(_str_encode(_pc.document['outfile'])))
 
     def makecomplex(self, complex, real='', imag='', amp='', phase=''):
         """This function generates a Complex imagefile from either
@@ -235,7 +237,7 @@ class imagepol:
         schema = {'complex': {'type': 'cStr'}, 'real': {'type': 'cStr'}, 'imag': {'type': 'cStr'}, 'amp': {'type': 'cStr'}, 'phase': {'type': 'cStr'}}
         doc = {'complex': complex, 'real': real, 'imag': imag, 'amp': amp, 'phase': phase}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.makecomplex(_pc.document['complex'], _pc.document['real'], _pc.document['imag'], _pc.document['amp'], _pc.document['phase'])
+        return self._swigobj.makecomplex(_str_encode(_pc.document['complex']), _str_encode(_pc.document['real']), _str_encode(_pc.document['imag']), _str_encode(_pc.document['amp']), _str_encode(_pc.document['phase']))
 
     def open(self, image={ }):
         """Before polarimetric analysis can commence, an imagefile must be
@@ -296,7 +298,7 @@ class imagepol:
         schema = {'which': {'type': 'cStr'}, 'debias': {'type': 'cBool'}, 'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'which': which, 'debias': debias, 'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.pol(_pc.document['which'], _pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.pol(_str_encode(_pc.document['which']), _pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def rotationmeasure(self, rm='', rmerr='', pa0='', pa0err='', nturns='', chisq='', sigma=float(-1), rmfg=float(0.0), rmmax=float(0.0), maxpaerr=float(1e30), plotter='', nx=int(5), ny=int(5)):
         """This function generates the rotation
@@ -363,7 +365,7 @@ class imagepol:
         schema = {'rm': {'type': 'cStr'}, 'rmerr': {'type': 'cStr'}, 'pa0': {'type': 'cStr'}, 'pa0err': {'type': 'cStr'}, 'nturns': {'type': 'cStr'}, 'chisq': {'type': 'cStr'}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'rmfg': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'rmmax': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxpaerr': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'plotter': {'type': 'cStr'}, 'nx': {'type': 'cInt'}, 'ny': {'type': 'cInt'}}
         doc = {'rm': rm, 'rmerr': rmerr, 'pa0': pa0, 'pa0err': pa0err, 'nturns': nturns, 'chisq': chisq, 'sigma': sigma, 'rmfg': rmfg, 'rmmax': rmmax, 'maxpaerr': maxpaerr, 'plotter': plotter, 'nx': nx, 'ny': ny}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.rotationmeasure(_pc.document['rm'], _pc.document['rmerr'], _pc.document['pa0'], _pc.document['pa0err'], _pc.document['nturns'], _pc.document['chisq'], _pc.document['sigma'], _pc.document['rmfg'], _pc.document['rmmax'], _pc.document['maxpaerr'], _pc.document['plotter'], _pc.document['nx'], _pc.document['ny'])
+        return self._swigobj.rotationmeasure(_str_encode(_pc.document['rm']), _str_encode(_pc.document['rmerr']), _str_encode(_pc.document['pa0']), _str_encode(_pc.document['pa0err']), _str_encode(_pc.document['nturns']), _str_encode(_pc.document['chisq']), _pc.document['sigma'], _pc.document['rmfg'], _pc.document['rmmax'], _pc.document['maxpaerr'], _str_encode(_pc.document['plotter']), _pc.document['nx'], _pc.document['ny'])
 
     def sigma(self, clip=float(10.0)):
         """This function returns the standard deviation from V, Q&U or I in that
@@ -402,7 +404,7 @@ class imagepol:
         schema = {'infile': {'type': 'cReqPath', 'coerce': _coerce.expand_path}, 'debias': {'type': 'cBool'}, 'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'infile': infile, 'debias': debias, 'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.sigmadepolratio(_pc.document['infile'], _pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.sigmadepolratio(_pc.document['infile'], _pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def sigmafraclinpol(self, clip=float(10.0), sigma=float(-1), outfile=''):
         """This function  returns the
@@ -418,7 +420,7 @@ class imagepol:
         schema = {'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.sigmafraclinpol(_pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.sigmafraclinpol(_pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def sigmafractotpol(self, clip=float(10.0), sigma=float(-1), outfile=''):
         """This function  returns the
@@ -433,7 +435,7 @@ class imagepol:
         schema = {'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.sigmafractotpol(_pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.sigmafractotpol(_pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def sigmalinpolint(self, clip=float(10.0), sigma=float(-1), outfile=''):
         """This function  returns the error (standard
@@ -449,7 +451,7 @@ class imagepol:
         schema = {'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.sigmalinpolint(_pc.document['clip'], _pc.document['sigma'], _pc.document['outfile'])
+        return self._swigobj.sigmalinpolint(_pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile']))
 
     def sigmalinpolposang(self, clip=float(10.0), sigma=float(-1), outfile=''):
         """This function  returns the
@@ -465,7 +467,7 @@ class imagepol:
         schema = {'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.sigmalinpolposang(_pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.sigmalinpolposang(_pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 
     def sigmastokes(self, which, clip=float(10.0)):
         """This function  returns the standard
@@ -475,7 +477,7 @@ class imagepol:
         schema = {'which': {'type': 'cStr'}, 'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'which': which, 'clip': clip}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.sigmastokes(_pc.document['which'], _pc.document['clip'])
+        return self._swigobj.sigmastokes(_str_encode(_pc.document['which']), _pc.document['clip'])
 
     def sigmastokesi(self, clip=float(10.0)):
         """This function  returns the standard deviation of the noise for the
@@ -540,7 +542,7 @@ class imagepol:
         schema = {'which': {'type': 'cStr'}, 'outfile': {'type': 'cStr'}}
         doc = {'which': which, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.stokes(_pc.document['which'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.stokes(_str_encode(_pc.document['which']), _str_encode(_pc.document['outfile'])))
 
     def stokesi(self, outfile=''):
         """This function returns an on-the-fly image tool containing Stokes I only.
@@ -548,7 +550,7 @@ class imagepol:
         schema = {'outfile': {'type': 'cStr'}}
         doc = {'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.stokesi(_pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.stokesi(_str_encode(_pc.document['outfile'])))
 
     def stokesq(self, outfile=''):
         """This function returns an on-the-fly image tool containing Stokes Q only.
@@ -556,7 +558,7 @@ class imagepol:
         schema = {'outfile': {'type': 'cStr'}}
         doc = {'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.stokesq(_pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.stokesq(_str_encode(_pc.document['outfile'])))
 
     def stokesu(self, outfile=''):
         """This function returns an on-the-fly image tool containing Stokes U only.
@@ -564,7 +566,7 @@ class imagepol:
         schema = {'outfile': {'type': 'cStr'}}
         doc = {'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.stokesu(_pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.stokesu(_str_encode(_pc.document['outfile'])))
 
     def stokesv(self, outfile=''):
         """This function returns an on-the-fly image tool containing Stokes V only.
@@ -572,7 +574,7 @@ class imagepol:
         schema = {'outfile': {'type': 'cStr'}}
         doc = {'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.stokesv(_pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.stokesv(_str_encode(_pc.document['outfile'])))
 
     def summary(self):
         """This function just lists a summary of the Imagepol tool to the logger.
@@ -594,5 +596,5 @@ class imagepol:
         schema = {'debias': {'type': 'cBool'}, 'clip': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'sigma': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'outfile': {'type': 'cStr'}}
         doc = {'debias': debias, 'clip': clip, 'sigma': sigma, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_image(swig_object=self._swigobj.totpolint(_pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _pc.document['outfile']))
+        return _wrap_image(swig_object=self._swigobj.totpolint(_pc.document['debias'], _pc.document['clip'], _pc.document['sigma'], _str_encode(_pc.document['outfile'])))
 

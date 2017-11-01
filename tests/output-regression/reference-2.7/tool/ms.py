@@ -2,6 +2,8 @@
 ##################### 39a3c11106700d068d59e7f714f10974 ##############################
 from __future__ import absolute_import 
 from .__casac__ import ms as _ms
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 from .table import table as _wrap_table
@@ -98,7 +100,7 @@ class ms:
         schema = {'msfile': {'type': 'cStr'}, 'fitsfile': {'type': 'cReqPath', 'coerce': _coerce.expand_path}, 'nomodify': {'type': 'cBool'}, 'lock': {'type': 'cBool'}, 'obstype': {'type': 'cInt'}, 'host': {'type': 'cStr'}, 'forcenewserver': {'type': 'cBool'}, 'antnamescheme': {'type': 'cStr'}}
         doc = {'msfile': msfile, 'fitsfile': fitsfile, 'nomodify': nomodify, 'lock': lock, 'obstype': obstype, 'host': host, 'forcenewserver': forcenewserver, 'antnamescheme': antnamescheme}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromfits(_pc.document['msfile'], _pc.document['fitsfile'], _pc.document['nomodify'], _pc.document['lock'], _pc.document['obstype'], _pc.document['host'], _pc.document['forcenewserver'], _pc.document['antnamescheme'])
+        return self._swigobj.fromfits(_str_encode(_pc.document['msfile']), _pc.document['fitsfile'], _pc.document['nomodify'], _pc.document['lock'], _pc.document['obstype'], _str_encode(_pc.document['host']), _pc.document['forcenewserver'], _str_encode(_pc.document['antnamescheme']))
 
     def fromfitsidi(self, msfile='', fitsfile='', nomodify=True, lock=False, obstype=int(0)):
         """This function will convert a uvfits file to a measurement set table and
@@ -124,7 +126,7 @@ class ms:
         schema = {'msfile': {'type': 'cStr'}, 'fitsfile': {'type': 'cStr'}, 'nomodify': {'type': 'cBool'}, 'lock': {'type': 'cBool'}, 'obstype': {'type': 'cInt'}}
         doc = {'msfile': msfile, 'fitsfile': fitsfile, 'nomodify': nomodify, 'lock': lock, 'obstype': obstype}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromfitsidi(_pc.document['msfile'], _pc.document['fitsfile'], _pc.document['nomodify'], _pc.document['lock'], _pc.document['obstype'])
+        return self._swigobj.fromfitsidi(_str_encode(_pc.document['msfile']), _str_encode(_pc.document['fitsfile']), _pc.document['nomodify'], _pc.document['lock'], _pc.document['obstype'])
 
     def listfits(self, fitsfile):
         """
@@ -132,7 +134,7 @@ class ms:
         schema = {'fitsfile': {'type': 'cStr'}}
         doc = {'fitsfile': fitsfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.listfits(_pc.document['fitsfile'])
+        return self._swigobj.listfits(_str_encode(_pc.document['fitsfile']))
 
     def createmultims(self, outputTableName, tables, subtables, nomodify=True, lock=False, copysubtables=False, omitsubtables=[  ]):
         """
@@ -140,7 +142,7 @@ class ms:
         schema = {'outputTableName': {'type': 'cStr'}, 'tables': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'subtables': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'nomodify': {'type': 'cBool'}, 'lock': {'type': 'cBool'}, 'copysubtables': {'type': 'cBool'}, 'omitsubtables': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'outputTableName': outputTableName, 'tables': tables, 'subtables': subtables, 'nomodify': nomodify, 'lock': lock, 'copysubtables': copysubtables, 'omitsubtables': omitsubtables}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.createmultims(_pc.document['outputTableName'], _pc.document['tables'], _pc.document['subtables'], _pc.document['nomodify'], _pc.document['lock'], _pc.document['copysubtables'], _pc.document['omitsubtables'])
+        return self._swigobj.createmultims(_str_encode(_pc.document['outputTableName']), [_str_encode(_x) for _x in _pc.document['tables']], [_str_encode(_x) for _x in _pc.document['subtables']], _pc.document['nomodify'], _pc.document['lock'], _pc.document['copysubtables'], [_str_encode(_x) for _x in _pc.document['omitsubtables']])
 
     def ismultims(self):
         """
@@ -161,7 +163,7 @@ class ms:
         schema = {'dircolname': {'type': 'cStr'}, 'fieldid': {'type': 'cInt'}, 'time': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'format': {'type': 'cStr'}}
         doc = {'dircolname': dircolname, 'fieldid': fieldid, 'time': time, 'format': format}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getfielddirmeas(_pc.document['dircolname'], _pc.document['fieldid'], _pc.document['time'], _pc.document['format'])
+        return self._swigobj.getfielddirmeas(_str_encode(_pc.document['dircolname']), _pc.document['fieldid'], _pc.document['time'], _str_encode(_pc.document['format']))
 
     def nrow(self, selected=False):
         """DEPRECATED: Please use the ms::nrow2() function in place of
@@ -425,7 +427,7 @@ class ms:
         schema = {'combine': {'type': 'cStr'}, 'timebin': {'type': 'cVariant'}, 'slidetimebin': {'type': 'cBool'}, 'chanbin': {'type': 'cVariant'}, 'minsamp': {'type': 'cInt'}, 'statalg': {'type': 'cStr'}, 'fence': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'center': {'type': 'cStr'}, 'lside': {'type': 'cBool'}, 'zscore': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxiter': {'type': 'cInt'}, 'excludechans': {'type': 'cStr'}, 'wtrange': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'preview': {'type': 'cBool'}, 'datacolumn': {'type': 'cStr'}}
         doc = {'combine': combine, 'timebin': timebin, 'slidetimebin': slidetimebin, 'chanbin': chanbin, 'minsamp': minsamp, 'statalg': statalg, 'fence': fence, 'center': center, 'lside': lside, 'zscore': zscore, 'maxiter': maxiter, 'excludechans': excludechans, 'wtrange': wtrange, 'preview': preview, 'datacolumn': datacolumn}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.statwt2(_pc.document['combine'], _pc.document['timebin'], _pc.document['slidetimebin'], _pc.document['chanbin'], _pc.document['minsamp'], _pc.document['statalg'], _pc.document['fence'], _pc.document['center'], _pc.document['lside'], _pc.document['zscore'], _pc.document['maxiter'], _pc.document['excludechans'], _pc.document['wtrange'], _pc.document['preview'], _pc.document['datacolumn'])
+        return self._swigobj.statwt2(_str_encode(_pc.document['combine']), _pc.document['timebin'], _pc.document['slidetimebin'], _pc.document['chanbin'], _pc.document['minsamp'], _str_encode(_pc.document['statalg']), _pc.document['fence'], _str_encode(_pc.document['center']), _pc.document['lside'], _pc.document['zscore'], _pc.document['maxiter'], _str_encode(_pc.document['excludechans']), _pc.document['wtrange'], _pc.document['preview'], _str_encode(_pc.document['datacolumn']))
 
     def tofits(self, fitsfile='', column='corrected', field=[ ], spw=[ ], baseline=[ ], time='', scan=[ ], uvrange=[ ], taql='', writesyscal=False, multisource=False, combinespw=False, writestation=False, padwithflags=False, overwrite=False):
         """This function writes a uvfits file that contains the data in
@@ -504,7 +506,7 @@ class ms:
         schema = {'fitsfile': {'type': 'cStr'}, 'column': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'baseline': {'type': 'cVariant'}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'taql': {'type': 'cStr'}, 'writesyscal': {'type': 'cBool'}, 'multisource': {'type': 'cBool'}, 'combinespw': {'type': 'cBool'}, 'writestation': {'type': 'cBool'}, 'padwithflags': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
         doc = {'fitsfile': fitsfile, 'column': column, 'field': field, 'spw': spw, 'baseline': baseline, 'time': time, 'scan': scan, 'uvrange': uvrange, 'taql': taql, 'writesyscal': writesyscal, 'multisource': multisource, 'combinespw': combinespw, 'writestation': writestation, 'padwithflags': padwithflags, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.tofits(_pc.document['fitsfile'], _pc.document['column'], _pc.document['field'], _pc.document['spw'], _pc.document['baseline'], _pc.document['time'], _pc.document['scan'], _pc.document['uvrange'], _pc.document['taql'], _pc.document['writesyscal'], _pc.document['multisource'], _pc.document['combinespw'], _pc.document['writestation'], _pc.document['padwithflags'], _pc.document['overwrite'])
+        return self._swigobj.tofits(_str_encode(_pc.document['fitsfile']), _str_encode(_pc.document['column']), _pc.document['field'], _pc.document['spw'], _pc.document['baseline'], _str_encode(_pc.document['time']), _pc.document['scan'], _pc.document['uvrange'], _str_encode(_pc.document['taql']), _pc.document['writesyscal'], _pc.document['multisource'], _pc.document['combinespw'], _pc.document['writestation'], _pc.document['padwithflags'], _pc.document['overwrite'])
 
     def summary(self, verbose=False, listfile='', listunfl=False, cachesize=float(50), overwrite=False, wantreturn=True):
         """This method will print a summary of the measurement set to the
@@ -534,7 +536,7 @@ class ms:
         schema = {'verbose': {'type': 'cBool'}, 'listfile': {'type': 'cStr'}, 'listunfl': {'type': 'cBool'}, 'cachesize': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'overwrite': {'type': 'cBool'}, 'wantreturn': {'type': 'cBool'}}
         doc = {'verbose': verbose, 'listfile': listfile, 'listunfl': listunfl, 'cachesize': cachesize, 'overwrite': overwrite, 'wantreturn': wantreturn}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.summary(_pc.document['verbose'], _pc.document['listfile'], _pc.document['listunfl'], _pc.document['cachesize'], _pc.document['overwrite'], _pc.document['wantreturn'])
+        return self._swigobj.summary(_pc.document['verbose'], _str_encode(_pc.document['listfile']), _pc.document['listunfl'], _pc.document['cachesize'], _pc.document['overwrite'], _pc.document['wantreturn'])
 
     def getscansummary(self):
         """This function will return a summary of the main table as a structure
@@ -569,7 +571,7 @@ class ms:
         schema = {'message': {'type': 'cStr'}, 'parms': {'type': 'cStr'}, 'origin': {'type': 'cStr'}, 'msname': {'type': 'cStr'}, 'app': {'type': 'cStr'}}
         doc = {'message': message, 'parms': parms, 'origin': origin, 'msname': msname, 'app': app}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.writehistory(_pc.document['message'], _pc.document['parms'], _pc.document['origin'], _pc.document['msname'], _pc.document['app'])
+        return self._swigobj.writehistory(_str_encode(_pc.document['message']), _str_encode(_pc.document['parms']), _str_encode(_pc.document['origin']), _str_encode(_pc.document['msname']), _str_encode(_pc.document['app']))
 
     def statisticsold(self, column='', complex_value='', useflags=True, spw='', field='', baseline='', uvrange='', time='', correlation='', scan='', array='', obs=''):
         """DEPRECATED: Please use the ms::statistics() function in place of
@@ -585,7 +587,7 @@ class ms:
         schema = {'column': {'type': 'cStr'}, 'complex_value': {'type': 'cStr'}, 'useflags': {'type': 'cBool'}, 'spw': {'type': 'cStr'}, 'field': {'type': 'cStr'}, 'baseline': {'type': 'cStr'}, 'uvrange': {'type': 'cStr'}, 'time': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'scan': {'type': 'cStr'}, 'array': {'type': 'cStr'}, 'obs': {'type': 'cStr'}}
         doc = {'column': column, 'complex_value': complex_value, 'useflags': useflags, 'spw': spw, 'field': field, 'baseline': baseline, 'uvrange': uvrange, 'time': time, 'correlation': correlation, 'scan': scan, 'array': array, 'obs': obs}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.statisticsold(_pc.document['column'], _pc.document['complex_value'], _pc.document['useflags'], _pc.document['spw'], _pc.document['field'], _pc.document['baseline'], _pc.document['uvrange'], _pc.document['time'], _pc.document['correlation'], _pc.document['scan'], _pc.document['array'], _pc.document['obs'])
+        return self._swigobj.statisticsold(_str_encode(_pc.document['column']), _str_encode(_pc.document['complex_value']), _pc.document['useflags'], _str_encode(_pc.document['spw']), _str_encode(_pc.document['field']), _str_encode(_pc.document['baseline']), _str_encode(_pc.document['uvrange']), _str_encode(_pc.document['time']), _str_encode(_pc.document['correlation']), _str_encode(_pc.document['scan']), _str_encode(_pc.document['array']), _str_encode(_pc.document['obs']))
 
     def statistics(self, column='', complex_value='', useflags=True, useweights=False, spw='', field='', baseline='', uvrange='', time='', correlation='', scan='', intent='', array='', obs='', reportingaxes='', timeaverage=False, timebin='0s', timespan='', maxuvwdistance=float(0.0)):
         """This function computes descriptive statistics on the measurement set.
@@ -598,7 +600,7 @@ class ms:
         schema = {'column': {'type': 'cStr'}, 'complex_value': {'type': 'cStr'}, 'useflags': {'type': 'cBool'}, 'useweights': {'type': 'cBool'}, 'spw': {'type': 'cStr'}, 'field': {'type': 'cStr'}, 'baseline': {'type': 'cStr'}, 'uvrange': {'type': 'cStr'}, 'time': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'scan': {'type': 'cStr'}, 'intent': {'type': 'cStr'}, 'array': {'type': 'cStr'}, 'obs': {'type': 'cStr'}, 'reportingaxes': {'type': 'cStr'}, 'timeaverage': {'type': 'cBool'}, 'timebin': {'type': 'cStr'}, 'timespan': {'type': 'cStr'}, 'maxuvwdistance': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'column': column, 'complex_value': complex_value, 'useflags': useflags, 'useweights': useweights, 'spw': spw, 'field': field, 'baseline': baseline, 'uvrange': uvrange, 'time': time, 'correlation': correlation, 'scan': scan, 'intent': intent, 'array': array, 'obs': obs, 'reportingaxes': reportingaxes, 'timeaverage': timeaverage, 'timebin': timebin, 'timespan': timespan, 'maxuvwdistance': maxuvwdistance}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.statistics(_pc.document['column'], _pc.document['complex_value'], _pc.document['useflags'], _pc.document['useweights'], _pc.document['spw'], _pc.document['field'], _pc.document['baseline'], _pc.document['uvrange'], _pc.document['time'], _pc.document['correlation'], _pc.document['scan'], _pc.document['intent'], _pc.document['array'], _pc.document['obs'], _pc.document['reportingaxes'], _pc.document['timeaverage'], _pc.document['timebin'], _pc.document['timespan'], _pc.document['maxuvwdistance'])
+        return self._swigobj.statistics(_str_encode(_pc.document['column']), _str_encode(_pc.document['complex_value']), _pc.document['useflags'], _pc.document['useweights'], _str_encode(_pc.document['spw']), _str_encode(_pc.document['field']), _str_encode(_pc.document['baseline']), _str_encode(_pc.document['uvrange']), _str_encode(_pc.document['time']), _str_encode(_pc.document['correlation']), _str_encode(_pc.document['scan']), _str_encode(_pc.document['intent']), _str_encode(_pc.document['array']), _str_encode(_pc.document['obs']), _str_encode(_pc.document['reportingaxes']), _pc.document['timeaverage'], _str_encode(_pc.document['timebin']), _str_encode(_pc.document['timespan']), _pc.document['maxuvwdistance'])
 
     def range(self, items=[  ], useflags=True, blocksize=int(10)):
         """DEPRECATED: Please use the ms::range2() function in place of
@@ -642,7 +644,7 @@ class ms:
         schema = {'items': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'useflags': {'type': 'cBool'}, 'blocksize': {'type': 'cInt'}}
         doc = {'items': items, 'useflags': useflags, 'blocksize': blocksize}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.range(_pc.document['items'], _pc.document['useflags'], _pc.document['blocksize'])
+        return self._swigobj.range([_str_encode(_x) for _x in _pc.document['items']], _pc.document['useflags'], _pc.document['blocksize'])
 
     def range2(self, items=[  ], useflags=True, blocksize=int(10)):
         """This function will return the range of values in the currently
@@ -683,7 +685,7 @@ class ms:
         schema = {'items': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'useflags': {'type': 'cBool'}, 'blocksize': {'type': 'cInt'}}
         doc = {'items': items, 'useflags': useflags, 'blocksize': blocksize}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.range2(_pc.document['items'], _pc.document['useflags'], _pc.document['blocksize'])
+        return self._swigobj.range2([_str_encode(_x) for _x in _pc.document['items']], _pc.document['useflags'], _pc.document['blocksize'])
 
     def lister(self, options='', datacolumn='data', field='', spw='', antenna='', timerange='', correlation='', scan='', feed='', array='', observation='', uvrange='', average='', showflags=False, msselect='', pagerows=int(50), listfile=''):
         """This tool lists measurement set visibility data under a number of
@@ -724,7 +726,7 @@ class ms:
         schema = {'options': {'type': 'cStr'}, 'datacolumn': {'type': 'cStr'}, 'field': {'type': 'cStr'}, 'spw': {'type': 'cStr'}, 'antenna': {'type': 'cStr'}, 'timerange': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'scan': {'type': 'cStr'}, 'feed': {'type': 'cStr'}, 'array': {'type': 'cStr'}, 'observation': {'type': 'cStr'}, 'uvrange': {'type': 'cStr'}, 'average': {'type': 'cStr'}, 'showflags': {'type': 'cBool'}, 'msselect': {'type': 'cStr'}, 'pagerows': {'type': 'cInt'}, 'listfile': {'type': 'cStr'}}
         doc = {'options': options, 'datacolumn': datacolumn, 'field': field, 'spw': spw, 'antenna': antenna, 'timerange': timerange, 'correlation': correlation, 'scan': scan, 'feed': feed, 'array': array, 'observation': observation, 'uvrange': uvrange, 'average': average, 'showflags': showflags, 'msselect': msselect, 'pagerows': pagerows, 'listfile': listfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.lister(_pc.document['options'], _pc.document['datacolumn'], _pc.document['field'], _pc.document['spw'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['correlation'], _pc.document['scan'], _pc.document['feed'], _pc.document['array'], _pc.document['observation'], _pc.document['uvrange'], _pc.document['average'], _pc.document['showflags'], _pc.document['msselect'], _pc.document['pagerows'], _pc.document['listfile'])
+        return self._swigobj.lister(_str_encode(_pc.document['options']), _str_encode(_pc.document['datacolumn']), _str_encode(_pc.document['field']), _str_encode(_pc.document['spw']), _str_encode(_pc.document['antenna']), _str_encode(_pc.document['timerange']), _str_encode(_pc.document['correlation']), _str_encode(_pc.document['scan']), _str_encode(_pc.document['feed']), _str_encode(_pc.document['array']), _str_encode(_pc.document['observation']), _str_encode(_pc.document['uvrange']), _str_encode(_pc.document['average']), _pc.document['showflags'], _str_encode(_pc.document['msselect']), _pc.document['pagerows'], _str_encode(_pc.document['listfile']))
 
     def metadata(self, cachesize=float(50)):
         """Get the MS metadata associated with this MS.
@@ -924,7 +926,7 @@ class ms:
         schema = {'msselect': {'type': 'cStr'}}
         doc = {'msselect': msselect}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.selecttaql(_pc.document['msselect'])
+        return self._swigobj.selecttaql(_str_encode(_pc.document['msselect']))
 
     def selecttaql2(self, msselect=''):
         """This function will select a subset of the current measurement set
@@ -943,7 +945,7 @@ class ms:
         schema = {'msselect': {'type': 'cStr'}}
         doc = {'msselect': msselect}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.selecttaql2(_pc.document['msselect'])
+        return self._swigobj.selecttaql2(_str_encode(_pc.document['msselect']))
 
     def selectchannel(self, nchan=int(1), start=int(0), width=int(1), inc=int(1)):
         """DEPRECATED: Please use the ms::selectchannel2() function in place of
@@ -1059,7 +1061,7 @@ class ms:
         schema = {'wantedpol': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'wantedpol': wantedpol}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.selectpolarization(_pc.document['wantedpol'])
+        return self._swigobj.selectpolarization([_str_encode(_x) for _x in _pc.document['wantedpol']])
 
     def selectpolarization2(self, wantedpol=[  ]):
         """This function allows you to select a subset of the polarizations
@@ -1085,7 +1087,7 @@ class ms:
         schema = {'wantedpol': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'wantedpol': wantedpol}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.selectpolarization2(_pc.document['wantedpol'])
+        return self._swigobj.selectpolarization2([_str_encode(_x) for _x in _pc.document['wantedpol']])
 
     def regridspw(self, outframe='LSRK', mode='chan', restfreq=float(-3E30), interpolation='LINEAR', start=float(-3E30), center=float(-3E30), bandwidth=float(-1.), chanwidth=float(-1.), hanning=True):
         """This function permits you to transform the spectral data of your measurement set to a
@@ -1120,7 +1122,7 @@ class ms:
         schema = {'outframe': {'type': 'cStr'}, 'mode': {'type': 'cStr'}, 'restfreq': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'interpolation': {'type': 'cStr'}, 'start': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'center': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'bandwidth': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'chanwidth': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'hanning': {'type': 'cBool'}}
         doc = {'outframe': outframe, 'mode': mode, 'restfreq': restfreq, 'interpolation': interpolation, 'start': start, 'center': center, 'bandwidth': bandwidth, 'chanwidth': chanwidth, 'hanning': hanning}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.regridspw(_pc.document['outframe'], _pc.document['mode'], _pc.document['restfreq'], _pc.document['interpolation'], _pc.document['start'], _pc.document['center'], _pc.document['bandwidth'], _pc.document['chanwidth'], _pc.document['hanning'])
+        return self._swigobj.regridspw(_str_encode(_pc.document['outframe']), _str_encode(_pc.document['mode']), _pc.document['restfreq'], _str_encode(_pc.document['interpolation']), _pc.document['start'], _pc.document['center'], _pc.document['bandwidth'], _pc.document['chanwidth'], _pc.document['hanning'])
 
     def cvel(self, mode='channel', nchan=int(-1), start=[ ], width=[ ], interp='linear', phasec=[ ], restfreq=[ ], outframe='', veltype='radio', hanning=True):
         """This function permits you to transform the spectral data of your measurement set to a
@@ -1130,7 +1132,7 @@ class ms:
         schema = {'mode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cVariant'}, 'width': {'type': 'cVariant'}, 'interp': {'type': 'cStr'}, 'phasec': {'type': 'cVariant'}, 'restfreq': {'type': 'cVariant'}, 'outframe': {'type': 'cStr'}, 'veltype': {'type': 'cStr'}, 'hanning': {'type': 'cBool'}}
         doc = {'mode': mode, 'nchan': nchan, 'start': start, 'width': width, 'interp': interp, 'phasec': phasec, 'restfreq': restfreq, 'outframe': outframe, 'veltype': veltype, 'hanning': hanning}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.cvel(_pc.document['mode'], _pc.document['nchan'], _pc.document['start'], _pc.document['width'], _pc.document['interp'], _pc.document['phasec'], _pc.document['restfreq'], _pc.document['outframe'], _pc.document['veltype'], _pc.document['hanning'])
+        return self._swigobj.cvel(_str_encode(_pc.document['mode']), _pc.document['nchan'], _pc.document['start'], _pc.document['width'], _str_encode(_pc.document['interp']), _pc.document['phasec'], _pc.document['restfreq'], _str_encode(_pc.document['outframe']), _str_encode(_pc.document['veltype']), _pc.document['hanning'])
 
     def cvelfreqs(self, spwids=[ int(0) ], fieldids=[ int(0) ], obstime='', mode='channel', nchan=int(-1), start=[ ], width=[ ], phasec=[ ], restfreq=[ ], outframe='', veltype='radio', verbose=True):
         """Take the spectral grid of a given spectral window, tranform and regrid it as prescribed by the given
@@ -1141,7 +1143,7 @@ class ms:
         schema = {'spwids': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'fieldids': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'obstime': {'type': 'cStr'}, 'mode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cVariant'}, 'width': {'type': 'cVariant'}, 'phasec': {'type': 'cVariant'}, 'restfreq': {'type': 'cVariant'}, 'outframe': {'type': 'cStr'}, 'veltype': {'type': 'cStr'}, 'verbose': {'type': 'cBool'}}
         doc = {'spwids': spwids, 'fieldids': fieldids, 'obstime': obstime, 'mode': mode, 'nchan': nchan, 'start': start, 'width': width, 'phasec': phasec, 'restfreq': restfreq, 'outframe': outframe, 'veltype': veltype, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.cvelfreqs(_pc.document['spwids'], _pc.document['fieldids'], _pc.document['obstime'], _pc.document['mode'], _pc.document['nchan'], _pc.document['start'], _pc.document['width'], _pc.document['phasec'], _pc.document['restfreq'], _pc.document['outframe'], _pc.document['veltype'], _pc.document['verbose'])
+        return self._swigobj.cvelfreqs(_pc.document['spwids'], _pc.document['fieldids'], _str_encode(_pc.document['obstime']), _str_encode(_pc.document['mode']), _pc.document['nchan'], _pc.document['start'], _pc.document['width'], _pc.document['phasec'], _pc.document['restfreq'], _str_encode(_pc.document['outframe']), _str_encode(_pc.document['veltype']), _pc.document['verbose'])
 
     def getdata(self, items=[  ], ifraxis=False, ifraxisgap=int(0), increment=int(1), average=False):
         """DEPRECATED: Please use the ms::getdata2() function in place
@@ -1259,7 +1261,7 @@ class ms:
         schema = {'items': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'ifraxis': {'type': 'cBool'}, 'ifraxisgap': {'type': 'cInt'}, 'increment': {'type': 'cInt'}, 'average': {'type': 'cBool'}}
         doc = {'items': items, 'ifraxis': ifraxis, 'ifraxisgap': ifraxisgap, 'increment': increment, 'average': average}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getdata(_pc.document['items'], _pc.document['ifraxis'], _pc.document['ifraxisgap'], _pc.document['increment'], _pc.document['average'])
+        return self._swigobj.getdata([_str_encode(_x) for _x in _pc.document['items']], _pc.document['ifraxis'], _pc.document['ifraxisgap'], _pc.document['increment'], _pc.document['average'])
 
     def getdata2(self, items=[  ], ifraxis=False, ifraxisgap=int(0), increment=int(1), average=False):
         """This function will read the specified items from the currently
@@ -1374,7 +1376,7 @@ class ms:
         schema = {'items': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'ifraxis': {'type': 'cBool'}, 'ifraxisgap': {'type': 'cInt'}, 'increment': {'type': 'cInt'}, 'average': {'type': 'cBool'}}
         doc = {'items': items, 'ifraxis': ifraxis, 'ifraxisgap': ifraxisgap, 'increment': increment, 'average': average}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getdata2(_pc.document['items'], _pc.document['ifraxis'], _pc.document['ifraxisgap'], _pc.document['increment'], _pc.document['average'])
+        return self._swigobj.getdata2([_str_encode(_x) for _x in _pc.document['items']], _pc.document['ifraxis'], _pc.document['ifraxisgap'], _pc.document['increment'], _pc.document['average'])
 
     def putdata(self, items={ }):
         """DEPRECATED: Please use the ms::putdata2() function in place
@@ -1463,7 +1465,7 @@ class ms:
         schema = {'msfile': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant'}, 'dirtol': {'type': 'cVariant'}, 'weightscale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'handling': {'type': 'cInt'}, 'destmsfile': {'type': 'cStr'}, 'respectname': {'type': 'cBool'}}
         doc = {'msfile': msfile, 'freqtol': freqtol, 'dirtol': dirtol, 'weightscale': weightscale, 'handling': handling, 'destmsfile': destmsfile, 'respectname': respectname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.concatenate(_pc.document['msfile'], _pc.document['freqtol'], _pc.document['dirtol'], _pc.document['weightscale'], _pc.document['handling'], _pc.document['destmsfile'], _pc.document['respectname'])
+        return self._swigobj.concatenate(_str_encode(_pc.document['msfile']), _pc.document['freqtol'], _pc.document['dirtol'], _pc.document['weightscale'], _pc.document['handling'], _str_encode(_pc.document['destmsfile']), _pc.document['respectname'])
 
     def testconcatenate(self, msfile='', freqtol=[ ], dirtol=[ ], respectname=False):
         """This function acts like ms.concatenate() with handling==3 (do not concatenate
@@ -1477,7 +1479,7 @@ class ms:
         schema = {'msfile': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant'}, 'dirtol': {'type': 'cVariant'}, 'respectname': {'type': 'cBool'}}
         doc = {'msfile': msfile, 'freqtol': freqtol, 'dirtol': dirtol, 'respectname': respectname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.testconcatenate(_pc.document['msfile'], _pc.document['freqtol'], _pc.document['dirtol'], _pc.document['respectname'])
+        return self._swigobj.testconcatenate(_str_encode(_pc.document['msfile']), _pc.document['freqtol'], _pc.document['dirtol'], _pc.document['respectname'])
 
     def virtconcatenate(self, msfile='', auxfilename='', freqtol=[ ], dirtol=[ ], weightscale=float(1.), respectname=True):
         """This function virtually concatenates two measurement sets together
@@ -1490,7 +1492,7 @@ class ms:
         schema = {'msfile': {'type': 'cStr'}, 'auxfilename': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant'}, 'dirtol': {'type': 'cVariant'}, 'weightscale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'respectname': {'type': 'cBool'}}
         doc = {'msfile': msfile, 'auxfilename': auxfilename, 'freqtol': freqtol, 'dirtol': dirtol, 'weightscale': weightscale, 'respectname': respectname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.virtconcatenate(_pc.document['msfile'], _pc.document['auxfilename'], _pc.document['freqtol'], _pc.document['dirtol'], _pc.document['weightscale'], _pc.document['respectname'])
+        return self._swigobj.virtconcatenate(_str_encode(_pc.document['msfile']), _str_encode(_pc.document['auxfilename']), _pc.document['freqtol'], _pc.document['dirtol'], _pc.document['weightscale'], _pc.document['respectname'])
 
     def timesort(self, newmsname=''):
         """This function sorts the main table of the measurement set by the contents
@@ -1505,7 +1507,7 @@ class ms:
         schema = {'newmsname': {'type': 'cStr'}}
         doc = {'newmsname': newmsname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.timesort(_pc.document['newmsname'])
+        return self._swigobj.timesort(_str_encode(_pc.document['newmsname']))
 
     def sort(self, newmsname='', columns=[  ]):
         """This function sorts the main table of the measurement set by the contents
@@ -1520,7 +1522,7 @@ class ms:
         schema = {'newmsname': {'type': 'cStr'}, 'columns': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'newmsname': newmsname, 'columns': columns}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.sort(_pc.document['newmsname'], _pc.document['columns'])
+        return self._swigobj.sort(_str_encode(_pc.document['newmsname']), [_str_encode(_x) for _x in _pc.document['columns']])
 
     def contsub(self, outputms='', fitspw=[ ], fitorder=int(1), combine='', spw='*', unionspw='*', field='', scan='', intent='', correlation='', obs='', whichcol='CORRECTED_DATA'):
         """NOT FULLY IMPLEMENTED YET.  uvcontsub uses the cb tool for now.
@@ -1536,7 +1538,7 @@ class ms:
         schema = {'outputms': {'type': 'cStr'}, 'fitspw': {'type': 'cVariant'}, 'fitorder': {'type': 'cInt'}, 'combine': {'type': 'cStr'}, 'spw': {'type': 'cVariant'}, 'unionspw': {'type': 'cVariant'}, 'field': {'type': 'cVariant'}, 'scan': {'type': 'cVariant'}, 'intent': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'obs': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}}
         doc = {'outputms': outputms, 'fitspw': fitspw, 'fitorder': fitorder, 'combine': combine, 'spw': spw, 'unionspw': unionspw, 'field': field, 'scan': scan, 'intent': intent, 'correlation': correlation, 'obs': obs, 'whichcol': whichcol}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.contsub(_pc.document['outputms'], _pc.document['fitspw'], _pc.document['fitorder'], _pc.document['combine'], _pc.document['spw'], _pc.document['unionspw'], _pc.document['field'], _pc.document['scan'], _pc.document['intent'], _pc.document['correlation'], _pc.document['obs'], _pc.document['whichcol'])
+        return self._swigobj.contsub(_str_encode(_pc.document['outputms']), _pc.document['fitspw'], _pc.document['fitorder'], _str_encode(_pc.document['combine']), _pc.document['spw'], _pc.document['unionspw'], _pc.document['field'], _pc.document['scan'], _str_encode(_pc.document['intent']), _str_encode(_pc.document['correlation']), _str_encode(_pc.document['obs']), _str_encode(_pc.document['whichcol']))
 
     def statwt(self, dorms=False, byantenna=True, sepacs=True, fitspw=[ ], fitcorr=[ ], combine='', timebin=[ ], minsamp=int(3), field=[ ], spw=[ ], antenna='', timerange='', scan=[ ], intent='', array=[ ], correlation='', obs='', datacolumn='corrected_data'):
         """NOT IMPLEMENTED YET.
@@ -1568,7 +1570,7 @@ class ms:
         schema = {'dorms': {'type': 'cBool'}, 'byantenna': {'type': 'cBool'}, 'sepacs': {'type': 'cBool'}, 'fitspw': {'type': 'cVariant'}, 'fitcorr': {'type': 'cVariant'}, 'combine': {'type': 'cStr'}, 'timebin': {'type': 'cVariant'}, 'minsamp': {'type': 'cInt'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'timerange': {'type': 'cStr'}, 'scan': {'type': 'cVariant'}, 'intent': {'type': 'cStr'}, 'array': {'type': 'cVariant'}, 'correlation': {'type': 'cStr'}, 'obs': {'type': 'cStr'}, 'datacolumn': {'type': 'cStr'}}
         doc = {'dorms': dorms, 'byantenna': byantenna, 'sepacs': sepacs, 'fitspw': fitspw, 'fitcorr': fitcorr, 'combine': combine, 'timebin': timebin, 'minsamp': minsamp, 'field': field, 'spw': spw, 'antenna': antenna, 'timerange': timerange, 'scan': scan, 'intent': intent, 'array': array, 'correlation': correlation, 'obs': obs, 'datacolumn': datacolumn}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.statwt(_pc.document['dorms'], _pc.document['byantenna'], _pc.document['sepacs'], _pc.document['fitspw'], _pc.document['fitcorr'], _pc.document['combine'], _pc.document['timebin'], _pc.document['minsamp'], _pc.document['field'], _pc.document['spw'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['scan'], _pc.document['intent'], _pc.document['array'], _pc.document['correlation'], _pc.document['obs'], _pc.document['datacolumn'])
+        return self._swigobj.statwt(_pc.document['dorms'], _pc.document['byantenna'], _pc.document['sepacs'], _pc.document['fitspw'], _pc.document['fitcorr'], _str_encode(_pc.document['combine']), _pc.document['timebin'], _pc.document['minsamp'], _pc.document['field'], _pc.document['spw'], _pc.document['antenna'], _str_encode(_pc.document['timerange']), _pc.document['scan'], _str_encode(_pc.document['intent']), _pc.document['array'], _str_encode(_pc.document['correlation']), _str_encode(_pc.document['obs']), _str_encode(_pc.document['datacolumn']))
 
     def split(self, outputms='', field=[ ], spw=[ ], step=[ int(1) ], baseline=[ ], timebin=[ ], time='', scan=[ ], uvrange=[ ], taql='', whichcol='DATA', tileshape=[ ], subarray=[ ], combine='', correlation='', intent='', obs=''):
         """This function splits out part of the MS into a new MS. Time and
@@ -1587,7 +1589,7 @@ class ms:
         schema = {'outputms': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'step': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'baseline': {'type': 'cVariant'}, 'timebin': {'type': 'cVariant'}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'taql': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}, 'tileshape': {'type': 'cVariant'}, 'subarray': {'type': 'cVariant'}, 'combine': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'intent': {'type': 'cStr'}, 'obs': {'type': 'cStr'}}
         doc = {'outputms': outputms, 'field': field, 'spw': spw, 'step': step, 'baseline': baseline, 'timebin': timebin, 'time': time, 'scan': scan, 'uvrange': uvrange, 'taql': taql, 'whichcol': whichcol, 'tileshape': tileshape, 'subarray': subarray, 'combine': combine, 'correlation': correlation, 'intent': intent, 'obs': obs}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.split(_pc.document['outputms'], _pc.document['field'], _pc.document['spw'], _pc.document['step'], _pc.document['baseline'], _pc.document['timebin'], _pc.document['time'], _pc.document['scan'], _pc.document['uvrange'], _pc.document['taql'], _pc.document['whichcol'], _pc.document['tileshape'], _pc.document['subarray'], _pc.document['combine'], _pc.document['correlation'], _pc.document['intent'], _pc.document['obs'])
+        return self._swigobj.split(_str_encode(_pc.document['outputms']), _pc.document['field'], _pc.document['spw'], _pc.document['step'], _pc.document['baseline'], _pc.document['timebin'], _str_encode(_pc.document['time']), _pc.document['scan'], _pc.document['uvrange'], _str_encode(_pc.document['taql']), _str_encode(_pc.document['whichcol']), _pc.document['tileshape'], _pc.document['subarray'], _str_encode(_pc.document['combine']), _str_encode(_pc.document['correlation']), _str_encode(_pc.document['intent']), _str_encode(_pc.document['obs']))
 
     def partition(self, outputms='', field=[ ], spw=[ ], baseline=[ ], timebin=[ ], time='', scan=[ ], uvrange=[ ], taql='', whichcol='DATA', tileshape=[ ], subarray=[ ], combine='', intent='', obs=''):
         """This function splits out part of the MS into a new MS. Time averaging can
@@ -1602,7 +1604,7 @@ class ms:
         schema = {'outputms': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'baseline': {'type': 'cVariant'}, 'timebin': {'type': 'cVariant'}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'taql': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}, 'tileshape': {'type': 'cVariant'}, 'subarray': {'type': 'cVariant'}, 'combine': {'type': 'cStr'}, 'intent': {'type': 'cStr'}, 'obs': {'type': 'cStr'}}
         doc = {'outputms': outputms, 'field': field, 'spw': spw, 'baseline': baseline, 'timebin': timebin, 'time': time, 'scan': scan, 'uvrange': uvrange, 'taql': taql, 'whichcol': whichcol, 'tileshape': tileshape, 'subarray': subarray, 'combine': combine, 'intent': intent, 'obs': obs}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.partition(_pc.document['outputms'], _pc.document['field'], _pc.document['spw'], _pc.document['baseline'], _pc.document['timebin'], _pc.document['time'], _pc.document['scan'], _pc.document['uvrange'], _pc.document['taql'], _pc.document['whichcol'], _pc.document['tileshape'], _pc.document['subarray'], _pc.document['combine'], _pc.document['intent'], _pc.document['obs'])
+        return self._swigobj.partition(_str_encode(_pc.document['outputms']), _pc.document['field'], _pc.document['spw'], _pc.document['baseline'], _pc.document['timebin'], _str_encode(_pc.document['time']), _pc.document['scan'], _pc.document['uvrange'], _str_encode(_pc.document['taql']), _str_encode(_pc.document['whichcol']), _pc.document['tileshape'], _pc.document['subarray'], _str_encode(_pc.document['combine']), _str_encode(_pc.document['intent']), _str_encode(_pc.document['obs']))
 
     def iterinit(self, columns=[  ], interval=float(0.0), maxrows=int(0), adddefaultsortcolumns=True):
         """DEPRECATED: Please use the ms::iterinit2() function in place
@@ -1630,7 +1632,7 @@ class ms:
         schema = {'columns': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'interval': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxrows': {'type': 'cInt'}, 'adddefaultsortcolumns': {'type': 'cBool'}}
         doc = {'columns': columns, 'interval': interval, 'maxrows': maxrows, 'adddefaultsortcolumns': adddefaultsortcolumns}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.iterinit(_pc.document['columns'], _pc.document['interval'], _pc.document['maxrows'], _pc.document['adddefaultsortcolumns'])
+        return self._swigobj.iterinit([_str_encode(_x) for _x in _pc.document['columns']], _pc.document['interval'], _pc.document['maxrows'], _pc.document['adddefaultsortcolumns'])
 
     def iterinit2(self, columns=[  ], interval=float(0.0), maxrows=int(0), adddefaultsortcolumns=True):
         """Specify the columns to iterate over and the time interval to use
@@ -1655,7 +1657,7 @@ class ms:
         schema = {'columns': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'interval': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxrows': {'type': 'cInt'}, 'adddefaultsortcolumns': {'type': 'cBool'}}
         doc = {'columns': columns, 'interval': interval, 'maxrows': maxrows, 'adddefaultsortcolumns': adddefaultsortcolumns}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.iterinit2(_pc.document['columns'], _pc.document['interval'], _pc.document['maxrows'], _pc.document['adddefaultsortcolumns'])
+        return self._swigobj.iterinit2([_str_encode(_x) for _x in _pc.document['columns']], _pc.document['interval'], _pc.document['maxrows'], _pc.document['adddefaultsortcolumns'])
 
     def iterorigin(self):
         """DEPRECATED: Please use the ms::iterorigin2() function in place
@@ -1748,7 +1750,7 @@ class ms:
         schema = {'abspath': {'type': 'cStr'}}
         doc = {'abspath': abspath}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.asdmref(_pc.document['abspath'])
+        return self._swigobj.asdmref(_str_encode(_pc.document['abspath']))
 
     def continuumsub(self, field=[ ], fitspw=[ ], spw=[ ], solint=[ ], fitorder=int(0), mode='subtract'):
         """DEPRECATED: Please use the ms::continuumsub2() function in place
@@ -1792,7 +1794,7 @@ class ms:
         schema = {'field': {'type': 'cVariant'}, 'fitspw': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'solint': {'type': 'cVariant'}, 'fitorder': {'type': 'cInt'}, 'mode': {'type': 'cStr'}}
         doc = {'field': field, 'fitspw': fitspw, 'spw': spw, 'solint': solint, 'fitorder': fitorder, 'mode': mode}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.continuumsub(_pc.document['field'], _pc.document['fitspw'], _pc.document['spw'], _pc.document['solint'], _pc.document['fitorder'], _pc.document['mode'])
+        return self._swigobj.continuumsub(_pc.document['field'], _pc.document['fitspw'], _pc.document['spw'], _pc.document['solint'], _pc.document['fitorder'], _str_encode(_pc.document['mode']))
 
     def continuumsub2(self, field=[ ], fitspw=[ ], spw=[ ], solint=[ ], fitorder=int(0), mode='subtract'):
         """This function provides a means of continuum determination and
@@ -1832,7 +1834,7 @@ class ms:
         schema = {'field': {'type': 'cVariant'}, 'fitspw': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'solint': {'type': 'cVariant'}, 'fitorder': {'type': 'cInt'}, 'mode': {'type': 'cStr'}}
         doc = {'field': field, 'fitspw': fitspw, 'spw': spw, 'solint': solint, 'fitorder': fitorder, 'mode': mode}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.continuumsub2(_pc.document['field'], _pc.document['fitspw'], _pc.document['spw'], _pc.document['solint'], _pc.document['fitorder'], _pc.document['mode'])
+        return self._swigobj.continuumsub2(_pc.document['field'], _pc.document['fitspw'], _pc.document['spw'], _pc.document['solint'], _pc.document['fitorder'], _str_encode(_pc.document['mode']))
 
     def done(self):
         """You should call close() when you are finished using the ms
@@ -1850,7 +1852,7 @@ class ms:
         schema = {'vis': {'type': 'cStr'}, 'spw': {'type': 'cVariant'}, 'field': {'type': 'cVariant'}, 'baseline': {'type': 'cVariant'}, 'time': {'type': 'cVariant'}, 'scan': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'observation': {'type': 'cVariant'}, 'polarization': {'type': 'cVariant'}, 'taql': {'type': 'cStr'}}
         doc = {'vis': vis, 'spw': spw, 'field': field, 'baseline': baseline, 'time': time, 'scan': scan, 'uvrange': uvrange, 'observation': observation, 'polarization': polarization, 'taql': taql}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.msseltoindex(_pc.document['vis'], _pc.document['spw'], _pc.document['field'], _pc.document['baseline'], _pc.document['time'], _pc.document['scan'], _pc.document['uvrange'], _pc.document['observation'], _pc.document['polarization'], _pc.document['taql'])
+        return self._swigobj.msseltoindex(_str_encode(_pc.document['vis']), _pc.document['spw'], _pc.document['field'], _pc.document['baseline'], _pc.document['time'], _pc.document['scan'], _pc.document['uvrange'], _pc.document['observation'], _pc.document['polarization'], _str_encode(_pc.document['taql']))
 
     def hanningsmooth(self, datacolumn='corrected'):
         """This function Hanning smooths the frequency channels with a
@@ -1864,7 +1866,7 @@ class ms:
         schema = {'datacolumn': {'type': 'cStr'}}
         doc = {'datacolumn': datacolumn}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.hanningsmooth(_pc.document['datacolumn'])
+        return self._swigobj.hanningsmooth(_str_encode(_pc.document['datacolumn']))
 
     def uvsub(self, reverse=False):
         """This function subtracts model visibility data from corrected visibility
@@ -1883,7 +1885,7 @@ class ms:
         schema = {'id': {'type': 'cInt'}, 'ephemerisname': {'type': 'cStr'}, 'comment': {'type': 'cStr'}, 'field': {'type': 'cVariant'}}
         doc = {'id': id, 'ephemerisname': ephemerisname, 'comment': comment, 'field': field}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.addephemeris(_pc.document['id'], _pc.document['ephemerisname'], _pc.document['comment'], _pc.document['field'])
+        return self._swigobj.addephemeris(_pc.document['id'], _str_encode(_pc.document['ephemerisname']), _str_encode(_pc.document['comment']), _pc.document['field'])
 
     def ngetdata(self, items=[  ], ifraxis=False, ifraxisgap=int(0), increment=int(1), average=False):
         """DEPRECATED: Please use the ms::getdata2() function in place
@@ -1901,7 +1903,7 @@ class ms:
         schema = {'items': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'ifraxis': {'type': 'cBool'}, 'ifraxisgap': {'type': 'cInt'}, 'increment': {'type': 'cInt'}, 'average': {'type': 'cBool'}}
         doc = {'items': items, 'ifraxis': ifraxis, 'ifraxisgap': ifraxisgap, 'increment': increment, 'average': average}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.ngetdata(_pc.document['items'], _pc.document['ifraxis'], _pc.document['ifraxisgap'], _pc.document['increment'], _pc.document['average'])
+        return self._swigobj.ngetdata([_str_encode(_x) for _x in _pc.document['items']], _pc.document['ifraxis'], _pc.document['ifraxisgap'], _pc.document['increment'], _pc.document['average'])
 
     def niterinit(self, columns=[  ], interval=float(0.0), maxrows=int(0), adddefaultsortcolumns=True):
         """DEPRECATED: Please use the ms::iterinit2() function in place
@@ -1911,7 +1913,7 @@ class ms:
         schema = {'columns': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'interval': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxrows': {'type': 'cInt'}, 'adddefaultsortcolumns': {'type': 'cBool'}}
         doc = {'columns': columns, 'interval': interval, 'maxrows': maxrows, 'adddefaultsortcolumns': adddefaultsortcolumns}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.niterinit(_pc.document['columns'], _pc.document['interval'], _pc.document['maxrows'], _pc.document['adddefaultsortcolumns'])
+        return self._swigobj.niterinit([_str_encode(_x) for _x in _pc.document['columns']], _pc.document['interval'], _pc.document['maxrows'], _pc.document['adddefaultsortcolumns'])
 
     def niterorigin(self):
         """DEPRECATED: Please use the ms::iterorigin2() function in place

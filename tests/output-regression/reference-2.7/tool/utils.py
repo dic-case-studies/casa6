@@ -2,6 +2,8 @@
 ##################### 1cf6407697ca1942b37e37ea830645c3 ##############################
 from __future__ import absolute_import 
 from .__casac__ import utils as _utils
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -45,7 +47,7 @@ class utils:
         schema = {'name': {'type': 'cStr'}, 'value': {'type': 'cVariant'}}
         doc = {'name': name, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.expandparam(_pc.document['name'], _pc.document['value'])
+        return self._swigobj.expandparam(_str_encode(_pc.document['name']), _pc.document['value'])
 
     def torecord(self, input):
         """
@@ -53,7 +55,7 @@ class utils:
         schema = {'input': {'type': 'cStr'}}
         doc = {'input': input}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.torecord(_pc.document['input'])
+        return self._swigobj.torecord(_str_encode(_pc.document['input']))
 
     def toxml(self, input={ }, asfile=False, filename='recordas.xml'):
         """
@@ -61,7 +63,7 @@ class utils:
         schema = {'input': {'type': 'cDict'}, 'asfile': {'type': 'cBool'}, 'filename': {'type': 'cStr'}}
         doc = {'input': input, 'asfile': asfile, 'filename': filename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.toxml(_pc.document['input'], _pc.document['asfile'], _pc.document['filename'])
+        return self._swigobj.toxml(_pc.document['input'], _pc.document['asfile'], _str_encode(_pc.document['filename']))
 
     def getrc(self, rcvar=''):
         """
@@ -69,7 +71,7 @@ class utils:
         schema = {'rcvar': {'type': 'cStr'}}
         doc = {'rcvar': rcvar}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getrc(_pc.document['rcvar'])
+        return self._swigobj.getrc(_str_encode(_pc.document['rcvar']))
 
     def removetable(self, tablenames=[  ]):
         """
@@ -77,7 +79,7 @@ class utils:
         schema = {'tablenames': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'tablenames': tablenames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.removetable(_pc.document['tablenames'])
+        return self._swigobj.removetable([_str_encode(_x) for _x in _pc.document['tablenames']])
 
     def tableinfo(self, tablename=''):
         """Currently this only returns the pid of the process locking the table (lockpid), if the lock
@@ -89,7 +91,7 @@ class utils:
         schema = {'tablename': {'type': 'cStr'}}
         doc = {'tablename': tablename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.tableinfo(_pc.document['tablename'])
+        return self._swigobj.tableinfo(_str_encode(_pc.document['tablename']))
 
     def lockedtables(self):
         """
@@ -137,7 +139,7 @@ class utils:
         schema = {'crashDumpDirectory': {'type': 'cStr'}, 'crashDumpPosterApplication': {'type': 'cStr'}, 'crashPostingUrl': {'type': 'cStr'}, 'logFile': {'type': 'cStr'}}
         doc = {'crashDumpDirectory': crashDumpDirectory, 'crashDumpPosterApplication': crashDumpPosterApplication, 'crashPostingUrl': crashPostingUrl, 'logFile': logFile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj._crash_reporter_initialize(_pc.document['crashDumpDirectory'], _pc.document['crashDumpPosterApplication'], _pc.document['crashPostingUrl'], _pc.document['logFile'])
+        return self._swigobj._crash_reporter_initialize(_str_encode(_pc.document['crashDumpDirectory']), _str_encode(_pc.document['crashDumpPosterApplication']), _str_encode(_pc.document['crashPostingUrl']), _str_encode(_pc.document['logFile']))
 
     def _trigger_segfault(self, faultType=int(0)):
         """This triggers a segfault for testing the crash reporter.  Obviously you
@@ -156,7 +158,7 @@ class utils:
         schema = {'default_path': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'default_path': default_path}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.initialize(_pc.document['default_path'])
+        return self._swigobj.initialize([_str_encode(_x) for _x in _pc.document['default_path']])
 
     def defaultpath(self):
         """Returns the default data path. This path is used unless the user has set the current path to something else using the setpath function.
@@ -170,7 +172,7 @@ class utils:
         schema = {'dirs': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'dirs': dirs}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setpath(_pc.document['dirs'])
+        return self._swigobj.setpath([_str_encode(_x) for _x in _pc.document['dirs']])
 
     def getpath(self):
         """Returns the list of directories that are currently in the data path.
@@ -190,7 +192,7 @@ class utils:
         schema = {'path': {'type': 'cStr'}}
         doc = {'path': path}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.resolve(_pc.document['path'])
+        return self._swigobj.resolve(_str_encode(_pc.document['path']))
 
     def version(self):
         """Returns a four element vector representing the version (major, minor, patch and feature).
@@ -220,5 +222,5 @@ class utils:
         schema = {'comparitor': {'type': 'cStr'}, 'vec': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
         doc = {'comparitor': comparitor, 'vec': vec}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.compare_version(_pc.document['comparitor'], _pc.document['vec'])
+        return self._swigobj.compare_version(_str_encode(_pc.document['comparitor']), _pc.document['vec'])
 

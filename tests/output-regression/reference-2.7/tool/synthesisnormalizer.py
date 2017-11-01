@@ -2,6 +2,8 @@
 ##################### e7758c1bfca4799c53d8fddadd53d3e4 ##############################
 from __future__ import absolute_import 
 from .__casac__ import synthesisnormalizer as _synthesisnormalizer
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 from .synthesisimstore import synthesisimstore as _wrap_synthesisimstore

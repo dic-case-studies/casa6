@@ -2,6 +2,8 @@
 ##################### b8b3e74736ff36451fb026d4d97bf7e2 ##############################
 from __future__ import absolute_import 
 from .__casac__ import componentlist as _componentlist
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -36,7 +38,7 @@ class componentlist:
         schema = {'filename': {'type': 'cStr'}, 'nomodify': {'type': 'cBool'}, 'log': {'type': 'cBool'}}
         doc = {'filename': filename, 'nomodify': nomodify, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.open(_pc.document['filename'], _pc.document['nomodify'], _pc.document['log'])
+        return self._swigobj.open(_str_encode(_pc.document['filename']), _pc.document['nomodify'], _pc.document['log'])
 
     def asciitocomponentlist(self, filename, asciifile, refer='J2000', format='ST', direction={ }, spectrum={ }, flux={ }, log=True):
         """This constructor will allow conversion of a number of ascii-file-based
@@ -46,7 +48,7 @@ class componentlist:
         schema = {'filename': {'type': 'cStr'}, 'asciifile': {'type': 'cStr'}, 'refer': {'type': 'cStr'}, 'format': {'type': 'cStr'}, 'direction': {'type': 'cDict'}, 'spectrum': {'type': 'cDict'}, 'flux': {'type': 'cDict'}, 'log': {'type': 'cBool'}}
         doc = {'filename': filename, 'asciifile': asciifile, 'refer': refer, 'format': format, 'direction': direction, 'spectrum': spectrum, 'flux': flux, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.asciitocomponentlist(_pc.document['filename'], _pc.document['asciifile'], _pc.document['refer'], _pc.document['format'], _pc.document['direction'], _pc.document['spectrum'], _pc.document['flux'], _pc.document['log'])
+        return self._swigobj.asciitocomponentlist(_str_encode(_pc.document['filename']), _str_encode(_pc.document['asciifile']), _str_encode(_pc.document['refer']), _str_encode(_pc.document['format']), _pc.document['direction'], _pc.document['spectrum'], _pc.document['flux'], _pc.document['log'])
 
     def concatenate(self, list=[ ], which=[ int(-1) ], log=True):
         """The concatenate function copies the specified component(s), from
@@ -173,7 +175,7 @@ class componentlist:
         schema = {'criteria': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'criteria': criteria, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.sort(_pc.document['criteria'], _pc.document['log'])
+        return self._swigobj.sort(_str_encode(_pc.document['criteria']), _pc.document['log'])
 
     def isphysical(self, which=[ int(-1) ]):
         """The isphysical function is used to check if the specified
@@ -239,7 +241,7 @@ class componentlist:
         schema = {'filename': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'filename': filename, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.rename(_pc.document['filename'], _pc.document['log'])
+        return self._swigobj.rename(_str_encode(_pc.document['filename']), _pc.document['log'])
 
     def simulate(self, howmany=int(1), log=True):
         """The simulate function adds simulated components to the list. The
@@ -280,7 +282,7 @@ class componentlist:
         schema = {'flux': {'type': 'cVariant'}, 'fluxunit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'dir': {'type': 'cVariant'}, 'shape': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant'}, 'minoraxis': {'type': 'cVariant'}, 'positionangle': {'type': 'cVariant'}, 'freq': {'type': 'cVariant'}, 'spectrumtype': {'type': 'cStr'}, 'index': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'optionalparms': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'label': {'type': 'cStr'}}
         doc = {'flux': flux, 'fluxunit': fluxunit, 'polarization': polarization, 'dir': dir, 'shape': shape, 'majoraxis': majoraxis, 'minoraxis': minoraxis, 'positionangle': positionangle, 'freq': freq, 'spectrumtype': spectrumtype, 'index': index, 'optionalparms': optionalparms, 'label': label}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.addcomponent(_pc.document['flux'], _pc.document['fluxunit'], _pc.document['polarization'], _pc.document['dir'], _pc.document['shape'], _pc.document['majoraxis'], _pc.document['minoraxis'], _pc.document['positionangle'], _pc.document['freq'], _pc.document['spectrumtype'], _pc.document['index'], _pc.document['optionalparms'], _pc.document['label'])
+        return self._swigobj.addcomponent(_pc.document['flux'], _str_encode(_pc.document['fluxunit']), _str_encode(_pc.document['polarization']), _pc.document['dir'], _str_encode(_pc.document['shape']), _pc.document['majoraxis'], _pc.document['minoraxis'], _pc.document['positionangle'], _pc.document['freq'], _str_encode(_pc.document['spectrumtype']), _pc.document['index'], _pc.document['optionalparms'], _str_encode(_pc.document['label']))
 
     def close(self, log=True):
         """The close function resets the componentlist to its default state. In
@@ -391,7 +393,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'value': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'value': value, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setlabel(_pc.document['which'], _pc.document['value'], _pc.document['log'])
+        return self._swigobj.setlabel(_pc.document['which'], _str_encode(_pc.document['value']), _pc.document['log'])
 
     def getfluxvalue(self, which):
         """The getfluxvalue function returns the value of the flux of the
@@ -463,7 +465,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'value': {'type': 'cVariant'}, 'unit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'error': {'type': 'cVariant'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'value': value, 'unit': unit, 'polarization': polarization, 'error': error, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setflux(_pc.document['which'], _pc.document['value'], _pc.document['unit'], _pc.document['polarization'], _pc.document['error'], _pc.document['log'])
+        return self._swigobj.setflux(_pc.document['which'], _pc.document['value'], _str_encode(_pc.document['unit']), _str_encode(_pc.document['polarization']), _pc.document['error'], _pc.document['log'])
 
     def convertfluxunit(self, which, unit='Jy'):
         """The convertfluxunit function is used to convert the flux to another
@@ -473,7 +475,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'which': which, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.convertfluxunit(_pc.document['which'], _pc.document['unit'])
+        return self._swigobj.convertfluxunit(_pc.document['which'], _str_encode(_pc.document['unit']))
 
     def convertfluxpol(self, which, polarization='Stokes'):
         """The convertfluxpol function is used to convert the flux to another
@@ -484,7 +486,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'polarization': {'type': 'cStr'}}
         doc = {'which': which, 'polarization': polarization}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.convertfluxpol(_pc.document['which'], _pc.document['polarization'])
+        return self._swigobj.convertfluxpol(_pc.document['which'], _str_encode(_pc.document['polarization']))
 
     def getrefdir(self, which):
         """The getrefdir function returns, as a direction measure, the
@@ -504,7 +506,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'unit': {'type': 'cStr'}, 'precision': {'type': 'cInt'}}
         doc = {'which': which, 'unit': unit, 'precision': precision}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getrefdirra(_pc.document['which'], _pc.document['unit'], _pc.document['precision'])
+        return self._swigobj.getrefdirra(_pc.document['which'], _str_encode(_pc.document['unit']), _pc.document['precision'])
 
     def getrefdirdec(self, which, unit='deg', precision=int(6)):
         """The getrefdirdec function returns the declination of the reference
@@ -520,7 +522,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'unit': {'type': 'cStr'}, 'precision': {'type': 'cInt'}}
         doc = {'which': which, 'unit': unit, 'precision': precision}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getrefdirdec(_pc.document['which'], _pc.document['unit'], _pc.document['precision'])
+        return self._swigobj.getrefdirdec(_pc.document['which'], _str_encode(_pc.document['unit']), _pc.document['precision'])
 
     def getrefdirframe(self, which):
         """The getrefdirframe function returns the reference frame of the reference
@@ -572,7 +574,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'frame': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'frame': frame, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setrefdirframe(_pc.document['which'], _pc.document['frame'], _pc.document['log'])
+        return self._swigobj.setrefdirframe(_pc.document['which'], _str_encode(_pc.document['frame']), _pc.document['log'])
 
     def convertrefdir(self, which, frame):
         """The convertrefdir function changes the specified components to use a
@@ -589,7 +591,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'frame': {'type': 'cStr'}}
         doc = {'which': which, 'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.convertrefdir(_pc.document['which'], _pc.document['frame'])
+        return self._swigobj.convertrefdir(_pc.document['which'], _str_encode(_pc.document['frame']))
 
     def shapetype(self, which):
         """The shapetype function returns the current shape of the specified
@@ -667,7 +669,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant'}, 'minoraxis': {'type': 'cVariant'}, 'positionangle': {'type': 'cVariant'}, 'majoraxiserror': {'type': 'cVariant'}, 'minoraxiserror': {'type': 'cVariant'}, 'positionangleerror': {'type': 'cVariant'}, 'optionalparms': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'type': type, 'majoraxis': majoraxis, 'minoraxis': minoraxis, 'positionangle': positionangle, 'majoraxiserror': majoraxiserror, 'minoraxiserror': minoraxiserror, 'positionangleerror': positionangleerror, 'optionalparms': optionalparms, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setshape(_pc.document['which'], _pc.document['type'], _pc.document['majoraxis'], _pc.document['minoraxis'], _pc.document['positionangle'], _pc.document['majoraxiserror'], _pc.document['minoraxiserror'], _pc.document['positionangleerror'], _pc.document['optionalparms'], _pc.document['log'])
+        return self._swigobj.setshape(_pc.document['which'], _str_encode(_pc.document['type']), _pc.document['majoraxis'], _pc.document['minoraxis'], _pc.document['positionangle'], _pc.document['majoraxiserror'], _pc.document['minoraxiserror'], _pc.document['positionangleerror'], _pc.document['optionalparms'], _pc.document['log'])
 
     def convertshape(self, which, majoraxis='arcmin', minoraxis='arcmin', positionangle='deg'):
         """
@@ -675,7 +677,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'majoraxis': {'type': 'cStr'}, 'minoraxis': {'type': 'cStr'}, 'positionangle': {'type': 'cStr'}}
         doc = {'which': which, 'majoraxis': majoraxis, 'minoraxis': minoraxis, 'positionangle': positionangle}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.convertshape(_pc.document['which'], _pc.document['majoraxis'], _pc.document['minoraxis'], _pc.document['positionangle'])
+        return self._swigobj.convertshape(_pc.document['which'], _str_encode(_pc.document['majoraxis']), _str_encode(_pc.document['minoraxis']), _str_encode(_pc.document['positionangle']))
 
     def spectrumtype(self, which):
         """The spectrumtype function returns the current spectral shape of the
@@ -756,7 +758,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'index': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularfreqs': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabulari': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularq': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularu': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularv': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'reffreq': {'type': 'cVariant'}, 'frame': {'type': 'cStr'}}
         doc = {'which': which, 'type': type, 'index': index, 'tabularfreqs': tabularfreqs, 'tabulari': tabulari, 'tabularq': tabularq, 'tabularu': tabularu, 'tabularv': tabularv, 'reffreq': reffreq, 'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setstokesspectrum(_pc.document['which'], _pc.document['type'], _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabulari'], _pc.document['tabularq'], _pc.document['tabularu'], _pc.document['tabularv'], _pc.document['reffreq'], _pc.document['frame'])
+        return self._swigobj.setstokesspectrum(_pc.document['which'], _str_encode(_pc.document['type']), _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabulari'], _pc.document['tabularq'], _pc.document['tabularu'], _pc.document['tabularv'], _pc.document['reffreq'], _str_encode(_pc.document['frame']))
 
     def setspectrum(self, which, type='spectral index', index=float(0.0), tabularfreqs=[ float(1.0e11) ], tabularflux=[ float(1.0) ], tabularframe='LSRK'):
         """The setspectrum function changes the spectrum of the specified components
@@ -795,7 +797,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'index': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'tabularfreqs': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularflux': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularframe': {'type': 'cStr'}}
         doc = {'which': which, 'type': type, 'index': index, 'tabularfreqs': tabularfreqs, 'tabularflux': tabularflux, 'tabularframe': tabularframe}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setspectrum(_pc.document['which'], _pc.document['type'], _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabularflux'], _pc.document['tabularframe'])
+        return self._swigobj.setspectrum(_pc.document['which'], _str_encode(_pc.document['type']), _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabularflux'], _str_encode(_pc.document['tabularframe']))
 
     def getfreq(self, which):
         """
@@ -841,7 +843,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'value': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'unit': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'value': value, 'unit': unit, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setfreq(_pc.document['which'], _pc.document['value'], _pc.document['unit'], _pc.document['log'])
+        return self._swigobj.setfreq(_pc.document['which'], _pc.document['value'], _str_encode(_pc.document['unit']), _pc.document['log'])
 
     def setfreqframe(self, which, frame='LSRK', log=True):
         """The setfreqframe function sets the reference frame for the
@@ -857,7 +859,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'frame': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'frame': frame, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setfreqframe(_pc.document['which'], _pc.document['frame'], _pc.document['log'])
+        return self._swigobj.setfreqframe(_pc.document['which'], _str_encode(_pc.document['frame']), _pc.document['log'])
 
     def convertfrequnit(self, which, unit='GHz'):
         """The convertfrequnit function changes the specified components to use
@@ -875,7 +877,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'which': which, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.convertfrequnit(_pc.document['which'], _pc.document['unit'])
+        return self._swigobj.convertfrequnit(_pc.document['which'], _str_encode(_pc.document['unit']))
 
     def getcomponent(self, which, iknow=False):
         """The component function returns a record, showing the current state

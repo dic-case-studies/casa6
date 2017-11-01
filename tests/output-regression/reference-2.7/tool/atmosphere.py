@@ -2,6 +2,8 @@
 ##################### 96aa7d967de74086e53e2b899e73508c ##############################
 from __future__ import absolute_import 
 from .__casac__ import atmosphere as _atmosphere
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -85,7 +87,7 @@ class atmosphere:
         schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'maxAltitude': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'dP': {'type': 'cFloatQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cFloatQuant'}, 'atmType': {'type': 'cStr'}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'maxAltitude': maxAltitude, 'humidity': humidity, 'dTem_dh': dTem_dh, 'dP': dP, 'dPm': dPm, 'h0': h0, 'atmType': atmType}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getBasicAtmParms(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _pc.document['atmType'])
+        return self._swigobj.getBasicAtmParms(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _str_encode(_pc.document['atmType']))
 
     def getNumLayers(self):
         """

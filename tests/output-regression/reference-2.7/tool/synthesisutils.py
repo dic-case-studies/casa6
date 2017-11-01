@@ -2,6 +2,8 @@
 ##################### 446f8d72a8d4a8d7938e884151ff05b6 ##############################
 from __future__ import absolute_import 
 from .__casac__ import synthesisutils as _synthesisutils
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 from .synthesisimstore import synthesisimstore as _wrap_synthesisimstore
@@ -31,7 +33,7 @@ class synthesisutils:
         schema = {'selpars': {'type': 'cDict'}, 'npart': {'type': 'cInt'}, 'fstart': {'type': 'cVariant'}, 'fend': {'type': 'cVariant'}, 'frame': {'type': 'cStr'}}
         doc = {'selpars': selpars, 'npart': npart, 'fstart': fstart, 'fend': fend, 'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.cubedatapartition(_pc.document['selpars'], _pc.document['npart'], _pc.document['fstart'], _pc.document['fend'], _pc.document['frame'])
+        return self._swigobj.cubedatapartition(_pc.document['selpars'], _pc.document['npart'], _pc.document['fstart'], _pc.document['fend'], _str_encode(_pc.document['frame']))
 
     def cubeimagepartition(self, impars={ }, npart=int(1)):
         """

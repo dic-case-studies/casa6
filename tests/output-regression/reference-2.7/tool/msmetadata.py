@@ -2,6 +2,8 @@
 ##################### 36bac9c9bb40ae8d3ca3eaa51cfcaa90 ##############################
 from __future__ import absolute_import 
 from .__casac__ import msmetadata as _msmetadata
+from .platform import str_encode as _str_encode
+from .platform import str_decode as _str_decode
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -152,7 +154,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}, 'asvel': {'type': 'cBool'}}
         doc = {'spw': spw, 'unit': unit, 'asvel': asvel}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.chaneffbws(_pc.document['spw'], _pc.document['unit'], _pc.document['asvel'])
+        return self._swigobj.chaneffbws(_pc.document['spw'], _str_encode(_pc.document['unit']), _pc.document['asvel'])
 
     def chanfreqs(self, spw, unit='Hz'):
         """Get an array of channel frequencies for the specified spectral window.
@@ -161,7 +163,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'spw': spw, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.chanfreqs(_pc.document['spw'], _pc.document['unit'])
+        return self._swigobj.chanfreqs(_pc.document['spw'], _str_encode(_pc.document['unit']))
 
     def chanres(self, spw, unit='', asvel=False):
         """Get an array of channel resolutions for the specified spectral window. The parameter
@@ -173,7 +175,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}, 'asvel': {'type': 'cBool'}}
         doc = {'spw': spw, 'unit': unit, 'asvel': asvel}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.chanres(_pc.document['spw'], _pc.document['unit'], _pc.document['asvel'])
+        return self._swigobj.chanres(_pc.document['spw'], _str_encode(_pc.document['unit']), _pc.document['asvel'])
 
     def chanwidths(self, spw, unit='Hz'):
         """Get an array of channel widths for the specified spectral window.
@@ -182,7 +184,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'spw': spw, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.chanwidths(_pc.document['spw'], _pc.document['unit'])
+        return self._swigobj.chanwidths(_pc.document['spw'], _str_encode(_pc.document['unit']))
 
     def close(self):
         """This method will close the tool and reclaim system resources it has been using. Returns true if successful.
@@ -276,7 +278,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cStr'}, 'asnames': {'type': 'cBool'}}
         doc = {'intent': intent, 'asnames': asnames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fieldsforintent(_pc.document['intent'], _pc.document['asnames'])
+        return self._swigobj.fieldsforintent(_str_encode(_pc.document['intent']), _pc.document['asnames'])
 
     def fieldsforname(self, name=''):
         """Get an array of the unique, zero-based field IDs for the specified field name. If the field name is the
@@ -286,7 +288,7 @@ class msmetadata:
         schema = {'name': {'type': 'cStr'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fieldsforname(_pc.document['name'])
+        return self._swigobj.fieldsforname(_str_encode(_pc.document['name']))
 
     def fieldsforscan(self, scan=int(-1), asnames=False, obsid=int(-1), arrayid=int(-1)):
         """Get an array of the unique fields for the specified scan number, observation ID, and array ID.
@@ -388,7 +390,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'spw': spw, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.meanfreq(_pc.document['spw'], _pc.document['unit'])
+        return self._swigobj.meanfreq(_pc.document['spw'], _str_encode(_pc.document['unit']))
 
     def name(self):
         """Get the name of the attached MS.
@@ -538,7 +540,7 @@ class msmetadata:
         schema = {'msfile': {'type': 'cStr'}, 'maxcache': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'msfile': msfile, 'maxcache': maxcache}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.open(_pc.document['msfile'], _pc.document['maxcache'])
+        return self._swigobj.open(_str_encode(_pc.document['msfile']), _pc.document['maxcache'])
 
     def phasecenter(self, fieldid=int(0), epoch={ }):
         """Get a direction measures for the phasecenter of the field id and time specified
@@ -651,7 +653,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cStr'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'intent': intent, 'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.scansforintent(_pc.document['intent'], _pc.document['obsid'], _pc.document['arrayid'])
+        return self._swigobj.scansforintent(_str_encode(_pc.document['intent']), _pc.document['obsid'], _pc.document['arrayid'])
 
     def scansforspw(self, spw=int(-1), obsid=int(-1), arrayid=int(-1)):
         """Get an array of the unique scan numbers associated with the specified zero-based spectral window ID, observation ID, and array ID.
@@ -755,7 +757,7 @@ class msmetadata:
         schema = {'baseband': {'type': 'cInt'}, 'sqldmode': {'type': 'cStr'}}
         doc = {'baseband': baseband, 'sqldmode': sqldmode}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.spwsforbaseband(_pc.document['baseband'], _pc.document['sqldmode'])
+        return self._swigobj.spwsforbaseband(_pc.document['baseband'], _str_encode(_pc.document['sqldmode']))
 
     def spwfordatadesc(self, ddid=int(-1)):
         """Get the spectral window ID associated with the specified data description ID. If the specified data description ID
@@ -790,7 +792,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cStr'}}
         doc = {'intent': intent}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.spwsforintent(_pc.document['intent'])
+        return self._swigobj.spwsforintent(_str_encode(_pc.document['intent']))
 
     def spwsfornames(self, spwids=''):
         """Get the IDs of the specified spw(s). Returns a dictionary where the keys
@@ -885,7 +887,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cStr'}}
         doc = {'intent': intent}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.timesforintent(_pc.document['intent'])
+        return self._swigobj.timesforintent(_str_encode(_pc.document['intent']))
 
     def timesforscan(self, scan=int(-1), obsid=int(-1), arrayid=int(-1), perspw=False):
         """Get the unique times for the specified scan number, observation ID, and array ID. If perspw=True, the returned data structure is
