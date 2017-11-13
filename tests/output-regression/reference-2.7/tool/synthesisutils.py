@@ -23,7 +23,8 @@ class synthesisutils:
         schema = {'selpars': {'type': 'cDict'}, 'npart': {'type': 'cInt'}}
         doc = {'selpars': selpars, 'npart': npart}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.contdatapartition(_pc.document['selpars'], _pc.document['npart'])
+        _contdatapartition_result = self._swigobj.contdatapartition(_pc.document['selpars'], _pc.document['npart'])
+        return _contdatapartition_result
 
     def cubedatapartition(self, selpars={ }, npart=int(1), fstart=[ ], fend=[ ], frame='LSRK'):
         """returns a dictionary with data spectral parttiion that maps  data  to  nparts
@@ -33,7 +34,8 @@ class synthesisutils:
         schema = {'selpars': {'type': 'cDict'}, 'npart': {'type': 'cInt'}, 'fstart': {'type': 'cVariant'}, 'fend': {'type': 'cVariant'}, 'frame': {'type': 'cStr'}}
         doc = {'selpars': selpars, 'npart': npart, 'fstart': fstart, 'fend': fend, 'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.cubedatapartition(_pc.document['selpars'], _pc.document['npart'], _pc.document['fstart'], _pc.document['fend'], _str_encode(_pc.document['frame']))
+        _cubedatapartition_result = self._swigobj.cubedatapartition(_pc.document['selpars'], _pc.document['npart'], _pc.document['fstart'], _pc.document['fend'], _str_encode(_pc.document['frame']))
+        return _cubedatapartition_result
 
     def cubeimagepartition(self, impars={ }, npart=int(1)):
         """
@@ -41,7 +43,8 @@ class synthesisutils:
         schema = {'impars': {'type': 'cDict'}, 'npart': {'type': 'cInt'}}
         doc = {'impars': impars, 'npart': npart}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.cubeimagepartition(_pc.document['impars'], _pc.document['npart'])
+        _cubeimagepartition_result = self._swigobj.cubeimagepartition(_pc.document['impars'], _pc.document['npart'])
+        return _cubeimagepartition_result
 
     def cubedataimagepartition(self, selpars={ }, incsys={ }, npart=int(1), nchannel=int(1)):
         """
@@ -49,7 +52,8 @@ class synthesisutils:
         schema = {'selpars': {'type': 'cDict'}, 'incsys': {'type': 'cDict'}, 'npart': {'type': 'cInt'}, 'nchannel': {'type': 'cInt'}}
         doc = {'selpars': selpars, 'incsys': incsys, 'npart': npart, 'nchannel': nchannel}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.cubedataimagepartition(_pc.document['selpars'], _pc.document['incsys'], _pc.document['npart'], _pc.document['nchannel'])
+        _cubedataimagepartition_result = self._swigobj.cubedataimagepartition(_pc.document['selpars'], _pc.document['incsys'], _pc.document['npart'], _pc.document['nchannel'])
+        return _cubedataimagepartition_result
 
     def checkselectionparams(self, selpars={ }):
         """
@@ -57,7 +61,8 @@ class synthesisutils:
         schema = {'selpars': {'type': 'cDict'}}
         doc = {'selpars': selpars}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.checkselectionparams(_pc.document['selpars'])
+        _checkselectionparams_result = self._swigobj.checkselectionparams(_pc.document['selpars'])
+        return _checkselectionparams_result
 
     def checkimageparams(self, impars={ }):
         """
@@ -65,7 +70,8 @@ class synthesisutils:
         schema = {'impars': {'type': 'cDict'}}
         doc = {'impars': impars}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.checkimageparams(_pc.document['impars'])
+        _checkimageparams_result = self._swigobj.checkimageparams(_pc.document['impars'])
+        return _checkimageparams_result
 
     def checkgridparams(self, gridpars={ }):
         """
@@ -73,7 +79,8 @@ class synthesisutils:
         schema = {'gridpars': {'type': 'cDict'}}
         doc = {'gridpars': gridpars}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.checkgridparams(_pc.document['gridpars'])
+        _checkgridparams_result = self._swigobj.checkgridparams(_pc.document['gridpars'])
+        return _checkgridparams_result
 
     def updateimpars(self, impars={ }):
         """
@@ -81,7 +88,8 @@ class synthesisutils:
         schema = {'impars': {'type': 'cDict'}}
         doc = {'impars': impars}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.updateimpars(_pc.document['impars'])
+        _updateimpars_result = self._swigobj.updateimpars(_pc.document['impars'])
+        return _updateimpars_result
 
     def getOptimumSize(self, size=int(100)):
         """
@@ -89,10 +97,12 @@ class synthesisutils:
         schema = {'size': {'type': 'cInt'}}
         doc = {'size': size}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getOptimumSize(_pc.document['size'])
+        _getOptimumSize_result = self._swigobj.getOptimumSize(_pc.document['size'])
+        return _getOptimumSize_result
 
     def done(self):
         """
         """
-        return self._swigobj.done()
+        _done_result = self._swigobj.done()
+        return _done_result
 

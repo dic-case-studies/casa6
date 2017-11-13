@@ -43,7 +43,8 @@ class regionmanager:
         schema = {'absrelvalue': {'type': 'cInt'}}
         doc = {'absrelvalue': absrelvalue}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.absreltype(_pc.document['absrelvalue'])
+        _absreltype_result = self._swigobj.absreltype(_pc.document['absrelvalue'])
+        return _absreltype_result
 
     def box(self, blc=[ float(0) ], trc=[ float(-1) ], inc=[ float(1) ], absrel='abs', frac=False, comment=''):
         """This function creates a multi-dimensional pixel box region.  The box is
@@ -64,7 +65,8 @@ class regionmanager:
         schema = {'blc': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'trc': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'inc': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'absrel': {'type': 'cStr'}, 'frac': {'type': 'cBool'}, 'comment': {'type': 'cStr'}}
         doc = {'blc': blc, 'trc': trc, 'inc': inc, 'absrel': absrel, 'frac': frac, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.box(_pc.document['blc'], _pc.document['trc'], _pc.document['inc'], _str_encode(_pc.document['absrel']), _pc.document['frac'], _str_encode(_pc.document['comment']))
+        _box_result = self._swigobj.box(_pc.document['blc'], _pc.document['trc'], _pc.document['inc'], _str_encode(_pc.document['absrel']), _pc.document['frac'], _str_encode(_pc.document['comment']))
+        return _box_result
 
     def frombcs(self, csys={ }, shape=[ int(0) ], box='', chans='', stokes='', stokescontrol='a', region=[ ]):
         """This function creates a multi-dimensional world coordinate region based
@@ -76,7 +78,8 @@ class regionmanager:
         schema = {'csys': {'type': 'cDict'}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'box': {'type': 'cStr'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'stokescontrol': {'type': 'cStr'}, 'region': {'type': 'cVariant'}}
         doc = {'csys': csys, 'shape': shape, 'box': box, 'chans': chans, 'stokes': stokes, 'stokescontrol': stokescontrol, 'region': region}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.frombcs(_pc.document['csys'], _pc.document['shape'], _str_encode(_pc.document['box']), _str_encode(_pc.document['chans']), _str_encode(_pc.document['stokes']), _str_encode(_pc.document['stokescontrol']), _pc.document['region'])
+        _frombcs_result = self._swigobj.frombcs(_pc.document['csys'], _pc.document['shape'], _str_encode(_pc.document['box']), _str_encode(_pc.document['chans']), _str_encode(_pc.document['stokes']), _str_encode(_pc.document['stokescontrol']), _pc.document['region'])
+        return _frombcs_result
 
     def complement(self, region=[ ], comment=''):
         """This function (short-hand name {tt comp}) creates the complement of
@@ -93,7 +96,8 @@ class regionmanager:
         schema = {'region': {'type': 'cVariant'}, 'comment': {'type': 'cStr'}}
         doc = {'region': region, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.complement(_pc.document['region'], _str_encode(_pc.document['comment']))
+        _complement_result = self._swigobj.complement(_pc.document['region'], _str_encode(_pc.document['comment']))
+        return _complement_result
 
     def concatenation(self, box=[ ], regions=[ ], comment=''):
         """This function (short-hand name {tt concat}) creates a region which is
@@ -123,7 +127,8 @@ class regionmanager:
         schema = {'box': {'type': 'cVariant'}, 'regions': {'type': 'cVariant'}, 'comment': {'type': 'cStr'}}
         doc = {'box': box, 'regions': regions, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.concatenation(_pc.document['box'], _pc.document['regions'], _str_encode(_pc.document['comment']))
+        _concatenation_result = self._swigobj.concatenation(_pc.document['box'], _pc.document['regions'], _str_encode(_pc.document['comment']))
+        return _concatenation_result
 
     def deletefromtable(self, tablename='', regionname=''):
         """This function deletes a region stored in an casa  Table.
@@ -141,7 +146,8 @@ class regionmanager:
         schema = {'tablename': {'type': 'cStr'}, 'regionname': {'type': 'cStr'}}
         doc = {'tablename': tablename, 'regionname': regionname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.deletefromtable(_str_encode(_pc.document['tablename']), _str_encode(_pc.document['regionname']))
+        _deletefromtable_result = self._swigobj.deletefromtable(_str_encode(_pc.document['tablename']), _str_encode(_pc.document['regionname']))
+        return _deletefromtable_result
 
     def difference(self, region1={ }, region2={ }, comment=''):
         """This function (short-hand name {stff diff}) creates
@@ -154,7 +160,8 @@ class regionmanager:
         schema = {'region1': {'type': 'cDict'}, 'region2': {'type': 'cDict'}, 'comment': {'type': 'cStr'}}
         doc = {'region1': region1, 'region2': region2, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.difference(_pc.document['region1'], _pc.document['region2'], _str_encode(_pc.document['comment']))
+        _difference_result = self._swigobj.difference(_pc.document['region1'], _pc.document['region2'], _str_encode(_pc.document['comment']))
+        return _difference_result
 
     def done(self):
         """This function destroys the contents of the {stf regionmanager} tool
@@ -163,7 +170,8 @@ class regionmanager:
         function.
         
         """
-        return self._swigobj.done()
+        _done_result = self._swigobj.done()
+        return _done_result
 
     def selectedchannels(self, specification='', shape=[ int(0) ]):
         """This method returns all the selected zero-based channel numbers from the specified string within the image.
@@ -175,7 +183,8 @@ class regionmanager:
         schema = {'specification': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
         doc = {'specification': specification, 'shape': shape}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.selectedchannels(_str_encode(_pc.document['specification']), _pc.document['shape'])
+        _selectedchannels_result = self._swigobj.selectedchannels(_str_encode(_pc.document['specification']), _pc.document['shape'])
+        return _selectedchannels_result
 
     def fromtextfile(self, filename='', shape=[ int(0) ], csys={ }):
         """This function reads a text file containing region descriptions and
@@ -186,7 +195,8 @@ class regionmanager:
         schema = {'filename': {'type': 'cReqPath', 'coerce': _coerce.expand_path}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'csys': {'type': 'cDict'}}
         doc = {'filename': filename, 'shape': shape, 'csys': csys}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromtextfile(_pc.document['filename'], _pc.document['shape'], _pc.document['csys'])
+        _fromtextfile_result = self._swigobj.fromtextfile(_pc.document['filename'], _pc.document['shape'], _pc.document['csys'])
+        return _fromtextfile_result
 
     def fromtext(self, text='', shape=[ int(1) ], csys={ }):
         """This function reads a region region text descriptions and
@@ -197,7 +207,8 @@ class regionmanager:
         schema = {'text': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'csys': {'type': 'cDict'}}
         doc = {'text': text, 'shape': shape, 'csys': csys}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromtext(_str_encode(_pc.document['text']), _pc.document['shape'], _pc.document['csys'])
+        _fromtext_result = self._swigobj.fromtext(_str_encode(_pc.document['text']), _pc.document['shape'], _pc.document['csys'])
+        return _fromtext_result
 
     def fromfiletorecord(self, filename='', verbose=True, regionname=''):
         """This function reads files containing ImageRegion objects and turns them
@@ -210,7 +221,8 @@ class regionmanager:
         schema = {'filename': {'type': 'cStr'}, 'verbose': {'type': 'cBool'}, 'regionname': {'type': 'cStr'}}
         doc = {'filename': filename, 'verbose': verbose, 'regionname': regionname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromfiletorecord(_str_encode(_pc.document['filename']), _pc.document['verbose'], _str_encode(_pc.document['regionname']))
+        _fromfiletorecord_result = self._swigobj.fromfiletorecord(_str_encode(_pc.document['filename']), _pc.document['verbose'], _str_encode(_pc.document['regionname']))
+        return _fromfiletorecord_result
 
     def tofile(self, filename='', region={ }):
         """This function is to store a region created by the regionmanager in a disk file for future use
@@ -218,7 +230,8 @@ class regionmanager:
         schema = {'filename': {'type': 'cStr'}, 'region': {'type': 'cDict'}}
         doc = {'filename': filename, 'region': region}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.tofile(_str_encode(_pc.document['filename']), _pc.document['region'])
+        _tofile_result = self._swigobj.tofile(_str_encode(_pc.document['filename']), _pc.document['region'])
+        return _tofile_result
 
     def fromrecordtotable(self, tablename='', regionname=[ ], regionrec={ }, asmask=False, verbose=True):
         """This function saves regions into an casa Table
@@ -238,7 +251,8 @@ class regionmanager:
         schema = {'tablename': {'type': 'cStr'}, 'regionname': {'type': 'cVariant'}, 'regionrec': {'type': 'cDict'}, 'asmask': {'type': 'cBool'}, 'verbose': {'type': 'cBool'}}
         doc = {'tablename': tablename, 'regionname': regionname, 'regionrec': regionrec, 'asmask': asmask, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromrecordtotable(_str_encode(_pc.document['tablename']), _pc.document['regionname'], _pc.document['regionrec'], _pc.document['asmask'], _pc.document['verbose'])
+        _fromrecordtotable_result = self._swigobj.fromrecordtotable(_str_encode(_pc.document['tablename']), _pc.document['regionname'], _pc.document['regionrec'], _pc.document['asmask'], _pc.document['verbose'])
+        return _fromrecordtotable_result
 
     def fromtabletorecord(self, tablename='', regionname=[ ], verbose=True):
         """This function restores a region from an aipspp Table
@@ -261,7 +275,8 @@ class regionmanager:
         schema = {'tablename': {'type': 'cStr'}, 'regionname': {'type': 'cVariant'}, 'verbose': {'type': 'cBool'}}
         doc = {'tablename': tablename, 'regionname': regionname, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromtabletorecord(_str_encode(_pc.document['tablename']), _pc.document['regionname'], _pc.document['verbose'])
+        _fromtabletorecord_result = self._swigobj.fromtabletorecord(_str_encode(_pc.document['tablename']), _pc.document['regionname'], _pc.document['verbose'])
+        return _fromtabletorecord_result
 
     def intersection(self, regions=[ ], comment=''):
         """This function (short-hand name {stff int}) creates a region which is
@@ -273,7 +288,8 @@ class regionmanager:
         schema = {'regions': {'type': 'cVariant'}, 'comment': {'type': 'cStr'}}
         doc = {'regions': regions, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.intersection(_pc.document['regions'], _str_encode(_pc.document['comment']))
+        _intersection_result = self._swigobj.intersection(_pc.document['regions'], _str_encode(_pc.document['comment']))
+        return _intersection_result
 
     def ispixelregion(self, region={ }):
         """NOT IMPLEMENTED IN CASA
@@ -284,7 +300,8 @@ class regionmanager:
         schema = {'region': {'type': 'cDict'}}
         doc = {'region': region}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.ispixelregion(_pc.document['region'])
+        _ispixelregion_result = self._swigobj.ispixelregion(_pc.document['region'])
+        return _ispixelregion_result
 
     def isworldregion(self, region={ }):
         """NOT IMPLEMENTED IN CASA
@@ -295,7 +312,8 @@ class regionmanager:
         schema = {'region': {'type': 'cDict'}}
         doc = {'region': region}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.isworldregion(_pc.document['region'])
+        _isworldregion_result = self._swigobj.isworldregion(_pc.document['region'])
+        return _isworldregion_result
 
     def namesintable(self, tablename=''):
         """This function returns the names of regions stored in an CASA Table.
@@ -306,7 +324,8 @@ class regionmanager:
         schema = {'tablename': {'type': 'cStr'}}
         doc = {'tablename': tablename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.namesintable(_str_encode(_pc.document['tablename']))
+        _namesintable_result = self._swigobj.namesintable(_str_encode(_pc.document['tablename']))
+        return _namesintable_result
 
     def setcoordinates(self, csys={ }):
         """This function allows you to (re)set the default Coordinate System
@@ -327,7 +346,8 @@ class regionmanager:
         schema = {'csys': {'type': 'cDict'}}
         doc = {'csys': csys}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setcoordinates(_pc.document['csys'])
+        _setcoordinates_result = self._swigobj.setcoordinates(_pc.document['csys'])
+        return _setcoordinates_result
 
     def makeunion(self, regions=[ ], comment=''):
         """This function takes a minimum of two world regions and creates a region which
@@ -339,7 +359,8 @@ class regionmanager:
         schema = {'regions': {'type': 'cVariant'}, 'comment': {'type': 'cStr'}}
         doc = {'regions': regions, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.makeunion(_pc.document['regions'], _str_encode(_pc.document['comment']))
+        _makeunion_result = self._swigobj.makeunion(_pc.document['regions'], _str_encode(_pc.document['comment']))
+        return _makeunion_result
 
     def wbox(self, blc=[ ], trc=[ ], pixelaxes=[ int(-1) ], csys={ }, absrel='abs', comment=''):
         """This function creates a multi-dimensional world box region; the
@@ -392,7 +413,8 @@ class regionmanager:
         schema = {'blc': {'type': 'cVariant'}, 'trc': {'type': 'cVariant'}, 'pixelaxes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'csys': {'type': 'cDict'}, 'absrel': {'type': 'cStr'}, 'comment': {'type': 'cStr'}}
         doc = {'blc': blc, 'trc': trc, 'pixelaxes': pixelaxes, 'csys': csys, 'absrel': absrel, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.wbox(_pc.document['blc'], _pc.document['trc'], _pc.document['pixelaxes'], _pc.document['csys'], _str_encode(_pc.document['absrel']), _str_encode(_pc.document['comment']))
+        _wbox_result = self._swigobj.wbox(_pc.document['blc'], _pc.document['trc'], _pc.document['pixelaxes'], _pc.document['csys'], _str_encode(_pc.document['absrel']), _str_encode(_pc.document['comment']))
+        return _wbox_result
 
     def wpolygon(self, x=[ ], y=[ ], pixelaxes=[ int(-1) ], csys={ }, absrel='abs', comment=''):
         """This function (short-hand name {stff wpoly}) creates a 2D world
@@ -440,5 +462,6 @@ class regionmanager:
         schema = {'x': {'type': 'cVariant'}, 'y': {'type': 'cVariant'}, 'pixelaxes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'csys': {'type': 'cDict'}, 'absrel': {'type': 'cStr'}, 'comment': {'type': 'cStr'}}
         doc = {'x': x, 'y': y, 'pixelaxes': pixelaxes, 'csys': csys, 'absrel': absrel, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.wpolygon(_pc.document['x'], _pc.document['y'], _pc.document['pixelaxes'], _pc.document['csys'], _str_encode(_pc.document['absrel']), _str_encode(_pc.document['comment']))
+        _wpolygon_result = self._swigobj.wpolygon(_pc.document['x'], _pc.document['y'], _pc.document['pixelaxes'], _pc.document['csys'], _str_encode(_pc.document['absrel']), _str_encode(_pc.document['comment']))
+        return _wpolygon_result
 

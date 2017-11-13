@@ -24,7 +24,8 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.dirshow(_pc.document['v'])
+        _dirshow_result = self._swigobj.dirshow(_pc.document['v'])
+        return _dirshow_result
 
     def show(self, v, refcode=True):
         """show will convert a measure to a string.
@@ -35,7 +36,8 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'refcode': {'type': 'cBool'}}
         doc = {'v': v, 'refcode': refcode}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.show(_pc.document['v'], _pc.document['refcode'])
+        _show_result = self._swigobj.show(_pc.document['v'], _pc.document['refcode'])
+        return _show_result
 
     def epoch(self, rf='UTC', v0=[ ], off={ }):
         """epoch defines an epoch measure from the CLI. It has to specify a
@@ -60,7 +62,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.epoch(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        _epoch_result = self._swigobj.epoch(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        return _epoch_result
 
     def direction(self, rf='J2000', v0=[ ], v1=[ ], off={ }):
         """direction defines a direction measure from the CLI. It has to specify a
@@ -92,7 +95,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.direction(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['off'])
+        _direction_result = self._swigobj.direction(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['off'])
+        return _direction_result
 
     def getvalue(self, v):
         """getvalue gets the actual implementation value of the measure.
@@ -100,7 +104,8 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getvalue(_pc.document['v'])
+        _getvalue_result = self._swigobj.getvalue(_pc.document['v'])
+        return _getvalue_result
 
     def gettype(self, v):
         """gettype gets the actual type of the measure.
@@ -108,7 +113,8 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.gettype(_pc.document['v'])
+        _gettype_result = self._swigobj.gettype(_pc.document['v'])
+        return _gettype_result
 
     def getref(self, v):
         """gettype gets the actual reference code of the measure.
@@ -116,7 +122,8 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getref(_pc.document['v'])
+        _getref_result = self._swigobj.getref(_pc.document['v'])
+        return _getref_result
 
     def getoffset(self, v):
         """getoff gets the actual offset of the measure (as a measure) or F if no offset
@@ -125,36 +132,42 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getoffset(_pc.document['v'])
+        _getoffset_result = self._swigobj.getoffset(_pc.document['v'])
+        return _getoffset_result
 
     def cometname(self):
         """cometname gets the name of the current comet (if any).
         """
-        return self._swigobj.cometname()
+        _cometname_result = self._swigobj.cometname()
+        return _cometname_result
 
     def comettype(self):
         """comettype gets the comet table type (apparent or topocentric)
         """
-        return self._swigobj.comettype()
+        _comettype_result = self._swigobj.comettype()
+        return _comettype_result
 
     def cometdist(self):
         """cometdist returns the distance in AU of the current comet in the current frame,
         as a quantity.  It will return -1 AU on failure!
         
         """
-        return self._swigobj.cometdist()
+        _cometdist_result = self._swigobj.cometdist()
+        return _cometdist_result
 
     def cometangdiam(self):
         """cometdist returns the angular diameter (as seen from Earth) in AU of the current
         comet in the current frame, as a quantity.  It will return -1 radians on failure!
         
         """
-        return self._swigobj.cometangdiam()
+        _cometangdiam_result = self._swigobj.cometangdiam()
+        return _cometangdiam_result
 
     def comettopo(self):
         """comettopo gets the comet table's topographic coordinates used.
         """
-        return self._swigobj.comettopo()
+        _comettopo_result = self._swigobj.comettopo()
+        return _comettopo_result
 
     def framecomet(self, v=''):
         """framecomet will put the specified comet table in the frame.
@@ -162,7 +175,8 @@ class measures:
         schema = {'v': {'type': 'cReqPath', 'coerce': _coerce.expand_path}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.framecomet(_pc.document['v'])
+        _framecomet_result = self._swigobj.framecomet(_pc.document['v'])
+        return _framecomet_result
 
     def position(self, rf='WGS84', v0=[ ], v1=[ ], v2=[ ], off={ }):
         """position defines a position measure from the CLI. It has to specify a
@@ -188,7 +202,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.position(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        _position_result = self._swigobj.position(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        return _position_result
 
     def observatory(self, name='ALMA'):
         """observatory will give you the position of an observatory as given in the
@@ -205,13 +220,15 @@ class measures:
         schema = {'name': {'type': 'cStr'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.observatory(_str_encode(_pc.document['name']))
+        _observatory_result = self._swigobj.observatory(_str_encode(_pc.document['name']))
+        return _observatory_result
 
     def obslist(self):
         """obslist will give you an array of strings of the
         observatories known in the Observatories table.
         """
-        return self._swigobj.obslist()
+        _obslist_result = self._swigobj.obslist()
+        return _obslist_result
 
     def linelist(self):
         """linelist will give you a string with a space separated list of spectral lines
@@ -221,7 +238,8 @@ class measures:
         already online, and will be interfaced once a nomenclature can be defined for
         the tens of thousands of lines.
         """
-        return self._swigobj.linelist()
+        _linelist_result = self._swigobj.linelist()
+        return _linelist_result
 
     def spectralline(self, name='HI'):
         """spectralline will give you the frequency of a spectral line. The known list
@@ -230,13 +248,15 @@ class measures:
         schema = {'name': {'type': 'cStr'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.spectralline(_str_encode(_pc.document['name']))
+        _spectralline_result = self._swigobj.spectralline(_str_encode(_pc.document['name']))
+        return _spectralline_result
 
     def sourcelist(self):
         """sourcelist will give you a string with the space separated list of sources
         known in the Sources table.
         """
-        return self._swigobj.sourcelist()
+        _sourcelist_result = self._swigobj.sourcelist()
+        return _sourcelist_result
 
     def source(self, name=[ ]):
         """source will give you the direction of a source. The known list
@@ -245,7 +265,8 @@ class measures:
         schema = {'name': {'type': 'cVariant'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.source(_pc.document['name'])
+        _source_result = self._swigobj.source(_pc.document['name'])
+        return _source_result
 
     def frequency(self, rf='LSRK', v0=[ ], off={ }):
         """frequency defines a frequency measure from the CLI. It has to specify a
@@ -278,7 +299,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.frequency(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        _frequency_result = self._swigobj.frequency(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        return _frequency_result
 
     def doppler(self, rf='RADIO', v0=[ ], off={ }):
         """doppler defines a doppler measure from the CLI. It has to specify a
@@ -303,7 +325,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.doppler(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        _doppler_result = self._swigobj.doppler(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        return _doppler_result
 
     def radialvelocity(self, rf='LSRK', v0=[ ], off={ }):
         """radialvelocity defines a radialvelocity measure from the CLI. It has to
@@ -330,7 +353,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.radialvelocity(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        _radialvelocity_result = self._swigobj.radialvelocity(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        return _radialvelocity_result
 
     def shift(self, v={ }, offset=[ ], pa=[ ]):
         """This method calculates the direction measure located at the specified offset angular amount along the specified
@@ -340,7 +364,8 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'offset': {'type': 'cVariant'}, 'pa': {'type': 'cVariant'}}
         doc = {'v': v, 'offset': offset, 'pa': pa}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.shift(_pc.document['v'], _pc.document['offset'], _pc.document['pa'])
+        _shift_result = self._swigobj.shift(_pc.document['v'], _pc.document['offset'], _pc.document['pa'])
+        return _shift_result
 
     def uvw(self, rf='ITRF', v0=[ ], v1=[ ], v2=[ ], off={ }):
         """uvw defines a uvw measure from the CLI. It has to specify a
@@ -366,7 +391,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.uvw(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        _uvw_result = self._swigobj.uvw(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        return _uvw_result
 
     def touvw(self, v={ }, dot={ }, xyz={ }):
         """touvw calculates a uvw measure from a baseline.   Note that the
@@ -396,7 +422,10 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'dot': {'type': 'cDict'}, 'xyz': {'type': 'cDict'}}
         doc = {'v': v, 'dot': dot, 'xyz': xyz}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.touvw(_pc.document['v'], _pc.document['dot'], _pc.document['xyz'])
+        _touvw_result = self._swigobj.touvw(_pc.document['v'], _pc.document['dot'], _pc.document['xyz'])
+        dot = _pc.document['dot']
+        xyz = _pc.document['xyz']
+        return _touvw_result
 
     def expand(self, v={ }, xyz={ }):
         """expand calculates the differences between a series of given measure
@@ -407,7 +436,9 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'xyz': {'type': 'cDict'}}
         doc = {'v': v, 'xyz': xyz}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.expand(_pc.document['v'], _pc.document['xyz'])
+        _expand_result = self._swigobj.expand(_pc.document['v'], _pc.document['xyz'])
+        xyz = _pc.document['xyz']
+        return _expand_result
 
     def earthmagnetic(self, rf='IGRF', v0=[ ], v1=[ ], v2=[ ], off={ }):
         """earthmagnetic defines an earthmagnetic measure from the CLI. It needs
@@ -429,7 +460,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.earthmagnetic(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        _earthmagnetic_result = self._swigobj.earthmagnetic(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        return _earthmagnetic_result
 
     def baseline(self, rf='ITRF', v0=[ ], v1=[ ], v2=[ ], off={ }):
         """baseline defines a baseline measure from the CLI. It has to specify a
@@ -456,7 +488,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.baseline(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        _baseline_result = self._swigobj.baseline(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        return _baseline_result
 
     def asbaseline(self, pos):
         """asbaseline converts a position measure into a baseline measure. No
@@ -466,7 +499,8 @@ class measures:
         schema = {'pos': {'type': 'cDict'}}
         doc = {'pos': pos}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.asbaseline(_pc.document['pos'])
+        _asbaseline_result = self._swigobj.asbaseline(_pc.document['pos'])
+        return _asbaseline_result
 
     def listcodes(self, ms):
         """listcodes will produce the known reference codes for a specified measure
@@ -480,7 +514,8 @@ class measures:
         schema = {'ms': {'type': 'cDict'}}
         doc = {'ms': ms}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.listcodes(_pc.document['ms'])
+        _listcodes_result = self._swigobj.listcodes(_pc.document['ms'])
+        return _listcodes_result
 
     def measure(self, v, rf, off={ }):
         """measure converts measures (epoch, direction etc.) from one reference to
@@ -515,7 +550,8 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'rf': {'type': 'cStr'}, 'off': {'type': 'cDict'}}
         doc = {'v': v, 'rf': rf, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.measure(_pc.document['v'], _str_encode(_pc.document['rf']), _pc.document['off'])
+        _measure_result = self._swigobj.measure(_pc.document['v'], _str_encode(_pc.document['rf']), _pc.document['off'])
+        return _measure_result
 
     def doframe(self, v):
         """doframe will set the measure specified as part of a frame.
@@ -595,14 +631,16 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.doframe(_pc.document['v'])
+        _doframe_result = self._swigobj.doframe(_pc.document['v'])
+        return _doframe_result
 
     def framenow(self):
         """framenow will fill the active frame time with the current date and time.
         The different frame values necessary are described in the
         doframe function
         """
-        return self._swigobj.framenow()
+        _framenow_result = self._swigobj.framenow()
+        return _framenow_result
 
     def showframe(self):
         """showframe will display the currently active reference frame values  on the
@@ -613,7 +651,8 @@ class measures:
         displayed on the terminal using the formatting as done for the
         show function.
         """
-        return self._swigobj.showframe()
+        _showframe_result = self._swigobj.showframe()
+        return _showframe_result
 
     def toradialvelocity(self, rf, v0):
         """toradialvelocity will convert a Doppler type value (e.g. in radio mode) to a
@@ -622,7 +661,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.toradialvelocity(_str_encode(_pc.document['rf']), _pc.document['v0'])
+        _toradialvelocity_result = self._swigobj.toradialvelocity(_str_encode(_pc.document['rf']), _pc.document['v0'])
+        return _toradialvelocity_result
 
     def tofrequency(self, rf, v0, rfq):
         """tofrequency will convert a Doppler type value (e.g. in radio mode) to a
@@ -633,7 +673,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cDict'}, 'rfq': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'rfq': rfq}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.tofrequency(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['rfq'])
+        _tofrequency_result = self._swigobj.tofrequency(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['rfq'])
+        return _tofrequency_result
 
     def todoppler(self, rf, v0, rfq=[ ]):
         """todoppler will convert a radialvelocity measure or a frequency measure to a
@@ -643,7 +684,8 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cDict'}, 'rfq': {'type': 'cVariant'}}
         doc = {'rf': rf, 'v0': v0, 'rfq': rfq}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.todoppler(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['rfq'])
+        _todoppler_result = self._swigobj.todoppler(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['rfq'])
+        return _todoppler_result
 
     def torestfrequency(self, v0, d0):
         """torestfrequency will convert a frequency measure and a doppler measure
@@ -653,7 +695,8 @@ class measures:
         schema = {'v0': {'type': 'cDict'}, 'd0': {'type': 'cDict'}}
         doc = {'v0': v0, 'd0': d0}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.torestfrequency(_pc.document['v0'], _pc.document['d0'])
+        _torestfrequency_result = self._swigobj.torestfrequency(_pc.document['v0'], _pc.document['d0'])
+        return _torestfrequency_result
 
     def rise(self, crd=[ ], ev=[ ]):
         """rise will give the rise/set hour-angles of a source. It needs the position
@@ -663,7 +706,8 @@ class measures:
         schema = {'crd': {'type': 'cVariant'}, 'ev': {'type': 'cVariant'}}
         doc = {'crd': crd, 'ev': ev}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.rise(_pc.document['crd'], _pc.document['ev'])
+        _rise_result = self._swigobj.rise(_pc.document['crd'], _pc.document['ev'])
+        return _rise_result
 
     def riseset(self, crd=[ ], ev=[ ]):
         """rise will give the rise/set times of a source. It needs the position
@@ -676,7 +720,8 @@ class measures:
         schema = {'crd': {'type': 'cVariant'}, 'ev': {'type': 'cVariant'}}
         doc = {'crd': crd, 'ev': ev}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.riseset(_pc.document['crd'], _pc.document['ev'])
+        _riseset_result = self._swigobj.riseset(_pc.document['crd'], _pc.document['ev'])
+        return _riseset_result
 
     def posangle(self, m1, m2):
         """posangle will give the position angle from a direction to another. I.e. the
@@ -687,7 +732,8 @@ class measures:
         schema = {'m1': {'type': 'cDict'}, 'm2': {'type': 'cDict'}}
         doc = {'m1': m1, 'm2': m2}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.posangle(_pc.document['m1'], _pc.document['m2'])
+        _posangle_result = self._swigobj.posangle(_pc.document['m1'], _pc.document['m2'])
+        return _posangle_result
 
     def separation(self, m1, m2):
         """separation will give the separation of a direction from another as an angle.
@@ -695,7 +741,8 @@ class measures:
         schema = {'m1': {'type': 'cDict'}, 'm2': {'type': 'cDict'}}
         doc = {'m1': m1, 'm2': m2}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.separation(_pc.document['m1'], _pc.document['m2'])
+        _separation_result = self._swigobj.separation(_pc.document['m1'], _pc.document['m2'])
+        return _separation_result
 
     def addxvalue(self, a):
         """addxvalue will give some additional information about some measures as a vector
@@ -706,18 +753,21 @@ class measures:
         schema = {'a': {'type': 'cDict'}}
         doc = {'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.addxvalue(_pc.document['a'])
+        _addxvalue_result = self._swigobj.addxvalue(_pc.document['a'])
+        return _addxvalue_result
 
     def type(self):
         """type will return the tool name.
         """
-        return self._swigobj.type()
+        _type_result = self._swigobj.type()
+        return _type_result
 
     def done(self):
         """In general you will not want to call this method.  It removes and then
         recreates the default measures tool.
         """
-        return self._swigobj.done()
+        _done_result = self._swigobj.done()
+        return _done_result
 
     def ismeasure(self, v):
         """Checks if the operand is a correct measure
@@ -725,5 +775,6 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.ismeasure(_pc.document['v'])
+        _ismeasure_result = self._swigobj.ismeasure(_pc.document['v'])
+        return _ismeasure_result
 

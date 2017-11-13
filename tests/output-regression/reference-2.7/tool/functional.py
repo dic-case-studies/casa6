@@ -23,17 +23,20 @@ class functional:
         schema = {'x': {'type': 'cVariant'}}
         doc = {'x': x}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.f(_pc.document['x'])
+        _f_result = self._swigobj.f(_pc.document['x'])
+        return _f_result
 
     def ndim(self):
         """Return the number of dimensions.
         """
-        return self._swigobj.ndim()
+        _ndim_result = self._swigobj.ndim()
+        return _ndim_result
 
     def done(self):
         """Free the functional's resources.
         """
-        return self._swigobj.done()
+        _done_result = self._swigobj.done()
+        return _done_result
 
     def gaussian1d(self, amplitude=float(1), center=float(0), fwhm=float(1)):
         """Create a 1-dimensional Gaussian with the specified amplitude, fwhm, and
@@ -42,7 +45,8 @@ class functional:
         schema = {'amplitude': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'center': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'fwhm': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'amplitude': amplitude, 'center': center, 'fwhm': fwhm}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_functional(swig_object=self._swigobj.gaussian1d(_pc.document['amplitude'], _pc.document['center'], _pc.document['fwhm']))
+        _gaussian1d_result = _wrap_functional(swig_object=self._swigobj.gaussian1d(_pc.document['amplitude'], _pc.document['center'], _pc.document['fwhm']))
+        return _gaussian1d_result
 
     def gaussian2d(self, amplitude=float(1), center=[ float(-1) ], fwhm=[ float(-1) ], pa=[ ]):
         """Create a 2-dimensional Gaussian with the specified amplitude, fwhms, and
@@ -53,7 +57,8 @@ class functional:
         schema = {'amplitude': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'center': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'fwhm': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'pa': {'type': 'cVariant'}}
         doc = {'amplitude': amplitude, 'center': center, 'fwhm': fwhm, 'pa': pa}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_functional(swig_object=self._swigobj.gaussian2d(_pc.document['amplitude'], _pc.document['center'], _pc.document['fwhm'], _pc.document['pa']))
+        _gaussian2d_result = _wrap_functional(swig_object=self._swigobj.gaussian2d(_pc.document['amplitude'], _pc.document['center'], _pc.document['fwhm'], _pc.document['pa']))
+        return _gaussian2d_result
 
     def polynomial(self, coefficients=[ float(0) ]):
         """Create a 1-dimensional polynomial function with the specified coefficents.
@@ -61,7 +66,8 @@ class functional:
         schema = {'coefficients': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
         doc = {'coefficients': coefficients}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_functional(swig_object=self._swigobj.polynomial(_pc.document['coefficients']))
+        _polynomial_result = _wrap_functional(swig_object=self._swigobj.polynomial(_pc.document['coefficients']))
+        return _polynomial_result
 
     def powerlogpoly(self, coefficients=[ float(0) ]):
         """Create a 1-dimensional power log polynomial function with the specified coefficents.
@@ -69,5 +75,6 @@ class functional:
         schema = {'coefficients': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
         doc = {'coefficients': coefficients}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_functional(swig_object=self._swigobj.powerlogpoly(_pc.document['coefficients']))
+        _powerlogpoly_result = _wrap_functional(swig_object=self._swigobj.powerlogpoly(_pc.document['coefficients']))
+        return _powerlogpoly_result
 

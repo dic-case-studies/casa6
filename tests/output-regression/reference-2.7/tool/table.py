@@ -88,7 +88,8 @@ class table:
         schema = {'tablename': {'type': 'cStr'}, 'fitsfile': {'type': 'cStr'}, 'whichhdu': {'type': 'cInt'}, 'storage': {'type': 'cStr'}, 'convention': {'type': 'cStr'}, 'nomodify': {'type': 'cBool'}, 'ack': {'type': 'cBool'}}
         doc = {'tablename': tablename, 'fitsfile': fitsfile, 'whichhdu': whichhdu, 'storage': storage, 'convention': convention, 'nomodify': nomodify, 'ack': ack}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_table(swig_object=self._swigobj.fromfits(_str_encode(_pc.document['tablename']), _str_encode(_pc.document['fitsfile']), _pc.document['whichhdu'], _str_encode(_pc.document['storage']), _str_encode(_pc.document['convention']), _pc.document['nomodify'], _pc.document['ack']))
+        _fromfits_result = _wrap_table(swig_object=self._swigobj.fromfits(_str_encode(_pc.document['tablename']), _str_encode(_pc.document['fitsfile']), _pc.document['whichhdu'], _str_encode(_pc.document['storage']), _str_encode(_pc.document['convention']), _pc.document['nomodify'], _pc.document['ack']))
+        return _fromfits_result
 
     def fromascii(self, tablename, asciifile, headerfile='', autoheader=False, autoshape=[ int(-1) ], sep='', commentmarker='', firstline=int(0), lastline=int(-1), nomodify=True, columnnames=[  ], datatypes=[  ]):
         """Create a table from an ASCII file. Columnar data as well as
@@ -272,7 +273,8 @@ class table:
         schema = {'tablename': {'type': 'cStr'}, 'asciifile': {'type': 'cStr'}, 'headerfile': {'type': 'cStr'}, 'autoheader': {'type': 'cBool'}, 'autoshape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'sep': {'type': 'cStr'}, 'commentmarker': {'type': 'cStr'}, 'firstline': {'type': 'cInt'}, 'lastline': {'type': 'cInt'}, 'nomodify': {'type': 'cBool'}, 'columnnames': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'datatypes': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'tablename': tablename, 'asciifile': asciifile, 'headerfile': headerfile, 'autoheader': autoheader, 'autoshape': autoshape, 'sep': sep, 'commentmarker': commentmarker, 'firstline': firstline, 'lastline': lastline, 'nomodify': nomodify, 'columnnames': columnnames, 'datatypes': datatypes}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromascii(_str_encode(_pc.document['tablename']), _str_encode(_pc.document['asciifile']), _str_encode(_pc.document['headerfile']), _pc.document['autoheader'], _pc.document['autoshape'], _str_encode(_pc.document['sep']), _str_encode(_pc.document['commentmarker']), _pc.document['firstline'], _pc.document['lastline'], _pc.document['nomodify'], [_str_encode(_x) for _x in _pc.document['columnnames']], [_str_encode(_x) for _x in _pc.document['datatypes']])
+        _fromascii_result = self._swigobj.fromascii(_str_encode(_pc.document['tablename']), _str_encode(_pc.document['asciifile']), _str_encode(_pc.document['headerfile']), _pc.document['autoheader'], _pc.document['autoshape'], _str_encode(_pc.document['sep']), _str_encode(_pc.document['commentmarker']), _pc.document['firstline'], _pc.document['lastline'], _pc.document['nomodify'], [_str_encode(_x) for _x in _pc.document['columnnames']], [_str_encode(_x) for _x in _pc.document['datatypes']])
+        return _fromascii_result
 
     def open(self, tablename='', lockoptions={ }, nomodify=True):
         """Opens a disk file containing an existing casa Table.
@@ -307,7 +309,8 @@ class table:
         schema = {'tablename': {'type': 'cReqPath', 'coerce': _coerce.expand_path}, 'lockoptions': {'type': 'cDict'}, 'nomodify': {'type': 'cBool'}}
         doc = {'tablename': tablename, 'lockoptions': lockoptions, 'nomodify': nomodify}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.open(_pc.document['tablename'], _pc.document['lockoptions'], _pc.document['nomodify'])
+        _open_result = self._swigobj.open(_pc.document['tablename'], _pc.document['lockoptions'], _pc.document['nomodify'])
+        return _open_result
 
     def create(self, tablename='', tabledesc={ }, lockoptions={ }, endianformat='', memtype='', nrow=int(0), dminfo={ }):
         """Create a new casa Table.
@@ -342,7 +345,8 @@ class table:
         schema = {'tablename': {'type': 'cStr'}, 'tabledesc': {'type': 'cDict'}, 'lockoptions': {'type': 'cDict'}, 'endianformat': {'type': 'cStr'}, 'memtype': {'type': 'cStr'}, 'nrow': {'type': 'cInt'}, 'dminfo': {'type': 'cDict'}}
         doc = {'tablename': tablename, 'tabledesc': tabledesc, 'lockoptions': lockoptions, 'endianformat': endianformat, 'memtype': memtype, 'nrow': nrow, 'dminfo': dminfo}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.create(_str_encode(_pc.document['tablename']), _pc.document['tabledesc'], _pc.document['lockoptions'], _str_encode(_pc.document['endianformat']), _str_encode(_pc.document['memtype']), _pc.document['nrow'], _pc.document['dminfo'])
+        _create_result = self._swigobj.create(_str_encode(_pc.document['tablename']), _pc.document['tabledesc'], _pc.document['lockoptions'], _str_encode(_pc.document['endianformat']), _str_encode(_pc.document['memtype']), _pc.document['nrow'], _pc.document['dminfo'])
+        return _create_result
 
     def flush(self):
         """Until a flush is performed, the results of all operations
@@ -350,7 +354,8 @@ class table:
         disk file. Hence you {em must} do a flush to write the changes
         to disk.
         """
-        return self._swigobj.flush()
+        _flush_result = self._swigobj.flush()
+        return _flush_result
 
     def fromASDM(self, tablename, xmlfile):
         """.keywords
@@ -411,7 +416,8 @@ class table:
         schema = {'tablename': {'type': 'cStr'}, 'xmlfile': {'type': 'cStr'}}
         doc = {'tablename': tablename, 'xmlfile': xmlfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fromASDM(_str_encode(_pc.document['tablename']), _str_encode(_pc.document['xmlfile']))
+        _fromASDM_result = self._swigobj.fromASDM(_str_encode(_pc.document['tablename']), _str_encode(_pc.document['xmlfile']))
+        return _fromASDM_result
 
     def resync(self):
         """Acquiring a read or write lock automatically synchronizes the internals
@@ -424,13 +430,15 @@ class table:
         It is only useful if the table is opened with locking mode
         texttt{autonoread} or texttt{usernoread}.
         """
-        return self._swigobj.resync()
+        _resync_result = self._swigobj.resync()
+        return _resync_result
 
     def close(self):
         """First a flush is done, then the table is closed inside casapy and
         is no longer available for use.
         """
-        return self._swigobj.close()
+        _close_result = self._swigobj.close()
+        return _close_result
 
     def copy(self, newtablename, deep=False, valuecopy=False, dminfo={ }, endian='aipsrc', memorytable=False, returnobject=False, norows=False):
         """Copy the table. All subtables are also copied.
@@ -476,7 +484,8 @@ class table:
         schema = {'newtablename': {'type': 'cStr'}, 'deep': {'type': 'cBool'}, 'valuecopy': {'type': 'cBool'}, 'dminfo': {'type': 'cDict'}, 'endian': {'type': 'cStr'}, 'memorytable': {'type': 'cBool'}, 'returnobject': {'type': 'cBool'}, 'norows': {'type': 'cBool'}}
         doc = {'newtablename': newtablename, 'deep': deep, 'valuecopy': valuecopy, 'dminfo': dminfo, 'endian': endian, 'memorytable': memorytable, 'returnobject': returnobject, 'norows': norows}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_table(swig_object=self._swigobj.copy(_str_encode(_pc.document['newtablename']), _pc.document['deep'], _pc.document['valuecopy'], _pc.document['dminfo'], _str_encode(_pc.document['endian']), _pc.document['memorytable'], _pc.document['returnobject'], _pc.document['norows']))
+        _copy_result = _wrap_table(swig_object=self._swigobj.copy(_str_encode(_pc.document['newtablename']), _pc.document['deep'], _pc.document['valuecopy'], _pc.document['dminfo'], _str_encode(_pc.document['endian']), _pc.document['memorytable'], _pc.document['returnobject'], _pc.document['norows']))
+        return _copy_result
 
     def copyrows(self, outtable, startrowin=int(0), startrowout=int(-1), nrow=int(-1)):
         """Copy rows from this table to another. By default all rows of this
@@ -493,23 +502,27 @@ class table:
         schema = {'outtable': {'type': 'cStr'}, 'startrowin': {'type': 'cInt'}, 'startrowout': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}}
         doc = {'outtable': outtable, 'startrowin': startrowin, 'startrowout': startrowout, 'nrow': nrow}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.copyrows(_str_encode(_pc.document['outtable']), _pc.document['startrowin'], _pc.document['startrowout'], _pc.document['nrow'])
+        _copyrows_result = self._swigobj.copyrows(_str_encode(_pc.document['outtable']), _pc.document['startrowin'], _pc.document['startrowout'], _pc.document['nrow'])
+        return _copyrows_result
 
     def done(self):
         """Effectively a synonym for function close.
         """
-        return self._swigobj.done()
+        _done_result = self._swigobj.done()
+        return _done_result
 
     def iswritable(self):
         """Test if the table is opened for write.
         """
-        return self._swigobj.iswritable()
+        _iswritable_result = self._swigobj.iswritable()
+        return _iswritable_result
 
     def endianformat(self):
         """Get the endian format used for this table.
         It returns a string with value 'big' or 'little'.
         """
-        return self._swigobj.endianformat()
+        _endianformat_result = self._swigobj.endianformat()
+        return _endianformat_result
 
     def lock(self, write=True, nattempts=int(0)):
         """Try to acquire a read or write lock on the table. Nothing will be
@@ -524,7 +537,8 @@ class table:
         schema = {'write': {'type': 'cBool'}, 'nattempts': {'type': 'cInt'}}
         doc = {'write': write, 'nattempts': nattempts}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.lock(_pc.document['write'], _pc.document['nattempts'])
+        _lock_result = self._swigobj.lock(_pc.document['write'], _pc.document['nattempts'])
+        return _lock_result
 
     def unlock(self):
         """The table is flushed and the lock on the table is released.
@@ -532,13 +546,15 @@ class table:
         However, it is also possible to use it with auto locking. In that case
         the lock will automatically be re-acquired before the next table operation.
         """
-        return self._swigobj.unlock()
+        _unlock_result = self._swigobj.unlock()
+        return _unlock_result
 
     def datachanged(self):
         """This function tests if data in the table have changed (by another
         process) since the last call to this function.
         """
-        return self._swigobj.datachanged()
+        _datachanged_result = self._swigobj.datachanged()
+        return _datachanged_result
 
     def haslock(self, write=True):
         """Has this process a read or write lock on the table?
@@ -546,14 +562,16 @@ class table:
         schema = {'write': {'type': 'cBool'}}
         doc = {'write': write}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.haslock(_pc.document['write'])
+        _haslock_result = self._swigobj.haslock(_pc.document['write'])
+        return _haslock_result
 
     def lockoptions(self):
         """Get the lock options used for this table.
         It returns a record with the fields: option, interval and maxwait.
         The record can be used as the lockoptions argument when opening a table.
         """
-        return self._swigobj.lockoptions()
+        _lockoptions_result = self._swigobj.lockoptions()
+        return _lockoptions_result
 
     def ismultiused(self, checksubtables=False):
         """Is the table still in use in another process?
@@ -562,19 +580,22 @@ class table:
         schema = {'checksubtables': {'type': 'cBool'}}
         doc = {'checksubtables': checksubtables}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.ismultiused(_pc.document['checksubtables'])
+        _ismultiused_result = self._swigobj.ismultiused(_pc.document['checksubtables'])
+        return _ismultiused_result
 
     def browse(self):
         """To start the browser, the environment variable
         DISPLAY must be set.
         """
-        return self._swigobj.browse()
+        _browse_result = self._swigobj.browse()
+        return _browse_result
 
     def name(self):
         """Gives the name of the casa table on disk that the
         table tool has open.
         """
-        return self._swigobj.name()
+        _name_result = self._swigobj.name()
+        return _name_result
 
     def createmultitable(self, outputTableName, tables, subdirname):
         """
@@ -582,7 +603,8 @@ class table:
         schema = {'outputTableName': {'type': 'cStr'}, 'tables': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'subdirname': {'type': 'cStr'}}
         doc = {'outputTableName': outputTableName, 'tables': tables, 'subdirname': subdirname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.createmultitable(_str_encode(_pc.document['outputTableName']), [_str_encode(_x) for _x in _pc.document['tables']], _str_encode(_pc.document['subdirname']))
+        _createmultitable_result = self._swigobj.createmultitable(_str_encode(_pc.document['outputTableName']), [_str_encode(_x) for _x in _pc.document['tables']], _str_encode(_pc.document['subdirname']))
+        return _createmultitable_result
 
     def toasciifmt(self, asciifile, headerfile='', columns=[  ], sep=''):
         """Write a table into an ASCII format approximately compatible with fromascii except that in order to permit variable shaped arrays (as they often occur in MSs), array values are output enclosed in square brackets.
@@ -595,7 +617,8 @@ class table:
         schema = {'asciifile': {'type': 'cStr'}, 'headerfile': {'type': 'cStr'}, 'columns': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'sep': {'type': 'cStr'}}
         doc = {'asciifile': asciifile, 'headerfile': headerfile, 'columns': columns, 'sep': sep}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.toasciifmt(_str_encode(_pc.document['asciifile']), _str_encode(_pc.document['headerfile']), [_str_encode(_x) for _x in _pc.document['columns']], _str_encode(_pc.document['sep']))
+        _toasciifmt_result = self._swigobj.toasciifmt(_str_encode(_pc.document['asciifile']), _str_encode(_pc.document['headerfile']), [_str_encode(_x) for _x in _pc.document['columns']], _str_encode(_pc.document['sep']))
+        return _toasciifmt_result
 
     def taql(self, taqlcommand='TaQL expression'):
         """This method Expose TaQL to the user.
@@ -604,7 +627,8 @@ class table:
         schema = {'taqlcommand': {'type': 'cStr'}}
         doc = {'taqlcommand': taqlcommand}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_table(swig_object=self._swigobj.taql(_str_encode(_pc.document['taqlcommand'])))
+        _taql_result = _wrap_table(swig_object=self._swigobj.taql(_str_encode(_pc.document['taqlcommand'])))
+        return _taql_result
 
     def query(self, query='String', name='', sortlist='', columns='', style=''):
         """Make a table from a query applied to the current table.  It is possible to
@@ -618,7 +642,8 @@ class table:
         schema = {'query': {'type': 'cStr'}, 'name': {'type': 'cStr'}, 'sortlist': {'type': 'cStr'}, 'columns': {'type': 'cStr'}, 'style': {'type': 'cStr'}}
         doc = {'query': query, 'name': name, 'sortlist': sortlist, 'columns': columns, 'style': style}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_table(swig_object=self._swigobj.query(_str_encode(_pc.document['query']), _str_encode(_pc.document['name']), _str_encode(_pc.document['sortlist']), _str_encode(_pc.document['columns']), _str_encode(_pc.document['style'])))
+        _query_result = _wrap_table(swig_object=self._swigobj.query(_str_encode(_pc.document['query']), _str_encode(_pc.document['name']), _str_encode(_pc.document['sortlist']), _str_encode(_pc.document['columns']), _str_encode(_pc.document['style'])))
+        return _query_result
 
     def calc(self, expr, prefix='using style base0, endincl, fortranorder', showtaql=False):
         """Get the result from the calculation of an expression on a table
@@ -631,7 +656,8 @@ class table:
         schema = {'expr': {'type': 'cStr'}, 'prefix': {'type': 'cStr'}, 'showtaql': {'type': 'cBool'}}
         doc = {'expr': expr, 'prefix': prefix, 'showtaql': showtaql}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.calc(_str_encode(_pc.document['expr']), _str_encode(_pc.document['prefix']), _pc.document['showtaql'])
+        _calc_result = self._swigobj.calc(_str_encode(_pc.document['expr']), _str_encode(_pc.document['prefix']), _pc.document['showtaql'])
+        return _calc_result
 
     def selectrows(self, rownrs, name=''):
         """Create a (reference) table containing a given subset of rows.
@@ -665,12 +691,14 @@ class table:
         schema = {'rownrs': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'name': {'type': 'cStr'}}
         doc = {'rownrs': rownrs, 'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return _wrap_table(swig_object=self._swigobj.selectrows(_pc.document['rownrs'], _str_encode(_pc.document['name'])))
+        _selectrows_result = _wrap_table(swig_object=self._swigobj.selectrows(_pc.document['rownrs'], _str_encode(_pc.document['name'])))
+        return _selectrows_result
 
     def info(self):
         """The info record contains information on the table.
         """
-        return self._swigobj.info()
+        _info_result = self._swigobj.info()
+        return _info_result
 
     def putinfo(self, value):
         """The info record contains information on the table. It is
@@ -680,7 +708,8 @@ class table:
         schema = {'value': {'type': 'cDict'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putinfo(_pc.document['value'])
+        _putinfo_result = self._swigobj.putinfo(_pc.document['value'])
+        return _putinfo_result
 
     def addreadmeline(self, value):
         """A readme line is part of the info record associated with a table.
@@ -689,7 +718,8 @@ class table:
         schema = {'value': {'type': 'cStr'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.addreadmeline(_str_encode(_pc.document['value']))
+        _addreadmeline_result = self._swigobj.addreadmeline(_str_encode(_pc.document['value']))
+        return _addreadmeline_result
 
     def summary(self, recurse=False):
         """A (terse) summary of the table contents is sent to the defaultlogger.
@@ -697,13 +727,15 @@ class table:
         schema = {'recurse': {'type': 'cBool'}}
         doc = {'recurse': recurse}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.summary(_pc.document['recurse'])
+        _summary_result = self._swigobj.summary(_pc.document['recurse'])
+        return _summary_result
 
     def colnames(self):
         """The names of the columns in the table are returned as a vector
         of Strings.
         """
-        return self._swigobj.colnames()
+        _colnames_result = self._swigobj.colnames()
+        return _colnames_result
 
     def rownumbers(self, tab={ }, nbytes=int(0)):
         """!!!NOTE INPUT PARAMETERS IGNORED!!!
@@ -747,7 +779,8 @@ class table:
         schema = {'tab': {'type': 'cDict'}, 'nbytes': {'type': 'cInt'}}
         doc = {'tab': tab, 'nbytes': nbytes}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.rownumbers(_pc.document['tab'], _pc.document['nbytes'])
+        _rownumbers_result = self._swigobj.rownumbers(_pc.document['tab'], _pc.document['nbytes'])
+        return _rownumbers_result
 
     def setmaxcachesize(self, columnname, nbytes):
         """It can sometimes be useful to limit the size of the cache used by
@@ -758,7 +791,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'nbytes': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'nbytes': nbytes}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setmaxcachesize(_str_encode(_pc.document['columnname']), _pc.document['nbytes'])
+        _setmaxcachesize_result = self._swigobj.setmaxcachesize(_str_encode(_pc.document['columnname']), _pc.document['nbytes'])
+        return _setmaxcachesize_result
 
     def isscalarcol(self, columnname):
         """A column may contain either scalars or arrays in each cell.
@@ -767,7 +801,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}}
         doc = {'columnname': columnname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.isscalarcol(_str_encode(_pc.document['columnname']))
+        _isscalarcol_result = self._swigobj.isscalarcol(_str_encode(_pc.document['columnname']))
+        return _isscalarcol_result
 
     def isvarcol(self, columnname):
         """This functions tells if the column contains variable shaped arrays.
@@ -777,7 +812,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}}
         doc = {'columnname': columnname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.isvarcol(_str_encode(_pc.document['columnname']))
+        _isvarcol_result = self._swigobj.isvarcol(_str_encode(_pc.document['columnname']))
+        return _isvarcol_result
 
     def coldatatype(self, columnname):
         """A column may contain various data types. This tool function returns the
@@ -786,7 +822,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}}
         doc = {'columnname': columnname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.coldatatype(_str_encode(_pc.document['columnname']))
+        _coldatatype_result = self._swigobj.coldatatype(_str_encode(_pc.document['columnname']))
+        return _coldatatype_result
 
     def colarraytype(self, columnname):
         """The possible column array types are defined as:
@@ -803,17 +840,20 @@ class table:
         schema = {'columnname': {'type': 'cStr'}}
         doc = {'columnname': columnname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.colarraytype(_str_encode(_pc.document['columnname']))
+        _colarraytype_result = self._swigobj.colarraytype(_str_encode(_pc.document['columnname']))
+        return _colarraytype_result
 
     def ncols(self):
         """
         """
-        return self._swigobj.ncols()
+        _ncols_result = self._swigobj.ncols()
+        return _ncols_result
 
     def nrows(self):
         """Note that rows are numbered starting at 0.
         """
-        return self._swigobj.nrows()
+        _nrows_result = self._swigobj.nrows()
+        return _nrows_result
 
     def addrows(self, nrow=int(1)):
         """Rows can be added to the end of a table that was opened nomodify=False.
@@ -822,7 +862,8 @@ class table:
         schema = {'nrow': {'type': 'cInt'}}
         doc = {'nrow': nrow}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.addrows(_pc.document['nrow'])
+        _addrows_result = self._swigobj.addrows(_pc.document['nrow'])
+        return _addrows_result
 
     def removerows(self, rownrs):
         """Remove the row numbers specified in the vector from the table.
@@ -831,7 +872,8 @@ class table:
         schema = {'rownrs': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
         doc = {'rownrs': rownrs}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.removerows(_pc.document['rownrs'])
+        _removerows_result = self._swigobj.removerows(_pc.document['rownrs'])
+        return _removerows_result
 
     def addcols(self, desc, dminfo={ }):
         """Columns can be added to a table that was opened nomodify=False.
@@ -853,7 +895,8 @@ class table:
         schema = {'desc': {'type': 'cDict'}, 'dminfo': {'type': 'cDict'}}
         doc = {'desc': desc, 'dminfo': dminfo}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.addcols(_pc.document['desc'], _pc.document['dminfo'])
+        _addcols_result = self._swigobj.addcols(_pc.document['desc'], _pc.document['dminfo'])
+        return _addcols_result
 
     def renamecol(self, oldname, newname):
         """A column can be renamed in a table that was opened nomodify=False.
@@ -863,7 +906,8 @@ class table:
         schema = {'oldname': {'type': 'cStr'}, 'newname': {'type': 'cStr'}}
         doc = {'oldname': oldname, 'newname': newname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.renamecol(_str_encode(_pc.document['oldname']), _str_encode(_pc.document['newname']))
+        _renamecol_result = self._swigobj.renamecol(_str_encode(_pc.document['oldname']), _str_encode(_pc.document['newname']))
+        return _renamecol_result
 
     def removecols(self, columnames):
         """Columns can be removed from a table that was opened nomodify=False.
@@ -877,7 +921,8 @@ class table:
         schema = {'columnames': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
         doc = {'columnames': columnames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.removecols([_str_encode(_x) for _x in _pc.document['columnames']])
+        _removecols_result = self._swigobj.removecols([_str_encode(_x) for _x in _pc.document['columnames']])
+        return _removecols_result
 
     def iscelldefined(self, columnname, rownr=int(0)):
         """A column containing variable shaped arrays can have an empty cell
@@ -889,7 +934,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'rownr': rownr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.iscelldefined(_str_encode(_pc.document['columnname']), _pc.document['rownr'])
+        _iscelldefined_result = self._swigobj.iscelldefined(_str_encode(_pc.document['columnname']), _pc.document['rownr'])
+        return _iscelldefined_result
 
     def getcell(self, columnname, rownr=int(0)):
         """A cell is the value at one row in one column. It may be a scalar
@@ -898,7 +944,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'rownr': rownr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getcell(_str_encode(_pc.document['columnname']), _pc.document['rownr'])
+        _getcell_result = self._swigobj.getcell(_str_encode(_pc.document['columnname']), _pc.document['rownr'])
+        return _getcell_result
 
     def getcellslice(self, columnname, rownr, blc, trc, incr=[ int(1) ]):
         """A cell is the value at one row in one column. It must be an array.
@@ -909,7 +956,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cInt'}, 'blc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'trc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'incr': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
         doc = {'columnname': columnname, 'rownr': rownr, 'blc': blc, 'trc': trc, 'incr': incr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getcellslice(_str_encode(_pc.document['columnname']), _pc.document['rownr'], _pc.document['blc'], _pc.document['trc'], _pc.document['incr'])
+        _getcellslice_result = self._swigobj.getcellslice(_str_encode(_pc.document['columnname']), _pc.document['rownr'], _pc.document['blc'], _pc.document['trc'], _pc.document['incr'])
+        return _getcellslice_result
 
     def getcol(self, columnname, startrow=int(0), nrow=int(-1), rowincr=int(1)):
         """The entire column (or part of it) is returned. Warning: it might be big!
@@ -925,7 +973,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getcol(_str_encode(_pc.document['columnname']), _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        _getcol_result = self._swigobj.getcol(_str_encode(_pc.document['columnname']), _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        return _getcol_result
 
     def getvarcol(self, columnname, startrow=int(0), nrow=int(-1), rowincr=int(1)):
         """Function texttt{getcol} can only used if values in the column cells to get
@@ -941,7 +990,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getvarcol(_str_encode(_pc.document['columnname']), _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        _getvarcol_result = self._swigobj.getvarcol(_str_encode(_pc.document['columnname']), _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        return _getvarcol_result
 
     def getcolslice(self, columnname, blc, trc, incr, startrow=int(0), nrow=int(-1), rowincr=int(1)):
         """A slice from the entire column (or part of it) is returned.
@@ -954,7 +1004,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'blc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'trc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'incr': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'blc': blc, 'trc': trc, 'incr': incr, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getcolslice(_str_encode(_pc.document['columnname']), _pc.document['blc'], _pc.document['trc'], _pc.document['incr'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        _getcolslice_result = self._swigobj.getcolslice(_str_encode(_pc.document['columnname']), _pc.document['blc'], _pc.document['trc'], _pc.document['incr'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        return _getcolslice_result
 
     def putcell(self, columnname, rownr, thevalue=[ ]):
         """A cell is the the value at one row in one column. It
@@ -963,7 +1014,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'thevalue': {'type': 'cVariant'}}
         doc = {'columnname': columnname, 'rownr': rownr, 'thevalue': thevalue}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putcell(_str_encode(_pc.document['columnname']), _pc.document['rownr'], _pc.document['thevalue'])
+        _putcell_result = self._swigobj.putcell(_str_encode(_pc.document['columnname']), _pc.document['rownr'], _pc.document['thevalue'])
+        return _putcell_result
 
     def putcellslice(self, columnname, rownr, value=[ ], blc=[ ], trc=[ ], incr=[ int(1) ]):
         """A cell is the value at one row in one column. It must be an array.
@@ -974,7 +1026,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cInt'}, 'value': {'type': 'cVariant'}, 'blc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'trc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'incr': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
         doc = {'columnname': columnname, 'rownr': rownr, 'value': value, 'blc': blc, 'trc': trc, 'incr': incr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putcellslice(_str_encode(_pc.document['columnname']), _pc.document['rownr'], _pc.document['value'], _pc.document['blc'], _pc.document['trc'], _pc.document['incr'])
+        _putcellslice_result = self._swigobj.putcellslice(_str_encode(_pc.document['columnname']), _pc.document['rownr'], _pc.document['value'], _pc.document['blc'], _pc.document['trc'], _pc.document['incr'])
+        return _putcellslice_result
 
     def putcol(self, columnname, value=[ ], startrow=int(0), nrow=int(-1), rowincr=int(1)):
         """
@@ -982,7 +1035,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'value': {'type': 'cVariant'}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'value': value, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putcol(_str_encode(_pc.document['columnname']), _pc.document['value'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        _putcol_result = self._swigobj.putcol(_str_encode(_pc.document['columnname']), _pc.document['value'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        return _putcol_result
 
     def putvarcol(self, columnname, value, startrow=int(0), nrow=int(-1), rowincr=int(1)):
         """texttt{putcol} can only used if values in the column cells to put
@@ -995,7 +1049,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'value': {'type': 'cDict'}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'value': value, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putvarcol(_str_encode(_pc.document['columnname']), _pc.document['value'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        _putvarcol_result = self._swigobj.putvarcol(_str_encode(_pc.document['columnname']), _pc.document['value'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        return _putvarcol_result
 
     def putcolslice(self, columnname, value=[ ], blc=[ ], trc=[ ], incr=[ int(1) ], startrow=int(0), nrow=int(-1), rowincr=int(1)):
         """In blc and trc, -1 can be used to indicate all values for a dimension
@@ -1006,7 +1061,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'value': {'type': 'cVariant'}, 'blc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'trc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'incr': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'value': value, 'blc': blc, 'trc': trc, 'incr': incr, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putcolslice(_str_encode(_pc.document['columnname']), _pc.document['value'], _pc.document['blc'], _pc.document['trc'], _pc.document['incr'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        _putcolslice_result = self._swigobj.putcolslice(_str_encode(_pc.document['columnname']), _pc.document['value'], _pc.document['blc'], _pc.document['trc'], _pc.document['incr'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        return _putcolslice_result
 
     def getcolshapestring(self, columnname, startrow=int(0), nrow=int(-1), rowincr=int(1)):
         """The shapes of the arrays in the entire column (or part of it) are
@@ -1017,7 +1073,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getcolshapestring(_str_encode(_pc.document['columnname']), _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        _getcolshapestring_result = self._swigobj.getcolshapestring(_str_encode(_pc.document['columnname']), _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
+        return _getcolshapestring_result
 
     def getkeyword(self, keyword=[ ]):
         """The value of the given table keyword is returned. The value can be of any
@@ -1031,7 +1088,8 @@ class table:
         schema = {'keyword': {'type': 'cVariant'}}
         doc = {'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getkeyword(_pc.document['keyword'])
+        _getkeyword_result = self._swigobj.getkeyword(_pc.document['keyword'])
+        return _getkeyword_result
 
     def getkeywords(self):
         """The values of all table keywords are returned. The values can be of any
@@ -1039,7 +1097,8 @@ class table:
         If a keyword is a table, its value is returned as a string containing
         the table name prefixed by 'Table: '.
         """
-        return self._swigobj.getkeywords()
+        _getkeywords_result = self._swigobj.getkeywords()
+        return _getkeywords_result
 
     def getcolkeyword(self, columnname, keyword=[ ]):
         """The value of the given column keyword is returned. The value can be of any
@@ -1053,7 +1112,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant'}}
         doc = {'columnname': columnname, 'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getcolkeyword(_str_encode(_pc.document['columnname']), _pc.document['keyword'])
+        _getcolkeyword_result = self._swigobj.getcolkeyword(_str_encode(_pc.document['columnname']), _pc.document['keyword'])
+        return _getcolkeyword_result
 
     def getcolkeywords(self, columnname):
         """The values of all keywords for the given column are returned.
@@ -1064,7 +1124,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}}
         doc = {'columnname': columnname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getcolkeywords(_str_encode(_pc.document['columnname']))
+        _getcolkeywords_result = self._swigobj.getcolkeywords(_str_encode(_pc.document['columnname']))
+        return _getcolkeywords_result
 
     def putkeyword(self, keyword=[ ], value=[ ], makesubrecord=False):
         """Put a table keyword. The value of the keyword can be a scalar or
@@ -1081,7 +1142,8 @@ class table:
         schema = {'keyword': {'type': 'cVariant'}, 'value': {'type': 'cVariant'}, 'makesubrecord': {'type': 'cBool'}}
         doc = {'keyword': keyword, 'value': value, 'makesubrecord': makesubrecord}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putkeyword(_pc.document['keyword'], _pc.document['value'], _pc.document['makesubrecord'])
+        _putkeyword_result = self._swigobj.putkeyword(_pc.document['keyword'], _pc.document['value'], _pc.document['makesubrecord'])
+        return _putkeyword_result
 
     def putkeywords(self, value):
         """Put multiple table keywords. All fields in the given record are put
@@ -1094,7 +1156,8 @@ class table:
         schema = {'value': {'type': 'cDict'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putkeywords(_pc.document['value'])
+        _putkeywords_result = self._swigobj.putkeywords(_pc.document['value'])
+        return _putkeywords_result
 
     def putcolkeyword(self, columnname, keyword=[ ], value=[ ]):
         """Put a keyword in the given column.
@@ -1112,7 +1175,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant'}, 'value': {'type': 'cVariant'}}
         doc = {'columnname': columnname, 'keyword': keyword, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putcolkeyword(_str_encode(_pc.document['columnname']), _pc.document['keyword'], _pc.document['value'])
+        _putcolkeyword_result = self._swigobj.putcolkeyword(_str_encode(_pc.document['columnname']), _pc.document['keyword'], _pc.document['value'])
+        return _putcolkeyword_result
 
     def putcolkeywords(self, columnname, value):
         """Put multiple keywords in the given column.
@@ -1126,7 +1190,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'value': {'type': 'cDict'}}
         doc = {'columnname': columnname, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.putcolkeywords(_str_encode(_pc.document['columnname']), _pc.document['value'])
+        _putcolkeywords_result = self._swigobj.putcolkeywords(_str_encode(_pc.document['columnname']), _pc.document['value'])
+        return _putcolkeywords_result
 
     def removekeyword(self, keyword=[ ]):
         """
@@ -1134,7 +1199,8 @@ class table:
         schema = {'keyword': {'type': 'cVariant'}}
         doc = {'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.removekeyword(_pc.document['keyword'])
+        _removekeyword_result = self._swigobj.removekeyword(_pc.document['keyword'])
+        return _removekeyword_result
 
     def removecolkeyword(self, columnname, keyword=[ ]):
         """
@@ -1142,7 +1208,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant'}}
         doc = {'columnname': columnname, 'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.removecolkeyword(_str_encode(_pc.document['columnname']), _pc.document['keyword'])
+        _removecolkeyword_result = self._swigobj.removecolkeyword(_str_encode(_pc.document['columnname']), _pc.document['keyword'])
+        return _removecolkeyword_result
 
     def getdminfo(self):
         """This function returns the types and names of the data managers used.
@@ -1151,13 +1218,15 @@ class table:
         each data manager. Each subrecord contains the fields TYPE, NAME and
         COLUMNS.
         """
-        return self._swigobj.getdminfo()
+        _getdminfo_result = self._swigobj.getdminfo()
+        return _getdminfo_result
 
     def keywordnames(self):
         """This function returns a vector of strings containing the names
         of all table keywords.
         """
-        return self._swigobj.keywordnames()
+        _keywordnames_result = self._swigobj.keywordnames()
+        return _keywordnames_result
 
     def fieldnames(self, keyword=''):
         """This function returns a vector of strings containing the names
@@ -1168,7 +1237,8 @@ class table:
         schema = {'keyword': {'type': 'cStr'}}
         doc = {'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.fieldnames(_str_encode(_pc.document['keyword']))
+        _fieldnames_result = self._swigobj.fieldnames(_str_encode(_pc.document['keyword']))
+        return _fieldnames_result
 
     def colkeywordnames(self, columnname):
         """This function returns a vector of strings containing the names
@@ -1177,7 +1247,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}}
         doc = {'columnname': columnname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.colkeywordnames(_str_encode(_pc.document['columnname']))
+        _colkeywordnames_result = self._swigobj.colkeywordnames(_str_encode(_pc.document['columnname']))
+        return _colkeywordnames_result
 
     def colfieldnames(self, columnname, keyword=''):
         """This function returns a vector of strings containing the names
@@ -1189,7 +1260,8 @@ class table:
         schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cStr'}}
         doc = {'columnname': columnname, 'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.colfieldnames(_str_encode(_pc.document['columnname']), _str_encode(_pc.document['keyword']))
+        _colfieldnames_result = self._swigobj.colfieldnames(_str_encode(_pc.document['columnname']), _str_encode(_pc.document['keyword']))
+        return _colfieldnames_result
 
     def getdesc(self, actual=True):
         """The table description is a casapy record that contains a complete
@@ -1203,7 +1275,8 @@ class table:
         schema = {'actual': {'type': 'cBool'}}
         doc = {'actual': actual}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getdesc(_pc.document['actual'])
+        _getdesc_result = self._swigobj.getdesc(_pc.document['actual'])
+        return _getdesc_result
 
     def getcoldesc(self, columnname):
         """The column description is a casapy record that contains a complete
@@ -1214,25 +1287,29 @@ class table:
         schema = {'columnname': {'type': 'cStr'}}
         doc = {'columnname': columnname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getcoldesc(_str_encode(_pc.document['columnname']))
+        _getcoldesc_result = self._swigobj.getcoldesc(_str_encode(_pc.document['columnname']))
+        return _getcoldesc_result
 
     def ok(self):
         """Perform a number of sanity checks and return T if ok.
         Failure (returning F) is a sign of a bug.
         """
-        return self._swigobj.ok()
+        _ok_result = self._swigobj.ok()
+        return _ok_result
 
     def clearlocks(self):
         """Occasionally a table will be inretrievably locked to another process no matter how much closing is done.
         So clearLocks will unlock all the files in the table cache that use AutoLocking.
         """
-        return self._swigobj.clearlocks()
+        _clearlocks_result = self._swigobj.clearlocks()
+        return _clearlocks_result
 
     def listlocks(self):
         """Occasionally a table will be inretrievably locked to another process no matter how much closing is done.
         So listLocks will list the offending tables (and unoffending ones, too), so we can figure out where the problem might be.
         """
-        return self._swigobj.listlocks()
+        _listlocks_result = self._swigobj.listlocks()
+        return _listlocks_result
 
     def statistics(self, column, complex_value='', useflags=True):
         """This function computes descriptive statistics on the table column.
@@ -1245,7 +1322,8 @@ class table:
         schema = {'column': {'type': 'cStr'}, 'complex_value': {'type': 'cStr'}, 'useflags': {'type': 'cBool'}}
         doc = {'column': column, 'complex_value': complex_value, 'useflags': useflags}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.statistics(_str_encode(_pc.document['column']), _str_encode(_pc.document['complex_value']), _pc.document['useflags'])
+        _statistics_result = self._swigobj.statistics(_str_encode(_pc.document['column']), _str_encode(_pc.document['complex_value']), _pc.document['useflags'])
+        return _statistics_result
 
     def showcache(self, verbose=True):
         """Show the contents of the table cache.
@@ -1253,7 +1331,8 @@ class table:
         schema = {'verbose': {'type': 'cBool'}}
         doc = {'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.showcache(_pc.document['verbose'])
+        _showcache_result = self._swigobj.showcache(_pc.document['verbose'])
+        return _showcache_result
 
     def testincrstman(self, column):
         """Checks consistency of an Incremental Store Manager bucket layout
@@ -1265,5 +1344,6 @@ class table:
         schema = {'column': {'type': 'cStr'}}
         doc = {'column': column}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.testincrstman(_str_encode(_pc.document['column']))
+        _testincrstman_result = self._swigobj.testincrstman(_str_encode(_pc.document['column']))
+        return _testincrstman_result
 

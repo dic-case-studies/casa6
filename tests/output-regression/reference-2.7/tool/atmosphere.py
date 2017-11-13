@@ -20,23 +20,27 @@ class atmosphere:
     def close(self):
         """
         """
-        return self._swigobj.close()
+        _close_result = self._swigobj.close()
+        return _close_result
 
     def done(self):
         """
         """
-        return self._swigobj.done()
+        _done_result = self._swigobj.done()
+        return _done_result
 
     def getAtmVersion(self):
         """Returns the version of ATM library implemented to this tool.
         """
-        return self._swigobj.getAtmVersion()
+        _getAtmVersion_result = self._swigobj.getAtmVersion()
+        return _getAtmVersion_result
 
     def listAtmosphereTypes(self):
         """Returns a list of index numbers and corresponding atmosphere types
         used by the ATM library.
         """
-        return self._swigobj.listAtmosphereTypes()
+        _listAtmosphereTypes_result = self._swigobj.listAtmosphereTypes()
+        return _listAtmosphereTypes_result
 
     def initAtmProfile(self, altitude={'value': float(5000.), 'unit': 'm'}, temperature={'value': float(270.0), 'unit': 'K'}, pressure={'value': float(560.0), 'unit': 'mbar'}, maxAltitude={'value': float(48.0), 'unit': 'km'}, humidity=float(20.0), dTem_dh={'value': float(-5.6), 'unit': 'K/km'}, dP={'value': float(10.0), 'unit': 'mbar'}, dPm=float(1.2), h0={'value': float(2.0), 'unit': 'km'}, atmType=int(1), layerBoundaries=[  ], layerTemperature=[  ]):
         """An atmospheric profile is composed of 4 quantities as a function of
@@ -70,7 +74,8 @@ class atmosphere:
         schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'maxAltitude': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'dP': {'type': 'cFloatQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cFloatQuant'}, 'atmType': {'type': 'cInt'}, 'layerBoundaries': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'layerTemperature': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'maxAltitude': maxAltitude, 'humidity': humidity, 'dTem_dh': dTem_dh, 'dP': dP, 'dPm': dPm, 'h0': h0, 'atmType': atmType, 'layerBoundaries': layerBoundaries, 'layerTemperature': layerTemperature}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.initAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _pc.document['atmType'], _pc.document['layerBoundaries'], _pc.document['layerTemperature'])
+        _initAtmProfile_result = self._swigobj.initAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _pc.document['atmType'], _pc.document['layerBoundaries'], _pc.document['layerTemperature'])
+        return _initAtmProfile_result
 
     def updateAtmProfile(self, altitude={'value': float(5000.), 'unit': 'm'}, temperature={'value': float(270.0), 'unit': 'K'}, pressure={'value': float(560.0), 'unit': 'mbar'}, humidity=float(20.0), dTem_dh={'value': float(-5.6), 'unit': 'K/km'}, h0={'value': float(2.0), 'unit': 'km'}):
         """This is used to update the {tt atmosphere} tool when basic
@@ -79,7 +84,8 @@ class atmosphere:
         schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'h0': {'type': 'cFloatQuant'}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'humidity': humidity, 'dTem_dh': dTem_dh, 'h0': h0}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.updateAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['h0'])
+        _updateAtmProfile_result = self._swigobj.updateAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['h0'])
+        return _updateAtmProfile_result
 
     def getBasicAtmParms(self, altitude={'value': float(0), 'unit': ''}, temperature={'value': float(0), 'unit': ''}, pressure={'value': float(0), 'unit': ''}, maxAltitude={'value': float(0), 'unit': ''}, humidity=float(0), dTem_dh={'value': float(0), 'unit': ''}, dP={'value': float(0), 'unit': ''}, dPm=float(0), h0={'value': float(0), 'unit': ''}, atmType=''):
         """
@@ -87,18 +93,31 @@ class atmosphere:
         schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'maxAltitude': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'dP': {'type': 'cFloatQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cFloatQuant'}, 'atmType': {'type': 'cStr'}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'maxAltitude': maxAltitude, 'humidity': humidity, 'dTem_dh': dTem_dh, 'dP': dP, 'dPm': dPm, 'h0': h0, 'atmType': atmType}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getBasicAtmParms(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _str_encode(_pc.document['atmType']))
+        _getBasicAtmParms_result = self._swigobj.getBasicAtmParms(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _str_encode(_pc.document['atmType']))
+        altitude = _pc.document['altitude']
+        temperature = _pc.document['temperature']
+        pressure = _pc.document['pressure']
+        maxAltitude = _pc.document['maxAltitude']
+        humidity = _pc.document['humidity']
+        dTem_dh = _pc.document['dTem_dh']
+        dP = _pc.document['dP']
+        dPm = _pc.document['dPm']
+        h0 = _pc.document['h0']
+        atmType = _str_encode(_pc.document['atmType'])
+        return _getBasicAtmParms_result
 
     def getNumLayers(self):
         """
         """
-        return self._swigobj.getNumLayers()
+        _getNumLayers_result = self._swigobj.getNumLayers()
+        return _getNumLayers_result
 
     def getGroundWH2O(self):
         """Method to get the zenith column  of water vapor. It is computed by
         simply integrating the H2O profile:
         """
-        return self._swigobj.getGroundWH2O()
+        _getGroundWH2O_result = self._swigobj.getGroundWH2O()
+        return _getGroundWH2O_result
 
     def getProfile(self, thickness={'value': float(0), 'unit': ''}, temperature={'value': float(0), 'unit': ''}, watermassdensity={'value': float(0), 'unit': ''}, water={'value': float(0), 'unit': ''}, pressure={'value': float(0), 'unit': ''}, O3={'value': float(0), 'unit': ''}, CO={'value': float(0), 'unit': ''}, N2O={'value': float(0), 'unit': ''}):
         """Get the atmospheric profile.
@@ -106,7 +125,16 @@ class atmosphere:
         schema = {'thickness': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'watermassdensity': {'type': 'cFloatQuant'}, 'water': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'O3': {'type': 'cFloatQuant'}, 'CO': {'type': 'cFloatQuant'}, 'N2O': {'type': 'cFloatQuant'}}
         doc = {'thickness': thickness, 'temperature': temperature, 'watermassdensity': watermassdensity, 'water': water, 'pressure': pressure, 'O3': O3, 'CO': CO, 'N2O': N2O}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getProfile(_pc.document['thickness'], _pc.document['temperature'], _pc.document['watermassdensity'], _pc.document['water'], _pc.document['pressure'], _pc.document['O3'], _pc.document['CO'], _pc.document['N2O'])
+        _getProfile_result = self._swigobj.getProfile(_pc.document['thickness'], _pc.document['temperature'], _pc.document['watermassdensity'], _pc.document['water'], _pc.document['pressure'], _pc.document['O3'], _pc.document['CO'], _pc.document['N2O'])
+        thickness = _pc.document['thickness']
+        temperature = _pc.document['temperature']
+        watermassdensity = _pc.document['watermassdensity']
+        water = _pc.document['water']
+        pressure = _pc.document['pressure']
+        O3 = _pc.document['O3']
+        CO = _pc.document['CO']
+        N2O = _pc.document['N2O']
+        return _getProfile_result
 
     def initSpectralWindow(self, nbands=int(1), fCenter={'value': float(90), 'unit': 'GHz'}, fWidth={'value': float(0.64), 'unit': 'GHz'}, fRes={'value': float(0.0), 'unit': 'GHz'}):
         """function that defines a spectral window, computes absorption and emmision coefficients for this window,
@@ -117,7 +145,8 @@ class atmosphere:
         schema = {'nbands': {'type': 'cInt'}, 'fCenter': {'type': 'cFloatQuant'}, 'fWidth': {'type': 'cFloatQuant'}, 'fRes': {'type': 'cFloatQuant'}}
         doc = {'nbands': nbands, 'fCenter': fCenter, 'fWidth': fWidth, 'fRes': fRes}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.initSpectralWindow(_pc.document['nbands'], _pc.document['fCenter'], _pc.document['fWidth'], _pc.document['fRes'])
+        _initSpectralWindow_result = self._swigobj.initSpectralWindow(_pc.document['nbands'], _pc.document['fCenter'], _pc.document['fWidth'], _pc.document['fRes'])
+        return _initSpectralWindow_result
 
     def addSpectralWindow(self, fCenter={'value': float(350), 'unit': 'GHz'}, fWidth={'value': float(0.008), 'unit': 'GHz'}, fRes={'value': float(0.002), 'unit': 'GHz'}):
         """Add a new spectral window, uniformly sampled, this spectral window
@@ -126,12 +155,14 @@ class atmosphere:
         schema = {'fCenter': {'type': 'cFloatQuant'}, 'fWidth': {'type': 'cFloatQuant'}, 'fRes': {'type': 'cFloatQuant'}}
         doc = {'fCenter': fCenter, 'fWidth': fWidth, 'fRes': fRes}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.addSpectralWindow(_pc.document['fCenter'], _pc.document['fWidth'], _pc.document['fRes'])
+        _addSpectralWindow_result = self._swigobj.addSpectralWindow(_pc.document['fCenter'], _pc.document['fWidth'], _pc.document['fRes'])
+        return _addSpectralWindow_result
 
     def getNumSpectralWindows(self):
         """
         """
-        return self._swigobj.getNumSpectralWindows()
+        _getNumSpectralWindows_result = self._swigobj.getNumSpectralWindows()
+        return _getNumSpectralWindows_result
 
     def getNumChan(self, spwid=int(0)):
         """Return the number of channels of ith band ( passes in as parameter ).
@@ -139,7 +170,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}}
         doc = {'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getNumChan(_pc.document['spwid'])
+        _getNumChan_result = self._swigobj.getNumChan(_pc.document['spwid'])
+        return _getNumChan_result
 
     def getRefChan(self, spwid=int(0)):
         """Return the reference channel of the given spectral window
@@ -147,7 +179,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}}
         doc = {'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getRefChan(_pc.document['spwid'])
+        _getRefChan_result = self._swigobj.getRefChan(_pc.document['spwid'])
+        return _getRefChan_result
 
     def getRefFreq(self, spwid=int(0)):
         """Return the reference frequency of the given spectral window
@@ -155,7 +188,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}}
         doc = {'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getRefFreq(_pc.document['spwid'])
+        _getRefFreq_result = self._swigobj.getRefFreq(_pc.document['spwid'])
+        return _getRefFreq_result
 
     def getChanSep(self, spwid=int(0)):
         """Return the channel separation of the given spectral window
@@ -163,7 +197,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}}
         doc = {'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getChanSep(_pc.document['spwid'])
+        _getChanSep_result = self._swigobj.getChanSep(_pc.document['spwid'])
+        return _getChanSep_result
 
     def getChanFreq(self, chanNum=int(0), spwid=int(0)):
         """Return the channel frequency for a given grid point for the specified spectral window.
@@ -172,7 +207,8 @@ class atmosphere:
         schema = {'chanNum': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'chanNum': chanNum, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getChanFreq(_pc.document['chanNum'], _pc.document['spwid'])
+        _getChanFreq_result = self._swigobj.getChanFreq(_pc.document['chanNum'], _pc.document['spwid'])
+        return _getChanFreq_result
 
     def getSpectralWindow(self, spwid=int(0)):
         """Return the spectral grid for the specified spectral window.
@@ -181,7 +217,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}}
         doc = {'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getSpectralWindow(_pc.document['spwid'])
+        _getSpectralWindow_result = self._swigobj.getSpectralWindow(_pc.document['spwid'])
+        return _getSpectralWindow_result
 
     def getChanNum(self, freq, spwid=int(0)):
         """Return the channel number for given frequency in the specified
@@ -191,7 +228,8 @@ class atmosphere:
         schema = {'freq': {'type': 'cFloatQuant'}, 'spwid': {'type': 'cInt'}}
         doc = {'freq': freq, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getChanNum(_pc.document['freq'], _pc.document['spwid'])
+        _getChanNum_result = self._swigobj.getChanNum(_pc.document['freq'], _pc.document['spwid'])
+        return _getChanNum_result
 
     def getBandwidth(self, spwid=int(0)):
         """Get the frequency range encompassing the list of frequency grid points for the specified spectral window.
@@ -200,7 +238,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}}
         doc = {'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getBandwidth(_pc.document['spwid'])
+        _getBandwidth_result = self._swigobj.getBandwidth(_pc.document['spwid'])
+        return _getBandwidth_result
 
     def getMinFreq(self, spwid=int(0)):
         """Get lowest frequency channel for the specified spectral window.
@@ -209,7 +248,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}}
         doc = {'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getMinFreq(_pc.document['spwid'])
+        _getMinFreq_result = self._swigobj.getMinFreq(_pc.document['spwid'])
+        return _getMinFreq_result
 
     def getMaxFreq(self, spwid=int(0)):
         """Get highest frequency channel for the specified spectral window.
@@ -218,7 +258,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}}
         doc = {'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getMaxFreq(_pc.document['spwid'])
+        _getMaxFreq_result = self._swigobj.getMaxFreq(_pc.document['spwid'])
+        return _getMaxFreq_result
 
     def getDryOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated Dry Opacity for one channel in a band.
@@ -226,7 +267,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getDryOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getDryOpacity_result = self._swigobj.getDryOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getDryOpacity_result
 
     def getDryContOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated Dry Continuum Opacity for one channel in a band.
@@ -234,7 +276,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getDryContOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getDryContOpacity_result = self._swigobj.getDryContOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getDryContOpacity_result
 
     def getO2LinesOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated O2 Lines Opacity for one channel in a band.
@@ -242,7 +285,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getO2LinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getO2LinesOpacity_result = self._swigobj.getO2LinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getO2LinesOpacity_result
 
     def getO3LinesOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated O3 Lines Opacity for one channel in a band.
@@ -250,7 +294,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getO3LinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getO3LinesOpacity_result = self._swigobj.getO3LinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getO3LinesOpacity_result
 
     def getCOLinesOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated CO Lines Opacity for one channel in a band.
@@ -258,7 +303,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getCOLinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getCOLinesOpacity_result = self._swigobj.getCOLinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getCOLinesOpacity_result
 
     def getN2OLinesOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated N2O Lines Opacity for one channel in a band.
@@ -266,7 +312,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getN2OLinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getN2OLinesOpacity_result = self._swigobj.getN2OLinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getN2OLinesOpacity_result
 
     def getWetOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated zenith Wet Opacity for one channel in a band.
@@ -274,7 +321,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getWetOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getWetOpacity_result = self._swigobj.getWetOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getWetOpacity_result
 
     def getH2OLinesOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated zenith H2O Lines Opacity for one channel in a band.
@@ -282,7 +330,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getH2OLinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getH2OLinesOpacity_result = self._swigobj.getH2OLinesOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getH2OLinesOpacity_result
 
     def getH2OContOpacity(self, nc=int(-1), spwid=int(0)):
         """Get the integrated zenith H2O Continuum Opacity for one channel in a band.
@@ -290,7 +339,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getH2OContOpacity(_pc.document['nc'], _pc.document['spwid'])
+        _getH2OContOpacity_result = self._swigobj.getH2OContOpacity(_pc.document['nc'], _pc.document['spwid'])
+        return _getH2OContOpacity_result
 
     def getDryOpacitySpec(self, spwid=int(0), dryOpacity=[ ]):
         """Get the integrated Dry opacity along the atmospheric path on each channel in a band.
@@ -298,7 +348,9 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}, 'dryOpacity': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
         doc = {'spwid': spwid, 'dryOpacity': dryOpacity}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getDryOpacitySpec(_pc.document['spwid'], _pc.document['dryOpacity'])
+        _getDryOpacitySpec_result = self._swigobj.getDryOpacitySpec(_pc.document['spwid'], _pc.document['dryOpacity'])
+        dryOpacity = _pc.document['dryOpacity']
+        return _getDryOpacitySpec_result
 
     def getWetOpacitySpec(self, spwid=int(0), wetOpacity={'value': float(0), 'unit': ''}):
         """Getthe integrated zenith Wet Opacity along the atmospheric path on each channel in a band.
@@ -306,7 +358,9 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}, 'wetOpacity': {'type': 'cFloatQuant'}}
         doc = {'spwid': spwid, 'wetOpacity': wetOpacity}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getWetOpacitySpec(_pc.document['spwid'], _pc.document['wetOpacity'])
+        _getWetOpacitySpec_result = self._swigobj.getWetOpacitySpec(_pc.document['spwid'], _pc.document['wetOpacity'])
+        wetOpacity = _pc.document['wetOpacity']
+        return _getWetOpacitySpec_result
 
     def getDispersivePhaseDelay(self, nc=int(-1), spwid=int(0)):
         """Get the integrated zenith H2O Atmospheric Phase Delay (Dispersive part)
@@ -315,7 +369,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getDispersivePhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        _getDispersivePhaseDelay_result = self._swigobj.getDispersivePhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        return _getDispersivePhaseDelay_result
 
     def getDispersiveWetPhaseDelay(self, nc=int(-1), spwid=int(0)):
         """Function to retrievethe the integrated Atmospheric Phase Delay
@@ -325,7 +380,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getDispersiveWetPhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        _getDispersiveWetPhaseDelay_result = self._swigobj.getDispersiveWetPhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        return _getDispersiveWetPhaseDelay_result
 
     def getNonDispersiveWetPhaseDelay(self, nc=int(-1), spwid=int(0)):
         """Function to retrieve the integrated wet Atmospheric Phase Delay
@@ -335,7 +391,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getNonDispersiveWetPhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        _getNonDispersiveWetPhaseDelay_result = self._swigobj.getNonDispersiveWetPhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        return _getNonDispersiveWetPhaseDelay_result
 
     def getNonDispersiveDryPhaseDelay(self, nc=int(-1), spwid=int(0)):
         """Function to retrieve the integrated dry Atmospheric Phase Delay
@@ -345,7 +402,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getNonDispersiveDryPhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        _getNonDispersiveDryPhaseDelay_result = self._swigobj.getNonDispersiveDryPhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        return _getNonDispersiveDryPhaseDelay_result
 
     def getNonDispersivePhaseDelay(self, nc=int(-1), spwid=int(0)):
         """Get the integrated zenith H2O Atmospheric Phase Delay (Non-Dispersive
@@ -355,7 +413,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getNonDispersivePhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        _getNonDispersivePhaseDelay_result = self._swigobj.getNonDispersivePhaseDelay(_pc.document['nc'], _pc.document['spwid'])
+        return _getNonDispersivePhaseDelay_result
 
     def getDispersivePathLength(self, nc=int(-1), spwid=int(0)):
         """Retrieve the integrated zenith H2O Atmospheric Path length (Dispersive part)
@@ -365,7 +424,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getDispersivePathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getDispersivePathLength_result = self._swigobj.getDispersivePathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getDispersivePathLength_result
 
     def getDispersiveWetPathLength(self, nc=int(-1), spwid=int(0)):
         """Retrieve the integrated wet Atmospheric Path length (Dispersive part)
@@ -375,7 +435,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getDispersiveWetPathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getDispersiveWetPathLength_result = self._swigobj.getDispersiveWetPathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getDispersiveWetPathLength_result
 
     def getNonDispersiveWetPathLength(self, nc=int(-1), spwid=int(0)):
         """Retrieve the integrated wet Atmospheric Path length (NonDispersive part)
@@ -385,7 +446,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getNonDispersiveWetPathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getNonDispersiveWetPathLength_result = self._swigobj.getNonDispersiveWetPathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getNonDispersiveWetPathLength_result
 
     def getNonDispersiveDryPathLength(self, nc=int(-1), spwid=int(0)):
         """Retrieve the integrated dry Atmospheric Path length (NonDispersive part)
@@ -395,7 +457,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getNonDispersiveDryPathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getNonDispersiveDryPathLength_result = self._swigobj.getNonDispersiveDryPathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getNonDispersiveDryPathLength_result
 
     def getO2LinesPathLength(self, nc=int(-1), spwid=int(0)):
         """Retrieve the integrated Atmospheric Path length (due to O2 Lines) along
@@ -405,7 +468,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getO2LinesPathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getO2LinesPathLength_result = self._swigobj.getO2LinesPathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getO2LinesPathLength_result
 
     def getO3LinesPathLength(self, nc=int(-1), spwid=int(0)):
         """Retrieve the integrated Atmospheric Path length (due to O3 Lines) along
@@ -415,7 +479,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getO3LinesPathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getO3LinesPathLength_result = self._swigobj.getO3LinesPathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getO3LinesPathLength_result
 
     def getCOLinesPathLength(self, nc=int(-1), spwid=int(0)):
         """Retrieve the integrated Atmospheric Path length (due to CO Lines)
@@ -425,7 +490,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getCOLinesPathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getCOLinesPathLength_result = self._swigobj.getCOLinesPathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getCOLinesPathLength_result
 
     def getN2OLinesPathLength(self, nc=int(-1), spwid=int(0)):
         """Retrieve the integrated Atmospheric Path length (due to N2O Lines)
@@ -435,7 +501,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getN2OLinesPathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getN2OLinesPathLength_result = self._swigobj.getN2OLinesPathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getN2OLinesPathLength_result
 
     def getNonDispersivePathLength(self, nc=int(-1), spwid=int(0)):
         """Get the integrated zenith H2O Atmospheric Path length (Non-Dispersive part)
@@ -444,7 +511,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nc': nc, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getNonDispersivePathLength(_pc.document['nc'], _pc.document['spwid'])
+        _getNonDispersivePathLength_result = self._swigobj.getNonDispersivePathLength(_pc.document['nc'], _pc.document['spwid'])
+        return _getNonDispersivePathLength_result
 
     def getAbsH2OLines(self, nl, nf=int(0), spwid=int(0)):
         """Accessor to get H2O lines Absorption Coefficient at layer nl,
@@ -453,7 +521,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsH2OLines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsH2OLines_result = self._swigobj.getAbsH2OLines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsH2OLines_result
 
     def getAbsH2OCont(self, nl, nf=int(0), spwid=int(0)):
         """Get H2O continuum Absorption Coefficient at layer nl,
@@ -462,7 +531,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsH2OCont(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsH2OCont_result = self._swigobj.getAbsH2OCont(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsH2OCont_result
 
     def getAbsO2Lines(self, nl, nf=int(0), spwid=int(0)):
         """Get O2 lines Absorption Coefficient at layer nl,
@@ -471,7 +541,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsO2Lines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsO2Lines_result = self._swigobj.getAbsO2Lines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsO2Lines_result
 
     def getAbsDryCont(self, nl, nf=int(0), spwid=int(0)):
         """Get Dry Continuum Absorption Coefficient at layer nl,
@@ -480,7 +551,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsDryCont(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsDryCont_result = self._swigobj.getAbsDryCont(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsDryCont_result
 
     def getAbsO3Lines(self, nl, nf=int(0), spwid=int(0)):
         """Get O3 lines Absorption Coefficient at layer nl,
@@ -489,7 +561,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsO3Lines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsO3Lines_result = self._swigobj.getAbsO3Lines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsO3Lines_result
 
     def getAbsCOLines(self, nl, nf=int(0), spwid=int(0)):
         """Get CO lines Absorption Coefficient at layer nl,
@@ -498,7 +571,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsCOLines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsCOLines_result = self._swigobj.getAbsCOLines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsCOLines_result
 
     def getAbsN2OLines(self, nl, nf=int(0), spwid=int(0)):
         """Get N2O lines Absorption Coefficient at layer nl,
@@ -507,7 +581,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsN2OLines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsN2OLines_result = self._swigobj.getAbsN2OLines(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsN2OLines_result
 
     def getAbsTotalDry(self, nl, nf=int(0), spwid=int(0)):
         """Get total dry Absorption Coefficient at layer nl,
@@ -516,7 +591,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsTotalDry(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsTotalDry_result = self._swigobj.getAbsTotalDry(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsTotalDry_result
 
     def getAbsTotalWet(self, nl, nf=int(0), spwid=int(0)):
         """Get total wet absorption coefficient at layer nl,
@@ -525,7 +601,8 @@ class atmosphere:
         schema = {'nl': {'type': 'cInt'}, 'nf': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}}
         doc = {'nl': nl, 'nf': nf, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAbsTotalWet(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        _getAbsTotalWet_result = self._swigobj.getAbsTotalWet(_pc.document['nl'], _pc.document['nf'], _pc.document['spwid'])
+        return _getAbsTotalWet_result
 
     def setUserWH2O(self, wh2o={'value': float(0.0), 'unit': 'mm'}):
         """Set user zenith water vapor column for forward radiative transfer
@@ -534,13 +611,15 @@ class atmosphere:
         schema = {'wh2o': {'type': 'cFloatQuant'}}
         doc = {'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setUserWH2O(_pc.document['wh2o'])
+        _setUserWH2O_result = self._swigobj.setUserWH2O(_pc.document['wh2o'])
+        return _setUserWH2O_result
 
     def getUserWH2O(self):
         """Get user zenith water vapor column for forward radiative transfer
         calculations.
         """
-        return self._swigobj.getUserWH2O()
+        _getUserWH2O_result = self._swigobj.getUserWH2O()
+        return _getUserWH2O_result
 
     def setAirMass(self, airmass):
         """Setter for air mass in SkyStatus without performing water vapor retrieval.
@@ -548,12 +627,14 @@ class atmosphere:
         schema = {'airmass': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'airmass': airmass}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setAirMass(_pc.document['airmass'])
+        _setAirMass_result = self._swigobj.setAirMass(_pc.document['airmass'])
+        return _setAirMass_result
 
     def getAirMass(self):
         """Accessor to get airmass.
         """
-        return self._swigobj.getAirMass()
+        _getAirMass_result = self._swigobj.getAirMass()
+        return _getAirMass_result
 
     def setSkyBackgroundTemperature(self, tbgr={'value': float(2.73), 'unit': 'K'}):
         """Set sky background temperature in SkyStatus without performing water vapor retrieval
@@ -561,12 +642,14 @@ class atmosphere:
         schema = {'tbgr': {'type': 'cFloatQuant'}}
         doc = {'tbgr': tbgr}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.setSkyBackgroundTemperature(_pc.document['tbgr'])
+        _setSkyBackgroundTemperature_result = self._swigobj.setSkyBackgroundTemperature(_pc.document['tbgr'])
+        return _setSkyBackgroundTemperature_result
 
     def getSkyBackgroundTemperature(self):
         """Get the sky background temperature
         """
-        return self._swigobj.getSkyBackgroundTemperature()
+        _getSkyBackgroundTemperature_result = self._swigobj.getSkyBackgroundTemperature()
+        return _getSkyBackgroundTemperature_result
 
     def getAverageTebbSky(self, spwid=int(0), wh2o={'value': float(-1), 'unit': 'mm'}):
         """Returns the average Equivalent Blackbody Temperature in spectral
@@ -575,7 +658,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}}
         doc = {'spwid': spwid, 'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAverageTebbSky(_pc.document['spwid'], _pc.document['wh2o'])
+        _getAverageTebbSky_result = self._swigobj.getAverageTebbSky(_pc.document['spwid'], _pc.document['wh2o'])
+        return _getAverageTebbSky_result
 
     def getTebbSky(self, nc=int(-1), spwid=int(0), wh2o={'value': float(-1), 'unit': 'mm'}):
         """Gets the Equivalent Blackbody Temperature in spectral window spwid and
@@ -585,7 +669,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}}
         doc = {'nc': nc, 'spwid': spwid, 'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getTebbSky(_pc.document['nc'], _pc.document['spwid'], _pc.document['wh2o'])
+        _getTebbSky_result = self._swigobj.getTebbSky(_pc.document['nc'], _pc.document['spwid'], _pc.document['wh2o'])
+        return _getTebbSky_result
 
     def getTebbSkySpec(self, spwid=int(0), wh2o={'value': float(-1), 'unit': 'mm'}, tebbSky={'value': float(0), 'unit': ''}):
         """Gets the Equivalent Blackbody Temperatures in a spectral window spwid
@@ -595,7 +680,9 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}, 'tebbSky': {'type': 'cFloatQuant'}}
         doc = {'spwid': spwid, 'wh2o': wh2o, 'tebbSky': tebbSky}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getTebbSkySpec(_pc.document['spwid'], _pc.document['wh2o'], _pc.document['tebbSky'])
+        _getTebbSkySpec_result = self._swigobj.getTebbSkySpec(_pc.document['spwid'], _pc.document['wh2o'], _pc.document['tebbSky'])
+        tebbSky = _pc.document['tebbSky']
+        return _getTebbSkySpec_result
 
     def getAverageTrjSky(self, spwid=int(0), wh2o={'value': float(-1), 'unit': 'mm'}):
         """Returns the average Rayleigh-Jeans Temperature in spectral
@@ -605,7 +692,8 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}}
         doc = {'spwid': spwid, 'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getAverageTrjSky(_pc.document['spwid'], _pc.document['wh2o'])
+        _getAverageTrjSky_result = self._swigobj.getAverageTrjSky(_pc.document['spwid'], _pc.document['wh2o'])
+        return _getAverageTrjSky_result
 
     def getTrjSky(self, nc=int(-1), spwid=int(0), wh2o={'value': float(-1), 'unit': 'mm'}):
         """Gets the Rayleigh-Jeans Temperature in spectral window spwid and
@@ -615,7 +703,8 @@ class atmosphere:
         schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}}
         doc = {'nc': nc, 'spwid': spwid, 'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getTrjSky(_pc.document['nc'], _pc.document['spwid'], _pc.document['wh2o'])
+        _getTrjSky_result = self._swigobj.getTrjSky(_pc.document['nc'], _pc.document['spwid'], _pc.document['wh2o'])
+        return _getTrjSky_result
 
     def getTrjSkySpec(self, spwid=int(0), wh2o={'value': float(-1), 'unit': 'mm'}, trjSky={'value': float(0), 'unit': ''}):
         """Gets the Rayleigh-Jeans Temperatures in a spectral window spwid
@@ -625,5 +714,7 @@ class atmosphere:
         schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}, 'trjSky': {'type': 'cFloatQuant'}}
         doc = {'spwid': spwid, 'wh2o': wh2o, 'trjSky': trjSky}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        return self._swigobj.getTrjSkySpec(_pc.document['spwid'], _pc.document['wh2o'], _pc.document['trjSky'])
+        _getTrjSkySpec_result = self._swigobj.getTrjSkySpec(_pc.document['spwid'], _pc.document['wh2o'], _pc.document['trjSky'])
+        trjSky = _pc.document['trjSky']
+        return _getTrjSkySpec_result
 

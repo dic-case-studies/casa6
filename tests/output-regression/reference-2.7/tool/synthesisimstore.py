@@ -20,5 +20,6 @@ class synthesisimstore:
     def done(self):
         """
         """
-        return self._swigobj.done()
+        _done_result = self._swigobj.done()
+        return _done_result
 
