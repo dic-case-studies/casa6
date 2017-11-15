@@ -2,8 +2,12 @@
 ##################### 2b467ce9e05175f727886de5d64427b1 ##############################
 from __future__ import absolute_import 
 from .__casac__ import image as _image
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 from .coordsys import coordsys as _wrap_coordsys
@@ -25,7 +29,7 @@ class image:
         schema = {'infile': {'type': 'cStr'}}
         doc = {'infile': infile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _newimage_result = _wrap_image(swig_object=self._swigobj.newimage(_str_encode(_pc.document['infile'])))
+        _newimage_result = _wrap_image(swig_object=self._swigobj.newimage(_str_ec(_pc.document['infile'])))
         return _newimage_result
 
     def newimagefromfile(self, infile):
@@ -45,7 +49,7 @@ class image:
         schema = {'infile': {'type': 'cStr'}}
         doc = {'infile': infile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _newimagefromfile_result = _wrap_image(swig_object=self._swigobj.newimagefromfile(_str_encode(_pc.document['infile'])))
+        _newimagefromfile_result = _wrap_image(swig_object=self._swigobj.newimagefromfile(_str_ec(_pc.document['infile'])))
         return _newimagefromfile_result
 
     def imagecalc(self, outfile='', pixels='', overwrite=False, imagemd=''):
@@ -108,7 +112,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'pixels': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'imagemd': {'type': 'cStr'}}
         doc = {'outfile': outfile, 'pixels': pixels, 'overwrite': overwrite, 'imagemd': imagemd}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _imagecalc_result = _wrap_image(swig_object=self._swigobj.imagecalc(_str_encode(_pc.document['outfile']), _str_encode(_pc.document['pixels']), _pc.document['overwrite'], _str_encode(_pc.document['imagemd'])))
+        _imagecalc_result = _wrap_image(swig_object=self._swigobj.imagecalc(_str_ec(_pc.document['outfile']), _str_ec(_pc.document['pixels']), _pc.document['overwrite'], _str_ec(_pc.document['imagemd'])))
         return _imagecalc_result
 
     def collapse(self, function='', axes=[ ], outfile='', region='', box='', chans='', stokes='', mask='', overwrite=False, stretch=False):
@@ -169,7 +173,7 @@ class image:
         schema = {'function': {'type': 'cStr'}, 'axes': {'type': 'cVariant'}, 'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'box': {'type': 'cStr'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'mask': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'function': function, 'axes': axes, 'outfile': outfile, 'region': region, 'box': box, 'chans': chans, 'stokes': stokes, 'mask': mask, 'overwrite': overwrite, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _collapse_result = _wrap_image(swig_object=self._swigobj.collapse(_str_encode(_pc.document['function']), _pc.document['axes'], _str_encode(_pc.document['outfile']), _pc.document['region'], _str_encode(_pc.document['box']), _str_encode(_pc.document['chans']), _str_encode(_pc.document['stokes']), _str_encode(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch']))
+        _collapse_result = _wrap_image(swig_object=self._swigobj.collapse(_str_ec(_pc.document['function']), _any_ec(_pc.document['axes']), _str_ec(_pc.document['outfile']), _any_ec(_pc.document['region']), _str_ec(_pc.document['box']), _str_ec(_pc.document['chans']), _str_ec(_pc.document['stokes']), _str_ec(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch']))
         return _collapse_result
 
     def decimate(self, outfile='', axis=int(0), factor=int(1), method='copy', region='', mask='', overwrite=False, stretch=False):
@@ -209,7 +213,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'axis': {'type': 'cInt'}, 'factor': {'type': 'cInt'}, 'method': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'axis': axis, 'factor': factor, 'method': method, 'region': region, 'mask': mask, 'overwrite': overwrite, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _decimate_result = _wrap_image(swig_object=self._swigobj.decimate(_str_encode(_pc.document['outfile']), _pc.document['axis'], _pc.document['factor'], _str_encode(_pc.document['method']), _pc.document['region'], _str_encode(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch']))
+        _decimate_result = _wrap_image(swig_object=self._swigobj.decimate(_str_ec(_pc.document['outfile']), _pc.document['axis'], _pc.document['factor'], _str_ec(_pc.document['method']), _any_ec(_pc.document['region']), _str_ec(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch']))
         return _decimate_result
 
     def dohistory(self, enable=True):
@@ -336,7 +340,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'infiles': {'type': 'cVariant'}, 'axis': {'type': 'cInt'}, 'relax': {'type': 'cBool'}, 'tempclose': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'reorder': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'infiles': infiles, 'axis': axis, 'relax': relax, 'tempclose': tempclose, 'overwrite': overwrite, 'reorder': reorder}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _imageconcat_result = _wrap_image(swig_object=self._swigobj.imageconcat(_str_encode(_pc.document['outfile']), _pc.document['infiles'], _pc.document['axis'], _pc.document['relax'], _pc.document['tempclose'], _pc.document['overwrite'], _pc.document['reorder']))
+        _imageconcat_result = _wrap_image(swig_object=self._swigobj.imageconcat(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['infiles']), _pc.document['axis'], _pc.document['relax'], _pc.document['tempclose'], _pc.document['overwrite'], _pc.document['reorder']))
         return _imageconcat_result
 
     def fromarray(self, outfile='', pixels=[ ], csys={ }, linear=False, overwrite=False, log=True):
@@ -381,7 +385,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'pixels': {'type': 'cVariant'}, 'csys': {'type': 'cDict'}, 'linear': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'log': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'pixels': pixels, 'csys': csys, 'linear': linear, 'overwrite': overwrite, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fromarray_result = self._swigobj.fromarray(_str_encode(_pc.document['outfile']), _pc.document['pixels'], _pc.document['csys'], _pc.document['linear'], _pc.document['overwrite'], _pc.document['log'])
+        _fromarray_result = self._swigobj.fromarray(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['pixels']), _dict_ec(_pc.document['csys']), _pc.document['linear'], _pc.document['overwrite'], _pc.document['log'])
         return _fromarray_result
 
     def fromascii(self, outfile='', infile='', shape=[ int(-1) ], sep=':', csys={ }, linear=False, overwrite=False):
@@ -467,10 +471,10 @@ class image:
         given linear coordinates.  If {stfaf linear=T}, then all axes are linear
         in the resulting coordinate system.
         """
-        schema = {'outfile': {'type': 'cStr'}, 'infile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'sep': {'type': 'cStr'}, 'csys': {'type': 'cDict'}, 'linear': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
+        schema = {'outfile': {'type': 'cStr'}, 'infile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'sep': {'type': 'cStr'}, 'csys': {'type': 'cDict'}, 'linear': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'infile': infile, 'shape': shape, 'sep': sep, 'csys': csys, 'linear': linear, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fromascii_result = self._swigobj.fromascii(_str_encode(_pc.document['outfile']), _str_encode(_pc.document['infile']), _pc.document['shape'], _str_encode(_pc.document['sep']), _pc.document['csys'], _pc.document['linear'], _pc.document['overwrite'])
+        _fromascii_result = self._swigobj.fromascii(_str_ec(_pc.document['outfile']), _str_ec(_pc.document['infile']), _pc.document['shape'], _str_ec(_pc.document['sep']), _dict_ec(_pc.document['csys']), _pc.document['linear'], _pc.document['overwrite'])
         return _fromascii_result
 
     def fromfits(self, outfile='', infile='', whichrep=int(0), whichhdu=int(0), zeroblanks=False, overwrite=False):
@@ -498,7 +502,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'infile': {'type': 'cStr'}, 'whichrep': {'type': 'cInt'}, 'whichhdu': {'type': 'cInt'}, 'zeroblanks': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'infile': infile, 'whichrep': whichrep, 'whichhdu': whichhdu, 'zeroblanks': zeroblanks, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fromfits_result = self._swigobj.fromfits(_str_encode(_pc.document['outfile']), _str_encode(_pc.document['infile']), _pc.document['whichrep'], _pc.document['whichhdu'], _pc.document['zeroblanks'], _pc.document['overwrite'])
+        _fromfits_result = self._swigobj.fromfits(_str_ec(_pc.document['outfile']), _str_ec(_pc.document['infile']), _pc.document['whichrep'], _pc.document['whichhdu'], _pc.document['zeroblanks'], _pc.document['overwrite'])
         return _fromfits_result
 
     def fromimage(self, outfile='', infile='', region=[ ], mask='', dropdeg=False, overwrite=False):
@@ -533,7 +537,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'infile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'infile': infile, 'region': region, 'mask': mask, 'dropdeg': dropdeg, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fromimage_result = self._swigobj.fromimage(_str_encode(_pc.document['outfile']), _str_encode(_pc.document['infile']), _pc.document['region'], _pc.document['mask'], _pc.document['dropdeg'], _pc.document['overwrite'])
+        _fromimage_result = self._swigobj.fromimage(_str_ec(_pc.document['outfile']), _str_ec(_pc.document['infile']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['dropdeg'], _pc.document['overwrite'])
         return _fromimage_result
 
     def fromshape(self, outfile='', shape=[ int(0) ], csys={ }, linear=False, overwrite=False, log=True, type='f'):
@@ -565,10 +569,10 @@ class image:
         
         The method returns True if successful, False otherwise.
         """
-        schema = {'outfile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'csys': {'type': 'cDict'}, 'linear': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'log': {'type': 'cBool'}, 'type': {'type': 'cStr'}}
+        schema = {'outfile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'csys': {'type': 'cDict'}, 'linear': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'log': {'type': 'cBool'}, 'type': {'type': 'cStr'}}
         doc = {'outfile': outfile, 'shape': shape, 'csys': csys, 'linear': linear, 'overwrite': overwrite, 'log': log, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fromshape_result = self._swigobj.fromshape(_str_encode(_pc.document['outfile']), _pc.document['shape'], _pc.document['csys'], _pc.document['linear'], _pc.document['overwrite'], _pc.document['log'], _str_encode(_pc.document['type']))
+        _fromshape_result = self._swigobj.fromshape(_str_ec(_pc.document['outfile']), _pc.document['shape'], _dict_ec(_pc.document['csys']), _pc.document['linear'], _pc.document['overwrite'], _pc.document['log'], _str_ec(_pc.document['type']))
         return _fromshape_result
 
     def maketestimage(self, outfile='', overwrite=False):
@@ -584,7 +588,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _maketestimage_result = self._swigobj.maketestimage(_str_encode(_pc.document['outfile']), _pc.document['overwrite'])
+        _maketestimage_result = self._swigobj.maketestimage(_str_ec(_pc.document['outfile']), _pc.document['overwrite'])
         return _maketestimage_result
 
     def deviation(self, outfile='', region='', mask='', overwrite=False, stretch=False, grid=[ int(1),int(1) ], anchor='ref', xlength='1pix', ylength='1pix', interp='cubic', stattype='sigma', statalg='classic', zscore=float(-1), maxiter=int(-1)):
@@ -653,10 +657,10 @@ class image:
         
         
         """
-        schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'grid': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'anchor': {'type': 'cVariant'}, 'xlength': {'type': 'cVariant'}, 'ylength': {'type': 'cVariant'}, 'interp': {'type': 'cStr'}, 'stattype': {'type': 'cStr'}, 'statalg': {'type': 'cStr'}, 'zscore': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxiter': {'type': 'cInt'}}
+        schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'grid': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'anchor': {'type': 'cVariant'}, 'xlength': {'type': 'cVariant'}, 'ylength': {'type': 'cVariant'}, 'interp': {'type': 'cStr'}, 'stattype': {'type': 'cStr'}, 'statalg': {'type': 'cStr'}, 'zscore': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxiter': {'type': 'cInt'}}
         doc = {'outfile': outfile, 'region': region, 'mask': mask, 'overwrite': overwrite, 'stretch': stretch, 'grid': grid, 'anchor': anchor, 'xlength': xlength, 'ylength': ylength, 'interp': interp, 'stattype': stattype, 'statalg': statalg, 'zscore': zscore, 'maxiter': maxiter}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _deviation_result = _wrap_image(swig_object=self._swigobj.deviation(_str_encode(_pc.document['outfile']), _pc.document['region'], _str_encode(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch'], _pc.document['grid'], _pc.document['anchor'], _pc.document['xlength'], _pc.document['ylength'], _str_encode(_pc.document['interp']), _str_encode(_pc.document['stattype']), _str_encode(_pc.document['statalg']), _pc.document['zscore'], _pc.document['maxiter']))
+        _deviation_result = _wrap_image(swig_object=self._swigobj.deviation(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['region']), _str_ec(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch'], _pc.document['grid'], _any_ec(_pc.document['anchor']), _any_ec(_pc.document['xlength']), _any_ec(_pc.document['ylength']), _str_ec(_pc.document['interp']), _str_ec(_pc.document['stattype']), _str_ec(_pc.document['statalg']), _pc.document['zscore'], _pc.document['maxiter']))
         return _deviation_result
 
     def adddegaxes(self, outfile='', direction=False, spectral=False, stokes='', linear=False, tabular=False, overwrite=False, silent=False):
@@ -682,7 +686,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'direction': {'type': 'cBool'}, 'spectral': {'type': 'cBool'}, 'stokes': {'type': 'cStr'}, 'linear': {'type': 'cBool'}, 'tabular': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'silent': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'direction': direction, 'spectral': spectral, 'stokes': stokes, 'linear': linear, 'tabular': tabular, 'overwrite': overwrite, 'silent': silent}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _adddegaxes_result = _wrap_image(swig_object=self._swigobj.adddegaxes(_str_encode(_pc.document['outfile']), _pc.document['direction'], _pc.document['spectral'], _str_encode(_pc.document['stokes']), _pc.document['linear'], _pc.document['tabular'], _pc.document['overwrite'], _pc.document['silent']))
+        _adddegaxes_result = _wrap_image(swig_object=self._swigobj.adddegaxes(_str_ec(_pc.document['outfile']), _pc.document['direction'], _pc.document['spectral'], _str_ec(_pc.document['stokes']), _pc.document['linear'], _pc.document['tabular'], _pc.document['overwrite'], _pc.document['silent']))
         return _adddegaxes_result
 
     def addnoise(self, type='normal', pars=[ float(0.0),float(1.0) ], region=[ ], zero=False, seeds=[  ]):
@@ -752,10 +756,10 @@ class image:
         
         end{itemize}
         """
-        schema = {'type': {'type': 'cStr'}, 'pars': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'region': {'type': 'cVariant'}, 'zero': {'type': 'cBool'}, 'seeds': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'type': {'type': 'cStr'}, 'pars': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'region': {'type': 'cVariant'}, 'zero': {'type': 'cBool'}, 'seeds': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'type': type, 'pars': pars, 'region': region, 'zero': zero, 'seeds': seeds}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _addnoise_result = self._swigobj.addnoise(_str_encode(_pc.document['type']), _pc.document['pars'], _pc.document['region'], _pc.document['zero'], _pc.document['seeds'])
+        _addnoise_result = self._swigobj.addnoise(_str_ec(_pc.document['type']), _pc.document['pars'], _any_ec(_pc.document['region']), _pc.document['zero'], _pc.document['seeds'])
         return _addnoise_result
 
     def convolve(self, outfile='', kernel=[ ], scale=float(-1.0), region=[ ], mask='', overwrite=False, stretch=False):
@@ -798,7 +802,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'kernel': {'type': 'cVariant'}, 'scale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'kernel': kernel, 'scale': scale, 'region': region, 'mask': mask, 'overwrite': overwrite, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convolve_result = _wrap_image(swig_object=self._swigobj.convolve(_str_encode(_pc.document['outfile']), _pc.document['kernel'], _pc.document['scale'], _pc.document['region'], _pc.document['mask'], _pc.document['overwrite'], _pc.document['stretch']))
+        _convolve_result = _wrap_image(swig_object=self._swigobj.convolve(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['kernel']), _pc.document['scale'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch']))
         return _convolve_result
 
     def boundingbox(self, region=[ ]):
@@ -826,7 +830,7 @@ class image:
         schema = {'region': {'type': 'cVariant'}}
         doc = {'region': region}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _boundingbox_result = self._swigobj.boundingbox(_pc.document['region'])
+        _boundingbox_result = _dict_dc(self._swigobj.boundingbox(_any_ec(_pc.document['region'])))
         return _boundingbox_result
 
     def boxcar(self, outfile='', region=[ ], mask=[ ], axis=int(-1), width=int(2), drop=True, dmethod='copy', overwrite=False, stretch=False):
@@ -896,14 +900,14 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'axis': {'type': 'cInt'}, 'width': {'type': 'cInt'}, 'drop': {'type': 'cBool'}, 'dmethod': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'region': region, 'mask': mask, 'axis': axis, 'width': width, 'drop': drop, 'dmethod': dmethod, 'overwrite': overwrite, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _boxcar_result = _wrap_image(swig_object=self._swigobj.boxcar(_str_encode(_pc.document['outfile']), _pc.document['region'], _pc.document['mask'], _pc.document['axis'], _pc.document['width'], _pc.document['drop'], _str_encode(_pc.document['dmethod']), _pc.document['overwrite'], _pc.document['stretch']))
+        _boxcar_result = _wrap_image(swig_object=self._swigobj.boxcar(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['axis'], _pc.document['width'], _pc.document['drop'], _str_ec(_pc.document['dmethod']), _pc.document['overwrite'], _pc.document['stretch']))
         return _boxcar_result
 
     def brightnessunit(self):
         """This function gets the image brightness unit. Both float and complex
         valued images are supported.
         """
-        _brightnessunit_result = self._swigobj.brightnessunit()
+        _brightnessunit_result = _str_dc(self._swigobj.brightnessunit())
         return _brightnessunit_result
 
     def calc(self, pixels, verbose=True):
@@ -935,7 +939,7 @@ class image:
         schema = {'pixels': {'type': 'cStr'}, 'verbose': {'type': 'cBool'}}
         doc = {'pixels': pixels, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _calc_result = self._swigobj.calc(_str_encode(_pc.document['pixels']), _pc.document['verbose'])
+        _calc_result = self._swigobj.calc(_str_ec(_pc.document['pixels']), _pc.document['verbose'])
         return _calc_result
 
     def calcmask(self, mask='', name='', asdefault=True):
@@ -967,7 +971,7 @@ class image:
         schema = {'mask': {'type': 'cStr'}, 'name': {'type': 'cStr'}, 'asdefault': {'type': 'cBool'}}
         doc = {'mask': mask, 'name': name, 'asdefault': asdefault}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _calcmask_result = self._swigobj.calcmask(_str_encode(_pc.document['mask']), _str_encode(_pc.document['name']), _pc.document['asdefault'])
+        _calcmask_result = self._swigobj.calcmask(_str_ec(_pc.document['mask']), _str_ec(_pc.document['name']), _pc.document['asdefault'])
         return _calcmask_result
 
     def close(self):
@@ -999,10 +1003,10 @@ class image:
         should use the region parameter if polarization selection is desired, in
         conformance with other ia tool methods.
         """
-        schema = {'outline': {'type': 'cStr'}, 'outcont': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'channels': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'pol': {'type': 'cStr'}, 'fitorder': {'type': 'cInt'}, 'overwrite': {'type': 'cBool'}}
+        schema = {'outline': {'type': 'cStr'}, 'outcont': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'channels': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'pol': {'type': 'cStr'}, 'fitorder': {'type': 'cInt'}, 'overwrite': {'type': 'cBool'}}
         doc = {'outline': outline, 'outcont': outcont, 'region': region, 'channels': channels, 'pol': pol, 'fitorder': fitorder, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _continuumsub_result = _wrap_image(swig_object=self._swigobj.continuumsub(_str_encode(_pc.document['outline']), _str_encode(_pc.document['outcont']), _pc.document['region'], _pc.document['channels'], _str_encode(_pc.document['pol']), _pc.document['fitorder'], _pc.document['overwrite']))
+        _continuumsub_result = _wrap_image(swig_object=self._swigobj.continuumsub(_str_ec(_pc.document['outline']), _str_ec(_pc.document['outcont']), _any_ec(_pc.document['region']), _pc.document['channels'], _str_ec(_pc.document['pol']), _pc.document['fitorder'], _pc.document['overwrite']))
         return _continuumsub_result
 
     def convertflux(self, value=[ ], major=[ ], minor=[ ], type='Gaussian', topeak=True, channel=int(-1), polarization=int(-1)):
@@ -1012,7 +1016,7 @@ class image:
         schema = {'value': {'type': 'cVariant'}, 'major': {'type': 'cVariant'}, 'minor': {'type': 'cVariant'}, 'type': {'type': 'cStr'}, 'topeak': {'type': 'cBool'}, 'channel': {'type': 'cInt'}, 'polarization': {'type': 'cInt'}}
         doc = {'value': value, 'major': major, 'minor': minor, 'type': type, 'topeak': topeak, 'channel': channel, 'polarization': polarization}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertflux_result = self._swigobj.convertflux(_pc.document['value'], _pc.document['major'], _pc.document['minor'], _str_encode(_pc.document['type']), _pc.document['topeak'], _pc.document['channel'], _pc.document['polarization'])
+        _convertflux_result = _dict_dc(self._swigobj.convertflux(_any_ec(_pc.document['value']), _any_ec(_pc.document['major']), _any_ec(_pc.document['minor']), _str_ec(_pc.document['type']), _pc.document['topeak'], _pc.document['channel'], _pc.document['polarization']))
         return _convertflux_result
 
     def convolve2d(self, outfile='', axes=[ int(0),int(1) ], type='gaussian', major='0deg', minor='0deg', pa='0deg', scale=float(-1), region=[ ], mask='', overwrite=False, stretch=False, targetres=False, beam={ }):
@@ -1127,10 +1131,10 @@ class image:
         hanning, and
         sepconvolve.
         """
-        schema = {'outfile': {'type': 'cStr'}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'type': {'type': 'cStr'}, 'major': {'type': 'cVariant'}, 'minor': {'type': 'cVariant'}, 'pa': {'type': 'cVariant'}, 'scale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'targetres': {'type': 'cBool'}, 'beam': {'type': 'cDict'}}
+        schema = {'outfile': {'type': 'cStr'}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'type': {'type': 'cStr'}, 'major': {'type': 'cVariant'}, 'minor': {'type': 'cVariant'}, 'pa': {'type': 'cVariant'}, 'scale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'targetres': {'type': 'cBool'}, 'beam': {'type': 'cDict'}}
         doc = {'outfile': outfile, 'axes': axes, 'type': type, 'major': major, 'minor': minor, 'pa': pa, 'scale': scale, 'region': region, 'mask': mask, 'overwrite': overwrite, 'stretch': stretch, 'targetres': targetres, 'beam': beam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convolve2d_result = _wrap_image(swig_object=self._swigobj.convolve2d(_str_encode(_pc.document['outfile']), _pc.document['axes'], _str_encode(_pc.document['type']), _pc.document['major'], _pc.document['minor'], _pc.document['pa'], _pc.document['scale'], _pc.document['region'], _pc.document['mask'], _pc.document['overwrite'], _pc.document['stretch'], _pc.document['targetres'], _pc.document['beam']))
+        _convolve2d_result = _wrap_image(swig_object=self._swigobj.convolve2d(_str_ec(_pc.document['outfile']), _pc.document['axes'], _str_ec(_pc.document['type']), _any_ec(_pc.document['major']), _any_ec(_pc.document['minor']), _any_ec(_pc.document['pa']), _pc.document['scale'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch'], _pc.document['targetres'], _dict_ec(_pc.document['beam'])))
         return _convolve2d_result
 
     def coordsys(self, axes=[ int(-1) ]):
@@ -1144,7 +1148,7 @@ class image:
         functions fromarray or
         fromshape.
         """
-        schema = {'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'axes': axes}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _coordsys_result = _wrap_coordsys(swig_object=self._swigobj.coordsys(_pc.document['axes']))
@@ -1182,10 +1186,10 @@ class image:
         as a Quantity. This field does not exist
         if the specified pixel coordinate is off the image.
         """
-        schema = {'pixel': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'dframe': {'type': 'cStr'}, 'sframe': {'type': 'cStr'}}
+        schema = {'pixel': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'dframe': {'type': 'cStr'}, 'sframe': {'type': 'cStr'}}
         doc = {'pixel': pixel, 'dframe': dframe, 'sframe': sframe}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _coordmeasures_result = self._swigobj.coordmeasures(_pc.document['pixel'], _str_encode(_pc.document['dframe']), _str_encode(_pc.document['sframe']))
+        _coordmeasures_result = _dict_dc(self._swigobj.coordmeasures(_pc.document['pixel'], _str_ec(_pc.document['dframe']), _str_ec(_pc.document['sframe'])))
         return _coordmeasures_result
 
     def decompose(self, region=[ ], mask='', simple=False, threshold=float(-1), ncontour=int(11), minrange=int(1), naxis=int(2), fit=True, maxrms=float(-1), maxretry=int(-1), maxiter=int(256), convcriteria=float(0.0001), stretch=False):
@@ -1225,7 +1229,7 @@ class image:
         schema = {'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'simple': {'type': 'cBool'}, 'threshold': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'ncontour': {'type': 'cInt'}, 'minrange': {'type': 'cInt'}, 'naxis': {'type': 'cInt'}, 'fit': {'type': 'cBool'}, 'maxrms': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxretry': {'type': 'cInt'}, 'maxiter': {'type': 'cInt'}, 'convcriteria': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'stretch': {'type': 'cBool'}}
         doc = {'region': region, 'mask': mask, 'simple': simple, 'threshold': threshold, 'ncontour': ncontour, 'minrange': minrange, 'naxis': naxis, 'fit': fit, 'maxrms': maxrms, 'maxretry': maxretry, 'maxiter': maxiter, 'convcriteria': convcriteria, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _decompose_result = self._swigobj.decompose(_pc.document['region'], _pc.document['mask'], _pc.document['simple'], _pc.document['threshold'], _pc.document['ncontour'], _pc.document['minrange'], _pc.document['naxis'], _pc.document['fit'], _pc.document['maxrms'], _pc.document['maxretry'], _pc.document['maxiter'], _pc.document['convcriteria'], _pc.document['stretch'])
+        _decompose_result = _dict_dc(self._swigobj.decompose(_any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['simple'], _pc.document['threshold'], _pc.document['ncontour'], _pc.document['minrange'], _pc.document['naxis'], _pc.document['fit'], _pc.document['maxrms'], _pc.document['maxretry'], _pc.document['maxiter'], _pc.document['convcriteria'], _pc.document['stretch']))
         return _decompose_result
 
     def deconvolvecomponentlist(self, complist, channel=int(-1), polarization=int(-1)):
@@ -1246,7 +1250,7 @@ class image:
         schema = {'complist': {'type': 'cDict'}, 'channel': {'type': 'cInt'}, 'polarization': {'type': 'cInt'}}
         doc = {'complist': complist, 'channel': channel, 'polarization': polarization}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _deconvolvecomponentlist_result = self._swigobj.deconvolvecomponentlist(_pc.document['complist'], _pc.document['channel'], _pc.document['polarization'])
+        _deconvolvecomponentlist_result = _dict_dc(self._swigobj.deconvolvecomponentlist(_dict_ec(_pc.document['complist']), _pc.document['channel'], _pc.document['polarization']))
         return _deconvolvecomponentlist_result
 
     def deconvolvefrombeam(self, source=[ ], beam=[ ]):
@@ -1257,7 +1261,7 @@ class image:
         schema = {'source': {'type': 'cVariant'}, 'beam': {'type': 'cVariant'}}
         doc = {'source': source, 'beam': beam}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _deconvolvefrombeam_result = self._swigobj.deconvolvefrombeam(_pc.document['source'], _pc.document['beam'])
+        _deconvolvefrombeam_result = _dict_dc(self._swigobj.deconvolvefrombeam(_any_ec(_pc.document['source']), _any_ec(_pc.document['beam'])))
         return _deconvolvefrombeam_result
 
     def beamforconvolvedsize(self, source=[ ], convolved=[ ]):
@@ -1269,7 +1273,7 @@ class image:
         schema = {'source': {'type': 'cVariant'}, 'convolved': {'type': 'cVariant'}}
         doc = {'source': source, 'convolved': convolved}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _beamforconvolvedsize_result = self._swigobj.beamforconvolvedsize(_pc.document['source'], _pc.document['convolved'])
+        _beamforconvolvedsize_result = _dict_dc(self._swigobj.beamforconvolvedsize(_any_ec(_pc.document['source']), _any_ec(_pc.document['convolved'])))
         return _beamforconvolvedsize_result
 
     def commonbeam(self):
@@ -1283,7 +1287,7 @@ class image:
         can be convolved.
         
         """
-        _commonbeam_result = self._swigobj.commonbeam()
+        _commonbeam_result = _dict_dc(self._swigobj.commonbeam())
         return _commonbeam_result
 
     def remove(self, done=False, verbose=True):
@@ -1305,7 +1309,7 @@ class image:
         schema = {'file': {'type': 'cStr'}}
         doc = {'file': file}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _removefile_result = self._swigobj.removefile(_str_encode(_pc.document['file']))
+        _removefile_result = self._swigobj.removefile(_str_ec(_pc.document['file']))
         return _removefile_result
 
     def done(self, remove=False, verbose=True):
@@ -1348,10 +1352,10 @@ class image:
         maskhandler can be
         used if there is a need to copy other masks too.
         """
-        schema = {'real': {'type': 'cStr'}, 'imag': {'type': 'cStr'}, 'amp': {'type': 'cStr'}, 'phase': {'type': 'cStr'}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'stretch': {'type': 'cBool'}, 'complex': {'type': 'cStr'}}
+        schema = {'real': {'type': 'cStr'}, 'imag': {'type': 'cStr'}, 'amp': {'type': 'cStr'}, 'phase': {'type': 'cStr'}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'stretch': {'type': 'cBool'}, 'complex': {'type': 'cStr'}}
         doc = {'real': real, 'imag': imag, 'amp': amp, 'phase': phase, 'axes': axes, 'region': region, 'mask': mask, 'stretch': stretch, 'complex': complex}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fft_result = self._swigobj.fft(_str_encode(_pc.document['real']), _str_encode(_pc.document['imag']), _str_encode(_pc.document['amp']), _str_encode(_pc.document['phase']), _pc.document['axes'], _pc.document['region'], _pc.document['mask'], _pc.document['stretch'], _str_encode(_pc.document['complex']))
+        _fft_result = self._swigobj.fft(_str_ec(_pc.document['real']), _str_ec(_pc.document['imag']), _str_ec(_pc.document['amp']), _str_ec(_pc.document['phase']), _pc.document['axes'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['stretch'], _str_ec(_pc.document['complex']))
         return _fft_result
 
     def findsources(self, nmax=int(20), cutoff=float(0.1), region=[ ], mask='', point=True, width=int(5), negfind=False):
@@ -1388,7 +1392,7 @@ class image:
         schema = {'nmax': {'type': 'cInt'}, 'cutoff': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'point': {'type': 'cBool'}, 'width': {'type': 'cInt'}, 'negfind': {'type': 'cBool'}}
         doc = {'nmax': nmax, 'cutoff': cutoff, 'region': region, 'mask': mask, 'point': point, 'width': width, 'negfind': negfind}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _findsources_result = self._swigobj.findsources(_pc.document['nmax'], _pc.document['cutoff'], _pc.document['region'], _pc.document['mask'], _pc.document['point'], _pc.document['width'], _pc.document['negfind'])
+        _findsources_result = _dict_dc(self._swigobj.findsources(_pc.document['nmax'], _pc.document['cutoff'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['point'], _pc.document['width'], _pc.document['negfind']))
         return _findsources_result
 
     def fitprofile(self, box='', region='', chans='', stokes='', axis=int(-1), mask='', ngauss=int(1), poly=int(-1), estimates='', minpts=int(1), multifit=False, model='', residual='', amp='', amperr='', center='', centererr='', fwhm='', fwhmerr='', integral='', integralerr='', stretch=False, logresults=True, pampest='', pcenterest='', pfwhmest='', pfix='', gmncomps=int(0), gmampcon='', gmcentercon='', gmfwhmcon='', gmampest=[ float(0.0) ], gmcenterest=[ float(0.0) ], gmfwhmest=[ float(0.0) ], gmfix='', spxtype='', spxest=[  ], spxfix=[  ], div=[ ], spxsol='', spxerr='', logfile='', append=True, pfunc='', goodamprange=[ float(0.0) ], goodcenterrange=[ float(0.0) ], goodfwhmrange=[ float(0.0) ], sigma='', outsigma='', planes=[  ]):
@@ -1728,10 +1732,10 @@ class image:
         
         
         """
-        schema = {'box': {'type': 'cStr'}, 'region': {'anyof': [{'type': 'cPath', 'coerce': _coerce.expand_path}, {'type': 'cDict'}]}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'axis': {'type': 'cInt'}, 'mask': {'type': 'cVariant'}, 'ngauss': {'type': 'cInt'}, 'poly': {'type': 'cInt'}, 'estimates': {'type': 'cPath', 'coerce': _coerce.expand_path}, 'minpts': {'type': 'cInt'}, 'multifit': {'type': 'cBool'}, 'model': {'type': 'cStr'}, 'residual': {'type': 'cStr'}, 'amp': {'type': 'cStr'}, 'amperr': {'type': 'cStr'}, 'center': {'type': 'cStr'}, 'centererr': {'type': 'cStr'}, 'fwhm': {'type': 'cStr'}, 'fwhmerr': {'type': 'cStr'}, 'integral': {'type': 'cStr'}, 'integralerr': {'type': 'cStr'}, 'stretch': {'type': 'cBool'}, 'logresults': {'type': 'cBool'}, 'pampest': {'type': 'cVariant'}, 'pcenterest': {'type': 'cVariant'}, 'pfwhmest': {'type': 'cVariant'}, 'pfix': {'type': 'cVariant'}, 'gmncomps': {'type': 'cVariant'}, 'gmampcon': {'type': 'cVariant'}, 'gmcentercon': {'type': 'cVariant'}, 'gmfwhmcon': {'type': 'cVariant'}, 'gmampest': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'gmcenterest': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'gmfwhmest': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'gmfix': {'type': 'cVariant'}, 'spxtype': {'type': 'cStr'}, 'spxest': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'spxfix': {'type': 'cBoolVec'}, 'div': {'type': 'cVariant'}, 'spxsol': {'type': 'cStr'}, 'spxerr': {'type': 'cStr'}, 'logfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'pfunc': {'type': 'cVariant'}, 'goodamprange': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'goodcenterrange': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'goodfwhmrange': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'sigma': {'type': 'cVariant'}, 'outsigma': {'type': 'cStr'}, 'planes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'box': {'type': 'cStr'}, 'region': {'anyof': [{'type': 'cPath', 'coerce': _coerce.expand_path}, {'type': 'cDict'}]}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'axis': {'type': 'cInt'}, 'mask': {'type': 'cVariant'}, 'ngauss': {'type': 'cInt'}, 'poly': {'type': 'cInt'}, 'estimates': {'type': 'cPath', 'coerce': _coerce.expand_path}, 'minpts': {'type': 'cInt'}, 'multifit': {'type': 'cBool'}, 'model': {'type': 'cStr'}, 'residual': {'type': 'cStr'}, 'amp': {'type': 'cStr'}, 'amperr': {'type': 'cStr'}, 'center': {'type': 'cStr'}, 'centererr': {'type': 'cStr'}, 'fwhm': {'type': 'cStr'}, 'fwhmerr': {'type': 'cStr'}, 'integral': {'type': 'cStr'}, 'integralerr': {'type': 'cStr'}, 'stretch': {'type': 'cBool'}, 'logresults': {'type': 'cBool'}, 'pampest': {'type': 'cVariant'}, 'pcenterest': {'type': 'cVariant'}, 'pfwhmest': {'type': 'cVariant'}, 'pfix': {'type': 'cVariant'}, 'gmncomps': {'type': 'cVariant'}, 'gmampcon': {'type': 'cVariant'}, 'gmcentercon': {'type': 'cVariant'}, 'gmfwhmcon': {'type': 'cVariant'}, 'gmampest': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'gmcenterest': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'gmfwhmest': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'gmfix': {'type': 'cVariant'}, 'spxtype': {'type': 'cStr'}, 'spxest': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'spxfix': {'type': 'cBoolVec'}, 'div': {'type': 'cVariant'}, 'spxsol': {'type': 'cStr'}, 'spxerr': {'type': 'cStr'}, 'logfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'pfunc': {'type': 'cVariant'}, 'goodamprange': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'goodcenterrange': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'goodfwhmrange': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'sigma': {'type': 'cVariant'}, 'outsigma': {'type': 'cStr'}, 'planes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'box': box, 'region': region, 'chans': chans, 'stokes': stokes, 'axis': axis, 'mask': mask, 'ngauss': ngauss, 'poly': poly, 'estimates': estimates, 'minpts': minpts, 'multifit': multifit, 'model': model, 'residual': residual, 'amp': amp, 'amperr': amperr, 'center': center, 'centererr': centererr, 'fwhm': fwhm, 'fwhmerr': fwhmerr, 'integral': integral, 'integralerr': integralerr, 'stretch': stretch, 'logresults': logresults, 'pampest': pampest, 'pcenterest': pcenterest, 'pfwhmest': pfwhmest, 'pfix': pfix, 'gmncomps': gmncomps, 'gmampcon': gmampcon, 'gmcentercon': gmcentercon, 'gmfwhmcon': gmfwhmcon, 'gmampest': gmampest, 'gmcenterest': gmcenterest, 'gmfwhmest': gmfwhmest, 'gmfix': gmfix, 'spxtype': spxtype, 'spxest': spxest, 'spxfix': spxfix, 'div': div, 'spxsol': spxsol, 'spxerr': spxerr, 'logfile': logfile, 'append': append, 'pfunc': pfunc, 'goodamprange': goodamprange, 'goodcenterrange': goodcenterrange, 'goodfwhmrange': goodfwhmrange, 'sigma': sigma, 'outsigma': outsigma, 'planes': planes}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fitprofile_result = self._swigobj.fitprofile(_str_encode(_pc.document['box']), _pc.document['region'], _str_encode(_pc.document['chans']), _str_encode(_pc.document['stokes']), _pc.document['axis'], _pc.document['mask'], _pc.document['ngauss'], _pc.document['poly'], _pc.document['estimates'], _pc.document['minpts'], _pc.document['multifit'], _str_encode(_pc.document['model']), _str_encode(_pc.document['residual']), _str_encode(_pc.document['amp']), _str_encode(_pc.document['amperr']), _str_encode(_pc.document['center']), _str_encode(_pc.document['centererr']), _str_encode(_pc.document['fwhm']), _str_encode(_pc.document['fwhmerr']), _str_encode(_pc.document['integral']), _str_encode(_pc.document['integralerr']), _pc.document['stretch'], _pc.document['logresults'], _pc.document['pampest'], _pc.document['pcenterest'], _pc.document['pfwhmest'], _pc.document['pfix'], _pc.document['gmncomps'], _pc.document['gmampcon'], _pc.document['gmcentercon'], _pc.document['gmfwhmcon'], _pc.document['gmampest'], _pc.document['gmcenterest'], _pc.document['gmfwhmest'], _pc.document['gmfix'], _str_encode(_pc.document['spxtype']), _pc.document['spxest'], _pc.document['spxfix'], _pc.document['div'], _str_encode(_pc.document['spxsol']), _str_encode(_pc.document['spxerr']), _str_encode(_pc.document['logfile']), _pc.document['append'], _pc.document['pfunc'], _pc.document['goodamprange'], _pc.document['goodcenterrange'], _pc.document['goodfwhmrange'], _pc.document['sigma'], _str_encode(_pc.document['outsigma']), _pc.document['planes'])
+        _fitprofile_result = _dict_dc(self._swigobj.fitprofile(_str_ec(_pc.document['box']), _pc.document['region'], _str_ec(_pc.document['chans']), _str_ec(_pc.document['stokes']), _pc.document['axis'], _any_ec(_pc.document['mask']), _pc.document['ngauss'], _pc.document['poly'], _str_ec(_pc.document['estimates']), _pc.document['minpts'], _pc.document['multifit'], _str_ec(_pc.document['model']), _str_ec(_pc.document['residual']), _str_ec(_pc.document['amp']), _str_ec(_pc.document['amperr']), _str_ec(_pc.document['center']), _str_ec(_pc.document['centererr']), _str_ec(_pc.document['fwhm']), _str_ec(_pc.document['fwhmerr']), _str_ec(_pc.document['integral']), _str_ec(_pc.document['integralerr']), _pc.document['stretch'], _pc.document['logresults'], _any_ec(_pc.document['pampest']), _any_ec(_pc.document['pcenterest']), _any_ec(_pc.document['pfwhmest']), _any_ec(_pc.document['pfix']), _any_ec(_pc.document['gmncomps']), _any_ec(_pc.document['gmampcon']), _any_ec(_pc.document['gmcentercon']), _any_ec(_pc.document['gmfwhmcon']), _pc.document['gmampest'], _pc.document['gmcenterest'], _pc.document['gmfwhmest'], _any_ec(_pc.document['gmfix']), _str_ec(_pc.document['spxtype']), _pc.document['spxest'], _pc.document['spxfix'], _any_ec(_pc.document['div']), _str_ec(_pc.document['spxsol']), _str_ec(_pc.document['spxerr']), _str_ec(_pc.document['logfile']), _pc.document['append'], _any_ec(_pc.document['pfunc']), _pc.document['goodamprange'], _pc.document['goodcenterrange'], _pc.document['goodfwhmrange'], _any_ec(_pc.document['sigma']), _str_ec(_pc.document['outsigma']), _pc.document['planes']))
         return _fitprofile_result
 
     def fitcomponents(self, box='', region=[ ], chans=[ ], stokes='', mask='', includepix=[ float(-1) ], excludepix=[ float(-1) ], residual='', model='', estimates='', logfile='', append=True, newestimates='', complist='', overwrite=False, dooff=False, offset=float(0.0), fixoffset=False, stretch=False, rms='', noisefwhm='', summary=''):
@@ -2016,10 +2020,10 @@ class image:
         ia.fitcomponents(region=region, chans=chans, excludepix=excludepix, estimates=estimates, logfile=logfile, append=append)
         end{verbatim}
         """
-        schema = {'box': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'chans': {'type': 'cVariant'}, 'stokes': {'type': 'cStr'}, 'mask': {'type': 'cVariant'}, 'includepix': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'excludepix': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'residual': {'type': 'cStr'}, 'model': {'type': 'cStr'}, 'estimates': {'type': 'cStr'}, 'logfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'newestimates': {'type': 'cStr'}, 'complist': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'dooff': {'type': 'cBool'}, 'offset': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'fixoffset': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'rms': {'type': 'cVariant'}, 'noisefwhm': {'type': 'cVariant'}, 'summary': {'type': 'cStr'}}
+        schema = {'box': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'chans': {'type': 'cVariant'}, 'stokes': {'type': 'cStr'}, 'mask': {'type': 'cVariant'}, 'includepix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'excludepix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'residual': {'type': 'cStr'}, 'model': {'type': 'cStr'}, 'estimates': {'type': 'cStr'}, 'logfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'newestimates': {'type': 'cStr'}, 'complist': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'dooff': {'type': 'cBool'}, 'offset': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'fixoffset': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'rms': {'type': 'cVariant'}, 'noisefwhm': {'type': 'cVariant'}, 'summary': {'type': 'cStr'}}
         doc = {'box': box, 'region': region, 'chans': chans, 'stokes': stokes, 'mask': mask, 'includepix': includepix, 'excludepix': excludepix, 'residual': residual, 'model': model, 'estimates': estimates, 'logfile': logfile, 'append': append, 'newestimates': newestimates, 'complist': complist, 'overwrite': overwrite, 'dooff': dooff, 'offset': offset, 'fixoffset': fixoffset, 'stretch': stretch, 'rms': rms, 'noisefwhm': noisefwhm, 'summary': summary}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fitcomponents_result = self._swigobj.fitcomponents(_str_encode(_pc.document['box']), _pc.document['region'], _pc.document['chans'], _str_encode(_pc.document['stokes']), _pc.document['mask'], _pc.document['includepix'], _pc.document['excludepix'], _str_encode(_pc.document['residual']), _str_encode(_pc.document['model']), _str_encode(_pc.document['estimates']), _str_encode(_pc.document['logfile']), _pc.document['append'], _str_encode(_pc.document['newestimates']), _str_encode(_pc.document['complist']), _pc.document['overwrite'], _pc.document['dooff'], _pc.document['offset'], _pc.document['fixoffset'], _pc.document['stretch'], _pc.document['rms'], _pc.document['noisefwhm'], _str_encode(_pc.document['summary']))
+        _fitcomponents_result = _dict_dc(self._swigobj.fitcomponents(_str_ec(_pc.document['box']), _any_ec(_pc.document['region']), _any_ec(_pc.document['chans']), _str_ec(_pc.document['stokes']), _any_ec(_pc.document['mask']), _pc.document['includepix'], _pc.document['excludepix'], _str_ec(_pc.document['residual']), _str_ec(_pc.document['model']), _str_ec(_pc.document['estimates']), _str_ec(_pc.document['logfile']), _pc.document['append'], _str_ec(_pc.document['newestimates']), _str_ec(_pc.document['complist']), _pc.document['overwrite'], _pc.document['dooff'], _pc.document['offset'], _pc.document['fixoffset'], _pc.document['stretch'], _any_ec(_pc.document['rms']), _any_ec(_pc.document['noisefwhm']), _str_ec(_pc.document['summary'])))
         return _fitcomponents_result
 
     def fromrecord(self, record, outfile=''):
@@ -2031,7 +2035,7 @@ class image:
         schema = {'record': {'type': 'cDict'}, 'outfile': {'type': 'cStr'}}
         doc = {'record': record, 'outfile': outfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fromrecord_result = self._swigobj.fromrecord(_pc.document['record'], _str_encode(_pc.document['outfile']))
+        _fromrecord_result = self._swigobj.fromrecord(_dict_ec(_pc.document['record']), _str_ec(_pc.document['outfile']))
         return _fromrecord_result
 
     def getchunk(self, blc=[ int(-1) ], trc=[ int(-1) ], inc=[ int(1) ], axes=[ int(-1) ], list=False, dropdeg=False, getmask=False):
@@ -2062,10 +2066,10 @@ class image:
         If you set getmask=True, the return value is the 'pixelmask' rather than
         the 'pixel' image.
         """
-        schema = {'blc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'trc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'inc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'list': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'getmask': {'type': 'cBool'}}
+        schema = {'blc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'trc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'inc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'list': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'getmask': {'type': 'cBool'}}
         doc = {'blc': blc, 'trc': trc, 'inc': inc, 'axes': axes, 'list': list, 'dropdeg': dropdeg, 'getmask': getmask}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getchunk_result = self._swigobj.getchunk(_pc.document['blc'], _pc.document['trc'], _pc.document['inc'], _pc.document['axes'], _pc.document['list'], _pc.document['dropdeg'], _pc.document['getmask'])
+        _getchunk_result = _any_dc(self._swigobj.getchunk(_pc.document['blc'], _pc.document['trc'], _pc.document['inc'], _pc.document['axes'], _pc.document['list'], _pc.document['dropdeg'], _pc.document['getmask']))
         return _getchunk_result
 
     def getregion(self, region=[ ], axes=[ int(-1) ], mask='', list=False, dropdeg=False, getmask=False, stretch=False):
@@ -2100,10 +2104,10 @@ class image:
         especially noticeable if you iterated line by line through a large
         image.
         """
-        schema = {'region': {'type': 'cVariant'}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'mask': {'type': 'cVariant'}, 'list': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'getmask': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
+        schema = {'region': {'type': 'cVariant'}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'mask': {'type': 'cVariant'}, 'list': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'getmask': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'region': region, 'axes': axes, 'mask': mask, 'list': list, 'dropdeg': dropdeg, 'getmask': getmask, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getregion_result = self._swigobj.getregion(_pc.document['region'], _pc.document['axes'], _pc.document['mask'], _pc.document['list'], _pc.document['dropdeg'], _pc.document['getmask'], _pc.document['stretch'])
+        _getregion_result = _any_dc(self._swigobj.getregion(_any_ec(_pc.document['region']), _pc.document['axes'], _any_ec(_pc.document['mask']), _pc.document['list'], _pc.document['dropdeg'], _pc.document['getmask'], _pc.document['stretch']))
         return _getregion_result
 
     def getprofile(self, axis=int(-1), function='mean', region=[ ], mask='', unit='', stretch=False, spectype='default', restfreq='', frame='', logfile=''):
@@ -2148,7 +2152,7 @@ class image:
         schema = {'axis': {'type': 'cInt'}, 'function': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cStr'}, 'unit': {'type': 'cStr'}, 'stretch': {'type': 'cBool'}, 'spectype': {'type': 'cStr'}, 'restfreq': {'type': 'cVariant'}, 'frame': {'type': 'cStr'}, 'logfile': {'type': 'cStr'}}
         doc = {'axis': axis, 'function': function, 'region': region, 'mask': mask, 'unit': unit, 'stretch': stretch, 'spectype': spectype, 'restfreq': restfreq, 'frame': frame, 'logfile': logfile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getprofile_result = self._swigobj.getprofile(_pc.document['axis'], _str_encode(_pc.document['function']), _pc.document['region'], _str_encode(_pc.document['mask']), _str_encode(_pc.document['unit']), _pc.document['stretch'], _str_encode(_pc.document['spectype']), _pc.document['restfreq'], _str_encode(_pc.document['frame']), _str_encode(_pc.document['logfile']))
+        _getprofile_result = _dict_dc(self._swigobj.getprofile(_pc.document['axis'], _str_ec(_pc.document['function']), _any_ec(_pc.document['region']), _str_ec(_pc.document['mask']), _str_ec(_pc.document['unit']), _pc.document['stretch'], _str_ec(_pc.document['spectype']), _any_ec(_pc.document['restfreq']), _str_ec(_pc.document['frame']), _str_ec(_pc.document['logfile'])))
         return _getprofile_result
 
     def getslice(self, x, y, axes=[ int(0),int(1) ], coord=[ int(-1) ], npts=int(0), method='linear'):
@@ -2168,10 +2172,10 @@ class image:
         'ypos' (y-location in absolute pixel coordinates), 'distance' (distance along
         slice in pixels), 'axes' (the x and y axes of slice).
         """
-        schema = {'x': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'y': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'coord': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'npts': {'type': 'cInt'}, 'method': {'type': 'cStr'}}
+        schema = {'x': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'y': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'coord': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'npts': {'type': 'cInt'}, 'method': {'type': 'cStr'}}
         doc = {'x': x, 'y': y, 'axes': axes, 'coord': coord, 'npts': npts, 'method': method}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getslice_result = self._swigobj.getslice(_pc.document['x'], _pc.document['y'], _pc.document['axes'], _pc.document['coord'], _pc.document['npts'], _str_encode(_pc.document['method']))
+        _getslice_result = _dict_dc(self._swigobj.getslice(_pc.document['x'], _pc.document['y'], _pc.document['axes'], _pc.document['coord'], _pc.document['npts'], _str_ec(_pc.document['method'])))
         return _getslice_result
 
     def hanning(self, outfile='', region=[ ], mask='', axis=int(-10), drop=True, overwrite=False, async=False, stretch=False, dmethod='copy'):
@@ -2254,7 +2258,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'axis': {'type': 'cInt'}, 'drop': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'async': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'dmethod': {'type': 'cStr'}}
         doc = {'outfile': outfile, 'region': region, 'mask': mask, 'axis': axis, 'drop': drop, 'overwrite': overwrite, 'async': async, 'stretch': stretch, 'dmethod': dmethod}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _hanning_result = _wrap_image(swig_object=self._swigobj.hanning(_str_encode(_pc.document['outfile']), _pc.document['region'], _pc.document['mask'], _pc.document['axis'], _pc.document['drop'], _pc.document['overwrite'], _pc.document['async'], _pc.document['stretch'], _str_encode(_pc.document['dmethod'])))
+        _hanning_result = _wrap_image(swig_object=self._swigobj.hanning(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['axis'], _pc.document['drop'], _pc.document['overwrite'], _pc.document['async'], _pc.document['stretch'], _str_ec(_pc.document['dmethod'])))
         return _hanning_result
 
     def haslock(self):
@@ -2319,10 +2323,10 @@ class image:
         using the data in each histogram is returned. The shape of these arrays is equal to
         the shape of the display axes. So,
         """
-        schema = {'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'nbins': {'type': 'cInt'}, 'includepix': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'cumu': {'type': 'cBool'}, 'log': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
+        schema = {'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'nbins': {'type': 'cInt'}, 'includepix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'cumu': {'type': 'cBool'}, 'log': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'axes': axes, 'region': region, 'mask': mask, 'nbins': nbins, 'includepix': includepix, 'cumu': cumu, 'log': log, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _histograms_result = self._swigobj.histograms(_pc.document['axes'], _pc.document['region'], _pc.document['mask'], _pc.document['nbins'], _pc.document['includepix'], _pc.document['cumu'], _pc.document['log'], _pc.document['stretch'])
+        _histograms_result = _dict_dc(self._swigobj.histograms(_pc.document['axes'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['nbins'], _pc.document['includepix'], _pc.document['cumu'], _pc.document['log'], _pc.document['stretch']))
         return _histograms_result
 
     def history(self, list=True):
@@ -2342,7 +2346,7 @@ class image:
         schema = {'list': {'type': 'cBool'}}
         doc = {'list': list}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _history_result = self._swigobj.history(_pc.document['list'])
+        _history_result = [_str_dc(_x) for _x in self._swigobj.history(_pc.document['list'])]
         return _history_result
 
     def insert(self, infile='', region=[ ], locate=[ float(-1) ], verbose=False):
@@ -2364,10 +2368,10 @@ class image:
         The image referenced by this tool is modified in place; no new image
         is created. The method returns True if successful.
         """
-        schema = {'infile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'locate': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'verbose': {'type': 'cBool'}}
+        schema = {'infile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'locate': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'verbose': {'type': 'cBool'}}
         doc = {'infile': infile, 'region': region, 'locate': locate, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _insert_result = self._swigobj.insert(_str_encode(_pc.document['infile']), _pc.document['region'], _pc.document['locate'], _pc.document['verbose'])
+        _insert_result = self._swigobj.insert(_str_ec(_pc.document['infile']), _any_ec(_pc.document['region']), _pc.document['locate'], _pc.document['verbose'])
         return _insert_result
 
     def isopen(self):
@@ -2410,7 +2414,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'imag': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'overwrite': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'imag': imag, 'region': region, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _makecomplex_result = self._swigobj.makecomplex(_str_encode(_pc.document['outfile']), _str_encode(_pc.document['imag']), _pc.document['region'], _pc.document['overwrite'])
+        _makecomplex_result = self._swigobj.makecomplex(_str_ec(_pc.document['outfile']), _str_ec(_pc.document['imag']), _any_ec(_pc.document['region']), _pc.document['overwrite'])
         return _makecomplex_result
 
     def maskhandler(self, op='default', name=[  ]):
@@ -2469,10 +2473,10 @@ class image:
         a default mask is set, it is listed first, and is not enclosed in square
         brackets.
         """
-        schema = {'op': {'type': 'cStr'}, 'name': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
+        schema = {'op': {'type': 'cStr'}, 'name': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}}
         doc = {'op': op, 'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _maskhandler_result = self._swigobj.maskhandler(_str_encode(_pc.document['op']), [_str_encode(_x) for _x in _pc.document['name']])
+        _maskhandler_result = [_str_dc(_x) for _x in self._swigobj.maskhandler(_str_ec(_pc.document['op']), [_str_ec(_x) for _x in _pc.document['name']])]
         return _maskhandler_result
 
     def miscinfo(self):
@@ -2491,7 +2495,7 @@ class image:
         {stff miscinfo} record are written to the fits file
         as keywords with the corresponding record field name.
         """
-        _miscinfo_result = self._swigobj.miscinfo()
+        _miscinfo_result = _dict_dc(self._swigobj.miscinfo())
         return _miscinfo_result
 
     def modify(self, model, region=[ ], mask='', subtract=True, list=True, stretch=False):
@@ -2508,7 +2512,7 @@ class image:
         schema = {'model': {'type': 'cDict'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'subtract': {'type': 'cBool'}, 'list': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'model': model, 'region': region, 'mask': mask, 'subtract': subtract, 'list': list, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _modify_result = self._swigobj.modify(_pc.document['model'], _pc.document['region'], _pc.document['mask'], _pc.document['subtract'], _pc.document['list'], _pc.document['stretch'])
+        _modify_result = self._swigobj.modify(_dict_ec(_pc.document['model']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['subtract'], _pc.document['list'], _pc.document['stretch'])
         return _modify_result
 
     def maxfit(self, region=[ ], point=True, width=int(5), negfind=False, list=True):
@@ -2529,7 +2533,7 @@ class image:
         schema = {'region': {'type': 'cVariant'}, 'point': {'type': 'cBool'}, 'width': {'type': 'cInt'}, 'negfind': {'type': 'cBool'}, 'list': {'type': 'cBool'}}
         doc = {'region': region, 'point': point, 'width': width, 'negfind': negfind, 'list': list}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _maxfit_result = self._swigobj.maxfit(_pc.document['region'], _pc.document['point'], _pc.document['width'], _pc.document['negfind'], _pc.document['list'])
+        _maxfit_result = _dict_dc(self._swigobj.maxfit(_any_ec(_pc.document['region']), _pc.document['point'], _pc.document['width'], _pc.document['negfind'], _pc.document['list']))
         return _maxfit_result
 
     def moments(self, moments=[ int(0) ], axis=int(-10), region=[ ], mask='', method=[  ], smoothaxes=[ int(-1) ], smoothtypes=[ ], smoothwidths=[ float(0.0) ], includepix=[ float(-1) ], excludepix=[ float(-1) ], peaksnr=float(3.0), stddev=float(0.0), doppler='RADIO', outfile='', smoothout='', overwrite=False, drop=True, stretch=False, async=False):
@@ -2781,10 +2785,10 @@ class image:
         spectral axis, each channel will be convolved with a beam that is equal to the beam
         having the largest area in the beamset prior to moment determination.
         """
-        schema = {'moments': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'axis': {'type': 'cInt'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'method': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'smoothaxes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'smoothtypes': {'type': 'cVariant'}, 'smoothwidths': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'includepix': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'excludepix': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'peaksnr': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'stddev': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'doppler': {'type': 'cStr'}, 'outfile': {'type': 'cStr'}, 'smoothout': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'drop': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'async': {'type': 'cBool'}}
+        schema = {'moments': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'axis': {'type': 'cInt'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'method': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'smoothaxes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'smoothtypes': {'type': 'cVariant'}, 'smoothwidths': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'includepix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'excludepix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'peaksnr': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'stddev': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'doppler': {'type': 'cStr'}, 'outfile': {'type': 'cStr'}, 'smoothout': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'drop': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'async': {'type': 'cBool'}}
         doc = {'moments': moments, 'axis': axis, 'region': region, 'mask': mask, 'method': method, 'smoothaxes': smoothaxes, 'smoothtypes': smoothtypes, 'smoothwidths': smoothwidths, 'includepix': includepix, 'excludepix': excludepix, 'peaksnr': peaksnr, 'stddev': stddev, 'doppler': doppler, 'outfile': outfile, 'smoothout': smoothout, 'overwrite': overwrite, 'drop': drop, 'stretch': stretch, 'async': async}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _moments_result = _wrap_image(swig_object=self._swigobj.moments(_pc.document['moments'], _pc.document['axis'], _pc.document['region'], _pc.document['mask'], [_str_encode(_x) for _x in _pc.document['method']], _pc.document['smoothaxes'], _pc.document['smoothtypes'], _pc.document['smoothwidths'], _pc.document['includepix'], _pc.document['excludepix'], _pc.document['peaksnr'], _pc.document['stddev'], _str_encode(_pc.document['doppler']), _str_encode(_pc.document['outfile']), _str_encode(_pc.document['smoothout']), _pc.document['overwrite'], _pc.document['drop'], _pc.document['stretch'], _pc.document['async']))
+        _moments_result = _wrap_image(swig_object=self._swigobj.moments(_pc.document['moments'], _pc.document['axis'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), [_str_ec(_x) for _x in _pc.document['method']], _pc.document['smoothaxes'], _any_ec(_pc.document['smoothtypes']), _pc.document['smoothwidths'], _pc.document['includepix'], _pc.document['excludepix'], _pc.document['peaksnr'], _pc.document['stddev'], _str_ec(_pc.document['doppler']), _str_ec(_pc.document['outfile']), _str_ec(_pc.document['smoothout']), _pc.document['overwrite'], _pc.document['drop'], _pc.document['stretch'], _pc.document['async']))
         return _moments_result
 
     def name(self, strippath=False):
@@ -2796,7 +2800,7 @@ class image:
         schema = {'strippath': {'type': 'cBool'}}
         doc = {'strippath': strippath}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _name_result = self._swigobj.name(_pc.document['strippath'])
+        _name_result = _str_dc(self._swigobj.name(_pc.document['strippath']))
         return _name_result
 
     def open(self, infile):
@@ -2813,7 +2817,7 @@ class image:
         schema = {'infile': {'type': 'cReqPath', 'coerce': _coerce.expand_path}}
         doc = {'infile': infile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _open_result = self._swigobj.open(_pc.document['infile'])
+        _open_result = self._swigobj.open(_str_ec(_pc.document['infile']))
         return _open_result
 
     def pad(self, outfile='', npixels=int(1), value=float(0), padmask=False, overwrite=False, region=[ ], box='', chans='', stokes='', mask='', stretch=False, wantreturn=True):
@@ -2830,7 +2834,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'npixels': {'type': 'cInt'}, 'value': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'padmask': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'region': {'type': 'cVariant'}, 'box': {'type': 'cStr'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'mask': {'type': 'cStr'}, 'stretch': {'type': 'cBool'}, 'wantreturn': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'npixels': npixels, 'value': value, 'padmask': padmask, 'overwrite': overwrite, 'region': region, 'box': box, 'chans': chans, 'stokes': stokes, 'mask': mask, 'stretch': stretch, 'wantreturn': wantreturn}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _pad_result = _wrap_image(swig_object=self._swigobj.pad(_str_encode(_pc.document['outfile']), _pc.document['npixels'], _pc.document['value'], _pc.document['padmask'], _pc.document['overwrite'], _pc.document['region'], _str_encode(_pc.document['box']), _str_encode(_pc.document['chans']), _str_encode(_pc.document['stokes']), _str_encode(_pc.document['mask']), _pc.document['stretch'], _pc.document['wantreturn']))
+        _pad_result = _wrap_image(swig_object=self._swigobj.pad(_str_ec(_pc.document['outfile']), _pc.document['npixels'], _pc.document['value'], _pc.document['padmask'], _pc.document['overwrite'], _any_ec(_pc.document['region']), _str_ec(_pc.document['box']), _str_ec(_pc.document['chans']), _str_ec(_pc.document['stokes']), _str_ec(_pc.document['mask']), _pc.document['stretch'], _pc.document['wantreturn']))
         return _pad_result
 
     def crop(self, outfile='', axes=[  ], overwrite=False, region=[ ], box='', chans='', stokes='', mask='', stretch=False, wantreturn=True):
@@ -2840,10 +2844,10 @@ class image:
         returned.
         
         """
-        schema = {'outfile': {'type': 'cStr'}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'overwrite': {'type': 'cBool'}, 'region': {'type': 'cVariant'}, 'box': {'type': 'cStr'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'mask': {'type': 'cStr'}, 'stretch': {'type': 'cBool'}, 'wantreturn': {'type': 'cBool'}}
+        schema = {'outfile': {'type': 'cStr'}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'overwrite': {'type': 'cBool'}, 'region': {'type': 'cVariant'}, 'box': {'type': 'cStr'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'mask': {'type': 'cStr'}, 'stretch': {'type': 'cBool'}, 'wantreturn': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'axes': axes, 'overwrite': overwrite, 'region': region, 'box': box, 'chans': chans, 'stokes': stokes, 'mask': mask, 'stretch': stretch, 'wantreturn': wantreturn}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _crop_result = _wrap_image(swig_object=self._swigobj.crop(_str_encode(_pc.document['outfile']), _pc.document['axes'], _pc.document['overwrite'], _pc.document['region'], _str_encode(_pc.document['box']), _str_encode(_pc.document['chans']), _str_encode(_pc.document['stokes']), _str_encode(_pc.document['mask']), _pc.document['stretch'], _pc.document['wantreturn']))
+        _crop_result = _wrap_image(swig_object=self._swigobj.crop(_str_ec(_pc.document['outfile']), _pc.document['axes'], _pc.document['overwrite'], _any_ec(_pc.document['region']), _str_ec(_pc.document['box']), _str_ec(_pc.document['chans']), _str_ec(_pc.document['stokes']), _str_ec(_pc.document['mask']), _pc.document['stretch'], _pc.document['wantreturn']))
         return _crop_result
 
     def pixelvalue(self, pixel=[ int(-1) ]):
@@ -2859,10 +2863,10 @@ class image:
         Missing elements are given the (nearest integer) value of the reference pixel.
         This is reflected in the output record 'pixel' field.
         """
-        schema = {'pixel': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'pixel': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'pixel': pixel}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _pixelvalue_result = self._swigobj.pixelvalue(_pc.document['pixel'])
+        _pixelvalue_result = _dict_dc(self._swigobj.pixelvalue(_pc.document['pixel']))
         return _pixelvalue_result
 
     def putchunk(self, pixels=[ ], blc=[ int(-1) ], inc=[ int(1) ], list=False, locking=True, replicate=False):
@@ -2907,10 +2911,10 @@ class image:
         See also the functions set and
         calc which can also change pixel values.
         """
-        schema = {'pixels': {'type': 'cVariant'}, 'blc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'inc': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'list': {'type': 'cBool'}, 'locking': {'type': 'cBool'}, 'replicate': {'type': 'cBool'}}
+        schema = {'pixels': {'type': 'cVariant'}, 'blc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'inc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'list': {'type': 'cBool'}, 'locking': {'type': 'cBool'}, 'replicate': {'type': 'cBool'}}
         doc = {'pixels': pixels, 'blc': blc, 'inc': inc, 'list': list, 'locking': locking, 'replicate': replicate}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _putchunk_result = self._swigobj.putchunk(_pc.document['pixels'], _pc.document['blc'], _pc.document['inc'], _pc.document['list'], _pc.document['locking'], _pc.document['replicate'])
+        _putchunk_result = self._swigobj.putchunk(_any_ec(_pc.document['pixels']), _pc.document['blc'], _pc.document['inc'], _pc.document['list'], _pc.document['locking'], _pc.document['replicate'])
         return _putchunk_result
 
     def putregion(self, pixels=[ ], pixelmask=[ ], region=[ ], list=False, usemask=True, locking=True, replicate=False):
@@ -2950,7 +2954,7 @@ class image:
         schema = {'pixels': {'type': 'cVariant'}, 'pixelmask': {'type': 'cVariant'}, 'region': {'type': 'cVariant'}, 'list': {'type': 'cBool'}, 'usemask': {'type': 'cBool'}, 'locking': {'type': 'cBool'}, 'replicate': {'type': 'cBool'}}
         doc = {'pixels': pixels, 'pixelmask': pixelmask, 'region': region, 'list': list, 'usemask': usemask, 'locking': locking, 'replicate': replicate}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _putregion_result = self._swigobj.putregion(_pc.document['pixels'], _pc.document['pixelmask'], _pc.document['region'], _pc.document['list'], _pc.document['usemask'], _pc.document['locking'], _pc.document['replicate'])
+        _putregion_result = self._swigobj.putregion(_any_ec(_pc.document['pixels']), _any_ec(_pc.document['pixelmask']), _any_ec(_pc.document['region']), _pc.document['list'], _pc.document['usemask'], _pc.document['locking'], _pc.document['replicate'])
         return _putregion_result
 
     def rebin(self, outfile, bin, region=[ ], mask='', dropdeg=False, overwrite=False, async=False, stretch=False, crop=False):
@@ -2988,10 +2992,10 @@ class image:
         on-the-fly Image tool returned by this function (with the done function) this
         temporary image is deleted.
         """
-        schema = {'outfile': {'type': 'cStr'}, 'bin': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'async': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'crop': {'type': 'cBool'}}
+        schema = {'outfile': {'type': 'cStr'}, 'bin': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'async': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'crop': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'bin': bin, 'region': region, 'mask': mask, 'dropdeg': dropdeg, 'overwrite': overwrite, 'async': async, 'stretch': stretch, 'crop': crop}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _rebin_result = _wrap_image(swig_object=self._swigobj.rebin(_str_encode(_pc.document['outfile']), _pc.document['bin'], _pc.document['region'], _pc.document['mask'], _pc.document['dropdeg'], _pc.document['overwrite'], _pc.document['async'], _pc.document['stretch'], _pc.document['crop']))
+        _rebin_result = _wrap_image(swig_object=self._swigobj.rebin(_str_ec(_pc.document['outfile']), _pc.document['bin'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['dropdeg'], _pc.document['overwrite'], _pc.document['async'], _pc.document['stretch'], _pc.document['crop']))
         return _rebin_result
 
     def regrid(self, outfile='', shape=[ int(-1) ], csys={ }, axes=[ int(-1) ], region=[ ], mask='', method='linear', decimate=int(10), replicate=False, doref=True, dropdeg=False, overwrite=False, force=False, asvelocity=False, async=False, stretch=False):
@@ -3155,10 +3159,10 @@ class image:
         However, no such check is done if there is no beam present. To add a restoring beam to
         an image, use ia.setrestoringbeam().
         """
-        schema = {'outfile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'csys': {'type': 'cDict'}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'method': {'type': 'cStr'}, 'decimate': {'type': 'cInt'}, 'replicate': {'type': 'cBool'}, 'doref': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'force': {'type': 'cBool'}, 'asvelocity': {'type': 'cBool'}, 'async': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
+        schema = {'outfile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'csys': {'type': 'cDict'}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'method': {'type': 'cStr'}, 'decimate': {'type': 'cInt'}, 'replicate': {'type': 'cBool'}, 'doref': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'force': {'type': 'cBool'}, 'asvelocity': {'type': 'cBool'}, 'async': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'shape': shape, 'csys': csys, 'axes': axes, 'region': region, 'mask': mask, 'method': method, 'decimate': decimate, 'replicate': replicate, 'doref': doref, 'dropdeg': dropdeg, 'overwrite': overwrite, 'force': force, 'asvelocity': asvelocity, 'async': async, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _regrid_result = _wrap_image(swig_object=self._swigobj.regrid(_str_encode(_pc.document['outfile']), _pc.document['shape'], _pc.document['csys'], _pc.document['axes'], _pc.document['region'], _pc.document['mask'], _str_encode(_pc.document['method']), _pc.document['decimate'], _pc.document['replicate'], _pc.document['doref'], _pc.document['dropdeg'], _pc.document['overwrite'], _pc.document['force'], _pc.document['asvelocity'], _pc.document['async'], _pc.document['stretch']))
+        _regrid_result = _wrap_image(swig_object=self._swigobj.regrid(_str_ec(_pc.document['outfile']), _pc.document['shape'], _dict_ec(_pc.document['csys']), _pc.document['axes'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _str_ec(_pc.document['method']), _pc.document['decimate'], _pc.document['replicate'], _pc.document['doref'], _pc.document['dropdeg'], _pc.document['overwrite'], _pc.document['force'], _pc.document['asvelocity'], _pc.document['async'], _pc.document['stretch']))
         return _regrid_result
 
     def transpose(self, outfile='', order=[ ]):
@@ -3200,7 +3204,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'order': {'type': 'cVariant'}}
         doc = {'outfile': outfile, 'order': order}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _transpose_result = _wrap_image(swig_object=self._swigobj.transpose(_str_encode(_pc.document['outfile']), _pc.document['order']))
+        _transpose_result = _wrap_image(swig_object=self._swigobj.transpose(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['order'])))
         return _transpose_result
 
     def rotate(self, outfile='', shape=[ int(-1) ], pa=[ ], region=[ ], mask='', method='cubic', decimate=int(0), replicate=False, dropdeg=False, overwrite=False, stretch=False):
@@ -3266,10 +3270,10 @@ class image:
         mask) for all of the relevant input pixels were masked bad
         then the output pixel would be masked bad (F).
         """
-        schema = {'outfile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'pa': {'type': 'cVariant'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'method': {'type': 'cStr'}, 'decimate': {'type': 'cInt'}, 'replicate': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
+        schema = {'outfile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'pa': {'type': 'cVariant'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'method': {'type': 'cStr'}, 'decimate': {'type': 'cInt'}, 'replicate': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'shape': shape, 'pa': pa, 'region': region, 'mask': mask, 'method': method, 'decimate': decimate, 'replicate': replicate, 'dropdeg': dropdeg, 'overwrite': overwrite, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _rotate_result = _wrap_image(swig_object=self._swigobj.rotate(_str_encode(_pc.document['outfile']), _pc.document['shape'], _pc.document['pa'], _pc.document['region'], _pc.document['mask'], _str_encode(_pc.document['method']), _pc.document['decimate'], _pc.document['replicate'], _pc.document['dropdeg'], _pc.document['overwrite'], _pc.document['stretch']))
+        _rotate_result = _wrap_image(swig_object=self._swigobj.rotate(_str_ec(_pc.document['outfile']), _pc.document['shape'], _any_ec(_pc.document['pa']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _str_ec(_pc.document['method']), _pc.document['decimate'], _pc.document['replicate'], _pc.document['dropdeg'], _pc.document['overwrite'], _pc.document['stretch']))
         return _rotate_result
 
     def rotatebeam(self, angle=[ ]):
@@ -3281,7 +3285,7 @@ class image:
         schema = {'angle': {'type': 'cVariant'}}
         doc = {'angle': angle}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _rotatebeam_result = self._swigobj.rotatebeam(_pc.document['angle'])
+        _rotatebeam_result = self._swigobj.rotatebeam(_any_ec(_pc.document['angle']))
         return _rotatebeam_result
 
     def rename(self, name, overwrite=False):
@@ -3293,7 +3297,7 @@ class image:
         schema = {'name': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}}
         doc = {'name': name, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _rename_result = self._swigobj.rename(_str_encode(_pc.document['name']), _pc.document['overwrite'])
+        _rename_result = self._swigobj.rename(_str_ec(_pc.document['name']), _pc.document['overwrite'])
         return _rename_result
 
     def replacemaskedpixels(self, pixels=[ ], region=[ ], mask='', update=False, list=False, stretch=False):
@@ -3350,7 +3354,7 @@ class image:
         schema = {'pixels': {'type': 'cVariant'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'update': {'type': 'cBool'}, 'list': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'pixels': pixels, 'region': region, 'mask': mask, 'update': update, 'list': list, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _replacemaskedpixels_result = self._swigobj.replacemaskedpixels(_pc.document['pixels'], _pc.document['region'], _pc.document['mask'], _pc.document['update'], _pc.document['list'], _pc.document['stretch'])
+        _replacemaskedpixels_result = self._swigobj.replacemaskedpixels(_any_ec(_pc.document['pixels']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['update'], _pc.document['list'], _pc.document['stretch'])
         return _replacemaskedpixels_result
 
     def beamarea(self, channel=int(-1), polarization=int(-1)):
@@ -3360,7 +3364,7 @@ class image:
         schema = {'channel': {'type': 'cInt'}, 'polarization': {'type': 'cInt'}}
         doc = {'channel': channel, 'polarization': polarization}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _beamarea_result = self._swigobj.beamarea(_pc.document['channel'], _pc.document['polarization'])
+        _beamarea_result = _dict_dc(self._swigobj.beamarea(_pc.document['channel'], _pc.document['polarization']))
         return _beamarea_result
 
     def restoringbeam(self, channel=int(-1), polarization=int(-1)):
@@ -3396,7 +3400,7 @@ class image:
         schema = {'channel': {'type': 'cInt'}, 'polarization': {'type': 'cInt'}}
         doc = {'channel': channel, 'polarization': polarization}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _restoringbeam_result = self._swigobj.restoringbeam(_pc.document['channel'], _pc.document['polarization'])
+        _restoringbeam_result = _dict_dc(self._swigobj.restoringbeam(_pc.document['channel'], _pc.document['polarization']))
         return _restoringbeam_result
 
     def sepconvolve(self, outfile='', axes=[ int(-1) ], types=[ '' ], widths=[ ], scale=float(-1), region=[ ], mask='', overwrite=False, stretch=False):
@@ -3471,10 +3475,10 @@ class image:
         convolve and
         hanning.
         """
-        schema = {'outfile': {'type': 'cStr'}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'types': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'widths': {'type': 'cVariant'}, 'scale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
+        schema = {'outfile': {'type': 'cStr'}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'types': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'widths': {'type': 'cVariant'}, 'scale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'axes': axes, 'types': types, 'widths': widths, 'scale': scale, 'region': region, 'mask': mask, 'overwrite': overwrite, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _sepconvolve_result = _wrap_image(swig_object=self._swigobj.sepconvolve(_str_encode(_pc.document['outfile']), _pc.document['axes'], [_str_encode(_x) for _x in _pc.document['types']], _pc.document['widths'], _pc.document['scale'], _pc.document['region'], _pc.document['mask'], _pc.document['overwrite'], _pc.document['stretch']))
+        _sepconvolve_result = _wrap_image(swig_object=self._swigobj.sepconvolve(_str_ec(_pc.document['outfile']), _pc.document['axes'], [_str_ec(_x) for _x in _pc.document['types']], _any_ec(_pc.document['widths']), _pc.document['scale'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['overwrite'], _pc.document['stretch']))
         return _sepconvolve_result
 
     def set(self, pixels=[ ], pixelmask=int(-1), region=[ ], list=False):
@@ -3515,7 +3519,7 @@ class image:
         schema = {'pixels': {'type': 'cVariant'}, 'pixelmask': {'type': 'cInt'}, 'region': {'type': 'cVariant'}, 'list': {'type': 'cBool'}}
         doc = {'pixels': pixels, 'pixelmask': pixelmask, 'region': region, 'list': list}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _set_result = self._swigobj.set(_pc.document['pixels'], _pc.document['pixelmask'], _pc.document['region'], _pc.document['list'])
+        _set_result = self._swigobj.set(_any_ec(_pc.document['pixels']), _pc.document['pixelmask'], _any_ec(_pc.document['region']), _pc.document['list'])
         return _set_result
 
     def setbrightnessunit(self, unit):
@@ -3527,7 +3531,7 @@ class image:
         schema = {'unit': {'type': 'cStr'}}
         doc = {'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setbrightnessunit_result = self._swigobj.setbrightnessunit(_str_encode(_pc.document['unit']))
+        _setbrightnessunit_result = self._swigobj.setbrightnessunit(_str_ec(_pc.document['unit']))
         return _setbrightnessunit_result
 
     def setcoordsys(self, csys):
@@ -3544,7 +3548,7 @@ class image:
         schema = {'csys': {'type': 'cDict'}}
         doc = {'csys': csys}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setcoordsys_result = self._swigobj.setcoordsys(_pc.document['csys'])
+        _setcoordsys_result = self._swigobj.setcoordsys(_dict_ec(_pc.document['csys']))
         return _setcoordsys_result
 
     def sethistory(self, origin='', history=[  ]):
@@ -3558,10 +3562,10 @@ class image:
         You can recover the history information with function
         history.
         """
-        schema = {'origin': {'type': 'cStr'}, 'history': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
+        schema = {'origin': {'type': 'cStr'}, 'history': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}}
         doc = {'origin': origin, 'history': history}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _sethistory_result = self._swigobj.sethistory(_str_encode(_pc.document['origin']), [_str_encode(_x) for _x in _pc.document['history']])
+        _sethistory_result = self._swigobj.sethistory(_str_ec(_pc.document['origin']), [_str_ec(_x) for _x in _pc.document['history']])
         return _sethistory_result
 
     def setmiscinfo(self, info):
@@ -3586,7 +3590,7 @@ class image:
         schema = {'info': {'type': 'cDict'}}
         doc = {'info': info}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setmiscinfo_result = self._swigobj.setmiscinfo(_pc.document['info'])
+        _setmiscinfo_result = self._swigobj.setmiscinfo(_dict_ec(_pc.document['info']))
         return _setmiscinfo_result
 
     def shape(self):
@@ -3670,7 +3674,7 @@ class image:
         schema = {'major': {'type': 'cVariant'}, 'minor': {'type': 'cVariant'}, 'pa': {'type': 'cVariant'}, 'beam': {'type': 'cDict'}, 'remove': {'type': 'cBool'}, 'log': {'type': 'cBool'}, 'channel': {'type': 'cInt'}, 'polarization': {'type': 'cInt'}, 'imagename': {'type': 'cStr'}}
         doc = {'major': major, 'minor': minor, 'pa': pa, 'beam': beam, 'remove': remove, 'log': log, 'channel': channel, 'polarization': polarization, 'imagename': imagename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setrestoringbeam_result = self._swigobj.setrestoringbeam(_pc.document['major'], _pc.document['minor'], _pc.document['pa'], _pc.document['beam'], _pc.document['remove'], _pc.document['log'], _pc.document['channel'], _pc.document['polarization'], _str_encode(_pc.document['imagename']))
+        _setrestoringbeam_result = self._swigobj.setrestoringbeam(_any_ec(_pc.document['major']), _any_ec(_pc.document['minor']), _any_ec(_pc.document['pa']), _dict_ec(_pc.document['beam']), _pc.document['remove'], _pc.document['log'], _pc.document['channel'], _pc.document['polarization'], _str_ec(_pc.document['imagename']))
         return _setrestoringbeam_result
 
     def statistics(self, axes=[ int(-1) ], region={ }, mask='', includepix=[ float(-1) ], excludepix=[ float(-1) ], list=False, force=False, disk=False, robust=False, verbose=False, stretch=False, logfile='', append=True, algorithm='classic', fence=float(-1), center='mean', lside=True, zscore=float(-1), maxiter=int(-1), clmethod='auto'):
@@ -3924,10 +3928,10 @@ class image:
         In both cases of flux density or flux being computed, the resulting numerical value is
         assigned to the "flux" key in the output dictionary.
         """
-        schema = {'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'region': {'anyof': [{'type': 'cDict'}, {'type': 'cReqPath', 'coerce': _coerce.expand_path}]}, 'mask': {'type': 'cVariant'}, 'includepix': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'excludepix': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'list': {'type': 'cBool'}, 'force': {'type': 'cBool'}, 'disk': {'type': 'cBool'}, 'robust': {'type': 'cBool'}, 'verbose': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'logfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'algorithm': {'type': 'cStr'}, 'fence': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'center': {'type': 'cStr'}, 'lside': {'type': 'cBool'}, 'zscore': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxiter': {'type': 'cInt'}, 'clmethod': {'type': 'cStr'}}
+        schema = {'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'region': {'anyof': [{'type': 'cDict'}, {'type': 'cReqPath', 'coerce': _coerce.expand_path}]}, 'mask': {'type': 'cVariant'}, 'includepix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'excludepix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'list': {'type': 'cBool'}, 'force': {'type': 'cBool'}, 'disk': {'type': 'cBool'}, 'robust': {'type': 'cBool'}, 'verbose': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'logfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'algorithm': {'type': 'cStr'}, 'fence': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'center': {'type': 'cStr'}, 'lside': {'type': 'cBool'}, 'zscore': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxiter': {'type': 'cInt'}, 'clmethod': {'type': 'cStr'}}
         doc = {'axes': axes, 'region': region, 'mask': mask, 'includepix': includepix, 'excludepix': excludepix, 'list': list, 'force': force, 'disk': disk, 'robust': robust, 'verbose': verbose, 'stretch': stretch, 'logfile': logfile, 'append': append, 'algorithm': algorithm, 'fence': fence, 'center': center, 'lside': lside, 'zscore': zscore, 'maxiter': maxiter, 'clmethod': clmethod}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _statistics_result = self._swigobj.statistics(_pc.document['axes'], _pc.document['region'], _pc.document['mask'], _pc.document['includepix'], _pc.document['excludepix'], _pc.document['list'], _pc.document['force'], _pc.document['disk'], _pc.document['robust'], _pc.document['verbose'], _pc.document['stretch'], _str_encode(_pc.document['logfile']), _pc.document['append'], _str_encode(_pc.document['algorithm']), _pc.document['fence'], _str_encode(_pc.document['center']), _pc.document['lside'], _pc.document['zscore'], _pc.document['maxiter'], _str_encode(_pc.document['clmethod']))
+        _statistics_result = _dict_dc(self._swigobj.statistics(_pc.document['axes'], _pc.document['region'], _any_ec(_pc.document['mask']), _pc.document['includepix'], _pc.document['excludepix'], _pc.document['list'], _pc.document['force'], _pc.document['disk'], _pc.document['robust'], _pc.document['verbose'], _pc.document['stretch'], _str_ec(_pc.document['logfile']), _pc.document['append'], _str_ec(_pc.document['algorithm']), _pc.document['fence'], _str_ec(_pc.document['center']), _pc.document['lside'], _pc.document['zscore'], _pc.document['maxiter'], _str_ec(_pc.document['clmethod'])))
         return _statistics_result
 
     def twopointcorrelation(self, outfile='', region=[ ], mask='', axes=[ int(-1) ], method='structurefunction', overwrite=False, stretch=False):
@@ -3956,10 +3960,10 @@ class image:
         half of the image.  We just write it all out to look nice.  The long
         lags don't have a lot of contributing values of course.
         """
-        schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'axes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'method': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
+        schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'axes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'method': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'region': region, 'mask': mask, 'axes': axes, 'method': method, 'overwrite': overwrite, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _twopointcorrelation_result = self._swigobj.twopointcorrelation(_str_encode(_pc.document['outfile']), _pc.document['region'], _pc.document['mask'], _pc.document['axes'], _str_encode(_pc.document['method']), _pc.document['overwrite'], _pc.document['stretch'])
+        _twopointcorrelation_result = self._swigobj.twopointcorrelation(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['axes'], _str_ec(_pc.document['method']), _pc.document['overwrite'], _pc.document['stretch'])
         return _twopointcorrelation_result
 
     def subimage(self, outfile='', region='', mask='', dropdeg=False, overwrite=False, list=True, stretch=False, wantreturn=True, keepaxes=[  ]):
@@ -4003,10 +4007,10 @@ class image:
         the mask is shape [100, 200, 2], stretching is not possible and an
         error will result.
         """
-        schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'list': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'wantreturn': {'type': 'cBool'}, 'keepaxes': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'list': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'wantreturn': {'type': 'cBool'}, 'keepaxes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'outfile': outfile, 'region': region, 'mask': mask, 'dropdeg': dropdeg, 'overwrite': overwrite, 'list': list, 'stretch': stretch, 'wantreturn': wantreturn, 'keepaxes': keepaxes}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _subimage_result = _wrap_image(swig_object=self._swigobj.subimage(_str_encode(_pc.document['outfile']), _pc.document['region'], _pc.document['mask'], _pc.document['dropdeg'], _pc.document['overwrite'], _pc.document['list'], _pc.document['stretch'], _pc.document['wantreturn'], _pc.document['keepaxes']))
+        _subimage_result = _wrap_image(swig_object=self._swigobj.subimage(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['dropdeg'], _pc.document['overwrite'], _pc.document['list'], _pc.document['stretch'], _pc.document['wantreturn'], _pc.document['keepaxes']))
         return _subimage_result
 
     def summary(self, doppler='RADIO', list=True, pixelorder=True, verbose=False):
@@ -4082,7 +4086,7 @@ class image:
         schema = {'doppler': {'type': 'cStr'}, 'list': {'type': 'cBool'}, 'pixelorder': {'type': 'cBool'}, 'verbose': {'type': 'cBool'}}
         doc = {'doppler': doppler, 'list': list, 'pixelorder': pixelorder, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _summary_result = self._swigobj.summary(_str_encode(_pc.document['doppler']), _pc.document['list'], _pc.document['pixelorder'], _pc.document['verbose'])
+        _summary_result = _dict_dc(self._swigobj.summary(_str_ec(_pc.document['doppler']), _pc.document['list'], _pc.document['pixelorder'], _pc.document['verbose']))
         return _summary_result
 
     def tofits(self, outfile='', velocity=False, optical=True, bitpix=int(-32), minpix=float(1), maxpix=float(-1), region=[ ], mask='', overwrite=False, dropdeg=False, deglast=False, dropstokes=False, stokeslast=True, wavelength=False, airwavelength=False, async=False, stretch=False, history=True):
@@ -4139,7 +4143,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'velocity': {'type': 'cBool'}, 'optical': {'type': 'cBool'}, 'bitpix': {'type': 'cInt'}, 'minpix': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'maxpix': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'overwrite': {'type': 'cBool'}, 'dropdeg': {'type': 'cBool'}, 'deglast': {'type': 'cBool'}, 'dropstokes': {'type': 'cBool'}, 'stokeslast': {'type': 'cBool'}, 'wavelength': {'type': 'cBool'}, 'airwavelength': {'type': 'cBool'}, 'async': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}, 'history': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'velocity': velocity, 'optical': optical, 'bitpix': bitpix, 'minpix': minpix, 'maxpix': maxpix, 'region': region, 'mask': mask, 'overwrite': overwrite, 'dropdeg': dropdeg, 'deglast': deglast, 'dropstokes': dropstokes, 'stokeslast': stokeslast, 'wavelength': wavelength, 'airwavelength': airwavelength, 'async': async, 'stretch': stretch, 'history': history}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _tofits_result = self._swigobj.tofits(_str_encode(_pc.document['outfile']), _pc.document['velocity'], _pc.document['optical'], _pc.document['bitpix'], _pc.document['minpix'], _pc.document['maxpix'], _pc.document['region'], _pc.document['mask'], _pc.document['overwrite'], _pc.document['dropdeg'], _pc.document['deglast'], _pc.document['dropstokes'], _pc.document['stokeslast'], _pc.document['wavelength'], _pc.document['airwavelength'], _pc.document['async'], _pc.document['stretch'], _pc.document['history'])
+        _tofits_result = self._swigobj.tofits(_str_ec(_pc.document['outfile']), _pc.document['velocity'], _pc.document['optical'], _pc.document['bitpix'], _pc.document['minpix'], _pc.document['maxpix'], _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['overwrite'], _pc.document['dropdeg'], _pc.document['deglast'], _pc.document['dropstokes'], _pc.document['stokeslast'], _pc.document['wavelength'], _pc.document['airwavelength'], _pc.document['async'], _pc.document['stretch'], _pc.document['history'])
         return _tofits_result
 
     def toASCII(self, outfile, region=[ ], mask='', sep=':', format='%e', maskvalue=float(-999), overwrite=False, stretch=False):
@@ -4157,14 +4161,14 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'sep': {'type': 'cStr'}, 'format': {'type': 'cStr'}, 'maskvalue': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'overwrite': {'type': 'cBool'}, 'stretch': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'region': region, 'mask': mask, 'sep': sep, 'format': format, 'maskvalue': maskvalue, 'overwrite': overwrite, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toASCII_result = self._swigobj.toASCII(_str_encode(_pc.document['outfile']), _pc.document['region'], _pc.document['mask'], _str_encode(_pc.document['sep']), _str_encode(_pc.document['format']), _pc.document['maskvalue'], _pc.document['overwrite'], _pc.document['stretch'])
+        _toASCII_result = self._swigobj.toASCII(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _str_ec(_pc.document['sep']), _str_ec(_pc.document['format']), _pc.document['maskvalue'], _pc.document['overwrite'], _pc.document['stretch'])
         return _toASCII_result
 
     def torecord(self):
         """You can convert an associated image to a record for manipulation or passing it to inputs of other function of other tools.
         This and fromrecord are used for serialization and deserialization.
         """
-        _torecord_result = self._swigobj.torecord()
+        _torecord_result = _dict_dc(self._swigobj.torecord())
         return _torecord_result
 
     def type(self):
@@ -4172,7 +4176,7 @@ class image:
         a script to make sure this variable is an Image
         tool.
         """
-        _type_result = self._swigobj.type()
+        _type_result = _str_dc(self._swigobj.type())
         return _type_result
 
     def topixel(self, value=[ ]):
@@ -4188,7 +4192,7 @@ class image:
         schema = {'value': {'type': 'cVariant'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _topixel_result = self._swigobj.topixel(_pc.document['value'])
+        _topixel_result = _dict_dc(self._swigobj.topixel(_any_ec(_pc.document['value'])))
         return _topixel_result
 
     def toworld(self, value=[ ], format='n', dovelocity=True):
@@ -4202,7 +4206,7 @@ class image:
         schema = {'value': {'type': 'cVariant'}, 'format': {'type': 'cStr'}, 'dovelocity': {'type': 'cBool'}}
         doc = {'value': value, 'format': format, 'dovelocity': dovelocity}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toworld_result = self._swigobj.toworld(_pc.document['value'], _str_encode(_pc.document['format']), _pc.document['dovelocity'])
+        _toworld_result = _dict_dc(self._swigobj.toworld(_any_ec(_pc.document['value']), _str_ec(_pc.document['format']), _pc.document['dovelocity']))
         return _toworld_result
 
     def unlock(self):
@@ -4247,7 +4251,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'pixels': {'type': 'cVariant'}, 'csys': {'type': 'cDict'}, 'linear': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'log': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'pixels': pixels, 'csys': csys, 'linear': linear, 'overwrite': overwrite, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _newimagefromarray_result = _wrap_image(swig_object=self._swigobj.newimagefromarray(_str_encode(_pc.document['outfile']), _pc.document['pixels'], _pc.document['csys'], _pc.document['linear'], _pc.document['overwrite'], _pc.document['log']))
+        _newimagefromarray_result = _wrap_image(swig_object=self._swigobj.newimagefromarray(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['pixels']), _dict_ec(_pc.document['csys']), _pc.document['linear'], _pc.document['overwrite'], _pc.document['log']))
         return _newimagefromarray_result
 
     def newimagefromfits(self, outfile='', infile='', whichrep=int(0), whichhdu=int(0), zeroblanks=False, overwrite=False):
@@ -4275,7 +4279,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'infile': {'type': 'cStr'}, 'whichrep': {'type': 'cInt'}, 'whichhdu': {'type': 'cInt'}, 'zeroblanks': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'infile': infile, 'whichrep': whichrep, 'whichhdu': whichhdu, 'zeroblanks': zeroblanks, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _newimagefromfits_result = _wrap_image(swig_object=self._swigobj.newimagefromfits(_str_encode(_pc.document['outfile']), _str_encode(_pc.document['infile']), _pc.document['whichrep'], _pc.document['whichhdu'], _pc.document['zeroblanks'], _pc.document['overwrite']))
+        _newimagefromfits_result = _wrap_image(swig_object=self._swigobj.newimagefromfits(_str_ec(_pc.document['outfile']), _str_ec(_pc.document['infile']), _pc.document['whichrep'], _pc.document['whichhdu'], _pc.document['zeroblanks'], _pc.document['overwrite']))
         return _newimagefromfits_result
 
     def newimagefromimage(self, infile='', outfile='', region=[ ], mask='', dropdeg=False, overwrite=False):
@@ -4311,7 +4315,7 @@ class image:
         schema = {'infile': {'type': 'cStr'}, 'outfile': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'mask': {'type': 'cVariant'}, 'dropdeg': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
         doc = {'infile': infile, 'outfile': outfile, 'region': region, 'mask': mask, 'dropdeg': dropdeg, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _newimagefromimage_result = _wrap_image(swig_object=self._swigobj.newimagefromimage(_str_encode(_pc.document['infile']), _str_encode(_pc.document['outfile']), _pc.document['region'], _pc.document['mask'], _pc.document['dropdeg'], _pc.document['overwrite']))
+        _newimagefromimage_result = _wrap_image(swig_object=self._swigobj.newimagefromimage(_str_ec(_pc.document['infile']), _str_ec(_pc.document['outfile']), _any_ec(_pc.document['region']), _any_ec(_pc.document['mask']), _pc.document['dropdeg'], _pc.document['overwrite']))
         return _newimagefromimage_result
 
     def newimagefromshape(self, outfile='', shape=[ int(0) ], csys={ }, linear=False, overwrite=False, log=True, type='f'):
@@ -4340,10 +4344,10 @@ class image:
         shape=[64,64,32,4]}).  Extra dimensions are given linear coordinates.
         If {stfaf linear=T} then you get a linear Coordinate System.
         """
-        schema = {'outfile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'csys': {'type': 'cDict'}, 'linear': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'log': {'type': 'cBool'}, 'type': {'type': 'cStr'}}
+        schema = {'outfile': {'type': 'cStr'}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'csys': {'type': 'cDict'}, 'linear': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}, 'log': {'type': 'cBool'}, 'type': {'type': 'cStr'}}
         doc = {'outfile': outfile, 'shape': shape, 'csys': csys, 'linear': linear, 'overwrite': overwrite, 'log': log, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _newimagefromshape_result = _wrap_image(swig_object=self._swigobj.newimagefromshape(_str_encode(_pc.document['outfile']), _pc.document['shape'], _pc.document['csys'], _pc.document['linear'], _pc.document['overwrite'], _pc.document['log'], _str_encode(_pc.document['type'])))
+        _newimagefromshape_result = _wrap_image(swig_object=self._swigobj.newimagefromshape(_str_ec(_pc.document['outfile']), _pc.document['shape'], _dict_ec(_pc.document['csys']), _pc.document['linear'], _pc.document['overwrite'], _pc.document['log'], _str_ec(_pc.document['type'])))
         return _newimagefromshape_result
 
     def pbcor(self, pbimage='', outfile='', overwrite=False, box='', region=[ ], chans='', stokes='', mask='', mode='divide', cutoff=float(-1.0), stretch=False):
@@ -4369,7 +4373,7 @@ class image:
         schema = {'pbimage': {'type': 'cVariant'}, 'outfile': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'box': {'type': 'cStr'}, 'region': {'type': 'cVariant'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'mask': {'type': 'cStr'}, 'mode': {'type': 'cStr'}, 'cutoff': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'stretch': {'type': 'cBool'}}
         doc = {'pbimage': pbimage, 'outfile': outfile, 'overwrite': overwrite, 'box': box, 'region': region, 'chans': chans, 'stokes': stokes, 'mask': mask, 'mode': mode, 'cutoff': cutoff, 'stretch': stretch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _pbcor_result = _wrap_image(swig_object=self._swigobj.pbcor(_pc.document['pbimage'], _str_encode(_pc.document['outfile']), _pc.document['overwrite'], _str_encode(_pc.document['box']), _pc.document['region'], _str_encode(_pc.document['chans']), _str_encode(_pc.document['stokes']), _str_encode(_pc.document['mask']), _str_encode(_pc.document['mode']), _pc.document['cutoff'], _pc.document['stretch']))
+        _pbcor_result = _wrap_image(swig_object=self._swigobj.pbcor(_any_ec(_pc.document['pbimage']), _str_ec(_pc.document['outfile']), _pc.document['overwrite'], _str_ec(_pc.document['box']), _any_ec(_pc.document['region']), _str_ec(_pc.document['chans']), _str_ec(_pc.document['stokes']), _str_ec(_pc.document['mask']), _str_ec(_pc.document['mode']), _pc.document['cutoff'], _pc.document['stretch']))
         return _pbcor_result
 
     def pv(self, outfile='', start=[ ], end=[ ], center=[ ], length=[ ], pa=[ ], width=int(1), unit='arcsec', overwrite=False, region=[ ], chans='', stokes='', mask='', stretch=False, wantreturn=True):
@@ -4421,7 +4425,7 @@ class image:
         schema = {'outfile': {'type': 'cStr'}, 'start': {'type': 'cVariant'}, 'end': {'type': 'cVariant'}, 'center': {'type': 'cVariant'}, 'length': {'type': 'cVariant'}, 'pa': {'type': 'cVariant'}, 'width': {'type': 'cVariant'}, 'unit': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'region': {'type': 'cVariant'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'mask': {'type': 'cStr'}, 'stretch': {'type': 'cBool'}, 'wantreturn': {'type': 'cBool'}}
         doc = {'outfile': outfile, 'start': start, 'end': end, 'center': center, 'length': length, 'pa': pa, 'width': width, 'unit': unit, 'overwrite': overwrite, 'region': region, 'chans': chans, 'stokes': stokes, 'mask': mask, 'stretch': stretch, 'wantreturn': wantreturn}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _pv_result = _wrap_image(swig_object=self._swigobj.pv(_str_encode(_pc.document['outfile']), _pc.document['start'], _pc.document['end'], _pc.document['center'], _pc.document['length'], _pc.document['pa'], _pc.document['width'], _str_encode(_pc.document['unit']), _pc.document['overwrite'], _pc.document['region'], _str_encode(_pc.document['chans']), _str_encode(_pc.document['stokes']), _str_encode(_pc.document['mask']), _pc.document['stretch'], _pc.document['wantreturn']))
+        _pv_result = _wrap_image(swig_object=self._swigobj.pv(_str_ec(_pc.document['outfile']), _any_ec(_pc.document['start']), _any_ec(_pc.document['end']), _any_ec(_pc.document['center']), _any_ec(_pc.document['length']), _any_ec(_pc.document['pa']), _any_ec(_pc.document['width']), _str_ec(_pc.document['unit']), _pc.document['overwrite'], _any_ec(_pc.document['region']), _str_ec(_pc.document['chans']), _str_ec(_pc.document['stokes']), _str_ec(_pc.document['mask']), _pc.document['stretch'], _pc.document['wantreturn']))
         return _pv_result
 
     def makearray(self, v=float(0.0), shape=[ int(0) ]):
@@ -4429,10 +4433,10 @@ class image:
         value for the new array.  The second is a vector giving the lengths of
         the dimensions of the array.
         """
-        schema = {'v': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'v': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'v': v, 'shape': shape}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _makearray_result = self._swigobj.makearray(_pc.document['v'], _pc.document['shape'])
+        _makearray_result = _any_dc(self._swigobj.makearray(_pc.document['v'], _pc.document['shape']))
         return _makearray_result
 
     def isconform(self, other):
@@ -4442,6 +4446,6 @@ class image:
         schema = {'other': {'type': 'cStr'}}
         doc = {'other': other}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _isconform_result = self._swigobj.isconform(_str_encode(_pc.document['other']))
+        _isconform_result = self._swigobj.isconform(_str_ec(_pc.document['other']))
         return _isconform_result
 

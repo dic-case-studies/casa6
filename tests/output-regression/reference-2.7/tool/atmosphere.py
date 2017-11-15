@@ -2,8 +2,12 @@
 ##################### 96aa7d967de74086e53e2b899e73508c ##############################
 from __future__ import absolute_import 
 from .__casac__ import atmosphere as _atmosphere
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -32,14 +36,14 @@ class atmosphere:
     def getAtmVersion(self):
         """Returns the version of ATM library implemented to this tool.
         """
-        _getAtmVersion_result = self._swigobj.getAtmVersion()
+        _getAtmVersion_result = _str_dc(self._swigobj.getAtmVersion())
         return _getAtmVersion_result
 
     def listAtmosphereTypes(self):
         """Returns a list of index numbers and corresponding atmosphere types
         used by the ATM library.
         """
-        _listAtmosphereTypes_result = self._swigobj.listAtmosphereTypes()
+        _listAtmosphereTypes_result = [_str_dc(_x) for _x in self._swigobj.listAtmosphereTypes()]
         return _listAtmosphereTypes_result
 
     def initAtmProfile(self, altitude={'value': float(5000.), 'unit': 'm'}, temperature={'value': float(270.0), 'unit': 'K'}, pressure={'value': float(560.0), 'unit': 'mbar'}, maxAltitude={'value': float(48.0), 'unit': 'km'}, humidity=float(20.0), dTem_dh={'value': float(-5.6), 'unit': 'K/km'}, dP={'value': float(10.0), 'unit': 'mbar'}, dPm=float(1.2), h0={'value': float(2.0), 'unit': 'km'}, atmType=int(1), layerBoundaries=[  ], layerTemperature=[  ]):
@@ -71,10 +75,10 @@ class atmosphere:
         negative value indicates an error).  The zenith column of water vapor
         can be calculated by simply integrating the H2O profile.
         """
-        schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'maxAltitude': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'dP': {'type': 'cFloatQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cFloatQuant'}, 'atmType': {'type': 'cInt'}, 'layerBoundaries': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'layerTemperature': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
+        schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'maxAltitude': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'dP': {'type': 'cFloatQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cFloatQuant'}, 'atmType': {'type': 'cInt'}, 'layerBoundaries': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'layerTemperature': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'maxAltitude': maxAltitude, 'humidity': humidity, 'dTem_dh': dTem_dh, 'dP': dP, 'dPm': dPm, 'h0': h0, 'atmType': atmType, 'layerBoundaries': layerBoundaries, 'layerTemperature': layerTemperature}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _initAtmProfile_result = self._swigobj.initAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _pc.document['atmType'], _pc.document['layerBoundaries'], _pc.document['layerTemperature'])
+        _initAtmProfile_result = _str_dc(self._swigobj.initAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _pc.document['atmType'], _pc.document['layerBoundaries'], _pc.document['layerTemperature']))
         return _initAtmProfile_result
 
     def updateAtmProfile(self, altitude={'value': float(5000.), 'unit': 'm'}, temperature={'value': float(270.0), 'unit': 'K'}, pressure={'value': float(560.0), 'unit': 'mbar'}, humidity=float(20.0), dTem_dh={'value': float(-5.6), 'unit': 'K/km'}, h0={'value': float(2.0), 'unit': 'km'}):
@@ -84,7 +88,7 @@ class atmosphere:
         schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'h0': {'type': 'cFloatQuant'}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'humidity': humidity, 'dTem_dh': dTem_dh, 'h0': h0}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _updateAtmProfile_result = self._swigobj.updateAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['h0'])
+        _updateAtmProfile_result = _str_dc(self._swigobj.updateAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['h0']))
         return _updateAtmProfile_result
 
     def getBasicAtmParms(self, altitude={'value': float(0), 'unit': ''}, temperature={'value': float(0), 'unit': ''}, pressure={'value': float(0), 'unit': ''}, maxAltitude={'value': float(0), 'unit': ''}, humidity=float(0), dTem_dh={'value': float(0), 'unit': ''}, dP={'value': float(0), 'unit': ''}, dPm=float(0), h0={'value': float(0), 'unit': ''}, atmType=''):
@@ -93,7 +97,7 @@ class atmosphere:
         schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'maxAltitude': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'dP': {'type': 'cFloatQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cFloatQuant'}, 'atmType': {'type': 'cStr'}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'maxAltitude': maxAltitude, 'humidity': humidity, 'dTem_dh': dTem_dh, 'dP': dP, 'dPm': dPm, 'h0': h0, 'atmType': atmType}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getBasicAtmParms_result = self._swigobj.getBasicAtmParms(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _str_encode(_pc.document['atmType']))
+        _getBasicAtmParms_result = _str_dc(self._swigobj.getBasicAtmParms(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _str_ec(_pc.document['atmType'])))
         altitude = _pc.document['altitude']
         temperature = _pc.document['temperature']
         pressure = _pc.document['pressure']
@@ -103,7 +107,7 @@ class atmosphere:
         dP = _pc.document['dP']
         dPm = _pc.document['dPm']
         h0 = _pc.document['h0']
-        atmType = _str_encode(_pc.document['atmType'])
+        atmType = _str_dc(_str_ec(_pc.document['atmType']))
         return _getBasicAtmParms_result
 
     def getNumLayers(self):
@@ -125,7 +129,7 @@ class atmosphere:
         schema = {'thickness': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'watermassdensity': {'type': 'cFloatQuant'}, 'water': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'O3': {'type': 'cFloatQuant'}, 'CO': {'type': 'cFloatQuant'}, 'N2O': {'type': 'cFloatQuant'}}
         doc = {'thickness': thickness, 'temperature': temperature, 'watermassdensity': watermassdensity, 'water': water, 'pressure': pressure, 'O3': O3, 'CO': CO, 'N2O': N2O}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getProfile_result = self._swigobj.getProfile(_pc.document['thickness'], _pc.document['temperature'], _pc.document['watermassdensity'], _pc.document['water'], _pc.document['pressure'], _pc.document['O3'], _pc.document['CO'], _pc.document['N2O'])
+        _getProfile_result = _str_dc(self._swigobj.getProfile(_pc.document['thickness'], _pc.document['temperature'], _pc.document['watermassdensity'], _pc.document['water'], _pc.document['pressure'], _pc.document['O3'], _pc.document['CO'], _pc.document['N2O']))
         thickness = _pc.document['thickness']
         temperature = _pc.document['temperature']
         watermassdensity = _pc.document['watermassdensity']
@@ -345,7 +349,7 @@ class atmosphere:
     def getDryOpacitySpec(self, spwid=int(0), dryOpacity=[ ]):
         """Get the integrated Dry opacity along the atmospheric path on each channel in a band.
         """
-        schema = {'spwid': {'type': 'cInt'}, 'dryOpacity': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
+        schema = {'spwid': {'type': 'cInt'}, 'dryOpacity': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
         doc = {'spwid': spwid, 'dryOpacity': dryOpacity}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getDryOpacitySpec_result = self._swigobj.getDryOpacitySpec(_pc.document['spwid'], _pc.document['dryOpacity'])

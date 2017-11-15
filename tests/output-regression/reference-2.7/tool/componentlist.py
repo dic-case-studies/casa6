@@ -2,8 +2,12 @@
 ##################### b8b3e74736ff36451fb026d4d97bf7e2 ##############################
 from __future__ import absolute_import 
 from .__casac__ import componentlist as _componentlist
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -38,7 +42,7 @@ class componentlist:
         schema = {'filename': {'type': 'cStr'}, 'nomodify': {'type': 'cBool'}, 'log': {'type': 'cBool'}}
         doc = {'filename': filename, 'nomodify': nomodify, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _open_result = self._swigobj.open(_str_encode(_pc.document['filename']), _pc.document['nomodify'], _pc.document['log'])
+        _open_result = self._swigobj.open(_str_ec(_pc.document['filename']), _pc.document['nomodify'], _pc.document['log'])
         return _open_result
 
     def asciitocomponentlist(self, filename, asciifile, refer='J2000', format='ST', direction={ }, spectrum={ }, flux={ }, log=True):
@@ -49,7 +53,7 @@ class componentlist:
         schema = {'filename': {'type': 'cStr'}, 'asciifile': {'type': 'cStr'}, 'refer': {'type': 'cStr'}, 'format': {'type': 'cStr'}, 'direction': {'type': 'cDict'}, 'spectrum': {'type': 'cDict'}, 'flux': {'type': 'cDict'}, 'log': {'type': 'cBool'}}
         doc = {'filename': filename, 'asciifile': asciifile, 'refer': refer, 'format': format, 'direction': direction, 'spectrum': spectrum, 'flux': flux, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _asciitocomponentlist_result = self._swigobj.asciitocomponentlist(_str_encode(_pc.document['filename']), _str_encode(_pc.document['asciifile']), _str_encode(_pc.document['refer']), _str_encode(_pc.document['format']), _pc.document['direction'], _pc.document['spectrum'], _pc.document['flux'], _pc.document['log'])
+        _asciitocomponentlist_result = self._swigobj.asciitocomponentlist(_str_ec(_pc.document['filename']), _str_ec(_pc.document['asciifile']), _str_ec(_pc.document['refer']), _str_ec(_pc.document['format']), _dict_ec(_pc.document['direction']), _dict_ec(_pc.document['spectrum']), _dict_ec(_pc.document['flux']), _pc.document['log'])
         return _asciitocomponentlist_result
 
     def concatenate(self, list=[ ], which=[ int(-1) ], log=True):
@@ -64,10 +68,10 @@ class componentlist:
         once. By default all components are copied.
         
         """
-        schema = {'list': {'type': 'cVariant'}, 'which': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'log': {'type': 'cBool'}}
+        schema = {'list': {'type': 'cVariant'}, 'which': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'log': {'type': 'cBool'}}
         doc = {'list': list, 'which': which, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _concatenate_result = self._swigobj.concatenate(_pc.document['list'], _pc.document['which'], _pc.document['log'])
+        _concatenate_result = self._swigobj.concatenate(_any_ec(_pc.document['list']), _pc.document['which'], _pc.document['log'])
         return _concatenate_result
 
     def fromrecord(self, record={ }):
@@ -80,7 +84,7 @@ class componentlist:
         schema = {'record': {'type': 'cDict'}}
         doc = {'record': record}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fromrecord_result = self._swigobj.fromrecord(_pc.document['record'])
+        _fromrecord_result = self._swigobj.fromrecord(_dict_ec(_pc.document['record']))
         return _fromrecord_result
 
     def torecord(self):
@@ -90,7 +94,7 @@ class componentlist:
         
         
         """
-        _torecord_result = self._swigobj.torecord()
+        _torecord_result = _dict_dc(self._swigobj.torecord())
         return _torecord_result
 
     def remove(self, which=[ int(-1) ], log=True):
@@ -114,7 +118,7 @@ class componentlist:
         
         
         """
-        schema = {'which': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'log': {'type': 'cBool'}}
+        schema = {'which': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _remove_result = self._swigobj.remove(_pc.document['which'], _pc.document['log'])
@@ -185,7 +189,7 @@ class componentlist:
         schema = {'criteria': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'criteria': criteria, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _sort_result = self._swigobj.sort(_str_encode(_pc.document['criteria']), _pc.document['log'])
+        _sort_result = self._swigobj.sort(_str_ec(_pc.document['criteria']), _pc.document['log'])
         return _sort_result
 
     def isphysical(self, which=[ int(-1) ]):
@@ -208,7 +212,7 @@ class componentlist:
         
         
         """
-        schema = {'which': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'which': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _isphysical_result = self._swigobj.isphysical(_pc.document['which'])
@@ -226,7 +230,7 @@ class componentlist:
         schema = {'direction': {'type': 'cVariant'}, 'pixellatsize': {'type': 'cVariant'}, 'pixellongsize': {'type': 'cVariant'}, 'frequency': {'type': 'cVariant'}}
         doc = {'direction': direction, 'pixellatsize': pixellatsize, 'pixellongsize': pixellongsize, 'frequency': frequency}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _sample_result = self._swigobj.sample(_pc.document['direction'], _pc.document['pixellatsize'], _pc.document['pixellongsize'], _pc.document['frequency'])
+        _sample_result = self._swigobj.sample(_any_ec(_pc.document['direction']), _any_ec(_pc.document['pixellatsize']), _any_ec(_pc.document['pixellongsize']), _any_ec(_pc.document['frequency']))
         return _sample_result
 
     def rename(self, filename, log=True):
@@ -254,7 +258,7 @@ class componentlist:
         schema = {'filename': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'filename': filename, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _rename_result = self._swigobj.rename(_str_encode(_pc.document['filename']), _pc.document['log'])
+        _rename_result = self._swigobj.rename(_str_ec(_pc.document['filename']), _pc.document['log'])
         return _rename_result
 
     def simulate(self, howmany=int(1), log=True):
@@ -294,10 +298,10 @@ class componentlist:
         [label] See setlabel
         
         """
-        schema = {'flux': {'type': 'cVariant'}, 'fluxunit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'dir': {'type': 'cVariant'}, 'shape': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant'}, 'minoraxis': {'type': 'cVariant'}, 'positionangle': {'type': 'cVariant'}, 'freq': {'type': 'cVariant'}, 'spectrumtype': {'type': 'cStr'}, 'index': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'optionalparms': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'label': {'type': 'cStr'}}
+        schema = {'flux': {'type': 'cVariant'}, 'fluxunit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'dir': {'type': 'cVariant'}, 'shape': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant'}, 'minoraxis': {'type': 'cVariant'}, 'positionangle': {'type': 'cVariant'}, 'freq': {'type': 'cVariant'}, 'spectrumtype': {'type': 'cStr'}, 'index': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'optionalparms': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'label': {'type': 'cStr'}}
         doc = {'flux': flux, 'fluxunit': fluxunit, 'polarization': polarization, 'dir': dir, 'shape': shape, 'majoraxis': majoraxis, 'minoraxis': minoraxis, 'positionangle': positionangle, 'freq': freq, 'spectrumtype': spectrumtype, 'index': index, 'optionalparms': optionalparms, 'label': label}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _addcomponent_result = self._swigobj.addcomponent(_pc.document['flux'], _str_encode(_pc.document['fluxunit']), _str_encode(_pc.document['polarization']), _pc.document['dir'], _str_encode(_pc.document['shape']), _pc.document['majoraxis'], _pc.document['minoraxis'], _pc.document['positionangle'], _pc.document['freq'], _str_encode(_pc.document['spectrumtype']), _pc.document['index'], _pc.document['optionalparms'], _str_encode(_pc.document['label']))
+        _addcomponent_result = self._swigobj.addcomponent(_any_ec(_pc.document['flux']), _str_ec(_pc.document['fluxunit']), _str_ec(_pc.document['polarization']), _any_ec(_pc.document['dir']), _str_ec(_pc.document['shape']), _any_ec(_pc.document['majoraxis']), _any_ec(_pc.document['minoraxis']), _any_ec(_pc.document['positionangle']), _any_ec(_pc.document['freq']), _str_ec(_pc.document['spectrumtype']), _pc.document['index'], _pc.document['optionalparms'], _str_ec(_pc.document['label']))
         return _addcomponent_result
 
     def close(self, log=True):
@@ -352,7 +356,7 @@ class componentlist:
         simulate function.
         
         """
-        schema = {'which': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'which': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _select_result = self._swigobj.select(_pc.document['which'])
@@ -371,7 +375,7 @@ class componentlist:
         already deselected is perfectly valid and results in no change.
         
         """
-        schema = {'which': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'which': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _deselect_result = self._swigobj.deselect(_pc.document['which'])
@@ -404,7 +408,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getlabel_result = self._swigobj.getlabel(_pc.document['which'])
+        _getlabel_result = _str_dc(self._swigobj.getlabel(_pc.document['which']))
         return _getlabel_result
 
     def setlabel(self, which, value, log=True):
@@ -416,7 +420,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'value': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'value': value, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setlabel_result = self._swigobj.setlabel(_pc.document['which'], _str_encode(_pc.document['value']), _pc.document['log'])
+        _setlabel_result = self._swigobj.setlabel(_pc.document['which'], _str_ec(_pc.document['value']), _pc.document['log'])
         return _setlabel_result
 
     def getfluxvalue(self, which):
@@ -444,7 +448,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getfluxunit_result = self._swigobj.getfluxunit(_pc.document['which'])
+        _getfluxunit_result = _str_dc(self._swigobj.getfluxunit(_pc.document['which']))
         return _getfluxunit_result
 
     def getfluxpol(self, which):
@@ -458,7 +462,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getfluxpol_result = self._swigobj.getfluxpol(_pc.document['which'])
+        _getfluxpol_result = _str_dc(self._swigobj.getfluxpol(_pc.document['which']))
         return _getfluxpol_result
 
     def getfluxerror(self, which):
@@ -493,7 +497,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'value': {'type': 'cVariant'}, 'unit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'error': {'type': 'cVariant'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'value': value, 'unit': unit, 'polarization': polarization, 'error': error, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setflux_result = self._swigobj.setflux(_pc.document['which'], _pc.document['value'], _str_encode(_pc.document['unit']), _str_encode(_pc.document['polarization']), _pc.document['error'], _pc.document['log'])
+        _setflux_result = self._swigobj.setflux(_pc.document['which'], _any_ec(_pc.document['value']), _str_ec(_pc.document['unit']), _str_ec(_pc.document['polarization']), _any_ec(_pc.document['error']), _pc.document['log'])
         return _setflux_result
 
     def convertfluxunit(self, which, unit='Jy'):
@@ -504,7 +508,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'which': which, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertfluxunit_result = self._swigobj.convertfluxunit(_pc.document['which'], _str_encode(_pc.document['unit']))
+        _convertfluxunit_result = self._swigobj.convertfluxunit(_pc.document['which'], _str_ec(_pc.document['unit']))
         return _convertfluxunit_result
 
     def convertfluxpol(self, which, polarization='Stokes'):
@@ -516,7 +520,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'polarization': {'type': 'cStr'}}
         doc = {'which': which, 'polarization': polarization}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertfluxpol_result = self._swigobj.convertfluxpol(_pc.document['which'], _str_encode(_pc.document['polarization']))
+        _convertfluxpol_result = self._swigobj.convertfluxpol(_pc.document['which'], _str_ec(_pc.document['polarization']))
         return _convertfluxpol_result
 
     def getrefdir(self, which):
@@ -529,7 +533,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getrefdir_result = self._swigobj.getrefdir(_pc.document['which'])
+        _getrefdir_result = _dict_dc(self._swigobj.getrefdir(_pc.document['which']))
         return _getrefdir_result
 
     def getrefdirra(self, which, unit='deg', precision=int(6)):
@@ -538,7 +542,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'unit': {'type': 'cStr'}, 'precision': {'type': 'cInt'}}
         doc = {'which': which, 'unit': unit, 'precision': precision}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getrefdirra_result = self._swigobj.getrefdirra(_pc.document['which'], _str_encode(_pc.document['unit']), _pc.document['precision'])
+        _getrefdirra_result = _str_dc(self._swigobj.getrefdirra(_pc.document['which'], _str_ec(_pc.document['unit']), _pc.document['precision']))
         return _getrefdirra_result
 
     def getrefdirdec(self, which, unit='deg', precision=int(6)):
@@ -555,7 +559,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'unit': {'type': 'cStr'}, 'precision': {'type': 'cInt'}}
         doc = {'which': which, 'unit': unit, 'precision': precision}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getrefdirdec_result = self._swigobj.getrefdirdec(_pc.document['which'], _str_encode(_pc.document['unit']), _pc.document['precision'])
+        _getrefdirdec_result = _str_dc(self._swigobj.getrefdirdec(_pc.document['which'], _str_ec(_pc.document['unit']), _pc.document['precision']))
         return _getrefdirdec_result
 
     def getrefdirframe(self, which):
@@ -568,7 +572,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getrefdirframe_result = self._swigobj.getrefdirframe(_pc.document['which'])
+        _getrefdirframe_result = _str_dc(self._swigobj.getrefdirframe(_pc.document['which']))
         return _getrefdirframe_result
 
     def setrefdir(self, which=int(1), ra=[ ], dec=[ ], log=True):
@@ -590,7 +594,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'ra': {'type': 'cVariant'}, 'dec': {'type': 'cVariant'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'ra': ra, 'dec': dec, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setrefdir_result = self._swigobj.setrefdir(_pc.document['which'], _pc.document['ra'], _pc.document['dec'], _pc.document['log'])
+        _setrefdir_result = self._swigobj.setrefdir(_pc.document['which'], _any_ec(_pc.document['ra']), _any_ec(_pc.document['dec']), _pc.document['log'])
         return _setrefdir_result
 
     def setrefdirframe(self, which, frame, log=True):
@@ -610,7 +614,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'frame': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'frame': frame, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setrefdirframe_result = self._swigobj.setrefdirframe(_pc.document['which'], _str_encode(_pc.document['frame']), _pc.document['log'])
+        _setrefdirframe_result = self._swigobj.setrefdirframe(_pc.document['which'], _str_ec(_pc.document['frame']), _pc.document['log'])
         return _setrefdirframe_result
 
     def convertrefdir(self, which, frame):
@@ -628,7 +632,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'frame': {'type': 'cStr'}}
         doc = {'which': which, 'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertrefdir_result = self._swigobj.convertrefdir(_pc.document['which'], _str_encode(_pc.document['frame']))
+        _convertrefdir_result = self._swigobj.convertrefdir(_pc.document['which'], _str_ec(_pc.document['frame']))
         return _convertrefdir_result
 
     def shapetype(self, which):
@@ -643,7 +647,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _shapetype_result = self._swigobj.shapetype(_pc.document['which'])
+        _shapetype_result = _str_dc(self._swigobj.shapetype(_pc.document['which']))
         return _shapetype_result
 
     def getshape(self, which):
@@ -670,7 +674,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getshape_result = self._swigobj.getshape(_pc.document['which'])
+        _getshape_result = _dict_dc(self._swigobj.getshape(_pc.document['which']))
         return _getshape_result
 
     def setshape(self, which, type='Point', majoraxis=[ ], minoraxis=[ ], positionangle=[ ], majoraxiserror=[ ], minoraxiserror=[ ], positionangleerror=[ ], optionalparms=[ float(0.0) ], log=True):
@@ -706,10 +710,10 @@ class componentlist:
         
         
         """
-        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant'}, 'minoraxis': {'type': 'cVariant'}, 'positionangle': {'type': 'cVariant'}, 'majoraxiserror': {'type': 'cVariant'}, 'minoraxiserror': {'type': 'cVariant'}, 'positionangleerror': {'type': 'cVariant'}, 'optionalparms': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'log': {'type': 'cBool'}}
+        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant'}, 'minoraxis': {'type': 'cVariant'}, 'positionangle': {'type': 'cVariant'}, 'majoraxiserror': {'type': 'cVariant'}, 'minoraxiserror': {'type': 'cVariant'}, 'positionangleerror': {'type': 'cVariant'}, 'optionalparms': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'type': type, 'majoraxis': majoraxis, 'minoraxis': minoraxis, 'positionangle': positionangle, 'majoraxiserror': majoraxiserror, 'minoraxiserror': minoraxiserror, 'positionangleerror': positionangleerror, 'optionalparms': optionalparms, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setshape_result = self._swigobj.setshape(_pc.document['which'], _str_encode(_pc.document['type']), _pc.document['majoraxis'], _pc.document['minoraxis'], _pc.document['positionangle'], _pc.document['majoraxiserror'], _pc.document['minoraxiserror'], _pc.document['positionangleerror'], _pc.document['optionalparms'], _pc.document['log'])
+        _setshape_result = self._swigobj.setshape(_pc.document['which'], _str_ec(_pc.document['type']), _any_ec(_pc.document['majoraxis']), _any_ec(_pc.document['minoraxis']), _any_ec(_pc.document['positionangle']), _any_ec(_pc.document['majoraxiserror']), _any_ec(_pc.document['minoraxiserror']), _any_ec(_pc.document['positionangleerror']), _pc.document['optionalparms'], _pc.document['log'])
         return _setshape_result
 
     def convertshape(self, which, majoraxis='arcmin', minoraxis='arcmin', positionangle='deg'):
@@ -718,7 +722,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'majoraxis': {'type': 'cStr'}, 'minoraxis': {'type': 'cStr'}, 'positionangle': {'type': 'cStr'}}
         doc = {'which': which, 'majoraxis': majoraxis, 'minoraxis': minoraxis, 'positionangle': positionangle}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertshape_result = self._swigobj.convertshape(_pc.document['which'], _str_encode(_pc.document['majoraxis']), _str_encode(_pc.document['minoraxis']), _str_encode(_pc.document['positionangle']))
+        _convertshape_result = self._swigobj.convertshape(_pc.document['which'], _str_ec(_pc.document['majoraxis']), _str_ec(_pc.document['minoraxis']), _str_ec(_pc.document['positionangle']))
         return _convertshape_result
 
     def spectrumtype(self, which):
@@ -733,7 +737,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spectrumtype_result = self._swigobj.spectrumtype(_pc.document['which'])
+        _spectrumtype_result = _str_dc(self._swigobj.spectrumtype(_pc.document['which']))
         return _spectrumtype_result
 
     def getspectrum(self, which):
@@ -759,7 +763,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getspectrum_result = self._swigobj.getspectrum(_pc.document['which'])
+        _getspectrum_result = _dict_dc(self._swigobj.getspectrum(_pc.document['which']))
         return _getspectrum_result
 
     def setstokesspectrum(self, which, type='spectral index', index=[ float(0.0) ], tabularfreqs=[ float(1.0e11) ], tabulari=[ float(1.0) ], tabularq=[ float(0.0) ], tabularu=[ float(0.0) ], tabularv=[ float(0.0) ], reffreq=[ ], frame='LSRK'):
@@ -799,10 +803,10 @@ class componentlist:
         
         
         """
-        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'index': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularfreqs': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabulari': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularq': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularu': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularv': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'reffreq': {'type': 'cVariant'}, 'frame': {'type': 'cStr'}}
+        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'index': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularfreqs': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabulari': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularq': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularu': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularv': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'reffreq': {'type': 'cVariant'}, 'frame': {'type': 'cStr'}}
         doc = {'which': which, 'type': type, 'index': index, 'tabularfreqs': tabularfreqs, 'tabulari': tabulari, 'tabularq': tabularq, 'tabularu': tabularu, 'tabularv': tabularv, 'reffreq': reffreq, 'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setstokesspectrum_result = self._swigobj.setstokesspectrum(_pc.document['which'], _str_encode(_pc.document['type']), _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabulari'], _pc.document['tabularq'], _pc.document['tabularu'], _pc.document['tabularv'], _pc.document['reffreq'], _str_encode(_pc.document['frame']))
+        _setstokesspectrum_result = self._swigobj.setstokesspectrum(_pc.document['which'], _str_ec(_pc.document['type']), _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabulari'], _pc.document['tabularq'], _pc.document['tabularu'], _pc.document['tabularv'], _any_ec(_pc.document['reffreq']), _str_ec(_pc.document['frame']))
         return _setstokesspectrum_result
 
     def setspectrum(self, which, type='spectral index', index=float(0.0), tabularfreqs=[ float(1.0e11) ], tabularflux=[ float(1.0) ], tabularframe='LSRK'):
@@ -839,10 +843,10 @@ class componentlist:
         
         
         """
-        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'index': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'tabularfreqs': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularflux': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'tabularframe': {'type': 'cStr'}}
+        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'index': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'tabularfreqs': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularflux': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularframe': {'type': 'cStr'}}
         doc = {'which': which, 'type': type, 'index': index, 'tabularfreqs': tabularfreqs, 'tabularflux': tabularflux, 'tabularframe': tabularframe}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setspectrum_result = self._swigobj.setspectrum(_pc.document['which'], _str_encode(_pc.document['type']), _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabularflux'], _str_encode(_pc.document['tabularframe']))
+        _setspectrum_result = self._swigobj.setspectrum(_pc.document['which'], _str_ec(_pc.document['type']), _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabularflux'], _str_ec(_pc.document['tabularframe']))
         return _setspectrum_result
 
     def getfreq(self, which):
@@ -851,7 +855,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getfreq_result = self._swigobj.getfreq(_pc.document['which'])
+        _getfreq_result = _dict_dc(self._swigobj.getfreq(_pc.document['which']))
         return _getfreq_result
 
     def getfreqvalue(self, which):
@@ -869,7 +873,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getfrequnit_result = self._swigobj.getfrequnit(_pc.document['which'])
+        _getfrequnit_result = _str_dc(self._swigobj.getfrequnit(_pc.document['which']))
         return _getfrequnit_result
 
     def getfreqframe(self, which):
@@ -878,7 +882,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getfreqframe_result = self._swigobj.getfreqframe(_pc.document['which'])
+        _getfreqframe_result = _str_dc(self._swigobj.getfreqframe(_pc.document['which']))
         return _getfreqframe_result
 
     def setfreq(self, which, value, unit='GHz', log=True):
@@ -893,7 +897,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'value': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'unit': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'value': value, 'unit': unit, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setfreq_result = self._swigobj.setfreq(_pc.document['which'], _pc.document['value'], _str_encode(_pc.document['unit']), _pc.document['log'])
+        _setfreq_result = self._swigobj.setfreq(_pc.document['which'], _pc.document['value'], _str_ec(_pc.document['unit']), _pc.document['log'])
         return _setfreq_result
 
     def setfreqframe(self, which, frame='LSRK', log=True):
@@ -910,7 +914,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'frame': {'type': 'cStr'}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'frame': frame, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setfreqframe_result = self._swigobj.setfreqframe(_pc.document['which'], _str_encode(_pc.document['frame']), _pc.document['log'])
+        _setfreqframe_result = self._swigobj.setfreqframe(_pc.document['which'], _str_ec(_pc.document['frame']), _pc.document['log'])
         return _setfreqframe_result
 
     def convertfrequnit(self, which, unit='GHz'):
@@ -929,7 +933,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'which': which, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertfrequnit_result = self._swigobj.convertfrequnit(_pc.document['which'], _str_encode(_pc.document['unit']))
+        _convertfrequnit_result = self._swigobj.convertfrequnit(_pc.document['which'], _str_ec(_pc.document['unit']))
         return _convertfrequnit_result
 
     def getcomponent(self, which, iknow=False):
@@ -952,7 +956,7 @@ class componentlist:
         schema = {'which': {'type': 'cInt'}, 'iknow': {'type': 'cBool'}}
         doc = {'which': which, 'iknow': iknow}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getcomponent_result = self._swigobj.getcomponent(_pc.document['which'], _pc.document['iknow'])
+        _getcomponent_result = _dict_dc(self._swigobj.getcomponent(_pc.document['which'], _pc.document['iknow']))
         return _getcomponent_result
 
     def add(self, thecomponent, iknow=True):
@@ -968,7 +972,7 @@ class componentlist:
         schema = {'thecomponent': {'type': 'cDict'}, 'iknow': {'type': 'cBool'}}
         doc = {'thecomponent': thecomponent, 'iknow': iknow}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _add_result = self._swigobj.add(_pc.document['thecomponent'], _pc.document['iknow'])
+        _add_result = self._swigobj.add(_dict_ec(_pc.document['thecomponent']), _pc.document['iknow'])
         return _add_result
 
     def replace(self, which, list, whichones=[ int(-1) ]):
@@ -982,10 +986,10 @@ class componentlist:
         
         
         """
-        schema = {'which': {'type': 'cInt'}, 'list': {'type': 'cDict'}, 'whichones': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'which': {'type': 'cInt'}, 'list': {'type': 'cDict'}, 'whichones': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'which': which, 'list': list, 'whichones': whichones}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _replace_result = self._swigobj.replace(_pc.document['which'], _pc.document['list'], _pc.document['whichones'])
+        _replace_result = self._swigobj.replace(_pc.document['which'], _dict_ec(_pc.document['list']), _pc.document['whichones'])
         return _replace_result
 
     def summarize(self, which=int(-1)):
@@ -1007,6 +1011,6 @@ class componentlist:
         schema = {'tool': {'type': 'cVariant'}}
         doc = {'tool': tool}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _iscomponentlist_result = self._swigobj.iscomponentlist(_pc.document['tool'])
+        _iscomponentlist_result = self._swigobj.iscomponentlist(_any_ec(_pc.document['tool']))
         return _iscomponentlist_result
 

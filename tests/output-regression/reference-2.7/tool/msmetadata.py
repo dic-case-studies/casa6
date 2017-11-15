@@ -2,8 +2,12 @@
 ##################### 36bac9c9bb40ae8d3ca3eaa51cfcaa90 ##############################
 from __future__ import absolute_import 
 from .__casac__ import msmetadata as _msmetadata
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -41,7 +45,7 @@ class msmetadata:
         schema = {'antenna': {'type': 'cVariant'}}
         doc = {'antenna': antenna}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antennadiameter_result = self._swigobj.antennadiameter(_pc.document['antenna'])
+        _antennadiameter_result = _dict_dc(self._swigobj.antennadiameter(_any_ec(_pc.document['antenna'])))
         return _antennadiameter_result
 
     def antennaids(self, name='', mindiameter='0m', maxdiameter='1pc', obsid=int(-1)):
@@ -56,7 +60,7 @@ class msmetadata:
         schema = {'name': {'type': 'cVariant'}, 'mindiameter': {'type': 'cVariant'}, 'maxdiameter': {'type': 'cVariant'}, 'obsid': {'type': 'cInt'}}
         doc = {'name': name, 'mindiameter': mindiameter, 'maxdiameter': maxdiameter, 'obsid': obsid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antennaids_result = self._swigobj.antennaids(_pc.document['name'], _pc.document['mindiameter'], _pc.document['maxdiameter'], _pc.document['obsid'])
+        _antennaids_result = self._swigobj.antennaids(_any_ec(_pc.document['name']), _any_ec(_pc.document['mindiameter']), _any_ec(_pc.document['maxdiameter']), _pc.document['obsid'])
         return _antennaids_result
 
     def antennanames(self, antennaids=int(-1)):
@@ -67,7 +71,7 @@ class msmetadata:
         schema = {'antennaids': {'type': 'cVariant'}}
         doc = {'antennaids': antennaids}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antennanames_result = self._swigobj.antennanames(_pc.document['antennaids'])
+        _antennanames_result = [_str_dc(_x) for _x in self._swigobj.antennanames(_any_ec(_pc.document['antennaids']))]
         return _antennanames_result
 
     def antennaoffset(self, which=int(0)):
@@ -82,7 +86,7 @@ class msmetadata:
         schema = {'which': {'type': 'cVariant'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antennaoffset_result = self._swigobj.antennaoffset(_pc.document['which'])
+        _antennaoffset_result = _dict_dc(self._swigobj.antennaoffset(_any_ec(_pc.document['which'])))
         return _antennaoffset_result
 
     def antennaposition(self, which=[ ]):
@@ -93,7 +97,7 @@ class msmetadata:
         schema = {'which': {'type': 'cVariant'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antennaposition_result = self._swigobj.antennaposition(_pc.document['which'])
+        _antennaposition_result = _dict_dc(self._swigobj.antennaposition(_any_ec(_pc.document['which'])))
         return _antennaposition_result
 
     def antennastations(self, which=int(-1), obsid=int(-1)):
@@ -107,7 +111,7 @@ class msmetadata:
         schema = {'which': {'type': 'cVariant'}, 'obsid': {'type': 'cInt'}}
         doc = {'which': which, 'obsid': obsid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antennastations_result = self._swigobj.antennastations(_pc.document['which'], _pc.document['obsid'])
+        _antennastations_result = [_str_dc(_x) for _x in self._swigobj.antennastations(_any_ec(_pc.document['which']), _pc.document['obsid'])]
         return _antennastations_result
 
     def antennasforscan(self, scan=int(-1), obsid=int(-1), arrayid=int(-1)):
@@ -127,7 +131,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cVariant'}}
         doc = {'spw': spw}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _bandwidths_result = self._swigobj.bandwidths(_pc.document['spw'])
+        _bandwidths_result = _any_dc(self._swigobj.bandwidths(_any_ec(_pc.document['spw'])))
         return _bandwidths_result
 
     def baseband(self, spw):
@@ -146,7 +150,7 @@ class msmetadata:
         "baseline" information is also present via the values along the diagonal.
         
         """
-        _baselines_result = self._swigobj.baselines()
+        _baselines_result = _any_dc(self._swigobj.baselines())
         return _baselines_result
 
     def chanavgspws(self):
@@ -166,7 +170,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}, 'asvel': {'type': 'cBool'}}
         doc = {'spw': spw, 'unit': unit, 'asvel': asvel}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _chaneffbws_result = self._swigobj.chaneffbws(_pc.document['spw'], _str_encode(_pc.document['unit']), _pc.document['asvel'])
+        _chaneffbws_result = self._swigobj.chaneffbws(_pc.document['spw'], _str_ec(_pc.document['unit']), _pc.document['asvel'])
         return _chaneffbws_result
 
     def chanfreqs(self, spw, unit='Hz'):
@@ -176,7 +180,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'spw': spw, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _chanfreqs_result = self._swigobj.chanfreqs(_pc.document['spw'], _str_encode(_pc.document['unit']))
+        _chanfreqs_result = self._swigobj.chanfreqs(_pc.document['spw'], _str_ec(_pc.document['unit']))
         return _chanfreqs_result
 
     def chanres(self, spw, unit='', asvel=False):
@@ -189,7 +193,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}, 'asvel': {'type': 'cBool'}}
         doc = {'spw': spw, 'unit': unit, 'asvel': asvel}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _chanres_result = self._swigobj.chanres(_pc.document['spw'], _str_encode(_pc.document['unit']), _pc.document['asvel'])
+        _chanres_result = self._swigobj.chanres(_pc.document['spw'], _str_ec(_pc.document['unit']), _pc.document['asvel'])
         return _chanres_result
 
     def chanwidths(self, spw, unit='Hz'):
@@ -199,7 +203,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'spw': spw, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _chanwidths_result = self._swigobj.chanwidths(_pc.document['spw'], _str_encode(_pc.document['unit']))
+        _chanwidths_result = self._swigobj.chanwidths(_pc.document['spw'], _str_ec(_pc.document['unit']))
         return _chanwidths_result
 
     def close(self):
@@ -216,7 +220,7 @@ class msmetadata:
         schema = {'pol': {'type': 'cInt'}}
         doc = {'pol': pol}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _corrprodsforpol_result = self._swigobj.corrprodsforpol(_pc.document['pol'])
+        _corrprodsforpol_result = _any_dc(self._swigobj.corrprodsforpol(_pc.document['pol']))
         return _corrprodsforpol_result
 
     def corrtypesforpol(self, pol=int(-1)):
@@ -264,7 +268,7 @@ class msmetadata:
         a quantity (a dictionary having a numerical value and a string unit).
         
         """
-        _effexposuretime_result = self._swigobj.effexposuretime()
+        _effexposuretime_result = _dict_dc(self._swigobj.effexposuretime())
         return _effexposuretime_result
 
     def exposuretime(self, scan=int(0), spwid=int(0), polid=int(-1), obsid=int(0), arrayid=int(0)):
@@ -279,7 +283,7 @@ class msmetadata:
         schema = {'scan': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}, 'polid': {'type': 'cInt'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'scan': scan, 'spwid': spwid, 'polid': polid, 'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _exposuretime_result = self._swigobj.exposuretime(_pc.document['scan'], _pc.document['spwid'], _pc.document['polid'], _pc.document['obsid'], _pc.document['arrayid'])
+        _exposuretime_result = _dict_dc(self._swigobj.exposuretime(_pc.document['scan'], _pc.document['spwid'], _pc.document['polid'], _pc.document['obsid'], _pc.document['arrayid']))
         return _exposuretime_result
 
     def fdmspws(self):
@@ -293,7 +297,7 @@ class msmetadata:
         """Get an array of field names as they appear in the FIELD table.
         
         """
-        _fieldnames_result = self._swigobj.fieldnames()
+        _fieldnames_result = [_str_dc(_x) for _x in self._swigobj.fieldnames()]
         return _fieldnames_result
 
     def fieldsforintent(self, intent='', asnames=False):
@@ -303,7 +307,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cStr'}, 'asnames': {'type': 'cBool'}}
         doc = {'intent': intent, 'asnames': asnames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fieldsforintent_result = self._swigobj.fieldsforintent(_str_encode(_pc.document['intent']), _pc.document['asnames'])
+        _fieldsforintent_result = _any_dc(self._swigobj.fieldsforintent(_str_ec(_pc.document['intent']), _pc.document['asnames']))
         return _fieldsforintent_result
 
     def fieldsforname(self, name=''):
@@ -314,7 +318,7 @@ class msmetadata:
         schema = {'name': {'type': 'cStr'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fieldsforname_result = self._swigobj.fieldsforname(_str_encode(_pc.document['name']))
+        _fieldsforname_result = self._swigobj.fieldsforname(_str_ec(_pc.document['name']))
         return _fieldsforname_result
 
     def fieldsforscan(self, scan=int(-1), asnames=False, obsid=int(-1), arrayid=int(-1)):
@@ -324,7 +328,7 @@ class msmetadata:
         schema = {'scan': {'type': 'cInt'}, 'asnames': {'type': 'cBool'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'scan': scan, 'asnames': asnames, 'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fieldsforscan_result = self._swigobj.fieldsforscan(_pc.document['scan'], _pc.document['asnames'], _pc.document['obsid'], _pc.document['arrayid'])
+        _fieldsforscan_result = _any_dc(self._swigobj.fieldsforscan(_pc.document['scan'], _pc.document['asnames'], _pc.document['obsid'], _pc.document['arrayid']))
         return _fieldsforscan_result
 
     def fieldsforscans(self, scans=[  ], asnames=False, obsid=int(-1), arrayid=int(-1), asmap=False):
@@ -337,10 +341,10 @@ class msmetadata:
         that all scans for the selected obsid and arrayid should be included.
         
         """
-        schema = {'scans': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'asnames': {'type': 'cBool'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}, 'asmap': {'type': 'cBool'}}
+        schema = {'scans': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'asnames': {'type': 'cBool'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}, 'asmap': {'type': 'cBool'}}
         doc = {'scans': scans, 'asnames': asnames, 'obsid': obsid, 'arrayid': arrayid, 'asmap': asmap}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fieldsforscans_result = self._swigobj.fieldsforscans(_pc.document['scans'], _pc.document['asnames'], _pc.document['obsid'], _pc.document['arrayid'], _pc.document['asmap'])
+        _fieldsforscans_result = _any_dc(self._swigobj.fieldsforscans(_pc.document['scans'], _pc.document['asnames'], _pc.document['obsid'], _pc.document['arrayid'], _pc.document['asmap']))
         return _fieldsforscans_result
 
     def fieldsforsource(self, source=int(-1), asnames=False):
@@ -350,7 +354,7 @@ class msmetadata:
         schema = {'source': {'type': 'cInt'}, 'asnames': {'type': 'cBool'}}
         doc = {'source': source, 'asnames': asnames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fieldsforsource_result = self._swigobj.fieldsforsource(_pc.document['source'], _pc.document['asnames'])
+        _fieldsforsource_result = _any_dc(self._swigobj.fieldsforsource(_pc.document['source'], _pc.document['asnames']))
         return _fieldsforsource_result
 
     def fieldsforsources(self, asnames=False):
@@ -360,7 +364,7 @@ class msmetadata:
         schema = {'asnames': {'type': 'cBool'}}
         doc = {'asnames': asnames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fieldsforsources_result = self._swigobj.fieldsforsources(_pc.document['asnames'])
+        _fieldsforsources_result = _dict_dc(self._swigobj.fieldsforsources(_pc.document['asnames']))
         return _fieldsforsources_result
 
     def fieldsforspw(self, spw=int(-1), asnames=False):
@@ -370,7 +374,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'asnames': {'type': 'cBool'}}
         doc = {'spw': spw, 'asnames': asnames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fieldsforspw_result = self._swigobj.fieldsforspw(_pc.document['spw'], _pc.document['asnames'])
+        _fieldsforspw_result = _any_dc(self._swigobj.fieldsforspw(_pc.document['spw'], _pc.document['asnames']))
         return _fieldsforspw_result
 
     def fieldsfortimes(self, time=float(-1), tol=float(0)):
@@ -387,7 +391,7 @@ class msmetadata:
         """Get an array of the unique intents associated with the MS.
         
         """
-        _intents_result = self._swigobj.intents()
+        _intents_result = [_str_dc(_x) for _x in self._swigobj.intents()]
         return _intents_result
 
     def intentsforfield(self, field=[ ]):
@@ -397,7 +401,7 @@ class msmetadata:
         schema = {'field': {'type': 'cVariant'}}
         doc = {'field': field}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _intentsforfield_result = self._swigobj.intentsforfield(_pc.document['field'])
+        _intentsforfield_result = [_str_dc(_x) for _x in self._swigobj.intentsforfield(_any_ec(_pc.document['field']))]
         return _intentsforfield_result
 
     def intentsforscan(self, scan=int(-1), obsid=int(-1), arrayid=int(-1)):
@@ -407,7 +411,7 @@ class msmetadata:
         schema = {'scan': {'type': 'cInt'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'scan': scan, 'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _intentsforscan_result = self._swigobj.intentsforscan(_pc.document['scan'], _pc.document['obsid'], _pc.document['arrayid'])
+        _intentsforscan_result = [_str_dc(_x) for _x in self._swigobj.intentsforscan(_pc.document['scan'], _pc.document['obsid'], _pc.document['arrayid'])]
         return _intentsforscan_result
 
     def intentsforspw(self, spw=int(-1)):
@@ -417,7 +421,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}}
         doc = {'spw': spw}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _intentsforspw_result = self._swigobj.intentsforspw(_pc.document['spw'])
+        _intentsforspw_result = [_str_dc(_x) for _x in self._swigobj.intentsforspw(_pc.document['spw'])]
         return _intentsforspw_result
 
     def meanfreq(self, spw, unit='Hz'):
@@ -427,14 +431,14 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}, 'unit': {'type': 'cStr'}}
         doc = {'spw': spw, 'unit': unit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _meanfreq_result = self._swigobj.meanfreq(_pc.document['spw'], _str_encode(_pc.document['unit']))
+        _meanfreq_result = self._swigobj.meanfreq(_pc.document['spw'], _str_ec(_pc.document['unit']))
         return _meanfreq_result
 
     def name(self):
         """Get the name of the attached MS.
         
         """
-        _name_result = self._swigobj.name()
+        _name_result = _str_dc(self._swigobj.name())
         return _name_result
 
     def namesforfields(self, fieldids=''):
@@ -444,7 +448,7 @@ class msmetadata:
         schema = {'fieldids': {'type': 'cVariant'}}
         doc = {'fieldids': fieldids}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _namesforfields_result = self._swigobj.namesforfields(_pc.document['fieldids'])
+        _namesforfields_result = [_str_dc(_x) for _x in self._swigobj.namesforfields(_any_ec(_pc.document['fieldids']))]
         return _namesforfields_result
 
     def namesforspws(self, spwids=''):
@@ -454,7 +458,7 @@ class msmetadata:
         schema = {'spwids': {'type': 'cVariant'}}
         doc = {'spwids': spwids}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _namesforspws_result = self._swigobj.namesforspws(_pc.document['spwids'])
+        _namesforspws_result = [_str_dc(_x) for _x in self._swigobj.namesforspws(_any_ec(_pc.document['spwids']))]
         return _namesforspws_result
 
     def nantennas(self):
@@ -501,7 +505,7 @@ class msmetadata:
         schema = {'polid': {'type': 'cInt'}}
         doc = {'polid': polid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _ncorrforpol_result = self._swigobj.ncorrforpol(_pc.document['polid'])
+        _ncorrforpol_result = _any_dc(self._swigobj.ncorrforpol(_pc.document['polid']))
         return _ncorrforpol_result
 
     def nfields(self):
@@ -564,14 +568,14 @@ class msmetadata:
         """Get an array of observers as they are listed in the OBSERVATIONS table.
         
         """
-        _observers_result = self._swigobj.observers()
+        _observers_result = [_str_dc(_x) for _x in self._swigobj.observers()]
         return _observers_result
 
     def observatorynames(self):
         """Get an array of MS telescope (observatory) names as they are listed in the OBSERVATIONS table.
         
         """
-        _observatorynames_result = self._swigobj.observatorynames()
+        _observatorynames_result = [_str_dc(_x) for _x in self._swigobj.observatorynames()]
         return _observatorynames_result
 
     def observatoryposition(self, which=int(0)):
@@ -581,7 +585,7 @@ class msmetadata:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _observatoryposition_result = self._swigobj.observatoryposition(_pc.document['which'])
+        _observatoryposition_result = _dict_dc(self._swigobj.observatoryposition(_pc.document['which']))
         return _observatoryposition_result
 
     def open(self, msfile='', maxcache=float(50)):
@@ -596,7 +600,7 @@ class msmetadata:
         schema = {'msfile': {'type': 'cStr'}, 'maxcache': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'msfile': msfile, 'maxcache': maxcache}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _open_result = self._swigobj.open(_str_encode(_pc.document['msfile']), _pc.document['maxcache'])
+        _open_result = self._swigobj.open(_str_ec(_pc.document['msfile']), _pc.document['maxcache'])
         return _open_result
 
     def phasecenter(self, fieldid=int(0), epoch={ }):
@@ -606,7 +610,7 @@ class msmetadata:
         schema = {'fieldid': {'type': 'cInt'}, 'epoch': {'type': 'cDict'}}
         doc = {'fieldid': fieldid, 'epoch': epoch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _phasecenter_result = self._swigobj.phasecenter(_pc.document['fieldid'], _pc.document['epoch'])
+        _phasecenter_result = _dict_dc(self._swigobj.phasecenter(_pc.document['fieldid'], _dict_ec(_pc.document['epoch'])))
         return _phasecenter_result
 
     def pointingdirection(self, rownum=int(0), interpolate=False, initialrow=int(0)):
@@ -617,7 +621,7 @@ class msmetadata:
         schema = {'rownum': {'type': 'cInt'}, 'interpolate': {'type': 'cBool'}, 'initialrow': {'type': 'cInt'}}
         doc = {'rownum': rownum, 'interpolate': interpolate, 'initialrow': initialrow}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _pointingdirection_result = self._swigobj.pointingdirection(_pc.document['rownum'], _pc.document['interpolate'], _pc.document['initialrow'])
+        _pointingdirection_result = _dict_dc(self._swigobj.pointingdirection(_pc.document['rownum'], _pc.document['interpolate'], _pc.document['initialrow']))
         return _pointingdirection_result
 
     def polidfordatadesc(self, ddid=int(-1)):
@@ -628,14 +632,14 @@ class msmetadata:
         schema = {'ddid': {'type': 'cInt'}}
         doc = {'ddid': ddid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _polidfordatadesc_result = self._swigobj.polidfordatadesc(_pc.document['ddid'])
+        _polidfordatadesc_result = _any_dc(self._swigobj.polidfordatadesc(_pc.document['ddid']))
         return _polidfordatadesc_result
 
     def projects(self):
         """Get an array of projects as they are listed in the OBSERVATIONS table.
         
         """
-        _projects_result = self._swigobj.projects()
+        _projects_result = [_str_dc(_x) for _x in self._swigobj.projects()]
         return _projects_result
 
     def propermotions(self):
@@ -645,7 +649,7 @@ class msmetadata:
         the longitudinal and latidinal components of the proper motion, which are valid quantity dictionaries.
         
         """
-        _propermotions_result = self._swigobj.propermotions()
+        _propermotions_result = _dict_dc(self._swigobj.propermotions())
         return _propermotions_result
 
     def refdir(self, field=int(0), epoch={ }):
@@ -655,7 +659,7 @@ class msmetadata:
         schema = {'field': {'type': 'cVariant'}, 'epoch': {'type': 'cDict'}}
         doc = {'field': field, 'epoch': epoch}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _refdir_result = self._swigobj.refdir(_pc.document['field'], _pc.document['epoch'])
+        _refdir_result = _dict_dc(self._swigobj.refdir(_any_ec(_pc.document['field']), _dict_ec(_pc.document['epoch'])))
         return _refdir_result
 
     def reffreq(self, spw=int(-1)):
@@ -666,7 +670,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cInt'}}
         doc = {'spw': spw}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _reffreq_result = self._swigobj.reffreq(_pc.document['spw'])
+        _reffreq_result = _dict_dc(self._swigobj.reffreq(_pc.document['spw']))
         return _reffreq_result
 
     def restfreqs(self, sourceid=int(0), spw=int(0)):
@@ -678,7 +682,7 @@ class msmetadata:
         schema = {'sourceid': {'type': 'cInt'}, 'spw': {'type': 'cInt'}}
         doc = {'sourceid': sourceid, 'spw': spw}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _restfreqs_result = self._swigobj.restfreqs(_pc.document['sourceid'], _pc.document['spw'])
+        _restfreqs_result = _any_dc(self._swigobj.restfreqs(_pc.document['sourceid'], _pc.document['spw']))
         return _restfreqs_result
 
     def scannumbers(self, obsid=int(-1), arrayid=int(-1)):
@@ -698,7 +702,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cVariant'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'intent': intent, 'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _scansforfield_result = self._swigobj.scansforfield(_pc.document['intent'], _pc.document['obsid'], _pc.document['arrayid'])
+        _scansforfield_result = self._swigobj.scansforfield(_any_ec(_pc.document['intent']), _pc.document['obsid'], _pc.document['arrayid'])
         return _scansforfield_result
 
     def scansforfields(self, obsid=int(0), arrayid=int(0)):
@@ -710,7 +714,7 @@ class msmetadata:
         schema = {'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _scansforfields_result = self._swigobj.scansforfields(_pc.document['obsid'], _pc.document['arrayid'])
+        _scansforfields_result = _dict_dc(self._swigobj.scansforfields(_pc.document['obsid'], _pc.document['arrayid']))
         return _scansforfields_result
 
     def scansforintent(self, intent='', obsid=int(-1), arrayid=int(-1)):
@@ -721,7 +725,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cStr'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'intent': intent, 'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _scansforintent_result = self._swigobj.scansforintent(_str_encode(_pc.document['intent']), _pc.document['obsid'], _pc.document['arrayid'])
+        _scansforintent_result = self._swigobj.scansforintent(_str_ec(_pc.document['intent']), _pc.document['obsid'], _pc.document['arrayid'])
         return _scansforintent_result
 
     def scansforspw(self, spw=int(-1), obsid=int(-1), arrayid=int(-1)):
@@ -743,7 +747,7 @@ class msmetadata:
         schema = {'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _scansforspws_result = self._swigobj.scansforspws(_pc.document['obsid'], _pc.document['arrayid'])
+        _scansforspws_result = _dict_dc(self._swigobj.scansforspws(_pc.document['obsid'], _pc.document['arrayid']))
         return _scansforspws_result
 
     def scansforstate(self, state=int(-1), obsid=int(-1), arrayid=int(-1)):
@@ -773,7 +777,7 @@ class msmetadata:
         schema = {'obsid': {'type': 'cInt'}}
         doc = {'obsid': obsid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _schedule_result = self._swigobj.schedule(_pc.document['obsid'])
+        _schedule_result = [_str_dc(_x) for _x in self._swigobj.schedule(_pc.document['obsid'])]
         return _schedule_result
 
     def sideband(self, spw):
@@ -792,7 +796,7 @@ class msmetadata:
         in the returned dictionary is a valid direction measure.
         
         """
-        _sourcedirs_result = self._swigobj.sourcedirs()
+        _sourcedirs_result = _dict_dc(self._swigobj.sourcedirs())
         return _sourcedirs_result
 
     def sourcetimes(self):
@@ -801,7 +805,7 @@ class msmetadata:
         in the returned dictionary is a valid time quantity.
         
         """
-        _sourcetimes_result = self._swigobj.sourcetimes()
+        _sourcetimes_result = _dict_dc(self._swigobj.sourcetimes())
         return _sourcetimes_result
 
     def sourceidforfield(self, field=int(-1)):
@@ -827,7 +831,7 @@ class msmetadata:
         """Get the values of the SOURCE_NAME column from the SOURCE table.
         
         """
-        _sourcenames_result = self._swigobj.sourcenames()
+        _sourcenames_result = [_str_dc(_x) for _x in self._swigobj.sourcenames()]
         return _sourcenames_result
 
     def spwsforbaseband(self, baseband=int(-1), sqldmode='include'):
@@ -837,7 +841,7 @@ class msmetadata:
         schema = {'baseband': {'type': 'cInt'}, 'sqldmode': {'type': 'cStr'}}
         doc = {'baseband': baseband, 'sqldmode': sqldmode}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spwsforbaseband_result = self._swigobj.spwsforbaseband(_pc.document['baseband'], _str_encode(_pc.document['sqldmode']))
+        _spwsforbaseband_result = _any_dc(self._swigobj.spwsforbaseband(_pc.document['baseband'], _str_ec(_pc.document['sqldmode'])))
         return _spwsforbaseband_result
 
     def spwfordatadesc(self, ddid=int(-1)):
@@ -848,7 +852,7 @@ class msmetadata:
         schema = {'ddid': {'type': 'cInt'}}
         doc = {'ddid': ddid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spwfordatadesc_result = self._swigobj.spwfordatadesc(_pc.document['ddid'])
+        _spwfordatadesc_result = _any_dc(self._swigobj.spwfordatadesc(_pc.document['ddid']))
         return _spwfordatadesc_result
 
     def spwsforfield(self, field=''):
@@ -858,7 +862,7 @@ class msmetadata:
         schema = {'field': {'type': 'cVariant'}}
         doc = {'field': field}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spwsforfield_result = self._swigobj.spwsforfield(_pc.document['field'])
+        _spwsforfield_result = self._swigobj.spwsforfield(_any_ec(_pc.document['field']))
         return _spwsforfield_result
 
     def spwsforfields(self):
@@ -866,7 +870,7 @@ class msmetadata:
         returned dictionary. To access a particular element, one must ensure the key is a string.
         
         """
-        _spwsforfields_result = self._swigobj.spwsforfields()
+        _spwsforfields_result = _dict_dc(self._swigobj.spwsforfields())
         return _spwsforfields_result
 
     def spwsforintent(self, intent=''):
@@ -876,7 +880,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cStr'}}
         doc = {'intent': intent}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spwsforintent_result = self._swigobj.spwsforintent(_str_encode(_pc.document['intent']))
+        _spwsforintent_result = self._swigobj.spwsforintent(_str_ec(_pc.document['intent']))
         return _spwsforintent_result
 
     def spwsfornames(self, spwids=''):
@@ -892,7 +896,7 @@ class msmetadata:
         schema = {'spwids': {'type': 'cVariant'}}
         doc = {'spwids': spwids}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spwsfornames_result = self._swigobj.spwsfornames(_pc.document['spwids'])
+        _spwsfornames_result = _dict_dc(self._swigobj.spwsfornames(_any_ec(_pc.document['spwids'])))
         return _spwsfornames_result
 
     def spwsforscan(self, scan=int(-1), obsid=int(-1), arrayid=int(-1)):
@@ -913,7 +917,7 @@ class msmetadata:
         schema = {'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spwsforscans_result = self._swigobj.spwsforscans(_pc.document['obsid'], _pc.document['arrayid'])
+        _spwsforscans_result = _dict_dc(self._swigobj.spwsforscans(_pc.document['obsid'], _pc.document['arrayid']))
         return _spwsforscans_result
 
     def statesforscan(self, scan=int(-1), obsid=int(-1), arrayid=int(-1)):
@@ -934,14 +938,14 @@ class msmetadata:
         schema = {'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _statesforscans_result = self._swigobj.statesforscans(_pc.document['obsid'], _pc.document['arrayid'])
+        _statesforscans_result = _dict_dc(self._swigobj.statesforscans(_pc.document['obsid'], _pc.document['arrayid']))
         return _statesforscans_result
 
     def summary(self):
         """Get dictionary summarizing the MS.
         
         """
-        _summary_result = self._swigobj.summary()
+        _summary_result = _dict_dc(self._swigobj.summary())
         return _summary_result
 
     def tdmspws(self):
@@ -961,7 +965,7 @@ class msmetadata:
         schema = {'obsid': {'type': 'cInt'}}
         doc = {'obsid': obsid}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _timerangeforobs_result = self._swigobj.timerangeforobs(_pc.document['obsid'])
+        _timerangeforobs_result = _dict_dc(self._swigobj.timerangeforobs(_pc.document['obsid']))
         return _timerangeforobs_result
 
     def timesforfield(self, field=int(-1)):
@@ -981,7 +985,7 @@ class msmetadata:
         schema = {'intent': {'type': 'cStr'}}
         doc = {'intent': intent}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _timesforintent_result = self._swigobj.timesforintent(_str_encode(_pc.document['intent']))
+        _timesforintent_result = self._swigobj.timesforintent(_str_ec(_pc.document['intent']))
         return _timesforintent_result
 
     def timesforscan(self, scan=int(-1), obsid=int(-1), arrayid=int(-1), perspw=False):
@@ -994,14 +998,14 @@ class msmetadata:
         schema = {'scan': {'type': 'cInt'}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}, 'perspw': {'type': 'cBool'}}
         doc = {'scan': scan, 'obsid': obsid, 'arrayid': arrayid, 'perspw': perspw}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _timesforscan_result = self._swigobj.timesforscan(_pc.document['scan'], _pc.document['obsid'], _pc.document['arrayid'], _pc.document['perspw'])
+        _timesforscan_result = _any_dc(self._swigobj.timesforscan(_pc.document['scan'], _pc.document['obsid'], _pc.document['arrayid'], _pc.document['perspw']))
         return _timesforscan_result
 
     def timesforscans(self, scans=[ int(-1) ], obsid=int(-1), arrayid=int(-1)):
         """Get an array of the unique times for the specified scan numbers, observation ID, and array ID.
         
         """
-        schema = {'scans': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
+        schema = {'scans': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'obsid': {'type': 'cInt'}, 'arrayid': {'type': 'cInt'}}
         doc = {'scans': scans, 'obsid': obsid, 'arrayid': arrayid}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _timesforscans_result = self._swigobj.timesforscans(_pc.document['scans'], _pc.document['obsid'], _pc.document['arrayid'])
@@ -1020,7 +1024,7 @@ class msmetadata:
         schema = {'spw': {'type': 'cVariant'}}
         doc = {'spw': spw}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _timesforspws_result = self._swigobj.timesforspws(_pc.document['spw'])
+        _timesforspws_result = _any_dc(self._swigobj.timesforspws(_any_ec(_pc.document['spw'])))
         return _timesforspws_result
 
     def transitions(self, sourceid=int(0), spw=int(0)):
@@ -1032,7 +1036,7 @@ class msmetadata:
         schema = {'sourceid': {'type': 'cInt'}, 'spw': {'type': 'cInt'}}
         doc = {'sourceid': sourceid, 'spw': spw}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _transitions_result = self._swigobj.transitions(_pc.document['sourceid'], _pc.document['spw'])
+        _transitions_result = _any_dc(self._swigobj.transitions(_pc.document['sourceid'], _pc.document['spw']))
         return _transitions_result
 
     def wvrspws(self, complement=False):

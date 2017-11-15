@@ -2,8 +2,12 @@
 ##################### 2840c0752d528fd6314567967456757c ##############################
 from __future__ import absolute_import 
 from .__casac__ import measures as _measures
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -24,7 +28,7 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _dirshow_result = self._swigobj.dirshow(_pc.document['v'])
+        _dirshow_result = _str_dc(self._swigobj.dirshow(_dict_ec(_pc.document['v'])))
         return _dirshow_result
 
     def show(self, v, refcode=True):
@@ -36,7 +40,7 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'refcode': {'type': 'cBool'}}
         doc = {'v': v, 'refcode': refcode}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _show_result = self._swigobj.show(_pc.document['v'], _pc.document['refcode'])
+        _show_result = _str_dc(self._swigobj.show(_dict_ec(_pc.document['v']), _pc.document['refcode']))
         return _show_result
 
     def epoch(self, rf='UTC', v0=[ ], off={ }):
@@ -62,7 +66,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _epoch_result = self._swigobj.epoch(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        _epoch_result = _dict_dc(self._swigobj.epoch(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _dict_ec(_pc.document['off'])))
         return _epoch_result
 
     def direction(self, rf='J2000', v0=[ ], v1=[ ], off={ }):
@@ -95,7 +99,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _direction_result = self._swigobj.direction(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['off'])
+        _direction_result = _dict_dc(self._swigobj.direction(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _dict_ec(_pc.document['off'])))
         return _direction_result
 
     def getvalue(self, v):
@@ -104,7 +108,7 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getvalue_result = self._swigobj.getvalue(_pc.document['v'])
+        _getvalue_result = _dict_dc(self._swigobj.getvalue(_dict_ec(_pc.document['v'])))
         return _getvalue_result
 
     def gettype(self, v):
@@ -113,7 +117,7 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _gettype_result = self._swigobj.gettype(_pc.document['v'])
+        _gettype_result = _str_dc(self._swigobj.gettype(_dict_ec(_pc.document['v'])))
         return _gettype_result
 
     def getref(self, v):
@@ -122,7 +126,7 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getref_result = self._swigobj.getref(_pc.document['v'])
+        _getref_result = _str_dc(self._swigobj.getref(_dict_ec(_pc.document['v'])))
         return _getref_result
 
     def getoffset(self, v):
@@ -132,19 +136,19 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getoffset_result = self._swigobj.getoffset(_pc.document['v'])
+        _getoffset_result = _dict_dc(self._swigobj.getoffset(_dict_ec(_pc.document['v'])))
         return _getoffset_result
 
     def cometname(self):
         """cometname gets the name of the current comet (if any).
         """
-        _cometname_result = self._swigobj.cometname()
+        _cometname_result = _str_dc(self._swigobj.cometname())
         return _cometname_result
 
     def comettype(self):
         """comettype gets the comet table type (apparent or topocentric)
         """
-        _comettype_result = self._swigobj.comettype()
+        _comettype_result = _str_dc(self._swigobj.comettype())
         return _comettype_result
 
     def cometdist(self):
@@ -152,7 +156,7 @@ class measures:
         as a quantity.  It will return -1 AU on failure!
         
         """
-        _cometdist_result = self._swigobj.cometdist()
+        _cometdist_result = _dict_dc(self._swigobj.cometdist())
         return _cometdist_result
 
     def cometangdiam(self):
@@ -160,13 +164,13 @@ class measures:
         comet in the current frame, as a quantity.  It will return -1 radians on failure!
         
         """
-        _cometangdiam_result = self._swigobj.cometangdiam()
+        _cometangdiam_result = _dict_dc(self._swigobj.cometangdiam())
         return _cometangdiam_result
 
     def comettopo(self):
         """comettopo gets the comet table's topographic coordinates used.
         """
-        _comettopo_result = self._swigobj.comettopo()
+        _comettopo_result = _dict_dc(self._swigobj.comettopo())
         return _comettopo_result
 
     def framecomet(self, v=''):
@@ -175,7 +179,7 @@ class measures:
         schema = {'v': {'type': 'cReqPath', 'coerce': _coerce.expand_path}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _framecomet_result = self._swigobj.framecomet(_pc.document['v'])
+        _framecomet_result = self._swigobj.framecomet(_str_ec(_pc.document['v']))
         return _framecomet_result
 
     def position(self, rf='WGS84', v0=[ ], v1=[ ], v2=[ ], off={ }):
@@ -202,7 +206,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _position_result = self._swigobj.position(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        _position_result = _dict_dc(self._swigobj.position(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _any_ec(_pc.document['v2']), _dict_ec(_pc.document['off'])))
         return _position_result
 
     def observatory(self, name='ALMA'):
@@ -220,14 +224,14 @@ class measures:
         schema = {'name': {'type': 'cStr'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _observatory_result = self._swigobj.observatory(_str_encode(_pc.document['name']))
+        _observatory_result = _dict_dc(self._swigobj.observatory(_str_ec(_pc.document['name'])))
         return _observatory_result
 
     def obslist(self):
         """obslist will give you an array of strings of the
         observatories known in the Observatories table.
         """
-        _obslist_result = self._swigobj.obslist()
+        _obslist_result = [_str_dc(_x) for _x in self._swigobj.obslist()]
         return _obslist_result
 
     def linelist(self):
@@ -238,7 +242,7 @@ class measures:
         already online, and will be interfaced once a nomenclature can be defined for
         the tens of thousands of lines.
         """
-        _linelist_result = self._swigobj.linelist()
+        _linelist_result = _str_dc(self._swigobj.linelist())
         return _linelist_result
 
     def spectralline(self, name='HI'):
@@ -248,14 +252,14 @@ class measures:
         schema = {'name': {'type': 'cStr'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spectralline_result = self._swigobj.spectralline(_str_encode(_pc.document['name']))
+        _spectralline_result = _dict_dc(self._swigobj.spectralline(_str_ec(_pc.document['name'])))
         return _spectralline_result
 
     def sourcelist(self):
         """sourcelist will give you a string with the space separated list of sources
         known in the Sources table.
         """
-        _sourcelist_result = self._swigobj.sourcelist()
+        _sourcelist_result = _str_dc(self._swigobj.sourcelist())
         return _sourcelist_result
 
     def source(self, name=[ ]):
@@ -265,7 +269,7 @@ class measures:
         schema = {'name': {'type': 'cVariant'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _source_result = self._swigobj.source(_pc.document['name'])
+        _source_result = _dict_dc(self._swigobj.source(_any_ec(_pc.document['name'])))
         return _source_result
 
     def frequency(self, rf='LSRK', v0=[ ], off={ }):
@@ -299,7 +303,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _frequency_result = self._swigobj.frequency(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        _frequency_result = _dict_dc(self._swigobj.frequency(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _dict_ec(_pc.document['off'])))
         return _frequency_result
 
     def doppler(self, rf='RADIO', v0=[ ], off={ }):
@@ -325,7 +329,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _doppler_result = self._swigobj.doppler(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        _doppler_result = _dict_dc(self._swigobj.doppler(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _dict_ec(_pc.document['off'])))
         return _doppler_result
 
     def radialvelocity(self, rf='LSRK', v0=[ ], off={ }):
@@ -353,7 +357,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _radialvelocity_result = self._swigobj.radialvelocity(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['off'])
+        _radialvelocity_result = _dict_dc(self._swigobj.radialvelocity(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _dict_ec(_pc.document['off'])))
         return _radialvelocity_result
 
     def shift(self, v={ }, offset=[ ], pa=[ ]):
@@ -364,7 +368,7 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'offset': {'type': 'cVariant'}, 'pa': {'type': 'cVariant'}}
         doc = {'v': v, 'offset': offset, 'pa': pa}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _shift_result = self._swigobj.shift(_pc.document['v'], _pc.document['offset'], _pc.document['pa'])
+        _shift_result = _dict_dc(self._swigobj.shift(_dict_ec(_pc.document['v']), _any_ec(_pc.document['offset']), _any_ec(_pc.document['pa'])))
         return _shift_result
 
     def uvw(self, rf='ITRF', v0=[ ], v1=[ ], v2=[ ], off={ }):
@@ -391,7 +395,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _uvw_result = self._swigobj.uvw(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        _uvw_result = _dict_dc(self._swigobj.uvw(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _any_ec(_pc.document['v2']), _dict_ec(_pc.document['off'])))
         return _uvw_result
 
     def touvw(self, v={ }, dot={ }, xyz={ }):
@@ -422,9 +426,9 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'dot': {'type': 'cDict'}, 'xyz': {'type': 'cDict'}}
         doc = {'v': v, 'dot': dot, 'xyz': xyz}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _touvw_result = self._swigobj.touvw(_pc.document['v'], _pc.document['dot'], _pc.document['xyz'])
-        dot = _pc.document['dot']
-        xyz = _pc.document['xyz']
+        _touvw_result = _dict_dc(self._swigobj.touvw(_dict_ec(_pc.document['v']), _dict_ec(_pc.document['dot']), _dict_ec(_pc.document['xyz'])))
+        dot = _dict_dc(_dict_ec(_pc.document['dot']))
+        xyz = _dict_dc(_dict_ec(_pc.document['xyz']))
         return _touvw_result
 
     def expand(self, v={ }, xyz={ }):
@@ -436,8 +440,8 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'xyz': {'type': 'cDict'}}
         doc = {'v': v, 'xyz': xyz}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _expand_result = self._swigobj.expand(_pc.document['v'], _pc.document['xyz'])
-        xyz = _pc.document['xyz']
+        _expand_result = _dict_dc(self._swigobj.expand(_dict_ec(_pc.document['v']), _dict_ec(_pc.document['xyz'])))
+        xyz = _dict_dc(_dict_ec(_pc.document['xyz']))
         return _expand_result
 
     def earthmagnetic(self, rf='IGRF', v0=[ ], v1=[ ], v2=[ ], off={ }):
@@ -460,7 +464,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _earthmagnetic_result = self._swigobj.earthmagnetic(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        _earthmagnetic_result = _dict_dc(self._swigobj.earthmagnetic(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _any_ec(_pc.document['v2']), _dict_ec(_pc.document['off'])))
         return _earthmagnetic_result
 
     def baseline(self, rf='ITRF', v0=[ ], v1=[ ], v2=[ ], off={ }):
@@ -488,7 +492,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _baseline_result = self._swigobj.baseline(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['v1'], _pc.document['v2'], _pc.document['off'])
+        _baseline_result = _dict_dc(self._swigobj.baseline(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _any_ec(_pc.document['v2']), _dict_ec(_pc.document['off'])))
         return _baseline_result
 
     def asbaseline(self, pos):
@@ -499,7 +503,7 @@ class measures:
         schema = {'pos': {'type': 'cDict'}}
         doc = {'pos': pos}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _asbaseline_result = self._swigobj.asbaseline(_pc.document['pos'])
+        _asbaseline_result = _dict_dc(self._swigobj.asbaseline(_dict_ec(_pc.document['pos'])))
         return _asbaseline_result
 
     def listcodes(self, ms):
@@ -514,7 +518,7 @@ class measures:
         schema = {'ms': {'type': 'cDict'}}
         doc = {'ms': ms}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _listcodes_result = self._swigobj.listcodes(_pc.document['ms'])
+        _listcodes_result = _dict_dc(self._swigobj.listcodes(_dict_ec(_pc.document['ms'])))
         return _listcodes_result
 
     def measure(self, v, rf, off={ }):
@@ -550,7 +554,7 @@ class measures:
         schema = {'v': {'type': 'cDict'}, 'rf': {'type': 'cStr'}, 'off': {'type': 'cDict'}}
         doc = {'v': v, 'rf': rf, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _measure_result = self._swigobj.measure(_pc.document['v'], _str_encode(_pc.document['rf']), _pc.document['off'])
+        _measure_result = _dict_dc(self._swigobj.measure(_dict_ec(_pc.document['v']), _str_ec(_pc.document['rf']), _dict_ec(_pc.document['off'])))
         return _measure_result
 
     def doframe(self, v):
@@ -631,7 +635,7 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _doframe_result = self._swigobj.doframe(_pc.document['v'])
+        _doframe_result = self._swigobj.doframe(_dict_ec(_pc.document['v']))
         return _doframe_result
 
     def framenow(self):
@@ -651,7 +655,7 @@ class measures:
         displayed on the terminal using the formatting as done for the
         show function.
         """
-        _showframe_result = self._swigobj.showframe()
+        _showframe_result = _str_dc(self._swigobj.showframe())
         return _showframe_result
 
     def toradialvelocity(self, rf, v0):
@@ -661,7 +665,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toradialvelocity_result = self._swigobj.toradialvelocity(_str_encode(_pc.document['rf']), _pc.document['v0'])
+        _toradialvelocity_result = _dict_dc(self._swigobj.toradialvelocity(_str_ec(_pc.document['rf']), _dict_ec(_pc.document['v0'])))
         return _toradialvelocity_result
 
     def tofrequency(self, rf, v0, rfq):
@@ -673,7 +677,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cDict'}, 'rfq': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'rfq': rfq}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _tofrequency_result = self._swigobj.tofrequency(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['rfq'])
+        _tofrequency_result = _dict_dc(self._swigobj.tofrequency(_str_ec(_pc.document['rf']), _dict_ec(_pc.document['v0']), _dict_ec(_pc.document['rfq'])))
         return _tofrequency_result
 
     def todoppler(self, rf, v0, rfq=[ ]):
@@ -684,7 +688,7 @@ class measures:
         schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cDict'}, 'rfq': {'type': 'cVariant'}}
         doc = {'rf': rf, 'v0': v0, 'rfq': rfq}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _todoppler_result = self._swigobj.todoppler(_str_encode(_pc.document['rf']), _pc.document['v0'], _pc.document['rfq'])
+        _todoppler_result = _dict_dc(self._swigobj.todoppler(_str_ec(_pc.document['rf']), _dict_ec(_pc.document['v0']), _any_ec(_pc.document['rfq'])))
         return _todoppler_result
 
     def torestfrequency(self, v0, d0):
@@ -695,7 +699,7 @@ class measures:
         schema = {'v0': {'type': 'cDict'}, 'd0': {'type': 'cDict'}}
         doc = {'v0': v0, 'd0': d0}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _torestfrequency_result = self._swigobj.torestfrequency(_pc.document['v0'], _pc.document['d0'])
+        _torestfrequency_result = _dict_dc(self._swigobj.torestfrequency(_dict_ec(_pc.document['v0']), _dict_ec(_pc.document['d0'])))
         return _torestfrequency_result
 
     def rise(self, crd=[ ], ev=[ ]):
@@ -706,7 +710,7 @@ class measures:
         schema = {'crd': {'type': 'cVariant'}, 'ev': {'type': 'cVariant'}}
         doc = {'crd': crd, 'ev': ev}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _rise_result = self._swigobj.rise(_pc.document['crd'], _pc.document['ev'])
+        _rise_result = _dict_dc(self._swigobj.rise(_any_ec(_pc.document['crd']), _any_ec(_pc.document['ev'])))
         return _rise_result
 
     def riseset(self, crd=[ ], ev=[ ]):
@@ -720,7 +724,7 @@ class measures:
         schema = {'crd': {'type': 'cVariant'}, 'ev': {'type': 'cVariant'}}
         doc = {'crd': crd, 'ev': ev}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _riseset_result = self._swigobj.riseset(_pc.document['crd'], _pc.document['ev'])
+        _riseset_result = _dict_dc(self._swigobj.riseset(_any_ec(_pc.document['crd']), _any_ec(_pc.document['ev'])))
         return _riseset_result
 
     def posangle(self, m1, m2):
@@ -732,7 +736,7 @@ class measures:
         schema = {'m1': {'type': 'cDict'}, 'm2': {'type': 'cDict'}}
         doc = {'m1': m1, 'm2': m2}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _posangle_result = self._swigobj.posangle(_pc.document['m1'], _pc.document['m2'])
+        _posangle_result = _dict_dc(self._swigobj.posangle(_dict_ec(_pc.document['m1']), _dict_ec(_pc.document['m2'])))
         return _posangle_result
 
     def separation(self, m1, m2):
@@ -741,7 +745,7 @@ class measures:
         schema = {'m1': {'type': 'cDict'}, 'm2': {'type': 'cDict'}}
         doc = {'m1': m1, 'm2': m2}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _separation_result = self._swigobj.separation(_pc.document['m1'], _pc.document['m2'])
+        _separation_result = _dict_dc(self._swigobj.separation(_dict_ec(_pc.document['m1']), _dict_ec(_pc.document['m2'])))
         return _separation_result
 
     def addxvalue(self, a):
@@ -753,13 +757,13 @@ class measures:
         schema = {'a': {'type': 'cDict'}}
         doc = {'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _addxvalue_result = self._swigobj.addxvalue(_pc.document['a'])
+        _addxvalue_result = _dict_dc(self._swigobj.addxvalue(_dict_ec(_pc.document['a'])))
         return _addxvalue_result
 
     def type(self):
         """type will return the tool name.
         """
-        _type_result = self._swigobj.type()
+        _type_result = _str_dc(self._swigobj.type())
         return _type_result
 
     def done(self):
@@ -775,6 +779,6 @@ class measures:
         schema = {'v': {'type': 'cDict'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _ismeasure_result = self._swigobj.ismeasure(_pc.document['v'])
+        _ismeasure_result = self._swigobj.ismeasure(_dict_ec(_pc.document['v']))
         return _ismeasure_result
 

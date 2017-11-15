@@ -2,8 +2,12 @@
 ##################### ba72f6b892d295fcf5df093fb446253b ##############################
 from __future__ import absolute_import 
 from .__casac__ import coordsys as _coordsys
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 _wrap_coordsys = lambda swig_object: coordsys(swig_object=swig_object)
@@ -57,10 +61,10 @@ class coordsys:
         a list of pixel and world values to function
         settabular.
         """
-        schema = {'direction': {'type': 'cBool'}, 'spectral': {'type': 'cBool'}, 'stokes': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'linear': {'type': 'cInt'}, 'tabular': {'type': 'cBool'}}
+        schema = {'direction': {'type': 'cBool'}, 'spectral': {'type': 'cBool'}, 'stokes': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'linear': {'type': 'cInt'}, 'tabular': {'type': 'cBool'}}
         doc = {'direction': direction, 'spectral': spectral, 'stokes': stokes, 'linear': linear, 'tabular': tabular}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _newcoordsys_result = _wrap_coordsys(swig_object=self._swigobj.newcoordsys(_pc.document['direction'], _pc.document['spectral'], [_str_encode(_x) for _x in _pc.document['stokes']], _pc.document['linear'], _pc.document['tabular']))
+        _newcoordsys_result = _wrap_coordsys(swig_object=self._swigobj.newcoordsys(_pc.document['direction'], _pc.document['spectral'], [_str_ec(_x) for _x in _pc.document['stokes']], _pc.document['linear'], _pc.document['tabular']))
         return _newcoordsys_result
 
     def addcoordinate(self, direction=False, spectral=False, stokes=[ 'I','Q','U','V','XX','YY','XY','YX','RR','LL','RL','LR','' ], linear=int(0), tabular=False):
@@ -68,10 +72,10 @@ class coordsys:
         multiple coordinates of the same type which are not well supported.
         Use only for assay tests.
         """
-        schema = {'direction': {'type': 'cBool'}, 'spectral': {'type': 'cBool'}, 'stokes': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'linear': {'type': 'cInt'}, 'tabular': {'type': 'cBool'}}
+        schema = {'direction': {'type': 'cBool'}, 'spectral': {'type': 'cBool'}, 'stokes': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'linear': {'type': 'cInt'}, 'tabular': {'type': 'cBool'}}
         doc = {'direction': direction, 'spectral': spectral, 'stokes': stokes, 'linear': linear, 'tabular': tabular}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _addcoordinate_result = self._swigobj.addcoordinate(_pc.document['direction'], _pc.document['spectral'], [_str_encode(_x) for _x in _pc.document['stokes']], _pc.document['linear'], _pc.document['tabular'])
+        _addcoordinate_result = self._swigobj.addcoordinate(_pc.document['direction'], _pc.document['spectral'], [_str_ec(_x) for _x in _pc.document['stokes']], _pc.document['linear'], _pc.document['tabular'])
         return _addcoordinate_result
 
     def axesmap(self, toworld=True):
@@ -98,7 +102,7 @@ class coordsys:
         schema = {'world': {'type': 'cBool'}}
         doc = {'world': world}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _axiscoordinatetypes_result = self._swigobj.axiscoordinatetypes(_pc.document['world'])
+        _axiscoordinatetypes_result = [_str_dc(_x) for _x in self._swigobj.axiscoordinatetypes(_pc.document['world'])]
         return _axiscoordinatetypes_result
 
     def conversiontype(self, type='direction'):
@@ -118,7 +122,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}}
         doc = {'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _conversiontype_result = self._swigobj.conversiontype(_str_encode(_pc.document['type']))
+        _conversiontype_result = _str_dc(self._swigobj.conversiontype(_str_ec(_pc.document['type'])))
         return _conversiontype_result
 
     def convert(self, coordin, absin=[ False ], dopplerin='radio', unitsin=[ 'Native' ], absout=[ False ], dopplerout='radio', unitsout=[ 'Native' ], shape=[ int(-1) ]):
@@ -142,10 +146,10 @@ class coordsys:
         
         The example clarifies the use of this function.
         """
-        schema = {'coordin': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'absin': {'type': 'cBoolVec'}, 'dopplerin': {'type': 'cStr'}, 'unitsin': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'absout': {'type': 'cBoolVec'}, 'dopplerout': {'type': 'cStr'}, 'unitsout': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'coordin': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'absin': {'type': 'cBoolVec'}, 'dopplerin': {'type': 'cStr'}, 'unitsin': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'absout': {'type': 'cBoolVec'}, 'dopplerout': {'type': 'cStr'}, 'unitsout': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'coordin': coordin, 'absin': absin, 'dopplerin': dopplerin, 'unitsin': unitsin, 'absout': absout, 'dopplerout': dopplerout, 'unitsout': unitsout, 'shape': shape}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convert_result = self._swigobj.convert(_pc.document['coordin'], _pc.document['absin'], _str_encode(_pc.document['dopplerin']), [_str_encode(_x) for _x in _pc.document['unitsin']], _pc.document['absout'], _str_encode(_pc.document['dopplerout']), [_str_encode(_x) for _x in _pc.document['unitsout']], _pc.document['shape'])
+        _convert_result = self._swigobj.convert(_pc.document['coordin'], _pc.document['absin'], _str_ec(_pc.document['dopplerin']), [_str_ec(_x) for _x in _pc.document['unitsin']], _pc.document['absout'], _str_ec(_pc.document['dopplerout']), [_str_ec(_x) for _x in _pc.document['unitsout']], _pc.document['shape'])
         return _convert_result
 
     def convertdirection(self, frame):
@@ -167,7 +171,7 @@ class coordsys:
         schema = {'frame': {'type': 'cStr'}}
         doc = {'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertdirection_result = self._swigobj.convertdirection(_str_encode(_pc.document['frame']))
+        _convertdirection_result = _dict_dc(self._swigobj.convertdirection(_str_ec(_pc.document['frame'])))
         return _convertdirection_result
 
     def convertmany(self, coordin=[ ], absin=[ False ], dopplerin='radio', unitsin=[ 'Native' ], absout=[ False ], dopplerout='radio', unitsout=[ 'Native' ], shape=[ int(-1) ]):
@@ -179,10 +183,10 @@ class coordsys:
         provide a matrix holding many coordinates to convert
         and a matrix of many converted coordinates is returned.
         """
-        schema = {'coordin': {'type': 'cVariant'}, 'absin': {'type': 'cBoolVec'}, 'dopplerin': {'type': 'cStr'}, 'unitsin': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'absout': {'type': 'cBoolVec'}, 'dopplerout': {'type': 'cStr'}, 'unitsout': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'shape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'coordin': {'type': 'cVariant'}, 'absin': {'type': 'cBoolVec'}, 'dopplerin': {'type': 'cStr'}, 'unitsin': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'absout': {'type': 'cBoolVec'}, 'dopplerout': {'type': 'cStr'}, 'unitsout': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'coordin': coordin, 'absin': absin, 'dopplerin': dopplerin, 'unitsin': unitsin, 'absout': absout, 'dopplerout': dopplerout, 'unitsout': unitsout, 'shape': shape}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertmany_result = self._swigobj.convertmany(_pc.document['coordin'], _pc.document['absin'], _str_encode(_pc.document['dopplerin']), [_str_encode(_x) for _x in _pc.document['unitsin']], _pc.document['absout'], _str_encode(_pc.document['dopplerout']), [_str_encode(_x) for _x in _pc.document['unitsout']], _pc.document['shape'])
+        _convertmany_result = _any_dc(self._swigobj.convertmany(_any_ec(_pc.document['coordin']), _pc.document['absin'], _str_ec(_pc.document['dopplerin']), [_str_ec(_x) for _x in _pc.document['unitsin']], _pc.document['absout'], _str_ec(_pc.document['dopplerout']), [_str_ec(_x) for _x in _pc.document['unitsout']], _pc.document['shape']))
         return _convertmany_result
 
     def coordinatetype(self, which=int(-1)):
@@ -196,7 +200,7 @@ class coordsys:
         schema = {'which': {'type': 'cInt'}}
         doc = {'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _coordinatetype_result = self._swigobj.coordinatetype(_pc.document['which'])
+        _coordinatetype_result = [_str_dc(_x) for _x in self._swigobj.coordinatetype(_pc.document['which'])]
         return _coordinatetype_result
 
     def copy(self):
@@ -218,7 +222,7 @@ class coordsys:
         """This function  returns the epoch of the observation as a
         Measure.
         """
-        _epoch_result = self._swigobj.epoch()
+        _epoch_result = _dict_dc(self._swigobj.epoch())
         return _epoch_result
 
     def findaxis(self, world=True, axis=int(0)):
@@ -228,7 +232,7 @@ class coordsys:
         schema = {'world': {'type': 'cBool'}, 'axis': {'type': 'cInt'}}
         doc = {'world': world, 'axis': axis}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _findaxis_result = self._swigobj.findaxis(_pc.document['world'], _pc.document['axis'])
+        _findaxis_result = _dict_dc(self._swigobj.findaxis(_pc.document['world'], _pc.document['axis']))
         return _findaxis_result
 
     def findaxisbyname(self, axisname='', allowfriendlyname=True):
@@ -242,7 +246,7 @@ class coordsys:
         schema = {'axisname': {'type': 'cStr'}, 'allowfriendlyname': {'type': 'cBool'}}
         doc = {'axisname': axisname, 'allowfriendlyname': allowfriendlyname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _findaxisbyname_result = self._swigobj.findaxisbyname(_str_encode(_pc.document['axisname']), _pc.document['allowfriendlyname'])
+        _findaxisbyname_result = self._swigobj.findaxisbyname(_str_ec(_pc.document['axisname']), _pc.document['allowfriendlyname'])
         return _findaxisbyname_result
 
     def findcoordinate(self, type='direction', which=int(0)):
@@ -263,7 +267,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}, 'which': {'type': 'cInt'}}
         doc = {'type': type, 'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _findcoordinate_result = self._swigobj.findcoordinate(_str_encode(_pc.document['type']), _pc.document['which'])
+        _findcoordinate_result = _dict_dc(self._swigobj.findcoordinate(_str_ec(_pc.document['type']), _pc.document['which']))
         return _findcoordinate_result
 
     def frequencytofrequency(self, value, frequnit='', velocity=[ ]):
@@ -282,10 +286,10 @@ class coordsys:
         in the Coordinate System. See also function
         frequencytovelocity.
         """
-        schema = {'value': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'frequnit': {'type': 'cStr'}, 'velocity': {'type': 'cVariant'}}
+        schema = {'value': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'frequnit': {'type': 'cStr'}, 'velocity': {'type': 'cVariant'}}
         doc = {'value': value, 'frequnit': frequnit, 'velocity': velocity}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _frequencytofrequency_result = self._swigobj.frequencytofrequency(_pc.document['value'], _str_encode(_pc.document['frequnit']), _pc.document['velocity'])
+        _frequencytofrequency_result = self._swigobj.frequencytofrequency(_pc.document['value'], _str_ec(_pc.document['frequnit']), _any_ec(_pc.document['velocity']))
         return _frequencytofrequency_result
 
     def frequencytovelocity(self, value, frequnit='', doppler='radio', velunit='km/s'):
@@ -309,10 +313,10 @@ class coordsys:
         in the Coordinate System. See also function
         velocitytofrequency.
         """
-        schema = {'value': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'frequnit': {'type': 'cStr'}, 'doppler': {'type': 'cStr'}, 'velunit': {'type': 'cStr'}}
+        schema = {'value': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'frequnit': {'type': 'cStr'}, 'doppler': {'type': 'cStr'}, 'velunit': {'type': 'cStr'}}
         doc = {'value': value, 'frequnit': frequnit, 'doppler': doppler, 'velunit': velunit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _frequencytovelocity_result = self._swigobj.frequencytovelocity(_pc.document['value'], _str_encode(_pc.document['frequnit']), _str_encode(_pc.document['doppler']), _str_encode(_pc.document['velunit']))
+        _frequencytovelocity_result = self._swigobj.frequencytovelocity(_pc.document['value'], _str_ec(_pc.document['frequnit']), _str_ec(_pc.document['doppler']), _str_ec(_pc.document['velunit']))
         return _frequencytovelocity_result
 
     def fromrecord(self, record):
@@ -325,7 +329,7 @@ class coordsys:
         schema = {'record': {'type': 'cDict'}}
         doc = {'record': record}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fromrecord_result = self._swigobj.fromrecord(_pc.document['record'])
+        _fromrecord_result = self._swigobj.fromrecord(_dict_ec(_pc.document['record']))
         return _fromrecord_result
 
     def increment(self, format='n', type=''):
@@ -348,7 +352,7 @@ class coordsys:
         schema = {'format': {'type': 'cStr'}, 'type': {'type': 'cStr'}}
         doc = {'format': format, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _increment_result = self._swigobj.increment(_str_encode(_pc.document['format']), _str_encode(_pc.document['type']))
+        _increment_result = _dict_dc(self._swigobj.increment(_str_ec(_pc.document['format']), _str_ec(_pc.document['type'])))
         return _increment_result
 
     def lineartransform(self, type):
@@ -360,7 +364,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}}
         doc = {'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _lineartransform_result = self._swigobj.lineartransform(_str_encode(_pc.document['type']))
+        _lineartransform_result = _any_dc(self._swigobj.lineartransform(_str_ec(_pc.document['type'])))
         return _lineartransform_result
 
     def names(self, type=''):
@@ -379,7 +383,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}}
         doc = {'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _names_result = self._swigobj.names(_str_encode(_pc.document['type']))
+        _names_result = [_str_dc(_x) for _x in self._swigobj.names(_str_ec(_pc.document['type']))]
         return _names_result
 
     def naxes(self, world=True):
@@ -407,7 +411,7 @@ class coordsys:
         """This function returns the name of the observer.
         You can set it with the function setobserver.
         """
-        _observer_result = self._swigobj.observer()
+        _observer_result = _str_dc(self._swigobj.observer())
         return _observer_result
 
     def projection(self, type=''):
@@ -449,7 +453,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}}
         doc = {'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _projection_result = self._swigobj.projection(_str_encode(_pc.document['type']))
+        _projection_result = _dict_dc(self._swigobj.projection(_str_ec(_pc.document['type'])))
         return _projection_result
 
     def referencecode(self, type='', list=False):
@@ -487,7 +491,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}, 'list': {'type': 'cBool'}}
         doc = {'type': type, 'list': list}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _referencecode_result = self._swigobj.referencecode(_str_encode(_pc.document['type']), _pc.document['list'])
+        _referencecode_result = [_str_dc(_x) for _x in self._swigobj.referencecode(_str_ec(_pc.document['type']), _pc.document['list'])]
         return _referencecode_result
 
     def referencepixel(self, type=''):
@@ -507,7 +511,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}}
         doc = {'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _referencepixel_result = self._swigobj.referencepixel(_str_encode(_pc.document['type']))
+        _referencepixel_result = _dict_dc(self._swigobj.referencepixel(_str_ec(_pc.document['type'])))
         return _referencepixel_result
 
     def referencevalue(self, format='n', type=''):
@@ -530,7 +534,7 @@ class coordsys:
         schema = {'format': {'type': 'cStr'}, 'type': {'type': 'cStr'}}
         doc = {'format': format, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _referencevalue_result = self._swigobj.referencevalue(_str_encode(_pc.document['format']), _str_encode(_pc.document['type']))
+        _referencevalue_result = _dict_dc(self._swigobj.referencevalue(_str_ec(_pc.document['format']), _str_ec(_pc.document['type'])))
         return _referencevalue_result
 
     def reorder(self, order):
@@ -538,7 +542,7 @@ class coordsys:
         You specify the new order of the coordinates in terms of their old
         order.
         """
-        schema = {'order': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'order': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'order': order}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _reorder_result = self._swigobj.reorder(_pc.document['order'])
@@ -552,7 +556,7 @@ class coordsys:
         the second axis becomes the third axis, and the third axis becomes the
         second axis.
         """
-        schema = {'order': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'order': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'order': order}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _transpose_result = self._swigobj.transpose(_pc.document['order'])
@@ -566,7 +570,7 @@ class coordsys:
         schema = {'csys': {'type': 'cDict'}, 'whichin': {'type': 'cInt'}, 'whichout': {'type': 'cInt'}}
         doc = {'csys': csys, 'whichin': whichin, 'whichout': whichout}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _replace_result = self._swigobj.replace(_pc.document['csys'], _pc.document['whichin'], _pc.document['whichout'])
+        _replace_result = self._swigobj.replace(_dict_ec(_pc.document['csys']), _pc.document['whichin'], _pc.document['whichout'])
         return _replace_result
 
     def restfrequency(self):
@@ -585,7 +589,7 @@ class coordsys:
         If the Coordinate System does not contain a frequency coordinate,
         an exception is generated.
         """
-        _restfrequency_result = self._swigobj.restfrequency()
+        _restfrequency_result = _dict_dc(self._swigobj.restfrequency())
         return _restfrequency_result
 
     def setconversiontype(self, direction='', spectral=''):
@@ -707,7 +711,7 @@ class coordsys:
         schema = {'direction': {'type': 'cStr'}, 'spectral': {'type': 'cStr'}}
         doc = {'direction': direction, 'spectral': spectral}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setconversiontype_result = self._swigobj.setconversiontype(_str_encode(_pc.document['direction']), _str_encode(_pc.document['spectral']))
+        _setconversiontype_result = self._swigobj.setconversiontype(_str_ec(_pc.document['direction']), _str_ec(_pc.document['spectral']))
         return _setconversiontype_result
 
     def getconversiontype(self, type='', showconversion=True):
@@ -716,7 +720,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}, 'showconversion': {'type': 'cBool'}}
         doc = {'type': type, 'showconversion': showconversion}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getconversiontype_result = self._swigobj.getconversiontype(_str_encode(_pc.document['type']), _pc.document['showconversion'])
+        _getconversiontype_result = _str_dc(self._swigobj.getconversiontype(_str_ec(_pc.document['type']), _pc.document['showconversion']))
         return _getconversiontype_result
 
     def setdirection(self, refcode='', proj='', projpar=[ float(-1) ], refpix=[ float(-1) ], refval=[ ], incr=[ ], xform=[ ], poles=[ ]):
@@ -739,10 +743,10 @@ class coordsys:
         Bear in mind, that if your Coordinate System came from a real image, then
         the reference pixel is special and you should not change it.
         """
-        schema = {'refcode': {'type': 'cStr'}, 'proj': {'type': 'cStr'}, 'projpar': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'refpix': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'refval': {'type': 'cVariant'}, 'incr': {'type': 'cVariant'}, 'xform': {'type': 'cVariant'}, 'poles': {'type': 'cVariant'}}
+        schema = {'refcode': {'type': 'cStr'}, 'proj': {'type': 'cStr'}, 'projpar': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'refpix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'refval': {'type': 'cVariant'}, 'incr': {'type': 'cVariant'}, 'xform': {'type': 'cVariant'}, 'poles': {'type': 'cVariant'}}
         doc = {'refcode': refcode, 'proj': proj, 'projpar': projpar, 'refpix': refpix, 'refval': refval, 'incr': incr, 'xform': xform, 'poles': poles}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setdirection_result = self._swigobj.setdirection(_str_encode(_pc.document['refcode']), _str_encode(_pc.document['proj']), _pc.document['projpar'], _pc.document['refpix'], _pc.document['refval'], _pc.document['incr'], _pc.document['xform'], _pc.document['poles'])
+        _setdirection_result = self._swigobj.setdirection(_str_ec(_pc.document['refcode']), _str_ec(_pc.document['proj']), _pc.document['projpar'], _pc.document['refpix'], _any_ec(_pc.document['refval']), _any_ec(_pc.document['incr']), _any_ec(_pc.document['xform']), _any_ec(_pc.document['poles']))
         return _setdirection_result
 
     def setepoch(self, value):
@@ -754,7 +758,7 @@ class coordsys:
         schema = {'value': {'type': 'cDict'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setepoch_result = self._swigobj.setepoch(_pc.document['value'])
+        _setepoch_result = self._swigobj.setepoch(_dict_ec(_pc.document['value']))
         return _setepoch_result
 
     def setincrement(self, value=[ ], type=''):
@@ -782,7 +786,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}, 'type': {'type': 'cStr'}}
         doc = {'value': value, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setincrement_result = self._swigobj.setincrement(_pc.document['value'], _str_encode(_pc.document['type']))
+        _setincrement_result = self._swigobj.setincrement(_any_ec(_pc.document['value']), _str_ec(_pc.document['type']))
         return _setincrement_result
 
     def setlineartransform(self, type='', value=[ ]):
@@ -795,7 +799,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}, 'value': {'type': 'cVariant'}}
         doc = {'type': type, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setlineartransform_result = self._swigobj.setlineartransform(_str_encode(_pc.document['type']), _pc.document['value'])
+        _setlineartransform_result = self._swigobj.setlineartransform(_str_ec(_pc.document['type']), _any_ec(_pc.document['value']))
         return _setlineartransform_result
 
     def setnames(self, value, type=''):
@@ -812,10 +816,10 @@ class coordsys:
         You can recover the current axis names with function
         names.
         """
-        schema = {'value': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'type': {'type': 'cStr'}}
+        schema = {'value': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'type': {'type': 'cStr'}}
         doc = {'value': value, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setnames_result = self._swigobj.setnames([_str_encode(_x) for _x in _pc.document['value']], _str_encode(_pc.document['type']))
+        _setnames_result = self._swigobj.setnames([_str_ec(_x) for _x in _pc.document['value']], _str_ec(_pc.document['type']))
         return _setnames_result
 
     def setobserver(self, value):
@@ -827,7 +831,7 @@ class coordsys:
         schema = {'value': {'type': 'cStr'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setobserver_result = self._swigobj.setobserver(_str_encode(_pc.document['value']))
+        _setobserver_result = self._swigobj.setobserver(_str_ec(_pc.document['value']))
         return _setobserver_result
 
     def setprojection(self, type, parameters=[ float(-1) ]):
@@ -869,10 +873,10 @@ class coordsys:
         If the Coordinate System does not contain a direction coordinate,
         an exception is generated.
         """
-        schema = {'type': {'type': 'cStr'}, 'parameters': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
+        schema = {'type': {'type': 'cStr'}, 'parameters': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
         doc = {'type': type, 'parameters': parameters}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setprojection_result = self._swigobj.setprojection(_str_encode(_pc.document['type']), _pc.document['parameters'])
+        _setprojection_result = self._swigobj.setprojection(_str_ec(_pc.document['type']), _pc.document['parameters'])
         return _setprojection_result
 
     def setreferencecode(self, value, type='direction', adjust=True):
@@ -897,7 +901,7 @@ class coordsys:
         schema = {'value': {'type': 'cStr'}, 'type': {'type': 'cStr'}, 'adjust': {'type': 'cBool'}}
         doc = {'value': value, 'type': type, 'adjust': adjust}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setreferencecode_result = self._swigobj.setreferencecode(_str_encode(_pc.document['value']), _str_encode(_pc.document['type']), _pc.document['adjust'])
+        _setreferencecode_result = self._swigobj.setreferencecode(_str_ec(_pc.document['value']), _str_ec(_pc.document['type']), _pc.document['adjust'])
         return _setreferencecode_result
 
     def setreferencelocation(self, pixel=[ int(-1) ], world=[ ], mask=[ False ]):
@@ -915,10 +919,10 @@ class coordsys:
         images.  It allows you to keep easily a particular feature centered in the
         regridded image.
         """
-        schema = {'pixel': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}, 'world': {'type': 'cVariant'}, 'mask': {'type': 'cBoolVec'}}
+        schema = {'pixel': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'world': {'type': 'cVariant'}, 'mask': {'type': 'cBoolVec'}}
         doc = {'pixel': pixel, 'world': world, 'mask': mask}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setreferencelocation_result = self._swigobj.setreferencelocation(_pc.document['pixel'], _pc.document['world'], _pc.document['mask'])
+        _setreferencelocation_result = self._swigobj.setreferencelocation(_pc.document['pixel'], _any_ec(_pc.document['world']), _pc.document['mask'])
         return _setreferencelocation_result
 
     def setreferencepixel(self, value, type=''):
@@ -940,10 +944,10 @@ class coordsys:
         You can recover the current reference pixel with function
         referencepixel.
         """
-        schema = {'value': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'type': {'type': 'cStr'}}
+        schema = {'value': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'type': {'type': 'cStr'}}
         doc = {'value': value, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setreferencepixel_result = self._swigobj.setreferencepixel(_pc.document['value'], _str_encode(_pc.document['type']))
+        _setreferencepixel_result = self._swigobj.setreferencepixel(_pc.document['value'], _str_ec(_pc.document['type']))
         return _setreferencepixel_result
 
     def setreferencevalue(self, value=[ ], type=''):
@@ -969,7 +973,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}, 'type': {'type': 'cStr'}}
         doc = {'value': value, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setreferencevalue_result = self._swigobj.setreferencevalue(_pc.document['value'], _str_encode(_pc.document['type']))
+        _setreferencevalue_result = self._swigobj.setreferencevalue(_any_ec(_pc.document['value']), _str_ec(_pc.document['type']))
         return _setreferencevalue_result
 
     def setrestfrequency(self, value=[ ], which=int(0), append=False):
@@ -998,7 +1002,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}, 'which': {'type': 'cInt'}, 'append': {'type': 'cBool'}}
         doc = {'value': value, 'which': which, 'append': append}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setrestfrequency_result = self._swigobj.setrestfrequency(_pc.document['value'], _pc.document['which'], _pc.document['append'])
+        _setrestfrequency_result = self._swigobj.setrestfrequency(_any_ec(_pc.document['value']), _pc.document['which'], _pc.document['append'])
         return _setrestfrequency_result
 
     def setspectral(self, refcode='', restfreq=[ ], frequencies=[ ], doppler='', velocities=[ ]):
@@ -1025,7 +1029,7 @@ class coordsys:
         schema = {'refcode': {'type': 'cStr'}, 'restfreq': {'type': 'cVariant'}, 'frequencies': {'type': 'cVariant'}, 'doppler': {'type': 'cStr'}, 'velocities': {'type': 'cVariant'}}
         doc = {'refcode': refcode, 'restfreq': restfreq, 'frequencies': frequencies, 'doppler': doppler, 'velocities': velocities}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setspectral_result = self._swigobj.setspectral(_str_encode(_pc.document['refcode']), _pc.document['restfreq'], _pc.document['frequencies'], _str_encode(_pc.document['doppler']), _pc.document['velocities'])
+        _setspectral_result = self._swigobj.setspectral(_str_ec(_pc.document['refcode']), _any_ec(_pc.document['restfreq']), _any_ec(_pc.document['frequencies']), _str_ec(_pc.document['doppler']), _any_ec(_pc.document['velocities']))
         return _setspectral_result
 
     def setstokes(self, stokes):
@@ -1039,10 +1043,10 @@ class coordsys:
         You can set the Stokes types with function
         setstokes.
         """
-        schema = {'stokes': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
+        schema = {'stokes': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}}
         doc = {'stokes': stokes}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setstokes_result = self._swigobj.setstokes([_str_encode(_x) for _x in _pc.document['stokes']])
+        _setstokes_result = self._swigobj.setstokes([_str_ec(_x) for _x in _pc.document['stokes']])
         return _setstokes_result
 
     def settabular(self, pixel=[ float(-1) ], world=[ float(-1) ], which=int(0)):
@@ -1067,7 +1071,7 @@ class coordsys:
         If you have more than one Tabular Coordinate, use argument
         {stfaf which} to specify which one you want to modify.
         """
-        schema = {'pixel': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'world': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'which': {'type': 'cInt'}}
+        schema = {'pixel': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'world': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'which': {'type': 'cInt'}}
         doc = {'pixel': pixel, 'world': world, 'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _settabular_result = self._swigobj.settabular(_pc.document['pixel'], _pc.document['world'], _pc.document['which'])
@@ -1088,7 +1092,7 @@ class coordsys:
         schema = {'value': {'type': 'cStr'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _settelescope_result = self._swigobj.settelescope(_str_encode(_pc.document['value']))
+        _settelescope_result = self._swigobj.settelescope(_str_ec(_pc.document['value']))
         return _settelescope_result
 
     def setunits(self, value, type='', overwrite=False, which=int(-10)):
@@ -1113,10 +1117,10 @@ class coordsys:
         You can recover the current axis units with function
         units.
         """
-        schema = {'value': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'type': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'which': {'type': 'cInt'}}
+        schema = {'value': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'type': {'type': 'cStr'}, 'overwrite': {'type': 'cBool'}, 'which': {'type': 'cInt'}}
         doc = {'value': value, 'type': type, 'overwrite': overwrite, 'which': which}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setunits_result = self._swigobj.setunits([_str_encode(_x) for _x in _pc.document['value']], _str_encode(_pc.document['type']), _pc.document['overwrite'], _pc.document['which'])
+        _setunits_result = self._swigobj.setunits([_str_ec(_x) for _x in _pc.document['value']], _str_ec(_pc.document['type']), _pc.document['overwrite'], _pc.document['which'])
         return _setunits_result
 
     def stokes(self):
@@ -1127,7 +1131,7 @@ class coordsys:
         You can set the Stokes types with function
         setstokes.
         """
-        _stokes_result = self._swigobj.stokes()
+        _stokes_result = [_str_dc(_x) for _x in self._swigobj.stokes()]
         return _stokes_result
 
     def summary(self, doppler='RADIO', list=True):
@@ -1167,7 +1171,7 @@ class coordsys:
         schema = {'doppler': {'type': 'cStr'}, 'list': {'type': 'cBool'}}
         doc = {'doppler': doppler, 'list': list}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _summary_result = self._swigobj.summary(_str_encode(_pc.document['doppler']), _pc.document['list'])
+        _summary_result = [_str_dc(_x) for _x in self._swigobj.summary(_str_ec(_pc.document['doppler']), _pc.document['list'])]
         return _summary_result
 
     def telescope(self):
@@ -1182,7 +1186,7 @@ class coordsys:
         Measures observatory.
         The example shows how.
         """
-        _telescope_result = self._swigobj.telescope()
+        _telescope_result = _str_dc(self._swigobj.telescope())
         return _telescope_result
 
     def toabs(self, value=[ ], isworld=int(-1)):
@@ -1204,7 +1208,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}, 'isworld': {'type': 'cInt'}}
         doc = {'value': value, 'isworld': isworld}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toabs_result = self._swigobj.toabs(_pc.document['value'], _pc.document['isworld'])
+        _toabs_result = _dict_dc(self._swigobj.toabs(_any_ec(_pc.document['value']), _pc.document['isworld']))
         return _toabs_result
 
     def toabsmany(self, value=[ ], isworld=int(-1)):
@@ -1222,7 +1226,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}, 'isworld': {'type': 'cInt'}}
         doc = {'value': value, 'isworld': isworld}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toabsmany_result = self._swigobj.toabsmany(_pc.document['value'], _pc.document['isworld'])
+        _toabsmany_result = _dict_dc(self._swigobj.toabsmany(_any_ec(_pc.document['value']), _pc.document['isworld']))
         return _toabsmany_result
 
     def topixel(self, value=[ ]):
@@ -1243,7 +1247,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _topixel_result = self._swigobj.topixel(_pc.document['value'])
+        _topixel_result = _dict_dc(self._swigobj.topixel(_any_ec(_pc.document['value'])))
         return _topixel_result
 
     def topixelmany(self, value=[ ]):
@@ -1260,7 +1264,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _topixelmany_result = self._swigobj.topixelmany(_pc.document['value'])
+        _topixelmany_result = _dict_dc(self._swigobj.topixelmany(_any_ec(_pc.document['value'])))
         return _topixelmany_result
 
     def torecord(self):
@@ -1271,7 +1275,7 @@ class coordsys:
         These functions  allow
         Coordsys tools to be used as parameters in the methods of other tools.
         """
-        _torecord_result = self._swigobj.torecord()
+        _torecord_result = _dict_dc(self._swigobj.torecord())
         return _torecord_result
 
     def subimage(self, originshft=[ ], newshape=[  ]):
@@ -1281,10 +1285,10 @@ class coordsys:
         when your sub-image you are considering has only a section of your original Stokes
         axis.
         """
-        schema = {'originshft': {'type': 'cVariant'}, 'newshape': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'originshft': {'type': 'cVariant'}, 'newshape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'originshft': originshft, 'newshape': newshape}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _subimage_result = self._swigobj.subimage(_pc.document['originshft'], _pc.document['newshape'])
+        _subimage_result = _dict_dc(self._swigobj.subimage(_any_ec(_pc.document['originshft']), _pc.document['newshape']))
         return _subimage_result
 
     def torel(self, value=[ ], isworld=int(-1)):
@@ -1310,7 +1314,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}, 'isworld': {'type': 'cInt'}}
         doc = {'value': value, 'isworld': isworld}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _torel_result = self._swigobj.torel(_pc.document['value'], _pc.document['isworld'])
+        _torel_result = _dict_dc(self._swigobj.torel(_any_ec(_pc.document['value']), _pc.document['isworld']))
         return _torel_result
 
     def torelmany(self, value=[ ], isworld=int(-1)):
@@ -1328,7 +1332,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}, 'isworld': {'type': 'cInt'}}
         doc = {'value': value, 'isworld': isworld}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _torelmany_result = self._swigobj.torelmany(_pc.document['value'], _pc.document['isworld'])
+        _torelmany_result = _dict_dc(self._swigobj.torelmany(_any_ec(_pc.document['value']), _pc.document['isworld']))
         return _torelmany_result
 
     def toworld(self, value=[ ], format='n'):
@@ -1346,7 +1350,7 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}, 'format': {'type': 'cStr'}}
         doc = {'value': value, 'format': format}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toworld_result = self._swigobj.toworld(_pc.document['value'], _str_encode(_pc.document['format']))
+        _toworld_result = _dict_dc(self._swigobj.toworld(_any_ec(_pc.document['value']), _str_ec(_pc.document['format'])))
         return _toworld_result
 
     def toworldmany(self, value=[ ]):
@@ -1363,13 +1367,13 @@ class coordsys:
         schema = {'value': {'type': 'cVariant'}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toworldmany_result = self._swigobj.toworldmany(_pc.document['value'])
+        _toworldmany_result = _dict_dc(self._swigobj.toworldmany(_any_ec(_pc.document['value'])))
         return _toworldmany_result
 
     def type(self):
         """This function returns the string `coordsys'.
         """
-        _type_result = self._swigobj.type()
+        _type_result = _str_dc(self._swigobj.type())
         return _type_result
 
     def units(self, type=''):
@@ -1388,7 +1392,7 @@ class coordsys:
         schema = {'type': {'type': 'cStr'}}
         doc = {'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _units_result = self._swigobj.units(_str_encode(_pc.document['type']))
+        _units_result = [_str_dc(_x) for _x in self._swigobj.units(_str_ec(_pc.document['type']))]
         return _units_result
 
     def velocitytofrequency(self, value, frequnit='', doppler='radio', velunit='km/s'):
@@ -1408,16 +1412,16 @@ class coordsys:
         in the Coordinate System. See also the function
         frequencytovelocity.
         """
-        schema = {'value': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'frequnit': {'type': 'cStr'}, 'doppler': {'type': 'cStr'}, 'velunit': {'type': 'cStr'}}
+        schema = {'value': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'frequnit': {'type': 'cStr'}, 'doppler': {'type': 'cStr'}, 'velunit': {'type': 'cStr'}}
         doc = {'value': value, 'frequnit': frequnit, 'doppler': doppler, 'velunit': velunit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _velocitytofrequency_result = self._swigobj.velocitytofrequency(_pc.document['value'], _str_encode(_pc.document['frequnit']), _str_encode(_pc.document['doppler']), _str_encode(_pc.document['velunit']))
+        _velocitytofrequency_result = self._swigobj.velocitytofrequency(_pc.document['value'], _str_ec(_pc.document['frequnit']), _str_ec(_pc.document['doppler']), _str_ec(_pc.document['velunit']))
         return _velocitytofrequency_result
 
     def parentname(self):
         """This function returns the parent image name for `coordsys'.
         """
-        _parentname_result = self._swigobj.parentname()
+        _parentname_result = _str_dc(self._swigobj.parentname())
         return _parentname_result
 
     def setparentname(self, imagename):
@@ -1426,6 +1430,6 @@ class coordsys:
         schema = {'imagename': {'type': 'cStr'}}
         doc = {'imagename': imagename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setparentname_result = self._swigobj.setparentname(_str_encode(_pc.document['imagename']))
+        _setparentname_result = self._swigobj.setparentname(_str_ec(_pc.document['imagename']))
         return _setparentname_result
 

@@ -2,8 +2,12 @@
 ##################### 1cf6407697ca1942b37e37ea830645c3 ##############################
 from __future__ import absolute_import 
 from .__casac__ import utils as _utils
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -23,7 +27,7 @@ class utils:
         schema = {'input': {'type': 'cDict'}, 'xmldescriptor': {'type': 'cVariant'}, 'throwexecpt': {'type': 'cBool'}}
         doc = {'input': input, 'xmldescriptor': xmldescriptor, 'throwexecpt': throwexecpt}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _verify_result = self._swigobj.verify(_pc.document['input'], _pc.document['xmldescriptor'], _pc.document['throwexecpt'])
+        _verify_result = self._swigobj.verify(_dict_ec(_pc.document['input']), _any_ec(_pc.document['xmldescriptor']), _pc.document['throwexecpt'])
         return _verify_result
 
     def setconstraints(self, xmldescriptor=[ ]):
@@ -32,7 +36,7 @@ class utils:
         schema = {'xmldescriptor': {'type': 'cVariant'}}
         doc = {'xmldescriptor': xmldescriptor}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setconstraints_result = self._swigobj.setconstraints(_pc.document['xmldescriptor'])
+        _setconstraints_result = self._swigobj.setconstraints(_any_ec(_pc.document['xmldescriptor']))
         return _setconstraints_result
 
     def verifyparam(self, param={ }):
@@ -41,7 +45,7 @@ class utils:
         schema = {'param': {'type': 'cDict'}}
         doc = {'param': param}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _verifyparam_result = self._swigobj.verifyparam(_pc.document['param'])
+        _verifyparam_result = self._swigobj.verifyparam(_dict_ec(_pc.document['param']))
         return _verifyparam_result
 
     def expandparam(self, name='', value=[ ]):
@@ -50,7 +54,7 @@ class utils:
         schema = {'name': {'type': 'cStr'}, 'value': {'type': 'cVariant'}}
         doc = {'name': name, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _expandparam_result = self._swigobj.expandparam(_str_encode(_pc.document['name']), _pc.document['value'])
+        _expandparam_result = _any_dc(self._swigobj.expandparam(_str_ec(_pc.document['name']), _any_ec(_pc.document['value'])))
         return _expandparam_result
 
     def torecord(self, input):
@@ -59,7 +63,7 @@ class utils:
         schema = {'input': {'type': 'cStr'}}
         doc = {'input': input}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _torecord_result = self._swigobj.torecord(_str_encode(_pc.document['input']))
+        _torecord_result = _dict_dc(self._swigobj.torecord(_str_ec(_pc.document['input'])))
         return _torecord_result
 
     def toxml(self, input={ }, asfile=False, filename='recordas.xml'):
@@ -68,7 +72,7 @@ class utils:
         schema = {'input': {'type': 'cDict'}, 'asfile': {'type': 'cBool'}, 'filename': {'type': 'cStr'}}
         doc = {'input': input, 'asfile': asfile, 'filename': filename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toxml_result = self._swigobj.toxml(_pc.document['input'], _pc.document['asfile'], _str_encode(_pc.document['filename']))
+        _toxml_result = _str_dc(self._swigobj.toxml(_dict_ec(_pc.document['input']), _pc.document['asfile'], _str_ec(_pc.document['filename'])))
         return _toxml_result
 
     def getrc(self, rcvar=''):
@@ -77,16 +81,16 @@ class utils:
         schema = {'rcvar': {'type': 'cStr'}}
         doc = {'rcvar': rcvar}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getrc_result = self._swigobj.getrc(_str_encode(_pc.document['rcvar']))
+        _getrc_result = _str_dc(self._swigobj.getrc(_str_ec(_pc.document['rcvar'])))
         return _getrc_result
 
     def removetable(self, tablenames=[  ]):
         """
         """
-        schema = {'tablenames': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
+        schema = {'tablenames': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}}
         doc = {'tablenames': tablenames}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _removetable_result = self._swigobj.removetable([_str_encode(_x) for _x in _pc.document['tablenames']])
+        _removetable_result = self._swigobj.removetable([_str_ec(_x) for _x in _pc.document['tablenames']])
         return _removetable_result
 
     def tableinfo(self, tablename=''):
@@ -99,19 +103,19 @@ class utils:
         schema = {'tablename': {'type': 'cStr'}}
         doc = {'tablename': tablename}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _tableinfo_result = self._swigobj.tableinfo(_str_encode(_pc.document['tablename']))
+        _tableinfo_result = _dict_dc(self._swigobj.tableinfo(_str_ec(_pc.document['tablename'])))
         return _tableinfo_result
 
     def lockedtables(self):
         """
         """
-        _lockedtables_result = self._swigobj.lockedtables()
+        _lockedtables_result = [_str_dc(_x) for _x in self._swigobj.lockedtables()]
         return _lockedtables_result
 
     def hostinfo(self):
         """
         """
-        _hostinfo_result = self._swigobj.hostinfo()
+        _hostinfo_result = _dict_dc(self._swigobj.hostinfo())
         return _hostinfo_result
 
     def c_exception(self):
@@ -124,7 +128,7 @@ class utils:
         exception.
         
         """
-        _c_exception_result = self._swigobj.c_exception()
+        _c_exception_result = _str_dc(self._swigobj.c_exception())
         return _c_exception_result
 
     def c_exception_clear(self):
@@ -152,7 +156,7 @@ class utils:
         schema = {'crashDumpDirectory': {'type': 'cStr'}, 'crashDumpPosterApplication': {'type': 'cStr'}, 'crashPostingUrl': {'type': 'cStr'}, 'logFile': {'type': 'cStr'}}
         doc = {'crashDumpDirectory': crashDumpDirectory, 'crashDumpPosterApplication': crashDumpPosterApplication, 'crashPostingUrl': crashPostingUrl, 'logFile': logFile}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        __crash_reporter_initialize_result = self._swigobj._crash_reporter_initialize(_str_encode(_pc.document['crashDumpDirectory']), _str_encode(_pc.document['crashDumpPosterApplication']), _str_encode(_pc.document['crashPostingUrl']), _str_encode(_pc.document['logFile']))
+        __crash_reporter_initialize_result = _str_dc(self._swigobj._crash_reporter_initialize(_str_ec(_pc.document['crashDumpDirectory']), _str_ec(_pc.document['crashDumpPosterApplication']), _str_ec(_pc.document['crashPostingUrl']), _str_ec(_pc.document['logFile'])))
         return __crash_reporter_initialize_result
 
     def _trigger_segfault(self, faultType=int(0)):
@@ -170,32 +174,32 @@ class utils:
     def initialize(self, default_path):
         """returns true if initalization was performed; returns false if initialization was already done
         """
-        schema = {'default_path': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
+        schema = {'default_path': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}}
         doc = {'default_path': default_path}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _initialize_result = self._swigobj.initialize([_str_encode(_x) for _x in _pc.document['default_path']])
+        _initialize_result = self._swigobj.initialize([_str_ec(_x) for _x in _pc.document['default_path']])
         return _initialize_result
 
     def defaultpath(self):
         """Returns the default data path. This path is used unless the user has set the current path to something else using the setpath function.
         """
-        _defaultpath_result = self._swigobj.defaultpath()
+        _defaultpath_result = [_str_dc(_x) for _x in self._swigobj.defaultpath()]
         return _defaultpath_result
 
     def setpath(self, dirs=[  ]):
         """Sets the data path to the specified list of directories. Returns true if all directories were added
         returns false otherwise.
         """
-        schema = {'dirs': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}}
+        schema = {'dirs': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}}
         doc = {'dirs': dirs}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setpath_result = self._swigobj.setpath([_str_encode(_x) for _x in _pc.document['dirs']])
+        _setpath_result = self._swigobj.setpath([_str_ec(_x) for _x in _pc.document['dirs']])
         return _setpath_result
 
     def getpath(self):
         """Returns the list of directories that are currently in the data path.
         """
-        _getpath_result = self._swigobj.getpath()
+        _getpath_result = [_str_dc(_x) for _x in self._swigobj.getpath()]
         return _getpath_result
 
     def clearpath(self):
@@ -212,7 +216,7 @@ class utils:
         schema = {'path': {'type': 'cStr'}}
         doc = {'path': path}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _resolve_result = self._swigobj.resolve(_str_encode(_pc.document['path']))
+        _resolve_result = _str_dc(self._swigobj.resolve(_str_ec(_pc.document['path'])))
         return _resolve_result
 
     def version(self):
@@ -226,27 +230,27 @@ class utils:
         cycle there are different sorts of packaged distributions. For example, a development
         version ("DEV") or a release version ("REL").
         """
-        _version_desc_result = self._swigobj.version_desc()
+        _version_desc_result = _str_dc(self._swigobj.version_desc())
         return _version_desc_result
 
     def version_info(self):
         """Returns a description string that includes the version information and the descriptive string..
         """
-        _version_info_result = self._swigobj.version_info()
+        _version_info_result = _str_dc(self._swigobj.version_info())
         return _version_info_result
 
     def version_string(self):
         """Returns a description string that includes the version information and the descriptive string..
         """
-        _version_string_result = self._swigobj.version_string()
+        _version_string_result = _str_dc(self._swigobj.version_string())
         return _version_string_result
 
     def compare_version(self, comparitor, vec):
         """Returns a description string that includes the version information and the descriptive string..
         """
-        schema = {'comparitor': {'type': 'cStr'}, 'vec': {'type': 'cIntVec', 'coerce': _coerce.to_intvec}}
+        schema = {'comparitor': {'type': 'cStr'}, 'vec': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'comparitor': comparitor, 'vec': vec}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _compare_version_result = self._swigobj.compare_version(_str_encode(_pc.document['comparitor']), _pc.document['vec'])
+        _compare_version_result = self._swigobj.compare_version(_str_ec(_pc.document['comparitor']), _pc.document['vec'])
         return _compare_version_result
 

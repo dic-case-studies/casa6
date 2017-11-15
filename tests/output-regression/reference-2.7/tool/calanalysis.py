@@ -2,8 +2,12 @@
 ##################### 6027fdcee2daf9c77e67911b3056537d ##############################
 from __future__ import absolute_import 
 from .__casac__ import calanalysis as _calanalysis
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -23,7 +27,7 @@ class calanalysis:
         schema = {'caltable': {'type': 'cReqPath', 'coerce': _coerce.expand_path}}
         doc = {'caltable': caltable}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _open_result = self._swigobj.open(_pc.document['caltable'])
+        _open_result = self._swigobj.open(_str_ec(_pc.document['caltable']))
         return _open_result
 
     def close(self):
@@ -35,35 +39,35 @@ class calanalysis:
     def calname(self):
         """This member function returns calibration table name.
         """
-        _calname_result = self._swigobj.calname()
+        _calname_result = _str_dc(self._swigobj.calname())
         return _calname_result
 
     def msname(self):
         """This member function returns the name of the MS that created this calibration
         table.
         """
-        _msname_result = self._swigobj.msname()
+        _msname_result = _str_dc(self._swigobj.msname())
         return _msname_result
 
     def viscal(self):
         """This member function returns the type of calibration table ('B', 'G', 'T',
         etc.).
         """
-        _viscal_result = self._swigobj.viscal()
+        _viscal_result = _str_dc(self._swigobj.viscal())
         return _viscal_result
 
     def partype(self):
         """This member function returns the parameter column type in the calibration table
         ('Complex' or 'Float').
         """
-        _partype_result = self._swigobj.partype()
+        _partype_result = _str_dc(self._swigobj.partype())
         return _partype_result
 
     def polbasis(self):
         """This member function returns the polarization basis in the calibration table
         ('L' for linear or 'C' for circular).
         """
-        _polbasis_result = self._swigobj.polbasis()
+        _polbasis_result = _str_dc(self._swigobj.polbasis())
         return _polbasis_result
 
     def numfield(self):
@@ -78,7 +82,7 @@ class calanalysis:
         schema = {'name': {'type': 'cBool'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _field_result = self._swigobj.field(_pc.document['name'])
+        _field_result = [_str_dc(_x) for _x in self._swigobj.field(_pc.document['name'])]
         return _field_result
 
     def numantenna(self):
@@ -105,7 +109,7 @@ class calanalysis:
         schema = {'name': {'type': 'cBool'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antenna_result = self._swigobj.antenna(_pc.document['name'])
+        _antenna_result = [_str_dc(_x) for _x in self._swigobj.antenna(_pc.document['name'])]
         return _antenna_result
 
     def antenna1(self, name=True):
@@ -114,7 +118,7 @@ class calanalysis:
         schema = {'name': {'type': 'cBool'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antenna1_result = self._swigobj.antenna1(_pc.document['name'])
+        _antenna1_result = [_str_dc(_x) for _x in self._swigobj.antenna1(_pc.document['name'])]
         return _antenna1_result
 
     def antenna2(self, name=True):
@@ -123,7 +127,7 @@ class calanalysis:
         schema = {'name': {'type': 'cBool'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _antenna2_result = self._swigobj.antenna2(_pc.document['name'])
+        _antenna2_result = [_str_dc(_x) for _x in self._swigobj.antenna2(_pc.document['name'])]
         return _antenna2_result
 
     def numfeed(self):
@@ -135,7 +139,7 @@ class calanalysis:
     def feed(self):
         """This member function returns the feeds in the calibration table.
         """
-        _feed_result = self._swigobj.feed()
+        _feed_result = [_str_dc(_x) for _x in self._swigobj.feed()]
         return _feed_result
 
     def numtime(self):
@@ -164,7 +168,7 @@ class calanalysis:
         schema = {'name': {'type': 'cBool'}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _spw_result = self._swigobj.spw(_pc.document['name'])
+        _spw_result = [_str_dc(_x) for _x in self._swigobj.spw(_pc.document['name'])]
         return _spw_result
 
     def numchannel(self):
@@ -178,7 +182,7 @@ class calanalysis:
         """This member function returns the frequencies per spectral window in the
         calibration table.
         """
-        _freq_result = self._swigobj.freq()
+        _freq_result = _dict_dc(self._swigobj.freq())
         return _freq_result
 
     def get(self, field=[ ], antenna=[ ], timerange=[ ], spw=[ ], feed=[ ], axis='TIME', ap='AMPLITUDE', norm=False, unwrap=False, jumpmax=float(0.0)):
@@ -187,7 +191,7 @@ class calanalysis:
         schema = {'field': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'timerange': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'feed': {'type': 'cVariant'}, 'axis': {'type': 'cStr'}, 'ap': {'type': 'cStr'}, 'norm': {'type': 'cBool'}, 'unwrap': {'type': 'cBool'}, 'jumpmax': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'field': field, 'antenna': antenna, 'timerange': timerange, 'spw': spw, 'feed': feed, 'axis': axis, 'ap': ap, 'norm': norm, 'unwrap': unwrap, 'jumpmax': jumpmax}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _get_result = self._swigobj.get(_pc.document['field'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['spw'], _pc.document['feed'], _str_encode(_pc.document['axis']), _str_encode(_pc.document['ap']), _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax'])
+        _get_result = _dict_dc(self._swigobj.get(_any_ec(_pc.document['field']), _any_ec(_pc.document['antenna']), _any_ec(_pc.document['timerange']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['feed']), _str_ec(_pc.document['axis']), _str_ec(_pc.document['ap']), _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax']))
         return _get_result
 
     def fit(self, field=[ ], antenna=[ ], timerange=[ ], spw=[ ], feed=[ ], axis='TIME', ap='AMPLITUDE', norm=False, unwrap=False, jumpmax=float(0.0), order='AVERAGE', type='LSQ', weight=False):
@@ -197,6 +201,6 @@ class calanalysis:
         schema = {'field': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'timerange': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'feed': {'type': 'cVariant'}, 'axis': {'type': 'cStr'}, 'ap': {'type': 'cStr'}, 'norm': {'type': 'cBool'}, 'unwrap': {'type': 'cBool'}, 'jumpmax': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'order': {'type': 'cStr'}, 'type': {'type': 'cStr'}, 'weight': {'type': 'cBool'}}
         doc = {'field': field, 'antenna': antenna, 'timerange': timerange, 'spw': spw, 'feed': feed, 'axis': axis, 'ap': ap, 'norm': norm, 'unwrap': unwrap, 'jumpmax': jumpmax, 'order': order, 'type': type, 'weight': weight}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _fit_result = self._swigobj.fit(_pc.document['field'], _pc.document['antenna'], _pc.document['timerange'], _pc.document['spw'], _pc.document['feed'], _str_encode(_pc.document['axis']), _str_encode(_pc.document['ap']), _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax'], _str_encode(_pc.document['order']), _str_encode(_pc.document['type']), _pc.document['weight'])
+        _fit_result = _dict_dc(self._swigobj.fit(_any_ec(_pc.document['field']), _any_ec(_pc.document['antenna']), _any_ec(_pc.document['timerange']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['feed']), _str_ec(_pc.document['axis']), _str_ec(_pc.document['ap']), _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax'], _str_ec(_pc.document['order']), _str_ec(_pc.document['type']), _pc.document['weight']))
         return _fit_result
 

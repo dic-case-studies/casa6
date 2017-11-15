@@ -2,8 +2,12 @@
 ##################### 0f13b59a4d4f695c2b3330fbedc6740d ##############################
 from __future__ import absolute_import 
 from .__casac__ import functional as _functional
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 _wrap_functional = lambda swig_object: functional(swig_object=swig_object)
@@ -23,7 +27,7 @@ class functional:
         schema = {'x': {'type': 'cVariant'}}
         doc = {'x': x}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _f_result = self._swigobj.f(_pc.document['x'])
+        _f_result = _any_dc(self._swigobj.f(_any_ec(_pc.document['x'])))
         return _f_result
 
     def ndim(self):
@@ -54,16 +58,16 @@ class functional:
         calculate the function value at a series of {em x, y} values, or the
         value.
         """
-        schema = {'amplitude': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'center': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'fwhm': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}, 'pa': {'type': 'cVariant'}}
+        schema = {'amplitude': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'center': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'fwhm': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'pa': {'type': 'cVariant'}}
         doc = {'amplitude': amplitude, 'center': center, 'fwhm': fwhm, 'pa': pa}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _gaussian2d_result = _wrap_functional(swig_object=self._swigobj.gaussian2d(_pc.document['amplitude'], _pc.document['center'], _pc.document['fwhm'], _pc.document['pa']))
+        _gaussian2d_result = _wrap_functional(swig_object=self._swigobj.gaussian2d(_pc.document['amplitude'], _pc.document['center'], _pc.document['fwhm'], _any_ec(_pc.document['pa'])))
         return _gaussian2d_result
 
     def polynomial(self, coefficients=[ float(0) ]):
         """Create a 1-dimensional polynomial function with the specified coefficents.
         """
-        schema = {'coefficients': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
+        schema = {'coefficients': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
         doc = {'coefficients': coefficients}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _polynomial_result = _wrap_functional(swig_object=self._swigobj.polynomial(_pc.document['coefficients']))
@@ -72,7 +76,7 @@ class functional:
     def powerlogpoly(self, coefficients=[ float(0) ]):
         """Create a 1-dimensional power log polynomial function with the specified coefficents.
         """
-        schema = {'coefficients': {'type': 'cFloatVec', 'coerce': _coerce.to_floatvec}}
+        schema = {'coefficients': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
         doc = {'coefficients': coefficients}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _powerlogpoly_result = _wrap_functional(swig_object=self._swigobj.powerlogpoly(_pc.document['coefficients']))

@@ -2,8 +2,12 @@
 ##################### 18150fd18af6d56f92e5cf7a8abb1e3d ##############################
 from __future__ import absolute_import 
 from .__casac__ import quanta as _quanta
-from .platform import str_encode as _str_encode
-from .platform import str_decode as _str_decode
+from .platform import str_encode as _str_ec
+from .platform import str_decode as _str_dc
+from .platform import dict_encode as _dict_ec
+from .platform import dict_decode as _dict_dc
+from .platform import encode as _any_ec
+from .platform import decode as _any_dc
 from .typecheck import validator as _pc
 from .coercetype import coerce as _coerce
 
@@ -24,7 +28,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'outunit': {'type': 'cStr'}}
         doc = {'v': v, 'outunit': outunit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertfreq_result = self._swigobj.convertfreq(_pc.document['v'], _str_encode(_pc.document['outunit']))
+        _convertfreq_result = _dict_dc(self._swigobj.convertfreq(_any_ec(_pc.document['v']), _str_ec(_pc.document['outunit'])))
         return _convertfreq_result
 
     def convertdop(self, v=[ ], outunit='km/s'):
@@ -34,7 +38,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'outunit': {'type': 'cStr'}}
         doc = {'v': v, 'outunit': outunit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convertdop_result = self._swigobj.convertdop(_pc.document['v'], _str_encode(_pc.document['outunit']))
+        _convertdop_result = _dict_dc(self._swigobj.convertdop(_any_ec(_pc.document['v']), _str_ec(_pc.document['outunit'])))
         return _convertdop_result
 
     def quantity(self, v=[ ], unitname=''):
@@ -52,7 +56,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'unitname': {'type': 'cStr'}}
         doc = {'v': v, 'unitname': unitname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _quantity_result = self._swigobj.quantity(_pc.document['v'], _str_encode(_pc.document['unitname']))
+        _quantity_result = _dict_dc(self._swigobj.quantity(_any_ec(_pc.document['v']), _str_ec(_pc.document['unitname'])))
         return _quantity_result
 
     def getvalue(self, v=[ ]):
@@ -62,7 +66,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getvalue_result = self._swigobj.getvalue(_pc.document['v'])
+        _getvalue_result = self._swigobj.getvalue(_any_ec(_pc.document['v']))
         return _getvalue_result
 
     def getunit(self, v=[ ]):
@@ -71,7 +75,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getunit_result = self._swigobj.getunit(_pc.document['v'])
+        _getunit_result = _str_dc(self._swigobj.getunit(_any_ec(_pc.document['v'])))
         return _getunit_result
 
     def canonical(self, v=[ ]):
@@ -80,7 +84,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _canonical_result = self._swigobj.canonical(_pc.document['v'])
+        _canonical_result = _dict_dc(self._swigobj.canonical(_any_ec(_pc.document['v'])))
         return _canonical_result
 
     def canon(self, v=[ ]):
@@ -89,7 +93,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _canon_result = self._swigobj.canon(_pc.document['v'])
+        _canon_result = _dict_dc(self._swigobj.canon(_any_ec(_pc.document['v'])))
         return _canon_result
 
     def convert(self, v=[ ], outunit=[ ]):
@@ -99,7 +103,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'outunit': {'type': 'cVariant'}}
         doc = {'v': v, 'outunit': outunit}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _convert_result = self._swigobj.convert(_pc.document['v'], _pc.document['outunit'])
+        _convert_result = _dict_dc(self._swigobj.convert(_any_ec(_pc.document['v']), _any_ec(_pc.document['outunit'])))
         return _convert_result
 
     def define(self, name, v=[ ]):
@@ -108,7 +112,7 @@ class quanta:
         schema = {'name': {'type': 'cStr'}, 'v': {'type': 'cVariant'}}
         doc = {'name': name, 'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _define_result = self._swigobj.define(_str_encode(_pc.document['name']), _pc.document['v'])
+        _define_result = self._swigobj.define(_str_ec(_pc.document['name']), _any_ec(_pc.document['v']))
         return _define_result
 
     def map(self, v='all'):
@@ -127,7 +131,7 @@ class quanta:
         schema = {'v': {'type': 'cStr'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _map_result = self._swigobj.map(_str_encode(_pc.document['v']))
+        _map_result = _str_dc(self._swigobj.map(_str_ec(_pc.document['v'])))
         return _map_result
 
     def maprec(self, v='all'):
@@ -144,7 +148,7 @@ class quanta:
         schema = {'v': {'type': 'cStr'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _maprec_result = self._swigobj.maprec(_str_encode(_pc.document['v']))
+        _maprec_result = _dict_dc(self._swigobj.maprec(_str_ec(_pc.document['v'])))
         return _maprec_result
 
     def fits(self):
@@ -172,10 +176,10 @@ class quanta:
         by a pair of square brackets if there is more than one entry, and fields are
         separated by a ','.
         """
-        schema = {'v': {'type': 'cVariant'}, 'prec': {'type': 'cInt'}, 'form': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'showform': {'type': 'cBool'}}
+        schema = {'v': {'type': 'cVariant'}, 'prec': {'type': 'cInt'}, 'form': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'showform': {'type': 'cBool'}}
         doc = {'v': v, 'prec': prec, 'form': form, 'showform': showform}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _angle_result = self._swigobj.angle(_pc.document['v'], _pc.document['prec'], [_str_encode(_x) for _x in _pc.document['form']], _pc.document['showform'])
+        _angle_result = [_str_dc(_x) for _x in self._swigobj.angle(_any_ec(_pc.document['v']), _pc.document['prec'], [_str_ec(_x) for _x in _pc.document['form']], _pc.document['showform'])]
         return _angle_result
 
     def time(self, v=[ ], prec=int(0), form=[  ], showform=False):
@@ -203,10 +207,10 @@ class quanta:
         by a pair of square brackets if there is more than one entry, and fields are
         separated by a ','.
         """
-        schema = {'v': {'type': 'cVariant'}, 'prec': {'type': 'cInt'}, 'form': {'type': 'cStrVec', 'coerce': _coerce.to_strvec}, 'showform': {'type': 'cBool'}}
+        schema = {'v': {'type': 'cVariant'}, 'prec': {'type': 'cInt'}, 'form': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'showform': {'type': 'cBool'}}
         doc = {'v': v, 'prec': prec, 'form': form, 'showform': showform}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _time_result = self._swigobj.time(_pc.document['v'], _pc.document['prec'], [_str_encode(_x) for _x in _pc.document['form']], _pc.document['showform'])
+        _time_result = [_str_dc(_x) for _x in self._swigobj.time(_any_ec(_pc.document['v']), _pc.document['prec'], [_str_ec(_x) for _x in _pc.document['form']], _pc.document['showform'])]
         return _time_result
 
     def add(self, v=[ ], a=[ ]):
@@ -215,7 +219,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _add_result = self._swigobj.add(_pc.document['v'], _pc.document['a'])
+        _add_result = _dict_dc(self._swigobj.add(_any_ec(_pc.document['v']), _any_ec(_pc.document['a'])))
         return _add_result
 
     def sub(self, v=[ ], a=[ ]):
@@ -224,7 +228,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _sub_result = self._swigobj.sub(_pc.document['v'], _pc.document['a'])
+        _sub_result = _dict_dc(self._swigobj.sub(_any_ec(_pc.document['v']), _any_ec(_pc.document['a'])))
         return _sub_result
 
     def mul(self, v=[ ], a=[ ]):
@@ -233,7 +237,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _mul_result = self._swigobj.mul(_pc.document['v'], _pc.document['a'])
+        _mul_result = _dict_dc(self._swigobj.mul(_any_ec(_pc.document['v']), _any_ec(_pc.document['a'])))
         return _mul_result
 
     def div(self, v=[ ], a=[ ]):
@@ -242,7 +246,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _div_result = self._swigobj.div(_pc.document['v'], _pc.document['a'])
+        _div_result = _dict_dc(self._swigobj.div(_any_ec(_pc.document['v']), _any_ec(_pc.document['a'])))
         return _div_result
 
     def neg(self, v=[ ]):
@@ -251,7 +255,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _neg_result = self._swigobj.neg(_pc.document['v'])
+        _neg_result = _dict_dc(self._swigobj.neg(_any_ec(_pc.document['v'])))
         return _neg_result
 
     def norm(self, v=[ ], a=float(-0.5)):
@@ -262,7 +266,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _norm_result = self._swigobj.norm(_pc.document['v'], _pc.document['a'])
+        _norm_result = _dict_dc(self._swigobj.norm(_any_ec(_pc.document['v']), _pc.document['a']))
         return _norm_result
 
     def le(self, v=[ ], a=[ ]):
@@ -271,7 +275,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _le_result = self._swigobj.le(_pc.document['v'], _pc.document['a'])
+        _le_result = self._swigobj.le(_any_ec(_pc.document['v']), _any_ec(_pc.document['a']))
         return _le_result
 
     def lt(self, v=[ ], a=[ ]):
@@ -280,7 +284,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _lt_result = self._swigobj.lt(_pc.document['v'], _pc.document['a'])
+        _lt_result = self._swigobj.lt(_any_ec(_pc.document['v']), _any_ec(_pc.document['a']))
         return _lt_result
 
     def eq(self, v=[ ], a=[ ]):
@@ -289,7 +293,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _eq_result = self._swigobj.eq(_pc.document['v'], _pc.document['a'])
+        _eq_result = self._swigobj.eq(_any_ec(_pc.document['v']), _any_ec(_pc.document['a']))
         return _eq_result
 
     def ne(self, v=[ ], a=[ ]):
@@ -298,7 +302,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _ne_result = self._swigobj.ne(_pc.document['v'], _pc.document['a'])
+        _ne_result = self._swigobj.ne(_any_ec(_pc.document['v']), _any_ec(_pc.document['a']))
         return _ne_result
 
     def gt(self, v=[ ], a=[ ]):
@@ -307,7 +311,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _gt_result = self._swigobj.gt(_pc.document['v'], _pc.document['a'])
+        _gt_result = self._swigobj.gt(_any_ec(_pc.document['v']), _any_ec(_pc.document['a']))
         return _gt_result
 
     def ge(self, v=[ ], a=[ ]):
@@ -316,7 +320,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _ge_result = self._swigobj.ge(_pc.document['v'], _pc.document['a'])
+        _ge_result = self._swigobj.ge(_any_ec(_pc.document['v']), _any_ec(_pc.document['a']))
         return _ge_result
 
     def sin(self, v=[ ]):
@@ -325,7 +329,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _sin_result = self._swigobj.sin(_pc.document['v'])
+        _sin_result = _dict_dc(self._swigobj.sin(_any_ec(_pc.document['v'])))
         return _sin_result
 
     def cos(self, v=[ ]):
@@ -334,7 +338,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _cos_result = self._swigobj.cos(_pc.document['v'])
+        _cos_result = _dict_dc(self._swigobj.cos(_any_ec(_pc.document['v'])))
         return _cos_result
 
     def tan(self, v=[ ]):
@@ -343,7 +347,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _tan_result = self._swigobj.tan(_pc.document['v'])
+        _tan_result = _dict_dc(self._swigobj.tan(_any_ec(_pc.document['v'])))
         return _tan_result
 
     def asin(self, v=[ ]):
@@ -352,7 +356,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _asin_result = self._swigobj.asin(_pc.document['v'])
+        _asin_result = _dict_dc(self._swigobj.asin(_any_ec(_pc.document['v'])))
         return _asin_result
 
     def acos(self, v=[ ]):
@@ -361,7 +365,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _acos_result = self._swigobj.acos(_pc.document['v'])
+        _acos_result = _dict_dc(self._swigobj.acos(_any_ec(_pc.document['v'])))
         return _acos_result
 
     def atan(self, v=[ ]):
@@ -370,7 +374,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _atan_result = self._swigobj.atan(_pc.document['v'])
+        _atan_result = _dict_dc(self._swigobj.atan(_any_ec(_pc.document['v'])))
         return _atan_result
 
     def atan2(self, v=[ ], a=[ ]):
@@ -379,7 +383,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _atan2_result = self._swigobj.atan2(_pc.document['v'], _pc.document['a'])
+        _atan2_result = _dict_dc(self._swigobj.atan2(_any_ec(_pc.document['v']), _any_ec(_pc.document['a'])))
         return _atan2_result
 
     def abs(self, v=[ ]):
@@ -388,7 +392,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _abs_result = self._swigobj.abs(_pc.document['v'])
+        _abs_result = _dict_dc(self._swigobj.abs(_any_ec(_pc.document['v'])))
         return _abs_result
 
     def ceil(self, v=[ ]):
@@ -397,7 +401,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _ceil_result = self._swigobj.ceil(_pc.document['v'])
+        _ceil_result = _dict_dc(self._swigobj.ceil(_any_ec(_pc.document['v'])))
         return _ceil_result
 
     def floor(self, v=[ ]):
@@ -406,7 +410,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _floor_result = self._swigobj.floor(_pc.document['v'])
+        _floor_result = _dict_dc(self._swigobj.floor(_any_ec(_pc.document['v'])))
         return _floor_result
 
     def log(self, v=[ ]):
@@ -415,7 +419,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _log_result = self._swigobj.log(_pc.document['v'])
+        _log_result = _dict_dc(self._swigobj.log(_any_ec(_pc.document['v'])))
         return _log_result
 
     def log10(self, v=[ ]):
@@ -424,7 +428,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _log10_result = self._swigobj.log10(_pc.document['v'])
+        _log10_result = _dict_dc(self._swigobj.log10(_any_ec(_pc.document['v'])))
         return _log10_result
 
     def exp(self, v=[ ]):
@@ -433,7 +437,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _exp_result = self._swigobj.exp(_pc.document['v'])
+        _exp_result = _dict_dc(self._swigobj.exp(_any_ec(_pc.document['v'])))
         return _exp_result
 
     def sqrt(self, v=[ ]):
@@ -442,7 +446,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _sqrt_result = self._swigobj.sqrt(_pc.document['v'])
+        _sqrt_result = _dict_dc(self._swigobj.sqrt(_any_ec(_pc.document['v'])))
         return _sqrt_result
 
     def compare(self, v=[ ], a=[ ]):
@@ -451,7 +455,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cVariant'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _compare_result = self._swigobj.compare(_pc.document['v'], _pc.document['a'])
+        _compare_result = self._swigobj.compare(_any_ec(_pc.document['v']), _any_ec(_pc.document['a']))
         return _compare_result
 
     def check(self, v):
@@ -460,7 +464,7 @@ class quanta:
         schema = {'v': {'type': 'cStr'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _check_result = self._swigobj.check(_str_encode(_pc.document['v']))
+        _check_result = self._swigobj.check(_str_ec(_pc.document['v']))
         return _check_result
 
     def checkfreq(self, cm=[ ]):
@@ -470,7 +474,7 @@ class quanta:
         schema = {'cm': {'type': 'cVariant'}}
         doc = {'cm': cm}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _checkfreq_result = self._swigobj.checkfreq(_pc.document['cm'])
+        _checkfreq_result = self._swigobj.checkfreq(_any_ec(_pc.document['cm']))
         return _checkfreq_result
 
     def pow(self, v=[ ], a=int(1)):
@@ -479,7 +483,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'a': {'type': 'cInt'}}
         doc = {'v': v, 'a': a}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _pow_result = self._swigobj.pow(_pc.document['v'], _pc.document['a'])
+        _pow_result = _dict_dc(self._swigobj.pow(_any_ec(_pc.document['v']), _pc.document['a']))
         return _pow_result
 
     def constants(self, v='pi'):
@@ -509,7 +513,7 @@ class quanta:
         schema = {'v': {'type': 'cStr'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _constants_result = self._swigobj.constants(_str_encode(_pc.document['v']))
+        _constants_result = _dict_dc(self._swigobj.constants(_str_ec(_pc.document['v'])))
         return _constants_result
 
     def isangle(self, v=[ ]):
@@ -518,7 +522,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _isangle_result = self._swigobj.isangle(_pc.document['v'])
+        _isangle_result = self._swigobj.isangle(_any_ec(_pc.document['v']))
         return _isangle_result
 
     def totime(self, v=[ ]):
@@ -527,7 +531,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _totime_result = self._swigobj.totime(_pc.document['v'])
+        _totime_result = _dict_dc(self._swigobj.totime(_any_ec(_pc.document['v'])))
         return _totime_result
 
     def toangle(self, v=[ ]):
@@ -536,7 +540,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _toangle_result = self._swigobj.toangle(_pc.document['v'])
+        _toangle_result = _dict_dc(self._swigobj.toangle(_any_ec(_pc.document['v'])))
         return _toangle_result
 
     def splitdate(self, v=[ ]):
@@ -548,7 +552,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _splitdate_result = self._swigobj.splitdate(_pc.document['v'])
+        _splitdate_result = _dict_dc(self._swigobj.splitdate(_any_ec(_pc.document['v'])))
         return _splitdate_result
 
     def tos(self, v=[ ], prec=int(9)):
@@ -560,13 +564,13 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'prec': {'type': 'cInt'}}
         doc = {'v': v, 'prec': prec}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _tos_result = self._swigobj.tos(_pc.document['v'], _pc.document['prec'])
+        _tos_result = _str_dc(self._swigobj.tos(_any_ec(_pc.document['v']), _pc.document['prec']))
         return _tos_result
 
     def type(self):
         """type will return the tool name.
         """
-        _type_result = self._swigobj.type()
+        _type_result = _str_dc(self._swigobj.type())
         return _type_result
 
     def done(self, kill=False):
@@ -585,7 +589,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'unitname': {'type': 'cStr'}}
         doc = {'v': v, 'unitname': unitname}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _unit_result = self._swigobj.unit(_pc.document['v'], _str_encode(_pc.document['unitname']))
+        _unit_result = _dict_dc(self._swigobj.unit(_any_ec(_pc.document['v']), _str_ec(_pc.document['unitname'])))
         return _unit_result
 
     def isquantity(self, v=[ ]):
@@ -594,7 +598,7 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}}
         doc = {'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _isquantity_result = self._swigobj.isquantity(_pc.document['v'])
+        _isquantity_result = self._swigobj.isquantity(_any_ec(_pc.document['v']))
         return _isquantity_result
 
     def setformat(self, t='', v='F'):
@@ -603,7 +607,7 @@ class quanta:
         schema = {'t': {'type': 'cStr'}, 'v': {'type': 'cStr'}}
         doc = {'t': t, 'v': v}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setformat_result = self._swigobj.setformat(_str_encode(_pc.document['t']), _str_encode(_pc.document['v']))
+        _setformat_result = self._swigobj.setformat(_str_ec(_pc.document['t']), _str_ec(_pc.document['v']))
         return _setformat_result
 
     def getformat(self, t=''):
@@ -617,7 +621,7 @@ class quanta:
         schema = {'t': {'type': 'cStr'}}
         doc = {'t': t}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _getformat_result = self._swigobj.getformat(_str_encode(_pc.document['t']))
+        _getformat_result = _str_dc(self._swigobj.getformat(_str_ec(_pc.document['t'])))
         return _getformat_result
 
     def formxxx(self, v=[ ], format='dms', prec=int(2)):
@@ -627,6 +631,6 @@ class quanta:
         schema = {'v': {'type': 'cVariant'}, 'format': {'type': 'cStr'}, 'prec': {'type': 'cInt'}}
         doc = {'v': v, 'format': format, 'prec': prec}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _formxxx_result = self._swigobj.formxxx(_pc.document['v'], _str_encode(_pc.document['format']), _pc.document['prec'])
+        _formxxx_result = _str_dc(self._swigobj.formxxx(_any_ec(_pc.document['v']), _str_ec(_pc.document['format']), _pc.document['prec']))
         return _formxxx_result
 
