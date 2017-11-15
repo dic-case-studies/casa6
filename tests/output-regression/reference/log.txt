@@ -1,4 +1,4 @@
-start time: Mon Nov 13 10:18:42 2017
+start time: Wed Nov 15 12:51:10 2017
 input files:
     xml/tools/atmosphere.xml
     xml/tools/calanalysis.xml
@@ -20,7 +20,7 @@ input files:
     xml/tools/table.xml
     xml/tools/utils.xml
     xml/tools/vpmanager.xml
-command: scripts/xml-casa output-c=tests/output-regression/171113/source output-h=tests/output-regression/171113/include output-i=tests/output-regression/171113/swig output-tool=tests/output-regression/171113/tool -all xml/tools/atmosphere.xml xml/tools/calanalysis.xml xml/tools/calibrater.xml xml/tools/componentlist.xml xml/tools/coordsys.xml xml/tools/functional.xml xml/tools/image.xml xml/tools/imagepol.xml xml/tools/measures.xml xml/tools/ms.xml xml/tools/msmetadata.xml xml/tools/quanta.xml xml/tools/regionmanager.xml xml/tools/synthesisimager.xml xml/tools/synthesisimstore.xml xml/tools/synthesisnormalizer.xml xml/tools/synthesisutils.xml xml/tools/table.xml xml/tools/utils.xml xml/tools/vpmanager.xml
+command: scripts/xml-casa output-c=tests/output-regression/171115/source output-h=tests/output-regression/171115/include output-i=tests/output-regression/171115/swig output-tool=tests/output-regression/171115/tool -all xml/tools/atmosphere.xml xml/tools/calanalysis.xml xml/tools/calibrater.xml xml/tools/componentlist.xml xml/tools/coordsys.xml xml/tools/functional.xml xml/tools/image.xml xml/tools/imagepol.xml xml/tools/measures.xml xml/tools/ms.xml xml/tools/msmetadata.xml xml/tools/quanta.xml xml/tools/regionmanager.xml xml/tools/synthesisimager.xml xml/tools/synthesisimstore.xml xml/tools/synthesisnormalizer.xml xml/tools/synthesisutils.xml xml/tools/table.xml xml/tools/utils.xml xml/tools/vpmanager.xml
 output:
     <inc> coordsys, image, synthesisimstore, msmetadata, table
     <tgt> libmsmetadata < msmetadata

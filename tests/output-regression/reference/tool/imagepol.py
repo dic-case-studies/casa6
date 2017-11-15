@@ -285,7 +285,7 @@ class imagepol:
         schema = {'image': {'anyof': [{'type': 'cReqPath', 'coerce': _coerce.expand_path}, {'type': 'cDict'}]}}
         doc = {'image': image}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _open_result = self._swigobj.open(_pc.document['image'])
+        _open_result = self._swigobj.open(_any_ec(_pc.document['image']))
         return _open_result
 
     def pol(self, which, debias=False, clip=float(10.0), sigma=float(-1), outfile=''):
