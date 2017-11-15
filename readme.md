@@ -3,6 +3,8 @@
 
 CASAtools is a self-contained python module that provides the tools from the [CASA](http://casa.nrao.edu/) project. The module only contains the non-GUI tools which are the [SWIG](http://swig.org) bound C++ functionality from CASA.
 
+CASAtools can be built and used with either **Python 2.7** or **Python 3.4**.
+
 ## Maturity
 
 This is alpha software in every sense of the word. Currently the goal is just to make this usable on the Linux platforms which the [CASA](http://casa.nrao.edu) project supports for development, [RedHat Enterprise Linux](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) release 6 and release 7.
