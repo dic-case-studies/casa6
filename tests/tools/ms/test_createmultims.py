@@ -63,12 +63,12 @@ def listpartition(vis=None, createdict=None, listfile=None):
         try:
             tblocal.open(mmsname, nomodify=True)
         except:
-            raise ValueError, "Unable to open table %s" % mmsname
+            raise ValueError("Unable to open table %s" % mmsname)
     
         tbinfo = tblocal.info()
         tblocal.close()
     
-        if tbinfo.has_key('readme'):
+        if 'readme' in tbinfo:
             readme = tbinfo['readme']
             readlist = readme.splitlines()
             for val in readlist:
@@ -170,7 +170,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
                 mslocal1.close()
             except:
                 mslocal1.close()
-                raise Exception, 'Cannot get scan/spw information from subMS'
+                raise Exception('Cannot get scan/spw information from subMS')
 
             # Get the data volume in bytes per sub-MS
             sizelist.append(getDiskUsage(subms))
@@ -250,13 +250,12 @@ def listpartition(vis=None, createdict=None, listfile=None):
         if (type(vis) == str) & os.path.exists(vis):
             mslocal.open(thems=vis)
         else:
-            raise Exception, \
-                'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
 
         # Check output filename existence 
         if listfile is not None and isinstance(listfile,str) and listfile != '':
             if (type(listfile) == str) & os.path.exists(listfile):
-                raise Exception, 'Output file \'%s\' already exists'%listfile
+                raise Exception('Output file \'%s\' already exists'%listfile)
             
             ffout = open(listfile, 'w')
             
@@ -289,12 +288,11 @@ def listpartition(vis=None, createdict=None, listfile=None):
         try:
             outdict = {}
             outdict = getScanSpwSummary(mslist) 
-        except Exception, instance:
-            print('%s'%instance,'ERROR')
+        except Exception as instance:
+            print('%s ERROR'%instance)
 
         # Now loop through the dictionary to print the information
-        indices = outdict.keys()
-        indices.sort()
+        indices = sorted(outdict.keys())
             
         counter = 0
         for index in indices:
@@ -307,8 +305,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
             # Sort scans for more optimal printing
             # Print information per scan
             firstscan = True
-            skeys = SCAN.keys()
-            skeys.sort()
+            skeys = sorted(SCAN.keys())
             for myscan in skeys:
                 SPW = outdict[index]['scanId'][myscan]['spwIds']
                 NCHAN = outdict[index]['scanId'][myscan]['nchans']
@@ -352,9 +349,9 @@ def listpartition(vis=None, createdict=None, listfile=None):
         
         return {}
             
-    except Exception, instance:
+    except Exception as instance:
 #        mslocal.close()
-        print '*** Error ***', instance
+        print('*** Error *** %s' % instance)
     
 
            
@@ -369,7 +366,7 @@ class test_createmultims(unittest.TestCase):
         global msname, myname
         self.tb.open(msname+"/"+thename)
         for mycell in theexpectation:
-            print myname, ": comparing ", mycell
+            print("%s: comparing %s" % (myname,mycell))
             value = self.tb.getcell(mycell[0], mycell[1])
             # see if value is array
             try:
@@ -392,13 +389,13 @@ class test_createmultims(unittest.TestCase):
                     except:
                         in_agreement = False
             if not in_agreement:
-                print myname, ":  Error in MS subtable", thename, ":"
-                print "     column ", mycell[0], " row ", mycell[1], " contains ", value
-                print "     expected value is ", mycell[2]
+                print("%s:  Error in MS subtable %s:" % (myname,thename))
+                print("     column %s row %s contains %s" % (mycell[0],mycell[1],value))
+                print("     expected value is %s" % mycell[2])
                 self.tb.close()
                 return False
         self.tb.close()
-        print myname, ": table ", thename, " as expected."
+        print("%s: table %s as expected." % (myname,thename))
         return True
 
     def setUp(self):
@@ -412,7 +409,7 @@ class test_createmultims(unittest.TestCase):
         os.chdir(ctsys.resolve(datapath))
         for mymsname in sorted(glob.glob("part*.ms")):
             if not mymsname in filespresent:
-                print "Copying ", mymsname
+                print("Copying %s" % mymsname)
                 shutil.copytree(mymsname, cpath+'/'+mymsname)
         os.chdir(cpath)
         

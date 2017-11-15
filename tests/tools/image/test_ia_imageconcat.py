@@ -86,7 +86,6 @@ class ia_imageconcat_test(unittest.TestCase):
         myia = self._myia
         shape = [4, 4, 20]
         myia.fromshape("", shape)
-        print "*** here 1"
         blc1=[0, 0, 0]
         trc1=[shape[0]-1, shape[1]-1, shape[2]/2-1]
         rg1 = self.rg.box(blc=blc1, trc=trc1)
@@ -106,7 +105,6 @@ class ia_imageconcat_test(unittest.TestCase):
         major3 = self.qa.quantity("5arcmin")
         minor3 = self.qa.quantity("4arcmin")
         pa3 = self.qa.quantity("20deg")
-        print "*** here 2"
 
         # first image has no beam while second does
         sub1.setbrightnessunit("Jy/pixel") 

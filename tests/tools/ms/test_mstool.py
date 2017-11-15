@@ -43,7 +43,7 @@ from CASAtools import ctsys
 
 datadir = 'regression/'
 datafile = os.path.join(datadir, "unittest/listobs/ngc5921_ut.ms")
-print 'ms tool tests will use data from '+ datafile
+print('ms tool tests will use data from '+ datafile)
 
 class mstool_test_base(unittest.TestCase):
     
@@ -426,7 +426,7 @@ class mstool_test_select(mstool_test_base):
         self.assertAlmostEqual(rec['data'][0][0][0], (62.093727111816406+0j))
 
         # test invalid selection
-        print "\nTest invalid channel selection:"
+        print("\nTest invalid channel selection:")
         self.ms.selectinit(reset=True)
         self.assertFalse(self.ms.selectchannel(128,2,5,3))
         print
@@ -452,7 +452,7 @@ class mstool_test_select(mstool_test_base):
         self.assertAlmostEqual(rec['data'][0][2][0], (70.219131469726562+0j))
 
         # test invalid selection
-        print "\nTest invalid channel selection:"
+        print("\nTest invalid channel selection:")
         self.ms.selectinit2(reset=True)
         self.assertFalse(self.ms.selectchannel2(2,128,5,3))
         print
@@ -776,7 +776,7 @@ class mstool_test_dataIO(mstool_test_base):
         self.assertEqual(rec['data'].shape, (ncorr, nchan, nIfr, nAnt))
         # increment 2
         rec = self.ms.getdata(['data'], increment=2)
-        self.assertEqual(rec['data'].shape, (ncorr, nchan, nrow/2))
+        self.assertEqual(rec['data'].shape, (ncorr, nchan, nrow//2))
         # average True, ifraxis False - avg over row axis
         rec = self.ms.getdata(['data'], average=True)
         self.assertEqual(rec['data'].shape, (ncorr, nchan))
@@ -807,7 +807,7 @@ class mstool_test_dataIO(mstool_test_base):
         self.assertEqual(rec['data'].shape, (ncorr, nchan, nIfr, nAnt))
         # increment 2
         rec = self.ms.getdata2(['data'], increment=2)
-        self.assertEqual(rec['data'].shape, (ncorr, nchan, nrow/2))
+        self.assertEqual(rec['data'].shape, (ncorr, nchan, nrow//2))
         # average True, ifraxis False - avg over row axis
         rec = self.ms.getdata2(['data'], average=True)
         self.assertEqual(rec['data'].shape, (ncorr, nchan))

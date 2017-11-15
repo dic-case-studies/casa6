@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+use File::Find;
+use File::Copy;
+use Cwd qw(abs_path);
+
+die "expected one or more source directory" unless scalar(@ARGV) > 0;
+foreach ( @ARGV ) {
+    die "the argument should be a directory" unless -d $_;
+}
+@sourcedirs = @ARGV;
+
+sub curfiles {
+    my $files = shift(@_);
+    if ( -f $_ && $_ ne "dup" && $_ ne "dup~") { $$files{$_} = abs_path($_) }
+};
+
+%files = ( );
+find( sub { curfiles( \%files ) }, "." );
+
+sub copyfiles {
+    my $target = shift(@_);
+    if ( $File::Find::dir =~ m|/__casac__| || $File::Find::dir =~ m|/OLDOLD| ) {
+        return;
+    }
+    if ( -f $_ && exists $$target{$_} ) {
+        copy( $_, $$target{$_} );
+        print "$File::Find::dir/$_\t->\t$$target{$_}\n";
+    }
+};
+foreach $sourcedir ( @sourcedirs ) {
+    find( sub { copyfiles( \%files ) }, $sourcedir );
+}

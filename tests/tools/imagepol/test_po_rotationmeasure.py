@@ -67,11 +67,11 @@
 ###########################################################################
 import shutil
 import unittest
-import scipy.constants
 
 from CASAtools import imagepol as potool
 from CASAtools import image as iatool
 from CASAtools import table
+from CASAtools import constants
 
 datapath='regression/unittest/po_tool/'
 eq_beams = datapath + "pol_eq_beams.fits"
@@ -91,7 +91,7 @@ class po_rotationmeasure_test(unittest.TestCase):
     def test_multibeam(self):
         """Test multibeam images for correct behavior"""
         mypo = self.mypo
-        print eq_beams
+        print(eq_beams)
         mypo.open(eq_beams)
         self.assertTrue(mypo.rotationmeasure("g"))
         mypo.done()
@@ -148,7 +148,7 @@ class po_rotationmeasure_test(unittest.TestCase):
         # U values all 1
         U = 1
         pixvals[:,:,2,:] = U
-        c = scipy.constants.c
+        c = constants.c
         RM = 9.6
         pa0deg = 22.5
         pa0 = pa0deg/180*pi

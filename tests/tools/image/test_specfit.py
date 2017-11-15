@@ -983,7 +983,7 @@ class specfit_test(unittest.TestCase):
         myia.putchunk(bb)
         residual = "bad.im"
         res = myia.fitprofile(ngauss=0, poly=2, residual=residual)
-        zz = range(20)
+        zz = list(range(20))
         del zz[15]
         del zz[10]
         del zz[5]

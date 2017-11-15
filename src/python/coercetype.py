@@ -2,6 +2,7 @@
 ## CASAtools source file (src/python/coercetype.py)
 ##
 from __future__ import absolute_import
+from .platform import str_encode
 import sys
 import os
 import numpy
@@ -18,6 +19,15 @@ class CasaCoerce:
         if isinstance(value,str):
             return [value]
         return value
+
+    def to_list(self,value):
+        if isinstance(value,str):
+            return value
+        try:
+            i = iter(value)
+            return list(value)
+        except TypeError:
+            return value
 
     def to_int(self,value):
         if isinstance(value,numpy.int32):
@@ -55,7 +65,7 @@ class CasaCoerce:
         ###
         ### cerberus validation is not reentrant...
         ###
-        return self.ctsys._swigobj.resolve(value)
+        return self.ctsys._swigobj.resolve(str_encode(value))
 
 coerce = CasaCoerce( )
 

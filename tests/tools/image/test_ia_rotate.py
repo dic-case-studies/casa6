@@ -122,7 +122,7 @@ class ia_rotate_test(unittest.TestCase):
         rot = myia.rotate(pa="45deg")
         myia.done()
         msgs = rot.history()
-        print "msgs ", msgs
+        print("msgs %s" %  msgs)
         rot.done()
         self.assertTrue("ia.rotate" in msgs[-2])
         self.assertTrue("ia.rotate" in msgs[-1])

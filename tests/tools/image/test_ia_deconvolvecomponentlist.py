@@ -130,7 +130,7 @@ class ia_deconvolvecomponentlist_test(unittest.TestCase):
             bb.done()
             self.assertTrue(self.__near(shape["majoraxis"], emaj[i], tol))
             self.assertTrue(self.__near(shape["minoraxis"], emin[i], tol))
-            print "*** pa " + str(shape["positionangle"])
+            print("*** pa %s" % shape["positionangle"])
             self.assertTrue(self.__near(shape["positionangle"], epa[i], tol))
         
 def suite():
