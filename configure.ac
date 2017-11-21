@@ -90,6 +90,7 @@ AX_LIB_STDCXX
 dnl#################################################################################################
 dnl###  add C++ compiler path to start of PATH to try and find matching c/fortran compilers      ###
 dnl#################################################################################################
+save_PATH_save=${PATH}
 PATH=$(dirname $CXX)${PATH_SEPARATOR}${PATH}
 
 AC_PROG_CC
@@ -101,13 +102,16 @@ AX_CHECK_COMPILE_FLAG(-fcx-fortran-rules,[CC_FORTRAN_COMPLEX=-fcx-fortran-rules]
 AC_SUBST(CC_FORTRAN_COMPLEX)
 AC_LANG_POP([C])
 
-AC_PROG_FC([gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
+AC_PROG_FC([gfortran-mp-5 gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
 AX_PATH_TO_BINARY(${FC},FC)
 AC_MSG_NOTICE([Fortran compiler ${FC}])
 if test -f "$FC" -a ! -x "$FC"; then
    echo "could not find fortran compiler..."
    exit 1
 fi
+PATH=${save_PATH_save}
+
+AC_PATH_PROG([CCACHE],[ccache])
 
 for func in pread pwrite; do
     AC_CHECK_FUNC([$func],[],AC_MSG_ERROR([$func function is required by casacore]))

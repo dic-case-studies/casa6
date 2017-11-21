@@ -312,23 +312,52 @@ EOD`
 	ac_save_LIBS="$LIBS"
 	ac_save_LDFLAGS="$LDFLAGS"
 	ac_save_CPPFLAGS="$CPPFLAGS"
-	LIBS="$ac_save_LIBS $PYTHON_LIB $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LIBS"
+	LIBS="$ac_save_LIBS $PYTHON_LIB $PYTHON_EXTRA_LIBS"
 	LDFLAGS="$ac_save_LDFLAGS $PYTHON_EXTRA_LDFLAGS"
 	CPPFLAGS="$ac_save_CPPFLAGS `for i in $PYTHON_INCLUDE_PATH; do echo -I$i; done`"
 	AC_LANG_PUSH([C])
-	AC_LINK_IFELSE([
-		AC_LANG_PROGRAM([[#include <Python.h>]],
-				[[Py_Initialize();]])
-		],[pythonexists=yes],[pythonexists=no])
-	AC_LANG_POP([C])
+    AC_LINK_IFELSE([
+        AC_LANG_PROGRAM([[#include <Python.h>]],
+                [[Py_Initialize();]])
+        ],[
+            pythonexsts=yes
+            AC_MSG_RESULT([yes])
+        ],[
+            dnl## this is likely the correct way to get the linking information
+            dnl## (especially LINKFORSHARED) see:
+            dnl##         https://trac.macports.org/ticket/39223#no1
+            dnl## we fall back to it to preserve all of the other information we
+            dnl## get from distutils (e.g. python site files etc.)
+            AC_MSG_RESULT([hmmm...])
+            AC_MSG_NOTICE([looking harder for shared library flags...])
+            AC_PATH_PROG([PYTHON_CONFIG],[python${PYTHON_VERSION}-config])
+            if test -z "$PYTHON_CONFIG"; then
+                pythonexists=no
+            else
+                AC_MSG_CHECKING(new python extra linking flags)
+                PYTHON_EXTRA_LIBS=`$PYTHON_CONFIG --ldflags`
+                AC_MSG_RESULT([$PYTHON_EXTRA_LIBS])
+                AC_MSG_CHECKING([consistency of all components of python development environment, again])
+                LIBS="$ac_save_LIBS $PYTHON_LIB $PYTHON_EXTRA_LIBS"
+                AC_LINK_IFELSE([
+                        AC_LANG_PROGRAM([[#include <Python.h>]],
+                                        [[Py_Initialize();]])
+                        ],[
+                            pythonexists=yes
+                            AC_MSG_RESULT([ok])
+                        ],[
+                            pythonexists=no
+                            AC_MSG_RESULT([failed again])
+                        ])
+            fi
+        ])
+    AC_LANG_POP([C])
 	# turn back to default flags
 	CPPFLAGS="$ac_save_CPPFLAGS"
 	LIBS="$ac_save_LIBS"
 	LDFLAGS="$ac_save_LDFLAGS"
 
-	AC_MSG_RESULT([$pythonexists])
-
-        if test ! "x$pythonexists" = "xyes"; then
+	if test ! "x$pythonexists" = "xyes"; then
 	   AC_MSG_FAILURE([
   Could not link test program to Python. Maybe the main Python library has been
   installed in some non-standard library path. If so, pass it to configure,

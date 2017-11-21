@@ -43,7 +43,7 @@ Operating System :: MacOS :: MacOS X
 Operating System :: POSIX
 """
 
-from distutils.ccompiler import new_compiler
+from distutils.ccompiler import new_compiler, CCompiler
 from distutils.sysconfig import customize_compiler
 from distutils.core import setup, Extension
 from distutils.ccompiler import get_default_compiler
@@ -62,7 +62,7 @@ import subprocess
 import sysconfig
 import platform
 import pickle
-import errno    
+import errno
 import time
 import sys
 import re
@@ -149,7 +149,7 @@ def load_properties(filepath, sep='=', comment_char='#'):
             if l and not l.startswith(comment_char):
                 key_value = l.split(sep)
                 key = key_value[0].strip()
-                value = sep.join(key_value[1:]).strip().strip('"') 
+                value = sep.join(key_value[1:]).strip().strip('"')
                 props[key] = value.split(' ') if key.startswith('build.flags') else value
     return props
 
@@ -284,27 +284,29 @@ def tool_files(tool):
         inc.append('binding/tools/%s' % tool)
     return (inc,src)
 
+platform_cflags = { 'darwin': [ ],
+                    'linux2': [ '-fopenmp', '-fcx-fortran-rules' ],
+                    'linux': [ '-fopenmp', '-fcx-fortran-rules' ] };
 
 module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
                                       '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
                                       '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
-                                      '-DWCSLIB_VERSION_MINOR=15', '-fcx-fortran-rules', '-fsigned-char', '-fopenmp' ],
+                                      '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char' ] + platform_cflags[sys.platform],
                        '/code/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
                                       '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
                                       '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
                                       '-DDBUS_CPP', '-DQWT6', '-DUseCasacoreNamespace', \
-                                      '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-fcx-fortran-rules', \
-                                      '-DNO_CRASH_REPORTER', '-fopenmp', '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ],
-                       'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
-                                        '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
-                                        '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
-                                        '-DDBUS_CPP', '-DQWT6', '-DUseCasacoreNamespace', \
-                                        '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-fcx-fortran-rules', \
-                                        '-DNO_CRASH_REPORTER', '-fopenmp', '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ] }
+                                      '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
+                                      '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ] + platform_cflags[sys.platform],
+                       'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
+                                        '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
+                                        '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DDBUS_CPP', '-DQWT6', \
+                                        '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
+                                        '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ] + platform_cflags[sys.platform] }
 
 def customize_compiler(self):
     """inject customization into distutils.
-    
+
     Getting distutils to use a specfic compiler with a fully-quaified
     path and specfic flags is difficult. By default, it seems to just
     use 'gcc', i.e. whichever compiler happens to be in the user's
@@ -319,17 +321,21 @@ def customize_compiler(self):
 
     # save references to the default compiler_so and _comple methods
     default_compiler_so = self.compiler_so
+    default_linker_so = self.linker_so
     supercc = self._compile
     superld = self.link
+    ccache = [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
     cflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.compile'),props.items()))
     cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
+    ldflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.items()))
+    ldflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
     if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
         cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
                                                                       ###     /usr/include (e.g. rhel6)
-    new_compiler_cxx = ['/usr/bin/ccache', props['build.compiler.cxx'], '-g', '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
-    new_compiler_cc = ['/usr/bin/ccache', props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
+    new_compiler_cxx = ccache + [props['build.compiler.cxx'], '-g', '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
+    new_compiler_cc = ccache + [props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
-    
+
     new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
     new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cc))
 
@@ -354,12 +360,18 @@ def customize_compiler(self):
               extra_postargs=None, build_temp=None, target_lang=None):
         fn = os.path.basename(output_filename)
         if fn.startswith('lib') and fn.endswith(".so"):
+            print("linking shared library...")
+            self.linker_so = map(lambda f: "-dynamiclib" if f == "-bundle" else f,self.linker_so)
+            if sys.platform == 'darwin':
+                if output_filename.endswith(".so"):
+                    output_filename = output_filename[:-3] + ".dylib"
             dir = os.path.dirname(output_filename)
+            target_desc=CCompiler.SHARED_LIBRARY
             if dir not in local_library_path:
                 local_library_path.insert(0,dir)
                 with open(local_path_file,'wb') as f:
                     pickle.dump(local_library_path,f)
-                
+
             bfn = (fn[3:])[:-3]
             library_mangle[bfn.split('.')[0]] = bfn
             with open(local_mangle_file,'wb') as f:
@@ -369,6 +381,7 @@ def customize_compiler(self):
                 [library_mangle[l] if l in library_mangle else l for l in libraries],
                 library_dirs+local_library_path, runtime_library_dirs, export_symbols,
                 debug, extra_preargs, extra_postargs, build_temp, target_lang)
+        self.linker_so = default_linker_so
 
     # now redefine the _compile method. This gets executed for each
     # object but distutils doesn't have the ability to change compilers
@@ -382,7 +395,7 @@ def customize_compiler(self):
                 if (ext == ".f90"):
                     cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
                 if (ext == ".f"):
-                    cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]            
+                    cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
                 # Force architecture of shared library.
                 if arch == "32bit":
                     cc_args.append("-m32")
@@ -553,8 +566,17 @@ class casa_test(Command):
 
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
-    if sys.executable != "@PYTHON@":
-        os.execvp( '@PYTHON@', ['@PYTHON@'] + sys.argv )
+    targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print sys.executable"])).split('\n')[0]
+    if sys.executable != targetexecutable:
+        if not os.path.exists('.restarted'):
+            open('.restarted','w').close()
+            os.execvp( '@PYTHON@', ['@PYTHON@'] + sys.argv )
+        else:
+            print("cannot configure with @PYTHON@")
+            sys.stdout.flush( )
+            os._exit(1)
+    if os.path.exists('.restarted'):
+        os.remove('.restarted')
     if not os.path.isfile('build.properties'):
         sys.exit('Run configure to create build properties, then try again...')
     props = load_properties('build.properties')
@@ -601,10 +623,16 @@ if __name__ == '__main__':
                                 #file_filter=['fgridsdclip.f']
         )
 
+        ### from macports it is called libdbus-cpp.dylib, from CASA's RPM it is called libcasa-dbus-cpp.so...
+        dbuscpp = props['build.name.lib.dbuscpp'] if 'build.name.lib.dbuscpp' in props and len(props['build.name.lib.dbuscpp']) > 0 else 'casa-dbus-cpp'
         ldflags = list(set(filter(lambda x: len(x) > 0 and not x.startswith('-l'),chain.from_iterable(map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.items()))))))
-        rpath = ":".join(['$ORIGIN/lib'] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags))))
 
-        ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding'], extra_link_args=ldflags+['-Wl,-rpath,'+rpath], libraries=['casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ) ]
+        if sys.platform == 'darwin':
+            rpath = [ '-install_name', '@rpath/lib%s.dylib' % module_name, '-Wl,-rpath,@loader_path' ]
+        else:
+            rpath = [ '-Wl,-rpath,' + ":".join(['$ORIGIN/lib'] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))) ]
+
+        ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding'], extra_link_args=ldflags+rpath+['-L/opt/local/lib/gcc5'], libraries=[dbuscpp,'dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ) ]
 
         swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
         if pyversion >= 3:
@@ -615,12 +643,18 @@ if __name__ == '__main__':
             (I,L) = tool_files(t)
             incdirs[t] = I
             libsrc[t] = L
+
         for lb in LIBS:
             incdirs[lb] = [ i for t in LIBS[lb] for i in incdirs[t] ]
             libsrc[lb] = [ l for t in LIBS[lb] for l in libsrc[t] ]
 
         for lb in LIBS:
-            ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir, '-Wl,-rpath,'+rpath], swig_opts=swig_opt, libraries=[module_name,'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ))
+            if sys.platform == 'darwin':
+                rpath = [ '-install_name', '@rpath/%s.dylib' % lb, '-Wl,-rpath,@loader_path' ]
+            else:
+                rpath = [ ]
+
+            ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + rpath + ['-L'+libdir, '-L/opt/local/lib/gcc5'], swig_opts=swig_opt, libraries=[module_name,dbuscpp,'dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] ))
 
         for t in TOOLS:
             inc = [ ]; lib = [ ]; src = [ ]
@@ -631,7 +665,12 @@ if __name__ == '__main__':
                 else:
                     src += libsrc[dep]
 
-            ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir, '-Wl,-rpath,'+rpath], swig_opts=swig_opt, libraries=[module_name,'casa-dbus-cpp','dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','gomp','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] + lib ))
+            if sys.platform == 'darwin':
+                rpath = [ '-Wl,-rpath,@loader_path/lib' ]
+            else:
+                rpath = [ ]
+
+            ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + rpath + ['-L'+libdir, '-L/opt/local/lib/gcc5'], swig_opts=swig_opt, libraries=[module_name,dbuscpp,'dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] + lib ))
 
         setup( name="casa",version="@CASA_VERSION@",
                maintainer="Darrell Schiebel",
@@ -697,5 +736,3 @@ if __name__ == '__main__':
     #print(distutils.sysconfig.ccompiler.get_default_compiler( ))
     #print(distutils.ccompiler.get_default_compiler(os.name( ),sys.platform( )))
     #print(os.path.dirname(os.path.realpath(__file__)))
-
-
