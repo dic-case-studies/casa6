@@ -320,7 +320,7 @@ EOD`
         AC_LANG_PROGRAM([[#include <Python.h>]],
                 [[Py_Initialize();]])
         ],[
-            pythonexsts=yes
+            pythonexists=yes
             AC_MSG_RESULT([yes])
         ],[
             dnl## this is likely the correct way to get the linking information
