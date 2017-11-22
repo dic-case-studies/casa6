@@ -256,7 +256,7 @@ class mstool_test_summary(mstool_test_base):
         self.assertAlmostEqual(stats['min'], 2.2130522e-05)
         self.assertAlmostEqual(stats['max'], 73.6559143)
         self.assertAlmostEqual(stats['sum'], 6899544.742657, 6)
-        self.assertAlmostEqual(stats['sumsq'], 439740418.53063, 5)
+        self.assertAlmostEqual(stats['sumsq'], 439740418.53063, 4)
         self.assertAlmostEqual(stats['mean'], 4.2606825)
         self.assertAlmostEqual(stats['median'], 0.0273157)
         self.assertAlmostEqual(stats['rms'], 16.47888, 5)
