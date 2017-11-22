@@ -189,6 +189,7 @@ def generate_pyinit(moduledir,tools):
 
         config='''\
 
+               import user as __user
                from .utils import utils as __utils
                import os as __os
                def __find_data_path( ):
@@ -207,8 +208,21 @@ def generate_pyinit(moduledir,tools):
                    used = set( )
                    return [ x for x in casadata + potential_local + potential_remote if x not in used and (used.add(x) or True)]
 
+               def __find_user_data_path( ):
+                   def is_iter_container(v):
+                       try:
+                           _iter = iter(v)
+                           return not isinstance(v,str)
+                       except TypeError:
+                           return False
+
+                   if hasattr(__user,'casa') and 'datapath' in __user.casa and is_iter_container(__user.casa['datapath']):
+                       return filter(__os.path.isdir, map(__os.path.expanduser,__user.casa['datapath']))
+                   else:
+                       return [ ]
+
                ctsys = __utils( )
-               ctsys.initialize( __find_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] )
+               ctsys.initialize( __find_user_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] + __find_data_path( ))
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
