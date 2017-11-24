@@ -79,6 +79,12 @@ Out[3]: True
 In [4]: exit
 -bash-4.2$ 
 ```
+CASAtools can be configured using *~/.casa/toolrc.py*. For example, extra data search paths can be added like:
+```
+-bash-4.2$ cat ~/.casa/toolrc.py
+datapath=[ "~/develop/casa/data/unittests" ]
+-bash-4.2$ 
+```
 
 #### Notes
 
