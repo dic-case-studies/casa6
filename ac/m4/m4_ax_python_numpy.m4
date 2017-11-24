@@ -54,7 +54,7 @@ AC_MSG_RESULT([no (python unknown)])
 NUMPY_INCLUDEDIR=`$PYTHON -c '
 try:
     from numpy import get_include
-    print get_include()
+    print(get_include())
 except:
     pass
 '`
@@ -97,10 +97,61 @@ if [[ "$NUMPY_INCLUDEDIR" ]]; then
     ])
 
     if [[ "x$ax_python_numpy_cv_check" != "xyes" ]]; then
+
+        AC_MSG_CHECKING([no numpy header files found, looking again])
+        perlproc=`cat <<'EOF'
+foreach ( <> ) { if ( m|.*?'([[^']]+)'.*| ) { print "[$]1\n" } }
+EOF
+`
+        POTENTIAL_NUMPY_PATH=""
+        for path in `$PYTHON -m site |  perl -e "$perlproc"`; do
+            if test -d $path; then
+                for f in `find $path -name arrayobject.h 2> /dev/null`; do
+                    if test -f $f; then
+                        case ${f} in
+                            */numpy/arrayobject.h)
+                                bpath=`echo $f | sed 's|/numpy/arrayobject.h$||'`
+                                case $POTENTIAL_NUMPY_PATH in
+                                    *$path*) ;;
+                                    *)
+                                        if test -z "$POTENTIAL_NUMPY_PATH"; then
+                                            POTENTIAL_NUMPY_PATH=$bpath
+                                        else
+                                            POTENTIAL_NUMPY_PATH="$POTENTIAL_NUMPY_PATH $bpath"
+                                        fi
+                                        ;;
+                                esac
+                                ;;
+                            *)  ;;
+                        esac
+                    fi
+                done
+            fi
+        done
+        for p in $POTENTIAL_NUMPY_PATH; do
+            if test -d $p; then
+                LIBS="$ac_save_LIBS $PYTHON_LIB $PYTHON_EXTRA_LIBS -I$p"
+                AC_LINK_IFELSE( [
+                    AC_LANG_SOURCE([[
+                        #define PY_ARRAY_UNIQUE_SYMBOL my_array_symbol
+                        #include <Python.h>
+                        #include <numpy/oldnumeric.h>
+                        #include <numpy/old_defines.h>
+                        int main( int argc, char *argv[] ) {
+                            &PyArray_FromDims;
+                        }
+                    ]]) ],[ ax_python_numpy_cv_check=yes
+                            NUMPY_INCLUDEDIR=$p
+                            break
+                    ],[ ax_python_numpy_cv_check=no ])
+            fi
+        done
+    fi
+
+    if [[ "x$ax_python_numpy_cv_check" != "xyes" ]]; then
         NUMPY_INCLUDEDIR=
         AC_MSG_ERROR([[Cannot find numpy]])
     fi
-
 
     AC_SUBST([NUMPY_INCLUDEDIR])
 

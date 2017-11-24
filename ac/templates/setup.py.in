@@ -87,8 +87,12 @@ else:
     def str_decode(bs):
         return bs.decode(sys.getdefaultencoding(),"strict")
     def pipe_decode(output):
-        return (str_decode(output[0]),str_decode(output[1]))
-
+        if isinstance(output,bytes) or isinstance(output,bytearray):
+            return str_decode(output)
+        elif isinstance(output,tuple):
+            return (str_decode(output[0]),str_decode(output[1]))
+        else:
+            return ("","")
 
 boost_exclusions = [ 'CalCurveTable.cc', 'AnnotationRow.cc', 'GainTrackingRow.cc', 'DopplerTable.cc', 'StateRow.cc', 'CalFocusTable.cc', 'SquareLawDetectorTable.cc', 'FlagTable.cc', 'StationTable.cc', 'EntityRef.cc', 'SBSummaryRow.cc', 'ScaleTable.cc', 'FieldRow.cc', 'FocusRow.cc', 'CalPhaseTable.cc', 'Misc.cc', 'CalPositionTable.cc', 'DelayModelVariableParametersTable.cc', 'StateTable.cc', 'CalAtmosphereRow.cc', 'TotalPowerRow.cc', 'ObservationTable.cc', 'FeedRow.cc', 'Interval.cc', 'CalFocusRow.cc', 'CalAmpliTable.cc', 'CalFocusModelTable.cc', 'PolarizationRow.cc', 'SeeingTable.cc', 'CorrelatorModeRow.cc', 'SysPowerRow.cc', 'CalPointingModelTable.cc', 'CalAtmosphereTable.cc', 'SpectralWindowTable.cc', 'MainTable.cc', 'StationRow.cc', 'WeatherTable.cc', 'Entity.cc', 'SourceTable.cc', 'ProcessorRow.cc', 'AlmaRadiometerRow.cc', 'CalBandpassRow.cc', 'HolographyTable.cc', 'SubscanTable.cc', 'FlagCmdTable.cc', 'CalDataTable.cc', 'CalHolographyTable.cc', 'Tag.cc', 'CalDelayRow.cc', 'ConfigDescriptionRow.cc', 'Frequency.cc', 'HistoryTable.cc', 'FieldTable.cc', 'DataDescriptionTable.cc', 'CorrelatorModeTable.cc', 'CalSeeingRow.cc', 'WeatherRow.cc', 'CalAppPhaseTable.cc', 'PointingModelRow.cc', 'Pressure.cc', 'SpectralWindowRow.cc', 'SysCalTable.cc', 'ExecBlockTable.cc', 'CalFluxRow.cc', 'SysPowerTable.cc', 'TotalPowerTable.cc', 'CalPrimaryBeamTable.cc', 'CalDeviceRow.cc', 'SubscanRow.cc', 'EntityId.cc', 'CalHolographyRow.cc', 'SwitchCycleRow.cc', 'WVMCalRow.cc', 'AlmaRadiometerTable.cc', 'DelayModelVariableParametersRow.cc', 'DelayModelRow.cc', 'EphemerisTable.cc', 'ConfigDescriptionTable.cc', 'FreqOffsetRow.cc', 'ReceiverRow.cc', 'PolarizationTable.cc', 'CalFluxTable.cc', 'CalWVRTable.cc', 'CalReductionRow.cc', 'MainRow.cc', 'CalDelayTable.cc', 'HistoryRow.cc', 'SquareLawDetectorRow.cc', 'PointingRow.cc', 'DelayModelTable.cc', 'CalBandpassTable.cc', 'EphemerisRow.cc', 'CalAmpliRow.cc', 'GainTrackingTable.cc', 'ScanRow.cc', 'CalAppPhaseRow.cc', 'FreqOffsetTable.cc', 'FlagCmdRow.cc', 'ProcessorTable.cc', 'PointingTable.cc', 'CalPositionRow.cc', 'DelayModelFixedParametersTable.cc', 'ObservationRow.cc', 'FocusModelTable.cc', 'Angle.cc', 'Flux.cc', 'DelayModelFixedParametersRow.cc', 'CalPointingRow.cc', 'FocusModelRow.cc', 'CalPhaseRow.cc', 'Merger.cc', 'ExecBlockRow.cc', 'ScanTable.cc', 'DopplerRow.cc', 'CalPointingModelRow.cc', 'FocusTable.cc', 'ASDM.cc', 'PartId.cc', 'Length.cc', 'ComplexWrapper.cc', 'FeedTable.cc', 'ArrayTimeInterval.cc', 'Parser.cc', 'PointingModelTable.cc', 'WVMCalTable.cc', 'CalPointingTable.cc', 'SBSummaryTable.cc', 'CalSeeingTable.cc', 'CalDeviceTable.cc', 'FlagRow.cc', 'Temperature.cc', 'AntennaTable.cc', 'ScaleRow.cc', 'CalPrimaryBeamRow.cc', 'CalFocusModelRow.cc', 'CalCurveRow.cc', 'SwitchCycleTable.cc', 'AntennaRow.cc', 'CalDataRow.cc', 'CalWVRRow.cc', 'CalReductionTable.cc', 'SourceRow.cc', 'AnnotationTable.cc', 'CalGainRow.cc', 'ReceiverTable.cc', 'Speed.cc', 'EndianStream.cc', 'AngularRate.cc', 'Humidity.cc', 'ArrayTime.cc', 'DataDescriptionRow.cc', 'SysCalRow.cc', 'CalGainTable.cc', 'HolographyRow.cc', 'SeeingRow.cc', 'DataDescriptionsSet.cc', 'SDMBinData.cc', 'BaselinesSet.cc', 'SDMDataObjectStreamReader.cc', 'SwitchCyclesList.cc', 'SDMDataObjectParser.cc', 'SDMDataObjectWriter.cc', 'SDMDataObject.cc', 'SDMDataObjectReader.cc', 'MS2ASDM.cc', 'PycValueHolder.cc', 'PycBasicData.cc', 'PycRecord.cc', 'PycArray.cc', 'PycExcp.cc', 'PycArrayNP.cc', 'PycImport.cc' ]
 
@@ -189,7 +193,7 @@ def generate_pyinit(moduledir,tools):
 
         config='''\
 
-               import user as __user
+               import CASAtools.ctuser as __user
                from .utils import utils as __utils
                import os as __os
                def __find_data_path( ):
@@ -216,8 +220,8 @@ def generate_pyinit(moduledir,tools):
                        except TypeError:
                            return False
 
-                   if hasattr(__user,'casa') and 'datapath' in __user.casa and is_iter_container(__user.casa['datapath']):
-                       return filter(__os.path.isdir, map(__os.path.expanduser,__user.casa['datapath']))
+                   if hasattr(__user,'datapath') and is_iter_container(__user.datapath):
+                       return list(filter(__os.path.isdir, map(__os.path.expanduser,__user.datapath)))
                    else:
                        return [ ]
 
@@ -376,7 +380,7 @@ def customize_compiler(self):
         fn = os.path.basename(output_filename)
         if fn.startswith('lib') and fn.endswith(".so"):
             print("linking shared library...")
-            self.linker_so = map(lambda f: "-dynamiclib" if f == "-bundle" else f,self.linker_so)
+            self.linker_so = list(map(lambda f: "-dynamiclib" if f == "-bundle" else f,self.linker_so))
             if sys.platform == 'darwin':
                 if output_filename.endswith(".so"):
                     output_filename = output_filename[:-3] + ".dylib"
@@ -581,7 +585,7 @@ class casa_test(Command):
 
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
-    targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print sys.executable"])).split('\n')[0]
+    targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print(sys.executable)"])).split('\n')[0]
     if sys.executable != targetexecutable:
         if not os.path.exists('.restarted'):
             open('.restarted','w').close()

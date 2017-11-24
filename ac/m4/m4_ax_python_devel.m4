@@ -318,7 +318,7 @@ EOD`
 	AC_LANG_PUSH([C])
     AC_LINK_IFELSE([
         AC_LANG_PROGRAM([[#include <Python.h>]],
-                [[Py_Initialize();]])
+                        [[Py_Initialize();]])
         ],[
             pythonexists=yes
             AC_MSG_RESULT([yes])
@@ -349,8 +349,33 @@ EOD`
                             pythonexists=no
                             AC_MSG_RESULT([failed again])
                         ])
+                if test "x$pythonexists" != "xyes" ; then
+                   AC_MSG_NOTICE([attempting to guess extra library paths based upon Framework path...])
+                   case ${PYTHON_EXTRA_LIBS} in
+                       */Library/Frameworks*)
+                           AC_MSG_CHECKING([consistency of all components of python development environment, once more])
+                           INFERRED_LIB_PATH=`echo $PYTHON_EXTRA_LIBS | perl -pe 's@(?:^.*?\s+|^.*?-L)(/.*)/Library/Frameworks.*@[$]1/lib@'`
+                           if test -d "$INFERRED_LIB_PATH"; then
+                               LIBS="$ac_save_LIBS $PYTHON_LIB $PYTHON_EXTRA_LIBS -L$INFERRED_LIB_PATH"
+                               AC_LINK_IFELSE([
+                                       AC_LANG_PROGRAM([[#include <Python.h>]],
+                                                       [[Py_Initialize();]])
+                                       ],[
+                                           pythonexists=yes
+                                           PYTHON_EXTRA_LIBS="$PYTHON_EXTRA_LIBS -L$INFERRED_LIB_PATH"
+                                           AC_MSG_RESULT([ok])
+                                       ],[
+                                           pythonexists=no
+                                           AC_MSG_RESULT([nope])
+                                       ])
+                           fi
+                           ;;
+                       *)  ;;
+                   esac
+                fi
             fi
         ])
+
     AC_LANG_POP([C])
 	# turn back to default flags
 	CPPFLAGS="$ac_save_CPPFLAGS"
