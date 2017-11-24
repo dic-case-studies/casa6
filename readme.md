@@ -7,7 +7,7 @@ CASAtools can be built and used with either **Python 2.7** or **Python 3.4**.
 
 ## Maturity
 
-This is alpha software in every sense of the word. Currently it builds on [RedHat Enterprise Linux](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) and OSX (RHEL6, RHEL7 and OSX 10.12) using the [CASA](http://casa.nrao.edu) development environment.
+This is alpha software in every sense of the word. Currently it builds on [RedHat Enterprise Linux](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) and OSX (RHEL6, RHEL7 and OSX 10.12) using the standard [CASA](http://casa.nrao.edu) development environment.
 
 ## Building CASAtools
 
@@ -45,6 +45,10 @@ After the CASA build environment is installed, the CASAtools module can be built
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
 -bash-4.2$ ./setup.py build
+```
+A particular version of Python can be selected at configure time like:
+```
+-bash-4.2$ PYTHON_VERSION=3.4 ./configure
 ```
 
 #### See If It Works
