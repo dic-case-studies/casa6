@@ -7,7 +7,7 @@ CASAtools can be built and used with either **Python 2.7** or **Python 3.4**.
 
 ## Maturity
 
-This is alpha software in every sense of the word. Currently the goal is just to make this usable on the Linux platforms which the [CASA](http://casa.nrao.edu) project supports for development, [RedHat Enterprise Linux](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) release 6 and release 7.
+This is alpha software in every sense of the word. Currently it builds on [RedHat Enterprise Linux](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) and OSX (RHEL6, RHEL7 and OSX 10.12) using the [CASA](http://casa.nrao.edu) development environment.
 
 ## Building CASAtools
 
