@@ -325,7 +325,7 @@ module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION
 
 def customize_compiler(self):
     """inject customization into distutils.
-    
+
     Getting distutils to use a specfic compiler with a fully-quaified
     path and specfic flags is difficult. By default, it seems to just
     use 'gcc', i.e. whichever compiler happens to be in the user's
@@ -354,7 +354,7 @@ def customize_compiler(self):
     new_compiler_cxx = ccache + [props['build.compiler.cxx'], '-g', '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
     new_compiler_cc = ccache + [props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
-    
+
     new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
     new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cc))
 
@@ -384,13 +384,15 @@ def customize_compiler(self):
             if sys.platform == 'darwin':
                 if output_filename.endswith(".so"):
                     output_filename = output_filename[:-3] + ".dylib"
+                subname = os.path.basename(output_filename)
+                extra_postargs=list(map( lambda arg: arg % subname if '%s' in arg else arg, extra_postargs ))
             dir = os.path.dirname(output_filename)
             target_desc=CCompiler.SHARED_LIBRARY
             if dir not in local_library_path:
                 local_library_path.insert(0,dir)
                 with open(local_path_file,'wb') as f:
                     pickle.dump(local_library_path,f)
-                
+
             bfn = (fn[3:])[:-3]
             library_mangle[bfn.split('.')[0]] = bfn
             with open(local_mangle_file,'wb') as f:
@@ -648,7 +650,7 @@ if __name__ == '__main__':
 
         if sys.platform == 'darwin':
             ### need to get '/opt/local/lib/gcc5' from gfortran directly
-            rpath = [ '-install_name', '@rpath/lib%s.dylib' % module_name, '-Wl,-rpath,@loader_path' ]
+            rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
             archflags = ['-L/opt/local/lib/gcc5']
             archlibs = [ ]
         else:
@@ -673,7 +675,7 @@ if __name__ == '__main__':
 
         for lb in LIBS:
             if sys.platform == 'darwin':
-                rpath = [ '-install_name', '@rpath/%s.dylib' % lb, '-Wl,-rpath,@loader_path' ]
+                rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
             ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name,dbuscpp,'dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] + archlibs ))
 
         for t in TOOLS:
@@ -686,7 +688,7 @@ if __name__ == '__main__':
                     src += libsrc[dep]
 
             if sys.platform == 'darwin':
-                rpath = [ '-Wl,-rpath,@loader_path/lib' ]
+                rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
             ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name,dbuscpp,'dbus-1', 'sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','readline','gfortran','dl'] + lib + archlibs))
 
         setup( name="casa",version="@CASA_VERSION@",
@@ -735,7 +737,7 @@ if __name__ == '__main__':
         print(CODE_SRC)
         print(CODE_YACC)
         print(CODE_LEX)
-           
+
     #print(props)
     #if 'build.compiler.so-version' in props:
     #    sover = props['build.compiler.so-version']
@@ -753,5 +755,3 @@ if __name__ == '__main__':
     #print(distutils.sysconfig.ccompiler.get_default_compiler( ))
     #print(distutils.ccompiler.get_default_compiler(os.name( ),sys.platform( )))
     #print(os.path.dirname(os.path.realpath(__file__)))
-
-
