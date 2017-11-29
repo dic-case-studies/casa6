@@ -287,6 +287,45 @@ def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='bin
     ##  tools   -  all tools along with what they need to be built against
     return (needed,libs,tools)
 
+def run_process( cmd, err, dir="." ):
+    sys.stdout.flush()
+    proc = Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+    out,err = pipe_decode(proc.communicate( ))
+    exit_code = proc.wait( )
+    if proc.returncode != 0:
+        print(err)
+        sys.exit(err)
+    print(out)
+    return proc.returncode
+
+def build_grpc( prefix ):
+    """Build grpc (https://github.com/grpc/grpc/blob/master/):
+           (1) do a straight build of grpc to get the C/C++ libraries and protoc compiler
+           (2) rebuild protobuf to install and then cherry pick the include files
+    """
+    if os.path.isdir("grpc-source"):
+        mkpath(prefix)
+        if os.path.isdir(prefix):
+            if not os.path.exists("grpc-source/third_party/protobuf/LICENSE"):
+                print("checking out google protobuf...")
+                run_process( ["git", "submodule", "update", "--init"], err='git protobuf checkout failed', dir="grpc-source" )
+
+            prefix_arg = os.path.realpath(prefix)
+            proto_prefix_arg = "%s/.proto" % prefix_arg
+            mkpath(proto_prefix_arg)
+
+            print("building google grpc...")
+            run_process( ["make", "prefix=%s" % prefix_arg, "PROTOBUF_CONFIG_OPTS=--prefix=%s" % proto_prefix_arg, "install"], err='build of grpc failed', dir="grpc-source" )
+
+            #print("setting up google protobuf...")
+            #run_process( ["./autogen.sh"], err='setup of google protobuf failed', dir="grpc-source/third_party/protobuf" )
+
+            #print("configuring google protobuf...")
+            #run_process( ["./configure", "--prefix=%s" % proto_prefix_arg], err='configuring google protobuf failed', dir="grpc-source/third_party/protobuf" )
+
+            print("building google protobuf...")
+            run_process( ["make", "install"], err='building google protobuf failed', dir="grpc-source/third_party/protobuf" )
+
 def tool_files(tool):
     src = ['binding/tools/%s/%s' % (tool,f) for f in listdir('binding/tools/%s' % tool) if f.endswith(".cc")]
     src += ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".cc")]
@@ -629,6 +668,9 @@ if __name__ == '__main__':
         generate_lex(CASACORE_LEX + CODE_LEX)
         generate_yacc(CASACORE_YACC + CODE_YACC)
         (NEEDED,LIBS,TOOLS) = generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
+
+        # hopefully this will repace dbus
+        build_grpc(os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'))
 
         CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
         MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
