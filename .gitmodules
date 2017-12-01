@@ -1,7 +1,8 @@
-[submodule "casa-source"]
-	path = casa-source
-	url = https://open-bitbucket.nrao.edu/scm/casa/casa.git
 [submodule "grpc-source"]
 	path = grpc-source
 	url = https://github.com/grpc/grpc
 	branch = v1.7.x
+[submodule "casa-source"]
+	path = casa-source
+	url = https://open-bitbucket.nrao.edu/scm/casa/casa.git
+	branch = CAS-10741
