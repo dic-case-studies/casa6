@@ -56,8 +56,8 @@ from distutils.util import spawn
 
 from subprocess import Popen, PIPE
 from subprocess import call as Proc
-from shutil import copyfile
 from textwrap import dedent
+from shutil import copy2
 import subprocess
 import sysconfig
 import platform
@@ -69,7 +69,7 @@ import re
 import os
 
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, islink
 from itertools import chain
 
 module_name = 'CASAtools'
@@ -287,44 +287,118 @@ def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='bin
     ##  tools   -  all tools along with what they need to be built against
     return (needed,libs,tools)
 
-def run_process( cmd, err, dir="." ):
-    sys.stdout.flush()
-    proc = Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+def run_process( cmd, err, dir=".", stdin=None ):
+    sys.stdout.flush( )
+    proc = Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE ) if stdin is None else Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=stdin )
     out,err = pipe_decode(proc.communicate( ))
     exit_code = proc.wait( )
     if proc.returncode != 0:
+        print("failure...")
         print(err)
+        sys.stdout.flush( )
         sys.exit(err)
     print(out)
     return proc.returncode
 
-def build_grpc( prefix ):
+
+def build_grpc( prefix, srcdir, collectdir ):
     """Build grpc (https://github.com/grpc/grpc/blob/master/):
            (1) do a straight build of grpc to get the C/C++ libraries and protoc compiler
            (2) rebuild protobuf to install and then cherry pick the include files
     """
     if os.path.isdir("grpc-source"):
+
+        if not os.path.isdir(srcdir):
+            print("copying the source directory...")
+            run_process( ["rsync","-aq","grpc-source/",srcdir], err='could not copy the grpc source tree' )
+            with open("patches/grpc-source.diff", 'rb', 0) as fd:
+                print("patching grpc source tree...")
+                run_process( ["patch", "-p0"], err='could not patch grpc source tree', stdin=fd, dir=srcdir )
+
         mkpath(prefix)
         if os.path.isdir(prefix):
             if not os.path.exists("grpc-source/third_party/protobuf/LICENSE"):
                 print("checking out google protobuf...")
                 run_process( ["git", "submodule", "update", "--init"], err='git protobuf checkout failed', dir="grpc-source" )
 
+            srcdir_arg = os.path.realpath(srcdir)
             prefix_arg = os.path.realpath(prefix)
-            proto_prefix_arg = "%s/.proto" % prefix_arg
-            mkpath(proto_prefix_arg)
+            collectdir_arg = os.path.realpath(collectdir)
+            mkpath(collectdir_arg)
 
             print("building google grpc...")
-            run_process( ["make", "prefix=%s" % prefix_arg, "PROTOBUF_CONFIG_OPTS=--prefix=%s" % proto_prefix_arg, "install"], err='build of grpc failed', dir="grpc-source" )
+            run_process( ["make", "DYLD_PREFIX=@rpath/", "prefix=%s" % prefix_arg, "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "install"], err='build of grpc failed', dir=srcdir_arg )
 
-            #print("setting up google protobuf...")
-            #run_process( ["./autogen.sh"], err='setup of google protobuf failed', dir="grpc-source/third_party/protobuf" )
+            print("installing google protobuf...")
+            run_process( ["make", "install"], err='building google protobuf failed', dir="%s/third_party/protobuf" % srcdir_arg )
 
-            #print("configuring google protobuf...")
-            #run_process( ["./configure", "--prefix=%s" % proto_prefix_arg], err='configuring google protobuf failed', dir="grpc-source/third_party/protobuf" )
+            print("copying the protobuf includes...")
+            run_process( ["rsync","-aq","%s/include/" % collectdir_arg,"%s/include" % prefix], err='could not copy the protobuf include tree' )
 
-            print("building google protobuf...")
-            run_process( ["make", "install"], err='building google protobuf failed', dir="grpc-source/third_party/protobuf" )
+            print("copying the protobuf libs...")
+            run_process( ["rsync","-aq","%s/lib/" % collectdir_arg,"%s/lib" % prefix], err='could not copy the protobuf lib tree' )
+
+            print("copying the protobuf compiler...")
+            run_process( ["rsync","-aq","%s/bin/" % collectdir_arg,"%s/bin" % prefix], err='could not copy the protobuf bin tree' )
+
+            ## remove 'libtool' droppings
+            for root,subdirs,files in os.walk(prefix):
+                for f in files:
+                    p = join(root,f)
+                    if not islink(p) and p.endswith(".la"):
+                        os.remove(p)
+
+def build_protobuf( prefix, srcdir, collectdir ):
+    """Build grpc (https://github.com/grpc/grpc/blob/master/):
+           (1) do a straight build of grpc to get the C/C++ libraries and protoc compiler
+           (2) rebuild protobuf to install and then cherry pick the include files
+    """
+    if os.path.isdir("grpc-source"):
+
+        if not os.path.isdir(srcdir):
+            print("copying the source directory...")
+            run_process( ["rsync","-aq","grpc-source/third_party/protobuf/",srcdir], err='could not copy the protobuf source tree' )
+            ## here we would really like to patch protobuf's Makefile.am to create libraries as we would like right off the
+            ## bat (e.g. "-install_name @rpath/libprotobuf.14.dylib"), but 'libtool' is a britte cludge
+
+        mkpath(prefix)
+        if os.path.isdir(prefix):
+
+            srcdir_arg = os.path.realpath(srcdir)
+            prefix_arg = os.path.realpath(prefix)
+            collectdir_arg = os.path.realpath(collectdir)
+            mkpath(collectdir_arg)
+
+            print("autogen for google protobuf...")
+            run_process( ["autoreconf","-f", "-i", "-Wall,no-obsolete"], err='autogen of protobuf failed', dir=srcdir_arg )
+            print("configuring google protobuf...")
+            run_process( ["./configure", "--prefix=%s" % prefix_arg], err='build of grpc failed', dir=srcdir_arg )
+
+            print("compiling google protobuf...")
+            run_process( ["make"], err='building google protobuf failed', dir=srcdir_arg )
+
+            found=[ ]
+            searchdir=join(srcdir_arg,"src",".libs")
+            for f in listdir(searchdir):
+                if f.startswith("libprotobuf") and f.endswith(".dylib"):
+                    file = join(searchdir,f)
+                    found.append(file)
+
+            if len(found) < 4:
+                sys.exit("build of dynamic protobuf libraries failed")
+
+            tgtdir = "%s/lib" % prefix_arg
+            for f in found:
+                fname = os.path.basename(f)
+                if islink(f):
+                    if not os.path.exists(join(tgtdir,fname)):
+                        linkto = os.readlink(f)
+                        os.symlink(linkto,join(tgtdir,fname))
+                elif isfile(f):
+                    copy2(f,tgtdir)
+                    if sys.platform == 'darwin':
+                        run_process( ["install_name_tool", "-id", "@rpath/%s" % fname, join(tgtdir,fname) ], err='could not update install_name for %s' % fname )
+
 
 def tool_files(tool):
     src = ['binding/tools/%s/%s' % (tool,f) for f in listdir('binding/tools/%s' % tool) if f.endswith(".cc")]
@@ -670,7 +744,12 @@ if __name__ == '__main__':
         (NEEDED,LIBS,TOOLS) = generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
 
         # hopefully this will repace dbus
-        build_grpc(os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'))
+        build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                    os.path.join('build', distutils_dir_name('grpc')),
+                    os.path.join('build', distutils_dir_name('grpc-install')) )
+        build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                        os.path.join('build', distutils_dir_name('protobuf')),
+                        os.path.join('build', distutils_dir_name('grpc-install')) )
 
         CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
         MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
