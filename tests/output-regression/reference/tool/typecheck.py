@@ -101,6 +101,10 @@ class CasaValidator(Validator):
         if isinstance(value,CASAtools.coordsys.coordsys):
             return True
 
+    def _validate_type_ccomponentlistTool(self,value):
+        if isinstance(value,CASAtools.componentlist.componentlist):
+            return True
+
     def _validate_type_cmsmetadataTool(self,value):
         if isinstance(value,CASAtools.msmetadata.msmetadata):
             return True

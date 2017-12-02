@@ -1,4 +1,4 @@
-start time: Wed Nov 15 12:51:10 2017
+start time: Sat Dec  2 08:10:01 2017
 input files:
     xml/tools/atmosphere.xml
     xml/tools/calanalysis.xml
@@ -20,17 +20,17 @@ input files:
     xml/tools/table.xml
     xml/tools/utils.xml
     xml/tools/vpmanager.xml
-command: scripts/xml-casa output-c=tests/output-regression/171115/source output-h=tests/output-regression/171115/include output-i=tests/output-regression/171115/swig output-tool=tests/output-regression/171115/tool -all xml/tools/atmosphere.xml xml/tools/calanalysis.xml xml/tools/calibrater.xml xml/tools/componentlist.xml xml/tools/coordsys.xml xml/tools/functional.xml xml/tools/image.xml xml/tools/imagepol.xml xml/tools/measures.xml xml/tools/ms.xml xml/tools/msmetadata.xml xml/tools/quanta.xml xml/tools/regionmanager.xml xml/tools/synthesisimager.xml xml/tools/synthesisimstore.xml xml/tools/synthesisnormalizer.xml xml/tools/synthesisutils.xml xml/tools/table.xml xml/tools/utils.xml xml/tools/vpmanager.xml
+command: scripts/xml-casa output-c=tests/output-regression/171202/source output-h=tests/output-regression/171202/include output-i=tests/output-regression/171202/swig output-tool=tests/output-regression/171202/tool -all xml/tools/atmosphere.xml xml/tools/calanalysis.xml xml/tools/calibrater.xml xml/tools/componentlist.xml xml/tools/coordsys.xml xml/tools/functional.xml xml/tools/image.xml xml/tools/imagepol.xml xml/tools/measures.xml xml/tools/ms.xml xml/tools/msmetadata.xml xml/tools/quanta.xml xml/tools/regionmanager.xml xml/tools/synthesisimager.xml xml/tools/synthesisimstore.xml xml/tools/synthesisnormalizer.xml xml/tools/synthesisutils.xml xml/tools/table.xml xml/tools/utils.xml xml/tools/vpmanager.xml
 output:
-    <inc> coordsys, image, synthesisimstore, msmetadata, table
+    <inc> coordsys, image, synthesisimstore, componentlist, msmetadata, table
     <tgt> libmsmetadata < msmetadata
     <tgt> libtable < table
+    <tgt> libcomponentlistcoordsysimage < componentlist coordsys image
     <tgt> libsynthesisimstore < synthesisimstore
-    <tgt> libcoordsysimage < coordsys image
     <tgt> utils : utils
-    <tgt> coordsys : libcoordsysimage
+    <tgt> coordsys : libcomponentlistcoordsysimage
     <tgt> vpmanager : vpmanager
-    <tgt> image : libcoordsysimage
+    <tgt> image : libcomponentlistcoordsysimage
     <tgt> measures : measures
     <tgt> atmosphere : atmosphere
     <tgt> quanta : quanta
@@ -39,9 +39,9 @@ output:
     <tgt> regionmanager : regionmanager
     <tgt> calanalysis : calanalysis
     <tgt> synthesisimager : libsynthesisimstore synthesisimager
-    <tgt> componentlist : componentlist
+    <tgt> componentlist : libcomponentlistcoordsysimage
     <tgt> msmetadata : libmsmetadata
-    <tgt> imagepol : imagepol libcoordsysimage
+    <tgt> imagepol : imagepol libcomponentlistcoordsysimage
     <tgt> calibrater : calibrater
     <tgt> functional : functional
     <tgt> ms : libmsmetadata libtable ms
