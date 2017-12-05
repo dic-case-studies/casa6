@@ -341,9 +341,6 @@ def build_grpc( prefix, srcdir, collectdir ):
         if not os.path.isdir(srcdir):
             print("copying the source directory...")
             run_process( ["rsync","-aq","grpc-source/",srcdir], err='could not copy the grpc source tree' )
-            with open("patches/grpc-source.diff", 'rb', 0) as fd:
-                print("patching grpc source tree...")
-                run_process( ["patch", "-p0"], err='could not patch grpc source tree', stdin=fd, dir=srcdir )
 
         mkpath(prefix)
         create_ccache_bin( )
