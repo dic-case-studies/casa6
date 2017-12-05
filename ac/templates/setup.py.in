@@ -287,9 +287,9 @@ def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='bin
     ##  tools   -  all tools along with what they need to be built against
     return (needed,libs,tools)
 
-def run_process( cmd, err, dir=".", stdin=None ):
+def run_process( cmd, err, dir=".", stdin=None, env=None ):
     sys.stdout.flush( )
-    proc = Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE ) if stdin is None else Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=stdin )
+    proc = Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=None if env is None else dict(os.environ,**env) ) if stdin is None else Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=stdin, env=None if env is None else dict(os.environ, **env) )
     out,err = pipe_decode(proc.communicate( ))
     exit_code = proc.wait( )
     if proc.returncode != 0:
@@ -300,12 +300,42 @@ def run_process( cmd, err, dir=".", stdin=None ):
     print(out)
     return proc.returncode
 
+def write_wrapper( dir, ccache, compiler ):
+    wrapper='''#!/usr/bin/perl
+#open(LOG,">> /tmp/wrapper-log-file.txt");
+#print LOG '%s', ' ', join(' ',@ARGV), "\n";
+#close(LOG);
+exec { '%s' } '%s', '%s', @ARGV;
+'''
+    with open(join(dir,os.path.basename(compiler)), "w") as f:
+        f.write(wrapper % (compiler,ccache,ccache,compiler))
+    os.chmod(join(dir,os.path.basename(compiler)), 0o0755)
+
+######################################################################################################
+## gRPC depends on a few other packages, some of which use libtool and automake. The problem
+## with automake and libtool is that they were designed as if there is only one way to build
+## and link libraries and applications. They permit not configuration, they ignore compiler
+## specifications. It is just a inflexible and brittle system. To ensure that ccache is used
+## by these extra packages, we create a wrapper library and add it to the beginning of our
+## PATH. (BTW, gRPC's makefile is very nice)
+######################################################################################################
+broken_autoconf_compiler_dir=os.path.realpath(join('build',distutils_dir_name('compilers')))
+def create_ccache_bin( ):
+    """gRPC and protobuf don't seem to honor CC and CXX
+    """
+    mkpath(broken_autoconf_compiler_dir)
+    for c in [props['build.compiler.cc'], props['build.compiler.cxx']]:
+        if not os.path.exists(join(broken_autoconf_compiler_dir,os.path.basename(c))):
+            write_wrapper( broken_autoconf_compiler_dir, props['build.compiler.ccache'], c )
 
 def build_grpc( prefix, srcdir, collectdir ):
     """Build grpc (https://github.com/grpc/grpc/blob/master/):
            (1) do a straight build of grpc to get the C/C++ libraries and protoc compiler
            (2) rebuild protobuf to install and then cherry pick the include files
     """
+    extra_env = { 'PATH': "%s:%s" % (broken_autoconf_compiler_dir, os.environ['PATH']),
+                  'CC': os.path.basename(props['build.compiler.cc']), 'CXX': os.path.basename(props['build.compiler.cxx'])  }
+
     if os.path.isdir("grpc-source"):
 
         if not os.path.isdir(srcdir):
@@ -316,6 +346,7 @@ def build_grpc( prefix, srcdir, collectdir ):
                 run_process( ["patch", "-p0"], err='could not patch grpc source tree', stdin=fd, dir=srcdir )
 
         mkpath(prefix)
+        create_ccache_bin( )
         if os.path.isdir(prefix):
             if not os.path.exists("grpc-source/third_party/protobuf/LICENSE"):
                 print("checking out google protobuf...")
@@ -327,10 +358,11 @@ def build_grpc( prefix, srcdir, collectdir ):
             mkpath(collectdir_arg)
 
             print("building google grpc...")
-            run_process( ["make", "DYLD_PREFIX=@rpath/", "prefix=%s" % prefix_arg, "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "install"], err='build of grpc failed', dir=srcdir_arg )
+            run_process( ["make", "DYLD_PREFIX=@rpath/", "prefix=%s" % prefix_arg, "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "VERBOSE=1", "install"],
+                         err='build of grpc failed', dir=srcdir_arg, env=extra_env )
 
             print("installing google protobuf...")
-            run_process( ["make", "install"], err='building google protobuf failed', dir="%s/third_party/protobuf" % srcdir_arg )
+            run_process( ["make", "install"], err='building google protobuf failed', dir="%s/third_party/protobuf" % srcdir_arg, env=extra_env )
 
             print("copying the protobuf includes...")
             run_process( ["rsync","-aq","%s/include/" % collectdir_arg,"%s/include" % prefix], err='could not copy the protobuf include tree' )
@@ -362,6 +394,7 @@ def build_protobuf( prefix, srcdir, collectdir ):
             ## bat (e.g. "-install_name @rpath/libprotobuf.14.dylib"), but 'libtool' is a britte cludge
 
         mkpath(prefix)
+        create_ccache_bin( )
         if os.path.isdir(prefix):
 
             srcdir_arg = os.path.realpath(srcdir)
@@ -369,13 +402,15 @@ def build_protobuf( prefix, srcdir, collectdir ):
             collectdir_arg = os.path.realpath(collectdir)
             mkpath(collectdir_arg)
 
+            extra_env = { 'PATH': "%s:%s" % (broken_autoconf_compiler_dir, os.environ['PATH']),
+                          'CC': os.path.basename(props['build.compiler.cc']), 'CXX': os.path.basename(props['build.compiler.cxx']) }
             print("autogen for google protobuf...")
-            run_process( ["autoreconf","-f", "-i", "-Wall,no-obsolete"], err='autogen of protobuf failed', dir=srcdir_arg )
+            run_process( ["autoreconf","-f", "-i", "-Wall,no-obsolete"], err='autogen of protobuf failed', dir=srcdir_arg, env=extra_env )
             print("configuring google protobuf...")
-            run_process( ["./configure", "--prefix=%s" % prefix_arg], err='build of grpc failed', dir=srcdir_arg )
+            run_process( ["./configure", "--prefix=%s" % prefix_arg], err='build of grpc failed', dir=srcdir_arg, env=extra_env )
 
             print("compiling google protobuf...")
-            run_process( ["make"], err='building google protobuf failed', dir=srcdir_arg )
+            run_process( ["make"], err='building google protobuf failed', dir=srcdir_arg, env=extra_env )
 
             found=[ ]
             searchdir=join(srcdir_arg,"src",".libs")
