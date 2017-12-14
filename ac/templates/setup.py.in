@@ -303,7 +303,7 @@ def run_process( cmd, err, dir=".", stdin=None, env=None ):
 def write_wrapper( dir, ccache, compiler ):
     wrapper='''#!/usr/bin/perl
 #open(LOG,">> /tmp/wrapper-log-file.txt");
-#print LOG '%s', ' ', join(' ',@ARGV), "\n";
+#print LOG '%s', ' ', join(' ',@ARGV), "\\n";
 #close(LOG);
 exec { '%s' } '%s', '%s', @ARGV;
 '''

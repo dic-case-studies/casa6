@@ -88,6 +88,25 @@ datapath=[ "~/develop/casa/data/unittests" ]
 -bash-4.2$ 
 ```
 
+#### Run Available Tests
+
+A number of tests have been brought into CASAtools from CASA. Like the rest of CASAtools, the testing infrastructure is still in the process of being refined (and in need of some refactoring). However, with the proper setup it works for *some of the people, some of the time*. To run the tests, you need to check out the subset of the CASA data repository needed for CASAtools unit tests. This data repository will use about *14GB* of space. You can check out the necessary data repository like:
+```
+-bash-4.2$ git clone --no-checkout https://open-bitbucket.nrao.edu/scm/casa/casa-data.git unittests
+-bash-4.2$ git show HEAD:casatools-unittests | bash
+```
+After the checkout is complete, you must update your CASAtools RC file to indicate where the unit test data can be found. In my case it looks like:
+```
+-bash-4.2$ cat ~/.casa/toolrc.py
+datapath=[ "~/develop/casa/data/unittests" ]
+-bash-4.2$ 
+```
+The `datapath` list specifies directories where CASAtools should look for data files, and should include the directory we just checked out. After all of this is set, the full suite of tests can be run with:
+```
+-bash-4.2$ ./setup.py test
+```
+There are bout 48 tests in total. Running all of them takes about 12 minutes on my laptop.
+
 #### Notes
 
 If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.0.jar*, e.g.
