@@ -156,7 +156,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to an data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
 
-3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/toolsrc.py`
+3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/toolrc.py`
 
 ### XML Changes
 
