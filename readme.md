@@ -90,7 +90,7 @@ datapath=[ "~/develop/casa/data/unittests" ]
 
 #### Run Available Tests
 
-A number of tests have been brought into CASAtools from CASA. Like the rest of CASAtools, the testing infrastructure is still in the process of being refined (and in need of some refactoring). However, with the proper setup it works for *some of the people, some of the time*. To run the tests, you need to check out the subset of the CASA data repository needed for CASAtools unit tests. This data repository will use about *14GB* of space. You can check out the necessary data repository like:
+A number of tests have been brought into CASAtools from CASA. Like the rest of CASAtools, the testing infrastructure is still in the process of being refined (and in need of some refactoring). However, with the proper setup it works for *some of the people, some of the time*. To run the tests, you need to check out the subset of the CASA data repository needed for CASAtools unit tests. This data repository will use about **14GB** of space. You can check out the necessary data repository like:
 ```
 -bash-4.2$ git clone --no-checkout https://open-bitbucket.nrao.edu/scm/casa/casa-data.git unittests
 -bash-4.2$ git show HEAD:casatools-unittests | bash
