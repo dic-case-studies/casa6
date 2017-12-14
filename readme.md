@@ -156,6 +156,8 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to an data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
 
+3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/toolsrc.py`
+
 ### XML Changes
 
 1. __String Constants__ --- (**developer**) default values for strings, should **not** include quotes. The standard CASA XML processing would strip out opening and closing quotes, but CASAtools XML processing does not.
