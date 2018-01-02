@@ -17,10 +17,10 @@ vpath %.proto $(PROTODIR)
 all: client server
 
 client: helloworld.pb.o helloworld.grpc.pb.o client.o
-	clang++ -o $@ $^ -L$(LIBDIR) -Wl,-rpath,@loader_path/$(LIBDIR) -L$(LIBDIR) -lgrpc++ -lgrpc -L../../../build/grpc.macosx-10.12-x86_64-3.6.proto-install/lib -Wl,-rpath,@loader_path/$(LIBDIR) -lprotobuf
+	clang++ -o $@ $^ -L$(LIBDIR) -Wl,-rpath,@loader_path/$(LIBDIR) -L$(LIBDIR) -lgrpc++ -lgrpc -Wl,-rpath,@loader_path/$(LIBDIR) -lprotobuf
 
 server: helloworld.pb.o helloworld.grpc.pb.o server.o
-	clang++ -o $@ $^ -L$(LIBDIR) -Wl,-rpath,@loader_path/$(LIBDIR) -L$(LIBDIR) -lgrpc++ -lgrpc -L../../../build/grpc.macosx-10.12-x86_64-3.6.proto-install/lib -Wl,-rpath,@loader_path/$(LIBDIR) -lprotobuf
+	clang++ -o $@ $^ -L$(LIBDIR) -Wl,-rpath,@loader_path/$(LIBDIR) -L$(LIBDIR) -lgrpc++ -lgrpc -Wl,-rpath,@loader_path/$(LIBDIR) -lprotobuf
 
 .PRECIOUS: %.grpc.pb.cc
 %.grpc.pb.cc: %.proto
