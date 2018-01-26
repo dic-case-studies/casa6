@@ -48,7 +48,7 @@ After the CASA build environment is installed, the CASAtools module can be built
 -bash-4.2$ ./configure
 -bash-4.2$ ./setup.py build
 ```
-The `gcw-pick` script adjusts the standard CASA source tree for building with `setup.py`, and once CASAtools is integrated with CASA this step will not be necessary.
+The `gcw-pick` script adjusts the standard CASA source tree for building with `setup.py`, and once CASAtools is integrated with CASA this step will not be necessary. `gcw-pick` may run for quite a while...
 
 A particular version of Python can be selected at configure time like:
 ```
