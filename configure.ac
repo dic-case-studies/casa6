@@ -29,6 +29,8 @@ AC_MSG_NOTICE([host os is ${host_osname}])
 PWD=`pwd`
 AC_SUBST(PWD)
 
+AC_ARG_ENABLE([dbus], [  --enable-dbus           compile in support for DBus (deprecated feature)])
+
 AC_LANG(C++)
 
 AX_CXX11($PATH)
@@ -158,8 +160,23 @@ AC_SUBST(CASA_VERSION_FEATURE)
 AC_SUBST(CASA_VERSION_DESC)
 AC_SUBST(CASA_VERSION)
 
-AX_DBUS
-AX_DBUSCPP
+AS_IF([test "x$enable_dbus" = "xyes"], [
+    HAVE_DBUS=1
+    AX_DBUS
+    AX_DBUSCPP
+],[
+    HAVE_DBUS=0
+    AC_SUBST(HAVE_DBUS)
+    AC_SUBST(DBUSCPP_XML2CPP)
+    AC_SUBST(DBUSCPP_CFLAGS)
+    AC_SUBST(DBUSCPP_NAME)
+    AC_SUBST(DBUSCPP_LDFLAGS)
+    DBUS_CFLAGS="-DWITHOUT_DBUS"
+    AC_SUBST(DBUS_CFLAGS)
+    AC_SUBST(DBUS_LDFLAGS)
+])
+AC_SUBST(HAVE_DBUS)
+
 AX_LIBXML
 AX_LIBSAKURA
 
