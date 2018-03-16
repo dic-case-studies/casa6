@@ -76,6 +76,8 @@ $hdr_dir = "binding/include";
                'msmetadata' => 'casa-source/gcwrap/tools/ms/msmetadata.xml',
                'calibrater' => 'casa-source/gcwrap/tools/synthesis/calibrater.xml',
                'vpmanager' => 'casa-source/gcwrap/tools/synthesis/vpmanager.xml',
+               'imagemetadata' => 'casa-source/gcwrap/tools/images/imagemetadata.xml',
+               'logsink' => 'casa-source/gcwrap/tools/casa/logsink.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -151,6 +153,16 @@ $hdr_dir = "binding/include";
                'vpmanager' => [ 'casa-source/gcwrap/tools/synthesis/vpmanager_private.h',
                                 'casa-source/gcwrap/tools/synthesis/vpmanager_forward.h',
                                 'casa-source/gcwrap/tools/synthesis/vpmanager_cmpt.cc' ],
+               'imagemetadata' =>  [ 'casa-source/gcwrap/tools/images/imagemetadata_cmpt.cc',
+                                'casa-source/gcwrap/tools/images/imagemetadata_forward.h',
+                                'casa-source/gcwrap/tools/images/imagemetadata_private.h' ],
+               'logsink' =>  [ 'casa-source/gcwrap/tools/casa/logsink_cmpt.cc',
+                                'casa-source/gcwrap/tools/casa/logsink_forward.h',
+                                'casa-source/gcwrap/tools/casa/logsink_private.h',
+                                'casa-source/gcwrap/tools/casa/TSLogSink.h',
+                                'casa-source/gcwrap/tools/casa/TSLogSink.cc',
+                                'casa-source/gcwrap/tools/utils/CasapyWatcher.h',
+                                'casa-source/gcwrap/tools/utils/CasapyWatcher.cc', ],
              );
 
 print "configuring CASAtools... this may take a few moments...\n";
@@ -165,6 +177,8 @@ foreach $k ( keys %xml_files ) {                                 ### always usin
         open( my $out, "> $tool_dir/$k/$base" );
         while ( my $line = <$in> ) {
             $line =~ s|tools/xerces/stdcasaXMLUtil.h|stdcasaXMLUtil.h|g;
+            $line =~ s|tools/casa/TSLogSink.h|TSLogSink.h|g;
+            $line =~ s|tools/utils/CasapyWatcher.h|CasapyWatcher.h|g;
             print $out $line;
         }
         close($out);
