@@ -1,4 +1,4 @@
-start time: Fri Feb 16 16:22:52 2018
+start time: Thu Mar 15 14:11:51 2018
 input files:
     xml/tools/atmosphere.xml
     xml/tools/calanalysis.xml
@@ -7,7 +7,9 @@ input files:
     xml/tools/coordsys.xml
     xml/tools/functional.xml
     xml/tools/image.xml
+    xml/tools/imagemetadata.xml
     xml/tools/imagepol.xml
+    xml/tools/logsink.xml
     xml/tools/measures.xml
     xml/tools/ms.xml
     xml/tools/msmetadata.xml
@@ -20,7 +22,7 @@ input files:
     xml/tools/table.xml
     xml/tools/utils.xml
     xml/tools/vpmanager.xml
-command: scripts/xml-casa output-c=tests/output-regression/180216/source output-h=tests/output-regression/180216/include output-i=tests/output-regression/180216/swig output-tool=tests/output-regression/180216/tool -all xml/tools/atmosphere.xml xml/tools/calanalysis.xml xml/tools/calibrater.xml xml/tools/componentlist.xml xml/tools/coordsys.xml xml/tools/functional.xml xml/tools/image.xml xml/tools/imagepol.xml xml/tools/measures.xml xml/tools/ms.xml xml/tools/msmetadata.xml xml/tools/quanta.xml xml/tools/regionmanager.xml xml/tools/synthesisimager.xml xml/tools/synthesisimstore.xml xml/tools/synthesisnormalizer.xml xml/tools/synthesisutils.xml xml/tools/table.xml xml/tools/utils.xml xml/tools/vpmanager.xml
+command: scripts/xml-casa output-c=tests/output-regression/180315/source output-h=tests/output-regression/180315/include output-i=tests/output-regression/180315/swig output-tool=tests/output-regression/180315/tool -all xml/tools/atmosphere.xml xml/tools/calanalysis.xml xml/tools/calibrater.xml xml/tools/componentlist.xml xml/tools/coordsys.xml xml/tools/functional.xml xml/tools/image.xml xml/tools/imagemetadata.xml xml/tools/imagepol.xml xml/tools/logsink.xml xml/tools/measures.xml xml/tools/ms.xml xml/tools/msmetadata.xml xml/tools/quanta.xml xml/tools/regionmanager.xml xml/tools/synthesisimager.xml xml/tools/synthesisimstore.xml xml/tools/synthesisnormalizer.xml xml/tools/synthesisutils.xml xml/tools/table.xml xml/tools/utils.xml xml/tools/vpmanager.xml
 output:
     <inc> coordsys, image, synthesisimstore, componentlist, msmetadata, table
     <tgt> libmsmetadata < msmetadata
@@ -42,8 +44,11 @@ output:
     <tgt> componentlist : libcomponentlistcoordsysimage
     <tgt> msmetadata : libmsmetadata
     <tgt> imagepol : imagepol libcomponentlistcoordsysimage
+    <tgt> imagemetadata : imagemetadata
     <tgt> calibrater : calibrater
+    <tgt> logsink : logsink
     <tgt> functional : functional
     <tgt> ms : libmsmetadata libtable ms
     <tgt> synthesisutils : libsynthesisimstore synthesisutils
     <tgt> table : libtable
+    TASK: 
