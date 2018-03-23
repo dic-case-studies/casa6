@@ -16,6 +16,7 @@ build.flags.compile.pthread=@PTHREAD_CFLAGS@
 build.flags.link.cfitsio=@CFITSIO_LIBS@
 build.flags.compile.cfitsio=@CFITSIO_CFLAGS@
 option.dbus=@HAVE_DBUS@
+option.grpc=@WITH_GRPC@
 build.compiler.dbuscpp=@DBUSCPP_XML2CPP@
 build.compiler.ccache=@CCACHE@
 build.flags.compile.dbuscpp=@DBUSCPP_CFLAGS@

@@ -30,6 +30,16 @@ PWD=`pwd`
 AC_SUBST(PWD)
 
 AC_ARG_ENABLE([dbus], [  --enable-dbus           compile in support for DBus (deprecated feature)])
+AC_ARG_ENABLE([grpc], [  --disable-grpc          compile in support for gRPC],
+  [case "${enableval}" in
+     yes ) WITH_GRPC=1 ;;
+     no ) WITH_GRPC=0 ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-grpc) ;;
+   esac],
+  [WITH_GRPC=1]
+)
+AC_SUBST(WITH_GRPC)
+
 
 AC_LANG(C++)
 
