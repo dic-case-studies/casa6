@@ -15,11 +15,6 @@ class CasaCoerce:
     def set_ctsys(self, util_obj):
         self.ctsys = util_obj
 
-    def to_strvec(self,value):
-        if isinstance(value,str):
-            return [value]
-        return value
-
     def to_list(self,value):
         if isinstance(value,str):
             return value
@@ -34,21 +29,54 @@ class CasaCoerce:
             return int(value)
         return value
 
-    def to_intvec(self,value):
-        if isinstance(value,int) or isinstance(value,numpy.int32):
-            return [int(value)]
-        return value
-
     def to_float(self,value):
         if isinstance(value,int):
             return float(value)
         return value
 
+    def to_intvec(self,value):
+        if isinstance(value,int) or isinstance(value,numpy.int32):
+            return [int(value)]
+        return value
+
     def to_floatvec(self,value):
-        if isinstance(value,float):
+        if type(value) in [float,int,numpy.int32,numpy.int64]:
+            return [float(value)]
+        if isinstance(value,list):
+            if all([isinstance(v,float) or isinstance(v,int) or isinstance(v,numpy.int32) or isinstance(v,numpy.int64) for v in value]):
+                return [float(v) for v in value]
+        if isinstance(value,numpy.ndarray) and len(value.shape) <= 1:
+            if value.dtype.type in [ numpy.float32, numpy.float64, numpy.int32, numpy.int64, int ]:
+                return [float(v) for v in value]
+        return value
+
+    def to_strvec(self,value):
+        if isinstance(value,str):
             return [value]
-        if isinstance(value,list) or isinstance(value,numpy.ndarray):
-            return [float(v) for v in value]
+        return value
+
+    def to_intarray(self,value):
+        if isinstance(value,int) or isinstance(value,numpy.int32):
+            return numpy.array([int(value)])
+        return value
+
+    def to_floatarray(self,value):
+        if type(value) in [float,int,numpy.int32,numpy.int64]:
+            return numpy.array([float(value)])
+        if isinstance(value,list):
+            if all([isinstance(v,int) or isinstance(v,numpy.int32) or isinstance(v,numpy.int64) for v in value]):
+                return numpy.array([float(v) for v in value])
+        if isinstance(value,numpy.ndarray):
+            if value.dtype.type in [ numpy.float32, numpy.float64, numpy.int32, numpy.int64, int ]:
+                return value.astype(numpy.float64)
+        return value
+
+    def to_strarray(self,value):
+        if isinstance(value,str):
+            return numpy.array([value])
+        if isinstance(value,list):
+            if all([isinstance(v,str) for v in value]):
+                return numpy.array(value)
         return value
 
     def expand_path(self,value):

@@ -84,6 +84,7 @@ from itertools import chain
 module_name = 'CASAtools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
+xml_jar_file = 'xml-casa-assembly-1.0.jar'
 
 if pyversion < 3:
     str_encode = str
@@ -185,6 +186,15 @@ def so_version( ):
     y=(delta>>8)&0xff
     x=(delta>>16)&0xffff
     return "%d.%d.%d" % (x,y,z)
+
+def install_xml_casa( ):
+    script = os.path.join('scripts','xml-casa')
+    jar = os.path.join('scripts','java',xml_jar_file)
+    bindir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin")
+    javadir = os.path.join(bindir,'java')
+    mkpath(javadir)
+    copy2(script,bindir)
+    copy2(jar,javadir)
 
 def generate_grpc(protos):
     protoc = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "protoc")
@@ -447,6 +457,9 @@ def build_grpc( prefix, srcdir, collectdir ):
 
             print("copying the protobuf compiler...")
             run_process( ["rsync","-aq","%s/bin/" % collectdir_arg,"%s/bin" % prefix], err='could not copy the protobuf bin tree' )
+
+            print("copying xml-casa...")
+            install_xml_casa( )
 
             ## remove 'libtool' droppings
             for root,subdirs,files in os.walk(prefix):

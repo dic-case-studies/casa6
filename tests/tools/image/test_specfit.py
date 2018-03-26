@@ -98,12 +98,12 @@ def run_fitprofile (
     axis, mask, ngauss, poly, multifit, model="",
     residual="", amp="", amperr="", center="", centererr="",
     fwhm="", fwhmerr="", integral="", integralerr="",
-    estimates="", logresults=True, pampest="", pcenterest="", pfwhmest="",
-    pfix="", gmncomps=0, gmampcon="", gmcentercon="",
-    gmfwhmcon="", gmampest=[0], gmcenterest=[0],
+    estimates="", logresults=True, pampest=[ ], pcenterest=[ ], pfwhmest=[ ],
+    pfix="", gmncomps=0, gmampcon=[ ], gmcentercon=[ ],
+    gmfwhmcon=[ ], gmampest=[0], gmcenterest=[0],
     gmfwhmest=[0], gmfix="", logfile="", pfunc="",
     goodamprange=[0.0], goodcenterrange=[0.0], goodfwhmrange=[0.0],
-    sigma="", outsigma=""
+    sigma=[ ], outsigma=""
 ):
     myia = iatool()
     myia.open(imagename)

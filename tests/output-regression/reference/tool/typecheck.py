@@ -67,21 +67,58 @@ class CasaValidator(Validator):
             return True
 
     def _validate_type_cIntVec(self,value):
-        if isinstance(value,list) or isinstance(value,numpy.ndarray):
+        if isinstance(value,list):
             if all([isinstance(v,int) or isinstance(v,numpy.int32) or isinstance(v,numpy.int64) for v in value]):
+                return True
+        if isinstance(value,numpy.ndarray) and len(value.shape) <= 1:
+            if value.dtype.type in [ numpy.int32, numpy.int64, int ]:
                 return True
 
     def _validate_type_cFloatVec(self,value):
-        if isinstance(value,list) and all([isinstance(e,float) for e in value]):
-            return True
+        if isinstance(value,list):
+            if all([isinstance(v,float) or isinstance(v,numpy.float32) or isinstance(v,numpy.float64) for v in value]):
+                return True
+        if isinstance(value,numpy.ndarray) and len(value.shape) <= 1:
+            if value.dtype.type in [ numpy.float32, numpy.float64, float ]:
+                return True
 
     def _validate_type_cStrVec(self,value):
-        if isinstance(value,list) and all([isinstance(e,str) for e in value]):
-            return True
+        if isinstance(value,list):
+            if all([isinstance(v,str) for v in value]):
+                return True
+        if isinstance(value,numpy.ndarray) and len(value.shape) <= 1:
+            if value.dtype.type in [ numpy.str_, str ]:
+                return True
 
     def _validate_type_cBoolVec(self,value):
-        if isinstance(value,list) and all([isinstance(e,bool) for e in value]):
-            return True
+        if isinstance(value,list):
+            if all([isinstance(v,bool) for v in value]):
+                return True
+        if isinstance(value,numpy.ndarray) and len(value.shape) <= 1:
+            if value.dtype.type in [ numpy.bool_, bool ]:
+                return True
+
+    def _validate_type_cIntArray(self,value):
+        if isinstance(value,numpy.ndarray):
+            print(">>>cIntArray>>>>> %s" % value.dtype.type)
+            if value.dtype.type in [int, numpy.int32, numpy.int64]:
+                return True
+
+    def _validate_type_cFloatArray(self,value):
+        if isinstance(value,numpy.ndarray):
+            print(">>>cFloatArray>>> %s" % value.dtype.type)
+            if value.dtype.type in [ float, numpy.float32, numpy.float64 ]:
+                return True
+
+    def _validate_type_cStrArray(self,value):
+        if isinstance(value,numpy.ndarray):
+            if value.dtype.type is numpy.str_:
+                return True
+
+    def _validate_type_cBoolArray(self,value):
+        if isinstance(value,numpy.ndarray):
+            if value.dtype.type is numpy.bool_:
+                return True
 
     def _validate_type_cDict(self,value):
         if isinstance(value,dict):
