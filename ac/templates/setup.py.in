@@ -463,6 +463,15 @@ def build_grpc( prefix, srcdir, collectdir ):
             print("copying the protobuf compiler...")
             run_process( ["rsync","-aq","%s/bin/" % collectdir_arg,"%s/bin" % prefix], err='could not copy the protobuf bin tree' )
 
+            ##
+            ## grpc "make install" seems to generate a symlink from '...so.5' instead of '...so.1'
+            ##
+            libdir = join(prefix,"lib")
+            if os.path.exists(join(libdir,"libgrpc++.so.1.8.7")) and os.path.exists(join(libdir,"libgrpc++.so.5")):
+                os.rename(join(libdir,"libgrpc++.so.5"),join(libdir,"libgrpc++.so.1"))
+            if os.path.exists(join(libdir,"libgrpc++_unsecure.so.1.8.7")) and os.path.exists(join(libdir,"libgrpc++_unsecure.so.5")):
+                os.rename(join(libdir,"libgrpc++_unsecure.so.5"),join(libdir,"libgrpc++_unsecure.so.1"))
+
             ## remove 'libtool' droppings
             for root,subdirs,files in os.walk(prefix):
                 for f in files:
