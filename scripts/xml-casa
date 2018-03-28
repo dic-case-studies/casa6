@@ -27,6 +27,7 @@ foreach ( @ARGV ) {
     m|^-header$| && (push(@flags,$_),$doing_something=1,next);
     m|^-swig$| && (push(@flags,$_),$doing_something=1,next);
     m|^-tool$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-task$| && (push(@flags,$_),$doing_something=1,next);
     m|^-all$| && (push(@flags,$_),$doing_something=1,next);
     m|^-tgts$| && (push(@flags,$_),$doing_something=1,next);
     m|^-output-tool-subdir$| && (push(@flags,$_),next);
@@ -53,6 +54,11 @@ foreach ( @ARGV ) {
         next;
     }
     if ( m|^output-tool=(.*)$| ) {
+        if ( -d $1 ) { push(@flags,$_) }
+        else { die "in '$_' directory does not exist" }
+        next;
+    }
+    if ( m|^output-task=(.*)$| ) {
         if ( -d $1 ) { push(@flags,$_) }
         else { die "in '$_' directory does not exist" }
         next;
