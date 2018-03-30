@@ -47,6 +47,7 @@ Operating System :: POSIX
 from CASAtools.config import build as tools_config
 
 from setuptools import setup, find_packages
+from distutils.dir_util import copy_tree, remove_tree
 from distutils.cmd import Command
 from subprocess import Popen, PIPE
 from subprocess import call as Proc
@@ -73,13 +74,19 @@ pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
 private = [ 'src/lib/ialib.py',
             'src/lib/cvt.py',
             'src/tasks/task_imhead.py',
-            'src/tasks/task_immoments.py' ]
+            'src/tasks/task_immoments.py',
+            'src/tasks/task_imhistory.py',
+]
 
 xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
-              'casa-source/gcwrap/tasks/immoments.xml': 'xml/immoments.xml' }
+              'casa-source/gcwrap/tasks/immoments.xml': 'xml/immoments.xml',
+              'casa-source/gcwrap/tasks/imhistory.xml': 'xml/imhistory.xml',
+}
 
 xml_files = [ 'xml/imhead.xml',
-              'xml/immoments.xml' ]
+              'xml/immoments.xml',
+              'xml/imhistory.xml',
+]
 
 if pyversion < 3:
     str_encode = str
