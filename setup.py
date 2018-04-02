@@ -71,21 +71,29 @@ module_name = 'CASAtasks'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
 
-private = [ 'src/lib/ialib.py',
-            'src/lib/cvt.py',
-            'src/tasks/task_imhead.py',
-            'src/tasks/task_immoments.py',
-            'src/tasks/task_imhistory.py',
+private_scripts = [ 'src/scripts/ialib.py',
+                    'src/scripts/cvt.py',
+                    'src/scripts/callibrary.py',
+                    'src/scripts/flaghelper.py',
+                    'src/scripts/partitionhelper.py',
+                    'src/tasks/task_imhead.py',
+                    'src/tasks/task_immoments.py',
+                    'src/tasks/task_imhistory.py',
+                    'src/tasks/task_applycal.py',
 ]
+
+private_modules = [ 'src/modules/parallel' ]
 
 xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/immoments.xml': 'xml/immoments.xml',
               'casa-source/gcwrap/tasks/imhistory.xml': 'xml/imhistory.xml',
+              'casa-source/gcwrap/tasks/applycal.xml': 'xml/applycal.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
               'xml/immoments.xml',
               'xml/imhistory.xml',
+              'xml/applycal.xml',
 ]
 
 if pyversion < 3:
@@ -204,8 +212,12 @@ class BuildCasa(Command):
         tasks = output.split( )
         generate_pyinit(moduledir,tasks)
 
-        for f in private:
+        for f in private_scripts:
             copy2(f,privatedir)
+
+        for m in private_modules:
+            tgt = os.path.join(privatedir,os.path.basename(m))
+            copy_tree(m,tgt)
 
 class TestCasa(Command):
     user_options = []
