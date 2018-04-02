@@ -122,17 +122,20 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 
 | Tool Name           | Description                                                     |
 | ------------------- | --------------------------------------------------------------- |
+| agentflagger        | Tool for manual and automated flagging                          |
 | atmosphere          | Atmosphere model                                                |
 | calanalysis         | Get and fit data from a calibration table (CASA 3.4 and later). |
 | calibrater          | Synthesis calibration (self- and cross-)                        |
 | componentlist       | A tool for the manipulation of groups of components             |
 | coordsys            | Operations on CoordinateSystems                                 |
 | functional          | Functionals handling                                            |
-| imagepol            | Polarimetric analysis of images                                 |
 | image               | Operations on images                                            |
+| imagemetadata       | Operations on imagemetadata                                     |
+| imagepol            | Polarimetric analysis of images                                 |
+| logsink             | tool for logsink                                                |
 | measures            | measures tool                                                   |
-| msmetadata          | Operations to retrieve metadata from a measurment set           |
 | ms                  | Operations on measurement sets                                  |
+| msmetadata          | Operations to retrieve metadata from a measurment set           |
 | quanta              | quanta tool handles units and quantities                        |
 | regionmanager       | Create and manipulate regions of interest                       |
 | synthesisimager     | tool for synthesis imaging                                      |
