@@ -78,6 +78,7 @@ $hdr_dir = "binding/include";
                'vpmanager' => 'casa-source/gcwrap/tools/synthesis/vpmanager.xml',
                'imagemetadata' => 'casa-source/gcwrap/tools/images/imagemetadata.xml',
                'logsink' => 'casa-source/gcwrap/tools/casa/logsink.xml',
+               'agentflagger' => 'casa-source/gcwrap/tools/flagging/agentflagger.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -157,12 +158,15 @@ $hdr_dir = "binding/include";
                                 'casa-source/gcwrap/tools/images/imagemetadata_forward.h',
                                 'casa-source/gcwrap/tools/images/imagemetadata_private.h' ],
                'logsink' =>  [ 'casa-source/gcwrap/tools/casa/logsink_cmpt.cc',
-                                'casa-source/gcwrap/tools/casa/logsink_forward.h',
-                                'casa-source/gcwrap/tools/casa/logsink_private.h',
-                                'casa-source/gcwrap/tools/casa/TSLogSink.h',
-                                'casa-source/gcwrap/tools/casa/TSLogSink.cc',
-                                'casa-source/gcwrap/tools/utils/CasapyWatcher.h',
-                                'casa-source/gcwrap/tools/utils/CasapyWatcher.cc', ],
+                               'casa-source/gcwrap/tools/casa/logsink_forward.h',
+                               'casa-source/gcwrap/tools/casa/logsink_private.h',
+                               'casa-source/gcwrap/tools/casa/TSLogSink.h',
+                               'casa-source/gcwrap/tools/casa/TSLogSink.cc',
+                               'casa-source/gcwrap/tools/utils/CasapyWatcher.h',
+                               'casa-source/gcwrap/tools/utils/CasapyWatcher.cc', ],
+               'agentflagger' => [ 'casa-source/gcwrap/tools/flagging/agentflagger_cmpt.cc',
+                                   'casa-source/gcwrap/tools/flagging/agentflagger_forward.h',
+                                   'casa-source/gcwrap/tools/flagging/agentflagger_private.h', ],
              );
 
 print "configuring CASAtools... this may take a few moments...\n";
