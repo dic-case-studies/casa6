@@ -226,7 +226,11 @@ class TestCasa(Command):
         self.__test_dir = "build/%s" % distutils_dir_name('testing')
         self.__lib_dir = os.path.abspath("build/%s" % distutils_dir_name('lib'))
         self.__env = os.environ.copy( )
-        self.__env['PYTHONPATH'] = "%s:%s" % (self.__env['PYTHONPATH'],self.__lib_dir) if 'PYTHONPATH' in self.__env else self.__lib_dir
+        if 'PYTHONPATH' in self.__env:
+            existing_paths = ":".join(list(map(os.path.abspath,self.__env['PYTHONPATH'].split(':'))))
+            self.__env['PYTHONPATH'] = "%s:%s" % (self.__lib_dir,existing_paths)
+        else:
+            self.__env['PYTHONPATH'] = self.__lib_dir
         self.__regression_dir = "build/%s" % distutils_dir_name('regression')
         #self.__regression_ref_dir = "tests/output-regression/reference-%d.%d" % (sys.version_info[0],sys.version_info[1])
         self.__regression_ref_dir = "tests/output-regression/reference"
