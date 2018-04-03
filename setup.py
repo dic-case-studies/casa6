@@ -80,6 +80,9 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_immoments.py',
                     'src/tasks/task_imhistory.py',
                     'src/tasks/task_applycal.py',
+                    'src/tasks/task_bandpass.py',
+                    'src/tasks/task_blcal.py',
+                    'src/tasks/task_calstat.py',
 ]
 
 private_modules = [ 'src/modules/parallel' ]
@@ -88,12 +91,18 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/immoments.xml': 'xml/immoments.xml',
               'casa-source/gcwrap/tasks/imhistory.xml': 'xml/imhistory.xml',
               'casa-source/gcwrap/tasks/applycal.xml': 'xml/applycal.xml',
+              'casa-source/gcwrap/tasks/bandpass.xml': 'xml/bandpass.xml',
+              'casa-source/gcwrap/tasks/blcal.xml': 'xml/blcal.xml',
+              'casa-source/gcwrap/tasks/calstat.xml': 'xml/calstat.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
               'xml/immoments.xml',
               'xml/imhistory.xml',
               'xml/applycal.xml',
+              'xml/bandpass.xml',
+              'xml/blcal.xml',
+              'xml/calstat.xml',
 ]
 
 if pyversion < 3:
@@ -290,7 +299,7 @@ class TestCasa(Command):
         tests = [ ]
         for dir, subdirs, files in os.walk(testdir):
             for f in files:
-                if f.endswith(".py"):
+                if f.endswith(".py") and f.startswith("test_"):
                     workingdir = "%s/%s" % (self.__test_dir,f[:-3])
                     mkpath(workingdir)
                     tests.append((os.path.abspath("%s/%s" % (dir,f)),workingdir))
