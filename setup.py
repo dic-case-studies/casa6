@@ -83,6 +83,9 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_bandpass.py',
                     'src/tasks/task_blcal.py',
                     'src/tasks/task_calstat.py',
+                    'src/tasks/task_concat.py',
+                    'src/tasks/task_split.py',
+                    'src/tasks/task_listobs.py',
 ]
 
 private_modules = [ 'src/modules/parallel' ]
@@ -94,6 +97,9 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/bandpass.xml': 'xml/bandpass.xml',
               'casa-source/gcwrap/tasks/blcal.xml': 'xml/blcal.xml',
               'casa-source/gcwrap/tasks/calstat.xml': 'xml/calstat.xml',
+              'casa-source/gcwrap/tasks/concat.xml': 'xml/concat.xml',
+              'casa-source/gcwrap/tasks/split.xml': 'xml/split.xml',
+              'casa-source/gcwrap/tasks/listobs.xml': 'xml/listobs.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -103,6 +109,9 @@ xml_files = [ 'xml/imhead.xml',
               'xml/bandpass.xml',
               'xml/blcal.xml',
               'xml/calstat.xml',
+#              'xml/concat.xml',
+#              'xml/split.xml',
+              'xml/listobs.xml',
 ]
 
 if pyversion < 3:
