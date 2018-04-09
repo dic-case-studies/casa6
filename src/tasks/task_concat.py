@@ -343,14 +343,14 @@ def concat(vislist,concatvis,freqtol,dirtol,respectname,timesort,copypointing,
 				t.open(theconcatvis, nomodify=False)
 				for colname in [ 'WEIGHT', 'WEIGHT_SPECTRUM']:
 					if (colname in t.colnames()) and (t.iscelldefined(colname,0)):
-						for j in xrange(0,t.nrows()):
+						for j in range(0,t.nrows()):
 							a = t.getcell(colname, j)
 							a *= wscale
 							t.putcell(colname, j, a)
 				for colname in ['SIGMA']:
 					if (wscale > 0. and colname in t.colnames()) and (t.iscelldefined(colname,0)):
 						sscale = 1./sqrt(wscale)
-						for j in xrange(0,t.nrows()):
+						for j in range(0,t.nrows()):
 							a = t.getcell(colname, j)
 							a *= sscale
 							t.putcell(colname, j, a)

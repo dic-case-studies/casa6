@@ -76,7 +76,7 @@ class JobData:
         the JobQueueManager.
         """
         output = ''
-        for idx in xrange(len(self._commandList)):
+        for idx in range(len(self._commandList)):
             if idx > 0:
                 output += '; '
             output += self._commandList[idx].getCommandLine()

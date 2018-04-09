@@ -86,6 +86,15 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_concat.py',
                     'src/tasks/task_split.py',
                     'src/tasks/task_listobs.py',
+                    'src/tasks/task_flagdata.py',
+                    'src/tasks/task_flagcmd.py',
+                    'src/tasks/task_setjy.py',
+                    'src/scripts/setjy_helper.py',
+                    'src/scripts/solar_system_setjy.py',
+                    'src/scripts/mstools.py',
+                    'src/scripts/update_spw.py',
+                    'src/tasks/task_cvel.py',
+                    'src/tasks/task_importuvfits.py',
 ]
 
 private_modules = [ 'src/modules/parallel' ]
@@ -100,6 +109,11 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/concat.xml': 'xml/concat.xml',
               'casa-source/gcwrap/tasks/split.xml': 'xml/split.xml',
               'casa-source/gcwrap/tasks/listobs.xml': 'xml/listobs.xml',
+              'casa-source/gcwrap/tasks/flagdata.xml': 'xml/flagdata.xml',
+              'casa-source/gcwrap/tasks/flagcmd.xml': 'xml/flagcmd.xml',
+              'casa-source/gcwrap/tasks/setjy.xml': 'xml/setjy.xml',
+              'casa-source/gcwrap/tasks/cvel.xml': 'xml/cvel.xml',
+              'casa-source/gcwrap/tasks/importuvfits.xml': 'xml/importuvfits.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -110,8 +124,13 @@ xml_files = [ 'xml/imhead.xml',
               'xml/blcal.xml',
               'xml/calstat.xml',
 #              'xml/concat.xml',
-#              'xml/split.xml',
+              'xml/split.xml',
               'xml/listobs.xml',
+              'xml/flagdata.xml',
+              'xml/flagcmd.xml',
+              'xml/setjy.xml',
+              'xml/cvel.xml',
+              'xml/importuvfits.xml',
 ]
 
 if pyversion < 3:

@@ -789,7 +789,7 @@ def makeMMS(outputvis, submslist, copysubtables=False, omitsubtables=[], paralle
         thesubtables.remove('HISTORY')
 
         # Create sym links to all sub-tables in all subMSs
-        for i in xrange(1,len(submslist)):
+        for i in range(1,len(submslist)):
             thesubms = os.path.basename(submslist[i].rstrip('/'))
             os.chdir('../'+thesubms)
             

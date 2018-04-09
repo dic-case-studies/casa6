@@ -18,8 +18,7 @@ Example:
 import copy
 import os
 #from taskinit import mstool
-from casac import *
-from taskinit import ms
+from CASAtools import ms
 
 def update_spw(spw, spwmap=None):
     """
@@ -124,7 +123,7 @@ def update_spw(spw, spwmap=None):
     outstr = ''
     for sc in spwchans:
         sgrps = sc[0].split(';')
-        for sind in xrange(len(sgrps)):
+        for sind in range(len(sgrps)):
             sgrp = sgrps[sind]
             if sgrp.find('~') > -1:
                 start, end = sgrp.split('~')
@@ -160,9 +159,9 @@ def spwchan_to_ranges(vis, spw):
     selarr = ms.msseltoindex(vis, spw=spw)['channel']
     nspw = selarr.shape[0]
     selranges = {}
-    for s in xrange(nspw):
+    for s in range(nspw):
         if selranges.has_key(selarr[s][0]):
-            raise ValueError, 'spwchan_to_ranges() does not support multiple channel ranges per spw.'
+            raise ValueError('spwchan_to_ranges() does not support multiple channel ranges per spw.')
         selranges[selarr[s][0]] = tuple(selarr[s][1:])
     return selranges
 
@@ -193,7 +192,7 @@ def spwchan_to_sets(vis, spw):
     # just doesn't have all the channels in spw is a bit crude.  Sanjay is
     # working on adding some flexibility to ms.msseltoindex.
     if not os.path.isdir(vis):
-        raise ValueError, str(vis) + ' is not a valid MS.'
+        raise ValueError(str(vis) + ' is not a valid MS.')
         
     sets = {}
     try:
@@ -272,7 +271,7 @@ def set_to_chanstr(chanset, totnchan=None):
         # Check whether the same step can be used throughout.
         step = mylist[1] - mylist[0]
         samestep = True
-        for i in xrange(2, len(mylist)):
+        for i in range(2, len(mylist)):
             if mylist[i] - mylist[i - 1] != step:
                 samestep = False
                 break
@@ -285,7 +284,7 @@ def set_to_chanstr(chanset, totnchan=None):
             oldc = sc
             retstr = str(sc)
             nc = len(mylist)
-            for i in xrange(1, nc):
+            for i in range(1, nc):
                 cc = mylist[i]
                 if (cc > oldc + 1) or (i == nc - 1):
                     if (i == nc - 1) and (cc == oldc + 1):
@@ -342,7 +341,7 @@ def sets_to_spwchan(spwsets, nchans={}):
         oldspw = startspw
         sstr = str(startspw)
         nselspw = len(slist)
-        for sind in xrange(1, nselspw):
+        for sind in range(1, nselspw):
             currspw = slist[sind]
             if (currspw > oldspw + 1) or (sind == nselspw - 1):
                 if currspw > oldspw + 1:
@@ -429,16 +428,16 @@ def update_spwchan(vis, sch0, sch1, truncate=False, widths={}):
                 if truncate:
                     s1.intersection_update(s0)
                     if not s1:
-                        raise ValueError, "'%s' does not overlap '%s'." % (sch1, sch0)
+                        raise ValueError("'%s' does not overlap '%s'." % (sch1, sch0))
                 else:
-                    raise ValueError, "'%s' is not a subset of '%s'." % (sch1, sch0)
+                    raise ValueError("'%s' is not a subset of '%s'." % (sch1, sch0))
 
             # Adapt s1 for a post-s0 world.
             s0list = sorted(list(s0))
             s1list = sorted(list(s1))
             outchan = 0
             nc0 = len(s0list)
-            for s1ind in xrange(len(s1list)):
+            for s1ind in range(len(s1list)):
                 while (outchan < nc0) and (s0list[outchan] < s1list[s1ind]):
                     outchan += 1
                 if outchan == nc0:  # Shouldn't happen
@@ -456,7 +455,7 @@ def update_spwchan(vis, sch0, sch1, truncate=False, widths={}):
             # Get the number of channels per spw that are selected by s0.
             nchans[outspw] = len(s0)
         elif not truncate:
-            raise ValueError, str(s) + ' is not a selected spw of ' + sch0
+            raise ValueError(str(s) + ' is not a selected spw of ' + sch0)
 
     return sets_to_spwchan(outsets, nchans)
 
@@ -500,7 +499,7 @@ def expand_tilde(tstr, conv_multiranges=False):
                 start = int(numrang)
                 end = start
         except:
-            raise ValueError, 'numrang = ' + numrang + ', tstr = ' + tstr + ', conv_multiranges = ' + str(conv_multiranges)
+            raise ValueError('numrang = ' + numrang + ', tstr = ' + tstr + ', conv_multiranges = ' + str(conv_multiranges))
         numset.update(range(start, end + 1, step))
     return sorted(list(numset))
 
@@ -629,7 +628,7 @@ def join_spws(spw1, spw2, span_semicolon=True):
     slist.sort()
     res = str(slist[0])
     laststart = 0
-    for i in xrange(1, len(slist)):
+    for i in range(1, len(slist)):
         # If consecutive spws have the same channel list,
         if slist[i] == slist[i - 1] + 1 and spwdict[slist[i]] == spwdict[slist[i - 1]]:
             if slist[i] == slist[laststart] + 1:
