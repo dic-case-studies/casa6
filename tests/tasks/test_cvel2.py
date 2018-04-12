@@ -3,9 +3,9 @@ import os
 import numpy
 import shutil
 from CASAtasks import cvel2, cvel, split, importuvfits, partition
-from CASAtools import table, ms, quanta
-from parallel.parallel_task_helper import ParallelTaskHelper
-from parallel.parallel_data_helper import ParallelDataHelper
+from CASAtools import ctsys, table, ms, quanta
+from CASAtasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from CASAtasks.private.parallel.parallel_data_helper import ParallelDataHelper
 import unittest
 
 # Path for data
@@ -13,14 +13,14 @@ datapath = None
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):   
+if 'TEST_DATADIR' in os.environ:
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/cvel/'
     if os.path.isdir(DATADIR):
         testmms = True
         datapath = DATADIR
         print('cvel2 tests will use data from '+datapath)
     
-if os.environ.has_key('BYPASS_PARALLEL_PROCESSING'):
+if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
     ParallelTaskHelper.bypassParallelProcessing(1)
 
 myname = 'test_cvel'
@@ -267,7 +267,7 @@ class cvel2_test(test_base):
         # Simulate the passall=True. This MS has fields 0~6
         desel = outfile+'.deselected'
         split(vis='myinput.ms',outputvis=desel,field='0,2,3,4,5,6',spw='0',datacolumn='all')
-        mslocal = mstool()
+        mslocal = ms()
         mslocal.open(outfile, nomodify=False)
         mslocal.concatenate(msfile=desel)            
         mslocal.close()
@@ -1396,7 +1396,7 @@ class cvel2_test(test_base):
             keepmms=False
             )
 
-        self.assertFalse(ParallelDataHelper.isParallelMS(outfile),'Output shold be an MS')
+        self.assertFalse(ParallelDataHelper.isParallelMS(outfile),'Output should be an MS')
         self.assertNotEqual(rval,False)
         ret = verify_ms(outfile, 1, 2, 0)
         self.assertTrue(ret[0],ret[1])
@@ -1424,3 +1424,5 @@ class cleanup(unittest.TestCase):
 def suite():
     return [cvel2_test, cleanup]
 
+if __name__ == '__main__':
+    unittest.main()

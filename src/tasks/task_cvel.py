@@ -182,7 +182,7 @@ def cvel(vis, outputvis,
         assert outputvis != '', "Must provide output data set name in parameter outputvis."
         assert not os.path.exists(outputvis), "Output MS %s already exists - will not overwrite." % outputvis
         assert not os.path.exists(outputvis+".flagversions"), \
-                "The flagversions \"%s.flagversions\" for the output MS already exist. Please delete." % outputvis
+            "The flagversions \"%s.flagversions\" for the output MS already exist. Please delete." % outputvis
                             
         # Handle selectdata explicitly
         #  (avoid hidden globals)

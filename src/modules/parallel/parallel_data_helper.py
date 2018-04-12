@@ -11,7 +11,7 @@ from .parallel_task_helper import ParallelTaskHelper, JobData
 from .. import partitionhelper as ph
 import inspect
 from numpy.f2py.auxfuncs import throw_error
-from CASAtools import ms, msmetadata, mstransformer
+from CASAtools import quanta, ms, msmetadata, mstransformer
 from CASAtasks import casalog
 
 try:
@@ -125,6 +125,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         self.__ddistart = None
         self._msTool = None
         self._tbTool = None
+        self._qa = quanta( )
         
         if not 'spw' in self.__args:
             self.__args['spw'] = ''
@@ -226,7 +227,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 (self.__args['combinespws'] == False and self.__args['nspw'] == 1):
                 # Get the value of timebin as a float
                 timebin = self.__args['timebin']
-                tsec = qa.quantity(timebin,'s')['value']
+                tsec = self._qa.quantity(timebin,'s')['value']
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 # For each subms, check if scans length is <=  timebin
                 for subms in subMSList:
@@ -246,7 +247,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 spwdict = ph.getScanSpwSummary(subMSList) 
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 timebin = self.__args['timebin']
-                tsec = qa.quantity(timebin,'s')['value']
+                tsec = self._qa.quantity(timebin,'s')['value']
                 for subms in subMSList:
                     subms_spwids = ph.getSubMSSpwIds(subms, spwdict)
                     slist = map(str,subms_spwids)
@@ -267,7 +268,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             if (sepaxis != 'spw' and self.__args['combine'] == 'scan'):
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 timebin = self.__args['timebin']
-                tsec = qa.quantity(timebin,'s')['value']
+                tsec = self._qa.quantity(timebin,'s')['value']
                 for subms in subMSList:
                     if not self.__isScanContained(subms, scansel, tsec):
                         casalog.post('Cannot process MMS in parallel when combine=\'scan\' because the subMSs do not contain all the selected scans',\
@@ -1420,11 +1421,11 @@ class ParallelDataHelper(ParallelTaskHelper):
 
             # Check if the parameter has valid velocity units
             if not self.__args['start'] == '':
-                if (qa.quantity(self.__args['start'])['unit'].find('m/s') < 0):
+                if (self._qa.quantity(self.__args['start'])['unit'].find('m/s') < 0):
                     raise TypeError('Parameter start does not have valid velocity units')
             
             if not self.__args['width'] == '':
-                if (qa.quantity(self.__args['width'])['unit'].find('m/s') < 0):
+                if (self._qa.quantity(self.__args['width'])['unit'].find('m/s') < 0):
                     raise TypeError('Parameter width does not have valid velocity units')
                                             
         elif self.__args['mode'] == 'frequency':
@@ -1435,11 +1436,11 @@ class ParallelDataHelper(ParallelTaskHelper):
     
             # Check if the parameter has valid frequency units
             if not self.__args['start'] == '':
-                if (qa.quantity(self.__args['start'])['unit'].find('Hz') < 0):
+                if (self._qa.quantity(self.__args['start'])['unit'].find('Hz') < 0):
                     raise TypeError('Parameter start does not have valid frequency units')
     
             if not self.__args['width'] == '':
-                if (qa.quantity(self.__args['width'])['unit'].find('Hz') < 0):
+                if (self._qa.quantity(self.__args['width'])['unit'].find('Hz') < 0):
                     raise TypeError('Parameter width does not have valid frequency units')
         
         start = self.__args['start']

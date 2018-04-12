@@ -39,6 +39,11 @@ def cvel2(
         class, implemented in parallel.parallel_data_helper.py. 
     """
 
+    assert outputvis != '', "Must provide output data set name in parameter outputvis."
+    assert not os.path.exists(outputvis), "Output MS %s already exists - will not overwrite." % outputvis
+    assert not os.path.exists(outputvis+".flagversions"), \
+        "The flagversions \"%s.flagversions\" for the output MS already exist. Please delete." % outputvis
+
     # Initialize the helper class  
     pdh = ParallelDataHelper("cvel2", locals()) 
 
