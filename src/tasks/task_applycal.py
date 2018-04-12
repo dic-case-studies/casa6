@@ -5,7 +5,7 @@ from .. import casalog
 from .callibrary import *
 from . import flaghelper as fh
 from .parallel.parallel_task_helper import ParallelTaskHelper
-
+from .mstools import write_history
 
 def applycal(
     vis=None,
@@ -175,9 +175,10 @@ def applycal(
 
             # write history
         try:
+            vars = locals( )
             param_names = \
-                applycal.func_code.co_varnames[:applycal.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+                applycal.__code__.co_varnames[:applycal.__code__.co_argcount]
+            param_vals = [vars[p] for p in param_names]
             write_history(
                 mstool(),
                 vis,
@@ -218,7 +219,7 @@ def reportflags(rec):
                     flstr += 'Out: ' + str(VEi['nflagOut'])
                     flstr += ' (' + str(100. * VEi['nflagOut']
                             / VEi['ndata']) + '%)'
-                    if VEi.has_key('table'):
+                    if 'table' in VEi:
                         flstr += ' (' + VEi['table'] + ')'
                     casalog.post(flstr)
     except Exception as instance:

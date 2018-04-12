@@ -106,7 +106,7 @@ def checkMSes(holderdict, dir, files):
         if not myopen(mytb, currms + '/DATA_DESCRIPTION'):
             break
 
-        for row in xrange(mytb.nrows()):
+        for row in range(mytb.nrows()):
             if not mytb.getcell('FLAG_ROW', row):
                 key = (num_corrs[mytb.getcell('POLARIZATION_ID', row)],
                        num_chans[mytb.getcell('SPECTRAL_WINDOW_ID', row)])

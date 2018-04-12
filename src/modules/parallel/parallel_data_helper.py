@@ -11,7 +11,7 @@ from .parallel_task_helper import ParallelTaskHelper, JobData
 from .. import partitionhelper as ph
 import inspect
 from numpy.f2py.auxfuncs import throw_error
-from CASAtools import ms
+from CASAtools import ms, msmetadata, mstransformer
 from CASAtasks import casalog
 
 try:
@@ -349,7 +349,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         scanlist = []
         if scansel.isspace() or scansel.__len__() == 0:
             # Get all the scan ids
-            mymsmd = msmdtool()
+            mymsmd = msmetadata( )
             mymsmd.open(msfile)
             scans = mymsmd.scannumbers()
             mymsmd.close()
@@ -381,7 +381,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             """
             isContained = False                            
             
-            mymsmd = msmdtool()
+            mymsmd = msmetadata( )
             mymsmd.open(subms)
             
             # Check if subms scans contain all selected scans
@@ -701,7 +701,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         numSubMS = min(len(spwList),numSubMS)
 
         # Get a dictionary of the spws parted for each subMS
-        spwList = map(str,spwList)
+        spwList = list(map(str,spwList))
         partitionedSPWs1 = self.__partition1(spwList,numSubMS)
 
         # Add the channel selections back to the spw expressions
@@ -1006,8 +1006,8 @@ class ParallelDataHelper(ParallelTaskHelper):
         # scan+spw separation axis 
         if hasscans:
             count = 0
-            for k,spws in partedspws.iteritems():
-                for ks,scans in partedscans.iteritems():
+            for k,spws in partedspws.items():
+                for ks,scans in partedscans.items():
                     if self._msTool is None:
                         self._msTool = ms( )
                         self._msTool.open(self._arg['vis'],nomodify=False)
@@ -1035,7 +1035,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         # spw separation axis 
         else:
             count = 0
-            for k,spws in partedspws.iteritems():
+            for k,spws in partedspws.items():
                 if self._msTool is None:
                     self._msTool = ms( )
                     self._msTool.open(self._arg['vis'],nomodify=False)
@@ -1141,7 +1141,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             except:
                 baselinelist = []
         else:
-            md = msmdtool()
+            md = msmetadata( )
             md.open(self._arg['vis'])
             baselines = md.baselines()
             md.close()
@@ -1475,7 +1475,6 @@ class ParallelDataHelper(ParallelTaskHelper):
             for command_response in command_response_list:
                 outvis = command_response['parameters']['outputvis']
                 outputList[outvis] = command_response['ret']
-                                                                     
                      
         # List of failed MSs. TBD
         nFailures = []
@@ -1513,14 +1512,14 @@ class ParallelDataHelper(ParallelTaskHelper):
                 
                 casalog.post('Consolidate the sub-tables')
              
-                toUpdateList = self.__ddidict.values()
+                toUpdateList = list(self.__ddidict.values())
                                 
                 toUpdateList.sort()
                 casalog.post('List to consolidate %s'%toUpdateList,'DEBUG')
                                 
                 # Consolidate the spw sub-tables to take channel selection
                 # or averages into account.
-                mtlocal1 = mttool()
+                mtlocal1 = mstransformer()
                 try:                        
                     mtlocal1.mergespwtables(toUpdateList)
                     mtlocal1.done()

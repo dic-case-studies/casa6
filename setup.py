@@ -94,7 +94,11 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/mstools.py',
                     'src/scripts/update_spw.py',
                     'src/tasks/task_cvel.py',
+                    'src/tasks/task_cvel2.py',
                     'src/tasks/task_importuvfits.py',
+                    'src/tasks/task_partition.py',
+                    'src/tasks/task_listpartition.py',
+                    'src/tasks/task_flagmanager.py',
 ]
 
 private_modules = [ 'src/modules/parallel' ]
@@ -113,7 +117,11 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/flagcmd.xml': 'xml/flagcmd.xml',
               'casa-source/gcwrap/tasks/setjy.xml': 'xml/setjy.xml',
               'casa-source/gcwrap/tasks/cvel.xml': 'xml/cvel.xml',
+              'casa-source/gcwrap/tasks/cvel2.xml': 'xml/cvel2.xml',
               'casa-source/gcwrap/tasks/importuvfits.xml': 'xml/importuvfits.xml',
+              'casa-source/gcwrap/tasks/partition.xml': 'xml/partition.xml',
+              'casa-source/gcwrap/tasks/listpartition.xml': 'xml/listpartition.xml',
+              'casa-source/gcwrap/tasks/flagmanager.xml': 'xml/flagmanager.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -130,7 +138,11 @@ xml_files = [ 'xml/imhead.xml',
               'xml/flagcmd.xml',
               'xml/setjy.xml',
               'xml/cvel.xml',
+              'xml/cvel2.xml',
               'xml/importuvfits.xml',
+              'xml/partition.xml',
+              'xml/listpartition.xml',
+              'xml/flagmanager.xml',
 ]
 
 if pyversion < 3:

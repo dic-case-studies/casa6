@@ -7,7 +7,9 @@ import time
 import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
+from CASAtasks import casalog
 from CASAtools.platform import str_decode
+from CASAtools import table, ms, msmetadata
 
 class convertToMMS():
     def __init__(self,\
@@ -335,7 +337,7 @@ class convertToMMS():
 #        scan, spw, antenna, baseline, field, state,
 #        channel, row in a MS or MMS'''
 #     
-#     md = msmdtool()
+#     md = msmetadata( )
 #     try:
 #         md.open(msfile)
 #     except:
@@ -394,7 +396,7 @@ def getScanList(msfile, selection={}):
        
        Return a list of the scans in this MS/MMS. '''
     
-    msTool=mstool()
+    msTool=ms()
     msTool.open(msfile)
     if isinstance(selection, dict) and selection != {}:
         msTool.msselect(items=selection)
@@ -425,7 +427,7 @@ def getScanNrows(msfile, myscan, selection={}):
             msN = ph.getScanNrows('referenceMS', s)
             assert (mmsN == msN)
     '''
-    msTool=mstool()
+    msTool=ms()
     msTool.open(msfile)
     if isinstance(selection, dict) and selection != {}:
         msTool.msselect(items=selection)
@@ -434,7 +436,7 @@ def getScanNrows(msfile, myscan, selection={}):
     msTool.close()
     
     Nrows = 0
-    if not scand.has_key(str(myscan)):
+    if not str(myscan) in scand:
         return Nrows
     
     subscans = scand[str(myscan)]
@@ -457,7 +459,7 @@ def getMMSScanNrows(thisdict, myscan):
     tkeys = thisdict.keys()
     scanrows = 0
     for k in tkeys:
-        if thisdict[k]['scanId'].has_key(myscan):
+        if myscan in thisdict[k]['scanId']:
             scanrows += thisdict[k]['scanId'][myscan]['nrows']
         
     return scanrows
@@ -474,7 +476,7 @@ def getSpwIds(msfile, myscan, selection={}):
     '''
     import numpy as np
     
-    msTool=mstool()
+    msTool=ms()
     msTool.open(msfile)
     if isinstance(selection, dict) and selection != {}:
         msTool.msselect(items=selection)
@@ -484,7 +486,7 @@ def getSpwIds(msfile, myscan, selection={}):
     
     spwlist = []
 
-    if not scand.has_key(str(myscan)):
+    if not str(myscan) in scand:
         return spwlist
     
     subscans = scand[str(myscan)]
@@ -532,7 +534,7 @@ def getScanSpwSummary(mslist=[]):
     if mslist == []:
         return {}
 
-    mslocal1 = casac.ms()
+    mslocal1 = ms()
 
     # Create lists for scan and spw dictionaries of each MS
     msscanlist = []
@@ -689,9 +691,11 @@ def getDiskUsage(msfile):
     # Command line to run
     ducmd = 'du -hs '+msfile
     
-    p = Popen(ducmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+    p = Popen(ducmd, shell=True, stdin=None, stdout=PIPE, stderr=STDOUT, close_fds=True)
     
-    sizeline = p.stdout.read()
+    o, e = p.communicate( )                ### previously 'sizeline = p.stdout.read()' here
+                                           ### left process running...
+    sizeline = str_decode(o.split( )[0])
     
     # Create a list of the output string, which looks like this:
     # ' 75M\tuidScan23.data/uidScan23.0000.ms\n'
@@ -702,7 +706,7 @@ def getDiskUsage(msfile):
 
 
 def getSubtables(vis):
-    tbTool = tbtool()
+    tbTool = table()
     theSubTables = []
     tbTool.open(vis)
     myKeyw = tbTool.getkeywords()
@@ -739,8 +743,8 @@ def makeMMS(outputvis, submslist, copysubtables=False, omitsubtables=[], paralle
 
     ## make an MMS with all sub-MSs contained in a SUBMSS subdirectory
     origpath = os.getcwd()
-    mymstool = mstool()
-    mytbtool = tbtool()
+    mymstool = ms()
+    mytbtool = table()
     
     try:
         try:
@@ -819,7 +823,7 @@ def axisType(mmsname):
 
         It returns the value of AxisType or an empty string if it doesn't exist.
     """
-    tblocal = tbtool()
+    tblocal = table()
     
     axis = ''
 
@@ -831,7 +835,7 @@ def axisType(mmsname):
     tbinfo = tblocal.info()
     tblocal.close()
     
-    if tbinfo.has_key('readme'):
+    if 'readme' in tbinfo:
         readme = tbinfo['readme']
         readlist = readme.splitlines()
         for val in readlist:
@@ -855,7 +859,7 @@ def setAxisType(mmsname, axis=''):
     if axis == '':
         raise ValueError("Axis value cannot be empty")
     
-    tblocal = tbtool()
+    tblocal = table()
     try:
         tblocal.open(mmsname, nomodify=False)
     except:
@@ -866,7 +870,7 @@ def setAxisType(mmsname, axis=''):
     tbinfo = tblocal.info()
     readme = ''
     # Save original readme
-    if tbinfo.has_key('readme'):
+    if 'readme' in tbinfo:
         readme = tbinfo['readme']
 
     # Check if AxisType already exist and remove it
@@ -936,7 +940,7 @@ def getPartitonMap(msfilename, nsubms, selection={}, axis=['field','spw','scan']
     """
     
     # Open ms tool
-    myMsTool=mstool()
+    myMsTool=ms()
     myMsTool.open(msfilename)
     
     
@@ -954,7 +958,7 @@ def getPartitonMap(msfilename, nsubms, selection={}, axis=['field','spw','scan']
     
     
     # Get list of WVR SPWs using the ms metadata tool 
-    myMsMetaDataTool = msmdtool()
+    myMsMetaDataTool = msmetadata( )
     myMsMetaDataTool.open(msfilename)
     wvrspws = myMsMetaDataTool.wvrspws()
     myMsMetaDataTool.close()
@@ -991,7 +995,7 @@ def getPartitonMap(msfilename, nsubms, selection={}, axis=['field','spw','scan']
                 # Convert to string to be used as a map key
                 ddi = str(ddi)
                 # Check if DDI entry is already present for this scan, otherwise initialize it
-                if not scanDdiMap[scan].has_key(ddi):
+                if not ddi in scanDdiMap[scan]:
                     scanDdiMap[scan][ddi] = {}
                     scanDdiMap[scan][ddi]['nVis'] = 0                   
                     scanDdiMap[scan][ddi]['fieldId'] = fieldId                    
@@ -1001,17 +1005,17 @@ def getPartitonMap(msfilename, nsubms, selection={}, axis=['field','spw','scan']
                 # Add number of rows and vis from this timestamp
                 scanDdiMap[scan][ddi]['nVis'] = scanDdiMap[scan][ddi]['nVis'] + nvis
                 # Update ddi nvis
-                if not nVisPerDDI.has_key(ddi):
+                if not ddi in nVisPerDDI:
                     nVisPerDDI[ddi] = nvis
                 else:
                     nVisPerDDI[ddi] = nVisPerDDI[ddi] + nvis
                 # Update scan nvis
-                if not nVisPerScan.has_key(scan):
+                if not scan in nVisPerScan:
                     nVisPerScan[scan] = nvis
                 else:
                     nVisPerScan[scan] = nVisPerScan[scan] + nvis
                 # Update field nvis
-                if not nVisPerField.has_key(fieldId):
+                if not fieldId in nVisPerField:
                     nVisPerField[fieldId] = nvis
                 else:
                     nVisPerField[fieldId] = nVisPerField[fieldId] + nvis         

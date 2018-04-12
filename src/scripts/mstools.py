@@ -14,8 +14,9 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
 
         Example:
         The end of split does
-        param_names = split.func_code.co_varnames[:split.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]  # Must be done in the task.
+        vars = locals( )
+        param_names = split.__code__.co_varnames[:split.__code__.co_argcount]
+        param_vals = [vars[p] for p in param_names]  # Must be done in the task.
         write_history(myms, outputvis, 'split', param_names, param_vals,
                       casalog),
         which appends, e.g.,

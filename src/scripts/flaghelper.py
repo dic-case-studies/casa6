@@ -173,13 +173,13 @@ def addAbsolutePath(input_file):
     
     for key in flagdict:
         cmddict = flagdict[key]['command']
-        if cmddict.has_key('addantenna') and isinstance(cmddict['addantenna'],str) and \
+        if 'addantenna' in cmddict and isinstance(cmddict['addantenna'],str) and \
             cmddict['addantenna'] != '':
             cmddict['addantenna'] = os.path.abspath(cmddict['addantenna'])
-        if cmddict.has_key('timedev') and isinstance(cmddict['timedev'],str) and \
+        if 'timedev' in cmddict and isinstance(cmddict['timedev'],str) and \
             cmddict['timedev'] != '':
             cmddict['timedev'] = os.path.abspath(cmddict['timedev'])
-        if cmddict.has_key('freqdev') and isinstance(cmddict['freqdev'],str) and \
+        if 'freqdev' in cmddict and isinstance(cmddict['freqdev'],str) and \
             cmddict['freqdev'] != '':
             cmddict['freqdev'] = os.path.abspath(cmddict['freqdev'])
     
@@ -504,7 +504,7 @@ def applyTimeBuffer(cmddict, tbuff):
 #         casalog.post('Time buffer (tbuff) is not of type float', 'WARN')
 #         return
             
-    if cmddict.has_key('timerange'):
+    if 'timerange' in cmddict:
         timerange = cmddict['timerange']
         if timerange.find('~') != -1:
             t0,t1 = timerange.split('~',1)
@@ -565,7 +565,7 @@ def applyTimeBufferList(alist, tbuff=None):
          return
     
     for cmddict in alist:
-        if cmddict.has_key('timerange'):
+        if 'timerange' in cmddict:
             timerange = cmddict['timerange']
             if timerange.find('~') != -1:
                 t0,t1 = timerange.split('~',1)
@@ -654,18 +654,18 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
         cmddict['row'] = str(row)
         cmddict['id'] = str(row)
         cmddict['command'] = parsed
-        if parsed.has_key('mode'):
+        if 'mode' in parsed:
             mode = parsed['mode']
           
         input_reason = '' 
-        if parsed.has_key('reason'):
+        if 'reason' in parsed:
             input_reason = parsed['reason']
             
         cmddict['reason'] = input_reason
                         
-        if parsed.has_key('timerange'):
+        if 'timerange' in parsed:
             timerange = parsed['timerange']
-        if parsed.has_key('antenna'):
+        if 'antenna' in parsed:
             antenna = parsed['antenna']
 
         cmddict['applied'] = False
@@ -689,7 +689,7 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
     if myreaslist.__len__() > 0:
         for key in flagdict.keys():
             cmddict = flagdict[key]['command']
-            if cmddict.has_key('reason'):
+            if 'reason' in cmddict:
                 input_reason = cmddict['reason']
                 if selectReason(myreaslist, input_reason):
                     selected_dict[row] = flagdict[key]
@@ -705,7 +705,7 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
         cmddict = {}
         for key in selected_dict:
             cmddict = selected_dict[key]['command']
-            if cmddict.has_key('addantenna'):
+            if 'addantenna' in cmddict:
                 if isinstance(cmddict['addantenna'],str) and \
                     cmddict['addantenna'] != '':
                 # Create a dictionary and replace the parameter
@@ -744,7 +744,7 @@ def parseSelectionPars(cmddict):
                'timerange','uvrange','intent','antenna']
             
     for par in parlist:
-        if cmddict.has_key(par):
+        if par in cmddict:
             selectionPars[par] = cmddict[par]
                         
     return selectionPars
@@ -792,7 +792,7 @@ def parseUnion(vis, flagdict):
         # Each key is a dictionary of one flag command
         cmddict = flagdict[k]['command']
                
-        for xkey,xval in cmddict.iteritems():        
+        for xkey,xval in cmddict.items():
             # Check which parameter
             if xkey == "scan":
                 scans += xval + ','
@@ -880,7 +880,7 @@ def parseUnion(vis, flagdict):
     ncmds = flagdict.__len__()
 
     # Make the union. Only leave non-empty parameters in dictionary
-    for k,v in npars.iteritems():
+    for k,v in npars.items():
         if v < ncmds:
             dictpars.pop(k)
          
@@ -961,10 +961,10 @@ def parseAgents(aflocal, flagdict, myrows, apply, writeflags, display=''):
         cmd = OrderedDict()
         cmd = myflagcmd[row]['command']
            
-        if cmd.has_key('reason'):
+        if 'reason' in cmd:
             cmd.pop('reason')
             
-        if not cmd.has_key('mode'):
+        if not 'mode' in cmd:
             cmd['mode'] = 'manual'
             
         elif cmd['mode'] == '':
@@ -1003,7 +1003,7 @@ def parseAgents(aflocal, flagdict, myrows, apply, writeflags, display=''):
         if myflagcmd.__len__() == 1:
             sellist=['scan','field','intent','feed','array','uvrange','observation']
             for k in sellist:
-                if cmd.has_key(k):
+                if k in cmd:
                     cmd.pop(k)
 
         casalog.post('Parsing parameters of mode %s in row %s'%(mode,row), 'DEBUG')
@@ -1033,81 +1033,81 @@ def evalParams(params):
        Do not repeat any parameter'''
 
     # manual parameter
-#    if params.has_key('autocorr'):
+#    if 'autocorr' in params:
 #        params['autocorr'] = eval(params['autocorr'].capitalize())
         
     # quack parameters
-#     if params.has_key('quackmode') and not params['quackmode'] in ['beg'
+#     if 'quackmode' in params and not params['quackmode'] in ['beg'
 #             , 'endb', 'end', 'tail']:
 #         raise Exception, \
 #             "Illegal value '%s' of parameter quackmode, must be either 'beg', 'endb', 'end' or 'tail'" \
 #             % params['quackmode']
-#     if params.has_key('quackinterval'):
+#     if 'quackinterval' in params:
 #         params['quackinterval'] = float(params['quackinterval'])        
-#     if params.has_key('quackincrement'):
+#     if 'quackincrement'in params:
 #         if type(params['quackincrement']) == str:
 #             params['quackincrement'] = eval(params['quackincrement'].capitalize())
 
     # clip parameters
-    if params.has_key('clipminmax'):
+    if 'clipminmax' in params:
         val1 = params['clipminmax'][0]
         val2 = params['clipminmax'][1]
         params['clipminmax'] = [float(val1), float(val2)]
-#    if params.has_key('clipoutside'):
+#    if 'clipoutside' in params:
 #        if type(params['clipoutside']) == str:
 #            params['clipoutside'] = eval(params['clipoutside'].capitalize())
 #        else:
 #            params['clipoutside'] = params['clipoutside']
-#    if params.has_key('channelavg'):
+#    if 'channelavg' in params:
 #        params['channelavg'] = eval(params['channelavg'].capitalize())
-#    if params.has_key('clipzeros'):
+#    if 'clipzeros' in params:
 #        params['clipzeros'] = eval(params['clipzeros'].capitalize())
             
             
     # shadow parameter
-#     if params.has_key('tolerance'):
+#     if 'tolerance' in params:
 #         params['tolerance'] = float(params['tolerance'])
 #            
 #     # elevation parameters
-#     if params.has_key('lowerlimit'):
+#     if 'lowerlimit' in params:
 #         params['lowerlimit'] = float(params['lowerlimit'])        
-#     if params.has_key('upperlimit'):
+#     if 'upperlimit' in params:
 #         params['upperlimit'] = float(params['upperlimit'])
         
     # extend parameters
-#    if params.has_key('extendpols'):        
+#    if 'extendpols' in params:
 #        params['extendpols'] = eval(params['extendpols'].capitalize())
-#     if params.has_key('growtime'):
+#     if 'growtime' in params:
 #         params['growtime'] = float(params['growtime'])
-#     if params.has_key('growfreq'):
+#     if 'growfreq' in params:
 #         params['growfreq'] = float(params['growfreq'])
-#    if params.has_key('growaround'):
+#    if 'growaround' in params:
 #        params['growaround'] = eval(params['growaround'].capitalize())
-#    if params.has_key('flagneartime'):
+#    if 'flagneartime' in params:
 #        params['flagneartime'] = eval(params['flagneartime'].capitalize())
-#    if params.has_key('flagnearfreq'):
+#    if 'flagnearfreq' in params:
 #        params['flagnearfreq'] = eval(params['flagnearfreq'].capitalize())
 
     # tfcrop parameters
-#    if params.has_key('combinescans'):
+#    if 'combinescans' in params:
 #        params['combinescans'] = eval(params['combinescans'].capitalize())        
-#     if params.has_key('timecutoff'):
+#     if 'timecutoff' in params:
 #         params['timecutoff'] = float(params['timecutoff'])       
-#     if params.has_key('freqcutoff'):
+#     if 'freqcutoff' in params:
 #         params['freqcutoff'] = float(params['freqcutoff'])        
-#     if params.has_key('maxnpieces'):
+#     if 'maxnpieces' in params:
 #         params['maxnpieces'] = int(params['maxnpieces'])        
-#     if params.has_key('halfwin'):
+#     if 'halfwin' in params:
 #         params['halfwin'] = int(params['halfwin'])
-#    if params.has_key('extendflags'):
+#    if 'extendflags' in params:
 #        params['extendflags'] = eval(params['extendflags'].capitalize())        
         
     # rflag parameters
-#    if params.has_key('winsize'):
+#    if 'winsize' in params:
 #        params['winsize'] = int(params['winsize']);
 
     # This is only necessary when timedev/freqdev are strings
-    if params.has_key('timedev'):
+    if 'timedev' in params:
         timepar = params['timedev']
         if isinstance(timepar, list):
             return
@@ -1116,7 +1116,7 @@ def evalParams(params):
         except Exception:
             timepar = readRFlagThresholdFile(params['timedev'],'timedev');
         params['timedev'] = timepar
-    if params.has_key('freqdev'):
+    if 'freqdev' in params:
          freqpar = params['freqdev']
          if isinstance(freqpar, list):
             return
@@ -1125,13 +1125,13 @@ def evalParams(params):
          except Exception:
              freqpar = readRFlagThresholdFile(params['freqdev'],'freqdev');
          params['freqdev'] = freqpar
-#     if params.has_key('timedevscale'):
+#     if 'timedevscale' in params:
 #         params['timedevscale'] = float(params['timedevscale']);
-#     if params.has_key('freqdevscale'):
+#     if 'freqdevscale' in params:
 #         params['freqdevscale'] = float(params['freqdevscale']);
-#     if params.has_key('spectralmin'):
+#     if 'spectralmin' in params:
 #         params['spectralmin'] = float(params['spectralmin']);
-#     if params.has_key('spectralmax'):
+#     if 'spectralmax' in params:
 #         params['spectralmax'] = float(params['spectralmax']);
 
 #@dump_args
@@ -1186,7 +1186,7 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
                 if reason != '':
                     cmddict['reason'] = reason
                                         
-                for k,v in cmddict.iteritems():
+                for k,v in cmddict.items():
                     cmdstr = ""
                     if isinstance(v, str):
                         # Add quotes to string values
@@ -1222,11 +1222,11 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
             cmddict = flagdict[key]['command']
             
             # Do not save reason in the COMMAND column
-            if cmddict.has_key('reason'):
+            if 'reason' in cmddict:
                 cmddict.pop('reason')
                 
             # Summary cmds should not go to FLAG_CMD
-            if cmddict.has_key('mode') and cmddict['mode'] == 'summary':
+            if 'mode' in cmddict and cmddict['mode'] == 'summary':
                 casalog.post("Commands with mode='summary' are not allowed in the FLAG_CMD table", 'WARN')
                 continue
             
@@ -1235,7 +1235,7 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
             if reason2add:
                 reason = add_reason
                 
-            for k,v in cmddict.iteritems():
+            for k,v in cmddict.items():
                 cmdstr = ""
                 if isinstance(v, str):
                     # Add quotes to string values
@@ -1322,13 +1322,13 @@ def parseRFlagOutputFromSummary(mode,summary_stats_list, flagcmd):
                 for key in flagcmd.keys():
                     # cmdline is a dictionary with flag commands
                     cmdline = flagcmd[key]['command']
-                    if cmdline.has_key('mode') and cmdline['mode'] == 'rflag':
+                    if 'mode' in cmdline and cmdline['mode'] == 'rflag':
                     # Check for match between input flagcmd and output threshold, via the rflag id
                         if(key == rflagid):  
                             # If timedev,freqdev are missing from cmdline, add empty ones.
-                            if(not cmdline.has_key('timedev')):  # aah. don't confuse it with timedevscale
+                            if not 'timedev' in cmdline:  # aah. don't confuse it with timedevscale
                                 cmdline['timedev'] = []
-                            if( not cmdline.has_key('freqdev')):
+                            if not 'freqdev' in cmdline:
                                 cmdline['freqdev'] = []
                             # Write RFlag thresholds to these file names. 
                             newtimedev,newfreqdev = writeRFlagThresholdFile(rflag_thresholds, cmdline['timedev'], cmdline['freqdev'], rflagid)
@@ -1515,11 +1515,11 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
         antstr = ''
         reastr = ''
         timstr = ''
-        if myflags[key].has_key('antenna'):
+        if 'antenna' in myflags[key]:
             antstr = myflags[key]['antenna']
-        if myflags[key].has_key('reason'):
+        if 'reason' in myflags[key]:
             reastr = myflags[key]['reason']
-        if myflags[key].has_key('timerange'):
+        if 'timerange' in myflags[key]:
             timstr = myflags[key]['timerange']
         if antstr != '':
             # flags that have antenna specified
@@ -1818,7 +1818,7 @@ def evaluateParameters(pardict):
     
     cmddict = OrderedDict()
     
-    for key,val in pardict.iteritems():
+    for key,val in pardict.items():
         newval = None        
                 
         if val.startswith('['):
@@ -1885,7 +1885,7 @@ def evaluateFlagParameters(pardict, pars):
      
     # Remove the parameters we don't need to evaluate
     for par in removepars:
-        if fpars.has_key(par):
+        if par in fpars:
             fpars.pop(par)
         
     # Define the parameters that have variant type in flagdata
@@ -1990,7 +1990,7 @@ def evaluateFlagParameters(pardict, pars):
     for idx in pardict.keys():
         mydict = pardict[idx]['command']
         count += 1
-        for key,val in mydict.iteritems():
+        for key,val in mydict.items():
             if key not in refkeys:
                 raise IOError('Parameter \'%s\' in row=%s is not a valid flagdata parameter'%(key,idx))
 
@@ -3046,7 +3046,7 @@ def getUnion(vis, cmddict):
     nlines = nrows - npars['comment']
         
     # Make the union. 
-    for k,v in npars.iteritems():
+    for k,v in npars.items():
         if k != 'comment':
             if v < nlines:
                 dicpars[k] = ''
@@ -3054,7 +3054,7 @@ def getUnion(vis, cmddict):
 
     uniondic = dicpars.copy()
     # Remove empty parameters from the dictionary
-    for k,v in dicpars.iteritems():
+    for k,v in dicpars.items():
         if v == '':
             uniondic.pop(k)
     
@@ -3273,7 +3273,7 @@ def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
                 newdict = evalString(cmdline)
 #                newdict = evaluateString(cmdline)
                 cmdline = ''
-                for k,v in newdict.iteritems():
+                for k,v in newdict.items():
                     cmdstr = ""
                     # Add quotes to non-quoted strings
                     if isinstance(v, str):
@@ -3340,7 +3340,7 @@ def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
             newdict = evalString(command)
 #            newdict = evaluateString(command)
             cmdline = ''
-            for k,v in newdict.iteritems():
+            for k,v in newdict.items():
                 cmdstr = ""
                 if isinstance(v, str):
                     if v.count("'") > 0:
@@ -3606,7 +3606,7 @@ def readNtime(params):
 
     newtime = 0.0
     
-    if params.has_key('ntime'):
+    if 'ntime' in params:
         ntime = params['ntime']
 
         # Verify the ntime value
@@ -3647,23 +3647,23 @@ def fixType(params):
        Do not repeat any parameter'''
 
     # manual parameter
-    if params.has_key('autocorr'):
+    if 'autocorr' in params:
         params['autocorr'] = eval(params['autocorr'].capitalize())
         
     # quack parameters
-    if params.has_key('quackmode') and not params['quackmode'] in ['beg'
+    if 'quackmode' in params and not params['quackmode'] in ['beg'
             , 'endb', 'end', 'tail']:
         raise Exception( \
             "Illegal value '%s' of parameter quackmode, must be either 'beg', 'endb', 'end' or 'tail'" \
             % params['quackmode'])
-    if params.has_key('quackinterval'):
+    if 'quackinterval' in params:
         params['quackinterval'] = float(params['quackinterval'])        
-    if params.has_key('quackincrement'):
+    if 'quackincrement' in params:
         if type(params['quackincrement']) == str:
             params['quackincrement'] = eval(params['quackincrement'].capitalize())
 
     # clip parameters
-    if params.has_key('clipminmax'):
+    if 'clipminmax' in params:
         value01 = params['clipminmax']
         # turn string into [min,max] range
         value0 = value01.lstrip('[')
@@ -3672,79 +3672,79 @@ def fixType(params):
         rmin = float(r[0])
         rmax = float(r[1])
         params['clipminmax'] = [rmin, rmax]        
-    if params.has_key('clipoutside'):
+    if 'clipoutside' in params:
         if type(params['clipoutside']) == str:
             params['clipoutside'] = eval(params['clipoutside'].capitalize())
         else:
             params['clipoutside'] = params['clipoutside']
-    if params.has_key('channelavg'):
+    if 'channelavg' in params:
         params['channelavg'] = eval(params['channelavg'].capitalize())
-    if params.has_key('clipzeros'):
+    if 'clipzeros' in params:
         params['clipzeros'] = eval(params['clipzeros'].capitalize())
             
             
     # shadow parameter
-    if params.has_key('tolerance'):
+    if 'tolerance' in params:
         params['tolerance'] = float(params['tolerance'])
            
     # elevation parameters
-    if params.has_key('lowerlimit'):
+    if 'lowerlimit' in params:
         params['lowerlimit'] = float(params['lowerlimit'])        
-    if params.has_key('upperlimit'):
+    if 'upperlimit'in params:
         params['upperlimit'] = float(params['upperlimit'])
         
     # extend parameters
-    if params.has_key('extendpols'):        
+    if 'extendpols' in params:
         params['extendpols'] = eval(params['extendpols'].capitalize())
-    if params.has_key('growtime'):
+    if 'growtime' in params:
         params['growtime'] = float(params['growtime'])
-    if params.has_key('growfreq'):
+    if 'growfreq' in params:
         params['growfreq'] = float(params['growfreq'])
-    if params.has_key('growaround'):
+    if 'growaround' in params:
         params['growaround'] = eval(params['growaround'].capitalize())
-    if params.has_key('flagneartime'):
+    if 'flagneartime' in params:
         params['flagneartime'] = eval(params['flagneartime'].capitalize())
-    if params.has_key('flagnearfreq'):
+    if 'flagnearfreq' in params:
         params['flagnearfreq'] = eval(params['flagnearfreq'].capitalize())
 
     # tfcrop parameters
-    if params.has_key('combinescans'):
+    if 'combinescans' in params:
         params['combinescans'] = eval(params['combinescans'].capitalize())        
-    if params.has_key('timecutoff'):
+    if 'timecutoff' in params:
         params['timecutoff'] = float(params['timecutoff'])       
-    if params.has_key('freqcutoff'):
+    if 'freqcutoff' in params:
         params['freqcutoff'] = float(params['freqcutoff'])        
-    if params.has_key('maxnpieces'):
+    if 'maxnpieces' in params:
         params['maxnpieces'] = int(params['maxnpieces'])        
-    if params.has_key('halfwin'):
+    if 'halfwin' in params:
         params['halfwin'] = int(params['halfwin'])
-    if params.has_key('extendflags'):
+    if 'extendflags' in params:
         params['extendflags'] = eval(params['extendflags'].capitalize())        
         
     # rflag parameters
-    if params.has_key('winsize'):
+    if 'winsize' in params:
         params['winsize'] = int(params['winsize']);
-    if params.has_key('timedev'):
+    if 'timedev' in params:
         timepar = params['timedev']
         try:
             timepar = eval(timepar)
         except Exception:
             timepar = readRFlagThresholdFile(params['timedev'],'timedev');
         params['timedev'] = timepar
-    if params.has_key('freqdev'):
+    if 'freqdev' in params:
         freqpar = params['freqdev']
         try:
             freqpar = eval(freqpar)
         except Exception:
             freqpar = readRFlagThresholdFile(params['freqdev'],'freqdev');
         params['freqdev'] = freqpar
-    if params.has_key('timedevscale'):
+    if 'timedevscale' in params:
         params['timedevscale'] = float(params['timedevscale']);
-    if params.has_key('freqdevscale'):
+    if 'freqdevscale' in params:
         params['freqdevscale'] = float(params['freqdevscale']);
-    if params.has_key('spectralmin'):
+    if 'spectralmin' in params:
         params['spectralmin'] = float(params['spectralmin']);
-    if params.has_key('spectralmax'):
+    if 'spectralmax' in params:
         params['spectralmax'] = float(params['spectralmax']);
 
 #@dump_args
@@ -3994,7 +3994,7 @@ def setupAgent(aflocal, myflagcmd, myrows, apply, writeflags, display=''):
         if myflagcmd.__len__() == 1:
             sellist=['scan','field','intent','feed','array','uvrange','observation']
             for k in sellist:
-                if modepars.has_key(k):
+                if k in modepars:
                     modepars.pop(k)
 
         casalog.post('Parsing parameters of mode %s in row %s'%(mode,key), 'DEBUG')
@@ -4342,7 +4342,7 @@ def readRFlagThresholdFile(infile='',inkey=''):
     threshlist = OrderedDict()
     for aline in range(0,len(cleanlist)):
         threshlist[str(aline)] = convertStringToDict(cleanlist[aline]);
-        if threshlist[str(aline)].has_key(inkey):
+        if inkey in threshlist[str(aline)]:
             devthreshold = threshlist[str(aline)][inkey]
 
     # return only the last one. There should be only one anyway.

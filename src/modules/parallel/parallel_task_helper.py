@@ -222,7 +222,6 @@ class ParallelTaskHelper:
 
 
     def executeJobs(self):
-        
         casalog.origin("ParallelTaskHelper")
         
         # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested 
@@ -230,12 +229,16 @@ class ParallelTaskHelper:
             for job in self._executionList:
                 parameters = job.getCommandArguments()
                 try:
-                    exec("from taskinit import *; from tasks import *; " + job.getCommandLine())
+                    vars = globals( )
+                    try:
+                        exec("from CASAtasks import *; " + job.getCommandLine(),vars)
+                    except Exception as e:
+                        print("exec in parallel_task_helper.executeJobs failed: %s" % e)
                     # jagonzal: Special case for partition
-                    if (parameters.has_key('outputvis')):
-                        self._sequential_return_list[parameters['outputvis']] = returnVar0
+                    if 'outputvis' in parameters:
+                        self._sequential_return_list[parameters['outputvis']] = vars['returnVar0']
                     else:
-                        self._sequential_return_list[parameters['vis']] = returnVar0
+                        self._sequential_return_list[parameters['vis']] = vars['returnVar0']
                 except Exception as instance:
                     str_instance = str(instance)
                     if (str_instance.find("NullSelection") == 0):
@@ -310,12 +313,12 @@ class ParallelTaskHelper:
         for key in dict_list:
             item = dict_list[key]
             if isinstance(item,dict):
-                if ret_dict.has_key(key):
+                if key in ret_dict:
                     ret_dict[key] = ParallelTaskHelper.sum_dictionaries(item,ret_dict[key])
                 else:
                     ret_dict[key] = ParallelTaskHelper.sum_dictionaries(item,{})
             else:
-                if ret_dict.has_key(key):
+                if key in ret_dict:
                     if not isinstance(ret_dict[key],str):
                         ret_dict[key] += item
                 else:
@@ -563,7 +566,7 @@ class ParallelTaskWorker:
         stack=inspect.stack()
         for stack_level in range(len(stack)):
             frame_globals=sys._getframe(stack_level).f_globals
-            if frame_globals.has_key('update_params'):
+            if 'update_params' in frame_globals:
                 return dict(frame_globals)
             
         raise Exception("CASA top level environment not found")

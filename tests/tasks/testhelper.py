@@ -152,7 +152,7 @@ def compTables(referencetab, testtab, excludecols, tolerance=0.001, mode="percen
                                         rval = False
                                         break
                                 elif (isinstance(a[i][j],list)) or (isinstance(a[i][j],np.ndarray)):
-                                    it = xrange(0,len(a[i][j]))
+                                    it = range(0,len(a[i][j]))
                                     if mode=="percentage":
                                         diff = np.abs(np.subtract(a[i][j], b[i][j])) > tolerance * np.abs(a[i][j])
                                         it = np.where(diff)[0]
@@ -218,7 +218,7 @@ def compVarColTables(referencetab, testtab, varcol, tolerance=0.):
                 print('Length of %s differ from %s, %s!=%s'%(referencetab,testtab,len(rk),len(tk)))
                 retval = False
             else:
-                for therow in xrange(tblocal.nrows()):
+                for therow in range(tblocal.nrows()):
             
                     rdata = tblocal.getcell(col,therow)
                     tdata = tb2.getcell(col,therow)

@@ -580,7 +580,7 @@ def flagdata(vis,
             
             tempdict = copy.deepcopy(seldic)
             # Remove the empty parameters
-            for k,v in seldic.iteritems():
+            for k,v in seldic.items():
                 if v == '':
                     tempdict.pop(k)
             
@@ -751,8 +751,9 @@ def flagdata(vis,
         if not iscal:
             if mode != 'summary' and action == 'apply':
                 try:
-                    param_names = flagdata.func_code.co_varnames[:flagdata.func_code.co_argcount]
-                    param_vals = [eval(p) for p in param_names]
+                    vars = locals( )
+                    param_names = flagdata.__code__.co_varnames[:flagdata.__code__.co_argcount]
+                    param_vals = [vars[p] for p in param_names]
                     retval &= write_history(mslocal, vis, 'flagdata', param_names,
                                             param_vals, casalog)
                     
@@ -781,14 +782,14 @@ def flagdata(vis,
                ordered_summary_list.pop('nreport')
                
                if len(ordered_summary_list) == 1:
-                   repkey = ordered_summary_list.keys()
+                   repkey = list(ordered_summary_list.keys())
                    summary_stats_list = ordered_summary_list.pop(repkey[0])
                else:                       
                    # rename the keys of the dictionary according to
                    # the number of reports left in dictionary
                    counter = 0
                    summary_reports = OrderedDict()
-                   for k in ordered_summary_list.iterkeys():
+                   for k in ordered_summary_list.keys( ):
                        repname = "report"+str(counter)
                        summary_reports[repname] = ordered_summary_list[k]
                        counter += 1
@@ -826,9 +827,9 @@ def delspace(word, replace):
 def filter_summary(summary_stats,minrel,maxrel,minabs,maxabs):
     
     if type(summary_stats) is dict:
-        if  summary_stats.has_key('flagged') and \
-            summary_stats.has_key('total') and \
-            not summary_stats.has_key('type'):
+        if  'flagged' in summary_stats and \
+            'total' in summary_stats and \
+            not 'type' in summary_stats:
             if  (summary_stats['flagged'] < minabs) or \
                 (summary_stats['flagged'] > maxabs and maxabs >= 0) or \
                 (summary_stats['flagged'] * 1.0 / summary_stats['total'] < minrel) or \

@@ -160,7 +160,7 @@ def spwchan_to_ranges(vis, spw):
     nspw = selarr.shape[0]
     selranges = {}
     for s in range(nspw):
-        if selranges.has_key(selarr[s][0]):
+        if selarr[s][0] in selranges:
             raise ValueError('spwchan_to_ranges() does not support multiple channel ranges per spw.')
         selranges[selarr[s][0]] = tuple(selarr[s][1:])
     return selranges
@@ -198,7 +198,7 @@ def spwchan_to_sets(vis, spw):
     try:
         scharr = ms.msseltoindex(vis, spw=spw)['channel']
         for scr in scharr:
-            if not sets.has_key(scr[0]):
+            if not scr[0] in sets:
                 sets[scr[0]] = set([])
 
             # scr[2] is the last selected channel.  Bump it up for range().
@@ -213,7 +213,7 @@ def spwchan_to_sets(vis, spw):
         for s in spwd:
             if s in allrec['spw']:
                 endchan = allrec['channel'][s, 2]
-                if not sets.has_key(s):
+                if not s in sets:
                     sets[s] = set([])
                 if spwd[s] == '':
                     # We need to get the spw's # of channels without using
@@ -327,7 +327,7 @@ def sets_to_spwchan(spwsets, nchans={}):
             cstr = set_to_chanstr(spwsets[s], nchans.get(s))
 
             if cstr:
-                if not csd.has_key(cstr):
+                if not cstr in csd:
                     csd[cstr] = []
                 csd[cstr].append(s)
 
@@ -562,7 +562,7 @@ def spw_to_dict(spw, spwdict={}, conv_multiranges=True):
             if charange == '*':
                 myspwdict[s] = ''
             else:
-                if not myspwdict.has_key(s):
+                if not s in myspwdict:
                     myspwdict[s] = set([])
                 if myspwdict[s] != '':
                     myspwdict[s].update(charange)        

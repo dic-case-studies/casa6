@@ -928,7 +928,7 @@ class test_concat(unittest.TestCase):
             tb.close()
             result = True
             print(myname, ": OK. Checking baseline labels ...")
-            for i in xrange(0,len(ant1)):
+            for i in range(0,len(ant1)):
                 if(ant1[i]>ant2[i]):
                     print("Found incorrectly ordered baseline label in row ", i, ": ", ant1, " ", ant2)
                     result = False
@@ -1016,7 +1016,7 @@ class test_concat(unittest.TestCase):
             tb.close()
             result = True
             print(myname, ": OK. Checking baseline labels ...")
-            for i in xrange(0,len(ant1)):
+            for i in range(0,len(ant1)):
                 if(ant1[i]>ant2[i]):
                     print("Found incorrectly ordered baseline label in row ", i, ": ", ant1, " ", ant2)
                     result = False

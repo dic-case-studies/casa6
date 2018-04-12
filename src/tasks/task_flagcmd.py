@@ -380,7 +380,7 @@ def flagcmd(
                 for key in myflagcmd.keys():
                     cmddict = myflagcmd[key]['command']
                     cmdline = ""
-                    for k,v in cmddict.iteritems():
+                    for k,v in cmddict.items():
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     cmdline.rstrip()
                     outdict[key]['command'] = cmdline
@@ -402,8 +402,9 @@ def flagcmd(
         if not iscal and (action == 'apply' or action == 'unapply'):
             retval = True
             try:
-                param_names = flagcmd.func_code.co_varnames[:flagcmd.func_code.co_argcount]
-                param_vals = [eval(p) for p in param_names]
+                vars = locals( )
+                param_names = flagcmd.__code__.co_varnames[:flagcmd.__code__.co_argcount]
+                param_vals = [vars[p] for p in param_names]
                 retval &= write_history(mslocal, vis, 'flagcmd', param_names,
                                         param_vals, casalog)
                 
@@ -550,13 +551,13 @@ def readFromTable(
 
             flagd['command'] = parsed
             
-            if parsed.has_key('mode'):
+            if 'mode' in parsed:
                 flagd['mode'] = parsed['mode']
-            if parsed.has_key('timerange'):
+            if 'timerange' in parsed:
                 flagd['timerange'] = parsed['timerange']
-            if parsed.has_key('antenna'):
+            if 'antenna' in parsed:
                 flagd['antenna'] = parsed['antenna']
-            if parsed.has_key('id'):
+            if 'id' in parsed:
                 flagd['id'] = parsed['id']
 
             # Keep original key index, might need this later
@@ -1018,7 +1019,7 @@ def listFlagCommands(myflags=None, listmode=''):
             
             cmddict = myflags[k]['command']
             cmdline = ""
-            for key,val in cmddict.iteritems():
+            for key,val in cmddict.items():
                 cmdstr = ""
                 if isinstance(val, str):
                     # Add quotes to string values
@@ -1041,11 +1042,11 @@ def listFlagCommands(myflags=None, listmode=''):
         for k in myflags.keys():
             cmddict = myflags[k]['command']
             reason = myflags[k]['reason']
-            if cmddict.has_key('reason'):
+            if 'reason' in cmddict:
                 cmddict.pop('reason')
                 
             cmdline = ""
-            for key,val in cmddict.iteritems():
+            for key,val in cmddict.items():
                 cmdstr = ""
                 if isinstance(val, str):
                     # Add quotes to string values
@@ -1071,11 +1072,11 @@ def listFlagCommands(myflags=None, listmode=''):
             antenna = ''
             timerange = ''
             cmddict = myflags[k]
-            if cmddict.has_key('reason'):
+            if 'reason' in cmddict:
                 reason = cmddict['reason']
-            if cmddict.has_key('antenna'):
+            if 'antenna' in cmddict:
                 antenna = cmddict['antenna']
-            if cmddict.has_key('timerange'):
+            if 'timerange' in cmddict:
                 timerange = cmddict['timerange']
                 
             pstr = '%-8s %-8s %-48s %-32s' % (k, antenna,timerange,reason)
@@ -1177,44 +1178,44 @@ def listFlagCmd(
         fld = myflags[key]
         # Get fields
         skey = str(key)
-        if fld.has_key('id') and useid:
+        if 'id' in fld and useid:
             fid = fld['id']
         else:
             fid = str(key)
-        if fld.has_key('antenna'):
+        if 'antenna' in fld:
             ant = fld['antenna']
         else:
             ant = 'Unset'
-        if fld.has_key('timerange'):
+        if 'timerange' in fld:
             timr = fld['timerange']
         else:
             timr = 'Unset'
-        if fld.has_key('reason'):
+        if 'reason' in fld:
             reas = fld['reason']
         else:
             reas = 'Unset'
-        if fld.has_key('command'):
+        if 'command' in fld:
             cmd = fld['command']
             # To be verified
-#            if fld.has_key('addantenna'):
+#            if 'addantenna' in fld:
 #                addantenna = fld['addantenna']
 #                cmd = cmd + ' addantenna=' + str(addantenna)
 #        else:
 
 #            cmd = 'Unset'
-        if fld.has_key('type'):
+        if 'type' in fld:
             typ = fld['type']
         else:
             typ = 'FLAG'
-        if fld.has_key('level'):
+        if 'level' in fld:
             levl = str(fld['level'])
         else:
             levl = '0'
-        if fld.has_key('severity'):
+        if 'severity'in fld:
             sevr = str(fld['severity'])
         else:
             sevr = '0'
-        if fld.has_key('applied'):
+        if 'applied' in fld:
             appl = str(fld['applied'])
         else:
             appl = 'Unset'
@@ -1228,7 +1229,7 @@ def listFlagCmd(
                 elif listmode == 'cmd':
                     # Loop over dictionary with commands
                     cmdline = ""
-                    for k,v in cmd.iteritems():
+                    for k,v in cmd.items():
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     
                     cmdline = cmdline.rstrip()                       
@@ -1244,7 +1245,7 @@ def listFlagCmd(
                         )
                 else:
                     cmdline = ""
-                    for k,v in cmd.iteritems():
+                    for k,v in cmd.items():
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     
                     cmdline = cmdline.rstrip()                       
@@ -1851,7 +1852,7 @@ def newplotflags(
         pl.ioff()
 
     plotflagperant = defaultdict(list)
-    for ipf, flag in plotflag.iteritems():
+    for ipf, flag in plotflag.items():
         if not flag['show']:
             continue
         nflag = flag.copy()

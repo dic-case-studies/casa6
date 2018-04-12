@@ -121,7 +121,7 @@ def compare_tables(tabname, exptabname, tol=None):
         raise ValueError(tabname + ' and ' + exptabname + ' have different keywords')
     if set(tabdict['cols'].keys()) != set(exptabdict['cols'].keys()):
         raise ValueError(tabname + ' and ' + exptabname + ' have different columns')
-    for col, tabentry in tabdict['cols'].iteritems():
+    for col, tabentry in tabdict['cols'].items():
         if set(tabentry['keywords']) != set(exptabdict['cols'][col]['keywords']):
             raise ValueError(tabname + ' and ' + exptabname + ' have different keywords for column ' + col)
 
@@ -807,7 +807,7 @@ class split_test_state(unittest.TestCase):
         tblocal.open(self.outms)
         mytime = tblocal.getcol('TIME')
         myrow = 0
-        for i in xrange(len(mytime)):
+        for i in range(len(mytime)):
             if mytime[i]==4785966752.5:
                 myrow = i
                 break
