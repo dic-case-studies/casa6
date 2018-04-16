@@ -5,7 +5,7 @@ import filecmp
 import pprint
 from CASAtasks import flagcmd, flagdata, mstransform, setjy
 from CASAtools import agentflagger, table
-from .parallel.parallel_task_helper import ParallelTaskHelper
+from CASAtasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 from . import flaghelper as fh
 #from IPython.kernel.core.display_formatter import PPrintDisplayFormatter
 

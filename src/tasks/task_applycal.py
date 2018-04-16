@@ -6,6 +6,7 @@ from .callibrary import *
 from . import flaghelper as fh
 from .parallel.parallel_task_helper import ParallelTaskHelper
 from .mstools import write_history
+from CASAtools import calibrater
 
 def applycal(
     vis=None,
@@ -52,7 +53,7 @@ def applycal(
             return
 
     try:
-        mycb = cbtool()
+        mycb = calibrater( )
         if (type(vis) == str) & os.path.exists(vis):
             # add CORRECTED_DATA column
             mycb.open(filename=vis, compress=False, addcorr=True,

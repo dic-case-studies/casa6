@@ -99,6 +99,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_partition.py',
                     'src/tasks/task_listpartition.py',
                     'src/tasks/task_flagmanager.py',
+                    'src/tasks/task_mstransform.py',
 ]
 
 private_modules = [ 'src/modules/parallel' ]
@@ -122,6 +123,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/partition.xml': 'xml/partition.xml',
               'casa-source/gcwrap/tasks/listpartition.xml': 'xml/listpartition.xml',
               'casa-source/gcwrap/tasks/flagmanager.xml': 'xml/flagmanager.xml',
+              'casa-source/gcwrap/tasks/mstransform.xml': 'xml/mstransform.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -143,6 +145,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/partition.xml',
               'xml/listpartition.xml',
               'xml/flagmanager.xml',
+              'xml/mstransform.xml',
 ]
 
 if pyversion < 3:

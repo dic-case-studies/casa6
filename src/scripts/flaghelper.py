@@ -45,6 +45,7 @@ tblocal = table()
 qalocal = quanta()
 mslocal = ms()
 aflocal = agentflagger()
+qalocal = quanta( )
 
 debug = False
 
@@ -210,7 +211,7 @@ def readFile(inputfile):
             raise
     else:
         casalog.post('ASCII file not found - please verify the name','ERROR')
-        raise
+        raise Exception('ASCII file not found')
             
     # Parse file
     try:
@@ -509,15 +510,15 @@ def applyTimeBuffer(cmddict, tbuff):
         if timerange.find('~') != -1:
             t0,t1 = timerange.split('~',1)
             # start time
-            startTime = qa.totime(t0)['value']
+            startTime = qalocal.totime(t0)['value']
             startTimeSec = (startTime * 24 * 3600) - tbuff
-            startTimeSec = qa.quantity(startTimeSec, 's')
-            paddedT0 = qa.time(startTimeSec,form='ymd',prec=9)[0]
+            startTimeSec = qalocal.quantity(startTimeSec, 's')
+            paddedT0 = qalocal.time(startTimeSec,form='ymd',prec=9)[0]
             # end time
-            endTime = qa.totime(t1)['value']
+            endTime = qalocal.totime(t1)['value']
             endTimeSec = (endTime * 24 * 3600) + tbuff
-            endTimeSec = qa.quantity(endTimeSec, 's')
-            paddedT1 = qa.time(endTimeSec,form='ymd',prec=9)[0]
+            endTimeSec = qalocal.quantity(endTimeSec, 's')
+            paddedT1 = qalocal.time(endTimeSec,form='ymd',prec=9)[0]
             
             # update the original dictionary
             cmddict['timerange'] = paddedT0+'~'+paddedT1                
@@ -570,15 +571,15 @@ def applyTimeBufferList(alist, tbuff=None):
             if timerange.find('~') != -1:
                 t0,t1 = timerange.split('~',1)
                 # start time
-                startTime = qa.totime(t0)['value']
+                startTime = qalocal.totime(t0)['value']
                 startTimeSec = (startTime * 24 * 3600) - tbuff0
-                startTimeSec = qa.quantity(startTimeSec, 's')
-                paddedT0 = qa.time(startTimeSec,form='ymd',prec=9)[0]
+                startTimeSec = qalocal.quantity(startTimeSec, 's')
+                paddedT0 = qalocal.time(startTimeSec,form='ymd',prec=9)[0]
                 # end time
-                endTime = qa.totime(t1)['value']
+                endTime = qalocal.totime(t1)['value']
                 endTimeSec = (endTime * 24 * 3600) + tbuff1
-                endTimeSec = qa.quantity(endTimeSec, 's')
-                paddedT1 = qa.time(endTimeSec,form='ymd',prec=9)[0]
+                endTimeSec = qalocal.quantity(endTimeSec, 's')
+                paddedT1 = qalocal.time(endTimeSec,form='ymd',prec=9)[0]
                 
                 # update the original dictionary
                 cmddict['timerange'] = paddedT0+'~'+paddedT1
@@ -910,8 +911,8 @@ def _merge_timerange(commands):
             # skip invalid timeranges so they don't remove the whole agent group
             if '~' in cmd['timerange']:
                 t0,t1 = cmd['timerange'].split('~', 1)
-                startTime = qa.totime(t0)['value']
-                endTime = qa.totime(t1)['value']
+                startTime = qalocal.totime(t0)['value']
+                endTime = qalocal.totime(t1)['value']
                 if endTime <= startTime:
                     raise ValueError
 
@@ -1621,7 +1622,7 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
             else:
                 t1 = times
                 t2 = t1
-            (t1s, t2s) = (qa.convert(t1, 's')['value'], qa.convert(t2,
+            (t1s, t2s) = (qalocal.convert(t1, 's')['value'], qalocal.convert(t2,
                           's')['value'])
             plotflag[ipf]['t1s'] = t1s
             plotflag[ipf]['t2s'] = t2s
@@ -1630,10 +1631,10 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
             if t2s > timmax:
                 timmax = t2s
     # min,max times
-    q1 = qa.quantity(timmin, 's')
-    time1 = qa.time(q1, form='ymd', prec=9)[0]
-    q2 = qa.quantity(timmax, 's')
-    time2 = qa.time(q2, form='ymd', prec=9)[0]
+    q1 = qalocal.quantity(timmin, 's')
+    time1 = qalocal.time(q1, form='ymd', prec=9)[0]
+    q2 = qalocal.quantity(timmax, 's')
+    time2 = qalocal.time(q2, form='ymd', prec=9)[0]
     casalog.post('Found flag times from ' + time1 + ' to ' + time2)
 
     # sort out blank times
@@ -1653,10 +1654,10 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
     if t2sdata >= t1sdata > 0 and (timmin < t1sdata or timmax
                                    > t2sdata):
         # min,max data times
-        q1 = qa.quantity(t1sdata, 's')
-        tdata1 = qa.time(q1, form='ymd', prec=9)[0]
-        q2 = qa.quantity(t2sdata, 's')
-        tdata2 = qa.time(q2, form='ymd', prec=9)[0]
+        q1 = qalocal.quantity(t1sdata, 's')
+        tdata1 = qalocal.time(q1, form='ymd', prec=9)[0]
+        q2 = qalocal.quantity(t2sdata, 's')
+        tdata2 = qalocal.time(q2, form='ymd', prec=9)[0]
         casalog.post('WARNING: Trimming flag times to data limits '
                      + tdata1 + ' to ' + tdata2)
 
@@ -1791,8 +1792,8 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
         time = myXlim[0] + (myXlim[1] - myXlim[0]) * float(itim) \
             / float(nxticks - 1)
         mytime.append(time)
-        q1 = qa.quantity(time, 's')
-        time1 = qa.time(q1, form='ymd', prec=9)[0]
+        q1 = qalocal.quantity(time, 's')
+        time1 = qalocal.time(q1, form='ymd', prec=9)[0]
         if itim > 0:
             time1s = time1[11:]
         else:
@@ -2228,13 +2229,13 @@ def parseXML(sdmfile, mytbuff):
         rowstart = rownode.getElementsByTagName('startTime')
         start = int(rowstart[0].childNodes[0].nodeValue)
         startmjds = float(start) * 1.0E-9 - mytbuff
-        t = qa.quantity(startmjds, 's')
-        starttime = qa.time(t, form='ymd', prec=9)[0]
+        t = qalocal.quantity(startmjds, 's')
+        starttime = qalocal.time(t, form='ymd', prec=9)[0]
         rowend = rownode.getElementsByTagName('endTime')
         end = int(rowend[0].childNodes[0].nodeValue)
         endmjds = float(end) * 1.0E-9 + mytbuff
-        t = qa.quantity(endmjds, 's')
-        endtime = qa.time(t, form='ymd', prec=9)[0]
+        t = qalocal.quantity(endmjds, 's')
+        endtime = qalocal.time(t, form='ymd', prec=9)[0]
     # time and interval for FLAG_CMD use
         times = 0.5 * (startmjds + endmjds)
         intervs = endmjds - startmjds
@@ -2788,13 +2789,13 @@ def readXML(sdmfile, mytbuff):
         rowstart = rownode.getElementsByTagName('startTime')
         start = int(rowstart[0].childNodes[0].nodeValue)
         startmjds = float(start) * 1.0E-9 - mytbuff
-        t = qa.quantity(startmjds, 's')
-        starttime = qa.time(t, form='ymd', prec=9)[0]
+        t = qalocal.quantity(startmjds, 's')
+        starttime = qalocal.time(t, form='ymd', prec=9)[0]
         rowend = rownode.getElementsByTagName('endTime')
         end = int(rowend[0].childNodes[0].nodeValue)
         endmjds = float(end) * 1.0E-9 + mytbuff
-        t = qa.quantity(endmjds, 's')
-        endtime = qa.time(t, form='ymd', prec=9)[0]
+        t = qalocal.quantity(endmjds, 's')
+        endtime = qalocal.time(t, form='ymd', prec=9)[0]
     # time and interval for FLAG_CMD use
         times = 0.5 * (startmjds + endmjds)
         intervs = endmjds - startmjds
@@ -3623,11 +3624,11 @@ def readNtime(params):
                 newtime = 0.0
             else:
                 # read the units from the string
-                qtime = qa.quantity(ntime)
+                qtime = qalocal.quantity(ntime)
                 
                 if qtime['unit'] == 'min':
                     # convert to seconds
-                    qtime = qa.convert(qtime, 's')
+                    qtime = qalocal.convert(qtime, 's')
                 elif qtime['unit'] == '':
                     qtime['unit'] = 's'
                     
@@ -4186,7 +4187,7 @@ def writeAntennaList(outfile='', antlist={}):
     """
     Save the antlist dictionary as a text file
     """
-    ofile = file(outfile, 'w');
+    ofile = open(outfile, 'w');
     for apid in sorted(antlist):
           apars = antlist[apid];
           ofile.write("name=" + str(apars['name']) + '\n');
@@ -4216,7 +4217,7 @@ def readAntennaList(infile=''):
 
     if (type(infile) == str) & os.path.exists(infile):
         try:
-            ifile = file(infile,'r');
+            ifile = open(infile,'r');
         except:
             raise Exception('Error opening file ' + infile)
         
@@ -4296,8 +4297,8 @@ def writeRFlagThresholdFile(rflag_thresholds={},timedevfile='', freqdevfile='',a
     # save rflag output in file, and print them everywhere.
     casalog.post("Saving RFlag_"+str(agent_id)+" output in : " + toutfile + " and " + foutfile, 'INFO')
 
-    ofiletime = file(toutfile, 'w');
-    ofilefreq = file(foutfile, 'w');
+    ofiletime = open(toutfile, 'w');
+    ofilefreq = open(foutfile, 'w');
     # Construct dictionary from what needs to be stored.
     timedict = {'name':rflag_thresholds['name'] , 'timedev': (rflag_thresholds['timedev']).tolist()}
     freqdict = {'name':rflag_thresholds['name'] , 'freqdev': (rflag_thresholds['freqdev']).tolist()}
@@ -4329,7 +4330,7 @@ def readRFlagThresholdFile(infile='',inkey=''):
         print('Cannot find file : ', infile)
         return [];
 
-    ifile = file(infile,'r');
+    ifile = open(infile,'r');
     thelist = ifile.readlines();
     ifile.close();
 
