@@ -183,7 +183,7 @@ class coordsys:
         provide a matrix holding many coordinates to convert
         and a matrix of many converted coordinates is returned.
         """
-        schema = {'coordin': {'type': 'cVariant'}, 'absin': {'type': 'cBoolVec'}, 'dopplerin': {'type': 'cStr'}, 'unitsin': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'absout': {'type': 'cBoolVec'}, 'dopplerout': {'type': 'cStr'}, 'unitsout': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
+        schema = {'coordin': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'absin': {'type': 'cBoolVec'}, 'dopplerin': {'type': 'cStr'}, 'unitsin': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'absout': {'type': 'cBoolVec'}, 'dopplerout': {'type': 'cStr'}, 'unitsout': {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'coordin': coordin, 'absin': absin, 'dopplerin': dopplerin, 'unitsin': unitsin, 'absout': absout, 'dopplerout': dopplerout, 'unitsout': unitsout, 'shape': shape}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _convertmany_result = _any_dc(self._swigobj.convertmany(_any_ec(_pc.document['coordin']), _pc.document['absin'], _str_ec(_pc.document['dopplerin']), [_str_ec(_x) for _x in _pc.document['unitsin']], _pc.document['absout'], _str_ec(_pc.document['dopplerout']), [_str_ec(_x) for _x in _pc.document['unitsout']], _pc.document['shape']))
@@ -286,7 +286,7 @@ class coordsys:
         in the Coordinate System. See also function
         frequencytovelocity.
         """
-        schema = {'value': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'frequnit': {'type': 'cStr'}, 'velocity': {'type': 'cVariant'}}
+        schema = {'value': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'frequnit': {'type': 'cStr'}, 'velocity': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'value': value, 'frequnit': frequnit, 'velocity': velocity}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _frequencytofrequency_result = self._swigobj.frequencytofrequency(_pc.document['value'], _str_ec(_pc.document['frequnit']), _any_ec(_pc.document['velocity']))
@@ -743,7 +743,7 @@ class coordsys:
         Bear in mind, that if your Coordinate System came from a real image, then
         the reference pixel is special and you should not change it.
         """
-        schema = {'refcode': {'type': 'cStr'}, 'proj': {'type': 'cStr'}, 'projpar': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'refpix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'refval': {'type': 'cVariant'}, 'incr': {'type': 'cVariant'}, 'xform': {'type': 'cVariant'}, 'poles': {'type': 'cVariant'}}
+        schema = {'refcode': {'type': 'cStr'}, 'proj': {'type': 'cStr'}, 'projpar': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'refpix': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'refval': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'incr': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'xform': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'poles': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'refcode': refcode, 'proj': proj, 'projpar': projpar, 'refpix': refpix, 'refval': refval, 'incr': incr, 'xform': xform, 'poles': poles}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setdirection_result = self._swigobj.setdirection(_str_ec(_pc.document['refcode']), _str_ec(_pc.document['proj']), _pc.document['projpar'], _pc.document['refpix'], _any_ec(_pc.document['refval']), _any_ec(_pc.document['incr']), _any_ec(_pc.document['xform']), _any_ec(_pc.document['poles']))
@@ -783,7 +783,7 @@ class coordsys:
         You can recover the current increments with function
         increment.
         """
-        schema = {'value': {'type': 'cVariant'}, 'type': {'type': 'cStr'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'type': {'type': 'cStr'}}
         doc = {'value': value, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setincrement_result = self._swigobj.setincrement(_any_ec(_pc.document['value']), _str_ec(_pc.document['type']))
@@ -796,7 +796,7 @@ class coordsys:
         You can recover the current linear transform with function
         lineartransform.
         """
-        schema = {'type': {'type': 'cStr'}, 'value': {'type': 'cVariant'}}
+        schema = {'type': {'type': 'cStr'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'type': type, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setlineartransform_result = self._swigobj.setlineartransform(_str_ec(_pc.document['type']), _any_ec(_pc.document['value']))
@@ -919,7 +919,7 @@ class coordsys:
         images.  It allows you to keep easily a particular feature centered in the
         regridded image.
         """
-        schema = {'pixel': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'world': {'type': 'cVariant'}, 'mask': {'type': 'cBoolVec'}}
+        schema = {'pixel': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'world': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'mask': {'type': 'cBoolVec'}}
         doc = {'pixel': pixel, 'world': world, 'mask': mask}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setreferencelocation_result = self._swigobj.setreferencelocation(_pc.document['pixel'], _any_ec(_pc.document['world']), _pc.document['mask'])
@@ -970,7 +970,7 @@ class coordsys:
         will have a null effect, due to the interpretation as a generic
         record.
         """
-        schema = {'value': {'type': 'cVariant'}, 'type': {'type': 'cStr'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'type': {'type': 'cStr'}}
         doc = {'value': value, 'type': type}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setreferencevalue_result = self._swigobj.setreferencevalue(_any_ec(_pc.document['value']), _str_ec(_pc.document['type']))
@@ -999,7 +999,7 @@ class coordsys:
         If the Coordinate System does not contain a frequency coordinate,
         an exception is generated.
         """
-        schema = {'value': {'type': 'cVariant'}, 'which': {'type': 'cInt'}, 'append': {'type': 'cBool'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'which': {'type': 'cInt'}, 'append': {'type': 'cBool'}}
         doc = {'value': value, 'which': which, 'append': append}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setrestfrequency_result = self._swigobj.setrestfrequency(_any_ec(_pc.document['value']), _pc.document['which'], _pc.document['append'])
@@ -1026,7 +1026,7 @@ class coordsys:
         You may specify the rest frequency as a Quantum or a double (native units
         of Spectral Coordinate used).
         """
-        schema = {'refcode': {'type': 'cStr'}, 'restfreq': {'type': 'cVariant'}, 'frequencies': {'type': 'cVariant'}, 'doppler': {'type': 'cStr'}, 'velocities': {'type': 'cVariant'}}
+        schema = {'refcode': {'type': 'cStr'}, 'restfreq': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'frequencies': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'doppler': {'type': 'cStr'}, 'velocities': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'refcode': refcode, 'restfreq': restfreq, 'frequencies': frequencies, 'doppler': doppler, 'velocities': velocities}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setspectral_result = self._swigobj.setspectral(_str_ec(_pc.document['refcode']), _any_ec(_pc.document['restfreq']), _any_ec(_pc.document['frequencies']), _str_ec(_pc.document['doppler']), _any_ec(_pc.document['velocities']))
@@ -1205,7 +1205,7 @@ class coordsys:
         could be world or pixel) in which case you must specify whether it is a
         world or pixel coordinate via the {stfaf isworld} argument.
         """
-        schema = {'value': {'type': 'cVariant'}, 'isworld': {'type': 'cInt'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'isworld': {'type': 'cInt'}}
         doc = {'value': value, 'isworld': isworld}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _toabs_result = _dict_dc(self._swigobj.toabs(_any_ec(_pc.document['value']), _pc.document['isworld']))
@@ -1223,7 +1223,7 @@ class coordsys:
         values must be the native units, given by function
         units.
         """
-        schema = {'value': {'type': 'cVariant'}, 'isworld': {'type': 'cInt'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'isworld': {'type': 'cInt'}}
         doc = {'value': value, 'isworld': isworld}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _toabsmany_result = _dict_dc(self._swigobj.toabsmany(_any_ec(_pc.document['value']), _pc.document['isworld']))
@@ -1244,7 +1244,7 @@ class coordsys:
         You may supply the world coordinate in all of the formats described in
         the htmlref{formatting}{COORDSYS:FORMATTING} discussion.
         """
-        schema = {'value': {'type': 'cVariant'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _topixel_result = _dict_dc(self._swigobj.topixel(_any_ec(_pc.document['value'])))
@@ -1261,7 +1261,7 @@ class coordsys:
         The units of the numeric values must be the native units, given by
         function units.
         """
-        schema = {'value': {'type': 'cVariant'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _topixelmany_result = _dict_dc(self._swigobj.topixelmany(_any_ec(_pc.document['value'])))
@@ -1285,7 +1285,7 @@ class coordsys:
         when your sub-image you are considering has only a section of your original Stokes
         axis.
         """
-        schema = {'originshft': {'type': 'cVariant'}, 'newshape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
+        schema = {'originshft': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'newshape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'originshft': originshft, 'newshape': newshape}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _subimage_result = _dict_dc(self._swigobj.subimage(_any_ec(_pc.document['originshft']), _pc.document['newshape']))
@@ -1311,7 +1311,7 @@ class coordsys:
         could be world or pixel) in which case you must specify whether it is a
         world or pixel coordinate via the {stfaf isworld} argument.
         """
-        schema = {'value': {'type': 'cVariant'}, 'isworld': {'type': 'cInt'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'isworld': {'type': 'cInt'}}
         doc = {'value': value, 'isworld': isworld}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _torel_result = _dict_dc(self._swigobj.torel(_any_ec(_pc.document['value']), _pc.document['isworld']))
@@ -1329,7 +1329,7 @@ class coordsys:
         values must be the native units, given by function
         units.
         """
-        schema = {'value': {'type': 'cVariant'}, 'isworld': {'type': 'cInt'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'isworld': {'type': 'cInt'}}
         doc = {'value': value, 'isworld': isworld}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _torelmany_result = _dict_dc(self._swigobj.torelmany(_any_ec(_pc.document['value']), _pc.document['isworld']))
@@ -1347,7 +1347,7 @@ class coordsys:
         the htmlref{discussion}{COORDSYS:FORMATTING} regarding the
         formatting possibilities available via argument {stfaf format}.
         """
-        schema = {'value': {'type': 'cVariant'}, 'format': {'type': 'cStr'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'format': {'type': 'cStr'}}
         doc = {'value': value, 'format': format}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _toworld_result = _dict_dc(self._swigobj.toworld(_any_ec(_pc.document['value']), _str_ec(_pc.document['format'])))
@@ -1364,7 +1364,7 @@ class coordsys:
         The units of the output world values are the native units given by
         function units.
         """
-        schema = {'value': {'type': 'cVariant'}}
+        schema = {'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _toworldmany_result = _dict_dc(self._swigobj.toworldmany(_any_ec(_pc.document['value'])))

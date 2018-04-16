@@ -84,7 +84,7 @@ class calibrater:
         
         end{description}
         """
-        schema = {'time': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'scan': {'type': 'cVariant'}, 'field': {'type': 'cVariant'}, 'intent': {'type': 'cVariant'}, 'observation': {'type': 'cVariant'}, 'baseline': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'chanmode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cInt'}, 'step': {'type': 'cInt'}, 'mstart': {'type': 'cFloatQuant'}, 'mstep': {'type': 'cFloatQuant'}, 'msselect': {'type': 'cStr'}}
+        schema = {'time': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'scan': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'intent': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'observation': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'baseline': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'uvrange': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'chanmode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cInt'}, 'step': {'type': 'cInt'}, 'mstart': {'type': 'cDoubleQuant'}, 'mstep': {'type': 'cDoubleQuant'}, 'msselect': {'type': 'cStr'}}
         doc = {'time': time, 'spw': spw, 'scan': scan, 'field': field, 'intent': intent, 'observation': observation, 'baseline': baseline, 'uvrange': uvrange, 'chanmode': chanmode, 'nchan': nchan, 'start': start, 'step': step, 'mstart': mstart, 'mstep': mstep, 'msselect': msselect}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _selectvis_result = self._swigobj.selectvis(_any_ec(_pc.document['time']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['scan']), _any_ec(_pc.document['field']), _any_ec(_pc.document['intent']), _any_ec(_pc.document['observation']), _any_ec(_pc.document['baseline']), _any_ec(_pc.document['uvrange']), _str_ec(_pc.document['chanmode']), _pc.document['nchan'], _pc.document['start'], _pc.document['step'], _pc.document['mstart'], _pc.document['mstep'], _str_ec(_pc.document['msselect']))
@@ -226,7 +226,7 @@ class calibrater:
         item Allow for antenna- and time-dependent opacities
         end{itemize}
         """
-        schema = {'type': {'type': 'cStr'}, 't': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'table': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'interp': {'type': 'cStr'}, 'select': {'type': 'cStr'}, 'calwt': {'type': 'cBool'}, 'spwmap': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'opacity': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
+        schema = {'type': {'type': 'cStr'}, 't': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'table': {'type': 'cStr'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'interp': {'type': 'cStr'}, 'select': {'type': 'cStr'}, 'calwt': {'type': 'cBool'}, 'spwmap': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'opacity': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
         doc = {'type': type, 't': t, 'table': table, 'field': field, 'interp': interp, 'select': select, 'calwt': calwt, 'spwmap': spwmap, 'opacity': opacity}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setapply_result = self._swigobj.setapply(_str_ec(_pc.document['type']), _pc.document['t'], _str_ec(_pc.document['table']), _any_ec(_pc.document['field']), _str_ec(_pc.document['interp']), _str_ec(_pc.document['select']), _pc.document['calwt'], _pc.document['spwmap'], _pc.document['opacity'])
@@ -326,7 +326,7 @@ class calibrater:
         item{Permit flexible specification of preavg (as for t)}
         end{itemize}
         """
-        schema = {'type': {'type': 'cStr'}, 't': {'type': 'cVariant'}, 'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'preavg': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'phaseonly': {'type': 'cBool'}, 'apmode': {'type': 'cStr'}, 'refant': {'type': 'cVariant'}, 'refantmode': {'type': 'cStr'}, 'minblperant': {'type': 'cInt'}, 'solnorm': {'type': 'cBool'}, 'minsnr': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'combine': {'type': 'cStr'}, 'fillgaps': {'type': 'cInt'}, 'cfcache': {'type': 'cStr'}, 'painc': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'fitorder': {'type': 'cInt'}, 'fraction': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'numedge': {'type': 'cInt'}, 'radius': {'type': 'cStr'}, 'smooth': {'type': 'cBool'}}
+        schema = {'type': {'type': 'cStr'}, 't': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'preavg': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'phaseonly': {'type': 'cBool'}, 'apmode': {'type': 'cStr'}, 'refant': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'refantmode': {'type': 'cStr'}, 'minblperant': {'type': 'cInt'}, 'solnorm': {'type': 'cBool'}, 'minsnr': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'combine': {'type': 'cStr'}, 'fillgaps': {'type': 'cInt'}, 'cfcache': {'type': 'cStr'}, 'painc': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'fitorder': {'type': 'cInt'}, 'fraction': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'numedge': {'type': 'cInt'}, 'radius': {'type': 'cStr'}, 'smooth': {'type': 'cBool'}}
         doc = {'type': type, 't': t, 'table': table, 'append': append, 'preavg': preavg, 'phaseonly': phaseonly, 'apmode': apmode, 'refant': refant, 'refantmode': refantmode, 'minblperant': minblperant, 'solnorm': solnorm, 'minsnr': minsnr, 'combine': combine, 'fillgaps': fillgaps, 'cfcache': cfcache, 'painc': painc, 'fitorder': fitorder, 'fraction': fraction, 'numedge': numedge, 'radius': radius, 'smooth': smooth}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setsolve_result = self._swigobj.setsolve(_str_ec(_pc.document['type']), _any_ec(_pc.document['t']), _str_ec(_pc.document['table']), _pc.document['append'], _pc.document['preavg'], _pc.document['phaseonly'], _str_ec(_pc.document['apmode']), _any_ec(_pc.document['refant']), _str_ec(_pc.document['refantmode']), _pc.document['minblperant'], _pc.document['solnorm'], _pc.document['minsnr'], _str_ec(_pc.document['combine']), _pc.document['fillgaps'], _str_ec(_pc.document['cfcache']), _pc.document['painc'], _pc.document['fitorder'], _pc.document['fraction'], _pc.document['numedge'], _str_ec(_pc.document['radius']), _pc.document['smooth'])
@@ -385,7 +385,7 @@ class calibrater:
         item Improve phase-tracking algorithm
         end{itemize}
         """
-        schema = {'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'mode': {'type': 'cStr'}, 'splinetime': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'preavg': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'npointaver': {'type': 'cInt'}, 'phasewrap': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'refant': {'type': 'cVariant'}}
+        schema = {'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'mode': {'type': 'cStr'}, 'splinetime': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'preavg': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'npointaver': {'type': 'cInt'}, 'phasewrap': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'refant': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'table': table, 'append': append, 'mode': mode, 'splinetime': splinetime, 'preavg': preavg, 'npointaver': npointaver, 'phasewrap': phasewrap, 'refant': refant}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setsolvegainspline_result = self._swigobj.setsolvegainspline(_str_ec(_pc.document['table']), _pc.document['append'], _str_ec(_pc.document['mode']), _pc.document['splinetime'], _pc.document['preavg'], _pc.document['npointaver'], _pc.document['phasewrap'], _any_ec(_pc.document['refant']))
@@ -454,7 +454,7 @@ class calibrater:
         bandpass to be combined on a common channel axis, effectively yielding
         a mean bandpass for the set of spws.
         """
-        schema = {'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 't': {'type': 'cVariant'}, 'combine': {'type': 'cStr'}, 'degamp': {'type': 'cInt'}, 'degphase': {'type': 'cInt'}, 'visnorm': {'type': 'cBool'}, 'solnorm': {'type': 'cBool'}, 'maskcenter': {'type': 'cInt'}, 'maskedge': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'refant': {'type': 'cVariant'}}
+        schema = {'table': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 't': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'combine': {'type': 'cStr'}, 'degamp': {'type': 'cInt'}, 'degphase': {'type': 'cInt'}, 'visnorm': {'type': 'cBool'}, 'solnorm': {'type': 'cBool'}, 'maskcenter': {'type': 'cInt'}, 'maskedge': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'refant': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'table': table, 'append': append, 't': t, 'combine': combine, 'degamp': degamp, 'degphase': degphase, 'visnorm': visnorm, 'solnorm': solnorm, 'maskcenter': maskcenter, 'maskedge': maskedge, 'refant': refant}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setsolvebandpoly_result = self._swigobj.setsolvebandpoly(_str_ec(_pc.document['table']), _pc.document['append'], _any_ec(_pc.document['t']), _str_ec(_pc.document['combine']), _pc.document['degamp'], _pc.document['degphase'], _pc.document['visnorm'], _pc.document['solnorm'], _pc.document['maskcenter'], _pc.document['maskedge'], _any_ec(_pc.document['refant']))
@@ -512,7 +512,7 @@ class calibrater:
         For convenience, this method also provides a means for
         deleting the MODEL_DATA column by setting scr=T.
         """
-        schema = {'otf': {'type': 'cBool'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'scr': {'type': 'cBool'}}
+        schema = {'otf': {'type': 'cBool'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'scr': {'type': 'cBool'}}
         doc = {'otf': otf, 'field': field, 'spw': spw, 'scr': scr}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _delmod_result = self._swigobj.delmod(_pc.document['otf'], _any_ec(_pc.document['field']), _any_ec(_pc.document['spw']), _pc.document['scr'])
@@ -668,7 +668,7 @@ class calibrater:
         item An option to use the data to derive the relative flux densities
         end{itemize}
         """
-        schema = {'tablein': {'type': 'cStr'}, 'reference': {'type': 'cVariant'}, 'tableout': {'type': 'cStr'}, 'transfer': {'type': 'cVariant'}, 'listfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'refspwmap': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'gainthreshold': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'antenna': {'type': 'cStr'}, 'timerange': {'type': 'cStr'}, 'scan': {'type': 'cStr'}, 'incremental': {'type': 'cBool'}, 'fitorder': {'type': 'cInt'}, 'display': {'type': 'cBool'}}
+        schema = {'tablein': {'type': 'cStr'}, 'reference': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'tableout': {'type': 'cStr'}, 'transfer': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'listfile': {'type': 'cStr'}, 'append': {'type': 'cBool'}, 'refspwmap': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'gainthreshold': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'antenna': {'type': 'cStr'}, 'timerange': {'type': 'cStr'}, 'scan': {'type': 'cStr'}, 'incremental': {'type': 'cBool'}, 'fitorder': {'type': 'cInt'}, 'display': {'type': 'cBool'}}
         doc = {'tablein': tablein, 'reference': reference, 'tableout': tableout, 'transfer': transfer, 'listfile': listfile, 'append': append, 'refspwmap': refspwmap, 'gainthreshold': gainthreshold, 'antenna': antenna, 'timerange': timerange, 'scan': scan, 'incremental': incremental, 'fitorder': fitorder, 'display': display}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _fluxscale_result = _dict_dc(self._swigobj.fluxscale(_str_ec(_pc.document['tablein']), _any_ec(_pc.document['reference']), _str_ec(_pc.document['tableout']), _any_ec(_pc.document['transfer']), _str_ec(_pc.document['listfile']), _pc.document['append'], _pc.document['refspwmap'], _pc.document['gainthreshold'], _str_ec(_pc.document['antenna']), _str_ec(_pc.document['timerange']), _str_ec(_pc.document['scan']), _pc.document['incremental'], _pc.document['fitorder'], _pc.document['display']))
@@ -817,7 +817,7 @@ class calibrater:
         item Smoothing (probably a separate function)
         end{itemize}
         """
-        schema = {'tablein': {'type': 'cStr'}, 'incrtable': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'calfield': {'type': 'cVariant'}, 'interp': {'type': 'cStr'}, 't': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'spwmap': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
+        schema = {'tablein': {'type': 'cStr'}, 'incrtable': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'calfield': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'interp': {'type': 'cStr'}, 't': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'spwmap': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'tablein': tablein, 'incrtable': incrtable, 'tableout': tableout, 'field': field, 'calfield': calfield, 'interp': interp, 't': t, 'spwmap': spwmap}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _accumulate_result = self._swigobj.accumulate(_str_ec(_pc.document['tablein']), _str_ec(_pc.document['incrtable']), _str_ec(_pc.document['tableout']), _any_ec(_pc.document['field']), _any_ec(_pc.document['calfield']), _str_ec(_pc.document['interp']), _pc.document['t'], _pc.document['spwmap'])
@@ -879,7 +879,7 @@ class calibrater:
         item Add A/P toggle
         end{itemize}
         """
-        schema = {'tablein': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'smoothtype': {'type': 'cStr'}, 'smoothtime': {'type': 'cFloat', 'coerce': _coerce.to_float}}
+        schema = {'tablein': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'smoothtype': {'type': 'cStr'}, 'smoothtime': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'tablein': tablein, 'tableout': tableout, 'field': field, 'smoothtype': smoothtype, 'smoothtime': smoothtime}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _smooth_result = self._swigobj.smooth(_str_ec(_pc.document['tablein']), _str_ec(_pc.document['tableout']), _any_ec(_pc.document['field']), _str_ec(_pc.document['smoothtype']), _pc.document['smoothtime'])
@@ -894,7 +894,7 @@ class calibrater:
         item TBD
         end{itemize}
         """
-        schema = {'tablein': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'refantmode': {'type': 'cStr'}, 'refant': {'type': 'cVariant'}}
+        schema = {'tablein': {'type': 'cStr'}, 'tableout': {'type': 'cStr'}, 'refantmode': {'type': 'cStr'}, 'refant': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'tablein': tablein, 'tableout': tableout, 'refantmode': refantmode, 'refant': refant}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _rerefant_result = self._swigobj.rerefant(_str_ec(_pc.document['tablein']), _str_ec(_pc.document['tableout']), _str_ec(_pc.document['refantmode']), _any_ec(_pc.document['refant']))
@@ -939,7 +939,7 @@ class calibrater:
         are not given, but the ordering of the polrization modes (left-to-right) is
         equivalent to the order output by task listobs (see ``Feeds'' in listobs output).
         """
-        schema = {'caltable': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'listfile': {'type': 'cStr'}, 'pagerows': {'type': 'cInt'}}
+        schema = {'caltable': {'type': 'cStr'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'antenna': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'listfile': {'type': 'cStr'}, 'pagerows': {'type': 'cInt'}}
         doc = {'caltable': caltable, 'field': field, 'antenna': antenna, 'spw': spw, 'listfile': listfile, 'pagerows': pagerows}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _listcal_result = self._swigobj.listcal(_str_ec(_pc.document['caltable']), _any_ec(_pc.document['field']), _any_ec(_pc.document['antenna']), _any_ec(_pc.document['spw']), _str_ec(_pc.document['listfile']), _pc.document['pagerows'])

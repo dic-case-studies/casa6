@@ -1167,8 +1167,8 @@ class imregrid_test(unittest.TestCase):
         self.assertTrue((myia.shape() == [20, 20, 10]).all(), "Shape error")
         got = myia.getchunk()
         gotm = myia.getchunk(getmask=True)
-        for i in xrange(20):
-            for j in xrange(20):
+        for i in range(20):
+            for j in range(20):
                 self.assertTrue((got[i,j,:] == expec[i,j]).all(), "incorrect values" )
                 self.assertTrue((gotm[i,j,:] == expm[i,j]).all(), "incorrect mask" )
 

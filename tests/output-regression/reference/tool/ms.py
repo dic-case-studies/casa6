@@ -465,7 +465,7 @@ class ms:
         visibility.
         
         """
-        schema = {'fitsfile': {'type': 'cStr'}, 'column': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'baseline': {'type': 'cVariant'}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'taql': {'type': 'cStr'}, 'writesyscal': {'type': 'cBool'}, 'multisource': {'type': 'cBool'}, 'combinespw': {'type': 'cBool'}, 'writestation': {'type': 'cBool'}, 'padwithflags': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
+        schema = {'fitsfile': {'type': 'cStr'}, 'column': {'type': 'cStr'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'baseline': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'uvrange': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'taql': {'type': 'cStr'}, 'writesyscal': {'type': 'cBool'}, 'multisource': {'type': 'cBool'}, 'combinespw': {'type': 'cBool'}, 'writestation': {'type': 'cBool'}, 'padwithflags': {'type': 'cBool'}, 'overwrite': {'type': 'cBool'}}
         doc = {'fitsfile': fitsfile, 'column': column, 'field': field, 'spw': spw, 'baseline': baseline, 'time': time, 'scan': scan, 'uvrange': uvrange, 'taql': taql, 'writesyscal': writesyscal, 'multisource': multisource, 'combinespw': combinespw, 'writestation': writestation, 'padwithflags': padwithflags, 'overwrite': overwrite}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _tofits_result = self._swigobj.tofits(_str_ec(_pc.document['fitsfile']), _str_ec(_pc.document['column']), _any_ec(_pc.document['field']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['baseline']), _str_ec(_pc.document['time']), _any_ec(_pc.document['scan']), _any_ec(_pc.document['uvrange']), _str_ec(_pc.document['taql']), _pc.document['writesyscal'], _pc.document['multisource'], _pc.document['combinespw'], _pc.document['writestation'], _pc.document['padwithflags'], _pc.document['overwrite'])
@@ -517,7 +517,7 @@ class ms:
         in order to use this function.
         
         """
-        schema = {'msfile': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant'}, 'dirtol': {'type': 'cVariant'}, 'weightscale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'handling': {'type': 'cInt'}, 'destmsfile': {'type': 'cStr'}, 'respectname': {'type': 'cBool'}}
+        schema = {'msfile': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'dirtol': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'weightscale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'handling': {'type': 'cInt'}, 'destmsfile': {'type': 'cStr'}, 'respectname': {'type': 'cBool'}}
         doc = {'msfile': msfile, 'freqtol': freqtol, 'dirtol': dirtol, 'weightscale': weightscale, 'handling': handling, 'destmsfile': destmsfile, 'respectname': respectname}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _concatenate_result = self._swigobj.concatenate(_str_ec(_pc.document['msfile']), _any_ec(_pc.document['freqtol']), _any_ec(_pc.document['dirtol']), _pc.document['weightscale'], _pc.document['handling'], _str_ec(_pc.document['destmsfile']), _pc.document['respectname'])
@@ -533,7 +533,7 @@ class ms:
         it is not touched.
         
         """
-        schema = {'msfile': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant'}, 'dirtol': {'type': 'cVariant'}, 'respectname': {'type': 'cBool'}}
+        schema = {'msfile': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'dirtol': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'respectname': {'type': 'cBool'}}
         doc = {'msfile': msfile, 'freqtol': freqtol, 'dirtol': dirtol, 'respectname': respectname}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _testconcatenate_result = self._swigobj.testconcatenate(_str_ec(_pc.document['msfile']), _any_ec(_pc.document['freqtol']), _any_ec(_pc.document['dirtol']), _pc.document['respectname'])
@@ -548,7 +548,7 @@ class ms:
         this function.
         
         """
-        schema = {'msfile': {'type': 'cStr'}, 'auxfilename': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant'}, 'dirtol': {'type': 'cVariant'}, 'weightscale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'respectname': {'type': 'cBool'}}
+        schema = {'msfile': {'type': 'cStr'}, 'auxfilename': {'type': 'cStr'}, 'freqtol': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'dirtol': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'weightscale': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'respectname': {'type': 'cBool'}}
         doc = {'msfile': msfile, 'auxfilename': auxfilename, 'freqtol': freqtol, 'dirtol': dirtol, 'weightscale': weightscale, 'respectname': respectname}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _virtconcatenate_result = self._swigobj.virtconcatenate(_str_ec(_pc.document['msfile']), _str_ec(_pc.document['auxfilename']), _any_ec(_pc.document['freqtol']), _any_ec(_pc.document['dirtol']), _pc.document['weightscale'], _pc.document['respectname'])
@@ -582,7 +582,7 @@ class ms:
         selected.
         
         """
-        schema = {'outputms': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'step': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'baseline': {'type': 'cVariant'}, 'timebin': {'type': 'cVariant'}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'taql': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}, 'tileshape': {'type': 'cVariant'}, 'subarray': {'type': 'cVariant'}, 'combine': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'intent': {'type': 'cStr'}, 'obs': {'type': 'cStr'}}
+        schema = {'outputms': {'type': 'cStr'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'step': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'baseline': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'timebin': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'uvrange': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'taql': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}, 'tileshape': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'subarray': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'combine': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'intent': {'type': 'cStr'}, 'obs': {'type': 'cStr'}}
         doc = {'outputms': outputms, 'field': field, 'spw': spw, 'step': step, 'baseline': baseline, 'timebin': timebin, 'time': time, 'scan': scan, 'uvrange': uvrange, 'taql': taql, 'whichcol': whichcol, 'tileshape': tileshape, 'subarray': subarray, 'combine': combine, 'correlation': correlation, 'intent': intent, 'obs': obs}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _split_result = self._swigobj.split(_str_ec(_pc.document['outputms']), _any_ec(_pc.document['field']), _any_ec(_pc.document['spw']), _pc.document['step'], _any_ec(_pc.document['baseline']), _any_ec(_pc.document['timebin']), _str_ec(_pc.document['time']), _any_ec(_pc.document['scan']), _any_ec(_pc.document['uvrange']), _str_ec(_pc.document['taql']), _str_ec(_pc.document['whichcol']), _any_ec(_pc.document['tileshape']), _any_ec(_pc.document['subarray']), _str_ec(_pc.document['combine']), _str_ec(_pc.document['correlation']), _str_ec(_pc.document['intent']), _str_ec(_pc.document['obs']))
@@ -599,7 +599,7 @@ class ms:
         spectral window(s).
         
         """
-        schema = {'outputms': {'type': 'cStr'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'baseline': {'type': 'cVariant'}, 'timebin': {'type': 'cVariant'}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'taql': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}, 'tileshape': {'type': 'cVariant'}, 'subarray': {'type': 'cVariant'}, 'combine': {'type': 'cStr'}, 'intent': {'type': 'cStr'}, 'obs': {'type': 'cStr'}}
+        schema = {'outputms': {'type': 'cStr'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'baseline': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'timebin': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'time': {'type': 'cStr'}, 'scan': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'uvrange': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'taql': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}, 'tileshape': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'subarray': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'combine': {'type': 'cStr'}, 'intent': {'type': 'cStr'}, 'obs': {'type': 'cStr'}}
         doc = {'outputms': outputms, 'field': field, 'spw': spw, 'baseline': baseline, 'timebin': timebin, 'time': time, 'scan': scan, 'uvrange': uvrange, 'taql': taql, 'whichcol': whichcol, 'tileshape': tileshape, 'subarray': subarray, 'combine': combine, 'intent': intent, 'obs': obs}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _partition_result = self._swigobj.partition(_str_ec(_pc.document['outputms']), _any_ec(_pc.document['field']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['baseline']), _any_ec(_pc.document['timebin']), _str_ec(_pc.document['time']), _any_ec(_pc.document['scan']), _any_ec(_pc.document['uvrange']), _str_ec(_pc.document['taql']), _str_ec(_pc.document['whichcol']), _any_ec(_pc.document['tileshape']), _any_ec(_pc.document['subarray']), _str_ec(_pc.document['combine']), _str_ec(_pc.document['intent']), _str_ec(_pc.document['obs']))
@@ -864,7 +864,7 @@ class ms:
         """Utility function that will return the ids of the selection used.
         
         """
-        schema = {'vis': {'type': 'cStr'}, 'spw': {'type': 'cVariant'}, 'field': {'type': 'cVariant'}, 'baseline': {'type': 'cVariant'}, 'time': {'type': 'cVariant'}, 'scan': {'type': 'cVariant'}, 'uvrange': {'type': 'cVariant'}, 'observation': {'type': 'cVariant'}, 'polarization': {'type': 'cVariant'}, 'taql': {'type': 'cStr'}}
+        schema = {'vis': {'type': 'cStr'}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'baseline': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'time': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'scan': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'uvrange': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'observation': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'polarization': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'taql': {'type': 'cStr'}}
         doc = {'vis': vis, 'spw': spw, 'field': field, 'baseline': baseline, 'time': time, 'scan': scan, 'uvrange': uvrange, 'observation': observation, 'polarization': polarization, 'taql': taql}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _msseltoindex_result = _dict_dc(self._swigobj.msseltoindex(_str_ec(_pc.document['vis']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['field']), _any_ec(_pc.document['baseline']), _any_ec(_pc.document['time']), _any_ec(_pc.document['scan']), _any_ec(_pc.document['uvrange']), _any_ec(_pc.document['observation']), _any_ec(_pc.document['polarization']), _str_ec(_pc.document['taql'])))
@@ -1301,7 +1301,7 @@ class ms:
         effectively at least 2 if dorms is False, and 1 if it is True.
         
         """
-        schema = {'dorms': {'type': 'cBool'}, 'byantenna': {'type': 'cBool'}, 'sepacs': {'type': 'cBool'}, 'fitspw': {'type': 'cVariant'}, 'fitcorr': {'type': 'cVariant'}, 'combine': {'type': 'cStr'}, 'timebin': {'type': 'cVariant'}, 'minsamp': {'type': 'cInt'}, 'field': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'antenna': {'anyof': [{'type': 'cStr'}, {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, {'type': 'cInt'}, {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}]}, 'timerange': {'type': 'cStr'}, 'scan': {'type': 'cVariant'}, 'intent': {'type': 'cStr'}, 'array': {'type': 'cVariant'}, 'correlation': {'type': 'cStr'}, 'obs': {'type': 'cStr'}, 'datacolumn': {'type': 'cStr'}}
+        schema = {'dorms': {'type': 'cBool'}, 'byantenna': {'type': 'cBool'}, 'sepacs': {'type': 'cBool'}, 'fitspw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'fitcorr': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'combine': {'type': 'cStr'}, 'timebin': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'minsamp': {'type': 'cInt'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'antenna': {'anyof': [{'type': 'cStr'}, {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}, {'type': 'cInt'}, {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}]}, 'timerange': {'type': 'cStr'}, 'scan': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'intent': {'type': 'cStr'}, 'array': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'correlation': {'type': 'cStr'}, 'obs': {'type': 'cStr'}, 'datacolumn': {'type': 'cStr'}}
         doc = {'dorms': dorms, 'byantenna': byantenna, 'sepacs': sepacs, 'fitspw': fitspw, 'fitcorr': fitcorr, 'combine': combine, 'timebin': timebin, 'minsamp': minsamp, 'field': field, 'spw': spw, 'antenna': antenna, 'timerange': timerange, 'scan': scan, 'intent': intent, 'array': array, 'correlation': correlation, 'obs': obs, 'datacolumn': datacolumn}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _statwt_result = self._swigobj.statwt(_pc.document['dorms'], _pc.document['byantenna'], _pc.document['sepacs'], _any_ec(_pc.document['fitspw']), _any_ec(_pc.document['fitcorr']), _str_ec(_pc.document['combine']), _any_ec(_pc.document['timebin']), _pc.document['minsamp'], _any_ec(_pc.document['field']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['antenna']), _str_ec(_pc.document['timerange']), _any_ec(_pc.document['scan']), _str_ec(_pc.document['intent']), _any_ec(_pc.document['array']), _str_ec(_pc.document['correlation']), _str_ec(_pc.document['obs']), _str_ec(_pc.document['datacolumn']))
@@ -1354,7 +1354,7 @@ class ms:
         will combine all spectral windows of the MS into one.
         
         """
-        schema = {'mode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cVariant'}, 'width': {'type': 'cVariant'}, 'interp': {'type': 'cStr'}, 'phasec': {'type': 'cVariant'}, 'restfreq': {'type': 'cVariant'}, 'outframe': {'type': 'cStr'}, 'veltype': {'type': 'cStr'}, 'hanning': {'type': 'cBool'}}
+        schema = {'mode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'width': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'interp': {'type': 'cStr'}, 'phasec': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'restfreq': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'outframe': {'type': 'cStr'}, 'veltype': {'type': 'cStr'}, 'hanning': {'type': 'cBool'}}
         doc = {'mode': mode, 'nchan': nchan, 'start': start, 'width': width, 'interp': interp, 'phasec': phasec, 'restfreq': restfreq, 'outframe': outframe, 'veltype': veltype, 'hanning': hanning}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _cvel_result = self._swigobj.cvel(_str_ec(_pc.document['mode']), _pc.document['nchan'], _any_ec(_pc.document['start']), _any_ec(_pc.document['width']), _str_ec(_pc.document['interp']), _any_ec(_pc.document['phasec']), _any_ec(_pc.document['restfreq']), _str_ec(_pc.document['outframe']), _str_ec(_pc.document['veltype']), _pc.document['hanning'])
@@ -1383,7 +1383,7 @@ class ms:
         using them in cvel or clean.
         
         """
-        schema = {'spwids': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'fieldids': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'obstime': {'type': 'cStr'}, 'mode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cVariant'}, 'width': {'type': 'cVariant'}, 'phasec': {'type': 'cVariant'}, 'restfreq': {'type': 'cVariant'}, 'outframe': {'type': 'cStr'}, 'veltype': {'type': 'cStr'}, 'verbose': {'type': 'cBool'}}
+        schema = {'spwids': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'fieldids': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'obstime': {'type': 'cStr'}, 'mode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'width': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'phasec': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'restfreq': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'outframe': {'type': 'cStr'}, 'veltype': {'type': 'cStr'}, 'verbose': {'type': 'cBool'}}
         doc = {'spwids': spwids, 'fieldids': fieldids, 'obstime': obstime, 'mode': mode, 'nchan': nchan, 'start': start, 'width': width, 'phasec': phasec, 'restfreq': restfreq, 'outframe': outframe, 'veltype': veltype, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _cvelfreqs_result = self._swigobj.cvelfreqs(_pc.document['spwids'], _pc.document['fieldids'], _str_ec(_pc.document['obstime']), _str_ec(_pc.document['mode']), _pc.document['nchan'], _any_ec(_pc.document['start']), _any_ec(_pc.document['width']), _any_ec(_pc.document['phasec']), _any_ec(_pc.document['restfreq']), _str_ec(_pc.document['outframe']), _str_ec(_pc.document['veltype']), _pc.document['verbose'])
@@ -1401,7 +1401,7 @@ class ms:
         visibilities selected by fitspw (depending on combine).
         
         """
-        schema = {'outputms': {'type': 'cStr'}, 'fitspw': {'type': 'cVariant'}, 'fitorder': {'type': 'cInt'}, 'combine': {'type': 'cStr'}, 'spw': {'type': 'cVariant'}, 'unionspw': {'type': 'cVariant'}, 'field': {'type': 'cVariant'}, 'scan': {'type': 'cVariant'}, 'intent': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'obs': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}}
+        schema = {'outputms': {'type': 'cStr'}, 'fitspw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'fitorder': {'type': 'cInt'}, 'combine': {'type': 'cStr'}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'unionspw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'scan': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'intent': {'type': 'cStr'}, 'correlation': {'type': 'cStr'}, 'obs': {'type': 'cStr'}, 'whichcol': {'type': 'cStr'}}
         doc = {'outputms': outputms, 'fitspw': fitspw, 'fitorder': fitorder, 'combine': combine, 'spw': spw, 'unionspw': unionspw, 'field': field, 'scan': scan, 'intent': intent, 'correlation': correlation, 'obs': obs, 'whichcol': whichcol}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _contsub_result = self._swigobj.contsub(_str_ec(_pc.document['outputms']), _any_ec(_pc.document['fitspw']), _pc.document['fitorder'], _str_ec(_pc.document['combine']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['unionspw']), _any_ec(_pc.document['field']), _any_ec(_pc.document['scan']), _str_ec(_pc.document['intent']), _str_ec(_pc.document['correlation']), _str_ec(_pc.document['obs']), _str_ec(_pc.document['whichcol']))
@@ -1444,7 +1444,7 @@ class ms:
         tool, and try continuumsub again.
         
         """
-        schema = {'field': {'type': 'cVariant'}, 'fitspw': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'solint': {'type': 'cVariant'}, 'fitorder': {'type': 'cInt'}, 'mode': {'type': 'cStr'}}
+        schema = {'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'fitspw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'solint': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'fitorder': {'type': 'cInt'}, 'mode': {'type': 'cStr'}}
         doc = {'field': field, 'fitspw': fitspw, 'spw': spw, 'solint': solint, 'fitorder': fitorder, 'mode': mode}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _continuumsub_result = self._swigobj.continuumsub(_any_ec(_pc.document['field']), _any_ec(_pc.document['fitspw']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['solint']), _pc.document['fitorder'], _str_ec(_pc.document['mode']))
@@ -1465,7 +1465,7 @@ class ms:
     def addephemeris(self, id=int(-1), ephemerisname='', comment='', field=[ ]):
         """
         """
-        schema = {'id': {'type': 'cInt'}, 'ephemerisname': {'type': 'cStr'}, 'comment': {'type': 'cStr'}, 'field': {'type': 'cVariant'}}
+        schema = {'id': {'type': 'cInt'}, 'ephemerisname': {'type': 'cStr'}, 'comment': {'type': 'cStr'}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'id': id, 'ephemerisname': ephemerisname, 'comment': comment, 'field': field}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _addephemeris_result = self._swigobj.addephemeris(_pc.document['id'], _str_ec(_pc.document['ephemerisname']), _str_ec(_pc.document['comment']), _any_ec(_pc.document['field']))
@@ -2148,7 +2148,7 @@ class ms:
         the ms tool, and try continuumsubold again.
         
         """
-        schema = {'field': {'type': 'cVariant'}, 'fitspw': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'solint': {'type': 'cVariant'}, 'fitorder': {'type': 'cInt'}, 'mode': {'type': 'cStr'}}
+        schema = {'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'fitspw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'solint': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'fitorder': {'type': 'cInt'}, 'mode': {'type': 'cStr'}}
         doc = {'field': field, 'fitspw': fitspw, 'spw': spw, 'solint': solint, 'fitorder': fitorder, 'mode': mode}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _continuumsubold_result = self._swigobj.continuumsubold(_any_ec(_pc.document['field']), _any_ec(_pc.document['fitspw']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['solint']), _pc.document['fitorder'], _str_ec(_pc.document['mode']))

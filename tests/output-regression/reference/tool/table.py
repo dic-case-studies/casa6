@@ -1015,7 +1015,7 @@ class table:
         """A cell is the the value at one row in one column. It
         may be a scalar or an array.
         """
-        schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'thevalue': {'type': 'cVariant'}}
+        schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'thevalue': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'columnname': columnname, 'rownr': rownr, 'thevalue': thevalue}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _putcell_result = self._swigobj.putcell(_str_ec(_pc.document['columnname']), _pc.document['rownr'], _any_ec(_pc.document['thevalue']))
@@ -1027,7 +1027,7 @@ class table:
         In blc and trc -1 can be used to indicate all values for a dimension
         (-1 in blc is equivalent to 0, so -1 is especially useful for trc).
         """
-        schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cInt'}, 'value': {'type': 'cVariant'}, 'blc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'trc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'incr': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
+        schema = {'columnname': {'type': 'cStr'}, 'rownr': {'type': 'cInt'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'blc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'trc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'incr': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}}
         doc = {'columnname': columnname, 'rownr': rownr, 'value': value, 'blc': blc, 'trc': trc, 'incr': incr}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _putcellslice_result = self._swigobj.putcellslice(_str_ec(_pc.document['columnname']), _pc.document['rownr'], _any_ec(_pc.document['value']), _pc.document['blc'], _pc.document['trc'], _pc.document['incr'])
@@ -1036,7 +1036,7 @@ class table:
     def putcol(self, columnname, value=[ ], startrow=int(0), nrow=int(-1), rowincr=int(1)):
         """
         """
-        schema = {'columnname': {'type': 'cStr'}, 'value': {'type': 'cVariant'}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
+        schema = {'columnname': {'type': 'cStr'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'value': value, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _putcol_result = self._swigobj.putcol(_str_ec(_pc.document['columnname']), _any_ec(_pc.document['value']), _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
@@ -1062,7 +1062,7 @@ class table:
         Note that blc and trc should not contain the row number, only the
         blc and trc of the arrays in the column.
         """
-        schema = {'columnname': {'type': 'cStr'}, 'value': {'type': 'cVariant'}, 'blc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'trc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'incr': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
+        schema = {'columnname': {'type': 'cStr'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'blc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'trc': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'incr': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'startrow': {'type': 'cInt'}, 'nrow': {'type': 'cInt'}, 'rowincr': {'type': 'cInt'}}
         doc = {'columnname': columnname, 'value': value, 'blc': blc, 'trc': trc, 'incr': incr, 'startrow': startrow, 'nrow': nrow, 'rowincr': rowincr}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _putcolslice_result = self._swigobj.putcolslice(_str_ec(_pc.document['columnname']), _any_ec(_pc.document['value']), _pc.document['blc'], _pc.document['trc'], _pc.document['incr'], _pc.document['startrow'], _pc.document['nrow'], _pc.document['rowincr'])
@@ -1089,7 +1089,7 @@ class table:
         (arbitrarily deeply nested). A field in such a subrecord can be
         read by separating the name with dots.
         """
-        schema = {'keyword': {'type': 'cVariant'}}
+        schema = {'keyword': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getkeyword_result = _any_dc(self._swigobj.getkeyword(_any_ec(_pc.document['keyword'])))
@@ -1113,7 +1113,7 @@ class table:
         (arbitrarily deeply nested). A field in such a subrecord can be
         read by separating the name with dots.
         """
-        schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant'}}
+        schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'columnname': columnname, 'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getcolkeyword_result = _any_dc(self._swigobj.getcolkeyword(_str_ec(_pc.document['columnname']), _any_ec(_pc.document['keyword'])))
@@ -1143,7 +1143,7 @@ class table:
         exist, an error is returned unless texttt{makesubrecord=True} is given.
         In such a case intermediate records are created when needed.
         """
-        schema = {'keyword': {'type': 'cVariant'}, 'value': {'type': 'cVariant'}, 'makesubrecord': {'type': 'cBool'}}
+        schema = {'keyword': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'makesubrecord': {'type': 'cBool'}}
         doc = {'keyword': keyword, 'value': value, 'makesubrecord': makesubrecord}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _putkeyword_result = self._swigobj.putkeyword(_any_ec(_pc.document['keyword']), _any_ec(_pc.document['value']), _pc.document['makesubrecord'])
@@ -1176,7 +1176,7 @@ class table:
         exist, an error is returned unless texttt{makesubrecord=True} is given.
         In such a case intermediate records are created when needed.
         """
-        schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant'}, 'value': {'type': 'cVariant'}}
+        schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'columnname': columnname, 'keyword': keyword, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _putcolkeyword_result = self._swigobj.putcolkeyword(_str_ec(_pc.document['columnname']), _any_ec(_pc.document['keyword']), _any_ec(_pc.document['value']))
@@ -1200,7 +1200,7 @@ class table:
     def removekeyword(self, keyword=[ ]):
         """
         """
-        schema = {'keyword': {'type': 'cVariant'}}
+        schema = {'keyword': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _removekeyword_result = self._swigobj.removekeyword(_any_ec(_pc.document['keyword']))
@@ -1209,7 +1209,7 @@ class table:
     def removecolkeyword(self, columnname, keyword=[ ]):
         """
         """
-        schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant'}}
+        schema = {'columnname': {'type': 'cStr'}, 'keyword': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'columnname': columnname, 'keyword': keyword}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _removecolkeyword_result = self._swigobj.removecolkeyword(_str_ec(_pc.document['columnname']), _any_ec(_pc.document['keyword']))

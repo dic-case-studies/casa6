@@ -24,7 +24,7 @@ class utils:
     def verify(self, input={ }, xmldescriptor=[ ], throwexecpt=False):
         """
         """
-        schema = {'input': {'type': 'cDict'}, 'xmldescriptor': {'type': 'cVariant'}, 'throwexecpt': {'type': 'cBool'}}
+        schema = {'input': {'type': 'cDict'}, 'xmldescriptor': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'throwexecpt': {'type': 'cBool'}}
         doc = {'input': input, 'xmldescriptor': xmldescriptor, 'throwexecpt': throwexecpt}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _verify_result = self._swigobj.verify(_dict_ec(_pc.document['input']), _any_ec(_pc.document['xmldescriptor']), _pc.document['throwexecpt'])
@@ -33,7 +33,7 @@ class utils:
     def setconstraints(self, xmldescriptor=[ ]):
         """
         """
-        schema = {'xmldescriptor': {'type': 'cVariant'}}
+        schema = {'xmldescriptor': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'xmldescriptor': xmldescriptor}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setconstraints_result = self._swigobj.setconstraints(_any_ec(_pc.document['xmldescriptor']))
@@ -51,7 +51,7 @@ class utils:
     def expandparam(self, name='', value=[ ]):
         """
         """
-        schema = {'name': {'type': 'cStr'}, 'value': {'type': 'cVariant'}}
+        schema = {'name': {'type': 'cStr'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'name': name, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _expandparam_result = _any_dc(self._swigobj.expandparam(_str_ec(_pc.document['name']), _any_ec(_pc.document['value'])))

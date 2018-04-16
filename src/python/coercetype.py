@@ -79,6 +79,15 @@ class CasaCoerce:
                 return numpy.array(value)
         return value
 
+    def to_variant(self,value):
+        if isinstance(value,numpy.int32):
+            return int(value)
+        if isinstance(value,numpy.int64):
+            return float(value)
+        if isinstance(value,numpy.float32) or isinstance(value,numpy.float64):
+            return float(value)
+        return value
+
     def expand_path(self,value):
         if not isinstance(value,str):
             return value

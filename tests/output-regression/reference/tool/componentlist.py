@@ -68,7 +68,7 @@ class componentlist:
         once. By default all components are copied.
         
         """
-        schema = {'list': {'type': 'cVariant'}, 'which': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'log': {'type': 'cBool'}}
+        schema = {'list': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'which': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'log': {'type': 'cBool'}}
         doc = {'list': list, 'which': which, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _concatenate_result = self._swigobj.concatenate(_any_ec(_pc.document['list']), _pc.document['which'], _pc.document['log'])
@@ -227,7 +227,7 @@ class componentlist:
         
         
         """
-        schema = {'direction': {'type': 'cVariant'}, 'pixellatsize': {'type': 'cVariant'}, 'pixellongsize': {'type': 'cVariant'}, 'frequency': {'type': 'cVariant'}}
+        schema = {'direction': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'pixellatsize': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'pixellongsize': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'frequency': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'direction': direction, 'pixellatsize': pixellatsize, 'pixellongsize': pixellongsize, 'frequency': frequency}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _sample_result = self._swigobj.sample(_any_ec(_pc.document['direction']), _any_ec(_pc.document['pixellatsize']), _any_ec(_pc.document['pixellongsize']), _any_ec(_pc.document['frequency']))
@@ -298,7 +298,7 @@ class componentlist:
         [label] See setlabel
         
         """
-        schema = {'flux': {'type': 'cVariant'}, 'fluxunit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'dir': {'type': 'cVariant'}, 'shape': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant'}, 'minoraxis': {'type': 'cVariant'}, 'positionangle': {'type': 'cVariant'}, 'freq': {'type': 'cVariant'}, 'spectrumtype': {'type': 'cStr'}, 'index': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'optionalparms': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'label': {'type': 'cStr'}}
+        schema = {'flux': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'fluxunit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'dir': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'shape': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'minoraxis': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'positionangle': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'freq': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spectrumtype': {'type': 'cStr'}, 'index': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'optionalparms': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'label': {'type': 'cStr'}}
         doc = {'flux': flux, 'fluxunit': fluxunit, 'polarization': polarization, 'dir': dir, 'shape': shape, 'majoraxis': majoraxis, 'minoraxis': minoraxis, 'positionangle': positionangle, 'freq': freq, 'spectrumtype': spectrumtype, 'index': index, 'optionalparms': optionalparms, 'label': label}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _addcomponent_result = self._swigobj.addcomponent(_any_ec(_pc.document['flux']), _str_ec(_pc.document['fluxunit']), _str_ec(_pc.document['polarization']), _any_ec(_pc.document['dir']), _str_ec(_pc.document['shape']), _any_ec(_pc.document['majoraxis']), _any_ec(_pc.document['minoraxis']), _any_ec(_pc.document['positionangle']), _any_ec(_pc.document['freq']), _str_ec(_pc.document['spectrumtype']), _pc.document['index'], _pc.document['optionalparms'], _str_ec(_pc.document['label']))
@@ -494,7 +494,7 @@ class componentlist:
         ignored.)
         
         """
-        schema = {'which': {'type': 'cInt'}, 'value': {'type': 'cVariant'}, 'unit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'error': {'type': 'cVariant'}, 'log': {'type': 'cBool'}}
+        schema = {'which': {'type': 'cInt'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'unit': {'type': 'cStr'}, 'polarization': {'type': 'cStr'}, 'error': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'value': value, 'unit': unit, 'polarization': polarization, 'error': error, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setflux_result = self._swigobj.setflux(_pc.document['which'], _any_ec(_pc.document['value']), _str_ec(_pc.document['unit']), _str_ec(_pc.document['polarization']), _any_ec(_pc.document['error']), _pc.document['log'])
@@ -591,7 +591,7 @@ class componentlist:
         'time'.
         
         """
-        schema = {'which': {'type': 'cInt'}, 'ra': {'type': 'cVariant'}, 'dec': {'type': 'cVariant'}, 'log': {'type': 'cBool'}}
+        schema = {'which': {'type': 'cInt'}, 'ra': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'dec': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'ra': ra, 'dec': dec, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setrefdir_result = self._swigobj.setrefdir(_pc.document['which'], _any_ec(_pc.document['ra']), _any_ec(_pc.document['dec']), _pc.document['log'])
@@ -707,7 +707,7 @@ class componentlist:
         
         
         """
-        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant'}, 'minoraxis': {'type': 'cVariant'}, 'positionangle': {'type': 'cVariant'}, 'majoraxiserror': {'type': 'cVariant'}, 'minoraxiserror': {'type': 'cVariant'}, 'positionangleerror': {'type': 'cVariant'}, 'optionalparms': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'log': {'type': 'cBool'}}
+        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'majoraxis': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'minoraxis': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'positionangle': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'majoraxiserror': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'minoraxiserror': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'positionangleerror': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'optionalparms': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'log': {'type': 'cBool'}}
         doc = {'which': which, 'type': type, 'majoraxis': majoraxis, 'minoraxis': minoraxis, 'positionangle': positionangle, 'majoraxiserror': majoraxiserror, 'minoraxiserror': minoraxiserror, 'positionangleerror': positionangleerror, 'optionalparms': optionalparms, 'log': log}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setshape_result = self._swigobj.setshape(_pc.document['which'], _str_ec(_pc.document['type']), _any_ec(_pc.document['majoraxis']), _any_ec(_pc.document['minoraxis']), _any_ec(_pc.document['positionangle']), _any_ec(_pc.document['majoraxiserror']), _any_ec(_pc.document['minoraxiserror']), _any_ec(_pc.document['positionangleerror']), _pc.document['optionalparms'], _pc.document['log'])
@@ -800,7 +800,7 @@ class componentlist:
         
         
         """
-        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'index': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularfreqs': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabulari': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularq': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularu': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularv': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'reffreq': {'type': 'cVariant'}, 'frame': {'type': 'cStr'}}
+        schema = {'which': {'type': 'cInt'}, 'type': {'type': 'cStr'}, 'index': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularfreqs': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabulari': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularq': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularu': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'tabularv': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'reffreq': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'frame': {'type': 'cStr'}}
         doc = {'which': which, 'type': type, 'index': index, 'tabularfreqs': tabularfreqs, 'tabulari': tabulari, 'tabularq': tabularq, 'tabularu': tabularu, 'tabularv': tabularv, 'reffreq': reffreq, 'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setstokesspectrum_result = self._swigobj.setstokesspectrum(_pc.document['which'], _str_ec(_pc.document['type']), _pc.document['index'], _pc.document['tabularfreqs'], _pc.document['tabulari'], _pc.document['tabularq'], _pc.document['tabularu'], _pc.document['tabularv'], _any_ec(_pc.document['reffreq']), _str_ec(_pc.document['frame']))
@@ -1005,7 +1005,7 @@ class componentlist:
         it returns False.
         
         """
-        schema = {'tool': {'type': 'cVariant'}}
+        schema = {'tool': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'tool': tool}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _iscomponentlist_result = self._swigobj.iscomponentlist(_any_ec(_pc.document['tool']))

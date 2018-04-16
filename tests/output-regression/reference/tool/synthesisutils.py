@@ -35,7 +35,7 @@ class synthesisutils:
         of the input range frequency... usually to be used for doing data selection
         when imaging a cube from fstart to fend in npart subcubes
         """
-        schema = {'selpars': {'type': 'cDict'}, 'npart': {'type': 'cInt'}, 'fstart': {'type': 'cVariant'}, 'fend': {'type': 'cVariant'}, 'frame': {'type': 'cStr'}}
+        schema = {'selpars': {'type': 'cDict'}, 'npart': {'type': 'cInt'}, 'fstart': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'fend': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'frame': {'type': 'cStr'}}
         doc = {'selpars': selpars, 'npart': npart, 'fstart': fstart, 'fend': fend, 'frame': frame}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _cubedatapartition_result = _dict_dc(self._swigobj.cubedatapartition(_dict_ec(_pc.document['selpars']), _pc.document['npart'], _any_ec(_pc.document['fstart']), _any_ec(_pc.document['fend']), _str_ec(_pc.document['frame'])))

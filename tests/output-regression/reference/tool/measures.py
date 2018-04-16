@@ -63,7 +63,7 @@ class measures:
         
         See quantity for possible time formats.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _epoch_result = _dict_dc(self._swigobj.epoch(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _dict_ec(_pc.document['off'])))
@@ -96,7 +96,7 @@ class measures:
         latitude(angle) (none needed for planets: the frame epoch defines coordinates).
         See quantity for possible angle formats.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v1': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _direction_result = _dict_dc(self._swigobj.direction(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _dict_ec(_pc.document['off'])))
@@ -203,7 +203,7 @@ class measures:
         (angle), latitude(angle) and height(length); or x,y,z (length).
         See quantity for possible angle formats.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v1': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v2': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _position_result = _dict_dc(self._swigobj.position(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _any_ec(_pc.document['v2']), _dict_ec(_pc.document['off'])))
@@ -266,7 +266,7 @@ class measures:
         """source will give you the direction of a source. The known list
         can be obtained by me.sourcelist().
         """
-        schema = {'name': {'type': 'cVariant'}}
+        schema = {'name': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'name': name}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _source_result = _dict_dc(self._swigobj.source(_any_ec(_pc.document['name'])))
@@ -300,7 +300,7 @@ class measures:
         item value as momentum: 4.42044e-42kg.m
         end{itemize}
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _frequency_result = _dict_dc(self._swigobj.frequency(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _dict_ec(_pc.document['off'])))
@@ -326,7 +326,7 @@ class measures:
         The doppler quantity values should be either non-dimensioned to specify a
         ratio of the light velocity, or in velocity.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _doppler_result = _dict_dc(self._swigobj.doppler(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _dict_ec(_pc.document['off'])))
@@ -354,7 +354,7 @@ class measures:
         end{verbatim}
         The radialvelocity quantity values should be given as velocity.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _radialvelocity_result = _dict_dc(self._swigobj.radialvelocity(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _dict_ec(_pc.document['off'])))
@@ -365,7 +365,7 @@ class measures:
         position angle from the specified direction measure.
         
         """
-        schema = {'v': {'type': 'cDict'}, 'offset': {'type': 'cVariant'}, 'pa': {'type': 'cVariant'}}
+        schema = {'v': {'type': 'cDict'}, 'offset': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'pa': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'v': v, 'offset': offset, 'pa': pa}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _shift_result = _dict_dc(self._swigobj.shift(_dict_ec(_pc.document['v']), _any_ec(_pc.document['offset']), _any_ec(_pc.document['pa'])))
@@ -391,7 +391,7 @@ class measures:
         (angle), latitude(angle) and height(length); or x,y,z (length).
         See quantity for possible angle formats.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v1': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v2': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _uvw_result = _dict_dc(self._swigobj.uvw(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _any_ec(_pc.document['v2']), _dict_ec(_pc.document['off'])))
@@ -460,7 +460,7 @@ class measures:
         latitude(angle) and length(field strength); or x,y,z (field).
         See quantity for possible angle formats.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v1': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v2': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _earthmagnetic_result = _dict_dc(self._swigobj.earthmagnetic(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _any_ec(_pc.document['v2']), _dict_ec(_pc.document['off'])))
@@ -488,7 +488,7 @@ class measures:
         (angle), latitude(angle) and height(length); or x,y,z (length).
         See quantity for possible angle formats.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant'}, 'v1': {'type': 'cVariant'}, 'v2': {'type': 'cVariant'}, 'off': {'type': 'cDict'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v1': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'v2': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'off': {'type': 'cDict'}}
         doc = {'rf': rf, 'v0': v0, 'v1': v1, 'v2': v2, 'off': off}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _baseline_result = _dict_dc(self._swigobj.baseline(_str_ec(_pc.document['rf']), _any_ec(_pc.document['v0']), _any_ec(_pc.document['v1']), _any_ec(_pc.document['v2']), _dict_ec(_pc.document['off'])))
@@ -684,7 +684,7 @@ class measures:
         doppler measure. In the case of a frequency, a rest frequency has to be
         specified. The type of doppler wanted (e.g. RADIO) has to be specified.
         """
-        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cDict'}, 'rfq': {'type': 'cVariant'}}
+        schema = {'rf': {'type': 'cStr'}, 'v0': {'type': 'cDict'}, 'rfq': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'rf': rf, 'v0': v0, 'rfq': rfq}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _todoppler_result = _dict_dc(self._swigobj.todoppler(_str_ec(_pc.document['rf']), _dict_ec(_pc.document['v0']), _any_ec(_pc.document['rfq'])))
@@ -706,7 +706,7 @@ class measures:
         in the frame, and a time. If the latter is not set, the current time will be
         used.
         """
-        schema = {'crd': {'type': 'cVariant'}, 'ev': {'type': 'cVariant'}}
+        schema = {'crd': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'ev': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'crd': crd, 'ev': ev}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _rise_result = _dict_dc(self._swigobj.rise(_any_ec(_pc.document['crd']), _any_ec(_pc.document['ev'])))
@@ -720,7 +720,7 @@ class measures:
         fields will all have a string value. The record also returns a rise and set
         record, with 'last' and 'utc' fields showing the rise and set times as epochs.
         """
-        schema = {'crd': {'type': 'cVariant'}, 'ev': {'type': 'cVariant'}}
+        schema = {'crd': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'ev': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'crd': crd, 'ev': ev}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _riseset_result = _dict_dc(self._swigobj.riseset(_any_ec(_pc.document['crd']), _any_ec(_pc.document['ev'])))

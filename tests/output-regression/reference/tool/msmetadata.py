@@ -57,7 +57,7 @@ class msmetadata:
         If no names and no diameter range is specified, all IDs are returned.
         
         """
-        schema = {'name': {'anyof': [{'type': 'cStr'}, {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}]}, 'mindiameter': {'type': 'cVariant'}, 'maxdiameter': {'type': 'cVariant'}, 'obsid': {'type': 'cInt'}}
+        schema = {'name': {'anyof': [{'type': 'cStr'}, {'type': 'cStrVec', 'coerce': [_coerce.to_list,_coerce.to_strvec]}]}, 'mindiameter': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'maxdiameter': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'obsid': {'type': 'cInt'}}
         doc = {'name': name, 'mindiameter': mindiameter, 'maxdiameter': maxdiameter, 'obsid': obsid}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _antennaids_result = self._swigobj.antennaids(_any_ec(_pc.document['name']), _any_ec(_pc.document['mindiameter']), _any_ec(_pc.document['maxdiameter']), _pc.document['obsid'])

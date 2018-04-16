@@ -64,6 +64,7 @@ $hdr_dir = "binding/include";
                'synthesisimstore' => 'casa-source/gcwrap/tools/synthesis/synthesisimstore.xml',
                'synthesisnormalizer' => 'casa-source/gcwrap/tools/synthesis/synthesisnormalizer.xml',
                'synthesisimager' => 'casa-source/gcwrap/tools/synthesis/synthesisimager.xml',
+               'imager' => 'casa-source/gcwrap/tools/synthesis/imager.xml',
                'synthesisutils' => 'casa-source/gcwrap/tools/synthesis/synthesisutils.xml',
                'atmosphere' => 'casa-source/gcwrap/tools/atmosphere/atmosphere.xml',
                'table' => 'casa-source/gcwrap/tools/tables/table.xml',
@@ -79,6 +80,7 @@ $hdr_dir = "binding/include";
                'imagemetadata' => 'casa-source/gcwrap/tools/images/imagemetadata.xml',
                'logsink' => 'casa-source/gcwrap/tools/casa/logsink.xml',
                'agentflagger' => 'casa-source/gcwrap/tools/flagging/agentflagger.xml',
+               'mstransformer' => 'casa-source/gcwrap/tools/mstransformer/mstransformer.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -110,6 +112,9 @@ $hdr_dir = "binding/include";
                'synthesisimager' =>  [ 'casa-source/gcwrap/tools/synthesis/synthesisimager_cmpt.cc',
                                        'casa-source/gcwrap/tools/synthesis/synthesisimager_forward.h',
                                        'casa-source/gcwrap/tools/synthesis/synthesisimager_private.h' ],
+               'imager' =>  [ 'casa-source/gcwrap/tools/synthesis/imager_cmpt.cc',
+                                       'casa-source/gcwrap/tools/synthesis/imager_forward.h',
+                                       'casa-source/gcwrap/tools/synthesis/imager_private.h' ],
                'synthesisutils' =>  [ 'casa-source/gcwrap/tools/synthesis/synthesisutils_cmpt.cc',
                                       'casa-source/gcwrap/tools/synthesis/synthesisutils_forward.h',
                                       'casa-source/gcwrap/tools/synthesis/synthesisutils_private.h' ],
@@ -167,6 +172,9 @@ $hdr_dir = "binding/include";
                'agentflagger' => [ 'casa-source/gcwrap/tools/flagging/agentflagger_cmpt.cc',
                                    'casa-source/gcwrap/tools/flagging/agentflagger_forward.h',
                                    'casa-source/gcwrap/tools/flagging/agentflagger_private.h', ],
+               'mstransformer' => [ 'casa-source/gcwrap/tools/mstransformer/mstransformer_cmpt.cc',
+                                    'casa-source/gcwrap/tools/mstransformer/mstransformer_forward.h',
+                                    'casa-source/gcwrap/tools/mstransformer/mstransformer_private.h', ]
              );
 
 print "configuring CASAtools... this may take a few moments...\n";

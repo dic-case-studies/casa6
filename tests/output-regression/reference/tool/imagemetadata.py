@@ -25,7 +25,7 @@ class imagemetadata:
         """Add a key-value pair if possible.
         
         """
-        schema = {'key': {'type': 'cStr'}, 'value': {'type': 'cVariant'}}
+        schema = {'key': {'type': 'cStr'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'key': key, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _add_result = self._swigobj.add(_str_ec(_pc.document['key']), _any_ec(_pc.document['value']))
@@ -85,7 +85,7 @@ class imagemetadata:
         to remove may be specified. If no value is specified, all masks are removed.
         
         """
-        schema = {'key': {'type': 'cStr'}, 'value': {'type': 'cVariant'}}
+        schema = {'key': {'type': 'cStr'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'key': key, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _remove_result = self._swigobj.remove(_str_ec(_pc.document['key']), _any_ec(_pc.document['value']))
@@ -95,7 +95,7 @@ class imagemetadata:
         """Set a key-value pair if possible.
         
         """
-        schema = {'key': {'type': 'cStr'}, 'value': {'type': 'cVariant'}}
+        schema = {'key': {'type': 'cStr'}, 'value': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'key': key, 'value': value}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _set_result = self._swigobj.set(_str_ec(_pc.document['key']), _any_ec(_pc.document['value']))

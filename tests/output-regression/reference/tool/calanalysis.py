@@ -188,7 +188,7 @@ class calanalysis:
     def get(self, field=[ ], antenna=[ ], timerange=[ ], spw=[ ], feed=[ ], axis='TIME', ap='AMPLITUDE', norm=False, unwrap=False, jumpmax=float(0.0)):
         """This member function returns the calibration data.
         """
-        schema = {'field': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'timerange': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'feed': {'type': 'cVariant'}, 'axis': {'type': 'cStr'}, 'ap': {'type': 'cStr'}, 'norm': {'type': 'cBool'}, 'unwrap': {'type': 'cBool'}, 'jumpmax': {'type': 'cFloat', 'coerce': _coerce.to_float}}
+        schema = {'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'antenna': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'timerange': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'feed': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'axis': {'type': 'cStr'}, 'ap': {'type': 'cStr'}, 'norm': {'type': 'cBool'}, 'unwrap': {'type': 'cBool'}, 'jumpmax': {'type': 'cFloat', 'coerce': _coerce.to_float}}
         doc = {'field': field, 'antenna': antenna, 'timerange': timerange, 'spw': spw, 'feed': feed, 'axis': axis, 'ap': ap, 'norm': norm, 'unwrap': unwrap, 'jumpmax': jumpmax}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _get_result = _dict_dc(self._swigobj.get(_any_ec(_pc.document['field']), _any_ec(_pc.document['antenna']), _any_ec(_pc.document['timerange']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['feed']), _str_ec(_pc.document['axis']), _str_ec(_pc.document['ap']), _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax']))
@@ -198,7 +198,7 @@ class calanalysis:
         """This member function returns the calibration data and fits along the
         non-iteration axis.
         """
-        schema = {'field': {'type': 'cVariant'}, 'antenna': {'type': 'cVariant'}, 'timerange': {'type': 'cVariant'}, 'spw': {'type': 'cVariant'}, 'feed': {'type': 'cVariant'}, 'axis': {'type': 'cStr'}, 'ap': {'type': 'cStr'}, 'norm': {'type': 'cBool'}, 'unwrap': {'type': 'cBool'}, 'jumpmax': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'order': {'type': 'cStr'}, 'type': {'type': 'cStr'}, 'weight': {'type': 'cBool'}}
+        schema = {'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'antenna': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'timerange': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'feed': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'axis': {'type': 'cStr'}, 'ap': {'type': 'cStr'}, 'norm': {'type': 'cBool'}, 'unwrap': {'type': 'cBool'}, 'jumpmax': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'order': {'type': 'cStr'}, 'type': {'type': 'cStr'}, 'weight': {'type': 'cBool'}}
         doc = {'field': field, 'antenna': antenna, 'timerange': timerange, 'spw': spw, 'feed': feed, 'axis': axis, 'ap': ap, 'norm': norm, 'unwrap': unwrap, 'jumpmax': jumpmax, 'order': order, 'type': type, 'weight': weight}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _fit_result = _dict_dc(self._swigobj.fit(_any_ec(_pc.document['field']), _any_ec(_pc.document['antenna']), _any_ec(_pc.document['timerange']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['feed']), _str_ec(_pc.document['axis']), _str_ec(_pc.document['ap']), _pc.document['norm'], _pc.document['unwrap'], _pc.document['jumpmax'], _str_ec(_pc.document['order']), _str_ec(_pc.document['type']), _pc.document['weight']))

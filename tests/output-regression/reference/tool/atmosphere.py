@@ -75,7 +75,7 @@ class atmosphere:
         negative value indicates an error).  The zenith column of water vapor
         can be calculated by simply integrating the H2O profile.
         """
-        schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'maxAltitude': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'dP': {'type': 'cFloatQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cFloatQuant'}, 'atmType': {'type': 'cInt'}, 'layerBoundaries': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'layerTemperature': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
+        schema = {'altitude': {'type': 'cDoubleQuant'}, 'temperature': {'type': 'cDoubleQuant'}, 'pressure': {'type': 'cDoubleQuant'}, 'maxAltitude': {'type': 'cDoubleQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cDoubleQuant'}, 'dP': {'type': 'cDoubleQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cDoubleQuant'}, 'atmType': {'type': 'cInt'}, 'layerBoundaries': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}, 'layerTemperature': {'type': 'cFloatVec', 'coerce': [_coerce.to_list,_coerce.to_floatvec]}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'maxAltitude': maxAltitude, 'humidity': humidity, 'dTem_dh': dTem_dh, 'dP': dP, 'dPm': dPm, 'h0': h0, 'atmType': atmType, 'layerBoundaries': layerBoundaries, 'layerTemperature': layerTemperature}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _initAtmProfile_result = _str_dc(self._swigobj.initAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _pc.document['atmType'], _pc.document['layerBoundaries'], _pc.document['layerTemperature']))
@@ -85,7 +85,7 @@ class atmosphere:
         """This is used to update the {tt atmosphere} tool when basic
         atmospheric parameters.change.
         """
-        schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'h0': {'type': 'cFloatQuant'}}
+        schema = {'altitude': {'type': 'cDoubleQuant'}, 'temperature': {'type': 'cDoubleQuant'}, 'pressure': {'type': 'cDoubleQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cDoubleQuant'}, 'h0': {'type': 'cDoubleQuant'}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'humidity': humidity, 'dTem_dh': dTem_dh, 'h0': h0}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _updateAtmProfile_result = _str_dc(self._swigobj.updateAtmProfile(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['h0']))
@@ -94,7 +94,7 @@ class atmosphere:
     def getBasicAtmParms(self, altitude={'value': float(0), 'unit': ''}, temperature={'value': float(0), 'unit': ''}, pressure={'value': float(0), 'unit': ''}, maxAltitude={'value': float(0), 'unit': ''}, humidity=float(0), dTem_dh={'value': float(0), 'unit': ''}, dP={'value': float(0), 'unit': ''}, dPm=float(0), h0={'value': float(0), 'unit': ''}, atmType=''):
         """
         """
-        schema = {'altitude': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'maxAltitude': {'type': 'cFloatQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cFloatQuant'}, 'dP': {'type': 'cFloatQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cFloatQuant'}, 'atmType': {'type': 'cStr'}}
+        schema = {'altitude': {'type': 'cDoubleQuant'}, 'temperature': {'type': 'cDoubleQuant'}, 'pressure': {'type': 'cDoubleQuant'}, 'maxAltitude': {'type': 'cDoubleQuant'}, 'humidity': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'dTem_dh': {'type': 'cDoubleQuant'}, 'dP': {'type': 'cDoubleQuant'}, 'dPm': {'type': 'cFloat', 'coerce': _coerce.to_float}, 'h0': {'type': 'cDoubleQuant'}, 'atmType': {'type': 'cStr'}}
         doc = {'altitude': altitude, 'temperature': temperature, 'pressure': pressure, 'maxAltitude': maxAltitude, 'humidity': humidity, 'dTem_dh': dTem_dh, 'dP': dP, 'dPm': dPm, 'h0': h0, 'atmType': atmType}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getBasicAtmParms_result = _str_dc(self._swigobj.getBasicAtmParms(_pc.document['altitude'], _pc.document['temperature'], _pc.document['pressure'], _pc.document['maxAltitude'], _pc.document['humidity'], _pc.document['dTem_dh'], _pc.document['dP'], _pc.document['dPm'], _pc.document['h0'], _str_ec(_pc.document['atmType'])))
@@ -126,7 +126,7 @@ class atmosphere:
     def getProfile(self, thickness={'value': float(0), 'unit': ''}, temperature={'value': float(0), 'unit': ''}, watermassdensity={'value': float(0), 'unit': ''}, water={'value': float(0), 'unit': ''}, pressure={'value': float(0), 'unit': ''}, O3={'value': float(0), 'unit': ''}, CO={'value': float(0), 'unit': ''}, N2O={'value': float(0), 'unit': ''}):
         """Get the atmospheric profile.
         """
-        schema = {'thickness': {'type': 'cFloatQuant'}, 'temperature': {'type': 'cFloatQuant'}, 'watermassdensity': {'type': 'cFloatQuant'}, 'water': {'type': 'cFloatQuant'}, 'pressure': {'type': 'cFloatQuant'}, 'O3': {'type': 'cFloatQuant'}, 'CO': {'type': 'cFloatQuant'}, 'N2O': {'type': 'cFloatQuant'}}
+        schema = {'thickness': {'type': 'cDoubleQuant'}, 'temperature': {'type': 'cDoubleQuant'}, 'watermassdensity': {'type': 'cDoubleQuant'}, 'water': {'type': 'cDoubleQuant'}, 'pressure': {'type': 'cDoubleQuant'}, 'O3': {'type': 'cDoubleQuant'}, 'CO': {'type': 'cDoubleQuant'}, 'N2O': {'type': 'cDoubleQuant'}}
         doc = {'thickness': thickness, 'temperature': temperature, 'watermassdensity': watermassdensity, 'water': water, 'pressure': pressure, 'O3': O3, 'CO': CO, 'N2O': N2O}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getProfile_result = _str_dc(self._swigobj.getProfile(_pc.document['thickness'], _pc.document['temperature'], _pc.document['watermassdensity'], _pc.document['water'], _pc.document['pressure'], _pc.document['O3'], _pc.document['CO'], _pc.document['N2O']))
@@ -146,7 +146,7 @@ class atmosphere:
         
         NOTE: This method should be invoked after setting atmospheric profile model by initAtmProfile.
         """
-        schema = {'nbands': {'type': 'cInt'}, 'fCenter': {'type': 'cFloatQuant'}, 'fWidth': {'type': 'cFloatQuant'}, 'fRes': {'type': 'cFloatQuant'}}
+        schema = {'nbands': {'type': 'cInt'}, 'fCenter': {'type': 'cDoubleQuant'}, 'fWidth': {'type': 'cDoubleQuant'}, 'fRes': {'type': 'cDoubleQuant'}}
         doc = {'nbands': nbands, 'fCenter': fCenter, 'fWidth': fWidth, 'fRes': fRes}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _initSpectralWindow_result = self._swigobj.initSpectralWindow(_pc.document['nbands'], _pc.document['fCenter'], _pc.document['fWidth'], _pc.document['fRes'])
@@ -156,7 +156,7 @@ class atmosphere:
         """Add a new spectral window, uniformly sampled, this spectral window
         having no sideband.
         """
-        schema = {'fCenter': {'type': 'cFloatQuant'}, 'fWidth': {'type': 'cFloatQuant'}, 'fRes': {'type': 'cFloatQuant'}}
+        schema = {'fCenter': {'type': 'cDoubleQuant'}, 'fWidth': {'type': 'cDoubleQuant'}, 'fRes': {'type': 'cDoubleQuant'}}
         doc = {'fCenter': fCenter, 'fWidth': fWidth, 'fRes': fRes}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _addSpectralWindow_result = self._swigobj.addSpectralWindow(_pc.document['fCenter'], _pc.document['fWidth'], _pc.document['fRes'])
@@ -229,7 +229,7 @@ class atmosphere:
         spectral window relative to the reference channel number.
         
         """
-        schema = {'freq': {'type': 'cFloatQuant'}, 'spwid': {'type': 'cInt'}}
+        schema = {'freq': {'type': 'cDoubleQuant'}, 'spwid': {'type': 'cInt'}}
         doc = {'freq': freq, 'spwid': spwid}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getChanNum_result = self._swigobj.getChanNum(_pc.document['freq'], _pc.document['spwid'])
@@ -359,7 +359,7 @@ class atmosphere:
     def getWetOpacitySpec(self, spwid=int(0), wetOpacity={'value': float(0), 'unit': ''}):
         """Getthe integrated zenith Wet Opacity along the atmospheric path on each channel in a band.
         """
-        schema = {'spwid': {'type': 'cInt'}, 'wetOpacity': {'type': 'cFloatQuant'}}
+        schema = {'spwid': {'type': 'cInt'}, 'wetOpacity': {'type': 'cDoubleQuant'}}
         doc = {'spwid': spwid, 'wetOpacity': wetOpacity}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getWetOpacitySpec_result = self._swigobj.getWetOpacitySpec(_pc.document['spwid'], _pc.document['wetOpacity'])
@@ -612,7 +612,7 @@ class atmosphere:
         """Set user zenith water vapor column for forward radiative transfer
         calculations.
         """
-        schema = {'wh2o': {'type': 'cFloatQuant'}}
+        schema = {'wh2o': {'type': 'cDoubleQuant'}}
         doc = {'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setUserWH2O_result = self._swigobj.setUserWH2O(_pc.document['wh2o'])
@@ -643,7 +643,7 @@ class atmosphere:
     def setSkyBackgroundTemperature(self, tbgr={'value': float(2.73), 'unit': 'K'}):
         """Set sky background temperature in SkyStatus without performing water vapor retrieval
         """
-        schema = {'tbgr': {'type': 'cFloatQuant'}}
+        schema = {'tbgr': {'type': 'cDoubleQuant'}}
         doc = {'tbgr': tbgr}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _setSkyBackgroundTemperature_result = self._swigobj.setSkyBackgroundTemperature(_pc.document['tbgr'])
@@ -659,7 +659,7 @@ class atmosphere:
         """Returns the average Equivalent Blackbody Temperature in spectral
         window spwid, for the current conditions and a perfect sky coupling.
         """
-        schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}}
+        schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cDoubleQuant'}}
         doc = {'spwid': spwid, 'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getAverageTebbSky_result = self._swigobj.getAverageTebbSky(_pc.document['spwid'], _pc.document['wh2o'])
@@ -670,7 +670,7 @@ class atmosphere:
         channel nc, for the current (user) Water Vapor Column wh2o,
         the current Air Mass, and perfect Sky Coupling to the sky.
         """
-        schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}}
+        schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cDoubleQuant'}}
         doc = {'nc': nc, 'spwid': spwid, 'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getTebbSky_result = self._swigobj.getTebbSky(_pc.document['nc'], _pc.document['spwid'], _pc.document['wh2o'])
@@ -681,7 +681,7 @@ class atmosphere:
         for the current (user) Water Vapor Column wh2o, the current Air Mass, and
         perfect Sky Coupling to the sky.
         """
-        schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}, 'tebbSky': {'type': 'cFloatQuant'}}
+        schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cDoubleQuant'}, 'tebbSky': {'type': 'cDoubleQuant'}}
         doc = {'spwid': spwid, 'wh2o': wh2o, 'tebbSky': tebbSky}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getTebbSkySpec_result = self._swigobj.getTebbSkySpec(_pc.document['spwid'], _pc.document['wh2o'], _pc.document['tebbSky'])
@@ -693,7 +693,7 @@ class atmosphere:
         window spwid, for the current (user) Water Vapor Column wh2o,
         the current Air Mass, and perfect Sky Coupling to the sky.
         """
-        schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}}
+        schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cDoubleQuant'}}
         doc = {'spwid': spwid, 'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getAverageTrjSky_result = self._swigobj.getAverageTrjSky(_pc.document['spwid'], _pc.document['wh2o'])
@@ -704,7 +704,7 @@ class atmosphere:
         channel nc, for the current (user) Water Vapor Column wh2o, the
         current Air Mass, and perfect Sky Coupling to the sky.
         """
-        schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}}
+        schema = {'nc': {'type': 'cInt'}, 'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cDoubleQuant'}}
         doc = {'nc': nc, 'spwid': spwid, 'wh2o': wh2o}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getTrjSky_result = self._swigobj.getTrjSky(_pc.document['nc'], _pc.document['spwid'], _pc.document['wh2o'])
@@ -715,7 +715,7 @@ class atmosphere:
         for the current (user) Water Vapor Column wh2o, the current Air
         Mass, and perfect Sky Coupling to the sky.
         """
-        schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cFloatQuant'}, 'trjSky': {'type': 'cFloatQuant'}}
+        schema = {'spwid': {'type': 'cInt'}, 'wh2o': {'type': 'cDoubleQuant'}, 'trjSky': {'type': 'cDoubleQuant'}}
         doc = {'spwid': spwid, 'wh2o': wh2o, 'trjSky': trjSky}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _getTrjSkySpec_result = self._swigobj.getTrjSkySpec(_pc.document['spwid'], _pc.document['wh2o'], _pc.document['trjSky'])

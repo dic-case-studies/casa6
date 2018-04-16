@@ -79,7 +79,7 @@ class regionmanager:
         task code into C++. However, if users find it to have value, its existence
         can be permanent.
         """
-        schema = {'csys': {'type': 'cDict'}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'box': {'type': 'cStr'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'stokescontrol': {'type': 'cStr'}, 'region': {'type': 'cVariant'}}
+        schema = {'csys': {'type': 'cDict'}, 'shape': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'box': {'type': 'cStr'}, 'chans': {'type': 'cStr'}, 'stokes': {'type': 'cStr'}, 'stokescontrol': {'type': 'cStr'}, 'region': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}}
         doc = {'csys': csys, 'shape': shape, 'box': box, 'chans': chans, 'stokes': stokes, 'stokescontrol': stokescontrol, 'region': region}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _frombcs_result = _dict_dc(self._swigobj.frombcs(_dict_ec(_pc.document['csys']), _pc.document['shape'], _str_ec(_pc.document['box']), _str_ec(_pc.document['chans']), _str_ec(_pc.document['stokes']), _str_ec(_pc.document['stokescontrol']), _any_ec(_pc.document['region'])))
@@ -97,7 +97,7 @@ class regionmanager:
         
         NOTE: ia.statistics() is UNABLE to handle complement regions in CASA yet.
         """
-        schema = {'region': {'type': 'cVariant'}, 'comment': {'type': 'cStr'}}
+        schema = {'region': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'comment': {'type': 'cStr'}}
         doc = {'region': region, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _complement_result = _dict_dc(self._swigobj.complement(_any_ec(_pc.document['region']), _str_ec(_pc.document['comment'])))
@@ -128,7 +128,7 @@ class regionmanager:
         interface takes a record containing {stff region} records, Python
         dictionaries, as there might be a lot of them.
         """
-        schema = {'box': {'type': 'cVariant'}, 'regions': {'type': 'cVariant'}, 'comment': {'type': 'cStr'}}
+        schema = {'box': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'regions': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'comment': {'type': 'cStr'}}
         doc = {'box': box, 'regions': regions, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _concatenation_result = _dict_dc(self._swigobj.concatenation(_any_ec(_pc.document['box']), _any_ec(_pc.document['regions']), _str_ec(_pc.document['comment'])))
@@ -252,7 +252,7 @@ class regionmanager:
         exists a new one will be generated which is close but different. The
         function returns you the name the region is assigned
         """
-        schema = {'tablename': {'type': 'cStr'}, 'regionname': {'type': 'cVariant'}, 'regionrec': {'type': 'cDict'}, 'asmask': {'type': 'cBool'}, 'verbose': {'type': 'cBool'}}
+        schema = {'tablename': {'type': 'cStr'}, 'regionname': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'regionrec': {'type': 'cDict'}, 'asmask': {'type': 'cBool'}, 'verbose': {'type': 'cBool'}}
         doc = {'tablename': tablename, 'regionname': regionname, 'regionrec': regionrec, 'asmask': asmask, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _fromrecordtotable_result = _str_dc(self._swigobj.fromrecordtotable(_str_ec(_pc.document['tablename']), _any_ec(_pc.document['regionname']), _dict_ec(_pc.document['regionrec']), _pc.document['asmask'], _pc.document['verbose']))
@@ -276,7 +276,7 @@ class regionmanager:
         namesintable to find out the
         names of the regions in the Table.
         """
-        schema = {'tablename': {'type': 'cStr'}, 'regionname': {'type': 'cVariant'}, 'verbose': {'type': 'cBool'}}
+        schema = {'tablename': {'type': 'cStr'}, 'regionname': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'verbose': {'type': 'cBool'}}
         doc = {'tablename': tablename, 'regionname': regionname, 'verbose': verbose}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _fromtabletorecord_result = _dict_dc(self._swigobj.fromtabletorecord(_str_ec(_pc.document['tablename']), _any_ec(_pc.document['regionname']), _pc.document['verbose']))
@@ -289,7 +289,7 @@ class regionmanager:
         The input regions must be provided as a Python dictionary of regions
         (see examples).
         """
-        schema = {'regions': {'type': 'cVariant'}, 'comment': {'type': 'cStr'}}
+        schema = {'regions': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'comment': {'type': 'cStr'}}
         doc = {'regions': regions, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _intersection_result = _dict_dc(self._swigobj.intersection(_any_ec(_pc.document['regions']), _str_ec(_pc.document['comment'])))
@@ -360,7 +360,7 @@ class regionmanager:
         regions must be a Pythion dictionary of at leat two regions
         (see examples).
         """
-        schema = {'regions': {'type': 'cVariant'}, 'comment': {'type': 'cStr'}}
+        schema = {'regions': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'comment': {'type': 'cStr'}}
         doc = {'regions': regions, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _makeunion_result = _dict_dc(self._swigobj.makeunion(_any_ec(_pc.document['regions']), _str_ec(_pc.document['comment'])))
@@ -414,7 +414,7 @@ class regionmanager:
         is hidden from you when using the gui
         interface of the regionmanager.
         """
-        schema = {'blc': {'type': 'cVariant'}, 'trc': {'type': 'cVariant'}, 'pixelaxes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'csys': {'type': 'cDict'}, 'absrel': {'type': 'cStr'}, 'comment': {'type': 'cStr'}}
+        schema = {'blc': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'trc': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'pixelaxes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'csys': {'type': 'cDict'}, 'absrel': {'type': 'cStr'}, 'comment': {'type': 'cStr'}}
         doc = {'blc': blc, 'trc': trc, 'pixelaxes': pixelaxes, 'csys': csys, 'absrel': absrel, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _wbox_result = _dict_dc(self._swigobj.wbox(_any_ec(_pc.document['blc']), _any_ec(_pc.document['trc']), _pc.document['pixelaxes'], _dict_ec(_pc.document['csys']), _str_ec(_pc.document['absrel']), _str_ec(_pc.document['comment'])))
@@ -463,7 +463,7 @@ class regionmanager:
         is hidden from you when using the gui
         interface of the regionmanager.
         """
-        schema = {'x': {'type': 'cVariant'}, 'y': {'type': 'cVariant'}, 'pixelaxes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'csys': {'type': 'cDict'}, 'absrel': {'type': 'cStr'}, 'comment': {'type': 'cStr'}}
+        schema = {'x': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'y': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'pixelaxes': {'type': 'cIntVec', 'coerce': [_coerce.to_list,_coerce.to_intvec]}, 'csys': {'type': 'cDict'}, 'absrel': {'type': 'cStr'}, 'comment': {'type': 'cStr'}}
         doc = {'x': x, 'y': y, 'pixelaxes': pixelaxes, 'csys': csys, 'absrel': absrel, 'comment': comment}
         assert _pc.validate(doc,schema), str(_pc.errors)
         _wpolygon_result = _dict_dc(self._swigobj.wpolygon(_any_ec(_pc.document['x']), _any_ec(_pc.document['y']), _pc.document['pixelaxes'], _dict_ec(_pc.document['csys']), _str_ec(_pc.document['absrel']), _str_ec(_pc.document['comment'])))

@@ -7,6 +7,10 @@ import os
 
 
 class CasaValidator(Validator):
+    def __is_float(self, value):
+        return isinstance(value,float) or isinstance(value,numpy.float32) or isinstance(value,numpy.float64)
+    def __is_floatvec(self, value):
+        return isinstance(value,list) and all([self.__is_float(v) for v in value['value']])
 
     def __validate_anyof(self, operator, definitions, field, value):
         ### this is actually, mostly __validate_logical from the
@@ -43,7 +47,7 @@ class CasaValidator(Validator):
             super(CasaValidator, self)._error( field, errors.ANYOF, _errors, valids, len(definitions) )
 
     def _validate_type_cInt(self,value):
-        if isinstance(value,int) or isinstance(v,numpy.int32) or isinstance(v,numpy.int64):
+        if isinstance(value,int) or isinstance(value,numpy.int32) or isinstance(value,numpy.int64):
             return True
 
     def _validate_type_cFloat(self,value):
@@ -100,13 +104,11 @@ class CasaValidator(Validator):
 
     def _validate_type_cIntArray(self,value):
         if isinstance(value,numpy.ndarray):
-            print(">>>cIntArray>>>>> %s" % value.dtype.type)
             if value.dtype.type in [int, numpy.int32, numpy.int64]:
                 return True
 
     def _validate_type_cFloatArray(self,value):
         if isinstance(value,numpy.ndarray):
-            print(">>>cFloatArray>>> %s" % value.dtype.type)
             if value.dtype.type in [ float, numpy.float32, numpy.float64 ]:
                 return True
 
@@ -132,6 +134,14 @@ class CasaValidator(Validator):
            isinstance(value,list) or \
            isinstance(value,float) or \
            isinstance(value,numpy.ndarray):
+            return True
+
+    def _validate_type_cDoubleQuant(self,value):
+        if isinstance(value,dict) and len(value) == 2 and \
+           'unit' in value and 'value' in value and \
+           isinstance(value['unit'],str) and \
+           ( self.__is_float(value['value']) or \
+             self.__is_floatvec(value['value']) ):
             return True
 
     def _validate_type_ccoordsysTool(self,value):

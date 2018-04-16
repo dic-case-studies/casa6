@@ -102,7 +102,7 @@ class synthesisnormalizer:
         schema = {'imstore': {'type': 'csynthesisimstoreTool'}}
         doc = {'imstore': imstore}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _setimstore_result = self._swigobj.setimstore(_pc.document['imstore'] if _pc.document['imstore'] is None else _pc.document['imstore']._swigobj)
+        _setimstore_result = self._swigobj.setimstore(_pc.document['imstore']._swigobj if hasattr(_pc.document['imstore'],'_swigobj') else _pc.document['imstore'])
         return _setimstore_result
 
     def done(self):
