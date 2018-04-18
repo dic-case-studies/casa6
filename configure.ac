@@ -6,6 +6,7 @@ m4_include([ac/m4/m4_ax_pkg_prog_pkg_config.m4])
 m4_include([ac/m4/m4_ax_boost_base.m4])
 m4_include([ac/m4/m4_ax_canonical_name.m4])
 m4_include([ac/m4/m4_ax_canonical_split.m4])
+m4_include([ac/m4/m4_ax_gsl.m4])
 m4_include([ac/m4/m4_ax_cfitsio.m4])
 m4_include([ac/m4/m4_ax_check_compile_flag.m4])
 m4_include([ac/m4/m4_ax_cxx11.m4])
@@ -151,6 +152,7 @@ AX_PATH_TO_BINARY(bison,BISON)
 
 AX_PTHREAD
 AX_CFITSIO
+AX_GSL
 
 AC_MSG_CHECKING([for casa version number])
 read -a full_version <<< "`(cd casa-source && code/install/resolvegitrevision.sh --pretty-print) | perl -pe 's|^(\d+)\.(\d+)\.(\d+).*?(\d+).?$|$1 $2 $3 $4|'`"

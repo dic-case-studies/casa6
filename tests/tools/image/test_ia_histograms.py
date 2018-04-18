@@ -133,7 +133,7 @@ class ia_histograms_test(unittest.TestCase):
         self.assertFalse(ok, 'Histograms unexpectedly did not fail (1)')
         
         nbins = 25
-        idx = nbins/2+1
+        idx = nbins//2+1
         out = myim.histograms(nbins=nbins)
         self.assertTrue(out, 'Histograms failed (1)')
         hists=out
