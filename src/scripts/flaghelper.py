@@ -2,6 +2,7 @@ import os
 import time
 import ast
 import copy
+import numpy
 from CASAtasks import casalog
 from CASAtools import table,quanta,ms,agentflagger
 from .parallel.parallel_task_helper import ParallelTaskHelper
@@ -1276,14 +1277,14 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
         tblocal.addrows(Nadd)
     
         # Fill in the columns
-        tblocal.putcol('APPLIED', pl.array(appliedlist), startrow=nrows,nrow=Nadd)    
-        tblocal.putcol('COMMAND', pl.array(cmdlist), startrow=nrows, nrow=Nadd)
-        tblocal.putcol('INTERVAL', pl.array(timelist), startrow=nrows,nrow=Nadd)    
-        tblocal.putcol('LEVEL', pl.array(otherlist), startrow=nrows,nrow=Nadd)    
-        tblocal.putcol('REASON', pl.array(reasonlist),startrow=nrows, nrow=Nadd)
-        tblocal.putcol('SEVERITY', pl.array(otherlist), startrow=nrows,nrow=Nadd)    
-        tblocal.putcol('TIME', pl.array(timelist), startrow=nrows,nrow=Nadd)    
-        tblocal.putcol('TYPE', pl.array(typelist), startrow=nrows,nrow=Nadd)    
+        tblocal.putcol('APPLIED', numpy.array(appliedlist), startrow=nrows,nrow=Nadd)    
+        tblocal.putcol('COMMAND', numpy.array(cmdlist), startrow=nrows, nrow=Nadd)
+        tblocal.putcol('INTERVAL', numpy.array(timelist), startrow=nrows,nrow=Nadd)    
+        tblocal.putcol('LEVEL', numpy.array(otherlist), startrow=nrows,nrow=Nadd)    
+        tblocal.putcol('REASON', numpy.array(reasonlist),startrow=nrows, nrow=Nadd)
+        tblocal.putcol('SEVERITY', numpy.array(otherlist), startrow=nrows,nrow=Nadd)    
+        tblocal.putcol('TIME', numpy.array(timelist), startrow=nrows,nrow=Nadd)    
+        tblocal.putcol('TYPE', numpy.array(typelist), startrow=nrows,nrow=Nadd)    
         
         newrows = int(tblocal.nrows())
         newrows = newrows - nrows
@@ -3388,20 +3389,20 @@ def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
         # add blank rows
         tblocal.addrows(nadd)
         # now fill them in
-        tblocal.putcol('TIME', pl.array(tim_list), startrow=nrows, nrow=nadd)
-        tblocal.putcol('INTERVAL', pl.array(intv_list), startrow=nrows,
+        tblocal.putcol('TIME', numpy.array(tim_list), startrow=nrows, nrow=nadd)
+        tblocal.putcol('INTERVAL', numpy.array(intv_list), startrow=nrows,
                   nrow=nadd)
-        tblocal.putcol('REASON', pl.array(reas_list), startrow=nrows,
+        tblocal.putcol('REASON', numpy.array(reas_list), startrow=nrows,
                   nrow=nadd)
-        tblocal.putcol('COMMAND', pl.array(cmd_list), startrow=nrows,
+        tblocal.putcol('COMMAND', numpy.array(cmd_list), startrow=nrows,
                   nrow=nadd)
         # Other columns
-        tblocal.putcol('TYPE', pl.array(typ_list), startrow=nrows, nrow=nadd)
-        tblocal.putcol('SEVERITY', pl.array(sev_list), startrow=nrows,
+        tblocal.putcol('TYPE', numpy.array(typ_list), startrow=nrows, nrow=nadd)
+        tblocal.putcol('SEVERITY', numpy.array(sev_list), startrow=nrows,
                   nrow=nadd)
-        tblocal.putcol('LEVEL', pl.array(lev_list), startrow=nrows,
+        tblocal.putcol('LEVEL', numpy.array(lev_list), startrow=nrows,
                   nrow=nadd)
-        tblocal.putcol('APPLIED', pl.array(app_list), startrow=nrows,
+        tblocal.putcol('APPLIED', numpy.array(app_list), startrow=nrows,
                   nrow=nadd)
     
         nrows = int(tblocal.nrows())

@@ -43,8 +43,14 @@ Topic :: Software Development :: Libraries :: Python Modules
 Operating System :: MacOS :: MacOS X
 Operating System :: POSIX
 """
+import sys
+import os
 
-from CASAtools.config import build as tools_config
+try:
+    from CASAtools.config import build as tools_config
+except:
+    print("cannot find CASAtools (https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) in PYTHONPATH")
+    os._exit(1)
 
 from setuptools import setup, find_packages
 from distutils.dir_util import copy_tree, remove_tree
@@ -59,9 +65,7 @@ import platform
 import pickle
 import errno
 import time
-import sys
 import re
-import os
 
 from os import listdir
 from os.path import isfile, join, islink

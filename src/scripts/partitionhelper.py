@@ -6,7 +6,7 @@ import traceback
 import time
 import subprocess
 import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 from CASAtasks import casalog
 from CASAtools.platform import str_decode
 from CASAtools import table, ms, msmetadata
