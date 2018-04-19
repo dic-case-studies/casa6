@@ -561,8 +561,14 @@ def tool_files(tool):
 
 
 platform_cflags = { 'darwin': [ ],
-                    'linux2': [ '-fopenmp', '-fcx-fortran-rules' ],
-                    'linux': [ '-fopenmp', '-fcx-fortran-rules' ] };
+                    'linux2': [ '-fcx-fortran-rules' ],
+                    'linux': [ '-fcx-fortran-rules' ],
+#####
+#####  these cause a segmentation violation in test_setjy
+#####
+#                    'linux2': [ '-fopenmp', '-fcx-fortran-rules' ],
+#                    'linux': [ '-fopenmp', '-fcx-fortran-rules' ],
+};
 
 module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
                                       '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
