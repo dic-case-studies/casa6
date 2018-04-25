@@ -6,6 +6,8 @@ from .platform import str_encode as _str_ec
 from .platform import str_decode as _str_dc
 from .platform import dict_encode as _dict_ec
 from .platform import dict_decode as _dict_dc
+from .platform import dict_encode as _quant_ec
+from .platform import dict_decode as _quant_dc
 from .platform import encode as _any_ec
 from .platform import decode as _any_dc
 from .typecheck import validator as _pc
@@ -87,7 +89,7 @@ class calibrater:
         schema = {'time': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'spw': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'scan': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'field': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'intent': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'observation': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'baseline': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'uvrange': {'type': 'cVariant', 'coerce': [_coerce.to_variant]}, 'chanmode': {'type': 'cStr'}, 'nchan': {'type': 'cInt'}, 'start': {'type': 'cInt'}, 'step': {'type': 'cInt'}, 'mstart': {'type': 'cDoubleQuant'}, 'mstep': {'type': 'cDoubleQuant'}, 'msselect': {'type': 'cStr'}}
         doc = {'time': time, 'spw': spw, 'scan': scan, 'field': field, 'intent': intent, 'observation': observation, 'baseline': baseline, 'uvrange': uvrange, 'chanmode': chanmode, 'nchan': nchan, 'start': start, 'step': step, 'mstart': mstart, 'mstep': mstep, 'msselect': msselect}
         assert _pc.validate(doc,schema), str(_pc.errors)
-        _selectvis_result = self._swigobj.selectvis(_any_ec(_pc.document['time']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['scan']), _any_ec(_pc.document['field']), _any_ec(_pc.document['intent']), _any_ec(_pc.document['observation']), _any_ec(_pc.document['baseline']), _any_ec(_pc.document['uvrange']), _str_ec(_pc.document['chanmode']), _pc.document['nchan'], _pc.document['start'], _pc.document['step'], _pc.document['mstart'], _pc.document['mstep'], _str_ec(_pc.document['msselect']))
+        _selectvis_result = self._swigobj.selectvis(_any_ec(_pc.document['time']), _any_ec(_pc.document['spw']), _any_ec(_pc.document['scan']), _any_ec(_pc.document['field']), _any_ec(_pc.document['intent']), _any_ec(_pc.document['observation']), _any_ec(_pc.document['baseline']), _any_ec(_pc.document['uvrange']), _str_ec(_pc.document['chanmode']), _pc.document['nchan'], _pc.document['start'], _pc.document['step'], _quant_ec(_pc.document['mstart']), _quant_ec(_pc.document['mstep']), _str_ec(_pc.document['msselect']))
         return _selectvis_result
 
     def setmodel(self, modelimage):

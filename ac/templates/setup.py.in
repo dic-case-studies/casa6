@@ -571,20 +571,23 @@ platform_cflags = { 'darwin': [ ],
 };
 
 module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
-                                      '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
-                                      '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
-                                      '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char' ] + platform_cflags[sys.platform],
+                                 '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
+                                 '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
+                                 '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST',
+                                 '-DCASATOOLS' ] + platform_cflags[sys.platform],
                        '/code/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
                                       '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
                                       '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
                                       '-DDBUS_CPP', '-DQWT6', '-DUseCasacoreNamespace', \
                                       '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
-                                      '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ] + platform_cflags[sys.platform],
+                                      '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST',
+                                      '-DCASATOOLS' ] + platform_cflags[sys.platform],
                        'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DDBUS_CPP', '-DQWT6', \
                                         '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
-                                        '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS' ] + platform_cflags[sys.platform] }
+                                        '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST',
+                                        '-DCASATOOLS' ] + platform_cflags[sys.platform] }
 
 def customize_compiler(self):
     """inject customization into distutils.
@@ -722,7 +725,10 @@ class casa_build_ext(build_ext):
 
 
 class casa_test(Command):
-    user_options = []
+    user_options = [
+      # The format is (long option, short option, description).
+      ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
+    ]
 
     def initialize_options(self):
         self.__test_dir = "build/%s" % distutils_dir_name('testing')
@@ -734,7 +740,7 @@ class casa_test(Command):
         self.__regression_ref_dir = "tests/output-regression/reference"
         self.__regression_sample_gen = "scripts/output-snapshot"
         self.__regression_sample_dir = "%s/%s" % (self.__regression_dir,"output")
-
+        self.output_regression = 0
 
     def finalize_options(self):
         pass
@@ -837,8 +843,10 @@ class casa_test(Command):
         print( len_message + '.' * (tabwidth - len(len_message)) +
                (" ok" if len(regression_ref) == len(regression_sample) else " fail") )
 
-        regression_keys = filter(lambda k: k in regression_sample, regression_ref.keys( ))
-        regressionresults = list(map(lambda k: self.__compare_reg(tabwidth,k,regression_ref[k],regression_sample[k]), regression_keys))
+        regressionresults = []
+        if self.output_regression:
+            regression_keys = filter(lambda k: k in regression_sample, regression_ref.keys( ))
+            regressionresults = list(map(lambda k: self.__compare_reg(tabwidth,k,regression_ref[k],regression_sample[k]), regression_keys))
 
         results = testresults + regressionresults
         print('-' * (tabwidth + 8))

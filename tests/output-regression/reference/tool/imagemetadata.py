@@ -6,6 +6,8 @@ from .platform import str_encode as _str_ec
 from .platform import str_decode as _str_dc
 from .platform import dict_encode as _dict_ec
 from .platform import dict_decode as _dict_dc
+from .platform import dict_encode as _quant_ec
+from .platform import dict_decode as _quant_dc
 from .platform import encode as _any_ec
 from .platform import decode as _any_dc
 from .typecheck import validator as _pc
