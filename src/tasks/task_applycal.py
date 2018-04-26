@@ -6,7 +6,7 @@ from .callibrary import *
 from . import flaghelper as fh
 from .parallel.parallel_task_helper import ParallelTaskHelper
 from .mstools import write_history
-from CASAtools import calibrater
+from CASAtools import ms, calibrater
 
 def applycal(
     vis=None,
@@ -181,7 +181,7 @@ def applycal(
                 applycal.__code__.co_varnames[:applycal.__code__.co_argcount]
             param_vals = [vars[p] for p in param_names]
             write_history(
-                mstool(),
+                ms(),
                 vis,
                 'applycal',
                 param_names,

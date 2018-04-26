@@ -238,8 +238,7 @@ class convertToMMS():
            subms  --> number of subMss to create
 
         '''
-        from tasks import partition
-        from __main__ import default
+        from CASAtasks import partition
 
         if not os.path.lexists(ms):
             return False
@@ -273,7 +272,6 @@ class convertToMMS():
             shutil.rmtree(corrupted)
         
         # Run partition   
-        default('partition')
         partition(vis=ms, outputvis=MMSFullName, createmms=True, datacolumn='all', flagbackup=False,
                   separationaxis=axis, numsubms=subms)
         casalog.origin('convertToMMS')

@@ -1872,7 +1872,7 @@ def evaluateFlagParameters(pardict, pars):
         It raises an exception if any parameter or type of value do not match.
 
     """
-    from tasks import flagdata
+    from CASAtasks import flagdata
      
     # Make a deepcopy of flagdata parameters dictionary for modification
     fpars = copy.deepcopy(pars)
