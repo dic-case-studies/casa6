@@ -149,6 +149,15 @@ def distutils_dir_name(dname):
     f = "{dirname}.{platform}-{version[0]}.{version[1]}"
     return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
 
+def sakura_files( ):
+    return [ 'sakura-source/src/baseline.cc', 'sakura-source/src/bit_operation.cc',
+             'sakura-source/src/bool_filter_collection.cc', 'sakura-source/src/concurrent.cc',
+             'sakura-source/src/convolution.cc', 'sakura-source/src/fft.cc',
+             'sakura-source/src/gen_util.cc', 'sakura-source/src/gridding.cc',
+             'sakura-source/src/interpolation.cc', 'sakura-source/src/mask_edge.cc',
+             'sakura-source/src/normalization.cc', 'sakura-source/src/numeric_operation.cc',
+             'sakura-source/src/statistics.cc' ]
+
 def source_files(path,root_filter=[ ],path_filter=[ ],subdir_filter=['tests','test','apps','demo'],file_filter=[ ],file_suffix_filter=""):
     """
     find all of the source files to compile beneath path
@@ -617,8 +626,8 @@ def customize_compiler(self):
     if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
         cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
                                                                       ###     /usr/include (e.g. rhel6)
-    new_compiler_cxx = ccache + [props['build.compiler.cxx'], '-g', '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
-    new_compiler_cc = ccache + [props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude'] + cflags + default_compiler_so[1:]
+    new_compiler_cxx = ccache + [props['build.compiler.cxx'], '-g', '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', '-Isakura-source/src'] + cflags + default_compiler_so[1:]
+    new_compiler_cc = ccache + [props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
 
     new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
@@ -925,6 +934,7 @@ if __name__ == '__main__':
 
         CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
         MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
+        SAKURA_SRC = sakura_files( )
         CORE_F77 = source_files("casa-source/casacore",file_suffix_filter=".f",
                                 #file_filter=['fgridsd.f']
         )
@@ -959,7 +969,7 @@ if __name__ == '__main__':
             archlibs = ['gomp']
 
         grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
-        ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=dbuslibs + ['sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ) ]
+        ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=dbuslibs + ['sqlite3','xslt','xml2','xerces-c','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ) ]
 
         swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
         if pyversion >= 3:
@@ -977,7 +987,7 @@ if __name__ == '__main__':
         for lb in LIBS:
             if sys.platform == 'darwin':
                 rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
-            ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + dbuslibs + ['sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+            ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + dbuslibs + ['sqlite3','xslt','xml2','xerces-c','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
 
         for t in TOOLS:
             inc = [ ]; lib = [ ]; src = [ ]
@@ -990,7 +1000,7 @@ if __name__ == '__main__':
 
             if sys.platform == 'darwin':
                 rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
-            ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + dbuslibs + ['sqlite3','xslt','xml2','xerces-c','sakura','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + lib + archlibs))
+            ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + dbuslibs + ['sqlite3','xslt','xml2','xerces-c','gsl','gslcblas','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + lib + archlibs))
 
         setup( name="casa",version="@CASA_VERSION@",
                maintainer="Darrell Schiebel",

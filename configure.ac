@@ -21,6 +21,7 @@ m4_include([ac/m4/m4_ax_path_to_binary.m4])
 m4_include([ac/m4/m4_ax_pthread.m4])
 m4_include([ac/m4/m4_ax_python_devel.m4])
 m4_include([ac/m4/m4_ax_python_numpy.m4])
+m4_include([ac/m4/m4_ax_eigen.m4])
 
 dnl setup cannonical host variables without requiring
 dnl install.sh et al. as AC_CANONICAL_HOST does
@@ -190,8 +191,7 @@ AS_IF([test "x$enable_dbus" = "xyes"], [
 AC_SUBST(HAVE_DBUS)
 
 AX_LIBXML
-AX_LIBSAKURA
-
+AX_EIGEN
 
 AC_CONFIG_FILES(build.properties:ac/templates/build.in)
 AC_CONFIG_FILES(binding/source/version.cc:casa-source/code/stdcasa/version.cc.in)

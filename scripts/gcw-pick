@@ -17,6 +17,7 @@ $exe = abs_path($0);
 $path = abs_path(dirname($exe));
 $java = '/usr/bin/java';
 $jarfile_name = "xml-casa-assembly-1.0.jar";
+$sakura_release = "libsakura-4.0.2065.tar.gz";
 @java_version = ( );
 open(JAVAVER, "$java -version 2>&1 |");
 foreach ( <JAVAVER> ) {
@@ -44,6 +45,22 @@ if ( ! -e $jarfile ) {
     }
 }
 die "configuration error, cannot find jar file ($jarfile_name)" unless -e $jarfile;
+
+if ( ! -d 'sakura-source/src' ) {
+    if ( ! -d '.sakura' || ! -f ".sakura/$sakura_release" ) {
+        make_path('.sakura');
+        make_path('sakura-source');
+        ### pull from download url
+        ### download from jp times out...
+        #my $ff = File::Fetch->new(uri => "http://alma-dl.mtk.nao.ac.jp/ftp/sakura/releases/latest_src/$sakura_release");
+        my $ff = File::Fetch->new(uri => "http://casa.nrao.edu/download/devel/libsakura/$sakura_release");
+        my $where = $ff->fetch( to => '.sakura' );
+        unlink(".sakura/$sakura_release") unless -f ".sakura/$sakura_release" && -s ".sakura/$sakura_release" > 354000;
+    }
+    die "could not download libsakura" unless -f ".sakura/$sakura_release";
+    my @args = ("tar", "-C", "sakura-source", "-zxf", ".sakura/$sakura_release", '--strip-components', '1');
+    system(@args) == 0 or die "failed to extract libsakura: $?";
+}
 
 $path = getcwd( );
 
