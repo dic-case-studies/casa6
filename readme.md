@@ -42,7 +42,7 @@ After all of the dependencies have been installed and the source code for CASAta
 -bash-4.2$ cd CASAtasks
 -bash-4.2$ PYTHONPATH=../CASAtools/build/lib.macosx-10.12-x86_64-3.6 ./setup.py build
 ```
-*Substitute* the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) in the build line above.
+**Substitute** the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) in the build line above.
 
 #### Run Available Tests
 
@@ -51,4 +51,4 @@ Tests are actively being added, but you can run the existing tests with:
 -bash-4.2$ PYTHONPATH=../CASAtools/build/lib.macosx-10.12-x86_64-3.6 ./setup.py test
 ```
 
-Again, *substitute* the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) in the line above.
+Again, **substitute** the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) in the line above.
