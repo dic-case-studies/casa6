@@ -106,6 +106,8 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_mstransform.py',
                     'src/tasks/task_tclean.py',
                     'src/tasks/task_immath.py',
+                    'src/tasks/task_vishead.py',
+                    'src/scripts/vishead_util.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -132,6 +134,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/mstransform.xml': 'xml/mstransform.xml',
               'casa-source/gcwrap/tasks/tclean.xml': 'xml/tclean.xml',
               'casa-source/gcwrap/tasks/immath.xml': 'xml/immath.xml',
+              'casa-source/gcwrap/tasks/vishead.xml': 'xml/vishead.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -156,6 +159,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/mstransform.xml',
               'xml/tclean.xml',
               'xml/immath.xml',
+              'xml/vishead.xml',
 ]
 
 if pyversion < 3:
