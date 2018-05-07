@@ -110,6 +110,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/vishead_util.py',
                     'src/tasks/task_uvsub.py',
                     'src/tasks/task_spxfit.py',
+                    'src/tasks/task_splattotable.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -139,6 +140,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/vishead.xml': 'xml/vishead.xml',
               'casa-source/gcwrap/tasks/uvsub.xml': 'xml/uvsub.xml',
               'casa-source/gcwrap/tasks/spxfit.xml': 'xml/spxfit.xml',
+              'casa-source/gcwrap/tasks/splattotable.xml': 'xml/splattotable.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -166,6 +168,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/vishead.xml',
               'xml/uvsub.xml',
               'xml/spxfit.xml',
+              'xml/splattotable.xml',
 ]
 
 if pyversion < 3:
