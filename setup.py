@@ -104,9 +104,11 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_listpartition.py',
                     'src/tasks/task_flagmanager.py',
                     'src/tasks/task_mstransform.py',
+                    'src/tasks/task_tclean.py',
+                    'src/tasks/task_immath.py',
 ]
 
-private_modules = [ 'src/modules/parallel' ]
+private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
 
 xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/immoments.xml': 'xml/immoments.xml',
@@ -128,6 +130,8 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/listpartition.xml': 'xml/listpartition.xml',
               'casa-source/gcwrap/tasks/flagmanager.xml': 'xml/flagmanager.xml',
               'casa-source/gcwrap/tasks/mstransform.xml': 'xml/mstransform.xml',
+              'casa-source/gcwrap/tasks/tclean.xml': 'xml/tclean.xml',
+              'casa-source/gcwrap/tasks/immath.xml': 'xml/immath.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -150,6 +154,8 @@ xml_files = [ 'xml/imhead.xml',
               'xml/listpartition.xml',
               'xml/flagmanager.xml',
               'xml/mstransform.xml',
+              'xml/tclean.xml',
+              'xml/immath.xml',
 ]
 
 if pyversion < 3:
