@@ -99,6 +99,7 @@ $hdr_dir = "binding/include";
                'logsink' => 'casa-source/gcwrap/tools/casa/logsink.xml',
                'agentflagger' => 'casa-source/gcwrap/tools/flagging/agentflagger.xml',
                'mstransformer' => 'casa-source/gcwrap/tools/mstransformer/mstransformer.xml',
+               'spectralline' => 'casa-source/gcwrap/tools/spectralline/spectralline.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -195,7 +196,10 @@ $hdr_dir = "binding/include";
                                    'casa-source/gcwrap/tools/flagging/agentflagger_private.h', ],
                'mstransformer' => [ 'casa-source/gcwrap/tools/mstransformer/mstransformer_cmpt.cc',
                                     'casa-source/gcwrap/tools/mstransformer/mstransformer_forward.h',
-                                    'casa-source/gcwrap/tools/mstransformer/mstransformer_private.h', ]
+                                    'casa-source/gcwrap/tools/mstransformer/mstransformer_private.h', ],
+               'spectralline' => [ 'casa-source/gcwrap/tools/spectralline/spectralline_cmpt.cc',
+                                    'casa-source/gcwrap/tools/spectralline/spectralline_forward.h',
+                                    'casa-source/gcwrap/tools/spectralline/spectralline_private.h', ],
              );
 
 print "configuring CASAtools... this may take a few moments...\n";
