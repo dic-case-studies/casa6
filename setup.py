@@ -113,6 +113,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_splattotable.py',
                     'src/tasks/task_specsmooth.py',
                     'src/tasks/task_specflux.py',
+                    'src/tasks/task_smoothcal.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -145,6 +146,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/splattotable.xml': 'xml/splattotable.xml',
               'casa-source/gcwrap/tasks/specsmooth.xml': 'xml/specsmooth.xml',
               'casa-source/gcwrap/tasks/specflux.xml': 'xml/specflux.xml',
+              'casa-source/gcwrap/tasks/smoothcal.xml': 'xml/smoothcal.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -175,6 +177,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/splattotable.xml',
               'xml/specsmooth.xml',
               'xml/specflux.xml',
+              'xml/smoothcal.xml',
 ]
 
 if pyversion < 3:
