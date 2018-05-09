@@ -1,5 +1,9 @@
+import os
+from stat import S_ISDIR, ST_MODE
+
 from CASAtools import image
 from CASAtools import ctsys
+
 from .. import casalog
 from . import cvt
 

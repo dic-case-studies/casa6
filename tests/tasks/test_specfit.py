@@ -90,15 +90,16 @@ nanvalue = 4.53345345
 datapath=ctsys.resolve('regression/unittest/specfit')
 
 _ia = image( )
+_rg = regionmanager( )
 
 def run_fitprofile (
     imagename, box, region, chans, stokes,
     axis, mask, ngauss, poly, multifit, model="",
     residual="", amp="", amperr="", center="", centererr="",
     fwhm="", fwhmerr="", integral="", integralerr="",
-    estimates="", logresults=True, pampest="", pcenterest="", pfwhmest="",
-    pfix="", gmncomps=0, gmampcon="", gmcentercon="",
-    gmfwhmcon="", gmampest=[0], gmcenterest=[0],
+    estimates="", logresults=True, pampest=[ ], pcenterest=[ ], pfwhmest=[ ],
+    pfix=[ ], gmncomps=0, gmampcon=[ ], gmcentercon=[ ],
+    gmfwhmcon=[ ], gmampest=[0], gmcenterest=[0],
     gmfwhmest=[0], gmfix="", logfile="", pfunc="",
     goodamprange=[0.0], goodcenterrange=[0.0], goodfwhmrange=[0.0],
     sigma="", outsigma=""
@@ -134,10 +135,10 @@ def run_specfit(
     axis, mask, ngauss, poly, multifit, model="",
     residual="", amp="", amperr="", center="", centererr="",
     fwhm="", fwhmerr="", integral="", integralerr="",
-    wantreturn=True, estimates="", logresults=None,
-    pampest="", pcenterest="", pfwhmest="", pfix="",
-    gmncomps=0, gmampcon="", gmcentercon="",
-    gmfwhmcon="", gmampest=[0], gmcenterest=[0],
+    wantreturn=True, estimates="", logresults=False,
+    pampest=[ ], pcenterest=[ ], pfwhmest=[ ], pfix=[ ],
+    gmncomps=0, gmampcon=[ ], gmcentercon=[ ],
+    gmfwhmcon=[ ], gmampest=[0], gmcenterest=[0],
     gmfwhmest=[0], gmfix="", logfile="", pfunc="",
     goodamprange=[0.0], goodcenterrange=[0.0], goodfwhmrange=[0.0],
     sigma="", outsigma=""
@@ -190,12 +191,12 @@ class specfit_test(unittest.TestCase):
         if (numpy.isnan(gotchunk).any()):
             gotchunk = gotchunk.ravel()
             for i in range(len(gotchunk)):
-                if isnan(gotchunk[i]):
+                if numpy.isnan(gotchunk[i]):
                     gotchunk[i] = nanvalue
         if (numpy.isnan(expchunk).any()):
             expchunk = expchunk.ravel()
             for i in range(len(expchunk)):
-                if isnan(expchunk[i]):
+                if numpy.isnan(expchunk[i]):
                     expchunk[i] = nanvalue
         diffData = gotchunk - expchunk
         self.assertTrue(abs(diffData).max() < 2e-11)
@@ -241,45 +242,37 @@ class specfit_test(unittest.TestCase):
                         )
                     )
         # Exception if no image name given",
-        testit(
-            "", "", "", "", "", 2, "", False, 1, -1, "", ""
-        )
+        try:
+            OK = False
+            testit( "", "", "", "", "", 2, "", 1, -1, False, "", "" )
+        except:
+            OK = True
+        self.assertTrue(OK)
+
         # Exception if bogus image name given
-        testit(
-            "my bad", "", "", "", "", 2, "", 1, -1, False, "", ""
-        )
+        try:
+            OK = False
+            testit( "my bad", "", "", "", "", 2, "", 1, -1, False, "", "" )
+        except:
+            OK = True
+        self.assertTrue(OK)
+
         # Exception if given axis is out of range
-        testit(
-            twogauss, "", "", "", "", 5, "", 1, -1, False, "", ""
-        )
+        testit( twogauss, "", "", "", "", 5, "", 1, -1, False, "", "" )
         # Exception if bogus box string given #1
-        testit(
-            twogauss, "abc", "", "", "", 2, "", 1, -1, False, "", ""
-        )
+        testit( twogauss, "abc", "", "", "", 2, "", 1, -1, False, "", "" )
         # Exception if bogus box string given #2
-        testit(
-            twogauss, "0,0,1000,1000", "", "", "", 2, "", 1, -1, False, "", ""
-        )
+        testit( twogauss, "0,0,1000,1000", "", "", "", 2, "", 1, -1, False, "", "" )
         # Exception if bogus chans string given #1
-        testit(
-            twogauss, "", "", "abc", "", 2, "", 1, -1, False, "", ""
-        )
+        testit( twogauss, "", "", "abc", "", 2, "", 1, -1, False, "", "" )
         # Exception if bogus chans string given #2
-        testit(
-            twogauss, "", "", "0-200", "", 2, "", 1, -1, False, "", ""
-        )        
+        testit( twogauss, "", "", "0-200", "", 2, "", 1, -1, False, "", "" )
         # Exception if bogus stokes string given #1   
-        testit(
-            twogauss, "", "", "", "abc", 2, "", 1, -1, False, "", ""
-        )       
+        testit( twogauss, "", "", "", "abc", 2, "", 1, -1, False, "", "" )
         # Exception if bogus stokes string given #2 
-        testit(
-            twogauss, "", "", "", "v", 2, "", 1, -1, False, "", ""
-        )       
+        testit( twogauss, "", "", "", "v", 2, "", 1, -1, False, "", "" )
         # Exception if no gaussians and no polynomial specified
-        testit(
-            twogauss, "", "", "", "", 2, "", 0, -1, False, "", ""
-        )         
+        testit( twogauss, "", "", "", "", 2, "", 0, -1, False, "", "" )
         
     def test_1(self):
         """Tests of averaging over a region and then fitting"""
@@ -984,7 +977,7 @@ class specfit_test(unittest.TestCase):
         myia.putchunk(bb)
         residual = "bad.im"
         res = myia.fitprofile(ngauss=0, poly=2, residual=residual)
-        zz = range(20)
+        zz = list(range(20))
         del zz[15]
         del zz[10]
         del zz[5]
@@ -1003,7 +996,7 @@ class specfit_test(unittest.TestCase):
         residual = "good2.im"
         res3 = myia.fitprofile(
             ngauss=0, poly=2, planes=zz, residual=residual,
-            region=rg.box([0,0,2], [0,0,18])
+            region=_rg.box([0,0,2], [0,0,18])
         )
         tt.open(residual)
         mask = mask = "indexin(2,[0, 1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15])"
@@ -1013,7 +1006,7 @@ class specfit_test(unittest.TestCase):
         residual = "good3.im"
         res4 = myia.fitprofile(
             ngauss=0, poly=2, planes=zz, residual=residual,
-            region=rg.box([0,0,6], [0,0,18])
+            region=_rg.box([0,0,6], [0,0,18])
         )
         tt.open(residual)
         mask = mask = "indexin(2,[0, 1, 2, 3, 5, 6, 7, 8, 10, 11])"
