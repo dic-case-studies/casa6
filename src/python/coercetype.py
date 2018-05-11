@@ -30,7 +30,8 @@ class CasaCoerce:
         return value
 
     def to_float(self,value):
-        if isinstance(value,int):
+        if isinstance(value,int) or isinstance(value,numpy.int32) or isinstance(value,numpy.int64) or \
+           isinstance(value,numpy.float64) or isinstance(value,numpy.float32):
             return float(value)
         return value
 
@@ -43,7 +44,8 @@ class CasaCoerce:
         if type(value) in [float,int,numpy.int32,numpy.int64]:
             return [float(value)]
         if isinstance(value,list):
-            if all([isinstance(v,float) or isinstance(v,int) or isinstance(v,numpy.int32) or isinstance(v,numpy.int64) for v in value]):
+            if all( [ isinstance(v,float) or isinstance(v,numpy.float64) or isinstance(v,numpy.float32) or \
+                      isinstance(v,int) or isinstance(v,numpy.int32) or isinstance(v,numpy.int64) for v in value]):
                 return [float(v) for v in value]
         if isinstance(value,numpy.ndarray) and len(value.shape) <= 1:
             if value.dtype.type in [ numpy.float32, numpy.float64, numpy.int32, numpy.int64, int ]:
