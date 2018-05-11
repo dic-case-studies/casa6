@@ -11,11 +11,14 @@ import shutil
 import glob
 import unittest
 from math import sqrt
-from CASAtools import calibrater, table
+from CASAtools import ctsys, calibrater
+from CASAtools import table as tbtool
+from CASAtools import ms as mstool
 from CASAtasks import split, concat
 
 cb = calibrater( )
-tb = table( )
+tb = tbtool( )
+ms = mstool( )
 
 myname = 'test_concat'
 
@@ -70,22 +73,22 @@ def checktable(thename, theexpectation, multims=False):
 # beginning of actual test 
 
 class test_concat(unittest.TestCase):
-    
+
     def setUp(self):
         global testmms
         res = None
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/concat/input/'
+        datapath=ctsys.resolve('regression/unittest/concat/input')
         datapathmms = ''
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
-        if os.environ.has_key('TEST_DATADIR'):   
+        if 'TEST_DATADIR' in os.environ:
             testmms = True
             DATADIR = str(os.environ.get('TEST_DATADIR'))
             if os.path.isdir(DATADIR):
                 datapathmms = DATADIR+'/concat/input/'
 
-        
+
         cpath = os.path.abspath(os.curdir)
         filespresent = sorted(glob.glob("*.ms"))
         if(datapathmms!=''): 
@@ -119,7 +122,7 @@ class test_concat(unittest.TestCase):
             for mymsname in myinputmslist:
                 if not mymsname in filespresent:
                     print("Copying ", mymsname)
-                    rval = os.system('cp -R '+datapath+'/'+mymsname+' .')
+                    rval = os.system('cp -R '+os.path.join(datapath,mymsname)+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
 
@@ -155,9 +158,9 @@ class test_concat(unittest.TestCase):
             shutil.copytree('xy1.ms', 'xy1-noephem.ms')
 
             ms.open('xy1.ms', nomodify=False)
-            ms.addephemeris(0,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab',
+            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
                             'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
-            ms.addephemeris(1,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab',
+            ms.addephemeris(1,ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
                             'Jupiter_54708-55437dUTC', 0)
             ms.close()
 
@@ -185,7 +188,7 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2.ms', nomodify=False)
-            ms.addephemeris(0,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab',
+            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
                             'Uranus_54708-55437dUTC', '1908-201')
             ms.close()
 
@@ -213,7 +216,7 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2late.ms', nomodify=False)
-            ms.addephemeris(0,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab',
+            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
                             'Uranus_55437-56293dUTC', '1908-201')
             ms.close()
 
@@ -1880,4 +1883,6 @@ class concat_cleanup(unittest.TestCase):
     
 def suite():
     return [test_concat,concat_cleanup]        
-        
+
+if __name__ == '__main__':
+    unittest.main()
