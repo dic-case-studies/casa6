@@ -228,3 +228,6 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 * <font color="#7CFC00">Green</font> XML elements can be repeated.
 * Black XML elements or attributes must be supplied (once)
 
+## testing links
+
+[more information for testing](test.md)
