@@ -7,7 +7,7 @@ import sys
 import filecmp
 import glob
 ### for testhelper import
-sys.path.append(os.path.abspath(os.path.basename(__file__)))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import testhelper as th
 from CASAtools import ctsys, ms, table, msmetadata, agentflagger
 from CASAtasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, flagcmd

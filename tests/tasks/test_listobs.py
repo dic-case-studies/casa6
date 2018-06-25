@@ -3,7 +3,7 @@ import sys
 import shutil
 import string
 ### for listing import
-sys.path.append(os.path.abspath(os.path.basename(__file__)))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import listing as lt
 import hashlib
 import unittest

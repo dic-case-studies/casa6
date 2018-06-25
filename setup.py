@@ -232,6 +232,24 @@ def mkpath(path):
         else:
             raise
 
+def upgrade_xml( conversions ):
+    mkpath("xml")
+    for k in conversions.keys( ):
+        if not os.path.exists(conversions[k]):
+            print("upgrading %s" % k)
+
+            proc = Popen( [tools_config['build.compiler.xml-casa'], "-upgrade", k],
+                          stdout=subprocess.PIPE )
+
+            (output, error) = pipe_decode(proc.communicate( ))
+
+            exit_code = proc.wait( )
+            if exit_code != 0:
+                sys.exit('upgrading %s failed' % conversions[k])
+            xmlfd = open(conversions[k], 'w')
+            xmlfd.write(output)
+            xmlfd.close( )
+
 def generate_pyinit(moduledir,tasks):
     """Generate __init__.py for the module
     """
@@ -269,23 +287,7 @@ class BuildCasa(Command):
         pass
 
     def run(self):
-        mkpath("xml")
-        for k in xml_xlate.keys( ):
-            if not os.path.exists(xml_xlate[k]):
-                print("upgrading %s" % k)
-
-                proc = Popen( [tools_config['build.compiler.xml-casa'], "-upgrade", k],
-                              stdout=subprocess.PIPE )
-    
-                (output, error) = pipe_decode(proc.communicate( ))
-    
-                exit_code = proc.wait( )
-                if exit_code != 0:
-                    sys.exit('upgrading %s failed' % xml_xlate[k])
-                xmlfd = open(xml_xlate[k], 'w')
-                xmlfd.write(output)
-                xmlfd.close( )
-
+        upgrade_xml(xml_xlate)
         #scripts/xml-casa output-task=/tmp/debug/task -task taskxml/imhead.xml > /Users/drs/develop/casa/CASAtools/build/lib.macosx-10.12-x86_64-3.6/CASAtasks/imhead.py
         libdir = os.path.join("build",distutils_dir_name('lib'))
         moduledir = os.path.join(libdir,"CASAtasks")

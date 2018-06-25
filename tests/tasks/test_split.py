@@ -25,7 +25,7 @@ import sys
 import shutil
 import filecmp
 ### for testhelper import
-sys.path.append(os.path.abspath(os.path.basename(__file__)))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from recipes.listshapes import listshapes
 import testhelper as th
 from CASAtasks import split, partition, listobs, flagdata, importasdm, flagcmd

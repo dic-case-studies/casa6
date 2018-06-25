@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 ### for testhelper import
-sys.path.append(os.path.abspath(os.path.basename(__file__)))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import testhelper as th
 from CASAtools import ctsys
 from CASAtasks import bandpass
