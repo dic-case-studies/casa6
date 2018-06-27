@@ -12,6 +12,10 @@ use File::Path qw(make_path remove_tree);
 ### avoid: "Fetch failed! HTTP response: 500 Internal Server Error [500 Can’t verify SSL peers without knowing which Certificate Authorities to trust]"
 ###
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
+###
+### avoid: TLSv1.0 backends...
+###
+$File::Fetch::BLACKLIST = [qw|lwp httptiny httplite|];
 
 $exe = abs_path($0);
 $path = abs_path(dirname($exe));

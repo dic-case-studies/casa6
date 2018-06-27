@@ -64,7 +64,7 @@ def _variance2(dr, di, flag, corr, row):
         return 2/(vr + vi)
 
 
-class statwt2_test(unittest.TestCase):
+class statwt_test(unittest.TestCase):
 
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
@@ -80,7 +80,7 @@ class statwt2_test(unittest.TestCase):
                 shutil.copytree(ctsys.resolve(src), dst) 
                 myms = mstool()
                 myms.open(dst, nomodify=False)
-                myms.statwt2(combine=combine, excludechans=excludechans)
+                myms.statwt(combine=combine, excludechans=excludechans)
                 myms.done()
                 [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
                 actflag = flag.copy()
@@ -161,7 +161,7 @@ class statwt2_test(unittest.TestCase):
             shutil.copytree(ctsys.resolve(src), dst) 
             myms = mstool()
             myms.open(dst, nomodify=False)
-            myms.statwt2(timebin=timebin, combine=combine)
+            myms.statwt(timebin=timebin, combine=combine)
             myms.done()
             [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
             self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
@@ -188,7 +188,7 @@ class statwt2_test(unittest.TestCase):
                     if i == 0:
                         myms = mstool()
                         myms.open(dst, nomodify=False)
-                        myms.statwt2(chanbin=chanbin, combine=combine)
+                        myms.statwt(chanbin=chanbin, combine=combine)
                         myms.done()
                     elif i == 2:
                         # check WEIGHT_SPECTRUM is created, only check once,
@@ -203,7 +203,7 @@ class statwt2_test(unittest.TestCase):
                         mytb.done()
                         myms = mstool()
                         myms.open(dst, nomodify=False)
-                        myms.statwt2(chanbin=chanbin, combine=combine)
+                        myms.statwt(chanbin=chanbin, combine=combine)
                         myms.done()
                     [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
                     self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
@@ -221,7 +221,7 @@ class statwt2_test(unittest.TestCase):
             shutil.copytree(ctsys.resolve(src), dst)
             myms = mstool()
             myms.open(dst, nomodify=False)
-            myms.statwt2(minsamp=minsamp, combine=combine)
+            myms.statwt(minsamp=minsamp, combine=combine)
             myms.done()
             [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
             if minsamp == 60:
@@ -245,7 +245,7 @@ class statwt2_test(unittest.TestCase):
         rtol = 1e-7
         for field in ["2", "N5921_2"]:
             shutil.copytree(ctsys.resolve(src), dst)
-            statwt2(dst, field=field, combine=combine)
+            statwt(dst, field=field, combine=combine)
             [wt, wtsp, flag, frow, data, field_id] = _get_dst_cols(dst, "FIELD_ID")
             nrow = len(frow)
             dr = numpy.real(data)
@@ -284,7 +284,7 @@ class statwt2_test(unittest.TestCase):
         spw="0"
         # data set only has one spw
         shutil.copytree(ctsys.resolve(src), dst)
-        statwt2(dst, spw=spw, combine=combine)
+        statwt(dst, spw=spw, combine=combine)
         [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
         nrow = len(frow)
         dr = numpy.real(data)
@@ -316,7 +316,7 @@ class statwt2_test(unittest.TestCase):
             shutil.copytree(ctsys.resolve(src), dst)
             myms = mstool()
             myms.open(dst, nomodify=False)
-            myms.statwt2(timebin=timebin, combine=combine)
+            myms.statwt(timebin=timebin, combine=combine)
             myms.done()
             [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
             self.assertTrue(numpy.all(numpy.isclose(gotwt, expwt, rtol)))
@@ -336,7 +336,7 @@ class statwt2_test(unittest.TestCase):
         shutil.copytree(ctsys.resolve(src), dst)
         myms = mstool()
         myms.open(dst, nomodify=False)
-        myms.statwt2(timebin=timebin, combine=combine)
+        myms.statwt(timebin=timebin, combine=combine)
         myms.done()
         [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
         self.assertTrue(numpy.all(numpy.isclose(gotwt, expwt, rtol)))
@@ -356,7 +356,7 @@ class statwt2_test(unittest.TestCase):
             shutil.copytree(ctsys.resolve(src), dst)
             myms = mstool()
             myms.open(dst, nomodify=False)
-            myms.statwt2(timebin=timebin, combine=combine)
+            myms.statwt(timebin=timebin, combine=combine)
             myms.done()
             [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
             self.assertTrue(numpy.all(numpy.isclose(gotwt, expwt, rtol)))
@@ -374,15 +374,15 @@ class statwt2_test(unittest.TestCase):
             myms = mstool()
             myms.open(dst, nomodify=False)
             if statalg == "cl":
-                self.assertTrue(myms.statwt2(statalg=statalg))
+                self.assertTrue(myms.statwt(statalg=statalg))
             elif statalg == "ch":
-                self.assertTrue(myms.statwt2(statalg=statalg, zscore=5, maxiter=3))
+                self.assertTrue(myms.statwt(statalg=statalg, zscore=5, maxiter=3))
             elif statalg == "h":
-                self.assertTrue(myms.statwt2(statalg=statalg, fence=0.2))
+                self.assertTrue(myms.statwt(statalg=statalg, fence=0.2))
             elif statalg == "f":
-                self.assertTrue(myms.statwt2(statalg=statalg, center="median", lside=False))
+                self.assertTrue(myms.statwt(statalg=statalg, center="median", lside=False))
             elif statalg == "bogus":
-                self.assertRaises(Exception, myms.statwt2, statalg=statalg)
+                self.assertRaises(Exception, myms.statwt, statalg=statalg)
             myms.done()
             shutil.rmtree(dst)
                 
@@ -398,7 +398,7 @@ class statwt2_test(unittest.TestCase):
         shutil.copytree(ctsys.resolve(src), dst) 
         myms = mstool()
         myms.open(dst, nomodify=False)
-        myms.statwt2(timebin=timebin, combine=combine, wtrange=wtrange)
+        myms.statwt(timebin=timebin, combine=combine, wtrange=wtrange)
         myms.done()
         [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
         self.assertTrue(
@@ -444,7 +444,7 @@ class statwt2_test(unittest.TestCase):
         shutil.copytree(ctsys.resolve(src), dst)
         myms = mstool()
         myms.open(dst, nomodify=False)
-        myms.statwt2(
+        myms.statwt(
             timebin=timebin, combine=combine, wtrange=wtrange, preview=preview
         )
         myms.done()
@@ -477,7 +477,7 @@ class statwt2_test(unittest.TestCase):
         self.assertTrue(mytb.renamecol("CORRECTED_DATA", "DATA"))
         mytb.done()
         myms.open(dst, nomodify=False)
-        myms.statwt2(timebin=timebin, combine=combine, datacolumn=data)
+        myms.statwt(timebin=timebin, combine=combine, datacolumn=data)
         myms.done()
         [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
         self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
@@ -502,7 +502,7 @@ class statwt2_test(unittest.TestCase):
         myms = mstool()
         shutil.copytree(ctsys.resolve(src), dst)
         myms.open(dst, nomodify=False)
-        myms.statwt2(timebin=timebin, slidetimebin=True)
+        myms.statwt(timebin=timebin, slidetimebin=True)
         myms.done()
         [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
         self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
@@ -518,7 +518,7 @@ class statwt2_test(unittest.TestCase):
         shutil.rmtree(dst)
 
 def suite():
-    return [statwt2_test]
+    return [statwt_test]
 
 if __name__ == '__main__':
     unittest.main()
