@@ -272,7 +272,8 @@ def generate_pyinit(moduledir,tools):
                            path = __os.path.dirname(path)
                        return path
 
-                   potential_data_paths = ['/opt/casa/data', '/home/casa/data/master', '/home/casa/data', '/export/data_1/casa/data']
+                   #potential_data_paths = ['/opt/casa/data', '/home/casa/data/master', '/home/casa/data', '/export/data_1/casa/data']
+                   potential_data_paths = [ ]
                    casadata = [ d for d in (__os.environ['CASADATA'].split(':') if 'CASADATA' in __os.environ else [ ]) if __os.path.isdir(d) ]
                    potential = [ d for d in potential_data_paths if __os.path.isdir(d) ]
                    potential_local = [ d for d in potential if find_mount_point(d) == '/' ]

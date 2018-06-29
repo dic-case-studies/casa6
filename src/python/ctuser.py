@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 """Hook to allow user-specified customization code to run.
 
 This code was imported from Python 2.7 for use with CASAtools...
@@ -36,7 +37,10 @@ toolrc = os.path.join(home, ".casa/toolrc.py")
 try:
     f = open(toolrc)
 except IOError:
-    pass
+    try:
+        from casatoolsrc import *
+    except:
+        pass
 else:
     f.close()
     exec(open(toolrc).read())

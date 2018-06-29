@@ -31,4 +31,11 @@ AC_DEFUN([AX_EIGEN], [
     ])
     AC_LANG_RESTORE
   fi
+  AS_IF([test "x$ax_eigen_ok" = "xyes"], [
+      HAVE_EIGEN=1
+  ],[
+      HAVE_EIGEN=0
+  ])
+  AC_SUBST(HAVE_EIGEN)
+  AC_SUBST(EIGEN_CFLAGS)
 ])

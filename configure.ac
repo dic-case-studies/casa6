@@ -143,6 +143,7 @@ AS_IF([test "x$HAVE_BOOST" = "xyes"], [
 ])
 AC_SUBST(BOOST_CFLAGS)
 AC_SUBST(BOOST_LDFLAGS)
+AC_SUBST(HAVE_BOOST)
 
 AX_PYTHON_DEVEL(>= '2.7.0')
 dnl#AX_BOOST_PYTHON
@@ -202,6 +203,24 @@ AC_SUBST(HAVE_DBUS)
 
 AX_LIBXML
 AX_EIGEN
+AS_IF([ test "x$HAVE_EIGEN" = "x0" ], [
+    AS_IF([ ! test -d eigen-source ], [
+        AC_MSG_NOTICE([Could not find Eigen3, fetching source code...])
+        ( git clone https://github.com/eigenteam/eigen-git-mirror.git eigen-source || rm -rf eigen-source ) > /dev/null 2>&1
+        pushd eigen-source > /dev/null 2>&1
+        git checkout > /dev/null 2>&1
+        git checkout branches/3.2 > /dev/null 2>&1
+        popd > /dev/null 2>&1
+    ],[
+        AC_MSG_NOTICE([Could not find Eigen3 but source code already fetched...])
+    ])
+    HAVE_EIGEN=1
+    EIGEN_CFLAGS="-I`pwd`/eigen-source"
+    FETCHED_EIGEN=1
+],[
+    FETCHED_EIGEN=0
+])
+AC_SUBST(FETCHED_EIGEN)
 
 AC_CONFIG_FILES(build.properties:ac/templates/build.in)
 AC_CONFIG_FILES(binding/source/version.cc:casa-source/code/stdcasa/version.cc.in)
