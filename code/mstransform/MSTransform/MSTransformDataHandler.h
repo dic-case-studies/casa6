@@ -101,7 +101,7 @@ public:
 	// Returns the set (possibly empty) of spectral windows that are
 	// in SPW but not listed in ms's DATA_DESCRIPTION sub-table.
 	// (This happens with certain calibration/hardware setups.)
-	static std::set<casacore::Int> findBadSpws(casacore::MeasurementSet& ms, casacore::Vector<casacore::Int> spwv);
+	static std::set<casacore::Int> findSpwsNotInDD(casacore::MeasurementSet& ms, casacore::Vector<casacore::Int> spwv);
 
 	// Select Antennas to split out
 	void selectAntenna(const casacore::Vector<casacore::Int>& antennaids,const casacore::Vector<casacore::String>& antennaSel);
