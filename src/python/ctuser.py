@@ -38,7 +38,7 @@ try:
     f = open(toolrc)
 except IOError:
     try:
-        from casatoolsrc import *
+        from casatoolrc import *
     except:
         pass
 else:
