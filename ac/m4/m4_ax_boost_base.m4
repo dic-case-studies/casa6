@@ -36,6 +36,8 @@
 
 AC_DEFUN([AX_BOOST_BASE],
 [
+HAVE_BOOST=0
+AC_SUBST(HAVE_BOOST)
 AC_ARG_WITH([boost],
   [AS_HELP_STRING([--with-boost@<:@=ARG@:>@],
     [use Boost library from a standard location (ARG=yes),
@@ -270,7 +272,7 @@ if test "x$want_boost" = "xyes"; then
         # execute ACTION-IF-NOT-FOUND (if present):
         ifelse([$3], , :, [$3])
     else
-        AC_DEFINE(HAVE_BOOST,,[define if the Boost library is available])
+        HAVE_BOOST=1
         # execute ACTION-IF-FOUND (if present):
         ifelse([$2], , :, [$2])
     fi

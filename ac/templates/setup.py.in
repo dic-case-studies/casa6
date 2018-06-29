@@ -624,9 +624,9 @@ def customize_compiler(self):
     supercc = self._compile
     superld = self.link
     ccache = [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
-    cflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.compile'),props.items()))
+    cflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.compile') and "boost" not in pair[0],props.items()))
     cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
-    ldflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.items()))
+    ldflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link') and "boost" not in pair[0],props.items()))
     ldflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
     if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
         cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
