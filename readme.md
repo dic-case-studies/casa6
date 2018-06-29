@@ -146,6 +146,10 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | vpmanager           | Tool for specifying voltage patterns and primary beams          |
 
 
+## Tool Initialization
+
+The user initalization and customization file for the CASAtools module is `~/.casa/toolrc.py`. If this file does not exist, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`). If the `casatoolrc` module does not exist in `PYTHONPATH`, then the default values for all initialization state is used.
+
 ## Changes from Standard CASA
 
 While the goal was to simply reconstitute the [CASA tools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse/gcwrap/tools) within a unencumbered python module, deviations were required as work progressed. These deviations are divided into categories based upon whether the change relates to the way the tools behave or the way the XML files are structured. The *gcw-pick* script includes an automatic XML update function which is able to make some of the more basic changes to the XML code automatically as the XML files are pulled from the *casa-source/gcwrap* tree into CASAtools.
@@ -161,9 +165,9 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to an data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
 
-3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/toolrc.py`
+3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/toolrc.py`; if this file is not found, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`)
 
-### XML Changes
+### Xml Changes
 
 1. __String Constants__ --- (**developer**) default values for strings, should **not** include quotes. The standard CASA XML processing would strip out opening and closing quotes, but CASAtools XML processing does not.
 
