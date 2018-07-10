@@ -324,7 +324,7 @@ class ImagerParameters():
             return errs
 
         # msname, field, spw, etc must all be equal-length lists of strings, or all except msname must be of length 1.
-        if not self.allselpars.has_key('msname'):
+        if not 'msname'in self.allselpars:
             errs = errs + 'MS name(s) not specified'
         else:
 
@@ -406,7 +406,7 @@ class ImagerParameters():
 ####
 #        for immod in self.allimpars.keys() :
 #            tempcsys = {}
-#            if self.allimpars[immod].has_key('csys'):
+#            if 'csys' in self.allimpars[immod]:
 #                tempcsys = self.allimpars[immod]['csys']
 #
 #            synu = synthesisutils()
@@ -550,7 +550,7 @@ class ImagerParameters():
     def evalToTarget(self, globalpars, subparkey, parname, dtype='int' ):
         try:
             for fld in range(0, len( globalpars ) ):
-                if globalpars[ fld ][subparkey].has_key(parname):
+                if parname in globalpars[ fld ][subparkey]:
                     if dtype=='int' or dtype=='intvec':
                         val_e = eval( globalpars[ fld ][subparkey][parname] )
                     if dtype=='strvec':
@@ -682,7 +682,7 @@ class ImagerParameters():
     ## For CAS-8250. Remove when CAS-6682 is done.
     def fixIntParam(self, allpars, parname ):
         for immod in allpars.keys() :
-            if allpars[immod].has_key(parname):
+            if parname in allpars[immod]:
                 ims = allpars[immod][parname]
                 if type(ims) != list:
                     ims = int(ims)

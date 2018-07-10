@@ -6,7 +6,7 @@ import time
 import re;
 import copy
 
-from CASAtools import synthesisimager, synthesisdeconvolver, synthesisnormalizer
+from CASAtools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink
 from CASAtasks import casalog
 
 '''
@@ -126,7 +126,7 @@ class PySynthesisImager:
 #############################################
 
     def initializeIterationControl(self):
-        self.IBtool = casac.synthesisiterbot()
+        self.IBtool = iterbotsink( )
         itbot = self.IBtool.setupiteration(iterpars=self.iterpars)
 
 #############################################
@@ -426,7 +426,7 @@ class PySynthesisImager:
                 exrec = self.SDtools[immod].executeminorcycle( iterbotrecord = iterbotrec )
                 #print('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
                 self.IBtool.mergeexecrecord( exrec )
-                if os.environ.has_key('SAVE_ALL_AUTOMASKS') and os.environ['SAVE_ALL_AUTOMASKS']=="true":
+                if 'SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true":
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     tempmaskname = self.allimpars[str(immod)]['imagename']+'.autothresh'+str(self.ncycle)
                     if os.path.isdir(maskname):
@@ -455,7 +455,7 @@ class PySynthesisImager:
 
     def plotReport( self, summ={} ,fignum=1 ):
 
-        if not ( summ.has_key('summaryminor') and summ.has_key('summarymajor') and summ.has_key('threshold') and summ['summaryminor'].shape[0]==6 ):
+        if not ( 'summaryminor' in summ and 'summarymajor' in summ and 'threshold' in summ and summ['summaryminor'].shape[0]==6 ):
             print('Cannot make summary plot. Please check contents of the output dictionary from tclean.')
             return summ
 

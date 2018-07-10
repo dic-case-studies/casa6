@@ -118,6 +118,8 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_specfit.py',
                     'src/tasks/task_imstat.py',
                     'src/tasks/task_slsearch.py',
+                    'src/tasks/task_delmod.py',
+                    'src/tasks/task_imsubimage.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -154,6 +156,8 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/specfit.xml': 'xml/specfit.xml',
               'casa-source/gcwrap/tasks/imstat.xml': 'xml/imstat.xml',
               'casa-source/gcwrap/tasks/slsearch.xml': 'xml/slsearch.xml',
+              'casa-source/gcwrap/tasks/delmod.xml': 'xml/delmod.xml',
+              'casa-source/gcwrap/tasks/imsubimage.xml': 'xml/imsubimage.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -188,6 +192,8 @@ xml_files = [ 'xml/imhead.xml',
               'xml/specfit.xml',
               'xml/imstat.xml',
               'xml/slsearch.xml',
+              'xml/delmod.xml',
+              'xml/imsubimage.xml',
 ]
 
 if pyversion < 3:
