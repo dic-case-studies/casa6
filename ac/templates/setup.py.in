@@ -911,7 +911,7 @@ if __name__ == '__main__':
             xml2cpp_proxy('xml/ViewerProxy.interface.xml', 'viewer/ViewerProxy.proxy.h')
         else:
             a_priori_directory_exclusions += [ 'casadbus/session', 'casadbus/plotserver', 'casadbus/synthesis', 'casadbus/utilities', 'casadbus/viewer' ]
-            a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SIIterBot.cc', 'SynthesisIterBot.cc' ]
+            a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SynthesisIterBot.cc' ]
 
         CASACORE_YACC = source_files("casa-source/casacore",file_suffix_filter=".yy")
         CODE_YACC = source_files("casa-source/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
