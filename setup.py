@@ -122,7 +122,6 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_imsubimage.py',
                     'src/tasks/task_accor.py',
                     'src/tasks/task_accum.py',
-                    'src/tasks/task_accum.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
