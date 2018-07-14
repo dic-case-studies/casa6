@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl"?>
+<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
+                             file:///opt/casa/code/tools/xml/casa.xsd">
+
+  <tool name="sdm" module="sdm">
+
+    <code>
+	  <include>tools/sdm/sdm_forward.h</include>
+      <private>
+	    <include>tools/sdm/sdm_private.h</include>
+      </private>
+    </code>
+    <shortdescription>Manipulate or examine SDM datasets</shortdescription>
+
+    <description></description>
+
+    <method type="constructor" name="sdm">
+
+      <shortdescription>Construct an SDM tool</shortdescription>
+      <description></description>
+
+      <input>
+        <param type="path" name="path">
+	      <description>Path to the SDM</description>
+	      <value></value>
+        </param>
+      </input>
+
+      <returns type="sdm"/>
+
+      <example></example>
+
+    </method>
+
+    <method type="function" name="summarystr">
+
+      <!-- someday we may want a "summaryrec" which returns something useful to scripts -->
+      <shortdescription>Returns a summary of the SDM as a string</shortdescription>
+
+      <description></description>
+
+      <input></input>
+
+      <returns type="string"/>
+
+      <example></example>
+
+    </method>
+
+  </tool>
+</casaxml>

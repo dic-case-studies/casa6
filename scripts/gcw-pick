@@ -105,6 +105,7 @@ $hdr_dir = "binding/include";
                'mstransformer' => 'casa-source/gcwrap/tools/mstransformer/mstransformer.xml',
                'spectralline' => 'casa-source/gcwrap/tools/spectralline/spectralline.xml',
                'iterbotsink' => 'src/cmpt/iterbot/iterbotsink.xml',
+               'sdm' => 'src/cmpt/sdm/sdm.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -208,6 +209,9 @@ $hdr_dir = "binding/include";
                'iterbotsink' => [ 'src/cmpt/iterbot/iterbotsink_cmpt.cc',
                                   'src/cmpt/iterbot/iterbotsink_forward.h',
                                   'src/cmpt/iterbot/iterbotsink_private.h', ],
+               'sdm' => [ 'src/cmpt/sdm/sdm_cmpt.cc',
+                          'src/cmpt/sdm/sdm_forward.h',
+                          'src/cmpt/sdm/sdm_private.h', ],
              );
 
 print "configuring CASAtools... this may take a few moments...\n";
