@@ -122,6 +122,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_imsubimage.py',
                     'src/tasks/task_accor.py',
                     'src/tasks/task_accum.py',
+                    'src/tasks/task_asdmsummary.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -162,6 +163,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/imsubimage.xml': 'xml/imsubimage.xml',
               'casa-source/gcwrap/tasks/accor.xml': 'xml/accor.xml',
               'casa-source/gcwrap/tasks/accum.xml': 'xml/accum.xml',
+              'casa-source/gcwrap/tasks/asdmsummary.xml': 'xml/asdmsummary.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -200,6 +202,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/imsubimage.xml',
               'xml/accor.xml',
               'xml/accum.xml',
+              'xml/asdmsummary.xml',
 ]
 
 if pyversion < 3:
