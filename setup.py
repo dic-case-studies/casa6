@@ -124,6 +124,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_accum.py',
                     'src/tasks/task_asdmsummary.py',
                     'src/tasks/task_clearcal.py',
+                    'src/tasks/task_conjugatevis.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -166,6 +167,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/accum.xml': 'xml/accum.xml',
               'casa-source/gcwrap/tasks/asdmsummary.xml': 'xml/asdmsummary.xml',
               'casa-source/gcwrap/tasks/clearcal.xml': 'xml/clearcal.xml',
+              'casa-source/gcwrap/tasks/conjugatevis.xml': 'xml/conjugatevis.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -206,6 +208,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/accum.xml',
               'xml/asdmsummary.xml',
               'xml/clearcal.xml',
+              'xml/conjugatevis.xml',
 ]
 
 if pyversion < 3:
