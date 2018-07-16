@@ -23,14 +23,14 @@ class sdm_summarystr_test(unittest.TestCase):
         mysdm = sdm('regression/asdm-import/input/uid___X5f_X18951_X1')
         #self.doASDMSummary(asdmpath,174)
         summary = mysdm.summarystr( ).splitlines( )
-        self.assertTrue(len(summary) == 9999, summary[0] if len(summary) == 1 else None)
+        self.assertTrue(len(summary) == 166, summary[0] if len(summary) == 1 else None)
         
     def test_vla_asdm(self):
         '''VLA data'''
         # used in test_importevla, test_importasdm_mms, test_importasdm
         mysdm = sdm('regression/unittest/importevla/X_osro_013.55979.93803716435')
         summary = mysdm.summarystr( ).splitlines( )
-        self.assertTrue(len(summary) == 9999, summary[0] if len(summary) == 1 else None)
+        self.assertTrue(len(summary) == 246, summary[0] if len(summary) == 1 else None)
 
     def test_aca_asdm(self):
         '''ACA with mixed pol/channelisation'''
