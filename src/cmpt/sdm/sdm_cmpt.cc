@@ -1,4 +1,8 @@
 #include <iostream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <unistd.h>
 
 #include <alma/ASDM/ASDM.h>
 #include <alma/ASDM/AntennaRow.h>
@@ -35,10 +39,12 @@
 #include <casa/Logging/StreamLogSink.h>
 #include <casa/Logging/LogSink.h>
 
+#include <alma/MS2ASDM/MS2ASDM.h>
+
 #include <sdm_cmpt.h>
 
 // A facility to get rid of blanks at start and end of a string.
-// 
+//
 string lrtrim(std::string& s,const std::string& drop = " ")
 {
   std::string r=s.erase(s.find_last_not_of(drop)+1);
@@ -47,19 +53,19 @@ string lrtrim(std::string& s,const std::string& drop = " ")
 
 using namespace std;
 
-template<typename Enum, typename EnumHelper> 
+template<typename Enum, typename EnumHelper>
 void output1 (typename  std::vector<Enum>::iterator begin, typename std::vector<Enum>::iterator end, ostringstream & oss) {
   if (begin == end) return;
   oss << ',' << EnumHelper::name(*begin);
-  output1<Enum, EnumHelper>(begin+1, end, oss);    
-} 
+  output1<Enum, EnumHelper>(begin+1, end, oss);
+}
 
-template<typename Enum, typename EnumHelper> 
+template<typename Enum, typename EnumHelper>
 void output (typename std::vector<Enum>::iterator begin, typename std::vector<Enum>::iterator end, std::ostringstream & oss) {
   if (begin == end) return;
   oss << EnumHelper::name(*begin);
-  output1<Enum, EnumHelper>(begin+1, end, oss);    
-} 
+  output1<Enum, EnumHelper>(begin+1, end, oss);
+}
 
 
 template<typename T>
@@ -82,6 +88,25 @@ static bool notNull(int n) { return n != 0 ; }
 namespace casac {
     sdm::sdm( const std::string &path ) {
         sdm_path = path;
+    }
+
+    bool sdm::fromms( const std::string &mspath, const std::string &datacolumn, const std::string &archiveid,
+                      const std::string &rangeid, double subscanduration, double sbduration,
+                      bool apcorrected, bool verbose) {
+        struct stat path_stat;
+        if ( stat( sdm_path.c_str( ), &path_stat ) != -1 ) {
+            if ( S_ISREG(path_stat.st_mode) )
+                throw runtime_error("SDM path exists and is a file");
+            else if ( S_ISDIR(path_stat.st_mode) ) {
+                DIR *dir = opendir(sdm_path.c_str( ));
+                for ( int i=0; i <= 2 && readdir(dir); ++i ) {
+                    if ( i == 2 ) throw runtime_error("SDM directory exists and is not empty");
+                }
+            }
+        }
+        casacore::MeasurementSet ms(mspath.c_str( ));
+        casa::MS2ASDM m2a(ms);
+        return m2a.writeASDM( sdm_path, datacolumn, archiveid, rangeid, verbose, subscanduration, sbduration, apcorrected );
     }
 
     std::string sdm::summarystr( ) {
@@ -119,7 +144,7 @@ namespace casac {
             antenna_p = aT.getRowByKey(antennaIds[i]);
             station_p = sT.getRowByKey(antenna_p->getStationId());
             std::vector<asdm::Length> position = station_p->getPosition();
-            //infostream.fill(''); 
+            //infostream.fill('');
             infostream.width(12);infostream << antenna_p->getAntennaId() ;
             infostream.width(6); infostream.setf(ios::right); infostream   << antenna_p->getName() ;
             infostream.width(13); infostream  << CAntennaMake::name(antenna_p->getAntennaMake()) ;
@@ -134,12 +159,12 @@ namespace casac {
 
     sdm::SpectralWindowSummary sdm::spectralWindowSummary(asdm::SpectralWindowRow * spw_p) {
         SpectralWindowSummary result;
-  
+
         result.numChan = spw_p->getNumChan();
-  
-        if (spw_p->isChanFreqStartExists()) 
+
+        if (spw_p->isChanFreqStartExists())
             result.firstChan = spw_p->getChanFreqStart();
-        else 
+        else
             if (spw_p->isChanFreqArrayExists())
                 result.firstChan = spw_p->getChanFreqArray()[0];
             else
@@ -147,7 +172,7 @@ namespace casac {
 
         if (spw_p->isChanWidthArrayExists())
             result.chanWidth = spw_p->getChanWidthArray()[0];
-        else 
+        else
             if (spw_p->isChanWidthExists())
                 result.chanWidth = spw_p->getChanWidth();
             else
@@ -159,14 +184,14 @@ namespace casac {
             result.measFreqRef = "TOPO";
 
         result.refFreq = spw_p->getRefFreq();
-  
+
         return result;
     }
 
     void sdm::mainSummary(asdm::ExecBlockRow* eb_p, int scanNumber, int subscanNumber) {
 
         asdm::ASDM& ds = eb_p->getTable().getContainer();
-  
+
         asdm::Tag ebId = eb_p->getExecBlockId();
 
         const std::vector<asdm::MainRow *>& mains = ds.getMain().get();
@@ -209,8 +234,8 @@ namespace casac {
                            << ", frame = " << spwSummary.measFreqRef
                            << ", firstChan = " << spwSummary.firstChan
                            << ", chandWidth = " << spwSummary.chanWidth
-                           << " x " 
-                           << p_p->getPolarizationId() << " : corr = " ; 
+                           << " x "
+                           << p_p->getPolarizationId() << " : corr = " ;
                 std::vector<StokesParameterMod::StokesParameter> corrType = p_p->getCorrType();
                 output<StokesParameterMod::StokesParameter, CStokesParameter>(corrType.begin(), corrType.end(), infostream);
                 infostream << endl;
@@ -220,14 +245,14 @@ namespace casac {
     }
 
     void sdm::subscanSummary(asdm::ExecBlockRow* eb_p, int scanNumber) {
-      
+
         asdm::ASDM& ds = eb_p->getTable().getContainer();
         asdm::Tag ebId = eb_p->getExecBlockId();
 
         const std::vector<asdm::SubscanRow *>& subscans = ds.getSubscan().get();
         std::vector<asdm::SubscanRow *> eb_subscans;
         for (asdm::SubscanRow * sscan_p: subscans) {
-            if (sscan_p->getExecBlockId() == ebId && sscan_p->getScanNumber() == scanNumber) 
+            if (sscan_p->getExecBlockId() == ebId && sscan_p->getScanNumber() == scanNumber)
                 eb_subscans.push_back(sscan_p);
         }
 
@@ -245,7 +270,7 @@ namespace casac {
                 output<int>(numSubintegration.begin(), numSubintegration.end(), infostream);
                 infostream << endl;
             }
-            // info(infostream.str()); 
+            // info(infostream.str());
 
             mainSummary(eb_p, scanNumber, sscan_p->getSubscanNumber());
         }
@@ -254,7 +279,7 @@ namespace casac {
 
     void sdm::scanSummary(asdm::ExecBlockRow* eb_p) {
 
-        asdm::ASDM& ds = eb_p->getTable().getContainer();  
+        asdm::ASDM& ds = eb_p->getTable().getContainer();
         asdm::Tag ebId = eb_p->getExecBlockId();
 
         const std::vector<asdm::MainRow *>& mains = ds.getMain().get();
@@ -263,7 +288,7 @@ namespace casac {
         for(asdm::MainRow* main: mains) {
             if ( main->getExecBlockId() == ebId) eb_mains.push_back(main);
         }
-  
+
         const std::vector<asdm::ScanRow*>& scans = ds.getScan().get();
         std::vector<asdm::ScanRow *> eb_scans;
         for(asdm::ScanRow* scan: scans) {
@@ -282,14 +307,14 @@ namespace casac {
                            << " from " << scan_p->getStartTime().toFITS()
                            << " to " <<  scan_p->getEndTime().toFITS()
                            << endl;
-      
+
                 std::vector<ScanIntentMod::ScanIntent> scis = scan_p->getScanIntent();
                 if (scis.size() > 0) {
                     infostream << "\tIntents : ";
                     output<ScanIntentMod::ScanIntent, CScanIntent>(scis.begin(), scis.end(), infostream);
                     infostream << endl;
                 }
-      
+
                 if ( scan_p->isFieldNameExists() ) {
                     std::vector<string> fields = scan_p->getFieldName();
                     if (fields.size() > 0) {
@@ -300,7 +325,7 @@ namespace casac {
                 }
 
                 if ( scan_p->isSourceNameExists() ) {
-                    infostream << "\tSources : " << scan_p->getSourceName() << endl; 
+                    infostream << "\tSources : " << scan_p->getSourceName() << endl;
                 }
                 // info(infostream.str());
                 subscanSummary(eb_p, scan_p->getScanNumber());
@@ -329,6 +354,5 @@ namespace casac {
     }
 
     sdm::~sdm( ) { }
-    
-}
 
+}
