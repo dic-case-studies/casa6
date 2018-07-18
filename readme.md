@@ -129,18 +129,19 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | componentlist        | A tool for the manipulation of groups of components             |
 | coordsys             | Operations on CoordinateSystems                                 |
 | functional           | Functionals handling                                            |
+| image                | Operations on images                                            |
 | imagemetadata        | Operations on imagemetadata                                     |
 | imagepol             | Polarimetric analysis of images                                 |
 | imager               | tool for synthesis imaging                                      |
-| image                | Operations on images                                            |
 | iterbotsink          | tool for synthesis imaging                                      |
 | logsink              | tool for logsink                                                |
 | measures             | measures tool                                                   |
+| ms                   | Operations on measurement sets                                  |
 | msmetadata           | Operations to retrieve metadata from a measurment set           |
 | mstransformer        | Tool to apply spw and frame transformations in MS               |
-| ms                   | Operations on measurement sets                                  |
 | quanta               | quanta tool handles units and quantities                        |
 | regionmanager        | Create and manipulate regions of interest                       |
+| sdm                  | Manipulate or examine SDM datasets                              |
 | spectralline         | spectral line tool                                              |
 | synthesisdeconvolver | tool for synthesis imaging                                      |
 | synthesisimager      | tool for synthesis imaging                                      |
