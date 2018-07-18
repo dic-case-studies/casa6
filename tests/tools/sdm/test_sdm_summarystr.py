@@ -46,6 +46,17 @@ class sdm_summarystr_test(unittest.TestCase):
         summary = mysdm.summarystr( ).splitlines( )
         self.assertTrue(len(summary) == 1017, summary[0] if len(summary) == 1 else None)
 
+    def test_bogus_file(self):
+        ''' 12m with mixedl pol/channelisation'''
+        # used in test_importasdm_mms, test_importasdm
+        passes = False
+        try:
+            mysdm = sdm('/tmp/some_nonexistent_directory_for_our_test')
+            summary = mysdm.summarystr( )
+        except:
+            passes = True
+        self.assertTrue(passes,"non-existent file fails to throw an exception")
+
 def suite():
     return [sdm_summarystr_test]
 

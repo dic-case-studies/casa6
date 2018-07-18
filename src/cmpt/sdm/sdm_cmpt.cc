@@ -121,8 +121,7 @@ namespace casac {
             ds.setFromFile(sdm_path, asdm::ASDMParseOptions().loadTablesOnDemand(true).checkRowUniqueness(false));
             execBlockSummary(ds);
         } catch ( asdm::ConversionException ce ) {
-            std::string result = std::string("ERROR[conversion-exception]: ") + ce.getMessage( );
-            return result;
+            throw casacore::AipsError(std::string("ERROR[conversion-exception]: ") + ce.getMessage( ));
         }
 
         return infostream.str( );
