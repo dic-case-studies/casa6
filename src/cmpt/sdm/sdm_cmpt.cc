@@ -96,11 +96,11 @@ namespace casac {
         struct stat path_stat;
         if ( stat( sdm_path.c_str( ), &path_stat ) != -1 ) {
             if ( S_ISREG(path_stat.st_mode) )
-                throw runtime_error("SDM path exists and is a file");
+                throw casacore::AipsError("SDM path exists and is a file");
             else if ( S_ISDIR(path_stat.st_mode) ) {
                 DIR *dir = opendir(sdm_path.c_str( ));
                 for ( int i=0; i <= 2 && readdir(dir); ++i ) {
-                    if ( i == 2 ) throw runtime_error("SDM directory exists and is not empty");
+                    if ( i == 2 ) throw casacore::AipsError("SDM directory exists and is not empty");
                 }
             }
         }
