@@ -105,6 +105,16 @@
 	      <description>produce log output</description>
           <value>true</value>
         </param>
+        <param type="string" name="useversion">
+	      <description>
+            Selects the version of MS2asdm to be used ('v3')
+          </description>
+	      <value>v3</value>
+	      <allowed kind="enum">
+	        <value>v3</value>
+	        <value></value>
+	      </allowed>
+        </param>
       </input>
 
       <returns type="bool"/>

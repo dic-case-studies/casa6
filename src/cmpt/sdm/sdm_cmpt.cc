@@ -92,7 +92,7 @@ namespace casac {
 
     bool sdm::fromms( const std::string &mspath, const std::string &datacolumn, const std::string &archiveid,
                       const std::string &rangeid, double subscanduration, double sbduration,
-                      bool apcorrected, bool verbose) {
+                      bool apcorrected, bool verbose, const std::string &/*useversion*/ ) {
         struct stat path_stat;
         if ( stat( sdm_path.c_str( ), &path_stat ) != -1 ) {
             if ( S_ISREG(path_stat.st_mode) )
