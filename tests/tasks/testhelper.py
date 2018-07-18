@@ -4,7 +4,6 @@ import math
 import shutil
 import string
 import time
-from CASAtasks import casalog
 from CASAtools import table
 import numpy as np
 import math
