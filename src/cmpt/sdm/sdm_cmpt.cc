@@ -27,6 +27,7 @@
 #include <alma/ASDM/SubscanTable.h>
 #include <alma/ASDM/Misc.h>
 
+#include <alma/Enumerations/CDirectionReferenceCode.h>
 #include <alma/Enumerations/CAntennaMake.h>
 #include <alma/Enumerations/CAtmPhaseCorrection.h>
 #include <alma/Enumerations/CCorrelationMode.h>
