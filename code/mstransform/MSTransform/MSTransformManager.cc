@@ -6724,6 +6724,14 @@ void MSTransformManager::fillWeightCols(vi::VisBuffer2 *vb,RefRows &rowRef)
 		setSmoothingKernel(smoothmode_p);
     setSmoothingFourierKernel(MSTransformations::plainSmooth);
 	}
+	
+  if(doingData_p)
+  {
+    //This makes a reference to the weight
+    Matrix<Float> weightSource(vb->weight());
+    weightSource = vb->sigma();
+    arrayTransformInPlace(weightSource, vi::AveragingTvi2::sigmaToWeight);
+  }
 
 	return;
 }
