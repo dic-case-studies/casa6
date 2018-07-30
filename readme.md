@@ -30,6 +30,9 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
 -bash-4.2$ 
 ```
 
+##### Notable Dependencies
+1. [GNU Scientific Library](https://www.gnu.org/software/gsl/) version **2.2** or greater
+
 #### Checkout
 
 Checkout the CASAtools source code:
