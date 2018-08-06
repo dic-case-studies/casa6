@@ -6015,42 +6015,51 @@ void MSTransformManager::fillIdCols(vi::VisBuffer2 *vb,RefRows &rowRef)
 	}
 	else
 	{
-		writeMatrix(vb->uvw(),outputMsCols_p->uvw(),rowRef,nspws_p);
+	    writeMatrix(vb->uvw(),outputMsCols_p->uvw(),rowRef,nspws_p);
 
-		// WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
-		if (not spectrumTransformation_p)
-		{
-			Matrix<Float> weights = vb->weight();
-			if (newWeightFactorMap_p.size() > 0)
-			{
-				if ( (newWeightFactorMap_p.find(vb->spectralWindows()(0))  != newWeightFactorMap_p.end()) and
-						(newWeightFactorMap_p[vb->spectralWindows()(0)] != 1) )
-				{
-					weights *= newWeightFactorMap_p[vb->spectralWindows()(0)];
-				}
-			}
-			writeMatrix(weights,outputMsCols_p->weight(),rowRef,nspws_p);
+	    // WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
+	    if (not spectrumTransformation_p)
+	    {
 
-			// Sigma must be redefined to 1/weight when corrected data becomes data
-			if (correctedToData_p)
-			{
-				arrayTransformInPlace(weights, vi::AveragingTvi2::weightToSigma);
-				writeMatrix(weights,outputMsCols_p->sigma(),rowRef,nspws_p);
-			}
-			else
-			{
-				Matrix<Float> sigma = vb->sigma();
-				if (newSigmaFactorMap_p.size() > 0)
-				{
-					if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
-							(newSigmaFactorMap_p[vb->spectralWindows()(0)] != 1) )
-					{
-						sigma *= newSigmaFactorMap_p[vb->spectralWindows()(0)];
-					}
-				}
-				writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
-			}
-		}
+	        if (correctedToData_p) {
+
+	            // weight -> weight
+	            Matrix<Float> weights = vb->weight();
+	            if (newWeightFactorMap_p.size() > 0)
+	            {
+	                if ( (newWeightFactorMap_p.find(vb->spectralWindows()(0))  != newWeightFactorMap_p.end()) and
+	                        (newWeightFactorMap_p[vb->spectralWindows()(0)] != 1) )
+	                {
+	                    weights *= newWeightFactorMap_p[vb->spectralWindows()(0)];
+	                }
+	            }
+	            writeMatrix(weights,outputMsCols_p->weight(),rowRef,nspws_p);
+
+	            // weight -> sigma
+	            arrayTransformInPlace(weights, vi::AveragingTvi2::weightToSigma);
+	            writeMatrix(weights,outputMsCols_p->sigma(),rowRef,nspws_p);
+
+	        }
+	        else
+	        {
+	            // sigma -> weight
+	            Matrix<Float> sigma = vb->sigma();
+                arrayTransformInPlace(sigma, vi::AveragingTvi2::sigmaToWeight);
+                writeMatrix(sigma,outputMsCols_p->weight(),rowRef,nspws_p);
+
+	            // sigma -> sigma
+	            if (newSigmaFactorMap_p.size() > 0)
+	            {
+	                if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
+	                        (newSigmaFactorMap_p[vb->spectralWindows()(0)] != 1) )
+	                {
+	                    sigma *= newSigmaFactorMap_p[vb->spectralWindows()(0)];
+	                }
+	            }
+	            writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
+	        }
+
+	    }
 
 	}
 
@@ -6724,14 +6733,6 @@ void MSTransformManager::fillWeightCols(vi::VisBuffer2 *vb,RefRows &rowRef)
 		setSmoothingKernel(smoothmode_p);
     setSmoothingFourierKernel(MSTransformations::plainSmooth);
 	}
-	
-  if(doingData_p)
-  {
-    //This makes a reference to the weight
-    Matrix<Float> weightSource(vb->weight());
-    weightSource = vb->sigma();
-    arrayTransformInPlace(weightSource, vi::AveragingTvi2::sigmaToWeight);
-  }
 
 	return;
 }
