@@ -30,6 +30,20 @@
 
     </method>
 
+    <method type="function" name="sdmversion">
+
+      <shortdescription>Returns SDM version number on which this tool operates</shortdescription>
+
+      <description/>
+
+      <input/>
+
+      <returns type="string"/>
+
+      <example/>
+
+    </method>    <!-- sdmversion -->
+
     <method type="function" name="summarystr">
 
       <!-- someday we may want a "summaryrec" which returns something useful to scripts -->

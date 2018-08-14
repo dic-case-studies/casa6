@@ -876,6 +876,8 @@ namespace casac {
                      process_pointing, process_flags, tbuff, applyflags, savecmds, outfile, flagbackup, verbose,
                      overwrite, showversion, useversion, bdfflags, with_pointing_correction, remove_ref_undef,
                      convert_ephem2geo, polyephem_tabtimestep ) ) {
+            if ( remove_ref_undef )
+                fixspwbackport(vis);
             if ( bdfflags ) {
                 bool uncorrected_data = false;
                 if (wvr_corrected_data.compare("no") == 0)
@@ -3251,6 +3253,11 @@ namespace casac {
         casacore::MeasurementSet ms(mspath.c_str( ));
         casa::MS2ASDM m2a(ms);
         return m2a.writeASDM( sdm_path, datacolumn, archiveid, rangeid, verbose, subscanduration, sbduration, apcorrected );
+    }
+
+    std::string sdm::sdmversion( ) {
+        static constexpr string version = "sdm-3.0";
+        return version;
     }
 
     std::string sdm::summarystr( ) {
@@ -6280,4 +6287,52 @@ namespace casac {
     double sdm::sysPowerIntervalInSeconds(const SysPowerRow* row) const {
         return ((double) row->getTimeInterval().getDuration().get()) / ArrayTime::unitsInASecond ;
     }
+
+    /*
+     * fixspwbackport
+     *
+     * Allow MS created post 4.3 to be ported to older versions of casa due to
+     * the addition of Undefined spectral frame
+     *  Created on: Oct 06, 2014
+     *      Author: kgolap
+     */
+    bool sdm::fixspwbackport( const std::string &msname ) {
+        String msname(argv[1]);
+        if (!Table::isWritable(msname)) {
+            errstream.str("");
+            errstream << "Cannot modify " << msname << endl;
+            error(errstream.str());
+            return false;
+        }
+        
+        String specName=msname + String("/SPECTRAL_WINDOW");
+        Table spwTab=Table(specName, Table::Update);
+        TableProxy tprox(spwTab);
+        Vector<String> colnames=tprox.columnNames();
+        for (uInt k=0; k < colnames.nelements(); ++k){
+            TableColumn cfcol(spwTab, colnames[k]);
+            TableRecord& colRec=cfcol.rwKeywordSet();
+            if(colRec.isDefined("MEASINFO")){
+                if(colRec.asrwRecord("MEASINFO").isDefined("TabRefTypes")){
+                    Vector<String> nrf(9);
+                    nrf[0]="REST"; nrf[1]="LSRK"; nrf[2]="LSRD"; nrf[3]="BARY";
+                    nrf[4]="GEO"; nrf[5]="TOPO"; nrf[6]="GALACTO"; nrf[7]="LGROUP";
+                    nrf[8]="CMB";
+                    colRec.asrwRecord("MEASINFO").removeField("TabRefTypes");
+                    colRec.asrwRecord("MEASINFO").define("TabRefTypes", nrf);
+			
+                    //cerr << colRec.asrwRecord("MEASINFO").asArrayString("TabRefTypes")<< endl;
+                    //cerr << colRec << endl;
+                }
+                if(colRec.asrwRecord("MEASINFO").isDefined("TabRefCodes")){
+                    Vector<uInt> nrc(9);
+                    indgen(nrc);
+                    colRec.asrwRecord("MEASINFO").removeField("TabRefCodes");
+                    colRec.asrwRecord("MEASINFO").define("TabRefCodes", nrc);
+                }
+            }
+        }
+        return true;
+    }
+
 }

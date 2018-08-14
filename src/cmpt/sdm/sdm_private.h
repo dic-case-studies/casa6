@@ -81,6 +81,8 @@ void processCorrelatorFlagsPerSlices( asdm::MainRow *mR_p, unsigned int iASDMInd
                                       unsigned &iMSRow, casacore::ArrayColumn<bool> &flag, casacore::ScalarColumn<bool> &flagRow,
                                       CorrelationModeMod::CorrelationMode ocorrelationMode );
 
+bool fixspwbackport( const std::string &msname );
+
 public:
 const bool verbose = true;
 

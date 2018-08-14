@@ -9,7 +9,7 @@ import testhelper as th
 from xmlhelper import readXML
 import unittest
 
-myname = 'test_importasdm'
+myname = 'test_sdm_toms'
 
 # default ASDM dataset name
 myasdm_dataset_name = 'uid___X5f_X18951_X1'
