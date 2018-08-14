@@ -241,8 +241,9 @@ def immath(
                 varnames, filenames, _myia
             )
         try:
-            param_names = immath.func_code.co_varnames[:immath.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]   
+            vars = locals( )
+            param_names = immath.__code__.co_varnames[:immath.__code__.co_argcount]
+            param_vals = [vars[p] for p in param_names]
             write_image_history(
                 outia, sys._getframe().f_code.co_name,
                 param_names, param_vals, casalog

@@ -226,7 +226,7 @@ def flagdata(vis,
         if ((mode == 'summary') and ((minrel != 0.0) or (maxrel != 1.0) or (minabs != 0) or (maxabs != -1))):
             filterSummary = True
             
-            myms = mstool()
+            myms = ms( )
             myms.open(vis)
             subMS_list = myms.getreferencedtables()
             myms.close()

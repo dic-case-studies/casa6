@@ -126,6 +126,8 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_clearcal.py',
                     'src/tasks/task_conjugatevis.py',
                     'src/tasks/task_exportasdm.py',
+                    'src/tasks/task_importasdm.py',
+                    'src/scripts/convertephem.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -170,6 +172,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/clearcal.xml': 'xml/clearcal.xml',
               'casa-source/gcwrap/tasks/conjugatevis.xml': 'xml/conjugatevis.xml',
               'casa-source/gcwrap/tasks/exportasdm.xml': 'xml/exportasdm.xml',
+              'casa-source/gcwrap/tasks/importasdm.xml': 'xml/importasdm.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -212,6 +215,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/clearcal.xml',
               'xml/conjugatevis.xml',
               'xml/exportasdm.xml',
+              'xml/importasdm.xml',
 ]
 
 if pyversion < 3:
