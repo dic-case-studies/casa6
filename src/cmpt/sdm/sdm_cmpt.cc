@@ -3256,8 +3256,7 @@ namespace casac {
     }
 
     std::string sdm::sdmversion( ) {
-        static constexpr string version = "sdm-3.0";
-        return version;
+        return "sdm-3.0";
     }
 
     std::string sdm::summarystr( ) {
