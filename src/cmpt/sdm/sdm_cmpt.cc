@@ -46,6 +46,7 @@
 
 #include "ASDM2MSException.h"
 
+#include <tables/Tables/TableProxy.h>
 #include <alma/MS2ASDM/MS2ASDM.h>
 #include <asdmstman/AsdmStMan.h>
 #include <ScansParser.h>
@@ -6296,7 +6297,6 @@ namespace casac {
      *      Author: kgolap
      */
     bool sdm::fixspwbackport( const std::string &msname ) {
-        String msname(argv[1]);
         if (!Table::isWritable(msname)) {
             errstream.str("");
             errstream << "Cannot modify " << msname << endl;
@@ -6304,9 +6304,9 @@ namespace casac {
             return false;
         }
         
-        String specName=msname + String("/SPECTRAL_WINDOW");
+        String specName=msname + "/SPECTRAL_WINDOW";
         Table spwTab=Table(specName, Table::Update);
-        TableProxy tprox(spwTab);
+	casacore::TableProxy tprox(spwTab);
         Vector<String> colnames=tprox.columnNames();
         for (uInt k=0; k < colnames.nelements(); ++k){
             TableColumn cfcol(spwTab, colnames[k]);
