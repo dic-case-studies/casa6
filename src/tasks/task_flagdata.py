@@ -9,7 +9,7 @@ from .parallel.parallel_task_helper import ParallelTaskHelper
 # this should be replaced when CASA really moves to Python 2.7
 from collections import OrderedDict
 from CASAtasks import casalog
-from CASAtools import ms, agentflagger, quanta
+from CASAtools import ms, agentflagger, quanta, table
 
 localqa = quanta( )
 
@@ -682,7 +682,7 @@ def flagdata(vis,
                 
             # CAS-3966 Add datacolumn to display agent parameters
             # Check if FLOAT_DATA exist instead
-            tblocal = tbtool()
+            tblocal = table()
             tblocal.open(vis)
             allcols = tblocal.colnames()
             tblocal.close()

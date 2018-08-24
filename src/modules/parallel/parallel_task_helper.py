@@ -4,6 +4,7 @@ import sys
 import copy
 import shutil
 from .. import partitionhelper as ph
+from CASAtools import table
 from CASAtools import ms as mstool
 from CASAtasks import casalog
 
@@ -406,7 +407,7 @@ class ParallelTaskHelper:
         theSubMSs = msTool.getreferencedtables()
         msTool.close()
 
-        tbTool = tbtool();
+        tbTool = table( );
         
         if mastersubms=='':
             tbTool.open(vis)

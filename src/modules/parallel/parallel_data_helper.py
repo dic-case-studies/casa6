@@ -11,7 +11,7 @@ from .parallel_task_helper import ParallelTaskHelper, JobData
 from .. import partitionhelper as ph
 import inspect
 from numpy.f2py.auxfuncs import throw_error
-from CASAtools import quanta, ms, msmetadata, mstransformer
+from CASAtools import quanta, ms, msmetadata, mstransformer, table
 from CASAtasks import casalog
 
 try:
@@ -586,7 +586,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         if len(submslist) == 0:
             raise ValueError('There are no subMSs in input vis')
                     
-        tbTool = tbtool()
+        tbTool = table( )
 
         listOutputMS = []
 
