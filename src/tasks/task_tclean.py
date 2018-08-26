@@ -114,9 +114,9 @@ def tclean(
     usemask,#='user',
     mask,#='',
     pbmask,#='',
-    maskthreshold,#='',
-    maskresolution,#='',
-    nmask,#=0,
+    # maskthreshold,#='',
+    # maskresolution,#='',
+    # nmask,#=0,
 
     ##### automask by multithresh
     sidelobethreshold,#=5.0,
@@ -153,9 +153,9 @@ def tclean(
     if specmode=='cont':
         specmode='mfs'
 
-    if specmode=='mfs' and nterms==1 and deconvolver == "mtmfs":
-        casalog.post( "The MTMFS deconvolution algorithm (deconvolver='mtmfs') needs nterms>1.Please set nterms=2 (or more). ", "WARN", "task_tclean" )
-        return
+#    if specmode=='mfs' and nterms==1 and deconvolver == "mtmfs":
+#        casalog.post( "The MTMFS deconvolution algorithm (deconvolver='mtmfs') needs nterms>1.Please set nterms=2 (or more). ", "WARN", "task_tclean" )
+#        return
 
     if specmode!='mfs' and deconvolver=="mtmfs":
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs'.", "WARN", "task_tclean" )
@@ -259,9 +259,9 @@ def tclean(
         usemask=usemask,
         mask=mask,
         pbmask=pbmask,
-        maskthreshold=maskthreshold,
-        maskresolution=maskresolution,
-        nmask=nmask,
+        #maskthreshold=maskthreshold,
+        #maskresolution=maskresolution,
+        #nmask=nmask,
 
         ### automask multithresh params
         sidelobethreshold=sidelobethreshold,
@@ -423,7 +423,7 @@ def tclean(
 
 
     except Exception as e:
-        #print('Exception : ' + str(e))
+        #print 'Exception : ' + str(e)
         casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
         if imager != None:
             imager.deleteTools() 
