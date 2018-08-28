@@ -138,6 +138,10 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_fluxscale.py',
                     'src/tasks/task_ft.py',
                     'src/tasks/task_gaincal.py',
+                    'src/tasks/task_gencal.py',
+                    'src/scripts/correct_ant_posns.py',
+                    'src/scripts/correct_ant_posns_alma.py',
+                    'src/scripts/correct_ant_posns_evla.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -192,6 +196,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/fluxscale.xml': 'xml/fluxscale.xml',
               'casa-source/gcwrap/tasks/ft.xml': 'xml/ft.xml',
               'casa-source/gcwrap/tasks/gaincal.xml': 'xml/gaincal.xml',
+              'casa-source/gcwrap/tasks/gencal.xml': 'xml/gencal.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -244,6 +249,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/fluxscale.xml',
               'xml/ft.xml',
               'xml/gaincal.xml',
+              'xml/gencal.xml',
 ]
 
 if pyversion < 3:
