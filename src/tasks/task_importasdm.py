@@ -7,6 +7,7 @@ from . import flaghelper as fh
 from . import convertephem as ce
 from .parallel.parallel_data_helper import ParallelDataHelper
 
+_tb = table( )
 
 def importasdm(
     asdm=None,
@@ -413,11 +414,12 @@ def importasdm(
                 # Get the proper column
                 datacolumn = 'DATA'
                 dcols = ['DATA', 'FLOAT_DATA']
+                _tb.open(tempname)
                 for dc in dcols:
-                    ##### FIX ME #############################################
-                    if len(th.getColDesc(tempname, dc)) > 0:
+                    if dc in _tb.colnames( ):
                         datacolumn = dc
                         break
+                _tb.close( )
                     
                 fpars['datacolumn'] = datacolumn
                     
