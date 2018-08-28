@@ -2,6 +2,8 @@ import os
 import shutil
 import time
 import unittest
+### for testhelper import
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import testhelper as th
 from CASAtasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
 from CASAtasks import partition, flagdata, flagmanager, split, setjy, listpartition, listobs
