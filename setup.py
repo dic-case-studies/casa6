@@ -136,6 +136,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/JPLephem_reader2.py',
                     'src/tasks/task_fixvis.py',
                     'src/tasks/task_fluxscale.py',
+                    'src/tasks/task_ft.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -188,6 +189,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/fixplanets.xml': 'xml/fixplanets.xml',
               'casa-source/gcwrap/tasks/fixvis.xml': 'xml/fixvis.xml',
               'casa-source/gcwrap/tasks/fluxscale.xml': 'xml/fluxscale.xml',
+              'casa-source/gcwrap/tasks/ft.xml': 'xml/ft.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -238,6 +240,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/fixplanets.xml',
               'xml/fixvis.xml',
               'xml/fluxscale.xml',
+              'xml/ft.xml',
 ]
 
 if pyversion < 3:
