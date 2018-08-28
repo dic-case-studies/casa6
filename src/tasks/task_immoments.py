@@ -89,7 +89,6 @@ from .ialib import write_image_history
 from CASAtools import regionmanager, image
 from CASAtasks import casalog
 from . import cvt
-from inspect import signature
 
 _rg = regionmanager( )
 
@@ -129,10 +128,9 @@ def immoments(
         created_images = _immoments_get_created_images(outia.name(), outfile)
         created_images.append(outia)
         try:
-            sig = signature(immoments)
-            param_names = sig.parameters.keys( )
-            local_vars = locals( )
-            param_vals = [local_vars[p] for p in param_names]
+            vars = locals( )
+            param_names = immoments.__code__.co_varnames[:immoments.__code__.co_argcount]
+            param_vals = [vars[p] for p in param_names]
             method = sys._getframe().f_code.co_name
             for im in created_images:
                 write_image_history(
