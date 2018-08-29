@@ -158,14 +158,15 @@ class imcollapse_test(unittest.TestCase):
             box, chans, stokes, mask, overwrite, wantreturn
         ):
             for i in [0,1]:
-                #if (i==0 and len(imagename) > 0 and imagename != bogus):
+                # this may not be the best approach, here...
                 if (i==0 and len(imagename) > 0 and imagename != bogus):
                     self.assertRaises(
                         Exception, run_collapse, imagename,
                         function, axes, outfile, region, box,
                         chans, stokes, mask, overwrite
                     )
-                elif len(function) == 0 or function == "bogus function" or region == "bogus_region" or box == "abc" or box == "0,0,1000,1000" or type(axes) == str or axes >= 4:
+                elif len(function) == 0 or function == "bogus function" or region == "bogus_region" or \
+                     box == "abc" or box == "0,0,1000,1000" or type(axes) == str or axes >= 4:
                     self.assertRaises(
                         RuntimeError, run_collapse, imagename,
                         function, axes, outfile, region, box,
