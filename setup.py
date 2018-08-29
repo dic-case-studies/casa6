@@ -147,6 +147,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_imcontsub.py',
                     'src/tasks/task_imdev.py',
                     'src/tasks/task_imfit.py',
+                    'src/tasks/task_impbcor.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -207,6 +208,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/imcontsub.xml': 'xml/imcontsub.xml',
               'casa-source/gcwrap/tasks/imdev.xml': 'xml/imdev.xml',
               'casa-source/gcwrap/tasks/imfit.xml': 'xml/imfit.xml',
+              'casa-source/gcwrap/tasks/impbcor.xml': 'xml/impbcor.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -265,6 +267,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/imcontsub.xml',
               'xml/imdev.xml',
               'xml/imfit.xml',
+              'xml/impbcor.xml',
 ]
 
 if pyversion < 3:
