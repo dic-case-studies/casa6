@@ -104,6 +104,7 @@ $hdr_dir = "binding/include";
                'agentflagger' => 'casa-source/gcwrap/tools/flagging/agentflagger.xml',
                'mstransformer' => 'casa-source/gcwrap/tools/mstransformer/mstransformer.xml',
                'spectralline' => 'casa-source/gcwrap/tools/spectralline/spectralline.xml',
+               'singledishms' => 'casa-source/gcwrap/tools/singledish/singledishms.xml',
                'iterbotsink' => 'src/cmpt/iterbot/iterbotsink.xml',
                'sdm' => 'src/cmpt/sdm/sdm.xml',
              );
@@ -206,6 +207,9 @@ $hdr_dir = "binding/include";
                'spectralline' => [ 'casa-source/gcwrap/tools/spectralline/spectralline_cmpt.cc',
                                     'casa-source/gcwrap/tools/spectralline/spectralline_forward.h',
                                     'casa-source/gcwrap/tools/spectralline/spectralline_private.h', ],
+               'singledishms' => [ 'casa-source/gcwrap/tools/singledish/singledishms_cmpt.cc',
+                                    'casa-source/gcwrap/tools/singledish/singledishms_forward.h',
+                                    'casa-source/gcwrap/tools/singledish/singledishms_private.h', ],
                'iterbotsink' => [ 'src/cmpt/iterbot/iterbotsink_cmpt.cc',
                                   'src/cmpt/iterbot/iterbotsink_forward.h',
                                   'src/cmpt/iterbot/iterbotsink_private.h', ],
