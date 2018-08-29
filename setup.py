@@ -143,6 +143,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/correct_ant_posns_alma.py',
                     'src/scripts/correct_ant_posns_evla.py',
                     'src/tasks/task_hanningsmooth.py',
+                    'src/tasks/task_imcollapse.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -199,6 +200,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/gaincal.xml': 'xml/gaincal.xml',
               'casa-source/gcwrap/tasks/gencal.xml': 'xml/gencal.xml',
               'casa-source/gcwrap/tasks/hanningsmooth.xml': 'xml/hanningsmooth.xml',
+              'casa-source/gcwrap/tasks/imcollapse.xml': 'xml/imcollapse.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -253,6 +255,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/gaincal.xml',
               'xml/gencal.xml',
               'xml/hanningsmooth.xml',
+              'xml/imcollapse.xml',
 ]
 
 if pyversion < 3:
