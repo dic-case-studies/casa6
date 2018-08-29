@@ -145,6 +145,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_hanningsmooth.py',
                     'src/tasks/task_imcollapse.py',
                     'src/tasks/task_imcontsub.py',
+                    'src/tasks/task_imdev.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -203,6 +204,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/hanningsmooth.xml': 'xml/hanningsmooth.xml',
               'casa-source/gcwrap/tasks/imcollapse.xml': 'xml/imcollapse.xml',
               'casa-source/gcwrap/tasks/imcontsub.xml': 'xml/imcontsub.xml',
+              'casa-source/gcwrap/tasks/imdev.xml': 'xml/imdev.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -259,6 +261,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/hanningsmooth.xml',
               'xml/imcollapse.xml',
               'xml/imcontsub.xml',
+              'xml/imdev.xml',
 ]
 
 if pyversion < 3:
