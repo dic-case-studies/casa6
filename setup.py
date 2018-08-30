@@ -152,6 +152,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_importatca.py',
                     'src/tasks/task_importfitsidi.py',
                     'src/tasks/task_importgmrt.py',
+                    'src/tasks/task_importnro.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -216,6 +217,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/importasap.xml': 'xml/importasap.xml',
               'casa-source/gcwrap/tasks/importatca.xml': 'xml/importatca.xml',
               'casa-source/gcwrap/tasks/importgmrt.xml': 'xml/importgmrt.xml',
+              'casa-source/gcwrap/tasks/importnro.xml': 'xml/importnro.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -279,6 +281,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/importatca.xml',
               'xml/importfitsidi.xml',
               'xml/importgmrt.xml',
+              'xml/importnro.xml',
 ]
 
 if pyversion < 3:
