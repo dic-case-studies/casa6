@@ -16,8 +16,8 @@ This is is still in intial development (read *pre-alpha* software), and at this 
 First make sure that the version of Python you want to use is available. [MacPorts](https://www.macports.org) has been used to successfully install Python 3.6 on [OSX](http://en.wikipedia.org/wiki/MacOS). On [RedHat](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux), the [Software Collections](https://developers.redhat.com/products/softwarecollections/overview/) has been used to install Python 3.6.:
 ```
 -bash-4.2# yum install rh-python36
--bash-4.2# yum install rh-python36-python-numpy
--bash-4.2# yum install rh-python36-python-scipy
+-bash-4.2# yum install rh-python36-numpy
+-bash-4.2# yum install rh-python36-scipy
 -bash-4.2# yum install rh-python36-python-tkinter
 ```
 Unfortunately, Software Collections does not supply an RPM for [matplotlib](https://matplotlib.org). For installing matplotlib, [pip](https://pypi.org/project/pip) can be used:
