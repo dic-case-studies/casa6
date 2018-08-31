@@ -155,6 +155,8 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_importnro.py',
                     'src/tasks/task_importvla.py',
                     'src/tasks/task_impv.py',
+                    'src/tasks/task_imrebin.py',
+                    'src/tasks/task_imreframe.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -222,6 +224,8 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/importnro.xml': 'xml/importnro.xml',
               'casa-source/gcwrap/tasks/importvla.xml': 'xml/importvla.xml',
               'casa-source/gcwrap/tasks/impv.xml': 'xml/impv.xml',
+              'casa-source/gcwrap/tasks/imrebin.xml': 'xml/imrebin.xml',
+              'casa-source/gcwrap/tasks/imreframe.xml': 'xml/imreframe.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -288,6 +292,8 @@ xml_files = [ 'xml/imhead.xml',
               'xml/importnro.xml',
               'xml/importvla.xml',
               'xml/impv.xml',
+              'xml/imrebin.xml',
+              'xml/imreframe.xml',
 ]
 
 if pyversion < 3:
