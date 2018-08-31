@@ -105,6 +105,8 @@ $hdr_dir = "binding/include";
                'mstransformer' => 'casa-source/gcwrap/tools/mstransformer/mstransformer.xml',
                'spectralline' => 'casa-source/gcwrap/tools/spectralline/spectralline.xml',
                'singledishms' => 'casa-source/gcwrap/tools/singledish/singledishms.xml',
+               'atcafiller' => 'casa-source/gcwrap/tools/atnf/atcafiller.xml',
+               'vlafiller' => 'casa-source/gcwrap/tools/nrao/vlafillertask.xml',
                'iterbotsink' => 'src/cmpt/iterbot/iterbotsink.xml',
                'sdm' => 'src/cmpt/sdm/sdm.xml',
              );
@@ -210,6 +212,10 @@ $hdr_dir = "binding/include";
                'singledishms' => [ 'casa-source/gcwrap/tools/singledish/singledishms_cmpt.cc',
                                     'casa-source/gcwrap/tools/singledish/singledishms_forward.h',
                                     'casa-source/gcwrap/tools/singledish/singledishms_private.h', ],
+               'atcafiller' => [ 'casa-source/gcwrap/tools/atnf/atcafiller_cmpt.cc',
+                                 'casa-source/gcwrap/tools/atnf/atcafiller_forward.h',
+                                 'casa-source/gcwrap/tools/atnf/atcafiller_private.h', ],
+               'vlafiller' => [ 'casa-source/gcwrap/tools/nrao/vlafillertask_cmpt.cc' ],
                'iterbotsink' => [ 'src/cmpt/iterbot/iterbotsink_cmpt.cc',
                                   'src/cmpt/iterbot/iterbotsink_forward.h',
                                   'src/cmpt/iterbot/iterbotsink_private.h', ],
@@ -243,6 +249,10 @@ $hdr_dir = "binding/include";
 
 print "configuring CASAtools... this may take a few moments...\n";
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
+
+fix_asdm_source("casa-source/code/alma");
+fix_vlafillertask("casa-source/gcwrap");
+
 foreach $k ( keys %xml_files ) { install($xml_files{$k},"$xml_dir/$k.xml") }
 foreach $k ( keys %xml_files ) {                                 ### always using the xml_files keys ensures consistency
     my $src = $src_files{$k};
@@ -345,8 +355,6 @@ foreach ( 'libcasatools/generated/source', 'libcasatools/generated/include' ) {
     unless ( -d $_ ) { make_path($_) or die "could not create $_: $!" }
 }
 
-fix_asdm_source("casa-source/code/alma");
-
 sub install {
     my $input = shift(@_);
     my $output = shift(@_);
@@ -355,6 +363,35 @@ sub install {
     while( <UPDATED> ) { print OUTPUT $_ }
     close(UPDATED);
     close(OUTPUT);
+}
+
+
+sub fix_vlafillertask {
+    my $find_path = shift(@_);
+    my $find_vlafillertask = sub {
+        if ( -f $_ && m|vlafillertask| ) {
+            my $file = $_;
+            my @lines = ( );
+            open( my $fd, "< $file" ) || die "cannot open $File::Find::dir/$file: $!";
+            while( my $line = <$fd> ) {
+                $line =~ s|vlafillertask|vlafiller|g;
+                push(@lines,$line);
+            }
+            close( $fd );
+            open( $fd, "> $file" );
+            print $fd @lines;
+            close( $fd );
+        }
+    };
+
+    if ( ! -f "$path/.updated.vlafillertask" ) {
+        find( { wanted => $find_vlafillertask }, $find_path );
+
+        my ($sec,$min,$hour,$day,$month,$yr19,@rest) =   localtime(time);
+        open( my $fd, "> $path/.updated.vlafillertask" );
+        print $fd sprintf("%d %d %d %02d:%02d:%02d\n",$day,$month,$yr19,$hour,$min,$sec);
+        close( $fd );
+    }
 }
 
 sub fix_asdm_source {

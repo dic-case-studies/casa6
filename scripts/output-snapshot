@@ -3,6 +3,7 @@ use File::Find;
 use Cwd qw(abs_path getcwd);
 use File::Path qw(make_path remove_tree);
 use POSIX qw(strftime);
+use File::Copy;
 
 die "expected 'scripts/xml-casa' executable to exist" unless -x 'scripts/xml-casa';
 die "expected 'xml/tools' directory to exist (and be a directory)" unless -d 'xml/tools';
@@ -18,7 +19,7 @@ unless ( $outdir ) {
     ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     $year = ($year + 1900) % 100;
     $mon += 1;
-    $outdir = sprintf("tests/output-regression/%02d%02d%02d",$year,$mon,$mday);
+    $outdir = sprintf("tests/output-regression/%02d%02d%02d.%02d%02d",$year,$mon,$mday,$hour,$min);
     make_path($outdir) or die "could not create $outdir";
 
 }
@@ -34,6 +35,8 @@ sub find_xml {
 @xml_files = ( );
 find( sub { find_xml( \@xml_files ) }, 'xml/tools');
 
+if ( -e "$outdir/xml" ) { remove_tree("$outdir/xml") or die "could not remove $outdir/xml" }
+make_path("$outdir/xml") or die "could not create $outdir/xml";
 if ( -e "$outdir/tool" ) { remove_tree("$outdir/tool") or die "could not remove $outdir/tool" }
 make_path("$outdir/tool") or die "could not create $outdir/tool";
 if ( -e "$outdir/swig" ) { remove_tree("$outdir/swig") or die "could not remove $outdir/swig" }
@@ -49,6 +52,7 @@ print $log "start time: $starttime\n";
 print $log "input files:\n";
 foreach ( sort @xml_files ) {
     print $log "    $_\n";
+    copy($_,"$outdir/xml") or die "could not copy $_";
 }
 $cmd = "scripts/xml-casa output-c=$outdir/source output-h=$outdir/include output-i=$outdir/swig output-tool=$outdir/tool -all " . join(" ",sort @xml_files);
 print $log "command: $cmd\n";
