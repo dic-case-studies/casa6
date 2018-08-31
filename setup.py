@@ -157,6 +157,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_impv.py',
                     'src/tasks/task_imrebin.py',
                     'src/tasks/task_imreframe.py',
+                    'src/tasks/task_imregrid.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -226,6 +227,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/impv.xml': 'xml/impv.xml',
               'casa-source/gcwrap/tasks/imrebin.xml': 'xml/imrebin.xml',
               'casa-source/gcwrap/tasks/imreframe.xml': 'xml/imreframe.xml',
+              'casa-source/gcwrap/tasks/imregrid.xml': 'xml/imregrid.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -294,6 +296,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/impv.xml',
               'xml/imrebin.xml',
               'xml/imreframe.xml',
+              'xml/imregrid.xml',
 ]
 
 if pyversion < 3:
