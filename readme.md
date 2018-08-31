@@ -24,6 +24,13 @@ Unfortunately, Software Collections does not supply an RPM for [matplotlib](http
 ```
 -bash-4.2# pip install matplotlib
 ```
+Environment changes are required to enable python 3.6. I have something like this in my ```~/.profile```:
+```
+if [ -e /opt/rh/rh-python36/enable ]; then
+   source /opt/rh/rh-python36/enable
+fi
+```
+but you could also just source this in the shell where you will use pip and build CASAtasks.
 
 Second build and install [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) using your choice of Python and the instructions found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse).
 
