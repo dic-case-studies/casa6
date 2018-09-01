@@ -306,6 +306,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/imreframe.xml',
               'xml/imregrid.xml',
               'xml/imsmooth.xml',
+              'xml/imtrans.xml',
               'xml/imval.xml',
               'xml/initweights.xml',
 ]
