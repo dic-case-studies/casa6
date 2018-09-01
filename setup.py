@@ -160,6 +160,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_imregrid.py',
                     'src/tasks/task_imsmooth.py',
                     'src/tasks/task_imtrans.py',
+                    'src/tasks/task_imval.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -232,6 +233,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/imregrid.xml': 'xml/imregrid.xml',
               'casa-source/gcwrap/tasks/imsmooth.xml': 'xml/imsmooth.xml',
               'casa-source/gcwrap/tasks/imtrans.xml': 'xml/imtrans.xml',
+              'casa-source/gcwrap/tasks/imval.xml': 'xml/imval.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -302,7 +304,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/imreframe.xml',
               'xml/imregrid.xml',
               'xml/imsmooth.xml',
-              'xml/imtrans.xml',
+              'xml/imval.xml',
 ]
 
 if pyversion < 3:
