@@ -162,6 +162,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_imtrans.py',
                     'src/tasks/task_imval.py',
                     'src/tasks/task_initweights.py',
+                    'src/tasks/task_listcal.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -236,6 +237,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/imtrans.xml': 'xml/imtrans.xml',
               'casa-source/gcwrap/tasks/imval.xml': 'xml/imval.xml',
               'casa-source/gcwrap/tasks/initweights.xml': 'xml/initweights.xml',
+              'casa-source/gcwrap/tasks/listcal.xml': 'xml/listcal.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -309,6 +311,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/imtrans.xml',
               'xml/imval.xml',
               'xml/initweights.xml',
+              'xml/listcal.xml'
 ]
 
 if pyversion < 3:
