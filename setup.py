@@ -401,6 +401,9 @@ def generate_pyinit(moduledir,tasks):
         fd.write("""casalog = _logsink( _os.getcwd( ) + '/casa-'+_time.strftime("%Y%m%d-%H%M%S", _time.gmtime())+'.log' )\n\n""")
         for task in tasks:
             fd.write("from .%s import %s\n" % (task,task))
+
+        fd.write("\n")
+        fd.write("casalog.setglobal(True)\n")
         fd.write("\n")
 
 class BuildCasa(Command):
