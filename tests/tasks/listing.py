@@ -227,7 +227,7 @@ def diffAmpPhsFloat(test, standard, prefix="", precision="1e-6"):
             #return 
         
         # Compare all Amp-Phs pairs on this line
-        for i in range(len(tFloatList)/2):
+        for i in range(len(tFloatList)//2):
 
             # If the Amp or Phs not exactly equal
             if ( ( tFloatList[i*2] != sFloatList[i*2] ) or 
