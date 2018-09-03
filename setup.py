@@ -164,6 +164,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_initweights.py',
                     'src/tasks/task_listcal.py',
                     'src/tasks/task_listfits.py',
+                    'src/tasks/task_listhistory.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -227,6 +228,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/impbcor.xml': 'xml/impbcor.xml',
               'casa-source/gcwrap/tasks/importasap.xml': 'xml/importasap.xml',
               'casa-source/gcwrap/tasks/importatca.xml': 'xml/importatca.xml',
+              'casa-source/gcwrap/tasks/importfitsidi.xml': 'xml/importfitsidi.xml',
               'casa-source/gcwrap/tasks/importgmrt.xml': 'xml/importgmrt.xml',
               'casa-source/gcwrap/tasks/importnro.xml': 'xml/importnro.xml',
               'casa-source/gcwrap/tasks/importvla.xml': 'xml/importvla.xml',
@@ -240,6 +242,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/initweights.xml': 'xml/initweights.xml',
               'casa-source/gcwrap/tasks/listcal.xml': 'xml/listcal.xml',
               'casa-source/gcwrap/tasks/listfits.xml': 'xml/listfits.xml',
+              'casa-source/gcwrap/tasks/listhistory.xml': 'xml/listhistory.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -315,6 +318,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/initweights.xml',
               'xml/listcal.xml',
               'xml/listfits.xml',
+              'xml/listhistory.xml',
 ]
 
 if pyversion < 3:
