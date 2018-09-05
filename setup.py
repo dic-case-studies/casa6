@@ -172,6 +172,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_polcal.py',
                     'src/tasks/task_predictcomp.py',
                     'src/tasks/task_rerefant.py',
+                    'src/tasks/task_rmfit.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -256,6 +257,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/polcal.xml': 'xml/polcal.xml',
               'casa-source/gcwrap/tasks/predictcomp.xml': 'xml/predictcomp.xml',
               'casa-source/gcwrap/tasks/rerefant.xml': 'xml/rerefant.xml',
+              'casa-source/gcwrap/tasks/rmfit.xml': 'xml/rmfit.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -338,6 +340,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/polcal.xml',
               'xml/predictcomp.xml',
               'xml/rerefant.xml',
+              'xml/rmfit.xml',
 ]
 
 if pyversion < 3:
