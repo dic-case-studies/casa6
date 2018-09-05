@@ -41,6 +41,9 @@ else:
         else:
             return str(bs)
 
+str2bytes = str_encode
+bytes2str = str_decode
+
 def dict_encode(d):
     coerce =  {
         "string": lambda x: str_encode(str(x)),
