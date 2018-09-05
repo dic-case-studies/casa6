@@ -174,6 +174,8 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_rerefant.py',
                     'src/tasks/task_rmfit.py',
                     'src/tasks/task_rmtables.py',
+                    'src/scripts/sdutil.py',
+                    'src/tasks/task_sdbaseline.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -260,6 +262,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/rerefant.xml': 'xml/rerefant.xml',
               'casa-source/gcwrap/tasks/rmfit.xml': 'xml/rmfit.xml',
               'casa-source/gcwrap/tasks/rmtables.xml': 'xml/rmtables.xml',
+              'casa-source/gcwrap/tasks/sdbaseline.xml': 'xml/sdbaseline.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -344,6 +347,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/rerefant.xml',
               'xml/rmfit.xml',
               'xml/rmtables.xml',
+              'xml/sdbaseline.xml',
 ]
 
 if pyversion < 3:
