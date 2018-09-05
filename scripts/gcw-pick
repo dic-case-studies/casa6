@@ -109,6 +109,7 @@ $hdr_dir = "binding/include";
                'vlafiller' => 'casa-source/gcwrap/tools/nrao/vlafillertask.xml',
                'iterbotsink' => 'src/cmpt/iterbot/iterbotsink.xml',
                'sdm' => 'src/cmpt/sdm/sdm.xml',
+               'sakura' => 'casa-source/gcwrap/tools/singledish/sakura.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -244,7 +245,10 @@ $hdr_dir = "binding/include";
                           'src/cmpt/sdm/SubscanIntent.cc',
                           'src/cmpt/sdm/SDMBinData.h',
                           'src/cmpt/sdm/SDMBinData.cc',
-                          'src/cmpt/sdm/BdFlagger.cc',               ],
+                          'src/cmpt/sdm/BdFlagger.cc', ],
+               'sakura' => [ 'casa-source/gcwrap/tools/singledish/sakura_cmpt.cc',
+                             'casa-source/gcwrap/tools/singledish/sakura_forward.h',
+                             'casa-source/gcwrap/tools/singledish/sakura_private.h', ],
              );
 
 print "configuring CASAtools... this may take a few moments...\n";
