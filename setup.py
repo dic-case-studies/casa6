@@ -171,6 +171,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/imtools.py',
                     'src/tasks/task_polcal.py',
                     'src/tasks/task_predictcomp.py',
+                    'src/tasks/task_rerefant.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -254,6 +255,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/makemask.xml': 'xml/makemask.xml',
               'casa-source/gcwrap/tasks/polcal.xml': 'xml/polcal.xml',
               'casa-source/gcwrap/tasks/predictcomp.xml': 'xml/predictcomp.xml',
+              'casa-source/gcwrap/tasks/rerefant.xml': 'xml/rerefant.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -335,6 +337,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/makemask.xml',
               'xml/polcal.xml',
               'xml/predictcomp.xml',
+              'xml/rerefant.xml',
 ]
 
 if pyversion < 3:
