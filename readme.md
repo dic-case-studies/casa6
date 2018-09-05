@@ -7,7 +7,7 @@ CASAtasks is a self-contained python module that provides the tasks from the [CA
 
 ## Maturity
 
-This is is still in intial development (read *pre-alpha* software), and at this point, it is not intended for use outside of the CASA project. Currently it builds wherever [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) can be built, and the only extra Python dependency is [matplotlib](https://matplotlib.org). Most of the development of this module has been done with Python 3.6, but we plan to make an effort to get this to work with Python 2.7.
+This is is still in intial development (read *pre-alpha* software), and at this point, it is not intended for use outside of the CASA project. Currently it builds wherever [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) can be built, and the only extra Python dependency is [matplotlib](https://matplotlib.org). Python 3.4 or 3.6 **must** be used to build this module, but we plan to make an effort to get this to work with Python 2.7.
 
 ## Building CASAtasks
 
