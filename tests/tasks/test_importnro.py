@@ -6,7 +6,7 @@ import numpy
 import itertools
 
 from CASAtools import ctsys, measures, ms, table, quanta
-from CASAtools.platform import str_encode
+from CASAtools.platform import str2bytes
 from CASAtasks import importnro
 
 _qa = quanta( )
@@ -92,7 +92,7 @@ class importnro_test(unittest.TestCase):
     
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
-        with open(self.infile, 'wb') as f: f.write(str_encode('AA'))
+        with open(self.infile, 'wb') as f: f.write(str2bytes('AA'))
         #os.remove(os.path.join(self.infile, 'table.info'))
         with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$') as cm:
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)

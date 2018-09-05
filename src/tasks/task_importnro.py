@@ -4,7 +4,7 @@ import re
 import shutil
 
 from CASAtools import singledishms, calibrater
-from CASAtools.platform import str_decode
+from CASAtools.platform import bytes2str
 from CASAtasks import casalog
 
 mysdms = singledishms( )
@@ -59,8 +59,8 @@ def _is_nostar(filename):
     ret = False
     if os.path.getsize(filename) >= 15136: # size of observation header
         with open(filename, 'rb') as f:
-            if str_decode(f.read(8).replace(b'\x00', b'')) == 'RW':
-                ret = (str_decode(f.read(15136-8+4)[-4:].replace(b'\x00', b'')) == 'LS')
+            if bytes2str(f.read(8).replace(b'\x00', b'')) == 'RW':
+                ret = (bytes2str(f.read(15136-8+4)[-4:].replace(b'\x00', b'')) == 'LS')
             f.close()
 
     return ret

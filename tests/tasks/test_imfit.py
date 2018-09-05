@@ -69,7 +69,7 @@ import unittest
 import numpy
 
 from CASAtools import ctsys, table, image, quanta, componentlist, regionmanager
-from CASAtools.platform import str_encode
+from CASAtools.platform import str2bytes
 from CASAtasks import imfit
 
 noisy_image = "gaussian_model_with_noise.im"
@@ -741,9 +741,9 @@ class imfit_test(unittest.TestCase):
     
             self.assertTrue(os.path.exists(newestimates)) 
             expec = ctsys.resolve(os.path.join(datapath,expected_new_estimates))
-            expected_sha = hashlib.sha512(str_encode(open(expec, 'r').read())).hexdigest()
+            expected_sha = hashlib.sha512(str2bytes(open(expec, 'r').read())).hexdigest()
     
-            got_sha = hashlib.sha512(str_encode(open(newestimates, 'r').read())).hexdigest()
+            got_sha = hashlib.sha512(str2bytes(open(newestimates, 'r').read())).hexdigest()
             self.assertTrue(
                 got_sha == expected_sha,
                 newestimates + " differs from " + expec

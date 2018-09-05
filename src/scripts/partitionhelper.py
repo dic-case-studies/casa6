@@ -8,7 +8,7 @@ import subprocess
 import numpy as np
 from matplotlib import pyplot as plt
 from CASAtasks import casalog
-from CASAtools.platform import str_decode
+from CASAtools.platform import bytes2str
 from CASAtools import table, ms, msmetadata
 
 class convertToMMS():
@@ -165,9 +165,9 @@ class convertToMMS():
             return ret
                 
         cmd1 = 'grep Type '+dir+'/table.info'
-        type = str_decode(subprocess.check_output(cmd1)).rstrip("\n")
+        type = bytes2str(subprocess.check_output(cmd1)).rstrip("\n")
         cmd2 = 'grep SubType '+dir+'/table.info'
-        stype = str_decode(subprocess.check_output(cmd2)).rstrip("\n")
+        stype = bytes2str(subprocess.check_output(cmd2)).rstrip("\n")
         
         # It is a cal table
         if type.__contains__('Calibration'):
@@ -693,7 +693,7 @@ def getDiskUsage(msfile):
     
     o, e = p.communicate( )                ### previously 'sizeline = p.stdout.read()' here
                                            ### left process running...
-    sizeline = str_decode(o.split( )[0])
+    sizeline = bytes2str(o.split( )[0])
     
     # Create a list of the output string, which looks like this:
     # ' 75M\tuidScan23.data/uidScan23.0000.ms\n'

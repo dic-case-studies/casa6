@@ -6,7 +6,7 @@ import subprocess
 import unittest
 
 from CASAtools import ctsys
-from CASAtools.platform import str_decode
+from CASAtools.platform import bytes2str
 from CASAtasks import casalog, listhistory
 
 datapath = ctsys.resolve('regression/unittest/listhistory')
@@ -64,7 +64,7 @@ class listhistory_test(unittest.TestCase):
 
         cmd=['wc', '-l', logfile]
         print(cmd)
-        output=str_decode(subprocess.check_output(cmd))
+        output=bytes2str(subprocess.check_output(cmd))
         num = int(output.split()[0])
         self.assertEqual(refnum,num)
 

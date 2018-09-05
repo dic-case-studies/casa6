@@ -4,7 +4,7 @@ import datetime
 import re
 
 from CASAtools import table, quanta
-from CASAtools.platform import str_decode
+from CASAtools.platform import bytes2str
 from CASAtasks import casalog
 
 _tb = table( )
@@ -89,7 +89,7 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
     response.close()
     for year in range(2010,current_year+1):
         response = urlopen(URL_BASE + str(year))
-        html = str_decode(response.read())
+        html = bytes2str(response.read())
         response.close()
         html_lines = html.split('\n')
         for correction_line in html_lines:
