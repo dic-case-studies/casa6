@@ -178,6 +178,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_sdbaseline.py',
                     'src/tasks/task_sdcal.py',
                     'src/tasks/task_sdfit.py',
+                    'src/tasks/task_sdfixscan.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -267,6 +268,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdbaseline.xml': 'xml/sdbaseline.xml',
               'casa-source/gcwrap/tasks/sdcal.xml': 'xml/sdcal.xml',
               'casa-source/gcwrap/tasks/sdfit.xml': 'xml/sdfit.xml',
+              'casa-source/gcwrap/tasks/sdfixscan.xml': 'xml/sdfixscan.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -354,6 +356,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdbaseline.xml',
               'xml/sdcal.xml',
               'xml/sdfit.xml',
+              'xml/sdfixscan.xml',
 ]
 
 if pyversion < 3:
