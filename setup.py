@@ -405,6 +405,17 @@ def upgrade_xml( conversions ):
     mkpath("xml")
     for k in conversions.keys( ):
         if not os.path.exists(conversions[k]):
+
+            if k.endswith("/sdcal.xml"):
+                print("fixing %s" % k)
+                f = open(k,'r')
+                filedata = f.read()
+                f.close()
+                newdata = filedata.replace('<value type="dict">{}</value>','<value type="record"/>')
+                f = open(k,'w')
+                f.write(newdata)
+                f.close()
+
             print("upgrading %s" % k)
 
             proc = Popen( [tools_config['build.compiler.xml-casa'], "-upgrade", k],
