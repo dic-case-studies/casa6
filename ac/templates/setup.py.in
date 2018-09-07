@@ -291,6 +291,8 @@ def generate_pyinit(moduledir,tools):
                    else:
                        return [ ]
 
+               sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
+
                ctsys = __utils( )
                ctsys.initialize( __find_user_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] + __find_data_path( ))
                from .coercetype import coerce as __coerce
