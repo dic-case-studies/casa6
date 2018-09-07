@@ -11,10 +11,10 @@ def skipUnlessHasParam(param):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
             task = args[0].task
-            task_args = inspect.getargs(task.func_code).args
+            task_args = inspect.getargs(task.__call__.__code__).args
             if isinstance(param, str):
                 condition = param in task_args
-                reason = '%s doesn\'t have parameter \'%s\''%(task.__name__, param)
+                reason = '%s doesn\'t have parameter \'%s\''%(str(task), param)
             else:
                 # should be a list
                 condition = all([p in task_args for p in param])

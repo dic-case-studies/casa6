@@ -8,7 +8,7 @@ import abc
 import datetime
 import contextlib
 
-from CASAtools import quanta, table, calibrater
+from CASAtools import quanta, table, calibrater, imager, table
 from CASAtools.platform import bytes2str
 from CASAtasks import casalog
 
@@ -511,7 +511,8 @@ class sdtask_template_imaging(sdtask_interface):
         super(sdtask_template_imaging,self).__init__(**kwargs)
         self.is_table_opened = False
         self.is_imager_opened = False
-        self.table, self.imager = gentools(['tb','im'])
+        self.table = table( )
+        self.imager = imager( )
         # workaround for sdtpimaging
         if not hasattr(self, 'infiles') and hasattr(self, 'infile'):
             self.infiles = [self.infile]
