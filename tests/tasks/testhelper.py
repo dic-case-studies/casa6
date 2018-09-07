@@ -693,3 +693,19 @@ def copytree_ignore_subversion(datadir, name, outname=None):
         shutil.copytree(os.path.join(datadir, name), outname,
                         ignore=ignore_subversion)
 
+
+def get_table_cache():
+    mytb = table( )
+    cache = mytb.showcache()
+    #print 'cache = {}'.format(cache)
+    return cache
+
+
+class TableCacheValidator(object):
+    def __init__(self):
+        self.original_cache = get_table_cache()
+        
+    def validate(self):
+        cache = get_table_cache()
+        #print 'original {} current {}'.format(self.original_cache, cache)
+        return len(cache) == 0 or cache == self.original_cache
