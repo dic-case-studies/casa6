@@ -180,6 +180,9 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_sdfit.py',
                     'src/tasks/task_sdfixscan.py',
                     'src/tasks/task_sdgaincal.py',
+                    'src/tasks/task_sdimaging.py',
+                    'src/scripts/sdbeamutil.py',
+                    'src/scripts/cleanhelper.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -271,6 +274,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdfit.xml': 'xml/sdfit.xml',
               'casa-source/gcwrap/tasks/sdfixscan.xml': 'xml/sdfixscan.xml',
               'casa-source/gcwrap/tasks/sdgaincal.xml': 'xml/sdgaincal.xml',
+              'casa-source/gcwrap/tasks/sdimaging.xml': 'xml/sdimaging.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -360,6 +364,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdfit.xml',
               'xml/sdfixscan.xml',
               'xml/sdgaincal.xml',
+              'xml/sdimaging.xml',
 ]
 
 if pyversion < 3:
