@@ -179,6 +179,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_sdcal.py',
                     'src/tasks/task_sdfit.py',
                     'src/tasks/task_sdfixscan.py',
+                    'src/tasks/task_sdgaincal.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -269,6 +270,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdcal.xml': 'xml/sdcal.xml',
               'casa-source/gcwrap/tasks/sdfit.xml': 'xml/sdfit.xml',
               'casa-source/gcwrap/tasks/sdfixscan.xml': 'xml/sdfixscan.xml',
+              'casa-source/gcwrap/tasks/sdgaincal.xml': 'xml/sdgaincal.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -357,6 +359,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdcal.xml',
               'xml/sdfit.xml',
               'xml/sdfixscan.xml',
+              'xml/sdgaincal.xml',
 ]
 
 if pyversion < 3:
@@ -412,6 +415,17 @@ def upgrade_xml( conversions ):
                 filedata = f.read()
                 f.close()
                 newdata = filedata.replace('<value type="dict">{}</value>','<value type="record"/>')
+                f = open(k,'w')
+                f.write(newdata)
+                f.close()
+
+            if k.endswith("/sdgaincal.xml"):
+                print("fixing %s" % k)
+                f = open(k,'r')
+                filedata = f.read()
+                f.close()
+                ## spwmap is intended to accept things like [[2,3,2,3],[-1]] is not an "intArray" so this must be an "any"
+                newdata = filedata.replace('<param type="intArray" name="spwmap" subparam="true">','<param type="any" name="spwmap" subparam="true">')
                 f = open(k,'w')
                 f.write(newdata)
                 f.close()
