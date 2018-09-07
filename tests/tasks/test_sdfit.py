@@ -425,17 +425,17 @@ class sdfit_unittest_base(unittest.TestCase):
             #keylist = self.complist
         
         for key in keylist:
-            self.assertTrue(currstat.has_key(key),\
+            self.assertTrue(key in currstat,\
                             msg="%s is not defined in the current results."\
                             % key)
-            self.assertTrue(refstat.has_key(key),\
+            self.assertTrue(key in refstat,\
                             msg="%s is not defined in the reference data."\
                             % key)
             refval = refstat[key]
             currval = currstat[key]
             # Quantum values
             if isinstance(refval,dict):
-                if refval.has_key('unit') and currval.has_key('unit'):
+                if 'unit' in refval and 'unit' in currval:
                     if printstat:
                         print("Comparing unit of '%s': %s (current run), %s (reference)" %\
                               (key,currval['unit'],refval['unit']))
