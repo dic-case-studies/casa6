@@ -185,6 +185,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/cleanhelper.py',
                     'src/tasks/task_sdimaging.py',
                     'src/tasks/task_sdsmooth.py',
+                    #'src/tasks/task_simalma.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -278,6 +279,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdgaincal.xml': 'xml/sdgaincal.xml',
               'casa-source/gcwrap/tasks/sdimaging.xml': 'xml/sdimaging.xml',
               'casa-source/gcwrap/tasks/sdsmooth.xml': 'xml/sdsmooth.xml',
+              #'casa-source/gcwrap/tasks/simalma.xml': 'xml/simalma.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -369,6 +371,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdgaincal.xml',
               'xml/sdimaging.xml',
               'xml/sdsmooth.xml',
+              #'xml/simalma.xml',
 ]
 
 if pyversion < 3:
@@ -435,6 +438,20 @@ def upgrade_xml( conversions ):
                 f.close()
                 ## spwmap is intended to accept things like [[2,3,2,3],[-1]] is not an "intArray" so this must be an "any"
                 newdata = filedata.replace('<param type="intArray" name="spwmap" subparam="true">','<param type="any" name="spwmap" subparam="true">')
+                f = open(k,'w')
+                f.write(newdata)
+                f.close()
+
+            if k.endswith("/imval.xml"):
+                print("fixing %s" % k)
+                f = open(k,'r')
+                filedata = f.read()
+                f.close()
+                ## one test case test_imval.py is fundamentally broken, and fixing this through
+                ## a commit causes the test case to proceed past the broken spot... so here
+                ## we revert to patching at build time...
+                newdata = filedata.replace('<output>','<bogus_output>')
+                newdata = newdata.replace('</output>','</bogus_output>')
                 f = open(k,'w')
                 f.write(newdata)
                 f.close()
