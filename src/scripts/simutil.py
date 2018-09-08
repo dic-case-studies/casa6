@@ -524,7 +524,7 @@ class simutil:
 
             # Start from the top because in the Southern hemisphere it sets first.
             y = qa.add(centy, qa.mul(0.5 * (nrows - 1), yspacing))
-            for row in xrange(0, nrows):         # xrange stops early.
+            for row in range(0, nrows):         # xrange stops early.
                 xspacing = qa.mul(1.0 / pl.cos(qa.convert(y, 'rad')['value']),spacing)
                 ystr = qa.formxxx(y, format='dms',prec=5)
                 
@@ -535,7 +535,7 @@ class simutil:
                     xmin = qa.sub(centx, qa.mul(ncolstomin - 0.5,
                                                 xspacing))
                     stopcolp1 = evencols
-                for col in xrange(0, stopcolp1):        # xrange stops early.
+                for col in range(0, stopcolp1):        # xrange stops early.
                     x = qa.formxxx(qa.add(xmin, qa.mul(col, xspacing)),
                                    format='hms',prec=5)
                     pointings.append("%s%s %s" % (epoch, x, ystr))
@@ -562,14 +562,14 @@ class simutil:
 
             # Start from the top because in the Southern hemisphere it sets first.
             y = qa.add(centy, qa.mul(0.5 * (nrows - 1), yspacing))
-            for row in xrange(0, nrows):         # xrange stops early.
+            for row in range(0, nrows):         # xrange stops early.
                 xspacing = qa.mul(1.0 / pl.cos(qa.convert(y, 'rad')['value']),spacing)
                 ystr = qa.formxxx(y, format='dms',prec=5)
 
                 xmin = qa.sub(centx, qa.mul(ncolstomin, xspacing))
                 stopcolp1 = ncols
         
-                for col in xrange(0, stopcolp1):        # xrange stops early.
+                for col in range(0, stopcolp1):        # xrange stops early.
                     x = qa.formxxx(qa.add(xmin, qa.mul(col, xspacing)),
                                    format='hms',prec=5)
                     pointings.append("%s%s %s" % (epoch, x, ystr))

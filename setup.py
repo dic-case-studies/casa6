@@ -188,6 +188,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/simutil.py',
                     #'src/tasks/task_simalma.py',
                     'src/tasks/task_simobserve.py',
+                    'src/tasks/task_simanalyze.py',
                     'src/tasks/task_feather.py',
 ]
 
@@ -284,6 +285,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdsmooth.xml': 'xml/sdsmooth.xml',
               #'casa-source/gcwrap/tasks/simalma.xml': 'xml/simalma.xml',
               'casa-source/gcwrap/tasks/simobserve.xml': 'xml/simobserve.xml',
+              'casa-source/gcwrap/tasks/simanalyze.xml': 'xml/simanalyze.xml',
               'casa-source/gcwrap/tasks/feather.xml': 'xml/feather.xml',
 }
 
@@ -378,6 +380,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdsmooth.xml',
               #'xml/simalma.xml',
               'xml/simobserve.xml',
+              'xml/simanalyze.xml',
               'xml/feather.xml',
 ]
 

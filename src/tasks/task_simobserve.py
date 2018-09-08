@@ -378,7 +378,7 @@ def simobserve(
             # (set back to simdata - there must be an automatic way to do this)
             casalog.origin('simobserve')
 
-            for k in xrange(0,nant): antnames.append('A%02d'%k)
+            for k in range(0,nant): antnames.append('A%02d'%k)
             aveant = stnd.mean()
             # TODO use max ant = min PB instead?
             pb = pbcoeff*0.29979/qa.convert(qa.quantity(model_specrefval),'GHz')['value']/aveant*3600.*180/pl.pi # arcsec
@@ -643,7 +643,7 @@ def simobserve(
         ymax=ymax+pb*relmargin/3600
         overlap = False
         # wrapang in median_direction should make offsets always small, not >360
-        for i in xrange(offsets.shape[1]):
+        for i in range(offsets.shape[1]):
             xc = pl.absolute(offsets[0,i]+shift[0])  # offsets and shift are in degrees
             yc = pl.absolute(offsets[1,i]+shift[1])
             if xc < xmax and yc < ymax:
@@ -735,7 +735,7 @@ def simobserve(
                     plotpb(pb,pl.gca(),lims=lims,color=plotcolor)
             else:
                 from matplotlib.patches import Circle
-                for i in xrange(offsets.shape[1]):
+                for i in range(offsets.shape[1]):
                     pl.gca().add_artist(Circle(
                         ((offsets[0,i]+shift[0])*3600,
                          (offsets[1,i]+shift[1])*3600),
@@ -888,7 +888,7 @@ def simobserve(
             sm.settimes(integrationtime=integration, usehourangle=usehourangle, 
                         referencetime=mereftime)
 
-            for k in xrange(0,nfld):
+            for k in range(0,nfld):
                 src = project + '_%d' % k
                 sm.setfield(sourcename=src, sourcedirection=pointings[k],
                             calcode="OBJ", distance='0m')
