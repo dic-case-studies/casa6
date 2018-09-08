@@ -185,7 +185,9 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/cleanhelper.py',
                     'src/tasks/task_sdimaging.py',
                     'src/tasks/task_sdsmooth.py',
+                    'src/scripts/simutil.py',
                     #'src/tasks/task_simalma.py',
+                    'src/tasks/task_feather.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -280,6 +282,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdimaging.xml': 'xml/sdimaging.xml',
               'casa-source/gcwrap/tasks/sdsmooth.xml': 'xml/sdsmooth.xml',
               #'casa-source/gcwrap/tasks/simalma.xml': 'xml/simalma.xml',
+              'casa-source/gcwrap/tasks/feather.xml': 'xml/feather.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -372,6 +375,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdimaging.xml',
               'xml/sdsmooth.xml',
               #'xml/simalma.xml',
+              'xml/feather.xml',
 ]
 
 if pyversion < 3:
