@@ -72,7 +72,7 @@ class compositenumber:
         while maxi<(n2*n3*n5) and itsnumbers[maxi]<=maxval: maxi=maxi+1
         self.itsnumbers=pl.int64(itsnumbers[0:maxi])
     def list(self):
-        print self.itsnumbers
+        print(self.itsnumbers)
     def nextlarger(self,x):
         if x>max(self.itsnumbers): self.generate(2*x)
         xi=0
@@ -214,9 +214,9 @@ class simutil:
                 s=foo[0]+"\x1b[35mWARNING\x1b[0m"+foo[1]
 
             if origin:
-                print clr+"["+origin+"] "+bw+s
+                print(clr+"["+origin+"] "+bw+s)
             else:
-                print s
+                print(s)
 
 
         if priority=="ERROR":
@@ -765,7 +765,7 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print "[simutil] WARN: precession not handled by average_direction()"
+                print("[simutil] WARN: precession not handled by average_direction()")
             x = self.wrapang(x, avgx, 360.0)
             avgx += (x - avgx) / i
             avgy += (y - avgy) / i
@@ -814,7 +814,7 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print "[simutil] WARN: precession not handled by average_direction()"
+                print("[simutil] WARN: precession not handled by average_direction()")
             x = self.wrapang(x, avgx, 360.0)
             xx.append(x)
             yy.append(y)
