@@ -191,6 +191,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_simanalyze.py',
                     'src/tasks/task_feather.py',
                     'src/tasks/task_statwt.py',
+                    'src/tasks/task_virtualconcat.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -289,6 +290,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/simanalyze.xml': 'xml/simanalyze.xml',
               'casa-source/gcwrap/tasks/feather.xml': 'xml/feather.xml',
               'casa-source/gcwrap/tasks/statwt.xml': 'xml/statwt.xml',
+              'casa-source/gcwrap/tasks/virtualconcat.xml': 'xml/virtualconcat.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -385,6 +387,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/simanalyze.xml',
               'xml/feather.xml',
               'xml/statwt.xml',
+              'xml/virtualconcat.xml',
 ]
 
 if pyversion < 3:
