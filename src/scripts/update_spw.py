@@ -20,6 +20,8 @@ import os
 #from taskinit import mstool
 from CASAtools import ms
 
+_ms = ms( )
+
 def update_spw(spw, spwmap=None):
     """
     Given an spw:chan selection string, return what it should be after the spws
@@ -156,7 +158,7 @@ def spwchan_to_ranges(vis, spw):
     >>> selranges
     {0: (1,  3,  1), 1: (1,  3,  1), 5: (10, 20,  2), 7: (10, 20,  2)}
     """
-    selarr = ms.msseltoindex(vis, spw=spw)['channel']
+    selarr = _ms.msseltoindex(vis, spw=spw)['channel']
     nspw = selarr.shape[0]
     selranges = {}
     for s in range(nspw):
@@ -185,18 +187,18 @@ def spwchan_to_sets(vis, spw):
     >>> spwchan_to_sets(vis, '')
     {}
     """
-    if not spw:        # ms.msseltoindex(vis, spw='')['channel'] returns a
+    if not spw:        # _ms.msseltoindex(vis, spw='')['channel'] returns a
         return {}      # different kind of empty array.  Skip it.
 
     # Currently distinguishing whether or not vis is a valid MS from whether it
     # just doesn't have all the channels in spw is a bit crude.  Sanjay is
-    # working on adding some flexibility to ms.msseltoindex.
+    # working on adding some flexibility to _ms.msseltoindex.
     if not os.path.isdir(vis):
         raise ValueError(str(vis) + ' is not a valid MS.')
         
     sets = {}
     try:
-        scharr = ms.msseltoindex(vis, spw=spw)['channel']
+        scharr = _ms.msseltoindex(vis, spw=spw)['channel']
         for scr in scharr:
             if not scr[0] in sets:
                 sets[scr[0]] = set([])
@@ -206,8 +208,8 @@ def spwchan_to_sets(vis, spw):
             sets[scr[0]].update(range(*scr[1:]))
     except:
         # spw includes channels that aren't in vis, so it needs to be trimmed
-        # down to make ms.msseltoindex happy.
-        allrec = ms.msseltoindex(vis, spw='*')
+        # down to make _ms.msseltoindex happy.
+        allrec = _ms.msseltoindex(vis, spw='*')
         #print "Trimming", spw
         spwd = spw_to_dict(spw, {}, False)
         for s in spwd:
@@ -217,7 +219,7 @@ def spwchan_to_sets(vis, spw):
                     sets[s] = set([])
                 if spwd[s] == '':
                     # We need to get the spw's # of channels without using
-                    # ms.msseltoindex.
+                    # _ms.msseltoindex.
                     mytb = casac.table()
                     mytb.open(vis + '/SPECTRAL_WINDOW')
                     spwd[s] = range(mytb.getcell('NUM_CHAN', s))
@@ -624,7 +626,7 @@ def join_spws(spw1, spw2, span_semicolon=True):
         spwdict[s] = cstr
 
     # If consecutive spws have the same channel selection, merge them.
-    slist = spwdict.keys()
+    slist = list(spwdict.keys())
     slist.sort()
     res = str(slist[0])
     laststart = 0
