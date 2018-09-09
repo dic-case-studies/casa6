@@ -194,6 +194,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_virtualconcat.py',
                     'src/tasks/task_uvcontsub.py',
                     'src/tasks/task_uvmodelfit.py',
+                    'src/tasks/task_visstat.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -295,6 +296,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/virtualconcat.xml': 'xml/virtualconcat.xml',
               'casa-source/gcwrap/tasks/uvcontsub.xml': 'xml/uvcontsub.xml',
               'casa-source/gcwrap/tasks/uvmodelfit.xml': 'xml/uvmodelfit.xml',
+              'casa-source/gcwrap/tasks/visstat.xml': 'xml/visstat.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -394,6 +396,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/virtualconcat.xml',
               'xml/uvcontsub.xml',
               'xml/uvmodelfit.xml',
+              'xml/visstat.xml',
 ]
 
 if pyversion < 3:
