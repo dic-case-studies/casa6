@@ -123,7 +123,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
 
                     ## Pop out the startmodel, as it would already have been created on the main node,.
                     tmpimpars = nimpars[str(fld)]
-                    if tmpimpars.has_key('startmodel'):
+                    if 'startmodel' in tmpimpars:
                         tmpimpars.pop('startmodel')
 
                     joblist.append( self.PH.runcmd("toolsi.defineimage( impars=" + str( nimpars[str(fld)] ) 
@@ -295,7 +295,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             if self.NN>1:
                 nimpars[str(fld)]['imagename'] = self.PH.getpartimagename( nimpars[str(fld)]['imagename'], nodes[0] )
             tmpimpars = nimpars[str(fld)]
-            if partialSelPars==False and tmpimpars.has_key('startmodel'):
+            if partialSelPars==False and 'startmodel' in tmpimpars:
                 tmpimpars.pop('startmodel')
             joblist.append( self.PH.runcmd("toolsi.defineimage( impars=" + str( tmpimpars ) 
                                                + ", gridpars=" + str( ngridpars[str(fld)] )   + ")", nodes[0] ) )
@@ -319,7 +319,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
 
 
                 tmpimpars = nimpars[str(fld)]
-                if partialSelPars==False and tmpimpars.has_key('startmodel'):
+                if partialSelPars==False and 'startmodel' in tmpimpars:
                     tmpimpars.pop('startmodel')
                 joblist.append( self.PH.runcmd("toolsi.defineimage( impars=" + str( tmpimpars ) 
                                                + ", gridpars=" + str( ngridpars[str(fld)] )   + ")", node ) )

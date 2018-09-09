@@ -380,8 +380,8 @@ def importasdm(
             tblocal.open(myviso+'/SOURCE', nomodify=False)
             ssourceids = tblocal.getcol('SOURCE_ID')
             sdirs = tblocal.getcol('DIRECTION')
-            for row in xrange(0,len(ssourceids)):
-                for i in xrange(0,len(affectedsids)):
+            for row in range(0,len(ssourceids)):
+                for i in range(0,len(affectedsids)):
                     if ssourceids[row]==affectedsids[i]:
                         sdirs[0][row] = directions[i][0]
                         sdirs[1][row] = directions[i][1]

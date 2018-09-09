@@ -571,7 +571,7 @@ class cleanhelper:
         """
         #print("Inside makemultifieldmask2")
         if((len(self.maskimages)==(len(self.imagelist)))):
-            if(self.imagelist[0] not in self.maskimages.has_key()):
+            if(self.imagelist[0] not in self.maskimages):
                 self.maskimages=OrderedDict()
         else:
             self.maskimages=OrderedDict()

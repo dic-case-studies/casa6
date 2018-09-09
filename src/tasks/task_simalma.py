@@ -1151,10 +1151,10 @@ def simalma(
                     bu.set_antenna("12m", "0.75m")
                     bu.set_sampling([ptgspacing_tp, ptgspacing_tp], "0.0deg")
                     bu.set_image_param(task_param['cell'], model_center,task_param['gridfunction'],
-                                       task_param['convsupport'] if task_param.has_key('convsupport') else -1,
+                                       task_param['convsupport'] if 'convsupport' in task_param else -1,
                                        -1,
-                                       task_param['gwidth'] if task_param.has_key('gwidth') else -1,
-                                       task_param['jwidth'] if task_param.has_key('jwidth') else -1,
+                                       task_param['gwidth'] if 'gwidth' in task_param else -1,
+                                       task_param['jwidth'] if 'jwidth' in task_param else -1,
                                        is_alma=True)
                     #bu.summary()
                     imbeam = bu.get_beamsize_image()

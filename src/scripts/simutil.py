@@ -1583,13 +1583,13 @@ class simutil:
                 break
         f.close()
 
-        if not params.has_key("coordsys"):
+        if "coordsys" not in params:
             self.msg("Must specify coordinate system #coorsys=XYZ|UTM|LOCin antenna file",origin="readantenna",priority="error")
             return -1
         else:
             self.coordsys=params["coordsys"]
 
-        if params.has_key("observatory"):
+        if "observatory" in params:
             self.telescopename=params["observatory"]
         else:
             self.telescopename="SIMULATED"
@@ -1604,7 +1604,7 @@ class simutil:
         if found:
             posobs=me.measure(me.observatory(self.telescopename),'WGS84')
             
-        if params.has_key("COFA"):
+        if "COFA" in params:
             obs_latlon=params["COFA"].split(",")
             cofa_lon=float(obs_latlon[0])
             cofa_lat=float(obs_latlon[1])
@@ -1635,17 +1635,17 @@ class simutil:
             if (params["coordsys"].upper()=="UTM"):
         ### expect easting, northing, elevation in m
                 self.msg("Antenna locations in UTM; will read from file easting, northing, elevation in m",origin="readantenna") 
-                if params.has_key("zone"):
+                if "zone" in params:
                     zone=params["zone"]
                 else:
                     self.msg("You must specify zone=NN in your antenna file",origin="readantenna",priority="error")
                     return -1
-                if params.has_key("datum"):
+                if "datum" in params:
                     datum=params["datum"]
                 else:
                     self.msg("You must specify datum in your antenna file",origin="readantenna",priority="error")
                     return -1
-                if params.has_key("hemisphere"):
+                if "hemisphere" in params:
                     nors=params["hemisphere"]
                     nors=nors[0].upper()
                 else:
@@ -1908,14 +1908,14 @@ class simutil:
             'WGS72' :[   0, 0  , 4.5,'WD','World Geodetic System - 72'    ],
             'WGS84' :[   0, 0  ,   0,'WE','World Geodetic System - 84'    ]}
         
-        if not datums.has_key(datumcode):
+        if datumcode not in datums:
             self.msg("unknown datum %s" % datumcode,priority="error")
             return -1
         
         datum=datums[datumcode]
         ellipsoid=datum[3]
         
-        if not ellipsoids.has_key(ellipsoid):
+        if ellipsoid not in ellipsoids:
             self.msg("unknown ellipsoid %s" % ellipsoid,priority="error")
             return -1
         
