@@ -8,6 +8,8 @@ m4_include([ac/m4/m4_ax_canonical_name.m4])
 m4_include([ac/m4/m4_ax_canonical_split.m4])
 m4_include([ac/m4/m4_ax_gsl.m4])
 m4_include([ac/m4/m4_ax_cfitsio.m4])
+m4_include([ac/m4/m4_ax_wcslib.m4])
+m4_include([ac/m4/m4_ax_rpfits.m4])
 m4_include([ac/m4/m4_ax_check_compile_flag.m4])
 m4_include([ac/m4/m4_ax_cxx11.m4])
 m4_include([ac/m4/m4_ax_cxx_compile_stdcxx_11.m4])
@@ -22,6 +24,7 @@ m4_include([ac/m4/m4_ax_pthread.m4])
 m4_include([ac/m4/m4_ax_python_devel.m4])
 m4_include([ac/m4/m4_ax_python_numpy.m4])
 m4_include([ac/m4/m4_ax_eigen.m4])
+m4_include([ac/m4/m4_ax_swig.m4])
 
 dnl setup cannonical host variables without requiring
 dnl install.sh et al. as AC_CANONICAL_HOST does
@@ -161,7 +164,10 @@ AX_PATH_TO_BINARY(bison,BISON)
 
 AX_PTHREAD
 AX_CFITSIO
+AX_WCSLIB
+AX_RPFITS
 AX_GSL
+AX_SWIG(3.0.0)
 
 AC_MSG_CHECKING([for casa version number])
 read -a full_version <<< "`(cd casa-source && code/install/resolvegitrevision.sh --pretty-print) | perl -pe 's|^(\d+)\.(\d+)\.(\d+).*?(\d+).?$|$1 $2 $3 $4|'`"
