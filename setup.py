@@ -196,6 +196,7 @@ private_scripts = [ 'src/scripts/ialib.py',
                     'src/tasks/task_uvmodelfit.py',
                     'src/tasks/task_visstat.py',
                     'src/tasks/task_widebandpbcor.py',
+                    'src/tasks/task_importmiriad.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -299,6 +300,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/uvmodelfit.xml': 'xml/uvmodelfit.xml',
               'casa-source/gcwrap/tasks/visstat.xml': 'xml/visstat.xml',
               'casa-source/gcwrap/tasks/widebandpbcor.xml': 'xml/widebandpbcor.xml',
+              'casa-source/gcwrap/tasks/importmiriad.xml': 'xml/importmiriad.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -400,6 +402,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/uvmodelfit.xml',
               'xml/visstat.xml',
               'xml/widebandpbcor.xml',
+              'xml/importmiriad.xml',
 ]
 
 if pyversion < 3:
