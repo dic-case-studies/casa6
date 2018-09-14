@@ -30,7 +30,7 @@ if test x"$ax_rpfits_ok" = x"no"; then
 
    if test "x$ax_rpfits_ok" = "xno"; then
       # fish around...
-      for path in [/opt/casa/02/lib /opt/local/lib /usr/local/lib]; do
+      for path in [/opt/casa/03/lib /opt/casa/02/lib /opt/local/lib /usr/local/lib]; do
          RPFITS_LIBS="-L$path -lrpfits"
          LIBS="$LIBS_sav $RPFITS_LIBS"
          # prevent the cache from thwarting our efforts...
