@@ -15,7 +15,7 @@ AC_DEFUN([AX_DBUS],[
       DBUS_LDFLAGS="-ldbus-1"
     else
       AC_MSG_RESULT([continuing])
-      for root in [/opt/casa/02 /usr /opt/local]; do
+      for root in [/opt/casa/03 /opt/casa/02 /usr /opt/local]; do
         for lib in [lib64 lib]; do
           if test -d "$root/include/dbus-1.0" -a -d "$root/$lib/dbus-1.0/include"; then
             AC_MSG_CHECKING([for dbus in $root])
