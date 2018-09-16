@@ -1,12 +1,19 @@
+import os
+import sys
 import shutil
 import unittest
-import os
 import filecmp
 import pprint
-from CASAtasks import flagcmd, flagdata, mstransform, setjy
-from CASAtools import agentflagger, table
+import numpy as np
+from CASAtasks import flagcmd, flagdata, mstransform, setjy, delmod, split
+from CASAtools import ctsys, agentflagger, table
 from CASAtasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-from . import flaghelper as fh
+from CASAtasks.private import flaghelper as fh
+
+### for testhelper import
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+import testhelper as th
+
 #from IPython.kernel.core.display_formatter import PPrintDisplayFormatter
 
 #
@@ -41,11 +48,11 @@ def create_input(str_text, filename):
     return
 
 # Path for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+datapath = ctsys.resolve("regression/unittest/flagdata")
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):   
+if 'TEST_DATADIR' in os.environ:
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/flagdata/'
     if os.path.isdir(DATADIR):
         testmms = True
@@ -54,7 +61,7 @@ if os.environ.has_key('TEST_DATADIR'):
 print('flagdata tests will use data from '+datapath)
 
 # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested 
-if os.environ.has_key('BYPASS_PARALLEL_PROCESSING'):
+if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
     ParallelTaskHelper.bypassParallelProcessing(1)
 
 # Local copy of the agentflagger tool
@@ -71,7 +78,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -84,10 +91,10 @@ class test_base(unittest.TestCase):
         if force:
             # Need a fresh restart. Copy the MS
             shutil.rmtree(self.vis, True)
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
  
         elif not os.path.exists(self.vis):
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)            
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)            
             
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -102,7 +109,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 #        self.unflag_ms()
@@ -116,7 +123,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -129,7 +136,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         flagdata(vis=self.vis, mode='unflag', flagbackup=False)
@@ -142,7 +149,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         flagdata(vis=self.vis, mode='unflag', flagbackup=False)
@@ -154,7 +161,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -167,7 +174,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -180,7 +187,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -192,10 +199,10 @@ class test_base(unittest.TestCase):
         if force:
             # Need a fresh restart. Copy the MS
             shutil.rmtree(self.vis, True)
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
  
         elif not os.path.exists(self.vis):
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)            
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)            
             
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -212,9 +219,9 @@ class test_base(unittest.TestCase):
             
         else:
             print("Moving data...")
-            os.system('cp -RH ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            os.system( 'cp -RH ' + \
+                       ctsys.resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                       ' ' + self.vis )
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -226,9 +233,9 @@ class test_base(unittest.TestCase):
             print("The CalTable is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            os.system( 'cp -RH ' + \
+                       ctsys.resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                       ' ' + self.vis )
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
         self.unflag_ms()        
@@ -241,16 +248,16 @@ class test_base(unittest.TestCase):
             print("The CalTable is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            os.system( 'cp -RH ' + \
+                       ctsys.resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                       ' ' + self.vis )
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
         
     def setUp_weightcol(self):
         '''Small MS with two rows and WEIGHT column'''
-        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
+        datapath = ctsys.resolve("regression/unittest/mstransform")
 
         inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
         self.vis = "msweight.ms"
@@ -259,27 +266,27 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH ' + datapath + inpvis + ' ' + self.vis)
+            os.system('cp -RH '+os.path.join(datapath,inpvis)+' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
         
     def setUp_tbuff(self):
         '''Small ALMA MS with low-amp points to be flagged with tbuff parameter'''
-        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+        datapath = ctsys.resolve("regression/unittest/flagdata")
         
         self.vis = 'uid___A002_X72c4aa_X8f5_scan21_spw18_field2_corrXX.ms'
         if os.path.exists(self.vis):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH ' + datapath + self.vis + ' ' + self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' ' + self.vis)
 
         # Copy the online flags file
         self.online = 'uid___A002_X72c4aa_X8f5_online.txt'
         self.user = 'uid___A002_X72c4aa_X8f5_user.txt'
-        os.system('cp -RH ' + datapath + self.online + ' ' + self.online)
-        os.system('cp -RH ' + datapath + self.user + ' ' + self.user)
+        os.system('cp -RH '+os.path.join(datapath,self.online)+' ' + self.online)
+        os.system('cp -RH '+os.path.join(datapath,self.user)+' ' + self.user)
         
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -455,7 +462,6 @@ class test_rflag(test_base):
     def test_rflag_numpy_types(self):
         '''flagdata:: mode = rflag : partially-specified thresholds using numpy types'''
         # Results should be the same as in test_rflag2 above
-        import numpy as np
         t1 = [np.int32(1), 10, np.float32(0.1)]
         t2 = [1, np.int16(11), np.float64(0.07)]
 
@@ -626,7 +632,6 @@ class test_rflag(test_base):
         
     def test_rflag_residuals(self):
         '''flagdata: rflag using MODEL and virtual MODEL columns'''
-        from tasks import delmod
 
         # Delete model columns, if any
         delmod(vis=self.vis,otf=True,scr=True)
@@ -828,7 +833,7 @@ class test_msselection(test_base):
         # Copy the input flagcmd file with a non-existing spw name
         # flagsfile has spw='"Subband:1","Subband:2","Subband:8"
         flagsfile = 'cas9366.flags.txt'
-        os.system('cp -rf '+datapath + flagsfile +' '+ ' .')
+        os.system('cp -rf '+os.path.join(datapath,flagsfile)+' '+ ' .')
         
         # Try to flag
         try:
@@ -1997,7 +2002,6 @@ class test_clip(test_base):
     def test_timeavg1(self):
         '''flagdata: clip with time average and compare with mstransform'''
         # Create an output with 4 rows
-        from tasks import split
         split(vis=self.vis,outputvis='timeavg.ms',datacolumn='data',spw='9',scan='30',antenna='1&2',
                timerange='2010/10/16/14:45:08.50~2010/10/16/14:45:11.50')
         
@@ -3630,7 +3634,6 @@ class test_virtual_col(test_base):
                 scalebychan=False, usescratch=False)
         
         # Verify that the virtual column exist
-        import testhelper as th
         mcol = th.getColDesc(self.MSvirtual+'/SOURCE', 'SOURCE_MODEL')
         mkeys = mcol.keys()
         self.assertTrue(mkeys.__len__() > 0, 'Should have a SOURCE_MODEL column')
@@ -3676,3 +3679,6 @@ def suite():
             test_preaveraging,
             test_virtual_col,
             cleanup]
+    
+if __name__ == '__main__':
+    unittest.main()

@@ -3,6 +3,7 @@ import time
 import ast
 import copy
 import numpy
+import inspect
 from CASAtasks import casalog
 from CASAtools import table,quanta,ms,agentflagger
 from .parallel.parallel_task_helper import ParallelTaskHelper
@@ -49,6 +50,13 @@ aflocal = agentflagger()
 qalocal = quanta( )
 
 debug = False
+
+
+def get_task_arg_default( func, arg ):
+    spec = inspect.getargspec(func.__call__)
+    if arg not in spec.args:
+        raise Exception("cannot find '%s' among the function arguments" % arg)
+    return spec.defaults[spec.args.index(arg)-1]
 
 # Decorator function to print the arguments of a function
 def dump_args(func):
@@ -1873,13 +1881,13 @@ def evaluateFlagParameters(pardict, pars):
 
     """
     from CASAtasks import flagdata
-     
+
     # Make a deepcopy of flagdata parameters dictionary for modification
     fpars = copy.deepcopy(pars)
  
     # Get the defaults of each parameter 
     for par in fpars.keys():
-        fpars[par] = flagdata.itsdefault(par)
+        fpars[par] = get_task_arg_default(flagdata,par)
      
     # Define the parameters that don't go in an input list in flagdata
     removepars = ['vis','inpfile','flagbackup','tbuff','cmdreason','savepars','outfile',
