@@ -10,7 +10,7 @@ def gaincal(vis=None,caltable=None,
             observation=None, msselect=None,
             solint=None,combine=None,preavg=None,
             refant=None,refantmode=None,minblperant=None,
-            minsnr=None,solnorm=None,
+            minsnr=None,solnorm=None,normtype=None,
             gaintype=None,smodel=None,calmode=None,append=None,
             splinetime=None,npointaver=None,phasewrap=None,
             docallib=None,callib=None,
@@ -122,18 +122,20 @@ def gaincal(vis=None,caltable=None,
                         mycb.setsolve(type='G',t=solint,combine=combine,preavg=preavg,
                                       refant=refant,refantmode=refantmode,
                                       minblperant=minblperant,
-                                      solnorm=solnorm,minsnr=minsnr,table=caltable,
+                                      solnorm=solnorm,normtype=normtype,
+                                      minsnr=minsnr,table=caltable,
                                       apmode=calmode,phaseonly=phaseonly,append=append)
                 elif (gaintype=='T'):
                         mycb.setsolve(type='T',t=solint,combine=combine,preavg=preavg,
                                       refant=refant,refantmode=refantmode,
                                       minblperant=minblperant,
-                                      solnorm=solnorm,minsnr=minsnr,table=caltable,
+                                      solnorm=solnorm,normtype=normtype,
+                                      minsnr=minsnr,table=caltable,
                                       apmode=calmode,phaseonly=phaseonly,append=append)
                 elif (gaintype=='K' or gaintype=='KCROSS' or gaintype=='XY+QU' or gaintype=='XYf+QU'):
                         mycb.setsolve(type=gaintype,t=solint,combine=combine,preavg=preavg,refant=refant,
                                       minblperant=minblperant,
-                                      solnorm=solnorm,minsnr=minsnr,table=caltable,
+                                      minsnr=minsnr,table=caltable,
                                       apmode=calmode,phaseonly=phaseonly,append=append)
                 elif (gaintype=='GSPLINE'):
                         mycb.setsolvegainspline(table=caltable,append=append,mode=calmode,
@@ -141,17 +143,17 @@ def gaincal(vis=None,caltable=None,
                                                 npointaver=npointaver,phasewrap=phasewrap)
                 mycb.solve()
 
-                _reportsolvestats(mycb.activityrec());
+                reportsolvestats(mycb.activityrec());
 
                 mycb.close()
 
         except Exception as instance:
-                print('*** Error *** %s' % instance)
+                print('*** Error ***', instance)
                 mycb.close()
-                casalog.post("Error in gaincal: %s" % instance, "SEVERE")
-                raise Exception("Error in gaincal: %s" % instance)
+                casalog.post("Error in gaincal: %s" % str(instance), "SEVERE")
+                raise Exception("Error in gaincal: "+str(instance))
 
-def _reportsolvestats(rec):
+def reportsolvestats(rec):
         if (list(rec.keys()).count('origin')==1 and
             rec['origin']=='Calibrater::genericGatherAndSolve'):
                 casalog.post("Calibration solve statistics per spw:  (expected/attempted/succeeded):")
