@@ -50,8 +50,8 @@ class fixvis_test1(unittest.TestCase):
                               phasecenter=phasecent, distances=dist)
             self.assertTrue(self.res)
             mystats = self._get_stats(0, 'testy')
-        except:
-            print("*** Unexpected error ***")
+        except Exception as e:
+            print("*** Unexpected error *** %s" % e)
 
         return mystats
 

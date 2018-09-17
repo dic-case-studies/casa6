@@ -58,9 +58,11 @@ class PyParallelCubeSynthesisImager():
         # to define final image coordinates, run selecdata and definemage
         self.SItool = synthesisimager()
         #print "allselpars=",allselpars
+        origspw={}
         for mss in sorted( allselpars.keys() ): 
 #            if(self.allimpars['0']['specmode']=='cubedata'):
 #                self.allselpars[mss]['outframe']='Undefined'
+            origspw[mss]={'spw':allselpars[mss]['spw']}
             self.SItool.selectdata( allselpars[mss] )
         for fid in sorted( allimagepars.keys() ):
             self.SItool.defineimage( allimagepars[fid], self.allgridpars[fid] )
@@ -90,6 +92,10 @@ class PyParallelCubeSynthesisImager():
             selparsPerNode= {tnode:{}}
             imparsPerNode= {tnode:{}}
             for fid in allimagepars.iterkeys():
+                ###restoring original spw selection just to allow weight density to be the same
+                ###ultimately should be passed by MPI if done this way
+                for mss in origspw.keys():
+                    alldataimpars[fid][nodeidx][mss]['spw']=origspw[mss]['spw']
                 for ky in alldataimpars[fid][nodeidx].iterkeys():
 ###                commenting this as it is resetting the selpars when key is not "msxxx" 
 ##                    selparsPerNode[tnode]={}
@@ -98,15 +104,16 @@ class PyParallelCubeSynthesisImager():
                         selparsPerNode[tnode][ky] = alldataimpars[fid][nodeidx][ky].copy();
                         if alldataimpars[fid][nodeidx][ky]['spw']=='-1':
                             selparsPerNode[tnode][ky]['spw']=''
-                        else: 
-                            # remove chan selections (will be adjusted by tuneSelectData)
-                            newspw=selparsPerNode[tnode][ky]['spw']
-                            newspwlist = newspw.split(',')
-                            spwsOnly = ''
-                            for sp in newspwlist:
-                                if spwsOnly!='': spwsOnly+=','
-                                spwsOnly+=sp.split(':')[0]   
-                            selparsPerNode[tnode][ky]['spw']=spwsOnly
+                        #else:
+                        ####using original spw selection for weight calculation
+                        #    # remove chan selections (will be adjusted by tuneSelectData)
+                        #   newspw=selparsPerNode[tnode][ky]['spw']
+                        #  newspwlist = newspw.split(',')
+                        #    spwsOnly = ''
+                        #    for sp in newspwlist:
+                        #        if spwsOnly!='': spwsOnly+=','
+                        #        spwsOnly+=sp.split(':')[0]   
+                        #       selparsPerNode[tnode][ky]['spw']=spwsOnly
 
                 imparsPerNode[tnode][fid] = allimagepars[fid].copy()
                 imparsPerNode[tnode][fid]['csys'] = alldataimpars[fid][nodeidx]['coordsys'].copy()
