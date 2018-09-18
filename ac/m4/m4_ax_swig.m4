@@ -19,6 +19,9 @@ done
 
 changequote([, ])
 
+PATH_save="$PATH"
+PATH="$PATH:/opt/casa/03/bin:/opt/casa/02/bin:/opt/local/bin:/usr/local/bin"
+
 AC_PATH_PROG(SWIG,swig)
 
 if test -n "$SWIG";
@@ -60,10 +63,73 @@ then
 			AC_MSG_RESULT(yes)
 		else
 			AC_MSG_RESULT(no)
-			AC_MSG_ERROR(installed version of swig is too old!)
+            AC_MSG_CHECKING(looking in the rest of PATH)
+			AC_MSG_RESULT()
+            while test "x$SWIG" != "x"; do
+                ## save paths to things we need before we ruin PATH
+                swig_sed=`which sed`
+                swig_expr=`which expr`
+                swig_dirname=`which dirname`
+                ## unset cache flag
+                unset ac_cv_path_SWIG
+                ## save unsuccessful path
+                baddir=`$swig_dirname $SWIG`
+                ## unset user override
+                unset SWIG
+                ## remove unsuccessful path
+                old_path=`echo $PATH | $swig_sed 's|:| |g'`
+                PATH=""
+                for p in $old_path; do
+                    if test "$baddir" != "$p"; then
+                        if test "x$PATH" = "x"; then
+                            PATH="$p"
+                        else
+                            PATH="$PATH:$p"
+                        fi
+                    fi
+                done
+                AC_PATH_PROG(SWIG,swig)
+                if test -n "$SWIG"; then
+                    SWIGLIB=`$SWIG -swiglib`
+
+                    changequote(<<, >>)
+                    swig_version=`$SWIG -version 2>&1 | $swig_sed 's/.* \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/p; d'`
+                    swig_major_ver=`echo $swig_version | $swig_sed 's/^\([0-9][0-9]*\).*/\1/'`
+                    swig_minor_ver=`echo $swig_version | $swig_sed 's/^[0-9][0-9]*\.\([0-9][0-9]*\).*/\1/'`
+                    swig_micro_ver=`echo $swig_version | $swig_sed 's/^[0-9][0-9]*\.[0-9][0-9]*\.\([0-9][0-9]*\).*/\1/'`
+                    changequote([, ])
+
+                    SWIGVERNUM=`printf "%02d%02d%02d" $swig_major_ver $swig_minor_ver $swig_micro_ver`
+
+                    AC_MSG_CHECKING(requested swig version ($SWIG_REQUEST_VERSION))
+
+                    changequote(<<, >>)
+                    swig_major_req=`$swig_expr $SWIG_REQUEST_VERSION : '\([0-9]*\)\.[0-9]*\.[0-9]*'`
+                    swig_minor_req=`$swig_expr $SWIG_REQUEST_VERSION : '[0-9]*\.\([0-9]*\)\.[0-9]*'`
+                    swig_micro_req=`$swig_expr $SWIG_REQUEST_VERSION : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
+                    changequote([, ])
+
+               		if test $swig_major_ver -ge $swig_major_req &&
+                       test $swig_minor_ver -ge $swig_minor_req &&
+                       test $swig_micro_ver -ge $swig_micro_req
+                    then
+                        AC_MSG_RESULT(yes)
+                        break
+                    else
+                        AC_MSG_RESULT(no)
+                    fi
+                fi
+            done
+            PATH="$PATH_save"
+            if test "x$SWIG" = "x"; then
+                SWIGFLAGS=""
+                SWIGLIB=""
+                AC_MSG_ERROR(no usable swig found!)
+            fi
 		fi
 	fi
 fi
+
 ])
 
 dnl @synopsis AC_LIB_WAD
