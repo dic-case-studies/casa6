@@ -40,3 +40,4 @@ build.flags.compile.wcslib=@WCSLIB_CFLAGS@
 build.flags.link.wcslib=@RPFITS_LIBS@
 build.flags.compile.wcslib=@RPFITS_CFLAGS@
 build.compiler.xml_casa=@PWD@/scripts/xml-casa
+build.compiler.swig=@SWIG@

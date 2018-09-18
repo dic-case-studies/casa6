@@ -740,10 +740,15 @@ def customize_compiler(self):
     self.link = _link
 
 
+def customize_swig(self):
+    swig_exe = props['build.compiler.swig'] if len(props['build.compiler.swig']) > 0 else "swig"
+    self.swig = swig_exe
+
 # run the customize_compiler
 class casa_build_ext(build_ext):
     def build_extensions(self):
         customize_compiler(self.compiler)
+        customize_swig(self)
         build_ext.build_extensions(self)
 
 
