@@ -14,6 +14,14 @@ AC_DEFUN([AX_GSL],[
   AC_SUBST(GSL_LIBS)
 
   AC_PATH_PROG([ax_gsl_config], [gsl-config])
+  AS_IF([test "x$ax_gsl_config" = "x"],[
+      ## unset cache flag
+      unset ac_cv_path_ax_gsl_config
+      PATH_save="$PATH"
+      PATH="$PATH:/opt/casa/03/bin:/opt/casa/02/bin:/opt/local/bin:/usr/local/bin"
+      AC_PATH_PROG([ax_gsl_config], [gsl-config])
+      PATH="$PATH_save"
+  ])
 
   AS_IF([test "x$ax_gsl_config" = "x"],[
     AC_MSG_ERROR([no gsl-config executable found]) 
