@@ -291,7 +291,7 @@ class initweights_common(unittest.TestCase):
         if takeEvenMean:
             return numpy.median(in_arr)
         else:
-            return numpy.sort(in_arr, axis=None)[(in_arr.size-1)/2]
+            return numpy.sort(in_arr, axis=None)[(in_arr.size-1)//2]
 
 
 class initweights_tsys_base(initweights_common):
