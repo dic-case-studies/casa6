@@ -20,7 +20,7 @@ $File::Fetch::BLACKLIST = [qw|lwp httptiny httplite|];
 $exe = abs_path($0);
 $path = abs_path(dirname($exe));
 $java = '/usr/bin/java';
-$jarfile_name = "xml-casa-assembly-1.0.jar";
+$jarfile_name = "xml-casa-assembly-1.1.jar";
 $sakura_release = "libsakura-4.0.2065-01.tar.gz";
 @java_version = ( );
 open(JAVAVER, "$java -version 2>&1 |");
@@ -44,7 +44,7 @@ if ( ! -e $jarfile ) {
         ### pull from download url
         my $jardir = dirname($jarfile);
         make_path($jardir);
-        my $ff = File::Fetch->new(uri => 'http://casa.nrao.edu/download/devel/xml-casa/java/xml-casa-assembly-1.0.jar');
+        my $ff = File::Fetch->new(uri => 'http://casa.nrao.edu/download/devel/xml-casa/java/xml-casa-assembly-1.1.jar');
         my $where = $ff->fetch( to => $jardir );
     }
 }
@@ -258,7 +258,7 @@ $hdr_dir = "binding/include";
                                    'casa-source/code/miriad/Filling/Importmiriad.cc' ],
              );
 
-print "configuring CASAtools... this may take a few moments...\n";
+print "configuring CASAtools... this may take a long time...\n";
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
 
 fix_asdm_source("casa-source/code/alma");

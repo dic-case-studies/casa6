@@ -3,10 +3,10 @@
 ### right now to ensure that the gRPC/protobuf install and the casacore changes (for
 ### service list) works properly...
 ### 
-PROTOC=../../../build/lib.macosx-10.12-x86_64-3.6/CASAtools/__casac__/bin/protoc
-GRPCPLUGIN=../../../build/lib.macosx-10.12-x86_64-3.6/CASAtools/__casac__/bin/grpc_cpp_plugin
-LIBDIR=../../../build/lib.macosx-10.12-x86_64-3.6/CASAtools/__casac__/lib
-CFLAGS=-I../../../build/lib.macosx-10.12-x86_64-3.6/CASAtools/__casac__/include
+PROTOC=../../../build/lib.macosx-10.12-x86_64-3.6/casatools/__casac__/bin/protoc
+GRPCPLUGIN=../../../build/lib.macosx-10.12-x86_64-3.6/casatools/__casac__/bin/grpc_cpp_plugin
+LIBDIR=../../../build/lib.macosx-10.12-x86_64-3.6/casatools/__casac__/lib
+CFLAGS=-I../../../build/lib.macosx-10.12-x86_64-3.6/casatools/__casac__/include
 PROTODIR=../protos
 
 %.o: %.cc

@@ -38,14 +38,14 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
 Checkout the CASAtools source code:
 
 ```
--bash-4.2$ git clone -q --recursive https://open-bitbucket.nrao.edu/scm/casa/CASAtools.git
+-bash-4.2$ git clone -q --recursive https://open-bitbucket.nrao.edu/scm/casa/casatools.git
 ```
 
 #### Build
 
 After the CASA build environment is installed, the CASAtools module can be built like:
 ```
--bash-4.2$ cd CASAtools
+-bash-4.2$ cd casatools
 -bash-4.2$ scripts/gcw-pick
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
@@ -75,7 +75,7 @@ IPython 5.1.0 -- An enhanced Interactive Python.
 help      -> Python's own help system.
 object?   -> Details about 'object', use 'object??' for extra details.
 
-In [1]: from CASAtools import image
+In [1]: from casatools import image
 
 In [2]: ia = image( )
 
@@ -169,7 +169,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 2. __Utils Tool__ --- the standard CASA *uttool* (AKA *utils* or just *ut*), has been converted from a toolbox/grab bag **tool** to a **singleton object** called *ctsys* in CASAtools, e.g.:
     ```
-    In [1]: from CASAtools import ctsys
+    In [1]: from casatools import ctsys
     ```
 
 3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to an data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)

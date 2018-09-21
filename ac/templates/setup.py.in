@@ -81,10 +81,10 @@ from os import listdir
 from os.path import isfile, join, islink
 from itertools import chain
 
-module_name = 'CASAtools'
+module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.0.jar'
+xml_jar_file = 'xml-casa-assembly-1.1.jar'
 
 if pyversion < 3:
     str_encode = str
@@ -258,7 +258,7 @@ def generate_pyinit(moduledir,tools):
 
         config='''\
 
-               import CASAtools.ctuser as __user
+               import casatools.ctuser as __user
                from .utils import utils as __utils
                import os as __os
                def __find_data_path( ):
@@ -911,7 +911,7 @@ class casa_build(Command):
                 fpath = os.path.join(root, file)
                 with open(fpath) as fd:
                     s = fd.read()
-                s = s.replace("from cerberus", "from CASAtools.__cerberus__")
+                s = s.replace("from cerberus", "from casatools.__cerberus__")
                 with open(fpath, "w") as fd:
                     fd.write(s)
 
