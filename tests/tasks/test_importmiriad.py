@@ -21,8 +21,8 @@ import sys
 import shutil
 import unittest
 
-from CASAtools import ctsys, table, ms
-from CASAtasks import importmiriad
+from casatools import ctsys, table, ms
+from casatasks import importmiriad
 
 _tb = table( )
 _ms = ms( )

@@ -5,8 +5,8 @@ import re
 import unittest
 import numpy as np
 
-from CASAtools import ctsys, table, quanta
-from CASAtasks import importvla
+from casatools import ctsys, table, quanta
+from casatasks import importvla
 
 
 # local copy of the table tool

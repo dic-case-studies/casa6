@@ -70,8 +70,8 @@ import sys
 import shutil
 import unittest
 
-from CASAtools import ctsys, image, table
-from CASAtasks import imtrans
+from casatools import ctsys, image, table
+from casatasks import imtrans
 
 datapath = 'regression/unittest/imtrans'
 good_image = "reorder_in.fits"

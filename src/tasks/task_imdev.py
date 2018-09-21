@@ -1,6 +1,6 @@
 import sys
-from CASAtools import image, coordsys, regionmanager
-from CASAtasks import casalog
+from casatools import image, coordsys, regionmanager
+from casatasks import casalog
 
 from .ialib import write_image_history
 

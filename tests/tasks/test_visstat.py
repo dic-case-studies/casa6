@@ -4,8 +4,8 @@ import unittest
 import copy
 import numpy as np
 
-from CASAtools import ctsys, table, quanta, measures
-from CASAtasks import visstat, clearcal
+from casatools import ctsys, table, quanta, measures
+from casatasks import visstat, clearcal
 
 #     Functional tests of visstat
 

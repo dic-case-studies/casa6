@@ -1,8 +1,8 @@
 import os
 import shutil
-from CASAtools import mstransformer, table
-from CASAtools import ms as mstool
-from CASAtasks import casalog
+from casatools import mstransformer, table
+from casatools import ms as mstool
+from casatasks import casalog
 from .parallel.parallel_data_helper import ParallelDataHelper
 from .mstools import write_history
 

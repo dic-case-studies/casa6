@@ -4,9 +4,9 @@ import time
 import numpy
 import numpy.fft as npfft
 
-from CASAtools import ctsys, quanta
-from CASAtools import image as iatool
-from CASAtasks import casalog
+from casatools import ctsys, quanta
+from casatools import image as iatool
+from casatasks import casalog
 from . import sdutil
 
 def create_4d_image(infile, outfile):

@@ -1,6 +1,6 @@
 import shutil
-from CASAtools import quanta, measures, table, ms, imager
-from CASAtasks import casalog
+from casatools import quanta, measures, table, ms, imager
+from casatasks import casalog
 from .mstools import write_history
 
 _myqa = quanta( )

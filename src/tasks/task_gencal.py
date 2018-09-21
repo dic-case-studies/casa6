@@ -2,8 +2,8 @@ import os
 import sys
 import warnings
 
-from CASAtools import calibrater
-from CASAtasks import casalog
+from casatools import calibrater
+from casatasks import casalog
 from . import correct_ant_posns as getantposns 
 
 _cb = calibrater( )

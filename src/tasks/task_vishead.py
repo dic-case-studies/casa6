@@ -14,8 +14,8 @@
 # This is not very effective (in list mode, or when using this task in a loop;
 # however expert users can always use the table tool directly.
 
-from CASAtools import ms
-from CASAtasks import casalog
+from casatools import ms
+from casatasks import casalog
 
 from .vishead_util import *
 

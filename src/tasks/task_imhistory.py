@@ -1,4 +1,4 @@
-from CASAtools import image
+from casatools import image
 from .. import casalog
 
 def imhistory(

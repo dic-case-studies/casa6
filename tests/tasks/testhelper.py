@@ -4,7 +4,7 @@ import math
 import shutil
 import string
 import time
-from CASAtools import table
+from casatools import table
 import numpy as np
 import math
 

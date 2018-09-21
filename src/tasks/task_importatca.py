@@ -1,7 +1,7 @@
 import os
 
-from CASAtasks import casalog
-from CASAtools import atcafiller
+from casatasks import casalog
+from casatools import atcafiller
 from .mstools import write_history
 
 def importatca (

@@ -9,8 +9,8 @@ import numpy as np
 import shutil
 from scipy import linalg
 
-from CASAtools import imager, image, quanta, measures
-from CASAtasks import casalog
+from casatools import imager, image, quanta, measures
+from casatasks import casalog
 
 im = imager( )
 ia = image( )

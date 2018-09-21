@@ -6,8 +6,8 @@ import math
 
 from .mstools import write_history
 
-from CASAtools import table, ms, mstransformer
-from CASAtasks import casalog
+from casatools import table, ms, mstransformer
+from casatasks import casalog
 from .parallel.parallel_data_helper import ParallelDataHelper
 
 _tb = table( )

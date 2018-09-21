@@ -94,8 +94,8 @@ import shutil
 import numpy
 import math
 import unittest
-from CASAtools import regionmanager, image, table
-from CASAtasks import casalog, immoments
+from casatools import regionmanager, image, table
+from casatasks import casalog, immoments
 
 _rg = regionmanager( )
 _ia = image( )
@@ -182,7 +182,7 @@ def _momentTest_debug_msg( msgNum=0 ):
     return
 
 datapath = '../build/lib.macosx-10.12-x86_64-3.6/casa-data/regression/immoment/'
-#datapath = '/Users/drs/develop/casa/CASAtools/build/lib.macosx-10.12-x86_64-3.6/casa-data/regression/immoment/'
+#datapath = '/Users/drs/develop/casa/casatools/build/lib.macosx-10.12-x86_64-3.6/casa-data/regression/immoment/'
 
 # input files
 list1=['n1333_both.image','n1333_both.image.rgn']

@@ -86,8 +86,8 @@
 import os, sys, time
 from stat import S_ISDIR, ST_MTIME, ST_MODE
 from .ialib import write_image_history
-from CASAtools import regionmanager, image
-from CASAtasks import casalog
+from casatools import regionmanager, image
+from casatasks import casalog
 from . import cvt
 
 _rg = regionmanager( )

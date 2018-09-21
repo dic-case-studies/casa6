@@ -5,8 +5,8 @@ import time
 from . import partitionhelper as ph
 from .parallel.parallel_task_helper import ParallelTaskHelper
 
-from CASAtools import calibrater, table, ms, quanta
-from CASAtasks import casalog
+from casatools import calibrater, table, ms, quanta
+from casatasks import casalog
 
 qa = quanta( )
 _cb = calibrater( )

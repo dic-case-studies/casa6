@@ -4,8 +4,8 @@ import numpy as np
 import os
 import filecmp
 import numpy
-from CASAtools import ctsys, table, ms
-from CASAtasks import setjy
+from casatools import ctsys, table, ms
+from casatasks import setjy
 
 """
 Unit tests for task setjy.

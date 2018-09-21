@@ -6,8 +6,8 @@ import copy
 import math
 import time
 
-from CASAtools import table, quanta, ms, mstransformer
-from CASAtasks import casalog
+from casatools import table, quanta, ms, mstransformer
+from casatasks import casalog
 from .parallel.parallel_data_helper import ParallelDataHelper
 from . import flaghelper as fh
 from .update_spw import update_spwchan

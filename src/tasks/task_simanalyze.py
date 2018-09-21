@@ -3,8 +3,8 @@ import re
 import glob
 import pylab as pl
 
-from CASAtools import table, image, imager
-from CASAtasks import casalog, sdimaging, imregrid, immath, concat, feather
+from casatools import table, image, imager
+from casatasks import casalog, sdimaging, imregrid, immath, concat, feather
 from . import sdbeamutil
 from .simutil import *
 

@@ -5,9 +5,9 @@ import unittest
 import numpy
 import itertools
 
-from CASAtools import ctsys, measures, ms, table, quanta
-from CASAtools.platform import str2bytes
-from CASAtasks import importnro
+from casatools import ctsys, measures, ms, table, quanta
+from casatools.platform import str2bytes
+from casatasks import importnro
 
 _qa = quanta( )
 _me = measures( )

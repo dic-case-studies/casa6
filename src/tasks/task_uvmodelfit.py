@@ -1,6 +1,6 @@
 import os
-from CASAtools import calibrater
-from CASAtasks import casalog
+from casatools import calibrater
+from casatasks import casalog
 
 
 def uvmodelfit(vis=None,

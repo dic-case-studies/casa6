@@ -1,6 +1,6 @@
 import os
-from CASAtasks import casalog
-from CASAtools import sdm, table, quanta, ms
+from casatasks import casalog
+from casatools import sdm, table, quanta, ms
 
 def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=None,
                subscanduration=None, sbduration=None, apcorrected=None,

@@ -1,7 +1,7 @@
 import os
 
-from CASAtasks import casalog
-from CASAtools import calibrater
+from casatasks import casalog
+from casatools import calibrater
 
 _cb = calibrater( )
 

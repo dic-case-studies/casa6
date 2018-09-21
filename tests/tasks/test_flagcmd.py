@@ -2,8 +2,8 @@ import shutil
 import unittest
 import os
 import filecmp
-from CASAtasks import flagcmd, flagdata, flagmanager
-from CASAtools import ctsys, agentflagger, table
+from casatasks import flagcmd, flagdata, flagmanager
+from casatools import ctsys, agentflagger, table
 from collections import OrderedDict
 
 #

@@ -3,9 +3,9 @@ from urllib.error import URLError
 import datetime
 import re
 
-from CASAtools import table, quanta
-from CASAtools.platform import bytes2str
-from CASAtasks import casalog
+from casatools import table, quanta
+from casatools.platform import bytes2str
+from casatasks import casalog
 
 _tb = table( )
 _qa = quanta( )

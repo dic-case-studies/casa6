@@ -7,9 +7,9 @@ import time
 import subprocess
 import numpy as np
 from matplotlib import pyplot as plt
-from CASAtasks import casalog
-from CASAtools.platform import bytes2str
-from CASAtools import table, ms, msmetadata
+from casatasks import casalog
+from casatools.platform import bytes2str
+from casatools import table, ms, msmetadata
 
 class convertToMMS():
     def __init__(self,\
@@ -238,7 +238,7 @@ class convertToMMS():
            subms  --> number of subMss to create
 
         '''
-        from CASAtasks import partition
+        from casatasks import partition
 
         if not os.path.lexists(ms):
             return False

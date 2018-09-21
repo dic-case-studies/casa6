@@ -5,8 +5,8 @@ import unittest
 import numpy
 import math
 
-from CASAtools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
-from CASAtools import ms as mstool
+from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
+from casatools import ms as mstool
 
 _ia = image( )
 _rg = regionmanager( )
@@ -15,8 +15,8 @@ qa = quanta( )
 tb = table( )
 ms = mstool( )
 
-from CASAtasks import sdimaging, flagdata
-from CASAtasks.private.sdutil import tbmanager, toolmanager, table_selector
+from casatasks import sdimaging, flagdata
+from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
 
 ### for selection_syntax import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))

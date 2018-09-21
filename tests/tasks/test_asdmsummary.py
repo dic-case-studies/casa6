@@ -6,7 +6,7 @@
 
 
 import os
-from CASAtasks import asdmsummary, casalog
+from casatasks import asdmsummary, casalog
 import unittest
 
 def logfileLen():

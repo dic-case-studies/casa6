@@ -6,8 +6,8 @@ import shutil
 from .setjy_helper import * 
 from .parallel.parallel_task_helper import ParallelTaskHelper
 from .mstools import write_history
-from CASAtools import ctsys, ms, imager
-from CASAtasks import casalog
+from casatools import ctsys, ms, imager
+from casatasks import casalog
 
 # Helper class for Multi-MS processing (by SC)
 class SetjyHelper():

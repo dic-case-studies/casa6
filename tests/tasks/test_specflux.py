@@ -69,8 +69,8 @@ import os
 import shutil
 import unittest
 
-from CASAtools import ctsys
-from CASAtasks import specflux
+from casatools import ctsys
+from casatasks import specflux
 
 datapath = ctsys.resolve('regression/unittest/specflux')
 im1 = os.path.join(datapath,"specflux1.im")

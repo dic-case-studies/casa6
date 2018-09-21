@@ -4,8 +4,8 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import ctsys, table, ms
-from CASAtasks import statwt
+from casatools import ctsys, table, ms
+from casatasks import statwt
 
 datadir = ctsys.resolve('regression/unittest/statwt')
 src = os.path.join(datadir,'ngc5921.split_2.ms')

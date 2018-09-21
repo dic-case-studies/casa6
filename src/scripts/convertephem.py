@@ -1,5 +1,5 @@
-from CASAtools import table, measures, quanta, ms
-from CASAtasks import casalog
+from casatools import table, measures, quanta, ms
+from casatasks import casalog
 import glob
 
 # Conversion of TOPO ephemerides to GEO (ICRS)

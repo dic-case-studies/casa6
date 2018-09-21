@@ -6,7 +6,7 @@ from .callibrary import *
 from . import flaghelper as fh
 from .parallel.parallel_task_helper import ParallelTaskHelper
 from .mstools import write_history
-from CASAtools import ms, calibrater
+from casatools import ms, calibrater
 
 def applycal(
     vis=None,

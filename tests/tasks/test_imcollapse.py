@@ -72,8 +72,8 @@ import unittest
 import numpy
 from math import sqrt
 
-from CASAtools import ctsys, image, table, quanta, regionmanager
-from CASAtasks import imcollapse
+from casatools import ctsys, image, table, quanta, regionmanager
+from casatasks import imcollapse
 
 good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"

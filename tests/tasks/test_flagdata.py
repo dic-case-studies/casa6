@@ -5,10 +5,10 @@ import unittest
 import filecmp
 import pprint
 import numpy as np
-from CASAtasks import flagcmd, flagdata, mstransform, setjy, delmod, split
-from CASAtools import ctsys, agentflagger, table
-from CASAtasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-from CASAtasks.private import flaghelper as fh
+from casatasks import flagcmd, flagdata, mstransform, setjy, delmod, split
+from casatools import ctsys, agentflagger, table
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private import flaghelper as fh
 
 ### for testhelper import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))

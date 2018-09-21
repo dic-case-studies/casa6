@@ -4,8 +4,8 @@
 # v1.0: 2012.02.13, M. Caillat
 #
 import os
-from CASAtools import sdm
-from CASAtasks import casalog
+from casatools import sdm
+from casatasks import casalog
 
 def asdmsummary(asdm=None):
     """Prints a description of the content of an SDM dataset to the CASA logger.

@@ -68,9 +68,9 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import ctsys, table, image, quanta, componentlist, regionmanager
-from CASAtools.platform import str2bytes
-from CASAtasks import imfit
+from casatools import ctsys, table, image, quanta, componentlist, regionmanager
+from casatools.platform import str2bytes
+from casatasks import imfit
 
 noisy_image = "gaussian_model_with_noise.im"
 noisy_image_xx = "gaussian_model_with_noise_xx.im"

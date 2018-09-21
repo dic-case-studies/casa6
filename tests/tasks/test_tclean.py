@@ -54,8 +54,8 @@ import unittest
 import inspect
 import numpy as np
 
-from CASAtools import ctsys, quanta, measures, image, vpmanager, calibrater
-from CASAtasks import casalog, delmod, imsubimage, tclean, uvsub
+from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
+from casatasks import casalog, delmod, imsubimage, tclean, uvsub
 
 _ia = image( )
 _vp = vpmanager( )

@@ -6,8 +6,8 @@ import time
 import re
 import copy
 
-from CASAtools import synthesisutils, synthesisimager
-from CASAtasks import casalog
+from casatools import synthesisutils, synthesisimager
+from casatasks import casalog
 
 from .imager_base import PySynthesisImager
 from .parallel_imager_helper import PyParallelImagerHelper

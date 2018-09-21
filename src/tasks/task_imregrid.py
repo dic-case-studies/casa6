@@ -2,8 +2,8 @@ import os
 import sys
 import shutil
 
-from CASAtools import image, coordsys, quanta
-from CASAtasks import casalog
+from casatools import image, coordsys, quanta
+from casatasks import casalog
 
 from .ialib import write_image_history
 

@@ -3,8 +3,8 @@ import os
 import re
 import numpy
 
-from CASAtools import quanta, ms, image, table, msmetadata
-from CASAtasks import casalog
+from casatools import quanta, ms, image, table, msmetadata
+from casatasks import casalog
 from . import sdutil
 from . import sdbeamutil
 from .cleanhelper import cleanhelper

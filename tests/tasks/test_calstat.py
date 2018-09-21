@@ -1,7 +1,7 @@
 import os
 import unittest
-from CASAtools import table,ctsys
-from CASAtasks import calstat
+from casatools import table,ctsys
+from casatasks import calstat
 
 epsilon = 0.0001
 

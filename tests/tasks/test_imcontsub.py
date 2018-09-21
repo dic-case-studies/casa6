@@ -101,8 +101,8 @@ import os
 import shutil
 import unittest
 
-from CASAtools import ctsys, image
-from CASAtasks import casalog, imcontsub, immath
+from casatools import ctsys, image
+from casatasks import casalog, imcontsub, immath
 
 _ia = image( )
 

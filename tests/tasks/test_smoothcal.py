@@ -3,8 +3,8 @@ import sys
 import shutil
 import unittest
 
-from CASAtools import ctsys, table
-from CASAtasks import smoothcal
+from casatools import ctsys, table
+from casatasks import smoothcal
 
 _tb = table( )
 '''

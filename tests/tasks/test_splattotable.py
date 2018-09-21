@@ -70,8 +70,8 @@ import os
 import shutil
 import unittest
 
-from CASAtools import ctsys, table, spectralline
-from CASAtasks import splattotable
+from casatools import ctsys, table, spectralline
+from casatasks import splattotable
 
 good_list = "list1.txt"
 bad_list = "list2.txt"

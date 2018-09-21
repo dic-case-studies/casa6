@@ -67,8 +67,8 @@
 import os
 import numpy
 
-from CASAtools import table, ms, agentflagger
-from CASAtasks import casalog, importuvfits
+from casatools import table, ms, agentflagger
+from casatasks import casalog, importuvfits
 
 def importgmrt( fitsfile, flagfile, vis ):
     retValue=False

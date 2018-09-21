@@ -2,8 +2,8 @@ import os
 import sys
 import shutil
 import unittest
-from CASAtools import ctsys, image, table
-from CASAtasks import clearstat
+from casatools import ctsys, image, table
+from casatasks import clearstat
 
 _ia = image( )
 _tb = table( )

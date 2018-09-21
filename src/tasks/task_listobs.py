@@ -1,6 +1,6 @@
 import os
-from CASAtools import ms
-from CASAtasks import casalog
+from casatools import ms
+from casatasks import casalog
 
 def listobs(
     vis, selectdata, spw, field, antenna, uvrange,

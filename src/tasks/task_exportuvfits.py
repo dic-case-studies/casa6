@@ -1,5 +1,5 @@
 import os
-from CASAtools import ms
+from casatools import ms
 
 def exportuvfits( vis, fitsfile, datacolumn, field, spw, antenna, time,
                   writesyscal, multisource, combinespw,

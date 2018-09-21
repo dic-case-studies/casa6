@@ -11,8 +11,8 @@ from .parallel_task_helper import ParallelTaskHelper, JobData
 from .. import partitionhelper as ph
 import inspect
 from numpy.f2py.auxfuncs import throw_error
-from CASAtools import quanta, ms, msmetadata, mstransformer, table
-from CASAtasks import casalog
+from casatools import quanta, ms, msmetadata, mstransformer, table
+from casatasks import casalog
 
 try:
     from mpi4casa.MPIEnvironment import MPIEnvironment

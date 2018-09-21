@@ -2,8 +2,8 @@ import os
 import re
 import pylab as pl
 
-from CASAtools import ctsys
-from CASAtasks import casalog
+from casatools import ctsys
+from casatasks import casalog
 from .simutil import *
 from .simutil import is_array_type
 

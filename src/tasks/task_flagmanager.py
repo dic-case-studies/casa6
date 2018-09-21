@@ -1,7 +1,7 @@
 import os
 import time
-from CASAtools import agentflagger
-from CASAtasks import casalog
+from casatools import agentflagger
+from casatasks import casalog
 
 def flagmanager(
     vis=None,

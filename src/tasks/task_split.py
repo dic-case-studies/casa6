@@ -8,8 +8,8 @@ from . import flaghelper as fh
 from .update_spw import update_spwchan
 from .parallel.parallel_data_helper import ParallelDataHelper
 from .mstools import write_history
-from CASAtasks import casalog
-from CASAtools import quanta, table, ms, mstransformer
+from casatasks import casalog
+from casatools import quanta, table, ms, mstransformer
 
 _qa = quanta( )
 

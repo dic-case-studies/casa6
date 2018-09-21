@@ -5,9 +5,9 @@ import unittest
 ### for testhelper import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import testhelper as th
-from CASAtasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
-from CASAtasks import partition, flagdata, flagmanager, split, setjy, listpartition, listobs
-from CASAtools import ctsys, msmetadata, ms, agentflagger, table
+from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
+from casatasks import partition, flagdata, flagmanager, split, setjy, listpartition, listobs
+from casatools import ctsys, msmetadata, ms, agentflagger, table
 
 ''' Unit Tests for task partition'''
 

@@ -1,7 +1,7 @@
 import tempfile
 import shutil
 
-from CASAtools import image, imagepol
+from casatools import image, imagepol
 from .ialib import write_image_history
 
 def rmfit(

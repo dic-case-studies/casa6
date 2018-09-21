@@ -1,7 +1,7 @@
 import os
 
-from CASAtools import image
-from CASAtasks import casalog
+from casatools import image
+from casatasks import casalog
 
 
 def feather(imagename=None,highres=None,lowres=None, sdfactor=None, effdishdiam=None, lowpassfiltersd=None):

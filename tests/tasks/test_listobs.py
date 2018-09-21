@@ -7,8 +7,8 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import listing as lt
 import hashlib
 import unittest
-from CASAtools import ms, ctsys
-from CASAtasks import listobs
+from casatools import ms, ctsys
+from casatasks import listobs
 
 '''
 Unit tests for task listobs. It tests the following parameters:

@@ -22,8 +22,8 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import ctsys, ms, table
-from CASAtasks import importatca
+from casatools import ctsys, ms, table
+from casatasks import importatca
 
 _ms = ms( )
 _tb = table( )

@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import pprint
-from CASAtasks import casalog
-from CASAtools import ms
+from casatasks import casalog
+from casatools import ms
 from .parallel.parallel_data_helper import ParallelDataHelper
 from . import partitionhelper as ph
 from . import flaghelper as fh

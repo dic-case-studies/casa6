@@ -9,9 +9,9 @@ import glob
 ### for testhelper import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import testhelper as th
-from CASAtools import ctsys, ms, table, msmetadata, agentflagger
-from CASAtasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, flagcmd
-#from CASAtasks import importasdm     ### tar files have been created to avoid the importasdm dependency
+from casatools import ctsys, ms, table, msmetadata, agentflagger
+from casatasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, flagcmd
+#from casatasks import importasdm     ### tar files have been created to avoid the importasdm dependency
 
 
 # Define the root for the data files

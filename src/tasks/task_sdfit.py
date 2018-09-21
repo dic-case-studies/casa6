@@ -3,9 +3,9 @@ import os
 import time, datetime
 from numpy import ma, array, logical_not, logical_and
 
-from CASAtools import table, singledishms
-from CASAtools import ms as mstool
-from CASAtasks import casalog
+from casatools import table, singledishms
+from casatools import ms as mstool
+from casatasks import casalog
 from . import sdutil
 
 ms = mstool( )

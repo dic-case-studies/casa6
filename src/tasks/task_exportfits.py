@@ -1,6 +1,6 @@
 import os
-from CASAtools import image
-from CASAtasks import casalog
+from casatools import image
+from casatasks import casalog
 
 
 def exportfits( imagename, fitsimage, velocity, optical, bitpix,

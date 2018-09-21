@@ -11,7 +11,7 @@ import numpy
 import copy
 import time
 
-from CASAtasks import casalog
+from casatasks import casalog
 
 from .imagerhelpers.imager_base import PySynthesisImager
 from .imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager

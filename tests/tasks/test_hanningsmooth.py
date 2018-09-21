@@ -5,11 +5,11 @@ import shutil
 ### for testhelper import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import testhelper as th
-from CASAtasks.private.parallel.parallel_data_helper import ParallelDataHelper
+from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
 import unittest
 
-from CASAtasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
-from CASAtools import ctsys, ms
+from casatasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
+from casatools import ctsys, ms
 
 '''
 functional tests for task hanningsmooth

@@ -3,8 +3,8 @@ import shutil
 import string
 import copy
 import math
-from CASAtasks import casalog
-from CASAtools import ms, mstransformer
+from casatasks import casalog
+from casatools import ms, mstransformer
 from .parallel.parallel_data_helper import ParallelDataHelper
 from . import flaghelper as fh
 from .mstools import write_history

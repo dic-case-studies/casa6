@@ -103,8 +103,8 @@ import shutil
 import unittest
 import math
 
-from CASAtools import ctsys, image, regionmanager, componentlist, table, quanta
-from CASAtasks import imsmooth, casalog
+from casatools import ctsys, image, regionmanager, componentlist, table, quanta
+from casatasks import imsmooth, casalog
 
 _ia = image( )
 _rg = regionmanager( )

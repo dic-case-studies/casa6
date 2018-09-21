@@ -9,9 +9,9 @@ import unittest
 #
 import listing
 
-from CASAtools import ctsys, table, ms, measures
-from CASAtasks import casalog, sdcal, partition, initweights
-from CASAtasks.private import sdutil
+from casatools import ctsys, table, ms, measures
+from casatasks import casalog, sdcal, partition, initweights
+from casatasks.private import sdutil
 
 ### for testhelper import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))

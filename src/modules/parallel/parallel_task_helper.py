@@ -4,9 +4,9 @@ import sys
 import copy
 import shutil
 from .. import partitionhelper as ph
-from CASAtools import table
-from CASAtools import ms as mstool
-from CASAtasks import casalog
+from casatools import table
+from casatools import ms as mstool
+from casatasks import casalog
 
 # To handle thread-based Tier-2 parallelization
 import threading
@@ -232,7 +232,7 @@ class ParallelTaskHelper:
                 try:
                     vars = globals( )
                     try:
-                        exec("from CASAtasks import *; " + job.getCommandLine(),vars)
+                        exec("from casatasks import *; " + job.getCommandLine(),vars)
                     except Exception as e:
                         print("exec in parallel_task_helper.executeJobs failed: %s" % e)
                     # jagonzal: Special case for partition

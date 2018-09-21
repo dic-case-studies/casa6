@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from CASAtasks import casalog
+from casatasks import casalog
 
 def _fetch_tmcdb_info(ant_names, obs_time):
     use_soap = False

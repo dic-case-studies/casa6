@@ -68,8 +68,8 @@
 import os
 import shutil
 import unittest
-from CASAtools import image, table
-from CASAtasks import imhistory
+from casatools import image, table
+from casatasks import imhistory
 
 class imhistory_test(unittest.TestCase):
     def setUp(self):

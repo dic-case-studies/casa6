@@ -86,8 +86,8 @@ import os
 import shutil
 import subprocess
 import unittest
-from CASAtasks import casalog, imhead
-from CASAtools import image, table, quanta, imagemetadata
+from casatasks import casalog, imhead
+from casatools import image, table, quanta, imagemetadata
 
 ###########################################################################
 # NAME: mode_test

@@ -92,8 +92,8 @@ import glob
 import struct
 import unittest
 
-from CASAtools import ctsys, table, image, regionmanager, measures
-from CASAtasks import casalog, immath
+from casatools import ctsys, table, image, regionmanager, measures
+from casatasks import casalog, immath
 
 _ia = image( )
 _rg = regionmanager( )

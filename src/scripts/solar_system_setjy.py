@@ -32,7 +32,7 @@ from numpy import array
 from scipy.interpolate import interp1d
 from math import exp, pi, cos, sin, isnan, sqrt
 import os
-from CASAtools import table, measures, quanta, ctsys
+from casatools import table, measures, quanta, ctsys
 qa = quanta( )
 HH = qa.constants('H')['value'] 
 KK = qa.constants('K')['value']

@@ -4,8 +4,8 @@ import shutil
 import string
 from .parallel.parallel_task_helper import ParallelTaskHelper
 from . import JPLephem_reader2 as jplreader
-from CASAtools import ms, table, measures, quanta, image, imager
-from CASAtasks import casalog
+from casatools import ms, table, measures, quanta, image, imager
+from casatasks import casalog
 
 _qa = quanta( )
 _me = measures( )

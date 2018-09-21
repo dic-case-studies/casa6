@@ -2,10 +2,10 @@
 import os
 import numpy
 import shutil
-from CASAtasks import cvel2, cvel, split, importuvfits, partition
-from CASAtools import ctsys, table, ms, quanta
-from CASAtasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-from CASAtasks.private.parallel.parallel_data_helper import ParallelDataHelper
+from casatasks import cvel2, cvel, split, importuvfits, partition
+from casatools import ctsys, table, ms, quanta
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
 import unittest
 
 # Path for data

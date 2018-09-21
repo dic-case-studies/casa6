@@ -6,8 +6,8 @@ import time
 import re;
 import copy
 
-from CASAtools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink
-from CASAtasks import casalog
+from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink
+from casatasks import casalog
 
 '''
 A set of helper functions for tclean.

@@ -6,8 +6,8 @@ import math
 import numpy
 import numbers
 
-from CASAtools import ctsys, image, table, quanta, regionmanager
-from CASAtasks import imstat
+from casatools import ctsys, image, table, quanta, regionmanager
+from casatasks import imstat
 
 _tb = table( )
 _qa = quanta( )

@@ -22,8 +22,8 @@ import sys
 import shutil
 import unittest
 
-from CASAtools import ctsys, ms, table
-from CASAtasks import importfitsidi
+from casatools import ctsys, ms, table
+from casatasks import importfitsidi
 
 _ms = ms( )
 _tb = table( )

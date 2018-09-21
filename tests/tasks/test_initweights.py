@@ -3,8 +3,8 @@ import shutil
 import numpy
 import unittest
 
-from CASAtools import ctsys, table
-from CASAtasks import initweights
+from casatools import ctsys, table
+from casatasks import initweights
 
 class initweights_common(unittest.TestCase):
     """

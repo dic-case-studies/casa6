@@ -60,8 +60,8 @@
 # </motivation>
 #
 ###########################################################################
-from CASAtools import spectralline
-from CASAtasks import casalog
+from casatools import spectralline
+from casatasks import casalog
 
 def splattotable(filenames=None, table=None):
     casalog.origin('splattotable')

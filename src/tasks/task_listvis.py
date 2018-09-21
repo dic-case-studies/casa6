@@ -1,8 +1,8 @@
 # Task listvis
 
 import os
-from CASAtools import ms
-from CASAtasks import casalog
+from casatools import ms
+from casatasks import casalog
 
 def listvis(vis, options, datacolumn, field,spw, selectdata, antenna, timerange,
             correlation, scan, feed, array, observation, uvrange, average,

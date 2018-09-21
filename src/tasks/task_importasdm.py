@@ -1,7 +1,7 @@
 import os
 import shutil
-from CASAtasks import casalog
-from CASAtools import table, agentflagger, ms, imager, measures, msmetadata, sdm
+from casatasks import casalog
+from casatools import table, agentflagger, ms, imager, measures, msmetadata, sdm
 from .mstools import write_history
 from . import flaghelper as fh
 from . import convertephem as ce

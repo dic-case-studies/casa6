@@ -2,9 +2,9 @@ import numpy
 import os
 from collections import Counter
 
-from CASAtools import singledishms, table, msmetadata
-from CASAtools import ms as mstool
-from CASAtasks import casalog
+from casatools import singledishms, table, msmetadata
+from casatools import ms as mstool
+from casatasks import casalog
 from . import sdutil
 
 ms = mstool( )

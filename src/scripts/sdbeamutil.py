@@ -5,8 +5,8 @@ import scipy.signal
 import scipy.interpolate
 from scipy import optimize
 
-from CASAtools import quanta
-from CASAtasks import casalog
+from casatools import quanta
+from casatasks import casalog
 
 ##################################################
 ### Prediction of theoretical beam size

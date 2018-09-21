@@ -5,8 +5,8 @@ import os
 import shutil
 import pylab as pl
 
-from CASAtools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
-from CASAtasks import casalog
+from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
+from casatasks import casalog
 tb = table( )
 ia = image( )
 po = imagepol( )

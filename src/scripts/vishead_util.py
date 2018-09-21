@@ -5,7 +5,7 @@
 
 import os
 
-from CASAtools import table, quanta
+from casatools import table, quanta
 
 _tb = table( )
 _qa = quanta( )

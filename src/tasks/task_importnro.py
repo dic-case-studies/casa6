@@ -3,9 +3,9 @@ import os
 import re
 import shutil
 
-from CASAtools import singledishms, calibrater
-from CASAtools.platform import bytes2str
-from CASAtasks import casalog
+from casatools import singledishms, calibrater
+from casatools.platform import bytes2str
+from casatasks import casalog
 
 mysdms = singledishms( )
 mycb = calibrater( )

@@ -4,8 +4,8 @@ import sys
 import shutil
 from collections import OrderedDict
 import numpy
-from CASAtasks import casalog
-from CASAtools import quanta, ms, table, componentlist, measures, calibrater, msmetadata
+from casatasks import casalog
+from casatools import quanta, ms, table, componentlist, measures, calibrater, msmetadata
 
 
 class ss_setjy_helper:

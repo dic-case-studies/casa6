@@ -6,11 +6,11 @@ import numpy
 import math
 import unittest
 
-from CASAtools import ctsys
-from CASAtools import table as tabletool
-from CASAtools import ms as mstool
-from CASAtasks import sdgaincal, mstransform, sdcal
-from CASAtasks.private import sdutil
+from casatools import ctsys
+from casatools import table as tabletool
+from casatools import ms as mstool
+from casatasks import sdgaincal, mstransform, sdcal
+from casatasks.private import sdutil
 
 ### for testhelper import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))

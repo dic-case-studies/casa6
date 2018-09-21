@@ -3,8 +3,8 @@ import shutil
 import unittest
 import numpy as np
 
-from CASAtools import ctsys
-from CASAtasks import predictcomp
+from casatools import ctsys
+from casatasks import predictcomp
 
 
 ''' Python unit tests for the predictcomp task

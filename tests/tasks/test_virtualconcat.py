@@ -12,8 +12,8 @@ import glob
 import time
 import unittest
 
-from CASAtools import ctsys, calibrater, table, ms
-from CASAtasks import virtualconcat, concat, listobs
+from casatools import ctsys, calibrater, table, ms
+from casatasks import virtualconcat, concat, listobs
 
 cb = calibrater( )
 tb = table( )

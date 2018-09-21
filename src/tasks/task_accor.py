@@ -1,7 +1,7 @@
 import os
 import numpy as np
-from CASAtools import calibrater
-from CASAtasks import casalog
+from casatools import calibrater
+from casatasks import casalog
 from .callibrary import *
 
 def accor(vis=None,caltable=None,

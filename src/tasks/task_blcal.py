@@ -1,7 +1,7 @@
 import os
 import numpy as np
-from CASAtasks import casalog
-from CASAtools import calibrater
+from casatasks import casalog
+from casatools import calibrater
 
 def blcal(vis=None,caltable=None,
           field=None,spw=None,intent=None,

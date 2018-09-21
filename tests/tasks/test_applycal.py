@@ -1,8 +1,8 @@
 import os
 import sys
 import shutil
-from CASAtasks import applycal,casalog
-from CASAtools import calibrater,ctsys
+from casatasks import applycal,casalog
+from casatools import calibrater,ctsys
 import unittest
 import time
 

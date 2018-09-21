@@ -70,8 +70,8 @@ import os
 import shutil
 import unittest
 
-from CASAtools import ctsys, image, table
-from CASAtasks import impbcor
+from casatools import ctsys, image, table
+from casatasks import impbcor
 
 im1 = "pbtest1_im.fits"
 pb1 = "pbtest1_pb.fits"

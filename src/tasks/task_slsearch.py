@@ -63,8 +63,8 @@
 ###########################################################################
 import shutil
 
-from CASAtools import spectralline
-from CASAtasks import casalog
+from casatools import spectralline
+from casatasks import casalog
 
 def slsearch(
     table=None, outfile=None, freqrange=None,

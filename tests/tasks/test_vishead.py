@@ -5,8 +5,8 @@ import numpy
 import os
 import shutil
 
-from CASAtools import ctsys
-from CASAtasks import vishead
+from casatools import ctsys
+from casatasks import vishead
 
 import unittest
 

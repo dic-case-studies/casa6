@@ -67,8 +67,8 @@
 
 import sys
 
-from CASAtools import image
-from CASAtasks import casalog
+from casatools import image
+from casatasks import casalog
 from .ialib import write_image_history
 
 def imcollapse(

@@ -2,8 +2,8 @@ import shutil
 import unittest
 import os
 import sys
-from CASAtasks import flagdata, flagmanager
-from CASAtools import ctsys, agentflagger
+from casatasks import flagdata, flagmanager
+from casatools import ctsys, agentflagger
 
 
 # Path for data

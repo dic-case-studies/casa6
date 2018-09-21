@@ -3,8 +3,8 @@ import sys
 import shutil
 import unittest
 
-from CASAtools import ctsys, table, quanta
-from CASAtasks import fixvis, imstat, tclean, split
+from casatools import ctsys, table, quanta
+from casatasks import fixvis, imstat, tclean, split
 
 '''
 Unit tests for task fixvis.

@@ -1,8 +1,8 @@
 import os
 import re
 
-from CASAtools import singledishms, calibrater, agentflagger
-from CASAtasks import casalog
+from casatools import singledishms, calibrater, agentflagger
+from casatasks import casalog
 
 mysdms = singledishms( )
 mycb = calibrater( )

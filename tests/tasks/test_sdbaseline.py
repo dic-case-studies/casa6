@@ -6,9 +6,9 @@ import numpy
 import unittest
 from numpy import array
 
-from CASAtools import ctsys, table
-from CASAtasks import sdbaseline
-from CASAtasks.private.sdutil import tbmanager
+from casatools import ctsys, table
+from casatasks import sdbaseline
+from casatasks.private.sdutil import tbmanager
 
 ### for selection_syntax import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))

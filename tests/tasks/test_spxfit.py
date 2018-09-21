@@ -72,8 +72,8 @@ import numpy
 import math
 import os
 
-from CASAtools import ctsys, image, functional, table
-from CASAtasks import spxfit
+from casatools import ctsys, image, functional, table
+from casatasks import spxfit
 
 nanvalue = 4.53345345
 

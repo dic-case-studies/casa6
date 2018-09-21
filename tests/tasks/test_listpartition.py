@@ -2,9 +2,9 @@ import os
 import sys
 import shutil
 import string
-from CASAtools import ctsys
-from CASAtasks import listpartition
-from CASAtasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
+from casatools import ctsys
+from casatasks import listpartition
+from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
 import unittest
 
 '''

@@ -1,5 +1,5 @@
-from CASAtools import image
-from CASAtasks import casalog
+from casatools import image
+from casatasks import casalog
 
 def specsmooth(
     imagename, outfile, box, chans, stokes, region,  mask,

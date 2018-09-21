@@ -9,8 +9,8 @@ import os
 import sys
 import shutil
 import glob
-from CASAtools import ctsys, table, ms
-from CASAtasks import conjugatevis
+from casatools import ctsys, table, ms
+from casatasks import conjugatevis
 import unittest
 
 _tb = table( )

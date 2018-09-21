@@ -1,8 +1,8 @@
 import os
 import numpy
 
-from CASAtools import image, regionmanager, coordsys
-from CASAtasks import casalog
+from casatools import image, regionmanager, coordsys
+from casatasks import casalog
 
 _ia = image( )
 _rg = regionmanager( )

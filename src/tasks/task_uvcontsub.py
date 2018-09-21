@@ -9,8 +9,8 @@ import numpy as np
 # (or any directories that already exist).
 from distutils.dir_util import copy_tree
 
-from CASAtools import calibrater, ms, table
-from CASAtasks import casalog, virtualconcat
+from casatools import calibrater, ms, table
+from casatasks import casalog, virtualconcat
 
 from .mstools import write_history
 from .update_spw import *

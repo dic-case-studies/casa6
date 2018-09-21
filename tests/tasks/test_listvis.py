@@ -6,8 +6,8 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import listing as lt
 import unittest
 
-from CASAtools import ctsys
-from CASAtasks import listvis
+from casatools import ctsys
+from casatasks import listvis
 
 '''
 Unit tests for task listvis. It tests the following parameters:

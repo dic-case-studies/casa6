@@ -1,5 +1,5 @@
 import os
-from CASAtools import calibrater
+from casatools import calibrater
 
 def listcal(vis=None,caltable=None,field=None,antenna=None,spw=None,
             listfile=None,pagerows=None):

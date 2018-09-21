@@ -11,10 +11,10 @@ import shutil
 import glob
 import unittest
 from math import sqrt
-from CASAtools import ctsys, calibrater
-from CASAtools import table as tbtool
-from CASAtools import ms as mstool
-from CASAtasks import split, concat
+from casatools import ctsys, calibrater
+from casatools import table as tbtool
+from casatools import ms as mstool
+from casatasks import split, concat
 
 cb = calibrater( )
 tb = tbtool( )

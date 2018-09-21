@@ -4,8 +4,8 @@ import shutil
 ### for testhelper import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import testhelper as th
-from CASAtools import ctsys
-from CASAtasks import bandpass
+from casatools import ctsys
+from casatasks import bandpass
 import unittest
 
 

@@ -60,8 +60,8 @@ import shutil
 import numpy as np
 import subprocess
 
-from CASAtools import coordsys, image, regionmanager, imager, table, quanta
-from CASAtasks import casalog
+from casatools import coordsys, image, regionmanager, imager, table, quanta
+from casatasks import casalog
 from .imtools import pixelmask2cleanmask
 
 csys = coordsys( )

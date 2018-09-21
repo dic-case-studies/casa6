@@ -7,7 +7,7 @@ import time
 import re;
 import copy
 
-from CASAtools import casalog
+from casatools import casalog
 
 from .imager_base import PySynthesisImager
 from .parallel_imager_helper import PyParallelImagerHelper

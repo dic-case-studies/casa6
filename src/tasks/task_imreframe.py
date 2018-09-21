@@ -2,8 +2,8 @@ import os
 import shutil
 import string
 
-from CASAtools import image, measures
-from CASAtasks import casalog
+from casatools import image, measures
+from casatasks import casalog
 
 
 def imreframe(imagename=None, output=None, outframe=None, epoch=None, restfreq=None):

@@ -1,8 +1,8 @@
 import os
 import glob
 
-from CASAtools import table
-from CASAtasks import casalog
+from casatools import table
+from casatasks import casalog
 
 # Concatenation of ephemeris tables
 #

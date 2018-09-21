@@ -2,8 +2,8 @@ import os
 import sys
 import shutil
 import unittest
-from CASAtools import ctsys, ms, msmetadata
-from CASAtasks import fixplanets
+from casatools import ctsys, ms, msmetadata
+from casatasks import fixplanets
 
 '''
 Unit tests for task fixplanets.

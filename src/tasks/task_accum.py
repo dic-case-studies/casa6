@@ -1,6 +1,6 @@
 import sys
 import os
-from CASAtools import calibrater
+from casatools import calibrater
 _cb = calibrater( )
 
 def accum(vis=None,tablein=None,incrtable=None,caltable=None,field=None,calfield=None,interp=None,accumtime=None,spwmap=None):

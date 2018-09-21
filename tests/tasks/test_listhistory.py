@@ -5,9 +5,9 @@ import shutil
 import subprocess
 import unittest
 
-from CASAtools import ctsys
-from CASAtools.platform import bytes2str
-from CASAtasks import casalog, listhistory
+from casatools import ctsys
+from casatools.platform import bytes2str
+from casatasks import casalog, listhistory
 
 datapath = ctsys.resolve('regression/unittest/listhistory')
 

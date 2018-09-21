@@ -1,7 +1,7 @@
 import os
 
-from CASAtools import imager, ms, image
-from CASAtasks import casalog
+from casatools import imager, ms, image
+from casatasks import casalog
 
 _im = imager( )
 _ms = ms( )

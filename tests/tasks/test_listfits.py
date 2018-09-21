@@ -3,8 +3,8 @@ import sys
 import shutil
 import unittest
 
-from CASAtools import ctsys
-from CASAtasks import casalog, listfits
+from casatools import ctsys
+from casatasks import casalog, listfits
 
 class listfits_test(unittest.TestCase):
     

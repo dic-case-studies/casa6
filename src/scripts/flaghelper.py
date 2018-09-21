@@ -4,8 +4,8 @@ import ast
 import copy
 import numpy
 import inspect
-from CASAtasks import casalog
-from CASAtools import table,quanta,ms,agentflagger
+from casatasks import casalog
+from casatools import table,quanta,ms,agentflagger
 from .parallel.parallel_task_helper import ParallelTaskHelper
 from collections import deque,defaultdict,OrderedDict
 
@@ -1880,7 +1880,7 @@ def evaluateFlagParameters(pardict, pars):
         It raises an exception if any parameter or type of value do not match.
 
     """
-    from CASAtasks import flagdata
+    from casatasks import flagdata
 
     # Make a deepcopy of flagdata parameters dictionary for modification
     fpars = copy.deepcopy(pars)

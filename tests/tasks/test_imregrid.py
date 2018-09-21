@@ -3,8 +3,8 @@ import shutil
 import numpy
 import unittest
 
-from CASAtools import ctsys, image, regionmanager, coordsys, measures, componentlist, table, quanta
-from CASAtasks import imregrid, imstat
+from casatools import ctsys, image, regionmanager, coordsys, measures, componentlist, table, quanta
+from casatasks import imregrid, imstat
 
 _tb = table( )
 _ia = image( )

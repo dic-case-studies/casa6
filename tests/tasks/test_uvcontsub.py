@@ -4,9 +4,9 @@ import sys
 import shutil
 import unittest
 
-from CASAtools import ctsys, table
-from CASAtasks import uvcontsub
-from CASAtasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatools import ctsys, table
+from casatasks import uvcontsub
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
 tb = table( )
 

@@ -111,8 +111,8 @@ import glob
 import numpy
 import unittest
 
-from CASAtools import ctsys, image
-from CASAtasks import imval, casalog
+from casatools import ctsys, image
+from casatasks import imval, casalog
 
 _ia = image( )
 

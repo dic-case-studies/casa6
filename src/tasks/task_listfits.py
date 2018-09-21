@@ -1,5 +1,5 @@
 import os
-from CASAtools import ms
+from casatools import ms
 
 _ms = ms( )
 

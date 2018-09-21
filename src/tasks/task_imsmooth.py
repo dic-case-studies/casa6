@@ -71,8 +71,8 @@ import os
 import sys
 import numpy
 
-from CASAtools import image, regionmanager, quanta
-from CASAtasks import casalog
+from casatools import image, regionmanager, quanta
+from casatasks import casalog
 
 from .ialib import write_image_history
 

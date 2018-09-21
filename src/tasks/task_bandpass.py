@@ -1,8 +1,8 @@
 import os
 import numpy as np
 from .callibrary import *
-from CASAtasks import casalog
-from CASAtools import calibrater
+from casatasks import casalog
+from casatools import calibrater
 
 def bandpass(vis=None,caltable=None,
              field=None,spw=None,intent=None,

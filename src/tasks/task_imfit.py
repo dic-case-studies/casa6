@@ -1,6 +1,6 @@
 import sys
-from CASAtools import image, componentlist
-from CASAtasks import casalog
+from casatools import image, componentlist
+from casatasks import casalog
 from .ialib import write_image_history
 
 def imfit(

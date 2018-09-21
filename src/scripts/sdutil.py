@@ -8,9 +8,9 @@ import abc
 import datetime
 import contextlib
 
-from CASAtools import quanta, table, calibrater, imager, table
-from CASAtools.platform import bytes2str
-from CASAtasks import casalog
+from casatools import quanta, table, calibrater, imager, table
+from casatools.platform import bytes2str
+from casatasks import casalog
 
 @contextlib.contextmanager
 def toolmanager(vis, ctor, *args, **kwargs):

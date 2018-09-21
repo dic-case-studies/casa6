@@ -1,6 +1,6 @@
 import os
-from CASAtools import table
-from CASAtasks import casalog
+from casatools import table
+from casatasks import casalog
 
 _tb = table( )
 

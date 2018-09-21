@@ -1,4 +1,4 @@
-from CASAtools import ctsys
+from casatools import ctsys
 
 def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=False):
         """
@@ -61,8 +61,8 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
                 try:
                         # Don't use myclog.version(); it also prints to the
                         # logger, which is confusing.
-                        vestr += CASAtools.version_string( ) + ' '
-                        vestr += CASAtools.version_desc( )
+                        vestr += casatools.version_string( ) + ' '
+                        vestr += casatools.version_desc( )
                 except Exception:
                         if hasattr(myclog, 'version'):
                                 # Now give it a try.

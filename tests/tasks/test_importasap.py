@@ -5,8 +5,8 @@ import re
 import unittest
 import numpy
 
-from CASAtools import ctsys, ms, table, agentflagger
-from CASAtasks import importasap
+from casatools import ctsys, ms, table, agentflagger
+from casatasks import importasap
 
 datapath='regression/unittest/importasap'
 

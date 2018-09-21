@@ -6,8 +6,8 @@ import numpy.ma as ma
 ### for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th
-from CASAtools import ctsys
-from CASAtasks import gencal
+from casatools import ctsys
+from casatasks import gencal
 import unittest
 
 '''

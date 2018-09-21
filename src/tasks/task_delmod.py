@@ -1,7 +1,7 @@
 import os
 
-from CASAtools import ms, calibrater
-from CASAtasks import casalog
+from casatools import ms, calibrater
+from casatasks import casalog
 from .parallel.parallel_task_helper import ParallelTaskHelper
 
 _ms = ms( )

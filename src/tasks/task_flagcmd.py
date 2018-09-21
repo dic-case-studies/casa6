@@ -1,6 +1,6 @@
 
-from CASAtasks import casalog
-from CASAtools import ms, quanta, table, agentflagger
+from casatasks import casalog
+from casatools import ms, quanta, table, agentflagger
 from .mstools import write_history
 import os
 import copy

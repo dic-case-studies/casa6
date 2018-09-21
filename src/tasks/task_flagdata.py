@@ -8,8 +8,8 @@ from .mstools import write_history
 from .parallel.parallel_task_helper import ParallelTaskHelper
 # this should be replaced when CASA really moves to Python 2.7
 from collections import OrderedDict
-from CASAtasks import casalog
-from CASAtools import ms, agentflagger, quanta, table
+from casatasks import casalog
+from casatools import ms, agentflagger, quanta, table
 
 localqa = quanta( )
 

@@ -1,7 +1,7 @@
 import os
 
-from CASAtools import vlafiller, ms, agentflagger
-from CASAtasks import casalog
+from casatools import vlafiller, ms, agentflagger
+from casatasks import casalog
 from .mstools import write_history
 
 _ms = ms( )

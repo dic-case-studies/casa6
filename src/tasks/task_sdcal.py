@@ -4,8 +4,8 @@ import numpy
 import numpy.random as random
 import shutil
 
-from CASAtools import calibrater, table
-from CASAtasks import casalog, applycal
+from casatools import calibrater, table
+from casatasks import casalog, applycal
 from . import sdutil
 
 # Table tool

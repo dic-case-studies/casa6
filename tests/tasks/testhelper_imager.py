@@ -7,7 +7,7 @@ import re
 import copy
 import unittest
 
-from CASAtools import table, image, calibrater
+from casatools import table, image, calibrater
 _ia = image( )
 _cb = calibrater( )
 _tb = table( )

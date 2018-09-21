@@ -7,9 +7,9 @@ import math
 from scipy import signal
 import unittest
 
-from CASAtools import ctsys, table, ms
-from CASAtasks import sdsmooth
-from CASAtasks.private import sdutil
+from casatools import ctsys, table, ms
+from casatasks import sdsmooth
+from casatasks.private import sdutil
 from testhelper import copytree_ignore_subversion
 
 tb = table( )

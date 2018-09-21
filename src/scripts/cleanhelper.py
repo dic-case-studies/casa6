@@ -9,9 +9,9 @@ from numpy import unique
 from collections import OrderedDict
 
 ###some helper tools
-from CASAtasks import casalog as default_casalog
-from CASAtools import table, quanta, measures, regionmanager, image, imager, msmetadata
-from CASAtools import ms as mstool
+from casatasks import casalog as default_casalog
+from casatools import table, quanta, measures, regionmanager, image, imager, msmetadata
+from casatools import ms as mstool
 
 ms = mstool( )
 tb = table( )

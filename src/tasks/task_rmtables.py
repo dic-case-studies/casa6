@@ -1,7 +1,7 @@
 import os
 import glob
-from CASAtools import ctsys
-from CASAtasks import casalog
+from casatools import ctsys
+from casatasks import casalog
 
 def rmtables(tablenames=None):
        """ Removes tables cleanly 

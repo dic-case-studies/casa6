@@ -5,8 +5,8 @@ import sys
 import shutil
 
 import unittest
-from CASAtools import ctsys, ms
-from CASAtasks import exportasdm
+from casatools import ctsys, ms
+from casatasks import exportasdm
 ### for testhelper import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import testhelper as th

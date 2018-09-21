@@ -1,6 +1,6 @@
 import os
-from CASAtools import calibrater, table, ms
-from CASAtasks import casalog
+from casatools import calibrater, table, ms
+from casatasks import casalog
 from .mstools import write_history
 from .parallel.parallel_task_helper import ParallelTaskHelper
 

@@ -1,6 +1,6 @@
 
-from CASAtools import miriadfiller
-from CASAtasks import casalog
+from casatools import miriadfiller
+from casatasks import casalog
 from .mstools import write_history
 
 def importmiriad (

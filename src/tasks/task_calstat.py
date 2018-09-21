@@ -1,5 +1,5 @@
-from CASAtasks import casalog
-from CASAtools import table
+from casatasks import casalog
+from casatools import table
 
 _tb = table( )
 

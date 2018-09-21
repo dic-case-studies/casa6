@@ -1,5 +1,5 @@
-from CASAtools import table
-from CASAtasks import casalog
+from casatools import table
+from casatasks import casalog
 
 from .correct_ant_posns_alma import correct_ant_posns_alma as _correct_ant_posns_alma
 from .correct_ant_posns_evla import correct_ant_posns_evla as _correct_ant_posns_evla

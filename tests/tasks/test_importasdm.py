@@ -30,8 +30,8 @@ import os
 import sys
 import shutil
 import numpy
-from CASAtools import ctsys, ms, table, quanta, measures, calibrater
-from CASAtasks import importasdm, flagdata, flagcmd, exportasdm
+from casatools import ctsys, ms, table, quanta, measures, calibrater
+from casatasks import importasdm, flagdata, flagcmd, exportasdm
 ### for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th

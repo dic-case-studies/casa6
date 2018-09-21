@@ -18,7 +18,7 @@ Example:
 import copy
 import os
 #from taskinit import mstool
-from CASAtools import ms
+from casatools import ms
 
 _ms = ms( )
 

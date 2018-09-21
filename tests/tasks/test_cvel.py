@@ -3,8 +3,8 @@
 import os
 import numpy
 import shutil
-from CASAtasks import cvel, split, importuvfits
-from CASAtools import ctsys, table, quanta, ms
+from casatasks import cvel, split, importuvfits
+from casatools import ctsys, table, quanta, ms
 import unittest
 
 myname = 'test_cvel'

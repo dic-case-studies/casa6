@@ -1,9 +1,9 @@
 import numpy
 import os
 
-from CASAtools import singledishms, table
-from CASAtools import ms as mstool
-from CASAtasks import casalog
+from casatools import singledishms, table
+from casatools import ms as mstool
+from casatasks import casalog
 from . import sdutil
 
 ms = mstool( )

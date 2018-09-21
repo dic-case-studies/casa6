@@ -1,6 +1,6 @@
 
-from CASAtools import ms
-from CASAtasks import casalog
+from casatools import ms
+from casatasks import casalog
 
 def visstat(vis=None,
             axis=None,

@@ -3,7 +3,7 @@ import inspect
 import re
 import abc
 
-from CASAtasks import casalog
+from casatasks import casalog
 
 def skipUnlessHasParam(param):
     def wrapper(func):

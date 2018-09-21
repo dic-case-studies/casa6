@@ -7,9 +7,9 @@ import numpy
 import unittest
 from numpy import array
 
-from CASAtools import ctsys, table, ms
-from CASAtasks import sdfit, flagdata
-from CASAtasks.private.sdutil import tbmanager
+from casatools import ctsys, table, ms
+from casatasks import sdfit, flagdata
+from casatasks.private.sdutil import tbmanager
 
 ### for selection_syntax import
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))

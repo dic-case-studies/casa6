@@ -22,8 +22,8 @@ import time                  # We can always use more time.
 import numpy
 import traceback
 
-from CASAtools import quanta, measures, table, quanta
-from CASAtasks import casalog
+from casatools import quanta, measures, table, quanta
+from casatasks import casalog
 
 _qa = quanta( )
 _me = measures( )

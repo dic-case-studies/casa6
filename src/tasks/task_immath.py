@@ -167,8 +167,8 @@ import re
 import shutil
 from .ialib import write_image_history
 
-from CASAtools import quanta, regionmanager, image, imagepol
-from CASAtasks import casalog
+from casatools import quanta, regionmanager, image, imagepol
+from casatasks import casalog
 
 _rg = regionmanager()
 _qa = quanta( )

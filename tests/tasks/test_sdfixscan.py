@@ -6,8 +6,8 @@ import time
 import numpy
 import re
 
-from CASAtools import ctsys, image, quanta
-from CASAtasks import sdfixscan
+from casatools import ctsys, image, quanta
+from casatasks import sdfixscan
 
 _ia = image( )
 qa = quanta( )

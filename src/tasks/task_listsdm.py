@@ -15,8 +15,8 @@ except ImportError as e:
     print("Warning, listsdm task not available: %s" % e)
     _setup_successful = False
 
-from CASAtools import quanta
-from CASAtasks import casalog
+from casatools import quanta
+from casatasks import casalog
 
 _qa = quanta( )
 

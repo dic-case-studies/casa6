@@ -34,8 +34,8 @@
 import os
 import numpy
 
-from CASAtools import image, regionmanager, quanta
-from CASAtasks import casalog
+from casatools import image, regionmanager, quanta
+from casatasks import casalog
 
 _qa = quanta( )
 

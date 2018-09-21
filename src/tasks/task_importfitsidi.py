@@ -2,8 +2,8 @@ import os
 import shutil
 import numpy as np
 
-from CASAtools import ms, table
-from CASAtasks import casalog
+from casatools import ms, table
+from casatasks import casalog
 from .mstools import write_history
 
 def importfitsidi(fitsidifile,vis,constobsid=None,scanreindexgap_s=None,specframe=None):

@@ -3,8 +3,8 @@ import shutil
 import re
 #import pdb
 
-from CASAtools import ctsys
-from CASAtasks import concat, imregrid, immath, sdimaging, impbcor, simobserve, simanalyze, feather
+from casatools import ctsys
+from casatasks import concat, imregrid, immath, sdimaging, impbcor, simobserve, simanalyze, feather
 from .simutil import *
 from . import sdbeamutil
 

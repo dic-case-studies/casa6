@@ -87,8 +87,8 @@
 # </todo>
 
 from __future__ import absolute_import
-from CASAtools import image
-from CASAtools import imagemetadata
+from casatools import image
+from casatools import imagemetadata
 from .. import casalog
 import numpy
 import sys

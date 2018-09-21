@@ -70,8 +70,8 @@ import os
 import shutil
 import unittest
 
-from CASAtools import ctsys, spectralline, table
-from CASAtasks import slsearch
+from casatools import ctsys, spectralline, table
+from casatasks import slsearch
 
 good_table = "biglist.tbl"
 

@@ -1,5 +1,5 @@
-from CASAtools import image, regionmanager, coordsys
-from CASAtasks import casalog
+from casatools import image, regionmanager, coordsys
+from casatasks import casalog
 
 def imstat(
     imagename, axes, region, box, chans,

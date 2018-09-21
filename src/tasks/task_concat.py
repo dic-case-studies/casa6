@@ -4,10 +4,10 @@ import stat
 import time
 from math import sqrt
 from .parallel.parallel_task_helper import ParallelTaskHelper
-from CASAtools import calibrater, quanta
-from CASAtools import table as tbtool
-from CASAtools import ms as mstool
-from CASAtasks import casalog
+from casatools import calibrater, quanta
+from casatools import table as tbtool
+from casatools import ms as mstool
+from casatasks import casalog
 
 _cb = calibrater( )
 _qa = quanta( )

@@ -1,5 +1,5 @@
 import shutil
-from CASAtools import image, table
+from casatools import image, table
 
 def pixelmask2cleanmask(imagename='',maskname='mask0',maskimage='',usemasked=False):
     """

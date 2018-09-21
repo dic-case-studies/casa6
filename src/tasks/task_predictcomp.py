@@ -1,8 +1,8 @@
 import os
 import numpy
 
-from CASAtools import componentlist, imager, measures, quanta, ms, table
-from CASAtasks import casalog
+from casatools import componentlist, imager, measures, quanta, ms, table
+from casatasks import casalog
 from .setjy_helper import testerrs
 from . import solar_system_setjy as SSSetjy
 

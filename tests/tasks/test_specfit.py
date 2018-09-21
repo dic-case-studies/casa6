@@ -71,8 +71,8 @@ import unittest
 import numpy
 import os
 
-from CASAtools import ctsys, image, regionmanager, functional, table
-from CASAtasks import specfit, imstat
+from casatools import ctsys, image, regionmanager, functional, table
+from casatasks import specfit, imstat
 
 twogauss = "specfit_multipix_2gauss.fits"
 polyim = "specfit_multipix_poly_2gauss.fits"

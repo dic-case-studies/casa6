@@ -4,8 +4,8 @@ import numpy
 import numpy.random as random
 import shutil
 
-from CASAtools import calibrater
-from CASAtasks import casalog, applycal
+from casatools import calibrater
+from casatasks import casalog, applycal
 
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}

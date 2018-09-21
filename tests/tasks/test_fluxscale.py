@@ -4,8 +4,8 @@ import testhelper as th
 import numpy as np
 import unittest
 
-from CASAtools import ctsys
-from CASAtasks import fluxscale
+from casatools import ctsys
+from casatasks import fluxscale
 
 ''' Python unit tests for the fluxscale task
 

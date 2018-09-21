@@ -1,8 +1,8 @@
 import os
 import shutil
-from CASAtools import table, quanta
-from CASAtools import ms as mstool
-from CASAtasks import casalog
+from casatools import table, quanta
+from casatools import ms as mstool
+from casatasks import casalog
 
 def cvel(vis, outputvis,
          passall, field, spw, selectdata, antenna, timerange, scan, array,

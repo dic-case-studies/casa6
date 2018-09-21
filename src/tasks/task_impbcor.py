@@ -61,8 +61,8 @@
 #
 
 ###########################################################################
-from CASAtools import image
-from CASAtasks import casalog
+from casatools import image
+from casatasks import casalog
 
 def impbcor(
     imagename=None, pbimage=None, outfile=None, overwrite=None,

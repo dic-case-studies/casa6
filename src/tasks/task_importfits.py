@@ -1,6 +1,6 @@
 import os
-from CASAtools import image, quanta
-from CASAtasks import casalog
+from casatools import image, quanta
+from casatasks import casalog
 
 from .ialib import write_image_history
 

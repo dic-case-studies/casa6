@@ -6,8 +6,8 @@ import time
 import re
 import copy
 
-from CASAtools import synthesisutils
-from CASAtasks import casalog
+from casatools import synthesisutils
+from casatasks import casalog
 
 '''
 A set of helper functions for the tasks  tclean

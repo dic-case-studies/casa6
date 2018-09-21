@@ -3,9 +3,9 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import ctsys, image
-from CASAtasks import makemask
-from CASAtasks.private.imtools import pixelmask2cleanmask   ##### <----<<< this dependency should be removed
+from casatools import ctsys, image
+from casatasks import makemask
+from casatasks.private.imtools import pixelmask2cleanmask   ##### <----<<< this dependency should be removed
 
 datapath = 'regression/unittest/makemask'
 

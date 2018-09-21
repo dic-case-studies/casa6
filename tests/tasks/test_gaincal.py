@@ -6,8 +6,8 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th
 import unittest
 
-from CASAtools import ctsys
-from CASAtasks import gaincal
+from casatools import ctsys
+from casatasks import gaincal
 
 ''' Python unit tests for the gaincal task
 

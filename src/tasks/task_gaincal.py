@@ -1,8 +1,8 @@
 import os
 import numpy as np
 from .callibrary import *
-from CASAtools import calibrater
-from CASAtasks import casalog
+from casatools import calibrater
+from casatasks import casalog
 
 def gaincal(vis=None,caltable=None,
             field=None,spw=None,intent=None,
