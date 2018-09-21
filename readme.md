@@ -43,7 +43,7 @@ Checkout the CASAtools source code:
 
 #### Build
 
-After the CASA build environment is installed, the CASAtools module can be built like:
+While CASAtools can be built with either Python 2.7 or Python 3, [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatasks/browse) requires Python 3 so it is probably best to build with Python 3 from the start. Make sure that ```-bash-4.2$ which python``` returns a path to the Python 3 executable you want to use because [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatasks/browse) builds with this executable.  After the CASA build environment is installed, the CASAtools module can be built like:
 ```
 -bash-4.2$ cd casatools
 -bash-4.2$ scripts/gcw-pick
