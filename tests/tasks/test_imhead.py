@@ -86,8 +86,8 @@ import os
 import shutil
 import subprocess
 import unittest
-from casatasks import casalog, imhead
-from casatools import image, table, quanta, imagemetadata
+from casatasks import casalog, imhead, immoments
+from casatools import ctsys, image, table, quanta, imagemetadata
 
 ###########################################################################
 # NAME: mode_test
@@ -107,7 +107,7 @@ from casatools import image, table, quanta, imagemetadata
 # Input file names
 input_file = 'ngc5921.clean.image'
 input_file_copy = 'ngc5921.clean.image.copy'
-datapath='../build/lib.macosx-10.12-x86_64-3.6/casa-data/regression/unittest/imhead/'
+datapath='regression/unittest/imhead'
 complexim = 'complex.im'
 
 def deep_equality(a, b): 
@@ -154,7 +154,7 @@ class imhead_test(unittest.TestCase):
         for f in [input_file, complexim]:
             if(os.path.exists(f)):
                 os.system('rm -rf ' + f)
-            os.system('cp -r ' +datapath + f +' ' + f)
+            os.system('cp -r '+ctsys.resolve(os.path.join(datapath,f))+' '+ f)
 
     def tearDown(self):
         for f in [input_file, complexim]:
@@ -867,9 +867,9 @@ class imhead_test(unittest.TestCase):
         shutil.copytree(input_file, input_file_copy)
         cur_hdr = imhead( input_file, 'list' )
         orig_hdr = imhead( input_file_copy, 'list' )
-        gotkeys = cur_hdr.keys()
+        gotkeys = list(cur_hdr.keys())
         gotkeys.sort()
-        expkeys = orig_hdr.keys()
+        expkeys = list(orig_hdr.keys())
         expkeys.sort()
         self.assertTrue(expkeys == gotkeys)
         for key in expkeys:
@@ -1570,7 +1570,7 @@ class imhead_test(unittest.TestCase):
         myia.fromshape(imagename, [1, 1])
         myia.done()
         a = imhead(imagename=imagename, mode="list")
-        self.assertTrue(not a.has_key("restfreq") and len(a.keys()) > 0)
+        self.assertTrue("restfreq" not in a and len(a.keys()) > 0)
         self.assertFalse(imhead(imagename=imagename, mode="get", hdkey="restfreq"))
         self.assertFalse(
             imhead(
@@ -1580,7 +1580,7 @@ class imhead_test(unittest.TestCase):
         
     def test_ncp(self):
         """Test NCP projection is reported, CAS-6568"""
-        imagename = datapath + "ncp_proj.im"
+        imagename = ctsys.resolve(os.path.join(datapath,"ncp_proj.im"))
         res = imhead(imagename, mode="list")
         proj = res['projection']
         self.assertTrue(proj.count("NCP") == 1)
@@ -1605,7 +1605,7 @@ class imhead_test(unittest.TestCase):
                 count += 1
         myia.done()
         zz = imhead(imagename=imagename, mode="list")
-        self.assertTrue(zz['perplanebeams'].has_key("median area beam"))
+        self.assertTrue("median area beam" in zz['perplanebeams'])
         self.assertTrue(
             zz['perplanebeams']["median area beam"]
             == {
@@ -1625,7 +1625,7 @@ class imhead_test(unittest.TestCase):
        
     def test_open_fits(self):
         """Verify opening fits file works"""
-        imagename = datapath + "reorder_in.fits"
+        imagename = ctsys.resolve(os.path.join(datapath,"reorder_in.fits"))
         myimd = imagemetadata( )
         self.assertTrue(myimd.open(imagename))
         myimd.done()
