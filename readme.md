@@ -59,6 +59,7 @@ A particular version of Python can be selected at configure time like:
 ```
 -bash-4.2$ PYTHON_VERSION=3.4 ./configure
 ```
+but as noted above, [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatasks/browse) will use whatever version of python is in your path so it is best to configure your ```PATH``` to get a particular version of Python.
 
 #### See If It Works
 
