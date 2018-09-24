@@ -18,7 +18,7 @@ This is alpha software in every sense of the word. Currently it builds on [RedHa
 Those already working on CASA 5 can install all of the CASAtools dependencies with [YUM](https://en.wikipedia.org/wiki/Yum_(.rpm)):
 
 ```
--bash-4.2# yum install casa-toolset-3
+-bash-4.2$ yum install casa-toolset-3
 ```
 After doing this, you may need to add RedHat's Python 3 to your $PATH with:
 ```
