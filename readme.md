@@ -38,8 +38,6 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
 1. [SWIG](http://www.swig.org) version **3.0** or greater
 1. [OpenMPI](https://www.open-mpi.org) version 1.10 *required when parallelization is enabled*
 
-##### Existing CASA Deveopers
-
 
 #### Checkout
 
