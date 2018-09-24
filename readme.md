@@ -33,6 +33,13 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
 ##### Notable Dependencies
 1. [GNU Scientific Library](https://www.gnu.org/software/gsl/) version **2.2** or greater
 
+##### Existing CASA Deveopers
+
+Those already working on CASA 5 can install all of the CASAtools dependencies with ```yum install casa-toolset-3```. After doing this, you may need to add RedHat's Python 3 to your path with:
+```
+-bash-4.2$ source /opt/rh/rh-python36/enable
+```
+
 #### Checkout
 
 Checkout the CASAtools source code:
