@@ -15,11 +15,14 @@ This is alpha software in every sense of the word. Currently it builds on [RedHa
 
 #### Install Dependencies
 
-The CASA development RPMs must be installed. This can be accomplished by adding the CASA [YUM](https://en.wikipedia.org/wiki/Yum_(.rpm)) repository to /etc/yum.repos.d and installing:
+Those already working on CASA 5 can install all of the CASAtools dependencies with [YUM](https://en.wikipedia.org/wiki/Yum_(.rpm)):
 
 ```
--bash-4.2# yum install ccache
--bash-4.2# yum install casa-toolset-2
+-bash-4.2# yum install casa-toolset-3
+```
+After doing this, you may need to add RedHat's Python 3 to your $PATH with:
+```
+-bash-4.2$ source /opt/rh/rh-python36/enable
 ```
 In addition, [Java 8](https://java.com/en/download/) or greater is required. You can check this by looking for 1.8 in the Java version output:
 ```
@@ -32,13 +35,11 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
 
 ##### Notable Dependencies
 1. [GNU Scientific Library](https://www.gnu.org/software/gsl/) version **2.2** or greater
+1. [SWIG](http://www.swig.org) version **3.0** or greater
+1. [OpenMPI](https://www.open-mpi.org) version 1.10 `required when parallelization is enabled`
 
 ##### Existing CASA Deveopers
 
-Those already working on CASA 5 can install all of the CASAtools dependencies with ```yum install casa-toolset-3```. After doing this, you may need to add RedHat's Python 3 to your path with:
-```
--bash-4.2$ source /opt/rh/rh-python36/enable
-```
 
 #### Checkout
 
