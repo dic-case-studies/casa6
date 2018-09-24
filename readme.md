@@ -5,7 +5,7 @@ If you are looking for the place to check out [CASA](http://casa.nrao.edu/) with
 
 CASAtools is a self-contained python module that provides the tools from the [CASA](http://casa.nrao.edu/) project. This module only contains the non-GUI tools which are the [SWIG](http://swig.org) bound C++ functionality from CASA.
 
-CASAtools can be built and used with either **Python** **2.7**, **3.4** or **3.6**.
+CASAtools can be built and used with either **Python** **2.7**, **3.4** or **3.6**. However, *[CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtasks/browse) can only be built with Python 3*. So if you plan to build [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtasks/browse), please ensure that you have a Python 3 interpreter available.
 
 ## Maturity
 
