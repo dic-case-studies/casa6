@@ -3,11 +3,11 @@ import shutil
 import numpy
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import regionmanager as rgtool
-from CASAtools import coordsys as cstool
-from CASAtools import table
-from CASAtools import ctsys
+from casatools import image as iatool
+from casatools import regionmanager as rgtool
+from casatools import coordsys as cstool
+from casatools import table
+from casatools import ctsys
 
 _ia = iatool( )
 _rg = rgtool( )

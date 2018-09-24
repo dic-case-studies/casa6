@@ -70,10 +70,10 @@ import shutil
 import unittest
 import os
 
-from CASAtools import image as iatool
-from CASAtools import coordsys
-from CASAtools import ctsys
-from CASAtools import table
+from casatools import image as iatool
+from casatools import coordsys
+from casatools import ctsys
+from casatools import table
 
 myim = "center_0.fits"
 

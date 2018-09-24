@@ -37,9 +37,9 @@ import unittest
 from numpy import array, ndarray, testing, where
 from math import ceil
 
-from CASAtools import calibrater as cbtool
-from CASAtools import ms as mstool
-from CASAtools import ctsys
+from casatools import calibrater as cbtool
+from casatools import ms as mstool
+from casatools import ctsys
 
 datadir = 'regression/'
 datafile = os.path.join(datadir, "unittest/listobs/ngc5921_ut.ms")

@@ -70,9 +70,9 @@ import os
 import shutil
 import unittest
 
-from CASAtools import regionmanager as rgtool
-from CASAtools import image as iatool
-from CASAtools import ctsys
+from casatools import regionmanager as rgtool
+from casatools import image as iatool
+from casatools import ctsys
 
 image = "imregion.fits"
 image_nospec = "imregion_nospec.fits"

@@ -70,10 +70,10 @@ import unittest
 import numpy
 import os
 
-from CASAtools import image as iatool
-from CASAtools import componentlist as cltool
-from CASAtools import quanta as qatool
-from CASAtools import measures as metool
+from casatools import image as iatool
+from casatools import componentlist as cltool
+from casatools import quanta as qatool
+from casatools import measures as metool
 
 datapath='regression/unittest/ia_modify'
 

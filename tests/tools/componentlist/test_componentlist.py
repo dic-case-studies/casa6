@@ -72,7 +72,7 @@
 ###########################################################################
 import unittest
 
-from CASAtools import componentlist as cltool
+from casatools import componentlist as cltool
 
 class componentlist_test(unittest.TestCase):
     

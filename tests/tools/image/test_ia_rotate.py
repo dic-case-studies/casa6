@@ -69,7 +69,7 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import image as iatool
+from casatools import image as iatool
 
 datapath = 'regression/unittest/ia_rotate/'
 

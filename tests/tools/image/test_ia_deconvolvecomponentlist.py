@@ -64,9 +64,9 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import componentlist as cltool
-from CASAtools import quanta
+from casatools import image as iatool
+from casatools import componentlist as cltool
+from casatools import quanta
 
 class ia_deconvolvecomponentlist_test(unittest.TestCase):
     

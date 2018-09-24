@@ -1,5 +1,5 @@
 import unittest
-from CASAtools import measures
+from casatools import measures
 
 '''
 Unit tests for the measures tool.

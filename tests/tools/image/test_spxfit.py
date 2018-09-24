@@ -72,9 +72,9 @@ import numpy
 import os
 from math import log
 
-from CASAtools import image as iatool
-from CASAtools import functional as fntool
-from CASAtools import table
+from casatools import image as iatool
+from casatools import functional as fntool
+from casatools import table
 
 nanvalue = 4.53345345
 

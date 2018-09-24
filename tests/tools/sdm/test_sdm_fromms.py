@@ -5,7 +5,7 @@ import sys
 import shutil
 
 import unittest
-from CASAtools import ctsys, sdm, ms
+from casatools import ctsys, sdm, ms
 ### for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th

@@ -72,11 +72,11 @@ import numpy
 import os
 from numpy import isnan
 
-from CASAtools import functional
-from CASAtools import regionmanager
-from CASAtools import image as iatool
-from CASAtools import table
-from CASAtools import ctsys
+from casatools import functional
+from casatools import regionmanager
+from casatools import image as iatool
+from casatools import table
+from casatools import ctsys
 
 twogauss = "specfit_multipix_2gauss.fits"
 polyim = "specfit_multipix_poly_2gauss.fits"

@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import numpy
-from CASAtools import ctsys, sdm, ms, table, quanta, measures, calibrater
+from casatools import ctsys, sdm, ms, table, quanta, measures, calibrater
 ### for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th

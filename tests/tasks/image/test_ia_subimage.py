@@ -70,8 +70,8 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import image as iatool
-from CASAtools import table
+from casatools import image as iatool
+from casatools import table
 
 datapath = 'regression/unittest/imsubimage/'
 

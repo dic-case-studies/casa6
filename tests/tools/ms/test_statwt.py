@@ -6,9 +6,9 @@ import math
 import numpy
 import numbers
 
-from CASAtools import ms as mstool
-from CASAtools import table as tbtool
-from CASAtools import ctsys
+from casatools import ms as mstool
+from casatools import table as tbtool
+from casatools import ctsys
 
 datadir = 'regression/unittest/statwt/'
 src = datadir + 'ngc5921.split_2.ms'

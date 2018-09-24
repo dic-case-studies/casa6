@@ -64,8 +64,8 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import quanta
+from casatools import image as iatool
+from casatools import quanta
 
 class ia_deconvolvefrombeam_test(unittest.TestCase):
     

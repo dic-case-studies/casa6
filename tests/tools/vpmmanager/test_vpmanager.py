@@ -3,8 +3,8 @@ import sys
 import shutil
 import unittest
 
-from CASAtools import table
-from CASAtools import vpmanager as vptool
+from casatools import table
+from casatools import vpmanager as vptool
 
 _vp = vptool( )
 

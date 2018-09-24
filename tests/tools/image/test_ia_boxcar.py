@@ -68,10 +68,10 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import table
-from CASAtools import quanta
-from CASAtools import regionmanager
+from casatools import image as iatool
+from casatools import table
+from casatools import quanta
+from casatools import regionmanager
 
 class ia_boxcar_test(unittest.TestCase):
     

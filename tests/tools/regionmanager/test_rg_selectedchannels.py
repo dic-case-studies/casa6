@@ -66,9 +66,9 @@
 import shutil
 import unittest
 
-from CASAtools import regionmanager
-from CASAtools import table
-from CASAtools import image as iatool
+from casatools import regionmanager
+from casatools import table
+from casatools import image as iatool
 
 class rg_selectedchannels_test(unittest.TestCase):
     

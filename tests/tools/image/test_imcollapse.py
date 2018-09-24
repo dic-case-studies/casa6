@@ -72,11 +72,11 @@ import numpy
 import os
 from math import sqrt
 
-from CASAtools import image as iatool
-from CASAtools import regionmanager
-from CASAtools import table
-from CASAtools import quanta
-from CASAtools import ctsys
+from casatools import image as iatool
+from casatools import regionmanager
+from casatools import table
+from casatools import quanta
+from casatools import ctsys
 
 good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"

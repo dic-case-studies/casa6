@@ -69,9 +69,9 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import image as iatool
-from CASAtools import table
-from CASAtools import regionmanager
+from casatools import image as iatool
+from casatools import table
+from casatools import regionmanager
 
 class ia_decimate_test(unittest.TestCase):
     

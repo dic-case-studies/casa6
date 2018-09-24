@@ -12,9 +12,9 @@ import glob
 import unittest
 import numpy as np
 
-from CASAtools import ms
-from CASAtools import table
-from CASAtools import ctsys
+from casatools import ms
+from casatools import table
+from casatools import ctsys
 
 myname = 'test_createmultims'
 

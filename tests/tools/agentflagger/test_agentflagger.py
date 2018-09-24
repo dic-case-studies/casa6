@@ -3,7 +3,7 @@ import unittest
 import os
 import filecmp
 import pprint
-from CASAtools import agentflagger, ctsys
+from casatools import agentflagger, ctsys
 
 
 class test_base(unittest.TestCase):

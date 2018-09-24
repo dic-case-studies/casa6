@@ -68,10 +68,10 @@
 import shutil
 import unittest
 
-from CASAtools import imagepol as potool
-from CASAtools import image as iatool
-from CASAtools import table
-from CASAtools import constants
+from casatools import imagepol as potool
+from casatools import image as iatool
+from casatools import table
+from casatools import constants
 
 datapath='regression/unittest/po_tool/'
 eq_beams = datapath + "pol_eq_beams.fits"

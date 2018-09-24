@@ -68,8 +68,8 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import table
+from casatools import image as iatool
+from casatools import table
 
 class ia_fromshape_test(unittest.TestCase):
     

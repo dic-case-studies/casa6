@@ -66,9 +66,9 @@ import os
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import regionmanager
-from CASAtools import quanta
+from casatools import image as iatool
+from casatools import regionmanager
+from casatools import quanta
 
 class ia_imageconcat_test(unittest.TestCase):
     

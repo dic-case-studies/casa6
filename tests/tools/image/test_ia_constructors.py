@@ -48,8 +48,8 @@ import shutil
 import unittest
 import numpy as np
 
-from CASAtools import image as iatool
-from CASAtools import table
+from casatools import image as iatool
+from casatools import table
 
 class ia_constructors_test(unittest.TestCase):
     

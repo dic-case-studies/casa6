@@ -68,9 +68,9 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import coordsys
-from CASAtools import quanta
+from casatools import image as iatool
+from casatools import coordsys
+from casatools import quanta
 
 class ia_adddegaxes_test(unittest.TestCase):
     

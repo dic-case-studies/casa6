@@ -70,8 +70,8 @@ import unittest
 import numpy
 import os
 
-from CASAtools import image as iatool
-from CASAtools import regionmanager
+from casatools import image as iatool
+from casatools import regionmanager
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:

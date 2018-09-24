@@ -67,8 +67,8 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import table
+from casatools import image as iatool
+from casatools import table
 
 class ia_makecomplex_test(unittest.TestCase):
     

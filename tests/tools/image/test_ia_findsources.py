@@ -68,8 +68,8 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import componentlist as cltool
+from casatools import image as iatool
+from casatools import componentlist as cltool
 
 class ia_findsources_test(unittest.TestCase):
     

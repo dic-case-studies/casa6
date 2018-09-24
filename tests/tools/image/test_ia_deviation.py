@@ -6,9 +6,9 @@ import math
 import numpy
 import numbers
 
-from CASAtools import image as iatool
-from CASAtools import regionmanager as rgtool
-from CASAtools import table
+from casatools import image as iatool
+from casatools import regionmanager as rgtool
+from casatools import table
 
 _rg = rgtool( )
 

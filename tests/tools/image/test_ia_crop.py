@@ -68,9 +68,9 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import regionmanager as rgtool
-from CASAtools import table
+from casatools import image as iatool
+from casatools import regionmanager as rgtool
+from casatools import table
 
 class ia_crop_test(unittest.TestCase):
     

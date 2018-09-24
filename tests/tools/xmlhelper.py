@@ -1,5 +1,5 @@
 import os
-from CASAtools import quanta
+from casatools import quanta
 
 qa_ = quanta( )
 

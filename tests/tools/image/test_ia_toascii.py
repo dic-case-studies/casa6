@@ -68,7 +68,7 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
+from casatools import image as iatool
 
 class ia_toascii_test(unittest.TestCase):
     

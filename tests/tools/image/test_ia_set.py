@@ -67,7 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
-from CASAtools import image as iatool
+from casatools import image as iatool
 
 class ia_set_test(unittest.TestCase):
     

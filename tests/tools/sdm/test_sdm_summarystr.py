@@ -6,7 +6,7 @@
 
 
 import os
-from CASAtools import ctsys, sdm
+from casatools import ctsys, sdm
 import unittest
 
 class sdm_summarystr_test(unittest.TestCase):

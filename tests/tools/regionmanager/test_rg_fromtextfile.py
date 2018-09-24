@@ -71,10 +71,10 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import regionmanager as rgtool
-from CASAtools import image as iatool
-from CASAtools import quanta
-from CASAtools import ctsys
+from casatools import regionmanager as rgtool
+from casatools import image as iatool
+from casatools import quanta
+from casatools import ctsys
 
 image = "imregion.fits"
 text1 = "goodfile1.txt"

@@ -5,7 +5,7 @@ import unittest
 
 import numpy
 
-from CASAtools import calanalysis
+from casatools import calanalysis
 
 class calanalysis_tsys1( unittest.TestCase ):
 

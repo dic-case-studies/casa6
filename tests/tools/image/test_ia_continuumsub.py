@@ -68,10 +68,10 @@
 import shutil
 import unittest
 
-from CASAtools import image as iatool
-from CASAtools import regionmanager
-from CASAtools import functional
-from CASAtools import quanta
+from casatools import image as iatool
+from casatools import regionmanager
+from casatools import functional
+from casatools import quanta
 
 class ia_continuumsub_test(unittest.TestCase):
     

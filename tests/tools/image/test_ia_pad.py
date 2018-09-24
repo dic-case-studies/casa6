@@ -68,7 +68,7 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import image as iatool
+from casatools import image as iatool
 
 class ia_pad_test(unittest.TestCase):
     

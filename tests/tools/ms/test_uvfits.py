@@ -6,10 +6,10 @@ import unittest
 
 import numpy as np
 
-from CASAtools import ms as mstool
-from CASAtools import msmetadata as msmdtool
-from CASAtools import table as tbtool
-from CASAtools import quanta
+from casatools import ms as mstool
+from casatools import msmetadata as msmdtool
+from casatools import table as tbtool
+from casatools import quanta
 
 '''
 Unit tests for UVFITS I/O tasks.

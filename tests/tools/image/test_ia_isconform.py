@@ -70,8 +70,8 @@ import shutil
 import unittest
 import os
 
-from CASAtools import image as iatool
-from CASAtools import ctsys
+from casatools import image as iatool
+from casatools import ctsys
 
 fits = "jj.fits"
 

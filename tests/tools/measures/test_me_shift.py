@@ -1,8 +1,8 @@
 import unittest
 import copy
 import math
-from CASAtools import measures
-from CASAtools import quanta
+from casatools import measures
+from casatools import quanta
 
 class me_shift_test(unittest.TestCase):
 

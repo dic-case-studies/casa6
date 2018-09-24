@@ -69,9 +69,9 @@ import shutil
 import unittest
 import numpy
 
-from CASAtools import image as iatool
-from CASAtools import regionmanager
-from CASAtools import table
+from casatools import image as iatool
+from casatools import regionmanager
+from casatools import table
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:
