@@ -408,19 +408,13 @@ def write_wrapper( dir, ccache, compiler ):
 #close(LOG);
 exec { '%s' } '%s', '%s', @ARGV;
 '''
-
-    nocache_wrapper='''#!/usr/bin/perl
-#open(LOG,">> /tmp/wrapper-log-file.txt");
-#print LOG '%s', ' ', join(' ',@ARGV), "\\n";
-#close(LOG);
-# %s
-# %s
-unshift(@ARGV,'%s');
-exec { $ARGV[0] } @ARGV;
-'''
-
-    with open(join(dir,os.path.basename(compiler)), "w") as f:
-        f.write((ccache_wrapper if len(ccache) > 0 else nocache_wrapper) % (compiler,ccache,ccache,compiler))
+    ###
+    ### when the user uses /usr/lib64/ccache/gcc et al. writing any
+    ### wrappers results in an infinite loop...
+    ###
+    if len(ccache) > 0:
+        with open(join(dir,os.path.basename(compiler)), "w") as f:
+            f.write(ccache_wrapper % (compiler,ccache,ccache,compiler))
         
     os.chmod(join(dir,os.path.basename(compiler)), 0o0755)
 

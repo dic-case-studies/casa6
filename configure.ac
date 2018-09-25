@@ -129,6 +129,15 @@ fi
 PATH=${save_PATH_save}
 
 AC_PATH_PROG([CCACHE],[ccache])
+_ccache_path=`perl -e "use Cwd 'abs_path'; print abs_path('${CCACHE}');"`
+_cc_path=`perl -e "use Cwd 'abs_path'; print abs_path('${CC}');"`
+
+if test "${_ccache_path}" = "${_cc_path}"; then
+    ###
+    ### user can utilize ccache by adding a directory of symlinks to PATH
+    ###
+    CCACHE=""
+fi
 
 for func in pread pwrite; do
     AC_CHECK_FUNC([$func],[],AC_MSG_ERROR([$func function is required by casacore]))
