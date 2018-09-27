@@ -81,6 +81,13 @@ else
     AC_MSG_ERROR([failed to find viable C++11 compiler, please include the path to one in your PATH environment variable])
 fi
 
+AC_MSG_CHECKING([for std::defaultfloat])
+AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([[#include <ios>]],
+                                    [[std::defaultfloat;]])],
+                   [AC_MSG_RESULT([yes])],
+                   [AC_MSG_RESULT([no])
+                    AC_MSG_ERROR([C++ compiler is not new enough]) ] )
+
 dnl# use faster fortran rules for complex operations, removes restoring complex infinities
 dnl# if naive computation results in NAN + NAN * I  Handling complex multiplication and
 dnl# division with correct treating of complex infinities (one element Inf regardless of
@@ -175,7 +182,7 @@ AX_PTHREAD
 AX_CFITSIO
 AX_WCSLIB
 AX_RPFITS
-AX_GSL
+AX_GSL(2.0)
 AX_SWIG(3.0.0)
 
 AC_MSG_CHECKING([for casa version number])
