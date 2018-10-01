@@ -53,6 +53,12 @@ After all of the dependencies have been installed and the source code for CASAta
 
 #### Run Available Tests
 
+Similar to the procedure for setting up testing of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse), you can get the test data for CASAtasks by running:
+```
+-bash-4.2$ git show HEAD:almatasks-tests | bash
+```
+in the root directory of a sparse checkout of the CASA data repository (the procedure for getting a sparse data repository is described in the testing section of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse)).
+
 Tests are actively being added, but you can run the existing tests with:
 ```
 -bash-4.2$ PYTHONPATH=../casatools/build/lib.macosx-10.12-x86_64-3.6 ./setup.py test
