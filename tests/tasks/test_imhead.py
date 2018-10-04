@@ -503,25 +503,15 @@ class imhead_test(unittest.TestCase):
         newval= None
         try:                    
             val=imhead( input_file, 'get', 'restfreq' )
-            print("*** val " + str(val))
             imhead( input_file, 'put', 'restfreq', '1.421GHz' )
-            print("kk")
             imhead( input_file, 'put', 'restfreq', '15.272GHz, 1.67GHz' )
-            print("yy")
             newval=imhead( input_file, 'get', 'restfreq' )
-            print("newval " + str(newval))
             if ( val != None ):  
-                print("val2 " + str(val))
-                #imhead( input_file, 'put', 'restfreq', str(val['value'])+str(val['unit']) )
                 imhead( input_file, 'put', 'restfreq', val['value'])
-                print("done")
         except Exception as instance:
-            print(str(instance))
             self.assertTrue(False)
         else:
             self.assertFalse( val!=None and val == newval )
-                
-    
     
         #######  PROJECTION  #############
         val   = None
@@ -793,8 +783,6 @@ class imhead_test(unittest.TestCase):
             val=imhead( input_file, 'get', 'object' )
             imhead( input_file, 'del', 'object' )
             newval=imhead( input_file, 'get', 'object' )
-            print("*** val " + str(val))
-            print("*** new " + str(newval))
         except:
             self.assertTrue(False)
         else:
@@ -808,7 +796,7 @@ class imhead_test(unittest.TestCase):
         val=None
         try:
             imhead( input_file, 'add', 'test', initVal )
-            val=imhead( input_file, 'get', 'test', val )
+            val = imhead(input_file, 'get', 'test')
         except:
             self.assertTrue(False)
         else:
@@ -936,19 +924,19 @@ class imhead_test(unittest.TestCase):
             # restore logfile
             casalog.setlogfile('casa.log')
             
-            cmd = 'grep cdelt1 ' + logfile
+            cmd = ['grep', ' cdelt1', logfile]
             out = subprocess.check_output(cmd)
             self.assertNotEqual(out,'','The keyword cdelt1 is not listed')
-            cmd = 'grep crval1 ' + logfile
+            cmd = ['grep', 'crval1', logfile]
             out = subprocess.check_output(cmd)
             self.assertNotEqual(out,'','The keyword crval1 is not listed')
-            cmd = 'grep ctype1 ' + logfile
+            cmd = ['grep', 'ctype1', logfile]
             out = subprocess.check_output(cmd)
             self.assertNotEqual(out,'','The keyword ctype1 is not listed')
-            cmd = 'grep cunit1 ' + logfile
+            cmd = ['grep', 'cunit1', logfile]
             out = subprocess.check_output(cmd)
             self.assertNotEqual(out,'','The keyword cunit1 is not listed')
-            cmd = 'grep shape ' + logfile
+            cmd = ['grep', 'shape', logfile]
             out = subprocess.check_output(cmd)
             self.assertNotEqual(out,'','The keyword shape is not listed')
             
@@ -1067,12 +1055,12 @@ class imhead_test(unittest.TestCase):
                 self.assertFalse(got)
             got = imhead(imagename=imagename, mode="get", hdkey="minpos")
             if xx == 'f':
-                self.assertTrue(got == stats['minposf'].translate(None, ","))
+                self.assertTrue(got == stats['minposf'].replace(",", ""))
             else:
                 self.assertFalse(got)
             got = imhead(imagename=imagename, mode="get", hdkey="maxpos")
             if xx == 'f':
-                self.assertTrue(got == stats['maxposf'].translate(None, ","))
+                self.assertTrue(got == stats['maxposf'].replace(",",""))
             else:
                 self.assertFalse(got)
             got = imhead(imagename=imagename, mode="get", hdkey="minpixpos")
@@ -1503,8 +1491,8 @@ class imhead_test(unittest.TestCase):
             for key in [
                 "datamin", "datamax", "maxpos", "minpos",
                 "maxpixpos", "minpixpos"
-            ]: 
-                self.assertFalse(imhead(imagename=imagename, mode="set", hdkey=key, hdvalue=4))
+            ]:
+                self.assertRaises(Exception, imhead(imagename=imagename, mode="set", hdkey=key, hdvalue=4))
                
             key = "user-specified"
             for value in ["test-val", 6, self.qa.quantity("4km/s")]:
