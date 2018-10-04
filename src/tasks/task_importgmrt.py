@@ -67,8 +67,11 @@
 import os
 import numpy
 
-from casatools import table, ms, agentflagger
+from casatools import table, ms, agentflagger, quanta
 from casatasks import casalog, importuvfits
+from .mstools import write_history
+
+_qa = quanta( )
 
 def importgmrt( fitsfile, flagfile, vis ):
     retValue=False
@@ -181,8 +184,8 @@ def importgmrt( fitsfile, flagfile, vis ):
         myms.done()
 
         # Now have the observation time range in a numpy array.
-        startObs = qa.time( str( trange[0] )+'s', prec=8, form='ymd' )[0]
-        endObs   = qa.time( str( trange[1] )+'s', prec=8, form='ymd' )[0]
+        startObs = _qa.time( str( trange[0] )+'s', prec=8, form='ymd' )[0]
+        endObs   = _qa.time( str( trange[1] )+'s', prec=8, form='ymd' )[0]
         
     except Exception as instance:
         casalog.post( 'Unable to find obaservation start/en times', 'SEVERE' )
