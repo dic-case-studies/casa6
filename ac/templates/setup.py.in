@@ -999,7 +999,7 @@ class casa_test(Command):
         tests = [ ]
         for dir, subdirs, files in os.walk(testdir):
             for f in files:
-                if f.endswith(".py"):
+                if f.endswith(".py") and f.startswith("test_"):
                     workingdir = "%s/%s" % (self.__test_dir,f[:-3])
                     mkpath(workingdir)
                     tests.append((os.path.abspath("%s/%s" % (dir,f)),workingdir))
@@ -1042,6 +1042,7 @@ class casa_test(Command):
         regressionwidth = 0 if len(regression_ref) == 0 else max(map(lambda x: len(x)+3,regression_ref.keys( )))
         tabwidth = max(testwidth,regressionwidth,45)
 
+        start_time = time.time()
         testresults = list(map(lambda params: self.__run_test(tabwidth,*params),tests))
 
         len_message = "regression file count"
@@ -1053,11 +1054,13 @@ class casa_test(Command):
             regression_keys = filter(lambda k: k in regression_sample, regression_ref.keys( ))
             regressionresults = list(map(lambda k: self.__compare_reg(tabwidth,k,regression_ref[k],regression_sample[k]), regression_keys))
 
+        end_time = time.time()
+
         results = testresults + regressionresults
         print('-' * (tabwidth + 8))
         passed = list(filter(lambda v: v[0] == 0,results))
         failed = list(filter(lambda v: v[0] != 0,results))
-        print("test summary %d passed, %d failed" % (len(passed),len(failed)))
+        print("ran %s tests in %d minutes, %d passed, %d failed" % (len(results),(end_time-start_time) / 60.0,len(passed),len(failed)))
         print("OK" if len(failed) == 0 else "FAIL")
         sys.exit(0 if len(failed) == 0 else 1)
 
