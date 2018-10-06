@@ -1060,7 +1060,7 @@ class casa_test(Command):
         print('-' * (tabwidth + 8))
         passed = list(filter(lambda v: v[0] == 0,results))
         failed = list(filter(lambda v: v[0] != 0,results))
-        print("ran %s tests in %d minutes, %d passed, %d failed" % (len(results),(end_time-start_time) / 60.0,len(passed),len(failed)))
+        print("ran %s tests in %.02f minutes, %d passed, %d failed" % (len(results),(end_time-start_time) / 60.0,len(passed),len(failed)))
         print("OK" if len(failed) == 0 else "FAIL")
         sys.exit(0 if len(failed) == 0 else 1)
 
