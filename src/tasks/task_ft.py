@@ -1,6 +1,6 @@
 import os
 
-from casatools import imager, ms, image
+from casatools import imager, ms, image, quanta
 from casatasks import casalog
 
 _im = imager( )
@@ -96,7 +96,7 @@ def ft(vis=None,field=None,spw=None,model=None,nterms=None,reffreq=None,complist
                        if(type(model)==str or (not (type(model)==list and len(model)==nterms)) ):
                                raise Exception('For nterms>1, please provide a list of nterms model-image names')
                        # parse the reference-frequency field.
-                       qat=qatool();
+                       qat=quanta();
                        try:
                           rff=qat.canonical(reffreq);
                        except Exception:
