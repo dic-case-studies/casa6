@@ -76,6 +76,7 @@ import time
 import sys
 import re
 import os
+import io
 
 from os import listdir
 from os.path import isfile, join, islink
@@ -904,10 +905,10 @@ class casa_build(Command):
             for file in files:
                 if file.endswith('.py'):
                     fpath = os.path.join(root, file)
-                    with open(fpath) as fd:
+                    with io.open(fpath,'r',encoding='utf8',newline='\n') as fd:
                         s = fd.read()
                     s = s.replace("from cerberus", "from casatools.__cerberus__")
-                    with open(fpath, "w") as fd:
+                    with io.open(fpath,'w',encoding='utf8',newline='\n') as fd:
                         fd.write(s)
 
         ###
