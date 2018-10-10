@@ -902,12 +902,13 @@ class casa_build(Command):
         copy_tree("cerberus/cerberus",cerberusdir)
         for root, dirs, files in os.walk(cerberusdir):
             for file in files:
-                fpath = os.path.join(root, file)
-                with open(fpath) as fd:
-                    s = fd.read()
-                s = s.replace("from cerberus", "from casatools.__cerberus__")
-                with open(fpath, "w") as fd:
-                    fd.write(s)
+                if file.endswith('.py'):
+                    fpath = os.path.join(root, file)
+                    with open(fpath) as fd:
+                        s = fd.read()
+                    s = s.replace("from cerberus", "from casatools.__cerberus__")
+                    with open(fpath, "w") as fd:
+                        fd.write(s)
 
         ###
         ### this generates the __init__.py for the __casac__ submodule...
