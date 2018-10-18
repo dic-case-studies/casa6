@@ -6042,12 +6042,8 @@ void MSTransformManager::fillIdCols(vi::VisBuffer2 *vb,RefRows &rowRef)
 	        }
 	        else
 	        {
-	            // sigma -> weight
-	            Matrix<Float> sigma = vb->sigma();
-                arrayTransformInPlace(sigma, vi::AveragingTvi2::sigmaToWeight);
-                writeMatrix(sigma,outputMsCols_p->weight(),rowRef,nspws_p);
-
 	            // sigma -> sigma
+                Matrix<Float> sigma = vb->sigma();
 	            if (newSigmaFactorMap_p.size() > 0)
 	            {
 	                if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
@@ -6057,8 +6053,11 @@ void MSTransformManager::fillIdCols(vi::VisBuffer2 *vb,RefRows &rowRef)
 	                }
 	            }
 	            writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
-	        }
 
+                // sigma -> weight
+                arrayTransformInPlace(sigma, vi::AveragingTvi2::sigmaToWeight);
+                writeMatrix(sigma, outputMsCols_p->weight(), rowRef, nspws_p);
+	        }
 	    }
 
 	}
