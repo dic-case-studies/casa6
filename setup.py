@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
@@ -54,9 +54,12 @@ except:
 
 from setuptools import setup, find_packages
 from distutils.dir_util import copy_tree, remove_tree
+from distutils.util import get_platform
 from distutils.cmd import Command
+from distutils.command.build import build
 from subprocess import Popen, PIPE
 from subprocess import call as Proc
+from datetime import datetime
 from textwrap import dedent
 from shutil import copy2
 import subprocess
@@ -74,6 +77,39 @@ from itertools import chain
 module_name = 'casatasks'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
+
+if pyversion < 3:
+    str_encode = str
+    str_decode = str
+    def pipe_decode(output):
+        return output
+else:
+    def str_encode(s):
+        return bytes(s,sys.getdefaultencoding())
+    def str_decode(bs):
+        return bs.decode(sys.getdefaultencoding(),"strict")
+    def pipe_decode(output):
+        if isinstance(output,bytes) or isinstance(output,bytearray):
+            return str_decode(output)
+        elif isinstance(output,tuple):
+            return (str_decode(output[0]),str_decode(output[1]))
+        else:
+            return ("","")
+
+def compute_version( ):
+    year = datetime.now().year
+
+    proc = Popen([ "git", "log", "--tags", "--simplify-by-decoration", '--pretty="format:%ci %d"', '--since="01/01/%d"' % year ], cwd="casa-source", stdout=PIPE, stderr=PIPE)
+    out,err = pipe_decode(proc.communicate( ))
+
+    if proc.returncode != 0:
+        print(err)
+        sys.exit("couldn't determine version number")
+
+    master_tags = [t for t in out.split('\n') if '-mas-' in t]
+    return '%d.%d' % (year,len(master_tags))
+
+casatasks_version = compute_version( )
 
 private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/cvt.py',
@@ -436,7 +472,7 @@ else:
 def distutils_dir_name(dname):
     """Returns the name of a distutils build directory"""
     f = "{dirname}.{platform}-{version[0]}.{version[1]}"
-    return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
+    return f.format(dirname=dname,platform=get_platform(),version=sys.version_info)
 
 def mkpath(path):
     try:
@@ -526,19 +562,20 @@ def generate_pyinit(moduledir,tasks):
         fd.write("casalog.setglobal(True)\n")
         fd.write("\n")
 
-class BuildCasa(Command):
+class BuildCasa(build):
     description = "Description of the command"
     user_options = []
 
     # This method must be implemented
     def initialize_options(self):
         print("initializing options...")
-        pass
+        build.initialize_options(self)
 
     # This method must be implemented
     def finalize_options(self):
+        #self.plat_name = get_platform( )
         print("finalizing options...")
-        pass
+        build.finalize_options(self)
 
     def run(self):
         upgrade_xml(xml_xlate)
@@ -700,12 +737,29 @@ class TestCasa(Command):
         print("OK" if len(failed) == 0 else "FAIL")
         sys.exit(0 if len(failed) == 0 else 1)
 
+cmd_setup = { 'build': BuildCasa, 'test': TestCasa }
+try:
+    from wheel.bdist_wheel import bdist_wheel
+    cmd_setup['bdist_wheel'] = bdist_wheel
+except ImportError:
+    pass  # custom command not needed if wheel is not installed
 
-setup( name="casatasks",
-       version="1",
-       packages=find_packages(),
-       author="CASA group",
-       author_email="aips2@nrao.edu",
+setup( name=module_name,version=casatasks_version,
+       maintainer="Darrell Schiebel",
+       maintainer_email="drs@nrao.edu",
+       author="CASA development team",
+       author_email="aips2-request@nrao.edu",
+       url="https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse",
+       download_url="https://casa.nrao.edu/download/",
+       license="GNU Library or Lesser General Public License (LGPL)",
+       packages=[ module_name,
+                  "%s.private" % module_name,
+                  "%s.private.parallel" % module_name, 
+                  "%s.private.imagerhelpers" % module_name ],
+       classifiers=[ 'Programming Language :: Python :: %s' % pyversion ],
        description="the CASA tasks",
-       cmdclass={ 'build': BuildCasa, 'test': TestCasa }
+       long_description="The CASAtasks are a collection of (mostly) stateless functions for\nthe analysis of radio astronomy observations.",
+       cmdclass=cmd_setup,
+       package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
+       install_requires=[ 'casatools', 'matplotlib', 'scipy' ]
 )
