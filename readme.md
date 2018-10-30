@@ -122,13 +122,18 @@ The `datapath` list specifies directories where CASAtools should look for data f
 ```
 There are bout 48 tests in total. Running all of them takes about 12 minutes on my laptop.
 
-*To run a single test*, you can just execute the test file:
+*To run a single set of test*, you can just execute the test file:
 ```
 -bash-4.2$ PYTHONPATH=build/lib.macosx-10.12-x86_64-3.6 python tests/tools/coordsys/test_coordsys.py
 ```
 If the ```casatools``` module is already available in your ```PYTHONPATH```, you would not need to
 explicitly specify it on the command line. This would be the case, for example, if you installed
-CASAtools via a binary *PyPI* wheel.
+CASAtools via a binary *PyPI* wheel. If you want to run a single test from the set, you can specify
+it on the command line like:
+```
+-bash-4.2$ PYTHONPATH=build/lib.linux-x86_64-3.6 python tests/tools/coordsys/test_coordsys.py coordsys_test.test_constructor
+```
+Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCase* specified in ```test_coordsys.py```.
 
 #### Notes
 
