@@ -6,15 +6,13 @@ import math
 import numpy
 import numbers
 
-from casatools import ms as mstool
-from casatools import table as tbtool
-from casatools import ctsys
+from casatools import ctsys, table, ms
 
-datadir = 'regression/unittest/statwt/'
-src = datadir + 'ngc5921.split_2.ms'
+datadir = ctsys.resolve('regression/unittest/statwt')
+src = os.path.join(datadir,'ngc5921.split_2.ms')
 
 def _get_dst_cols(dst, other="", dodata=True):
-    mytb = tbtool()
+    mytb = table()
     mytb.open(dst)
     wt = mytb.getcol("WEIGHT")
     wtsp = mytb.getcol("WEIGHT_SPECTRUM")
@@ -63,6 +61,8 @@ def _variance2(dr, di, flag, corr, row):
         vi = numpy.var(fi, ddof=1)
         return 2/(vr + vi)
 
+
+class statwt_test(unittest.TestCase):
 
     def test_algorithm(self):
         """ Test the algorithm, includes fitspw tests"""
@@ -155,13 +155,13 @@ def _variance2(dr, di, flag, corr, row):
     def test_timebin(self):
         """ Test time binning"""
         dst = "ngc5921.split.timebin.ms"
-        ref = datadir + "ngc5921.timebin300s_2.ms.ref"
+        ref = os.path.join(datadir,"ngc5921.timebin300s_2.ms.ref")
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
         rtol = 1e-7
         combine = "corr"
         for timebin in ["300s", 10]:
             shutil.copytree(ctsys.resolve(src), dst) 
-            myms = mstool()
+            myms = ms( )
             myms.open(dst, nomodify=False)
             myms.statwt(timebin=timebin, combine=combine)
             myms.done()
@@ -178,9 +178,9 @@ def _variance2(dr, di, flag, corr, row):
         rtol = 1e-7
         for combine in ["", "corr"]:
             if combine == "":
-                ref = datadir + "ngc5921.chanbin_sepcorr_2.ms.ref"
+                ref = os.path.join(datadir,"ngc5921.chanbin_sepcorr_2.ms.ref")
             else:
-                ref = datadir + "ngc5921.chanbin_combcorr_2.ms.ref"
+                ref = os.path.join(datadir,"ngc5921.chanbin_combcorr_2.ms.ref")
             [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
             for i in [0, 2]:
                 for chanbin in ["195.312kHz", 8]:
@@ -188,7 +188,7 @@ def _variance2(dr, di, flag, corr, row):
                         continue
                     shutil.copytree(ctsys.resolve(src), dst)
                     if i == 0:
-                        myms = mstool()
+                        myms = ms( )
                         myms.open(dst, nomodify=False)
                         myms.statwt(chanbin=chanbin, combine=combine)
                         myms.done()
@@ -196,14 +196,14 @@ def _variance2(dr, di, flag, corr, row):
                         # check WEIGHT_SPECTRUM is created, only check once,
                         # this test is long as it is
                         # shutil.copytree(src, dst)
-                        mytb = tbtool()
+                        mytb = table()
                         mytb.open(dst, nomodify=False)
                         x = mytb.ncols()
                         self.assertTrue(mytb.removecols("WEIGHT_SPECTRUM"), "column not removed")
                         y = mytb.ncols()
                         self.assertTrue(y == x-1, "wrong number of columns")
                         mytb.done()
-                        myms = mstool()
+                        myms = ms( )
                         myms.open(dst, nomodify=False)
                         myms.statwt(chanbin=chanbin, combine=combine)
                         myms.done()
@@ -221,7 +221,7 @@ def _variance2(dr, di, flag, corr, row):
         trow = 12
         for minsamp in [60, 80]:
             shutil.copytree(ctsys.resolve(src), dst)
-            myms = mstool()
+            myms = ms( )
             myms.open(dst, nomodify=False)
             myms.statwt(minsamp=minsamp, combine=combine)
             myms.done()
@@ -308,7 +308,7 @@ def _variance2(dr, di, flag, corr, row):
         """Test default scan, field, etc boundaries"""
         dst = "ngc5921.split.normalbounds.ms"
         timebin = "6000s"
-        ref = datadir + "ngc5921.normal_bounds_2.ms.ref"
+        ref = os.path.join(datadir,"ngc5921.normal_bounds_2.ms.ref")
         rtol = 1e-7
         [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
         # there are three field_ids, and there is a change in field_id when
@@ -316,7 +316,7 @@ def _variance2(dr, di, flag, corr, row):
         # absence of "scan" will give the same result as combine=""
         for combine in ["corr", "corr,field"]:
             shutil.copytree(ctsys.resolve(src), dst)
-            myms = mstool()
+            myms = ms( )
             myms.open(dst, nomodify=False)
             myms.statwt(timebin=timebin, combine=combine)
             myms.done()
@@ -331,12 +331,12 @@ def _variance2(dr, di, flag, corr, row):
         """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
         timebin = "6000s"
-        ref = datadir + "ngc5921.no_scan_bounds_2.ms.ref"
+        ref = os.path.join(datadir,"ngc5921.no_scan_bounds_2.ms.ref")
         rtol = 1e-7
         [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
         combine = "corr, scan"
         shutil.copytree(ctsys.resolve(src), dst)
-        myms = mstool()
+        myms = ms( )
         myms.open(dst, nomodify=False)
         myms.statwt(timebin=timebin, combine=combine)
         myms.done()
@@ -351,12 +351,12 @@ def _variance2(dr, di, flag, corr, row):
         """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
-        ref = datadir + "ngc5921.no_scan_nor_field_bounds_2.ms.ref"
+        ref = os.path.join(datadir,"ngc5921.no_scan_nor_field_bounds_2.ms.ref")
         rtol = 1e-7
         [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
         for combine in ["corr,scan,field", "corr,field,scan"]:
             shutil.copytree(ctsys.resolve(src), dst)
-            myms = mstool()
+            myms = ms( )
             myms.open(dst, nomodify=False)
             myms.statwt(timebin=timebin, combine=combine)
             myms.done()
@@ -373,7 +373,7 @@ def _variance2(dr, di, flag, corr, row):
         dst = "ngc5921.split.statalg.ms"
         for statalg in ["cl", "ch", "h", "f", "bogus"]:
             shutil.copytree(ctsys.resolve(src), dst)
-            myms = mstool()
+            myms = ms( )
             myms.open(dst, nomodify=False)
             if statalg == "cl":
                 self.assertTrue(myms.statwt(statalg=statalg))
@@ -391,14 +391,14 @@ def _variance2(dr, di, flag, corr, row):
     def test_wtrange(self):
         """ Test weight range"""
         dst = "ngc5921.split.timebin.ms"
-        ref = datadir + "ngc5921.timebin300s_2.ms.ref"
+        ref = os.path.join(datadir,"ngc5921.timebin300s_2.ms.ref")
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
         rtol = 1e-7
         combine = "corr"
         timebin = "300s"
         wtrange = [1, 2]
         shutil.copytree(ctsys.resolve(src), dst) 
-        myms = mstool()
+        myms = ms( )
         myms.open(dst, nomodify=False)
         myms.statwt(timebin=timebin, combine=combine, wtrange=wtrange)
         myms.done()
@@ -444,7 +444,7 @@ def _variance2(dr, di, flag, corr, row):
         wtrange = [1, 2]
         preview = True
         shutil.copytree(ctsys.resolve(src), dst)
-        myms = mstool()
+        myms = ms( )
         myms.open(dst, nomodify=False)
         myms.statwt(
             timebin=timebin, combine=combine, wtrange=wtrange, preview=preview
@@ -465,14 +465,14 @@ def _variance2(dr, di, flag, corr, row):
     def test_data(self):
         """ Test using data column"""
         dst = "ngc5921.split.data.ms"
-        ref = datadir + "ngc5921.timebin300s_2.ms.ref"
+        ref = os.path.join(datadir,"ngc5921.timebin300s_2.ms.ref")
         [refwt, refwtsp, refflag, reffrow] = _get_dst_cols(ref, "", dodata=False)
         rtol = 1e-7
         combine = "corr"
         timebin = 10
         data = "data"
-        mytb = tbtool()
-        myms = mstool()
+        mytb = table()
+        myms = ms( )
         shutil.copytree(ctsys.resolve(src), dst)
         self.assertTrue(mytb.open(dst, nomodify=False))
         self.assertTrue(mytb.removecols("DATA"))
@@ -497,11 +497,11 @@ def _variance2(dr, di, flag, corr, row):
     def test_slding_time_window(self):
         """ Test sliding time window"""
         dst = "ngc5921.split.sliding_time_window.ms"
-        ref = datadir + "ngc5921.slidingtimebin300s_2.ms.ref"
+        ref = os.path.join(datadir,"ngc5921.slidingtimebin300s_2.ms.ref")
         [refwt, refwtsp, refflag, reffrow] = _get_dst_cols(ref, "", dodata=False)
         rtol = 1e-7
         timebin = "300s"
-        myms = mstool()
+        myms = ms( )
         shutil.copytree(ctsys.resolve(src), dst)
         myms.open(dst, nomodify=False)
         myms.statwt(timebin=timebin, slidetimebin=True)
