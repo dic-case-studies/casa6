@@ -124,7 +124,7 @@ There are bout 48 tests in total. Running all of them takes about 12 minutes on 
 
 *To run a single test*, you can just execute the test file:
 ```
--bash-4.2$ PYTHONPATH=build/lib.macosx-10.12-x86_64-3.6 python build/lib.macosx-10.12-x86_64-3.6
+-bash-4.2$ PYTHONPATH=build/lib.macosx-10.12-x86_64-3.6 python tests/tools/coordsys/test_coordsys.py
 ```
 If the ```casatools``` module is already available in your ```PYTHONPATH```, you would not need to
 explicitly specify it on the command line. This would be the case, for example, if you installed
