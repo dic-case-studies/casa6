@@ -122,6 +122,14 @@ The `datapath` list specifies directories where CASAtools should look for data f
 ```
 There are bout 48 tests in total. Running all of them takes about 12 minutes on my laptop.
 
+*To run a single test*, you can just execute the test file:
+```
+-bash-4.2$ PYTHONPATH=build/lib.macosx-10.12-x86_64-3.6 python build/lib.macosx-10.12-x86_64-3.6
+```
+If the ```casatools``` module is already available in your ```PYTHONPATH```, you would not need to
+explicitly specify it on the command line. This would be the case, for example, if you installed
+CASAtools via a binary *PyPI* wheel.
+
 #### Notes
 
 If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.0.jar*, e.g.
