@@ -97,6 +97,7 @@ def immoments(
     mask, includepix, excludepix, outfile, stretch
 ):
     retValue=None
+    outia = None
     casalog.origin('immoments')
     _myia = image( )
     try:

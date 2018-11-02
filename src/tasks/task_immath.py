@@ -164,6 +164,7 @@
 
 import os
 import re
+import sys
 import shutil
 from .ialib import write_image_history
 

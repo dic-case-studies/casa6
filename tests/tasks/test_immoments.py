@@ -94,8 +94,8 @@ import shutil
 import numpy
 import math
 import unittest
-from casatools import regionmanager, image, table
-from casatasks import casalog, immoments
+from casatools import ctsys, regionmanager, image, table
+from casatasks import casalog, imstat, imhistory, imval, immath, immoments
 
 _rg = regionmanager( )
 _ia = image( )
@@ -181,8 +181,7 @@ def _momentTest_debug_msg( msgNum=0 ):
     print(str(msgNum)+":  "+debug_msgs[idx])
     return
 
-datapath = '../build/lib.macosx-10.12-x86_64-3.6/casa-data/regression/immoment/'
-#datapath = '/Users/drs/develop/casa/casatools/build/lib.macosx-10.12-x86_64-3.6/casa-data/regression/immoment/'
+datapath = ctsys.resolve('regression/immoment')
 
 # input files
 list1=['n1333_both.image','n1333_both.image.rgn']
@@ -229,7 +228,7 @@ class immoment_test1(unittest.TestCase):
                 os.system('rm -rf ' +file)
         
         for file in list1:
-            os.system('cp -RL ' +datapath + file +' ' + file)
+            os.system('cp -RL ' +os.path.join(datapath,file)+' ' + file)
 
 
     def tearDown(self):
@@ -253,8 +252,12 @@ class immoment_test1(unittest.TestCase):
         #######################################################################
 #        _momentTest_debug_msg( 5 )
         results = None
-        results = immoments( 'n1333_both', moments=[0], outfile='input_test_1' )
-        if ( results != None ):
+        success = False
+        try:
+            results = immoments( 'n1333_both', moments=[0], outfile='input_test_1' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Badfile, 'n1333_both', was not reported as bad."
@@ -446,10 +449,18 @@ class immoment_test1(unittest.TestCase):
                  +"\nError: Bad axis value, '-1', was not reported as bad."
         self.assertTrue(results)
 #        _momentTest_debug_msg( 19 )
-        results = immoments( 'n1333_both.image', moments=[0], axis=4, outfile='input_test_bad_axis' )
-        self.assertFalse(results)
-        results = immoments( 'n1333_both.image', moments=[0], axis='whatever', outfile='input_test_bad_axis' )
-        if ( results != None ):
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', moments=[0], axis=4, outfile='input_test_bad_axis' )
+        except:
+            success = True
+        self.assertTrue(success)
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', moments=[0], axis='whatever', outfile='input_test_bad_axis_unique' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad axis value, 'whatever', was not reported as bad."
@@ -464,27 +475,38 @@ class immoment_test1(unittest.TestCase):
         self.assertTrue(len(self.tb.showcache()) == 0)
 
         results = None
-        results = immoments( 'n1333_both.image', region=3, outfile='input_test_bad_rgn' )
-        if ( results ):
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', region=3, outfile='input_test_bad_rgn' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad region file, 3, was not reported as bad."
     
 #        _momentTest_debug_msg( 22 )
         results = None
-        results = immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
-        if ( results != None ):
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad region file, 'garbage.rgn', was not reported as missing."
     
 #        _momentTest_debug_msg( 23 )
-        fp=file( 'garbage.rgn', 'w' )
-        fp.write('This file does NOT contain a valid CASA region specification')
-        fp.close()
+        with open('garbage.rgn','w') as fp:
+            fp.write('This file does NOT contain a valid CASA region specification')
         results = None
-        results = immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
-        if ( results != None ):
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad region file, 'garbage.rgn', was not reported as bad."
@@ -509,16 +531,24 @@ class immoment_test1(unittest.TestCase):
         
 #        _momentTest_debug_msg( 34 )
         results = None
-        results = immoments( 'n1333_both.image', box='-3,0,799,799', outfile='input_test_bad_box' )
-        if ( results != None and results!=True ):
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', box='-3,0,799,799', outfile='input_test_bad_box' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad box value, 'x=-3', was not reported as missing."
     
 #        _momentTest_debug_msg( 26 )
         results = None
-        results = immoments( 'n1333_both.image', box='0,-3,799,799', outfile='input_test_bad_box' )
-        if ( results != None ):
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', box='0,-3,799,799', outfile='input_test_bad_box' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad box value, 'y=-3', was not reported as missing."
@@ -528,16 +558,24 @@ class immoment_test1(unittest.TestCase):
         self.assertTrue(len(self.tb.showcache()) == 0)
 
         results = None
-        results = immoments( 'n1333_both.image', box='-2,0,798,798', outfile='input_test_bad_box' )
-        if ( results!=None or results==True ):
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', box='-2,0,798,798', outfile='input_test_bad_box' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad box value, 'x=-2', was not reported."
     
 #        _momentTest_debug_msg( 28 )
         results = None
-        results = immoments( 'n1333_both.image', box='0,-2,799,799', outfile='input_test_bad_box' )
-        if ( results != None and results!=True ):
+        success = False
+        try:
+            results = immoments( 'n1333_both.image', box='0,-2,799,799', outfile='input_test_bad_box' )
+        except:
+            success = True
+        if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad box value, 'y=-2', was not reported as missing."
@@ -846,7 +884,7 @@ class immoment_test2(unittest.TestCase):
             for file in list2:
                 os.system('rm -rf ' +file)
         for file in list2:
-            os.system('cp -RL ' +datapath + file +' ' + file)
+            os.system('cp -RL ' +os.path.join(datapath,file)+' ' + file)
 
 
     def tearDown(self):
@@ -1259,7 +1297,7 @@ class immoment_test2(unittest.TestCase):
         """ Verify fix of CAS-5287"""
         outfile = "cas5287.im"
         immoments(
-            imagename=datapath + "38chans.im",moments=[8],axis="spectral",
+            imagename=os.path.join(datapath,"38chans.im"),moments=[8],axis="spectral",
             outfile=outfile
         )
         myia = image()
