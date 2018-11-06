@@ -1319,7 +1319,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'addwn must contain at least one element.')
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
         
     def test101(self):
         """Sinusoid Test 101: no effective wave number set (addwn empty list, applyfft=True)"""
@@ -1332,7 +1332,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'addwn must contain at least one element.')
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
         
     def test102(self):
         """Sinusoid Test 102: no effective wave number set (addwn empty tuple, applyfft=False)"""
@@ -1345,7 +1345,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'addwn must contain at least one element.')
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
         
     def test103(self):
         """Sinusoid Test 103: no effective wave number set (addwn empty tuple, applyfft=True)"""
@@ -1358,7 +1358,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'addwn must contain at least one element.')
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
         
     def test104(self):
         """Sinusoid Test 104: no effective wave number set (addwn empty string, applyfft=False)"""
@@ -1371,7 +1371,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'string index out of range')
+            self.assertEqual(str(e), 'string index out of range')
         
     def test105(self):
         """Sinusoid Test 105: no effective wave number set (addwn empty string, applyfft=True)"""
@@ -1384,7 +1384,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'string index out of range')
+            self.assertEqual(str(e), 'string index out of range')
         
     def test106(self):
         """Sinusoid Test 106: no effective wave number set (addwn and rejwn identical, applyfft=False)"""
@@ -1398,7 +1398,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
         
     def test107(self):
         """Sinusoid Test 107: no effective wave number set (addwn and rejwn identical, applyfft=True)"""
@@ -1412,7 +1412,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
         
     def test108(self):
         """Sinusoid Test 108: no effective wave number set (rejwn covers wider range than that of addwn, applyfft=False)"""
@@ -1426,7 +1426,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
         
     def test109(self):
         """Sinusoid Test 109: no effective wave number set (rejwn covers wider range than that of addwn, applyfft=True)"""
@@ -1440,7 +1440,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test110(self):
         """Sinusoid Test 110: wn range greater than upper limit"""
@@ -1454,7 +1454,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test111(self):
         """Sinusoid Test 111: explicitly specify wn value (greater than upper limit)"""
@@ -1468,7 +1468,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test112(self):
         """Sinusoid Test 112: explicitly specify wn value (negative)"""
@@ -1482,7 +1482,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'wrong value given for addwn/rejwn')
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
 
     def test113(self):
         """Sinusoid Test 113: explicitly specify wn value (addwn has negative and greater than upper limit)"""
@@ -1496,7 +1496,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'wrong value given for addwn/rejwn')
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
 
     def test114(self):
         """Sinusoid Test 114: explicitly specify wn value (both addwn/rejwn have negative and greater than upper limit)"""
@@ -1510,7 +1510,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'wrong value given for addwn/rejwn')
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
 
     def test115(self):
         """Sinusoid Test 115: wrong fftthresh (as list)"""
@@ -1523,7 +1523,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh must be float or integer or string.')
+            self.assertEqual(str(e), 'fftthresh must be float or integer or string.')
 
     def test116(self):
         """Sinusoid Test 116: wrong fftthresh (as string 'asigma')"""
@@ -1536,7 +1536,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test117(self):
         """Sinusoid Test 117: wrong fftthresh (as string 'topa')"""
@@ -1549,7 +1549,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test118(self):
         """Sinusoid Test 118: wrong fftthresh (as string 'top3sigma')"""
@@ -1562,7 +1562,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test119(self):
         """Sinusoid Test 119: wrong fftthresh (as string 'a123')"""
@@ -1575,7 +1575,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test120(self):
         """Sinusoid Test 120: wrong fftthresh (as string '')"""
@@ -1588,7 +1588,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test121(self):
         """Sinusoid Test 121: wrong fftthresh (as string '-3.0')"""
@@ -1601,7 +1601,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test122(self):
         """Sinusoid Test 122: wrong fftthresh (as string '0.0')"""
@@ -1614,7 +1614,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test123(self):
         """Sinusoid Test 123: wrong fftthresh (as string '-3')"""
@@ -1627,7 +1627,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test124(self):
         """Sinusoid Test 124: wrong fftthresh (as string '0')"""
@@ -1640,7 +1640,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test125(self):
         """Sinusoid Test 125: wrong fftthresh (as string '-3.0sigma')"""
@@ -1653,7 +1653,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test126(self):
         """Sinusoid Test 126: wrong fftthresh (as string '0.0sigma')"""
@@ -1666,7 +1666,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test127(self):
         """Sinusoid Test 127: wrong fftthresh (as string '-3sigma')"""
@@ -1679,7 +1679,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test128(self):
         """Sinusoid Test 128: wrong fftthresh (as string '0sigma')"""
@@ -1692,7 +1692,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test129(self):
         """Sinusoid Test 129: wrong fftthresh (as string 'top-3')"""
@@ -1705,7 +1705,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test130(self):
         """Sinusoid Test 130: wrong fftthresh (as string 'top0')"""
@@ -1718,7 +1718,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test131(self):
         """Sinusoid Test 131: wrong fftthresh (as string 'top1.5')"""
@@ -1731,7 +1731,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test132(self):
         """Sinusoid Test 132: wrong fftthresh (as float -3.0)"""
@@ -1744,7 +1744,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test133(self):
         """Sinusoid Test 133: wrong fftthresh (as float 0.0)"""
@@ -1757,7 +1757,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test134(self):
         """Sinusoid Test 134: wrong fftthresh (as int -3)"""
@@ -1770,7 +1770,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test135(self):
         """Sinusoid Test 135: wrong fftthresh (as int 0)"""
@@ -1783,7 +1783,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
 
 class sdbaseline_multi_IF_test(sdbaseline_unittest_base):

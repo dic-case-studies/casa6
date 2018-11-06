@@ -482,7 +482,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             stat=my_ia.statistics(mask="'"+weightfile+"' > 0.0", robust=True)
             valid_pixels=stat['npts']
         except RuntimeError as e:
-            if e.message.find('No valid data found.') >= 0:
+            if str(e).find('No valid data found.') >= 0:
                 valid_pixels = [0]
             else:
                 raise

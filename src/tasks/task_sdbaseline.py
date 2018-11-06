@@ -156,7 +156,7 @@ def check_fftthresh(fftthresh):
             if val_not_positive:
                 raise ValueError(not_positive_mesg)
         except Exception as e:
-            if (e.message == not_positive_mesg):
+            if (str(e) == not_positive_mesg):
                 raise
             else:
                 raise ValueError('fftthresh has a wrong format.')
