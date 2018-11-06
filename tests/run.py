@@ -33,7 +33,7 @@ def test_result_to_xml (result):
     returncode, testname, run_time, teststdout, testerr = result	
     testerror = escape(testerr)
     testxml = '<testcase classname="' + testname + '"' \
-          + 'name="Run regression" time="' + str("{0:.2f}".format(run_time)) + '">'
+          + ' name="Run regression" time="' + str(round(run_time)) + '">'
     if ( returncode != 0) :
        testxml = testxml + '<failure message="' + escape(str(b''.join(tail(testerror,"10")))) + '</failure>'
        failures = failures + 1
