@@ -17,30 +17,19 @@ from xml.sax.saxutils import escape
 ### xUnit generation
 ###
 
-testcount = 0
-failures = 0
-skipped = 0
-errorcount = 0
-
-
 def tail(f, n):
     proc = subprocess.Popen(['tail', '-n', n, f], stdout=subprocess.PIPE)
     lines = proc.stdout.readlines()
     return lines
 
 def test_result_to_xml (result):
-    global failures, testcount, skipped, errorcount
-    returncode, testname, run_time, teststdout, testerr = result	
+    returncode, testname, run_time, teststdout, testerr = result
     testerror = escape(testerr)
     testxml = '<testcase classname="' + testname + '"' \
           + ' name="Run regression" time="' + str(round(run_time)) + '">'
     if ( returncode != 0) :
        testxml = testxml + '<failure message="' + escape(str(b''.join(tail(testerror,"10")))) + '</failure>'
-       failures = failures + 1
-       testcount = testcount + 1
-    else:
-       testcount = testcount + 1
-    testxml = testxml + '</testcase>\n'   
+    testxml = testxml + '</testcase>\n'
     return testxml
 
 ###
@@ -123,29 +112,27 @@ if len(sys.argv) == 1:
     tabwidth = max(testwidth,45)
 
     start_time = time.time()
-    
+
     results = list(map(lambda params: run_test(tabwidth,*params),tests))
- 
-    xmlResults = list(map(lambda result: test_result_to_xml (result), results))    
-    
-    xUnit = open("xUnit.xml","w+")
-    testHeader = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" \
-                 + '<testsuite name="UnitTests" tests="' \
-	  	 + str(testcount) + '" errors="' + str(errorcount) \
-		 + '" failures="' + str(failures) + '" skip="' + str(skipped) +'">\n'
-    testFooter ="\n</testsuite>"
-    xUnit.write(testHeader)    
-    xUnit.write(''.join(xmlResults))    
-    xUnit.write(testFooter)    
-    xUnit.close()	
-    
-    end_time = time.time()
-    
+
     print('-' * (tabwidth + 8))
     passed = list(filter(lambda v: v[0] == 0,results))
     failed = list(filter(lambda v: v[0] != 0,results))
     print("ran %s tests in %.02f minutes, %d passed, %d failed" % (len(results),(end_time-start_time) / 60.0,len(passed),len(failed)))
     print("OK" if len(failed) == 0 else "FAIL")
+
+    xUnit = open("xUnit.xml","w+")
+    testHeader = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" \
+                 + '<testsuite name="UnitTests" tests="' \
+	  	 + str(len(results)) + '" errors="0"' + \
+		 + '" failures="' + str(failed) + '" skip="0">\n'
+    xmlResults = list(map(lambda result: test_result_to_xml (result), results))
+    testFooter ="\n</testsuite>"
+    xUnit.write(testHeader + ''.join(xmlResults) + testFooter)
+    xUnit.close()
+
+    end_time = time.time()
+
     sys.exit(0 if len(failed) == 0 else 1)
 
 else:
