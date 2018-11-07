@@ -29,15 +29,15 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from recipes.listshapes import listshapes
 import testhelper as th
 from casatasks import split, partition, listobs, flagdata, importasdm, flagcmd
-from casatools import ms, msmetadata, table
+from casatools import ctsys, ms, msmetadata, table
 import unittest
-from parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/split/'
+datapath = ctsys.resolve('regression/unittest/split')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):   
+if 'TEST_DATADIR' in os.environ:
     testmms = True
     DATADIR = str(os.environ.get('TEST_DATADIR'))
     if os.path.isdir(DATADIR):
@@ -45,7 +45,7 @@ if os.environ.has_key('TEST_DATADIR'):
 
 print('split tests will use data from '+datapath)
 
-if os.environ.has_key('BYPASS_PARALLEL_PROCESSING'):
+if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
     ParallelTaskHelper.bypassParallelProcessing(1)
 
 '''
@@ -204,10 +204,10 @@ class SplitChecker(unittest.TestCase):
             # shared by other tests, so making it readonly might break them.
             # Make inpms an already existing path (i.e. datapath + inpms) to
             # disable this copy.
-            shutil.copytree(datapath + inpms, inpms)
+            shutil.copytree(os.path.join(datapath,inpms), inpms)
 
         if not os.path.exists(inpms):
-            raise EnvironmentError("Missing input MS: " + datapath + inpms)
+            raise EnvironmentError("Missing input MS: " + os.path.join(datapath,inpms))
 
         for corrsel in self.corrsels:
             self.res = self.do_split(corrsel)
@@ -613,8 +613,8 @@ class split_test_cdsp(SplitChecker):
         self.__class__.need_to_initialize = False
 
         for inpms in self.corrsels:
-            if not os.path.exists(datapath + inpms):
-                raise EnvironmentError("Missing input MS: " + datapath + inpms)
+            if not os.path.exists(os.path.join(datapath,inpms)):
+                raise EnvironmentError("Missing input MS: " + os.path.join(datapath,inpms))
             self.res = self.do_split(inpms)
 
     def do_split(self, corrsel):     # corrsel is really an input MS in
@@ -624,7 +624,7 @@ class split_test_cdsp(SplitChecker):
         shutil.rmtree(outms, ignore_errors=True)
         try:
             print("\nRemapping CALDEVICE and SYSPOWER of", corrsel)
-            splitran = split(datapath + corrsel, outms, datacolumn='data',
+            splitran = split(os.path.join(datapath,corrsel), outms, datacolumn='data',
                              field='', spw='0,2', width=1,
                              antenna='ea05,ea13&',
                              timebin='', timerange='',
@@ -699,7 +699,7 @@ class split_test_cst(SplitChecker):
     """
     need_to_initialize = True
     corrsels = ['']
-    inpms = datapath + 'crazySourceTable.ms' # read-only
+    inpms = os.path.join(datapath,'crazySourceTable.ms') # read-only
     outms = 'filteredsrctab.ms'
     records = {}
 
@@ -777,7 +777,7 @@ class split_test_state(unittest.TestCase):
     """
     Checks the STATE subtable after selecting by intent.
     """
-    inpms = datapath + 'doppler01fine-01.ms'
+    inpms = os.path.join(datapath,'doppler01fine-01.ms')
     locms = inpms.split(os.path.sep)[-1]
     outms = 'obstar.ms'
 
@@ -846,7 +846,7 @@ class split_test_cavcd(unittest.TestCase):
                 # Copying is technically unnecessary for split,
                 # but self.inpms is shared by other tests, so making
                 # it readonly might break them.
-                shutil.copytree(datapath + self.inpms, self.inpms)
+                shutil.copytree(os.path.join(datapath,self.inpms), self.inpms)
                 
             print("\n\tSplitting", self.inpms)
             splitran = split(self.inpms, self.outms, datacolumn='corrected',
@@ -879,7 +879,7 @@ class split_test_genericsubtables(unittest.TestCase):
     """
     Check copying generic subtables
     """
-    inpms = datapath + '2554.ms'
+    inpms = os.path.join(datapath,'2554.ms')
     outms = 'musthavegenericsubtables.ms'
 
     def setUp(self):
@@ -932,7 +932,7 @@ class split_test_singchan(unittest.TestCase):
                 # Copying is technically unnecessary for split,
                 # but self.inpms is shared by other tests, so making
                 # it readonly might break them.
-                shutil.copytree(datapath + self.inpms, self.inpms)
+                shutil.copytree(os.path.join(datapath,self.inpms), self.inpms)
 
             print("\n\tSplitting", self.inpms)
             splitran = split(self.inpms, self.outms, datacolumn='data',
@@ -984,7 +984,7 @@ class split_test_blankov(unittest.TestCase):
                 # Copying is technically unnecessary for split,
                 # but self.inpms is shared by other tests, so making
                 # it readonly might break them.
-                shutil.copytree(datapath + self.inpms, self.inpms)
+                shutil.copytree(os.path.join(datapath,self.inpms), self.inpms)
         except Exception:
             print("Error in rm -rf %s or cp -r %s" % (self.outms, self.inpms))
             raise
@@ -998,7 +998,6 @@ class split_test_blankov(unittest.TestCase):
         Does outputvis == '' cause a prompt exit?
         """
         splitran = False
-        original_throw_pref = False
         try:
             splitran = split(self.inpms, self.outms, datacolumn='data',
                              field='', spw='0:25', width=1,
@@ -1010,7 +1009,6 @@ class split_test_blankov(unittest.TestCase):
             splitran = False
         except Exception as e:
             print("Unexpected but probably benign exception:", e)
-        myf['__rethrow_casa_exceptions'] = original_throw_pref
         assert not splitran
 
 class split_test_almapol(SplitChecker):
@@ -1020,7 +1018,7 @@ class split_test_almapol(SplitChecker):
     """
     need_to_initialize = True
     corrsels = ['xx,yy']
-    inpms = datapath + 'ixxxyyxyy.ms'
+    inpms = os.path.join(datapath,'ixxxyyxyy.ms')
     records = {}
 
     def do_split(self, corrsel):
@@ -1074,7 +1072,7 @@ class split_test_unorderedpolspw(SplitChecker):
     Check spw selection from a tricky MS.
     """
     need_to_initialize = True
-    inpms = datapath + 'unordered_polspw.ms'
+    inpms = os.path.join(datapath,'unordered_polspw.ms')
     corrsels = ['']
     records = {}
     #n_tests = 2
@@ -1116,7 +1114,7 @@ class split_test_sw_and_fc(SplitChecker):
     Check SPECTRAL_WINDOW and FLAG_CMD with chan selection and averaging.
     """
     need_to_initialize = True
-    inpms = datapath + '2562.ms'
+    inpms = os.path.join(datapath,'2562.ms')
     records = {}
 
     # records uses these as keys, so they MUST be tuples, not lists.
@@ -1325,7 +1323,7 @@ class split_test_optswc(SplitChecker):
     Check propagation of SPECTRAL_WINDOW's optional columns
     """
     need_to_initialize = True
-    inpms = datapath + 'optswc.ms'
+    inpms = os.path.join(datapath,'optswc.ms')
     records = {}
     expcols = set(['MEAS_FREQ_REF', 'CHAN_FREQ',       'REF_FREQUENCY',
                    'CHAN_WIDTH',    'EFFECTIVE_BW',    'RESOLUTION',
@@ -1393,7 +1391,7 @@ class split_test_tav_then_cvel(SplitChecker):
     #                   'chan': complex(0, 1),
     #                   'STATE_ID': complex(0, 0.1),
     #                   'time': 100.0}, ow=True)
-    inpms = datapath + 'doppler01fine-01.ms'
+    inpms = os.path.join(datapath,'doppler01fine-01.ms')
     corrsels = ['']
     records = {}
     #n_tests = 6
@@ -1530,7 +1528,7 @@ class split_test_wttosig(SplitChecker):
     Check WEIGHT and SIGMA after various datacolumn selections and averagings.
     """
     need_to_initialize = True
-    inpms = datapath + 'testwtsig.ms'
+    inpms = os.path.join(datapath,'testwtsig.ms')
     records = {}
 
     # records uses these as keys, so they MUST be tuples, not lists.
@@ -1689,7 +1687,7 @@ class split_test_fc(SplitChecker):
     Check FLAG_CATEGORY after various selections and averagings.
     """
     need_to_initialize = True
-    inpms = datapath + 'hasfc.ms'
+    inpms = os.path.join(datapath,'hasfc.ms')
     records = {}
 
     # records uses these as keys, so they MUST be tuples, not lists.
@@ -1854,11 +1852,7 @@ class test_base(unittest.TestCase):
         # data set with spw=0~15, 64 channels each in TOPO
         self.vis = "Four_ants_3C286.ms"
 
-        if os.path.exists(self.vis):
-           self.cleanup()
-
-        os.system('cp -RL '+self.datapath + self.vis +' '+ self.vis)
-        default(split)
+        os.system('cp -RL '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
         
     def setUp_3c84(self):
         # MS is as follows (scan=1):
@@ -1869,19 +1863,16 @@ class test_base(unittest.TestCase):
         #   2      64       RR  RL  LR  LL
 
         self.vis = '3c84scan1.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
 
-        os.system('cp -RL '+self.datapath + self.vis +' '+ self.vis)
-        default(split)
+        os.system('cp -RL '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
         
     def setUp_flags(self):
         asdmname = 'test_uid___A002_X997a62_X8c-short' # Flag.xml is modified
         self.vis = asdmname+'.ms'
         self.flagfile = asdmname+'_cmd.txt'
 
-        asdmpath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importasdm/'
-        os.system('ln -sf '+asdmpath+asdmname)
+        asdmpath=ctsys.resolve('regression/unittest/importasdm')
+        os.system('ln -sf '+os.path.join(asdmpath,asdmname))
         importasdm(asdmname, convert_ephem2geo=False, flagbackup=False, process_syspower=False, lazy=True, 
                    scans='1', savecmds=True, overwrite=True)
         
@@ -1890,11 +1881,10 @@ class test_base(unittest.TestCase):
         '''Create MMSs for tests with input MMS'''
         prefix = msfile.rstrip('.ms')
         if not os.path.exists(msfile):
-            os.system('cp -RL '+datapath + msfile +' '+ msfile)
+            os.system('cp -RL '+os.path.join(datapath,msfile)+' '+ msfile)
         
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
-        default(partition)
         
         if os.path.exists(self.testmms):
             os.system("rm -rf " + self.testmms)
@@ -1911,7 +1901,7 @@ class splitTests(test_base):
         if testmms:
             self.datapath = datapath
         else:
-            self.datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/flagdata/'
+            self.datapath = ctsys.resolve('regression/unittest/flagdata')
         self.setUp_4ants()
         
     def tearDown(self):
@@ -2041,7 +2031,7 @@ class splitSpwPoln(test_base):
         if testmms:
             self.datapath = datapath
         else:
-            self.datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/mstransform/'
+            self.datapath = ctsys.resolve('regression/unittest/mstransform')
         self.setUp_3c84()
 
     def tearDown(self):
@@ -2148,3 +2138,6 @@ def suite():
             splitSpwPoln,
             splitUpdateFlagCmd
             ]
+
+if __name__ == '__main__':
+    unittest.main()

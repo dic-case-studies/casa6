@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from casatools import table
 from glob import glob
 import os
 
@@ -10,7 +11,7 @@ def get_tool(toolname):
     """
     tool = None
     if toolname != 'table':
-        tool = casac.table()
+        tool = table( )
     else:
         print("The factory name for", toolname, "is unknown.")
     return tool
