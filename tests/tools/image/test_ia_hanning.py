@@ -157,8 +157,6 @@ class ia_hanning_test(unittest.TestCase):
         
         self.assertTrue(myim.done())
 
-
-    @unittest.skip("uses a task")
     def test_general(self):
         """Test general behavior"""
         myia = iatool()
@@ -175,12 +173,6 @@ class ia_hanning_test(unittest.TestCase):
             outfile = "out" + str(i) + ".im"
             if (i < 2):
                 self.assertRaises(Exception, myia.hanning, region=reg, axis=2)
-                self.assertFalse(
-                    specsmooth(
-                        imagename=imagename, outfile=outfile,
-                        region=reg, function="h", axis=2
-                    )
-                )
             else:
                 for drop in (False, True):
                     outfile = "out" + str(i) + str(drop) + ".im"
@@ -203,20 +195,12 @@ class ia_hanning_test(unittest.TestCase):
                                         expec = [4.0, 12.0]
                                     if i == 5:
                                         expec = [4.0, 14.0]
-                            for mm in [0, 1]:
-                                if mm == 0:
-                                    han = myia.hanning(
-                                        region=reg, axis=2, drop=drop, dmethod=dmethod
-                                    )
-                                elif mm == 1:
-                                    specsmooth(
-                                        imagename=imagename, outfile=outfile,
-                                        region=reg, function="h", axis=2, dmethod=dmethod
-                                    )
-                                    han.open(outfile)
-                                got = han.getchunk().ravel()
-                                self.assertTrue((got == expec).all())
-                                han.done()
+                            han = myia.hanning(
+                                region=reg, axis=2, drop=drop, dmethod=dmethod
+                            )
+                            got = han.getchunk().ravel()
+                            self.assertTrue((got == expec).all())
+                            han.done()
                     else:
                         dmethod="c"
                         if i == 2:
@@ -227,20 +211,12 @@ class ia_hanning_test(unittest.TestCase):
                             expec = [1.5, 2.5, 5.5, 10.5, 13.5]
                         elif i == 5:
                             expec = [1.5, 2.5, 5.5, 10.5, 17.5, 21.5]
-                        for mm in [0, 1]:
-                            if mm == 0:
-                                han = myia.hanning(
-                                    region=reg, axis=2, drop=drop, dmethod=dmethod
-                                )
-                            elif mm == 1:
-                                specsmooth(
-                                    imagename=imagename, outfile=outfile,
-                                    region=reg, function="h", axis=2, dmethod=""
-                                )
-                                han.open(outfile)
-                            got = han.getchunk().ravel()
-                            self.assertTrue((got == expec).all())
-                            han.done()
+                        han = myia.hanning(
+                            region=reg, axis=2, drop=drop, dmethod=dmethod
+                        )
+                        got = han.getchunk().ravel()
+                        self.assertTrue((got == expec).all())
+                        han.done()
         rg.done( )
         myia.done()
             
@@ -256,21 +232,6 @@ class ia_hanning_test(unittest.TestCase):
         teststr = "ia.hanning"
         self.assertTrue(teststr in msgs[-4], "'" + teststr + "' not found")    
         self.assertTrue(teststr in msgs[-3], "'" + teststr + "' not found")
-        
-        outfile = "zz_out.im"
-        self.assertTrue(
-            specsmooth(
-                imagename=imagename, outfile=outfile,
-                axis=2, function="h"
-            )
-        )
-        myia.open(outfile)
-        msgs = myia.history()
-        myia.done()
-        teststr = "version"
-        self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
-        teststr = "specsmooth"
-        self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found") 
    
 def suite():
     return [ia_hanning_test]
