@@ -2,6 +2,8 @@ from casatools import image
 from casatasks import casalog
 from .ialib import write_image_history
 
+import sys
+
 def specsmooth(
     imagename, outfile, box, chans, stokes, region,  mask,
     overwrite, stretch, axis, function, width, dmethod
@@ -30,13 +32,14 @@ def specsmooth(
         else:
             raise Exception("Unsupported convolution function " + function)
         try:
-            param_names = specsmooth.func_code.co_varnames[:specsmooth.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]   
+            vars = locals( )
+            param_names = specsmooth.__code__.co_varnames[:specsmooth.__code__.co_argcount]
+            param_vals = [vars[p] for p in param_names]
             write_image_history(
                 outia, sys._getframe().f_code.co_name,
                 param_names, param_vals, casalog
             )
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         return True
     except Exception as instance:
