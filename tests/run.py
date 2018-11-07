@@ -118,20 +118,25 @@ if len(sys.argv) == 1:
     print('-' * (tabwidth + 8))
     passed = list(filter(lambda v: v[0] == 0,results))
     failed = list(filter(lambda v: v[0] != 0,results))
-    print("ran %s tests in %.02f minutes, %d passed, %d failed" % (len(results),(end_time-start_time) / 60.0,len(passed),len(failed)))
-    print("OK" if len(failed) == 0 else "FAIL")
 
-    xUnit = open("xUnit.xml","w+")
+    # Construct xUnit.xml
     testHeader = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" \
-                 + '<testsuite name="UnitTests" tests="' \
-	  	 + str(len(results)) + '" errors="0"' + \
-		 + '" failures="' + str(failed) + '" skip="0">\n'
+             + '<testsuite name="UnitTests" tests="' \
+             + str(len(results)) + '" errors="0"' + \
+             + '" failures="' + str(failed) + '" skip="0">\n'
     xmlResults = list(map(lambda result: test_result_to_xml (result), results))
     testFooter ="\n</testsuite>"
+
+    # Write xUnit.xml
+    xUnit = open("xUnit.xml","w+")
     xUnit.write(testHeader + ''.join(xmlResults) + testFooter)
     xUnit.close()
 
     end_time = time.time()
+
+    print("ran %s tests in %.02f minutes, %d passed, %d failed" % (len(results),(end_time-start_time) / 60.0,len(passed),len(failed)))
+    print("OK" if len(failed) == 0 else "FAIL")
+
 
     sys.exit(0 if len(failed) == 0 else 1)
 
