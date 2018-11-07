@@ -123,7 +123,7 @@ if len(sys.argv) == 1:
     testHeader = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" \
              + '<testsuite name="UnitTests" tests="' \
              + str(len(results)) + '" errors="0"' \
-             + '" failures="' + str(len(failed)) + '" skip="0">\n'
+             + ' failures="' + str(len(failed)) + '" skip="0">\n'
     xmlResults = list(map(lambda result: test_result_to_xml (result), results))
     testFooter ="\n</testsuite>"
 
