@@ -1356,11 +1356,9 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out2.im"
-        self.assertFalse(
-            immath(
-                imagename="myim.im", outfile=outfile, mode="evalexpr",
-                expr="1*IM0", mask="mask2.im > 5", stretch=False
-            )
+        self.assertRaises(
+            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+            expr="1*IM0", mask="mask2.im > 5", stretch=False
         )
         outfile = "out3.im"
         immath(
@@ -1371,11 +1369,9 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out4.im"
-        self.assertFalse(
-            immath(
-                imagename="myim.im", outfile=outfile, mode="evalexpr",
-                expr="1*IM0", mask="mask3.im > 5", stretch=False
-            )
+        self.assertRaises(
+            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+            expr="1*IM0", mask="mask3.im > 5", stretch=False
         )
         
     def test21(self):
