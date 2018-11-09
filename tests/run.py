@@ -11,6 +11,26 @@ import unittest
 import subprocess
 from subprocess import Popen, PIPE
 from distutils.dir_util import remove_tree
+from xml.sax.saxutils import escape
+
+###
+### xUnit generation
+###
+
+def tail(f, n):
+    proc = subprocess.Popen(['tail', '-n', n, f], stdout=subprocess.PIPE)
+    lines = proc.stdout.readlines()
+    return lines
+
+def test_result_to_xml (result):
+    returncode, testname, run_time, teststdout, testerr = result
+    testerror = escape(testerr)
+    testxml = '<testcase classname="' + testname + '"' \
+          + ' name="Run regression" time="' + str(round(run_time)) + '">'
+    if ( returncode != 0) :
+       testxml = testxml + '<failure message="' + escape(str(b''.join(tail(testerror,"10")))) + '</failure>'
+    testxml = testxml + '</testcase>\n'
+    return testxml
 
 ###
 ### support routines
@@ -60,13 +80,16 @@ def run_test(tabwidth,test_path,working_dir):
     label = '.'.join(os.path.basename(test_path).split('.')[:-1])
     sys.stdout.write(label + '.' * (tabwidth - len(label)))
     sys.stdout.flush( )
+    start_time = time.time()
     proc = Popen( [sys.executable,test_path], cwd=working_dir, env=test_env,
                   stdout=subprocess.PIPE, stderr=subprocess.PIPE )
     (output, error) = pipe_decode(proc.communicate( ))
     exit_code = proc.wait( )
     (stdout_path,stderr_path) = dump_output(working_dir,"log",output,error)
+    end_time = time.time()
+    run_time = end_time-start_time
     print(" ok" if exit_code == 0 else " fail")
-    return (exit_code, label, stdout_path, stderr_path)
+    return (exit_code, label, run_time, stdout_path, stderr_path)
 
 ###
 ### collect paths and test module names
@@ -89,14 +112,32 @@ if len(sys.argv) == 1:
     tabwidth = max(testwidth,45)
 
     start_time = time.time()
+
     results = list(map(lambda params: run_test(tabwidth,*params),tests))
-    end_time = time.time()
 
     print('-' * (tabwidth + 8))
     passed = list(filter(lambda v: v[0] == 0,results))
     failed = list(filter(lambda v: v[0] != 0,results))
+
+    # Construct xUnit.xml
+    testHeader = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" \
+             + '<testsuite name="UnitTests" tests="' \
+             + str(len(results)) + '" errors="0"' \
+             + ' failures="' + str(len(failed)) + '" skip="0">\n'
+    xmlResults = list(map(lambda result: test_result_to_xml (result), results))
+    testFooter ="\n</testsuite>"
+
+    # Write xUnit.xml
+    xUnit = open("xUnit.xml","w+")
+    xUnit.write(testHeader + ''.join(xmlResults) + testFooter)
+    xUnit.close()
+
+    end_time = time.time()
+
     print("ran %s tests in %.02f minutes, %d passed, %d failed" % (len(results),(end_time-start_time) / 60.0,len(passed),len(failed)))
     print("OK" if len(failed) == 0 else "FAIL")
+
+
     sys.exit(0 if len(failed) == 0 else 1)
 
 else:
