@@ -581,39 +581,14 @@ class immoment_test1(unittest.TestCase):
                  +"\nError: Bad box value, 'y=-2', was not reported as missing."
     
 #        _momentTest_debug_msg( 29 )
-        results = None
-        results = immoments( 'n1333_both.image', box='0,0,800,799', outfile='input_test_bad_box' )
-        if ( results != None ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad box value, 'x=', was not reported as missing."
+        self.assertRaises(
+            Exception, immoments, 'n1333_both.image', box='0,0,800,799',
+            outfile='input_test_bad_box'
+        )
     
-#        _momentTest_debug_msg( 30 )
         self.assertTrue(len(self.tb.showcache()) == 0)
 
-        results = None
-        results = immoments( 'n1333_both.image', box='0,0,799,800', outfile='input_test_bad_box' )
-        if ( results != None ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad box value, 'y=800', was not reported as missing."
-    
-#        _momentTest_debug_msg( 31 )
-        results = None
-        results = immoments( 'n1333_both.image', box='0, 0,820,799', outfile='input_test_bad_box' )
-        if ( results != None ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad box value, 'x=820', was not reported as missing."
-    
-#        _momentTest_debug_msg( 32 )
-        results = None
-        results = immoments( 'n1333_both.image', box='0,0,799,820', outfile='input_test_bad_box' )
-        if ( results != None ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad box value, 'y=820', was not reported as missing."
-    
+   
         x1=random.randint(0,799)
         x2=random.randint(x1,799)
         y1=random.randint(0,799)
@@ -638,42 +613,15 @@ class immoment_test1(unittest.TestCase):
         #######################################################################
         casalog.post( "The CHANS parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
         
-#        _momentTest_debug_msg( 34 )
-        results = None
-        results = immoments( 'n1333_both.image', chans='-5', outfile='input_test_bad_chans' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad channel value, '-5', was not reported."
-    
-#        _momentTest_debug_msg( 35 )
-        results = None
+        self.assertRaises(
+            Exception, immoments, 'n1333_both.image', chans='-5',
+            outfile='input_test_bad_chans'
+        )
         self.assertTrue(len(self.tb.showcache()) == 0)
-        results = immoments( 'n1333_both.image', chans='-2', outfile='input_test_bad_chans' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad channel value, '-2', was not reported."\
-                 +"\n\tRESULTS: "+str(results)
-    
-#        _momentTest_debug_msg( 36 )
-        self.assertTrue(len(self.tb.showcache()) == 0)
-        results = None
-        results = immoments( 'n1333_both.image', chans='18', outfile='input_test_bad_chans' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad channel value of -18 was not reported."
-    
-#        _momentTest_debug_msg( 37 )
-        results = None
-        results = immoments( 'n1333_both.image', chans='32', outfile='input_test_bad_chans' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad channel value of 32 was not reported."
-    
-#        _momentTest_debug_msg( 38 )
+        self.assertRaises(
+            Exception, immoments, 'n1333_both.image', chans='18',
+            outfile='input_test_bad_chans'
+        )
         self.assertTrue(len(self.tb.showcache()) == 0)
         results = None
         try:
@@ -702,25 +650,11 @@ class immoment_test1(unittest.TestCase):
         #    Tests are 'Q', 'yellow' (invalid) and 'I'
         #######################################################################
         casalog.post( "The STOKES parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
-#        _momentTest_debug_msg( 41 )
-        self.assertTrue(results)
-        results = None
-        results = immoments( 'n1333_both.image', stokes='Q', outfile='input_test_bad_stokes' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad stokes value, 'Q', was not reported."
-    
-#        _momentTest_debug_msg( 42 )
+        self.assertRaises(
+            Exception, immoments, 'n1333_both.image', stokes='Q',
+            outfile='input_test_bad_stokes'
+        )
         self.assertTrue(len(self.tb.showcache()) == 0)
-        results = None
-        results = immoments( 'n1333_both.image', stokes='yellow', outfile='input_test_bad_stokess' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad stokes value, 'yellow', was not reported."
-    
-#        _momentTest_debug_msg( 43 )
         results = None
         try:
             results = immoments( 'n1333_both.image', stokes='I', outfile='input_test_stokes_1' )
@@ -748,46 +682,11 @@ class immoment_test1(unittest.TestCase):
         #######################################################################
         casalog.post( "The MASK parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
     
-#        _momentTest_debug_msg( 44 )
-        results = None
-        results = immoments( 'n1333_both.image', mask='blarg', outfile='input_test_bad_mask' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad mask value, 'blarg', was not reported."
-    
+        self.assertRaises(
+            Exception, immoments, 'n1333_both.image', mask='blarg',
+            outfile='input_test_bad_mask'
+        )
         self.assertTrue(len(self.tb.showcache()) == 0)
-#        _momentTest_debug_msg( 45 )
-        results = immoments( 'n1333_both.image', mask='n133_both.image:mask1', outfile='input_test_bad_mask' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad mask value, 'n133_both.image:mask1', was not reported."
-    
-#        _momentTest_debug_msg( 46 )
-        results = immoments( 'n1333_both.image', mask='bad_files.image:mask', outfile='input_test_bad_mask' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad mask value, 'bad_file.image:mask1', was not reported."
-    
-        # COMMENTED OUT BECAUSE THIS FEATURE OF LEL DOESN"T SEEM TO
-        # WORK
-#        _momentTest_debug_msg( 47 )
-        self.assertTrue(len(self.tb.showcache()) == 0)
-        #try:
-        #    results = immoments( 'n1333_both.image', mask='n1333_both.image:nomask', outfile='input_test_mask_1' )
-        #except:
-        #    retValue['success']=False
-        #    retValue['error_msgs']=retValue['error_msgs']\
-        #               +"\nError: Unable to create moment with mask='nomask'"
-        #if ( not os.path.exists( 'input_test_mask_1' ) or results == None ):
-        #    retValue['success']=False
-        #    retValue['error_msgs']=retValue['error_msgs']\
-        #             +"\nError: Moment file, 'input_test_mask_1', was not created."\
-        #             +"\nRESULTS: "+str(results)
-    
-#        _momentTest_debug_msg( 48 )
         try:
             results = immoments( 'n1333_both.image', mask='mask(n1333_both.image:mask0)', outfile='input_test_mask_2' )
         except:
@@ -806,17 +705,11 @@ class immoment_test1(unittest.TestCase):
         #######################################################################
         casalog.post( "The INCLUDEPIX parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
     
-#        _momentTest_debug_msg( 49 )
-        self.assertTrue(len(self.tb.showcache()) == 0)
-        results = immoments( 'n1333_both.image', includepix='bad', outfile='input_test_bad_incpix' )
-        self.assertFalse(results)
-        try:
-            results = immoments( 'n1333_both.image', includepix=[-0.1,0.1], outfile='input_test_incpix_2' )
-        except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                       +"\nError: Unable to create moment with includepix=[-0.1,0.1]"
-        self.assertTrue(results)
+        self.assertRaises(
+            Exception, immoments, 'n1333_both.image', includepix='bad',
+            outfile='input_test_bad_incpix'
+        )
+        self.assertTrue(immoments( 'n1333_both.image', includepix=[-0.1,0.1], outfile='input_test_incpix_2' ))
         #######################################################################
         # Testing excludepix parameter: Valid values are a vector of two or
         #    1 float values, indicating a single value or a range of values.
@@ -827,54 +720,24 @@ class immoment_test1(unittest.TestCase):
         #######################################################################
         casalog.post( "The EXCLUDEPIX parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
     
-#        _momentTest_debug_msg( 51 )
-        results = immoments( 'n1333_both.image', excludepix='badpix', outfile='input_test_bad_expix' )
-        self.assertFalse(results)
-#        _momentTest_debug_msg( 52 )
-        try:
-            results = immoments( 'n1333_both.image', excludepix=[0.1,-0.1], outfile='input_test_expix_2' )
-        except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                       +"\nError: Unable to create moment with excludepix=[0.1,-0.1]"
-
-        self.assertTrue(results)
+        self.assertRaises(
+            Exception, immoments, 'n1333_both.image', excludepix='badpix',
+            outfile='input_test_bad_expix'
+        )
+        self.assertTrue(immoments( 'n1333_both.image', excludepix=[0.1,-0.1], outfile='input_test_expix_2'))
         #######################################################################
         # Testing outfile parameter
         # Expects a file containing a region record, as created by the viewer.
         # Tests include bad file name (one writing in a read only aread and
         # one rewriting on an existing file., and good file.
         #######################################################################
-#        _momentTest_debug_msg( 53 )
         self.assertTrue(len(self.tb.showcache()) == 0)
-        try:
-            results = immoments( 'n1333_both.image', outfile='input_test_outfile_1' )
-        except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                       +"\nError: Unable to create moments in file 'input_test_outfile_1'"
-        self.assertTrue(results)
-        results = immoments( 'n1333_both.image', outfile='input_test_outfile_1' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad outfile value, 'input_test_outfile_1', was not reported."
-    
-    
-#        _momentTest_debug_msg( 55 )
-        results = immoments( 'n1333_both.image', outfile='/usr/input_test_outfile_2' )
-        if ( results!=None and results!=True ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad outfile name, '/usr/input_test_outfile_2', was not reported."
-    
-        
-        casalog.post( "Done immoments INPUT/OUTPUT tests.", 'NORMAL2' )
-        print("RETURNING", retValue)
+        self.assertTrue(immoments( 'n1333_both.image', outfile='input_test_outfile_1'))
+        self.assertRaises(
+            Exception, immoments, 'n1333_both.image', outfile='input_test_outfile_1'
+        )
         self.assertTrue(retValue['success'],retValue['error_msgs'])
         self.assertTrue(len(self.tb.showcache()) == 0)
-
-
 
 class immoment_test2(unittest.TestCase):    
 
@@ -1184,34 +1047,24 @@ class immoment_test2(unittest.TestCase):
                 atype = False
             ret = True
             func = ""
-            for j in [0, 1]:
-                if j == 0:
-                    casalog.post("*** spot #1 =====>>> i=%s j=%s mask-type=%s (%s) stretch=%s" % (i,j,type(mask),mask if type(mask) is str else "XX",stretch), 'WARN')
-                    ret = immoments(
+            if (atype):
+                self.assertTrue(
+                    immoments(
                         imagename="myim.im", outfile=outfile,
                         mask=mask, stretch=stretch
                     )
-                if j == 1:
-                    myia.open("myim.im")
-                    ret = True
-                    try:
-                        ret = myia.moments(
-                            outfile=outfile, mask=mask,
-                            stretch=stretch, drop=False
-                        )
-                        ret.done()
-                    except:
-                        ret = False
-                    finally:
-                        myia.done()
-                if (atype):
-                    self.assertTrue(myia.open(outfile))
-                    self.assertTrue(myia.shape().tolist() == exp)
-                    myia.done()
-                else:
-                    self.assertFalse(ret)
-                if os.path.exists(outfile):
-                    shutil.rmtree(outfile)
+                )
+                self.assertTrue(myia.open(outfile))
+                self.assertTrue(myia.shape().tolist() == exp)
+                myia.done()
+            else:
+                self.assertRaises(
+                    Exception, immoments, imagename="myim.im", outfile=outfile,
+                    mask=mask, stretch=stretch
+                )
+
+            if os.path.exists(outfile):
+                shutil.rmtree(outfile)
         self.assertTrue(len(self.tb.showcache()) == 0)
 
     def test_CAS_4400(self):
@@ -1330,48 +1183,57 @@ class immoment_test2(unittest.TestCase):
     def test_minmax_coord(self):
         """Verify CAS-5376, test min/max coords"""
         myia = image()
-        for type in ["max", "min"]:
-            myia.fromshape("", [10, 10, 10])
+        for minmax in ["max", "min"]:
+            imagename = "coord" + minmax + ".im"
+            myia.fromshape(imagename, [10, 10, 10])
             vels = []
             bb = myia.getchunk()
             val = 1
-            if (type == "min"):
+            if (minmax == "min"):
                 val = -1
             for i in range(10):
                 world = myia.toworld([0, 0, i])['numeric']
-                vels.append(myia.coordsys().frequencytovelocity(world[2])[0])
+                vels.append(myia.coordsys().frequencytovelocity([world[2]])[0])
                 for j in range(10):
                     bb[i, j, i] = val
             myia.putchunk(bb)
             moments = 9
-            if type == "min":
+            if minmax == "min":
                 moments = 11
-            kk = myia.moments(moments=moments)
             myia.done()
-            self.assertTrue(kk.brightnessunit() == "km/s")
-            bb = kk.getchunk()
+            outfile = imagename + ".out"
+            self.assertTrue(immoments(imagename, outfile=outfile, moments=moments))
+            myia.open(outfile)
+            self.assertTrue(myia.brightnessunit() == "km/s")
+            bb = myia.getchunk()
             for i in range(10):
                 for j in range(10):
                     self.assertTrue(abs(bb[i,j] - vels[i]) < 1e-4)
-            kk.done()
+            myia.done()
             
     def test_median_coord(self):
         """Verify CAS-5570 fix for median"""
         myia = image()
-        myia.fromshape("", [11, 1, 11])
+        imagename = "median_coord.im"
+        myia.fromshape(imagename, [11, 1, 11])
         cc = myia.getchunk()
         vels = []
         for i in range(11):
             for j in range(11):
                 cc[i, 0, j] = (j - i + 5) % 11 + 1
             world = myia.toworld([0, 0, i])['numeric']
-            vels.append(myia.coordsys().frequencytovelocity(world[2])[0])
+            vels.append(myia.coordsys().frequencytovelocity([world[2]])[0])
             
         myia.putchunk(cc)
-        kk = myia.moments(moments=4, method="basic", includepix=[0,12])
-        bb = kk.getchunk()
         myia.done()
-        kk.done()
+        # FIXME this should be a task, not tool method, call for casa6
+        outfile = "median_coord.out"
+        self.assertTrue(
+            immoments(imagename, outfile=outfile, moments=4, includepix=[0,12])
+        )
+        myia.open(outfile)
+        bb = myia.getchunk()
+        myia.done()
         for i in range(11):
             self.assertTrue(abs(bb[i,0] - vels[i]) < 10)
         
