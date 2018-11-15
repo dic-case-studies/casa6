@@ -41,7 +41,7 @@ class CasaCoerce:
         return value
 
     def to_floatvec(self,value):
-        if type(value) in [float,int,numpy.int32,numpy.int64]:
+        if type(value) in [float,int,numpy.int32,numpy.int64,numpy.float32,numpy.float64]:
             return [float(value)]
         if isinstance(value,list):
             if all( [ isinstance(v,float) or isinstance(v,numpy.float64) or isinstance(v,numpy.float32) or \
