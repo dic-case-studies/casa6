@@ -1193,7 +1193,7 @@ class immoment_test2(unittest.TestCase):
                 val = -1
             for i in range(10):
                 world = myia.toworld([0, 0, i])['numeric']
-                vels.append(myia.coordsys().frequencytovelocity([world[2]])[0])
+                vels.append(myia.coordsys().frequencytovelocity(world[2])[0])
                 for j in range(10):
                     bb[i, j, i] = val
             myia.putchunk(bb)
@@ -1222,7 +1222,7 @@ class immoment_test2(unittest.TestCase):
             for j in range(11):
                 cc[i, 0, j] = (j - i + 5) % 11 + 1
             world = myia.toworld([0, 0, i])['numeric']
-            vels.append(myia.coordsys().frequencytovelocity([world[2]])[0])
+            vels.append(myia.coordsys().frequencytovelocity(world[2])[0])
             
         myia.putchunk(cc)
         myia.done()
