@@ -17,18 +17,29 @@ from xml.sax.saxutils import escape
 ### xUnit generation
 ###
 
+xml_escape_table = {
+    "&": "&amp;",
+    '"': "&quot;",
+    "'": "&apos;",
+    ">": "&gt;",
+    "<": "&lt;",
+}
+
+def xml_escape(text):
+  return "".join(xml_escape_table.get(c,c) for c in text)
+
 def tail(f, n):
     proc = subprocess.Popen(['tail', '-n', n, f], stdout=subprocess.PIPE)
     lines = proc.stdout.readlines()
     return lines
 
 def test_result_to_xml (result):
+
     returncode, testname, run_time, teststdout, testerr = result
-    testerror = escape(testerr)
     testxml = '<testcase classname="' + testname + '"' \
           + ' name="Run regression" time="' + str(round(run_time)) + '">'
     if ( returncode != 0) :
-       testxml = testxml + '<failure message="' + escape(str(b''.join(tail(testerror,"10")))) + '</failure>'
+       testxml = testxml + '<failure message="' + xml_escape(str(b''.join(tail(testerr,"10")))) + '"</failure>'
     testxml = testxml + '</testcase>\n'
     return testxml
 
