@@ -26,12 +26,11 @@ xml_escape_table = {
 }
 
 def xml_escape(text):
-  return "".join(xml_escape_table.get(c,c) for c in text)
+    return "".join(xml_escape_table.get(c,c) for c in text)
 
-def tail(f, n):
-    proc = subprocess.Popen(['tail', '-n', n, f], stdout=subprocess.PIPE)
-    lines = proc.stdout.readlines()
-    return lines
+def readFile(f):
+    with open(f, 'r') as f1:
+      return f1.read()
 
 def test_result_to_xml (result):
 
@@ -39,7 +38,7 @@ def test_result_to_xml (result):
     testxml = '<testcase classname="' + testname + '"' \
           + ' name="Run regression" time="' + str(round(run_time)) + '">'
     if ( returncode != 0) :
-       testxml = testxml + '<failure><![CDATA[' + xml_escape(str(b'<br>'.join(tail(testerr,"1000")))) + '"]]></failure>'
+       testxml = testxml + '<failure>' + xml_escape(readFile(testerr)) + '</failure>'
     testxml = testxml + '</testcase>\n'
     return testxml
 
