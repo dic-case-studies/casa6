@@ -36,7 +36,7 @@ def test_result_to_xml (result):
 
     returncode, testname, run_time, teststdout, testerr = result
     testxml = '<testcase classname="' + testname + '"' \
-          + ' name="Run regression" time="' + str(round(run_time)) + '">'
+          + ' name="full log" time="' + str(round(run_time)) + '">'
     if ( returncode != 0) :
        testxml = testxml + '<failure>' + xml_escape(readFile(testerr)) + '</failure>'
     testxml = testxml + '</testcase>\n'
