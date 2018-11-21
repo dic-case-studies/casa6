@@ -78,7 +78,6 @@ class ia_deviation_test(unittest.TestCase):
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
 
-    @unittest.skip("uses a task")
     def test001(self):
         """Every pixel is a grid point"""
         self._myia.open(input0)
@@ -96,19 +95,6 @@ class ia_deviation_test(unittest.TestCase):
         self._myia.done()
         zz.done()
 
-        # now the task
-        outname = "out0.im"
-        imdev(
-            input0, outname, grid=[1,1], xlength="4pix", ylength="4pix",
-            stattype="npts", interp="cub",anchor=[0,0], statalg="cl"
-        )
-        self._myia.open(ref0)
-        expec = self._myia.getchunk()
-        self._myia.open(outname)
-        got = self._myia.getchunk()
-        self._myia.done()
-        self._compare(got, expec, "imstatimage test 1")
-        
     def test002(self):
         """Every pixel is a grid point with an offset, so should be the same result
         as test001"""
@@ -251,7 +237,6 @@ class ia_deviation_test(unittest.TestCase):
         self.assertTrue((mm.getchunk(getmask=True) == expec).all()) 
         mm.done()
         
-    @unittest.skip("uses a task")
     def test_circle(self):
         """test circles work correctly CAS-10296"""
         myia = self._myia
@@ -269,17 +254,6 @@ class ia_deviation_test(unittest.TestCase):
             "incorrect grid pixel value"
         )
         zz.done()
-        outfile = "mycirc_out.im"
-        imdev(
-            imagename=imagename,outfile=outfile, xlength="40pix",
-            ylength="", stattype="sum", grid=[20,20]
-        )
-        myia.open(outfile)
-        self.assertTrue(
-            numpy.isclose(myia.getchunk()[50,50], 1257.0, 1e-7),
-            "incorrect grid pixel value"
-        )
-        myia.done()
 
 def suite():
     return [ia_deviation_test]
