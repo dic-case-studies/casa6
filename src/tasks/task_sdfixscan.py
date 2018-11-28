@@ -420,9 +420,9 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             else:
                 maskw = 0.5 * numpy.sqrt(nx*ny) * masks[i]
             for ix in range(nx):
-                halfwx = (nx-1)/2
+                halfwx = (nx-1)//2
                 for iy in range(ny):
-                    halfwy = (ny-1)/2
+                    halfwy = (ny-1)//2
                     if scan_direction == 'horizontal':
                         #dd = abs(float(ix) - 0.5*(nx-1))
                         dd = abs(float(ix) - halfwx) # for CAS-9434
@@ -476,8 +476,8 @@ class sdfixscan_worker(sdutil.sdtask_interface):
                             weights[i][ix][iy] += eps*0.01 
             """
             # shift
-            xshift = -((ny-1)/2)
-            yshift = -((nx-1)/2)
+            xshift = -((ny-1)//2)
+            yshift = -((nx-1)//2)
             for ix in range(int(xshift),0,1):
                 tmp = weights[i,:,0].copy()
                 weights[i,:,0:ny-1] = weights[i,:,1:ny].copy()
