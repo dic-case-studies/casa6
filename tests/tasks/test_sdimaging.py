@@ -2109,8 +2109,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _get_refmask(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
-            for i in [0, self.imsize[0]/2]:
-                for j in [0, self.imsize[1]/3, self.imsize[1]*2/3]:
+            for i in [0, self.imsize[0]//2]:
+                for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
                     for k in k_range:
                         res.append(tb.getcell('PagedArray', 0)[i][j][0][k].real)
@@ -2119,8 +2119,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _get_refweight(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
-            for i in [0, self.imsize[0]/2]:
-                for j in [0, self.imsize[1]/3, self.imsize[1]*2/3]:
+            for i in [0, self.imsize[0]//2]:
+                for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
                     for k in k_range:
                         res.append(tb.getcell('map', 0)[i][j][0][k].real)
