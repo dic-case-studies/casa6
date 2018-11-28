@@ -2355,7 +2355,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                         valid_idx.append(ispec)
                     ispec += 1
         # shrink reference list if # of processed spectra is smaller than reference (selection)
-        if len(stats_list) < len(reference[reference.keys()[0]]):
+        if len(stats_list) < len(list(reference.values())[0]):
             self.assertEqual(len(valid_idx), len(stats_list),
                              "Internal error: len(valid_idx)!=len(stats_list)")
             reference = self.__select_stats(reference, valid_idx)
