@@ -1040,7 +1040,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
-        addwn = (0)
+        addwn = [0]
         result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                              blfunc='sinusoid',addwn=addwn,applyfft=False)
         self.assertEqual(result,None,
@@ -1052,7 +1052,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
-        addwn = (0,1)
+        addwn = [0,1]
         result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                              blfunc='sinusoid',addwn=addwn,applyfft=False)
         self.assertEqual(result,None,
@@ -1340,7 +1340,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
-        addwn = ()
+        addwn = []
         try:
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=False)
@@ -1353,7 +1353,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
-        addwn = ()
+        addwn = []
         try:
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=True)
