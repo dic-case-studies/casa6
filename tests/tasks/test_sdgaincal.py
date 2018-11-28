@@ -346,7 +346,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
     
     def _verify_param_and_flag_variable(self, table):
         nrow = table.nrows()
-        nrow_per_spw = nrow / 2
+        nrow_per_spw = nrow // 2
         ref_min = 0.90240508
         ref_max = 1.08644176
         delta = (ref_max - ref_min) / nrow_per_spw
