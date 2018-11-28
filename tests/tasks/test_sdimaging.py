@@ -4,6 +4,7 @@ import shutil
 import unittest
 import numpy
 import math
+import copy
 
 from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
 from casatools import ms as mstool
@@ -55,7 +56,7 @@ def merge_dict(d1, d2):
     """
     if type(d1) != dict or type(d2) != dict:
         raise ValueError("Internal error. inputs should be dictionaries.")
-    d12 = d1.copy()
+    d12 = copy.deepcopy(d1)
     d12.update(d2)
     return d12
 
