@@ -1854,7 +1854,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         tb.open(bltable)
         try:
             for i in range(npol*tb.nrows()):
-                irow = i / npol
+                irow = i // npol
                 ipol = i % npol
                 is_skipped = (option != '') and (irow == 2) and (ipol == 1)
 
