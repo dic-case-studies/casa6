@@ -395,11 +395,11 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
 
     def _getLeftWidth(self, kwidth):
         assert(0 < kwidth)
-        return (2-kwidth)/2
+        return (2-kwidth)//2
 
     def _getRightWidth(self, kwidth):
         assert(0 < kwidth)
-        return kwidth/2
+        return kwidth//2
     
     def _checkResult(self, spec, kwidth, centers, tol=5.0e-06):
         sys.stdout.write('testing kernel_width = '+str(kwidth)+'...')
