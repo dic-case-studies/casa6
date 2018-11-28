@@ -59,6 +59,7 @@ def tclean(
     ####### Gridding parameters
     gridder,#='ft', 
     facets,#=1,
+    psfphasecenter,#='',
     chanchunks,#=1,
 
     wprojplanes,#=1,
@@ -131,6 +132,7 @@ def tclean(
     dogrowprune,#=True
     minpercentchange,#=0.0
     verbose, #=False
+    fastnoise, #=True
 
     ## Misc
 
@@ -150,6 +152,15 @@ def tclean(
     #####################################################
     
     ### Move these checks elsewhere ? 
+    inpparams=locals().copy()
+    ###now deal with parameters which are not the same name 
+    inpparams['msname']= inpparams.pop('vis')
+    inpparams['timestr']= inpparams.pop('timerange')
+    inpparams['uvdist']= inpparams.pop('uvrange')
+    inpparams['obs']= inpparams.pop('observation')
+    inpparams['state']= inpparams.pop('intent')
+    inpparams['loopgain']=inpparams.pop('gain')
+    inpparams['scalebias']=inpparams.pop('smallscalebias')
 
     if specmode=='cont':
         specmode='mfs'
@@ -169,117 +180,128 @@ def tclean(
     imager = None
     paramList = None
 
+    # Put all parameters into dictionaries and check them.
+    ##make a dictionary of parameters that ImagerParameters take
+    defparm=dict(list(zip(ImagerParameters.__init__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__)))
+    ###assign values to the ones passed to tclean and if not defined yet in tclean...
+    ###assign them the default value of the constructor
+    #bparm={k:  inpparams[k] if inpparams.has_key(k) else defparm[k]  for k in ImagerParameters.__init__.__code__.co_varnames[1:-1]}
+    bparm={k:  inpparams[k] if k in inpparams else defparm[k]  for k in ImagerParameters.__init__.__code__.co_varnames[1:-1]}
+    paramList=ImagerParameters(**bparm)
+
     # deprecation message
     if usemask=='auto-thresh' or usemask=='auto-thresh2':
         casalog.post(usemask+" is deprecated, will be removed in CASA 5.4.  It is recommended to use auto-multithresh instead", "WARN") 
 
     # Put all parameters into dictionaries and check them. 
-    paramList = ImagerParameters(
-        msname =vis,
-        field=field,
-        spw=spw,
-        timestr=timerange,
-        uvdist=uvrange,
-        antenna=antenna,
-        scan=scan,
-        obs=observation,
-        state=intent,
-        datacolumn=datacolumn,
+#    paramList = ImagerParameters(
+#        msname =vis,
+#        field=field,
+#        spw=spw,
+#        timestr=timerange,
+#        uvdist=uvrange,
+#        antenna=antenna,
+#        scan=scan,
+#        obs=observation,
+#        state=intent,
+#        datacolumn=datacolumn,
 
         ### Image....
-        imagename=imagename,
+#        imagename=imagename,
         #### Direction Image Coords
-        imsize=imsize, 
-        cell=cell, 
-        phasecenter=phasecenter,
-        stokes=stokes,
-        projection=projection,
-        startmodel=startmodel,
-
+#        imsize=imsize, 
+#        cell=cell, 
+#        phasecenter=phasecenter,
+#        stokes=stokes,
+#        projection=projection,
+#        startmodel=startmodel,
+#
         ### Spectral Image Coords
-        specmode=specmode,
-        reffreq=reffreq,
-        nchan=nchan,
-        start=start,
-        width=width,
-        outframe=outframe,
-        veltype=veltype,
-        restfreq=restfreq,
-        sysvel='', #sysvel,
-        sysvelframe='', #sysvelframe,
-        interpolation=interpolation,
+#        specmode=specmode,
+#        reffreq=reffreq,
+#        nchan=nchan,
+#        start=start,
+#        width=width,
+#        outframe=outframe,
+#        veltype=veltype,
+#        restfreq=restfreq,
+#        sysvel='', #sysvel,
+#        sysvelframe='', #sysvelframe,
+#        interpolation=interpolation,
 
-        gridder=gridder,
+#        gridder=gridder,
 #        ftmachine=ftmachine,
-        facets=facets,
-        chanchunks=chanchunks,
+#        facets=facets,
+#        psfphasecenter=psfphasecenter,
+#        chanchunks=chanchunks,
 
-        wprojplanes=wprojplanes,
+#        wprojplanes=wprojplanes,
 
-        vptable=vptable,
-        usepointing=usepointing,
-        mosweight=mosweight,
+#        vptable=vptable,
+#        usepointing=usepointing,
+#        mosweight=mosweight,
         ### Gridding....
 
-        aterm=aterm,
-        psterm=psterm,
-        wbawp = wbawp,
-        cfcache = cfcache,
-        conjbeams = conjbeams,
-        computepastep =computepastep,
-        rotatepastep = rotatepastep,
+#        aterm=aterm,
+#        psterm=psterm,
+#        wbawp = wbawp,
+#        cfcache = cfcache,
+#        conjbeams = conjbeams,
+#        computepastep =computepastep,
+#        rotatepastep = rotatepastep,
 
-        pblimit=pblimit,
-        normtype=normtype,
+#        pblimit=pblimit,
+#        normtype=normtype,
 
-        outlierfile=outlierfile,
-        restart=restart,
+#        outlierfile=outlierfile,
+#        restart=restart,
 
-        weighting=weighting,
-        robust=robust,
-        npixels=npixels,
-        uvtaper=uvtaper,
+#        weighting=weighting,
+#        robust=robust,
+#        npixels=npixels,
+#        uvtaper=uvtaper,
 
         ### Deconvolution
-        niter=niter,
-        cycleniter=cycleniter,
-        loopgain=gain,
-        threshold=threshold,
-        nsigma=nsigma,
-        cyclefactor=cyclefactor,
-        minpsffraction=minpsffraction, 
-        maxpsffraction=maxpsffraction,
-        interactive=interactive,
+#        niter=niter,
+#        cycleniter=cycleniter,
+#        loopgain=gain,
+#        threshold=threshold,
+#        nsigma=nsigma,
+#        cyclefactor=cyclefactor,
+#        minpsffraction=minpsffraction, 
+#        maxpsffraction=maxpsffraction,
+#        interactive=interactive,
 
-        deconvolver=deconvolver,
-        scales=scales,
-        nterms=nterms,
-        scalebias=smallscalebias,
-        restoringbeam=restoringbeam,
+#        deconvolver=deconvolver,
+#        scales=scales,
+#        nterms=nterms,
+#        scalebias=smallscalebias,
+#        restoringbeam=restoringbeam,
         
         ### new mask params
-        usemask=usemask,
-        mask=mask,
-        pbmask=pbmask,
+#        usemask=usemask,
+#        mask=mask,
+#        pbmask=pbmask,
         #maskthreshold=maskthreshold,
         #maskresolution=maskresolution,
         #nmask=nmask,
 
         ### automask multithresh params
-        sidelobethreshold=sidelobethreshold,
-        noisethreshold=noisethreshold,
-        lownoisethreshold=lownoisethreshold,
-        negativethreshold=negativethreshold,
-        smoothfactor=smoothfactor,
-        minbeamfrac=minbeamfrac,
-        cutthreshold=cutthreshold,
-        growiterations=growiterations,
-        dogrowprune=dogrowprune,
-        minpercentchange=minpercentchange,
-        verbose=verbose,
+#        sidelobethreshold=sidelobethreshold,
+#        noisethreshold=noisethreshold,
+#        lownoisethreshold=lownoisethreshold,
+#        negativethreshold=negativethreshold,
+#        smoothfactor=smoothfactor,
+#        minbeamfrac=minbeamfrac,
+#        cutthreshold=cutthreshold,
+#        growiterations=growiterations,
+#        dogrowprune=dogrowprune,
+#        minpercentchange=minpercentchange,
+#        verbose=verbose,
+#        fasstnoise=fastnoise,
  
-        savemodel=savemodel
-        )
+#        savemodel=savemodel
+#        )
 
     #paramList.printParameters()
 
@@ -345,6 +367,16 @@ def tclean(
             t0=time.time();
 
             imager.makePSF()
+            if((psfphasecenter != '') and (gridder=='mosaic')):
+                print ("doing with different phasecenter psf")
+                imager.unlockimages(0)
+                psfParameters=paramList.getAllPars()
+                psfParameters['phasecenter']=psfphasecenter
+                psfParamList=ImagerParameters(**psfParameters)
+                psfimager=imagerInst(params=psfParamList)
+                psfimager.initializeImagers()
+                psfimager.setWeighting()
+                psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
 
             t1=time.time();
             casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
