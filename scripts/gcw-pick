@@ -410,7 +410,7 @@ sub fix_asdm_source {
     my %subst = ( );
 
     my $asdm_find_headers = sub {
-        if ( -f $_ && m|\.h$| ) {
+        if ( -f $_ && m|\.h(?:pp)?$| ) {
             my $p = "$File::Find::dir/$_";
             $p =~ s|^.*?/code/alma/(.*)|alma/$1|;
             $subst{$_} = $p;
@@ -418,7 +418,7 @@ sub fix_asdm_source {
     };
 
     my $asdm_substitute = sub {
-        if ( -f $_ && m/\.cc$|\.h$/ ) {
+        if ( -f $_ && m/\.cc$|\.h(?:pp)?$/ ) {
             my $file = $_;
             my @lines = ( );
             open( my $fd, "< $file" ) || die "cannot open $File::Find::dir/$file: $!";
