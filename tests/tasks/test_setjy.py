@@ -80,11 +80,12 @@ class SetjyUnitTestBase(unittest.TestCase):
             tblocal = table()
             tblocal.open(os.path.join(vis,'HISTORY'))
 
-            st = tblocal.query('ORIGIN == pattern("setjy::imager::setjy()*")', columns='MESSAGE')
-            nstrows = st.nrows()
+            if origin!=None:
+                st = tblocal.query('ORIGIN == pattern("%s*")' % origin, columns='MESSAGE')
+                nstrows = st.nrows()
 
             if nstrows == 0:
-                st = tblocal.query('ORIGIN == pattern("setjy*")', columns='MESSAGE')
+                st = tblocal.query('ORIGIN == pattern("setjy::imager::setjy()*")', columns='MESSAGE')
                 nstrows = st.nrows()
 
             if nstrows == 0:
