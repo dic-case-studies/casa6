@@ -70,7 +70,7 @@ def check_eq(val, expval, tol=None):
             if hasattr(are_eq, 'all'):
                 are_eq = are_eq.all()
             if not are_eq:
-                raise(ValueError, '!=')
+                raise ValueError('value != expected')
         except ValueError:
             errmsg = "%r != %r" % (val, expval)
             if (len(errmsg) > 66): # 66 = 78 - len('ValueError: ')
@@ -1714,8 +1714,9 @@ class split_test_fc(SplitChecker):
             categories = tblocal.getcolkeyword('FLAG_CATEGORY', 'CATEGORY')
             tblocal.close()
             shutil.rmtree(outms, ignore_errors=True)
-        except Exception:
-            print("Error splitting %s from %s", (trwtb, self.inpms))
+        except Exception as exc:
+            print("Error splitting {0} from {1}. Exception: {2}".
+                  format(trwtb, self.inpms, exc))
             raise
         self.__class__.records[trwtb] = record
         self.__class__.records['categories'] = categories
@@ -1918,7 +1919,7 @@ class splitTests(test_base):
         # Split scan=31 out
         split(vis=self.vis, outputvis=self.outputms, datacolumn='corrected', scan='31', keepflags=False)
         
-        expected_spws = range(1,15)
+        expected_spws = list(range(1,15))
         msmdt = msmetadata()
         msmdt.open(self.outputms)
         spws = msmdt.spwsforscan(31)

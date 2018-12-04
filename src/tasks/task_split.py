@@ -98,7 +98,7 @@ def split(vis,
         # String type
         if isinstance(width, str):
             if width.isdigit():
-                chanbin = string.atoi(width)
+                chanbin = int(width)
             else:
                 casalog.post('Parameter width is invalid. Using 1 as default', 'WARN')
                 chanbin = width = 1
