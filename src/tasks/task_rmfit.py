@@ -1,6 +1,8 @@
 import tempfile
 import shutil
 
+from casatasks import casalog
+
 from casatools import image, imagepol
 from .ialib import write_image_history
 
