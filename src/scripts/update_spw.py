@@ -444,7 +444,7 @@ def update_spwchan(vis, sch0, sch1, truncate=False, widths={}):
                     outchan += 1
                 if outchan == nc0:  # Shouldn't happen
                     outchan -= 1
-                s1list[s1ind] = outchan / widths.get(s, 1)
+                s1list[s1ind] = outchan // widths.get(s, 1)
 
             # Determine outspw.
             while (outspw < ns0spw) and (s0spws[outspw] < s):

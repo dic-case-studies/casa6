@@ -1,6 +1,8 @@
 import os
 from casatools import ms
 
+from casatasks import casalog
+
 def exportuvfits( vis, fitsfile, datacolumn, field, spw, antenna, time,
                   writesyscal, multisource, combinespw,
                   writestation, padwithflags, overwrite ):
