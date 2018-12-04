@@ -28,7 +28,7 @@ import filecmp
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from recipes.listshapes import listshapes
 import testhelper as th
-from casatasks import split, partition, listobs, flagdata, importasdm, flagcmd
+from casatasks import cvel, flagcmd, flagdata, importasdm, listobs, split, partition
 from casatools import ctsys, ms, msmetadata, table
 import unittest
 from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
