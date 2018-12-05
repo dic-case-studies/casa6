@@ -80,15 +80,15 @@ class SetjyUnitTestBase(unittest.TestCase):
             tblocal = table()
             tblocal.open(os.path.join(vis,'HISTORY'))
 
-            st = tblocal.query('ORIGIN == pattern("setjy::imager::setjy()*")', columns='MESSAGE')
-            nstrows = st.nrows()
-
-            if nstrows == 0:
-                st = tblocal.query('ORIGIN == pattern("setjy*")', columns='MESSAGE')
+            if origin!=None:
+                st = tblocal.query('ORIGIN == pattern("%s*")' % origin, columns='MESSAGE')
                 nstrows = st.nrows()
 
             if nstrows == 0:
-                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> we're shutting this party down!")
+                st = tblocal.query('ORIGIN == pattern("setjy::imager::setjy()*")', columns='MESSAGE')
+                nstrows = st.nrows()
+
+            if nstrows == 0:
                 tblocal.close( )
                 os.system("kill -9 %d" % os.getpid( ))
 
