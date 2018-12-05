@@ -89,7 +89,6 @@ class SetjyUnitTestBase(unittest.TestCase):
                 nstrows = st.nrows()
 
             if nstrows == 0:
-                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> we're shutting this party down!")
                 tblocal.close( )
                 os.system("kill -9 %d" % os.getpid( ))
 
