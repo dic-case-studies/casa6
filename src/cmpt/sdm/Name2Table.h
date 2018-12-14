@@ -37,18 +37,19 @@
 #include <map>
 #include <set>
 
-using namespace std;
+namespace asdm {
 
-namespace casac {
     class Name2Table {
-      private:
-        static map<string, ASDM_TABLE_BASE*> name2Table_;
-        static bool init_;
-        static bool init();
-        static set<ASDM_TABLE_BASE*> table_;
-      public:
-        static const set<ASDM_TABLE_BASE*>& find(const vector<string>& name,bool verbose=false);
+     private:
+      static std::map<std::string, ASDM_TABLE_BASE*> name2Table_;
+      static bool init_;
+      static bool init();
+
+      static std::set<ASDM_TABLE_BASE*> table_;
+
+     public:
+      static const std::set<ASDM_TABLE_BASE*>& find(const std::vector<std::string>& name,bool verbose=false);
     };
-}
+} // end namespace asdm
 
 #endif // _NAME2TABLE_H_

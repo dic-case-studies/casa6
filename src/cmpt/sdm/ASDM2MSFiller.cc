@@ -2,14 +2,13 @@
 // #include <omp.h>
 // #endif 
 
-#include	"stdio.h"			/* <stdio.h> */
-#include	"stddef.h"			/* <stddef.h> */
+#include	<stdio.h>
+#include	<stddef.h>
 #include        <math.h>
-#include	"time.h"			/* <time.h> */
-/*#include	"gipsyc.h" */			/* GIPSY definitions */
+#include	<time.h>
 
 #include "ASDM2MSFiller.h"
-#include "msvis/MSVis/SubMS.h"
+#include <msvis/MSVis/SubMS.h>
 
 using namespace casacore;
 using namespace casa;
@@ -1913,13 +1912,39 @@ namespace casac {
         msweatherCol.interval().put(crow, interval_);
         msweatherCol.time().put(crow, time_);
 
-        if (pressure_opt_.first) msweatherCol.pressure().put(crow, pressure_opt_.second);
-        if (relHumidity_opt_.first) msweatherCol.relHumidity().put(crow, relHumidity_opt_.second);
-        if (temperature_opt_.first) msweatherCol.temperature().put(crow, temperature_opt_.second);
-        if (windDirection_opt_.first) msweatherCol.windDirection().put(crow, windDirection_opt_.second);
-        if (windSpeed_opt_.first) msweatherCol.windSpeed().put(crow, windSpeed_opt_.second);
-        if (dewPoint_opt_.first) msweatherCol.dewPoint().put(crow, dewPoint_opt_.second);
-
+        // the default value in the MS for the flag columns is False
+        // they only need to be set when the data are not present in the SDM
+        if (pressure_opt_.first) {
+            msweatherCol.pressure().put(crow, pressure_opt_.second);
+        } else {
+            msweatherCol.pressureFlag().put(crow, true);
+        }
+        if (relHumidity_opt_.first) {
+            msweatherCol.relHumidity().put(crow, relHumidity_opt_.second);
+        } else {
+            msweatherCol.relHumidityFlag().put(crow, true);
+        }
+        if (temperature_opt_.first) {
+            msweatherCol.temperature().put(crow, temperature_opt_.second);
+        } else {
+            msweatherCol.temperatureFlag().put(crow, true);
+        }
+        if (windDirection_opt_.first) {
+            msweatherCol.windDirection().put(crow, windDirection_opt_.second);
+        } else {
+            msweatherCol.windDirectionFlag().put(crow, true);
+        }
+        if (windSpeed_opt_.first) {
+            msweatherCol.windSpeed().put(crow, windSpeed_opt_.second);
+        } else {
+            msweatherCol.windSpeedFlag().put(crow, true);
+        }
+        if (dewPoint_opt_.first) {
+            msweatherCol.dewPoint().put(crow, dewPoint_opt_.second);
+        } else {
+            msweatherCol.dewPointFlag().put(crow, true);
+        }
+        
         ScalarColumn<int> nsWXStationId(msweather, "NS_WX_STATION_ID");
         nsWXStationId.put(crow, wx_station_id_);
         ArrayColumn<double> nsWXStationPosition(msweather, "NS_WX_STATION_POSITION");

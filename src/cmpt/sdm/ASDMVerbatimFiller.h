@@ -6,18 +6,15 @@
 #include <set>
 #include <alma/ASDM/ASDM.h>
 
-using namespace std;
-using namespace asdm;
-
 namespace casac {
     class ASDMVerbatimFiller {
       public:
         virtual ~ASDMVerbatimFiller();
-        //  ASDMVerbatimFiller(casacore::MS* ms_p, const set<const ASDM_TABLE_BASE*>& table); 
-        ASDMVerbatimFiller(casacore::MS* ms_p, const set<ASDM_TABLE_BASE*>& table); 
-        void fill(const ASDM& asdm);
+        //  ASDMVerbatimFiller(casacore::MS* ms_p, const std::set<const asdm::ASDM_TABLE_BASE*>& table); 
+        ASDMVerbatimFiller(casacore::MS* ms_p, const std::set<asdm::ASDM_TABLE_BASE*>& table); 
+        void fill(const asdm::ASDM& asdm);
       private:
-        set<ASDM_TABLE_BASE*> table_;
+        std::set<asdm::ASDM_TABLE_BASE*> table_;
         ASDMVerbatimFiller();
     };
 }

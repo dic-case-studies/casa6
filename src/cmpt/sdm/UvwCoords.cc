@@ -3,6 +3,10 @@
 
 #include <measures/Measures/MFrequency.h>
 
+using namespace asdm;
+using namespace std;
+using namespace casacore;
+
 namespace casac {
 
     UvwCoords::UvwCoords( ASDM* const datasetPtr ) {
@@ -26,7 +30,7 @@ namespace casac {
             for(unsigned int nc=0; nc<3; nc++)stationPos[nc]=staCoords[nc].get();
 
             antennaPos = antPos(stationPos,antOffset);
-            Vector<Quantity> vq; vq.resize(3);
+            casacore::Vector<Quantity> vq; vq.resize(3);
             for(unsigned int nc=0; nc<3; nc++)vq[nc]=Quantity(antennaPos[nc],"m");
             MVPosition mvp(vq);
             MPosition posref( mvp, MPosition::ITRF );
@@ -213,7 +217,7 @@ namespace casac {
     void UvwCoords::uvw_bl( Tag configDescriptionId, 
                             const vector<vector<Angle> >& phaseDir,
                             double timeCentroid,
-                            Enum<CorrelationMode> correlationMode,
+                            Enum<CorrelationModeMod::CorrelationMode> correlationMode,
                             bool reverse, bool autoTrailing, 
                             vector<Vector<casacore::Double> >& v_uvw,
                             casacore::MSFieldColumns* /* msfc_p */){
@@ -267,7 +271,7 @@ namespace casac {
     void UvwCoords::uvw_bl( Tag configDescriptionId, 
                             const vector<vector<Angle> >& phaseDir,
                             const vector<double>& v_timeCentroid,
-                            Enum<CorrelationMode> correlationMode,
+                            Enum<CorrelationModeMod::CorrelationMode> correlationMode,
                             bool reverse, bool autoTrailing, 
                             vector<Vector<casacore::Double> >& v_uvw,
                             casacore::MSFieldColumns* /* msfc_p */){
@@ -340,7 +344,7 @@ namespace casac {
     }
 
     void UvwCoords::uvw_bl( asdm::MainRow* mainRow, vector<pair<unsigned int,double> > v_tci, 
-                            Enum<CorrelationMode> correlationMode,
+                            Enum<CorrelationModeMod::CorrelationMode> correlationMode,
                             pair<bool,bool> dataOrder, vector<Vector<casacore::Double> >& v_uvw){
 
         vector<double> v_timeCentroid;
@@ -354,7 +358,7 @@ namespace casac {
     }
 
 
-    void UvwCoords::uvw_bl( asdm::MainRow* mainRow, vector<double> v_timeCentroid, Enum<CorrelationMode> correlationMode,
+    void UvwCoords::uvw_bl( asdm::MainRow* mainRow, vector<double> v_timeCentroid, Enum<CorrelationModeMod::CorrelationMode> correlationMode,
                             pair<bool,bool> dataOrder, vector<Vector<casacore::Double> >& v_uvw, casacore::MSFieldColumns* /* msfc_p */){
 
         bool coutest=false;
