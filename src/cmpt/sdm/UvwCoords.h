@@ -1,6 +1,5 @@
 #include <vector>
 #include <map>
-using namespace std;
 
 #include <alma/Enumtcl/Enum.hpp>
 #include <alma/Enumtcl/CorrelationMode.h>
@@ -17,10 +16,7 @@ using namespace std;
 #include <measures/Measures/Muvw.h>
 #include <casa/Quanta.h>
 
-using namespace casacore;
-
 #include <alma/ASDM/ASDMEntities.h>
-using namespace asdm;
 
 /** @Brief SDM UVW engine: compute the uvw these being not present in the SDM but
     required to build casacore::MS main table.
@@ -51,7 +47,7 @@ namespace casac {
             the chain of offsets from the IERS station positions
             - All the (sub-)arrays present in the ConfigDescription table have been identified
         */
-        UvwCoords(ASDM* const datasetPtr);
+        UvwCoords(asdm::ASDM* const datasetPtr);
 
         /** Destructor */
         ~UvwCoords();
@@ -78,12 +74,12 @@ namespace casac {
             In practice this means, for ALMA, that when there is one sub-integration per integration
             the UVW are not determined twice.
         */
-        void uvw_bl( Tag configDescriptionId, 
-                     const vector<vector<Angle> >& phaseDir,
+        void uvw_bl( asdm::Tag configDescriptionId, 
+                     const std::vector<std::vector<asdm::Angle> >& phaseDir,
                      double timeCentroid,
-                     Enum<CorrelationMode> correlationMode,
+                     Enum<CorrelationModeMod::CorrelationMode> correlationMode,
                      bool reverse, bool autoTrailing,
-                     vector<casacore::Vector<casacore::Double> >& v_uvw,
+                     std::vector<casacore::Vector<casacore::Double> >& v_uvw,
                      casacore::MSFieldColumns* msfc_p=0);
 
         /** Determine the baseline-based uvw in case timeCentroid may change vs  baseline, spw or bin within a dump
@@ -109,12 +105,12 @@ namespace casac {
             when the time centroid does not change vs  baseline, spw or bin within a dump.
             - This method will destroy the previous content of v_uvw.
         */
-        void uvw_bl( Tag configDescriptionId, 
-                     const vector<vector<Angle> >& phaseDir,
-                     const vector<double>& v_timeCentroid,
-                     Enum<CorrelationMode> correlationMode,
+        void uvw_bl( asdm::Tag configDescriptionId, 
+                     const std::vector<std::vector<asdm::Angle> >& phaseDir,
+                     const std::vector<double>& v_timeCentroid,
+                     Enum<CorrelationModeMod::CorrelationMode> correlationMode,
                      bool reverse, bool autoTrailing, 
-                     vector<casacore::Vector<casacore::Double> >& v_uvw,
+                     std::vector<casacore::Vector<casacore::Double> >& v_uvw,
                      casacore::MSFieldColumns* msfc_p=0);
 
         /** Determine the baseline-based uvw for a sequence of epochs
@@ -154,9 +150,9 @@ namespace casac {
             available using the method timeSequence() of the DAMs (SDMBinData). 
             - for dataOrder (reverse and autoTrailing) it is available using a static method of the DAMs (SDMBinData).
         */
-        void uvw_bl( asdm::MainRow* mainRow, vector<pair<unsigned int,double> > v_tci, 
-                     Enum<CorrelationMode> correlationMode,
-                     pair<bool,bool> dataOrder, vector<casacore::Vector<casacore::Double> >& v_uvw);
+        void uvw_bl( asdm::MainRow* mainRow, std::vector<std::pair<unsigned int,double> > v_tci, 
+                     Enum<CorrelationModeMod::CorrelationMode> correlationMode,
+                     std::pair<bool,bool> dataOrder, std::vector<casacore::Vector<casacore::Double> >& v_uvw);
 
 
         /** Determine the baseline-based uvw for a sequence of epochs
@@ -180,10 +176,10 @@ namespace casac {
             - v_timeCentroid is a product of the DAMs. Its size is the number of casacore::MS rows per SDM row in the Main tables
             - for dataOrder (reverse and autoTrailing) it is available using a static method of the DAMs (SDMBinData).
         */
-        void uvw_bl( asdm::MainRow* mainRow, vector<double> v_timeCentroid, 
-                     Enum<CorrelationMode> correlationMode,
-                     pair<bool,bool> dataOrder,
-                     vector<casacore::Vector<casacore::Double> >& v_uvw,
+        void uvw_bl( asdm::MainRow* mainRow, std::vector<double> v_timeCentroid, 
+                     Enum<CorrelationModeMod::CorrelationMode> correlationMode,
+                     std::pair<bool,bool> dataOrder,
+                     std::vector<casacore::Vector<casacore::Double> >& v_uvw,
                      casacore::MSFieldColumns* msfc_p=0 );
 
       private:
@@ -193,16 +189,16 @@ namespace casac {
         */
         struct ArrayParam{
         public:
-            Tag                   subarrayId;        //<! (sub)array identifier
-            vector<Tag>           v_ant;             //<! sequence of antennas
+            asdm::Tag                   subarrayId;        //<! (sub)array identifier
+            std::vector<asdm::Tag>           v_ant;             //<! sequence of antennas
             unsigned int          nrepeat;           //<! number of casacore::MS main table rows per antenna baseline
-            Enum<CorrelationMode> e_correlationMode; //<! correlation mode (original mode passed through the user filter)
+            Enum<CorrelationModeMod::CorrelationMode> e_correlationMode; //<! correlation mode (original mode passed through the user filter)
             /** Concept Equality Comparable: 
                 @note Two subarrays are equals if they correspond to the same set (in mathematical sense)
                 of antennas
             */
             bool operator== ( ArrayParam & rhs){
-                set<Tag> a, b;
+                std::set<asdm::Tag> a, b;
                 for(unsigned int na=0; na<v_ant.size(); na++){
                     a.insert(v_ant[na]);
                 }
@@ -215,21 +211,21 @@ namespace casac {
                 return true;
             }
             string show(){
-                ostringstream os;
+                std::ostringstream os;
                 for(unsigned int n=0; n<v_ant.size(); n++)os << v_ant[n].toString() << " ";
                 os << " nrepeat " << nrepeat;
                 return os.str();
             }
         };
 
-        map<Tag,ArrayParam>            m_array_;
-        map<Tag,casacore::MPosition>             m_antPos_;
-        map<Tag,casacore::Vector<casacore::Double> > m_antUVW_;
+        std::map<asdm::Tag,ArrayParam>            m_array_;
+        std::map<asdm::Tag,casacore::MPosition>             m_antPos_;
+        std::map<asdm::Tag,casacore::Vector<casacore::Double> > m_antUVW_;
 
         // the 3 fundamental attributes of the state machine
         double                         timeCentroid_;
-        vector<vector<Angle> >         phaseDir_; 
-        Tag                            subarrayId_;
+        std::vector<std::vector<asdm::Angle> >         phaseDir_; 
+        asdm::Tag                            subarrayId_;
 
         casacore::Vector<casacore::Double>           sduvw_;
 
@@ -250,7 +246,7 @@ namespace casac {
             In right-handed frame. X towards the intersection of the equator and the Greenwich 
             meridian, Z towards the pole.
         */
-        vector<double> antPos(const vector<double>& stationPos, const vector<double>& antOffset);
+        std::vector<double> antPos(const std::vector<double>& stationPos, const std::vector<double>& antOffset);
 
         /** Determine antenna-based uvw for every member of the sequence of antennas defining a (sub)array
             @param  timeCentroid An epoch, the 'when' characterization.
@@ -265,7 +261,7 @@ namespace casac {
             - phaseDir is in J2000, the unit of the coordinates in radian
             @todo remove this note and all these warnings (to be coordinated with the release of SDM vers. 2)
         */ 
-        void uvw_an(double timeCentroid, const vector<vector<Angle> >& phaseDir, const vector<Tag>& v_antId);
+        void uvw_an(double timeCentroid, const std::vector<std::vector<asdm::Angle> >& phaseDir, const std::vector<asdm::Tag>& v_antId);
 
 
         /** Determine the baseline-based uvw for a sequence of antenna defining a (sub)array
@@ -285,7 +281,7 @@ namespace casac {
             corresponding to reverse=false.
             @warning This function will destroy the previous content of v_uvw.
         */
-        void uvw_bl( const vector<Tag>& v_antennaId, unsigned int nrep, bool reverse, vector<casacore::Vector<casacore::Double> >& v_uvw);
+        void uvw_bl( const std::vector<asdm::Tag>& v_antennaId, unsigned int nrep, bool reverse, std::vector<casacore::Vector<casacore::Double> >& v_uvw);
 
     };
 }

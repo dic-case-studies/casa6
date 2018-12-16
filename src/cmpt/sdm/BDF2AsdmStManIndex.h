@@ -35,7 +35,7 @@ namespace casac {
                              unsigned int		nPol,
                              unsigned int		stepBl,
                              unsigned int		stepSpw,
-                             const vector<double>&	scaleFactors,
+                             const std::vector<double>&	scaleFactors,
                              uint64_t	         	fileOffset,
                              uint32_t                 spwOffset);
 
@@ -47,7 +47,7 @@ namespace casac {
                             unsigned int		nPol,
                             unsigned int		stepBl,
                             unsigned int		stepSpw,
-                            const vector<double>&	scaleFactors,
+                            const std::vector<double>&	scaleFactors,
                             uint64_t	         	fileOffset,
                             uint32_t                  spwOffset);
 
@@ -59,7 +59,7 @@ namespace casac {
                               unsigned int		nPol,
                               unsigned int		stepBl,
                               unsigned int		stepSpw,
-                              const vector<double>&	scaleFactors,
+                              const std::vector<double>&	scaleFactors,
                               uint64_t		fileOffset,
                               uint32_t                spwOffset,
                               PrimitiveDataTypeMod::PrimitiveDataType       dataType);

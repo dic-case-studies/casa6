@@ -2,7 +2,7 @@
 
 using namespace casacore;
 
-namespace casac {
+namespace asdm {
 
     ASDM_TABLE_BASE::ASDM_TABLE_BASE() {table_p_ = 0;}
 
@@ -13,11 +13,12 @@ namespace casac {
     const string& ASDM_TABLE_BASE::name() const { return name_; }
 
     void ASDM_TABLE_BASE::buildAndAttachTable(casacore::MS* attachMS) {
-        casacore::SetupNewTable tableSetup( attachMS->tableName() + "/" + String(name_), tableDesc(), casacore::Table::New);
+        casacore::SetupNewTable tableSetup(attachMS->tableName() + "/" + String(name_), tableDesc(), casacore::Table::New);
         table_p_ = new casacore::Table(tableSetup, casacore::TableLock(casacore::TableLock::PermanentLockingWait));
         AlwaysAssert(table_p_, casacore::AipsError);
         attachMS->rwKeywordSet().defineTable(name_, *table_p_);
     }
-}
+
+} // end namespace asdm
 
 

@@ -25,14 +25,14 @@ void execBlockSummary(const asdm::ASDM& ds);
 // A number of EnumSet to encode the different selection criteria.
 //
 
-EnumSet<CorrelationMode>         es_cm;
-EnumSet<SpectralResolutionType>  es_srt;
-EnumSet<TimeSampling>            es_ts;
-Enum<CorrelationMode>            e_query_cm; 
-EnumSet<AtmPhaseCorrection>      es_query_apc;    
-EnumSet<AtmPhaseCorrection>      es_apc;
+EnumSet<CorrelationModeMod::CorrelationMode>         es_cm;
+EnumSet<SpectralResolutionTypeMod::SpectralResolutionType>  es_srt;
+EnumSet<TimeSamplingMod::TimeSampling>            es_ts;
+Enum<CorrelationModeMod::CorrelationMode>            e_query_cm; 
+EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection>      es_query_apc;    
+EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection>      es_apc;
 
-EnumSet<AtmPhaseCorrection> apcLiterals(const asdm::ASDM& ds);
+EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection> apcLiterals(const asdm::ASDM& ds);
 
 //
 // By default the resulting MS will not contain compressed columns
@@ -42,28 +42,28 @@ bool                             withCompression = false;
 
 std::vector<int> dataDescriptionIdx2Idx;
 std::map<asdm::MainRow*, int> stateIdx2Idx;
-std::map<AtmPhaseCorrection, ASDM2MSFiller*> msFillers; // There will be one filler per value of the axis APC.
+std::map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*> msFillers; // There will be one filler per value of the axis APC.
 ASDM2MSFiller* msFiller;
 
-bool hasCorrectedData(const EnumSet<AtmPhaseCorrection>& es);
-bool hasUncorrectedData(const EnumSet<AtmPhaseCorrection>& es);
+bool hasCorrectedData(const EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection>& es);
+bool hasUncorrectedData(const EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection>& es);
 
-map<int, int> swIdx2Idx ;                       // A map which associates old and new index of Spectral Windows before/after reordering.
-void fillSpectralWindow( asdm::ASDM* ds_p, map<unsigned int, double>& effectiveBwPerSpwId_m );
-void fillEphemeris( asdm::ASDM* ds_p, uint64_t timeStepInNanoSecond, bool interpolate_ephemeris, string telescopeName );
+std::map<int, int> swIdx2Idx ;                       // A map which associates old and new index of Spectral Windows before/after reordering.
+void fillSpectralWindow( asdm::ASDM* ds_p, std::map<unsigned int, double>& effectiveBwPerSpwId_m );
+void fillEphemeris( asdm::ASDM* ds_p, uint64_t timeStepInNanoSecond, bool interpolate_ephemeris, std::string telescopeName );
 void fillField( asdm::ASDM* ds_p, bool considerEphemeris );
-void fillSysPower( const string asdmDirectory, asdm::ASDM* ds_p, bool ignoreTime, const vector<asdm::ScanRow *>& selectedScanRow_v,
-                   map<AtmPhaseCorrection, ASDM2MSFiller*>& msFillers_m );
+void fillSysPower( const std::string asdmDirectory, asdm::ASDM* ds_p, bool ignoreTime, const std::vector<asdm::ScanRow *>& selectedScanRow_v,
+                   std::map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>& msFillers_m );
 void fillMainLazily( const string& dsName, asdm::ASDM* ds_p, std::map<int, std::set<int> >& selected_eb_scan_m,
-                     std::map<unsigned int , double>& effectiveBwPerDD_m, Enum<CorrelationMode> e_query_cm, bool checkdupints );
+                     std::map<unsigned int , double>& effectiveBwPerDD_m, Enum<CorrelationModeMod::CorrelationMode> e_query_cm, bool checkdupints );
 void fillState( asdm::MainRow* r_p );
 void fillMain( asdm::MainRow* r_p, sdmbin::SDMBinData &sdmBinData, const sdmbin::VMSData *vmsData_p, UvwCoords &uvwCoords,
                std::map<unsigned int, double>& effectiveBwPerDD_m, bool complexData, bool mute,
                bool ac_xc_per_timestamp, bool skipFirstTime=false );
 
         
-template<class T> void checkVectorSize( const string& vectorAttrName, const vector<T>& vectorAttr, const string& sizeAttrName,
-                                        unsigned int sizeAttr, const string& tableName, unsigned int rowNumber );
+template<class T> void checkVectorSize( const std::string& vectorAttrName, const std::vector<T>& vectorAttr, const std::string& sizeAttrName,
+                                        unsigned int sizeAttr, const std::string& tableName, unsigned int rowNumber );
 
 bool gen_ms( const std::string &vis, bool createmms, const std::string &separationaxis, const variant &numsubms,    
              const std::string &corr_mode, const std::string &srt, const std::string &time_sampling,
@@ -74,10 +74,10 @@ bool gen_ms( const std::string &vis, bool createmms, const std::string &separati
              bool verbose, bool overwrite, bool showversion, const std::string &useversion, bool bdfflags,
              bool with_pointing_correction, bool remove_ref_undef, bool convert_ephem2geo, double polyephem_tabtimestep );
 bool bd_flagger( const std::string &ms, const std::string &ocm, const std::string &scansOptionValue, bool lazy, bool processUncorrectedData );
-void loadBDFlags( map<string, unsigned int>& abbrev2bitpos );
-void processCorrelatorFlagsPerSlices( asdm::MainRow *mR_p, unsigned int iASDMIndex, const vector<int32_t> &mainRowIndex,
-                                      const string &bdfPath, uint64_t bdfSliceSizeInMb, const vector<string> &antennas,
-                                      const vector<pair<string, string> > &dataDescriptions, MSFlagEval &flagEval,
+void loadBDFlags( std::map<string, unsigned int>& abbrev2bitpos );
+void processCorrelatorFlagsPerSlices( asdm::MainRow *mR_p, unsigned int iASDMIndex, const std::vector<int32_t> &mainRowIndex,
+                                      const std::string &bdfPath, uint64_t bdfSliceSizeInMb, const std::vector<std::string> &antennas,
+                                      const std::vector<std::pair<std::string, std::string> > &dataDescriptions, MSFlagEval &flagEval,
                                       unsigned &iMSRow, casacore::ArrayColumn<bool> &flag, casacore::ScalarColumn<bool> &flagRow,
                                       CorrelationModeMod::CorrelationMode ocorrelationMode );
 
@@ -92,6 +92,6 @@ int sysPowerFeedId(const asdm::SysPowerRow* row) const;
 double sysPowerMidTimeInSeconds(const asdm::SysPowerRow* row) const;
 double sysPowerIntervalInSeconds(const asdm::SysPowerRow* row) const;
 
-void info(const string& message) const;
-void error(const string& message, int status=1) const;
-void warning (const string& message) const;
+void info(const std::string& message) const;
+void error(const std::string& message, int status=1) const;
+void warning (const std::string& message) const;

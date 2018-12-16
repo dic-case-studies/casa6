@@ -61,6 +61,8 @@
 #include "SubscanIntent.h"
 
 using namespace std;
+using namespace asdm;
+using namespace asdmbinaries;
 
 #define DDPRIORITY 1
 
@@ -301,39 +303,43 @@ static void myTimer( double *cpu_time ,   /* cpu timer */
     }
 }
 
-/**
- * This function tries to calculate the sizes of the successives slices of the BDF 
- * to be processed given a) the overall size of the BDF and b) the approximative maximum
- * size that one wants for one slice.
- * @paramater BDFsize the overall size of the BDF expressed in bytes,
- * @parameter approxSizeInMemory the approximative size that one wants for one slice, expressed in byte.
- *
- * \par Note:
- * It tries to avoid a last slice, corresponding to 
- * the remainder in the euclidean division BDFsize / approxSizeInMemory.
+/** 
+ * This function tries to allocate the number of integrations into slices
+ * based on the average size of one integration and the requested maximum size of one slice.
+ * The sum of all of the values in the returned vector is always equal to nIntegrations.
+ * @parameter nIntegrations the number of integrations in the BDF
+ * @parameter bdfSize the size of the BDF, in bytes
+ * @parameter approxSizeInMemory the approximate size that one wants for one slice, in bytes.
  */
-static vector<uint64_t> sizeInMemory(uint64_t BDFsize, uint64_t approxSizeInMemory) {
-    if (debug) cout << "sizeInMemory: entering" << endl;
-    vector<uint64_t> result;
-    uint64_t Q = BDFsize / approxSizeInMemory;
-    if (Q == 0) { 
-        result.push_back(BDFsize);
+static vector<unsigned int> getIntegrationSlices(int nIntegrations, uint64_t bdfSize, uint64_t approxSizeInMemory) {
+  if (debug) cout << "getIntegrationSlices: entering" << endl;
+  vector<unsigned int> result;
+  if (nIntegrations > 0) {
+    if (bdfSize < approxSizeInMemory) {
+      result.push_back(nIntegrations);
+    } else {
+      uint64_t avgIntSize = bdfSize/nIntegrations;
+      unsigned int nIntPerSlice = approxSizeInMemory/avgIntSize;
+      unsigned int nSlice = nIntegrations/nIntPerSlice;
+      result.resize(nSlice,nIntPerSlice);
+      unsigned int residualInts = nIntegrations % nIntPerSlice;
+      if (residualInts > (nSlice*nIntPerSlice/5)) {
+	// if the number of left over integrations is more than 1/5 of what's in the other slices
+	// then this makes an acceptable last slice - no need to redistribute
+	result.push_back(residualInts);
+      } else {
+	// final slice would too small, redistribute it to the other slices
+	while(residualInts > 0) {
+	  for (unsigned int i = 0; residualInts > 0 && i < result.size(); i++) {
+	    result[i]++; 
+	    residualInts--;
+	  }
+	}
+      }
     }
-    else {
-        result.resize(Q, approxSizeInMemory);
-        unsigned int R = BDFsize % approxSizeInMemory;
-        if ( R > (Q * approxSizeInMemory / 5) )  {
-            result.push_back(R); 
-        }
-        else {
-            while (R > 0) 
-                for (unsigned int i = 0; R >0 && i < result.size(); i++) {
-                    result[i]++ ; R--;
-                }
-        }
-    }
-    if (debug) cout << "sizeInMemory: exiting" << endl;
-    return result;
+  }
+  if (debug) cout << "getItegrationSlices: exiting" << endl;
+  return result;
 }
 
 /**
@@ -466,38 +472,38 @@ StokesMapper::~StokesMapper() {
 
 casacore::Stokes::StokesTypes StokesMapper::value(StokesParameterMod::StokesParameter s) {
   switch (s) {
-  case I : return casacore::Stokes::I; 
-  case Q : return casacore::Stokes::Q; 
-  case U : return casacore::Stokes::U; 
-  case V : return casacore::Stokes::V; 
-  case RR : return casacore::Stokes::RR; 
-  case RL : return casacore::Stokes::RL; 
-  case LR : return casacore::Stokes::LR; 
-  case LL : return casacore::Stokes::LL; 
-  case XX : return casacore::Stokes::XX; 
-  case XY : return casacore::Stokes::XY; 
-  case YX : return casacore::Stokes::YX; 
-  case YY : return casacore::Stokes::YY; 
-  case RX : return casacore::Stokes::RX; 
-  case RY : return casacore::Stokes::RY; 
-  case LX : return casacore::Stokes::LX; 
-  case LY : return casacore::Stokes::LY; 
-  case XR : return casacore::Stokes::XR; 
-  case XL : return casacore::Stokes::XL; 
-  case YR : return casacore::Stokes::YR; 
-  case YL : return casacore::Stokes::YL; 
-  case PP : return casacore::Stokes::PP; 
-  case PQ : return casacore::Stokes::PQ; 
-  case QP : return casacore::Stokes::QP; 
-  case QQ : return casacore::Stokes::QQ; 
-  case RCIRCULAR : return casacore::Stokes::RCircular; 
-  case LCIRCULAR : return casacore::Stokes::LCircular; 
-  case LINEAR : return casacore::Stokes::Linear; 
-  case PTOTAL : return casacore::Stokes::Ptotal; 
-  case PLINEAR : return casacore::Stokes::Plinear; 
-  case PFTOTAL : return casacore::Stokes::PFtotal; 
-  case PFLINEAR : return casacore::Stokes::PFlinear; 
-  case PANGLE : return casacore::Stokes::Pangle;  
+  case StokesParameterMod::I : return casacore::Stokes::I; 
+  case StokesParameterMod::Q : return casacore::Stokes::Q; 
+  case StokesParameterMod::U : return casacore::Stokes::U; 
+  case StokesParameterMod::V : return casacore::Stokes::V; 
+  case StokesParameterMod::RR : return casacore::Stokes::RR; 
+  case StokesParameterMod::RL : return casacore::Stokes::RL; 
+  case StokesParameterMod::LR : return casacore::Stokes::LR; 
+  case StokesParameterMod::LL : return casacore::Stokes::LL; 
+  case StokesParameterMod::XX : return casacore::Stokes::XX; 
+  case StokesParameterMod::XY : return casacore::Stokes::XY; 
+  case StokesParameterMod::YX : return casacore::Stokes::YX; 
+  case StokesParameterMod::YY : return casacore::Stokes::YY; 
+  case StokesParameterMod::RX : return casacore::Stokes::RX; 
+  case StokesParameterMod::RY : return casacore::Stokes::RY; 
+  case StokesParameterMod::LX : return casacore::Stokes::LX; 
+  case StokesParameterMod::LY : return casacore::Stokes::LY; 
+  case StokesParameterMod::XR : return casacore::Stokes::XR; 
+  case StokesParameterMod::XL : return casacore::Stokes::XL; 
+  case StokesParameterMod::YR : return casacore::Stokes::YR; 
+  case StokesParameterMod::YL : return casacore::Stokes::YL; 
+  case StokesParameterMod::PP : return casacore::Stokes::PP; 
+  case StokesParameterMod::PQ : return casacore::Stokes::PQ; 
+  case StokesParameterMod::QP : return casacore::Stokes::QP; 
+  case StokesParameterMod::QQ : return casacore::Stokes::QQ; 
+  case StokesParameterMod::RCIRCULAR : return casacore::Stokes::RCircular; 
+  case StokesParameterMod::LCIRCULAR : return casacore::Stokes::LCircular; 
+  case StokesParameterMod::LINEAR : return casacore::Stokes::Linear; 
+  case StokesParameterMod::PTOTAL : return casacore::Stokes::Ptotal; 
+  case StokesParameterMod::PLINEAR : return casacore::Stokes::Plinear; 
+  case StokesParameterMod::PFTOTAL : return casacore::Stokes::PFtotal; 
+  case StokesParameterMod::PFLINEAR : return casacore::Stokes::PFlinear; 
+  case StokesParameterMod::PANGLE : return casacore::Stokes::Pangle;  
   }
   return casacore::Stokes::Undefined;
 }
@@ -714,14 +720,14 @@ class FrequencyReferenceMapper {
 public :
     FrequencyReferenceMapper(const casac::sdm &o) : obj(o) { }
     ~FrequencyReferenceMapper();
-    MFrequency::Types value(FrequencyReferenceCodeMod::FrequencyReferenceCode frc);
+    casacore::MFrequency::Types value(FrequencyReferenceCodeMod::FrequencyReferenceCode frc);
 private:
     const casac::sdm &obj;
 };
 
 FrequencyReferenceMapper::~FrequencyReferenceMapper() { }
 
-MFrequency::Types FrequencyReferenceMapper::value(FrequencyReferenceCodeMod::FrequencyReferenceCode frc) {
+casacore::MFrequency::Types FrequencyReferenceMapper::value(FrequencyReferenceCodeMod::FrequencyReferenceCode frc) {
     switch (frc) {
         case FrequencyReferenceCodeMod::LABREST :
             {
@@ -731,15 +737,15 @@ MFrequency::Types FrequencyReferenceMapper::value(FrequencyReferenceCodeMod::Fre
                 obj.error(errstream.str());
             }
             break;
-        case FrequencyReferenceCodeMod::LSRD : return MFrequency::LSRD; 
-        case FrequencyReferenceCodeMod::LSRK : return MFrequency::LSRK; 
-        case FrequencyReferenceCodeMod::BARY : return MFrequency::BARY;
-        case FrequencyReferenceCodeMod::REST : return MFrequency::REST;
-        case FrequencyReferenceCodeMod::GEO  : return MFrequency::GEO; 
-        case FrequencyReferenceCodeMod::GALACTO : return MFrequency::GALACTO;
-        case FrequencyReferenceCodeMod::TOPO : return MFrequency::TOPO; 
+        case FrequencyReferenceCodeMod::LSRD : return casacore::MFrequency::LSRD; 
+        case FrequencyReferenceCodeMod::LSRK : return casacore::MFrequency::LSRK; 
+        case FrequencyReferenceCodeMod::BARY : return casacore::MFrequency::BARY;
+        case FrequencyReferenceCodeMod::REST : return casacore::MFrequency::REST;
+        case FrequencyReferenceCodeMod::GEO  : return casacore::MFrequency::GEO; 
+        case FrequencyReferenceCodeMod::GALACTO : return casacore::MFrequency::GALACTO;
+        case FrequencyReferenceCodeMod::TOPO : return casacore::MFrequency::TOPO; 
     }
-    return MFrequency::TOPO; // Never happens.
+    return casacore::MFrequency::TOPO; // Never happens.
 }
 
 /**
@@ -788,8 +794,8 @@ static vector<Tag> reorderSwIds(const ASDM& ds) {
     return result;
 }
 
-static void deleteEphemeris(map<AtmPhaseCorrection, Table*>& apc2EphemTable_m) {
-    for ( map<AtmPhaseCorrection, Table*>::iterator iter = apc2EphemTable_m.begin(); iter!=apc2EphemTable_m.end(); ++iter)
+static void deleteEphemeris(map<AtmPhaseCorrectionMod::AtmPhaseCorrection, casacore::Table*>& apc2EphemTable_m) {
+    for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, casacore::Table*>::iterator iter = apc2EphemTable_m.begin(); iter!=apc2EphemTable_m.end(); ++iter)
         if (apc2EphemTable_m[iter->first] != NULL) delete apc2EphemTable_m[iter->first];
 }
 
@@ -1050,11 +1056,11 @@ namespace casac {
             // this always has a value because of defaults
             string ocm_opt = ocorr_mode;
             if ( ocm_opt.compare("co") == 0 )
-                e_query_cm = CROSS_ONLY;
+                e_query_cm = CorrelationModeMod::CROSS_ONLY;
             else if ( ocm_opt.compare("ao") == 0 )
-                e_query_cm = AUTO_ONLY;
+                e_query_cm = CorrelationModeMod::AUTO_ONLY;
             else if ( ocm_opt.compare("ca") == 0 )
-                e_query_cm = CROSS_AND_AUTO;
+                e_query_cm = CorrelationModeMod::CROSS_AND_AUTO;
             else {
                 errstream.str("");
                 errstream << "Token '" << ocm_opt << "' invalid value for 'ocorr_mode' parameter." << endl;
@@ -1156,10 +1162,8 @@ namespace casac {
 
             checkRowUniqueness = false;
             scansOptionInfo = scans;
-
-            //if (options[ASIS]) {
-            //  asisOption = string(options[ASIS].last()->arg);
-            //}
+            asisOption =  asis;
+            
             ignoreTime = ignore_time;
             processSysPower = process_syspower;
             processCalDevice = process_caldevice;
@@ -1203,8 +1207,7 @@ namespace casac {
             errstream.str("");
             errstream << e.getMessage();
             error(errstream.str());
-        }
-        catch (std::exception e) {
+        } catch (std::exception e) {
             errstream.str("");
             errstream << e.what();
             error(errstream.str());
@@ -1218,18 +1221,6 @@ namespace casac {
         infostream.str("");
         infostream << "Time spent parsing the ASDM medata : " << cpu_time_parse_xml << " s.";
         info(infostream.str());
-  
-        //
-        // Let's verify immediately that if the lazy option has been set we have constant numPol x numCorr
-        // on each Configuration Description.
-        //
-        //if (lazy && !checkForConstantNPolNChan(ds)) {
-        //infostream.str("");
-        //infostream << "NOTE: This ASDM cannot be imported in 'lazy' mode because it has a varying number of polarizations and/or channels in some configuration description(s)."
-        //	       << endl << "      *** Will switch to non-lazy import. ***" << endl;
-        //warning(infostream.str());
-        //lazy = false;
-        //}
   
         //
         // What are the apc literals present in the binary data.
@@ -1256,7 +1247,7 @@ namespace casac {
   
         // From now we decide to extract the data with all atmospheric phase corrections.
         // The selection will be done on output. Michel Caillat Thur 18 Sept 2014 - CAS-6935
-        EnumSet<AtmPhaseCorrection> allAPCs;
+        EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection> allAPCs;
         allAPCs.fromString("AP_CORRECTED AP_UNCORRECTED");
         sdmBinData.selectDataSubset(e_query_cm, allAPCs);
   
@@ -1387,12 +1378,12 @@ namespace casac {
         // only AP_UNCORRECTED -> MS name has no particular suffix,
         // AP_CORRECTED and AP_UNCORRECTED -> 2 MSs whith names defined by the two above rules.
         //
-        map<AtmPhaseCorrection, string> msNames;
-        if (hasCorrectedData(es_apc) && es_query_apc[AP_CORRECTED]) {
-            msNames[AP_CORRECTED] = msNamePrefix + "-wvr-corrected";
+        map<AtmPhaseCorrectionMod::AtmPhaseCorrection, string> msNames;
+        if (hasCorrectedData(es_apc) && es_query_apc[AtmPhaseCorrectionMod::AP_CORRECTED]) {
+            msNames[AtmPhaseCorrectionMod::AP_CORRECTED] = msNamePrefix + "-wvr-corrected";
         }
-        if (hasUncorrectedData(es_apc) && es_query_apc[AP_UNCORRECTED]) {
-            msNames[AP_UNCORRECTED] = msNamePrefix;
+        if (hasUncorrectedData(es_apc) && es_query_apc[AtmPhaseCorrectionMod::AP_UNCORRECTED]) {
+            msNames[AtmPhaseCorrectionMod::AP_UNCORRECTED] = msNamePrefix;
         }
       
         if (msNames.size() == 0) {
@@ -1411,7 +1402,7 @@ namespace casac {
             // the MS name.
             // And eventually always suffix with ".ms".
             //
-            for (map<AtmPhaseCorrection, string>::iterator iter=msNames.begin(); iter != msNames.end(); ++iter) {
+            for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, string>::iterator iter=msNames.begin(); iter != msNames.end(); ++iter) {
                 if (withCompression)
                     iter->second = iter->second + ".compressed";
                 iter->second +=  msNameExtension;
@@ -1464,7 +1455,7 @@ namespace casac {
         if (!false) {
             try {
                 if (lazy)  casa::AsdmStMan::registerClass();
-                for (map<AtmPhaseCorrection, string>::iterator iter = msNames.begin(); iter != msNames.end(); ++iter) {
+                for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, string>::iterator iter = msNames.begin(); iter != msNames.end(); ++iter) {
                     info("About to create a filler for the measurement set '" + msNames[iter->first] + "'");
                     msFillers[iter->first] = new ASDM2MSFiller( msNames[iter->first], 0.0, false, complexData,
                                                                 withCompression, telName, maxNumCorr, maxNumChan,
@@ -1618,7 +1609,7 @@ namespace casac {
                 double yOffset = offset.at(1).get();
                 double zOffset = offset.at(2).get();
 
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     /*
                     ** "&" are not recommanded in antenna names in order to avoid bumps with MS Selection syntax.
@@ -1730,7 +1721,7 @@ namespace casac {
                 }
 
 
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     pIdx = iter->second->addUniquePolarization( numCorr, corrType, corrProduct );
                 }
@@ -1776,7 +1767,7 @@ namespace casac {
                     (errstream << "Problem while reading the DataDescription table, the row with key = Tag(" << i << ") does not exist.Aborting." << endl);
                     error(errstream.str());
                 }
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     ddIdx = iter->second->addUniqueDataDescription( swIdx2Idx[r->getSpectralWindowId().getTagValue()],
                                                                     polarizationIdx2Idx.at(r->getPolOrHoloId().getTagValue()) );
@@ -1841,7 +1832,7 @@ namespace casac {
                 string project(r->getProjectUID().getEntityId().toString());
                 double releaseDate = r->isReleaseDateExists() ? r->getReleaseDate().getMJD():0.0;
 
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addObservation( telescopeName, startTime, endTime, observerName, observingLog,
                                                   scheduleType, schedule, project, releaseDate );
@@ -1925,7 +1916,7 @@ namespace casac {
                 }
                 vector<double> receptor_angle_ = DConverter::toVectorD<Angle>(r->getReceptorAngle());
 
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addFeed( (int) r->getAntennaId().getTagValue(), r->getFeedId(),
                                            swIdx2Idx[r->getSpectralWindowId().getTagValue()],
@@ -1994,7 +1985,7 @@ namespace casac {
                 string reason = r->getReason();
                 string command = r->getCommand();
    
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addFlagCmd( time, interval, type, reason, r->getLevel(), r->getSeverity(),
                                               r->getApplied() ? 1 : 0, command );
@@ -2043,7 +2034,7 @@ namespace casac {
                 string cliCommand  = r->getCliCommand();
                 string appParams   = r->getAppParms();
  
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addHistory( time, r->getExecBlockId().getTagValue(), message,
                                               priority, origin, -1, application, cliCommand,
@@ -2300,7 +2291,7 @@ namespace casac {
                     }
     
 
-                    for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                    for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                           iter != msFillers.end(); ++iter ) {
                         iter->second->addPointingSlice( numMSPointingRows, antenna_id_,time_, interval_,
                                                         direction_, target_, pointing_offset_, encoder_,
@@ -2347,7 +2338,7 @@ namespace casac {
                 string processorType    = CProcessorType::name(r->getProcessorType());
                 string processorSubType = CProcessorSubType::name(r->getProcessorSubType());
       
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addProcessor( processorType, processorSubType,
                                                 -1,    // Since there is no typeId in the ASDM.
@@ -2496,7 +2487,7 @@ namespace casac {
                     sysVel = DConverter::toVectorD<Speed>(r->getSysVel());
                 }
    
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addSource( sourceId, time, interval, spectralWindowId, numLines,
                                              sourceName, calibrationGroup, code, direction,
@@ -2601,7 +2592,7 @@ namespace casac {
                 if (tant_tsys_spectrum_pair.first)
                     tant_tsys_spectrum_pair.second = FConverter::toVectorF(r->getTantTsysSpectrum(), true);
 
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addSysCal( (int) r->getAntennaId().getTagValue(), (int) r->getFeedId(),
                                              (int) swIdx2Idx[r->getSpectralWindowId().getTagValue()],
@@ -2850,7 +2841,7 @@ namespace casac {
                     //}
 
 
-                    for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator msIter = msFillers.begin();
+                    for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator msIter = msFillers.begin();
                           msIter != msFillers.end(); ++msIter ) {
                         msIter->second->addCalDevice( (*iter)->getAntennaId().getTagValue(), (*iter)->getFeedId(),
                                                       swIdx2Idx[(*iter)->getSpectralWindowId().getTagValue()],
@@ -2927,7 +2918,7 @@ namespace casac {
                 int		wxStationId        = r->getStationId().getTagValue();
                 vector<double>	wxStationPosition  = DConverter::toVectorD(r->getStationUsingStationId()->getPosition());
     
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addWeather( -1, time, interval, pressureOpt, relHumidityOpt, temperatureOpt,
                                               windDirectionOpt, windSpeedOpt, dewPointOpt, wxStationId, wxStationPosition);
@@ -2965,7 +2956,7 @@ namespace casac {
             // Consider only the Main rows whose execBlockId and scanNumber attributes correspond to the selection.
             // (execBlockId, scanNumber, wvr-corrected-data option)
             //
-            vector<AtmPhaseCorrection>		queriedAPC_v						  = es_apc.toEnumType();
+            vector<AtmPhaseCorrectionMod::AtmPhaseCorrection>		queriedAPC_v						  = es_apc.toEnumType();
             const vector<MainRow *>&		temp							  = mainT.get();
             for ( vector<MainRow *>::const_iterator iter_v = temp.begin(); iter_v			 != temp.end(); iter_v++ ) {
                 map<int, set<int> >::iterator	iter_m = selected_eb_scan_m.find((*iter_v)->getExecBlockId().getTagValue());
@@ -2989,7 +2980,7 @@ namespace casac {
             UvwCoords uvwCoords(ds);
       
             ostringstream oss;
-            EnumSet<AtmPhaseCorrection> es_query_ap_uncorrected;
+            EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection> es_query_ap_uncorrected;
             es_query_ap_uncorrected.fromString("AP_UNCORRECTED");
     
             // used in checking for duplicate integrations in the WVR (Radiometer) case
@@ -3006,7 +2997,7 @@ namespace casac {
                     ConfigDescriptionRow* cR = cT.getRowByKey(cdId);
                     Tag pId = cR->getProcessorId();
 
-                    ProcessorType processorType = ds->getProcessor().getRowByKey(pId)->getProcessorType();
+                    ProcessorTypeMod::ProcessorType processorType = ds->getProcessor().getRowByKey(pId)->getProcessorType();
                     infostream.str("");
                     infostream << "ASDM Main row #" << mainRowIndex[i] << " contains data produced by a '" << CProcessorType::name(processorType) << "'." ;
                     info(infostream.str());
@@ -3014,7 +3005,7 @@ namespace casac {
                     string dataUID = v[i]->getDataUID().getEntityId().toString();
                     replace(dataUID.begin(),dataUID.end(),':','_');
                     replace(dataUID.begin(),dataUID.end(),'/','_');
-                    string absBDFpath = Path(dsName + "/ASDMBinary/" + dataUID).absoluteName();
+                    string absBDFpath = casacore::Path(dsName + "/ASDMBinary/" + dataUID).absoluteName();
                     infostream.str("");
                     infostream << "ASDM Main row #" << mainRowIndex[i]
                                << " (scan #" << v[i]->getScanNumber()
@@ -3041,7 +3032,7 @@ namespace casac {
                         continue;	  
                     }
 
-                    if (processorType == RADIOMETER) {
+                    if (processorType == ProcessorTypeMod::RADIOMETER) {
                         if (!sdmBinData.acceptMainRow(v[i])) {
                             infostream.str("");
                             infostream <<"No data retrieved in the Main row #" << mainRowIndex[i] << " (" << sdmBinData.reasonToReject(v[i]) <<")" << endl;
@@ -3056,7 +3047,7 @@ namespace casac {
                             // work out the number of elements in this first row
                             // possibly this is available reliably elsewhere, but thats' not obvious
                             // this should be rare and only a few elements should tested, so relatively quick
-                            bool firstIntegration = True;
+                            bool firstIntegration = true;
                             while (firstIntegration && skipValues < vmsDataPtr->v_time.size()) {
                                 firstIntegration = lastTimeMap[cdId] == vmsDataPtr->v_time[skipValues];
                                 if (firstIntegration) skipValues++;
@@ -3093,17 +3084,16 @@ namespace casac {
                             continue;
                         }
 	  
-                        uint32_t		N			 = v[i]->getNumIntegration();
-                        uint64_t		bdfSize			 = v[i]->getDataSize();
-                        vector<uint64_t>	actualSizeInMemory(sizeInMemory(bdfSize, bdfSliceSizeInMb*1024*1024));
+                        int N = v[i]->getNumIntegration();
+                        uint64_t bdfSize = v[i]->getDataSize();
+                        vector<unsigned int> integrationSlices(getIntegrationSlices(N, bdfSize, bdfSliceSizeInMb*1024*1024));
                         int32_t			numberOfMSMainRows	 = 0;
                         int32_t			numberOfIntegrations	 = 0;
                         int32_t			numberOfReadIntegrations = 0;
 	  
                         // For each slice of the BDF with a size approx equal to the required size
-                        for ( unsigned int j = 0; j < actualSizeInMemory.size(); j++ ) {
-                            numberOfIntegrations = min((uint64_t)actualSizeInMemory[j] / (bdfSize / N), (uint64_t)N);
-                                                   // The min to prevent a possible excess when there are very few bytes in the BDF.
+                        for ( unsigned int j = 0; j < integrationSlices.size(); j++ ) {
+                            numberOfIntegrations = integrationSlices[j];
                             if (numberOfIntegrations) {
                                 infostream.str("");
                                 infostream << "ASDM Main row #" << mainRowIndex[i] << " - " << numberOfReadIntegrations  << " integrations done so far - the next " << numberOfIntegrations << " integrations produced " ;
@@ -3118,6 +3108,7 @@ namespace casac {
                             }
                         }
 
+                        // this should no longer be necessary, but keep this block in place just in case.
                         uint32_t numberOfRemainingIntegrations = N - numberOfReadIntegrations;
                         if (numberOfRemainingIntegrations) { 
                             vmsDataPtr = sdmBinData.getNextMSMainCols(numberOfRemainingIntegrations);
@@ -3195,9 +3186,9 @@ namespace casac {
             info(infostream.str());
 
             if (mainT.size()) {
-                for (map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                      iter != msFillers.end(); ++iter) {
-                    string kindOfData = (iter->first == AP_UNCORRECTED) ? "wvr uncorrected" : "wvr corrected";
+                    string kindOfData = (iter->first == AtmPhaseCorrectionMod::AP_UNCORRECTED) ? "wvr uncorrected" : "wvr corrected";
                     infostream.str("");
                     infostream << "converted in " << iter->second->ms()->nrow() << " main(s) rows in the measurement set containing the " << kindOfData << " data.";
                     info(infostream.str());
@@ -3214,7 +3205,7 @@ namespace casac {
                 vector<string> tablenames;
                 while (iss>>word)
                     tablenames.push_back(word);
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin(); iter != msFillers.end(); ++iter ){
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin(); iter != msFillers.end(); ++iter ){
                     ASDMVerbatimFiller avf(const_cast<casacore::MS*>(iter->second->ms()), Name2Table::find(tablenames, verbose));
                     avf.fill(*ds);
                 }
@@ -3225,11 +3216,11 @@ namespace casac {
             }
         }
   
-        for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+        for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
               iter != msFillers.end(); ++iter )
             iter->second->end();
   
-        for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+        for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
               iter != msFillers.end(); ++iter )
             delete iter->second;
 
@@ -3503,14 +3494,14 @@ namespace casac {
         }
     }
 
-    EnumSet<AtmPhaseCorrection> sdm::apcLiterals(const asdm::ASDM& ds) {
-        EnumSet<AtmPhaseCorrection> result;
+    EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection> sdm::apcLiterals(const asdm::ASDM& ds) {
+        EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection> result;
 
         vector<MainRow *> mRs = ds.getMain().get();
   
         for (unsigned int i = 0; i < mRs.size(); i++) {
             ConfigDescriptionRow * configDescriptionRow = mRs.at(i)->getConfigDescriptionUsingConfigDescriptionId();
-            vector<AtmPhaseCorrection> apc = configDescriptionRow -> getAtmPhaseCorrection();
+            vector<AtmPhaseCorrectionMod::AtmPhaseCorrection> apc = configDescriptionRow -> getAtmPhaseCorrection();
             for (unsigned int i = 0; i < apc.size(); i++)
                 result.set(apc.at(i));
         }
@@ -3519,16 +3510,16 @@ namespace casac {
 
     sdm::~sdm( ) { }
 
-    bool sdm::hasCorrectedData(const EnumSet<AtmPhaseCorrection>& es) {
-        return es[AP_CORRECTED];
+    bool sdm::hasCorrectedData(const EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection>& es) {
+        return es[AtmPhaseCorrectionMod::AP_CORRECTED];
     }
 
-    bool sdm::hasUncorrectedData(const EnumSet<AtmPhaseCorrection>& es) {
-        return es[AP_UNCORRECTED];
+    bool sdm::hasUncorrectedData(const EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection>& es) {
+        return es[AtmPhaseCorrectionMod::AP_UNCORRECTED];
     }
 
     void sdm::error(const string& message, int status) const {
-        casacore::LogSink::postGlobally(LogMessage(message, LogOrigin("sdm",WHERE), LogMessage::NORMAL));
+        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::NORMAL));
         //os << LogIO::POST;
         // cout << message << endl;
         throw casacore::AipsError(message);
@@ -3538,11 +3529,11 @@ namespace casac {
         if (!verbose){
             return;
         }
-        casacore::LogSink::postGlobally(LogMessage(message, LogOrigin("sdm",WHERE), LogMessage::NORMAL));
+        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::NORMAL));
     }
 
     void sdm::warning (const string& message) const {
-        LogSink::postGlobally(LogMessage(message, LogOrigin("sdm",WHERE), LogMessage::NORMAL));
+        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::NORMAL));
     }
 
     /** 
@@ -3762,7 +3753,7 @@ namespace casac {
                     for (unsigned int iAssocSw = 0; iAssocSw < numAssocValues; iAssocSw++)
                         assocSpectralWindowId_[iAssocSw] =  swIdx2Idx[assocSpectralWindowId_[iAssocSw]];
 
-                    vector<SpectralResolutionType> assocNature = r->getAssocNature();
+                    vector<SpectralResolutionTypeMod::SpectralResolutionType> assocNature = r->getAssocNature();
 
                     if (assocNature.size() != assocSpectralWindowId_.size()) {
                         infostream.str("");
@@ -3773,13 +3764,13 @@ namespace casac {
                                    << "'). Ignoring the difference and sending the full assocNature vector to the filler.";
                         info(infostream.str());
                     }
-                    assocNature_ = SConverter::toVectorS<SpectralResolutionType, CSpectralResolutionType>(r->getAssocNature());
+                    assocNature_ = SConverter::toVectorS<SpectralResolutionTypeMod::SpectralResolutionType, CSpectralResolutionType>(r->getAssocNature());
                 }
       
                 int numChan           = r->getNumChan();
                 string name           = r->isNameExists()?r->getName():"";
                 double refFreq        = r->getRefFreq().get();
-                int measFreqRef       = r->isMeasFreqRefExists()?FrequencyReferenceMapper(*this).value(r->getMeasFreqRef()):MFrequency::TOPO;
+                int measFreqRef       = r->isMeasFreqRefExists()?FrequencyReferenceMapper(*this).value(r->getMeasFreqRef()):casacore::MFrequency::TOPO;
                 double totalBandwidth = r->getTotBandwidth().get();
                 int netSideband       = r->getNetSideband();
                 int bbcNo             = r->getBasebandName();
@@ -3787,7 +3778,7 @@ namespace casac {
                 int freqGroup         = r->isFreqGroupExists()?r->getFreqGroup():0;
                 string freqGroupName  = r->isFreqGroupNameExists()?r->getFreqGroupName().c_str():"";
 
-                for (map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                      iter != msFillers.end(); ++iter) {
                     iter->second->addSpectralWindow( numChan,
                                                      name,
@@ -3833,8 +3824,9 @@ namespace casac {
     void sdm::fillEphemeris(ASDM* ds_p, uint64_t timeStepInNanoSecond, bool interpolate_ephemeris, string telescopeName) {
         LOGENTER("fillEphemeris");
 
-        // division by timeStepInNanoSecond below causes FPE
-        timeStepInNanoSecond = (timeStepInNanoSecond == 0 ? 1 : timeStepInNanoSecond);
+        // division by timeStepInNanoSecond below causes FPE - ensure it's set to something non-zero
+        // default to 0.001s = 1e6 ns
+        timeStepInNanoSecond = (timeStepInNanoSecond == 0 ? 1e6 : timeStepInNanoSecond);
 
         try {
             // Retrieve the Ephemeris table's content.
@@ -3928,7 +3920,7 @@ namespace casac {
                 }
 
                 // Prepare the table keywords with the values computed above.
-                TableDesc tableDesc;
+                casacore::TableDesc tableDesc;
 
                 tableDesc.comment() = ephRow_v[0]->getOrigin();
                 time_t now = time(0);
@@ -3959,31 +3951,31 @@ namespace casac {
                 tableDesc.rwKeywordSet().define("posrefsys", posref);
 
                 // Then the fields definitions and keywords.
-                ScalarColumnDesc<casacore::Double> mjdColumn("MJD");
+                casacore::ScalarColumnDesc<casacore::Double> mjdColumn("MJD");
                 mjdColumn.rwKeywordSet().define("UNIT", "d");
                 tableDesc.addColumn(mjdColumn);
 
-                ScalarColumnDesc<casacore::Double> raColumn("RA");
+                casacore::ScalarColumnDesc<casacore::Double> raColumn("RA");
                 raColumn.rwKeywordSet().define("UNIT", "deg");
                 tableDesc.addColumn(raColumn);
 
-                ScalarColumnDesc<casacore::Double> decColumn("DEC");
+                casacore::ScalarColumnDesc<casacore::Double> decColumn("DEC");
                 decColumn.rwKeywordSet().define("UNIT", "deg");
                 tableDesc.addColumn(decColumn);
 
-                ScalarColumnDesc<casacore::Double> rhoColumn("Rho");
+                casacore::ScalarColumnDesc<casacore::Double> rhoColumn("Rho");
                 rhoColumn.rwKeywordSet().define("UNIT", "AU");
                 tableDesc.addColumn(rhoColumn);
 
-                ScalarColumnDesc<casacore::Double> radVelColumn("RadVel");
+                casacore::ScalarColumnDesc<casacore::Double> radVelColumn("RadVel");
                 radVelColumn.rwKeywordSet().define("UNIT", "AU/d");
                 tableDesc.addColumn(radVelColumn);
 
-                ScalarColumnDesc<casacore::Double> diskLongColumn("diskLong");
+                casacore::ScalarColumnDesc<casacore::Double> diskLongColumn("diskLong");
                 diskLongColumn.rwKeywordSet().define("UNIT", "deg");
                 tableDesc.addColumn(diskLongColumn);
 
-                ScalarColumnDesc<casacore::Double> diskLatColumn("diskLat");
+                casacore::ScalarColumnDesc<casacore::Double> diskLatColumn("diskLat");
                 diskLatColumn.rwKeywordSet().define("UNIT", "deg");
                 tableDesc.addColumn(diskLatColumn);
   
@@ -3999,19 +3991,19 @@ namespace casac {
                 std::regex e("[\\[\\]\\(\\)\\{\\}\\/ ]");
                 tableName = std::regex_replace(tableName, e, "_");
 
-                map<AtmPhaseCorrection, Table*> apc2EphemTable_m;
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                map<AtmPhaseCorrectionMod::AtmPhaseCorrection, casacore::Table*> apc2EphemTable_m;
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     string tablePath = (string) iter->second->ms()->tableName() + string("/FIELD/") + tableName;  
-                    SetupNewTable tableSetup( tablePath, tableDesc, Table::New );
+                    casacore::SetupNewTable tableSetup( tablePath, tableDesc, casacore::Table::New );
 
-                    Table * table_p = new Table(tableSetup, TableLock(TableLock::PermanentLockingWait));
-                    TableInfo& info = table_p->tableInfo();
+                    casacore::Table * table_p = new casacore::Table(tableSetup, casacore::TableLock(casacore::TableLock::PermanentLockingWait));
+                    casacore::TableInfo& info = table_p->tableInfo();
                     info.setType("IERS");
                     info.setSubType("Solar System");
                     info.readmeAddLine("generated by asdm2ms");
 
-                    AlwaysAssert(table_p, AipsError);
+                    AlwaysAssert(table_p, casacore::AipsError);
                     (const_cast<casacore::MeasurementSet*>(iter->second->ms()))->rwKeywordSet().defineTable(tableName, *table_p);
                     table_p->flush();
                     apc2EphemTable_m[iter->first] = table_p;
@@ -4045,10 +4037,6 @@ namespace casac {
 
                 // the single row case
                 if (ephRow_v.size()==1) {
-                    // timeStepInNanoSecond is an unsigned integer
-                    //if (timeStepInNanoSecond <= 0.0) {
-                    //    timeStepInNanoSecond = 0.001;
-                    //}
 
                     infostream.str("");
                     infostream << "The MS Ephemeris table for ephemerisId = '" << ephemerisId
@@ -4518,11 +4506,11 @@ namespace casac {
                 // Let's proceed, using Slicers.
 
                 unsigned int numRows = raMS_v.size();
-                Slicer slicer(IPosition(1, 0), IPosition(1, numRows-1), Slicer::endIsLast);
+                casacore::Slicer slicer(casacore::IPosition(1, 0), casacore::IPosition(1, numRows-1), casacore::Slicer::endIsLast);
 
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter) {
-                    Table * table_p = apc2EphemTable_m[iter->first];
+                    casacore::Table * table_p = apc2EphemTable_m[iter->first];
 
                     // Update the MJD0 Keyword to the correct value, i.e. mjdMS_v[0] - dmjd
                     table_p->rwKeywordSet().define("MJD0", casacore::Double(mjdMS_v[0] - dmjd));
@@ -4535,29 +4523,29 @@ namespace casac {
                     LOG ("Added "+TO_STRING(numRows)+" rows to table "+((string)table_p->tableName()));
 
                     LOG("Filling column MJD");
-                    Vector<casacore::Double> MJD_V(IPosition(1, numRows), &mjdMS_v[0], SHARE);
-                    ScalarColumn<casacore::Double> MJD(*table_p, "MJD");
+                    casacore::Vector<casacore::Double> MJD_V(casacore::IPosition(1, numRows), &mjdMS_v[0], casacore::SHARE);
+                    casacore::ScalarColumn<casacore::Double> MJD(*table_p, "MJD");
                     MJD.putColumnRange(slicer, MJD_V);
 
                     LOG("Filling column RA");
-                    Vector<casacore::Double> RA_V(IPosition(1, numRows), &raMS_v[0], SHARE);
-                    ScalarColumn<casacore::Double> RA(*table_p,  "RA");
+                    casacore::Vector<casacore::Double> RA_V(casacore::IPosition(1, numRows), &raMS_v[0], casacore::SHARE);
+                    casacore::ScalarColumn<casacore::Double> RA(*table_p,  "RA");
                     RA.putColumnRange(slicer, RA_V);
 
                     LOG("Filling column DEC");
-                    Vector<casacore::Double> DEC_V(IPosition(1, numRows), &decMS_v[0], SHARE);
-                    ScalarColumn<casacore::Double> DEC(*table_p, "DEC");
+                    casacore::Vector<casacore::Double> DEC_V(casacore::IPosition(1, numRows), &decMS_v[0], casacore::SHARE);
+                    casacore::ScalarColumn<casacore::Double> DEC(*table_p, "DEC");
                     DEC.putColumnRange(slicer, DEC_V);
 
                     LOG ("Filling column Rho");
-                    Vector<casacore::Double> Rho_V(IPosition(1, numRows), &distanceMS_v[0], SHARE);
-                    ScalarColumn<casacore::Double> Rho(*table_p, "Rho");
+                    casacore::Vector<casacore::Double> Rho_V(casacore::IPosition(1, numRows), &distanceMS_v[0], casacore::SHARE);
+                    casacore::ScalarColumn<casacore::Double> Rho(*table_p, "Rho");
                     Rho.putColumnRange(slicer, Rho_V);
 
                     if (radVelExists) {
                         LOG ("Filling column RadVel");
-                        Vector<casacore::Double> RadVel_V(IPosition(1, numRows), &radVelMS_v[0], SHARE);
-                        ScalarColumn<casacore::Double> RadVel(*table_p, "RadVel");
+                        casacore::Vector<casacore::Double> RadVel_V(casacore::IPosition(1, numRows), &radVelMS_v[0], casacore::SHARE);
+                        casacore::ScalarColumn<casacore::Double> RadVel(*table_p, "RadVel");
                         RadVel.putColumnRange(slicer, RadVel_V);
                     }
 
@@ -4677,7 +4665,7 @@ namespace casac {
                 else
                     time = 0.0;
 
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter) {
                     iter->second->addField( fieldName, code, time, r->getNumPoly(), delayDir, phaseDir, referenceDir,
                                             directionCode, r->isSourceIdExists()?r->getSourceId():0 );
@@ -4685,7 +4673,7 @@ namespace casac {
             }
 
             if (considerEphemeris && (idxEphemerisId_v.size() > 0)) 
-                for ( map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+                for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter) {
                     iter->second->updateEphemerisIdInField(idxEphemerisId_v);
                 }
@@ -4712,7 +4700,7 @@ namespace casac {
         LOGEXIT("fillField");
     }
 
-    static void fillSysPower_aux (const sdm &s, const vector<SysPowerRow *>& sysPowers, map<AtmPhaseCorrection, ASDM2MSFiller*>& msFillers_m) {
+    static void fillSysPower_aux (const sdm &s, const vector<SysPowerRow *>& sysPowers, map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>& msFillers_m) {
         LOGENTER("fillSysPower_aux");
 
         vector<int>		antennaId;
@@ -4772,7 +4760,7 @@ namespace casac {
 
         LOG("fillSysPower_aux : about to append a slice to the MS SYSPOWER table.");
  
-        for (map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator msIter = msFillers_m.begin();
+        for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator msIter = msFillers_m.begin();
              msIter != msFillers_m.end();
              ++msIter) {
             msIter->second->addSysPowerSlice(antennaId.size(),
@@ -4802,7 +4790,7 @@ namespace casac {
      * @param msFillers_m a map of ASDM2MSFillers depending on AtmosphericPhaseCorrection.
      *
      */
-    void sdm::fillSysPower(const string asdmDirectory, ASDM* ds_p, bool ignoreTime, const vector<ScanRow *>& selectedScanRow_v, map<AtmPhaseCorrection, ASDM2MSFiller*>& msFillers_m) {
+    void sdm::fillSysPower(const string asdmDirectory, ASDM* ds_p, bool ignoreTime, const vector<ScanRow *>& selectedScanRow_v, map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>& msFillers_m) {
         LOGENTER("fillSysPower");
 
         const SysPowerTable& sysPowerT = ds_p->getSysPower();
@@ -4918,9 +4906,9 @@ namespace casac {
     } MainRowCUStruct;
 
     void sdm::fillMainLazily( const string& dsName, ASDM* ds_p,
-                             std::map<int, std::set<int> >& selected_eb_scan_m,
-                             std::map<unsigned int , double>& effectiveBwPerDD_m,
-                             Enum<CorrelationMode> e_query_cm, bool checkdupints) {
+                              std::map<int, std::set<int> >& selected_eb_scan_m,
+                              std::map<unsigned int , double>& effectiveBwPerDD_m,
+                              Enum<CorrelationModeMod::CorrelationMode> e_query_cm, bool checkdupints) {
 
         LOGENTER("fillMainLazily");
 
@@ -4939,8 +4927,8 @@ namespace casac {
         vector<int32_t>	mRIndexCorrected_v;
         vector<string>	bdfNamesCorrected_v;
 
-        bool	produceUncorrected = msFillers.find(AP_UNCORRECTED) != msFillers.end();
-        bool	produceCorrected   = msFillers.find(AP_CORRECTED) != msFillers.end();
+        bool	produceUncorrected = msFillers.find(AtmPhaseCorrectionMod::AP_UNCORRECTED) != msFillers.end();
+        bool	produceCorrected   = msFillers.find(AtmPhaseCorrectionMod::AP_CORRECTED) != msFillers.end();
 
         const vector<MainRow *>& temp = mainT.get();
 
@@ -4950,17 +4938,17 @@ namespace casac {
                 string dataUID = (*iter_v)->getDataUID().getEntityId().toString();
                 replace(dataUID.begin(),dataUID.end(),':','_');
                 replace(dataUID.begin(),dataUID.end(),'/','_');
-                string abspath = Path(dsName + "/ASDMBinary/" + dataUID).absoluteName();
+                string abspath = casacore::Path(dsName + "/ASDMBinary/" + dataUID).absoluteName();
 
                 // Are these data radiometric , if yes consider them both for corrected and uncorrected ms?
                 // ProcessorType processorType = procT.getRowByKey(cfgDscT.getRowByKey((*iter_v)->getConfigDescriptionId())->getProcessorId())->getProcessorType();
                 ConfigDescriptionRow *configDescRow = cfgDscT.getRowByKey((*iter_v)->getConfigDescriptionId());
-                ProcessorType processorType = procT.getRowByKey(configDescRow->getProcessorId())->getProcessorType();
+                ProcessorTypeMod::ProcessorType processorType = procT.getRowByKey(configDescRow->getProcessorId())->getProcessorType();
                 CorrelationModeMod::CorrelationMode corrMode = configDescRow->getCorrelationMode();
 
                 // some of these can be skipped immediately
-                if ( (e_query_cm == AUTO_ONLY && corrMode == CROSS_ONLY) ||
-                     (e_query_cm == CROSS_ONLY && corrMode == AUTO_ONLY) ) {
+                if ( (e_query_cm == CorrelationModeMod::AUTO_ONLY && corrMode == CorrelationModeMod::CROSS_ONLY) ||
+                     (e_query_cm == CorrelationModeMod::CROSS_ONLY && corrMode == CorrelationModeMod::AUTO_ONLY) ) {
                     infostream.str("");
                     infostream << "Skipping file " << abspath << " due to correlation mode selection.";
                     info(infostream.str());
@@ -4971,15 +4959,15 @@ namespace casac {
                 mRCU_s.bdfName = abspath;
                 mRCU_s.index = iter_v - temp.begin();
 
-                if (processorType == RADIOMETER) {
+                if (processorType == ProcessorTypeMod::RADIOMETER) {
                     // one considers that radiometric are uncorrected and corrected data.
                     mRCU_s.uncorrected = true; mRCU_s.corrected = true; 
                 }
-                else if (processorType == CORRELATOR) {
+                else if (processorType == ProcessorTypeMod::CORRELATOR) {
                     // We are in front of CORRELATOR data. what's their status regarding AP correction ?
-                    vector<AtmPhaseCorrection> apc_v =  cfgDscT.getRowByKey((*iter_v)->getConfigDescriptionId())->getAtmPhaseCorrection();
-                    mRCU_s.uncorrected = find(apc_v.begin(), apc_v.end(), AP_UNCORRECTED) != apc_v.end();
-                    mRCU_s.corrected   = find(apc_v.begin(), apc_v.end(), AP_CORRECTED) != apc_v.end(); 
+                    vector<AtmPhaseCorrectionMod::AtmPhaseCorrection> apc_v =  cfgDscT.getRowByKey((*iter_v)->getConfigDescriptionId())->getAtmPhaseCorrection();
+                    mRCU_s.uncorrected = find(apc_v.begin(), apc_v.end(), AtmPhaseCorrectionMod::AP_UNCORRECTED) != apc_v.end();
+                    mRCU_s.corrected   = find(apc_v.begin(), apc_v.end(), AtmPhaseCorrectionMod::AP_CORRECTED) != apc_v.end(); 
                 }
       
                 if ( mRCU_s.uncorrected && produceUncorrected) { 
@@ -5010,25 +4998,25 @@ namespace casac {
         BDF2AsdmStManIndex bdf2AsdmStManIndexC;
 
         if ( bdfNamesUncorrected_v.size() and produceUncorrected ) {
-            const casacore::MeasurementSet* ms_p = msFillers.find(AP_UNCORRECTED)->second->ms();
+            const casacore::MeasurementSet* ms_p = msFillers.find(AtmPhaseCorrectionMod::AP_UNCORRECTED)->second->ms();
             oss.str("");
             if (ms_p->tableDesc().isColumn("DATA")) {
-                oss << RODataManAccessor(*ms_p, "DATA", true).dataManagerSeqNr();
+                oss << casacore::RODataManAccessor(*ms_p, "DATA", true).dataManagerSeqNr();
             } else {
-                oss << RODataManAccessor(*ms_p, "FLOAT_DATA", true).dataManagerSeqNr();
+                oss << casacore::RODataManAccessor(*ms_p, "FLOAT_DATA", true).dataManagerSeqNr();
             }
-            bdf2AsdmStManIndexU.init(bdfNamesUncorrected_v, isBigEndian, ms_p->tableName() + "/table.f" + String(oss.str()));
+            bdf2AsdmStManIndexU.init(bdfNamesUncorrected_v, isBigEndian, ms_p->tableName() + "/table.f" + casacore::String(oss.str()));
         }
   
         if ( bdfNamesCorrected_v.size() and produceCorrected ) {
-            const casacore::MeasurementSet* ms_p = msFillers.find(AP_CORRECTED)->second->ms();
+            const casacore::MeasurementSet* ms_p = msFillers.find(AtmPhaseCorrectionMod::AP_CORRECTED)->second->ms();
             oss.str("");
             if (ms_p->tableDesc().isColumn("DATA")) {
-                oss << RODataManAccessor(*ms_p, "DATA", true).dataManagerSeqNr();
+                oss << casacore::RODataManAccessor(*ms_p, "DATA", true).dataManagerSeqNr();
             } else {
-                oss << RODataManAccessor(*ms_p, "FLOAT_DATA", true).dataManagerSeqNr();
+                oss << casacore::RODataManAccessor(*ms_p, "FLOAT_DATA", true).dataManagerSeqNr();
             }
-            bdf2AsdmStManIndexC.init(bdfNamesCorrected_v, isBigEndian, ms_p->tableName() + "/table.f" + String(oss.str()));
+            bdf2AsdmStManIndexC.init(bdfNamesCorrected_v, isBigEndian, ms_p->tableName() + "/table.f" + casacore::String(oss.str()));
         } 
 
         // Initialize an UVW coordinates engine.
@@ -5050,8 +5038,8 @@ namespace casac {
         //   * to populate all the columns other than the DATA's one in the non lazy way.
         //
 
-        uInt		lastMSNUrows = 0;
-        uInt		lastMSNCrows = 0;
+        casacore::uInt		lastMSNUrows = 0;
+        casacore::uInt		lastMSNCrows = 0;
 
         // used in checking for duplicate integrations in the WVR (Radiometer) case
         // This holds the most recent last integration time for each configDescriptionId - but only for Radiometer data.
@@ -5068,8 +5056,8 @@ namespace casac {
                 LOG("Processing " + iter->bdfName);
                 unsigned int numberOfAntennas = sdosr.numAntenna();
                 unsigned int numberOfBaselines = numberOfAntennas * (numberOfAntennas - 1) / 2 ;
-                ProcessorType processorType = sdosr.processorType();
-                CorrelationMode correlationMode = sdosr.correlationMode();
+                ProcessorTypeMod::ProcessorType processorType = sdosr.processorType();
+                CorrelationModeMod::CorrelationMode correlationMode = sdosr.correlationMode();
                 const SDMDataObject::DataStruct& dataStruct = sdosr.dataStruct();
 
                 infostream.str("");
@@ -5081,8 +5069,8 @@ namespace casac {
                 info(infostream.str());
 
                 // skip rows that don't match the selected mode
-                if ( (correlationMode == CROSS_ONLY && e_query_cm == AUTO_ONLY) || 
-                     (correlationMode == AUTO_ONLY && e_query_cm == CROSS_ONLY) ) {
+                if ( (correlationMode == CorrelationModeMod::CROSS_ONLY && e_query_cm == CorrelationModeMod::AUTO_ONLY) || 
+                     (correlationMode == CorrelationModeMod::AUTO_ONLY && e_query_cm == CorrelationModeMod::CROSS_ONLY) ) {
                     infostream.str("");
                     infostream << "The main row # " << iter->index << " is ignored because the correlationMode is excluded by the selected mode to fill.";
                     info(infostream.str());
@@ -5142,12 +5130,12 @@ namespace casac {
                 for (const SDMDataObject::Baseband& bb: dataStruct.basebands()) {
                     for (const SDMDataObject::SpectralWindow& spw: bb.spectralWindows()) {
                         numberOfChannels_v.push_back(spw.numSpectralPoint());
-                        if (correlationMode != AUTO_ONLY)
+                        if (correlationMode != CorrelationModeMod::AUTO_ONLY)
                             numberOfCrossPolarizations_v.push_back(spw.crossPolProducts().size());
                         else
                             numberOfCrossPolarizations_v.push_back(0);
 
-                        if (correlationMode != CROSS_ONLY)
+                        if (correlationMode != CorrelationModeMod::CROSS_ONLY)
                             numberOfSDPolarizations_v.push_back(spw.sdPolProducts().size());
                         else
                             numberOfSDPolarizations_v.push_back(0);
@@ -5171,7 +5159,7 @@ namespace casac {
                 vector<double> autoScaleFactors;
       
                 // The cross data scale factors exist.
-                if (correlationMode != AUTO_ONLY) { 
+                if (correlationMode != CorrelationModeMod::AUTO_ONLY) { 
                     for (const SDMDataObject::Baseband& bb: dataStruct.basebands()) {
                         for (const SDMDataObject::SpectralWindow& spw: bb.spectralWindows()) {
                             crossScaleFactors.push_back(spw.scaleFactor());
@@ -5186,7 +5174,7 @@ namespace casac {
                 }
       
                 // The auto data scale factors are fake.
-                if (correlationMode != CROSS_ONLY) {
+                if (correlationMode != CorrelationModeMod::CROSS_ONLY) {
                     for (unsigned int i = 0; i < numberOfSpectralWindows; i++)
                         autoScaleFactors.push_back(1.0);
                     if (debug) {
@@ -5269,7 +5257,7 @@ namespace casac {
                 //
                 // Now delegate to bdf2AsdmStManIndex the creation of the AsmdIndex 'es.
                 // 
-                if (processorType == RADIOMETER && sdosr.hasPackedData()) {
+                if (processorType == ProcessorTypeMod::RADIOMETER && sdosr.hasPackedData()) {
 
                     //
                     // Declare some containers required to populate the columns of the MS MAIN table in a non lazy way.
@@ -5385,7 +5373,7 @@ namespace casac {
                     //
                     // It's now time to populate the columns of the MAIN table but the DATA's one.
                     for (unsigned int iDD = 0; iDD < dataDescriptionIds.size(); iDD++) {
-                        for (map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator msfIter = msFillers.begin();
+                        for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator msfIter = msFillers.begin();
                              msfIter != msFillers.end();
                              ++msfIter) {
                             if (time_vv[iDD].size() > 0) {
@@ -5414,7 +5402,7 @@ namespace casac {
                     }
                 }
 
-                else if (!sdosr.hasPackedData() && (processorType == CORRELATOR || processorType == RADIOMETER)) {
+                else if (!sdosr.hasPackedData() && (processorType == ProcessorTypeMod::CORRELATOR || processorType == ProcessorTypeMod::RADIOMETER)) {
 
                     // duplicate time skipping is not supported here
 
@@ -5460,10 +5448,10 @@ namespace casac {
                     vector<vector<double> >  auto_sigma_vv(dataDescriptionIds.size());            // Column SIGMA
 	
                     // Ignore cross data if AUTO_ONLY is selected.
-                    bool hasCrossData = ((correlationMode == CROSS_AND_AUTO || correlationMode == CROSS_ONLY) && e_query_cm != AUTO_ONLY);
+                    bool hasCrossData = ((correlationMode == CorrelationModeMod::CROSS_AND_AUTO || correlationMode == CorrelationModeMod::CROSS_ONLY) && e_query_cm != CorrelationModeMod::AUTO_ONLY);
 
                     // Ignore auto data if CROSS_ONLY has been selected.
-                    bool hasAutoData = ((correlationMode == CROSS_AND_AUTO || correlationMode == AUTO_ONLY) && e_query_cm != CROSS_ONLY);
+                    bool hasAutoData = ((correlationMode == CorrelationModeMod::CROSS_AND_AUTO || correlationMode == CorrelationModeMod::AUTO_ONLY) && e_query_cm != CorrelationModeMod::CROSS_ONLY);
 
                     //
                     // Traverse all the integrations.
@@ -5481,11 +5469,11 @@ namespace casac {
 #else
                         pair<bool, bool> dataOrder(false, false);  // 1st: reverse bls NO, 2nd: autotrailing NO
 #endif
-                        vector<Vector<casacore::Double> > vv_uvw;
+                        vector<casacore::Vector<casacore::Double> > vv_uvw;
                         vector<double> time_v(dataDescriptionIds.size() * (numberOfBaselines + numberOfAntennas),
                                               time);
 
-                        if ( correlationMode != AUTO_ONLY ) {
+                        if ( correlationMode != CorrelationModeMod::AUTO_ONLY ) {
                             uvwCoords.uvw_bl(mR_p,
                                              time_v, 
                                              correlationMode,
@@ -5498,7 +5486,7 @@ namespace casac {
                         // first element of vv_uvw
                         // 
                         unsigned int uvwIndexBase = 0;
-                        if (correlationMode == CROSS_AND_AUTO) {
+                        if (correlationMode == CorrelationModeMod::CROSS_AND_AUTO) {
                             uvwIndexBase += numberOfAntennas * dataDescriptionIds.size();
                         }
 
@@ -5674,11 +5662,11 @@ namespace casac {
                     //
                     for (unsigned int iDD = 0; iDD < dataDescriptionIds.size(); iDD++) {
                         if (hasAutoData)
-                            for (map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator msfIter = msFillers.begin();
+                            for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator msfIter = msFillers.begin();
                                  msfIter != msFillers.end();
                                  ++msfIter)
-                                if ((msfIter->first == AP_UNCORRECTED and iter->uncorrected and produceUncorrected) ||
-                                    (msfIter->first == AP_CORRECTED and iter->corrected and produceCorrected)) {
+                                if ((msfIter->first == AtmPhaseCorrectionMod::AP_UNCORRECTED and iter->uncorrected and produceUncorrected) ||
+                                    (msfIter->first == AtmPhaseCorrectionMod::AP_CORRECTED and iter->corrected and produceCorrected)) {
                                     msfIter->second->addData(true,             // Yes ! these are complex data.
                                                              auto_time_vv[iDD],
                                                              auto_antenna1_vv[iDD],
@@ -5701,11 +5689,11 @@ namespace casac {
                                                              auto_sigma_vv[iDD]);
                                 }
                         if (hasCrossData) 
-                            for (map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator msfIter = msFillers.begin();
+                            for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator msfIter = msFillers.begin();
                                  msfIter != msFillers.end();
                                  ++msfIter)
-                                if ((msfIter->first == AP_UNCORRECTED and iter->uncorrected and produceUncorrected) ||
-                                    (msfIter->first == AP_CORRECTED and iter->corrected and produceCorrected)) {
+                                if ((msfIter->first == AtmPhaseCorrectionMod::AP_UNCORRECTED and iter->uncorrected and produceUncorrected) ||
+                                    (msfIter->first == AtmPhaseCorrectionMod::AP_CORRECTED and iter->corrected and produceCorrected)) {
                                     msfIter->second->addData(true,             // Yes ! these are complex data.
                                                              cross_time_vv[iDD],
                                                              cross_antenna1_vv[iDD],
@@ -5736,24 +5724,24 @@ namespace casac {
 
                 if (iter->uncorrected and produceUncorrected) {
                     infostream.str("");
-                    infostream << "ASDM Main row #" << iter->index << " produced a total of " << msFillers[AP_UNCORRECTED]->ms()->nrow() - lastMSNUrows << " MS Main rows with uncorrected data." << endl;
+                    infostream << "ASDM Main row #" << iter->index << " produced a total of " << msFillers[AtmPhaseCorrectionMod::AP_UNCORRECTED]->ms()->nrow() - lastMSNUrows << " MS Main rows with uncorrected data." << endl;
                     info(infostream.str());
-                    lastMSNUrows = msFillers[AP_UNCORRECTED]->ms()->nrow();	
+                    lastMSNUrows = msFillers[AtmPhaseCorrectionMod::AP_UNCORRECTED]->ms()->nrow();	
                 }
 
                 if (iter->corrected and produceCorrected) {
                     infostream.str("");
-                    infostream << "ASDM Main row #" << iter->index << " produced a total of " << msFillers[AP_CORRECTED]->ms()->nrow() - lastMSNCrows << " MS Main rows with corrected data." << endl;
+                    infostream << "ASDM Main row #" << iter->index << " produced a total of " << msFillers[AtmPhaseCorrectionMod::AP_CORRECTED]->ms()->nrow() - lastMSNCrows << " MS Main rows with corrected data." << endl;
                     info(infostream.str());
-                    lastMSNCrows = msFillers[AP_CORRECTED]->ms()->nrow();	
+                    lastMSNCrows = msFillers[AtmPhaseCorrectionMod::AP_CORRECTED]->ms()->nrow();	
                 }
             }
             infostream.str("");
             if (produceUncorrected) 
-                infostream << "The MS main table for wvr uncorrected data contains " << msFillers[AP_UNCORRECTED]->ms()->nrow() << " rows." << endl;
+                infostream << "The MS main table for wvr uncorrected data contains " << msFillers[AtmPhaseCorrectionMod::AP_UNCORRECTED]->ms()->nrow() << " rows." << endl;
 
             if (produceCorrected) 
-                infostream << "The MS main table for wvr corrected data contains " << msFillers[AP_CORRECTED]->ms()->nrow() << " rows." << endl;
+                infostream << "The MS main table for wvr corrected data contains " << msFillers[AtmPhaseCorrectionMod::AP_CORRECTED]->ms()->nrow() << " rows." << endl;
 
 
             info(infostream.str());
@@ -5781,7 +5769,7 @@ namespace casac {
 
         ASDM&			ds	   = r_p -> getTable() . getContainer();
         ScanRow*		scanR_p	   = ds.getScan().getRowByKey(r_p -> getExecBlockId(),	r_p -> getScanNumber());
-        vector<ScanIntent>	scanIntent = scanR_p -> getScanIntent();
+        vector<ScanIntentMod::ScanIntent>	scanIntent = scanR_p -> getScanIntent();
         SubscanRow*		sscanR_p   = ds.getSubscan().getRowByKey(r_p -> getExecBlockId(),
                                                                  r_p -> getScanNumber(),
                                                                  r_p -> getSubscanNumber());
@@ -5793,7 +5781,7 @@ namespace casac {
             throw ASDM2MSException(errstream.str());
         }	  
 
-        SubscanIntent subscanIntent = sscanR_p->getSubscanIntent();
+        SubscanIntentMod::SubscanIntent subscanIntent = sscanR_p->getSubscanIntent();
         string obs_mode;
         if (scanIntent.size() > 0) {
             obs_mode = CScanIntent::name(scanIntent.at(0))+"#"+CSubscanIntent::name(subscanIntent);
@@ -5808,7 +5796,7 @@ namespace casac {
         for (unsigned int iState = 0; iState < sRs.size(); iState++) {							     	    
             bool pushed = false;
     
-            for (map<AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
+            for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                  iter != msFillers.end();
                  ++iter) {
                 int retId = iter->second->addUniqueState(sRs[iState]->getSig(),
@@ -6066,7 +6054,7 @@ namespace casac {
             // Have we asked to write an MS with corrected data + radiometric data ?
     
             // Are we with radiometric data ? Then we assume that the data are labelled AP_UNCORRECTED.
-            if (sdmBinData.processorType(r_p) == RADIOMETER) {
+            if (sdmBinData.processorType(r_p) == ProcessorTypeMod::RADIOMETER) {
                 if ((iter=vmsData_p->v_m_data.at(msRowReIndex_v[iData]).find(AtmPhaseCorrectionMod::AP_UNCORRECTED)) != vmsData_p->v_m_data.at(msRowReIndex_v[iData]).end()){
 	
                     correctedTime_v.push_back(vmsData_p->v_time.at(msRowReIndex_v[iData]));
@@ -6155,7 +6143,7 @@ namespace casac {
             }
         }
  
-        if (uncorrectedData_v.size() > 0 && (msFillers.find(AP_UNCORRECTED) != msFillers.end())) {
+        if (uncorrectedData_v.size() > 0 && (msFillers.find(AtmPhaseCorrectionMod::AP_UNCORRECTED) != msFillers.end())) {
             if (! mute) { // Here we make the assumption that we have always uncorrected data. This realistic even if not totally rigorous.
 
                 if (!skipFirstTime) {
@@ -6179,7 +6167,7 @@ namespace casac {
                 // state must have already been filled so that the stateIdx2IDx map is available to extract the state ID for this main row pointer (r_p).
                 vector<int> msStateId_v(uncorrectedTime_v.size(), stateIdx2Idx[r_p]);
 
-                msFillers[AP_UNCORRECTED]->addData(complexData,
+                msFillers[AtmPhaseCorrectionMod::AP_UNCORRECTED]->addData(complexData,
                                                    uncorrectedTime_v	, // this is already time midpoint
                                                    uncorrectedAntennaId1_v,
                                                    uncorrectedAntennaId2_v,
@@ -6205,12 +6193,12 @@ namespace casac {
         }
 
 
-        if (correctedData_v.size() > 0 && (msFillers.find(AP_CORRECTED) != msFillers.end())) {
+        if (correctedData_v.size() > 0 && (msFillers.find(AtmPhaseCorrectionMod::AP_CORRECTED) != msFillers.end())) {
             if (! mute) {
                 // Here we make the assumption that the State is the same for all the antennas and let's use the first State found in the vector stateId contained in the ASDM Main Row
                 // state must have already been filled so that the stateIdx2IDx map is available to extract the state ID for this main row pointer (r_p).
                 vector<int>  correctedMsStateId_v(correctedTime_v.size(), stateIdx2Idx[r_p]);
-                msFillers[AP_CORRECTED]->addData(complexData,
+                msFillers[AtmPhaseCorrectionMod::AP_CORRECTED]->addData(complexData,
                                                  correctedTime_v, // this is already time midpoint
                                                  correctedAntennaId1_v, 
                                                  correctedAntennaId2_v,
@@ -6297,23 +6285,23 @@ namespace casac {
      *      Author: kgolap
      */
     bool sdm::fixspwbackport( const std::string &msname ) {
-        if (!Table::isWritable(msname)) {
+        if (!casacore::Table::isWritable(msname)) {
             errstream.str("");
             errstream << "Cannot modify " << msname << endl;
             error(errstream.str());
             return false;
         }
         
-        String specName=msname + "/SPECTRAL_WINDOW";
-        Table spwTab=Table(specName, Table::Update);
+        casacore::String specName=msname + "/SPECTRAL_WINDOW";
+        casacore::Table spwTab=casacore::Table(specName, casacore::Table::Update);
 	casacore::TableProxy tprox(spwTab);
-        Vector<String> colnames=tprox.columnNames();
-        for (uInt k=0; k < colnames.nelements(); ++k){
-            TableColumn cfcol(spwTab, colnames[k]);
-            TableRecord& colRec=cfcol.rwKeywordSet();
+        casacore::Vector<casacore::String> colnames=tprox.columnNames();
+        for (casacore::uInt k=0; k < colnames.nelements(); ++k){
+            casacore::TableColumn cfcol(spwTab, colnames[k]);
+            casacore::TableRecord& colRec=cfcol.rwKeywordSet();
             if(colRec.isDefined("MEASINFO")){
                 if(colRec.asrwRecord("MEASINFO").isDefined("TabRefTypes")){
-                    Vector<String> nrf(9);
+                    casacore::Vector<casacore::String> nrf(9);
                     nrf[0]="REST"; nrf[1]="LSRK"; nrf[2]="LSRD"; nrf[3]="BARY";
                     nrf[4]="GEO"; nrf[5]="TOPO"; nrf[6]="GALACTO"; nrf[7]="LGROUP";
                     nrf[8]="CMB";
@@ -6324,7 +6312,7 @@ namespace casac {
                     //cerr << colRec << endl;
                 }
                 if(colRec.asrwRecord("MEASINFO").isDefined("TabRefCodes")){
-                    Vector<uInt> nrc(9);
+                    casacore::Vector<casacore::uInt> nrc(9);
                     indgen(nrc);
                     colRec.asrwRecord("MEASINFO").removeField("TabRefCodes");
                     colRec.asrwRecord("MEASINFO").define("TabRefCodes", nrc);

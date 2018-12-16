@@ -20,6 +20,7 @@
 #include <alma/Enumerations/CAtmPhaseCorrection.h>
 #include <alma/ASDM/ASDM.h>
 
+#include "sdm_cmpt.h"
 
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
@@ -33,7 +34,7 @@
 
 namespace casac {
 
-    class sdm;
+    // class sdm;
     class ASDM2MSFiller;
 
     /**
@@ -46,7 +47,7 @@ namespace casac {
             return (v < 0.0) ? v : -v;
         }
     };
-
+    
     /**
      * A template function which returns a string representing the contents of a set
      * of elements of type T.
@@ -75,9 +76,9 @@ namespace casac {
      * @param s2 the second set.
      * @return a set equal to the intersection of s1 and s2.
      */
-    template<typename T> set<T> SetAndSet(const set<T>& s1, const set<T>& s2) {
-        set<T> result;
-        typename set<T>::iterator iter1_s, iter2_s;
+    template<typename T> std::set<T> SetAndSet(const std::set<T>& s1, const std::set<T>& s2) {
+        std::set<T> result;
+        typename std::set<T>::iterator iter1_s, iter2_s;
         for (iter1_s = s1.begin(); iter1_s != s1.end(); iter1_s++) {
             if ((iter2_s = s2.find(*iter1_s)) != s2.end())
                 result.insert(*iter1_s);
@@ -87,8 +88,8 @@ namespace casac {
 
     template<typename T> struct rowsInAScanbyTimeIntervalFunctor {
     private:
-        const vector<ScanRow *>&	scans;
-        vector<T *>			result;
+        const std::vector<asdm::ScanRow *>&	scans;
+        std::vector<T *>			result;
   
         /**
          * A function which returns true if and only there is at least
@@ -113,7 +114,7 @@ namespace casac {
       
                 rowStartTime = row->getTimeInterval().getStart().get();
                 rowEndTime = rowStartTime + row->getTimeInterval().getDuration().get();
-                if (max(currentScanStartTime, rowStartTime) < min(currentScanEndTime, rowEndTime))
+                if (std::max(currentScanStartTime, rowStartTime) < std::min(currentScanEndTime, rowEndTime))
                     return true;
             }
             return result;
@@ -136,21 +137,21 @@ namespace casac {
     template<typename T>
         struct rowsInAScanbyTimeFunctor {
         private:
-            const vector<ScanRow *>&	scans;
-            vector<T *>			result;
+        const std::vector<asdm::ScanRow *>&	scans;
+        std::vector<T *>			result;
 
             /**
              * A template function which checks if there is at least one element scan of the vector scans for which
              * the time  contained by returned by row->getTime() is embedded in the time range defined in scan. 
              * Returns true there is such a scan.
              */
-            bool timeIsInAScan(T* row, const vector<ScanRow *>& scans) {
+        bool timeIsInAScan(T* row, const std::vector<asdm::ScanRow *>& scans) {
                 bool result = false;
     
                 int64_t currentScanStartTime, currentScanEndTime;
                 int64_t rowTime;
                 rowTime = row->getTime().get();
-                for (vector<ScanRow *>::const_iterator iter = scans.begin(); iter != scans.end(); iter++) {
+                for (std::vector<asdm::ScanRow *>::const_iterator iter = scans.begin(); iter != scans.end(); iter++) {
                     currentScanStartTime = (*iter)->getStartTime().get();
                     currentScanEndTime = (*iter)->getEndTime().get();
                     if ((currentScanStartTime <= rowTime) && (rowTime < currentScanEndTime))
@@ -160,11 +161,11 @@ namespace casac {
             }
   
         public:
-            rowsInAScanbyTimeFunctor(const vector<ScanRow *>& scans): scans(scans) {};
-            const vector<T *> & operator() (const vector<T *>& rows, bool ignoreTime=false) {
+        rowsInAScanbyTimeFunctor(const std::vector<asdm::ScanRow *>& scans): scans(scans) {};
+        const std::vector<T *> & operator() (const std::vector<T *>& rows, bool ignoreTime=false) {
                 if (ignoreTime) return rows;
                 result.clear();
-                for (typename vector<T *>::const_iterator iter = rows.begin(); iter != rows.end(); iter++) {
+                for (typename std::vector<T *>::const_iterator iter = rows.begin(); iter != rows.end(); iter++) {
                     if (timeIsInAScan (*iter, scans))
                         result.push_back(*iter);
                 }
@@ -180,7 +181,7 @@ namespace casac {
     template<typename T> struct size_lt {
     public: 
         size_lt(unsigned int y) : y(y) {}
-        bool operator()(vector<T>& x) {return x.size() < y;}
+        bool operator()(std::vector<T>& x) {return x.size() < y;}
 
     private:
         unsigned int  y;
@@ -190,7 +191,7 @@ namespace casac {
      * A template function which returns a string from an (expectedly) enumeration and its associated 
      * helper class. (see <..>/code/alma/implement/Enumerations)
      */
-    template<typename Enum, typename CEnum> string stringValue(Enum literal) {
+    template<typename Enum, typename CEnum> std::string stringValue(Enum literal) {
         return CEnum::name(literal);
     }
 
@@ -206,13 +207,13 @@ namespace casac {
     /* ------------------------------------- TableSaxParser - beginning ------------------------------------------*/
 
 #if defined(__APPLE__)
-    std::string getexepath() {
+    inline std::string getexepath() {
         char path[1024];
         uint32_t size = sizeof(path);
         return  (_NSGetExecutablePath(path, &size) == 0) ? std::string(path) : "";
     }
 #else
-    std::string getexepath() {
+    inline std::string getexepath() {
         char result[ PATH_MAX ];
         ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
         return std::string( result, (count > 0) ? count : 0);
@@ -230,15 +231,15 @@ namespace casac {
         std::vector<std::shared_ptr<R> >  rows;
         RFilter*                    rFilter_p;
         bool                        ignoreTime;
-        void (*tableFiller_f_p) (const casac::sdm &, const vector<R*>&, map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>&);
+        void (*tableFiller_f_p) (const casac::sdm &, const std::vector<R*>&, std::map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>&);
         std::map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>* msFillers_m_p;
         const xmlChar*		topLevelElement_p;
         const xmlChar*		entityElement_p;
         const xmlChar*		containerEntityElement_p;
         const xmlChar*		rowElement_p;
         int				depth;
-        string			currentElement;
-        string			currentValue;
+        std::string			currentElement;
+        std::string			currentValue;
         StatesEnum			state;
         bool			verbose;
         bool                        debug;
@@ -246,7 +247,7 @@ namespace casac {
 
     template <class	T, class R, class RFilter> class TableSAXReader {
 
-        typedef void (*TableFiller)(const casac::sdm &, const vector<R*>&, map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>&);
+        typedef void (*TableFiller)(const casac::sdm &, const std::vector<R*>&, std::map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>&);
 
       public:
         /**
@@ -281,9 +282,9 @@ namespace casac {
         /**
          * It will be used as a functor.
          */
-        void operator() (const string&  asdmDirectory, bool ignoreTime) {
+        void operator() (const std::string&  asdmDirectory, bool ignoreTime) {
             myContext.ignoreTime = ignoreTime;
-            string tablePath = asdmDirectory + "/"+ T::name() + ".xml";
+            std::string tablePath = asdmDirectory + "/"+ T::name() + ".xml";
             xmlSAXUserParseFile(&myHandler, &myContext, tablePath.c_str());
         }
     
@@ -343,7 +344,7 @@ namespace casac {
     
                 // Otherwise we have a problem.
                 default : 
-                    string message = "Unexpected '" + string((char *) name) + "'.";
+                    std::string message = "Unexpected '" + std::string((char *) name) + "'.";
                     error(message);
             };
   
@@ -444,7 +445,7 @@ namespace casac {
                 break;
 	
             default : 
-                string message = "Unexpected '" + string((char *) name) + "'.";
+                std::string message = "Unexpected '" + std::string((char *) name) + "'.";
                 error(message);
             }
       
@@ -459,14 +460,14 @@ namespace casac {
         static void characters_callback (void *		v_p,
                                          const xmlChar * 	ch,
                                          int			len) {
-            V2CTX_P(v_p)->currentValue = string((char * ) ch, len);
+            V2CTX_P(v_p)->currentValue = std::string((char * ) ch, len);
         }
     
     
       private:
         bool			verbose;
         ParserContext<T, R, RFilter>		myContext ;
-        string			topLevelElement_s;
+        std::string			topLevelElement_s;
         asdm::ASDM			asdm;
         static xmlSAXHandler	myHandler; 
         static xmlSAXHandler        initSAXHandler() {
@@ -477,17 +478,17 @@ namespace casac {
             return handler;
         }
 
-        static void error(const string & message) {
+        static void error(const std::string & message) {
             throw asdm::ConversionException(message, T::name());
         }
     
         static void unexpectedOpeningElement(const xmlChar *name, const xmlChar *expectedName) {
-            string message = "Unexpected opening tag '" + string((const char *)  name) + "', I was expecting '" + string((const char*) expectedName) +"'.";
+            std::string message = "Unexpected opening tag '" + std::string((const char *)  name) + "', I was expecting '" + std::string((const char*) expectedName) +"'.";
             error(message);
         }
     
         static void unexpectedClosingElement(const xmlChar *name) {
-            string message = "Unexpected closing tag '" + string((const char *) name) + "'.";
+            std::string message = "Unexpected closing tag '" + std::string((const char *) name) + "'.";
             error(message);
         }
     
