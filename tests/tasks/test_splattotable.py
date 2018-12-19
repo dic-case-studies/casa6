@@ -98,7 +98,6 @@ class splattotable_test(unittest.TestCase):
     def tearDown(self):
         os.remove(good_list)
         os.remove(bad_list)
-        self.assertTrue(len(self._tb.showcache()) == 0)
 
     def test_exceptions(self):
         """splattotable: Test various exception cases"""
