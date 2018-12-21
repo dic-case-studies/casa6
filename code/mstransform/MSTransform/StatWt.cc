@@ -100,6 +100,11 @@ Record StatWt::writeWeights() {
     ProgressMeter pm(0, _ms->nrow(), "StatWt Progress");
     uInt64 count = 0;
     for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
+        /*
+        for (vi->origin(); vi->more(); vi->next()) {
+
+        }
+        */
         for (vi->origin(); vi->more(); vi->next()) {
             auto nrow = vb->nRows();
             if (_preview) {

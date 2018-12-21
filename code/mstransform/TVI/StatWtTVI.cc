@@ -879,6 +879,7 @@ void StatWtTVI::originChunks(Bool forceRewind) {
 void StatWtTVI::nextChunk() {
     // Drive next lower layer
     getVii()->nextChunk();
+    cout << "n unique timestamps in chunk " << getVii()->nUniqueTimestampsInChunk() << endl;
     _weightsComputed = False;
     _gatherAndComputeWeights();
     _weightsComputed = True;

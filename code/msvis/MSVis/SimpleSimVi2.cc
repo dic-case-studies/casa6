@@ -866,6 +866,10 @@ Int SimpleSimVi2::nRowsViWillSweep () const { SSVi2NotYetImplemented() } // numb
 
 Int SimpleSimVi2::nSpectralWindows () const { return pars_.nSpw_; }
 
+Int SimpleSimVi2::nUniqueTimestampsInChunk() const {
+    SSVi2NotYetImplemented();
+}
+
 
 void SimpleSimVi2::configureNewSubchunk() {
 
