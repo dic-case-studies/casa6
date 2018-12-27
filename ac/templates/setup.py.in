@@ -89,7 +89,7 @@ from itertools import chain
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.1.jar'
+xml_jar_file = 'xml-casa-assembly-1.2.jar'
 
 if pyversion < 3:
     str_encode = str

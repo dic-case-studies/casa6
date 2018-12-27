@@ -106,5 +106,20 @@ class CasaCoerce:
         ###
         return self.ctsys._swigobj.resolve(str_encode(value))
 
+    def expand_pathvec(self,value):
+        if not isinstance(value,list):
+            return value
+        if any([not isinstance(v,str) for v in value]):
+            return value
+
+        if self.ctsys is None:
+            sys.exit("configuration error in CasaCoerce.expand_pathvec( )...")
+
+        ###
+        ### cerberus validation is not reentrant...
+        ###
+        new_value = map(lambda v: v if v.startswith("/") or v.startswith("./") or v.startswith("../") else self.ctsys._swigobj.resolve(str_encode(v)), value)
+        return list(new_value)
+
 coerce = CasaCoerce( )
 
