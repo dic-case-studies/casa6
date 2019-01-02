@@ -44,7 +44,7 @@ if ( ! -e $jarfile ) {
         ### pull from download url
         my $jardir = dirname($jarfile);
         make_path($jardir);
-        my $ff = File::Fetch->new(uri => 'http://casa.nrao.edu/download/devel/xml-casa/java/xml-casa-assembly-1.1.jar');
+        my $ff = File::Fetch->new(uri => "http://casa.nrao.edu/download/devel/xml-casa/java/$jarfile_name");
         my $where = $ff->fetch( to => $jardir );
     }
 }
@@ -282,8 +282,8 @@ foreach $k ( keys %xml_files ) {                                 ### always usin
         close($in);
     }
 }
-    
-@headers = ( 'casa-source/gcwrap/tools/casaswig_types.h', 
+
+@headers = ( 'casa-source/gcwrap/tools/casaswig_types.h',
              'casa-source/gcwrap/tools/casa_typemaps.i',
              'casa-source/gcwrap/tools/swigconvert_python.h' );
 #@source = ( 'casa-source/gcwrap/tools/StdCasa/conversions.cc',
@@ -361,7 +361,7 @@ find( { wanted => $ms_subst }, 'binding/tools/ms' );
 foreach ( keys %xml_files ) {
     unless ( -d "binding/generated/tools/$_" ) { make_path("binding/generated/tools/$_") or die "could not create binding/generated/tools/$_: $!" }
 }
-    
+
 foreach ( 'libcasatools/generated/source', 'libcasatools/generated/include' ) {
     unless ( -d $_ ) { make_path($_) or die "could not create $_: $!" }
 }
@@ -439,11 +439,10 @@ sub fix_asdm_source {
     if ( ! -f "$path/.updated.alma.includes" ) {
         find( { wanted => $asdm_find_headers }, $find_path );
         find({ wanted => $asdm_substitute }, $find_path );
-        
+
         my ($sec,$min,$hour,$day,$month,$yr19,@rest) =   localtime(time);
         open( my $fd, "> $path/.updated.alma.includes" );
         print $fd sprintf("%d %d %d %02d:%02d:%02d\n",$day,$month,$yr19,$hour,$min,$sec);
         close( $fd );
     }
 }
-
