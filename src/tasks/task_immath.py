@@ -177,7 +177,7 @@ _qa = quanta( )
 def immath(
     imagename, mode, outfile, expr, varnames, sigma,
     polithresh, mask, region, box, chans, stokes, stretch,
-    imagemd
+    imagemd, prec
 ):
     # Tell CASA who will be reporting
     casalog.origin('immath')
@@ -232,14 +232,14 @@ def immath(
                 expr, varnames, subImages, filenames, file_map
             )
             outia = _immath_compute(
-                imagename, expr, outfile, imagemd, _myia
+                imagename, expr, outfile, imagemd, _myia, prec
             )
         else:
             # If the user didn't give any region or mask information
             # then just evaluated the expression with the filenames in it.
             outia = _immath_dofull(
                 imagename, imagemd, outfile, mode, expr,
-                varnames, filenames, _myia
+                varnames, filenames, _myia, prec
             )
         try:
             vars = locals( )
@@ -378,12 +378,12 @@ def _immath_new_poli(
     mypo.done()
     
 def _immath_compute(
-    imagename, expr, outfile, imagemd, _myia
+    imagename, expr, outfile, imagemd, _myia, prec
 ):
     # Do the calculation
     res = _myia.imagecalc(
         pixels=expr, outfile=outfile,
-        imagemd=_immath_translate_imagemd(imagename, imagemd)
+        imagemd=_immath_translate_imagemd(imagename, imagemd), prec=prec
     )
     res.dohistory(False)
     # modify stokes type for polarization intensity image
@@ -444,11 +444,11 @@ def _immath_createsubimages(
 
 def _immath_dofull(
     imagename, imagemd, outfile, mode, expr,
-    varnames, filenames, _myia
+    varnames, filenames, _myia, prec
 ):
     expr = _immath_expr_from_varnames(expr, varnames, filenames)    
     return _immath_compute(
-        imagename, expr, outfile, imagemd, _myia
+        imagename, expr, outfile, imagemd, _myia, prec=prec
     )
 
 def _immath_dospix(nfiles, varnames):
