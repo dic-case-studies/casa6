@@ -43,6 +43,15 @@ Topic :: Software Development :: Libraries :: Python Modules
 Operating System :: MacOS :: MacOS X
 Operating System :: POSIX
 """
+##
+##  Without this zlib import, building the casataks wheel dies with a segmentation violation at:
+##
+##    #0  0x00007f1d192ecf89 in fill_window () from /lib64/libz.so.1
+##    #1  0x00007f1d192ed590 in deflate_slow () from /lib64/libz.so.1
+##    #2  0x00007f1d192ee624 in deflate () from /lib64/libz.so.1
+##    #3  0x00007f1d0851a195 in zlib_Compress_compress () from /opt/rh/rh-python36/root/usr/lib64/python3.6/lib-dynload/zlib.cpython-36m-x86_64-linux-gnu.so
+##
+import zlib
 import sys
 import os
 
