@@ -44,7 +44,9 @@ Operating System :: MacOS :: MacOS X
 Operating System :: POSIX
 """
 ##
-##  Without this zlib import, building the casataks wheel dies with a segmentation violation at:
+##  Without this zlib import at the beginning, building the casataks
+##  wheel on RHEL7 (w/ rh-python36-python-3.6.3-3.el7.x86_64) dies
+##  with a segmentation violation at:
 ##
 ##    #0  0x00007f1d192ecf89 in fill_window () from /lib64/libz.so.1
 ##    #1  0x00007f1d192ed590 in deflate_slow () from /lib64/libz.so.1
