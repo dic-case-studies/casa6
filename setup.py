@@ -59,6 +59,7 @@ import os
 
 try:
     from casatools.config import build as tools_config
+    from casatools import ctsys
 except:
     print("cannot find CASAtools (https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) in PYTHONPATH")
     os._exit(1)
@@ -771,5 +772,5 @@ setup( name=module_name,version=casatasks_version,
        long_description="The CASAtasks are a collection of (mostly) stateless functions for\nthe analysis of radio astronomy observations.",
        cmdclass=cmd_setup,
        package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
-       install_requires=[ 'casatools', 'matplotlib', 'scipy' ]
+       install_requires=[ 'casatools==%s' % ctsys.toolversion_string( ), 'matplotlib', 'scipy' ]
 )
