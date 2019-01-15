@@ -130,9 +130,10 @@ def compute_version( ):
         sys.exit("couldn't determine version number")
 
     master_tags = [t for t in out.split('\n') if '-mas-' in t]
-    return '%d.%d' % (year,len(master_tags))
+    return (year,len(master_tags))
 
-casatools_version = compute_version( )
+(casatools_major,casatools_minor) = compute_version( )
+casatools_version = '%d.%d' % (casatools_major,casatools_minor)
 
 ###
 ###  return string discription of the current operating system, e.g.
@@ -268,6 +269,12 @@ def so_version( ):
     y=(delta>>8)&0xff
     x=(delta>>16)&0xffff
     return "%d.%d.%d" % (x,y,z)
+
+def install_version_header( major, minor, verstr ):
+    with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
+        for line in f:
+            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_VERSION_STRING@",verstr)
+            out.write(l)
 
 def install_xml_casa( ):
     script = os.path.join('scripts','xml-casa')
@@ -854,6 +861,8 @@ class casa_build_ext(build_ext):
 
         print("copying xml-casa...")
         install_xml_casa( )
+        print("generating version header...")
+        install_version_header(casatools_major,casatools_minor,casatools_version)
 
         build_ext.run(self)
 
