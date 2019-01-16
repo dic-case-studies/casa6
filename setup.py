@@ -58,8 +58,8 @@ import sys
 import os
 
 try:
+    import casatools
     from casatools.config import build as tools_config
-    from casatools import ctsys
 except:
     print("cannot find CASAtools (https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) in PYTHONPATH")
     os._exit(1)
@@ -119,9 +119,11 @@ def compute_version( ):
         sys.exit("couldn't determine version number")
 
     master_tags = [t for t in out.split('\n') if '-mas-' in t]
-    return '%d.%d' % (year,len(master_tags))
+    return (year,len(master_tags))
 
-casatasks_version = compute_version( )
+
+(casatasks_major,casatasks_minor) = compute_version( )
+casatasks_version = '%d.%d' % (casatasks_major,casatasks_minor)
 
 private_scripts = [ 'src/scripts/ialib.py',
                     'src/scripts/cvt.py',
@@ -561,7 +563,7 @@ def generate_pyinit(moduledir,tasks):
         fd.write("import os as _os\n")
         fd.write("import time as _time\n\n")
         fd.write("__name__ = '%s'\n" % module_name)
-        fd.write("__all__ = [ \"casalog\",\n")
+        fd.write("__all__ = [ \"casalog\", \"version\", \"version_string\",\n")
         for task in tasks:
             fd.write("            '%s',\n" % task)
         fd.write("          ]\n\n")
@@ -570,6 +572,8 @@ def generate_pyinit(moduledir,tasks):
             fd.write("from .%s import %s\n" % (task,task))
 
         fd.write("\n")
+        fd.write("def version( ): return [ %d, %d ]\n" % (casatasks_major,casatasks_minor))
+        fd.write("def version_string( ): return \"%s\"\n" % casatasks_version)
         fd.write("casalog.setglobal(True)\n")
         fd.write("\n")
 
@@ -772,5 +776,5 @@ setup( name=module_name,version=casatasks_version,
        long_description="The CASAtasks are a collection of (mostly) stateless functions for\nthe analysis of radio astronomy observations.",
        cmdclass=cmd_setup,
        package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
-       install_requires=[ 'casatools==%s' % ctsys.toolversion_string( ), 'matplotlib', 'scipy' ]
+       install_requires=[ 'casatools==%s' % casatools.version_string( ), 'matplotlib', 'scipy' ]
 )
