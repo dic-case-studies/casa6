@@ -17,7 +17,7 @@ class CasaCoerce:
 
     def to_list(self,value):
         if isinstance(value,str):
-            return value
+            return [ value ]
         try:
             i = iter(value)
             return list(value)
