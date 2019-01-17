@@ -324,7 +324,7 @@ def generate_pyinit(moduledir,tools):
         fd.write("""###########################################################################\n""")
         fd.write("from __future__ import absolute_import\n")
         fd.write("__name__ = '%s'\n" % module_name)
-        fd.write("__all__ = [ \"ctsys\",\n")
+        fd.write("__all__ = [ \"ctsys\", \"version\", \"version_string\",\n")
         for tool in tools:
             if tool != "utils":
                 fd.write("            '%s',\n" % tool)
@@ -375,6 +375,10 @@ def generate_pyinit(moduledir,tools):
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
+
+               def version( ): return list(ctsys.toolversion( ))
+               def version_string( ): return ctsys.toolversion_string( )
+
                import atexit as __atexit
                __atexit.register(ctsys.shutdown) ## c++ shutdown
               '''
