@@ -2156,11 +2156,15 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         with tbmanager(file) as tb:
             val = tb.getcell(colname, 0)
 
+        boolean_types = (bool, numpy.bool, numpy.bool_)
         for i in range(x_range[0], x_range[1]):
             for j in range(y_range[0], y_range[1]):
                 for k in range(f_range[0], f_range[1]):
-                    diff_value = abs(val[i][j][0][k]-ref_value)
-                    self.assertTrue(diff_value < tol)
+                    if type(val[i][j][0][k]) in boolean_types or type(ref_value) in boolean_types:
+                        self.assertEqual(val[i][j][0][k], ref_value)
+                    else:
+                        diff_value = abs(val[i][j][0][k]-ref_value)
+                        self.assertTrue(diff_value < tol)
 
 
 class sdimaging_test_polflag(sdimaging_unittest_base):
