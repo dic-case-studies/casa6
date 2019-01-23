@@ -258,10 +258,10 @@ $hdr_dir = "binding/include";
                                    'casa-source/code/miriad/Filling/Importmiriad.cc' ],
              );
 
-print "configuring CASAtools... this may take a long time...\n";
+print "configuring CASAtools... this may take a little while...\n";
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
 
-fix_asdm_source("casa-source/code/alma");
+#fix_asdm_source("casa-source/code/alma");
 fix_vlafillertask("casa-source/gcwrap");
 
 foreach $k ( keys %xml_files ) { install($xml_files{$k},"$xml_dir/$k.xml") }
