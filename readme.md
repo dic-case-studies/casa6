@@ -68,7 +68,7 @@ Again, **substitute** the path to your build of [CASAtools](https://open-bitbuck
 
 ## Available Tasks
 
-| Tool Name     | Description                                                                                                                     |
+| Task Name     | Description                                                                                                                     |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | accor         | Normalize visibilities based on auto-correlations                                                                               |
 | accum         | Accumulate incremental calibration solutions into a calibration table                                                           |
