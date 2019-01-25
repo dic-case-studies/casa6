@@ -149,25 +149,30 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | Tool Name            | Description                                                     |
 | -------------------- | --------------------------------------------------------------- |
 | agentflagger         | Tool for manual and automated flagging                          |
+| atcafiller           | Filler for ATNF/ATCA RPFITS data                                |
 | atmosphere           | Atmosphere model                                                |
 | calanalysis          | Get and fit data from a calibration table (CASA 3.4 and later). |
 | calibrater           | Synthesis calibration (self- and cross-)                        |
 | componentlist        | A tool for the manipulation of groups of components             |
 | coordsys             | Operations on CoordinateSystems                                 |
 | functional           | Functionals handling                                            |
-| image                | Operations on images                                            |
 | imagemetadata        | Operations on imagemetadata                                     |
 | imagepol             | Polarimetric analysis of images                                 |
 | imager               | tool for synthesis imaging                                      |
+| image                | Operations on images                                            |
 | iterbotsink          | tool for synthesis imaging                                      |
 | logsink              | tool for logsink                                                |
 | measures             | measures tool                                                   |
-| ms                   | Operations on measurement sets                                  |
+| miriadfiller         | Tool for the importmiriad task                                  |
 | msmetadata           | Operations to retrieve metadata from a measurment set           |
 | mstransformer        | Tool to apply spw and frame transformations in MS               |
+| ms                   | Operations on measurement sets                                  |
 | quanta               | quanta tool handles units and quantities                        |
 | regionmanager        | Create and manipulate regions of interest                       |
+| sakura               | New single dish tool interface using sakura                     |
 | sdm                  | Manipulate or examine SDM datasets                              |
+| simulator            | Tool for simulation                                             |
+| singledishms         | New single dish tool interface to process an MS                 |
 | spectralline         | spectral line tool                                              |
 | synthesisdeconvolver | tool for synthesis imaging                                      |
 | synthesisimager      | tool for synthesis imaging                                      |
@@ -175,6 +180,7 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | synthesisnormalizer  | tool for synthesis imaging                                      |
 | synthesisutils       | tool for synthesis imaging                                      |
 | table                | Access tables from casapy                                       |
+| vlafiller            | tool for VLA filler tasks                                       |
 | vpmanager            | Tool for specifying voltage patterns and primary beams          |
 
 
