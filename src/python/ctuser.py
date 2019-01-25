@@ -44,7 +44,7 @@ except:
     else:
         f.close()
         try:
-            exec(open(toolrc).read())
+            exec(open(toolrc).read( ))
         except:
             import sys
             sys.stderr.write("error: evaluation of %s failed\n" % toolrc)
