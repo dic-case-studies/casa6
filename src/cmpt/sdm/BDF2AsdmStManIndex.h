@@ -74,7 +74,6 @@ namespace casac {
         casacore::Block<casacore::String>	bdfNames;
         casacore::String			fname;
         std::map<std::string, int>	s2i_m;
-        bool				asBigEndian;
         std::vector<std::vector<casa::AsdmIndex> >	autoIndexes_vv;
         std::vector<std::vector<casa::AsdmIndex> >	crossIndexes_vv;
         std::vector<casa::AsdmIndex>  allIndexes_v;

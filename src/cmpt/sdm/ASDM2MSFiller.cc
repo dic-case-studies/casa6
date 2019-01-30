@@ -184,7 +184,6 @@ namespace casac {
     // The constructor
     ASDM2MSFiller::ASDM2MSFiller( const string& name_,
                                   double        creation_time_,
-                                  bool          withRadioMeters_,
                                   bool          complexData,
                                   bool          withCompression,
                                   //bool          withCorrectedData):
@@ -193,8 +192,6 @@ namespace casac {
                                   int           maxNumChan,
                                   bool          withCorrectedData,
                                   bool          useAsdmStMan4DATA ):
-        itsWithRadioMeters(withRadioMeters_),
-        itsFirstScan(true),
         itsMSMainRow(0),
         itsDataShapes(0),
         itsNCat(3) {
