@@ -73,7 +73,7 @@ def _variance2(dr, di, flag, corr, row):
 class statwt_test(unittest.TestCase):
 
     def test_algorithm(self):
-        """ Test the algorithm, includes fitspw tests"""
+        """ Test the algorithm, includes fitspw, excludechans tests"""
         mytb = table()
         mytb.open(src)
         expflag = mytb.getcol("FLAG")
@@ -82,9 +82,11 @@ class statwt_test(unittest.TestCase):
         dst = "ngc5921.split.ms"
         rtol = 1e-7
         for combine in ["", "corr"]:
-            for fitspw in ["0:0~9;21~62", ""]:
-                shutil.copytree(src, dst) 
-                statwt(dst, combine=combine, fitspw=fitspw)
+            c = 0
+            for fitspw in ["0:0~9;21~63", "", "0:10~20"]:
+                shutil.copytree(src, dst)
+                excludechans = c == 2
+                statwt(dst, combine=combine, fitspw=fitspw, excludechans=excludechans)
                 [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
                 actflag = flag.copy()
                 if fitspw != "":
@@ -152,6 +154,7 @@ class statwt_test(unittest.TestCase):
                         else:
                             self.assertFalse(frow[row], "FLAG_ROW is not false")
                 shutil.rmtree(dst) 
+                c += 1
                
     def test_timebin(self):
         """ Test time binning"""

@@ -3,12 +3,13 @@
 from casatools import ms
 from casatasks import casalog
 from . import flaghelper
+from .mstools import write_history
 
 def statwt(
     vis, selectdata, field, spw, intent, array, observation, scan,
     combine, timebin, slidetimebin, chanbin, minsamp, statalg,
-    fence, center, lside, zscore, maxiter, fitspw, wtrange,
-    flagbackup, preview, datacolumn
+    fence, center, lside, zscore, maxiter, fitspw, excludechans,
+    wtrange, flagbackup, preview, datacolumn
 ):
     casalog.origin('statwt')
     if not selectdata:
@@ -51,14 +52,28 @@ def statwt(
         #sel['feed'] = feed
         # Select the data. Only-parse is set to false.
         myms.msselect(sel, False)
-        return myms.statwt(
+        rval = None
+        rval = myms.statwt(
             combine=combine, timebin=timebin,
             slidetimebin=slidetimebin, chanbin=chanbin,
             minsamp=minsamp, statalg=statalg, fence=fence,
             center=center, lside=lside, zscore=zscore,
-            maxiter=maxiter, fitspw=fitspw,
+            maxiter=maxiter, fitspw=fitspw, excludechans=excludechans,
             wtrange=wtrange, preview=preview, datacolumn=datacolumn
         )
+        # Write to HISTORY of MS
+        if rval != None and not preview:
+            try:
+                # Write history to MS
+                vars = locals( )
+                param_names = statwt.__code__.co_varnames[:statwt.__code__.co_argcount]
+                param_vals = [vars[p] for p in param_names]
+                write_history(
+                    ms(), vis, 'statwt', param_names, param_vals, casalog
+                )
+            except Exception as instance:
+                casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
+        return rval
     except Exception as instance:
         casalog.post( '*** Error *** %s' % instance, 'SEVERE' )
         raise
