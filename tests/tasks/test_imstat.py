@@ -13,10 +13,6 @@ _tb = table( )
 _qa = quanta( )
 _rg = regionmanager( )
 
-#run using
-# `which casa` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py --mem test_imstat
-#
-
 '''
 Unit tests for task imstat.
 '''
@@ -109,66 +105,6 @@ class imstat_test(unittest.TestCase):
         expected = (mean*npts/pixperbeam)[0]
         self.assertTrue(abs(got - expected) < 1e-11)
  
-    def test002(self):
-        """ Test 2: test position format for 150 arcsec pixel image is correct """
-        shutil.copytree(os.path.join(self.datapath,self.s150), self.s150)
-        _myia = image()
-        _myia.open(self.s150)
-        stats = _myia.statistics()
-        _myia.close()
-        self.assertTrue(stats['blcf'] == '15:43:21.873, -00.17.47.274, I, 1.41332e+09Hz') 
-        self.assertTrue(stats['maxposf'] == '15:22:40.165, +05.11.29.923, I, 1.41332e+09Hz')
-        self.assertTrue(stats['minposf'] == '15:43:25.618, +04.22.40.617, I, 1.41332e+09Hz')
-        self.assertTrue(stats['trcf'] == '15:00:27.115, +10.20.37.699, I, 1.41332e+09Hz')
-
-    def test003(self):
-        """ Test 3: test position format for 15 arcsec pixel image is correct """
-        shutil.copytree(os.path.join(self.datapath,self.s15), self.s15)
-        _myia = image()
-        _myia.open(self.s15)
-        stats = _myia.statistics()
-        _myia.close()
-        self.assertTrue(stats['blcf'] == '15:24:08.404, +04.31.59.181, I, 1.41332e+09Hz')
-        self.assertTrue(stats['maxposf'] == '15:22:04.016, +05.04.44.999, I, 1.41332e+09Hz')
-        self.assertTrue(stats['minposf'] == '15:24:08.491, +04.59.59.208, I, 1.41332e+09Hz')
-        self.assertTrue(stats['trcf'] == '15:19:52.390, +05.35.44.246, I, 1.41332e+09Hz')
-
-    def test004(self):
-        """ Test 4: test position format for 0.015 arcsec pixel image is correct """
-        shutil.copytree(os.path.join(self.datapath,self.s0_015), self.s0_015)
-        _myia = image()
-        _myia.open(self.s0_015)
-        stats = _myia.statistics()
-        _myia.close() 
-        self.assertTrue(stats['blcf'] == '15:22:00.1285, +05.03.58.0800, I, 1.41332e+09Hz') 
-        self.assertTrue(stats['maxposf'] == '15:22:00.0040, +05.04.00.0450, I, 1.41332e+09Hz')
-        self.assertTrue(stats['minposf'] == '15:22:00.1285, +05.03.59.7600, I, 1.41332e+09Hz')
-        self.assertTrue(stats['trcf'] == '15:21:59.8725, +05.04.01.9050, I, 1.41332e+09Hz')
-
-    def test005(self):
-        """ Test 5: test position format for 0.0015 arcsec pixel image is correct """
-        _myia = image()
-        shutil.copytree(os.path.join(self.datapath,self.s0_0015), self.s0_0015)
-        _myia.open(self.s0_0015)
-        stats = _myia.statistics()
-        _myia.close()
-        self.assertTrue(stats['blcf'] == '15:22:00.01285, +05.03.59.80800, I, 1.41332e+09Hz') 
-        self.assertTrue(stats['maxposf'] == '15:22:00.00040, +05.04.00.00450, I, 1.41332e+09Hz')
-        self.assertTrue(stats['minposf'] == '15:22:00.01285, +05.03.59.97600, I, 1.41332e+09Hz')
-        self.assertTrue(stats['trcf'] == '15:21:59.98725, +05.04.00.19050, I, 1.41332e+09Hz')
-
-    def test006(self):
-        """ Test 6: test position format for 0.00015 arcsec pixel image is correct """
-        shutil.copytree(os.path.join(self.datapath,self.s0_00015), self.s0_00015)
-        _myia = image()
-        _myia.open(self.s0_00015)
-        stats = _myia.statistics()
-        _myia.close()
-        self.assertTrue(stats['blcf'] == '15:22:00.001285, +05.03.59.980800, I, 1.41332e+09Hz') 
-        self.assertTrue(stats['maxposf'] == '15:22:00.000040, +05.04.00.000450, I, 1.41332e+09Hz')
-        self.assertTrue(stats['minposf'] == '15:22:00.001285, +05.03.59.997600, I, 1.41332e+09Hz')
-        self.assertTrue(stats['trcf'] == '15:21:59.998725, +05.04.00.019050, I, 1.41332e+09Hz')
-
     def test007(self):
         """ Test 7: test that box parameter can have spaces, CAS-2050 """
         shutil.copytree(os.path.join(self.datapath,self.s0_00015), self.s0_00015)
@@ -178,13 +114,7 @@ class imstat_test(unittest.TestCase):
         
     def test008(self):
         """ Test 8: verify fix for CAS-2195"""
-        def test_statistics(im):
-            _myia = image()
-            _myia.open(im)
-            stats = _myia.statistics()
-            _myia.done()
-            return stats
-        
+       
         def test_imstat(im):
             return imstat(im)
             
@@ -192,20 +122,14 @@ class imstat_test(unittest.TestCase):
         shutil.copy(os.path.join(self.datapath,myim), myim)
         expected_max = [3, 10]
         expected_min = [4, 0]
-        for code in [test_statistics, test_imstat]:
+        for code in [test_imstat]:
             stats = code(myim)
             self.assertTrue((stats['maxpos'] == expected_max).all())
             self.assertTrue((stats['minpos'] == expected_min).all())
             
     def test009(self):
         """ Test 9: choose axes works"""
-        def test_statistics(im, axes):
-            _myia = image()
-            _myia.open(im)
-            stats = _myia.statistics(axes=axes)
-            _myia.done()
-            return stats
-        
+       
         def test_imstat(image, axes):
             return imstat(image, axes=axes)
             
@@ -255,33 +179,11 @@ class imstat_test(unittest.TestCase):
                 ]
             ]
         for i in range(len(axes)):
-            for code in [test_statistics, test_imstat]:
+            for code in [test_imstat]:
                 stats = code(myim, axes[i])
                 self.assertTrue((stats['mean'] == expected_mean[i]).all())
                 self.assertTrue((stats['sumsq'] == expected_sumsq[i]).all())
             
-            """
-    def test_robust(self):
-        *"" Confirm robust parameter*""
-        def test_statistics(image, robust):
-            _myia = image()
-            _myia.open(myim)
-            stats = _myia.statistics(robust=robust)
-            _myia.done()
-            return stats
-        def test_imstat(image, robust):
-            return imstat(image, robust=robust)
-        myim = self.fourdim
-        shutil.copytree(os.path.join(self.datapath,myim), myim)
-        for robust in [True, False]:
-            for code in [test_statistics, test_imstat]:
-                stats = code(myim, robust)
-                self.assertTrue(stats.has_key('median') == robust)
-                self.assertTrue(stats.has_key('medabsdevmed') == robust)
-                self.assertTrue(stats.has_key('quartile') == robust)
-                
-                """
-                
     def test_stretch(self):
         """ ia.statistics(): Test stretch parameter"""
         yy = image()
@@ -293,17 +195,7 @@ class imstat_test(unittest.TestCase):
         imagename = "tmp.im"
         yy.fromshape(imagename, shape)
         yy.addnoise()
-        self.assertRaises(
-            Exception,
-            yy.statistics,
-            mask=mymask + ">0", stretch=False
-        )
-        zz = yy.statistics(
-            mask=mymask + ">0", stretch=True
-        )
-        self.assertTrue(zz and type(zz) == type({}))
         yy.done()
-
         try:
             OK = False
             zz = imstat(
@@ -312,7 +204,6 @@ class imstat_test(unittest.TestCase):
         except:
             OK = True
         self.assertTrue(OK)
-
         zz = imstat(
             imagename=imagename, mask=mymask + ">0", stretch=True
         )
@@ -321,15 +212,6 @@ class imstat_test(unittest.TestCase):
    
     def test010(self):
         """test logfile """
-        def test_statistics(im, axes, logfile, append):
-            _myia = image()
-            _myia.open(im)
-            stats = _myia.statistics(
-                axes=axes, logfile=logfile, append=append, list=True, verbose=True
-            )
-            _myia.done()
-            return stats
-        
         def test_imstat(image, axes, logfile, append):
             return imstat(image, axes=axes, logfile=logfile, append=append, verbose=True)
             
@@ -337,7 +219,7 @@ class imstat_test(unittest.TestCase):
         i = 1
         myim = self.fourdim
         shutil.copytree(os.path.join(self.datapath,myim), myim)
-        for code in [test_statistics, test_imstat]:
+        for code in [test_imstat]:
             append = False
             if i == 2:
                 append = True
@@ -346,7 +228,6 @@ class imstat_test(unittest.TestCase):
             # appending, second time through size should double
             self.assertTrue(size > 1.2e4*i and size < 1.3e4*i )
             i = i+1
-
 
     def test011(self):
         """ test multiple region support"""
@@ -359,122 +240,10 @@ class imstat_test(unittest.TestCase):
             myia.coordsys().torecord(), shape,
             box=box, chans=chans
         )
-        bb = myia.statistics(region=reg)
-        self.assertTrue(bb["npts"][0] == 126)
         bb = imstat(imagename=myia.name(), chans=chans, box=box)
-        self.assertTrue(bb["npts"][0] == 126)
-        
-        rfilename = "myreg.reg"
-        _rg.tofile(rfilename, reg)
-        bb = myia.statistics(region=rfilename)
+        myia.done()
         self.assertTrue(bb["npts"][0] == 126)
             
-    def test012(self):
-        """ Test multi beam support"""
-        myia = self._myia
-        shape = [15, 20, 4, 10]
-        myia.fromshape("", shape)
-        xx = numpy.array(range(shape[0]*shape[1]))
-        xx.resize(shape[0], shape[1])
-        myia.putchunk(xx, replicate=True)
-        myia.setbrightnessunit("Jy/pixel")
-        def check(myia, axes, exp):
-            for i in range(shape[2]):
-                for j in range(shape[3]):
-                    got = myia.statistics(
-                        axes=axes,
-                        region=_rg.box(
-                            blc = [0, 0, i, j],
-                            trc=[shape[0]-1, shape[1]-1, i, j]
-                        )
-                    )
-                    self.assertTrue(len(got.keys()) == len(exp.keys()))
-                    for k in got.keys():
-                        if (type(got[k]) == type(got["rms"])):
-                            if (k != "blc" and k != "trc"):
-                                self.assertTrue((got[k] == exp[k][0][0]).all())
-                            
-        axes = [0, 1]
-        exp = myia.statistics(axes=axes)
-        self.assertFalse("flux" in exp)
-        check(myia, axes, exp)
-        myia.setbrightnessunit("Jy/beam")
-        self.assertTrue(myia.brightnessunit() == "Jy/beam")
-        major = _qa.quantity("3arcmin")
-        minor = _qa.quantity("2.5arcmin")
-        pa= _qa.quantity("20deg")
-        myia.setrestoringbeam(
-            major=major, minor=minor, pa=pa
-        )
-        self.assertTrue(myia.brightnessunit() == "Jy/beam")
-        exp = myia.statistics(axes=axes)
-        self.assertTrue("flux" in exp)
-        check(myia, axes, exp)
-        myia.setrestoringbeam(remove=True)
-        self.assertTrue(
-            myia.setrestoringbeam(
-                major=major, minor=minor, pa=pa,
-                channel=0, polarization=0
-            )
-        )
-        exp = myia.statistics(axes=axes)
-        self.assertTrue("flux" in exp)
-        check(myia, axes, exp)
-        nmajor = _qa.add(major, _qa.quantity("0.1arcmin"))
-        self.assertTrue(
-            myia.setrestoringbeam(
-                major=nmajor, minor=minor, pa=pa,
-                channel=1, polarization=1
-            )
-        )
-        exp = myia.statistics(axes=axes)
-        self.assertTrue("flux" in exp)
-        self.assertTrue(
-            abs(1 - _qa.getvalue(nmajor)*exp["flux"][1][1]/(_qa.getvalue(major)*exp["flux"][0][0]))
-            < 1e-7
-        )        
-        
-    def test_CAS4545(self):
-        """verify CAS-4545 fix: full support for >2Gpixel images"""
-        myia = self._myia
-        myia.fromshape("", [1291, 1290, 1290])
-        stats = myia.statistics()
-        self.assertTrue(stats['npts'][0] == myia.shape().prod())
-        
-    def test_kflux(self):
-        """Test flux determination for image with units of K - CAS-5779"""
-        myia = self._myia
-        myia.open(os.path.join(self.datapath,self.kimage))
-        res = myia.statistics()
-        self.assertTrue(abs(res['flux']/65265.98528085 - 1) < 1e-9)
-        
-    def test_ranges(self):
-        """test specifying ranges works correctly for median, medabsdevmed, and iqr"""
-        data = []
-        for i in range(1000):
-            if i % 2 == 0:
-                datum = i
-            else:
-                datum = -(i*i)
-            data.append(datum)
-        data = numpy.reshape(data, [10, 10, 10])
-        myia = self._myia
-        myia.fromarray("", data)
-        stats = myia.statistics(robust=True)
-        self.assertTrue(stats['median'][0] == -0.5)
-        self.assertTrue(stats['medabsdevmed'][0] == 967.5)
-        self.assertTrue(stats['quartile'][0] == 251499)
-        stats = myia.statistics(robust=True, includepix=[0.1, 1001] )
-        self.assertTrue(stats['median'][0] == 500)
-        self.assertTrue(stats['medabsdevmed'][0] == 250)
-        self.assertTrue(stats['quartile'][0] == 500)
-        stats = myia.statistics(robust=True, excludepix=[0.1, 1001] )
-        self.assertTrue(stats['median'][0] == -249001)
-        self.assertTrue(stats['medabsdevmed'][0] == 216240)
-        self.assertTrue(stats['quartile'][0] == 499000)
-
-        myia.done()
-        
     def test_hingesfences(self):
         """Test hinges-fences algorithm"""
         data = list(range(100))
@@ -482,25 +251,19 @@ class imstat_test(unittest.TestCase):
         imagename = "hftest.im"
         myia.fromarray(imagename, data)
         classic = myia.statistics(robust=True, algorithm="cl")
-        for i in range(2):
-            if i == 0:
-                hfall = myia.statistics(robust=True, algorithm="h")
-                hf0 = myia.statistics(robust=True, algorithm="h", fence=0)
-            else:
-                hfall = imstat(imagename=imagename, algorithm="h")
-                hf0 = imstat(imagename=imagename, algorithm="h", fence=0)
-            for k in classic.keys():
-                if type(classic[k]) == numpy.ndarray:
-                    if k == 'sigma':
-                        self.assertTrue((abs(hfall[k]/classic[k] - 1) < 1e-15).all())
-                    else:
-                        self.assertTrue((hfall[k] == classic[k]).all())
-                        
+        hfall = imstat(imagename=imagename, algorithm="h")
+        hf0 = imstat(imagename=imagename, algorithm="h", fence=0)
+        for k in classic.keys():
+            if type(classic[k]) == numpy.ndarray:
+                if k == 'sigma':
+                    self.assertTrue((abs(hfall[k]/classic[k] - 1) < 1e-15).all())
                 else:
-                    self.assertTrue(hfall[k] == classic[k])
-            self.assertTrue(hf0['npts'][0] == 51)
-            self.assertTrue(hf0['mean'][0] == 49)
-            self.assertTrue(hf0['q1'][0] == 36)
+                    self.assertTrue((hfall[k] == classic[k]).all())
+            else:
+                self.assertTrue(hfall[k] == classic[k])
+        self.assertTrue(hf0['npts'][0] == 51)
+        self.assertTrue(hf0['mean'][0] == 49)
+        self.assertTrue(hf0['q1'][0] == 36)
     
     def test_fithalf(self):
         """Test fit to half algorithm"""
@@ -510,53 +273,44 @@ class imstat_test(unittest.TestCase):
         imagename = "fhtest.im"
         myia.fromarray(imagename, data)
         myia.done()
-        for i in range(2):
-            for center in ["mean", "median", "zero"]:
-                for lside in [True, False]:
-                    if i == 0:
-                        myia.open(imagename)
-                        res = myia.statistics(
-                            robust=True, algorithm="f",
-                            center=center, lside=lside
-                        )
-                        myia.done()
-                    else:
-                        res = imstat(
-                            imagename=imagename, algorithm="f",
-                            center=center, lside=lside
-                        )
-                    if (lside):
-                        if (center == "mean"):
-                            self.assertTrue(res['npts'][0] == 116)
-                            self.assertTrue(res['mean'][0] == 3283.5)
-                            self.assertTrue(res['median'][0] == 3283.5)
-                            self.assertTrue(res['q1'][0] == 784.0)
-                        elif (center == "median"):
-                            self.assertTrue(res['npts'][0] == 100)
-                            self.assertTrue(res['mean'][0] == 2450.5)
-                            self.assertTrue(res['median'][0] == 2450.5)
-                            self.assertTrue(res['q1'][0] == 576.0)
-                        elif (center == "zero"):
-                            self.assertTrue(res['npts'][0] == 2)
-                            self.assertTrue(res['mean'][0] == 0)
-                            self.assertTrue(res['median'][0] == 0)
-                            self.assertTrue(res['q1'][0] == 0)
-                    else:
-                        if (center == "mean"):
-                            self.assertTrue(res['npts'][0] == 84)
-                            self.assertTrue(res['mean'][0] == 3283.5)
-                            self.assertTrue(res['median'][0] == 3283.5)
-                            self.assertTrue(res['q1'][0] == 326.0)
-                        elif (center == "median"):
-                            self.assertTrue(res['npts'][0] == 100)
-                            self.assertTrue(res['mean'][0] == 2450.5)
-                            self.assertTrue(res['median'][0] == 2450.5)
-                            self.assertTrue(res['q1'][0] == -724.0)
-                        elif (center == "zero"):
-                            self.assertTrue(res['npts'][0] == 200)
-                            self.assertTrue(res['mean'][0] == 0)
-                            self.assertTrue(res['median'][0] == 0)
-                            self.assertTrue(res['q1'][0] == -2500.0)
+        for center in ["mean", "median", "zero"]:
+            for lside in [True, False]:
+                res = imstat(
+                    imagename=imagename, algorithm="f",
+                    center=center, lside=lside
+                )
+                if (lside):
+                    if (center == "mean"):
+                        self.assertTrue(res['npts'][0] == 116)
+                        self.assertTrue(res['mean'][0] == 3283.5)
+                        self.assertTrue(res['median'][0] == 3283.5)
+                        self.assertTrue(res['q1'][0] == 784.0)
+                    elif (center == "median"):
+                        self.assertTrue(res['npts'][0] == 100)
+                        self.assertTrue(res['mean'][0] == 2450.5)
+                        self.assertTrue(res['median'][0] == 2450.5)
+                        self.assertTrue(res['q1'][0] == 576.0)
+                    elif (center == "zero"):
+                        self.assertTrue(res['npts'][0] == 2)
+                        self.assertTrue(res['mean'][0] == 0)
+                        self.assertTrue(res['median'][0] == 0)
+                        self.assertTrue(res['q1'][0] == 0)
+                else:
+                    if (center == "mean"):
+                        self.assertTrue(res['npts'][0] == 84)
+                        self.assertTrue(res['mean'][0] == 3283.5)
+                        self.assertTrue(res['median'][0] == 3283.5)
+                        self.assertTrue(res['q1'][0] == 326.0)
+                    elif (center == "median"):
+                        self.assertTrue(res['npts'][0] == 100)
+                        self.assertTrue(res['mean'][0] == 2450.5)
+                        self.assertTrue(res['median'][0] == 2450.5)
+                        self.assertTrue(res['q1'][0] == -724.0)
+                    elif (center == "zero"):
+                        self.assertTrue(res['npts'][0] == 200)
+                        self.assertTrue(res['mean'][0] == 0)
+                        self.assertTrue(res['median'][0] == 0)
+                        self.assertTrue(res['q1'][0] == -2500.0)
     
     def test_chauvenet(self):
         """Test Chauvenet's criterion algorithm"""
@@ -601,120 +355,32 @@ class imstat_test(unittest.TestCase):
         imagename = "chauvtest.im"
         myia.fromarray(imagename, data)
         myia.done()
-        for i in [0, 1]:
-            for zscore in [3.5, -1]:
-                for maxiter in [0, 1, -1]:
-                    if i == 0:
-                        myia.open(imagename)
-                        stats = myia.statistics(algorithm="ch", zscore=zscore, maxiter=maxiter)
-                        myia.done()
-                    else:
-                        stats = imstat(imagename=imagename, algorithm="ch", zscore=zscore, maxiter=maxiter)
-                    if zscore == 3.5:
-                        if maxiter == 0:
-                            enpts = 106
-                            emax = 8
-                        elif maxiter == 1:
-                            enpts = 104
-                            emax = 6
-                        elif maxiter == -1:
-                            enpts = 102
-                            emax = 4
-                    elif zscore == -1:
-                        if maxiter == 0:
-                            enpts = 106
-                            emax = 8
-                        elif maxiter == 1:
-                            enpts = 103
-                            emax = 5
-                        elif maxiter == -1:
-                            enpts = 100
-                            emax = data[99]
-                    self.assertTrue(stats['npts'][0] == enpts)
-                    self.assertTrue(abs(stats['max'][0] - emax) < 1e-6)
+        for zscore in [3.5, -1]:
+            for maxiter in [0, 1, -1]:
+                stats = imstat(imagename=imagename, algorithm="ch", zscore=zscore, maxiter=maxiter)
+                if zscore == 3.5:
+                    if maxiter == 0:
+                        enpts = 106
+                        emax = 8
+                    elif maxiter == 1:
+                        enpts = 104
+                        emax = 6
+                    elif maxiter == -1:
+                        enpts = 102
+                        emax = 4
+                elif zscore == -1:
+                    if maxiter == 0:
+                        enpts = 106
+                        emax = 8
+                    elif maxiter == 1:
+                        enpts = 103
+                        emax = 5
+                    elif maxiter == -1:
+                        enpts = 100
+                        emax = data[99]
+                self.assertTrue(stats['npts'][0] == enpts)
+                self.assertTrue(abs(stats['max'][0] - emax) < 1e-6)
     
-    def test_CAS7472(self):
-        """Verify stats of sub regions of temp images produce correct results when using originial (Kileen pointer) method"""
-        myia = image()
-        myia.fromshape("", [100,100])
-        myia.addnoise()
-        bb = myia.getchunk()
-        bb[50,50] = 200
-        bb[51,51] = -200
-        myia.putchunk(bb)
-        reg = _rg.box([25,25],[75,75])
-        resnew = myia.statistics(region=reg, clmethod="framework")
-        resold = myia.statistics(region=reg, clmethod="tiled")
-        myia.done()
-        self.assertTrue(resnew['max'][0] == 200)
-        self.assertTrue(resnew['min'][0] == -200)
-        self.assertTrue(resold['max'][0] == 200)
-        self.assertTrue(resold['min'][0] == -200)
-        self._compare(resold, resnew, "first")
-    
-        myia.fromshape("", [100,100, 100])
-        myia.addnoise()
-        reg = _rg.box([25,25,25],[75,75,25])
-        for axes in [[], [0], [1], [2], [0,1], [0,2], [1,2], [0,1,2]]:
-            resnew = myia.statistics(axes=axes, region=reg, clmethod="framework")
-            resold = myia.statistics(axes=axes, region=reg, clmethod="tiled")
-            self._compare(resold, resnew, "axes=" + str(axes))
-        myia.done()
-        
-    def test_CAS7697(self):
-        """verify fix to CAS-7697, min/max should be zero in masked plane"""
-        myia = image()
-        imagename = "CAS7697.im"
-        myia.fromshape(imagename, [100,100, 10])
-        myia.addnoise()
-        bb = myia.getchunk()
-        bb[:,:,9] = 40
-        myia.putchunk(bb)
-        myia.calcmask(imagename + "<30")
-        for clmethod in ["framework", "tiled"]:
-            stats = myia.statistics(axes=[0,1], clmethod=clmethod)
-            self.assertTrue(stats['max'][9] == 0)
-            self.assertTrue(stats['min'][9] == 0)
-        myia.done()
-
-    def test_CAS8357(self):
-        """verify ellipse with center outside lattice can be specified"""
-        myia = image()
-        myia.fromshape("",[30,30])
-        reg = "circle[[-1pix,-1pix], 10pix]"
-        res = myia.statistics(region=reg)
-        myia.done()
-        self.assertTrue(res['npts'] == 70, 'Wrong number of points')
-
-    def test_f2h_quantiles(self):
-        """verify ran out of bins bug fixed, CAS-8783"""
-        myia = image()
-        myia.open(os.path.join(self.datapath,"f2h_quantile.im"))
-        stats = myia.statistics(
-            robust=True, algorithm='fit-half', includepix=[0,0.01],
-        )
-        myia.done()
-        self.assertTrue((stats['blc'] == [0, 0, 0, 0]).all())
-        self.assertEqual(stats['blcf'], '09:49:35.993, +30.23.38.356, I, 2.520709e+11Hz')
-        self.assertAlmostEqual(stats['flux'][0], 269.1136358, 6)
-        self.assertAlmostEqual(stats['max'][0], 0.00400829, 6)
-        self.assertAlmostEqual(stats['mean'][0], 0.00200415, 6)
-        self.assertAlmostEqual(stats['medabsdevmed'][0], 0.00107797, 6)
-        self.assertAlmostEqual(stats['median'][0], 0.00200415, 6)
-        self.assertAlmostEqual(stats['min'][0], 2.42198261e-10, 6)
-        self.assertTrue((stats['minpos'] == [138, 130,   0, 207]).all())
-        self.assertEqual(stats['minposf'], '09:49:35.225, +30.23.47.717, I, 2.520204e+11Hz') 
-        self.assertEqual(stats['npts'], 25891736)
-        self.assertAlmostEqual(stats['q1'][0], 0.00092617, 6)
-        self.assertAlmostEqual(stats['q3'][0], 0.00308212, 6)
-        self.assertAlmostEqual(stats['quartile'][0], 0.00215594, 6)
-        self.assertAlmostEqual(stats['rms'][0], 0.0023352, 6)
-        self.assertAlmostEqual(stats['sigma'][0], 0.00119857, 6)
-        self.assertAlmostEqual(stats['sum'][0], 51890.79546682, 6)
-        self.assertAlmostEqual(stats['sumsq'][0], 141.19227439, 6)
-        self.assertTrue((stats['trc'] == [500, 500,   0, 250]).all())
-        self.assertEqual(stats['trcf'], '09:49:33.210, +30.24.14.357, I, 2.520099e+11Hz')
-
     def test_internal_region_exclusion(self):
         """Verify data not returned for internally excluded regions"""
         myia = image()
@@ -727,39 +393,24 @@ class imstat_test(unittest.TestCase):
         self.assertTrue((zz['npts'].shape == (42, 2)))
         self.assertTrue(numpy.min(zz['npts']) > 0)
 
-    def test_CAS_10906(self):
-        """Test fix to CAS-10906, accouting issue when computing median"""
-        myia = image()
-        imagename = os.path.join(self.datapath,"CAS-10906.im")
-        myia.open(imagename)
-        # running successfully verifies that the issue has been resolved
-        self.assertTrue(myia.statistics(robust=True))
-        myia.done()
-        
     def test_biweight(self):
         """Test biweight algorithm CAS-11100"""
         myia = image()
         imagename = os.path.join(self.datapath,"biweight_test.im")
-        for i in (0, 1):
-            for niter in (20, 2, -1):
-                if i == 0:
-                    myia.open(imagename)
-                    res = myia.statistics(algorithm='b', niter=niter)
-                    myia.done()
-                else:
-                    res = imstat(imagename=imagename, algorithm='b', niter=niter)
-                self.assertAlmostEqual(res['min'][0], -5.48938513)
-                self.assertAlmostEqual(res['max'][0], 104.80391693)
-                self.assertEqual(res['npts'][0], 1.25000000e+08)
-                if niter == 20:
-                    self.assertAlmostEqual(res['sigma'][0], 1.02012422703)
-                    self.assertAlmostEqual(res['mean'][0], -5.43024227e-06)
-                elif niter == 2:
-                    self.assertAlmostEqual(res['sigma'][0], 1.02012435686)
-                    self.assertAlmostEqual(res['mean'][0], 0.00026525095639)
-                elif niter == -1:
-                    self.assertAlmostEqual(res['sigma'][0], 1.02031194)
-                    self.assertAlmostEqual(res['mean'][0], 0.00284497)
+        for niter in (20, 2, -1):
+            res = imstat(imagename=imagename, algorithm='b', niter=niter)
+            self.assertAlmostEqual(res['min'][0], -5.48938513)
+            self.assertAlmostEqual(res['max'][0], 104.80391693)
+            self.assertEqual(res['npts'][0], 1.25000000e+08)
+            if niter == 20:
+                self.assertAlmostEqual(res['sigma'][0], 1.02012422703)
+                self.assertAlmostEqual(res['mean'][0], -5.43024227e-06)
+            elif niter == 2:
+                self.assertAlmostEqual(res['sigma'][0], 1.02012435686)
+                self.assertAlmostEqual(res['mean'][0], 0.00026525095639)
+            elif niter == -1:
+                self.assertAlmostEqual(res['sigma'][0], 1.02031194)
+                self.assertAlmostEqual(res['mean'][0], 0.00284497)
 
 def suite():
     return [imstat_test]
