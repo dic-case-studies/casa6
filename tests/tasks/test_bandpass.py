@@ -46,7 +46,7 @@ class test_base(unittest.TestCase):
 #        if testmms:
 #            self.msfile = prefix + '.mms'
 
-        self.reffile = datapath + prefix
+        self.reffile = os.path.join(datapath, prefix)
         self.cleanUp()
         
         fpath = os.path.join(datapath,self.msfile)
@@ -64,7 +64,7 @@ class test_base(unittest.TestCase):
 #        if testmms:
 #            self.msfile = prefix + '.mms'
 
-        self.reffile = datapath + prefix
+        self.reffile = os.path.join(datapath, prefix)
         self.cleanUp()
         
         fpath = os.path.join(datapath,self.msfile)
@@ -92,7 +92,7 @@ class bandpass1_test(test_base):
         bandpass(vis=self.msfile, caltable=msbcal, field='0',uvrange='>0.0',
                  bandtype='B',solint='inf',combine='scan',refant='VA15')
         self.assertTrue(os.path.exists(msbcal))
-                
+
         # Compare the calibration tables
         self.assertTrue(th.compTables(msbcal, reference, ['WEIGHT']))
 
@@ -118,7 +118,7 @@ class bandpass2_test(test_base):
                  field='0',spw='0',bandtype='B',
                  solint='inf',combine='scan',refant='ANT5')
         self.assertTrue(os.path.exists(msbcal))
-        
+
         # Compare the calibration tables
         self.assertTrue(th.compTables(msbcal, reference, ['WEIGHT']))
 
