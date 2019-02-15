@@ -539,6 +539,30 @@ AgentFlagger::parseAgentParameters(Record agent_params)
 	return true;
 }
 
+/*
+ * Build a string with a list of agents, for logging purposes. Uses the names they have in
+ * the mode parameter, for example display, rflag, summary, etc. rather than the more
+ * internal names of the agent classes.
+ *
+ * @param agents list of agents (items as casacore records, with a "mode" field)
+ * @return a comma separated list of agents
+ */
+std::string buildListAgentNames(std::vector<Record> agents) {
+    std::string all;
+    if (!agents.empty()) {
+        auto elem = agents.cbegin();
+        String mode;
+        elem->get("mode", mode);
+        all += mode;
+
+        elem->get("mode", mode);
+        while (++elem != agents.cend()) {
+            elem->get("mode", mode);
+            all += ", " + mode;
+        }
+    }
+    return all;
+}
 
 // ---------------------------------------------------------------------
 // AgentFlagger::initAgents
@@ -566,15 +590,17 @@ AgentFlagger::initAgents()
 	}
 
 
-	os<< LogIO::DEBUG1<< "There are initially "<< agents_config_list_p.size()<<
-			" agents in the list"<<LogIO::POST;
+	os << LogIO::NORMAL << "There are initially "<< agents_config_list_p.size()<<
+            " agents in the list. Agents: "
+           << buildListAgentNames(agents_config_list_p) << LogIO::POST;
 
 	size_t list_size = agents_config_list_p.size();
 
 	// Send the logging of the re-applying agents to the debug
 	// as we are only interested in seeing the unapply action (flagcmd)
 	Bool retstate = true;
-
+        // Just to log this info
+        std::vector<Record> agents_config_list_filtered;
 	// Loop through the vector of agents
 	for (size_t i=0; i < list_size; i++) {
 
@@ -597,17 +623,26 @@ AgentFlagger::initAgents()
          * Special considerations for some agents
          */
 
+        size_t maxSizeWhenAvg = 2;
+        if (0 == mode.compare("clip")) {
+            maxSizeWhenAvg = 1;
+        }
         // If clip agent is mixed with other agents and time average is true, skip it
-        if ((mode.compare("clip") == 0 and list_size > 1) or
-        		(mode.compare("rflag") == 0 and list_size > 2) or
-        		(mode.compare("tfcrop") == 0 and list_size > 2))
+        if ((mode.compare("clip") == 0 and list_size > maxSizeWhenAvg) or
+            (mode.compare("rflag") == 0 and list_size > maxSizeWhenAvg) or
+            (mode.compare("tfcrop") == 0 and list_size > maxSizeWhenAvg))
         {
             Bool tavg = false;
-        	int exists = agent_rec.fieldNumber ("timeavg");
-        	if (exists >= 0) agent_rec.get("timeavg", tavg);
+            int exists = agent_rec.fieldNumber ("timeavg");
+            if (exists >= 0) {
+                agent_rec.get("timeavg", tavg);
+            }
 
             if (tavg){
-                os << LogIO::WARN << "Cannot have " << mode <<" mode with timeavg/channelavg=True in list mode" << LogIO::POST;
+                os << LogIO::WARN << "Cannot have " << mode << " mode with timeavg/"
+                    "channelavg=True and more than " << maxSizeWhenAvg << " agents (for "
+                    "example when using extendflags, display, etc. or in list mode). Agent "
+                    "will be ignored!" << LogIO::POST;
                 continue;
             }
         }
@@ -618,9 +653,9 @@ AgentFlagger::initAgents()
         	int exists = agent_rec.fieldNumber ("quackincrement");
         	if (exists >= 0) agent_rec.get("quackincrement", quackincrement);
 
-			if (quackincrement){
-        		os << LogIO::WARN << "Cannot have quackincrement=True in list mode. Agent will be ignored!" << LogIO::POST;
-        		continue;
+                if (quackincrement){
+                    os << LogIO::WARN << "Cannot have quackincrement=True in list mode. Agent quack will be ignored!" << LogIO::POST;
+                    continue;
         	}
         }
 
@@ -721,11 +756,11 @@ AgentFlagger::initAgents()
 
 		// Add the agent to the FlagAgentList
 		agents_list_p.push_back(fa);
-
-
+                agents_config_list_filtered.push_back(agent_rec);
 	}
-	os << LogIO::NORMAL << "There are "<< agents_list_p.size()<<" valid agents in list"<<
-			LogIO::POST;
+	os << LogIO::NORMAL << "There are "<< agents_list_p.size()
+           <<" valid agents in the list. Agents: "
+           << buildListAgentNames(agents_config_list_filtered) << LogIO::POST;
 
 	// Clear the list so that this method cannot be called twice
 	agents_config_list_p.clear();
@@ -773,7 +808,8 @@ AgentFlagger::run(Bool writeflags, Bool sequential)
 	fdh_p->generateIterator();
 
 	agents_list_p.start();
-	os << LogIO::DEBUGGING << "Size of agent's list is " << agents_list_p.size()<< LogIO::POST;
+	os << LogIO::DEBUGGING << "Generated iterators. Start loop over chunks / agents. "
+            "Size of agents list is " << agents_list_p.size() << LogIO::POST;
 
 	// iterate over chunks
 	while (fdh_p->nextChunk())
@@ -788,8 +824,9 @@ AgentFlagger::run(Bool writeflags, Bool sequential)
 			agents_list_p.apply(sequential);
 
 			// Flush flags to MS
-			if (writeflags)
+			if (writeflags) {
 				fdh_p->flushFlags();
+                        }
 		}
 
 		// Print the chunk summary stats
@@ -1492,6 +1529,9 @@ AgentFlagger::parseAntIntParameters(String field, String spw, String /* array */
 // AgentFlagger::parseExtendParameters
 // Parse data selection parameters and specific extend parameters
 //
+// This method is called from parseAgentParameters, and it calls parseAgentParameters
+// again, passing a record set up for a "extend" agent. That way, an extend agent
+// is added after the main (RFlag or TFcrop) agent.
 // ---------------------------------------------------------------------
 bool
 AgentFlagger::parseExtendParameters(String field, String spw, String array, String feed, String scan,
