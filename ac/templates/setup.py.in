@@ -413,6 +413,10 @@ def __load_properties(filepath, sep='=', comment_char='#'):
 build = __load_properties(__os.path.join(__os.path.dirname(__file__),'build.properties'))
 build['build.compiler.xml-casa'] = __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','bin','xml-casa')
 
+build['build.flags.compile.grpc'] = [ '-I' + __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','include') ]
+build['build.flags.link.grpc'] = [ '-L' + __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','lib'), '-lgrpc++', '-lgrpc', '-lgpr', '-lprotobuf' ]
+build['build.compiler.protoc'] = __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','bin','protoc')
+
 """)
 
 
