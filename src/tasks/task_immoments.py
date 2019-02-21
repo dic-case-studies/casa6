@@ -101,14 +101,18 @@ def immoments(
     casalog.origin('immoments')
     _myia = image( )
     try:
+        if (len(outfile) == 0):
+            raise Exception("outfile must be specified")
         _myia.dohistory(False)
         # First check to see if the output file exists.  If it
         # does then we abort.  CASA doesn't allow files to be
         # over-written, just a policy.
-        if ( len( outfile ) > 0 and os.path.exists( outfile ) ):
-            raise Exception( 'Output file, '+outfile+\
-              ' exists. immoment can not proceed, please\n'\
-              'remove it or change the output file name.' )
+        if os.path.exists(outfile):
+            raise Exception(
+                'Output file, ' + outfile +
+                ' exists. immoment can not proceed, please\n'\
+                'remove it or change the output file name.' 
+            )
         elif ( len( outfile ) ==  1 ):
             raise Exception( 'outfile is not specified but must be' )
         _myia.open(imagename)
@@ -118,8 +122,6 @@ def immoments(
         )
         if isinstance(axis, str):
              axis = _myia.coordsys().findaxisbyname(axis)
-        print("stretch>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ",stretch)
-        print("mask>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ",mask)
         outia = _myia.moments(
             moments=moments, axis=int(axis), mask=mask,
             region=reg, includepix=cvt.as_list(includepix),
@@ -140,9 +142,8 @@ def immoments(
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         return True
-    except Exception as x:
-        _myia.done()
-        print('*** Error ***: ' + str(x))
+    except Exception as instance:
+        casalog.post('*** Error *** ' + str(instance), 'SEVERE') 
         raise
     finally:
         _myia.done()

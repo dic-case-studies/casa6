@@ -81,7 +81,7 @@ def imcollapse(
     outia = None
 
     try :
-        if (len(outfile) == 0):
+        if len(outfile) == 0:
             raise Exception("outfile must be specified")
         myia.dohistory(False)
         if (not myia.open(imagename)):
@@ -103,7 +103,7 @@ def imcollapse(
         outia.done()
         return True
     except Exception as instance:
-        casalog.post('*** Error *** %s' % instance, 'SEVERE')
+        casalog.post('*** Error *** ' + str(instance), 'SEVERE')
         raise
     finally:
         if myia:
