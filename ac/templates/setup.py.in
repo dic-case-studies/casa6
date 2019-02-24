@@ -535,7 +535,16 @@ def build_grpc( prefix, srcdir, collectdir ):
     if os.path.isdir("grpc-source"):
 
         if not os.path.isdir(srcdir):
-            print("copying the source directory...")
+
+            real_gnu = False
+            proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
+            out,err = pipe_decode(proc.communicate( ))
+            if len([s for s in (out + err).split('\n') if s.startswith("gcc version ")]) > 0 :
+                if sys.platform == 'darwin':
+                    print('using real GNU compiler on OSX...')
+                real_gnu = True
+
+            print("copying the grpc source directory...")
             run_process( ["rsync","-aq","grpc-source/",srcdir], err='could not copy the grpc source tree' )
             #### need to set @rpath/ prefix for install name...
             makefile = "%s/Makefile" % srcdir
@@ -543,6 +552,10 @@ def build_grpc( prefix, srcdir, collectdir ):
                 with open(makefile) as fd:
                     s = fd.read()
                 s = s.replace('-install_name ', '-install_name $(RPATH_DIR)')
+                if sys.platform == 'darwin' and real_gnu:
+                    s = s.replace('CXXFLAGS += -stdlib=libc++','')
+                    ### it could be that replacing DEFAULT_CXX should be done in all cases
+                    s = s.replace('$(DEFAULT_CXX)',props['build.compiler.cxx'])
                 with open(makefile, "w") as fd:
                     fd.write(s)
 
@@ -708,6 +721,8 @@ def customize_compiler(self):
     I found this reference useful:
     https://github.com/rmcgibbo/npcuda-example/blob/master/cython/setup.py
     """
+
+    self.compiler_cxx = [ props['build.compiler.cxx'] ]
 
     # make it swallow fortran files....
     self.src_extensions.extend( [".f",".f90"] )
