@@ -216,6 +216,15 @@ def distutils_dir_name(dname):
     f = "{dirname}.{platform}-{version[0]}.{version[1]}"
     return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
 
+def distutils_shared_library_name(base):
+    shared_ext = "dylib" if sys.platform == 'darwin' else "so"
+    f = "lib{name}.{abi}.{ext}"
+    return f.format(name=base, abi=sysconfig.get_config_var('SOABI'), ext=shared_ext)
+
+def distutils_loadable_object(base):
+    f = "_{name}{so}"
+    return f.format(name=base,so=sysconfig.get_config_var('SO'))
+
 def sakura_files( ):
     return [ 'sakura-source/src/baseline.cc', 'sakura-source/src/bit_operation.cc',
              'sakura-source/src/bool_filter_collection.cc', 'sakura-source/src/concurrent.cc',
@@ -535,7 +544,6 @@ def build_grpc( prefix, srcdir, collectdir ):
     if os.path.isdir("grpc-source"):
 
         if not os.path.isdir(srcdir):
-
             real_gnu = False
             proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
             out,err = pipe_decode(proc.communicate( ))
@@ -572,7 +580,8 @@ def build_grpc( prefix, srcdir, collectdir ):
             mkpath(collectdir_arg)
 
             print("building google grpc...")
-            run_process( ["make", "RPATH_DIR=@rpath/", "prefix=%s" % prefix_arg, "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "VERBOSE=1", "install"],
+            run_process( [ "make", "RPATH_DIR=@rpath/", "prefix=%s" % prefix_arg,
+                           "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "VERBOSE=1", "install"],
                          err='build of grpc failed', dir=srcdir_arg, env=extra_env )
 
             print("installing google protobuf...")
@@ -1077,6 +1086,92 @@ class casa_binary_dist(Distribution):
     def is_pure(self):
         return False
 
+class create_makefile(Command):
+    user_options = [
+      # The format is (long option, short option, description).
+#     ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
+    ]
+
+
+    def initialize_options(self):
+        print("setting up options")
+
+    def finalize_options(self):
+        pass
+
+    def __build_developer_grpc(self):
+        if not os.path.exists('.built.grpc'):
+            # hopefully this will replace dbus
+            build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                        os.path.join('build', distutils_dir_name('grpc')),
+                        os.path.join('build', distutils_dir_name('grpc-install')) )
+            build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                            os.path.join('build', distutils_dir_name('protobuf')),
+                            os.path.join('build', distutils_dir_name('grpc-install')) )
+            open(".built.grpc",'a').close( )
+
+
+    def __generate_casa_makefile(self):
+        CODE_SRC = source_files( "casa-source/code", file_suffix_filter=".cc",
+                                 subdir_filter=[ 'tests','test','apps','display','plotms','guitools','display3d','demo',
+                                                 'casaqt','convert','Filling','ImagerObjects2'],
+                                 file_filter=['MeasurementComponents/rGridFT.cc'],
+                                 path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc'] )
+        CORE_SRC = source_files( "casa-source/casacore",file_suffix_filter=".cc" )
+        SAKURA_SRC = sakura_files( )
+        CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
+        cpp_obj = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o: {src}\n\t{cc} {flags} $< -o $@\n'
+        with open("makefile","w") as mk:
+            for s in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
+                b = os.path.splitext(s)[0]
+                mk.write(cpp_obj.format(base=b,src=s,cc=props['build.compiler.cxx'],flags="-fill-in-flags-here"))
+            
+        print("------------------------------c++-----------------------------------" )
+        for f in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
+            print(f)
+
+        print("------------------------------yacc----------------------------------" )
+        CASACORE_YACC = source_files("casa-source/casacore",file_suffix_filter=".yy")
+        CODE_YACC = source_files( "casa-source/code",file_suffix_filter=".yy",
+                                  subdir_filter=[ 'tests','test','apps','display','plotms',
+                                                  'guitools','display3d','demo','casaqt','Filling' ] )
+        for f in CASACORE_YACC + CODE_YACC:
+            print(f)
+
+
+        print("------------------------------lex-----------------------------------" )
+        CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
+        CODE_LEX = source_files( "casa-source/code",file_suffix_filter=".ll",
+                                 subdir_filter=[ 'tests','test','apps','display','plotms','guitools',
+                                                 'display3d','demo','casaqt','Filling' ])
+        for f in CASACORE_LEX + CODE_LEX:
+            print(f)
+
+        print("------------------------------tool-xml------------------------------" )
+        TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
+        for f in TOOL_XML:
+            print(f)
+
+        print("------------------------------c++-----------------------------------" )
+        for f in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
+            print(f)
+
+        print("------------------------------c-------------------------------------" )
+        MIR_SRC =  source_files( "casa-source/casacore/mirlib",file_suffix_filter=".c" )
+        for f in MIR_SRC:
+            print(f)
+
+        print("------------------------------fortran-------------------------------" )
+        CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f")
+        CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f")
+        for f in CORE_F77 + CODE_F77:
+            print(f)
+
+
+    def run(self):
+        self.__build_developer_grpc( )
+        self.__generate_casa_makefile( )
+
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
     targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print(sys.executable)"])).split('\n')[0]
@@ -1226,8 +1321,8 @@ if __name__ == '__main__':
            classifiers=filter(None, classifiers.split("\n")),
            package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
            packages=[module_name],
-           cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build } \
+           cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build, 'genmake': create_makefile } \
                                    if wheel_build \
-                                   else { 'build_ext': casa_build_ext, 'test': casa_test },
+                                   else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile },
            ext_modules=ext,
            install_requires=[ 'numpy' ] )
