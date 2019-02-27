@@ -359,8 +359,9 @@ class asdm_import1(test_base):
         shutil.rmtree(myms_dataset_name)
         shutil.rmtree(msname,ignore_errors=True)
         shutil.rmtree(msname+'.flagversions',ignore_errors=True)
-        os.system('rm -rf reimported-M51.ms*')
-
+        for thisdir in ['reimported-M51.ms','reimported-M51.ms.flagversions','M51.ms.asdm','myinput.ms']:
+            shutil.rmtree(thisdir,ignore_errors=True)
+                
     def test1(self):
         '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -526,8 +527,8 @@ class asdm_import2(test_base):
         shutil.rmtree(myms_dataset_name)
         shutil.rmtree(msname,ignore_errors=True)
         shutil.rmtree(msname+'.flagversions',ignore_errors=True)
-        shutil.rmtree('myinput.ms', ignore_errors=True)
-        shutil.rmtree('M51.ms.asdm', ignore_errors=True)
+        for thisdir in ['reimported-M51.ms','reimported-M51.ms.flagversions','M51.ms.asdm','myinput.ms']:
+            shutil.rmtree(thisdir,ignore_errors=True)
 
     def test_import2(self):
         '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
@@ -847,6 +848,8 @@ class asdm_import6(test_base):
         os.system('rm '+myasdmname) # a link
         shutil.rmtree(msname,ignore_errors=True)
         shutil.rmtree(msname+'.flagversions',ignore_errors=True)
+        shutil.rmtree(myasdmname+'.ms',ignore_errors=True)
+        shutil.rmtree(myasdmname+'.ms.flagversions',ignore_errors=True)
         os.system('rm -rf reference.ms*')
 
     def test6_lazy1(self):
@@ -987,7 +990,8 @@ class asdm_import7(test_base):
             os.system('rm -f '+myasdmname) # a link
             shutil.rmtree(myasdmname+".ms",ignore_errors=True)
             shutil.rmtree(myasdmname+'.ms.flagversions',ignore_errors=True)
-            shutil.rmtree("reference.ms",ignore_errors=True)
+        shutil.rmtree("reference.ms",ignore_errors=True)
+        shutil.rmtree("reference.ms.flagversions",ignore_errors=True)
 
     def test7_lazy1(self):
         '''Asdm-import: Test good 12 m ASDM with mixed pol/channelisation input with default filler in lazy mode'''
@@ -2118,9 +2122,8 @@ class asdm_import8(test_base):
         self.setUp_numbin()
 
     def tearDown(self):
-        pass
-        #for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4']:
-        #    os.system('rm -rf '+this_asdm_name+"*")
+        for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4']:
+            os.system('rm -rf '+this_asdm_name+"*")
 
     def doNumTest(self, testName, asdm_name, ms_name, spWin_name, execBlock_name, expWinFunCol, expNumBinCol, expResCol):
         retValue = {'success': True, 'error_msgs': '' } 
