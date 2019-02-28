@@ -1,6 +1,6 @@
 import os
 
-from casatools import image
+from casatools import imager
 from casatasks import casalog
 
 
@@ -31,7 +31,7 @@ def feather(imagename=None,highres=None,lowres=None, sdfactor=None, effdishdiam=
         casalog.origin('feather')
 
         try:
-                imFea=image( )
+                imFea=imager( )
                 imFea.setvp(dovp=True)
                 imFea.setsdoptions(scale=sdfactor)
                 imFea.feather(image=imagename,highres=highres,lowres=lowres, effdishdiam=effdishdiam,  lowpassfiltersd=lowpassfiltersd)
