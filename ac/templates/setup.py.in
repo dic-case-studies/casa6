@@ -719,6 +719,34 @@ module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION
                                         '-DUSE_THREADS', '-DCASATOOLS' ] + [ '-DWITHOUT_DBUS' ] if props['option.dbus'] == "0" else [ ]  +
                                         platform_cflags[sys.platform] }
 
+def get_ccache():
+    return [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
+
+def get_cflags():
+    cflags = map(
+        lambda pair: pair[1],
+        filter(lambda pair: pair[0].startswith('build.flags.compile') and "boost" not in pair[0],props.items())
+    )
+    cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
+    if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
+        cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
+                                                                      ###     /usr/include (e.g. rhel6)
+    return cflags
+
+def get_new_cxx_compiler_flags():
+    return ['-g', '-std=c++11']
+
+def get_new_cxx_compiler_includes():
+    return [
+        '-Ibinding/include', '-Ibinding/generated/include', '-Ilibcasatools/generated/include',
+        '-Icasa-source/code', '-Icasa-source', '-Icasa-source/casacore', '-Iinclude',
+        '-Isakura-source/src'
+    ]
+
+def get_use_grpc():
+   return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] ) 
+     
+
 def customize_compiler(self):
     """inject customization into distutils.
 
@@ -741,13 +769,17 @@ def customize_compiler(self):
     default_linker_so = self.linker_so
     supercc = self._compile
     superld = self.link
-    ccache = [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
-    cflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.compile') and "boost" not in pair[0],props.items()))
-    cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
-    if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
-        cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
-                                                                      ###     /usr/include (e.g. rhel6)
-    new_compiler_cxx = ccache + [props['build.compiler.cxx'], '-g', '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', '-Isakura-source/src'] + cflags + default_compiler_so[1:]
+    # ccache = [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
+    ccache = get_ccache()
+    # cflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.compile') and "boost" not in pair[0],props.items()))
+    #cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
+    #if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
+    #    cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
+    cflags = get_cflags()                                                                 ###     /usr/include (e.g. rhel6)
+    new_compiler_cxx = (
+        ccache + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags() 
+        + get_new_cxx_compiler_includes() + cflags + default_compiler_so[1:]
+    )
     new_compiler_cc = ccache + [props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
 
@@ -836,7 +868,8 @@ def customize_compiler(self):
             ## get the cflags for the module being built; key is a subdir, value are flags
             m_cflags = map(lambda x: x[1] if x[0] in src else [], module_cflags.items())
             m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
-            self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )))
+            #self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )))
+            self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + get_use_grpc()))
             supercc(obj, src, ext, clean_args(cc_args), clean_args(postargs), clean_args(pp_opts))
 
         # reset the default compiler_so (may not be necessary)
@@ -1120,17 +1153,36 @@ class create_makefile(Command):
         CORE_SRC = source_files( "casa-source/casacore",file_suffix_filter=".cc" )
         SAKURA_SRC = sakura_files( )
         CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
-        cpp_obj = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o: {src}\n\t{cc} {flags} $< -o $@\n'
+        cpp_obj = (
+            os.path.join('build',distutils_dir_name('temp')) + os.sep
+            + '{base}.o: {src}\n\t{cc} {flags} {includes} {cflags} {dflags} $< -o $@\n'
+        )
+        src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM]
+        cflags = [module_cflags['/code/'], module_cflags['/casacore/'], platform_cflags[sys.platform], platform_cflags[sys.platform]]
+        sep = ' '
+        includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
+        flags = sep.join(get_new_cxx_compiler_flags())
+        cc = sep.join(get_ccache() + [props['build.compiler.cxx']])
+        add_cflags = sysconfig.get_config_var('CFLAGS')
+        duse_grpc = get_use_grpc()
         with open("makefile","w") as mk:
-            for s in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
-                b = os.path.splitext(s)[0]
-                mk.write(cpp_obj.format(base=b,src=s,cc=props['build.compiler.cxx'],flags="-fill-in-flags-here"))
+            #for s in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
+            for (mysrc, myflags) in zip(src, cflags):
+                dflags = sep.join(myflags + duse_grpc)
+                for s in mysrc:
+                    b = os.path.splitext(s)[0]
+                    mk.write(
+                        cpp_obj.format(
+                            base=b,src=s, cc=cc, flags=flags, includes=includes, 
+                            cflags=add_cflags, dflags=dflags
+                        )
+                    )
             
-        print("------------------------------c++-----------------------------------" )
+        # print("------------------------------c++-----------------------------------" )
         for f in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
             print(f)
 
-        print("------------------------------yacc----------------------------------" )
+        # print("------------------------------yacc----------------------------------" )
         CASACORE_YACC = source_files("casa-source/casacore",file_suffix_filter=".yy")
         CODE_YACC = source_files( "casa-source/code",file_suffix_filter=".yy",
                                   subdir_filter=[ 'tests','test','apps','display','plotms',
@@ -1139,7 +1191,7 @@ class create_makefile(Command):
             print(f)
 
 
-        print("------------------------------lex-----------------------------------" )
+        # print("------------------------------lex-----------------------------------" )
         CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
         CODE_LEX = source_files( "casa-source/code",file_suffix_filter=".ll",
                                  subdir_filter=[ 'tests','test','apps','display','plotms','guitools',
