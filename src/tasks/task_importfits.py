@@ -91,7 +91,7 @@ def importfits(fitsimage,imagename,whichrep,whichhdu,zeroblanks,overwrite,defaul
                     tmp = _myqa.toangle(qabeam[i])
                 except:
                     raise TypeError("Parameter beam[%s] is invalid (should be an angle): %s" % (i,beam[i]))
-            if (_myqa.convert(qabeam[0], 'arcsec') >= _myqa.convert(qabeam[1], 'arcsec')):
+            if (_myqa.convert(qabeam[0], 'arcsec')['value'] >= _myqa.convert(qabeam[1], 'arcsec')['value']):
                 addbeam = True
             else:
                 raise TypeError("Parameter beam[%s] is invalid (major axis must be >= minor axis): %s" % (i,beam))
