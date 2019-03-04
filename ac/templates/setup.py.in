@@ -1153,9 +1153,9 @@ class create_makefile(Command):
         CORE_SRC = source_files( "casa-source/casacore",file_suffix_filter=".cc" )
         SAKURA_SRC = sakura_files( )
         CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
+        obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         cpp_obj = (
-            os.path.join('build',distutils_dir_name('temp')) + os.sep
-            + '{base}.o: {src}\n\t{cc} {flags} {includes} {cflags} {dflags} -c $< -o $@\n'
+            obj_name + ': {src}\n\t{cc} {flags} {includes} {cflags} {dflags} -c $< -o $@\n'
         )
         src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM]
         cflags = [module_cflags['/code/'], module_cflags['/casacore/'], platform_cflags[sys.platform], platform_cflags[sys.platform]]
@@ -1165,19 +1165,23 @@ class create_makefile(Command):
         cc = sep.join(get_ccache() + [props['build.compiler.cxx']])
         add_cflags = sysconfig.get_config_var('CFLAGS')
         duse_grpc = get_use_grpc()
+        cpp_list = []
         with open("makefile","w") as mk:
             #for s in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
             for (mysrc, myflags) in zip(src, cflags):
                 dflags = sep.join(myflags + duse_grpc)
                 for s in mysrc:
                     b = os.path.splitext(s)[0]
+                    #cpp_list.append(os.path.join('build',distutils_dir_name('temp')) + os.sep + b + ".o")
+                    cpp_list.append(obj_name.format(base=b))
                     mk.write(
                         cpp_obj.format(
                             base=b,src=s, cc=cc, flags=flags, includes=includes, 
                             cflags=add_cflags, dflags=dflags
                         )
                     )
-            
+            mk.write(".PHONY: all\n")
+            mk.write("all: " + sep.join(cpp_list) + "\n")
         # print("------------------------------c++-----------------------------------" )
         for f in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
             print(f)
