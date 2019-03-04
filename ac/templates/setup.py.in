@@ -1155,7 +1155,7 @@ class create_makefile(Command):
         CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
         cpp_obj = (
             os.path.join('build',distutils_dir_name('temp')) + os.sep
-            + '{base}.o: {src}\n\t{cc} {flags} {includes} {cflags} {dflags} $< -o $@\n'
+            + '{base}.o: {src}\n\t{cc} {flags} {includes} {cflags} {dflags} -c $< -o $@\n'
         )
         src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM]
         cflags = [module_cflags['/code/'], module_cflags['/casacore/'], platform_cflags[sys.platform], platform_cflags[sys.platform]]
