@@ -295,11 +295,15 @@ def install_xml_casa( ):
     copy2(script,bindir)
     copy2(jar,javadir)
 
+def get_grpc_srcdir():
+    return os.path.join('build', distutils_dir_name('binding'),'grpc')
+
 def generate_grpc(protos):
     protoc = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "protoc")
     grpc_plugin = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "grpc_cpp_plugin")
     assert os.path.exists(grpc_plugin), 'gRPC plugin not found'
-    outdir=os.path.join('build', distutils_dir_name('binding'),'grpc')
+    #outdir=os.path.join('build', distutils_dir_name('binding'),'grpc')
+    outdir=get_grpc_srcdir()
     mkpath(outdir)
     for p in protos:
         assert os.path.isfile(p), "could not find gRPC proto '%s'" % p
@@ -1183,11 +1187,16 @@ class create_makefile(Command):
         cc = sep.join(get_ccache() + [props['build.compiler.cxx']])
         add_cflags = sysconfig.get_config_var('CFLAGS')
         duse_grpc = get_use_grpc()
+        grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()]
         cpp_list = []
         with open("makefile","w") as mk:
+            all_target = "all"
+            cpp_target = "cpp_compile"
+            mk.write(".PHONY: " + all_target + "\n")
+            mk.write(all_target + ": " + cpp_target + "\n")
             #for s in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
             for (mysrc, myflags) in zip(src, cflags):
-                dflags = sep.join(myflags + duse_grpc)
+                dflags = sep.join(myflags + duse_grpc + grpc_dirs)
                 for s in mysrc:
                     b = os.path.splitext(s)[0]
                     #cpp_list.append(os.path.join('build',distutils_dir_name('temp')) + os.sep + b + ".o")
@@ -1198,8 +1207,8 @@ class create_makefile(Command):
                             cflags=add_cflags, dflags=dflags
                         )
                     )
-            mk.write(".PHONY: all\n")
-            mk.write("all: " + sep.join(cpp_list) + "\n")
+            mk.write(".PHONY: " + cpp_target + "\n")
+            mk.write(cpp_target + ": " + sep.join(cpp_list) + "\n")
         # print("------------------------------c++-----------------------------------" )
         for f in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
             print(f)
@@ -1245,6 +1254,9 @@ class create_makefile(Command):
     def run(self):
         self.__build_developer_grpc( )
         self.__generate_casa_makefile( )
+
+def get_grpc_incdir():
+    return os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
 
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
@@ -1311,7 +1323,8 @@ if __name__ == '__main__':
     else:
         grpc_srcdir = ""
 
-    grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
+    # grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
+    grpc_incdir = get_grpc_incdir()
     GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
     BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
     CODE_SRC = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
