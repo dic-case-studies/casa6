@@ -19,6 +19,7 @@ m4_include([ac/m4/m4_ax_expand_path.m4])
 m4_include([ac/m4/m4_ax_lib_stdcxx.m4])
 m4_include([ac/m4/m4_ax_libsakura.m4])
 m4_include([ac/m4/m4_ax_libxml2.m4])
+m4_include([ac/m4/m4_ax_openmp.m4])
 m4_include([ac/m4/m4_ax_path_to_binary.m4])
 m4_include([ac/m4/m4_ax_pthread.m4])
 m4_include([ac/m4/m4_ax_python_devel.m4])
@@ -45,10 +46,10 @@ AC_ARG_ENABLE([grpc], [  --disable-grpc          compile in support for gRPC],
 )
 AC_SUBST(WITH_GRPC)
 
-
 AC_LANG(C++)
 
 AX_CXX11($PATH)
+AC_SUBST(OPENMP_CXXFLAGS)
 
 if [[ "${ac_success}" = "no" ]]; then
     dnl#############################################################################################
@@ -114,12 +115,37 @@ AX_LIB_STDCXX
 dnl#################################################################################################
 dnl###  add C++ compiler path to start of PATH to try and find matching c/fortran compilers      ###
 dnl#################################################################################################
+AC_MSG_NOTICE([c++ compiler is $CXX])
 save_PATH_save=${PATH}
-PATH=$(dirname $CXX)${PATH_SEPARATOR}${PATH}
+### have to protect against picking up C compiler from places other than
+### where the C++ compiler is found...
+temporary_script_dir=/tmp/casatools-config-$$
+AC_MSG_NOTICE([ temporary directory $temporary_script_dir ])
+current_directory=`pwd`
+AC_MSG_NOTICE([creating $temporary_script_dir])
+mkdir $temporary_script_dir
+if [[ $? -ne 0 ]] ; then
+   AC_MSG_NOTICE([creation of temporary directory $temporary_script_dir failed])
+   exit 1
+fi
+cd $temporary_script_dir
+ln -s `which sed`
+ln -s `which rm`
+ln -s `which dirname`
+ln -s `which basename`
+ln -s `which grep`
+cd $current_directory
 
-AC_PROG_CC
+PATH=$(dirname ${CXX}):/bin:$temporary_script_dir
+
+if [[ "$host_osname" = "darwin" ]]; then
+    AC_PROG_CC([clang cc gcc gcc-mp-5])
+else
+    AC_PROG_CC([gcc cc clang])
+fi
 AX_PATH_TO_BINARY(${CC},CC)
 AC_MSG_NOTICE([C compiler ${CC}])
+PATH=$(dirname ${CXX})${PATH_SEPARATOR}${PATH}
 
 AC_LANG_PUSH([C])
 AX_CHECK_COMPILE_FLAG(-fcx-fortran-rules,[CC_FORTRAN_COMPLEX=-fcx-fortran-rules],[CC_FORTRAN_COMPLEX=])
@@ -240,6 +266,11 @@ AS_IF([ test "x$HAVE_EIGEN" = "x0" ], [
     FETCHED_EIGEN=0
 ])
 AC_SUBST(FETCHED_EIGEN)
+
+if [[ -d "$temporary_script_dir" ]] ; then
+    AC_MSG_NOTICE([removing $temporary_script_dir])
+    rm -rf $temporary_script_dir
+fi
 
 AC_CONFIG_FILES(build.properties:ac/templates/build.in)
 AC_CONFIG_FILES(binding/source/version.cc:casa-source/code/stdcasa/version.cc.in)

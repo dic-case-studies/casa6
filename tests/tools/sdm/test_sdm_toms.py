@@ -337,6 +337,15 @@ class test_base(unittest.TestCase):
         datapath=ctsys.resolve(os.path.join('regression/alma-sd/M100',myasdmname))
         os.system('ln -sf '+datapath)
 
+    def setUp_numbin(self):
+        res = None
+        # need full copies as this test involves renaming some xml files
+        datapath=ctsys.resolve('regression/asdm-import/input')
+        for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4']:
+            if (os.path.exists(this_asdm_name)):
+                shutil.rmtree(this_asdm_name)
+            shutil.copytree(os.path.join(datapath,this_asdm_name), this_asdm_name)
+
 
 ###########################
 # beginning of actual test
@@ -350,8 +359,9 @@ class asdm_import1(test_base):
         shutil.rmtree(myms_dataset_name)
         shutil.rmtree(msname,ignore_errors=True)
         shutil.rmtree(msname+'.flagversions',ignore_errors=True)
-        os.system('rm -rf reimported-M51.ms*')
-
+        for thisdir in ['reimported-M51.ms','reimported-M51.ms.flagversions','M51.ms.asdm','myinput.ms']:
+            shutil.rmtree(thisdir,ignore_errors=True)
+                
     def test1(self):
         '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -517,8 +527,8 @@ class asdm_import2(test_base):
         shutil.rmtree(myms_dataset_name)
         shutil.rmtree(msname,ignore_errors=True)
         shutil.rmtree(msname+'.flagversions',ignore_errors=True)
-        shutil.rmtree('myinput.ms', ignore_errors=True)
-        shutil.rmtree('M51.ms.asdm', ignore_errors=True)
+        for thisdir in ['reimported-M51.ms','reimported-M51.ms.flagversions','M51.ms.asdm','myinput.ms']:
+            shutil.rmtree(thisdir,ignore_errors=True)
 
     def test_import2(self):
         '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
@@ -838,6 +848,8 @@ class asdm_import6(test_base):
         os.system('rm '+myasdmname) # a link
         shutil.rmtree(msname,ignore_errors=True)
         shutil.rmtree(msname+'.flagversions',ignore_errors=True)
+        shutil.rmtree(myasdmname+'.ms',ignore_errors=True)
+        shutil.rmtree(myasdmname+'.ms.flagversions',ignore_errors=True)
         os.system('rm -rf reference.ms*')
 
     def test6_lazy1(self):
@@ -978,7 +990,8 @@ class asdm_import7(test_base):
             os.system('rm -f '+myasdmname) # a link
             shutil.rmtree(myasdmname+".ms",ignore_errors=True)
             shutil.rmtree(myasdmname+'.ms.flagversions',ignore_errors=True)
-            shutil.rmtree("reference.ms",ignore_errors=True)
+        shutil.rmtree("reference.ms",ignore_errors=True)
+        shutil.rmtree("reference.ms.flagversions",ignore_errors=True)
 
     def test7_lazy1(self):
         '''Asdm-import: Test good 12 m ASDM with mixed pol/channelisation input with default filler in lazy mode'''
@@ -1133,6 +1146,25 @@ class asdm_import7(test_base):
                 except:
                     retValue['success'] = False
                     print("ERROR getting units of PRESSURE column in WEATHER table.")
+
+                try:
+                    # test that the SDM_WINDOW_FUNCTION column exists and has the exepcted values
+                    winFuncOK = tblocal.open(themsname+'/SPECTRAL_WINDOW')
+                    if winFuncOK:
+                        winFuncCol = tblocal.getcol('SDM_WINDOW_FUNCTION')
+                        tblocal.close()
+                        # test values here
+                        # expect 55 rows, rows 1:24 are HANNING, the rest are UNIFORM
+                        indx = numpy.arange(len(winFuncCol))
+                        winFuncOK = winFuncOK and (numpy.array_equal(indx[winFuncCol=="HANNING"],(numpy.arange(24)+1)))
+                        winFuncOK = winFuncOK and (len(indx[winFuncCol=="UNIFORM"])==31)
+
+                    retValue['success'] = winFuncOK and retValue['success']
+                    if not winFuncOK:
+                        print("SDM_WINDOW_FUNCTION column in the SPECTRAL_WINDOW table is missing or has incorrect values")
+                except:
+                    retValue['success'] = False
+                    print("ERROR checking the value of the SDM_WINDOW_FUNCTION column in the SPECTRAL_WINDOW table.")
 
         os.system("mv moved_"+myasdmname+" "+myasdmname)
 
@@ -2082,9 +2114,262 @@ class asdm_import7(test_base):
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
 
+class asdm_import8(test_base):
+    # these are more like unit tests, difficult to test without invoking all of importasdm
+    # currently this is just tests on SDM_NUM_BIN
+    
+    def setUp(self):
+        self.setUp_numbin()
+
+    def tearDown(self):
+        for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4']:
+            os.system('rm -rf '+this_asdm_name+"*")
+
+    def doNumTest(self, testName, asdm_name, ms_name, spWin_name, execBlock_name, expWinFunCol, expNumBinCol, expResCol):
+        retValue = {'success': True, 'error_msgs': '' } 
+        print(testName,": testing SDM columns in",asdm_name,' writing to ', ms_name)
+
+        originalSpWin = None
+        originalExecBlock = None
+
+        if spWin_name is not None:
+            print(testName,": using",spWin_name,"for SpectralWindow.xml")
+            spWin_path = os.path.join(asdm_name,spWin_name)
+            originalSpWin = os.path.join(asdm_name,"SpectralWindow.xml.original")
+            if not os.path.exists(spWin_path):
+                msg = spWin_path+" does not exist"
+                retValue['success'] = False
+                retValue['error_msgs'] = msg
+                return retValue
+            if os.path.exists(originalSpWin):
+                msg = originalSpWin+" already exists, will not overwrite"
+                retValue['success'] = False
+                retValue['error_msgs'] = msg
+                return retValue
+            shutil.move(os.path.join(asdm_name,'SpectralWindow.xml'),originalSpWin)
+            shutil.copyfile(spWin_path,os.path.join(asdm_name,'SpectralWindow.xml'))
+
+        if execBlock_name is not None:
+            print(testName,": using",execBlock_name,"for ExecBlock.xml")
+            execBlock_path = os.path.join(asdm_name,execBlock_name)
+            originalExecBlock = os.path.join(asdm_name,"ExecBlock.xml.original")
+            if not os.path.exists(execBlock_path):
+                msg = execBlock_path+" does not exist"
+                retValue['success'] = False
+                retValue['error_msgs'] = msg
+                return retValue
+            if os.path.exists(originalExecBlock):
+                msg = originalExecBlock+" already exists, will not overwrite"
+                retValue['success'] = False
+                retValue['error_msgs'] = msg
+                return retValue
+            shutil.move(os.path.join(asdm_name,'ExecBlock.xml'),originalExecBlock)
+            shutil.copyfile(execBlock_path,os.path.join(asdm_name,'ExecBlock.xml'))
+ 
+        mysdm = sdm(asdm_name)
+        self.res = mysdm.toms(vis=ms_name,lazy=True,process_syspower=False,process_caldevice=False,process_pointing=False,process_flags=False)
+
+        # the only table this test cares about is SPECTRAL_WINDOW
+        spwName = os.path.join(ms_name,"SPECTRAL_WINDOW")
+        if not os.access(spwName,os.F_OK):
+            print(testName,": Error ", spwName, "doesn't exist ...")
+            retValue['success'] = False
+            retValue['error_msgs']=spwName+' does not exist'
+        else:
+            ok = tblocal.open(spwName)
+            if (ok):
+                try:
+                    winFunCol = tblocal.getcol('SDM_WINDOW_FUNCTION')
+                    if not numpy.all(winFunCol==expWinFunCol):
+                        retValue['success'] = False
+                        msg = "ERROR Unexpected SDM_WINDOW_FUNCTION values when filling "+asdm_name
+                        retValue['error_msgs']=msg
+                        print(testName,":", msg)
+                except:
+                     retValue['success'] = False
+                     msg = "ERROR getting/testing SDM_WINDOW_FUNCTION column in "+spwName
+                     retValue['error_msgs']=msg
+                     print(testName,":",msg)
+
+                try:
+                    numBinCol = tblocal.getcol('SDM_NUM_BIN')
+                    if not numpy.all(numBinCol==expNumBinCol):
+                        retValue['success'] = False
+                        msg = "ERROR Unexpected SDM_NUM_BIN values when filling "+asdm_name
+                        # there may already be messages in error_msgs
+                        if len(retValue['error_msgs']>0):
+                            retValue['error_msgs']=retValue['error_msgs']+'\n'
+                        retValue['error_msgs']=retValue['error_msgs']+msg
+                        print(testName,":",msg)            
+                except:
+                    retValue['success'] = False
+                    msg = "ERROR getting/testing SDM_NUM_BIN column in "+spwName
+                    # there may already be messages in error_msgs
+                    if len(retValue['error_msgs'])>0:
+                        retValue['error_msgs']=retValue['error_msgs']+'\n'
+                    retValue['error_msgs']=retValue['error_msgs']+msg
+                    print(testName,":",msg)
+
+                # only test RESOLUTION values if expResCol is not None
+                if expResCol is not None:
+                    try:
+                        resCol = tblocal.getcol('RESOLUTION')
+                        # only test first value in each row, assumes all values in a row are equal
+                        resCol = resCol[0,:]
+                        if not numpy.all(resCol==expResCol):
+                            retValue['success'] = False
+                            msg = "ERROR Unexpected RESOLUTION values when filling "+asdm_name
+                            # there may already be messages in error_msgs
+                            if len(retValue['error_msgs']>0):
+                                retValue['error_msgs']=retValue['error_msgs']+'\n'
+                            retValue['error_msgs']=retValue['error_msgs']+msg
+                            print(testName,":",msg)         
+                    except:
+                        retValue['success'] = False
+                        msg = "ERROR getting/testing RESOLUTION column in "+spwName
+                        # there may already be messages in error_msgs
+                        if len(retValue['error_msgs'])>0:
+                            retValue['error_msgs']=retValue['error_msgs']+'\n'
+                        retValue['error_msgs']=retValue['error_msgs']+msg
+                        print(testName,":",msg)
+                tblocal.close()
+
+            else:
+                msg = "ERROR opening",spwName
+                retValue['success'] = False
+                retValue['error_msgs'] = msg
+                print(testName,":",msg)
+
+        if originalSpWin is not None:
+            os.remove(os.path.join(asdm_name,'SpectralWindow.xml'))
+            shutil.move(originalSpWin,os.path.join(asdm_name,'SpectralWindow.xml'))
+            print(testName,": restored original SpectralWindow.xml")
+
+        if originalExecBlock is not None:
+            os.remove(asdm_name+'/ExecBlock.xml')
+            shutil.move(originalExecBlock,os.path.join(asdm_name,'ExecBlock.xml'))
+            print(testName,": restored original ExecBlock.xml")
+
+        return retValue 
+
+    def test_alma_numbin(self):
+        retValue = {'success': True, 'error_msgs': '' } 
+
+        # original SpectralWindow.xml and inferred numBin  values
+        asdm_name = 'alma_numbin_mixed'
+        ms_name = asdm_name+".ms"
+        expWinFunCol = numpy.array(['UNIFORM']*5 + ['HANNING']*8 + ['UNIFORM']*4 + ['HANNING']*18 + ['UNIFORM']*42)
+        # expected values, 8 @ 24, 2 @ 27,29,31,33, rest are 1
+        expNumBinCol = numpy.ones(77,dtype=numpy.int32)
+        expNumBinCol[25] = 8
+        for indx in [27,29,31,33]:
+            expNumBinCol[indx] = 2
+        res = self.doNumTest(myname,asdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,None)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        # SpectralWindow.xml with appropriate numBin values, should yield same column values
+        ms_name = asdm_name+".numbin.ms"
+        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,None)
+        retValue['success'] = retValue['success'] and res['success']
+        retValue['error_msgs'] = retValue['error_msgs'] + res['error_msgs']
+
+        # SpectralWindow.xml with faked resolution and expectedBw values but no numBin, tests other inferred numBin values
+        expNumBinCol[5] = 4
+        expNumBinCol[7] = 16
+        ms_name = asdm_name+".faked.ms"
+        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.faked',None,expWinFunCol,expNumBinCol,None)
+        retValue['success'] = retValue['success'] and res['success']
+        retValue['error_msgs'] = retValue['error_msgs'] + res['error_msgs']
+
+        # SpectralWindow.xml with faked resolution and expectedBw values and added numBin values, same expected values as previous test
+        ms_name = asdm_name+".faked.numBin.ms"
+        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.faked.numBin',None,expWinFunCol,expNumBinCol,None)
+        retValue['success'] = retValue['success'] and res['success']
+        retValue['error_msgs'] = retValue['error_msgs'] + res['error_msgs']
+
+        self.assertTrue(retValue['success'],retValue['error_msgs'])
+
+    def test_evla_numbin(self):
+        retValue = {'success':True, 'error_msgs':''}
+
+        # numbin=2 related tests
+        sdm_name = 'evla_numbin_2'
+
+        # original SpectralWindow.xml and inferred numBin values, all equal to 2
+        expWinFunCol = numpy.array(['UNIFORM']*16)
+        expNumBinCol = numpy.empty(16,dtype=numpy.int32)
+        expNumBinCol.fill(2)
+        # also should alter resolution to these expected values
+        expResCol = numpy.empty(16)
+        expResCol.fill(4000000.)
+        ms_name = sdm_name+".ms"
+        res = self.doNumTest(myname,sdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,expResCol)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        # SpectralWindow.xml with numBin field and appropriately modified resolution, same expected values
+        ms_name = sdm_name+".numBin.ms"
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,expResCol)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        # SpectralWindow.xml with mostly numBin and alterned resolution, but one row has the original values, same expected values
+        ms_name = sdm_name+".mixed.ms"
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.mixed',None,expWinFunCol,expNumBinCol,expResCol)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        # original SpectralWindow.xml but with one non-physical (bad) value of resolution leading to the algorithm giving up and numBin=1 and resolution the original bad value
+        ms_name = sdm_name+".bad.ms"
+        expNumBinCol[0] = 1
+        expResCol[0] = 9000000.
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.bad',None,expWinFunCol,expNumBinCol,expResCol)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        # numbin=4 related tests
+        sdm_name = 'evla_numbin_4'
+        
+        # original SpectralWindow.xml and inferred numBin values, all equal to 4
+        expWinFunCol = numpy.array(['UNIFORM']*16)
+        expNumBinCol = numpy.empty(16,dtype=numpy.int32)
+        expNumBinCol.fill(4)
+        # also should alter resolution to these expected values
+        expResCol = numpy.empty(16)
+        expResCol.fill(8000000.)
+        ms_name = sdm_name+".ms"
+        res = self.doNumTest(myname,sdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,expResCol)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        # original SpectralWindow.xml with numBin field and altered resolution, same expected values
+        ms_name = sdm_name+".numBin.ms"
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,expResCol)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        # original SpectralWindow.xml with numBin field and original resolution
+        # expected numBin is the same, expected resolution is now the original values
+        expResCol /= 4.0
+        ms_name = sdm_name+".onlyNumBin.ms"
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.onlyNumBin',None,expWinFunCol,expNumBinCol,expResCol)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        # original SpectralWindow.xml and altered ExecBlock so that the telescope is UNKNOWN
+        # numBin is all 1 and expected resolution is the original resolution
+        expNumBinCol.fill(1)
+        ms_name = sdm_name+".unknownTel.ms"
+        res = self.doNumTest(myname,sdm_name,ms_name,None,'ExecBlock.xml.unknownTel',expWinFunCol,expNumBinCol,expResCol)
+        retValue['success'] = res['success']
+        retValue['error_msgs'] = res['error_msgs']
+
+        self.assertTrue(retValue['success'],retValue['error_msgs'])
+
 def suite():
     ### asdm_import4 should be resurected in the importasdm task test
-    return [asdm_import1, asdm_import2, asdm_import3, asdm_import5, asdm_import6, asdm_import7]
+    return [asdm_import1, asdm_import2, asdm_import3, asdm_import5, asdm_import6, asdm_import7, asdm_import8]
 
 if __name__ == '__main__':
     unittest.main()

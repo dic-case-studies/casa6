@@ -48,8 +48,10 @@ ASDM2MSFiller* msFiller;
 bool hasCorrectedData(const EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection>& es);
 bool hasUncorrectedData(const EnumSet<AtmPhaseCorrectionMod::AtmPhaseCorrection>& es);
 
+int getNumBin(asdm::SpectralWindowRow *spRow, const std::string &telescopeName);
+
 std::map<int, int> swIdx2Idx ;                       // A map which associates old and new index of Spectral Windows before/after reordering.
-void fillSpectralWindow( asdm::ASDM* ds_p, std::map<unsigned int, double>& effectiveBwPerSpwId_m );
+void fillSpectralWindow( asdm::ASDM* ds_p, std::map<unsigned int, double>& effectiveBwPerSpwId_m, const std::string &telescopeName );
 void fillEphemeris( asdm::ASDM* ds_p, uint64_t timeStepInNanoSecond, bool interpolate_ephemeris, std::string telescopeName );
 void fillField( asdm::ASDM* ds_p, bool considerEphemeris );
 void fillSysPower( const std::string asdmDirectory, asdm::ASDM* ds_p, bool ignoreTime, const std::vector<asdm::ScanRow *>& selectedScanRow_v,

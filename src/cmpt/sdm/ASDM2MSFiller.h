@@ -144,6 +144,8 @@ namespace casac {
         int            itsNumAntenna;
         casacore::MeasurementSet *itsMS;
         casacore::MSMainColumns  *itsMSCol;
+        casacore::ScalarColumn<casacore::String> *itsWinFuncCol;
+        casacore::ScalarColumn<casacore::Int> *itsNumBinCol;
         casacore::String     itsMSPath;
         casacore::uInt     itsMSMainRow;
         /*casacore::TiledDataStManAccessor itsImWgtAcc;*/
@@ -387,7 +389,9 @@ namespace casac {
                                 const std::string&		freq_group_name_,
                                 int			num_assoc_,
                                 const std::vector<int>&	assoc_sp_id_,
-                                const std::vector<std::string>&	assoc_nature_ );
+                                const std::vector<std::string>&	assoc_nature_,
+                                const std::string & windowFunction_,
+                                int numBin_ );
 
         int  addUniqueState( bool sig_,
                              bool ref_,

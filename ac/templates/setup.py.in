@@ -89,7 +89,8 @@ from itertools import chain
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.4.jar'
+xml_jar_file = 'xml-casa-assembly-1.5.jar'
+real_gnu = None
 
 if pyversion < 3:
     str_encode = str
@@ -413,6 +414,10 @@ def __load_properties(filepath, sep='=', comment_char='#'):
 build = __load_properties(__os.path.join(__os.path.dirname(__file__),'build.properties'))
 build['build.compiler.xml-casa'] = __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','bin','xml-casa')
 
+build['build.flags.compile.grpc'] = [ '-I' + __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','include') ]
+build['build.flags.link.grpc'] = [ '-L' + __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','lib'), '-lgrpc++', '-lgrpc', '-lgpr', '-lprotobuf' ]
+build['build.compiler.protoc'] = __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','bin','protoc')
+
 """)
 
 
@@ -531,7 +536,8 @@ def build_grpc( prefix, srcdir, collectdir ):
     if os.path.isdir("grpc-source"):
 
         if not os.path.isdir(srcdir):
-            print("copying the source directory...")
+
+            print("copying the grpc source directory...")
             run_process( ["rsync","-aq","grpc-source/",srcdir], err='could not copy the grpc source tree' )
             #### need to set @rpath/ prefix for install name...
             makefile = "%s/Makefile" % srcdir
@@ -539,6 +545,10 @@ def build_grpc( prefix, srcdir, collectdir ):
                 with open(makefile) as fd:
                     s = fd.read()
                 s = s.replace('-install_name ', '-install_name $(RPATH_DIR)')
+                if sys.platform == 'darwin' and real_gnu:
+                    s = s.replace('CXXFLAGS += -stdlib=libc++','')
+                    ### it could be that replacing DEFAULT_CXX should be done in all cases
+                    s = s.replace('$(DEFAULT_CXX)',props['build.compiler.cxx'])
                 with open(makefile, "w") as fd:
                     fd.write(s)
 
@@ -705,6 +715,16 @@ def customize_compiler(self):
     https://github.com/rmcgibbo/npcuda-example/blob/master/cython/setup.py
     """
 
+    self.compiler_cxx = [ props['build.compiler.cxx'] ]
+
+    real_gnu = False
+    proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
+    out,err = pipe_decode(proc.communicate( ))
+    if len([s for s in (out + err).split('\n') if s.startswith("gcc version ")]) > 0 :
+        if sys.platform == 'darwin':
+            print('using real GNU compiler on OSX...')
+        real_gnu = True
+
     # make it swallow fortran files....
     self.src_extensions.extend( [".f",".f90"] )
 
@@ -785,6 +805,11 @@ def customize_compiler(self):
                     cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
                 if (ext == ".f"):
                     cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+                if real_gnu and len(props['build.flags.compile.openmp']) > 0:
+                    ### we'll assume our fortran compiler is gfortran and set the openmp
+                    ### flags for gfortran if our main C++ compiler is really GNU and the
+                    ### openmp flags are set...
+                    cc_args = cc_args + ['-fopenmp']
                 # Force architecture of shared library.
                 if arch == "32bit":
                     cc_args.append("-m32")
@@ -1105,6 +1130,7 @@ if __name__ == '__main__':
     SAKURA_SRC = sakura_files( )
     CORE_F77 = source_files("casa-source/casacore",file_suffix_filter=".f",
                             #file_filter=['fgridsd.f']
+                            file_filter=['fgridft.f']
     )
 
     if props['option.grpc'] != "0":

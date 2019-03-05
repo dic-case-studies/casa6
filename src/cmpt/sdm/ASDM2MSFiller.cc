@@ -201,6 +201,8 @@ namespace casac {
    
         itsMS			= 0;
         itsMSCol		= 0;
+        itsWinFuncCol           = 0;
+        itsNumBinCol            = 0;
         itsNumAntenna		= 0;
         itsScanNumber         = 0;
 
@@ -219,7 +221,7 @@ namespace casac {
 
     // The destructor
     ASDM2MSFiller::~ASDM2MSFiller() {
-        // end flushes to the MS and deletes itsMS and itsMSCol
+        // end flushes to the MS and deletes itsMS and itsMSCol and itsWinFuncCol and itsNumBinCol
         end();
     }
 
@@ -380,6 +382,16 @@ namespace casac {
             MSSpectralWindow::addColumnToDesc (td, MSSpectralWindow::BBC_NO);
             MSSpectralWindow::addColumnToDesc (td, MSSpectralWindow::ASSOC_SPW_ID);
             MSSpectralWindow::addColumnToDesc (td, MSSpectralWindow::ASSOC_NATURE);
+
+            // add the non-standard SDM_WINDOW_FUNCTION and SDM_NUM_BIN columns
+            ScalarColumnDesc<String> sdmWinFuncDesc("SDM_WINDOW_FUNCTION","windowFunction value found in SDM");
+            sdmWinFuncDesc.setDefault("UNKNOWN");
+            td.addColumn(sdmWinFuncDesc);
+
+            ScalarColumnDesc<Int> sdmNumBinDesc("SDM_NUM_BIN","numBin value found in or inferred from SDM");
+            sdmNumBinDesc.setDefault(1);
+            td.addColumn(sdmNumBinDesc);
+
             itsMS->spectralWindow().addColumn(td,spwStMan);
             //SetupNewTable tabSetup(itsMS->spectralWindowTableName(),
             //			   td, Table::New);
@@ -514,6 +526,14 @@ namespace casac {
         itsMS->initRefs();
 
         itsMS->flush();
+
+        // get the SPECTRAL_WINDOW::SDM_WINDOW_FUNCTION column here so it doesn't need to be
+        // constructed each time a value is written to it
+        itsWinFuncCol = new ScalarColumn<String>(itsMS->spectralWindow(), "SDM_WINDOW_FUNCTION");
+
+        // get the SPECTRAL_WINDOW::SDM_NUM_BIN column here so it doesn't need to be
+        // constructed each time a value is written to it
+        itsNumBinCol = new ScalarColumn<Int>(itsMS->spectralWindow(), "SDM_NUM_BIN");
 
         //cout << "\n";
         {
@@ -1728,7 +1748,9 @@ namespace casac {
                                           const string&		freq_group_name_,
                                           int			num_assoc_,
                                           const vector<int>&		assoc_sp_id_,
-                                          const vector<string>&      assoc_nature_) {
+                                          const vector<string>&      assoc_nature_,
+                                          const string & windowFunction_,
+                                          int numBin_ ) {
  
         MSSpectralWindow msspwin = itsMS -> spectralWindow();
         MSSpWindowColumns msspwinCol(msspwin);
@@ -1775,6 +1797,12 @@ namespace casac {
         }
 
         msspwinCol.flagRow().put(crow, false);
+
+        // non-standard SDM_WINDOW_FUNCTION column
+        itsWinFuncCol->put(crow, windowFunction_);
+
+        // non-standard SDM_NUM_BIN column
+        itsNumBinCol->put(crow, numBin_);
 
         //msspwin.flush();
         // cout << "\n";
@@ -2162,6 +2190,14 @@ namespace casac {
         if (itsMSCol) {
             delete itsMSCol;
             itsMSCol = 0;
+        }
+        if (itsWinFuncCol) {
+            delete itsWinFuncCol;
+            itsWinFuncCol = 0;
+        }
+        if (itsNumBinCol) {
+            delete itsNumBinCol;
+            itsNumBinCol = 0;
         }
         if (itsMS) {
             itsMS->flush();
