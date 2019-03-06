@@ -1189,24 +1189,29 @@ class create_makefile(Command):
         duse_grpc = get_use_grpc()
         grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()]
         cpp_list = []
+        all_target = "all"
+        cpp_target = "cpp_compile"
+        mkdirs_target = "mk_obj_dirs"
         with open("makefile","w") as mk:
-            all_target = "all"
-            cpp_target = "cpp_compile"
             mk.write(".PHONY: " + all_target + "\n")
-            mk.write(all_target + ": " + cpp_target + "\n")
-            #for s in CODE_SRC + CORE_SRC + SAKURA_SRC + CODE_ATM:
+            mk.write(all_target + ": " + mkdirs_target + " " + cpp_target + "\n")
+            targdirs = set()
             for (mysrc, myflags) in zip(src, cflags):
                 dflags = sep.join(myflags + duse_grpc + grpc_dirs)
                 for s in mysrc:
                     b = os.path.splitext(s)[0]
                     #cpp_list.append(os.path.join('build',distutils_dir_name('temp')) + os.sep + b + ".o")
-                    cpp_list.append(obj_name.format(base=b))
+                    objfile = obj_name.format(base=b)
+                    cpp_list.append(objfile)
+                    targdirs.add(os.path.dirname(objfile))
                     mk.write(
                         cpp_obj.format(
                             base=b,src=s, cc=cc, flags=flags, includes=includes, 
                             cflags=add_cflags, dflags=dflags
                         )
                     )
+            mk.write(".PHONY: " + mkdirs_target + "\n")
+            mk.write(mkdirs_target + ":\n\t mkdir -p " + sep.join(targdirs) + "\n")
             mk.write(".PHONY: " + cpp_target + "\n")
             mk.write(cpp_target + ": " + sep.join(cpp_list) + "\n")
         # print("------------------------------c++-----------------------------------" )
