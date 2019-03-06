@@ -1177,8 +1177,8 @@ class create_makefile(Command):
         mkdirs_target = "mk_obj_dirs"
         sep = ' '
         with open("makefile", "w") as mk:
-            mk.write(".PHONY: " + all_target + "\n")
-            #mk.write(all_target + ":" +  mkdirs_target + " " + cpp_target + " " + yacc_target + "\n")
+            mk.write("DEPDIR := .d\n")
+            mk.write("\n.PHONY: " + all_target + "\n")
             mk.write(
                 sep.join(
                     [all_target + ":", mkdirs_target, cpp_target, yacc_target, lex_target, "\n"]
@@ -1194,13 +1194,16 @@ class create_makefile(Command):
         SAKURA_SRC = sakura_files( )
         CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+        dep_name = os.path.join("$(DEPDIR)",'build',distutils_dir_name('temp')) + os.sep + '{base}.d'
         cpp_obj = (
-            obj_name + ': {src}\n\t{cc} {flags} {includes} {cflags} {dflags} -c $< -o $@\n'
+            obj_name + ': {src} ' + dep_name + '\n\t{cc} {flags} {includes} {cflags} {dflags} -c $< -o $@'
+            + '\n\t$(POSTCOMPILE)'
         )
+        dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
         src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM]
         cflags = [module_cflags['/code/'], module_cflags['/casacore/'], platform_cflags[sys.platform], platform_cflags[sys.platform]]
         includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
-        flags = sep.join(get_new_cxx_compiler_flags())
+        flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
         cc = sep.join(get_ccache() + [props['build.compiler.cxx']])
         add_cflags = sysconfig.get_config_var('CFLAGS')
         duse_grpc = get_use_grpc()
@@ -1216,15 +1219,16 @@ class create_makefile(Command):
                     cpp_list.append(objfile)
                     targdirs.add(os.path.dirname(objfile))
                     mk.write(
-                        cpp_obj.format(
+                        "\n" + cpp_obj.format(
                             base=b,src=s, cc=cc, flags=flags, includes=includes, 
                             cflags=add_cflags, dflags=dflags
                         )
                     )
+                    mk.write("\n" + dep_targ.format(base=b))
             mk.write("\n# make directories for object files\n")
             mk.write(".PHONY: " + mkdirs_target + "\n")
-            mydirs = sep.join(targdirs)
-            mk.write(mkdirs_target + ": " + mydirs + "\n\t@mkdir -p " + mydirs + "\n")
+            mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+            mk.write(mkdirs_target + ":\n\t@mkdir -p " + mydirs + "\n")
             mk.write("\n# targets to compile C++ code to object files\n")
             mk.write(".PHONY: " + cpp_target + "\n")
             mk.write(cpp_target + ": " + sep.join(cpp_list) + "\n")
@@ -1252,19 +1256,7 @@ class create_makefile(Command):
             mk.write(".PHONY: " + yacc_target + "\n")
             mk.write(yacc_target + ": " + sep.join(yacc_list) + "\n")
                         
-
-
-        print("------------------------------lex-----------------------------------" )
-        #def generate_lex(sources,output_dir='libcasatools/generated/include'):
-            #"""Generate lex compilation files...
-            #"""
-            #mkpath(output_dir)
-            #for file in sources:
-                #name = os.path.basename(file)
-                #base = os.path.splitext(name)[0]
-                #if Proc([props['build.compiler.flex'], "-P%s" % base, "-o", "%s%s%s.lcc" % (output_dir,os.sep,base), file]) != 0:
-                    #sys.exit('lex generation of %s%s%s.lcc failed' % (output_dir,os.sep,base))
-
+        # lex
         CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
         CODE_LEX = source_files( "casa-source/code",file_suffix_filter=".ll",
                                  subdir_filter=[ 'tests','test','apps','display','plotms','guitools',
@@ -1305,7 +1297,20 @@ class create_makefile(Command):
         CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f")
         for f in CORE_F77 + CODE_F77:
             print(f)
+    
+        # dependencies
+        with open("makefile", "a") as mk:
+            mk.write("""
+$(shell mkdir -p $(DEPDIR) >/dev/null)
+# IMPORTANT: These dependency flags are for gcc. clang may use different flags for this purpose
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
+# the include of the dependencies must come after the first target
+# so just put it at the end of the file
+MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
+include $(MY_DEPS)
+            """)
 
     def run(self):
         self.__build_developer_grpc( )
