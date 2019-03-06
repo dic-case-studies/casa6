@@ -271,6 +271,16 @@ def load_properties(filepath, sep='=', comment_char='#'):
                 key = key_value[0].strip()
                 value = sep.join(key_value[1:]).strip().strip('"')
                 props[key] = value.split(' ') if key.startswith('build.flags') else value
+
+    global real_gnu
+    real_gnu = False
+    proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
+    out,err = pipe_decode(proc.communicate( ))
+    if len([s for s in (out + err).split('\n') if s.startswith("gcc version ")]) > 0 :
+        if sys.platform == 'darwin':
+            print('using real GNU compiler on OSX...')
+        real_gnu = True
+
     return props
 
 def so_version( ):
@@ -769,14 +779,6 @@ def customize_compiler(self):
     """
 
     self.compiler_cxx = [ props['build.compiler.cxx'] ]
-
-    real_gnu = False
-    proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
-    out,err = pipe_decode(proc.communicate( ))
-    if len([s for s in (out + err).split('\n') if s.startswith("gcc version ")]) > 0 :
-        if sys.platform == 'darwin':
-            print('using real GNU compiler on OSX...')
-        real_gnu = True
 
     # make it swallow fortran files....
     self.src_extensions.extend( [".f",".f90"] )
