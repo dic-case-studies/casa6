@@ -1202,7 +1202,6 @@ class create_makefile(Command):
                 dflags = sep.join(myflags + duse_grpc + grpc_dirs)
                 for s in mysrc:
                     b = os.path.splitext(s)[0]
-                    #cpp_list.append(os.path.join('build',distutils_dir_name('temp')) + os.sep + b + ".o")
                     objfile = obj_name.format(base=b)
                     cpp_list.append(objfile)
                     targdirs.add(os.path.dirname(objfile))
@@ -1212,8 +1211,11 @@ class create_makefile(Command):
                             cflags=add_cflags, dflags=dflags
                         )
                     )
+            mk.write("\n# make directories for object files\n")
             mk.write(".PHONY: " + mkdirs_target + "\n")
-            mk.write(mkdirs_target + ":\n\t mkdir -p " + sep.join(targdirs) + "\n")
+            mydirs = sep.join(targdirs)
+            mk.write(mkdirs_target + ": " + mydirs + "\n\t@mkdir -p " + mydirs + "\n")
+            mk.write("\n# targets to compile C++ code to object files\n")
             mk.write(".PHONY: " + cpp_target + "\n")
             mk.write(cpp_target + ": " + sep.join(cpp_list) + "\n")
         # print("------------------------------c++-----------------------------------" )
