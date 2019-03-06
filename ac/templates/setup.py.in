@@ -1172,12 +1172,18 @@ class create_makefile(Command):
         # declare some .PHONY targets
         cpp_target = "cpp_compile"
         yacc_target = "yacc_compile"
+        lex_target = "lex_compile"
         all_target = "all"
         mkdirs_target = "mk_obj_dirs"
+        sep = ' '
         with open("makefile", "w") as mk:
             mk.write(".PHONY: " + all_target + "\n")
-            mk.write(all_target + ": " + mkdirs_target + " " + cpp_target + " " + yacc_target + "\n")
-        sep = ' '
+            #mk.write(all_target + ":" +  mkdirs_target + " " + cpp_target + " " + yacc_target + "\n")
+            mk.write(
+                sep.join(
+                    [all_target + ":", mkdirs_target, cpp_target, yacc_target, lex_target, "\n"]
+                )
+            )
         # c++
         CODE_SRC = source_files( "casa-source/code", file_suffix_filter=".cc",
                                  subdir_filter=[ 'tests','test','apps','display','plotms','guitools','display3d','demo',
@@ -1249,12 +1255,36 @@ class create_makefile(Command):
 
 
         print("------------------------------lex-----------------------------------" )
+        #def generate_lex(sources,output_dir='libcasatools/generated/include'):
+            #"""Generate lex compilation files...
+            #"""
+            #mkpath(output_dir)
+            #for file in sources:
+                #name = os.path.basename(file)
+                #base = os.path.splitext(name)[0]
+                #if Proc([props['build.compiler.flex'], "-P%s" % base, "-o", "%s%s%s.lcc" % (output_dir,os.sep,base), file]) != 0:
+                    #sys.exit('lex generation of %s%s%s.lcc failed' % (output_dir,os.sep,base))
+
         CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
         CODE_LEX = source_files( "casa-source/code",file_suffix_filter=".ll",
                                  subdir_filter=[ 'tests','test','apps','display','plotms','guitools',
                                                  'display3d','demo','casaqt','Filling' ])
-        for f in CASACORE_LEX + CODE_LEX:
-            print(f)
+        output_dir="libcasatools/generated/include"
+        obj_name = os.path.join(output_dir,'{base}.lcc')
+        lex_obj_targ = (
+            obj_name + ": {src}\n\t" + props["build.compiler.flex"] + " -P{base} -o $@ $<\n"
+        )
+        lex_list = []
+        with open("makefile", "a") as mk:
+            for f in CASACORE_LEX + CODE_LEX:
+                name = os.path.basename(f)
+                base = os.path.splitext(name)[0]
+                objfile = obj_name.format(base=base)
+                lex_list.append(objfile)
+                mk.write(lex_obj_targ.format(src=f, base=base))
+            mk.write("\n# targets to compile lex code to object files\n")
+            mk.write(".PHONY: " + lex_target + "\n")
+            mk.write(lex_target + ": " + sep.join(lex_list) + "\n")
 
         print("------------------------------tool-xml------------------------------" )
         TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
