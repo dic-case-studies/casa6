@@ -762,6 +762,9 @@ def get_new_cxx_compiler_includes():
         '-Isakura-source/src'
     ]
 
+def get_new_c_compiler_flags():
+    return ['-g']
+
 def get_use_grpc():
    return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] ) 
      
@@ -1173,16 +1176,22 @@ class create_makefile(Command):
         cpp_target = "cpp_compile"
         yacc_target = "yacc_compile"
         lex_target = "lex_compile"
+        c_target = "c_compile"
         all_target = "all"
         mkdirs_target = "mk_obj_dirs"
+        real_clean_target = "real_clean"
         sep = ' '
         with open("makefile", "w") as mk:
-            mk.write("DEPDIR := .d\n")
+            mk.write("DEPDIR := build/.d\n")
             mk.write("\n.PHONY: " + all_target + "\n")
             mk.write(
                 sep.join(
-                    [all_target + ":", mkdirs_target, cpp_target, yacc_target, lex_target, "\n"]
+                    [all_target + ":", mkdirs_target, cpp_target, yacc_target, lex_target, c_target, "\n"]
                 )
+            )
+            mk.write(
+                "\n" + real_clean_target + ": \n\t @rm -rf build\n.PHONY: "
+                + real_clean_target + "\n"
             )
         # c++
         CODE_SRC = source_files( "casa-source/code", file_suffix_filter=".cc",
@@ -1219,7 +1228,7 @@ class create_makefile(Command):
                     cpp_list.append(objfile)
                     targdirs.add(os.path.dirname(objfile))
                     mk.write(
-                        "\n" + cpp_obj.format(
+                        "\n\n" + cpp_obj.format(
                             base=b,src=s, cc=cc, flags=flags, includes=includes, 
                             cflags=add_cflags, dflags=dflags
                         )
@@ -1289,8 +1298,34 @@ class create_makefile(Command):
 
         print("------------------------------c-------------------------------------" )
         MIR_SRC =  source_files( "casa-source/casacore/mirlib",file_suffix_filter=".c" )
-        for f in MIR_SRC:
-            print(f)
+        includes = sep.join(get_new_cxx_compiler_includes())
+        flags = sep.join(["$(DEPFLAGS)"] + get_new_c_compiler_flags())
+        obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+        dep_name = os.path.join("$(DEPDIR)",'build',distutils_dir_name('temp')) + os.sep + '{base}.d'
+        cc = sep.join(get_ccache() + [props['build.compiler.cc']])
+        cflags = sysconfig.get_config_var('CFLAGS')
+        dflags = sep.join(module_cflags['/casacore/'])
+        c_obj = (
+            obj_name + ': {src} ' + dep_name + '\n\t{cc} {includes} {flags} {cflags} {dflags} -c $< -o $@'
+            + '\n\t$(POSTCOMPILE)'
+        )
+        c_list = []
+        with open("makefile", "a") as mk:
+            for f in MIR_SRC:
+                name = os.path.basename(f)
+                base = os.path.splitext(name)[0]
+                objfile = obj_name.format(base=base)
+                c_list.append(objfile)
+                mk.write(
+                    "\n\n" + c_obj.format(
+                        base=base, src=f, cc=cc, includes=includes, flags=flags,
+                        cflags=cflags, dflags=dflags
+                    )
+                )
+                mk.write("\n" + dep_targ.format(base=base))
+            mk.write("\n# targets to compile C++ code to object files\n")
+            mk.write(".PHONY: " + c_target + "\n")
+            mk.write(c_target + ": " + sep.join(c_list) + "\n")
 
         print("------------------------------fortran-------------------------------" )
         CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f")
