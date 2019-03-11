@@ -12,3 +12,5 @@ for flag in sys.argv:
         print(' '.join(build['build.flags.compile.grpc']))
     if flag == '--grpc-protoc':
         print(build['build.compiler.protoc'])
+    if flag == '--grpc-libpath':
+        print(' '.join(map(lambda y: y[2:],filter(lambda x: x.startswith('-L'), build['build.flags.link.grpc']))))
