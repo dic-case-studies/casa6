@@ -118,7 +118,7 @@ class CasaCoerce:
         ###
         ### cerberus validation is not reentrant...
         ###
-        new_value = map(lambda v: v if len(v) == 0 or v.startswith("/") or v.startswith("./") or v.startswith("../") else self.ctsys._swigobj.resolve(str_encode(v)), value)
+        new_value = [v if len(v) == 0 or v.startswith("/") or v.startswith("./") or v.startswith("../") else self.ctsys._swigobj.resolve(str_encode(v)) for v in value]
         return list(new_value)
 
 coerce = CasaCoerce( )

@@ -375,7 +375,7 @@ def generate_pyinit(moduledir,tools):
                            return False
 
                    if hasattr(__user,'datapath') and is_iter_container(__user.datapath):
-                       return list(filter(__os.path.isdir, map(__os.path.expanduser,__user.datapath)))
+                       return list(filter(__os.path.isdir, list(map(__os.path.expanduser,__user.datapath))))
                    else:
                        return [ ]
 

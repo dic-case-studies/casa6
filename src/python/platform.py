@@ -65,7 +65,7 @@ def dict_encode(d):
         if len(d) == 2 and 'type' in d and 'value' in d and d['type'] in coerce:
             return coerce[d['type']](d['value'])
         else:
-            return dict(map(encode,d.items( )))
+            return dict(list(map(encode,list(d.items( )))))
     else:
         return encode(d)
 
@@ -90,7 +90,7 @@ def dict_decode(d):
         if len(d) == 2 and 'type' in d and 'value' in d and d['type'] in coerce:
             return coerce[d['type']](d['value'])
         else:
-            return dict(map(decode,d.items( )))
+            return dict(list(map(decode,list(d.items( )))))
     else:
         return decode(d)
 
