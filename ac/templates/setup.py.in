@@ -313,17 +313,6 @@ def generate_grpc(protos):
         run_process( genrpc, err='could not generate protobuf bindings for %s' % p )
     return outdir
 
-def xml2cpp_proxy(input,output):
-    """Convert dbus-cpp XML interface definition to a header file for the proxy object
-    """
-    out_root="libcasatools/generated/include/casadbus"
-    in_root="casa-source/code/casadbus"
-    subdir=os.path.dirname(output)
-    mkpath("%s%s%s" % (out_root,os.sep,subdir))
-    if Proc([ props['build.compiler.dbuscpp'], "%s%s%s" % (in_root,os.sep,input), \
-                         "--proxy=%s%s%s" % (out_root,os.sep,output) ]) != 0:
-        sys.exit('dbus proxy generation of %s%s%s failed' % (out_root,os.sep,output))
-
 def generate_pyinit(moduledir,tools):
     """Generate __init__.py for the module
     """
@@ -700,18 +689,17 @@ module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION
                        '/code/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
                                       '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
                                       '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
-                                      '-DDBUS_CPP', '-DQWT6', '-DUseCasacoreNamespace', \
+                                      '-DQWT6', '-DUseCasacoreNamespace', \
                                       '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
                                       '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                      '-DUSE_THREADS', '-DCASATOOLS' ] + [ '-DWITHOUT_DBUS' ] if props['option.dbus'] == "0" else [ ] \
+                                      '-DUSE_THREADS', '-DCASATOOLS', '-DWITHOUT_DBUS' ] \
                                       + platform_cflags[sys.platform],
                        'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
-                                        '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DDBUS_CPP', '-DQWT6', \
+                                        '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
                                         '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
                                         '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                        '-DUSE_THREADS', '-DCASATOOLS' ] + [ '-DWITHOUT_DBUS' ] if props['option.dbus'] == "0" else [ ]  +
-                                        platform_cflags[sys.platform] }
+                                        '-DUSE_THREADS', '-DCASATOOLS', '-DWITHOUT_DBUS' ] + platform_cflags[sys.platform] }
 
 def customize_compiler(self):
     """inject customization into distutils.
@@ -1110,13 +1098,8 @@ if __name__ == '__main__':
     moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
     generate_pyinit(moduledir,tools)
 
-    if props['option.dbus'] != "0":
-        xml2cpp_proxy('xml/PlotServerProxy.interface.xml', 'plotserver/PlotServerProxy.proxy.h')
-        xml2cpp_proxy('xml/DBusSession.interface.xml', 'session/DBusSession.proxy.h')
-        xml2cpp_proxy('xml/ViewerProxy.interface.xml', 'viewer/ViewerProxy.proxy.h')
-    else:
-        a_priori_directory_exclusions += [ 'casadbus/session', 'casadbus/plotserver', 'casadbus/synthesis', 'casadbus/utilities', 'casadbus/viewer' ]
-        a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SynthesisIterBot.cc' ]
+    a_priori_directory_exclusions += [ 'casadbus/session', 'casadbus/plotserver', 'casadbus/synthesis', 'casadbus/utilities', 'casadbus/viewer' ]
+    a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SynthesisIterBot.cc' ]
 
     CASACORE_YACC = source_files("casa-source/casacore",file_suffix_filter=".yy")
     CODE_YACC = source_files("casa-source/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
@@ -1135,21 +1118,16 @@ if __name__ == '__main__':
                             file_filter=['fgridft.f']
     )
 
-    if props['option.grpc'] != "0":
-        if not os.path.exists('.built.grpc'):
-            # hopefully this will replace dbus
-            build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
-                        os.path.join('build', distutils_dir_name('grpc')),
+    if not os.path.exists('.built.grpc'):
+        build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                    os.path.join('build', distutils_dir_name('grpc')),
+                    os.path.join('build', distutils_dir_name('grpc-install')) )
+        build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                        os.path.join('build', distutils_dir_name('protobuf')),
                         os.path.join('build', distutils_dir_name('grpc-install')) )
-            build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
-                            os.path.join('build', distutils_dir_name('protobuf')),
-                            os.path.join('build', distutils_dir_name('grpc-install')) )
-            open(".built.grpc",'a').close( )
+        open(".built.grpc",'a').close( )
 
-        grpc_srcdir = generate_grpc( [ os.path.join('casa-source','code','casatools','protos','registrar.proto') ] )
-    else:
-        grpc_srcdir = ""
-
+    grpc_srcdir = generate_grpc( [ os.path.join('casa-source','code','casatools','protos','registrar.proto') ] )
     grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
     GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
     BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
@@ -1160,13 +1138,6 @@ if __name__ == '__main__':
     CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",
                             #file_filter=['fgridsdclip.f']
     )
-
-    ### from macports it is called libdbus-cpp.dylib, from CASA's RPM it is called libcasa-dbus-cpp.so...
-    if props['option.dbus'] == "0":
-        dbuslibs = [ ]
-    else:
-        dbuscpp = props['build.name.lib.dbuscpp'] if 'build.name.lib.dbuscpp' in props and len(props['build.name.lib.dbuscpp']) > 0 else 'casa-dbus-cpp'
-        dbuslibs = [ dbuscpp, 'dbus-1' ]
 
     prop_linking = list(filter(lambda x: len(x) > 0,list(chain.from_iterable(map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.items()))))))
 
@@ -1184,7 +1155,7 @@ if __name__ == '__main__':
         archlibs = ['gomp']
 
     grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
-    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + dbuslibs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
+    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
 
     casacdir = os.path.join(moduledir, '__casac__')
     libdir = os.path.join(casacdir, 'lib')
@@ -1205,7 +1176,7 @@ if __name__ == '__main__':
     for lb in LIBS:
         if sys.platform == 'darwin':
             rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
-        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + dbuslibs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
 
     for t in TOOLS:
         inc = [ ]; lib = [ ]; src = [ ]
@@ -1218,7 +1189,7 @@ if __name__ == '__main__':
 
         if sys.platform == 'darwin':
             rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
-        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + dbuslibs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
+        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
 
     setup( name="casatools",version=casatools_version,
            maintainer="Darrell Schiebel",
