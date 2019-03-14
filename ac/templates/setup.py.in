@@ -1191,7 +1191,7 @@ class create_makefile(Command):
             mk.write("\n.PHONY: " + all_target + "\n")
             mk.write(
                 sep.join(
-                    [all_target + ":", mkdirs_target, cpp_target, yacc_target, lex_target, c_target, "\n"]
+                    [all_target + ":", mkdirs_target, yacc_target, lex_target, cpp_target, c_target, "\n"]
                 )
             )
             mk.write(
