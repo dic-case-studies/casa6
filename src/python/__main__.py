@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import sys
 from .config import build
+import os as __os
 
 for flag in sys.argv:
     ## qmake has difficuties with quoted paths, e.g. '-I/some/path/for/grpc/include/files'
@@ -14,3 +15,5 @@ for flag in sys.argv:
         print(build['build.compiler.protoc'])
     if flag == '--grpc-libpath':
         print(' '.join(map(lambda y: y[2:],filter(lambda x: x.startswith('-L'), build['build.flags.link.grpc']))))
+    if flag == '--proto-registrar':
+        print(__os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','proto','registrar.proto'))

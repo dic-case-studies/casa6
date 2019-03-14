@@ -299,10 +299,13 @@ def install_xml_casa( ):
 def generate_grpc(protos):
     protoc = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "protoc")
     grpc_plugin = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "grpc_cpp_plugin")
+    proto_export_dir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "proto")
     assert os.path.exists(grpc_plugin), 'gRPC plugin not found'
     outdir=os.path.join('build', distutils_dir_name('binding'),'grpc')
     mkpath(outdir)
+    mkpath(proto_export_dir)
     for p in protos:
+        copy2(p,proto_export_dir)
         assert os.path.isfile(p), "could not find gRPC proto '%s'" % p
         print('generating protocol for %s...' % os.path.basename(p))
         genprotocol = [protoc, '-I%s' % os.path.dirname(p), '--cpp_out=%s' % outdir, p]
