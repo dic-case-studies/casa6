@@ -19,6 +19,12 @@ AC_DEFUN([AX_LIBXML],[
         AC_MSG_ERROR([Cannot find xml2-config in your system path])
       else
         cflags=`$XML_CONFIG --cflags`
+        for inc in $cflags; do
+            if echo $inc | egrep '/libxml2$' > /dev/null 2>&1; then
+                inc=`echo $inc | sed 's|/libxml2||'`
+                cflags="$cflags $inc"
+            fi
+        done
         libs=`$XML_CONFIG --libs`
         LIBS="$save_LIBS $libs"
         LDFLAGS="$save_LDFLAGS $cflags"
@@ -32,7 +38,7 @@ AC_DEFUN([AX_LIBXML],[
           LIBXML_CFLAGS=$cflags
         else
           AC_MSG_RESULT([no])
-          AC_MSG_ERROR([Cannot find dbus])
+          AC_MSG_ERROR([Cannot find libxml2])
         fi
       fi
     fi
