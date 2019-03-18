@@ -70,45 +70,49 @@ AC_DEFUN([AX_CXX11], [dnl
     AC_REQUIRE([AC_PROG_CXX])
     AC_REQUIRE([AX_OPENMP])
     m4_if([$1], [], [m4_fatal([first argument to AX_CXX11 missing])])dnl
-    ax_path_saved=$PATH
-    ax_checked_path=""
-    ax_unchecked_path=$1
-    ax_done_cxx11=no
-    if [[ "$host_osname" = "darwin" ]]; then
-        ax_compiler_choices="clang++ c++ g++ g++-mp-5"
+    if [[ "x${CXX_OVERRIDE}" != "x" ]]; then
+        AX_OPENMP([ax_done_cxx11="yes"])
     else
-        ax_compiler_choices="g++ c++ clang++"
-    fi
-    ax_cxx_first_cxx_11=""
-    while [[ "$ax_unchecked_path" != "" -a "$ax_done_cxx11" = "no" ]]; do
-        PATH=${ax_unchecked_path}${PATH_SEPARATOR}${ax_checked_path}
-        for compiler in $ax_compiler_choices; do
-            AX_CXX11_CLEAR_CACHE
-            AX_OPENMP_CLEAR_CACHE
-            ac_save_CXX=$CXX
-            CXX="$compiler"
-            AC_PROG_CXX($compiler)
-            AX_CXX_COMPILE_STDCXX_11(noext,optional)
-            if [[ "${ac_success}" = "yes" ]]; then
-                if [[ "${ax_cxx_first_cxx_11}" = "" ]]; then
-                    ax_cxx_first_cxx_11="$CXX"
-                fi
-                AX_OPENMP([ax_done_cxx11="yes"; break])
-            fi
-            CXX="$ac_save_CXX"
-        done
-        if [[ "$ax_done_cxx11" = "no" ]]; then
-            AX_CXX11_RESET_CHECK
+        ax_path_saved=$PATH
+        ax_checked_path=""
+        ax_unchecked_path=$1
+        ax_done_cxx11=no
+        if [[ "$host_osname" = "darwin" ]]; then
+            ax_compiler_choices="clang++ c++ g++ g++-mp-5"
+        else
+            ax_compiler_choices="g++ c++ clang++"
         fi
-    done
-    PATH=$ax_path_saved
-    if [[ "${ac_success}" = "yes" ]]; then
-        AX_PATH_TO_BINARY(${CXX},CXX,$ax_unchecked_path)
-    else
-        AC_MSG_WARN([could not find a compiler which supports OpenMP])
-        AX_CXX11_RESET_CHECK
-        AC_PROG_CXX($ax_cxx_first_cxx_11)
-        AC_PATH_PROG([CXX],[$ax_cxx_first_cxx_11])
-        ac_success="yes"
+        ax_cxx_first_cxx_11=""
+        while [[ "$ax_unchecked_path" != "" -a "$ax_done_cxx11" = "no" ]]; do
+            PATH=${ax_unchecked_path}${PATH_SEPARATOR}${ax_checked_path}
+            for compiler in $ax_compiler_choices; do
+                AX_CXX11_CLEAR_CACHE
+                AX_OPENMP_CLEAR_CACHE
+                ac_save_CXX=$CXX
+                CXX="$compiler"
+                AC_PROG_CXX($compiler)
+                AX_CXX_COMPILE_STDCXX_11(noext,optional)
+                if [[ "${ac_success}" = "yes" ]]; then
+                    if [[ "${ax_cxx_first_cxx_11}" = "" ]]; then
+                        ax_cxx_first_cxx_11="$CXX"
+                    fi
+                        AX_OPENMP([ax_done_cxx11="yes"; break])
+                fi
+                CXX="$ac_save_CXX"
+            done
+            if [[ "$ax_done_cxx11" = "no" ]]; then
+                AX_CXX11_RESET_CHECK
+            fi
+        done
+        PATH=$ax_path_saved
+        if [[ "${ac_success}" = "yes" ]]; then
+            AX_PATH_TO_BINARY(${CXX},CXX,$ax_unchecked_path)
+        else
+            AC_MSG_WARN([could not find a compiler which supports OpenMP])
+            AX_CXX11_RESET_CHECK
+            AC_PROG_CXX($ax_cxx_first_cxx_11)
+            AC_PATH_PROG([CXX],[$ax_cxx_first_cxx_11])
+            ac_success="yes"
+        fi
     fi
 ])
