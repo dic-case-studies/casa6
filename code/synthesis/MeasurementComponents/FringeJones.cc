@@ -1689,9 +1689,9 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             }
             Int ind = bundle.get_param_corr_index(iant);
             if (ind < 0) continue;
-            gsl_vector_set(gp, ind+0, casa_param(3*icor + 0, iant));
-            gsl_vector_set(gp, ind+1, casa_param(3*icor + 1, iant));
-            gsl_vector_set(gp, ind+2, casa_param(3*icor + 2, iant));
+            gsl_vector_set(gp, ind+0, casa_param(4*icor + 0, iant));
+            gsl_vector_set(gp, ind+1, casa_param(4*icor + 1, iant));
+            gsl_vector_set(gp, ind+2, casa_param(4*icor + 2, iant));
         }
         gsl_vector *gp_orig = gsl_vector_alloc(p);
         // Keep a copy of original parameters
@@ -1737,31 +1737,6 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             if (!bundle.isActive(iant)) continue;
             Int iparam = bundle.get_param_corr_index(iant);
             if (iparam<0) continue;
-            if (0) {
-                // flag unused
-                // bool flag = false;
-                // if (fabs(gsl_vector_get(diff, iparam + 0) > FLT_EPSILON)) {
-                //     flag = true;
-                // }
-                // if (fabs(gsl_vector_get(diff, iparam + 1) > FLT_EPSILON)) {
-                //     flag = true;
-                // }
-                // if (fabs(gsl_vector_get(diff, iparam + 2) > 1e-30)) {
-                //     flag = true;
-                // }
-                if (DEVDEBUG) {
-                    logSink << "Old values for ant " << iant << " correlation " << icor 
-                            << ": Angle " << casa_param(3*icor + 0, iant)
-                            << " delay " << casa_param(3*icor + 1, iant) << " ns "
-                            << " rate " << casa_param(3*icor + 2, iant) << "."
-                            << endl
-                            << "New values for ant " << iant << " correlation " << icor 
-                            << ": Angle " << gsl_vector_get(res, iparam+0)
-                            << " delay " << gsl_vector_get(res, iparam+1) << " ns "
-                            << " rate " << gsl_vector_get(res, iparam+2) << "."
-                            << LogIO::POST;
-                }
-            }
             if (status==GSL_SUCCESS || status==GSL_EMAXITER) {
                 // Current policy is to assume that exceeding max
                 // number of iterations is not a deal-breaker, leave it
