@@ -1722,17 +1722,6 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
         gsl_vector_set_zero(snr_vector);
         expb_hess(gp, &bundle, hess, chi1*chi1, snr_vector, logSink);
         
-        // Double log_det = 0;
-        // cerr << "Hessian diagonal: [" ;
-        // for (size_t i=0; i<p; i+=1)
-        // {
-        //     Double d = gsl_matrix_get(hess, i, i);
-        //     cerr << d;
-        //     if (i != p-1) cerr << ", ";
-        //     log_det += log10(fabs(d));
-        // }
-        // cerr << "]" << endl;
-        
         for (size_t iant=0; iant != bundle.get_max_antenna_index()+1; iant++) {
             if (!bundle.isActive(iant)) continue;
             Int iparam = bundle.get_param_corr_index(iant);
