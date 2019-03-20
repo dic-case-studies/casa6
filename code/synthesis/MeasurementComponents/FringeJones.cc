@@ -697,7 +697,6 @@ public:
         corrStep(sdbs.nCorrelations() > 2 ? 3 : 1),
         activeAntennas(activeAntennas_),
         activeCorr(-1)
-        // corrStep(3)
         {
             Int last_index = sdbs.nSDB() - 1 ;
             t0 = sdbs(0).time()(0);
@@ -755,15 +754,6 @@ public:
         std::set<Int> ants = activeAntennas.find(activeCorr)->second;
         if (iant == refant) return true;
         else return (ants.find(iant) != ants.end());
-    }
-    Int
-    get_param_index(size_t iant, size_t icor) {
-        // here we use parallel correlation indices, because parameters
-        // by definition only have one hand.
-        if (iant == refant) return -1;
-        int ipar = antennaIndexMap[iant];
-        if (iant > refant) ipar -= 1;
-        return 3*(ipar*nCorrelations + icor);
     }
     Int
     get_param_corr_index(size_t iant) {
@@ -2466,7 +2456,7 @@ void FringeJones::applyRefAnt() {
 
   Vector<Int> nPol(nSpw(),nPar());  // TBD:or 1, if data was single pol
 
-  if (nPar()==6) {
+  if (nPar()==8) {
     // Verify that 2nd poln has unflagged solutions, PER SPW
     ROCTMainColumns ctmc(*ct_);
 
