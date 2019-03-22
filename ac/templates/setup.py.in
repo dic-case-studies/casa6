@@ -1208,6 +1208,7 @@ class create_makefile(Command):
         lex_target = "lex_compile"
         c_target = "c_compile"
         fortran_target = "f_compile"
+        swig_target = "swig_compile"
         all_target = "all"
         clean_target = "clean"
         build_distutils_temp = os.path.join('build',distutils_dir_name('temp'))
@@ -1222,12 +1223,10 @@ class create_makefile(Command):
             mk.write("\nDEPDIR := " + depdir + "\n")
             mk.write("\n.PHONY: " + all_target + "\n")
             mk.write(
-                sep.join(
-                    [
-                        all_target + ":", yacc_target,
-                        lex_target, cpp_target, c_target, fortran_target, "\n"
-                    ]
-                )
+                sep.join([
+                    all_target + ":", yacc_target, lex_target, cpp_target,
+                    c_target, fortran_target, swig_target, "\n"
+                ])
             )
             mk.write(
                 sep.join([
@@ -1403,7 +1402,27 @@ class create_makefile(Command):
             mk.write("\n# targets to compile fortran code to object files\n")
             mk.write(".PHONY: " + fortran_target + "\n")
             mk.write(fortran_target + ": " + mkdirs_f77_target + " " + sep.join(f_list) + "\n")
-    
+
+        # swig *.i -> *_wrap.cpp
+        BINDING_I = source_files("binding/generated/tools", file_suffix_filter=".i")
+        wrap_cpp_name = '{base}_wrap.cpp'
+        customize_swig(self)
+        swig = self.swig
+        flags = sep.join(['-python'] + get_swig_flags())
+        wrap_cpp_create = (
+            wrap_cpp_name + ': {src} \n\t' + swig + ' ' + flags + ' -o $@ $<'
+        )
+        i_list = []
+        with open("makefile", "a") as mk:
+            for ifile in BINDING_I:
+                (base, ext) = os.path.splitext(ifile)
+                wrapcpp_file = wrap_cpp_name.format(base=base)
+                i_list.append(wrapcpp_file)
+                mk.write("\n\n" + wrap_cpp_create.format(src=ifile, base=base))
+            mk.write("\n# targets to compile swig .i files to _wrap.cpp files\n")
+            mk.write(".PHONY: " + swig_target + "\n")
+            mk.write(swig_target + ": " + sep.join(i_list) + "\n")
+         
         # C++ and C dependency tracking to makefile
         with open("makefile", "a") as mk:
             mk.write("""
@@ -1422,6 +1441,19 @@ include $(MY_DEPS)
     def run(self):
         self.__build_developer_grpc( )
         self.__generate_casa_makefile( )
+
+def get_module_dir():
+    return os.path.join('build', distutils_dir_name('lib'), module_name)
+
+def get_casac_dir():
+    return os.path.join(get_module_dir(), '__casac__')
+
+def get_swig_flags():
+    swig_flags = ['-outdir', get_casac_dir(), '-c++', '-threads', "-Ibinding/include" ]
+    if pyversion >= 3:
+        print('generating python3 bindings...')
+        swig_flags.insert(0,"-py3")
+    return swig_flags
 
 def get_grpc_incdir():
     return os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
@@ -1448,7 +1480,8 @@ if __name__ == '__main__':
 
     TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
     tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]
-    moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
+    # moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
+    moduledir = get_module_dir()
     generate_pyinit(moduledir,tools)
 
     a_priori_directory_exclusions += [ 'casadbus/session', 'casadbus/plotserver', 'casadbus/synthesis', 'casadbus/utilities', 'casadbus/viewer' ]
@@ -1511,12 +1544,14 @@ if __name__ == '__main__':
     grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
     ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
 
-    casacdir = os.path.join(moduledir, '__casac__')
+    # casacdir = os.path.join(moduledir, '__casac__')
+    casacdir = get_casac_dir()
     libdir = os.path.join(casacdir, 'lib')
-    swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
-    if pyversion >= 3:
-        print('generating python3 bindings...')
-        swig_opt.insert(0,"-py3")
+    # swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
+    # if pyversion >= 3:
+    #    print('generating python3 bindings...')
+    #    swig_opt.insert(0,"-py3")
+    swig_opt = get_swig_flags()
     incdirs = { }
     libsrc = { }
     for t in TOOLS:
