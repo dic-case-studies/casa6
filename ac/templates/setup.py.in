@@ -1209,6 +1209,7 @@ class create_makefile(Command):
         c_target = "c_compile"
         fortran_target = "f_compile"
         swig_target = "swig_compile"
+        rsync_data_target = "rsync_data"
         all_target = "all"
         clean_target = "clean"
         build_distutils_temp = os.path.join('build',distutils_dir_name('temp'))
@@ -1225,7 +1226,7 @@ class create_makefile(Command):
             mk.write(
                 sep.join([
                     all_target + ":", yacc_target, lex_target, cpp_target,
-                    c_target, fortran_target, swig_target, "\n"
+                    c_target, fortran_target, swig_target, rsync_data_target, "\n"
                 ])
             )
             mk.write(
@@ -1422,7 +1423,17 @@ class create_makefile(Command):
             mk.write("\n# targets to compile swig .i files to _wrap.cpp files\n")
             mk.write(".PHONY: " + swig_target + "\n")
             mk.write(swig_target + ": " + sep.join(i_list) + "\n")
-         
+        
+        # rsync
+        moduledir = get_module_dir()
+        with open("makefile", "a") as mk:
+            mk.write("\n# targets to rsync data repos\n")
+            mk.write(".PHONY: " + rsync_data_target + "\n")
+            mk.write(
+                rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
+                + moduledir + "/__data__"
+            )
+ 
         # C++ and C dependency tracking to makefile
         with open("makefile", "a") as mk:
             mk.write("""
