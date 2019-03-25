@@ -69,7 +69,7 @@
 
 // DEVDEBUG gates the development debugging information to standard
 // error; it should be set to 0 for production.
-#define DEVDEBUG true
+#define DEVDEBUG false
 
 using namespace casa::vi;
 using namespace casacore;
@@ -760,7 +760,7 @@ public:
         if (iant == refant) return -1;
         int ipar = antennaIndexMap[iant];
         if (iant > refant) ipar -= 1;
-        return 3*ipar;        
+        return 4*ipar;        
     }
     size_t
     get_active_corr() {
@@ -836,33 +836,45 @@ expb_f(const gsl_vector *param, void *d, gsl_vector *f)
             // polarization (icorr is an encoding of the
             // polarization of the correlation products).
             Int iparam1 = bundle->get_param_corr_index(ant1);
-            Double phi0_1, tau1, r1;
+            Double phi0_1, tau1, r1, disp1;
             if (iparam1 >= 0) {
                 phi0_1 = gsl_vector_get(param, iparam1+0);
                 tau1 =   gsl_vector_get(param, iparam1+1);
                 r1 =     gsl_vector_get(param, iparam1+2);
+                disp1 =  gsl_vector_get(param, iparam1+3);
             } else {
                 phi0_1 = 0.0;
                 tau1 = 0.0;
                 r1 = 0.0;
+                disp1 = 0.0;
             }
             Int iparam2 = bundle->get_param_corr_index(ant2);
-            Double phi0_2, tau2, r2;
+            Double phi0_2, tau2, r2, disp2;
             if (iparam2 >= 0) {
                 phi0_2 = gsl_vector_get(param, iparam2+0);
                 tau2 =   gsl_vector_get(param, iparam2+1);
                 r2 =     gsl_vector_get(param, iparam2+2);
+                disp2 =  gsl_vector_get(param, iparam2+3);
             } else {
                 phi0_2 = 0.0;
                 tau2 = 0.0;
                 r2 = 0.0;
+                disp2 = 0.0;
             }
             
             Float phi0 = phi0_2 - phi0_1;
             Float tau  = tau2 - tau1;
             Float r    = r2 - r1;
+            Float disp = disp2 - disp1;
+            Float fmin = min(freqs);
+            Float fmax = max(freqs);
+            
             for (size_t ichan = 0; ichan != v.ncolumn(); ichan++) {
                 if (fl(dcorr, ichan, irow)) continue;
+
+                Float df = freqs(ichan) - fmin;
+                Float k_disp = 1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin;
+                    
                 Complex vis = v(dcorr, ichan, irow);
                 Double w0 = weights(dcorr, ichan, irow);
                 // FIXME: what should we use to scale the weights?
@@ -890,7 +902,7 @@ expb_f(const gsl_vector *param, void *d, gsl_vector *f)
                 //Double wDt = C::_2pi*(t1 - refTime) * ref_freq; 
                 Double wDt = C::_2pi*(t1 - refTime) * reffreq0; 
 
-                Double mtheta = -(phi0 + tau*wDf + r*wDt); 
+                Double mtheta = -(phi0 + tau*wDf + r*wDt + disp*k_disp); 
                 Double vtheta = arg(vis);
 
                 Double c_r = w*(cos(mtheta) - cos(vtheta));
@@ -935,8 +947,10 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
         SolveDataBuffer& s (sdbs(ibuf));
         if (!s.Ok()) continue;
 
-	const Vector<Double> freqs(s.freqs()); // This ibuf's freqs
-
+	const Vector<Double> freqs(s.freqs()); // This ibuf's freq
+        Float fmin = min(freqs);
+        Float fmax = max(freqs);
+        
         Cube<Complex> vis = s.visCubeCorrected();
         Cube<Bool> fl = s.flagCube();
         Cube<Float> weights = s.weightSpectrum();
@@ -965,48 +979,54 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
             // polarization of the correlation products).
 
             Int iparam1 = bundle->get_param_corr_index(ant1);
-            Double phi0_1, tau1, r1;
+            Double phi0_1, tau1, r1, disp1;
             if (iparam1 >= 0) {
                 phi0_1 = gsl_vector_get(x, iparam1+0);
                 tau1 =   gsl_vector_get(x, iparam1+1);
                 r1 =     gsl_vector_get(x, iparam1+2);
+                disp1 =  gsl_vector_get(x, iparam1+3);
             } else {
                 phi0_1 = 0.0;
                 tau1 = 0.0;
                 r1 = 0.0;
+                disp1 = 0.0;
             }
             Int iparam2 = bundle->get_param_corr_index(ant2);
-            Double phi0_2, tau2, r2;
+            Double phi0_2, tau2, r2, disp2;
             if (iparam2 >= 0) {
                 phi0_2 = gsl_vector_get(x, iparam2+0);
                 tau2 =   gsl_vector_get(x, iparam2+1);
                 r2 =     gsl_vector_get(x, iparam2+2);
+                disp2 =  gsl_vector_get(x, iparam2+3);
             } else {
                 phi0_2 = 0.0;
                 tau2 = 0.0;
                 r2 = 0.0;
+                disp2 = 0.0;
             }
             Double phi0 = phi0_2 - phi0_1;
             Double tau = tau2 - tau1;
             Double r = r2-r1;
-
-            //Double ref_freq = freqs(0); 
-            //Double wDt = C::_2pi*(t1 - refTime) * ref_freq; 
+            Double disp = disp2 - disp1;
             Double wDt = C::_2pi*(t1 - refTime) * reffreq0; 
-            // cerr << "Dt " << t1 - refTime << " ref_freq " << ref_freq << " wDt " << wDt << endl;
             bool found_data = false;
-            
+
             for (size_t ichan = 0; ichan != vis.ncolumn(); ichan++) {
                 if (fl(dcorr, ichan, irow)) continue;
                 Double w0 = weights(dcorr, ichan, irow);
                 Double w = sqrt(w0);
                 if (fabs(w) < FLT_EPSILON) continue;
                 found_data = true;
+
+                Float df = freqs(ichan) - fmin;
+                Float k_disp = 1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin;
+                Float ph_disp = disp*k_disp;
+                    
                 // Add a 1e-9 factor because tau parameter is in nanoseconds.
                 //Double wDf = C::_2pi*(freqs(ichan) - freqs(0))*1e-9;
                 Double wDf = C::_2pi*(freqs(ichan) - reffreq0)*1e-9;
                 //
-                Double mtheta = -(phi0 + tau*wDf + r*wDt);
+                Double mtheta = -(phi0 + tau*wDf + r*wDt + disp*k_disp);
                 Double ws = sin(mtheta);
                 Double wc = cos(mtheta);
 
@@ -1049,13 +1069,16 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
                         (*gsl_vector_ptr(v, count + 0)) += (w*-ws*-wDf) * gsl_vector_get(u, iparam2 + 1);
                         // J[count + 0, iparam2 + 2]:
                         (*gsl_vector_ptr(v, count + 0)) += (w*-ws*-wDt) * gsl_vector_get(u, iparam2 + 2);
-                        
+                        // Add in dispersion: 
+                        (*gsl_vector_ptr(v, count + 0)) += (w*-ws*-k_disp) * gsl_vector_get(u, iparam2 + 3);
                         // J[count + 1, iparam2 + 0]:
                         (*gsl_vector_ptr(v, count + 1)) += (w*+wc*-1.0) * gsl_vector_get(u, iparam2 + 0);
                         // J[count + 1, iparam2 + 1]:
                         (*gsl_vector_ptr(v, count + 1)) += (w*+wc*-wDf) * gsl_vector_get(u, iparam2 + 1);
                         // J[count + 1, iparam2 + 2]:
                         (*gsl_vector_ptr(v, count + 1)) += (w*+wc*-wDt) * gsl_vector_get(u, iparam2 + 2);
+                        // Dispersion
+                        (*gsl_vector_ptr(v, count + 1)) += (w*+wc*-k_disp) * gsl_vector_get(u, iparam2 + 3);
                     } else {
                         (*gsl_vector_ptr(v, iparam2 + 0)) += (w*-ws*-1.0) * gsl_vector_get(u, count + 0);
                         (*gsl_vector_ptr(v, iparam2 + 0)) += (w*+wc*-1.0) * gsl_vector_get(u, count + 1);
@@ -1063,6 +1086,8 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
                         (*gsl_vector_ptr(v, iparam2 + 1)) += (w*+wc*-wDf) * gsl_vector_get(u, count + 1);
                         (*gsl_vector_ptr(v, iparam2 + 2)) += (w*-ws*-wDt) * gsl_vector_get(u, count + 0);
                         (*gsl_vector_ptr(v, iparam2 + 2)) += (w*+wc*-wDt) * gsl_vector_get(u, count + 1);
+                        (*gsl_vector_ptr(v, iparam2 + 3)) += (w*-ws*-k_disp) * gsl_vector_get(u, count + 0);
+                        (*gsl_vector_ptr(v, iparam2 + 3)) += (w*+wc*-k_disp) * gsl_vector_get(u, count + 1);
                     }
                     // JTJ part. I'm calculating these from the CblasNoTrans version.
                     // JTJ[i, k] = sum_j JT[i, j] * J[j, k] , which is to say
@@ -1073,31 +1098,40 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
                     // can be simplified to (ws*ws) + (wc*wc) and that that reduces to 1.
                     // But I'd like to have regression tests for some of that I guess.
                     if (JTJ) {
+                        Float wterm = (-ws) * (-ws) + (+wc) * (+wc);
                         // J[count + 0, iparam2 + 0] * J[count + 0, iparam2 + 0]
                         // J[count + 1, iparam2 + 0] * J[count + 1, iparam2 + 0]
                         (*gsl_matrix_ptr(JTJ, iparam2 + 0, iparam2 + 0)) +=
-                            w0*-1.0*-1.0*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*-1.0*-1.0*wterm;
                         // J[count + 0, iparam2 + 1] * J[count + 0, iparam2 + 0]
                         // J[count + 1, iparam2 + 1] * J[count + 1, iparam2 + 0]                        
                         (*gsl_matrix_ptr(JTJ, iparam2 + 1, iparam2 + 0)) +=
-                            w0*-wDf*-1.0*((-ws) * (-ws) + (+wc) * (+wc));  
+                            w0*-wDf*-1.0*wterm;  
                         // J[count + 0, iparam2 + 1]^2
                         // J[count + 1, iparam2 + 1]^2 
                         (*gsl_matrix_ptr(JTJ, iparam2 + 1, iparam2 + 1)) +=
-                            w0*-wDf*-wDf*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*-wDf*-wDf*wterm;
                         // J[count + 0, iparam2 + 2] * J[count + 0, iparam2 + 0]
                         // J[count + 1, iparam2 + 2] * J[count + 1, iparam2 + 0] 
                         (*gsl_matrix_ptr(JTJ, iparam2 + 2, iparam2 + 0)) +=
-                            w0*-wDt*-1.0*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*-wDt*-1.0*wterm;
                         // J[count + 0, iparam2 + 2] * J[count + 0, iparam2 + 1]
                         // J[count + 1, iparam2 + 2] * J[count + 1, iparam2 + 1]
                         (*gsl_matrix_ptr(JTJ, iparam2 + 2, iparam2 + 1)) +=
-                            w0*-wDt*-wDf*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*-wDt*-wDf*wterm;
                         // J[count + 0, iparam2 + 2]^2 and J[count + 1, iparam2 + 2]^2
                         (*gsl_matrix_ptr(JTJ, iparam2 + 2, iparam2 + 2)) +=
-                            w0*-wDt*-wDt*((-ws) * (-ws) + (+wc) * (+wc));  
+                            w0*-wDt*-wDt*wterm;
+                        // Dispersive terms:
+                        (*gsl_matrix_ptr(JTJ, iparam2 + 3, iparam2 + 0)) +=
+                            w0*-1.0*-k_disp*wterm;
+                        (*gsl_matrix_ptr(JTJ, iparam2 + 3, iparam2 + 1)) +=
+                            w0*-wDf*-k_disp*wterm;
+                        (*gsl_matrix_ptr(JTJ, iparam2 + 3, iparam2 + 2)) +=
+                            w0*-wDt*-k_disp*wterm;
+                        (*gsl_matrix_ptr(JTJ, iparam2 + 3, iparam2 + 3)) +=
+                            w0*-k_disp*-k_disp*wterm;
                     }
-
                 }
                 if (iparam1 >= 0) {
                     params.insert(iparam1);
@@ -1105,10 +1139,12 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
                         (*gsl_vector_ptr(v, count + 0)) += gsl_vector_get(u, iparam1 + 0) * (w*-ws*+1.0);
                         (*gsl_vector_ptr(v, count + 0)) += gsl_vector_get(u, iparam1 + 1) * (w*-ws*+wDf); 
                         (*gsl_vector_ptr(v, count + 0)) += gsl_vector_get(u, iparam1 + 2) * (w*-ws*+wDt);
+                        (*gsl_vector_ptr(v, count + 0)) += gsl_vector_get(u, iparam1 + 3) * (w*-ws*+k_disp);
                         // 
                         (*gsl_vector_ptr(v, count + 1)) += gsl_vector_get(u, iparam1 + 0) * (w*+wc*+1.0);
                         (*gsl_vector_ptr(v, count + 1)) += gsl_vector_get(u, iparam1 + 1) * (w*+wc*+wDf);
                         (*gsl_vector_ptr(v, count + 1)) += gsl_vector_get(u, iparam1 + 2) * (w*+wc*+wDt);
+                        (*gsl_vector_ptr(v, count + 1)) += gsl_vector_get(u, iparam1 + 3) * (w*+wc*+k_disp);
                     } else {
                         // Transpose
                         (*gsl_vector_ptr(v, iparam1 + 0)) += gsl_vector_get(u, count + 0) * (w*-ws*+1.0);
@@ -1117,29 +1153,41 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
                         (*gsl_vector_ptr(v, iparam1 + 1)) += gsl_vector_get(u, count + 1) * (w*+wc*+wDf);
                         (*gsl_vector_ptr(v, iparam1 + 2)) += gsl_vector_get(u, count + 0) * (w*-ws*+wDt);
                         (*gsl_vector_ptr(v, iparam1 + 2)) += gsl_vector_get(u, count + 1) * (w*+wc*+wDt);
+                        (*gsl_vector_ptr(v, iparam1 + 3)) += gsl_vector_get(u, count + 0) * (w*-ws*+k_disp);
+                        (*gsl_vector_ptr(v, iparam1 + 3)) += gsl_vector_get(u, count + 1) * (w*+wc*+k_disp);
                     } 
                     if (JTJ) {
+                        Float wterm = (-ws) * (-ws) + (+wc) * (+wc);
                         // J[count + 0, iparam1 + 0]^2 and J[count + 1, iparam1 + 0]^2
                         (*gsl_matrix_ptr(JTJ, iparam1 + 0, iparam1 + 0)) +=
-                            w0*1.0*1.0*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*1.0*1.0*wterm;
                         // J[count + 0, iparam1 + 1] * J[count + 0, iparam1 + 0]
                         // and J[count + 1, iparam1 + 1] * J[count + 1, iparam1 + 0]
                         (*gsl_matrix_ptr(JTJ, iparam1 + 1, iparam1 + 0)) +=
-                            w0*wDf*1.0*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*wDf*1.0*wterm;
                         // J[count + 0, iparam1 + 1]^2 and J[count + 1, iparam1 + 1]^2 
                         (*gsl_matrix_ptr(JTJ, iparam1 + 1, iparam1 + 1)) +=
-                            w0*wDf*wDf*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*wDf*wDf*wterm;
                         // J[count + 0, iparam1 + 2] * J[count + 0, iparam1 + 0]
                         // J[count + 1, iparam1 + 2] * J[count + 1, iparam1 + 0] 
                         (*gsl_matrix_ptr(JTJ, iparam1 + 2, iparam1 + 0)) +=
-                            w0*wDt*1.0*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*wDt*1.0*wterm;
                         // J[count + 0, iparam1 + 2] * J[count + 0, iparam1 + 1]
                         // J[count + 1, iparam1 + 2] * J[count + 1, iparam1 + 1]
                         (*gsl_matrix_ptr(JTJ, iparam1 + 2, iparam1 + 1)) +=
-                            w0*wDt*wDf*((-ws) * (-ws) + (+wc) * (+wc));
+                            w0*wDt*wDf*wterm;
                         // J[count + 0, iparam1 + 2]^2 and  J[count + 1, iparam1 + 2]^2
                         (*gsl_matrix_ptr(JTJ, iparam1 + 2, iparam1 + 2)) +=
-                            w0*wDt*wDt*((-ws) * (-ws) + (+wc) * (+wc));  
+                            w0*wDt*wDt*wterm;
+                        // Dispersive!
+                        (*gsl_matrix_ptr(JTJ, iparam1 + 3, iparam1 + 0)) +=
+                            w0*1.0*k_disp*wterm;
+                        (*gsl_matrix_ptr(JTJ, iparam1 + 3, iparam1 + 1)) +=
+                            w0*wDf*k_disp*wterm;
+                        (*gsl_matrix_ptr(JTJ, iparam1 + 3, iparam1 + 2)) +=
+                            w0*wDt*k_disp*wterm;
+                        (*gsl_matrix_ptr(JTJ, iparam1 + 3, iparam1 + 3)) +=
+                            w0*k_disp*k_disp*wterm;
                     }
                 }
                 count += 2;
@@ -1166,7 +1214,7 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
             params.begin(),
             params.end(),
             std::ostream_iterator<Int>(std::cerr, " ")
-);
+            );
         cerr << endl;
         print_baselines(baselines);
         cerr << "count " << count << endl;
@@ -1210,7 +1258,6 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
     // Dimensions of (num_antennas); is the same dimension as
     // param vector here.
     gsl_matrix_set_zero(hess);
-    //Vector<Double> freqs = sdbs.freqs();
 
     const Double reffreq0=sdbs(0).freqs()(0);  // First freq in first SDB
 
@@ -1223,11 +1270,14 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
         if (!s.Ok()) continue;
 
 	const Vector<Double> freqs(s.freqs()); // This ibuf's freqs
-
+        Float fmin = min(freqs);
+        Float fmax = max(freqs);
+            
         Cube<Complex> v = s.visCubeCorrected();
         Cube<Bool> fl = s.flagCube();
         Cube<Float> weights = s.weightSpectrum();
            
+            
         for (Int irow=0; irow!=s.nRows(); irow++) {
             if (s.flagRow()(irow)) continue;
 
@@ -1245,32 +1295,37 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
             // polarization (icorr is an encoding of the
             // polarization of the correlation products).
             Int iparam1 = bundle->get_param_corr_index(ant1);
-            Double phi0_1, tau1, r1;
+            Double phi0_1, tau1, r1, disp1;
             if (iparam1 >= 0) {
                 phi0_1 = gsl_vector_get(param, iparam1+0);
                 tau1 =   gsl_vector_get(param, iparam1+1);
                 r1 =     gsl_vector_get(param, iparam1+2);
+                disp1 =  gsl_vector_get(param, iparam1+3);
             } else {
                 phi0_1 = 0.0;
                 tau1 = 0.0;
                 r1 = 0.0;
+                disp1 = 0.0;
             }
             Int iparam2 = bundle->get_param_corr_index(ant2);
-            Double phi0_2, tau2, r2;
+            Double phi0_2, tau2, r2, disp2;
             if (iparam2 >= 0) {
                 phi0_2 = gsl_vector_get(param, iparam2+0);
                 tau2 =   gsl_vector_get(param, iparam2+1);
                 r2 =     gsl_vector_get(param, iparam2+2);
+                disp2 =  gsl_vector_get(param, iparam2+3);
                 // cerr << "phi0_2 " << phi0_2 << " tau2 " << tau2 << " r2 " << r2 << endl;
             } else {
                 phi0_2 = 0.0;
                 tau2 = 0.0;
                 r2 = 0.0;
+                disp2 = 0.0;
             }
 
             Float phi0 = phi0_2 - phi0_1;
             Float tau  = tau2 - tau1;
             Float r    = r2 - r1;
+            Float disp = disp2 - disp1;
             for (size_t ichan = 0; ichan != v.ncolumn(); ichan++) {
                 if (fl(dcorr, ichan, irow)) continue;
                 Complex vis = v(dcorr, ichan, irow);
@@ -1289,10 +1344,13 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
                 Double t1 = s.time()(0);
 
                 //Double ref_freq = freqs(0);
-                //Double wDt = C::_2pi*(t1 - refTime) * ref_freq; 
-                Double wDt = C::_2pi*(t1 - refTime) * reffreq0; 
+                //Double wDt = C::_2pi*(t1 - refTime) * ref_freq;
+                Float df = freqs(ichan) - fmin;
 
-                Double mtheta = -(phi0 + tau*wDf + r*wDt); 
+                Double wDt = C::_2pi*(t1 - refTime) * reffreq0; 
+                Float k_disp = 1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin;
+
+                Double mtheta = -(phi0 + tau*wDf + r*wDt + disp*k_disp); 
                 Double vtheta = arg(vis);
 
                 // Hold on a minute though! 
@@ -1303,6 +1361,13 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
                 Double d11 = wDf*d01;
                 Double d12 = wDt*d01;
                 Double d22 = wDt*d12;
+                // Hang on a bit longer: dispersion
+                // FIXME: There may be an element of pattern-matching
+                // in the below assignments
+                Double d03 = k_disp*d01;
+                Double d13 = wDf*d03;
+                Double d23 = wDt*d13;
+                Double d33 = k_disp*d23;
                 
                 if (iparam1 >= 0) {
                     // Diagonal terms.
@@ -1318,6 +1383,15 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
                     *gsl_matrix_ptr(hess, iparam1 + 1, iparam1 + 0) += d01;
                     *gsl_matrix_ptr(hess, iparam1 + 2, iparam1 + 0) += d02;
                     *gsl_matrix_ptr(hess, iparam1 + 2, iparam1 + 1) += d12;
+                    // Dispersion
+                    *gsl_matrix_ptr(hess, iparam1 + 0, iparam1 + 3) += d03;
+                    *gsl_matrix_ptr(hess, iparam1 + 1, iparam1 + 3) += d13;
+                    *gsl_matrix_ptr(hess, iparam1 + 2, iparam1 + 3) += d23;
+                    *gsl_matrix_ptr(hess, iparam1 + 3, iparam1 + 3) += d33;
+                    *gsl_matrix_ptr(hess, iparam1 + 3, iparam1 + 0) += d03;
+                    *gsl_matrix_ptr(hess, iparam1 + 3, iparam1 + 1) += d13;
+                    *gsl_matrix_ptr(hess, iparam1 + 3, iparam1 + 2) += d23;
+                    
                 }
                 if (iparam2 >= 0) {
                     // Diagonals
@@ -1332,6 +1406,14 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
                     *gsl_matrix_ptr(hess, iparam2 + 1, iparam2 + 0) += d01;
                     *gsl_matrix_ptr(hess, iparam2 + 2, iparam2 + 0) += d02;
                     *gsl_matrix_ptr(hess, iparam2 + 2, iparam2 + 1) += d12;
+                    // Dispersion
+                    *gsl_matrix_ptr(hess, iparam2 + 0, iparam2 + 3) += d03;
+                    *gsl_matrix_ptr(hess, iparam2 + 1, iparam2 + 3) += d13;
+                    *gsl_matrix_ptr(hess, iparam2 + 2, iparam2 + 3) += d23;
+                    *gsl_matrix_ptr(hess, iparam2 + 3, iparam2 + 3) += d33;
+                    *gsl_matrix_ptr(hess, iparam2 + 3, iparam2 + 0) += d03;
+                    *gsl_matrix_ptr(hess, iparam2 + 3, iparam2 + 1) += d13;
+                    *gsl_matrix_ptr(hess, iparam2 + 3, iparam2 + 2) += d23;
                 }
                 // FIXME: Not just diagonal terms any more!
                 if ((iparam1 >= 0) && (iparam2 >= 0)) {
@@ -1360,7 +1442,17 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
                     *gsl_matrix_ptr(hess, iparam2 + 2, iparam1 + 1) -= d12;
                     *gsl_matrix_ptr(hess, iparam1 + 2, iparam2 + 1) -= d12;
                     *gsl_matrix_ptr(hess, iparam2 + 2, iparam1 + 2) -= d22;
-
+                    // Dispersion part 1:
+                    *gsl_matrix_ptr(hess, iparam1 + 0, iparam2 + 3) -= d03;
+                    *gsl_matrix_ptr(hess, iparam1 + 1, iparam2 + 3) -= d13;
+                    *gsl_matrix_ptr(hess, iparam1 + 2, iparam2 + 3) -= d23;
+                    *gsl_matrix_ptr(hess, iparam1 + 3, iparam2 + 3) -= d33;
+                    // Dispersion part 2
+                    *gsl_matrix_ptr(hess, iparam2 + 0, iparam1 + 3) -= d03;
+                    *gsl_matrix_ptr(hess, iparam2 + 1, iparam1 + 3) -= d13;
+                    *gsl_matrix_ptr(hess, iparam2 + 2, iparam1 + 3) -= d23;
+                    *gsl_matrix_ptr(hess, iparam2 + 3, iparam1 + 3) -= d33;
+                    
                 }
             }
         }
@@ -1394,23 +1486,21 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
     if ((fabs(det) < GSL_DBL_EPSILON) || std::isnan(det)) {
         logSink << "Hessian matrix singular (determinant=" << det << "); setting signal-to-noise ratio to zero." << LogIO::POST;
        // Singular matrix; fill snrs with zero.
-        for (size_t i=0; i < hess->size1; i+=3) {
+        for (size_t i=0; i < hess->size1; i+=4) {
             Double snr = 0;
             gsl_vector_set(snr_vector, i, snr);
         }
     }
     else {
-        // cerr << "Determinant of hessian =" << det << endl;
         gsl_linalg_LU_invert(hess, perm, inv_hess);
     
         Double sigma2 = xi_squared / (nobs - numant3) * nobs / sumwt;
         // cerr << "xi_squared " << xi_squared << " Nobs " << nobs << " sumwt " << sumwt << " sigma2 " << sigma2 << endl;
-        for (size_t i=0; i < hess->size1; i+=3) {
+        for (size_t i=0; i < hess->size1; i+=4) {
             Double h = gsl_matrix_get(inv_hess, i, i);
             Double snr0 = sqrt(sigma2*h*0.5);
             snr0 = min(snr0, 9999.999);
             Double snr = (snr0 > 1e-20) ? 1.0/snr0 : snr0;
-            // cerr << "Antenna " << i/3 << " h " << h << " SNR0 " << snr0 << " SNR  = " << snr << endl;
             gsl_vector_set(snr_vector, i, snr);
         }
     }
@@ -1639,8 +1729,8 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             logSink << "No baselines for correlation " << icor << "; not running least-squares solver." << LogIO::POST;
             continue;
         }
-        // Three parameters for every antenna.
-        size_t p = 3 * (bundle.get_num_antennas() - 1);
+        // Four parameters for every antenna, with dispersion
+        size_t p = 4 * (bundle.get_num_antennas() - 1);
         // We need to store complex visibilities in a real matrix so we
         // just store real and imaginary components separately.
         size_t n = 2 * bundle.get_num_data_points();
@@ -1692,6 +1782,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             gsl_vector_set(gp, ind+0, casa_param(4*icor + 0, iant));
             gsl_vector_set(gp, ind+1, casa_param(4*icor + 1, iant));
             gsl_vector_set(gp, ind+2, casa_param(4*icor + 2, iant));
+            // FIXME: We could use an initial guess for dispersion
         }
         gsl_vector *gp_orig = gsl_vector_alloc(p);
         // Keep a copy of original parameters
@@ -1735,6 +1826,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
                 casa_param(4*icor + 0, iant) = gsl_vector_get(res, iparam+0);
                 casa_param(4*icor + 1, iant) = gsl_vector_get(res, iparam+1);
                 casa_param(4*icor + 2, iant) = gsl_vector_get(res, iparam+2);
+                casa_param(4*icor + 3, iant) = gsl_vector_get(res, iparam+3);
                 for (size_t i=0; i!=3; i++) {
                     casa_snr(4*icor + i, iant) = gsl_vector_get(snr_vector, iparam+0);
                 }
@@ -2075,6 +2167,8 @@ void FringeJones::calcAllJones() {
     onePar.reference(Piter.array());
     onePOK.reference(POKiter.array());
 
+    Float fmin = min(currFreq());
+    Float fmax = max(currFreq());
     for (Int ich=0; ich<nChanMat(); ich++) {
       
       oneJones.reference(Jiter.array());
@@ -2082,11 +2176,20 @@ void FringeJones::calcAllJones() {
 
       for (Int ipar=0;ipar<nPar();ipar+=4) {
 	if (onePOK(ipar)) {
+          Float df = currFreq()(ich) - fmin;
+          Float k_disp = 1e-9*(1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin);
+
 	  phase=onePar(ipar);
 	  phase+=2.0*C::pi*onePar(ipar+1)*
 	    (currFreq()(ich)-KrefFreqs_(currSpw()));
 	  phase+=2.0*C::pi*onePar(ipar+2)*KrefFreqs_(currSpw())*1e9*
 	    (currTime() - refTime());
+          Float dph_d = onePar(ipar+3) * k_disp;
+          if (DEVDEBUG) {
+              cerr << "fmin " << fmin << " fmax " << fmax << " df " << df << " k_disp " << k_disp
+                   << " param " << onePar(ipar+3) << " dph_d " << dph_d << endl;
+          }
+          phase+=dph_d;
 	  oneJones(ipar/4)=Complex(cos(phase),sin(phase));
 	  oneJOK(ipar/4)=True;
 	} else {
@@ -2195,8 +2298,10 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
     Int ncol = drf.param().ncolumn();
     Int nrow = drf.param().nrow();
     
-    std::cerr << "nrow " << nrow << ", ncol " << ncol << endl; 
-    std::cerr << "drf.flag() " << drf.flag() << endl; 
+    if (DEVDEBUG) {
+        std::cerr << "nrow " << nrow << ", ncol " << ncol << endl; 
+        std::cerr << "drf.flag() " << drf.flag() << endl; 
+    }
     for (Int i=0; i!=ncol; i++) {
         for (Int j=0; j!=nrow; j++) {
             Int oj = (j>=3) ? j+1 : j;
@@ -2268,6 +2373,7 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
             Double phi0 = sRP(4*icor + 0, iant);
             Double delay = sRP(4*icor + 1, iant);
             Double rate = sRP(4*icor + 2, iant);
+            Double k_disp = sRP(4*icor + 3, iant);
             aggregateTime.find(iant);
             // We assume the reference frequency for fringe fitting
             // (which is NOT the one stored in the SPECTRAL_WINDOW
@@ -2284,7 +2390,7 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
             }
             if (DEVDEBUG) {
                 cerr << "Antenna " << iant << ": phi0 " << phi0 << " delay " << delay << " rate " << rate << " dt " << dt << endl
-                     << "dt " << dt << endl
+                     << "k_disp " << k_disp << endl
                      << "centroidFreq "<< centroidFreq << " Adding corrections for frequency (" << 360*delta1 << ")" 
                      << " and time (" << 360*delta2 << ") degrees." << endl;
             }
@@ -2302,7 +2408,9 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
             }
         }
     }
-    std::cerr << "sPok " << sPok << endl; 
+    if (DEVDEBUG) {
+        std::cerr << "sPok " << sPok << endl;
+    }
 }
 
 void
