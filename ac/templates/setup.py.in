@@ -1210,6 +1210,8 @@ class create_makefile(Command):
         fortran_target = "f_compile"
         swig_target = "swig_compile"
         statics_wrap_target = "statics_wrap_cc_compile"
+        build_props_target = "build_props_copy"
+        coercetype_target = "coercetype_copy"
         rsync_data_target = "rsync_data"
         all_target = "all"
         clean_target = "clean"
@@ -1227,7 +1229,8 @@ class create_makefile(Command):
             mk.write(
                 sep.join([
                     all_target + ":", yacc_target, lex_target, cpp_target, c_target,
-                    fortran_target, swig_target, statics_wrap_target, rsync_data_target, "\n"
+                    fortran_target, swig_target, statics_wrap_target, build_props_target,
+                    coercetype_target, rsync_data_target, "\n"
                 ])
             )
             mk.write(
@@ -1428,11 +1431,14 @@ class create_makefile(Command):
             mk.write(".PHONY: " + swig_target + "\n")
             mk.write(swig_target + ": " + sep.join(i_list) + "\n")
       
-        # C++ tool statics
-        # /usr/bin/ccache /opt/rh/devtoolset-4/root/bin/g++ -g -std=c++11 -Ibinding/include -Ibinding/generated/include -Ilibcasatools/generated/include -Icasa-source/code -Icasa-source -Icasa-source/casacore -Iinclude -Isakura-source/src -I/opt/rh/rh-python36/root/usr/lib64/python3.6/site-packages/numpy/core/include -pthread -D_REENTRANT -I/usr/include/cfitsio -I/usr/include/eigen3 -I/opt/casa/03/include -DWITHOUT_DBUS -I/usr/include/libxml2 -I/usr/include -fopenmp -pthread -Wno-unused-result -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -I/opt/rh/rh-python36/root/usr/include -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DAIPS_64B -DAIPS_AUTO_STL -DAIPS_DEBUG -DAIPS_HAS_QWT -DAIPS_LINUX -DAIPS_LITTLE_ENDIAN -DAIPS_STDLIB -DCASACORE_NEEDS_RETHROW -DCASA_USECASAPATH -DQWT6 -DUseCasacoreNamespace -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DNO_CRASH_REPORTER -fno-omit-frame-pointer -DWITHOUT_ACS -DWITHOUT_BOOST -DUSE_THREADS -DCASATOOLS -DWITHOUT_DBUS -fcx-fortran-rules -DUSE_GRPC -Ibinding -Ibinding/generated/tools/agentflagger -Ibinding/tools/agentflagger -I/opt/rh/rh-python36/root/usr/include/python3.6m -c binding/generated/tools/agentflagger/agentflagger_statics.cc -o build/temp.linux-x86_64-3.6/binding/generated/tools/agentflagger/agentflagger_statics.o
-        # This can probably be done in make, if really necessary, but it's so quick it's
-        # easiest to just do it using the existing python functionality for now
+        # Generation of various files. This can probably be done in make, if really
+        # necessary, but it's so quick it's easiest to just do it using the existing
+        # python functionality for now
+        moduledir = get_module_dir()
         install_version_header(casatools_major,casatools_minor,casatools_version)
+        generate_config(moduledir,props)
+
+        # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files 
         
         # some of this is copied and pasted from the C++ section above, so can be
         # refactored
@@ -1499,11 +1505,18 @@ class create_makefile(Command):
             mk.write(".PHONY: " + statics_wrap_target + "\n")
             mk.write(statics_wrap_target + ": " + mkdirs_statics_wrap_target + " " + sep.join(cpp_list) + "\n")
 
-        
-        
+        # copies
+        with open("makefile", "a") as mk:
+            mk.write(
+                "\n\n" + build_props_target + ": build.properties"
+                + "\n\tcp -f build.properties " + moduledir + "/."
+            ) 
+            mk.write(
+                "\n\n" + coercetype_target + ": src/python/coercetype.py"
+                + "\n\tcp -f src/python/coercetype.py " + moduledir + "/."
+            ) 
 
         # rsync
-        moduledir = get_module_dir()
         with open("makefile", "a") as mk:
             mk.write("\n# targets to rsync data repos\n")
             mk.write(".PHONY: " + rsync_data_target + "\n")
