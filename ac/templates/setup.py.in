@@ -1436,8 +1436,10 @@ class create_makefile(Command):
         
         # some of this is copied and pasted from the C++ section above, so can be
         # refactored
-        STATIC_CC = source_files("binding/generated/tools", file_suffix_filter=".cc")
-        WRAP_CPP = source_files("binding/generated/tools", file_suffix_filter=".cpp")
+        STATICS_CC = source_files("binding/generated/tools", file_suffix_filter=".cc")
+        # the wrap files won't be there for the initial run of this script, so we
+        # cannot use source_files() to find them
+        WRAP_CPP = [filename.replace('_statics.cc', '_wrap.cpp') for filename in STATICS_CC]
         CODE_BINDING = source_files("binding/tools", file_suffix_filter=".cc")
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
@@ -1467,7 +1469,7 @@ class create_makefile(Command):
         tool_deps['synthesisnormalizer'] = ['synthesisimstore']
         tool_deps['synthesisutils'] = ['synthesisimstore']
         with open("makefile", "a") as mk:
-            for s in STATIC_CC + WRAP_CPP + CODE_BINDING:
+            for s in STATICS_CC + WRAP_CPP + CODE_BINDING:
                 base = os.path.splitext(s)[0]
                 toolname = base.split(os.sep)[-2]
                 if toolname in tool_deps:
