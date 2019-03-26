@@ -975,7 +975,15 @@ def do_cerberus():
                 with io.open(fpath,'w',encoding='utf8',newline='\n') as fd:
                     fd.write(s)
 
-    
+def generate_casac_init_py():
+    ### this generates the __init__.py for the __casac__ submodule...
+    imports = "\n".join([ "from %s.__casac__.%s import %s" % (module_name,t,t) for t in TOOLS ])
+    alllist = ",\n            ".join([ "'%s'" % t for t in TOOLS ])
+    with open(os.path.join(casacdir,'__init__.py'),"w") as fd:
+        fd.write("from __future__ import absolute_import\n")
+        fd.write("__name__ = '__casac__'\n")
+        fd.write("__all__ = [ %s ]\n\n" % alllist)
+        fd.write("%s\n" % imports)
 
 # run the customize_compiler
 class casa_build_ext(build_ext):
@@ -1019,6 +1027,7 @@ class casa_build_ext(build_ext):
                         fd.write(s)
         """
         do_cerberus()
+        """
         ###
         ### this generates the __init__.py for the __casac__ submodule...
         ###
@@ -1029,6 +1038,8 @@ class casa_build_ext(build_ext):
             fd.write("__name__ = '__casac__'\n")
             fd.write("__all__ = [ %s ]\n\n" % alllist)
             fd.write("%s\n" % imports)
+        """
+        generate_casac_init_py()
 
         try:
             spawn(["rsync", "-avz", "rsync://casa-rsync.nrao.edu/casa-data", "%s/__data__" % moduledir])
@@ -1464,6 +1475,7 @@ class create_makefile(Command):
         # cannot use source_files() to find them
         WRAP_CPP = [filename.replace('_statics.cc', '_wrap.cpp') for filename in STATICS_CC]
         CODE_BINDING = source_files("binding/tools", file_suffix_filter=".cc")
+        SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
         obj_create = (
@@ -1492,17 +1504,18 @@ class create_makefile(Command):
         tool_deps['synthesisnormalizer'] = ['synthesisimstore']
         tool_deps['synthesisutils'] = ['synthesisimstore']
         with open("makefile", "a") as mk:
-            for s in STATICS_CC + WRAP_CPP + CODE_BINDING:
+            for s in STATICS_CC + WRAP_CPP + CODE_BINDING + SOURCE_BINDING:
                 base = os.path.splitext(s)[0]
-                toolname = base.split(os.sep)[-2]
-                if toolname in tool_deps:
-                    tool_deps[toolname].append(toolname)
-                else:
-                    tool_deps[toolname] = [toolname]
                 myinc = includes
-                for tn in tool_deps[toolname]:
-                    myinc += " " + tool_inc.format(toolname=tn)
-                if s in WRAP_CPP:
+                if s not in SOURCE_BINDING:
+                    toolname = base.split(os.sep)[-2]
+                    if toolname in tool_deps:
+                        tool_deps[toolname].append(toolname)
+                    else:
+                        tool_deps[toolname] = [toolname]
+                    for tn in tool_deps[toolname]:
+                        myinc += " " + tool_inc.format(toolname=tn)
+                if s in WRAP_CPP or s in SOURCE_BINDING:
                     myinc += " -I" + python_inc
                 objfile = obj_name.format(base=base)
                 cpp_list.append(objfile)
@@ -1549,6 +1562,8 @@ class create_makefile(Command):
             mk.write(straight_copies_target + ": " + sep.join(copy_to_list))
         # cerberus, just use the python implementation for now, no make target yet
         do_cerberus()
+        # casac __init__.py generation, just use the python implmentation for now, no make target yet
+        generate_casac_init_py()
         # rsync
         with open("makefile", "a") as mk:
             mk.write("\n# targets to rsync data repos\n")
