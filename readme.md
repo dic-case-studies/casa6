@@ -72,27 +72,16 @@ but as noted above, [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/re
 If the build completes successfully, try loading the CASAtools module:
 
 ```
--bash-4.2$ type ipython
-ipython is hashed (/opt/casa/02/bin/ipython)
--bash-4.2$ PYTHONPATH=build/lib.linux-x86_64-2.7 ipython 
-Python 2.7.12 (default, Apr  4 2017, 16:53:53) 
-Type "copyright", "credits" or "license" for more information.
-
-IPython 5.1.0 -- An enhanced Interactive Python.
-?         -> Introduction and overview of IPython's features.
-%quickref -> Quick reference.
-help      -> Python's own help system.
-object?   -> Details about 'object', use 'object??' for extra details.
-
-In [1]: from casatools import image
-
-In [2]: ia = image( )
-
-In [3]: ia.fromshape("mytest.im",[20,20])
-2017-10-11 20:49:13	INFO		Created Paged image 'mytest.im' of shape [20, 20] with float valued pixels.
-Out[3]: True
-
-In [4]: exit
+-bash-4.2$ PYTHONPATH=build/lib.linux-x86_64-3.6 python3
+Python 3.6.3 (default, Jan  9 2018, 10:19:07) 
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-11)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from casatools import image
+>>> ia = image( )
+>>> ia.fromshape("mytest.im",[20,20])
+2019-03-25 16:15:08     INFO    ImageFactory::createImage       Created Paged image 'mytest.im' of shape [20, 20] with float valued pixels.
+True
+>>> 
 -bash-4.2$ 
 ```
 CASAtools can be configured using *~/.casa/toolrc.py*. For example, extra data search paths can be added like:
