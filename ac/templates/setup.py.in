@@ -1228,8 +1228,7 @@ class create_makefile(Command):
         fortran_target = "f_compile"
         swig_target = "swig_compile"
         statics_wrap_target = "statics_wrap_cc_compile"
-        build_props_target = "build_props_copy"
-        coercetype_target = "coercetype_copy"
+        straight_copies_target = "straight_file_copies"
         rsync_data_target = "rsync_data"
         all_target = "all"
         clean_target = "clean"
@@ -1247,8 +1246,8 @@ class create_makefile(Command):
             mk.write(
                 sep.join([
                     all_target + ":", yacc_target, lex_target, cpp_target, c_target,
-                    fortran_target, swig_target, statics_wrap_target, build_props_target,
-                    coercetype_target, rsync_data_target, "\n"
+                    fortran_target, swig_target, statics_wrap_target, 
+                    straight_copies_target, "\n"
                 ])
             )
             mk.write(
@@ -1523,16 +1522,31 @@ class create_makefile(Command):
             mk.write(".PHONY: " + statics_wrap_target + "\n")
             mk.write(statics_wrap_target + ": " + mkdirs_statics_wrap_target + " " + sep.join(cpp_list) + "\n")
 
-        # copies
+        # straight file copies
+        files_to_copy = source_files("src/python", file_suffix_filter=".py")
+        files_to_copy.append("build.properties")
+        bindir = moduledir + os.sep + "__casac__" + os.sep + "bin"
+        copy_to_dirs = {}
+        xml_casa = "xml-casa"
+        files_to_copy.append("scripts" + os.sep + xml_casa)
+        copy_to_dirs[xml_casa] = bindir
+        assembly_jar = "xml-casa-assembly-1.5.jar"
+        files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
+        copy_to_dirs[assembly_jar] = bindir + os.sep + "java" 
+        copy_to_list = []
         with open("makefile", "a") as mk:
-            mk.write(
-                "\n\n" + build_props_target + ": build.properties"
-                + "\n\tcp -f build.properties " + moduledir + "/."
-            ) 
-            mk.write(
-                "\n\n" + coercetype_target + ": src/python/coercetype.py"
-                + "\n\tcp -f src/python/coercetype.py " + moduledir + "/."
-            ) 
+            mk.write("# straight file copies")
+            for f in files_to_copy:
+                filename = os.path.basename(f)
+                copy_to_dir = copy_to_dirs[filename] if filename in copy_to_dirs else moduledir
+                copy_to = copy_to_dir + os.sep + filename
+                mk.write(
+                    "\n\n" + copy_to + ": " +f 
+                    + "\n\tmkdir -p " + copy_to_dir + " && cp -f $< $@"
+                ) 
+                copy_to_list.append(copy_to)
+            mk.write("\n\n.PHONY: " + straight_copies_target + "\n")
+            mk.write(straight_copies_target + ": " + sep.join(copy_to_list))
         # cerberus, just use the python implementation for now, no make target yet
         do_cerberus()
         # rsync
