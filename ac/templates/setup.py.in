@@ -1247,7 +1247,7 @@ class create_makefile(Command):
                 sep.join([
                     all_target + ":", yacc_target, lex_target, cpp_target, c_target,
                     fortran_target, swig_target, statics_wrap_target, 
-                    straight_copies_target, "\n"
+                    straight_copies_target, rsync_data_target, "\n"
                 ])
             )
             mk.write(
