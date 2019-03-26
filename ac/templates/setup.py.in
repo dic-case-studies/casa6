@@ -1280,6 +1280,10 @@ class create_makefile(Command):
         CORE_SRC = source_files( "casa-source/casacore",file_suffix_filter=".cc" )
         SAKURA_SRC = sakura_files( )
         CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
+        # the gprc registrar files may not be present when this code gets run
+        grpc_registrar_dir = 'build' + os.sep + distutils_dir_name("binding") + os.sep + "grpc"
+        grpc_registrar_files = ['registrar.grpc.pb.cc', 'registrar.pb.cc']
+        GRPC_REGISTRAR = [grpc_registrar_dir + os.sep + s for s in grpc_registrar_files]
         obj_name = os.path.join(build_distutils_temp, "{base}.o")
         dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
         cpp_obj = (
@@ -1287,10 +1291,11 @@ class create_makefile(Command):
             + '\n\t$(POSTCOMPILE)'
         )
         dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
-        src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM]
+        src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR]
         cflags = [
             module_cflags['/code/'], module_cflags['/casacore/'],
-            platform_cflags[sys.platform], platform_cflags[sys.platform]
+            platform_cflags[sys.platform], platform_cflags[sys.platform],
+            platform_cflags[sys.platform]
         ]
         includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
         flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
