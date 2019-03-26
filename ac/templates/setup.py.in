@@ -959,6 +959,23 @@ try:
 except ImportError:
     pass  # custom command not needed if wheel is not installed
 
+def do_cerberus():
+    moduledir = get_module_dir()
+    cerberusdir = os.path.join(moduledir, '__cerberus__')
+    if os.path.exists(cerberusdir):
+        remove_tree(cerberusdir)
+    copy_tree("cerberus/cerberus",cerberusdir)
+    for root, dirs, files in os.walk(cerberusdir):
+        for file in files:
+            if file.endswith('.py'):
+                fpath = os.path.join(root, file)
+                with io.open(fpath,'r',encoding='utf8',newline='\n') as fd:
+                    s = fd.read()
+                s = s.replace("from cerberus", "from casatools.__cerberus__")
+                with io.open(fpath,'w',encoding='utf8',newline='\n') as fd:
+                    fd.write(s)
+
+    
 
 # run the customize_compiler
 class casa_build_ext(build_ext):
@@ -973,7 +990,7 @@ class casa_build_ext(build_ext):
         global a_priori_exclusions
         do_wheel_closure = doing_wheel_build
         moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
-        cerberusdir = os.path.join(moduledir, '__cerberus__')
+        # cerberusdir = os.path.join(moduledir, '__cerberus__')
         casacdir = os.path.join(moduledir, '__casac__')
 
         mkpath(moduledir)
@@ -987,7 +1004,7 @@ class casa_build_ext(build_ext):
         install_version_header(casatools_major,casatools_minor,casatools_version)
 
         build_ext.run(self)
-
+        """
         if os.path.exists(cerberusdir):
             remove_tree(cerberusdir)
         copy_tree("cerberus/cerberus",cerberusdir)
@@ -1000,7 +1017,8 @@ class casa_build_ext(build_ext):
                     s = s.replace("from cerberus", "from casatools.__cerberus__")
                     with io.open(fpath,'w',encoding='utf8',newline='\n') as fd:
                         fd.write(s)
-
+        """
+        do_cerberus()
         ###
         ### this generates the __init__.py for the __casac__ submodule...
         ###
@@ -1515,7 +1533,8 @@ class create_makefile(Command):
                 "\n\n" + coercetype_target + ": src/python/coercetype.py"
                 + "\n\tcp -f src/python/coercetype.py " + moduledir + "/."
             ) 
-
+        # cerberus, just use the python implementation for now, no make target yet
+        do_cerberus()
         # rsync
         with open("makefile", "a") as mk:
             mk.write("\n# targets to rsync data repos\n")
