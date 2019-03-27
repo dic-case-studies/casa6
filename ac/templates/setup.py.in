@@ -1420,7 +1420,7 @@ class create_makefile(Command):
             mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
         casatools_obj_list += c_list
 
-        CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f")
+        CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f", file_filter=['fgridft.f'])
         CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f")
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         f_obj = (
