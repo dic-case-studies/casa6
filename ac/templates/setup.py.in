@@ -1305,6 +1305,7 @@ class create_makefile(Command):
         cpp_list = []
         mkdirs_cc_target = "mk_cc_obj_dirs"
         targdirs = set()
+        shlib = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libcasatools.cpython-36m-x86_64-linux-gnu.so'
         with open("makefile", "a") as mk:
             for (mysrc, myflags) in zip(src, cflags):
                 dflags = sep.join(myflags + duse_grpc + grpc_dirs)
@@ -1327,6 +1328,8 @@ class create_makefile(Command):
             mk.write("\n# targets to compile C++ code to object files\n")
             mk.write(".PHONY: " + cpp_target + "\n")
             mk.write(cpp_target + ": " + mkdirs_cc_target + " " + sep.join(cpp_list) + "\n")
+    
+        casatools_obj_list = cpp_list
 
         # yacc 
         CASACORE_YACC = source_files("casa-source/casacore", file_suffix_filter=".yy")
@@ -1350,10 +1353,11 @@ class create_makefile(Command):
                 base = os.path.splitext(name)[0]
                 objfile = obj_name.format(base=base)
                 yacc_list.append(objfile)
-                mk.write(yacc_obj_targ.format(src=f, base=base))
+                mk.write('\n\n' + yacc_obj_targ.format(src=f, base=base))
             mk.write("\n# targets to compile yacc code to object files\n")
             mk.write(".PHONY: " + yacc_target + "\n")
             mk.write(yacc_target + ": " + sep.join(yacc_list) + "\n")
+        # casatools_obj_list += yacc_list
                         
         # lex
         CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
@@ -1376,11 +1380,7 @@ class create_makefile(Command):
             mk.write("\n# targets to compile lex code to object files\n")
             mk.write(".PHONY: " + lex_target + "\n")
             mk.write(lex_target + ": " + sep.join(lex_list) + "\n")
-
-        print("------------------------------tool-xml------------------------------" )
-        TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
-        for f in TOOL_XML:
-            print(f)
+        # casatools_obj_list += lex_list
 
         MIR_SRC =  source_files( "casa-source/casacore/mirlib",file_suffix_filter=".c" )
         includes = sep.join(get_new_cxx_compiler_includes())
@@ -1418,6 +1418,7 @@ class create_makefile(Command):
             mk.write(".PHONY: " + mkdirs_c_target + "\n")
             mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
             mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
+        casatools_obj_list += c_list
 
         CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f")
         CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f")
@@ -1443,6 +1444,34 @@ class create_makefile(Command):
             mk.write("\n# targets to compile fortran code to object files\n")
             mk.write(".PHONY: " + fortran_target + "\n")
             mk.write(fortran_target + ": " + mkdirs_f77_target + " " + sep.join(f_list) + "\n")
+        casatools_obj_list += f_list
+
+        # casatools link
+        linker = props['build.compiler.cxx']
+        ldflags1 = sep.join(props['build.flags.compile.pthread'])
+        # FIXME hardcoded because I don't know where it comes from
+        ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64-Wl,-z,relro -Wl,-rpath,'
+        ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
+        ldflags2 = '-Lbuild/lib.linux-x86_64-3.6/casatools/__casac__/lib '
+        ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 ' 
+        # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
+        # the libcasatools link 
+        # -lcasatools.cpython-36m-x86_64-linux-gnu '
+        ldflags2 += '-lcfitsio -lm -lxml2 -lz -lm -ldl -lrpfits -lsqlite3 -lxslt -lxml2 -lxerces-c '
+        ldflags2 += '-lfftw3f_threads -lfftw3f -lfftw3_threads -lfftw3 -llapack -lwcs -lcfitsio '
+        ldflags2 += '-lrpfits -lblas -lgrpc++ -lgrpc -lgpr -lprotobuf -lreadline -lgfortran '
+        ldflags2 += '-ldl -lgomp -lpython3.6m'
+        ldflags3 = '/opt/casa/03/lib/libgsl.so /opt/casa/03/lib/libgslcblas.so '
+        ldflags3 += '-Wl,-rpath,/opt/casa/03/lib -L/usr/lib64 -fopenmp '
+        # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
+        # ldflags3 += '-Lbuild/lib.linux-x86_64-3.6/casatools/__casac__/lib -Wl,-rpath,$$ORIGIN/lib:/usr/lib64'
+        ldflags3 += '-Wl,-rpath,/lib:/usr/lib64'
+        # ld_cmd = linker + ' ' + ldflags1 + ' ' + sep.join(cpp_list) + ' ' + ldflags2 + ' ' + shlib + ' ' + ldflags3
+        ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
+        with open("makefile", "a") as mk:
+            mk.write('\n\n' + shlib + ': ' + sep.join(casatools_obj_list))
+            mk.write('\n\t@mkdir -p build/lib.linux-x86_64-3.6/casatools/__casac__/lib')
+            mk.write('\n\t' + ld_cmd)
 
         # swig *.i -> *_wrap.cpp
         BINDING_I = source_files("binding/generated/tools", file_suffix_filter=".i")
@@ -1539,6 +1568,14 @@ class create_makefile(Command):
             mk.write("\n# targets to compile statics C++ code to object files\n")
             mk.write(".PHONY: " + statics_wrap_target + "\n")
             mk.write(statics_wrap_target + ": " + mkdirs_statics_wrap_target + " " + sep.join(cpp_list) + "\n")
+
+        # link shared libraries
+        shlib = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libmsmetadata.cpython-36m-x86_64-linux-gnu.so'
+        deps = 'build/temp.linux-x86_64-3.6/binding/tools/msmetadata/msmetadata_cmpt.o build/temp.linux-x86_64-3.6/binding/generated/tools/msmetadata/msmetadata_statics.o build/temp.linux-x86_64-3.6/binding/generated/tools/msmetadata/msmetadata_wrap.o'
+        ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
+        with open("makefile", "a") as mk:
+            mk.write('\n\n' + shlib + ': ' + deps);
+            mk.write('\n\t' + ld_cmd + '\n')
 
         # straight file copies
         files_to_copy = source_files("src/python", file_suffix_filter=".py")
