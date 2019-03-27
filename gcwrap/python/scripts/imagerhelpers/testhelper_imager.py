@@ -469,7 +469,7 @@ class TestHelpers():
 
          :param imlist: names of the images produced by a test execution.
 
-         :returns: the usual (test_imager_helper) string with success/error messages.
+         :returns: the usual (testhelper_imager) string with success/error messages.
          """
          # Keeping the general approach. This is fragile!
          testname = inspect.stack()[2][3]
@@ -506,7 +506,7 @@ class TestHelpers():
          :param check_misc: whether to check miscinfo in addition to imageinfo'
          :param check_extended: can leave enabled for images other than .tt?, .alpha, etc.
 
-         :returns: the usual (test_imager_helper) string with success/error messages.
+         :returns: the usual (testhelper_imager) string with success/error messages.
          Errors marked with '(Fail' as per self.verdict().
          """
 

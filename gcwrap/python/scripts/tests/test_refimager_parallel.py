@@ -20,7 +20,7 @@ from taskinit import *
 import unittest
 import inspect
 
-from imagerhelpers.test_imager_helper import TestHelpers
+from imagerhelpers.testhelper_imager import TestHelpers
 
 _ia = iatool( )
 

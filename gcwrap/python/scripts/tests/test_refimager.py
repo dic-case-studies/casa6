@@ -79,7 +79,7 @@ _ia = iatool( )
 _vp = vptool( )
 _cb = cbtool( )
 
-from imagerhelpers.test_imager_helper import TestHelpers
+from imagerhelpers.testhelper_imager import TestHelpers
 
 ## List to be run
 def suite():
