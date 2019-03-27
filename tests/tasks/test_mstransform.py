@@ -6,21 +6,52 @@ import math
 import sys
 import filecmp
 import glob
-### for testhelper import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import testhelper as th
-from casatools import ctsys, ms, table, msmetadata, agentflagger
-from casatasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, flagcmd
-#from casatasks import importasdm     ### tar files have been created to avoid the importasdm dependency
 
+try:
+    # CASA 6
+    ### for testhelper import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import testhelper as th
+    from casatools import ctsys, ms, table, msmetadata, agentflagger
+    from casatasks import applycal, cvel, cvel2, flagcmd, flagdata, importasdm, listpartition, listobs, mstransform, setjy, split
+    #from casatasks import importasdm     ### tar files have been created to avoid the importasdm dependency
 
-# Define the root for the data files
-mstransform_datapath = ctsys.resolve('regression/unittest/mstransform')
-flagdata_datapath = ctsys.resolve('regression/unittest/flagdata')
-importasdm_datapath = ctsys.resolve('regression/unittest/importasdm')
-importasdm_datapath_2 = ctsys.resolve('regression/asdm-import/input')
+    # Define the root for the data files
+    datapath = ctsys.resolve('regression/unittest/mstransform')
+    mstransform_datapath = datapath
+    flagdata_datapath = ctsys.resolve('regression/unittest/flagdata')
+    importasdm_datapath = ctsys.resolve('regression/unittest/importasdm')
+    importasdm_datapath_2 = ctsys.resolve('regression/asdm-import/input')
 
-aflocal = agentflagger( )
+    af_local = agentflagger()
+    msmd_local = msmetadata()
+    ms_local = ms()
+    tb_local = table()
+
+except ImportError:
+    # 2nd try, CASA 5
+    from tasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, importasdm, flagcmd
+    from taskinit import mstool, tbtool, msmdtool, aftool
+    from __main__ import default
+    import testhelper as th
+    from sdutil import tbmanager, toolmanager, table_selector
+
+    # Define the root for the data files
+    datapath = os.environ.get('CASAPATH').split()[0] + \
+               "/data/regression/unittest/mstransform/"
+    mstransform_datapath = datapath
+    flagdata_datapath = os.environ.get('CASAPATH').split()[0] + \
+                        "/data/regression/unittest/flagdata/"
+    importasdm_datapath = os.environ.get('CASAPATH').split()[0]+ \
+                          '/data/regression/unittest/importasdm/'
+    importasdm_datapath_2 = os.environ.get('CASAPATH').split()[0] + \
+                            "/data/regression/asdm-import/input/"
+
+    af_local = aftool()
+    ms_local = mstool()
+    msmd_local = msmdtool()
+    tb_local = tbtool()
+
 
 def weighToSigma(weight):
     if weight > sys.float_info.min:
@@ -64,72 +95,50 @@ def check_eq(val, expval, tol=None):
 # for importing different data sets
 class test_base(unittest.TestCase):
 
-    def copyfile(self,file):
+    vis = None
 
-        if os.path.exists(file):
-           os.system('rm -rf '+ file)
-
-        os.system('cp -RL '+os.path.join(mstransform_datapath,file)+' '+file)
-
-    def setUp_ngc5921(self):
+    @classmethod
+    def setUp_ngc5921(cls):
         # data set with spw=0, 63 channels in LSRK
-        self.vis = "ngc5921.ms"
+        test_base.vis = "ngc5921.ms"
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        if os.path.exists(self.vis):
-           self.cleanup()
-
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-
-    def setUp_4ants(self):
+    @classmethod
+    def setUp_4ants(cls):
         # data set with spw=0~15, 64 channels each in TOPO
-        self.vis = "Four_ants_3C286.ms"
+        test_base.vis = "Four_ants_3C286.ms"
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        if os.path.exists(self.vis):
-           self.cleanup()
-
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-
-    def setUp_jupiter(self):
+    @classmethod
+    def setUp_jupiter(cls):
         # data col, spw=0,1 1 channel each, TOPO, field=0~12, 93 scans
-        self.vis = 'jupiter6cm.demo-thinned.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
+        test_base.vis = 'jupiter6cm.demo-thinned.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-
-    def setUp_g19(self):
+    @classmethod
+    def setUp_g19(cls):
         # data with spw=0~23 128 channel each in LSRK, field=0,1
-        self.vis = 'g19_d2usb_targets_line-shortened-thinned.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
+        test_base.vis = 'g19_d2usb_targets_line-shortened-thinned.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
+    @classmethod
+    def setUp_CAS_5076(cls):
+        test_base.vis = 'CAS-5076.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-    def setUp_CAS_5076(self):
+    @classmethod
+    def setUp_almasim(cls):
+        test_base.vis = 'sim.alma.cycle0.compact.noisy.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'CAS-5076.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-
-    def setUp_almasim(self):
-
-        self.vis = 'sim.alma.cycle0.compact.noisy.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-
-    def setUp_floatcol(self):
+    @classmethod
+    def setUp_floatcol(cls):
         # 15 rows, 3 scans, 9 spw, mixed chans, XX,YY, FLOAT_DATA col
-        self.vis = 'SDFloatColumn.ms'
-        if os.path.exists(self.vis):
-            self.cleanup()
+        test_base.vis = 'SDFloatColumn.ms'
+        cls._setup_std_reusing_input_vis(cls.vis, datapath_sp=flagdata_datapath)
 
-        os.system('cp -RL '+os.path.join(flagdata_datapath,self.vis)+' '+self.vis)
-
-    def setUp_3c84(self):
+    @classmethod
+    def setUp_3c84(cls):
         # MS is as follows (scan=1):
         #  SpwID   #Chans   Corrs
         #   0      256      RR
@@ -137,125 +146,88 @@ class test_base(unittest.TestCase):
         #   1      128      RR  LL
         #   2      64       RR  RL  LR  LL
 
-        self.vis = '3c84scan1.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
+        test_base.vis = '3c84scan1.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
+    @classmethod
+    def setUp_CAS_5013(cls):
 
-    def setUp_CAS_5013(self):
+        test_base.vis = 'ALMA-data-mst-science-testing-CAS-5013-one-baseline-one-timestamp.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'ALMA-data-mst-science-testing-CAS-5013-one-baseline-one-timestamp.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
+    @classmethod
+    def setUp_CAS_4850(cls):
 
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
+        test_base.vis = 'CAS-4850-30s-limit-ALMA.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-    def setUp_CAS_4850(self):
+    @classmethod
+    def setUp_CAS_4983(cls):
+        test_base.vis = 'CAS-4983.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'CAS-4850-30s-limit-ALMA.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
+    @classmethod
+    def setUp_CAS_5172(cls):
+        test_base.vis = 'CAS-5172-phase-center.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+ self.vis)
+    @classmethod
+    def setUp_sub_tables_evla(cls):
 
-    def setUp_CAS_4983(self):
+        test_base.vis = 'test-subtables-evla.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'CAS-4983.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-        
-    def setUp_CAS_5172(self):
+    @classmethod
+    def setUp_sub_tables_alma(cls):
 
-        self.vis = 'CAS-5172-phase-center.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-        
-    def setUp_sub_tables_evla(self):
+        test_base.vis = 'test-subtables-alma.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'test-subtables-evla.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-        
-    def setUp_sub_tables_alma(self):
+    @classmethod
+    def setUp_titan(cls):
+        test_base.vis = 'titan-one-baseline-one-timestamp.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'test-subtables-alma.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-        
-    def setUp_titan(self):
+    @classmethod
+    def setUp_CAS_6733(cls):
+        test_base.vis = 'CAS-6733.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'titan-one-baseline-one-timestamp.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-        
-    def setUp_CAS_6733(self):
+    @classmethod
+    def setUp_CAS_6941(cls):
+        test_base.vis = 'CAS-6941.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'CAS-6733.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-        
-    def setUp_CAS_6941(self):
+    @classmethod
+    def setUp_CAS_6951(cls):
+        test_base.vis = 'CAS-6951.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'CAS-6941.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-        
-    def setUp_CAS_6951(self):
+    @classmethod
+    def setUp_CAS_7841(cls):
+        test_base.vis = 'CAS-7841.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'CAS-6951.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-        
-    def setUp_CAS_7841(self):
+    @classmethod
+    def setUp_CAS_7259(cls):
+        test_base.vis = 'n0337d03-CAS-7259.ms'
+        cls._setup_std_reusing_input_vis(cls.vis)
 
-        self.vis = 'CAS-7841.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-            
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-
-    def setUp_CAS_7259(self):
-
-        self.vis = 'n0337d03-CAS-7259.ms'
-        if os.path.exists(self.vis):
-           self.cleanup()
-
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
-
-    def setUp_flags(self):
+    @classmethod
+    def setUp_flags(cls):
         asdmname = 'test_uid___A002_X997a62_X8c-short' # Flag.xml is modified
-        self.vis = asdmname+'.ms'
-        self.flagfile = asdmname+'_cmd.txt'
+        test_base.vis = asdmname+'.ms'
+        cls.flagfile = asdmname+'_cmd.txt'
 
-        if os.path.isfile(os.path.join(mstransform_datapath,asdmname+".tar.xz")):
-            os.system('tar -Jxf '+os.path.join(mstransform_datapath,asdmname+".tar.xz"))
-        else:
-            os.system('ln -sf '+os.path.join(importasdm_datapath,asdmname))
-            importasdm( asdmname, convert_ephem2geo=False, flagbackup=False, process_syspower=False, lazy=True,
-                        scans='1', savecmds=True, overwrite=True)
+        os.system('ln -sf {0}'.format(os.path.join(importasdm_datapath, asdmname)))
+        importasdm(asdmname, convert_ephem2geo=False, flagbackup=False, process_syspower=False, lazy=True,
+                   scans='1', savecmds=True, overwrite=True)
 
     def createMMS(self, msfile, axis='auto',scans='',spws=''):
         '''Create MMSs for tests with input MMS'''
         prefix = msfile.rstrip('.ms')
         if not os.path.exists(msfile):
-            os.system('cp -RL '+os.path.join(mstransform_datapath,msfile)+' '+msfile)
+            os.system('cp -RL '+ os.path.join(mstransform_datapath, msfile) +' '+ msfile)
         
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
@@ -264,12 +236,38 @@ class test_base(unittest.TestCase):
             os.system("rm -rf " + self.testmms)
             
         print("................. Creating test MMS ..................")
-        mstransform( vis=msfile, outputvis=self.testmms, datacolumn='data',
-                     createmms=True,separationaxis=axis, scan=scans, spw=spws )
-        
+        mstransform(vis=msfile, outputvis=self.testmms, datacolumn='data',
+                    createmms=True,separationaxis=axis, scan=scans, spw=spws)
 
-    def cleanup(self):
+    @staticmethod
+    def copyfile(filename):
+
+        if os.path.exists(filename):
+           os.system('rm -rf '+ filename)
+
+        os.system('cp -RL {0} {1}'.format(os.path.join(datapath, filename), filename))
+
+    @staticmethod
+    def removeInputMS(self):
         os.system('rm -rf '+ self.vis)
+
+    @staticmethod
+    def _setup_std_reusing_input_vis(vis, datapath_sp=None):
+        test_base._copy_input_ms_if_needed(vis, datapath_sp=datapath_sp)
+
+    @staticmethod
+    def _copy_input_ms_if_needed(vis, reuse_input=True, datapath_sp=None):
+        # special datapath
+        if datapath_sp:
+            copy_path = datapath_sp
+        else:
+            copy_path = datapath  # global
+
+        found = os.path.exists(vis)
+        if found and not reuse_input:
+           test_base.system('rm -rf {0}'.format(vis))
+        if not found or not reuse_input:
+            os.system('cp -RL ' + os.path.join(copy_path, vis) + ' ' + vis)
 
 
 class test_base_compare(test_base):
@@ -294,23 +292,20 @@ class test_base_compare(test_base):
         os.system('rm -rf '+ self.refvis_sorted)
 
     def sort(self):
-        myms = ms( )
+        ms_local.open(self.outvis)
+        ms_local.sort(self.outvis_sorted,self.sortorder)
+        ms_local.done()
 
-        myms.open(self.outvis)
-        myms.sort(self.outvis_sorted,self.sortorder)
-        myms.done()
-
-        myms.open(self.refvis)
-        myms.sort(self.refvis_sorted,self.sortorder)
-        myms.done()
+        ms_local.open(self.refvis)
+        ms_local.sort(self.refvis_sorted,self.sortorder)
+        ms_local.done()
 
     def generate_tolerance_map(self):
 
         # Get column names
-        mytb = table( )
-        mytb.open(self.refvis)
-        self.columns = mytb.colnames()
-        mytb.close()
+        tb_local.open(self.refvis)
+        self.columns = tb_local.colnames()
+        tb_local.close()
 
         # Define default tolerance
         self.mode={}
@@ -406,10 +401,9 @@ class test_Combspw1(test_base):
         self.assertEqual(spw_col['r1'][0], 0,'Error re-indexing DATA_DESCRIPTION table')
 
         # DDI subtable should have 4 rows with the proper indices
-        mytb = table( )
-        mytb.open(self.outputms + '/DATA_DESCRIPTION')
-        spwCol = mytb.getcol('SPECTRAL_WINDOW_ID')
-        mytb.close()
+        tb_local.open(self.outputms + '/DATA_DESCRIPTION')
+        spwCol = tb_local.getcol('SPECTRAL_WINDOW_ID')
+        tb_local.close()
         nspw = spwCol.size
         check_eq(nspw, 1)
         check_eq(spwCol[0], 0)
@@ -454,30 +448,27 @@ class test_Combspw1(test_base):
              mode="velocity",nchan=107,start="1360.00km/s",width="5.2km/s",interpolation="linear",
              phasecenter="",restfreq="1420405752.0Hz",outframe="BARY",veltype="radio",hanning=False)
 
-        myms = ms( )
+        ms_local.open('cveloverlap.ms')
+        ms_local.sort('cveloverlap-sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        ms_local.done()
 
-        myms.open('cveloverlap.ms')
-        myms.sort('cveloverlap-sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
-
-        myms.open('cvel2overlap.ms')
-        myms.sort('cvel2overlap-sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
+        ms_local.open('cvel2overlap.ms')
+        ms_local.sort('cvel2overlap-sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        ms_local.done()
 
         # TODO: there are differences in values of masked entries
-        tb = table( )
-        tb.open('cvel2overlap-sorted.ms', nomodify=False)
-        nd = tb.getcol('DATA')
-        nf = tb.getcol('FLAG')
+        tb_local.open('cvel2overlap-sorted.ms', nomodify=False)
+        nd = tb_local.getcol('DATA')
+        nf = tb_local.getcol('FLAG')
         nd[nf] = 0.
-        tb.putcol('DATA', nd)
-        tb.done()
-        tb.open('cveloverlap-sorted.ms', nomodify=False)
-        nd = tb.getcol('DATA')
-        nf = tb.getcol('FLAG')
+        tb_local.putcol('DATA', nd)
+        tb_local.done()
+        tb_local.open('cveloverlap-sorted.ms', nomodify=False)
+        nd = tb_local.getcol('DATA')
+        nf = tb_local.getcol('FLAG')
         nd[nf] = 0.
-        tb.putcol('DATA', nd)
-        tb.done()
+        tb_local.putcol('DATA', nd)
+        tb_local.done()
 
         # TODO: there are differences in weights and sigma column of masked channels
         self.assertTrue(th.compTables('cveloverlap-sorted.ms','cvel2overlap-sorted.ms',
@@ -540,59 +531,57 @@ class test_combinespws_diff_channels(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
 
-class test_Regridms1(test_base):
+class test_regridms_four_ants(test_base):
     '''Tests for regridms parameter using Four_ants_3C286.ms'''
 
     def setUp(self):
         self.setUp_4ants()
 
     def tearDown(self):
-        pass
         os.system('rm -rf '+ self.vis)
-        os.system('rm -rf '+ self.outputms)
+        os.system('rm -rf '+ self.outputvis)
         os.system('rm -rf testmms*ms list.obs')
 
-    def test_regrid1_1(self):
+    def test_regrid1_defaults(self):
         '''mstransform: Default of regridms parameters'''
 
-        self.outputms = "reg11.ms"
-        mstransform(vis=self.vis, outputvis=self.outputms, regridms=True)
-        self.assertTrue(os.path.exists(self.outputms))
+        self.outputvis = "reg11.ms"
+        mstransform(vis=self.vis, outputvis=self.outputvis, regridms=True)
+        self.assertTrue(os.path.exists(self.outputvis))
 
         # The regriding should be the same as the input
         for i in range(16):
-            ret = th.verifyMS(self.outputms, 16, 64, i)
+            ret = th.verifyMS(self.outputvis, 16, 64, i)
             self.assertTrue(ret[0],ret[1])
 
-        listobs(self.outputms)
-        listobs(self.outputms, listfile='list.obs')
+        listobs(self.outputvis)
+        listobs(self.outputvis, listfile='list.obs')
         self.assertTrue(os.path.exists('list.obs'), 'Probable error in sub-table re-indexing')
         
         # Check the shape of WEIGHT and SIGMA
         inp_ws = th.getColShape(self.vis,'WEIGHT')
         inp_ss = th.getColShape(self.vis,'SIGMA')
-        out_ws = th.getColShape(self.outputms,'WEIGHT')
-        out_ss = th.getColShape(self.outputms,'SIGMA')
+        out_ws = th.getColShape(self.outputvis,'WEIGHT')
+        out_ss = th.getColShape(self.outputvis,'SIGMA')
         self.assertListEqual(inp_ws, out_ws, 'WEIGHT shape differ in input and output')
         self.assertListEqual(inp_ss, out_ss, 'SIGMA shape differ in input and output')
 
-
-    def test_regrid1_2(self):
+    def test_regrid1_defaults_spw_sel(self):
         '''mstransform: Default regridms with spw selection'''
 
-        self.outputms = "reg12.ms"
-        mstransform(vis=self.vis, outputvis=self.outputms, regridms=True, spw='1,3,5,7')
-        self.assertTrue(os.path.exists(self.outputms))
+        self.outputvis = "reg12.ms"
+        mstransform(vis=self.vis, outputvis=self.outputvis, regridms=True, spw='1,3,5,7')
+        self.assertTrue(os.path.exists(self.outputvis))
 
         # The output should be the same as the input
         for i in range(4):
-            ret = th.verifyMS(self.outputms, 4, 64, i)
+            ret = th.verifyMS(self.outputvis, 4, 64, i)
             self.assertTrue(ret[0],ret[1])
 
-        listobs(self.outputms)
+        listobs(self.outputvis)
 
         # Verify that some sub-tables are properly re-indexed.
-        spw_col = th.getVarCol(self.outputms+'/DATA_DESCRIPTION', 'SPECTRAL_WINDOW_ID')
+        spw_col = th.getVarCol(self.outputvis+'/DATA_DESCRIPTION', 'SPECTRAL_WINDOW_ID')
         self.assertEqual(spw_col.keys().__len__(), 4, 'Wrong number of rows in DD table')
         self.assertEqual(spw_col['r1'][0], 0,'Error re-indexing DATA_DESCRIPTION table')
         self.assertEqual(spw_col['r2'][0], 1,'Error re-indexing DATA_DESCRIPTION table')
@@ -600,7 +589,7 @@ class test_Regridms1(test_base):
         self.assertEqual(spw_col['r4'][0], 3,'Error re-indexing DATA_DESCRIPTION table')
 
 
-class test_Regridms3(test_base):
+class test_regridms_jupiter(test_base):
     '''Tests for regridms parameter using Jupiter MS'''
 
     def setUp(self):
@@ -608,37 +597,36 @@ class test_Regridms3(test_base):
 
     def tearDown(self):
         os.system('rm -rf '+ self.vis)
-        os.system('rm -rf '+ self.outputms)
+        os.system('rm -rf '+ self.outputvis)
         os.system('rm -rf cvel31*.*ms')
 
     def test_regrid3_1(self):
         '''mstransform 12: Check that output columns are the same when using mstransform'''
-        self.outputms = 'reg31.ms'
+        self.outputvis = 'reg31.ms'
 
-        mstransform(vis=self.vis, outputvis=self.outputms, field='6',
+        mstransform(vis=self.vis, outputvis=self.outputvis, field='6',
                     combinespws=True, regridms=True, datacolumn='data',
                     mode='frequency', nchan=2, start='4.8101 GHz', width='50 MHz',
                     outframe='')
 
-        ret = th.verifyMS(self.outputms, 1, 2, 0)
+        ret = th.verifyMS(self.outputvis, 1, 2, 0)
         self.assertTrue(ret[0],ret[1])
 
         # Now run with cvel to compare the columns, CAS-4866
-        outputms = 'cvel31.ms'
-        cvel(vis=self.vis, outputvis=outputms, field='6',
+        outputvis = 'cvel31.ms'
+        cvel(vis=self.vis, outputvis=outputvis, field='6',
             passall=False,mode='frequency',nchan=2,start='4.8101 GHz',
             width='50 MHz',outframe='')
 
         # Sort the output MSs so that they can be compared
-        myms = ms( )
 
-        myms.open('cvel31.ms')
-        myms.sort('cvel31-sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
+        ms_local.open('cvel31.ms')
+        ms_local.sort('cvel31-sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        ms_local.done()
 
-        myms.open('reg31.ms')
-        myms.sort('reg31-sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
+        ms_local.open('reg31.ms')
+        ms_local.sort('reg31-sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        ms_local.done()
 
         self.assertTrue(th.compTables('cvel31-sorted.ms','reg31-sorted.ms', 'FLAG_CATEGORY',0.000001,"absolute"))
         self.assertTrue(th.compTables('cvel31-sorted.ms/ANTENNA','reg31-sorted.ms/ANTENNA', [],0.000001,"absolute"))
@@ -654,19 +642,19 @@ class test_Regridms3(test_base):
         self.assertTrue(th.compTables('cvel31-sorted.ms/STATE','reg31-sorted.ms/STATE', [],0.000001,"absolute"))
 
         # Verify that some sub-tables are properly re-indexed.
-        spw_col = th.getVarCol(self.outputms+'/DATA_DESCRIPTION', 'SPECTRAL_WINDOW_ID')
+        spw_col = th.getVarCol(self.outputvis+'/DATA_DESCRIPTION', 'SPECTRAL_WINDOW_ID')
         self.assertEqual(spw_col.keys().__len__(), 1, 'Wrong number of rows in DD table')
         self.assertEqual(spw_col['r1'][0], 0,'Error re-indexing DATA_DESCRIPTION table')
 
     def test_regrid3_2(self):
         '''mstransform: Combine spw and regrid MS with two spws, select one field and 2 spws'''
         # cvel: test8
-        self.outputms = "reg32a.ms"
-        mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True, regridms=True,
+        self.outputvis = "reg32a.ms"
+        mstransform(vis=self.vis, outputvis=self.outputvis, combinespws=True, regridms=True,
                     spw='0,1',field = '11',nchan=1, width=2, datacolumn='DATA')
-        self.assertTrue(os.path.exists(self.outputms))
+        self.assertTrue(os.path.exists(self.outputvis))
 
-        ret = th.verifyMS(self.outputms, 1, 1, 0)
+        ret = th.verifyMS(self.outputvis, 1, 1, 0)
         self.assertTrue(ret[0],ret[1])
 
         # Now, do only the regridding and do not combine spws
@@ -681,19 +669,349 @@ class test_Regridms3(test_base):
         self.assertTrue(ret[0],ret[1])
 
 
-class test_Hanning(test_base):
-    '''Test for hanning transformation'''
+class test_regridms_negative_width(test_base):
+    """
+    Test regridding when the parameter width takes a negative value, in different
+    regridding modes.
+
+    I was tempted to put these test cases inside test_regridms_jupiter
+    and/or test_regridms_four_ants, but these two operate on MSs that are unnecessarily
+    big and have columns (model, corrected) that are not needed for this type of test.
+    The dataset used here has only one data row, which I hope removes the need for ordering
+    before comparing. Still, I think we should find or make a suitable but smaller MS.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # 1 spw, 1 data row, 3840 channels
+        cls.setUp_titan()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+        pass
+
     def setUp(self):
-        self.setUp_ngc5921()
+        pass
 
     def tearDown(self):
-        pass
+        # all test cases are expected to generate the output MS from mstransform in outputvis
+        os.system('rm -rf ' + self.outputvis)
+
+    def _check_chan_freqs_widths(self, freqs, widths, exp_nchan, exp_first_freq,
+                                 exp_last_freq, exp_width):
+        import numpy as np
+
+        self.assertEqual(len(freqs), exp_nchan)
+        self.assertEqual(len(widths), exp_nchan)
+        self.assertEqual(freqs[0], exp_first_freq)
+        self.assertEqual(freqs[-1], exp_last_freq)
+        self.assertTrue(np.allclose(np.ediff1d(freqs), exp_width, rtol=1e-2))
+        self.assertTrue(np.allclose(widths, exp_width, rtol=1e-3))
+
+    def test_regrid_channel_neg_width(self):
+        '''mstransform: regridding in channel mode with negative width'''
+
+        self.outputvis = 'regrid_chan_neg_width.ms'
+        nchan = 10
+        mstransform(vis=self.vis, outputvis=self.outputvis, datacolumn='data',
+                    regridms=True, outframe='BARY',
+                    mode='channel', nchan=nchan, start=100, width=-10)
+
+        chan_freqs, chan_widths = th.get_channel_freqs_widths(self.outputvis, 0)
+        self._check_chan_freqs_widths(chan_freqs, chan_widths, nchan,
+                                      3.543540545236911e+11, 3.5435954715143951e+11,
+                                      610291.972)
+
+    def test_regrid_channel_b_neg_width(self):
+        '''mstransform: regridding in channel_b mode with negative width'''
+
+        self.outputvis = 'regrid_chan_b_neg_width.ms'
+        nchan = 8
+        mstransform(vis=self.vis, outputvis=self.outputvis, datacolumn='data',
+                    regridms=True, outframe='BARY',
+                    mode='channel_b', nchan=nchan, start=100, width=-10)
+
+        chan_freqs, chan_widths = th.get_channel_freqs_widths(self.outputvis, 0)
+        self._check_chan_freqs_widths(chan_freqs, chan_widths, nchan,
+                                      3.5435521407843884e+11, 3.5435948612224243e+11,
+                                      610291.9720)
+
+    def test_regrid_velocity_neg_width(self):
+        '''mstransform: regridding in velocity mode with negative width'''
+
+        self.outputvis = 'regrid_vel_neg_width.ms'
+
+        vis_freqs, _vis_widths = th.get_channel_freqs_widths(self.vis, 0)
+        restf = vis_freqs[0]
+
+        nchan = 10
+        mstransform(vis=self.vis, outputvis=self.outputvis, datacolumn='data',
+                    regridms=True, outframe='BARY',
+                    mode='velocity', veltype='radio', restfreq='{0:.0f}Hz'.format(restf),
+                    nchan=nchan, start='25km/s', width='-1km/s')
+
+        chan_freqs, chan_widths = th.get_channel_freqs_widths(self.outputvis, 0)
+        self._check_chan_freqs_widths(chan_freqs, chan_widths, nchan,
+                                      3.5435876611326282e+11, 3.543694051229682e+11,
+                                      1.182112189e+06)
+
+    def test_regrid_frequency_neg_width(self):
+        '''mstransform: regridding in frequency mode with negative width'''
+
+        self.outputvis = 'regrid_freq_neg_width.ms'
+
+        nchan = 12
+        mstransform(vis=self.vis, outputvis=self.outputvis, datacolumn='data',
+                    regridms=True, outframe='LSRK',
+                    mode='frequency', nchan=nchan, start='354.42GHz', width='-0.3GHz')
+
+        chan_freqs, chan_widths = th.get_channel_freqs_widths(self.outputvis, 0)
+        self._check_chan_freqs_widths(chan_freqs, chan_widths, nchan,
+                                      3.5112e+11, 3.5442e+11, 3e+8)
+
+
+class test_regridms_interpolation_only(test_base):
+    '''Look into the DATA and WEIGHT produced by regridding, using the different
+    interpolation methods available, when not combining them with channel average
+    or any other transformations.'''
+
+    @classmethod
+    def setUpClass(cls):
+        # Small MS with two data rows (two SPWs, one row per SPW).
+        cls.vis = 'combine-1-timestamp-2-SPW-with-WEIGHT_SPECTRUM-Same-Exposure.ms'
+        cls.out_nchan = 10
+        cls.copyfile(cls.vis)
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
+    def tearDown(self):
+        # all test cases are expected to generate the output MS from mstransform in outvis
+        os.system('rm -rf '+ self.outvis)
+
+    def check_output_values(self, vis, eq_pattern, nchan=10, eq_epsilon=1e-5):
+        ''' Checks DATA, WEIGHT, and WEIGHT_SPECTRUM '''
+        tb_local.open(vis)
+        weight_spectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        data = tb_local.getcol('DATA')
+        weights = tb_local.getcol('WEIGHT')
+        tb_local.close()
+
+        # for 'combine-1-timestamp-2-SPW-with-WEIGHT_SPECTRUM-Same-Exposure.ms'
+        # shape is (1, 10, 2) - 1 pol x 10 channels x 2 rows
+        out_nchan = data.shape[1]
+        check_eq(out_nchan, nchan)
+        eq_epsilon = 1e-5
+        check_eq(weights[:,0], 59.026817, eq_epsilon)
+        check_eq(weights[:,1], 31.586397, eq_epsilon)
+        check_eq(weight_spectrum[:,:,0], weights[0,0], eq_epsilon)
+        check_eq(weight_spectrum[:,:,1], weights[0,1], eq_epsilon)
+        for pat in eq_pattern:
+            row = pat[0]
+            chan = pat[1]
+            real = pat[2]
+            imag = pat[3]
+            check_eq(data[0][chan][row].real, real, eq_epsilon)
+            check_eq(data[0][chan][row].imag, imag, eq_epsilon)
+
+    def run_mstransform_simply_regrid(self, vis, outvis, interpolation, nchan=10):
+        mstransform(vis=vis, outputvis=outvis, datacolumn="DATA",
+                    regridms=True, mode="frequency", nchan=nchan,
+                    start="2.20804+10Hz", width="2.5e+05Hz",
+                    phasecenter="J2000 12h01m53.13s -18d53m09.8s",
+                    interpolation=interpolation)
+
+    def test_simple_regrid_nearest(self):
+        ''' mstransform: regrid, nothing else. interpolation nearest, check output values'''
+        self.outvis = 'test_simple_regrid_nearest.ms'
+        self.run_mstransform_simply_regrid(self.vis, self.outvis, 'nearest')
+
+        eq_pattern = [[0, 0, .0, .0],
+                      [0, 1, 0.18098925, 0.35214117],
+                      [1, 5, 0.42104605, 0.26617193],
+                      [1, self.out_nchan-1, 0.02630020, 0.19990821]]
+        self.check_output_values(self.outvis, eq_pattern, self.out_nchan)
+
+    def test_simple_regrid_linear(self):
+        ''' mstransform: regrid, nothing else. interpolation linear, check output values'''
+        self.outvis = 'test_simple_regrid_linear.ms'
+        self.run_mstransform_simply_regrid(self.vis, self.outvis, 'linear')
+
+        eq_pattern = [[0, 0, 0.02533850, 0.04929977],
+                      [0, 1, 0.14533380, 0.47466096],
+                      [1, 5, 0.36502194, 0.45022112],
+                      [1, self.out_nchan-1, 0.12325509, 0.05476397]]
+        self.check_output_values(self.outvis, eq_pattern, self.out_nchan)
+
+    def test_simple_regrid_cubic(self):
+        ''' mstransform: regrid, nothing else. interpolation cubic, check output values'''
+        self.outvis = 'test_simple_regrid_cubic.ms'
+        self.run_mstransform_simply_regrid(self.vis, self.outvis, interpolation='cubic')
+
+        eq_pattern = [[0, 0, 0.05564772, 0.03979797],
+                      [0, 1, 0.15562536, 0.50231683],
+                      [1, 5, 0.39988747, 0.53319526 ],
+                      [1, self.out_nchan-1, 0.15120457, 0.07539418]]
+        self.check_output_values(self.outvis, eq_pattern, self.out_nchan)
+
+    def test_simple_regrid_spline(self):
+        ''' mstransform: regrid, nothing else. interpolation cubic, check output values'''
+        self.outvis = 'test_simple_regrid_spline.ms'
+        self.run_mstransform_simply_regrid(self.vis, self.outvis, interpolation='spline')
+
+        eq_pattern = [[0, 0, 0.03446201, 0.05137327],
+                      [0, 1, 0.15356585, 0.52084935],
+                      [1, 5, 0.40553212, 0.55733341 ],
+                      [1, self.out_nchan-1, 0.17665164, 0.05236539]]
+        self.check_output_values(self.outvis, eq_pattern, self.out_nchan)
+
+    def test_simple_regrid_fftshift(self):
+        ''' mstransform: regrid, nothing else. interpolation fftshift, check output values'''
+        self.outvis = 'test_simple_regrid_fftshift.ms'
+        self.run_mstransform_simply_regrid(self.vis, self.outvis, interpolation='fftshift')
+
+        eq_pattern = [[0, 0, 0.02533850, 0.04929977],
+                      [0, 1, 0.14533380, 0.47466096],
+                      [1, 5, 0.36502194, 0.45022112],
+                      [1, self.out_nchan-1, 0.12325509, 0.05476397]]
+        self.check_output_values(self.outvis, eq_pattern, self.out_nchan)
+
+
+class test_regridms_single_spw(test_base_compare):
+    '''Tests for regridms w/o combining SPWS'''
+
+    def setUp(self):
+        super(test_regridms_single_spw,self).setUp()
+        self.setUp_CAS_5013()
+        self.outvis = 'test_regridms_single_spw_mst.ms'
+        self.refvis = 'test_regridms_single_spw_cvel.ms'
+        self.outvis_sorted = 'test_regridms_single_spw_mst_sorted.ms'
+        self.refvis_sorted = 'test_regridms_single_spw_cvel_sorted.ms'
+        os.system('rm -rf test_regridms_single_sp*')
+
+    def tearDown(self):
+        super(test_regridms_single_spw,self).tearDown()
+
+    def test_regrid_only_LSRK(self):
+        '''mstransform: Change ref. frame to LSRK'''
+
+        mstransform(vis=self.vis,outputvis=self.outvis,regridms=True,datacolumn='ALL',
+                    field='Vy_CMa',spw='3',mode='frequency',nchan=3830,start='310427.353MHz',width='-244.149kHz',outframe='lsrk')
+        cvel(vis=self.vis,outputvis=self.refvis,
+             field='Vy_CMa',spw='3',mode='frequency',nchan=3830,start='310427.353MHz',width='-244.149kHz',outframe='lsrk')
+
+        self.generate_tolerance_map()
+
+        self.mode['WEIGHT'] = "absolute"
+        self.tolerance['WEIGHT'] = 1E-3
+
+        self.post_process()
+
+class test_regridms_multiple_spws(test_base_compare):
+    '''Tests for regridms combining SPWS'''
+
+    def setUp(self):
+        super(test_regridms_multiple_spws,self).setUp()
+        self.setUp_CAS_5172()
+        self.outvis = 'test_regridms_multiple_spw_mst.ms'
+        self.refvis = 'test_regridms_multiple_spw_cvel.ms'
+        self.outvis_sorted = 'test_regridms_multiple_spw_mst_sorted.ms'
+        self.refvis_sorted = 'test_regridms_multiple_spw_cvel_sorted.ms'
+        os.system('rm -rf test_regridms_multiple_spw*')
+
+    def tearDown(self):
+        super(test_regridms_multiple_spws,self).tearDown()
+
+    @unittest.skip('Skip, cvel produces an exception since release 4.7.2 as per CAS-9798')
+    def test_combine_regrid_fftshift(self):
+        '''mstransform: Combine 2 SPWs and change ref. frame to LSRK using fftshift'''
+
+        cvel(vis = self.vis, outputvis = self.refvis ,mode = 'velocity',nchan = 10,start = '-50km/s',width = '5km/s',
+             interpolation = 'fftshift',restfreq = '36.39232GHz',outframe = 'LSRK',veltype = 'radio', phasecenter="2")
+
+        mstransform(vis = self.vis, outputvis = self.outvis, datacolumn='all',combinespws = True, regridms = True,
+                    mode = 'velocity', nchan = 10, start = '-50km/s', width = '5km/s', interpolation = 'fftshift',
+                    restfreq = '36.39232GHz', outframe = 'LSRK', veltype = 'radio')
+
+        self.generate_tolerance_map()
+
+        self.mode['WEIGHT'] = "absolute"
+        self.tolerance['WEIGHT'] = 50
+
+        # Exlude FEED from the list of sub-tables to compare because cvel does not remove duplicates
+        self.subtables=['/ANTENNA','/DATA_DESCRIPTION','/FIELD','/FLAG_CMD',
+                        '/POINTING','/POLARIZATION','/PROCESSOR','/STATE']
+
+        self.post_process()
+
+    def test_combine_noregrid_fftshift(self):
+        '''mstransform: Combine 2 SPWs and change ref. frame to LSRK using fftshift'''
+
+        mstransform(vis=self.vis, outputvis=self.outvis, datacolumn='all',
+                    combinespws=True, regridms=True, mode='velocity', nchan=10,
+                    start='-50km/s', width='5km/s', interpolation='fftshift',
+                    restfreq='36.39232GHz', outframe='LSRK', veltype='radio')
+
+        self.assertTrue(os.path.isdir(self.outvis))
+
+
+class test_regridms_spw_with_different_number_of_channels(test_base):
+    '''Tests for regridms w/o combining SPWS'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_CAS_4983()
+        cls.outvis = 'test_regridms_spw_with_different_number_of_channels.ms'
+
+    @classmethod
+    def tearDownClass(self):
         os.system('rm -rf '+ self.vis)
+
+    def tearDown(self):
+        os.system('rm -rf '+ self.outvis)
+
+    def test_regridms_spw_with_different_number_of_channels_separately(self):
+        '''mstransform: Regrid SPWs separately, applying pre-channel averaging to only some of them'''
+
+        mstransform(vis=self.vis,outputvis=self.outvis,datacolumn='data',field='J0102-7546',regridms=True,
+                    mode='frequency',width='29297.28kHz',outframe='lsrk',veltype='radio')
+
+        # DDI subtable should have 4 rows with the proper indices
+        tb_local.open(self.outvis + '/SPECTRAL_WINDOW')
+        numChan = tb_local.getcol('NUM_CHAN')
+        tb_local.close()
+        check_eq(numChan[0], 32)
+        check_eq(numChan[1], 2)
+        check_eq(numChan[2], 68)
+        check_eq(numChan[3], 2)
+
+
+class test_Hanning_with_g19(test_base):
+    '''Test for hanning transformation - tests that use dataset g19'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_g19()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
+    def setUp(self):
+        self.outputms = ''
+
+    def tearDown(self):
+        # all test cases are expected to generate the output MS from mstransform in outputms
         os.system('rm -rf '+ self.outputms)
 
     def test_hanning1(self):
         '''mstransform: Apply Hanning smoothing in MS with 24 spws. Do not combine spws.'''
-        self.setUp_g19()
+
         self.outputms = "hann1.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, combinespws=False, hanning=True,
                     datacolumn='data')
@@ -712,7 +1030,7 @@ class test_Hanning(test_base):
 
     def test_hanning2(self):
         '''mstransform: Apply Hanning smoothing and combine spw=1,2,3.'''
-        self.setUp_g19()
+
         self.outputms = "hann2.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True, hanning=True,
                     spw='1,2,3', datacolumn='data')
@@ -725,6 +1043,26 @@ class test_Hanning(test_base):
         spw_col = th.getVarCol(self.outputms+'/DATA_DESCRIPTION', 'SPECTRAL_WINDOW_ID')
         self.assertEqual(spw_col.keys().__len__(), 1, 'Wrong number of rows in DD table')
         self.assertEqual(spw_col['r1'][0], 0,'Error re-indexing DATA_DESCRIPTION table')
+
+
+class test_Hanning_with_ngc5921(test_base):
+    '''Test for hanning transformation - tests that use dataset ngc5921'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_ngc5921()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
+    def setUp(self):
+        self.outputms = ''
+
+    def tearDown(self):
+        # all test cases are expected to generate the output MS from mstransform in outputms
+        os.system('rm -rf '+ self.outputms)
 
     def test_hanning3(self):
         '''mstransform: Hanning theoretical and calculated values should be the same'''
@@ -801,11 +1139,21 @@ class test_Hanning(test_base):
 
 class test_FreqAvg(test_base):
     '''Tests for frequency averaging'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_g19()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        self.setUp_g19()
+        pass
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        # all test cases are expected to generate the output MS from mstransform in outputvis
         os.system('rm -rf '+ self.outputms)
 
     def test_freqavg1(self):
@@ -891,11 +1239,21 @@ class test_FreqAvg(test_base):
 
 class test_Shape(test_base):
     '''Test the tileshape parameter'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        self.setUp_4ants()
+        pass
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        # all test cases are expected to generate the output MS from mstransform in outputvis
         os.system('rm -rf '+ self.outputms)
 
     def test_shape1(self):
@@ -906,16 +1264,15 @@ class test_Shape(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
         # Get the tile shape in input
-        tblocal = table( )
-        tblocal.open(self.vis)
-        inpdm = tblocal.getdminfo()
-        tblocal.close()
+        tb_local.open(self.vis)
+        inpdm = tb_local.getdminfo()
+        tb_local.close()
         inptsh = th.getTileShape(inpdm)
 
         # Get the tile shape for the output
-        tblocal.open(self.outputms)
-        outdm = tblocal.getdminfo()
-        tblocal.close()
+        tb_local.open(self.outputms)
+        outdm = tb_local.getdminfo()
+        tb_local.close()
         outtsh = th.getTileShape(outdm)
 
         # Compare both
@@ -931,10 +1288,9 @@ class test_Shape(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
         # Check the tile shape for the output
-        tblocal = table( )
-        tblocal.open(self.outputms)
-        outdm = tblocal.getdminfo()
-        tblocal.close()
+        tb_local.open(self.outputms)
+        outdm = tb_local.getdminfo()
+        tb_local.close()
         outtsh = th.getTileShape(outdm)
 
         self.assertTrue((inptsh==outtsh).all(), 'Tile shapes are different')
@@ -1037,12 +1393,20 @@ class test_Columns(test_base):
 
 class test_SeparateSPWs(test_base):
     '''Test the nspw parameter to separate spws'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        self.setUp_4ants()
         self.tmpms = ""
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.tmpms)
         os.system('rm -rf '+ self.outputms)
         os.system('rm -rf list.obs')
@@ -1105,10 +1469,9 @@ class test_SeparateSPWs(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
         # DDI subtable should have 4 rows with the proper index
-        mytbSPW = table( )
-        mytbSPW.open(self.outputms + '/DATA_DESCRIPTION')
-        spwCol = mytbSPW.getcol('SPECTRAL_WINDOW_ID')
-        mytbSPW.close()
+        tb_local.open(self.outputms + '/DATA_DESCRIPTION')
+        spwCol = tb_local.getcol('SPECTRAL_WINDOW_ID')
+        tb_local.close()
         nspw = spwCol.size
         check_eq(nspw, 4)
         check_eq(spwCol[0], 0)
@@ -1117,11 +1480,10 @@ class test_SeparateSPWs(test_base):
         check_eq(spwCol[3], 3)
         
         # Check some values from main table
-        mytbMain = table( )
-        mytbMain.open(self.outputms)
-        data = mytbMain.getcol('DATA')
+        tb_local.open(self.outputms)
+        data = tb_local.getcol('DATA')
         check_eq(data.shape,(4,16,4296))
-        mytbMain.close()
+        tb_local.close()
 
     def test_CAS_5403_2(self):
         '''mstransform: combine spw 0,1,2 into one spw and then break it down in 4 spws.
@@ -1131,17 +1493,16 @@ class test_SeparateSPWs(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
         # DDI subtable should have 4 rows with the proper index
-        mytb = table( )
-        mytb.open(self.outputms + '/DATA_DESCRIPTION')
-        spwCol = mytb.getcol('SPECTRAL_WINDOW_ID')
-        mytb.close()
+        tb_local.open(self.outputms + '/DATA_DESCRIPTION')
+        spwCol = tb_local.getcol('SPECTRAL_WINDOW_ID')
+        tb_local.close()
         nspw = spwCol.size
         check_eq(nspw, 4)
         check_eq(spwCol[0], 0)
         check_eq(spwCol[1], 1)
         check_eq(spwCol[2], 2)
         check_eq(spwCol[3], 3)
-
+        
         # Verify that some sub-tables are properly re-indexed.
         spw_col = th.getVarCol(self.outputms+'/DATA_DESCRIPTION', 'SPECTRAL_WINDOW_ID')
         self.assertEqual(spw_col.keys().__len__(), 4, 'Wrong number of rows in DD table')
@@ -1156,10 +1517,9 @@ class test_SeparateSPWs(test_base):
         mstransform(vis=self.vis, outputvis=self.outputms,regridms=True,nspw=3,nchan=10,spw='0:0~49')
         self.assertTrue(os.path.exists(self.outputms))
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SPECTRAL_WINDOW')
-        numChan = mytb.getcol('NUM_CHAN')      
-        mytb.close()            
+        tb_local.open(self.outputms + '/SPECTRAL_WINDOW')
+        numChan = tb_local.getcol('NUM_CHAN')      
+        tb_local.close()            
         check_eq(numChan[0], 10)
         check_eq(numChan[1], 10)
         check_eq(numChan[2], 10)      
@@ -1183,13 +1543,23 @@ class test_SeparateSPWs(test_base):
 
 class test_state(test_base):
     '''Test operation with state id'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_CAS_5076()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        self.setUp_CAS_5076()
+        pass
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        # all test cases are expected to generate the output MS from mstransform in outputms
         os.system('rm -rf '+ self.outputms)
-        
+
     def test_select_by_scan_intent_and_reindex_state_accordingly(self):
         '''mstransform: select a scan intent and re-index state sub-table'''
         self.outputms = "test_select_by_scan_intent_and_reindex_state_accordingly.ms"
@@ -1197,10 +1567,9 @@ class test_state(test_base):
         self.assertTrue(os.path.exists(self.outputms))
         
         # Check that state sub-table has been re-indexed
-        mytb = table( )
-        mytb.open(self.outputms + '/STATE')
-        scan_intent = mytb.getcol('OBS_MODE')
-        mytb.close()
+        tb_local.open(self.outputms + '/STATE')
+        scan_intent = tb_local.getcol('OBS_MODE')
+        tb_local.close()
         n_subscans = scan_intent.size
         check_eq(n_subscans, 12)
         
@@ -1214,16 +1583,14 @@ class test_state(test_base):
         self.assertTrue(os.path.exists(self.outputms))
         
         # Check that state sub-table has not been re-indexed
-        mytb = table( )
-        mytb.open(self.outputms + '/STATE')
-        scan_intent = mytb.getcol('OBS_MODE')
-        mytb.close()
+        tb_local.open(self.outputms + '/STATE')
+        scan_intent = tb_local.getcol('OBS_MODE')
+        tb_local.close()
         n_subscans = scan_intent.size
         check_eq(n_subscans, 30)        
 
         # listobs checks that re-indexing is consistent
         listobs(self.outputms)
-
 
 class test_WeightSpectrum(test_base):
     '''Test usage of WEIGHT_SPECTRUM to channel average and combine SPWs with different exposure'''
@@ -1247,11 +1614,10 @@ class test_WeightSpectrum(test_base):
                     interpolation="fftshift",phasecenter="J2000 12h01m53.13s -18d53m09.8s",
                     outframe="CMB",veltype="radio")
 
-        mytb = table( )
-        mytb.open(self.outvis)
-        data = mytb.getcol('DATA')
-        exposure = mytb.getcol('EXPOSURE')
-        mytb.close()
+        tb_local.open(self.outvis)
+        data = tb_local.getcol('DATA')
+        exposure = tb_local.getcol('EXPOSURE')
+        tb_local.close()
         nchan = data.size
         check_eq(nchan, 50)
         check_eq(data[0][0][0].real, 0.0950, 0.0001)
@@ -1270,11 +1636,10 @@ class test_WeightSpectrum(test_base):
                     interpolation="fftshift",phasecenter="J2000 12h01m53.13s -18d53m09.8s",
                     outframe="CMB",veltype="radio",usewtspectrum=True)
 
-        mytb = table( )
-        mytb.open(self.outvis)
-        data = mytb.getcol('DATA')
-        exposure = mytb.getcol('EXPOSURE')
-        mytb.close()
+        tb_local.open(self.outvis)
+        data = tb_local.getcol('DATA')
+        exposure = tb_local.getcol('EXPOSURE')
+        tb_local.close()
         nchan = data.size
         check_eq(nchan, 50)
         check_eq(data[0][0][0].real, 0.0950, 0.0001)
@@ -1294,10 +1659,9 @@ class test_WeightSpectrum(test_base):
                     interpolation="fftshift",phasecenter="J2000 12h01m53.13s -18d53m09.8s",
                     outframe="CMB",veltype="radio",usewtspectrum=True)
 
-        mytb = table( )
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         nchan = weightSpectrum.size
         check_eq(nchan, 50)
         check_eq(weightSpectrum[0][0][0], 1.9007, 0.0001)
@@ -1315,10 +1679,9 @@ class test_WeightSpectrum(test_base):
                     interpolation="fftshift",phasecenter="J2000 12h01m53.13s -18d53m09.8s",
                     outframe="CMB",veltype="radio",chanaverage=True,chanbin=4)
 
-        mytb = table( )
-        mytb.open(self.outvis)
-        data = mytb.getcol('DATA')
-        mytb.close()
+        tb_local.open(self.outvis)
+        data = tb_local.getcol('DATA')
+        tb_local.close()
         nchan = data.size
         check_eq(nchan, 12)
         check_eq(data[0][0][0].real, 0.0893, 0.0001)
@@ -1336,14 +1699,14 @@ class test_WeightSpectrum(test_base):
                     interpolation="fftshift",phasecenter="J2000 12h01m53.13s -18d53m09.8s",
                     outframe="CMB",veltype="radio",chanaverage=True,chanbin=4)
 
-        mytb = table( )
-        mytb.open(self.outvis)
-        data = mytb.getcol('DATA')
-        mytb.close()
+        tb_local.open(self.outvis)
+        data = tb_local.getcol('DATA')
+        tb_local.close()
         nchan = data.size
         check_eq(nchan, 12)
         check_eq(data[0][0][0].real, 0.0893, 0.0001)
         check_eq(data[0][nchan-1][0].imag, -0.2390, 0.0001)
+
 
 class test_channelAverageByDefault(test_base_compare):
 
@@ -1401,19 +1764,18 @@ class test_float_column(test_base):
                     regridms=True,outframe='LSRK',spw='0')
 
         print("Check column and keywords")
-        mytb = table( )
-        mytb.open(self.outputms+'/SPECTRAL_WINDOW')
-        refnum = mytb.getcell('MEAS_FREQ_REF',0)
-        mytb.close()
+        tb_local.open(self.outputms+'/SPECTRAL_WINDOW')
+        refnum = tb_local.getcell('MEAS_FREQ_REF',0)
+        tb_local.close()
         self.assertEqual(refnum, 1)
         
         # CAS-5900. Check the keywords in FLOAT_DATA are the same
-        mytb.open(self.outputms)
-        okeys = mytb.getcolkeywords('FLOAT_DATA')
-        mytb.close()
-        mytb.open(self.vis)
-        ikeys = mytb.getcolkeywords('FLOAT_DATA')
-        mytb.close()
+        tb_local.open(self.outputms)
+        okeys = tb_local.getcolkeywords('FLOAT_DATA')
+        tb_local.close()
+        tb_local.open(self.vis)
+        ikeys = tb_local.getcolkeywords('FLOAT_DATA')
+        tb_local.close()
         self.assertDictEqual(ikeys, okeys, 'Keywords from FLOAT_DATA are different')
         
         
@@ -1438,22 +1800,22 @@ class test_timeaverage(test_base_compare):
         super(test_timeaverage,self).tearDown()
 
     def unflag_ms(self):
-        aflocal.open(self.vis)
-        aflocal.selectdata()
+        af_local.open(self.vis)
+        af_local.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
-        aflocal.parseagentparameters(agentUnflag)
-        aflocal.init()
-        aflocal.run(writeflags=True)
-        aflocal.done()
-        
+        af_local.parseagentparameters(agentUnflag)
+        af_local.init()
+        af_local.run(writeflags=True)
+        af_local.done()
+
     def flag_ms(self):
-        aflocal.open(self.vis)
-        aflocal.selectdata()
+        af_local.open(self.vis)
+        af_local.selectdata()
         agentUnflag={'apply':True,'mode':'rflag','extendflags':False}
-        aflocal.parseagentparameters(agentUnflag)
-        aflocal.init()
-        aflocal.run(writeflags=True)
-        aflocal.done()        
+        af_local.parseagentparameters(agentUnflag)
+        af_local.init()
+        af_local.run(writeflags=True)
+        af_local.done()
 
     def test_timeaverage_data_unflagged(self):   
         
@@ -1532,25 +1894,31 @@ class test_timeaverage(test_base_compare):
 
 class test_timeaverage_limits(test_base):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_CAS_4850()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        self.setUp_CAS_4850()
         self.outvis = 'test_timeaverage_limits.ms'
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        # all test cases are expected to generate the output MS from mstransform in outvis
         os.system('rm -rf '+ self.outvis)
 
     def test_CAS_4850(self):
 
         mstransform(vis=self.vis,outputvis=self.outvis,datacolumn='DATA',timeaverage=True,timebin='40s')
 
-        mytb = table( )
-        mytb.open(self.outvis)
-        interval = mytb.getcol('INTERVAL')
+        tb_local.open(self.outvis)
+        interval = tb_local.getcol('INTERVAL')
         print(interval[0])
-        mytb.close()
+        tb_local.close()
         check_eq(interval[0] >= 40.0,True)
-
 
 class test_multiple_transformations(test_base_compare):
 
@@ -1753,119 +2121,24 @@ class test_multiple_transformations(test_base_compare):
 
         th.compTables(self.vis+'/FEED', self.outvis+'/FEED', ['FOCUS_LENGTH'])
 
-class test_regridms_single_spw(test_base_compare):
-    '''Tests for regridms w/o combining SPWS'''
-
-    def setUp(self):
-        super(test_regridms_single_spw,self).setUp()
-        self.setUp_CAS_5013()
-        self.outvis = 'test_regridms_single_spw_mst.ms'
-        self.refvis = 'test_regridms_single_spw_cvel.ms'
-        self.outvis_sorted = 'test_regridms_single_spw_mst_sorted.ms'
-        self.refvis_sorted = 'test_regridms_single_spw_cvel_sorted.ms'
-        os.system('rm -rf test_regridms_single_sp*')
-
-    def tearDown(self):
-        super(test_regridms_single_spw,self).tearDown()
-
-    def test_regrid_only_LSRK(self):
-        '''mstransform: Change ref. frame to LSRK'''
-
-        mstransform(vis=self.vis,outputvis=self.outvis,regridms=True,datacolumn='ALL',
-                    field='Vy_CMa',spw='3',mode='frequency',nchan=3830,start='310427.353MHz',width='-244.149kHz',outframe='lsrk')
-        cvel(vis=self.vis,outputvis=self.refvis,
-             field='Vy_CMa',spw='3',mode='frequency',nchan=3830,start='310427.353MHz',width='-244.149kHz',outframe='lsrk')
-
-        self.generate_tolerance_map()
-        
-        self.mode['WEIGHT'] = "absolute"
-        self.tolerance['WEIGHT'] = 1E-3        
-
-        self.post_process()
-        
-class test_regridms_multiple_spws(test_base_compare):
-    '''Tests for regridms combining SPWS'''
-       
-    def setUp(self):
-        super(test_regridms_multiple_spws,self).setUp()
-        self.setUp_CAS_5172()
-        self.outvis = 'test_regridms_multiple_spw_mst.ms'
-        self.refvis = 'test_regridms_multiple_spw_cvel.ms'
-        self.outvis_sorted = 'test_regridms_multiple_spw_mst_sorted.ms'
-        self.refvis_sorted = 'test_regridms_multiple_spw_cvel_sorted.ms'
-        os.system('rm -rf test_regridms_multiple_spw*')        
-        
-    def tearDown(self):
-        super(test_regridms_multiple_spws,self).tearDown()
-
-    @unittest.skip('Skip, cvel produces an exception since release 4.7.2 as per CAS-9798')
-    def test_combine_regrid_fftshift(self):
-        '''mstransform: Combine 2 SPWs and change ref. frame to LSRK using fftshift''' 
-        
-        cvel(vis = self.vis, outputvis = self.refvis ,mode = 'velocity',nchan = 10,start = '-50km/s',width = '5km/s',
-             interpolation = 'fftshift',restfreq = '36.39232GHz',outframe = 'LSRK',veltype = 'radio', phasecenter="2")
-        
-        mstransform(vis = self.vis, outputvis = self.outvis, datacolumn='all',combinespws = True, regridms = True, 
-                    mode = 'velocity', nchan = 10, start = '-50km/s', width = '5km/s', interpolation = 'fftshift', 
-                    restfreq = '36.39232GHz', outframe = 'LSRK', veltype = 'radio')
-
-        self.generate_tolerance_map()
-        
-        self.mode['WEIGHT'] = "absolute"
-        self.tolerance['WEIGHT'] = 50
-        
-        # Exlude FEED from the list of sub-tables to compare because cvel does not remove duplicates
-        self.subtables=['/ANTENNA','/DATA_DESCRIPTION','/FIELD','/FLAG_CMD',
-                        '/POINTING','/POLARIZATION','/PROCESSOR','/STATE']
-
-        self.post_process()          
-
-    def test_combine_noregrid_fftshift(self):
-        '''mstransform: Combine 2 SPWs and change ref. frame to LSRK using fftshift'''
-
-        mstransform(vis=self.vis, outputvis=self.outvis, datacolumn='all',
-                    combinespws=True, regridms=True, mode='velocity', nchan=10,
-                    start='-50km/s', width='5km/s', interpolation='fftshift',
-                    restfreq='36.39232GHz', outframe='LSRK', veltype='radio')
-
-        self.assertTrue(os.path.isdir(self.outvis))
-
-class test_regridms_spw_with_different_number_of_channels(test_base):
-    '''Tests for regridms w/o combining SPWS'''
-       
-    def setUp(self):
-        self.setUp_CAS_4983()
-        self.outvis = 'test_regridms_spw_with_different_number_of_channels.ms'
-        
-    def tearDown(self):
-        os.system('rm -rf '+ self.vis)
-        os.system('rm -rf '+ self.outvis)
-        
-    def test_regridms_spw_with_different_number_of_channels_separately(self):
-        '''mstransform: Regrid SPWs separately, applying pre-channel averaging to only some of them''' 
-        
-        mstransform(vis=self.vis,outputvis=self.outvis,datacolumn='data',field='J0102-7546',regridms=True,
-                    mode='frequency',width='29297.28kHz',outframe='lsrk',veltype='radio')  
-        
-        # DDI subtable should have 4 rows with the proper indices     
-        mytb = table( )
-        mytb.open(self.outvis + '/SPECTRAL_WINDOW')
-        numChan = mytb.getcol('NUM_CHAN')      
-        mytb.close()          
-        check_eq(numChan[0], 32)
-        check_eq(numChan[1], 2)
-        check_eq(numChan[2], 68)
-        check_eq(numChan[3], 2)        
-
 
 class test_spw_poln(test_base):
     '''tests for spw with different correlation shapes'''
 
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_3c84()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        self.setUp_3c84()
+        pass
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        # all test cases are expected to generate the output MS from mstransform in outputms
         os.system('rm -rf '+ self.outputms)
         os.system('rm -rf list.obs')
 
@@ -1877,15 +2150,14 @@ class test_spw_poln(test_base):
         mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data', correlation='LL')
 
         # Verify the input versus the output
-        myms = ms( )
-        myms.open(self.vis)
-        myms.msselect({'polarization':'LL'})
-        inp_nrow = myms.nrow(True)
-        myms.close()
+        ms_local.open(self.vis)
+        ms_local.msselect({'polarization':'LL'})
+        inp_nrow = ms_local.nrow(True)
+        ms_local.close()
 
-        myms.open(self.outputms)
-        out_nrow = myms.nrow()
-        myms.close()
+        ms_local.open(self.outputms)
+        out_nrow = ms_local.nrow()
+        ms_local.close()
 
         self.assertEqual(inp_nrow, out_nrow)
 
@@ -1921,15 +2193,14 @@ class test_spw_poln(test_base):
         mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data', spw='0')
 
         # Verify the input versus the output
-        myms = ms( )
-        myms.open(self.vis)
-        myms.msselect({'spw':'0'})
-        inp_nrow = myms.nrow(True)
-        myms.close()
+        ms_local.open(self.vis)
+        ms_local.msselect({'spw':'0'})
+        inp_nrow = ms_local.nrow(True)
+        ms_local.close()
 
-        myms.open(self.outputms)
-        out_nrow = myms.nrow()
-        myms.close()
+        ms_local.open(self.outputms)
+        out_nrow = ms_local.nrow()
+        ms_local.close()
 
         self.assertEqual(inp_nrow, out_nrow)
 
@@ -1957,15 +2228,14 @@ class test_spw_poln(test_base):
                     correlation='LL')
 
         # Verify the input versus the output
-        myms = ms( )
-        myms.open(self.vis)
-        myms.msselect({'spw':'0','polarization':'LL'})
-        inp_nrow = myms.nrow(True)
-        myms.close()
+        ms_local.open(self.vis)
+        ms_local.msselect({'spw':'0','polarization':'LL'})
+        inp_nrow = ms_local.nrow(True)
+        ms_local.close()
 
-        myms.open(self.outputms)
-        out_nrow = myms.nrow()
-        myms.close()
+        ms_local.open(self.outputms)
+        out_nrow = ms_local.nrow()
+        ms_local.close()
 
         self.assertEqual(inp_nrow, out_nrow)
 
@@ -1983,15 +2253,14 @@ class test_spw_poln(test_base):
                     correlation='RR')
 
         # Verify the input versus the output
-        myms = ms( )
-        myms.open(self.vis)
-        myms.msselect({'spw':'0,1','polarization':'RR'})
-        inp_nrow = myms.nrow(True)
-        myms.close()
+        ms_local.open(self.vis)
+        ms_local.msselect({'spw':'0,1','polarization':'RR'})
+        inp_nrow = ms_local.nrow(True)
+        ms_local.close()
 
-        myms.open(self.outputms)
-        out_nrow = myms.nrow()
-        myms.close()
+        ms_local.open(self.outputms)
+        out_nrow = ms_local.nrow()
+        ms_local.close()
 
         self.assertEqual(inp_nrow, out_nrow)
 
@@ -2001,15 +2270,14 @@ class test_spw_poln(test_base):
         mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data', spw='1,2')
 
         # Verify the input versus the output
-        myms = ms( )
-        myms.open(self.vis)
-        myms.msselect({'spw':'1,2'})
-        inp_nrow = myms.nrow(True)
-        myms.close()
+        ms_local.open(self.vis)
+        ms_local.msselect({'spw':'1,2'})
+        inp_nrow = ms_local.nrow(True)
+        ms_local.close()
 
-        myms.open(self.outputms)
-        out_nrow = myms.nrow()
-        myms.close()
+        ms_local.open(self.outputms)
+        out_nrow = ms_local.nrow()
+        ms_local.close()
         self.assertEqual(inp_nrow, out_nrow)
 
         # Verify that DATA_DESCRIPTION table is properly re-indexed.
@@ -2035,20 +2303,18 @@ class test_spw_poln(test_base):
         ret = th.verifyMS(self.outputms, 1, 256, 0)
         self.assertTrue(ret[0],ret[1])
 
-        mytb = table( )
-        mytb.open(self.outputms+'/SPECTRAL_WINDOW')
-        refnum = mytb.getcell('MEAS_FREQ_REF',0)
-        mytb.close()
+        tb_local.open(self.outputms+'/SPECTRAL_WINDOW')
+        refnum = tb_local.getcell('MEAS_FREQ_REF',0)
+        tb_local.close()
         self.assertEqual(refnum, 1)
 
         listobs(self.outputms, listfile='list.obs')
         self.assertTrue(os.path.exists('list.obs'), 'Probable error in sub-table re-indexing')
 
         # Verify the metadata information
-        msmdt = msmetadata( )
-        msmdt.open(self.outputms)
-        dds = msmdt.datadescids()
-        msmdt.done()
+        msmd_local.open(self.outputms)
+        dds = msmd_local.datadescids()
+        msmd_local.done()
         self.assertEqual(dds.__len__(),2,'Wrong number of rows in DD table')
 
     def test_chanavg_spw_with_diff_pol_shape(self):
@@ -2059,15 +2325,14 @@ class test_spw_poln(test_base):
                     chanaverage=True,chanbin=256)
 
         # verify the metadata of the output
-        msmdt = msmetadata( )
-        msmdt.open(self.outputms)
-        nchan = msmdt.nchan(0) # 1
-        nrow = msmdt.nrows() # 2600
-        dds = msmdt.datadescids() # 2
-        meanfreq = msmdt.meanfreq(0) # 4968996093.75
-        chanfreq = msmdt.chanfreqs(0) # [4.96899609e+09]
-        chanwidth = msmdt.chanwidths(spw=0, unit='kHz') # 2000
-        msmdt.done()
+        msmd_local.open(self.outputms)
+        nchan = msmd_local.nchan(0) # 1
+        nrow = msmd_local.nrows() # 2600
+        dds = msmd_local.datadescids() # 2
+        meanfreq = msmd_local.meanfreq(0) # 4968996093.75
+        chanfreq = msmd_local.chanfreqs(0) # [4.96899609e+09]
+        chanwidth = msmd_local.chanwidths(spw=0, unit='kHz') # 2000
+        msmd_local.done()
 
         self.assertEqual(dds.__len__(),2,'Wrong number of rows in DD table')
         self.assertEqual(nchan, 1)
@@ -2103,10 +2368,9 @@ class testFlags(test_base):
         # Split scan=31 out
         mstransform(self.vis, outputvis=self.outputms, datacolumn='corrected', scan='31', keepflags=False)
         
-        msmdt = msmetadata( )
-        msmdt.open(self.outputms)
-        spws = msmdt.spwsforscan(31)
-        msmdt.close()
+        msmd_local.open(self.outputms)
+        spws = msmd_local.spwsforscan(31)
+        msmd_local.close()
         self.assertEqual(spws.size, 15)
         
     def test_select_dropped_spw(self):
@@ -2119,23 +2383,28 @@ class testFlags(test_base):
         try:
             mstransform(self.vis, outputvis=self.outputms, datacolumn='data', spw='>14', keepflags=False)
         except RuntimeError as instance:
-            print('Expected Error: %s'%instance)
+            print('Expected Error: {0}'.format(instance))
         
         print('Expected Error!')
         
 class test_subtables_evla(test_base):
     '''Test effect of SPW combination/separation on EVLA sub-tables'''
     
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_sub_tables_evla()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        
-        self.vis = ''
         self.tmpms = ''
         self.outputms = ''
-                
-        self.setUp_sub_tables_evla()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        # all test cases expected to generate the output MSs in tmpsms / outputms
         os.system('rm -rf '+ self.tmpms)
         os.system('rm -rf '+ self.outputms)
     
@@ -2146,41 +2415,35 @@ class test_subtables_evla(test_base):
         
         mstransform(self.vis, outputvis=self.outputms, datacolumn='data', combinespws=True)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SOURCE')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SOURCE')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 1)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/FEED')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/FEED')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 27)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/CALDEVICE')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/CALDEVICE')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 27)      
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SYSPOWER')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SYSPOWER')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 193590)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SYSPOWER')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SYSPOWER')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 193590)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SPECTRAL_WINDOW')
-        nrows = mytb.nrows()
-        bbcNo = mytb.getcol('BBC_NO')
-        mytb.close()
+        tb_local.open(self.outputms + '/SPECTRAL_WINDOW')
+        nrows = tb_local.nrows()
+        bbcNo = tb_local.getcol('BBC_NO')
+        tb_local.close()
         self.assertEqual(nrows, 1)   
         self.assertEqual(bbcNo[0], 12)               
         
@@ -2193,60 +2456,121 @@ class test_subtables_evla(test_base):
         mstransform(self.vis, outputvis=self.tmpms, datacolumn='data', combinespws=True) 
         mstransform(self.tmpms, outputvis=self.outputms, datacolumn='data',regridms=True,mode='channel',nchan=64,nspw=2)      
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SOURCE')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SOURCE')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 1*2)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/FEED')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/FEED')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 27*2)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/CALDEVICE')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/CALDEVICE')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 27*2)      
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SYSPOWER')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SYSPOWER')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 193590*2)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SYSPOWER')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SYSPOWER')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 193590*2)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SPECTRAL_WINDOW')
-        nrows = mytb.nrows()
-        bbcNo = mytb.getcol('BBC_NO')
-        mytb.close()
+        tb_local.open(self.outputms + '/SPECTRAL_WINDOW')
+        nrows = tb_local.nrows()
+        bbcNo = tb_local.getcol('BBC_NO')
+        tb_local.close()
         self.assertEqual(nrows, 1*2)   
         self.assertEqual(bbcNo[0], 12)          
         
+class test_weight_spectrum_creation(test_base):
+    '''Test when WEIGHT/SIGMA_SPECTRUM columns are created or not (with usewtspectrum)'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        # all test cases are expected to generate the output MS from mstransform in outputms
+        os.system('rm -rf '+ self.outputms)
+
+    def test_usewtspectrum_on(self):
+        '''mstransform: when input MS does not have WEIGHT/SIGMA_SPECTRUM columns,
+        usewtspectrum=True should be respected'''
+        self.outputms = 'with_weight_spectrum.ms'
+
+        mstransform(self.vis, outputvis=self.outputms, spw='0', scan='31', antenna='0',
+                    usewtspectrum=True)
+
+        tb_local.open(self.outputms)
+        colnames = tb_local.colnames()
+        sub_kw_names = tb_local.keywordnames()
+        weight_sp_shape = tb_local.getcolshapestring('WEIGHT_SPECTRUM')
+        sigma_sp_shape = tb_local.getcolshapestring('SIGMA_SPECTRUM')
+        tb_local.close()
+
+        self.assertEqual(24, len(colnames))
+        self.assertEqual(16, len(sub_kw_names))
+        self.assertTrue('WEIGHT_SPECTRUM' in colnames)
+        self.assertEqual(270, len(weight_sp_shape))
+        self.assertEqual('[4, 64]', weight_sp_shape[0])
+        self.assertTrue('SIGMA_SPECTRUM' in colnames)
+        self.assertEqual(270, len(sigma_sp_shape))
+        self.assertEqual('[4, 64]', sigma_sp_shape[0])
+
+    def test_usewtspectrum_off(self):
+        '''mstransform: when input MS does not have WEIGHT/SIGMA_SPECTRUM columns,
+        if usewtspectrum is not set=True WEIGHT/SIGMA_SPECTRUM should not be created in
+        the output MS'''
+        self.outputms = 'without_weight_spectrum.ms'
+
+        mstransform(self.vis, outputvis=self.outputms, scan='31', spw='0', antenna='0',
+                    usewtspectrum=False)
+
+        tb_local.open(self.outputms)
+        colnames = tb_local.colnames()
+        sub_kw_names = tb_local.keywordnames()
+        tb_local.close()
+
+        self.assertEqual(22, len(colnames))
+        self.assertEqual(16, len(sub_kw_names))
+        self.assertTrue('WEIGHT_SPECTRUM' not in colnames)
+        self.assertTrue('SIGMA_SPECTRUM' not in colnames)
+
 class test_subtables_alma(test_base):
     '''Test effect of SPW combination/separation on ALMA sub-tables'''
     
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_sub_tables_alma()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        
-        self.vis = ''
         self.tmpms = ''
         self.outputms = ''
-                
-        self.setUp_sub_tables_alma()
-        
+
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        # all test cases are expected to generate the output MSs in tmpms / outputms
         os.system('rm -rf '+ self.tmpms)
         os.system('rm -rf '+ self.outputms)
-    
+
     def test_remove_duplicates_after_combine_alma(self):
         '''mstransform: Check that sub-tables have no duplicates after SPW combination'''
         
@@ -2254,35 +2578,30 @@ class test_subtables_alma(test_base):
         
         mstransform(self.vis, outputvis=self.outputms, datacolumn='data', combinespws=True)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SOURCE')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SOURCE')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 7)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/FEED')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/FEED')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 32)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/CALDEVICE')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/CALDEVICE')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 32)      
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SYSCAL')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SYSCAL')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 288)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SPECTRAL_WINDOW')
-        nrows = mytb.nrows()
-        bbcNo = mytb.getcol('BBC_NO')
-        mytb.close()
+        tb_local.open(self.outputms + '/SPECTRAL_WINDOW')
+        nrows = tb_local.nrows()
+        bbcNo = tb_local.getcol('BBC_NO')
+        tb_local.close()
         self.assertEqual(nrows, 1)   
         self.assertEqual(bbcNo[0], 1)               
         
@@ -2295,35 +2614,30 @@ class test_subtables_alma(test_base):
         mstransform(self.vis, outputvis=self.tmpms, datacolumn='data', combinespws=True) 
         mstransform(self.tmpms, outputvis=self.outputms, datacolumn='data',regridms=True,nspw=4)      
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SOURCE')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SOURCE')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 7*4)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/FEED')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/FEED')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 32*4)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/CALDEVICE')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/CALDEVICE')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 32*4)      
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SYSCAL')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/SYSCAL')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 288*4)
         
-        mytb = table( )
-        mytb.open(self.outputms + '/SPECTRAL_WINDOW')
-        nrows = mytb.nrows()
-        bbcNo = mytb.getcol('BBC_NO')
-        mytb.close()
+        tb_local.open(self.outputms + '/SPECTRAL_WINDOW')
+        nrows = tb_local.nrows()
+        bbcNo = tb_local.getcol('BBC_NO')
+        tb_local.close()
         self.assertEqual(nrows, 1*4)
         self.assertEqual(bbcNo[0], 1)
 
@@ -2332,19 +2646,18 @@ class test_subtables_alma(test_base):
         self.outputms = 'combined.ms'
         mstransform(self.vis, outputvis=self.outputms, datacolumn='data', regridms=True)
 
-        mytb = table( )
-        mytb.open(self.outputms + '/SPECTRAL_WINDOW')
-        cw = mytb.getcol('CHAN_WIDTH').T
-        cf = mytb.getcol('CHAN_FREQ').T
+        tb_local.open(self.outputms + '/SPECTRAL_WINDOW')
+        cw = tb_local.getcol('CHAN_WIDTH').T
+        cf = tb_local.getcol('CHAN_FREQ').T
         for w, f in zip(cw, cf):
             if numpy.diff(f)[0] < 0:
                 self.assertTrue((w < 0).all())
             else:
                 self.assertTrue((w > 0).all())
-        self.assertTrue((mytb.getcol('TOTAL_BANDWIDTH') > 0).all())
-        mytb.close()
-        
-               
+        self.assertTrue((tb_local.getcol('TOTAL_BANDWIDTH') > 0).all())
+        tb_local.close()
+
+
 class test_radial_velocity_correction(test_base_compare):
 
     def setUp(self):
@@ -2385,9 +2698,10 @@ class test_radial_velocity_correction_largetimerange(test_base_compare):
         super(test_radial_velocity_correction_largetimerange, self).setUp()
         self.vis = 'CAS-7382.ms'
         if os.path.exists(self.vis):
-           self.cleanup()
+           self.removeInputMS()
 
-        os.system('cp -RL '+os.path.join(mstransform_datapath,self.vis)+' '+self.vis)
+        os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.vis),
+                                          self.vis))
 
         self.outvis = "test-CAS-7382-mst.ms"
         self.refvis = "test-CAS-7382-cvel.ms"
@@ -2478,15 +2792,13 @@ class test_vla_mixed_polarizations(test_base):
         mstransform(vis=self.vis,outputvis=self.outputms,scan='16',datacolumn='DATA')
         
         # Check that DDI sub-table is consistent with POLARIZATION sub-table
-        mytb = table( )
-        mytb.open(self.outputms + '/POLARIZATION')
-        npols = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/POLARIZATION')
+        npols = tb_local.nrows()
+        tb_local.close()
         
-        mytb = table( )
-        mytb.open(self.outputms + '/DATA_DESCRIPTION')
-        polIds = mytb.getcol('POLARIZATION_ID')
-        mytb.close()    
+        tb_local.open(self.outputms + '/DATA_DESCRIPTION')
+        polIds = tb_local.getcol('POLARIZATION_ID')
+        tb_local.close()    
         
         self.assertTrue(all(polIds < npols) and all(polIds > -1), 'PolarizationId in DATA_DESCRIPTION not consistent with POLARIZATION table') 
         
@@ -2513,15 +2825,13 @@ class test_polarization_reindex(test_base):
         mstransform(vis=self.vis,outputvis=self.outputms,field='J1256-0547',datacolumn='DATA')
         
         # Check that DDI sub-table is consistent with POLARIZATION sub-table
-        mytb = table( )
-        mytb.open(self.outputms + '/POLARIZATION')
-        npols = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outputms + '/POLARIZATION')
+        npols = tb_local.nrows()
+        tb_local.close()
         
-        mytb = table( )
-        mytb.open(self.outputms + '/DATA_DESCRIPTION')
-        polIds = mytb.getcol('POLARIZATION_ID')
-        mytb.close()    
+        tb_local.open(self.outputms + '/DATA_DESCRIPTION')
+        polIds = tb_local.getcol('POLARIZATION_ID')
+        tb_local.close()    
         
         self.assertTrue(all(polIds < npols) and all(polIds > -1), 'PolarizationId in DATA_DESCRIPTION not consistent with POLARIZATION table') 
         
@@ -2532,12 +2842,20 @@ class test_polarization_reindex(test_base):
 class test_antenna_reindexing(test_base):
     '''Test to check proper reindex of subtables'''
 
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_CAS_7259()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-        self.setUp_CAS_7259()
         self.outvis = 'test_reindex_antenna_subtable.ms'
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        # all test cases are expected to generate the output MS from mstransform in outvis
         os.system('rm -rf '+ self.outvis)
         os.system('rm -rf list.obs')
 
@@ -2548,10 +2866,9 @@ class test_antenna_reindexing(test_base):
         
         listobs(self.outvis, listfile='list.obs')
         self.assertTrue(os.path.exists('list.obs'), 'Probable error in sub-table re-indexing')        
-        mytb = table( )
-        mytb.open(self.outvis+'/ANTENNA')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outvis+'/ANTENNA')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 9, 'ANTENNA subtable should be resized to 9 VA0* antennas')
 
     def test_antenna_reindexing_all_va(self):
@@ -2561,10 +2878,9 @@ class test_antenna_reindexing(test_base):
         
         listobs(self.outvis, listfile='list.obs')
         self.assertTrue(os.path.exists('list.obs'), 'Probable error in sub-table re-indexing')        
-        mytb = table( )
-        mytb.open(self.outvis+'/ANTENNA')
-        nrows = mytb.nrows()
-        mytb.close()
+        tb_local.open(self.outvis+'/ANTENNA')
+        nrows = tb_local.nrows()
+        tb_local.close()
         self.assertEqual(nrows, 27, 'ANTENNA subtable should contain all 27 VA* antennas')
 
         
@@ -2586,10 +2902,9 @@ class test_alma_wvr_correlation_products(test_base):
         mstransform(vis=self.vis,outputvis=self.outputms,spw='0,1,2',datacolumn='DATA')
         
         # Check that POLARIZATION sub-table is properly sorted
-        mytb = table( )
-        mytb.open(self.outputms + '/POLARIZATION')
-        numCorr = mytb.getcol('NUM_CORR')
-        mytb.close()    
+        tb_local.open(self.outputms + '/POLARIZATION')
+        numCorr = tb_local.getcol('NUM_CORR')
+        tb_local.close()    
         
         self.assertEqual(numCorr[0],2,'POLARIZATION table miss-sorted')         
         self.assertEqual(numCorr[1],1, 'POLARIZATION table miss-sorted')         
@@ -2617,10 +2932,9 @@ class test_alma_autocorr_selection_with_wvr(test_base):
         mstransform(vis=self.vis,outputvis=self.outputms,correlation='XX;YY',datacolumn='DATA')
         
         # Check that POLARIZATION sub-table is properly sorted
-        mytb = table( )
-        mytb.open(self.outputms + '/POLARIZATION')
-        numCorr = mytb.getcol('NUM_CORR')
-        mytb.close()    
+        tb_local.open(self.outputms + '/POLARIZATION')
+        numCorr = tb_local.getcol('NUM_CORR')
+        tb_local.close()    
         
         self.assertEqual(numCorr[0],2,'Incorrect number of correlations')         
         self.assertEqual(numCorr[1],1, 'Incorrect number of correlations')
@@ -2629,19 +2943,20 @@ class test_alma_autocorr_selection_with_wvr(test_base):
 class test_spectrum_transformations_mean(test_base):
     '''Check that WEIGHT/SIGMA are equivalent to the mean of the unflagged WEIGHT_SPECTRUM samples'''
     
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
-        self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
-        os.system('rm -rf '+ self.refvis)          
         
     def test_chanavg_mean_corrected(self):
         '''mstransform: Check that after chan avg WEIGHT/SIGMA is equivalent to the mean of the unflagged WEIGHT_SPECTRUM samples'''
@@ -2652,11 +2967,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2674,11 +2988,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2696,11 +3009,10 @@ class test_spectrum_transformations_mean(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2717,11 +3029,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2738,11 +3049,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2760,11 +3070,10 @@ class test_spectrum_transformations_mean(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2781,11 +3090,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2802,11 +3110,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2824,11 +3131,10 @@ class test_spectrum_transformations_mean(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2845,11 +3151,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2866,11 +3171,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2888,11 +3192,10 @@ class test_spectrum_transformations_mean(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2909,11 +3212,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     regridms=True, spw='0,1,2,3,4,5,6,7', nspw=4)
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2930,11 +3232,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     regridms=True, spw='0,1,2,3,4,5,6,7', nspw=4)
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2951,11 +3252,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     regridms=True, spw='0,1,2,3,4,5,6,7', nspw=4)
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2972,11 +3272,10 @@ class test_spectrum_transformations_mean(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     regridms=True, spw='0,1,2,3,4,5,6,7', nspw=4)
         
-        mytb= table( )
-        mytb.open(self.outvis)
-        flag = mytb.getcol("FLAG")
-        weight  = mytb.getcol("WEIGHT")
-        weightSpectrum  = mytb.getcol("WEIGHT_SPECTRUM")
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol("FLAG")
+        weight  = tb_local.getcol("WEIGHT")
+        weightSpectrum  = tb_local.getcol("WEIGHT_SPECTRUM")
         
         allSamplesFlagged = numpy.all(flag == True,1)
         weightSpectrumSamples = numpy.sum((flag == False),1) + allSamplesFlagged* numpy.sum(flag == True,1)
@@ -2985,22 +3284,29 @@ class test_spectrum_transformations_mean(test_base):
         self.assertTrue((numpy.abs(weightSpectrumMean - weight ) < 1E-4).all(), 'WEIGHT is not mean of WEIGHT_SPECTRUM')               
 
 
+@unittest.skip('Median replaced with mean to capture overall behaviour')
 class test_spectrum_transformations_median(test_base):
-    '''Check that WEIGHT/SIGMA are equivalent to the median of WEIGHT_SPECTRUM/SIGMA_SPECTRUM'''
+    '''Check that WEIGHT/SIGMA are equivalent to the median of WEIGHT_SPECTRUM/SIGMA_SPECTRUM
+
+    This test should not be run any longer:
+    # jagonzal: Replace median with mean to capture overall behaviour
+    # test_spectrum_transformations_median,
+    '''
     
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
-        self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
-        os.system('rm -rf '+ self.refvis)          
         
     def test_chanavg_median_corrected(self):
         '''mstransform: Check that after chan avg WEIGHT/SIGMA is equivalent to the median of WEIGHT_SPECTRUM/SIGMA_SPECTRUM'''
@@ -3011,25 +3317,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()        
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')
@@ -3043,25 +3347,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()  
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()  
     
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         # jagonzal: SIGMA is not derived from the median of SIGMA_SPECTRUM but from WEIGHT turned into SIGMA by using 1/pow(weight
@@ -3077,25 +3379,23 @@ class test_spectrum_transformations_median(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()  
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()  
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')  
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')    
@@ -3109,25 +3409,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()        
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')
@@ -3141,25 +3439,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()  
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()  
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')  
         # jagonzal: SIGMA is not derived from the median of SIGMA_SPECTRUM but from WEIGHT turned into SIGMA by using 1/pow(weight,2)
@@ -3175,25 +3471,23 @@ class test_spectrum_transformations_median(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()  
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()  
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')              
@@ -3207,25 +3501,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()        
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')
@@ -3239,25 +3531,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()  
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()  
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         # jagonzal: SIGMA is not derived from the median of SIGMA_SPECTRUM but from WEIGHT turned into SIGMA by using 1/pow(weight     
@@ -3273,25 +3563,23 @@ class test_spectrum_transformations_median(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()  
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()  
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')   
@@ -3305,25 +3593,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()        
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')
@@ -3337,25 +3623,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()  
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()  
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM') 
         # jagonzal: SIGMA is not derived from the median of SIGMA_SPECTRUM but from the median of the
@@ -3372,25 +3656,23 @@ class test_spectrum_transformations_median(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()  
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()  
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM/SIGMA_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')       
@@ -3404,25 +3686,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     regridms=True, nspw=4)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()        
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')
@@ -3436,25 +3716,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     regridms=True, nspw=4)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()        
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')        
@@ -3468,25 +3746,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     regridms=True, nspw=4)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()        
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')        
@@ -3500,25 +3776,23 @@ class test_spectrum_transformations_median(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     regridms=True, nspw=4)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         weightSpectrumMedian = numpy.median(weightSpectrum,1)
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         sigmaSpectrumMedian = numpy.median(sigmaSpectrum,1)        
         
-        mytb.open(self.outvis)
-        weight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        sigma = mytb.getcol('SIGMA')
-        mytb.close()        
+        tb_local.open(self.outvis)
+        sigma = tb_local.getcol('SIGMA')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumMedian - weight) < 1E-5).all(), 'WEIGHT is not median of WEIGHT_SPECTRUM')
         self.assertTrue((numpy.abs(sigmaSpectrumMedian - sigma) < 1E-5).all(), 'SIGMA is not median of SIGMA_SPECTRUM')                  
@@ -3527,20 +3801,21 @@ class test_spectrum_transformations_median(test_base):
 class test_spectrum_transformations_sigma_from_weight(test_base):
     '''Check that WEIGHT/SIGMA and WEIGHT_SPECTRUM/SIGMA_SPECTRUM follow the relation sigma = 1 sqrt(weight) '''
     
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
-        self.refvis = ''                
-        self.setUp_4ants()
-        
+
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
-        os.system('rm -rf '+ self.refvis)   
-        
+
     def test_chanavg_sigma_from_weight_corrected(self):
         '''mstransform: Check that after chan avg CORRECTED SIGMA=1/sqrt(WEIGHT)'''
         
@@ -3550,11 +3825,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3562,9 +3835,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')      
         
@@ -3577,11 +3850,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3589,9 +3860,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')    
         
@@ -3605,11 +3876,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3617,9 +3886,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')                 
         
@@ -3632,11 +3901,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3644,9 +3911,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')       
         
@@ -3659,11 +3926,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3671,9 +3936,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')      
         
@@ -3687,11 +3952,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3699,9 +3962,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')               
         
@@ -3714,11 +3977,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3726,9 +3987,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')            
         
@@ -3741,11 +4002,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3753,9 +4012,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')                 
         
@@ -3769,11 +4028,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
-        
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         (ncorr,nchan,nrow) = weightSpectrum.shape
         for row in range(0,nrow): 
@@ -3781,9 +4038,9 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
                 for corr in range(0,ncorr):
                     weightSpectrum[corr,chan,row] = weighToSigma(weightSpectrum[corr,chan,row])
         
-        mytb.open(self.outvis)
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.outvis)
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum - sigmaSpectrum) < 1E-4).all(), 'SIGMA_SPECTRUM not derived from WEIGHT_SPECTRUM')                                             
         
@@ -3791,18 +4048,23 @@ class test_spectrum_transformations_sigma_from_weight(test_base):
 class test_spectrum_transformations_2_steps_vs_1_step(test_base):
     '''Check that the result of chan/time average applied in 1 step is the same as applied in 2 steps'''
     
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
+        self.auxvis = ''
         self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
+        os.system('rm -rf '+ self.auxvis)
         os.system('rm -rf '+ self.refvis)
         
     def test_timeavg_chanavg_2_steps_vs_1_step_corrected(self):
@@ -3829,17 +4091,15 @@ class test_spectrum_transformations_2_steps_vs_1_step(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')     
@@ -3868,17 +4128,15 @@ class test_spectrum_transformations_2_steps_vs_1_step(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')     
@@ -3906,17 +4164,15 @@ class test_spectrum_transformations_2_steps_vs_1_step(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')        
@@ -3944,17 +4200,15 @@ class test_spectrum_transformations_2_steps_vs_1_step(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')     
@@ -3983,17 +4237,15 @@ class test_spectrum_transformations_2_steps_vs_1_step(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')        
@@ -4022,17 +4274,15 @@ class test_spectrum_transformations_2_steps_vs_1_step(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')     
@@ -4060,17 +4310,15 @@ class test_spectrum_transformations_2_steps_vs_1_step(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')            
@@ -4098,36 +4346,41 @@ class test_spectrum_transformations_2_steps_vs_1_step(test_base):
                     timeaverage=True,timebin='10s',
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')                
 
 class test_spectrum_transformations_chanavg_useWeightSpectrum_false_vs_true(test_base):
-    '''Check that WEIGHT/SIGMA and WEIGHT_SPECTRUM/SIGMA_SPECTRUM follow the relation sigma = 1 sqrt(weight) '''
-    
+    '''Check that WEIGHT/SIGMA and WEIGHT_SPECTRUM/SIGMA_SPECTRUM follow the relation sigma = 1 sqrt(weight)
+
+    # jagonzal: mstransform has been optimized to not use weight spectrum for chan. avg.
+    # DATA when there are no input SPECTRUM cols because VI/VB generates constant SPECTRUM
+    '''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
         self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
         os.system('rm -rf '+ self.refvis)                 
             
     def test_chanavg_useWeightSpectrum_false_vs_true_corrected(self):
@@ -4145,15 +4398,13 @@ class test_spectrum_transformations_chanavg_useWeightSpectrum_false_vs_true(test
                     datacolumn='CORRECTED',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        dataTrue = tb_local.getcol('DATA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        dataTrue = mytb.getcol('DATA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        dataFalse = mytb.getcol('DATA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        dataFalse = tb_local.getcol('DATA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(dataTrue - dataFalse) < 1E-6).all(), 'CORRECTED improperly averaged')
         
@@ -4172,15 +4423,13 @@ class test_spectrum_transformations_chanavg_useWeightSpectrum_false_vs_true(test
                     datacolumn='DATA',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        dataTrue = tb_local.getcol('DATA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        dataTrue = mytb.getcol('DATA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        dataFalse = mytb.getcol('DATA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        dataFalse = tb_local.getcol('DATA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(dataTrue - dataFalse) < 1E-6).all(), 'DATA improperly averaged')          
             
@@ -4199,15 +4448,13 @@ class test_spectrum_transformations_chanavg_useWeightSpectrum_false_vs_true(test
                     datacolumn='MODEL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        dataTrue = tb_local.getcol('DATA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        dataTrue = mytb.getcol('DATA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        dataFalse = mytb.getcol('DATA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        dataFalse = tb_local.getcol('DATA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(dataTrue - dataFalse) < 1E-6).all(), 'MODEL improperly averaged')                        
             
@@ -4226,34 +4473,37 @@ class test_spectrum_transformations_chanavg_useWeightSpectrum_false_vs_true(test
                     datacolumn='ALL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
-        
         cols = ['DATA','CORRECTED_DATA','MODEL_DATA']
         for col in cols:
-            mytb.open(self.outvis)
-            dataTrue = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            dataFalse = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            dataTrue = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            dataFalse = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(dataTrue - dataFalse) < 1E-6).all(), col + ' improperly generated')
             
             
 class test_spectrum_transformations_multiple_col(test_base):
     '''Check the result of multiple column operation vs single column operation'''
     
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
+        self.auxvis = ''
         self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
+        os.system('rm -rf '+ self.auxvis)
         os.system('rm -rf '+ self.refvis)        
         
     def test_chanavg_all_vs_data_and_corrected(self):
@@ -4277,22 +4527,20 @@ class test_spectrum_transformations_multiple_col(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrumData = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumData = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrumData = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumData = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.auxvis)
+        weightSpectrumCorrected = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumCorrected = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.auxvis)
-        weightSpectrumCorrected = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumCorrected = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumAll = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumAll = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()        
+        tb_local.open(self.refvis)
+        weightSpectrumAll = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumAll = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumAll-weightSpectrumCorrected) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrumAll-sigmaSpectrumData) < 1E-4).all(), 'Sigma Spectrum improperly generated')  
@@ -4318,22 +4566,20 @@ class test_spectrum_transformations_multiple_col(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrumData = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumData = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrumData = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumData = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.auxvis)
+        weightSpectrumCorrected = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumCorrected = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.auxvis)
-        weightSpectrumCorrected = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumCorrected = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumAll = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumAll = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()        
+        tb_local.open(self.refvis)
+        weightSpectrumAll = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumAll = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()        
         
         self.assertTrue((numpy.abs(weightSpectrumAll-weightSpectrumCorrected) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrumAll-sigmaSpectrumData) < 1E-4).all(), 'Sigma Spectrum improperly generated')       
@@ -4362,41 +4608,45 @@ class test_spectrum_transformations_multiple_col(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrumData = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumData = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrumData = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumData = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.auxvis)
+        weightSpectrumCorrected = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumCorrected = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.auxvis)
-        weightSpectrumCorrected = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumCorrected = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumAll = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumAll = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()        
+        tb_local.open(self.refvis)
+        weightSpectrumAll = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumAll = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()        
                
         self.assertTrue((numpy.abs(weightSpectrumAll-weightSpectrumCorrected) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrumAll-sigmaSpectrumData) < 1E-4).all(), 'Sigma Spectrum improperly generated')  
-        
+
+
+@unittest.skip('Skipping - chan average should generate the avg of the flagged data if all'
+               'are flagged')
 class test_spectrum_transformations_weight_zero_flag_set(test_base):
     '''mstransform: Check that flags are set when the resulting weight is zero'''
     
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
         self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
         os.system('rm -rf '+ self.refvis)      
     
     def test_timeavg_weight_zero_flag_set_corrected(self):
@@ -4408,15 +4658,13 @@ class test_spectrum_transformations_weight_zero_flag_set(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.outvis)
-        flag = mytb.getcol('FLAG')
-        mytb.close()
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol('FLAG')
+        tb_local.close()
         
         indexZeroSpectrum = weightSpectrum < 1E-6
         indexFlagSet = flag == True
@@ -4431,20 +4679,20 @@ class test_spectrum_transformations_weight_zero_flag_set(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
         
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.outvis)
-        flag = mytb.getcol('FLAG')
-        mytb.close()
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol('FLAG')
+        tb_local.close()
         
         indexZeroSpectrum = weightSpectrum < 1E-6
         indexFlagSet = flag == True
         self.assertTrue((indexZeroSpectrum == indexFlagSet).all(), 'WEIGHT_SPECTRUM not consistent with FLAG cube')        
-        
+
+    @unittest.skip('Skipping - chan average should generate the avg of the flagged data if '
+                   'all are flagged')
     def test_timeavg_chanavg_weight_zero_flag_set_corrected(self):
         '''mstransform: Check that flags are set when the weight resulting from time avg is zero'''
         
@@ -4455,36 +4703,37 @@ class test_spectrum_transformations_weight_zero_flag_set(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')
         
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.outvis)
-        flag = mytb.getcol('FLAG')
-        mytb.close()
+        tb_local.open(self.outvis)
+        flag = tb_local.getcol('FLAG')
+        tb_local.close()
         
         indexZeroSpectrum = weightSpectrum < 1E-6
         indexFlagSet = flag == True
         self.assertTrue((indexZeroSpectrum == indexFlagSet).all(), 'WEIGHT_SPECTRUM not consistent with FLAG cube')  
         
-        
+
 class test_spectrum_transformations_weight_constant(test_base):
     '''mstransform: Check that the result of avg CORRECTED with constant WEIGHT'''
-    
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
         self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
         os.system('rm -rf '+ self.refvis)
         
     def test_timeavg_corrected_vs_model_with_weight_constant(self):
@@ -4504,20 +4753,18 @@ class test_spectrum_transformations_weight_constant(test_base):
                     antenna='0&&1',spw='0',timerange='<14:45:52.50', # Limit data selection to gurantee constant WEIGHT
                     timeaverage=True,timebin='10s')
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         # Get input WEIGHT
-        mytb.open(self.vis)
-        inputWeight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.vis)
+        inputWeight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         # Transform WEIGHT_SPECTRUM from MODEL multipling by input WEIGHT
         weightSpectrumRef[0,:,:] = inputWeight[0,0]*weightSpectrumRef[0,:,:]
         weightSpectrumRef[1,:,:] = inputWeight[1,0]*weightSpectrumRef[1,:,:]
@@ -4543,20 +4790,18 @@ class test_spectrum_transformations_weight_constant(test_base):
                     antenna='0&&1',spw='0',timerange='<14:45:52.50', # Limit data selection to gurantee constant WEIGHT
                     chanaverage=True,chanbin=2)
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         # Get input WEIGHT
-        mytb.open(self.vis)
-        inputWeight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.vis)
+        inputWeight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         # Transform WEIGHT_SPECTRUM from MODEL multipling by input WEIGHT
         weightSpectrumRef[0,:,:] = inputWeight[0,0]*weightSpectrumRef[0,:,:]
         weightSpectrumRef[1,:,:] = inputWeight[1,0]*weightSpectrumRef[1,:,:]
@@ -4568,19 +4813,22 @@ class test_spectrum_transformations_weight_constant(test_base):
  
 class test_spectrum_transformations_sigma_unit(test_base):
     '''stransform: Check that the result of avg with sigma 1'''
-    
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
         self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
         os.system('rm -rf '+ self.refvis)
         
     def test_timeavg_data_vs_model_with_sigma_unit(self):
@@ -4598,17 +4846,15 @@ class test_spectrum_transformations_sigma_unit(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')
@@ -4628,17 +4874,15 @@ class test_spectrum_transformations_sigma_unit(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrum = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrum = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        sigmaSpectrumRef = mytb.getcol('SIGMA_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        sigmaSpectrumRef = tb_local.getcol('SIGMA_SPECTRUM')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
         self.assertTrue((numpy.abs(sigmaSpectrum-sigmaSpectrumRef) < 1E-4).all(), 'Sigma Spectrum improperly generated')  
@@ -4660,20 +4904,18 @@ class test_spectrum_transformations_sigma_unit(test_base):
                     antenna='0&&1',spw='0',timerange='<14:45:52.50', # Limit data selection to gurantee constant WEIGHT
                     timeaverage=True,timebin='10s')
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         # Get input WEIGHT
-        mytb.open(self.vis)
-        inputWeight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.vis)
+        inputWeight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         # Transform WEIGHT_SPECTRUM from MODEL multipling by input WEIGHT
         weightSpectrumRef[0,:,:] = inputWeight[0,0]*weightSpectrumRef[0,:,:]
         weightSpectrumRef[1,:,:] = inputWeight[1,0]*weightSpectrumRef[1,:,:]
@@ -4699,20 +4941,18 @@ class test_spectrum_transformations_sigma_unit(test_base):
                     antenna='0&&1',spw='0',timerange='<14:45:52.50', # Limit data selection to gurantee constant WEIGHT
                     chanaverage=True,chanbin=2)
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightSpectrum = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightSpectrum = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightSpectrumRef = mytb.getcol('WEIGHT_SPECTRUM')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightSpectrumRef = tb_local.getcol('WEIGHT_SPECTRUM')
+        tb_local.close()
         
         # Get input WEIGHT
-        mytb.open(self.vis)
-        inputWeight = mytb.getcol('WEIGHT')
-        mytb.close()
+        tb_local.open(self.vis)
+        inputWeight = tb_local.getcol('WEIGHT')
+        tb_local.close()
         # Transform WEIGHT_SPECTRUM from MODEL multipling by input WEIGHT
         weightSpectrumRef[0,:,:] = inputWeight[0,0]*weightSpectrumRef[0,:,:]
         weightSpectrumRef[1,:,:] = inputWeight[1,0]*weightSpectrumRef[1,:,:]
@@ -4720,23 +4960,26 @@ class test_spectrum_transformations_sigma_unit(test_base):
         weightSpectrumRef[3,:,:] = inputWeight[3,0]*weightSpectrumRef[3,:,:]
         
         self.assertTrue((numpy.abs(weightSpectrum-weightSpectrumRef) < 1E-4).all(), 'Weight Spectrum improperly generated')
-               
-        
+
+
 class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
     '''Check that WEIGHT/SIGMA are generated in the same way regardless of the useWeightSpectrum parameter '''
-    
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
         self.outvis = ''
-        self.auxvix = ''
         self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
         os.system('rm -rf '+ self.refvis)                 
             
     def test_chanavg_useWeightSpectrum_false_vs_true_corrected (self):
@@ -4754,17 +4997,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')
@@ -4784,17 +5025,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')     
@@ -4814,17 +5053,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA') 
@@ -4844,17 +5081,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     chanaverage=True,chanbin=2)        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')        
@@ -4874,17 +5109,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     datacolumn='CORRECTED',usewtspectrum=True,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')
@@ -4904,17 +5137,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     datacolumn='DATA',usewtspectrum=True,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')     
@@ -4934,17 +5165,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     datacolumn='MODEL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA') 
@@ -4964,17 +5193,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     datacolumn='ALL',usewtspectrum=True,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')                  
@@ -4996,17 +5223,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')
@@ -5028,17 +5253,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')     
@@ -5060,17 +5283,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA') 
@@ -5092,17 +5313,15 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
                     chanaverage=True,chanbin=2,
                     timeaverage=True,timebin='10s')        
 
-        mytb= table( )
+        tb_local.open(self.outvis)
+        weightFalse = tb_local.getcol('WEIGHT')
+        sigmaFalse = tb_local.getcol('SIGMA')
+        tb_local.close()
         
-        mytb.open(self.outvis)
-        weightFalse = mytb.getcol('WEIGHT')
-        sigmaFalse = mytb.getcol('SIGMA')
-        mytb.close()
-        
-        mytb.open(self.refvis)
-        weightTrue = mytb.getcol('WEIGHT')
-        sigmaTrue = mytb.getcol('SIGMA')
-        mytb.close()
+        tb_local.open(self.refvis)
+        weightTrue = tb_local.getcol('WEIGHT')
+        sigmaTrue = tb_local.getcol('SIGMA')
+        tb_local.close()
         
         self.assertTrue((numpy.abs(weightTrue - weightFalse) < 1E-6).all(), 'Error calculating WEIGHT')
         self.assertTrue((numpy.abs(sigmaTrue - sigmaFalse) < 1E-6).all(), 'Error calculating SIGMA')     
@@ -5111,21 +5330,23 @@ class test_spectrum_transformations_useWeightSpectrum_false_vs_true(test_base):
         
 class test_spectrum_transformations_flagged_average(test_base):
     '''Check that when all the samples are flagged the avg. and spectrum correspond to the avg./spectrum of all the flagged samples '''
-    
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUp_4ants()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Reuse self.vis for all tests in this class. It's input only
+        os.system('rm -rf ' + cls.vis)
+
     def setUp(self):
-                
-        self.vis = ''
-        self.outvis = ''
-        self.auxvix = ''
         self.refvis = ''                
-        self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outvis)
-        os.system('rm -rf '+ self.auxvix)
         os.system('rm -rf '+ self.refvis)                 
-            
+
     def test_chanavg_spectrum_transformations_flagged_average_corrected (self):
         
         # Flag the entire MS
@@ -5147,15 +5368,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     chanaverage=True,chanbin=2)        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')
             
     def test_chanavg_spectrum_transformations_flagged_average_data (self):
@@ -5179,15 +5399,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     chanaverage=True,chanbin=2)        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')     
             
     def test_chanavg_spectrum_transformations_flagged_average_model (self):
@@ -5211,15 +5430,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     chanaverage=True,chanbin=2)        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')                    
             
     def test_chanavg_spectrum_transformations_flagged_average_all (self):
@@ -5243,15 +5461,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     chanaverage=True,chanbin=2)        
 
         
-        mytb = table( )
         cols = ['CORRECTED_DATA','DATA','MODEL_DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')             
             
     def test_timeavg_spectrum_transformations_flagged_average_corrected (self):
@@ -5275,15 +5492,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     timeaverage=True,timebin='10s')        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')
             
     def test_timeavg_spectrum_transformations_flagged_average_data (self):
@@ -5307,15 +5523,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     timeaverage=True,timebin='10s')        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')     
             
     def test_timeavg_spectrum_transformations_flagged_average_model (self):
@@ -5339,15 +5554,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     timeaverage=True,timebin='10s')        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')                    
             
     def test_timeavg_spectrum_transformations_flagged_average_all (self):
@@ -5371,15 +5585,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     timeaverage=True,timebin='10s')        
 
         
-        mytb = table( )
         cols = ['CORRECTED_DATA','DATA','MODEL_DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')                                   
             
     def test_chanavg_timeavg_spectrum_transformations_flagged_average_corrected (self):
@@ -5405,15 +5618,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     timeaverage=True,timebin='10s')        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')
             
     def test_chanavg_timeavg_spectrum_transformations_flagged_average_data (self):
@@ -5439,15 +5651,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     timeaverage=True,timebin='10s')        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')     
             
     def test_chanavg_timeavg_spectrum_transformations_flagged_average_model (self):
@@ -5473,15 +5684,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     timeaverage=True,timebin='10s')        
 
         
-        mytb = table( )
         cols = ['DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')                    
             
     def test_chanavg_timeavg_spectrum_transformations_flagged_average_all (self):
@@ -5507,15 +5717,14 @@ class test_spectrum_transformations_flagged_average(test_base):
                     timeaverage=True,timebin='10s')        
 
         
-        mytb = table( )
         cols = ['CORRECTED_DATA','DATA','MODEL_DATA','WEIGHT','SIGMA','WEIGHT_SPECTRUM','SIGMA_SPECTRUM']
         for col in cols:
-            mytb.open(self.outvis)
-            testCol = mytb.getcol(col)
-            mytb.close()
-            mytb.open(self.refvis)
-            refCol = mytb.getcol(col)
-            mytb.close()            
+            tb_local.open(self.outvis)
+            testCol = tb_local.getcol(col)
+            tb_local.close()
+            tb_local.open(self.refvis)
+            refCol = tb_local.getcol(col)
+            tb_local.close()            
             self.assertTrue((numpy.abs(testCol - refCol) < 1E-6).all(), col + ' improperly generated')  
             
             
@@ -5530,7 +5739,7 @@ class test_otf_calibration(test_base_compare):
         super(test_otf_calibration,self).setUp()
         
         if os.path.exists('ngc5921_regression'): os.system('rm -rf ' + 'ngc5921_regression')
-        os.system('cp -RL '+os.path.join(mstransform_datapath,'ngc5921_regression')+' .')
+        os.system('cp -RL {0} .'.format(os.path.join(datapath, 'ngc5921_regression')))
         
         self.vis = 'ngc5921_regression/ngc5921.ms'
         self.outvis = 'mst_otf_calibration.ms'
@@ -5593,11 +5802,18 @@ class test_no_reindexing_ephemeris_copy(test_base):
         self.outvis = 'split_ephemeris_no_reindex.ms'
         self.splitvis = 'split_ephemeris_no_reindex.split.ms'
         self.asdm = 'uid___A002_X997a62_X8c-short'
+        datapath = importasdm_datapath_2
+        os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.asdm), self.asdm))
+
+        importasdm(self.asdm, vis=self.outvis, convert_ephem2geo=True, process_pointing=False, flagbackup=False)
         if os.path.isfile(os.path.join(mstransform_datapath,self.asdm+".tar.xz")):
-            os.system('tar -Jxf '+os.path.join(mstransform_datapath,self.asdm+".tar.xz"))
+            os.system('tar -Jxf {0}'.format(os.path.join(mstransform_datapath,
+                                                         self.asdm+".tar.xz")))
         else:
-            os.system('cp -RL '+os.path.join(importasdm_datapath_2,self.asdm)+' '+self.asdm)
+            os.system('cp -RL {0} {1}'.format(os.path.join(importasdm_datapath_2, self.asdm),
+                                              self.asdm))
             importasdm(self.asdm, vis=self.outvis, convert_ephem2geo=True, process_pointing=False, flagbackup=False)
+
 
     def tearDown(self):
         os.system('rm -rf '+ self.asdm)
@@ -5609,9 +5825,8 @@ class test_no_reindexing_ephemeris_copy(test_base):
         eph = glob.glob(os.path.join(self.splitvis, 'FIELD', 'EPHEM*.tab'))
         self.assertEqual(len(eph), 2)
         for e in eph:
-            mytb = table( )
-            mytb.open(e)
-            mytb.close()
+            tb_local.open(e)
+            tb_local.close()
 
         os.system('rm -rf '+ self.splitvis)
 
@@ -5619,15 +5834,13 @@ class test_no_reindexing_ephemeris_copy(test_base):
         eph = glob.glob(os.path.join(self.splitvis, 'FIELD', 'EPHEM*.tab'))
         self.assertEqual(len(eph), 2)
         for e in eph:
-            mytb = table( )
-            mytb.open(e)
-            mytb.close()
+            tb_local.open(e)
+            tb_local.close()
 
 
 class test_splitUpdateFlagCmd(test_base):
     
     def setUp(self):
-        self.datapath = '.'
         self.setUp_flags()
 
     def tearDown(self):
@@ -5642,6 +5855,27 @@ class test_splitUpdateFlagCmd(test_base):
         flagcmd(self.outputms, action='list', savepars=True, outfile='mstspwnames.txt', useapplied=True)
         self.assertTrue(filecmp.cmp(self.flagfile, 'mstspwnames.txt',1))
         
+class test_selectiononly_notransformation(test_base):
+    def setUp(self):
+        self.outputms = "selectiononly_notransformation.ms"
+        self.setUp_CAS_6951()
+
+    def tearDown(self):
+        os.system('rm -rf '+ self.vis)
+        os.system('rm -rf '+ self.outputms)
+
+    def test_select_several_channels_different_spw(self):
+        '''mstransform: apply a selection of different channels over several spw'''
+        '''See CAS-10596, CAS-11087 for cases in which this went wrong'''
+        mstransform(vis=self.vis, outputvis=self.outputms, spw='1:5;10;15,3:5;10;15,5:5;10;15', scan='1', datacolumn='data', reindex=True)
+        # Verify that some sub-tables are properly re-indexed.
+        spw_col = th.getVarCol(self.outputms+'/DATA_DESCRIPTION', 'SPECTRAL_WINDOW_ID')
+        self.assertEqual(spw_col.keys().__len__(), 3, 'Wrong number of rows in DD table')
+        self.assertEqual(spw_col['r1'][0], 0,'Error re-indexing DATA_DESCRIPTION table')
+        self.assertEqual(spw_col['r2'][0], 1,'Error re-indexing DATA_DESCRIPTION table')
+        self.assertEqual(spw_col['r3'][0], 2,'Error re-indexing DATA_DESCRIPTION table')
+
+
 # Cleanup class
 class Cleanup(test_base):
 
@@ -5655,16 +5889,22 @@ class Cleanup(test_base):
 
     def test_runTest(self):
         '''mstransform: Cleanup'''
-        pass         
+        pass
 
 
 def suite():
     return [
             test_Combspw1,
             test_combinespws_diff_channels,
-            test_Regridms1,
-            test_Regridms3,
-            test_Hanning,
+            test_regridms_four_ants,
+            test_regridms_jupiter,
+            test_regridms_negative_width,
+            test_regridms_interpolation_only,
+            test_regridms_single_spw,
+            test_regridms_multiple_spws,
+            test_regridms_spw_with_different_number_of_channels,
+            test_Hanning_with_g19,
+            test_Hanning_with_ngc5921,
             test_FreqAvg,
             test_Shape,
             test_Columns,
@@ -5675,12 +5915,10 @@ def suite():
             test_timeaverage,
             test_timeaverage_limits,
             test_multiple_transformations,
-            test_regridms_single_spw,
-            test_regridms_multiple_spws,
             test_float_column,
             test_spw_poln,
-            test_regridms_spw_with_different_number_of_channels,
             testFlags,
+            test_weight_spectrum_creation,
             test_subtables_evla,
             test_subtables_alma,
             test_radial_velocity_correction_largetimerange,
@@ -5702,15 +5940,8 @@ def suite():
             test_no_reindexing,
             test_no_reindexing_ephemeris_copy,
             test_splitUpdateFlagCmd,
-            # jagonzal: Replace median with mean to capture overall behaviour
-            # test_spectrum_transformations_median,
-            # jagonzal: mstransform has been optimized to not use weight spectrum for chan. avg. DATA when 
-            #           there are no iput SPECTRUM cols because VI/VB generates constant SPECTRUM 
-            # test_spectrum_transformations_chanavg_useWeightSpectrum_false_vs_true,
-            # jagonzal: According to George M. chan. avg should generated teh average of the flagged data
-            #           when all the samples are flagged just like time avg.       
-            # test_spectrum_transformations_weight_zero_flag_set,
+            test_selectiononly_notransformation,
             Cleanup]
-    
+
 if __name__ == '__main__':
     unittest.main()

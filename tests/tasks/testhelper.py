@@ -4,9 +4,30 @@ import math
 import shutil
 import string
 import time
-from casatools import table
 import numpy as np
 import math
+
+try:
+    # CASA 6
+    from casatools import table
+    # Most of this helper file is about table operations. The ms and image tools are used
+    # only for a couple of functions (for which there might be a better place)
+    from casatools import ms, image
+
+    tb_local = table()
+    tb_local2 = table()
+    ms_local = ms()
+    image_local = image()
+except ImportError:
+    # CASA 5
+    from taskinit import tbtool
+    from taskinit import mstool, iatool
+
+    tb_local = tbtool()
+    tb_local2 = tbtool()
+    ms_local = mstool()
+    image_local = iatool()
+
 
 '''
 A set of common helper functions for unit tests:
@@ -17,8 +38,6 @@ A set of common helper functions for unit tests:
    verify_ms - Function to verify spw and channels information in an MS   
    create_input - Save the string in a text file with the given name           
 '''
-
-tblocal = table( )
 
 def phasediffabsdeg(c1, c2):
     try:
@@ -53,12 +72,10 @@ def compTables(referencetab, testtab, excludecols, tolerance=0.001, mode="percen
 
     rval = True
 
-    tb2 = table()
+    tb_local.open(referencetab)
+    cnames = tb_local.colnames()
 
-    tblocal.open(referencetab)
-    cnames = tblocal.colnames()
-
-    tb2.open(testtab)
+    tb_local2.open(testtab)
 
     try:
         for c in cnames:
@@ -69,7 +86,7 @@ def compTables(referencetab, testtab, excludecols, tolerance=0.001, mode="percen
             
             a = 0
             try:
-                a = tblocal.getcol(c,startrow=startrow,nrow=nrow,rowincr=rowincr)
+                a = tb_local.getcol(c,startrow=startrow,nrow=nrow,rowincr=rowincr)
             except:
                 rval = False
                 print('Error accessing column ', c, ' in table ', referencetab)
@@ -78,7 +95,7 @@ def compTables(referencetab, testtab, excludecols, tolerance=0.001, mode="percen
 
             b = 0
             try:
-                b = tb2.getcol(c,startrow=startrow,nrow=nrow,rowincr=rowincr)
+                b = tb_local2.getcol(c,startrow=startrow,nrow=nrow,rowincr=rowincr)
             except:
                 rval = False
                 print('Error accessing column ', c, ' in table ', testtab)
@@ -188,8 +205,8 @@ def compTables(referencetab, testtab, excludecols, tolerance=0.001, mode="percen
                 
                 if not differs: print("Column " + c + " PASSED")
     finally:
-        tblocal.close()
-        tb2.close()
+        tb_local.close()
+        tb_local2.close()
 
     return rval
 
@@ -203,24 +220,23 @@ def compVarColTables(referencetab, testtab, varcol, tolerance=0.):
     '''
     
     retval = True
-    tb2 = table()
 
-    tblocal.open(referencetab)
-    cnames = tblocal.colnames()
+    tb_local.open(referencetab)
+    cnames = tb_local.colnames()
 
-    tb2.open(testtab)
+    tb_local2.open(testtab)
     col = varcol
-    if tblocal.isvarcol(col) and tb2.isvarcol(col):
+    if tb_local.isvarcol(col) and tb_local2.isvarcol(col):
         try:
             # First check
-            if tblocal.nrows() != tb2.nrows():
+            if tb_local.nrows() != tb_local2.nrows():
                 print('Length of %s differ from %s, %s!=%s'%(referencetab,testtab,len(rk),len(tk)))
                 retval = False
             else:
-                for therow in range(tblocal.nrows()):
+                for therow in range(tb_local.nrows()):
             
-                    rdata = tblocal.getcell(col,therow)
-                    tdata = tb2.getcell(col,therow)
+                    rdata = tb_local.getcell(col,therow)
+                    tdata = tb_local2.getcell(col,therow)
 
 #                    if not (rdata==tdata).all():
                     if not rdata.all()==tdata.all():
@@ -254,8 +270,8 @@ def compVarColTables(referencetab, testtab, varcol, tolerance=0.):
                             retval = False
                             break
         finally:
-            tblocal.close()
-            tb2.close()
+            tb_local.close()
+            tb_local2.close()
     
     else:
         print('Columns are not varcolumns.')
@@ -304,17 +320,17 @@ def verifyMS(msname, expnumspws, expnumchan, inspw, expchanfreqs=[], ignoreflags
            Returns a list with True or False and a state message'''
     
     msg = ''
-    tblocal.open(msname+'/SPECTRAL_WINDOW')
-    nc = tblocal.getcell("NUM_CHAN", inspw)
-    nr = tblocal.nrows()
-    cf = tblocal.getcell("CHAN_FREQ", inspw)
-    tblocal.close()
+    tb_local.open(msname+'/SPECTRAL_WINDOW')
+    nc = tb_local.getcell("NUM_CHAN", inspw)
+    nr = tb_local.nrows()
+    cf = tb_local.getcell("CHAN_FREQ", inspw)
+    tb_local.close()
     # After channel selection/average, need to know the exact row number to check,
     # ignore this check in these cases.
     if not ignoreflags:
-        tblocal.open(msname)
-        dimdata = tblocal.getcell("FLAG", 0)[0].size
-        tblocal.close()
+        tb_local.open(msname)
+        dimdata = tb_local.getcell("FLAG", 0)[0].size
+        tb_local.close()
         
     if not (nr==expnumspws):
         msg =  "Found "+str(nr)+", expected "+str(expnumspws)+" spectral windows in "+msname
@@ -350,22 +366,45 @@ def getChannels(msname, spwid, chanlist):
     
     try:
         try:
-            tblocal.open(msname+'/SPECTRAL_WINDOW')
+            tb_local.open(msname+'/SPECTRAL_WINDOW')
         except:
             print('Cannot open table '+msname+'SPECTRAL_WINDOW')
             
-        cf = tblocal.getcell("CHAN_FREQ", spwid)
+        cf = tb_local.getcell("CHAN_FREQ", spwid)
         
         # Get only the requested channels
         b = [cf[i] for i in chanlist]
         selchans = np.array(b)
     
     finally:
-        tblocal.close()
+        tb_local.close()
         
     return selchans
-    
-    
+
+def get_channel_freqs_widths(msname, spwid):
+    '''
+    Get frequencies and widths of all the channels for an spw ID
+       msname       --> name of MS
+       spwid        --> spw ID
+
+    Return two numpy arrays (frequencies, widths), each of the same length as the number of
+    channels'''
+
+    try:
+        spw_table = os.path.join(msname, 'SPECTRAL_WINDOW')
+        try:
+            tb_local.open(spw_table)
+        except RuntimeError:
+            print('Cannot open table: {0}').format(spw_table)
+
+        freqs = tb_local.getcell("CHAN_FREQ", spwid)
+        widths = tb_local.getcell("CHAN_WIDTH", spwid)
+
+    finally:
+        tb_local.close()
+
+    return freqs, widths
+
 def getColDesc(table, colname):
     '''Get the description of a column in a table
        table    --> name of table or MS
@@ -375,14 +414,14 @@ def getColDesc(table, colname):
     coldesc = {}
     try:
         try:
-            tblocal.open(table)            
-            tcols = tblocal.colnames()
+            tb_local.open(table)
+            tcols = tb_local.colnames()
             if tcols.__contains__(colname):
-                coldesc = tblocal.getcoldesc(colname)
+                coldesc = tb_local.getcoldesc(colname)
         except:
             pass                        
     finally:
-        tblocal.close()
+        tb_local.close()
         
     return coldesc
 
@@ -395,13 +434,13 @@ def getVarCol(table, colname):
     col = {}
     try:
         try:
-            tblocal.open(table)
-            col = tblocal.getvarcol(colname)
+            tb_local.open(table)
+            col = tb_local.getvarcol(colname)
         except:
             print('Cannot open table '+table)
 
     finally:
-        tblocal.close()
+        tb_local.close()
         
     return col
    
@@ -460,10 +499,10 @@ def getTileShape(mydict, column='DATA'):
 
 def checkwithtaql(taqlstring):
     os.system('rm -rf mynewtable.tab')
-    tblocal.create('mynewtable.tab')
-    tblocal.open('mynewtable.tab',nomodify=False)
-    rval = tblocal.taql(taqlstring)
-    tblocal.close()
+    tb_local.create('mynewtable.tab')
+    tb_local.open('mynewtable.tab',nomodify=False)
+    rval = tb_local.taql(taqlstring)
+    tb_local.close()
     therval = rval.nrows()
     tmpname = rval.name()
     rval.close()
@@ -527,14 +566,14 @@ def compmsmainboolcol(vis1, vis2, colname1='FLAG', colname2='FLAG'):
 
 def compareSubTables(input,reference,order=None,excluded_cols=[]):
     
-    tbinput = table()
+    tbinput = tb_local
     tbinput.open(input)
     if order is not None:
         tbinput_sorted = tbinput.taql("SELECT * from " + input + " order by " + order)
     else:
         tbinput_sorted = tbinput
     
-    tbreference = table()
+    tbreference = tb_local2
     tbreference.open(reference)
     if order is not None:
         tbreference_sorted = tbreference.taql("SELECT * from " + reference + " order by " + order)
@@ -549,15 +588,14 @@ def compareSubTables(input,reference,order=None,excluded_cols=[]):
             if not (col_input == col_reference).all():
                 tbinput.close()
                 tbreference.close()
-                del tbinput
-                del tbreference
                 return (False,col)
-    
+
     tbinput.close()
     tbreference.close()
-    del tbinput
-    del tbreference
-    
+    if order is not None:
+        tbinput_sorted.close()
+        tbreference_sorted.close()
+
     return (True,"OK")
 
 def getColShape(tab,col,start_row=0,nrow=1,row_inc=1):
@@ -576,19 +614,15 @@ def getColShape(tab,col,start_row=0,nrow=1,row_inc=1):
     col_shape = []
     try:
         try:
-            tblocal = table()
-            tblocal.open(tab)
-            col_shape = tblocal.getcolshapestring(col,start_row,nrow,row_inc)
+            tb_local.open(tab)
+            col_shape = tb_local.getcolshapestring(col,start_row,nrow,row_inc)
         except:
             print('Cannot get shape of col %s from table %s '%(col,tab))
 
     finally:
-        tblocal.close()
+        tb_local.close()
             
     return col_shape
-
-
-
 
 def findTemplate(testname,refimage,copy=False):
     """
@@ -621,6 +655,8 @@ def findTemplate(testname,refimage,copy=False):
     return found
 
 
+# As opposed to most other functions in this file, this doesn't use the table tool but the
+# image tool
 def compImages(im0,im1,keys=['flux','min','max','maxpos','rms'],tol=1e-4,verbose=False):
     """
     compare two images using imstat and the specified keys, 
@@ -630,16 +666,15 @@ def compImages(im0,im1,keys=['flux','min','max','maxpos','rms'],tol=1e-4,verbose
     from os import F_OK
     if isinstance(tol,float):
         tol=tol+np.zeros(len(keys))
-    myia=casac.image()
     ims=[im0,im1]
     s=[]
     for i in range(2):
         if not os.access(ims[i],F_OK): 
             print(ims[i]+" not found")
             return False
-        myia.open(ims[1])
-        s.append(myia.statistics())
-        myia.done()
+        image_local.open(ims[1])
+        s.append(image_local.statistics())
+        image_local.done()
     status=True
     for ik in range(len(keys)):
         k=keys[ik]
@@ -651,6 +686,8 @@ def compImages(im0,im1,keys=['flux','min','max','maxpos','rms'],tol=1e-4,verbose
     return status
 
 
+# As opposed to most other functions in this file, this doesn't use the table tool but the
+# ms tool
 def compMS(ms0,ms1,keys=['mean','min','max','rms'],ap="amp",tol=1e-4,verbose=False):
     """
     compare two MS using ms.statistics on amp or phase as specified, 
@@ -660,17 +697,16 @@ def compMS(ms0,ms1,keys=['mean','min','max','rms'],ap="amp",tol=1e-4,verbose=Fal
     from os import F_OK
     if isinstance(tol,float):
         tol=tol+np.zeros(len(keys))
-    myms=casac.ms()
     mss=[ms0,ms1]
     s=[]
     for i in range(2):
         if not os.access(mss[i],F_OK): 
             print(mss[i]+" not found")
             return False
-        myms.open(mss[1])
-        stats = myms.statistics("DATA",ap)
+        ms_local.open(mss[1])
+        stats = ms_local.statistics("DATA",ap)
         s.append(stats[stats.keys()[0]])
-        myms.done()
+        ms_local.done()
     status=True
     for ik in range(len(keys)):
         k=keys[ik]
@@ -695,16 +731,15 @@ def copytree_ignore_subversion(datadir, name, outname=None):
 
 
 def get_table_cache():
-    mytb = table( )
-    cache = mytb.showcache()
-    #print 'cache = {}'.format(cache)
+    cache = tb_local.showcache()
+    # print('cache = {}'.format(cache))
     return cache
 
 
 class TableCacheValidator(object):
     def __init__(self):
         self.original_cache = get_table_cache()
-        
+
     def validate(self):
         cache = get_table_cache()
         #print 'original {} current {}'.format(self.original_cache, cache)
