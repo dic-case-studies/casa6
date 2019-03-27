@@ -1,14 +1,54 @@
 import os
-import sys
 import shutil
 import time
 import unittest
-### for testhelper import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import testhelper as th
-from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
-from casatasks import partition, flagdata, flagmanager, split, setjy, listpartition, listobs
-from casatools import ctsys, msmetadata, ms, agentflagger, table
+
+try:
+    # CASA 6
+    from casatasks import listobs, listpartition, flagdata, flagmanager, partition, setjy, split
+    from casatools import ctsys, msmetadata, ms, agentflagger, table
+    ### for testhelper import
+    import sys
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import testhelper as th
+    from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
+
+    msmdt_local = msmetadata()
+    msmdt_local2 = msmetadata()
+    mst_local = ms()
+    aft_local = agentflagger()
+    tbt_local = table()
+
+    datapath_gaincal = ctsys.resolve('regression/unittest/gaincal')
+    datapath_flagdata = ctsys.resolve('regression/unittest/flagdata')
+    datapath_mstransform = ctsys.resolve('regression/unittest/mstransform')
+    datapath_partition = ctsys.resolve('regression/unittest/partition')
+
+except ImportError:
+    # CASA 5
+    from tasks import partition, flagdata, flagmanager, split, setjy, listpartition, listobs
+    from taskinit import msmdtool, mstool, aftool, tbtool
+
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    import testhelper as th
+    import partitionhelper as ph
+
+    msmdt_local = msmdtool()
+    msmdt_local2 = msmdtool()
+    mst_local = mstool()
+    aft_local = aftool()
+    tbt_local = tbtool()
+
+    datapath_gaincal = os.environ.get('CASAPATH').split()[0] + \
+                       "/data/regression/unittest/gaincal/"
+    datapath_flagdata = os.environ.get('CASAPATH').split()[0] + \
+                    "/data/regression/unittest/flagdata/"
+    datapath_mstransform = os.environ.get('CASAPATH').split()[0] + \
+                           "/data/regression/unittest/mstransform/"
+    datapath_partition = os.environ.get('CASAPATH').split()[0] + \
+                         '/data/regression/unittest/partition/'
+
+
 
 ''' Unit Tests for task partition'''
 
@@ -21,7 +61,7 @@ class test_base(unittest.TestCase):
     
     def setUp_ngc4826(self):
         
-        datapath = ctsys.resolve('regression/unittest/gaincal')
+        datapath = datapath_gaincal
                     
         # Input MS contain 4 obsID, 11 scans and 4 spws
         self.prefix = 'ngc4826'
@@ -31,16 +71,18 @@ class test_base(unittest.TestCase):
         self.mmsfile = self.prefix + '.mms'
         
         fpath = os.path.join(datapath,self.msfile)
-
-        if not os.path.exists(self.msfile):
+#         if os.path.lexists(fpath):        
+#             shutil.copytree(fpath, self.msfile, symlinks=True)
+#         else:
+#             self.fail('Data does not exist -> '+fpath)
+        if not os.path.exists(self.msfile):        
             shutil.copytree(fpath, self.msfile, symlinks=True)
         else:
-            print('MS is already around, no need to copy it.A')
-
+            print('MS is already around, no need to copy it.')
 
     def setUp_fourants(self):
         
-        datapath = ctsys.resolve('regression/unittest/flagdata')
+        datapath = datapath_flagdata
                     
         # Input MS contain 2 scans and 16 spws. It has all data columns
         self.prefix = 'Four_ants_3C286'
@@ -50,15 +92,17 @@ class test_base(unittest.TestCase):
         self.mmsfile = self.prefix + '.mms'
         
         fpath = os.path.join(datapath,self.msfile)
-
-        if not os.path.exists(self.msfile):
+#         if os.path.lexists(fpath):        
+#             shutil.copytree(fpath, self.msfile, symlinks=True)
+#         else:
+#             self.fail('Data does not exist -> '+fpath)
+        if not os.path.exists(self.msfile):        
             shutil.copytree(fpath, self.msfile, symlinks=True)
         else:
-            print('MS is already around, no need to copy it.B')
-
+            print('MS is already around, no need to copy it.')
 
     def setUp_floatcol(self):
-        datapath = ctsys.resolve('regression/unittest/flagdata')
+        datapath = datapath_flagdata
                     
         # 15 rows, 3 scans, 9 spw, mixed chans, XX,YY, FLOAT_DATA col
         self.prefix = "SDFloatColumn"
@@ -69,58 +113,52 @@ class test_base(unittest.TestCase):
         
         fpath = os.path.join(datapath,self.msfile)
         
-        if not os.path.exists(self.msfile):
+        if not os.path.exists(self.msfile):        
             shutil.copytree(fpath, self.msfile, symlinks=True)
         else:
-            print('MS is already around, no need to copy it.C')
-
+            print('MS is already around, no need to copy it.')
         
     def setUp_sub_tables_evla(self):
         
         # Define the root for the data files
-        datapath = ctsys.resolve('regression/unittest/mstransform')
+        datapath = datapath_mstransform
 
         self.vis = 'test-subtables-evla.ms'
         if os.path.exists(self.vis):
            self.cleanup()
             
-        os.system('cp -RL '+os.path.join(datapath,self.vis)+' '+ self.vis)
-
-
+        os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.vis), self.vis))
+        
     def setUp_sub_tables_alma(self):
         
         # Define the root for the data files
-        datapath = ctsys.resolve('regression/unittest/mstransform')
+        datapath = datapath_mstransform
 
         self.vis = 'test-subtables-alma.ms'
         if os.path.exists(self.vis):
            self.cleanup()
             
-        os.system('cp -RL '+os.path.join(datapath,self.vis)+' '+ self.vis)
-
+        os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.vis), self.vis))
         
     def setUp_3c84scan1(self):
         
         # Define the root for the data files
-        datapath = ctsys.resolve('regression/unittest/mstransform')
+        datapath = datapath_mstransform
 
         self.vis = '3c84scan1.ms'
         if os.path.exists(self.vis):
            self.cleanup()
             
-        os.system('cp -RL '+os.path.join(datapath,self.vis)+' '+ self.vis)
-
+        os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.vis), self.vis))
         
     def setUp_SD(self):
         res = None
         # Single-dish ASDM with 3 antennas and 6 baselines in total
         self.vis = 'uid___A002_X85c183_X36f_small.ms' 
-        datapath=ctsys.resolve('regression/unittest/partition')
+        datapath = datapath_partition
         if not os.path.exists(self.vis):
-            os.system('ln -sf ' + os.path.join(datapath,self.vis) +' '+ self.vis)
+            os.system('ln -sf {0} {1}'.format(os.path.join(datapath, self.vis), self.vis))
             
-        
-
     def cleanup(self):
         os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.vis +'.flagversions')
@@ -144,15 +182,13 @@ class partition_test1(test_base):
         self.assertTrue(os.path.exists(self.mmsfile), 'MMS was not created for this test')
         
         # Sort the output MSs so that they can be compared
-        myms = ms( )
+        mst_local.open(self.msfile)
+        mst_local.sort('ms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        mst_local.done()
         
-        myms.open(self.msfile)
-        myms.sort('ms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
-        
-        myms.open(self.mmsfile)
-        myms.sort('mms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
+        mst_local.open(self.mmsfile)
+        mst_local.sort('mms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        mst_local.done()
 
         # Compare both tables. Ignore the DATA column and compare it in next line
         self.assertTrue(th.compTables('ms_sorted.ms','mms_sorted.ms', 
@@ -188,15 +224,13 @@ class partition_test1(test_base):
                              'mms_spw=%s <--> ms_spw=%s' %(s, mmsN, msN))
 
         # Sort the output MSs so that they can be compared
-        myms = ms( )
+        mst_local.open(self.msfile)
+        mst_local.sort('ms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        mst_local.done()
         
-        myms.open(self.msfile)
-        myms.sort('ms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
-        
-        myms.open(self.mmsfile)
-        myms.sort('mms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
+        mst_local.open(self.mmsfile)
+        mst_local.sort('mms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        mst_local.done()
 
         self.assertTrue(th.compTables('ms_sorted.ms', 'mms_sorted.ms', 
                                       ['FLAG','FLAG_CATEGORY','TIME_CENTROID',
@@ -299,13 +333,13 @@ class partition_test1(test_base):
         '''partition: CAS-4398, handle the MODEL keywords correctly'''
         
         print('*** Check that MODEL_DATA is not present in MS first')
-        mytb = table( )
         try:
-            mytb.open(self.msfile+'/MODEL_DATA')
+            tbt_local.open(self.msfile+'/MODEL_DATA')
         except Exception as instance:
-            print('*** Expected exception. \"%s\"'%instance)
-            mytb.close()
-        
+            print('*** Expected exception. \"{0}\"'.format(instance))
+        finally:
+            tbt_local.close()
+
         inpms = 'ngc4826Jy.ms'
         shutil.copytree(self.msfile, inpms)
         
@@ -317,26 +351,25 @@ class partition_test1(test_base):
                   scan='1,2,3', disableparallel=True, flagbackup=False)  
 
         print('Check the SOURCE_MODEL columns....')
-        mytb = table( )
-        mytb.open(inpms+'/SOURCE')
-        msdict = mytb.getcell('SOURCE_MODEL', 0)
-        mytb.close()
+        tbt_local.open(inpms+'/SOURCE')
+        msdict = tbt_local.getcell('SOURCE_MODEL', 0)
+        tbt_local.close()
         
-        mytb.open(self.mmsfile+'/SOURCE')
-        mmsdict = mytb.getcell('SOURCE_MODEL', 0)
-        mytb.close()
+        tbt_local.open(self.mmsfile+'/SOURCE')
+        mmsdict = tbt_local.getcell('SOURCE_MODEL', 0)
+        tbt_local.close()
 
         self.assertEqual(set(msdict['cl_0'].keys()),set(mmsdict['cl_0'].keys()))
         
         # Check that the real MODEL_DATA column is not created in MMS
         try:
-            mytb.open(self.mmsfile+'/MODEL_DATA')
+            tbt_local.open(self.mmsfile+'/MODEL_DATA')
         except Exception as instance:
-            print('*** Expected exception. \"%s\"'%instance)
-            mytb.close()
-        
+            print('*** Expected exception. \"{0}\"'.format(instance))
+        finally:
+            tbt_local.close()
 
-    
+
 class partition_test2(test_base):
     
     def setUp(self):
@@ -362,23 +395,21 @@ class partition_test2(test_base):
         
         # Gather several metadata information
         # for the MS
-        mdlocal1 = msmetadata()
-        mdlocal1.open(msfile)
-        ms_rows = mdlocal1.nrows()
-        ms_nscans = mdlocal1.nscans()
-        ms_nspws = mdlocal1.nspw()
-        ms_scans = mdlocal1.scannumbers()
-        mdlocal1.close()        
-          
+        msmdt_local.open(msfile)
+        ms_rows = msmdt_local.nrows()
+        ms_nscans = msmdt_local.nscans()
+        ms_nspws = msmdt_local.nspw()
+        ms_scans = msmdt_local.scannumbers()
+        msmdt_local.close()
+
         # for the MMS
-        mdlocal2 = msmetadata()
-        mdlocal2.open(self.mmsfile)
-        mms_rows = mdlocal2.nrows()
-        mms_nscans = mdlocal2.nscans()
-        mms_nspws = mdlocal2.nspw()
-        mms_scans = mdlocal2.scannumbers()
-        mdlocal2.close()        
-          
+        msmdt_local.open(self.mmsfile)
+        mms_rows = msmdt_local.nrows()
+        mms_nscans = msmdt_local.nscans()
+        mms_nspws = msmdt_local.nspw()
+        mms_scans = msmdt_local.scannumbers()
+        msmdt_local.close()
+
         # Compare the number of rows
         self.assertEqual(ms_rows, mms_rows, 'Compare total number of rows in MS and MMS')
         self.assertEqual(ms_nscans, mms_nscans, 'Compare number of scans')
@@ -388,28 +419,26 @@ class partition_test2(test_base):
         self.assertEqual(ms_scans.all(), mms_scans.all(), 'Compare all scan IDs')
   
         try:
-            mdlocal1.open(msfile)
-            mdlocal2.open(self.mmsfile)
+            msmdt_local.open(msfile)
+            msmdt_local2.open(self.mmsfile)
           
             # Compare the spws
             for i in ms_scans:                
-                msi = mdlocal1.spwsforscan(i)
-                mmsi = mdlocal2.spwsforscan(i)
+                msi = msmdt_local.spwsforscan(i)
+                mmsi = msmdt_local2.spwsforscan(i)
                 self.assertEqual(msi.all(), mmsi.all(), 'Compare spw Ids for a scan')
         finally:          
-            mdlocal1.close()
-            mdlocal2.close()               
+            msmdt_local.close()
+            msmdt_local2.close()
 
         # Sort the output MSs so that they can be compared
-        myms = ms( )
+        mst_local.open(msfile)
+        mst_local.sort('ms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        mst_local.done()
         
-        myms.open(msfile)
-        myms.sort('ms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
-        
-        myms.open(self.mmsfile)
-        myms.sort('mms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
-        myms.done()
+        mst_local.open(self.mmsfile)
+        mst_local.sort('mms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
+        mst_local.done()
 
         # Ignore WEIGHT_SPECTRUM and SIGMA_SPECTRUM, which are empty columns
         self.assertTrue(th.compTables('ms_sorted.ms', 'mms_sorted.ms', 
@@ -454,7 +483,7 @@ class partition_test2(test_base):
 
 
         # Sort the output MSs so that they can be compared
-#         myms = ms( )
+#         myms = mstool()
 #         
 #         myms.open(self.msfile)
 #         myms.sort('ms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
@@ -617,20 +646,18 @@ class partition_test2(test_base):
         self.assertTrue(os.path.exists(self.mmsfile+'.flagversions'))
  
          # Check that the number of backups in MMS is correct
-        aflocal = agentflagger( )
-        aflocal.open(self.mmsfile)
-        nv = aflocal.getflagversionlist()
-        aflocal.done()
+        aft_local.open(self.mmsfile)
+        nv = aft_local.getflagversionlist()
+        aft_local.done()
         self.assertEqual(len(nv), 3)
                
         # Run flagdata on MMS to check if it works well.
         flagdata(vis=self.mmsfile, mode='unflag', flagbackup=True)
         
         # Check that the number of backups in MMS is correct
-        aflocal = agentflagger()
-        aflocal.open(self.mmsfile)
-        nvref = aflocal.getflagversionlist()
-        aflocal.done()
+        aft_local.open(self.mmsfile)
+        nvref = aft_local.getflagversionlist()
+        aft_local.done()
         self.assertEqual(len(nvref), 4)
         
     def test_flagsrestore(self):
@@ -711,10 +738,9 @@ class partition_test2(test_base):
         # This MS doesn't have auto-correlations. It has 4 antennas and 6 baselines (cross)
         # There will be MSSelectionNullSelection SEVERE messages in the logfile because
         # it will try to create SubMSs from auto-correlations. This is not an error!
-        md = msmetadata()
-        md.open(self.mmsfile)
-        bsl = md.baselines()
-        md.close()
+        msmdt_local.open(self.mmsfile)
+        bsl = msmdt_local.baselines()
+        msmdt_local.close()
         
         # diagonal give the auto-corrs
         ac = bsl.diagonal()
@@ -893,19 +919,18 @@ class test_partition_balanced_multiple_scan(test_base):
     ''' test file with multiple scan ids per ddi '''
     def setUp(self):
         # Define the root for the data files
-        datapath = ctsys.resolve('regression/unittest/mstransform')
+        datapath = datapath_mstransform
 
         self.vis = 'CAS-5076.ms'
         if os.path.exists(self.vis):
            self.cleanup()
 
         if os.system('which rsync 2>&1 > %s' % os.path.devnull):
-            os.system('rsync -aLC '+os.path.join(datapath,self.vis) +' .')
+            os.system('rsync -aLC {0} .'.format(os.path.join(datapath, self.vis)))
         else:
-            os.system('cp -RL '+os.path.join(datapath,self.vis) +' '+ self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.vis), self.vis))
 
         self.outputms = 'test_partitition_CAS-5076.ms'
-
 
     def tearDown(self):
         os.system("rm -rf " + self.vis)
@@ -927,10 +952,9 @@ class test_partition_balanced_multiple_scan(test_base):
         self.assertTrue(os.path.exists(self.outputms),'Output MMS does not exist')
         
         # Columns SYSPOWER, POINTING and SYSCAL should be links in most subMS
-        mslocal = ms( )
-        mslocal.open(self.outputms)
-        subms = mslocal.getreferencedtables()
-        mslocal.close()
+        mst_local.open(self.outputms)
+        subms = mst_local.getreferencedtables()
+        mst_local.close()
         cols = ['POINTING','SYSCAL','SYSPOWER']
         for col in cols:
             self.assertTrue(os.path.islink(subms[1] + '/' + col))
@@ -967,10 +991,9 @@ class test_partition_baseline_axis(test_base):
         self.outputms = 'baseline_autocorr.mms'
         partition(self.vis, outputvis=self.outputms, separationaxis='baseline', antenna='*&&&', flagbackup=False)
         
-        md = msmetadata()
-        md.open(self.outputms)
-        bsl = md.baselines()
-        md.close()
+        msmdt_local.open(self.outputms)
+        bsl = msmdt_local.baselines()
+        msmdt_local.close()
         
         #diagnoals give the auto-corrs
         ac = bsl.diagonal()
@@ -1006,6 +1029,6 @@ def suite():
             test_partition_balanced_multiple_scan,
             test_partition_baseline_axis,
             partition_cleanup]
-    
+
 if __name__ == '__main__':
     unittest.main()
