@@ -1299,7 +1299,13 @@ class create_makefile(Command):
         ]
         includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
         flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
-        add_cflags = sysconfig.get_config_var('CFLAGS')
+        # add_cflags = sysconfig.get_config_var('CFLAGS')
+        # filter out the optimization flags which Darrell has done for C and C++ compiles for setup.py build
+        sys_cflags = sep.join(
+            list(
+                filter(lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split())
+            )
+        )
         duse_grpc = get_use_grpc()
         grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()]
         cpp_list = []
@@ -1317,7 +1323,7 @@ class create_makefile(Command):
                     mk.write(
                         "\n\n" + cpp_obj.format(
                             base=b,src=s, flags=flags, includes=includes, 
-                            cflags=add_cflags, dflags=dflags
+                            cflags=sys_cflags, dflags=dflags
                         )
                     )
                     mk.write("\n" + dep_targ.format(base=b))
@@ -1388,7 +1394,6 @@ class create_makefile(Command):
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
         cc = sep.join(get_ccache() + [props['build.compiler.cc']])
-        cflags = sysconfig.get_config_var('CFLAGS')
         dflags = sep.join(module_cflags['/casacore/'])
         c_obj = (
             obj_name + ': {src} ' + dep_name + '\n\t{cc} {includes} {flags} {cflags} {dflags} -c $< -o $@'
@@ -1404,10 +1409,11 @@ class create_makefile(Command):
                 objfile = obj_name.format(base=base)
                 c_list.append(objfile)
                 targdirs.add(os.path.dirname(objfile))
+                # sys_cflags same as C++ above
                 mk.write(
                     "\n\n" + c_obj.format(
                         base=base, src=f, cc=cc, includes=includes, flags=flags,
-                        cflags=cflags, dflags=dflags
+                        cflags=sys_cflags, dflags=dflags
                     )
                 )
                 mk.write("\n" + dep_targ.format(base=base))
