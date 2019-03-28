@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -13,7 +15,7 @@ import unittest
 from sdgaincal import sdgaincal
 
 try:
-    from testutils import copytree_ignore_subversion
+    from .testutils import copytree_ignore_subversion
 except:
     from tests.testutils import copytree_ignore_subversion
 
@@ -62,7 +64,7 @@ class sdgaincal_test_base(unittest.TestCase):
                           'spwmap': []}
         retval = {}
         for (k,v) in default_params.items():
-            if params.has_key(k):
+            if k in params:
                 retval[k] = params[k]
             else:
                 retval[k] = v
@@ -143,7 +145,7 @@ class sdgaincal_test_base(unittest.TestCase):
                     t.close()
                 ma = numpy.ma.masked_array(fparam, flag)
                 mean_gain = ma.mean(axis=2)
-                print mean_gain
+                print(mean_gain)
                 npol = fparam.shape[0]
                 for ipol in xrange(npol):
                     if numpy.any(flag[ipol] == False):
@@ -455,10 +457,10 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
         (tb,) = gentools(['tb'])
         tb.open(self.tsystable, nomodify=False)
         spw_id = tb.getcol('SPECTRAL_WINDOW_ID')
-        print 'before ', spw_id
+        print('before ', spw_id)
         for i in xrange(len(spw_id)):
             spw_id[i] = spwmap[spw_id[i]]
-        print 'after', spw_id
+        print('after', spw_id)
         tb.putcol('SPECTRAL_WINDOW_ID', spw_id)
         tb.close()
 
@@ -526,7 +528,7 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
         Only first polarization is effective.
         Second polarization should be all flagged.
         """
-        print 'sdgaincal_single_polarization_test._verify_param_and_flag'
+        print('sdgaincal_single_polarization_test._verify_param_and_flag')
         for irow in xrange(table.nrows()):
             fparam = table.getcell('CPARAM', irow).real
             self.assertTrue(numpy.all(fparam[0] == 1.0))

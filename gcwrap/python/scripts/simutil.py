@@ -1,6 +1,8 @@
 # geodesy and pointing and other helper functions that are useful
 # to be available outside of the simdata task
 # geodesy from NGS: http://www.ngs.noaa.gov/TOOLS/program_descriptions.html
+from __future__ import absolute_import
+from __future__ import print_function
 import casac
 import os
 import shutil
@@ -72,7 +74,7 @@ class compositenumber:
         while maxi<(n2*n3*n5) and itsnumbers[maxi]<=maxval: maxi=maxi+1
         self.itsnumbers=pl.int64(itsnumbers[0:maxi])
     def list(self):
-        print self.itsnumbers
+        print(self.itsnumbers)
     def nextlarger(self,x):
         if x>max(self.itsnumbers): self.generate(2*x)
         xi=0
@@ -214,13 +216,13 @@ class simutil:
                 s=foo[0]+"\x1b[35mWARNING\x1b[0m"+foo[1]
 
             if origin:
-                print clr+"["+origin+"] "+bw+s
+                print(clr+"["+origin+"] "+bw+s)
             else:
-                print s
+                print(s)
 
 
         if priority=="ERROR":
-            raise Exception, s
+            raise Exception(s)
         else:            
             if origin==None:
                 origin="simutil"
@@ -765,7 +767,7 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print "[simutil] WARN: precession not handled by average_direction()"
+                print("[simutil] WARN: precession not handled by average_direction()")
             x = self.wrapang(x, avgx, 360.0)
             avgx += (x - avgx) / i
             avgy += (y - avgy) / i
@@ -814,7 +816,7 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print "[simutil] WARN: precession not handled by average_direction()"
+                print("[simutil] WARN: precession not handled by average_direction()")
             x = self.wrapang(x, avgx, 360.0)
             xx.append(x)
             yy.append(y)
@@ -1583,13 +1585,13 @@ class simutil:
                 break
         f.close()
 
-        if not params.has_key("coordsys"):
+        if "coordsys" not in params:
             self.msg("Must specify coordinate system #coorsys=XYZ|UTM|LOCin antenna file",origin="readantenna",priority="error")
             return -1
         else:
             self.coordsys=params["coordsys"]
 
-        if params.has_key("observatory"):
+        if "observatory" in params:
             self.telescopename=params["observatory"]
         else:
             self.telescopename="SIMULATED"
@@ -1604,7 +1606,7 @@ class simutil:
         if found:
             posobs=me.measure(me.observatory(self.telescopename),'WGS84')
             
-        if params.has_key("COFA"):
+        if "COFA" in params:
             obs_latlon=params["COFA"].split(",")
             cofa_lon=float(obs_latlon[0])
             cofa_lat=float(obs_latlon[1])
@@ -1635,17 +1637,17 @@ class simutil:
             if (params["coordsys"].upper()=="UTM"):
         ### expect easting, northing, elevation in m
                 self.msg("Antenna locations in UTM; will read from file easting, northing, elevation in m",origin="readantenna") 
-                if params.has_key("zone"):
+                if "zone" in params:
                     zone=params["zone"]
                 else:
                     self.msg("You must specify zone=NN in your antenna file",origin="readantenna",priority="error")
                     return -1
-                if params.has_key("datum"):
+                if "datum" in params:
                     datum=params["datum"]
                 else:
                     self.msg("You must specify datum in your antenna file",origin="readantenna",priority="error")
                     return -1
-                if params.has_key("hemisphere"):
+                if "hemisphere" in params:
                     nors=params["hemisphere"]
                     nors=nors[0].upper()
                 else:
@@ -1908,14 +1910,14 @@ class simutil:
             'WGS72' :[   0, 0  , 4.5,'WD','World Geodetic System - 72'    ],
             'WGS84' :[   0, 0  ,   0,'WE','World Geodetic System - 84'    ]}
         
-        if not datums.has_key(datumcode):
+        if datumcode not in datums:
             self.msg("unknown datum %s" % datumcode,priority="error")
             return -1
         
         datum=datums[datumcode]
         ellipsoid=datum[3]
         
-        if not ellipsoids.has_key(ellipsoid):
+        if ellipsoid not in ellipsoids:
             self.msg("unknown ellipsoid %s" % ellipsoid,priority="error")
             return -1
         
@@ -2279,7 +2281,7 @@ class simutil:
         csinlat=pl.sin(clat)
         ccoslat=pl.cos(clat)
         import types
-        if isinstance(x,types.FloatType): # weak
+        if isinstance(x,float): # weak
             x=[x]
             y=[y]
             z=[z]
@@ -2485,9 +2487,9 @@ class simutil:
                     inbright=inb
             try:
                 scalefactor=float(inbright)/pl.nanmax(arr)
-            except Exception, e:
+            except Exception as e:
                 in_ia.close()
-                raise Exception, e
+                raise Exception(e)
 
         # check shape characteristics of the input;
         # add degenerate axes as neeed:
@@ -2525,10 +2527,10 @@ class simutil:
                 incell = qa.abs(qa.convert(incell,'arcsec'))
                 # incell[0]<0 for RA increasing left
                 incell = [qa.mul(incell,-1),incell]
-        except Exception, e:
+        except Exception as e:
             # invalid incell
             in_ia.close()
-            raise Exception, e
+            raise Exception(e)
         # later, we can test validity with qa.compare()
 
 
@@ -3558,11 +3560,11 @@ class simutil:
         import scipy.interpolate as spintrp
         
         if not qa.compare(beam, "rad"):
-            raise ValueError, "beam should be a quantity of antenna primary beam size (angle)"
+            raise ValueError("beam should be a quantity of antenna primary beam size (angle)")
         if not qa.compare(cell, "rad"):
-            raise ValueError, "cell should be a quantity of image pixel size (angle)"
+            raise ValueError("cell should be a quantity of image pixel size (angle)")
         if len(sampling) > 0 and not qa.compare(sampling, "rad"):
-            raise ValueError, "sampling should be a quantity of pointing spacing (angle)"
+            raise ValueError("sampling should be a quantity of pointing spacing (angle)")
         if (convsupport < -1):
             convsupport = 3
 

@@ -1,5 +1,7 @@
 # unit test for the cvel task
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import numpy
 import shutil
@@ -39,9 +41,9 @@ def verify_ms(msname, expnumspws, expnumchan, inspw, expchanfreqs=[]):
         return [False,msg]
 
     if not (expchanfreqs==[]):
-        print "Testing channel frequencies ..."
-        print cf
-        print expchanfreqs
+        print("Testing channel frequencies ...")
+        print(cf)
+        print(expchanfreqs)
         if not (expchanfreqs.size == expnumchan):
             msg =  "Internal error: array of expected channel freqs should have dimension ", expnumchan
             return [False,msg]
@@ -348,7 +350,7 @@ class cvel_test(unittest.TestCase):
             ret = verify_ms(outfile, 1, 2, 0)
             self.assertTrue(ret[0],ret[1])
         except:
-            print "*** Expected error ***"
+            print("*** Expected error ***")
     
     def test15(self):
         '''Cvel 15: I/O vis set, input vis with two spws, one field selected, 2 spws selected, passall = False, regridding 8...'''
@@ -1067,7 +1069,7 @@ class cvel_test(unittest.TestCase):
             ret = verify_ms(outfile, 1, 2, 0)
             self.assertTrue(ret[0],ret[1])
         except:
-            print "*** Expected error ***"
+            print("*** Expected error ***")
 
     def test50(self):
         '''Cvel 50: test fftshift regridding: channel mode, width positive'''

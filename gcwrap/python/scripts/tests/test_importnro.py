@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -113,8 +115,8 @@ class importnro_test(unittest.TestCase):
             myms.open(self.outfile)
             myms.close()
             
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             self.fail('outputvis is not a valid ms')
         
         # check weight initialization
@@ -301,7 +303,7 @@ class importnro_test(unittest.TestCase):
             colkeys = tb.getcolkeywords(colname)
             self.assertTrue('QuantumUnits' in colkeys)
             column_unit = colkeys['QuantumUnits'][0]
-            print('{0} unit is {1}'.format(colname, column_unit))
+            print(('{0} unit is {1}'.format(colname, column_unit)))
             self.assertEqual(column_unit, unit)
             
             # value should be in reasonable range

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import commands
 import math
@@ -64,7 +66,7 @@ class PySynthesisImager:
         # NoOps (in SynthesisImager.cc) if the gridder is not one
         # which uses CFCache.
         if (exists):
-            print "CFCache already exists";
+            print("CFCache already exists");
         else:
             self.dryGridding();
             self.fillCFCache();
@@ -454,7 +456,7 @@ class PySynthesisImager:
             if self.stopMinor[str(immod)]<3 :
 
                 # temporarily disable the check (=> always save the intermediate images
-                if alwaysSaveIntermediateImages or (os.environ.has_key('SAVE_ALL_RESIMS') and os.environ['SAVE_ALL_RESIMS']=="true"):
+                if alwaysSaveIntermediateImages or ('SAVE_ALL_RESIMS' in os.environ and os.environ['SAVE_ALL_RESIMS']=="true"):
                     resname = self.allimpars[str(immod)]['imagename']+'.residual'
                     tempresname = self.allimpars[str(immod)]['imagename']+'.inputres'+str(self.ncycle)
                     if os.path.isdir(resname):
@@ -464,7 +466,7 @@ class PySynthesisImager:
 
                 #print '.... iterdone for ', immod, ' : ' , exrec['iterdone']
                 self.IBtool.mergeexecrecord( exrec )
-                if alwaysSaveIntermediateImages or (os.environ.has_key('SAVE_ALL_AUTOMASKS') and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
+                if alwaysSaveIntermediateImages or ('SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     tempmaskname = self.allimpars[str(immod)]['imagename']+'.autothresh'+str(self.ncycle)
                     if os.path.isdir(maskname):
@@ -493,8 +495,8 @@ class PySynthesisImager:
 
     def plotReport( self, summ={} ,fignum=1 ):
 
-        if not ( summ.has_key('summaryminor') and summ.has_key('summarymajor') and summ.has_key('threshold') and summ['summaryminor'].shape[0]==6 ):
-            print 'Cannot make summary plot. Please check contents of the output dictionary from tclean.'
+        if not ( 'summaryminor' in summ and 'summarymajor' in summ and 'threshold' in summ and summ['summaryminor'].shape[0]==6 ):
+            print('Cannot make summary plot. Please check contents of the output dictionary from tclean.')
             return summ
 
         import pylab as pl

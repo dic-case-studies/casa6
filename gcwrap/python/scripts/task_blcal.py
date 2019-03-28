@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import numpy as np
 from taskinit import *
@@ -20,7 +22,7 @@ def blcal(vis=None,caltable=None,
                 if ((type(vis)==str) & (os.path.exists(vis))):
                         mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
                 else:
-                        raise Exception, 'Visibility data set not found - please verify the name'
+                        raise Exception('Visibility data set not found - please verify the name')
 
 		mycb.reset()
 
@@ -93,7 +95,7 @@ def blcal(vis=None,caltable=None,
 
 		mycb.solve()
 		mycb.close()
-	except Exception, instance:
-		print '*** Error ***',instance
+	except Exception as instance:
+		print('*** Error ***',instance)
 		mycb.close()
-		raise Exception, instance
+		raise Exception(instance)

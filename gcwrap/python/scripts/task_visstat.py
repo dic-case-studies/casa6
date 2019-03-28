@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from taskinit import mstool, casalog
 
 def visstat(vis=None,

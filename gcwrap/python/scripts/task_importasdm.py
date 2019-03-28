@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 from taskinit import *
@@ -240,8 +242,7 @@ def importasdm(
 
         for ff in vistoproc:
             if not overwrite and os.path.exists(ff):
-                raise Exception, \
-                    'You have specified an existing MS and have indicated you do not wish to overwrite it: %s'%ff
+                raise Exception('You have specified an existing MS and have indicated you do not wish to overwrite it: %s'%ff)
 
         # If viso+".flagversions" then process differently depending on the value of overwrite..
         #
@@ -257,8 +258,8 @@ def importasdm(
                     else:
                         casalog.post("Found '%s' but can't overwrite it."
                                      % dotFlagversion)
-                        raise Exception, "Found '%s' but can't overwrite it." \
-                            % dotFlagversion
+                        raise Exception("Found '%s' but can't overwrite it." \
+                            % dotFlagversion)
                
         # Make outfile always a list             
         if isinstance(outfile, str):
@@ -284,7 +285,7 @@ def importasdm(
             if not overwrite:
                 for of in outfile:
                     if os.path.exists(of):
-                        raise Exception, "Cannot overwrite online flags file '%s'; overwrite is set to False."% of
+                        raise Exception("Cannot overwrite online flags file '%s'; overwrite is set to False."% of)
                 
             
         execute_string = execute_string + ' ' + asdm + ' ' + viso
@@ -315,8 +316,7 @@ def importasdm(
                 casalog.post(theexecutable
                              + ' terminated with exit code '
                              + str(exitcode), 'SEVERE')
-                raise Exception, \
-                    'ASDM conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.'
+                raise Exception('ASDM conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.')
 
         if showversion:
             return
@@ -343,7 +343,7 @@ def importasdm(
                     casalog.post(cmd
                                  + ' terminated with exit code '
                                  + str(cmdexitcode), 'SEVERE')
-                    raise Exception, 'fixspwbackport error.'
+                    raise Exception('fixspwbackport error.')
 
         # Binary Flag processing
         if bdfflags:
@@ -376,8 +376,7 @@ def importasdm(
                     casalog.post(bdffexecutable
                                  + ' terminated with exit code '
                                  + str(bdffexitcode), 'SEVERE')
-                    raise Exception, \
-                          'ASDM binary flags conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.'
+                    raise Exception('ASDM binary flags conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.')
 
 
         theephemfields = ce.findattachedephemfields(myviso,field='*')
@@ -509,7 +508,7 @@ def importasdm(
                     shutil.rmtree(tempname)
  
 
-                except Exception, instance:
+                except Exception as instance:
                     # Restore MS in case of error in MMS creation
                     shutil.move(tempname, myviso)
                     casalog.post('%s'%instance,'ERROR')
@@ -537,15 +536,14 @@ def importasdm(
                 casalog.post('Found Antenna.xml in SDM')
 
             else:
-                raise Exception, 'Failed to find Antenna.xml in SDM'
+                raise Exception('Failed to find Antenna.xml in SDM')
             
             # Find SpectralWindow.xml
             if os.access(asdm + '/SpectralWindow.xml', os.F_OK):
                 casalog.post('Found SpectralWindow.xml in SDM')
 
             else:
-                raise Exception, \
-                    'Failed to find SpectralWindow.xml in SDM'
+                raise Exception('Failed to find SpectralWindow.xml in SDM')
                     
             #
             # Parse Flag.xml into flag dictionary
@@ -597,7 +595,7 @@ def importasdm(
 
         # Write parameters to HISTORY table of MS
         mslocal = mstool() 
-        param_names = importasdm.func_code.co_varnames[:importasdm.func_code.co_argcount] 
+        param_names = importasdm.__code__.co_varnames[:importasdm.__code__.co_argcount] 
         param_vals = [eval(p) for p in param_names]
 
         for myviso in vistoproc:
@@ -607,8 +605,8 @@ def importasdm(
        
         return
     
-    except Exception, instance:
+    except Exception as instance:
 
-        print '*** Error ***', instance
+        print('*** Error ***', instance)
 
 

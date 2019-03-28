@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -65,8 +67,8 @@ class importasap_test(unittest.TestCase):
             myms.open(self.outfile)
             myms.close()
             
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             self.fail('outputvis is not a valid ms')
         
         # check weight initialization
@@ -212,7 +214,7 @@ class importasap_test(unittest.TestCase):
             colkeys = tb.getcolkeywords('PRESSURE')
             self.assertTrue('QuantumUnits' in colkeys)
             pressure_unit = colkeys['QuantumUnits'][0]
-            print('Pressure unit is {0}'.format(pressure_unit))
+            print(('Pressure unit is {0}'.format(pressure_unit)))
             self.assertEqual(pressure_unit, 'hPa')
             
             # value should be in reasonable range

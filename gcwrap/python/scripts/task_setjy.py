@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from glob import glob
 import os
 import re
@@ -102,7 +104,7 @@ def setjy(vis=None, field=None, spw=None,
                 else:
                     casalog.post("Error in parallel processing of MMS",'SEVERE')
                     retval = False
-            except Exception, instance:
+            except Exception as instance:
                 retval = False
         else:
             casalog.post("Could not initialize MODEL columns in sub-MSs", 'SEVERE')
@@ -165,8 +167,8 @@ def setjy_core(vis=None, field=None, spw=None,
                 availmodellist=['Venus', 'Mars', 'Jupiter', 'Uranus', 'Neptune', 'Pluto',
                                 'Io', 'Europa', 'Ganymede', 'Callisto', 'Titan','Triton',
                                 'Ceres', 'Pallas', 'Vesta', 'Juno', 'Victoria', 'Davida']
-                print "Solar system objects recognized by %s:" % standard
-                print availmodellist 
+                print("Solar system objects recognized by %s:" % standard)
+                print(availmodellist) 
             else:
                 lsmodims('.', modpat='*.im* *.mod*')
                 calmoddirs = findCalModels()
@@ -179,7 +181,7 @@ def setjy_core(vis=None, field=None, spw=None,
             if not os.path.isdir(vis):
               #casalog.post(vis + " must be a valid MS unless listmodels is True.",
               #             "SEVERE")
-                raise Exception, "%s is not a valid MS" % vis 
+                raise Exception("%s is not a valid MS" % vis) 
                 #return False
 
             myms = mstool()
@@ -208,11 +210,11 @@ def setjy_core(vis=None, field=None, spw=None,
                     return False
                 else:
                     if (not n_selected_rows):
-                        raise Exception, "No rows were selected. Please check your data selection"
+                        raise Exception("No rows were selected. Please check your data selection")
                     myim.open(vis, usescratch=usescratch)
 
             else:
-                raise Exception, 'Visibility data set not found - please verify the name'
+                raise Exception('Visibility data set not found - please verify the name')
 
             if modimage==None:  # defined as 'hidden' with default '' in the xml
       	                        # but the default value does not seem to set so deal
@@ -251,11 +253,11 @@ def setjy_core(vis=None, field=None, spw=None,
 
             # Write the parameters to HISTORY before the tool writes anything.
             try:
-                param_names = setjy.func_code.co_varnames[:setjy.func_code.co_argcount]
+                param_names = setjy.__code__.co_varnames[:setjy.__code__.co_argcount]
                 param_vals = [eval(p) for p in param_names]   
                 retval = write_history(myms, vis, 'setjy', param_names,
                                     param_vals, casalog)
-            except Exception, instance:
+            except Exception as instance:
                 casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                          'WARN')
 
@@ -282,7 +284,7 @@ def setjy_core(vis=None, field=None, spw=None,
                           roots=[casa['dirs']['data']],
                           exts=['.im','.ms','tab'])
                 if ssmoddirs==set([]):
-                     raise Exception, "Missing Tb or fd  models in the data directory"
+                     raise Exception("Missing Tb or fd  models in the data directory")
 
                 setjyutil=ss_setjy_helper(myim,vis,casalog)
                 retval=setjyutil.setSolarObjectJy(field=field,spw=spw,scalebychan=scalebychan,
@@ -344,7 +346,7 @@ def setjy_core(vis=None, field=None, spw=None,
                                                  intent=intent, interpolation=interpolation)
                             retval.update(curretval)
                     else:
-                        raise Exception, "No field is selected. Check fluxdict and field selection."
+                        raise Exception("No field is selected. Check fluxdict and field selection.")
                 else: 
                     influxdensity=fluxdensity
                     if standard=="manual":
@@ -372,7 +374,7 @@ def setjy_core(vis=None, field=None, spw=None,
             myim.close()
 
     # This block should catch errors mainly from the actual operation mode 
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('%s' % instance,'SEVERE')
         #retval=False
 	raise instance
@@ -412,12 +414,12 @@ def lsmodims(path, modpat='*', header='Candidate modimages'):
     """
     if os.path.isdir(path):
         if better_glob(path + '/' + modpat):
-            print "\n%s (%s) in %s:" % (header, modpat, path)
+            print("\n%s (%s) in %s:" % (header, modpat, path))
             sys.stdout.flush()
             os.system('cd ' + path + ';ls -d ' + modpat)
         else:
-            print "\nNo %s matching '%s' found in %s" % (header.lower(),
-                                                   modpat, path)
+            print("\nNo %s matching '%s' found in %s" % (header.lower(),
+                                                   modpat, path))
 
 
 def findCalModels(target='CalModels',
@@ -543,7 +545,7 @@ def nselrows(vis, field='', spw='', obs='', timerange='', scan='', intent='', us
             myms.msselect(msselargs)
             retval = myms.nrow(True)
             myms.close()
-        except Exception, instance:
+        except Exception as instance:
             #if ismms:
             #     casalog.post('nselrows: %s' % instance,'WARN')
             #else:
@@ -554,7 +556,7 @@ def nselrows(vis, field='', spw='', obs='', timerange='', scan='', intent='', us
             myms.close()
             #if not ismms: 
             #    raise Exception, instance
-            raise Exception, instance
+            raise Exception(instance)
             #else:
             #    casalog.post('Proceed as it appears to be dealing with a MMS...','DEBUG')
 
@@ -592,7 +594,7 @@ def parse_fluxdict(fluxdict, vis, field='', spw='', observation='', timerange=''
         myms.msselect(msselargs)
         #selindices = myms.msselectedindices()
         msselfldids=myms.range(["FIELD_ID"])['field_id']
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('parse_fluxdict exception: %s' % instance,'SEVERE')
         raise instance
     finally:
@@ -600,15 +602,15 @@ def parse_fluxdict(fluxdict, vis, field='', spw='', observation='', timerange=''
 
     # check if fluxdict is valid
     if fluxdict=={}:
-        raise Exception, "fluxdict is empty"
+        raise Exception("fluxdict is empty")
     else:
         msg=""
-        if not fluxdict.has_key("freq"):
+        if "freq" not in fluxdict:
              msg+="freq "
-        if not fluxdict.has_key("spwID"):
+        if "spwID" not in fluxdict:
              msg+="spwID "
         if len(msg):
-             raise Exception, "Input fluxdict is missing keywords:"+msg
+             raise Exception("Input fluxdict is missing keywords:"+msg)
 
     # select fields only common to the dictionary and field selection
     fieldids=[]
@@ -628,7 +630,7 @@ def parse_fluxdict(fluxdict, vis, field='', spw='', observation='', timerange=''
         #selfieldids = [fd for fd in fieldids if int(fd) in selindices['field'].tolist()]
         selfieldids = [fd for fd in fieldids if int(fd) in msselfldids]
         if not len(selfieldids):
-            raise Exception, "No field was found in fluxdict for the given data selection"
+            raise Exception("No field was found in fluxdict for the given data selection")
     else:
         selfieldids = fieldids   
 

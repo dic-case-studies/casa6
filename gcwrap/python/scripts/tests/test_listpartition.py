@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -28,7 +30,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.vis):
             pass
         else:
-            print "Linking to data..."
+            print("Linking to data...")
             os.system('ln -s ' + os.environ.get('CASAPATH').split()[0] +
                       "/data/regression/unittest/partition/" + self.vis + ' ' + self.vis)
             
@@ -41,7 +43,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.vis):
             pass
         else:
-            print "Linking to data..."
+            print("Linking to data...")
             os.system('ln -s ' + os.environ.get('CASAPATH').split()[0] +
                       "/data/regression/unittest/partition/" + self.vis + ' ' + self.vis)
 
@@ -54,7 +56,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.vis):
             pass
         else:
-            print "Linking to data..."
+            print("Linking to data...")
             os.system('ln -s ' + os.environ.get('CASAPATH').split()[0] +
                       "/data/regression/unittest/partition/" + self.vis + ' ' + self.vis)
 
@@ -67,7 +69,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.vis):
             pass
         else:
-            print "Linking to data..."
+            print("Linking to data...")
             os.system('ln -s ' + os.environ.get('CASAPATH').split()[0] +
                       "/data/regression/unittest/partition/" + self.vis + ' ' + self.vis)
 

@@ -65,6 +65,8 @@
 #
 
 ###########################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
 import casac
 from tasks import *
@@ -90,7 +92,7 @@ class imhistory_test(unittest.TestCase):
         h = imhistory(imagename, mode="list")
         self.assertTrue(len(h) == 3, "Incorrect history length")
         for hh in h[1:2]:
-            print hh
+            print(hh)
             self.assertTrue("fromshape" in hh, "Incorrect message")
         msg = "fred"
         self.assertTrue(

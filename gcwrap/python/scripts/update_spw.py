@@ -15,6 +15,7 @@ Example:
 '3'
 """
 
+from __future__ import absolute_import
 import copy
 import os
 #from taskinit import mstool
@@ -161,8 +162,8 @@ def spwchan_to_ranges(vis, spw):
     nspw = selarr.shape[0]
     selranges = {}
     for s in xrange(nspw):
-        if selranges.has_key(selarr[s][0]):
-            raise ValueError, 'spwchan_to_ranges() does not support multiple channel ranges per spw.'
+        if selarr[s][0] in selranges:
+            raise ValueError('spwchan_to_ranges() does not support multiple channel ranges per spw.')
         selranges[selarr[s][0]] = tuple(selarr[s][1:])
     return selranges
 
@@ -193,13 +194,13 @@ def spwchan_to_sets(vis, spw):
     # just doesn't have all the channels in spw is a bit crude.  Sanjay is
     # working on adding some flexibility to ms.msseltoindex.
     if not os.path.isdir(vis):
-        raise ValueError, str(vis) + ' is not a valid MS.'
+        raise ValueError(str(vis) + ' is not a valid MS.')
         
     sets = {}
     try:
         scharr = ms.msseltoindex(vis, spw=spw)['channel']
         for scr in scharr:
-            if not sets.has_key(scr[0]):
+            if scr[0] not in sets:
                 sets[scr[0]] = set([])
 
             # scr[2] is the last selected channel.  Bump it up for range().
@@ -214,7 +215,7 @@ def spwchan_to_sets(vis, spw):
         for s in spwd:
             if s in allrec['spw']:
                 endchan = allrec['channel'][s, 2]
-                if not sets.has_key(s):
+                if s not in sets:
                     sets[s] = set([])
                 if spwd[s] == '':
                     # We need to get the spw's # of channels without using
@@ -328,7 +329,7 @@ def sets_to_spwchan(spwsets, nchans={}):
             cstr = set_to_chanstr(spwsets[s], nchans.get(s))
 
             if cstr:
-                if not csd.has_key(cstr):
+                if cstr not in csd:
                     csd[cstr] = []
                 csd[cstr].append(s)
 
@@ -429,9 +430,9 @@ def update_spwchan(vis, sch0, sch1, truncate=False, widths={}):
                 if truncate:
                     s1.intersection_update(s0)
                     if not s1:
-                        raise ValueError, "'%s' does not overlap '%s'." % (sch1, sch0)
+                        raise ValueError("'%s' does not overlap '%s'." % (sch1, sch0))
                 else:
-                    raise ValueError, "'%s' is not a subset of '%s'." % (sch1, sch0)
+                    raise ValueError("'%s' is not a subset of '%s'." % (sch1, sch0))
 
             # Adapt s1 for a post-s0 world.
             s0list = sorted(list(s0))
@@ -456,7 +457,7 @@ def update_spwchan(vis, sch0, sch1, truncate=False, widths={}):
             # Get the number of channels per spw that are selected by s0.
             nchans[outspw] = len(s0)
         elif not truncate:
-            raise ValueError, str(s) + ' is not a selected spw of ' + sch0
+            raise ValueError(str(s) + ' is not a selected spw of ' + sch0)
 
     return sets_to_spwchan(outsets, nchans)
 
@@ -500,7 +501,7 @@ def expand_tilde(tstr, conv_multiranges=False):
                 start = int(numrang)
                 end = start
         except:
-            raise ValueError, 'numrang = ' + numrang + ', tstr = ' + tstr + ', conv_multiranges = ' + str(conv_multiranges)
+            raise ValueError('numrang = ' + numrang + ', tstr = ' + tstr + ', conv_multiranges = ' + str(conv_multiranges))
         numset.update(range(start, end + 1, step))
     return sorted(list(numset))
 
@@ -563,7 +564,7 @@ def spw_to_dict(spw, spwdict={}, conv_multiranges=True):
             if charange == '*':
                 myspwdict[s] = ''
             else:
-                if not myspwdict.has_key(s):
+                if s not in myspwdict:
                     myspwdict[s] = set([])
                 if myspwdict[s] != '':
                     myspwdict[s].update(charange)        

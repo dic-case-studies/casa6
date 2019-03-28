@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from taskinit import *
 
@@ -35,7 +37,7 @@ def feather(imagename=None,highres=None,lowres=None, sdfactor=None, effdishdiam=
 		imFea.feather(image=imagename,highres=highres,lowres=lowres, effdishdiam=effdishdiam,  lowpassfiltersd=lowpassfiltersd)
 		imFea.done()
 		del imFea
-	except Exception, instance:
-		print '*** Error ***',instance
-		raise Exception, instance
+	except Exception as instance:
+		print('*** Error ***',instance)
+		raise Exception(instance)
 

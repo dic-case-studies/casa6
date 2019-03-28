@@ -62,6 +62,7 @@
 #
 
 ###########################################################################
+from __future__ import absolute_import
 from taskinit import *
 
 def spxfit(
@@ -101,7 +102,7 @@ def spxfit(
 			append=append, 
 			sigma=sigmacopy, outsigma=outsigma
 		)
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
         retval = None
     myia.done()

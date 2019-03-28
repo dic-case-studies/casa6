@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -17,12 +19,12 @@ _ia = iatool( )
 _rg = rgtool( )
 
 try:
-    import selection_syntax
+    from . import selection_syntax
 except:
     import tests.selection_syntax as selection_syntax
 
 try:
-    import testutils
+    from . import testutils
 except:
     import tests.testutils as testutils
 
@@ -60,7 +62,7 @@ def merge_dict(d1, d2):
     dictionary is adopted.
     """
     if type(d1) != dict or type(d2) != dict:
-        raise ValueError, "Internal error. inputs should be dictionaries."
+        raise ValueError("Internal error. inputs should be dictionaries.")
     d12 = d1.copy()
     d12.update(d2)
     return d12
@@ -153,9 +155,9 @@ class sdimaging_unittest_base(unittest.TestCase):
         misc = _ia.miscinfo()
         _ia.close()
         for kw in ['TELESCOPE', 'OBJECT']:
-            self.assertFalse(misc.has_key(kw), 'Miscinfo should not have %s' % kw)
+            self.assertFalse(kw in misc, 'Miscinfo should not have %s' % kw)
         for kw in ['INSTRUME', 'distance']:
-            self.assertTrue(misc.has_key(kw), 'Miscinfo should have %s' % kw)
+            self.assertTrue(kw in misc, 'Miscinfo should have %s' % kw)
             
         
 
@@ -349,7 +351,7 @@ class sdimaging_test0(sdimaging_unittest_base):
             res=sdimaging(infiles=self.rawfile,field=self.badid,intent='',outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('Field Expression: Partial or no match for Field ID list [%s]' % self.badid)
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -360,7 +362,7 @@ class sdimaging_test0(sdimaging_unittest_base):
             res=sdimaging(infiles=self.rawfile,spw=self.badid,intent='',outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('Spw Expression: No match found for %s' % self.badid)
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -372,7 +374,7 @@ class sdimaging_test0(sdimaging_unittest_base):
                           imsize=self.imsize,cell=self.cell,outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('No match found for the antenna specificion')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -383,7 +385,7 @@ class sdimaging_test0(sdimaging_unittest_base):
             res=sdimaging(infiles=self.rawfile,stokes='BAD',intent='',outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('Stokes selection BAD is currently not supported.')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -398,7 +400,7 @@ class sdimaging_test0(sdimaging_unittest_base):
         """Test007: Bad scanlist"""
         try:
             res=sdimaging(infiles=self.rawfile,scan=self.badid,intent='',outfile=self.outfile)
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('Selection is empty')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -406,13 +408,13 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test008(self):
         """Test008: Existing outfile with overwrite=False"""
         f=open(self.outfile,'w')
-        print >> f, 'existing file'
+        print('existing file', file=f)
         f.close()
         try:
             res=sdimaging(infiles=self.rawfile,intent='',outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('Output file \'%s\' exists.'%(self.outfile))
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -423,7 +425,7 @@ class sdimaging_test0(sdimaging_unittest_base):
             res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter='This is bad')
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('Empty QuantumHolder argument for asQuantumDouble')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -462,7 +464,7 @@ class sdimaging_test0(sdimaging_unittest_base):
         try:
             res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=[0.,0.],imsize=self.imsize,phasecenter=self.phasecenter)
             self.assertFail(msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('Infinite resolution not possible.')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -476,7 +478,7 @@ class sdimaging_test0(sdimaging_unittest_base):
             res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,gridfunction=self.gridfunction,mode='frequency',nchan=10,start=start,width=width)
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('Output frequency grid cannot be calculated:  please check start and width parameters')
             #pos=str(e).find('calcChanFreqs failed, check input start and width parameters')
             self.assertNotEqual(pos,-1,
@@ -1945,7 +1947,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         refstats = ref.copy()
         refstats.update(box)
         for stats in ['blcf', 'trcf']:
-            if refstats.has_key(stats): refstats.pop(stats)
+            if stats in refstats: refstats.pop(stats)
         self._checkstats(name,refstats,region=boxreg,
                          compstats=compstats,atol=atol,rtol=rtol,
                          ignoremask=ignoremask)
@@ -1958,7 +1960,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
             return self.spw_flux
         elif infile == self.unifreq_ms:
             return self.spw_flux_unifreq
-        else: raise Exception, "Internal error: invalid input file to get flux value."
+        else: raise Exception("Internal error: invalid input file to get flux value.")
 
 ###
 # Test to verify if flag information is handled properly
@@ -2596,10 +2598,10 @@ class sdimaging_test_mapextent(unittest.TestCase):
             blc_ref[0] -= 360.0
         #self.verify_mapextent(npix_ref, blc_ref, trc_ref)
         # resulting map contain reference position
-        print 'npix', npix, 'npix_ref', npix_ref
-        print 'blc', blc, 'blc_ref', blc_ref
-        print 'trc', trc, 'trc_ref', trc_ref 
-        print 'extent', extent
+        print('npix', npix, 'npix_ref', npix_ref)
+        print('blc', blc, 'blc_ref', blc_ref)
+        print('trc', trc, 'trc_ref', trc_ref) 
+        print('extent', extent)
         # check if map area covers whole pointing data
         # this is done by comparing blc and trc with their references 
         # that are usually computed from actual distribution of 
@@ -2923,7 +2925,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                 finally:
                     mymsmd.close()
             
-            print '### gridmeta', gridmeta
+            print('### gridmeta', gridmeta)
             for ira in xrange(imsize):
                 for idec in xrange(imsize):
                     meta = gridmeta[ira][idec]
@@ -2941,22 +2943,22 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                     data = numpy.asarray(grid[ira][idec], dtype=numpy.float64)
                     if len(data) < 3:
                         continue
-                    print '### ira', ira, 'idec', idec, 'data', data
+                    print('### ira', ira, 'idec', idec, 'data', data)
                     for ichan in xrange(data.shape[1]):
                         slice = data[:,ichan]
                         argmin = numpy.argmin(slice)
                         argmax = numpy.argmax(slice)
-                        print '### ira', ira, 'idec', idec, 'argmin', argmin, 'argmax', argmax
+                        print('### ira', ira, 'idec', idec, 'argmin', argmin, 'argmax', argmax)
                         for imeta in (argmin, argmax):
                             infile, irow = gridmeta[ira][idec][imeta]
                             mytb.open(infile, nomodify=False)
                             try:
-                                print '### clip', infile, 'row', irow, 'chan', ichan, 'data', mytb.getcell('FLOAT_DATA', irow)
+                                print('### clip', infile, 'row', irow, 'chan', ichan, 'data', mytb.getcell('FLOAT_DATA', irow))
                                 #mytb.putcell('FLAG_ROW', irow, True)
                                 flag = mytb.getcell('FLAG', irow)
-                                print '### flag (before)', flag
+                                print('### flag (before)', flag)
                                 flag[0,ichan] = True
-                                print '### flag (after)', flag
+                                print('### flag (after)', flag)
                                 mytb.putcell('FLAG', irow, flag)
                             finally:
                                 mytb.close()
@@ -2980,10 +2982,10 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         reference_mask = myia.getchunk(getmask=True)
         myia.close()
         
-        print '### result', result.flatten()
-        print '### mask', result_mask.flatten()
-        print '### reference', reference.flatten()
-        print '### mask', reference_mask.flatten()
+        print('### result', result.flatten())
+        print('### mask', result_mask.flatten())
+        print('### reference', reference.flatten())
+        print('### mask', reference_mask.flatten())
         
         self.assertTrue(numpy.all(result_mask == reference_mask))
         
@@ -2995,7 +2997,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         vdiff = numpy.vectorize(diff)
         err = vdiff(mresult, mreference)
         eps = 1.0e-6
-        print 'err = %s (max %s min %s)'%(err, err.max(), err.min())
+        print('err = %s (max %s min %s)'%(err, err.max(), err.min()))
         self.assertTrue(numpy.all(err < eps)) 
     
     def test_1row(self):

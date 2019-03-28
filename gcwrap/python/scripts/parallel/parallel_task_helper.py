@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 from taskinit import *
 import os
 import copy
@@ -189,10 +190,9 @@ class ParallelTaskHelper:
         try:
             msTool = mstool()
             if not msTool.open(self._arg['vis']):
-                raise ValueError, "Unable to open MS %s," % self._arg['vis']
+                raise ValueError("Unable to open MS %s," % self._arg['vis'])
             if not msTool.ismultims():
-                raise ValueError, \
-                      "MS is not a MultiMS, simple parallelization failed"
+                raise ValueError("MS is not a MultiMS, simple parallelization failed")
 
             subMs_idx = 0
             for subMS in msTool.getreferencedtables():
@@ -210,7 +210,7 @@ class ParallelTaskHelper:
                 
             msTool.close()
             return True
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("Error handling MMS %s: %s" % (self._arg['vis'],instance),"WARN","generateJobs")
             msTool.close()
             return False
@@ -227,11 +227,11 @@ class ParallelTaskHelper:
                 try:
                     exec("from taskinit import *; from tasks import *; " + job.getCommandLine())
                     # jagonzal: Special case for partition
-                    if (parameters.has_key('outputvis')):
+                    if ('outputvis' in parameters):
                         self._sequential_return_list[parameters['outputvis']] = returnVar0
                     else:
                         self._sequential_return_list[parameters['vis']] = returnVar0
-                except Exception, instance:
+                except Exception as instance:
                     str_instance = str(instance)
                     if (string.find(str_instance,"NullSelection") == 0):
                         casalog.post("Error running task sequentially %s: %s" % (job.getCommandLine(),str_instance),"WARN","executeJobs")
@@ -308,7 +308,7 @@ class ParallelTaskHelper:
 
         for key, item in dict_list.items():
             if isinstance(item, dict):
-                if ret_dict.has_key(key):
+                if key in ret_dict:
                     if is_rflag_report(item):
                         ret_dict[key] = combine_rflag_subreport(item, ret_dict[key])
                     else:
@@ -316,7 +316,7 @@ class ParallelTaskHelper:
                 else:
                     ret_dict[key] = ParallelTaskHelper.combine_dictionaries(item,{})
             else:
-                if ret_dict.has_key(key):
+                if key in ret_dict:
                     # the 'nreport' field should not be summed - it's an index
                     if not isinstance(ret_dict[key],str) and 'nreport' != key:
                         # This is a good default for all reports that have flag counters
@@ -376,7 +376,7 @@ class ParallelTaskHelper:
             else:
                 try:
                     retVar = self.postExecution()
-                except Exception, instance:
+                except Exception as instance:
                     casalog.post("Error post processing MMS results %s: %s" % (self._arg['vis'],instance),"WARN","go")
                     traceback.print_tb(sys.exc_info()[2])
                     return False
@@ -393,10 +393,10 @@ class ParallelTaskHelper:
         
         msTool = mstool()
         if not msTool.open(vis):
-            raise ValueError, "Unable to open MS %s." % vis
+            raise ValueError("Unable to open MS %s." % vis)
 
         if not msTool.ismultims():
-            raise ValueError, "MS %s is not a reference MS." % vis
+            raise ValueError("MS %s is not a reference MS." % vis)
 
         rtnValue = msTool.getreferencedtables()
         if not isinstance(rtnValue, list):
@@ -439,7 +439,7 @@ class ParallelTaskHelper:
         else:
             for s in subtables:
                 if not (s in theSubTables):
-                    raise ValueError, s+' is not a subtable of '+ mastersubms
+                    raise ValueError(s+' is not a subtable of '+ mastersubms)
 
         origpath = os.getcwd()      
         masterbase = os.path.basename(mastersubms)
@@ -509,7 +509,7 @@ class ParallelTaskHelper:
         
         msTool = mstool()
         if not msTool.open(vis):
-            raise ValueError, "Unable to open MS %s," % vis
+            raise ValueError("Unable to open MS %s," % vis)
         rtnVal = msTool.ismultims() and \
                  isinstance(msTool.getreferencedtables(), list)
 
@@ -586,7 +586,7 @@ class ParallelTaskWorker:
         stack=inspect.stack()
         for stack_level in range(len(stack)):
             frame_globals=sys._getframe(stack_level).f_globals
-            if frame_globals.has_key('update_params'):
+            if 'update_params' in frame_globals:
                 return dict(frame_globals)
             
         raise Exception("CASA top level environment not found")
@@ -617,7 +617,7 @@ class ParallelTaskWorker:
             self.__state = "successful"
             # Release task lock
             ParallelTaskWorker.releaseTaskLock()            
-        except Exception, instance:
+        except Exception as instance:
             # Mark state as failed
             self.__state = "failed"
             # Release task lock if necessary

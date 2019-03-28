@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import sys
 import os
 import numpy
@@ -71,7 +72,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
     try:
         # outfile must be specified
         if (outfile == '') or not isinstance(outfile, str):
-            raise ValueError, "outfile is empty."
+            raise ValueError("outfile is empty.")
         
         # overwrite check
         if os.path.exists(outfile) and not overwrite:
@@ -82,7 +83,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
             #mycb.setvi(old=True)
             mycb.open(filename=infile, compress=False, addcorr=False, addmodel=False)
         else:
-            raise RuntimeError, 'infile not found - please verify the name'
+            raise RuntimeError('infile not found - please verify the name')
         
         # select data
         if isinstance(antenna, str) and len(antenna) > 0:
@@ -111,7 +112,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
                 else:
                     RuntimeError, 'wrong type of applytable item ({0}). it should be string'.format(type(table))
         else:
-            raise RuntimeError, 'wrong type of applytable ({0}). it should be string or list'.format(type(applytable))
+            raise RuntimeError('wrong type of applytable ({0}). it should be string or list'.format(type(applytable)))
         
         # set solve
         if calmode == 'doublecircle':
@@ -137,7 +138,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
         ## reporting calibration solution
         #reportsolvestats(mycb.activityrec());
 
-    except Exception, e:
+    except Exception as e:
         import traceback
         casalog.post(traceback.format_exc(), priority='DEBUG')
         casalog.post(errmsg(e), priority='SEVERE')

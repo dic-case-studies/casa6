@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import numpy as np
 import pprint
@@ -35,13 +37,12 @@ def listpartition(vis=None, createdict=None, listfile=None):
         if (type(vis) == str) & os.path.exists(vis):
             mslocal.open(thems=vis)
         else:
-            raise Exception, \
-                'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
 
         # Check output filename existence 
         if listfile != '':
             if (type(listfile) == str) & os.path.exists(listfile):
-                raise Exception, 'Output file \'%s\' already exists'%listfile
+                raise Exception('Output file \'%s\' already exists'%listfile)
             
             casalog.post('Will save output to \'%s\''%listfile)
             ffout = open(listfile, 'w')
@@ -78,7 +79,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
         try:
             outdict = {}
             outdict = ph.getScanSpwSummary(mslist) 
-        except Exception, instance:
+        except Exception as instance:
             casalog.post('%s'%instance,'ERROR')
 
         # Now loop through the dictionary to print the information
@@ -132,7 +133,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
                 # Print to a file
                 if listfile != '':
-                    print >> ffout, text
+                    print(text, file=ffout)
                 else:
                     # Print to the logger
                     casalog.post(text)
@@ -148,9 +149,9 @@ def listpartition(vis=None, createdict=None, listfile=None):
         
         return {}
             
-    except Exception, instance:
+    except Exception as instance:
 #        mslocal.close()
-        print '*** Error ***', instance
+        print('*** Error ***', instance)
     
 
            

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
 import unittest
 import os
@@ -88,7 +90,7 @@ def check_eq(val, expval, tol=None):
                 errmsg = "\n%r\n!=\n%r" % (val, expval)
             raise ValueError(errmsg)
         except Exception:
-            print("Error comparing", val, "to", expval)
+            print(("Error comparing", val, "to", expval))
             raise
 
 # Base class which defines setUp functions
@@ -1915,7 +1917,7 @@ class test_timeaverage_limits(test_base):
 
         tb_local.open(self.outvis)
         interval = tb_local.getcol('INTERVAL')
-        print(interval[0])
+        print((interval[0]))
         tb_local.close()
         check_eq(interval[0] >= 40.0,True)
 
@@ -2382,7 +2384,7 @@ class testFlags(test_base):
         try:
             mstransform(self.vis, outputvis=self.outputms, datacolumn='data', spw='>14', keepflags=False)
         except RuntimeError as instance:
-            print('Expected Error: {0}'.format(instance))
+            print(('Expected Error: {0}'.format(instance)))
         
         print('Expected Error!')
         

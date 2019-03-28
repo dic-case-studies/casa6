@@ -1,4 +1,5 @@
 # setjy helper functions
+from __future__ import absolute_import
 from casac import casac
 import os
 import sys
@@ -71,9 +72,9 @@ class ss_setjy_helper:
 	  fieldids = range(mytb.nrows())
         # frame reference for field position
         phdir_info=mytb.getcolkeyword("PHASE_DIR","MEASINFO")
-        if phdir_info.has_key('Ref'):
+        if 'Ref' in phdir_info:
           fieldref=phdir_info['Ref']
-        elif phdir_info.has_key('TabRefTypes'):
+        elif 'TabRefTypes' in phdir_info:
           colnames=mytb.colnames()
           for col in colnames:
             if col=='PhaseDir_Ref':
@@ -131,7 +132,7 @@ class ss_setjy_helper:
 	  trange=myms.range('time')
 	  #if not inparams.has_key(srcnames[fid]):
           #  inparams[srcnames[fid]]={}
-	  if not inparams.has_key(fid):
+	  if fid not in inparams:
             inparams[fid]={}
             inparams[fid]['fieldname']=srcnames[fid]
 
@@ -150,7 +151,7 @@ class ss_setjy_helper:
           #  inparams[srcnames[fid]]['mjds'][0].append([myme.epoch('utc',qa.quantity(tc,'s'))['m0']['value']])
           #else:
           #  inparams[srcnames[fid]]['mjds']=[myme.epoch('utc',qa.quantity(tc,'s'))['m0']['value']]
-	  if inparams[fid].has_key('mjd'):
+	  if 'mjd' in inparams[fid]:
             inparams[fid]['mjds'][0].append([myme.epoch('utc',qa.quantity(tc,'s'))['m0']['value']])
           else:
             inparams[fid]['mjds']=[myme.epoch('utc',qa.quantity(tc,'s'))['m0']['value']]
@@ -495,7 +496,7 @@ class ss_setjy_helper:
             mycl.done()
             ncomp = clinrec['nelements']
             if ncomp != len(spwids):
-               raise Exception, "Inconsistency in generated componentlist...Please submit a bug report."
+               raise Exception("Inconsistency in generated componentlist...Please submit a bug report.")
             for icomp in range(ncomp): 
 	      #self.im.selectvis(spw=spwids[icomp],field=field,observation=observation,time=timerange,intent=intent)
 	      ok = self.im.selectvis(spw=spwids[icomp],field=vfid,observation=observation,time=timerange,intent=intent)
@@ -540,7 +541,7 @@ class ss_setjy_helper:
 	  msg="Using channel dependent " if scalebychan else "Using spw dependent "
        
           if clrecs=={}:
-            raise Exception, "No componentlist is generated."
+            raise Exception("No componentlist is generated.")
           #self._casalog.post(clrecs)
 	  self._casalog.post(msg+" flux densities")
 	  #self._reportoLog(clrecs,self._casalog)
@@ -604,7 +605,7 @@ class ss_setjy_helper:
         if ncl == 1:
             clname = clrecs.keys()[0] 
             comprec = clrecs[clname]
-            if comprec.has_key('nelements'):
+            if 'nelements' in comprec:
                 nelm = comprec['nelements']
         
         if ncl != 1 or nelm == -1:
@@ -621,7 +622,7 @@ class ss_setjy_helper:
                       float('%.6g' % comp['shape']['direction']['m1']['value']))
                 casalog.post(msg,'INFO2')
             freq0=''
-            if comp.has_key('spectrum'):
+            if 'spectrum' in comp:
                 freqv = float('%.5g' % comp['spectrum']['frequency']['m0']['value'])
                 freq0 = str(freqv)+comp['spectrum']['frequency']['m0']['unit']
             if nelm==1:

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from taskinit import *
 
@@ -24,14 +26,14 @@ def rerefant(vis,tablein,caltable,refantmode,refant):
                         _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
 			       
                 else:
-                        raise Exception, 'Visibility data set not found - please verify the name'
+                        raise Exception('Visibility data set not found - please verify the name')
 
 		_cb.rerefant(tablein=tablein,tableout=caltable,refantmode=refantmode,refant=refant);
 		_cb.close()
 
-	except Exception, instance:
-		print '*** Error ***',instance
+	except Exception as instance:
+		print('*** Error ***',instance)
 		_cb.close()
-		raise Exception, instance
+		raise Exception(instance)
 
 

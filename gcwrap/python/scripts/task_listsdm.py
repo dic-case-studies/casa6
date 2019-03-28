@@ -6,12 +6,14 @@
 #
 # Original code based on readscans.py, courtesy S. Meyers
 
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 from taskinit import *
 try:
     from xml.dom import minidom
-except ImportError, e:
-    print "failed to load xml.dom.minidom:\n", e
+except ImportError as e:
+    print("failed to load xml.dom.minidom:\n", e)
     exit(1)
 
 def listsdm(sdm=None):

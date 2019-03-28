@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 from taskinit import *
@@ -175,16 +177,16 @@ def cvel(vis, outputvis,
 	casalog.origin('cvel')
 
 	if not ((type(vis)==str) & (os.path.exists(vis))):
-	    raise Exception, 'Visibility data set not found - please verify the name'
+	    raise Exception('Visibility data set not found - please verify the name')
 
         if (outputvis == ""):
-	    raise Exception, "Must provide output data set name in parameter outputvis."            
+	    raise Exception("Must provide output data set name in parameter outputvis.")            
 	
 	if os.path.exists(outputvis):
-	    raise Exception, "Output MS %s already exists - will not overwrite." % outputvis
+	    raise Exception("Output MS %s already exists - will not overwrite." % outputvis)
 
         if (os.path.exists(outputvis+".flagversions")):
-            raise Exception, "The flagversions \"%s.flagversions\" for the output MS already exist. Please delete." % outputvis
+            raise Exception("The flagversions \"%s.flagversions\" for the output MS already exist. Please delete." % outputvis)
 			    
         # Handle selectdata explicitly
         #  (avoid hidden globals)
@@ -226,7 +228,7 @@ def cvel(vis, outputvis,
                     if(len(ms.msseltoindex(vis, field=phasecenter)['field']) > 0):
                         tmppc=ms.msseltoindex(vis, field=phasecenter)['field'][0]
                         ##succesful must be string like '0' or 'NGC*'
-                except Exception, instance:
+                except Exception as instance:
                     ##failed must be a string 'J2000 18h00m00 10d00m00'
                     tmppc=phasecenter
                 phasecenter=tmppc
@@ -240,7 +242,7 @@ def cvel(vis, outputvis,
                 message += " was selected as phasecenter but is not among the fields selected for output: "
                 message += str(ms.msseltoindex(vis,field=field)['field'])
                 ms.close()
-                raise Exception, message
+                raise Exception(message)
 
             tb.open(vis+"/FIELD")
             try:
@@ -258,7 +260,7 @@ def cvel(vis, outputvis,
                 tb.close()
                 message = "phasecenter field id " + str(phasecenter) + " is not valid"
                 ms.close()
-                raise Exception, message
+                raise Exception(message)
 
         if(mode=='frequency'):
             ## reset the default values
@@ -270,10 +272,10 @@ def cvel(vis, outputvis,
             if not(start==""):
                 if (qa.quantity(start)['unit'].find('Hz') < 0):
                     ms.close()
-                    raise TypeError, "start parameter is not a valid frequency quantity " %start
+                    raise TypeError("start parameter is not a valid frequency quantity " %start)
             if(not(width=="") and (qa.quantity(width)['unit'].find('Hz') < 0)):
                 ms.close()
-                raise TypeError, "width parameter %s is not a valid frequency quantity " %width
+                raise TypeError("width parameter %s is not a valid frequency quantity " %width)
             
         elif(mode=='velocity'):
             ## reset the default values
@@ -285,15 +287,15 @@ def cvel(vis, outputvis,
             if not(start==""):
                 if (qa.quantity(start)['unit'].find('m/s') < 0):
                     ms.close()
-                    raise TypeError, "start parameter %s is not a valid velocity quantity " %start
+                    raise TypeError("start parameter %s is not a valid velocity quantity " %start)
             if(not(width=="") and (qa.quantity(width)['unit'].find('m/s') < 0)):
                 ms.close()
-                raise TypeError, "width parameter %s is not a valid velocity quantity " %width
+                raise TypeError("width parameter %s is not a valid velocity quantity " %width)
 
         elif(mode=='channel' or mode=='channel_b'):
             if((type(width) != int) or (type(start) != int)):
                 ms.close()
-                raise TypeError, "start and width have to be integers with mode = %s" %mode            
+                raise TypeError("start and width have to be integers with mode = %s" %mode)            
 
 
         ## check if preaveraging is necessary
@@ -370,7 +372,7 @@ def cvel(vis, outputvis,
         elif (mpresent and not cpresent and not dpresent):
             datacolumn = 'model_data'
         else:
-            raise Exception, "Neither DATA nor CORRECTED_DATA nor MODEL_DATA column present. Cannot proceed."
+            raise Exception("Neither DATA nor CORRECTED_DATA nor MODEL_DATA column present. Cannot proceed.")
 
         if(doselection and not dopreaverage):
             casalog.post("Creating selected SubMS ...", 'INFO')
@@ -450,7 +452,7 @@ def cvel(vis, outputvis,
                        phasec=newphasecenter, restfreq=restfreq,
                        outframe=outframe, veltype=veltype, hanning=hanning):
             ms.close()
-            raise Exception, "Error in regridding step ..."
+            raise Exception("Error in regridding step ...")
         ms.close()
 
         # deal with the passall option
@@ -505,7 +507,7 @@ def cvel(vis, outputvis,
                     ms.close()
                     shutil.rmtree(outputvis+temp_suffix)
                     if not rval:
-                        raise Exception, "Error in attaching passed-through data ..."
+                        raise Exception("Error in attaching passed-through data ...")
 
                 # II) deselected fields and selected spws
                 if not (fielddesel == ""):
@@ -528,26 +530,26 @@ def cvel(vis, outputvis,
                     ms.close()
                     shutil.rmtree(outputvis+temp_suffix)
                     if not rval:
-                        raise Exception, "Error in attaching passed-through data ..."
+                        raise Exception("Error in attaching passed-through data ...")
 
 	# Write history to output MS
 	try:
-		param_names = cvel.func_code.co_varnames[:cvel.func_code.co_argcount]
+		param_names = cvel.__code__.co_varnames[:cvel.__code__.co_argcount]
 		param_vals = [eval(p) for p in param_names]
 		write_history(mstool(), outputvis, 'cvel', param_names,
 					  param_vals, casalog)
-	except Exception, instance:
+	except Exception as instance:
 		casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
 					 'WARN')
 
         return True
 
-    except Exception, instance:
-        print '*** Error *** ',instance
+    except Exception as instance:
+        print('*** Error *** ',instance)
         # delete temp output (comment out for debugging)
         if os.path.exists(outputvis+".spwCombined"):
             casalog.post("Deleting temporary output files ...", 'INFO')
             shutil.rmtree(outputvis+".spwCombined")
-	raise Exception, instance
+	raise Exception(instance)
     
 

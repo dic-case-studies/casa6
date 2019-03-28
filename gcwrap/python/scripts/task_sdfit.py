@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy
 import os
 import time, datetime
@@ -25,7 +26,7 @@ def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,
             else:
                 raise ValueError(outfile + ' exists.')
         if (fitmode not in  ['list', 'auto']):
-            raise ValueError, "fitmode='%s' is not supported yet" % fitmode
+            raise ValueError("fitmode='%s' is not supported yet" % fitmode)
         if (spw == ''): spw = '*'
 
         selection = ms.msseltoindex(vis=infile, spw=spw, field=field, 
@@ -64,8 +65,8 @@ def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,
         else:
             raise Exception('temporary file was unexpectedly not created.')
 
-    except Exception, instance:
-        raise Exception, instance
+    except Exception as instance:
+        raise Exception(instance)
     finally:
         if 'tempfile' in locals() and os.path.exists(tempfile):
             os.system('rm -f %s' % tempfile)

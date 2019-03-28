@@ -5,6 +5,7 @@
 # by asdmsummary matches the expected number for that ASDM.
 
 
+from __future__ import absolute_import
 import os
 from __main__ import default
 from tasks import asdmsummary

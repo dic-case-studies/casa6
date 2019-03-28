@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import commands
 import math
@@ -132,7 +134,7 @@ class TestHelpers():
 #          return out, iters
 
      def getpeakres(self,summ):
-          if summ.has_key('summaryminor'):
+          if 'summaryminor' in summ:
                reslist = summ['summaryminor'][1,:]
                peakres = reslist[ len(reslist)-1 ]
           else:
@@ -140,7 +142,7 @@ class TestHelpers():
           return peakres
 
      def getmodflux(self,summ):
-          if summ.has_key('summaryminor'):
+          if 'summaryminor' in summ:
                modlist = summ['summaryminor'][2,:]
                modflux = modlist[ len(modlist)-1 ]
           else:
@@ -148,7 +150,7 @@ class TestHelpers():
           return modflux
 
      def getiterdone(self,summ):
-          if summ.has_key('iterdone'):
+          if 'iterdone' in summ:
                iters = summ['iterdone']
           else:
                iters = None
@@ -167,7 +169,7 @@ class TestHelpers():
           
           pstr =  "[" + testname + "] PeakRes is " + str(peakres) + " ("+self.verdict(retres)+" : should be " + str(correctres) + ")\n"
           pstr = pstr + "[" + testname + "] Modflux is " + str(modflux) + " ("+self.verdict(retmod)+" : should be " + str(correctmod) + ")"
-          print pstr
+          print(pstr)
           if retres==False or retmod==False:
                self.fail(pstr)
 
@@ -204,15 +206,15 @@ class TestHelpers():
                          pstr += self.checkval( val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True )
 
                except Exception as e:
-                    print ret
+                    print(ret)
                     raise
 
           if imexist != None:
                if type(imexist)==list:
                     pstr += self.checkims(imexist, True)
-                    print "pstr after checkims=",pstr
+                    print("pstr after checkims=",pstr)
                     pstr += self.check_keywords(imexist)
-                    print "pstr after check_keywords=",pstr
+                    print("pstr after check_keywords=",pstr)
 
 
           if imexistnot != None:
@@ -245,7 +247,7 @@ class TestHelpers():
           if stopcode != None:
               if type(stopcode)==int:
                   stopstr = "["+inspect.stack()[1][3]+"] Stopcode is " + str(ret['stopcode']) + " (" + self.verdict(ret['stopcode']==stopcode)  +  " : should be " + str(stopcode) + ")\n"
-                  print stopstr
+                  print(stopstr)
                   pstr += stopstr
                   
           if reffreq != None:
@@ -273,7 +275,7 @@ class TestHelpers():
                          ok=False
                     pstr =  "[" + testname + "] Chan "+ str(val[0]) + "  is " + str(thisval) + " ("+self.verdict(ok)+" : should be " + str(val[1]) + str(val[2]) + ")\n"
 
-          print pstr
+          print(pstr)
           return pstr
           #pstr = self.checkfinal(pstr)
 
@@ -306,7 +308,7 @@ class TestHelpers():
                          out=False
 
           pstr = "[" + testname + "] " + valname + " is " + str(val) + " ("+self.verdict(out)+" : should be " + str(correctval) + ")"
-          print pstr
+          print(pstr)
           pstr=pstr+"\n"
 #          if out==False:
 #               self.fail(pstr)
@@ -324,7 +326,7 @@ class TestHelpers():
                     out=False
 
           pstr = "[" + testname + "] Image made : " + str(imlist) + " = " + str(imex) + "(" + self.verdict(out) + " : should all be " + str(truth) + ")"
-          print pstr
+          print(pstr)
           pstr=pstr+"\n"
 #          if all(imex) == False:
 #               self.fail(pstr)
@@ -361,7 +363,7 @@ class TestHelpers():
                        res = True
                
           pstr =  "[" + testname + "] " + imname + ": Value is " + str(readval) + " at " + str(thepos) + " (" + self.verdict(res) +" : should be " + str(theval) + " )"
-          print pstr
+          print(pstr)
           pstr=pstr+"\n"
 #          if res==False:
 #               self.fail(pstr)
@@ -387,7 +389,7 @@ class TestHelpers():
                   res = False
               
           pstr =  "[" + testname + "] " + imname + ": Mask is " + str(readval) + " at " + str(thepos) + " (" + self.verdict(res) +" : should be " + str(theval) + " )"
-          print pstr
+          print(pstr)
           pstr=pstr+"\n"
 #          if res==False:
 #               self.fail(pstr)
@@ -409,7 +411,7 @@ class TestHelpers():
 
           pstr = "[" +  testname + "] Ref-Freq is " + str(reffreq) + " ("+self.verdict(retres)+" : should be " + str(theval) + ")"
 
-          print pstr
+          print(pstr)
           pstr=pstr+"\n"
           return pstr
    
@@ -451,7 +453,7 @@ class TestHelpers():
                pstr =  "[" + testname + "] " + imname + ": Spec frame is " +\
                str(baseframe) + thecrval + thecdelt + " (" +\
                self.verdict(res) +" : should be " + thecorrectans +" )"
-               print pstr
+               print(pstr)
                pstr=pstr+"\n"
           #self.checkfinal(pstr)
           return pstr
@@ -653,7 +655,7 @@ class TestHelpers():
                     hasvirmod=True
           tb.close()
 
-          print msname , ": modelcol=", hasmodcol, " modsum=", modsum, " virmod=", hasvirmod
+          print(msname , ": modelcol=", hasmodcol, " modsum=", modsum, " virmod=", hasvirmod)
           return hasmodcol, modsum, hasvirmod
 
      def checkmodelchan(self,msname="",chan=0):
@@ -696,7 +698,7 @@ class TestHelpers():
                #self.checkall(imexist = imlist)
 
           else:
-               print 'Not a parallel run of CASA'
+               print('Not a parallel run of CASA')
 
           return imlist
 
@@ -720,13 +722,13 @@ class TestHelpers():
              if ret.keys()[0].count('node'):
                  mergedret={}
                  nodenames = ret.keys()
-                 print "ret NOW=",ret
+                 print("ret NOW=",ret)
                  # must be parallel cube results
                  if parlist.count('iterdone'):
                      retIterdone = 0
                      for inode in nodenames:
-                         print "ret[",inode,"]=",ret[inode]
-                         print "inode.strip = ", int(inode.strip('node'))
+                         print("ret[",inode,"]=",ret[inode])
+                         print("inode.strip = ", int(inode.strip('node')))
                          retIterdone+=ret[inode][int(inode.strip('node'))]['iterdone']
                      mergedret['iterdone']=retIterdone
                  if parlist.count('nmajordone'):
@@ -755,7 +757,7 @@ class TestHelpers():
                      #         tempmodval=0.0
                      #    retModflux += tempmodval
                      #mergedret['modflux']=retModflux
-                    if not mergedret.has_key('summaryminor'):
+                    if 'summaryminor' not in mergedret:
                         mergedret['summryminor']=et['node1'][1]['summaryminor']
                  if parlist.count('stopcode'):
                      mergedret['stopcode']=ret['node1'][1]['stopcode']

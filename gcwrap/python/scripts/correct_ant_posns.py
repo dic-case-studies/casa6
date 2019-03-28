@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from taskinit import *
 from correct_ant_posns_alma import correct_ant_posns_alma
 from correct_ant_posns_evla import correct_ant_posns_evla
@@ -48,7 +50,7 @@ def correct_ant_posns(vis_name, print_offsets=False):
     else:
         msg = 'Currently only work for EVLA or ALMA observations'
         if (print_offsets):
-            print msg
+            print(msg)
         else:
             # send to casalogger
             casalog.post(msg, "WARN")

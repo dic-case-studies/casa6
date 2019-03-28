@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -81,7 +83,7 @@ class sdfixscan_unittest_base:
         # see CAS-5779, images/Images/ImageStatistics.tcc
         axis_ra = csys.findaxis(axis=csys.findaxisbyname('ra'))['axisincoordinate']
         axis_dec = csys.findaxis(axis=csys.findaxisbyname('dec'))['axisincoordinate']
-        print axis_ra, axis_dec
+        print(axis_ra, axis_dec)
         units = csys.units()
         increments = csys.increment()['numeric']
         incr_ra = qa.quantity(abs(increments[axis_ra]), units[axis_ra])
@@ -95,7 +97,7 @@ class sdfixscan_unittest_base:
         stats=_ia.statistics(list=True, verbose=True)
 
         # set 'flux' value to ref
-        if not ref.has_key('flux'):
+        if 'flux' not in ref:
             ref['flux'] = self._flux(_ia.coordsys(), ref)
 
         _ia.close()
@@ -149,7 +151,7 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
             res=sdfixscan(infiles=[self.rawfiles[0]],mode='fft_mask',direction=[0.])
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('infiles should be a list of input images for Basket-Weaving.')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))        
@@ -160,7 +162,7 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
             res=sdfixscan(infiles=self.rawfiles,mode='fft_mask')
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('direction must have at least two different direction.')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))        
@@ -171,7 +173,7 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
             res=sdfixscan(infiles=self.rawfiles,mode='model')
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('infiles allows only one input file for pressed-out method.')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))        
@@ -182,7 +184,7 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
             res=sdfixscan(infiles=[self.rawfiles[0]],mode='model')
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except Exception, e:
+        except Exception as e:
             pos=str(e).find('direction allows only one direction for pressed-out method.')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))        
@@ -194,11 +196,11 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
             res=sdfixscan(infiles=self.rawfiles,mode='fft_mask',direction=[0.,90.0],outfile=self.outfile,overwrite=False)
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except StandardError, e:
+        except Exception as e:
             pos=str(e).find('%s already exists'%(self.outfile))
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))        
-        except Exception, e:
+        except Exception as e:
             self.assertTrue(False,
                             msg='Unexpected exception was thrown: %s'%(str(e)))        
 
@@ -208,11 +210,11 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
             res=sdfixscan(infiles=[self.rawfiles[0]],mode='model',beamsize=0.0,direction=[0.],outfile=self.outfile,overwrite=True)
             self.assertTrue(False,
                             msg='The task must throw exception')
-        except StandardError, e:
+        except Exception as e:
             pos=str(e).find('Gaussian2DParam')
             self.assertNotEqual(pos,-1,
                                 msg='Unexpected exception was thrown: %s'%(str(e)))        
-        except Exception, e:
+        except Exception as e:
             self.assertTrue(False,
                             msg='Unexpected exception was thrown: %s'%(str(e)))        
 

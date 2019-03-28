@@ -65,6 +65,7 @@
 #
 
 ###########################################################################
+from __future__ import absolute_import
 import shutil
 import casac
 from tasks import *

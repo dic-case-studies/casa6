@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from taskinit import *
 
 def imstat(
@@ -27,7 +28,7 @@ def imstat(
             lside=lside, zscore=zscore, maxiter=maxiter,
             clmethod=clmethod, niter=niter
         )
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( '*** Error ***'+str(instance), 'SEVERE' )
         raise
     finally:

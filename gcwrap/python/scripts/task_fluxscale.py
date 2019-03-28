@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from taskinit import *
 from mstools import write_history
@@ -95,19 +97,19 @@ def fluxscale(vis=None,caltable=None,fluxtable=None,reference=None,transfer=None
 
                #write history
                try:
-                      param_names = fluxscale.func_code.co_varnames[:fluxscale.func_code.co_argcount]
+                      param_names = fluxscale.__code__.co_varnames[:fluxscale.__code__.co_argcount]
                       param_vals = [eval(p) for p in param_names]
                       write_history(mstool(), vis, 'fluxscale', param_names,
                                     param_vals, casalog)
                       writeResultsHistory(mstool(), vis, casalog, output)
-               except Exception, instance:
+               except Exception as instance:
                       casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                                    'WARN')
 
-       except Exception, instance:
-               print '*** Error ***',instance
+       except Exception as instance:
+               print('*** Error ***',instance)
                mycb.close()
-               raise Exception, instance
+               raise Exception(instance)
 
        return output
 
@@ -192,7 +194,7 @@ def writeResultsHistory(myms, vis, mycasalog, indict):
                            " Jy (reference freq = {:7.3f}".format(fitreffreq)+funitlast+")"
                     myms.writehistory(message=msg3, origin='fluxscale')
                     myms.writehistory(message=msg4, origin='fluxscale')
-    except Exception, instance:
+    except Exception as instance:
         mycasalog.post("*** Error \'%s\' updating fluxscale results in HISTORY of %s" % (instance, vis), 'WARN' )
 
     finally:

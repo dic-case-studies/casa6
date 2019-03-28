@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import commands
 import math
@@ -344,7 +346,7 @@ class ImagerParameters():
             return errs
 
         # msname, field, spw, etc must all be equal-length lists of strings, or all except msname must be of length 1.
-        if not self.allselpars.has_key('msname'):
+        if 'msname' not in self.allselpars:
             errs = errs + 'MS name(s) not specified'
         else:
 
@@ -399,7 +401,7 @@ class ImagerParameters():
         if len(self.outlierfile)>0:
             outlierpars,parseerrors = self.parseOutlierFile(self.outlierfile) 
             if parallel:
-                print "CALLING checkParallelMFMixModes..."
+                print("CALLING checkParallelMFMixModes...")
                 errs = self.checkParallelMFMixedModes(self.allimpars,outlierpars)
                 if len(errs): 
                     return errs 
@@ -552,7 +554,7 @@ class ImagerParameters():
                     tempnormpar[ parpair[0] ] = parpair[1]
                     usepar=True
                 if usepar==False:
-                    print 'Ignoring unknown parameter pair : ' + oneline
+                    print('Ignoring unknown parameter pair : ' + oneline)
 
         if len(errs)==0:
             returnlist.append( {'impars':tempimpar,'gridpars':tempgridpar, 'weightpars':tempweightpar, 'decpars':tempdecpar, 'normpars':tempnormpar} )
@@ -575,7 +577,7 @@ class ImagerParameters():
     def evalToTarget(self, globalpars, subparkey, parname, dtype='int' ):
         try:
             for fld in range(0, len( globalpars ) ):
-                if globalpars[ fld ][subparkey].has_key(parname):
+                if parname in globalpars[ fld ][subparkey]:
                     if dtype=='int' or dtype=='intvec':
                         val_e = eval( globalpars[ fld ][subparkey][parname] )
                     if dtype=='strvec':
@@ -588,7 +590,7 @@ class ImagerParameters():
 
                     globalpars[ fld ][subparkey][parname] = val_e
         except:
-            print 'Cannot evaluate outlier field parameter "' + parname + '"'
+            print('Cannot evaluate outlier field parameter "' + parname + '"')
 
         return globalpars
 
@@ -629,7 +631,7 @@ class ImagerParameters():
                             maxid = val
             newimagename = dirname[2:] + prefix + '_' + str(maxid+1)
 
-        print 'Using : ',  newimagename
+        print('Using : ',  newimagename)
         return newimagename
 
     def incrementImageNameList(self, inpnamelist ):
@@ -707,7 +709,7 @@ class ImagerParameters():
     ## For CAS-8250. Remove when CAS-6682 is done.
     def fixIntParam(self, allpars, parname ):
         for immod in allpars.keys() :
-            if allpars[immod].has_key(parname):
+            if parname in allpars[immod]:
                 ims = allpars[immod][parname]
                 if type(ims) != list:
                     ims = int(ims)
@@ -721,16 +723,16 @@ class ImagerParameters():
     #  (e.g. combination cube and continuum for main and outlier fields)
     def checkParallelMFMixedModes(self,allimpars,outlierpars):
         errmsg=''
-        print "outlierpars==",outlierpars
+        print("outlierpars==",outlierpars)
         mainspecmode= allimpars['0']['specmode']
         mainnchan = allimpars['0']['nchan'] 
-        print "mainspecmode=",mainspecmode, "mainnchan=",mainnchan
+        print("mainspecmode=",mainspecmode, "mainnchan=",mainnchan)
         cubeoutlier = False
         contoutlier = False
         isnchanmatch = True
         for immod in range(0, len(outlierpars)):
-            if outlierpars[immod].has_key('impars'):
-                if outlierpars[immod]['impars'].has_key('nchan'):
+            if 'impars' in outlierpars[immod]:
+                if 'nchan' in outlierpars[immod]['impars']:
                     if outlierpars[immod]['impars']['nchan']>1:
                         cubeoutlier=True
                         if outlierpars[immod]['impars']['nchan'] != mainnchan:
@@ -738,7 +740,7 @@ class ImagerParameters():
                     else:
                         contoutlier=True
                 else:
-                    if outlierpars[immod]['impars'].has_key('specmode'):
+                    if 'specmode' in outlierpars[immod]['impars']:
                         if outlierpars[immod]['impars']['specmode']=='mfs':
                            contoutlier=True
         if mainspecmode.find('cube')==0:

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 import os
 import sys
@@ -16,11 +18,11 @@ debug = False
 # Decorator function to print the arguments of a function
 def dump_args(func):
     "This decorator dumps out the arguments passed to a function before calling it"
-    argnames = func.func_code.co_varnames[:func.func_code.co_argcount]
-    fname = func.func_name
+    argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
+    fname = func.__name__
    
     def echo_func(*args,**kwargs):
-        print fname, ":", ', '.join('%s=%r' % entry for entry in zip(argnames,args) + kwargs.items())
+        print(fname, ":", ', '.join('%s=%r' % entry for entry in zip(argnames,args) + kwargs.items()))
         return func(*args, **kwargs)
    
     return echo_func
@@ -291,7 +293,7 @@ def flagdata(vis,
         newtime = 0.0
         if type(ntime) == float or type(ntime) == int:
             if ntime <= 0:
-                raise Exception, 'Parameter ntime cannot be < = 0'
+                raise Exception('Parameter ntime cannot be < = 0')
             else:
                 # units are seconds
                 newtime = float(ntime)
@@ -322,7 +324,7 @@ def flagdata(vis,
         if ((type(vis) == str) & (os.path.exists(vis))):
             aflocal.open(vis, newtime)
         else:
-            raise Exception, 'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
 
 
         # Get the parameters for the mode
@@ -383,10 +385,10 @@ def flagdata(vis,
                 casalog.post('%s'%flagcmd,'DEBUG1')
 
 
-            except Exception, instance:
+            except Exception as instance:
                 casalog.post('%s'%instance,'ERROR')
-                raise Exception, 'Error reading the input list. Make sure the syntax used in the list '\
-                                 'follows the rules given in the inline help of the task.'
+                raise Exception('Error reading the input list. Make sure the syntax used in the list '\
+                                 'follows the rules given in the inline help of the task.')
 
             casalog.post('Selected ' + str(vrows.__len__())
                          + ' commands from combined input list(s) ')
@@ -604,7 +606,7 @@ def flagdata(vis,
                     casalog.post('Saving to FLAG_CMD is not supported for cal tables', 'WARN')
 
                 if not overwrite and os.path.exists(outfile):
-                    raise Exception, 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile
+                    raise Exception('You have set overwrite to False. Remove %s before saving the flag commands'%outfile)
 
                 else:                                 
                     fh.writeFlagCommands(vis, flagcmd, writeflags, cmdreason, outfile, False) 
@@ -626,7 +628,7 @@ def flagdata(vis,
             casalog.post('Parsing the parameters for %s mode'%mode, 'DEBUG1')
             if (not aflocal.parseagentparameters(agent_pars)):
 #                casalog.post('Failed to parse parameters for mode %s' %mode, 'ERROR')
-                raise ValueError, 'Failed to parse parameters for mode %s' %mode
+                raise ValueError('Failed to parse parameters for mode %s' %mode)
                 
             casalog.post('%s'%agent_pars, 'DEBUG')
        
@@ -635,7 +637,7 @@ def flagdata(vis,
             # The loose union will be calculated for field and spw only;
             # antenna, correlation and timerange should be handled by the agent
             if vrows.__len__() == 0:
-                raise Exception, 'There are no valid commands in list'
+                raise Exception('There are no valid commands in list')
             
             unionpars = {}
                 
@@ -715,7 +717,7 @@ def flagdata(vis,
         # Save the current parameters/list to FLAG_CMD or to output
         if savepars:  
             if not overwrite and os.path.exists(outfile):
-                raise Exception, 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile            
+                raise Exception('You have set overwrite to False. Remove %s before saving the flag commands'%outfile)            
             
             # Cal table type
             if iscal:
@@ -742,12 +744,12 @@ def flagdata(vis,
         if not iscal:
             if mode != 'summary' and action == 'apply':
                 try:
-                    param_names = flagdata.func_code.co_varnames[:flagdata.func_code.co_argcount]
+                    param_names = flagdata.__code__.co_varnames[:flagdata.__code__.co_argcount]
                     param_vals = [eval(p) for p in param_names]
                     retval &= write_history(mslocal, vis, 'flagdata', param_names,
                                             param_vals, casalog)
                     
-                except Exception, instance:
+                except Exception as instance:
                     casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                                  'WARN')
 
@@ -798,7 +800,7 @@ def flagdata(vis,
                    
         return summary_stats_list
     
-    except Exception, instance:
+    except Exception as instance:
         aflocal.done()
         casalog.post('%s'%instance,'ERROR')
         return summary_stats
@@ -817,9 +819,9 @@ def delspace(word, replace):
 def filter_summary(summary_stats,minrel,maxrel,minabs,maxabs):
     
     if type(summary_stats) is dict:
-        if  summary_stats.has_key('flagged') and \
-            summary_stats.has_key('total') and \
-            not summary_stats.has_key('type'):
+        if  'flagged' in summary_stats and \
+            'total' in summary_stats and \
+            'type' not in summary_stats:
             if  (summary_stats['flagged'] < minabs) or \
                 (summary_stats['flagged'] > maxabs and maxabs >= 0) or \
                 (summary_stats['flagged'] * 1.0 / summary_stats['total'] < minrel) or \

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -25,15 +27,15 @@ datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):   
+if 'TEST_DATADIR' in os.environ:   
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/gencal/'
     if os.path.isdir(DATADIR):
         testmms = True
         datapath = DATADIR
     else:
-        print 'WARN: directory '+DATADIR+' does not exist'
+        print('WARN: directory '+DATADIR+' does not exist')
 
-print 'gencal tests will use data from '+datapath         
+print('gencal tests will use data from '+datapath)         
 
 
 class gencal_antpostest(unittest.TestCase):
@@ -101,8 +103,8 @@ class gencal_antpostest(unittest.TestCase):
           reference = self.reffile2
           self.assertTrue(th.compTables(self.caltable, reference, ['WEIGHT','OBSERVATION_ID']))
 
-        except urllib2.URLError, err:
-          print "Cannot access %s , skip this test" % evlabslncorrURL
+        except urllib2.URLError as err:
+          print("Cannot access %s , skip this test" % evlabslncorrURL)
           self.res=True
 
 
@@ -192,11 +194,11 @@ class test_gencal_antpos_alma(unittest.TestCase):
             self.assertTrue(callable(getattr(ws_cli.service, method_name)),
                             'The client service should have this method: {}, and '
                             'it should be callable.'.format(method_name))
-        except ImportError, exc:
+        except ImportError as exc:
             print('Cannot import required dependencies to query the ALMA TCM DB '
                   'web service')
             raise
-        except urllib2.URLError, exc:
+        except urllib2.URLError as exc:
             print('Connection/network error while querying the ALMA TCM DB web'
                   'service')
             raise
@@ -219,7 +221,7 @@ class test_gencal_antpos_alma(unittest.TestCase):
             print('Cannot import required dependencies to query the ALMA TCM DB '
                   'web service')
             raise
-        except urllib2.URLError, exc:
+        except urllib2.URLError as exc:
             print('Connection/network error while querying the ALMA TCM DB web'
                   'service')
             raise
@@ -293,7 +295,7 @@ class test_gencal_antpos_alma(unittest.TestCase):
             print('Cannot import required dependencies to query the ALMA TCM DB '
                   'web service')
             raise
-        except urllib2.URLError, exc:
+        except urllib2.URLError as exc:
             print('Connection/network error while querying the ALMA TCM DB web'
                   'service')
             raise

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -18,13 +20,13 @@ datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/ha
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):   
+if 'TEST_DATADIR' in os.environ:   
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/hanningsmooth/'
     if os.path.isdir(DATADIR):
         testmms = True
         datapath = DATADIR
 
-print 'hanningsmooth tests will use data from '+datapath         
+print('hanningsmooth tests will use data from '+datapath)         
 
 class test_base(unittest.TestCase):
 
@@ -63,7 +65,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.testmms):
             os.system("rm -rf " + self.testmms)
             
-        print "................. Creating test MMS .................."
+        print("................. Creating test MMS ..................")
         partition(vis=msfile, outputvis=self.testmms, datacolumn=column,
                     createmms=True,separationaxis=axis, scan=scans, spw=spws)
 
@@ -83,8 +85,8 @@ class hanningsmooth_test1(test_base):
         self.outputms = 'none.ms'
         try:
             hanningsmooth(vis=msfile)
-        except exceptions.RuntimeError, instance:
-            print 'Expected error: %s'%instance
+        except exceptions.RuntimeError as instance:
+            print('Expected error: %s'%instance)
         
     def test2(self):
         '''hanningsmooth - Test 2: Check that output MS is created'''

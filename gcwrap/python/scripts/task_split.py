@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import re
 import string
@@ -41,7 +42,7 @@ def split(vis,
     # Validate input and output parameters
     try:
         pdh.setupIO()
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('%s'%instance,'ERROR')
         return False
 
@@ -50,14 +51,14 @@ def split(vis,
         
         retval = pdh.validateInputParams()
         if not retval['status']:
-            raise Exception, 'Unable to continue with MMS processing'
+            raise Exception('Unable to continue with MMS processing')
                         
         pdh.setupCluster('split')
 
         # Execute the jobs
         try:
             pdh.go()
-        except Exception, instance:
+        except Exception as instance:
             casalog.post('%s'%instance,'ERROR')
             return False
                     
@@ -160,7 +161,7 @@ def split(vis,
             
         mtlocal.done()
 
-    except Exception, instance:
+    except Exception as instance:
         mtlocal.done()
         casalog.post('%s'%instance,'ERROR')
         return False
@@ -238,7 +239,7 @@ def split(vis,
                                         repl = "spw='" + sch2 + "'"
                                     cmd = cmds[rownum].replace(spwmatch.group(), repl)
                             #except: # cmd[rownum] no longer applies.
-                            except Exception, e:
+                            except Exception as e:
                                 casalog.post(
                                     "Error %s updating row %d of FLAG_CMD" % (e,
                                                                               rownum),
@@ -257,7 +258,7 @@ def split(vis,
                 
             mytb.close()
             
-        except Exception, instance:
+        except Exception as instance:
             if isopen:
                 mytb.close()
             mslocal = None
@@ -270,11 +271,11 @@ def split(vis,
 
     # Write history to output MS, not the input ms.
     try:
-        param_names = split.func_code.co_varnames[:split.func_code.co_argcount]
+        param_names = split.__code__.co_varnames[:split.__code__.co_argcount]
         param_vals = [eval(p) for p in param_names]
         write_history(mslocal, outputvis, 'split', param_names,
                       param_vals, casalog)
-    except Exception, instance:
+    except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')
         return False

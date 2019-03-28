@@ -1,4 +1,5 @@
 
+from __future__ import absolute_import
 import os, re
 import shutil
 import string
@@ -96,7 +97,7 @@ def mstransform(
     # Validate input and output parameters
     try:
         pdh.setupIO()
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('%s'%instance,'ERROR')
         return False
 
@@ -133,7 +134,7 @@ def mstransform(
                 pdh.override__args('createmms', False)
                 pdh.setupCluster('mstransform')
                 pdh.go()
-            except Exception, instance:
+            except Exception as instance:
                 casalog.post('%s'%instance,'ERROR')
                 return False
             
@@ -145,14 +146,14 @@ def mstransform(
         # Check the heuristics of separationaxis and the requested transformations
         pval = pdh.validateOutputParams()
         if pval == 0:
-            raise Exception, 'Cannot create MMS using separationaxis=%s with some of the requested transformations.'\
-                            %separationaxis
+            raise Exception('Cannot create MMS using separationaxis=%s with some of the requested transformations.'\
+                            %separationaxis)
                              
         try:
             pdh.setupCluster('mstransform')
             pdh.go()
             monolithic_processing = False
-        except Exception, instance:
+        except Exception as instance:
             casalog.post('%s'%instance,'ERROR')
             return False
         
@@ -203,11 +204,11 @@ def mstransform(
         if tileshape.__len__() == 1:
             # The only allowed values are 0 or 1
             if tileshape[0] != 0 and tileshape[0] != 1:
-                raise ValueError, 'When tileshape has one element, it should be either 0 or 1.'
+                raise ValueError('When tileshape has one element, it should be either 0 or 1.')
                 
         elif tileshape.__len__() != 3:
             # The 3 elements are: correlations, channels, rows
-            raise ValueError, 'Parameter tileshape must have 1 or 3 elements.'
+            raise ValueError('Parameter tileshape must have 1 or 3 elements.')
             
         config['tileshape'] = tileshape                
 
@@ -217,7 +218,7 @@ def mstransform(
             
         # Only parse chanaverage if chanbin is valid
         if chanaverage and isinstance(chanbin, int) and chanbin <= 1:
-            raise Exception, 'Parameter chanbin must be > 1 to do channel averaging'
+            raise Exception('Parameter chanbin must be > 1 to do channel averaging')
             
         # Validate the case of int or list chanbin
         if chanaverage and pdh.validateChanBin():
@@ -261,7 +262,7 @@ def mstransform(
         if timeaverage:
             tb = qa.convert(qa.quantity(timebin), 's')['value']
             if not tb > 0:
-                raise Exception, "Parameter timebin must be > '0s' to do time averaging"
+                raise Exception("Parameter timebin must be > '0s' to do time averaging")
                        
         if timeaverage:
             casalog.post('Parse time averaging parameters')
@@ -303,7 +304,7 @@ def mstransform(
             
         mtlocal.done()
                     
-    except Exception, instance:
+    except Exception as instance:
         mtlocal.done()
         casalog.post('%s'%instance,'ERROR')
         return False
@@ -380,7 +381,7 @@ def mstransform(
                                         repl = "spw='" + sch2 + "'"
                                     cmd = cmds[rownum].replace(spwmatch.group(), repl)
                             #except: # cmd[rownum] no longer applies.
-                            except Exception, e:
+                            except Exception as e:
                                 casalog.post(
                                     "Error %s updating row %d of FLAG_CMD" % (e,
                                                                               rownum),
@@ -399,7 +400,7 @@ def mstransform(
                 
             mytb.close()
             
-        except Exception, instance:
+        except Exception as instance:
             if isopen:
                 mytb.close()
             mslocal = None
@@ -412,11 +413,11 @@ def mstransform(
 
     # Write history to output MS, not the input ms.
     try:
-        param_names = mstransform.func_code.co_varnames[:mstransform.func_code.co_argcount]
+        param_names = mstransform.__code__.co_varnames[:mstransform.__code__.co_argcount]
         param_vals = [eval(p) for p in param_names]
         write_history(mslocal, outputvis, 'mstransform', param_names,
                       param_vals, casalog)
-    except Exception, instance:
+    except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')
         return False

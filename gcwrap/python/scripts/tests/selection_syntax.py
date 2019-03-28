@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import unittest
 import inspect
 import re
@@ -11,7 +12,7 @@ def skipUnlessHasParam(param):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
             task = args[0].task
-            task_args = inspect.getargs(task.func_code).args
+            task_args = inspect.getargs(task.__code__).args
             if isinstance(param, str):
                 condition = param in task_args
                 reason = '%s doesn\'t have parameter \'%s\''%(task.__name__, param)

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import commands
 import math
@@ -109,7 +111,7 @@ class PyParallelImagerHelper():
         allselpars =  synu.contdatapartition( oneselpars , self.NN )
         synu.done()
 
-        print 'Partitioned Selection : ', allselpars
+        print('Partitioned Selection : ', allselpars)
         return allselpars
 
 #############################################
@@ -120,7 +122,7 @@ class PyParallelImagerHelper():
         allselpars =  synu.cubedatapartition( oneselpars , self.NN )
         synu.done()
 
-        print 'Partitioned Selection : ', allselpars
+        print('Partitioned Selection : ', allselpars)
         return allselpars
 
 #############################################
@@ -130,7 +132,7 @@ class PyParallelImagerHelper():
         allimpars =  synu.cubeimagepartition( impars , self.NN )
         synu.done()
 
-        print 'ImSplit : ', allimpars
+        print('ImSplit : ', allimpars)
         return allimpars
 
 #############################################
@@ -166,14 +168,14 @@ class PyParallelImagerHelper():
         self.CL.pgc('from numpy import array,int32')
         self.CL.pgc('os.chdir("'+owd+'")')
         os.chdir(owd)
-        print "Setting up ", numproc, " engines."
+        print("Setting up ", numproc, " engines.")
         return numproc
 
 #############################################
     def takedownCluster(self):
         # Check that all nodes have returned, before stopping the cluster
          self.checkJobs()
-         print 'Ending use of cluster, but not closing it. Call clustermanager.stop_cluster() to close it if needed.'
+         print('Ending use of cluster, but not closing it. Call clustermanager.stop_cluster() to close it if needed.')
 #         self.sc.stop_cluster()
          self.CL=None
          self.sc=None
@@ -190,7 +192,7 @@ class PyParallelImagerHelper():
              for k in self.nodeList:
                  joblist[k-1] = self.CL.odo('casalog.post("node '+str(k)+' has completed its job")', k)
 
-        print 'Blocking for nodes to finish'
+        print('Blocking for nodes to finish')
         over=False
         while(not over):
             overone=True
@@ -198,10 +200,10 @@ class PyParallelImagerHelper():
             for k in range(len(joblist)):
                 try:
                     overone =  self.CL.check_job(joblist[k],False) and overone
-                except Exception,e:
+                except Exception as e:
                      raise Exception(e)
             over = overone
-        print '...done'
+        print('...done')
 
 #############################################
     def runcmd(self, cmdstr="", node=-1):

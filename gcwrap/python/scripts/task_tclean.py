@@ -5,6 +5,8 @@
 #
 ################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 from taskinit import *
 
 import os
@@ -185,10 +187,10 @@ def tclean(
     paramList = None
     # Put all parameters into dictionaries and check them.
     ##make a dictionary of parameters that ImagerParameters take
-    defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.func_defaults))
+    defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__))
     ###assign values to the ones passed to tclean and if not defined yet in tclean...
     ###assign them the default value of the constructor
-    bparm={k:  inpparams[k] if inpparams.has_key(k) else defparm[k]  for k in ImagerParameters.__init__.__func__.__code__.co_varnames[1:-1]}
+    bparm={k:  inpparams[k] if k in inpparams else defparm[k]  for k in ImagerParameters.__init__.__func__.__code__.co_varnames[1:-1]}
     ###default mosweight=True is tripping other gridders as they are not
     ###expecting it to be true
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
@@ -226,7 +228,7 @@ def tclean(
          # virtualconcat type - changed from virtualmove to virtualcopy 2016-07-20
          concattype='virtualcopy'
     else:
-         print 'Invalid parallel combination in doClean.'
+         print('Invalid parallel combination in doClean.')
          return False
     
     retrec={}
@@ -267,7 +269,7 @@ def tclean(
              
             imager.makePSF()
             if((psfphasecenter != '') and (gridder=='mosaic')):
-                print "doing with different phasecenter psf"
+                print("doing with different phasecenter psf")
                 imager.unlockimages(0)
                 psfParameters=paramList.getAllPars()
                 psfParameters['phasecenter']=psfphasecenter
@@ -341,7 +343,7 @@ def tclean(
 
 
         if (pcube):
-            print "running concatImages ..."
+            print("running concatImages ...")
             casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
             # fixed to move subcubes
             imager.concatImages(type=concattype)

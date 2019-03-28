@@ -61,6 +61,7 @@
 # </motivation>
 #
 ###########################################################################
+from __future__ import absolute_import
 from taskinit import *
 
 def slsearch(
@@ -88,9 +89,9 @@ def slsearch(
         )
             
         if (not newsl):
-            raise Exception, "Exception when running sl.search()"
+            raise Exception("Exception when running sl.search()")
         return True
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
         raise
     finally:

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import numpy as np
 from callibrary import *
@@ -29,7 +31,7 @@ def gaincal(vis=None,caltable=None,
                 if ((type(vis)==str) & (os.path.exists(vis))):
                         mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
                 else:
-                        raise Exception, 'Visibility data set not found - please verify the name'
+                        raise Exception('Visibility data set not found - please verify the name')
 
 		# Do data selection according to selectdata
 		casalog.post("NB: gaincal automatically excludes auto-correlations.")
@@ -147,11 +149,11 @@ def gaincal(vis=None,caltable=None,
 
 		mycb.close()
 
-	except Exception, instance:
-		print '*** Error ***', instance
+	except Exception as instance:
+		print('*** Error ***', instance)
 		mycb.close()
 		casalog.post("Error in gaincal: %s" % str(instance), "SEVERE")
-		raise Exception, "Error in gaincal: "+str(instance)
+		raise Exception("Error in gaincal: "+str(instance))
 
 def reportsolvestats(rec):
 	if (rec.keys().count('origin')==1 and

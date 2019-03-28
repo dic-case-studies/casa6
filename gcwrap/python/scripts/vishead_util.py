@@ -3,6 +3,8 @@
 #when working with measurement sets as tables.
 #"""
 
+from __future__ import absolute_import
+from __future__ import print_function
 from taskinit import *
 import os
 
@@ -19,7 +21,7 @@ def getput_keyw(mode, vis, key, hdindex, hdvalue='', hdref=None):
             i = int(hdindex)
             if i < 0:
                 # allowed by python, but...
-                raise Exception, "Illegal index " + str(i)
+                raise Exception("Illegal index " + str(i))
             
             value = tb.getcell(col, i)  # throws exception if index too large
         except (ValueError, TypeError):   # This is almost certainly from
@@ -31,7 +33,7 @@ def getput_keyw(mode, vis, key, hdindex, hdvalue='', hdref=None):
     elif mode == 'put':
         if(tb.isvarcol(col)):
             tb.close()
-            raise Exception, "vishead does not yet read/write variably sized columns"
+            raise Exception("vishead does not yet read/write variably sized columns")
         else:
             #TODO: Apply colinfo and hdref.
 
@@ -68,7 +70,7 @@ def getput_keyw(mode, vis, key, hdindex, hdvalue='', hdref=None):
         value = None
     else:
         tb.close()
-        raise Exception, "Assertion error"
+        raise Exception("Assertion error")
 
     #print "Will return", value
 
@@ -117,10 +119,10 @@ def getrefunits(d, defunits=None):
     """
     rsys = 'UNKNOWN'
     try:
-        if d.has_key('MEASINFO'):
+        if 'MEASINFO' in d:
             rsys = d['MEASINFO'].get('Ref', 'UNKNOWN')
     except:
-        print "d =", d
+        print("d =", d)
     return rsys, d.get('QuantumUnits', defunits)
     
 def valref2direction_strs(valreftuple):

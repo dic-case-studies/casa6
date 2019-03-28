@@ -1,4 +1,5 @@
 
+from __future__ import print_function
 def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=False):
         """
         Update vis with the parameters that task tname was called with.
@@ -40,14 +41,14 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
         """
         if not hasattr(myms, 'writehistory'):
                 if debug:
-                        print "write_history(myms, %s, %s): myms is not an ms tool" % (vis, tname)
+                        print("write_history(myms, %s, %s): myms is not an ms tool" % (vis, tname))
                 return False
         retval = True
         isopen = False
         try:
                 if not myclog and hasattr(casalog, 'post'):
                         myclog = casalog
-        except Exception, instance:
+        except Exception as instance:
                 # There's no logger to complain to, and I don't want to exit
                 # just because of that.
                 pass
@@ -63,7 +64,7 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
                     vestr += casa['source']['url'].split('/')[-2]
                     vestr += ' rev. ' + casa['source']['revision']
                     vestr += ' ' + casa['build']['time']
-                except Exception, instance:
+                except Exception as instance:
                     if hasattr(myclog, 'version'):
                         # Now give it a try.
                         vestr += myclog.version()
@@ -85,7 +86,7 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
 
                 myms.writehistory_batch(messages=messages, origin=tname)
 
-        except Exception, instance:
+        except Exception as instance:
                 if hasattr(myclog, 'post'):
                         myclog.post("*** Error \"%s\" updating HISTORY of %s" % (instance, vis),
                                     'SEVERE')

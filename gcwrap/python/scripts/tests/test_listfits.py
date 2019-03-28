@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -48,7 +50,7 @@ class listfits_test(unittest.TestCase):
            listfits(self.fitsfile)
            casalog.setlogfile(thelogfile)
         except:
-           print 'could not open "%s" for writing' % logfile
+           print('could not open "%s" for writing' % logfile)
         
 def suite():
     return [listfits_test]

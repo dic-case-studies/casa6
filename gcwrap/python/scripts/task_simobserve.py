@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from taskinit import *
 from simutil import *
 import os
@@ -1315,25 +1317,25 @@ def simobserve(
         if os.path.exists(fileroot+"/"+project+".noisy.sd.T.cal"):
             shutil.rmtree(fileroot+"/"+project+".noisy.sd.T.cal")
 
-    except TypeError, e:
+    except TypeError as e:
         finalize_tools()
         #msg("simobserve -- TypeError: %s" % e, priority="error")
         casalog.post("simobserve -- TypeError: %s" % e, priority="ERROR")
-        raise TypeError, e
+        raise TypeError(e)
         return False
-    except ValueError, e:
+    except ValueError as e:
         finalize_tools()
         #print "task_simobserve -- OptionError: ", e
         #msg("simobserve -- OptionError: %s" % e, priority="error")
         casalog.post("simobserve -- OptionError: %s" % e, priority="ERROR")
-        raise ValueError, e
+        raise ValueError(e)
         return False
-    except Exception, instance:
+    except Exception as instance:
         finalize_tools()
         #print '***Error***',instance
         #msg("simobserve -- Exception: %s" % instance, priority="error")
         casalog.post("simobserve -- Exception: %s" % instance, priority="ERROR")
-        raise Exception, instance
+        raise Exception(instance)
         return False
     return True
 
@@ -1360,7 +1362,7 @@ def plotpb(pb,axes,lims=None,color='k'):
         pblegend.set_alpha(0.7)
         axes.add_artist(pblegend)
     except:
-        print "Using old matplotlib substituting with circle"
+        print("Using old matplotlib substituting with circle")
         # work around for old matplotlib
         boxsize = pb*1.1
         if not lims: lims = axes.get_xlim(),axes.get_ylim()

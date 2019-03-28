@@ -55,6 +55,8 @@
 # 4. for input: mask/regular image with internal mask; for output: image with 
 #      internal mask with different spectral grid
 ###################
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import shutil
 from taskinit import *
@@ -91,9 +93,9 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 
         # check inpimage 
         if (['list','copy','expand'].count(mode)==1):
-            if inpimage=='': raise Exception, "inpimage is empty"
+            if inpimage=='': raise Exception("inpimage is empty")
             if not os.path.isdir(inpimage):
-                raise Exception, "inpimage=%s does not exist" % inpimage    
+                raise Exception("inpimage=%s does not exist" % inpimage)    
        
         # === list mode ===
         if mode == 'list':
@@ -127,7 +129,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
             if inpOK:
                 (parentimage,bmask)=extractmaskname(inpmask)
 		if bmask=='':
-		    raise Exception, "Missing an internal mask name"
+		    raise Exception("Missing an internal mask name")
                 if ia.isopen(): ia.close()
                 ia.open(parentimage)
                 defaultmaskname=ia.maskhandler('default')[0]
@@ -146,7 +148,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
             if inpOK:
                 (parentimage,bmask)=extractmaskname(inpmask)
                 if bmask=='':
-                    raise Exception, "Missing an internal mask name"
+                    raise Exception("Missing an internal mask name")
                 ia.open(parentimage)
                 casalog.post('Deleting the internal mask, %s ' % bmask, 'INFO')
                 defaultmaskname=ia.maskhandler('default')[0]
@@ -179,7 +181,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
            # seperate text files(region files), images(with full ':'), and direct region 
            # input mask(s)
            if inpmask=='':
-              raise Exception, "Input errror. The inpmask parameter is not specified."
+              raise Exception("Input errror. The inpmask parameter is not specified.")
            if type(inpmask)!=list: 
               inpmask=[inpmask]
            
@@ -195,7 +197,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                        if (commands.getoutput('file '+masklet).count('directory')):
                           if os.path.exists(masklet+'/table.f1'):
                               #casalog.post("%s is not in a recognized format for inpmask, ignored." % masklet, 'WARN') 
-                              raise Exception, "%s is not in a recognized format for inpmask" % masklet
+                              raise Exception("%s is not in a recognized format for inpmask" % masklet)
                           else:
                           # probably image file (with no mask extension)
                               imgfiles.append(masklet)
@@ -203,7 +205,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                           rgfiles.append(masklet)
                        else:
                           #casalog.post("%s does not recognized format for inpmask, ignored." % masklet, 'WARN')
-                          raise Exception, "%s is not in a recognized format for inpmask" % masklet
+                          raise Exception("%s is not in a recognized format for inpmask" % masklet)
                    else:
                        if masklet.count('[') and masklet.count(']'): # rough check on region specification 
                            rglist.append(masklet) 
@@ -212,7 +214,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                            if mask!='':
                                bmasks.append(masklet)
                            else:
-                               raise Exception, "%s is not an existing file/image or a region format" % masklet
+                               raise Exception("%s is not an existing file/image or a region format" % masklet)
       
            # expand allows only a string for inpmask
            if mode=='expand':
@@ -223,27 +225,27 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                if overwrite: 
                    output=inpimage
                else: 
-                   raise Exception, "output is not specified. If you want to overwrite inpimage, please set overwrite=True"
+                   raise Exception("output is not specified. If you want to overwrite inpimage, please set overwrite=True")
 
 	   if inpimage==output:
                #if overwrite:
 	       #    tmp_outmaskimage=tmp_maskimage
                #else:
                if not overwrite:
-                   raise Exception, "output=inpimage. If you want to overwrite inpimage, please set overwrite=True"
+                   raise Exception("output=inpimage. If you want to overwrite inpimage, please set overwrite=True")
 
            outparentim=output
            outbmask=''
            if os.path.isdir(output): 
                if not overwrite:
-                    raise Exception, "output=%s exists. If you want to overwrite it, please set overwrite=True" % output
+                    raise Exception("output=%s exists. If you want to overwrite it, please set overwrite=True" % output)
            else:
                (outparentim, outbmask)=extractmaskname(output)
                if outbmask!='':
                    (parentimexist,maskexist)=checkinmask(outparentim,outbmask)    
                    if parentimexist and maskexist: 
                        if not overwrite:
-                           raise Exception, "output=%s exists. If you want to overwrite it, please set overwrite=True" % output
+                           raise Exception("output=%s exists. If you want to overwrite it, please set overwrite=True" % output)
                        else:
                         casalog.post("Will overwrite the existing internal mask, %s in %s" % (outbmask,outparentim))
                         storeinmask=True
@@ -315,7 +317,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 		#print "expand mode main processing blocks..."
 		# do not allow list in this mode (for inpimage and inpmask) - maybe this is redundant now
 		if type(inpmask)==list:
-		    raise TypeError, 'A list for inpmask is not allowed for mode=expand'
+		    raise TypeError('A list for inpmask is not allowed for mode=expand')
 
 		# input image info, actually this will be output coordinates
 		ia.open(inpimage)
@@ -326,7 +328,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 #print " inshp for inpimage=",inshp
 
                 # prepare working input mask image (tmp_maskimage)
-                if debug: print "prepare working input image (tmp_maskimage)..."
+                if debug: print("prepare working input image (tmp_maskimage)...")
 		if inpmask!='': # inpmask is either image mask or T/F mask now
 		  # need to extract the mask and put in tmp_maskimage
                   # Note: changed usemasked=F, so that True (unmasked) part to be used. CAS- 
@@ -337,12 +339,12 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 		        #ia.open(tmp_maskimage)
                     else:
                         if debug: 
-                            print "parentimage=",parentimage, " exist?=",os.path.isdir(parentimage)
-                            print "tmp_maskimage=",tmp_maskimage, " exist?=",os.path.isdir(tmp_maskimage)
+                            print("parentimage=",parentimage, " exist?=",os.path.isdir(parentimage))
+                            print("tmp_maskimage=",tmp_maskimage, " exist?=",os.path.isdir(tmp_maskimage))
 		        # copy of inpimage in tmp_maskimage
 		        ia.fromimage(outfile=tmp_maskimage, infile=parentimage)
 		else:
-                    raise Exception, "inpmask must be specified"
+                    raise Exception("inpmask must be specified")
                 if ia.isopen(): ia.close() 
                 #setting up the output image (copy from inpimage or template)
                 if not os.path.isdir(outparentim):
@@ -354,7 +356,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     # if inpimage == output, tmp_outmaskimage is already created... 
                     if not os.path.isdir(tmp_outmaskimage):
                        shutil.copytree(outparentim,tmp_outmaskimage)
-                if debug: print "done setting up the out image=", tmp_outmaskimage     
+                if debug: print("done setting up the out image=", tmp_outmaskimage)     
 		# if inpfreq/outfreq are channel indices (int) then
 		# regrid in x y coords only and extract specified channel mask
 		# to specified output channels. (no regriding in spectral axis)
@@ -373,7 +375,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 inmaskcsys = ia.coordsys()
                 ia.close()
                 regridmethod = 'linear'
-                if inmaskcsys.torecord().has_key('spectral2'):
+                if 'spectral2' in inmaskcsys.torecord():
                     inspecdelt = inmaskcsys.torecord()['spectral2']['wcs']['cdelt']
                     ia.open(tmp_outmaskimage)
                     ocsys=ia.coordsys()
@@ -418,16 +420,16 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                                 if len(inpfreqs)==1: #contintuum -allow index-type specification
                                     selmode='byvf'
                                 else:
-                                    raise TypeError, "Mixed types in infreqs and outfreqs are not allowed" 
+                                    raise TypeError("Mixed types in infreqs and outfreqs are not allowed") 
                         else:
-                            raise TypeError, "Non-integer in inpfreq is not supported" 
+                            raise TypeError("Non-integer in inpfreq is not supported") 
                     # by velocity or frequency
                     elif type(inpfreqs)==str:
                         if type(outfreqs)!=str:
-                            raise TypeError, "Mixed types in infreqs and outfreqs" 
+                            raise TypeError("Mixed types in infreqs and outfreqs") 
                         selmode='byvf'
                     else:
-                        raise TypeError, "Wrong type for infreqs"
+                        raise TypeError("Wrong type for infreqs")
 
                     # inpfreqs and outfreqs are list of int
                     # match literally without regridding.
@@ -458,7 +460,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                             #do not regrid, use input image
                             shutil.copytree(tmp_maskimage,tmp_regridim)
                         else:
-                            if debug: print "regrid the mask,tmp_maskimage=",tmp_maskimage," tmp_regridim=",tmp_regridim
+                            if debug: print("regrid the mask,tmp_maskimage=",tmp_maskimage," tmp_regridim=",tmp_regridim)
                             #shutil.copytree(tmp_maskimage,'before_regrid_tmp_maskimage')
                             regridmask(tmp_maskimage,inpimage,tmp_regridim,chanrange=inpfreqlist,method=regridmethod)
                             #regridmask(tmp_maskimage,inpimage,tmp_regridim,chanrange=inpfreqlist)
@@ -487,7 +489,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                                     indhi=i
                                     break
                             if indhi < indlo:
-                                raise IOError, "Incorrectly finding edges of input masks! Probably some logic error in the code!!!" 
+                                raise IOError("Incorrectly finding edges of input masks! Probably some logic error in the code!!!") 
                             else:
                                 casalog.post("Determined non-zero channel range to be "+str(indlo)+"~"+str(indhi), 'DEBUG1')
 
@@ -575,7 +577,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     curinmasks = ia.maskhandler('get') 
                     if outbmask in curinmasks:
                        if  not overwrite:
-		           raise Exception, "Internal mask,"+outbmask+" exists. Please set overwrite=True."
+		           raise Exception("Internal mask,"+outbmask+" exists. Please set overwrite=True.")
                        else:
                            ia.maskhandler('delete',outbmask)
                     
@@ -597,12 +599,12 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 		    ia.rename(outparentim,ow)
 		    ia.done()
 
-            except Exception, instance:
-                print "*** Error ***", instance
+            except Exception as instance:
+                print("*** Error ***", instance)
                 if ia.isopen():
                     ia.close()
                 ia.done()
-                raise Exception, instance
+                raise Exception(instance)
 	    finally:
 		if os.path.exists(tmp_maskimage):
 		    shutil.rmtree(tmp_maskimage)
@@ -710,7 +712,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 		    #  will work in image(1/0) masks
                 
                     if debug: 
-                        print "imgfiles=",imgfiles
+                        print("imgfiles=",imgfiles)
                         shutil.copytree(sum_tmp_outfile,sum_tmp_outfile+"_imagemaskCombined")
                        
 		if len(bmasks)>0:
@@ -726,7 +728,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 			inmasks=ia.maskhandler('get')
                         ia.close()
 			if not inmasks.count(mskname):
-			    raise TypeError, mskname+" does not exist in "+imname+" -available masks:"+str(inmasks)
+			    raise TypeError(mskname+" does not exist in "+imname+" -available masks:"+str(inmasks))
 			# move T/F mask to image mask
                         # changed to usemasked=False as of CAS-5443  
 
@@ -754,7 +756,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         ia.open(imname)
                         ia.close()
                       
-                if debug: print "check rgfiles and rglist"
+                if debug: print("check rgfiles and rglist")
                 if len(rgfiles)>0 or len(rglist)>0:
                     # create an empty image with input image coords.
                     #print "Using %s as a template for regions" % inpimage 
@@ -777,8 +779,8 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 				for line in f:
                                     if firstline:
 				        if line.count('#CRTF')==0:
-				            raise Exception, "Input text file does not seems to be in a correct format \
-                                                              (must contains #CRTF)"
+				            raise Exception("Input text file does not seems to be in a correct format \
+                                                              (must contains #CRTF)")
 					firstline=False
                                     else:     
 					try:
@@ -806,7 +808,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                                 usedrgfiles.append(rgn)    
 			casalog.post("Converted %s regions from %s region files to image mask" % (nrgn,len(rgfiles)),"INFO")
 						
-                    if debug: print "processing rglist..."
+                    if debug: print("processing rglist...")
 		    if len(rglist)>0:
                         #print "Has rglist..."
                         nrgn=0
@@ -825,7 +827,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 			casalog.post("Converted %s regions to image mask" % (nrgn),"INFO")
                 
                         
-                    if debug: print "Regirdding..."
+                    if debug: print("Regirdding...")
                     # regrid if necessary
                     regridded_mask='__tmp_regrid_allrgnmask_'+pid
                     regridmask(tmp_allrgmaskim, sum_tmp_outfile,regridded_mask)
@@ -865,7 +867,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 		# so rename it with overwrite=T all the cases
                 #print "open sum_tmp_outfile=",sum_tmp_outfile
                 if storeinmask:
-                    if debug: print "Storeinmask......"
+                    if debug: print("Storeinmask......")
                     # by a request in CAS-6912 no setting of 1 for copying mask to the 'in-mask'
                     # (i.e. copy the values of inpimage as well for this mode)
                     # Replace
@@ -885,14 +887,14 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         if outbmask in oldmasklist:
                           ia.maskhandler('delete',outbmask)
                     if (maskexist and overwrite): 
-                      if debug: print "outbmask=",outbmask," exists... deleting it"
+                      if debug: print("outbmask=",outbmask," exists... deleting it")
                       ia.maskhandler('delete',outbmask)    
                     ia.maskhandler('copy',[sum_tmp_outfile+':'+outbmask, outbmask])    
                     ia.maskhandler('set',outbmask)
                     ia.done()
 		    outputmsg="to create an output mask: %s in %s" % (outbmask,outparentim)
                 else:
-                    if debug: print "store as an image mask......"
+                    if debug: print("store as an image mask......")
                     if ia.isopen(): ia.close()
 		    ia.open(sum_tmp_outfile) 
 		    ia.rename(outparentim,overwrite=True) 
@@ -911,9 +913,9 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 casalog.post(outputmsg,"INFO")
                 
 
-            except Exception, instance:
-                print "*** Error ***", instance
-                raise Exception, instance
+            except Exception as instance:
+                print("*** Error ***", instance)
+                raise Exception(instance)
 	    finally:
 		if os.path.exists(sum_tmp_outfile):
 		    shutil.rmtree(sum_tmp_outfile)
@@ -945,9 +947,9 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
     #        drawmaskinimage(inpimage,outmask)
             
 
-    except Exception, instance:
-        print '*** Error ****', instance
-        raise Exception, instance
+    except Exception as instance:
+        print('*** Error ****', instance)
+        raise Exception(instance)
 
     finally:
         # final clean up 
@@ -977,7 +979,7 @@ def regridmask(inputmask,template,outputmask,axes=[3,0,1],method='linear',chanra
     #print "Regrid.."
     #print "inputmask=",inputmask," template=",template," outputmask=",outputmask
     if not os.path.isdir(template):
-        raise IOError, "template image %s does not exist" % template
+        raise IOError("template image %s does not exist" % template)
     
     (ia,tb,) = gentools(['ia','tb']) 
     inputmaskcopy = "_tmp_copy_"+os.path.basename(inputmask)
@@ -994,7 +996,7 @@ def regridmask(inputmask,template,outputmask,axes=[3,0,1],method='linear',chanra
     keys = tb.getkeywords()  
     if keys['coords']['telescope']=="UNKNOWN":
         if defTelescope =="UNKNOWN":
-            raise IOError,"UNKNOWN Telescope for %s " % inputmask 
+            raise IOError("UNKNOWN Telescope for %s " % inputmask) 
         else:
             keys['coords']['telescope']=defTelescope
     tb.putkeywords(keys)     
@@ -1013,7 +1015,7 @@ def regridmask(inputmask,template,outputmask,axes=[3,0,1],method='linear',chanra
         errmsg += axname+" "
     if len(errmsg) != 0:
       errmsg = "There is no "+errmsg+" axes inpimage. ia.adddegaxis or importfits with defaultaxes=True can solve this problem"    
-      raise Exception, errmsg
+      raise Exception(errmsg)
 
     tmp_axes=[]
     for axi in axes:
@@ -1141,7 +1143,7 @@ def translatefreqrange(freqrange,csys):
                freqlist[i]=str(vf[0])+'Hz'
         return freqlist
     else:
-        raise TypeError, "Cannot understand frequency range"
+        raise TypeError("Cannot understand frequency range")
 
 def checkinput(inpname):
     """
@@ -1158,11 +1160,11 @@ def checkinput(inpname):
                 ia.open(parentimage)
                 inmasklist=ia.maskhandler('get')
                 ia.close()
-                raise Exception, "Cannot find the internal mask, %s. Candidate mask(s) are %s" % (tfmaskname, str(inmasklist))
+                raise Exception("Cannot find the internal mask, %s. Candidate mask(s) are %s" % (tfmaskname, str(inmasklist)))
             else:
                 return True # image mask and internal mask
     else:
-        raise Exception, "Cannot find the image=%s" % parentimage 
+        raise Exception("Cannot find the image=%s" % parentimage) 
    
 
 def checkinmask(parentimage,tfmaskname):

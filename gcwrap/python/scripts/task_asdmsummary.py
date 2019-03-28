@@ -3,6 +3,8 @@
 #
 # v1.0: 2012.02.13, M. Caillat
 #
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 from taskinit import *
 
@@ -24,9 +26,9 @@ def asdmsummary(asdm=None):
         exitcode = os.system(execute_string) >> 8
         if exitcode != 0 :
             casalog.post(theexecutable+' terminated with exit code '+str(exitcode), 'SEVERE')
-            raise Exception, "Error while trying to produce a summary of '+" + asdm + "'."
-    except Exception, instance:
-        print '*** Error ***', instance
+            raise Exception("Error while trying to produce a summary of '+" + asdm + "'.")
+    except Exception as instance:
+        print('*** Error ***', instance)
 
  
 

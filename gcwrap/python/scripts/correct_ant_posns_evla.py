@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from taskinit import *
 import urllib2
 import datetime
@@ -48,7 +50,7 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
     [obs_year,obs_month,obs_day,obs_time_string] = date_time.split('/')
     if (int(obs_year) < 2010):
         if (print_offsets):
-            print 'Does not work for VLA observations'
+            print('Does not work for VLA observations')
         else:
             casalog.post('Does not work for VLA observations',"WARN")
         return [1, '', []]
@@ -74,10 +76,10 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
 # first, see if the internet connection is possible
     try:
         response = urllib2.urlopen(URL_BASE + '2010')
-    except urllib2.URLError, err:
+    except urllib2.URLError as err:
         if (print_offsets):
-            print 'No internet connection to antenna position correction URL ', \
-                  err.reason
+            print('No internet connection to antenna position correction URL ', \
+                  err.reason)
         else:
            casalog.post('No internet connection to antenna position correction URL '+ \
                   str(err.reason),"WARN")
@@ -174,8 +176,8 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
         if ((ant_num_sta[3] != 0.0) or (ant_num_sta[4] != 0.0) or \
             (ant_num_sta[3] != 0.0)):
             if (print_offsets):
-                print "offsets for antenna %4s : %8.5f  %8.5f  %8.5f" % \
-                      (ant_num_sta[1], ant_num_sta[3], ant_num_sta[4], ant_num_sta[5])
+                print("offsets for antenna %4s : %8.5f  %8.5f  %8.5f" % \
+                      (ant_num_sta[1], ant_num_sta[3], ant_num_sta[4], ant_num_sta[5]))
             else:
                 casalog.post("offsets for antenna %4s : %8.5f  %8.5f  %8.5f" % \
                       (ant_num_sta[1], ant_num_sta[3], ant_num_sta[4], ant_num_sta[5]))
@@ -187,7 +189,7 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
     #    print "No offsets found for this MS"
     if (len(parms) == 0):
       if (print_offsets):
-        print "No offsets found for this MS"
+        print("No offsets found for this MS")
       else:
         casalog.post("No offsets found for this MS", "WARN")
     ant_string = ','.join(["%s" % ii for ii in ants])

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import numpy
 import traceback
@@ -78,11 +79,11 @@ def asaptask_decorator(func):
         try:
             # execute task 
             retval = func(*args, **kwargs)
-        except Exception, e:
+        except Exception as e:
             traceback_info = format_trace(traceback.format_exc())
             casalog.post(traceback_info,'SEVERE')
             casalog.post(str(e),'ERROR')
-            raise Exception, e
+            raise Exception(e)
         return retval
     return wrapper
 
@@ -113,11 +114,11 @@ def sdtask_decorator(func):
         try:
             # execute task 
             retval = func(*args, **kwargs)
-        except Exception, e:
+        except Exception as e:
             traceback_info = format_trace(traceback.format_exc())
             casalog.post(traceback_info,'SEVERE')
             casalog.post(str(e),'ERROR')
-            raise Exception, e
+            raise Exception(e)
         return retval
     return wrapper
 
@@ -470,7 +471,7 @@ class sdtask_template(sdtask_interface):
         #has_chan = has_chan or len(quantap.findall(self.spw))
         if has_chan:
             if mode.upper().startswith('E'):
-                raise ValueError, "spw parameter should not contain channel selection."
+                raise ValueError("spw parameter should not contain channel selection.")
             elif mode.upper().startswith('W'):
                 casalog.post("Channel selection found in spw parameter. It would be ignored", priority='WARN')
         
@@ -564,7 +565,7 @@ class sdtask_template_imaging(sdtask_interface):
         for idx in range(len(self.infiles)):
             if not is_ms(self.infiles[idx]):
                 msg='input data sets must be in MS format'
-                raise Exception, msg
+                raise Exception(msg)
         
         self.parameter_check()
         self.compile()
@@ -621,12 +622,12 @@ def expand_path(filename):
 
 def assert_infile_exists(infile=None):
     if (infile == ""):
-        raise Exception, "infile is undefined"
+        raise Exception("infile is undefined")
 
     filename = get_abspath(infile)
     if not os.path.exists(filename):
         mesg = "File '%s' not found." % (infile)
-        raise Exception, mesg
+        raise Exception(mesg)
 
 
 def get_default_outfile_name(infile=None, outfile=None, suffix=None):
@@ -642,7 +643,7 @@ def assert_outfile_canoverwrite_or_nonexistent(outfile=None, outform=None, overw
         filename = get_abspath(outfile)
         if os.path.exists(filename):
             mesg = "Output file '%s' exists." % (outfile)
-            raise Exception, mesg
+            raise Exception(mesg)
 
 
 def get_listvalue(value):
@@ -722,7 +723,7 @@ def combine_masklist(masklist1, masklist2, mode='and'):
         if (i == len(blist3)-1) and blist3[i]:
             tails.append(i)
     if len(heads) != len(tails):
-        raise Exception, "Internal error: heads and tails of resulting masklist have different length."
+        raise Exception("Internal error: heads and tails of resulting masklist have different length.")
     res = []
     for i in xrange(len(heads)):
         res.append([heads[i], tails[i]])
@@ -733,14 +734,14 @@ def get_restfreq_in_Hz(s_restfreq):
     qatl = casac.quanta()
     if not qatl.isquantity(s_restfreq):
         mesg = "Input value is not a quantity: %s" % (str(s_restfreq))
-        raise Exception, mesg
+        raise Exception(mesg)
     if qatl.compare(s_restfreq,'Hz'):
         return qatl.convert(s_restfreq, 'Hz')['value']
     elif qatl.quantity(s_restfreq)['unit'] == '':
         return float(s_restfreq)
     else:
         mesg = "wrong unit of restfreq."
-        raise Exception, mesg
+        raise Exception(mesg)
 ###############################################################
 # def get_restfreq_in_Hz(s_restfreq):
 #     value = 0.0
@@ -794,7 +795,7 @@ def get_restfreq_in_Hz(s_restfreq):
 def normalise_restfreq(in_restfreq):
     if isinstance(in_restfreq, float):
         return in_restfreq
-    elif isinstance(in_restfreq, int) or isinstance(in_restfreq, long):
+    elif isinstance(in_restfreq, int) or isinstance(in_restfreq, int):
         return float(in_restfreq)
     elif isinstance(in_restfreq, str):
         return get_restfreq_in_Hz(in_restfreq)
@@ -802,14 +803,14 @@ def normalise_restfreq(in_restfreq):
         if isinstance(in_restfreq, numpy.ndarray):
             if len(in_restfreq.shape) > 1:
                 mesg = "given in numpy.ndarray, in_restfreq must be 1-D."
-                raise Exception, mesg
+                raise Exception(mesg)
         
         res = []
         for i in xrange(len(in_restfreq)):
             elem = in_restfreq[i]
             if isinstance(elem, float):
                 res.append(elem)
-            elif isinstance(elem, int) or isinstance(elem, long):
+            elif isinstance(elem, int) or isinstance(elem, int):
                 res.append(float(elem))
             elif isinstance(elem, str):
                 res.append(get_restfreq_in_Hz(elem))
@@ -828,11 +829,11 @@ def normalise_restfreq(in_restfreq):
                     res.append(dictelem)
             else:
                 mesg = "restfreq elements must be float, int, or string."
-                raise Exception, mesg
+                raise Exception(mesg)
         return res
     else:
         mesg = "wrong type of restfreq given."
-        raise Exception, mesg
+        raise Exception(mesg)
 
 def set_restfreq(s, restfreq):
     rfset = (restfreq != '') and (restfreq != [])
@@ -1222,10 +1223,10 @@ def get_map_center(c,frame='J2000',unit='rad'):
                 map_center = 'J2000 '+c
             elif len(s) == 3:
                 if s[0].upper() != 'J2000':
-                    raise ValueError, 'Currently only J2000 is supported'
+                    raise ValueError('Currently only J2000 is supported')
                 map_center = c
             else:
-                raise ValueError, 'Invalid map center: %s'%(c)
+                raise ValueError('Invalid map center: %s'%(c))
     else:
         l = [frame]
         for i in xrange(2):
@@ -1441,7 +1442,7 @@ def get_spwids(selection, infile=None):
     spw_list = selection['spw']
     if len(spw_list) == 0:
         if infile is None:
-            raise Exception, "infile is needed when selection['spw'] is empty."
+            raise Exception("infile is needed when selection['spw'] is empty.")
         with tbmanager(os.path.join(infile, 'DATA_DESCRIPTION')) as tb:
             spw_list = tb.getcol('SPECTRAL_WINDOW_ID')
 

@@ -27,6 +27,7 @@
 # Modified by TT to avoid uncessary file open: 2012Dec13
 
 
+from __future__ import absolute_import
 from numpy import searchsorted
 from scipy import array
 from scipy.interpolate import interp1d
@@ -548,7 +549,7 @@ class solar_system_setjy:
     # (evolved stars, for instance).
         MODEL_IS_FD_BODIES = [ ]
 
-        if not self.models.has_key(source_name):
+        if source_name not in self.models:
             model_data_path = os.environ['CASAPATH'].split()[0]+'/data/alma/SolarSystemModels/'
             if (source_name in MODEL_IS_FD_BODIES):
                 model_data_filename = model_data_path + source_name + '_fd.dat'

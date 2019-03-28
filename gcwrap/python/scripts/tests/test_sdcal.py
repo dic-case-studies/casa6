@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -18,7 +20,7 @@ from sdcal import sdcal
 from partition import partition
 
 try:
-    from testutils import copytree_ignore_subversion
+    from .testutils import copytree_ignore_subversion
 except:
     from tests.testutils import copytree_ignore_subversion
     
@@ -101,18 +103,18 @@ class sdcal_test(unittest.TestCase):
         subt2.close()
 
         if (tsys1 == tsys2).all():
-            print ''
-            print 'The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape
-            print 'The shape of the FPARAM extracted with sdcal', tsys2.shape  
-            print 'Both tables are identical.'
+            print('')
+            print('The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape)
+            print('The shape of the FPARAM extracted with sdcal', tsys2.shape)  
+            print('Both tables are identical.')
         else:
-            print ''
-            print 'The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape
-            print 'The shape of the FPARAM of the extraction with sdcal', tsys2.shape
-            print 'Both tables are not identical.'
+            print('')
+            print('The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape)
+            print('The shape of the FPARAM of the extraction with sdcal', tsys2.shape)
+            print('Both tables are not identical.')
 
         if flag.all()==0:
-            print 'ALL FLAGs are set to zero.'
+            print('ALL FLAGs are set to zero.')
 
 
     def test00M(self):
@@ -141,18 +143,18 @@ class sdcal_test(unittest.TestCase):
         subt2.close()
 
         if (tsys1 == tsys2).all():
-            print ''
-            print 'The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape
-            print 'The shape of the FPARAM extracted with sdcal', tsys2.shape  
-            print 'Both tables are identical.'
+            print('')
+            print('The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape)
+            print('The shape of the FPARAM extracted with sdcal', tsys2.shape)  
+            print('Both tables are identical.')
         else:
-            print ''
-            print 'The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape
-            print 'The shape of the FPARAM of the extraction with sdcal', tsys2.shape
-            print 'Both tables are not identical.'
+            print('')
+            print('The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape)
+            print('The shape of the FPARAM of the extraction with sdcal', tsys2.shape)
+            print('Both tables are not identical.')
 
         if flag.all()==0:
-            print 'ALL FLAGs are set to zero.'
+            print('ALL FLAGs are set to zero.')
 
 
     def test01(self):
@@ -187,20 +189,20 @@ class sdcal_test(unittest.TestCase):
             sum_fparam1 += tb.getvarcol('FPARAM')['r1'][1][i][0]
         fparam0_ave=sum_fparam0/128.0
         fparam1_ave=sum_fparam1/128.0
-        print 'fparam_average_r1_0', fparam0_ave
-        print 'fparam_average_r1_1', fparam1_ave
-        print 'SIGMA00 ', sigma00
-        print 'SIGMA10 ', sigma10
-        print 'WEIGHT00 ', weight00
-        print 'WEIGHT10 ', weight10
+        print('fparam_average_r1_0', fparam0_ave)
+        print('fparam_average_r1_1', fparam1_ave)
+        print('SIGMA00 ', sigma00)
+        print('SIGMA10 ', sigma10)
+        print('WEIGHT00 ', weight00)
+        print('WEIGHT10 ', weight10)
         answer0 = 1/(sigma00**2)*1/(fparam0_ave**2) 
         answer1 = 1/(sigma10**2)*1/(fparam1_ave**2) 
-        print 'pol0: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer0
-        print 'pol1: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer1
+        print('pol0: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer0)
+        print('pol1: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer1)
         diff0_percent=(weight00-answer0)/weight00*100
         diff1_percent=(weight10-answer1)/weight10*100
-        print 'difference between fparam_r1_0 and weight00', diff0_percent, '%' 
-        print 'difference between fparam_r1_1 and weight10', diff1_percent, '%'
+        print('difference between fparam_r1_0 and weight00', diff0_percent, '%') 
+        print('difference between fparam_r1_1 and weight10', diff1_percent, '%')
         tb.close()
             
         
@@ -236,20 +238,20 @@ class sdcal_test(unittest.TestCase):
             sum_fparam1 += tb.getvarcol('FPARAM')['r1'][1][i][0]
         fparam0_ave=sum_fparam0/128.0
         fparam1_ave=sum_fparam1/128.0
-        print 'fparam_average_r1_0', fparam0_ave
-        print 'fparam_average_r1_1', fparam1_ave
-        print 'SIGMA00 ', sigma00
-        print 'SIGMA10 ', sigma10
-        print 'WEIGHT00 ', weight00
-        print 'WEIGHT10 ', weight10
+        print('fparam_average_r1_0', fparam0_ave)
+        print('fparam_average_r1_1', fparam1_ave)
+        print('SIGMA00 ', sigma00)
+        print('SIGMA10 ', sigma10)
+        print('WEIGHT00 ', weight00)
+        print('WEIGHT10 ', weight10)
         answer0 = 1/(sigma00**2)*1/(fparam0_ave**2) 
         answer1 = 1/(sigma10**2)*1/(fparam1_ave**2) 
-        print 'pol0: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer0
-        print 'pol1: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer1
+        print('pol0: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer0)
+        print('pol1: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer1)
         diff0_percent=(weight00-answer0)/weight00*100
         diff1_percent=(weight10-answer1)/weight10*100
-        print 'difference between fparam_r1_0 and weight00', diff0_percent, '%' 
-        print 'difference between fparam_r1_1 and weight10', diff1_percent, '%'
+        print('difference between fparam_r1_0 and weight00', diff0_percent, '%') 
+        print('difference between fparam_r1_1 and weight10', diff1_percent, '%')
         tb.close()
         
 
@@ -332,12 +334,12 @@ class sdcal_test(unittest.TestCase):
         fparam= tb.getvarcol('FPARAM')['r1'][0][0][0]
         tb.close()
                 
-        print "CORRECTED_DATA", corrected_data
-        print "DATA", data
-        print "FPARAM", fparam
+        print("CORRECTED_DATA", corrected_data)
+        print("DATA", data)
+        print("FPARAM", fparam)
         diff = corrected_data.real - (data.real*fparam)
         diff_per = (diff/corrected_data.real)*100 
-        print "difference between CORRECTED_DATA and DATA X FPARAM", diff_per, "%" 
+        print("difference between CORRECTED_DATA and DATA X FPARAM", diff_per, "%") 
     
        
     def test04(self):
@@ -372,12 +374,12 @@ class sdcal_test(unittest.TestCase):
         fparam_ave=sum_fparam/128.0    
         tb.close()
                 
-        print "CORRECTED_DATA", corrected_data
-        print "DATA", data
-        print "FPARAM average(128ch)", fparam_ave
+        print("CORRECTED_DATA", corrected_data)
+        print("DATA", data)
+        print("FPARAM average(128ch)", fparam_ave)
         diff = corrected_data.real - (data.real*fparam_ave)
         diff_per = (diff/corrected_data.real)*100 
-        print "difference between CORRECTED_DATA and DATA X FPARAM_average(128)", diff_per, "%" 
+        print("difference between CORRECTED_DATA and DATA X FPARAM_average(128)", diff_per, "%") 
     
 
 
@@ -386,7 +388,7 @@ class sdcal_test(unittest.TestCase):
         (spwmap={1:[9], 3:[11], 5:[13], 7:[15]})
         antanna1=0, DATA_DISC_ID=9, FPARAM_average
         """
-        print '' 
+        print('') 
         
         tid ="05"
         infile=self.infile1
@@ -409,12 +411,12 @@ class sdcal_test(unittest.TestCase):
         fparam= tb.getvarcol('FPARAM')['r1'][0][0][0]
         tb.close()
                 
-        print "CORRECTED_DATA", corrected_data
-        print "DATA", data
-        print "FPARAM", fparam
+        print("CORRECTED_DATA", corrected_data)
+        print("DATA", data)
+        print("FPARAM", fparam)
         diff = corrected_data.real - (data.real*fparam)
         diff_per = (diff/corrected_data.real)*100 
-        print "difference between CORRECTED_DATA and DATA X FPARAM", diff_per, "%" 
+        print("difference between CORRECTED_DATA and DATA X FPARAM", diff_per, "%") 
     
 
 
@@ -461,9 +463,9 @@ class sdcal_test(unittest.TestCase):
 
             #diff0_percent=(weight_spectrum[0][ch]-answer0)/weight_spectrum[0][ch]*100
             #diff1_percent=(weight_spectrum[1][ch]-answer1)/weight_spectrum[1][ch]*100
-            print ''
-            print 'pol0 & pol1 ch '+ str(ch)+ ': diff between 1/SIGMA**2 X 1/(FPARAM['+str(ch)+'])**2 and WEIGHT_SPECTRUM['+ str(ch)+']' , diff0, diff1
-            print diff0_percent, '%', diff1_percent, '%'
+            print('')
+            print('pol0 & pol1 ch '+ str(ch)+ ': diff between 1/SIGMA**2 X 1/(FPARAM['+str(ch)+'])**2 and WEIGHT_SPECTRUM['+ str(ch)+']' , diff0, diff1)
+            print(diff0_percent, '%', diff1_percent, '%')
             #self.assertTrue(diff0 < eps, msg='The error is small enough')
         tb.close()
             
@@ -612,7 +614,7 @@ class sdcal_test_ps(sdcal_test_base):
                 else:
                     myms = gentools(['ms'])[0]
                     myargs = kwargs.copy()
-                    if not myargs.has_key('baseline'):
+                    if 'baseline' not in myargs:
                         with sdutil.tbmanager(self.infile) as tb:
                             antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                             myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
@@ -853,7 +855,7 @@ class sdcal_test_otfraster(sdcal_test_base):
                 else:
                     myms = gentools(['ms'])[0]
                     myargs = kwargs.copy()
-                    if not myargs.has_key('baseline'):
+                    if 'baseline' not in myargs:
                         with sdutil.tbmanager(self.infile) as tb:
                             antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                             myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
@@ -1496,7 +1498,7 @@ class Interpolator(object):
         self.flag = None
         self.exposure = None
         self.finterp = getattr(Interpolator,'interp_freq_%s'%(finterp.lower()))
-        print 'self.finterp:', self.finterp.__name__
+        print('self.finterp:', self.finterp.__name__)
 
     def select(self, antenna, spw):
         self.taql = 'ANTENNA1 == %s && ANTENNA2 == %s && SPECTRAL_WINDOW_ID == %s'%(antenna, antenna, spw)
@@ -1666,7 +1668,7 @@ class sdcal_test_apply(sdcal_test_base):
                 # data selection 
                 myms = gentools(['ms'])[0]
                 myargs = kwargs.copy()
-                if not myargs.has_key('baseline'):
+                if 'baseline' not in myargs:
                     with sdutil.tbmanager(self.infile) as tb:
                         antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                         myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
@@ -1731,7 +1733,7 @@ class sdcal_test_apply(sdcal_test_base):
                     finterp = 'nearestflag'
                 
                 # result depends on interp
-                print 'Interpolation option:', tinterp, finterp
+                print('Interpolation option:', tinterp, finterp)
                 self.assertTrue(tinterp in ['linear', 'nearest'], msg='Internal Error')
                 if tinterp == 'linear':
                     interpolator = LinearInterpolator(self.applytable, finterp)
@@ -1743,7 +1745,7 @@ class sdcal_test_apply(sdcal_test_base):
                         taql = 'ANTENNA1 == %s && ANTENNA2 == %s && DATA_DESC_ID == %s'%(antenna, antenna, spwdd)
                         with sdutil.table_selector(self.infile, taql) as tb:
                             self.assertEqual(tb.nrows(), self.nrow_per_chunk, msg='Number of rows mismatch in antenna %s spw %s'%(antenna, spw))
-                            if weightsp_org[antenna].has_key(spw):
+                            if spw in weightsp_org[antenna]:
                                 has_weightsp = True
                                 
                             else:
