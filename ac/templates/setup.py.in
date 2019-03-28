@@ -1284,6 +1284,9 @@ class create_makefile(Command):
         grpc_registrar_dir = 'build' + os.sep + distutils_dir_name("binding") + os.sep + "grpc"
         grpc_registrar_files = ['registrar.grpc.pb.cc', 'registrar.pb.cc']
         GRPC_REGISTRAR = [grpc_registrar_dir + os.sep + s for s in grpc_registrar_files]
+        # the binding/source files need to be put into the casatools library, so compile 
+        # them here
+        SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
         obj_name = os.path.join(build_distutils_temp, "{base}.o")
         dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
         cpp_obj = (
@@ -1291,11 +1294,12 @@ class create_makefile(Command):
             + '\n\t$(POSTCOMPILE)'
         )
         dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
-        src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR]
+        src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING]
+        python_inc = props['build.python.include']
         cflags = [
             module_cflags['/code/'], module_cflags['/casacore/'],
             platform_cflags[sys.platform], platform_cflags[sys.platform],
-            platform_cflags[sys.platform]
+            platform_cflags[sys.platform], platform_cflags[sys.platform]
         ]
         includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
         flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
@@ -1315,6 +1319,9 @@ class create_makefile(Command):
         with open("makefile", "a") as mk:
             for (mysrc, myflags) in zip(src, cflags):
                 dflags = sep.join(myflags + duse_grpc + grpc_dirs)
+                myinc = includes
+                if mysrc == SOURCE_BINDING:
+                    myinc += " -I" + python_inc
                 for s in mysrc:
                     b = os.path.splitext(s)[0]
                     objfile = obj_name.format(base=b)
@@ -1322,7 +1329,7 @@ class create_makefile(Command):
                     targdirs.add(os.path.dirname(objfile))
                     mk.write(
                         "\n\n" + cpp_obj.format(
-                            base=b,src=s, flags=flags, includes=includes, 
+                            base=b,src=s, flags=flags, includes=myinc, 
                             cflags=sys_cflags, dflags=dflags
                         )
                     )
@@ -1471,7 +1478,7 @@ class create_makefile(Command):
         ldflags3 += '-Wl,-rpath,/opt/casa/03/lib -L/usr/lib64 -fopenmp '
         # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
         # ldflags3 += '-Lbuild/lib.linux-x86_64-3.6/casatools/__casac__/lib -Wl,-rpath,$$ORIGIN/lib:/usr/lib64'
-        ldflags3 += '-Wl,-rpath,/lib:/usr/lib64'
+        ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
         # ld_cmd = linker + ' ' + ldflags1 + ' ' + sep.join(cpp_list) + ' ' + ldflags2 + ' ' + shlib + ' ' + ldflags3
         ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
         with open("makefile", "a") as mk:
@@ -1515,7 +1522,7 @@ class create_makefile(Command):
         # cannot use source_files() to find them
         WRAP_CPP = [filename.replace('_statics.cc', '_wrap.cpp') for filename in STATICS_CC]
         CODE_BINDING = source_files("binding/tools", file_suffix_filter=".cc")
-        SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
+        # SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
         obj_create = (
@@ -1526,7 +1533,6 @@ class create_makefile(Command):
         cflags = module_cflags['binding/'] + platform_cflags[sys.platform]
         includes = sep.join(get_new_cxx_compiler_includes() + get_cflags() + ["-Ibinding"])
         tool_inc = "-Ibinding/generated/tools/{toolname} -Ibinding/tools/{toolname}"
-        python_inc = props['build.python.include']
         flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
         add_cflags = sysconfig.get_config_var('CFLAGS')
         duse_grpc = get_use_grpc()
@@ -1544,9 +1550,10 @@ class create_makefile(Command):
         tool_deps['synthesisnormalizer'] = ['synthesisimstore']
         tool_deps['synthesisutils'] = ['synthesisimstore']
         with open("makefile", "a") as mk:
-            for s in STATICS_CC + WRAP_CPP + CODE_BINDING + SOURCE_BINDING:
+            for s in STATICS_CC + WRAP_CPP + CODE_BINDING: # + SOURCE_BINDING:
                 base = os.path.splitext(s)[0]
                 myinc = includes
+                """
                 if s not in SOURCE_BINDING:
                     toolname = base.split(os.sep)[-2]
                     if toolname in tool_deps:
@@ -1557,6 +1564,16 @@ class create_makefile(Command):
                         myinc += " " + tool_inc.format(toolname=tn)
                 if s in WRAP_CPP or s in SOURCE_BINDING:
                     myinc += " -I" + python_inc
+                """
+                toolname = base.split(os.sep)[-2]
+                if toolname in tool_deps:
+                    tool_deps[toolname].append(toolname)
+                else:
+                    tool_deps[toolname] = [toolname]
+                if s in WRAP_CPP:
+                    myinc += " -I" + python_inc
+                for tn in tool_deps[toolname]:
+                    myinc += " " + tool_inc.format(toolname=tn)
                 objfile = obj_name.format(base=base)
                 cpp_list.append(objfile)
                 targdirs.add(os.path.dirname(objfile))
