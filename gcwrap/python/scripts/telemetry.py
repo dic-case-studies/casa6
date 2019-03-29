@@ -51,7 +51,7 @@ class telemetry:
 
         # Setup Telemetry log size monitoring
         # Size limit for the telemetry logs
-        tLogSizeLimit = 10000
+        tLogSizeLimit = 20000
         # File size check interval
         tLogSizeInterval = 60
         try:
@@ -67,7 +67,9 @@ class telemetry:
         else :
             tLogMonitor = TelemetryLogMonitor.TelemetryLogMonitor()
             tLogMonitor.start(casa['files']['telemetry-logfile'],tLogSizeLimit, tLogSizeInterval, casa)
-            print "Telemetry initialized."
+            print "Telemetry initialized. Telemetry will send anonymized usage statistics to NRAO."
+            print 'You can disable telemetry by adding the following line to your ~/.casarc file:'
+            print 'EnableTelemetry: False'
 
     def setNewTelemetryFile(self):
         self.casa['files']['telemetry-logfile'] =  self.logdir + '/casastats-' + self.casaver +'-'  + self.hostid + "-" + time.strftime("%Y%m%d-%H%M%S", time.gmtime()) + '.log'

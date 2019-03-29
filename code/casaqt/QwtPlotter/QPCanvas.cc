@@ -238,7 +238,8 @@ QPCanvas::QPCanvas(QPPlotter* parent) : m_parent(parent), m_canvas(this),
         m_axesRatioLocked(false), m_axesRatios(4, 1), m_stackCache(*this),
         m_autoIncColors(false), m_picker(m_canvas.canvas()),
         m_mouseFilter(m_canvas.canvas()), m_legendFontSet(false),
-        m_inDraggingMode(false), minSizeHint(50,50) {
+        m_inDraggingMode(false), minSizeHint(50,50),
+        defaultBackground_(nullptr) {
     logObject(CLASS_NAME, this, true);
     
     commonX = false;
@@ -295,6 +296,8 @@ QPCanvas::QPCanvas(QPPlotter* parent) : m_parent(parent), m_canvas(this),
     connect(&m_picker, SIGNAL(selected(const QwtDoubleRect&)),
             this, SLOT(regionSelected(const QwtDoubleRect&)));
 #endif
+
+    defaultBackground_ = background();
 }
 
 void QPCanvas::enableAxis( QwtPlot::Axis axis, bool enable ){
@@ -355,6 +358,10 @@ void QPCanvas::setTitleFont(const PlotFont& font) {
 PlotAreaFillPtr QPCanvas::background() const {
     return new QPAreaFill(m_canvas.canvas()->palette().brush(
                           QPalette::Window));
+}
+
+PlotAreaFillPtr QPCanvas::defaultBackground() const {
+    return  defaultBackground_;
 }
 
 void QPCanvas::setBackground(const PlotAreaFill& areaFill) {
@@ -639,21 +646,23 @@ void QPCanvas::setAxesRanges(PlotAxis xAxis, double xFrom, double xTo,
     
     // set bounds
     if (xFrom != xTo) {
-		if ((axisScale(xAxis) >= PlotAxisScale::DATE_MJ_SEC) && (xTo-xFrom)>120.0) {
-			setTimeScaleDiv(xAxis, xFrom, xTo);  // ticks to even steps/minutes
-		} else {
-        	m_canvas.setAxisScale(QPOptions::axis(xAxis), xFrom, xTo,
-           		m_canvas.axisStepSize(QPOptions::axis(xAxis)));
-		}
+        if ((axisScale(xAxis) >= PlotAxisScale::DATE_MJ_SEC) && (xTo-xFrom)>120.0) {
+            setTimeScaleDiv(xAxis, xFrom, xTo);  // ticks to even steps/minutes
+        } else {
+            m_canvas.setAxisScale(QPOptions::axis(xAxis), xFrom, xTo,
+                m_canvas.axisStepSize(QPOptions::axis(xAxis)));
+        }
+        m_canvas.updateAxes();
         changed = true;
-	}
-			
+    }
+
     if(yAxis != xAxis && yFrom != yTo) {
-		if (axisScale(yAxis) >= PlotAxisScale::DATE_MJ_SEC && (yTo-yFrom)>120.0) {
-			setTimeScaleDiv(yAxis, yFrom, yTo); // ticks to even steps/minutes
-		} else {
-        	m_canvas.setAxisScale(QPOptions::axis(yAxis), yFrom, yTo);
-		}
+        if (axisScale(yAxis) >= PlotAxisScale::DATE_MJ_SEC && (yTo-yFrom)>120.0) {
+            setTimeScaleDiv(yAxis, yFrom, yTo); // ticks to even steps/minutes
+        } else {
+            m_canvas.setAxisScale(QPOptions::axis(yAxis), yFrom, yTo);
+        }
+        m_canvas.updateAxes();
         changed = true;
     }
     

@@ -13,10 +13,9 @@
 #include <stdcasa/optionparser.h>
 #include <alma/Options/AlmaArg.h>
 using namespace alma;
-
 using namespace std;
 
-#include "ASDMAll.h"
+#include <alma/ASDM/ASDMAll.h>
 
 using namespace asdm;
 
@@ -28,73 +27,38 @@ using namespace asdm;
 #include <casa/Arrays/ArrayUtil.h>
 #include <casa/Arrays/ArrayLogical.h>
 
-#include "CAxisName.h"
+#include <alma/Enumerations/CAxisName.h>
 using namespace AxisNameMod;
-#include "CProcessorType.h"
+#include <alma/Enumerations/CProcessorType.h>
 using namespace ProcessorTypeMod;
 
-#include "SDMDataObject.h"
-#include "SDMDataObjectReader.h"
-#include "SDMDataObjectStreamReader.h"
+#include <alma/ASDMBinaries/SDMDataObject.h>
+#include <alma/ASDMBinaries/SDMDataObjectReader.h>
+#include <alma/ASDMBinaries/SDMDataObjectStreamReader.h>
 
 using namespace asdmbinaries;
 using namespace casacore;
 
-#include "asdm2MSGeneric.h"
-
-#include "ScansParser.h"
+#include <alma/apps/asdm2MS/asdm2MSGeneric.h>
+#include <alma/apps/asdm2MS/ScansParser.h>
 
 bool verbose = false; // By default, let's stay quiet.
 bool ddebug = false;
 
-#include "CScanIntent.h"
+#include <alma/Enumerations/CScanIntent.h>
 using namespace ScanIntentMod;
-#include "CSubscanIntent.h"
+#include <alma/Enumerations/CSubscanIntent.h>
 using namespace SubscanIntentMod;
 
 /*
 ** A simplistic tracing toolbox.
 */
 bool debug = (getenv("ASDM_DEBUG") != NULL);
+
 vector<char> logIndent;
-void hack01(char x) { cout << x; }
-struct hack02 {
-  string &acc;
-  hack02(string &a) : acc(a) { }
-  void operator( )(const map<string, unsigned int>::value_type &v) { acc += "\n\t* " + v.first; }
-};
-struct hack03 {
-  DataDescriptionTable &table;
-  vector<DataDescriptionRow*> &acc;
-  hack03(DataDescriptionTable &t, vector<DataDescriptionRow*> &a) : table(t), acc(a) { }
-  void operator( )(const Tag &tag) {
-    acc.push_back( table.getRowByKey(tag) );
-  }
-};
-struct hack04 {
-  vector<string> &acc;
-  hack04(vector<string> &v) : acc(v) { }
-  void operator( )(const Tag &tag) {
-    acc.push_back(tag.toString( ));
-  }
-};
-struct hack05 {
-  vector<pair<string, string> > &acc;
-  hack05(vector<pair<string, string> > &a) : acc(a) { }
-  void operator( )(const DataDescriptionRow *row) {
-    acc.push_back(make_pair(row->getSpectralWindowId( ).toString( ),row->getPolOrHoloId( ).toString( )));
-  }
-};
-struct hack06 {
-  ostringstream &out;
-  hack06(ostringstream &o) : out(o) { }
-  void operator( )(AxisName ax) {
-    out << CAxisName::toString(ax) << " ";
-  }
-};
-#define LOGENTER(name) if (debug) {for_each(logIndent.begin(), logIndent.end(), hack01); logIndent.push_back('\t'); cout << #name ": entering" << endl;}
-#define LOGEXIT(name)  if (debug) {logIndent.pop_back(); for_each(logIndent.begin(), logIndent.end(), hack01); cout << #name ": exiting" << endl;}
-#define LOG(msg) if (debug) {for_each(logIndent.begin(), logIndent.end(), cout << _1); cout << msg << endl;}
+#define LOGENTER(name) if (debug) { std::for_each(logIndent.begin(), logIndent.end(), [](char v) { cout << v; }); logIndent.push_back('\t'); cout << #name ": entering" << endl;}
+#define LOGEXIT(name)  if (debug) { logIndent.pop_back(); std::for_each(logIndent.begin(), logIndent.end(), [](char v) { cout << v; } ); cout << #name ": exiting" << endl;}
+#define LOG(msg) if (debug) { std::for_each(logIndent.begin(), logIndent.end(), [](char v) { cout << v; } ); cout << msg << endl; }
 
 /*
 ** Two string streams used all over the applications in general to prepare messages sent to the logging facilities.
@@ -505,11 +469,10 @@ public:
   void dump (ostream& os, bool MSORDER=true) {
     LOGENTER("MSFlagAccumulator::dump");
 
-    pair< vector<FLAG_SHAPE *>*,
-	  vector<FLAG_V *>* >cds = orderedByDDTIMBAL(MSORDER);
+    pair< vector<FLAG_SHAPE *>*, vector<FLAG_V *>* >cds = orderedByDDTIMBAL(MSORDER);
 
     vector<FLAG_SHAPE *>* shapes_p_v_p = cds.first;
-    vector<FLAG_V*>* values_p_v_p = cds.second;
+    // vector<FLAG_V*>* values_p_v_p = cds.second;
     unsigned int numCell = shapes_p_v_p->size();
     unsigned rn = 0;
     for (unsigned int i = 0; i < numCell; i++) {
@@ -523,12 +486,10 @@ public:
 /*
 ** The following functions drive the processing of the BDF flags
 */
-void traverseBAB(bool					sameAntenna,
-		 const vector<SDMDataObject::Baseband>& basebands,
-		 const pair<unsigned			int, const FLAGSTYPE*> & flagsPair,
-		 BDFFlagConsumer<FLAGSTYPE>&		consumer,
-		 MSFlagEval&				flagEval,
-		 MSFlagAccumulator<char>&               accumulator ) {
+void traverseBAB(bool sameAntenna, const vector<SDMDataObject::Baseband>& basebands,
+		 const pair<unsigned int, const FLAGSTYPE*> & flagsPair,
+		 BDFFlagConsumer<FLAGSTYPE> &consumer, MSFlagEval &flagEval,
+		 MSFlagAccumulator<char> &accumulator ) {
 
   LOGENTER("traverseBAB");
 
@@ -539,7 +500,7 @@ void traverseBAB(bool					sameAntenna,
   for (SDMDataObject::Baseband bab: basebands) {
     const vector<SDMDataObject::SpectralWindow>& spws = bab.spectralWindows();
     bool firstSPW = true;
-    vector<StokesParameter>::const_iterator ppIter, ppBegin, ppEnd;
+    vector<StokesParameterMod::StokesParameter>::const_iterator ppIter, ppBegin, ppEnd;
     unsigned int numPolProducts;
     pair<const FLAGSTYPE*, const FLAGSTYPE*> range;
 
@@ -587,11 +548,10 @@ void traverseBAB(bool					sameAntenna,
 }
 
 void traverseANT(const vector<SDMDataObject::Baseband>& basebands,
-		 const vector<string>&			antennas,
-		 const pair<unsigned			int, const FLAGSTYPE*> &			flagsPair,
-		 BDFFlagConsumer<FLAGSTYPE>&            consumer,
-		 MSFlagEval&				flagEval,
-		 MSFlagAccumulator<char>&               accumulator) {
+		 const vector<string> &antennas,
+		 const pair<unsigned int, const FLAGSTYPE*> &flagsPair,
+		 BDFFlagConsumer<FLAGSTYPE> &consumer, MSFlagEval &flagEval,
+		 MSFlagAccumulator<char> &accumulator) {
 
   LOGENTER("traverseANT");
   accumulator.resetBAL();
@@ -603,11 +563,10 @@ void traverseANT(const vector<SDMDataObject::Baseband>& basebands,
 }
 
 void traverseBAL(const vector<SDMDataObject::Baseband>& basebands,
-		 const vector<string>&			antennas,
-		 const pair<unsigned int, const FLAGSTYPE*> &			flagsPair,
-		 BDFFlagConsumer<FLAGSTYPE>&                   consumer,
-		 MSFlagEval& flagEval,
-		 MSFlagAccumulator<char>&                   accumulator) {
+		 const vector<string> &antennas,
+		 const pair<unsigned int, const FLAGSTYPE*> &flagsPair,
+		 BDFFlagConsumer<FLAGSTYPE> &consumer,
+		 MSFlagEval &flagEval, MSFlagAccumulator<char> &accumulator) {
 
   LOGENTER("traverseBAL");
   accumulator.resetBAL();
@@ -642,12 +601,12 @@ void traverseALMACorrelatorFlagsAxes(const vector<SDMDataObject::Baseband>&	base
   LOGEXIT("traverseALMACorrelatorFlagsAxes");
 }
 
-void traverseALMARadiometerFlagsAxes(unsigned int				numTime,
-				     const vector<SDMDataObject::Baseband>&	basebands,
-				     const vector<string>&			antennas,
-				     const pair<unsigned int, const FLAGSTYPE*> &                      flagsPair,
-				     MSFlagEval&                               flagEval,
-				     MSFlagAccumulator<char>&                   accumulator) {
+void traverseALMARadiometerFlagsAxes(unsigned int numTime,
+				     const vector<SDMDataObject::Baseband> &basebands,
+				     const vector<string> &antennas,
+				     const pair<unsigned int, const FLAGSTYPE*> &flagsPair,
+				     MSFlagEval &flagEval, MSFlagAccumulator<char> &accumulator) {
+
   LOGENTER("traverseALMARadiometerFlagsAxes");
 
   const FLAGSTYPE*	flags_p	 = flagsPair.second;
@@ -678,11 +637,8 @@ bool isNotNull(char f){
  * @parameter flag the column FLAG in the MS Main table
  * @parameter flagRow the column FLAG_ROW in the MS Main table
  */
-bool  putCell( FLAG_SHAPE* flagShape_p,
-	       FLAG_V* flag_v_p,
-	       uInt iRow0,
-	       ArrayColumn<Bool>& flag,
-	       ScalarColumn<Bool> flagRow) {
+bool  putCell( FLAG_SHAPE* flagShape_p, FLAG_V* flag_v_p, uInt iRow0,
+	       ArrayColumn<Bool>& flag, ScalarColumn<Bool> flagRow) {
   LOGENTER("putCell");
   uInt numChan = flagShape_p->first;
   uInt numCorr = flagShape_p->second;
@@ -808,10 +764,8 @@ pair<uInt, uInt> mergeAndPut(CorrelationModeMod::CorrelationMode correlationMode
 /*
  * Used for Radiometer data.
  */
-pair<uInt, uInt> put(MSFlagAccumulator<char>& accumulator,
-		     uInt iRow0,
-		     ArrayColumn<Bool>& flag,
-		     ScalarColumn<Bool> flagRow,
+pair<uInt, uInt> put(MSFlagAccumulator<char>& accumulator, uInt iRow0,
+		     ArrayColumn<Bool>& flag, ScalarColumn<Bool> flagRow,
 		     bool skipFirstIntegration=false) {
   LOGENTER("put");
   pair< vector<FLAG_SHAPE * >*,
@@ -906,68 +860,69 @@ void loadBDFlags(map<string, unsigned int>& abbrev2bitpos) {
 typedef map<string, unsigned int> s2ui;
 typedef pair<const string, unsigned int> s_ui;
 
-/**
- * This function tries to calculate the sizes of the successives slices of the BDF
- * to be processed given a) the overall size of the BDF and b) the approximative maximum
- * size that one wants for one slice.
- * @paramater BDFsize the overall size of the BDF expressed in bytes,
- * @parameter approxSizeInMemory the approximative size that one wants for one slice, expressed in byte.
- *
- * \par Note:
- * It tries to avoid a last slice, corresponding to
- * the remainder in the euclidean division BDFsize / approxSizeInMemory.
+/** 
+ * This function tries to allocate the number of integrations into slices
+ * based on the average size of one integration and the requested maximum size of one slice.
+ * The sum of all of the values in the returned vector is always equal to nIntegrations.
+ * @parameter nIntegrations the number of integrations in the BDF
+ * @parameter bdfSize the size of the BDF, in bytes
+ * @parameter approxSizeInMemory the approximate size that one wants for one slice, in bytes.
  */
-vector<uint64_t> sizeInMemory(uint64_t BDFsize, uint64_t approxSizeInMemory) {
-  if (debug) cout << "sizeInMemory: entering" << endl;
-  vector<uint64_t> result;
-  uint64_t Q = BDFsize / approxSizeInMemory;
-  if (Q == 0) {
-    result.push_back(BDFsize);
-  }
-  else {
-    result.resize(Q, approxSizeInMemory);
-    unsigned int R = BDFsize % approxSizeInMemory;
-    if ( R > (Q * approxSizeInMemory / 5) )  {
-      result.push_back(R);
-    }
-    else {
-      while (R > 0)
-	for (unsigned int i = 0; R >0 && i < result.size(); i++) {
-	  result[i]++ ; R--;
+vector<unsigned int> getIntegrationSlices(int nIntegrations, uint64_t bdfSize, uint64_t approxSizeInMemory) {
+  if (debug) cout << "getIntegrationSlices: entering" << endl;
+  vector<unsigned int> result;
+  if (nIntegrations > 0) {
+    if (bdfSize < approxSizeInMemory) {
+      result.push_back(nIntegrations);
+    } else {
+      uint64_t avgIntSize = bdfSize/nIntegrations;
+      unsigned int nIntPerSlice = approxSizeInMemory/avgIntSize;
+      unsigned int nSlice = nIntegrations/nIntPerSlice;
+      result.resize(nSlice,nIntPerSlice);
+      unsigned int residualInts = nIntegrations % nIntPerSlice;
+      if (residualInts > (nSlice*nIntPerSlice/5)) {
+	// if the number of left over integrations is more than 1/5 of what's in the other slices
+	// then this makes an acceptable last slice - no need to redistribute
+	result.push_back(residualInts);
+      } else {
+	// final slice would too small, redistribute it to the other slices
+	while(residualInts > 0) {
+	  for (unsigned int i = 0; residualInts > 0 && i < result.size(); i++) {
+	    result[i]++; 
+	    residualInts--;
+	  }
 	}
+      }
     }
   }
-  if (debug) cout << "sizeInMemory: exiting" << endl;
+  if (debug) cout << "getItegrationSlices: exiting" << endl;
   return result;
 }
 
-unsigned int flagsSizeIncludingSPWAndPOL(unsigned int numAntenna, CorrelationMode correlationMode, const SDMDataObject::DataStruct & dataStruct) {
+unsigned int flagsSizeIncludingSPWAndPOL(unsigned int numAntenna, CorrelationModeMod::CorrelationMode correlationMode, const SDMDataObject::DataStruct & dataStruct) {
   unsigned int autoresult = 0, crossresult = 0;
 
   const vector<SDMDataObject::Baseband>& basebands = dataStruct.basebands();
   for (SDMDataObject::Baseband baseband : basebands)
     for (SDMDataObject::SpectralWindow spw : baseband.spectralWindows()) {
-      if (correlationMode != CorrelationMode::CROSS_ONLY) {
+      if (correlationMode != CorrelationModeMod::CROSS_ONLY) {
         autoresult += spw.sdPolProducts().end() - spw.sdPolProducts().begin();
       }
 
-      if (correlationMode != CorrelationMode::AUTO_ONLY) {
+      if (correlationMode != CorrelationModeMod::AUTO_ONLY) {
         crossresult += spw.crossPolProducts().end() - spw.crossPolProducts().begin();
       }
     }
   return (autoresult * numAntenna + crossresult * numAntenna * (numAntenna - 1) / 2);
 }
 
-void processCorrelatorFlags(unsigned int numIntegration,
-			    const string&				bdfPath,
-			    const vector<string>&			antennas,
-			    const vector<pair<string, string> >&	dataDescriptions,
-			    MSFlagEval&				flagEval,
-			    uInt&					iMSRow,
-			    ArrayColumn<Bool>&				flag,
-			    ScalarColumn<Bool>&	                        flagRow,
-			    CorrelationModeMod::CorrelationMode         ocorrelationMode
-			    ) {
+void processCorrelatorFlags( unsigned int numIntegration, const string& bdfPath,
+                             const vector<string>& antennas,
+                             const vector<pair<string, string> >& dataDescriptions,
+                             MSFlagEval& flagEval, uInt& iMSRow,
+                             ArrayColumn<Bool>& flag, ScalarColumn<Bool>& flagRow,
+                             CorrelationModeMod::CorrelationMode ocorrelationMode ) {
+
   std::regex  ALMACorrelatorFlagsAxesRegex("(BAL )?ANT (BAB )?(SPW )?(POL )?");
 
   uInt numFlaggedRows = 0;
@@ -980,9 +935,9 @@ void processCorrelatorFlags(unsigned int numIntegration,
   CorrelatorFlagsAxes::set(flagsAxes);
 
   ostringstream oss;
-  hack06 hack06_instance(oss);
-  for_each(flagsAxes.begin(), flagsAxes.end(), hack06_instance);
-
+  // hack06 hack06_instance(oss);
+  // for_each(flagsAxes.begin(), flagsAxes.end(), hack06_instance);
+  for_each(flagsAxes.begin(), flagsAxes.end(), [&](AxisName ax){oss << CAxisName::toString(ax) << " ";});
   string axes_s = oss.str();
   if (axes_s.find("SPW ") == std::string::npos) {
     /*
@@ -1047,23 +1002,20 @@ void processCorrelatorFlags(unsigned int numIntegration,
 					   flagRow);
   iMSRow = putReturn.first;
   numFlaggedRows += putReturn.second;
+  sdosr.close();
 
   return;
 }
 
-void processCorrelatorFlagsPerSlices(MainRow*					mR_p,
-				     unsigned int                               iASDMIndex,
-				     const vector<int32_t>&                     mainRowIndex,
-				     const string&				bdfPath,
-				     uint64_t					bdfSliceSizeInMb,
-				     const vector<string>&			antennas,
-				     const vector<pair<string, string> >&	dataDescriptions,
-				     MSFlagEval&				flagEval,
-				     uInt&					iMSRow,
-				     ArrayColumn<Bool>&				flag,
-				     ScalarColumn<Bool>&	                flagRow,
-				     CorrelationModeMod::CorrelationMode        ocorrelationMode
-				     ) {
+void processCorrelatorFlagsPerSlices(MainRow *mR_p, unsigned int iASDMIndex,
+				     const vector<int32_t> &mainRowIndex,
+				     const string &bdfPath, uint64_t bdfSliceSizeInMb,
+				     const vector<string> &antennas,
+				     const vector<pair<string, string> > &dataDescriptions,
+				     MSFlagEval &flagEval, uInt &iMSRow,
+				     ArrayColumn<Bool> &flag, ScalarColumn<Bool> &flagRow,
+				     CorrelationModeMod::CorrelationMode ocorrelationMode) {
+
   // Regular expressions for the correct sequences of axes in the flags in the case of ALMA data.
   std::regex  ALMACorrelatorFlagsAxesRegex("(BAL )?ANT (BAB )?(SPW )?(POL )?");
 
@@ -1077,9 +1029,9 @@ void processCorrelatorFlagsPerSlices(MainRow*					mR_p,
   CorrelatorFlagsAxes::set(flagsAxes);
 
   ostringstream oss;
-  hack06 hack06_instance(oss);
-  for_each(flagsAxes.begin(), flagsAxes.end(), hack06_instance);
-
+  //hack06 hack06_instance(oss);
+  //for_each(flagsAxes.begin(), flagsAxes.end(), hack06_instance);
+  for_each(flagsAxes.begin(), flagsAxes.end(), [&](AxisName ax){oss << CAxisName::toString(ax) << " ";});
   string axes_s = oss.str();
   if (axes_s.find("SPW ") == std::string::npos) {
     /*
@@ -1107,22 +1059,19 @@ void processCorrelatorFlagsPerSlices(MainRow*					mR_p,
     throw ProcessFlagsException("'" + oss.str() + "' is not a valid sequence of flags axes for an ALMA correlator.");
   }
 
-  uint32_t		N			 = mR_p->getNumIntegration();
-  uint64_t		bdfSize			 = mR_p->getDataSize();
-  vector<uint64_t>	actualSizeInMemory(sizeInMemory(bdfSize, bdfSliceSizeInMb*1024*1024));
-
+  int N	= mR_p->getNumIntegration();
+  uint64_t  bdfSize = mR_p->getDataSize();
+  vector<unsigned int> integrationSlices(getIntegrationSlices(N, bdfSize, bdfSliceSizeInMb*1024*1024));
   int32_t		numberOfIntegrations	 = 0;
   int32_t		numberOfReadIntegrations = 0;
 
   unsigned int				numBAL		= antennas.size() * (antennas.size() - 1) / 2;
   unsigned int				numDD		= dataDescriptions.size();
 
-  for (unsigned int j = 0; j < actualSizeInMemory.size(); j++) {
+  for (unsigned int j = 0; j < integrationSlices.size(); j++) {
     if (debug) cout << "PLATOON" << endl;
-    numberOfIntegrations = min((uint64_t)actualSizeInMemory[j] / (bdfSize / N), (uint64_t)N); // The min to prevent a possible excess when there are very few bytes in the BDF.
-    //numberOfIntegrations = min(actualSizeInMemory[j] / (bdfSize / N), N); // The min to prevent a possible excess when there are very few bytes in the BDF.
-    if (debug) cout << "------------> " << numberOfIntegrations << " , " << actualSizeInMemory[j] << endl;
-
+    numberOfIntegrations = integrationSlices[j];
+    if (debug) cout << "------------> " << numberOfIntegrations << endl;
     if (numberOfIntegrations) {
       MSFlagAccumulator<char> autoAccumulator(numberOfIntegrations, antennas.size(), numDD);
       MSFlagAccumulator<char> crossAccumulator(numberOfIntegrations, numBAL, numDD);
@@ -1165,6 +1114,7 @@ void processCorrelatorFlagsPerSlices(MainRow*					mR_p,
     }
   }
 
+  // this should no longer be necessary, but keep this block in place just in case
   if (debug) cout << "REMAINING" << endl;
   uint32_t numberOfRemainingIntegrations = N - numberOfReadIntegrations;
   if (numberOfRemainingIntegrations) {
@@ -1231,9 +1181,13 @@ int main (int argc, char * argv[]) {
   // Load the BDF flags abbreviations.
   loadBDFlags(abbrev2bitpos);
 
-  string abbrevList;
-  hack02 hack02_instance(abbrevList);
-  for_each (abbrev2bitpos.begin(), abbrev2bitpos.end(), hack02_instance);
+  //string abbrevList;
+  //hack02 hack02_instance(abbrevList);
+  //for_each (abbrev2bitpos.begin(), abbrev2bitpos.end(), hack02_instance);
+  string abbrevList = accumulate( abbrev2bitpos.begin(), abbrev2bitpos.end(), string( ),
+                                  []( const std::string &acc, const map<string, unsigned int>::value_type &v ) {
+                                      return acc + "\n\t* " + v.first;
+                                  });
 
   // process command line options and parameters
 
@@ -1526,13 +1480,11 @@ int main (int argc, char * argv[]) {
   // Open the dataset.
   try {
     ds.setFromFile(dsName, parseOpt);
-  }
-  catch (ConversionException e) {
+  } catch (ConversionException e) {
     errstream.str("");
     errstream << e.getMessage() << endl;
     error(errstream.str());
-  }
-  catch (...) {
+  } catch (...) {
     errstream.str("");
     errstream << "Unexpected error while trying to access the dataset." << endl;
     error(errstream.str());
@@ -1596,12 +1548,12 @@ int main (int argc, char * argv[]) {
     map<int, set<int> >::iterator iter_m = eb_scan_m.find(-1);
 
     if (iter_m != eb_scan_m.end())
-      for (map<int, set<int> >::iterator iterr_m = all_eb_scan_m.begin(); iterr_m != all_eb_scan_m.end(); iterr_m++)
-	if ((iter_m->second).empty())
-	  selected_eb_scan_m[iterr_m->first] = iterr_m->second;
-	else
-	  selected_eb_scan_m[iterr_m->first] = SetAndSet<int>(iter_m->second, iterr_m->second);
-
+        for (map<int, set<int> >::iterator iterr_m = all_eb_scan_m.begin(); iterr_m != all_eb_scan_m.end(); iterr_m++) {
+            if ((iter_m->second).empty())
+                selected_eb_scan_m[iterr_m->first] = iterr_m->second;
+            else
+                selected_eb_scan_m[iterr_m->first] = SetAndSet<int>(iter_m->second, iterr_m->second);
+        }
     for (map<int, set<int> >::iterator iterr_m = all_eb_scan_m.begin(); iterr_m != all_eb_scan_m.end(); iterr_m++)
       if ((iter_m=eb_scan_m.find(iterr_m->first)) != eb_scan_m.end()) {
 	if ((iter_m->second).empty())
@@ -1626,8 +1578,7 @@ int main (int argc, char * argv[]) {
     }
 
     scansOptionInfo = oss.str();
-  }
-  else {
+  } else {
     selectedScanRow_v = ds.getScan().get();
     selected_eb_scan_m = all_eb_scan_m;
     scansOptionInfo = "All scans of all exec blocks will be processed \n";
@@ -1653,8 +1604,7 @@ int main (int argc, char * argv[]) {
     // data.attach(mainTable, "DATA");
     flag.attach(mainTable, "FLAG");
     flagRow.attach(mainTable, "FLAG_ROW");
-  }
-  catch (AipsError e) {
+  } catch (AipsError e) {
     errstream.str("");
     errstream << e.getMesg() << endl;
     error(errstream.str());
@@ -1676,8 +1626,7 @@ int main (int argc, char * argv[]) {
     bitset<32> UDflagmask(flagmask.to_ulong());  // ... because ...
     UDflagmask.reset(abbrev2bitpos["WVR_APC"]);  // the mask must NOT have the WVR_APC bit set to 1 !
     fm2Ulong = UDflagmask.to_ulong();            // (see https://bugs.nrao.edu/browse/CAS-8491)
-  }
-  else {
+  } else {
     fm2Ulong = flagmask.to_ulong();
   }
   MSFlagEval flagEval(fm2Ulong, processUncorrectedData ? 3 : 0); // If we process uncorrected data we ignore the combination
@@ -1735,22 +1684,37 @@ int main (int argc, char * argv[]) {
     ConfigDescriptionRow * cfgR = cfgT.getRowByKey(mR->getConfigDescriptionId());
 
     vector<Tag> antennaTags = cfgR->getAntennaId();
-    vector<string> antennas;
-    hack04 hack04_instance(antennas);
-    for_each(antennaTags.begin(), antennaTags.end(), hack04_instance);
+    //vector<string> antennas;
+    //hack04 hack04_instance(antennas);
+    //for_each(antennaTags.begin(), antennaTags.end(), hack04_instance);
+    vector<string> antennas = accumulate( antennaTags.begin(), antennaTags.end(), vector<string>( ),
+                                          []( vector<string> &acc, const Tag &tag ) {
+                                              acc.push_back(tag.toString( ));
+                                              return acc;
+                                          });
 
     vector<Tag> dataDescriptionTags = cfgR->getDataDescriptionId();
-    vector<DataDescriptionRow *> ddRs;
-    hack03 hack03_instance(ddT,ddRs);
-    for_each(dataDescriptionTags.begin(), dataDescriptionTags.end(), hack03_instance);
+    //vector<DataDescriptionRow *> ddRs;
+    //hack03 hack03_instance(ddT,ddRs);
+    //for_each(dataDescriptionTags.begin(), dataDescriptionTags.end(), hack03_instance);
+    vector<DataDescriptionRow*> ddRs = accumulate( dataDescriptionTags.begin(), dataDescriptionTags.end(), vector<DataDescriptionRow *>( ),
+                                                   [&]( vector<DataDescriptionRow *> &acc, const Tag &tag ) {
+                                                       acc.push_back( ddT.getRowByKey(tag) );
+                                                       return acc;
+                                                   });
 
     unsigned int numDD = ddRs.size();
 
-    vector<pair<string, string> > dataDescriptions;
-    hack05 hack05_instance(dataDescriptions);
-    for_each(ddRs.begin(),
-	     ddRs.end(),
-	     hack05_instance);
+    //vector<pair<string, string> > dataDescriptions;
+    //hack05 hack05_instance(dataDescriptions);
+    //for_each(ddRs.begin(),
+    //	     ddRs.end(),
+    //	     hack05_instance);
+    vector<pair<string, string> > dataDescriptions = accumulate( ddRs.begin(), ddRs.end(), vector<pair<string, string> >( ),
+                                                                 []( vector<pair<string,string> > &acc, const DataDescriptionRow *row ) {
+                                                                     acc.push_back(make_pair(row->getSpectralWindowId( ).toString( ),row->getPolOrHoloId( ).toString( )));
+                                                                     return acc;
+                                                                 });
 
     string dataUID = mR->getDataUID().getEntityId().toString();
     replace(dataUID.begin(),dataUID.end(),':','_');
@@ -1796,29 +1760,13 @@ int main (int argc, char * argv[]) {
 	{
 	  //ddebug =  (mR -> getScanNumber() == 2) ;
 	  if (lazy)
-	    processCorrelatorFlags(numIntegration,
-				   bdfPath,
-				   antennas,
-				   dataDescriptions,
-				   flagEval,
-				   iMSRow,
-				   flag,
-				   flagRow,
-				   ocorrelationMode);
+	    processCorrelatorFlags(numIntegration, bdfPath, antennas, dataDescriptions,
+				   flagEval, iMSRow, flag, flagRow, ocorrelationMode);
 
 	  else
-	    processCorrelatorFlagsPerSlices(mR,
-					    iASDMIndex,
-					    mainRowIndex,
-					    bdfPath,
-					    bdfSliceSizeInMb,
-					    antennas,
-					    dataDescriptions,
-					    flagEval,
-					    iMSRow,
-					    flag,
-					    flagRow,
-					    ocorrelationMode);
+	    processCorrelatorFlagsPerSlices(mR, iASDMIndex, mainRowIndex, bdfPath, bdfSliceSizeInMb,
+					    antennas, dataDescriptions, flagEval, iMSRow, flag,
+					    flagRow, ocorrelationMode);
 	}
 	break;
 
@@ -1836,8 +1784,9 @@ int main (int argc, char * argv[]) {
 	    const SDMDataObject::BinaryPart & flagsBP = sdo.dataStruct().flags();
 	    const vector<AxisName> & flagsAxes = flagsBP.axes();
 	    ostringstream oss;
-	    hack06 hack06_instance(oss);
-	    for_each(flagsAxes.begin(), flagsAxes.end(), hack06_instance);
+	    //hack06 hack06_instance(oss);
+	    //for_each(flagsAxes.begin(), flagsAxes.end(), hack06_instance);
+            for_each(flagsAxes.begin(), flagsAxes.end(), [&](AxisName ax){oss << CAxisName::toString(ax) << " ";});
 	    
 	    // Check the validity of the sequence of flags axes (depending on the fact that data are packed or not).
 	    // also check tos ee if the first integration should be skipped - only done for packed data
@@ -1862,8 +1811,7 @@ int main (int argc, char * argv[]) {
 		     << endl;
 	      }
 	      lastTimeMap[mR->getConfigDescriptionId()] = ArrayTime(startTime+(sdo.numTime()-1)*deltaTime).getMJD();
-	    }
-	    else {
+	    } else {
 	      if (!std::regex_match(oss.str(), ALMARadiometerFlagsAxesRegex))
 		throw ProcessFlagsException("'" + oss.str() + "' is not a valid sequence of flags axes for an ALMA radiometer.");
 	    }
@@ -1882,8 +1830,7 @@ int main (int argc, char * argv[]) {
 	      pair<unsigned int, const FLAGSTYPE *> flagsPair(numFlags, flags_p);
 	      accumulator.resetIntegration();
 	      traverseALMARadiometerFlagsAxes(numIntegrations, sdo.dataStruct().basebands(), antennas, flagsPair, flagEval, accumulator);
-	    }
-	    else {
+	    } else {
 	      // duplicate integrations are not checked or skipped here
 	      const vector<SDMDataSubset>& sdmDataSubsets = sdo.sdmDataSubsets();
 	      accumulator.resetIntegration();
@@ -1899,7 +1846,8 @@ int main (int argc, char * argv[]) {
 	    }
 	    infostream.str("");
 
-	    infostream << "ASDM Main row #" << mainRowIndex[iASDMIndex] << " - " << numIntegrations  << "/" << numIntegrations << " integrations done so far.";
+	    infostream << "ASDM Main row #" << mainRowIndex[iASDMIndex] << " - " << numIntegrations  << "/"
+                       << numIntegrations << " integrations done so far.";
 	    info(infostream.str());
 
 	    pair<uInt, uInt> putReturn = put(accumulator, iMSRow, flag, flagRow,skipFirstIntegration);
@@ -1920,43 +1868,40 @@ int main (int argc, char * argv[]) {
 		 <<", subscan #" <<  mR->getSubscanNumber()
 		 <<", " << CProcessorType::toString(pt)
 		 <<", " << mR->getConfigDescriptionId().toString() << ")"
-		 << " - BDF '" << bdfPath << "' - Size " << mR->getDataSize() << " bytes,  produced " << numFlaggedRows  << " flagged rows in the MS Main table rows " << iMSRowBegin << " to " << (iMSRow - 1) << endl << endl << endl;
+		 << " - BDF '" << bdfPath << "' - Size " << mR->getDataSize()
+                 << " bytes,  produced " << numFlaggedRows
+                 << " flagged rows in the MS Main table rows "
+                 << iMSRowBegin << " to " << (iMSRow - 1) << endl << endl << endl;
       info(infostream.str());
       iMSRowBegin = iMSRow;
       numFlaggedRowsTotal += numFlaggedRows;
-    }
-    catch (AipsError e) {
+    } catch (AipsError e) {
       info(infostream.str());
       infostream.str("");
       infostream << e.getMesg() << endl;
       info(infostream.str());
       exit(1);
-    }
-    catch (ProcessFlagsException e) {
+    } catch (ProcessFlagsException e) {
       info(infostream.str());
       infostream.str("");
       infostream << e.getMessage() << " , bdf path = " << bdfPath << ", processor type = " << CProcessorType::toString(pt) << endl;
       info(infostream.str());
-    }
-    catch (SDMDataObjectParserException e) {
+    } catch (SDMDataObjectParserException e) {
       info(infostream.str());
       infostream.str("");
       infostream << e.getMessage() << endl;
       info(infostream.str());
-    }
-    catch (SDMDataObjectException e) {
+    } catch (SDMDataObjectException e) {
       info(infostream.str());
       infostream.str("");
       infostream << e.getMessage() << endl;
       info(infostream.str());
-    }
-    catch (SDMDataObjectReaderException e) {
+    } catch (SDMDataObjectReaderException e) {
       info(infostream.str());
       infostream.str("");
       infostream << e.getMessage() << endl;
       info(infostream.str());
-    }
-    catch (SDMDataObjectStreamReaderException e) {
+    } catch (SDMDataObjectStreamReaderException e) {
       info(infostream.str());
       infostream.str("");
       infostream << e.getMessage() << endl;
@@ -1966,15 +1911,11 @@ int main (int argc, char * argv[]) {
   }
   infostream.str("");
   if (mainTable.nrow() > 0) { // this is a paranoid test...
-    // force verbosity
-    bool verbose_ = verbose;
-    verbose = true;
     infostream << numFlaggedRowsTotal << " rows have been flagged in the " << mainTable.nrow()
 	       << " of the MS Main table. "
 	       << setprecision(4)
 	       << ((float) numFlaggedRowsTotal) / mainTable.nrow() * 100.0 << "%." << endl;
     info(infostream.str());
-    verbose = verbose_;
   }
   mainTable.flush();
 

@@ -33,7 +33,6 @@
 #include <plotms/Data/CalCache.h>
 #include <QDebug>
 
-
 using namespace casacore;
 namespace casa {
 
@@ -1093,6 +1092,9 @@ void PlotMSPlot::cacheLoaded_(bool wasCanceled) {
         dataMissing();
         return;
     }
+    // Report we are done
+    if(itsTCLParams_.endCacheLog)
+        itsParent_->getLogger()->releaseMeasurement();
 
     // Make this more specific than canvas-triggered
     if (itsTCLParams_.updateCanvas || itsTCLParams_.updateIteration ){
@@ -1118,9 +1120,6 @@ void PlotMSPlot::cacheLoaded_(bool wasCanceled) {
             updateCanvas();
     }
 
-    // Report we are done
-    if(itsTCLParams_.endCacheLog)
-        itsParent_->getLogger()->releaseMeasurement();
     // Release drawing if needed.
     if(itsTCLParams_.releaseWhenDone && !isCacheUpdating() )
         releaseDrawing();
@@ -1274,6 +1273,7 @@ bool PlotMSPlot::parametersHaveChanged_(const PlotMSWatchedParameters &p,
 }
 
 void PlotMSPlot::constructorSetup() {
+	itsCache_->setPlot(this);
 	PlotMSPlotParameters& params = parameters();
 	params.addWatcher(this);
 	// hold notification until initializePlot is called
@@ -1945,6 +1945,20 @@ void PlotMSPlot::setCanvasProperties (int row, int col, int numplots, uInt itera
 void PlotMSPlot::setAxisRange(PMS::Axis axis, PlotAxis paxis, 
 		double minval, double maxval, PlotCanvasPtr& canvas) {
 	pair<double, double> bounds;
+
+	// don't override larger axis range 
+	bool rangeSet(canvas->numPlots() > 0);  // already a plot!
+	double canvRangeMin, canvRangeMax;
+	if (rangeSet) { // get range and check for default
+		canvRangeMin = canvas->axisRange(paxis).first;
+	    canvRangeMax = canvas->axisRange(paxis).second;
+		rangeSet &= ((canvRangeMin != 0.0) && (canvRangeMax != 1000.0));
+	}
+	if (rangeSet) {  // possibly by user on first plot
+		minval = min(minval, canvas->axisRange(paxis).first);
+		maxval = max(maxval, canvas->axisRange(paxis).second);
+	}
+
 	// CAS-3263 points near zero are not plotted, so add lower margin
 	if ((minval > -0.5) && (minval < 1.0) && (maxval > 10.0)) {
 		if (maxval > 100.0) minval -= 1.0; // add larger margin for larger range
@@ -1952,23 +1966,21 @@ void PlotMSPlot::setAxisRange(PMS::Axis axis, PlotAxis paxis,
 		bounds = make_pair(minval, maxval);
 		canvas->setAxisRange(paxis, bounds);
 	}
-
-	// explicitly set range so can set time scale 
+	
 	if (axis==PMS::TIME) {
-	    double diff = maxval - minval;
-		if (diff>120.0) {
+		// explicitly set range so can set time scale 
+		double diff = maxval - minval;
+		if (diff>120.0) {  // seconds (2 minutes)
 			bounds = make_pair(minval, maxval);
-	    	canvas->setAxisRange(paxis, bounds);
+			canvas->setAxisRange(paxis, bounds);
 		} else if (diff==0.0) {
 			// override autoscale which sets crazy tick marks;
 			// add 2-sec margins
 			bounds = make_pair(minval-2.0, maxval+2.0);
-		   	canvas->setAxisRange(paxis, bounds);
+			canvas->setAxisRange(paxis, bounds);
 		}
-	}
-
-	// make range symmetrical for uv plot
-	if (PMS::axisIsUV(axis)) {
+	} else if (PMS::axisIsUV(axis)) {
+		// make range symmetrical for uv plot
 		if ((minval != DBL_MAX) && (maxval != -DBL_MAX)) {
 			double maximum = round(max(abs(minval),maxval)) + 10.0;
 			minval = -maximum;
