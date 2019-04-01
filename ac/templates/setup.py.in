@@ -1237,6 +1237,8 @@ class create_makefile(Command):
         lex_target = "lex_compile"
         c_target = "c_compile"
         fortran_target = "f_compile"
+        libcasatools = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libcasatools.cpython-36m-x86_64-linux-gnu.so'
+        gen_tool_dep_target = 'generate_tool_dependencies'
         swig_target = "swig_compile"
         statics_wrap_target = "statics_wrap_cc_compile"
         straight_copies_target = "straight_file_copies"
@@ -1257,7 +1259,7 @@ class create_makefile(Command):
             mk.write(
                 sep.join([
                     all_target + ":", yacc_target, lex_target, cpp_target, c_target,
-                    fortran_target, swig_target, statics_wrap_target, 
+                    fortran_target, libcasatools, swig_target, statics_wrap_target, 
                     straight_copies_target, rsync_data_target, "\n"
                 ])
             )
@@ -1315,7 +1317,6 @@ class create_makefile(Command):
         cpp_list = []
         mkdirs_cc_target = "mk_cc_obj_dirs"
         targdirs = set()
-        shlib = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libcasatools.cpython-36m-x86_64-linux-gnu.so'
         with open("makefile", "a") as mk:
             for (mysrc, myflags) in zip(src, cflags):
                 dflags = sep.join(myflags + duse_grpc + grpc_dirs)
@@ -1370,7 +1371,6 @@ class create_makefile(Command):
             mk.write("\n# targets to compile yacc code to object files\n")
             mk.write(".PHONY: " + yacc_target + "\n")
             mk.write(yacc_target + ": " + sep.join(yacc_list) + "\n")
-        # casatools_obj_list += yacc_list
                         
         # lex
         CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
@@ -1393,7 +1393,6 @@ class create_makefile(Command):
             mk.write("\n# targets to compile lex code to object files\n")
             mk.write(".PHONY: " + lex_target + "\n")
             mk.write(lex_target + ": " + sep.join(lex_list) + "\n")
-        # casatools_obj_list += lex_list
 
         MIR_SRC =  source_files( "casa-source/casacore/mirlib",file_suffix_filter=".c" )
         includes = sep.join(get_new_cxx_compiler_includes())
@@ -1478,13 +1477,28 @@ class create_makefile(Command):
         ldflags3 += '-Wl,-rpath,/opt/casa/03/lib -L/usr/lib64 -fopenmp '
         # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
         # ldflags3 += '-Lbuild/lib.linux-x86_64-3.6/casatools/__casac__/lib -Wl,-rpath,$$ORIGIN/lib:/usr/lib64'
+        # $$ escapes the literal $ from make, the \ escapes the literal $ from the shell
         ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
-        # ld_cmd = linker + ' ' + ldflags1 + ' ' + sep.join(cpp_list) + ' ' + ldflags2 + ' ' + shlib + ' ' + ldflags3
         ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
         with open("makefile", "a") as mk:
-            mk.write('\n\n' + shlib + ': ' + sep.join(casatools_obj_list))
+            mk.write('\n\n' + libcasatools + ': ' + sep.join(casatools_obj_list))
             mk.write('\n\t@mkdir -p build/lib.linux-x86_64-3.6/casatools/__casac__/lib')
             mk.write('\n\t' + ld_cmd)
+        """
+        # determine tool interdependencies etc using xml-casa
+        moduledir = get_module_dir()
+        xml_casa = 'scripts' + os.sep + 'xml-casa'
+        XML_FILES = source_files("xml/tools", file_suffix_filter=".xml")
+        bgt = 'binding' + os.sep + 'generated' + os.sep + 'tools'
+        with open("makefile", "a") as mk:
+            mk.write('\n\n# generate tool interdependecies')
+            mk.write('\n.PHONY: ' + gen_tool_dep_target)
+            mk.write('\n' + gen_tool_dep_target + ': ' + sep.join(XML_FILES))
+            mk.write(
+                '\n\t' + xml_casa + ' -all -output-tool-subdir output-i=' + bgt + ' output-h=' 
+                + bgt + ' output-c=' + bgt + ' output-tool=' + moduledir + ' $^'
+            )
+        """
 
         # swig *.i -> *_wrap.cpp
         BINDING_I = source_files("binding/generated/tools", file_suffix_filter=".i")
@@ -1492,16 +1506,19 @@ class create_makefile(Command):
         customize_swig(self)
         swig = self.swig
         flags = sep.join(['-python'] + get_swig_flags())
+        xml_casa = 'scripts' + os.sep + 'xml-casa'
         wrap_cpp_create = (
-            wrap_cpp_name + ': {src} \n\t' + swig + ' ' + flags + ' -o $@ $<'
+            wrap_cpp_name + ': {base}.i xml' + os.sep + 'tools' + os.sep + '{toolname}.xml '
+            + xml_casa + '\n\t' + swig + ' ' + flags + ' -o $@ $<'
         )
         i_list = []
         with open("makefile", "a") as mk:
             for ifile in BINDING_I:
                 (base, ext) = os.path.splitext(ifile)
+                toolname = base.split(os.sep)[-2]
                 wrapcpp_file = wrap_cpp_name.format(base=base)
                 i_list.append(wrapcpp_file)
-                mk.write("\n\n" + wrap_cpp_create.format(src=ifile, base=base))
+                mk.write("\n\n" + wrap_cpp_create.format(base=base, toolname=toolname))
             mk.write("\n# targets to compile swig .i files to _wrap.cpp files\n")
             mk.write(".PHONY: " + swig_target + "\n")
             mk.write(swig_target + ": " + sep.join(i_list) + "\n")
@@ -1509,20 +1526,19 @@ class create_makefile(Command):
         # Generation of various files. This can probably be done in make, if really
         # necessary, but it's so quick it's easiest to just do it using the existing
         # python functionality for now
-        moduledir = get_module_dir()
         install_version_header(casatools_major,casatools_minor,casatools_version)
         generate_config(moduledir,props)
 
         # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files 
-        
         # some of this is copied and pasted from the C++ section above, so can be
         # refactored
+        # NOTE: If changes to xml files modify tool interdependencies, setup.py must
+        # be run again. The makefile can't check for and modify these (yet).
         STATICS_CC = source_files("binding/generated/tools", file_suffix_filter=".cc")
         # the wrap files won't be there for the initial run of this script, so we
         # cannot use source_files() to find them
         WRAP_CPP = [filename.replace('_statics.cc', '_wrap.cpp') for filename in STATICS_CC]
         CODE_BINDING = source_files("binding/tools", file_suffix_filter=".cc")
-        # SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
         obj_create = (
@@ -1541,6 +1557,7 @@ class create_makefile(Command):
         cpp_list = []
         mkdirs_statics_wrap_target = "mk_static_cc_obj_dirs"
         targdirs = set()
+        """
         tool_deps = {}
         # Any tool interdependcies must be reflected in the tool_deps dictionary
         tool_deps['image'] = ['componentlist', 'coordsys']
@@ -1549,31 +1566,30 @@ class create_makefile(Command):
         tool_deps['synthesisimager'] = ['synthesisimstore']
         tool_deps['synthesisnormalizer'] = ['synthesisimstore']
         tool_deps['synthesisutils'] = ['synthesisimstore']
+        """
         with open("makefile", "a") as mk:
             for s in STATICS_CC + WRAP_CPP + CODE_BINDING: # + SOURCE_BINDING:
                 base = os.path.splitext(s)[0]
                 myinc = includes
-                """
-                if s not in SOURCE_BINDING:
-                    toolname = base.split(os.sep)[-2]
-                    if toolname in tool_deps:
-                        tool_deps[toolname].append(toolname)
-                    else:
-                        tool_deps[toolname] = [toolname]
-                    for tn in tool_deps[toolname]:
-                        myinc += " " + tool_inc.format(toolname=tn)
-                if s in WRAP_CPP or s in SOURCE_BINDING:
-                    myinc += " -I" + python_inc
-                """
                 toolname = base.split(os.sep)[-2]
+                """
                 if toolname in tool_deps:
                     tool_deps[toolname].append(toolname)
                 else:
                     tool_deps[toolname] = [toolname]
+                """
                 if s in WRAP_CPP:
                     myinc += " -I" + python_inc
-                for tn in tool_deps[toolname]:
-                    myinc += " " + tool_inc.format(toolname=tn)
+                # for tn in tool_deps[toolname]:
+                mylibs = set([toolname] + g_tools[toolname] if toolname in g_tools else [])
+                dependencies = set();
+                for mylib in g_tools[toolname]:
+                    if mylib in g_tool_libs:
+                        dependencies.update(g_tool_libs[mylib])
+                    else:
+                        dependencies.add(mylib)
+                for dependency in dependencies:
+                    myinc += " " + tool_inc.format(toolname=dependency)
                 objfile = obj_name.format(base=base)
                 cpp_list.append(objfile)
                 targdirs.add(os.path.dirname(objfile))
@@ -1605,15 +1621,14 @@ class create_makefile(Command):
         files_to_copy.append("build.properties")
         bindir = moduledir + os.sep + "__casac__" + os.sep + "bin"
         copy_to_dirs = {}
-        xml_casa = "xml-casa"
-        files_to_copy.append("scripts" + os.sep + xml_casa)
+        files_to_copy.append(xml_casa)
         copy_to_dirs[xml_casa] = bindir
         assembly_jar = "xml-casa-assembly-1.5.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
         copy_to_dirs[assembly_jar] = bindir + os.sep + "java" 
         copy_to_list = []
         with open("makefile", "a") as mk:
-            mk.write("# straight file copies")
+            mk.write("\n# straight file copies")
             for f in files_to_copy:
                 filename = os.path.basename(f)
                 copy_to_dir = copy_to_dirs[filename] if filename in copy_to_dirs else moduledir
@@ -1637,6 +1652,7 @@ class create_makefile(Command):
                 rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
                 + moduledir + "/__data__"
             )
+        
         # C++ and C dependency tracking to makefile
         with open("makefile", "a") as mk:
             mk.write("""
@@ -1671,6 +1687,11 @@ def get_swig_flags():
 
 def get_grpc_incdir():
     return os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
+
+# set these globals so we don't have to run generate_binding() twice for genmake
+g_tool_shared_libs = None
+g_tool_libs = None
+g_tools = None
 
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
@@ -1709,6 +1730,8 @@ if __name__ == '__main__':
     generate_lex(CASACORE_LEX + CODE_LEX)
     generate_yacc(CASACORE_YACC + CODE_YACC)
     (NEEDED,LIBS,TOOLS) = generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
+    # stuff in globals for genmake
+    (g_tool_shared_libs, g_tool_libs, g_tools) = (NEEDED, LIBS, TOOLS)
 
     CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
     MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
