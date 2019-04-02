@@ -1478,14 +1478,8 @@ class create_makefile(Command):
         # -lcasatools.cpython-36m-x86_64-linux-gnu '
         sepl = " -l"
         ldflags2 += sepl + sepl.join(prop_libs)
-        if duse_grpc:
-            ldflags2 += sepl + sepl.join(get_grpc_libs())
-            
-        ldflags2 += sepl + sepl.join([
-            "sqlite3", "xslt", "xerces-c",
-            "fftw3f_threads", "fftw3f", "fftw3_threads", "fftw3", "lapack", "blas",
-            "readline", "gfortran", "gomp", "python3.6m"
-        ])
+        ldflags2 += sepl + sepl.join(get_tp_libs())
+
         # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
         # $$ escapes the literal $ from make, the \ escapes the literal $ from the shell
         ldflags3 = sep.join(prop_ldflags + ['-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'])
@@ -1699,6 +1693,12 @@ def get_link_props():
     prop_libs = list(map(lambda x: x[2:],list(filter(lambda x: x.startswith('-l'),prop_linking))))
     return (ldflags, prop_libs)
 
+# third party libs for linking
+def get_tp_libs():
+    return [
+            'sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f', 'fftw3_threads',
+            'fftw3','lapack','wcs','cfitsio','rpfits','blas'
+        ] + get_grpc_libs() + ['readline', 'gfortran', 'dl']
 
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
@@ -1769,12 +1769,6 @@ if __name__ == '__main__':
     CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",
                             #file_filter=['fgridsdclip.f']
     )
-    """
-    prop_linking = list(filter(lambda x: len(x) > 0,list(chain.from_iterable(map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.items()))))))
-
-    ldflags = list(filter(lambda x:  not x.startswith('-l'),prop_linking))
-    prop_libs = list(map(lambda x: x[2:],list(filter(lambda x: x.startswith('-l'),prop_linking))))
-    """
     (ldflags, prop_libs) = get_link_props()
     if sys.platform == 'darwin':
         ### need to get '/opt/local/lib/gcc5' from gfortran directly
@@ -1788,7 +1782,8 @@ if __name__ == '__main__':
 
     # grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
     grpc_libs = get_grpc_libs()
-    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
+    # ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
+    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + get_tp_libs() + archlibs ) ]
 
     # casacdir = os.path.join(moduledir, '__casac__')
     casacdir = get_casac_dir()
