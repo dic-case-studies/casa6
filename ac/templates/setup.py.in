@@ -1237,7 +1237,11 @@ class create_makefile(Command):
         lex_target = "lex_compile"
         c_target = "c_compile"
         fortran_target = "f_compile"
-        libcasatools = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libcasatools.cpython-36m-x86_64-linux-gnu.so'
+        soabi = sysconfig.get_config_var('SOABI')
+        lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
+        output_lib = os.sep.join([get_casac_dir(), "lib", "lib{libname}." + soabi + "." + lib_ext])
+        # libcasatools = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libcasatools.cpython-36m-x86_64-linux-gnu.so'
+        libcasatools = output_lib.format(libname='casatools')
         gen_tool_dep_target = 'generate_tool_dependencies'
         swig_target = "swig_compile"
         statics_wrap_target = "statics_wrap_cc_compile"
@@ -1283,9 +1287,12 @@ class create_makefile(Command):
         SAKURA_SRC = sakura_files( )
         CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
         # the gprc registrar files may not be present when this code gets run
-        grpc_registrar_dir = 'build' + os.sep + distutils_dir_name("binding") + os.sep + "grpc"
-        grpc_registrar_files = ['registrar.grpc.pb.cc', 'registrar.pb.cc']
-        GRPC_REGISTRAR = [grpc_registrar_dir + os.sep + s for s in grpc_registrar_files]
+        duse_grpc = get_use_grpc()
+        GRPC_REGISTRAR = []
+        if duse_grpc:
+            grpc_registrar_dir = 'build' + os.sep + distutils_dir_name("binding") + os.sep + "grpc"
+            grpc_registrar_files = ['registrar.grpc.pb.cc', 'registrar.pb.cc']
+            GRPC_REGISTRAR = [grpc_registrar_dir + os.sep + s for s in grpc_registrar_files]
         # the binding/source files need to be put into the casatools library, so compile 
         # them here
         SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
@@ -1312,8 +1319,7 @@ class create_makefile(Command):
                 filter(lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split())
             )
         )
-        duse_grpc = get_use_grpc()
-        grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()]
+        grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()] if duse_grpc else []
         cpp_list = []
         mkdirs_cc_target = "mk_cc_obj_dirs"
         targdirs = set()
@@ -1460,6 +1466,7 @@ class create_makefile(Command):
 
         # casatools link
         linker = props['build.compiler.cxx']
+        (prop_ldflags, prop_libs) = get_link_props()
         ldflags1 = sep.join(props['build.flags.compile.pthread'])
         # FIXME hardcoded because I don't know where it comes from
         ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64-Wl,-z,relro -Wl,-rpath,'
@@ -1469,36 +1476,26 @@ class create_makefile(Command):
         # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
         # the libcasatools link 
         # -lcasatools.cpython-36m-x86_64-linux-gnu '
-        ldflags2 += '-lcfitsio -lm -lxml2 -lz -lm -ldl -lrpfits -lsqlite3 -lxslt -lxml2 -lxerces-c '
-        ldflags2 += '-lfftw3f_threads -lfftw3f -lfftw3_threads -lfftw3 -llapack -lwcs -lcfitsio '
-        ldflags2 += '-lrpfits -lblas -lgrpc++ -lgrpc -lgpr -lprotobuf -lreadline -lgfortran '
-        ldflags2 += '-ldl -lgomp -lpython3.6m'
-        ldflags3 = '/opt/casa/03/lib/libgsl.so /opt/casa/03/lib/libgslcblas.so '
-        ldflags3 += '-Wl,-rpath,/opt/casa/03/lib -L/usr/lib64 -fopenmp '
+        sepl = " -l"
+        ldflags2 += sepl + sepl.join(prop_libs)
+        if duse_grpc:
+            ldflags2 += sepl + sepl.join(get_grpc_libs())
+            
+        ldflags2 += sepl + sepl.join([
+            "sqlite3", "xslt", "xerces-c",
+            "fftw3f_threads", "fftw3f", "fftw3_threads", "fftw3", "lapack", "blas",
+            "readline", "gfortran", "gomp", "python3.6m"
+        ])
         # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
-        # ldflags3 += '-Lbuild/lib.linux-x86_64-3.6/casatools/__casac__/lib -Wl,-rpath,$$ORIGIN/lib:/usr/lib64'
         # $$ escapes the literal $ from make, the \ escapes the literal $ from the shell
-        ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
+        ldflags3 = sep.join(prop_ldflags + ['-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'])
+        # ldflags3 += '-Lbuild/lib.linux-x86_64-3.6/casatools/__casac__/lib -Wl,-rpath,$$ORIGIN/lib:/usr/lib64'
+        # ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
         ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
         with open("makefile", "a") as mk:
             mk.write('\n\n' + libcasatools + ': ' + sep.join(casatools_obj_list))
             mk.write('\n\t@mkdir -p build/lib.linux-x86_64-3.6/casatools/__casac__/lib')
             mk.write('\n\t' + ld_cmd)
-        """
-        # determine tool interdependencies etc using xml-casa
-        moduledir = get_module_dir()
-        xml_casa = 'scripts' + os.sep + 'xml-casa'
-        XML_FILES = source_files("xml/tools", file_suffix_filter=".xml")
-        bgt = 'binding' + os.sep + 'generated' + os.sep + 'tools'
-        with open("makefile", "a") as mk:
-            mk.write('\n\n# generate tool interdependecies')
-            mk.write('\n.PHONY: ' + gen_tool_dep_target)
-            mk.write('\n' + gen_tool_dep_target + ': ' + sep.join(XML_FILES))
-            mk.write(
-                '\n\t' + xml_casa + ' -all -output-tool-subdir output-i=' + bgt + ' output-h=' 
-                + bgt + ' output-c=' + bgt + ' output-tool=' + moduledir + ' $^'
-            )
-        """
 
         # swig *.i -> *_wrap.cpp
         BINDING_I = source_files("binding/generated/tools", file_suffix_filter=".i")
@@ -1557,27 +1554,11 @@ class create_makefile(Command):
         cpp_list = []
         mkdirs_statics_wrap_target = "mk_static_cc_obj_dirs"
         targdirs = set()
-        """
-        tool_deps = {}
-        # Any tool interdependcies must be reflected in the tool_deps dictionary
-        tool_deps['image'] = ['componentlist', 'coordsys']
-        tool_deps['imagepol'] = ['componentlist', 'coordsys', 'image']
-        tool_deps['ms'] = ['msmetadata', 'table']
-        tool_deps['synthesisimager'] = ['synthesisimstore']
-        tool_deps['synthesisnormalizer'] = ['synthesisimstore']
-        tool_deps['synthesisutils'] = ['synthesisimstore']
-        """
         with open("makefile", "a") as mk:
             for s in STATICS_CC + WRAP_CPP + CODE_BINDING: # + SOURCE_BINDING:
                 base = os.path.splitext(s)[0]
                 myinc = includes
                 toolname = base.split(os.sep)[-2]
-                """
-                if toolname in tool_deps:
-                    tool_deps[toolname].append(toolname)
-                else:
-                    tool_deps[toolname] = [toolname]
-                """
                 if s in WRAP_CPP:
                     myinc += " -I" + python_inc
                 # for tn in tool_deps[toolname]:
@@ -1693,6 +1674,32 @@ g_tool_shared_libs = None
 g_tool_libs = None
 g_tools = None
 
+def get_grpc_libs():
+    return [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
+
+# includes and libs for linking from build.properties
+def get_link_props():
+    prop_linking = list(
+        filter(
+            lambda x:
+                len(x) > 0, list(
+                    chain.from_iterable(
+                        map(
+                            lambda pair:
+                                pair[1], filter(
+                                    lambda pair: pair[0].startswith('build.flags.link'),props.items()
+                                )
+                        )
+                    )
+                )
+        )
+    )
+
+    ldflags = list(filter(lambda x:  not x.startswith('-l'),prop_linking))
+    prop_libs = list(map(lambda x: x[2:],list(filter(lambda x: x.startswith('-l'),prop_linking))))
+    return (ldflags, prop_libs)
+
+
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
     targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print(sys.executable)"])).split('\n')[0]
@@ -1762,12 +1769,13 @@ if __name__ == '__main__':
     CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",
                             #file_filter=['fgridsdclip.f']
     )
-
+    """
     prop_linking = list(filter(lambda x: len(x) > 0,list(chain.from_iterable(map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.items()))))))
 
     ldflags = list(filter(lambda x:  not x.startswith('-l'),prop_linking))
     prop_libs = list(map(lambda x: x[2:],list(filter(lambda x: x.startswith('-l'),prop_linking))))
-
+    """
+    (ldflags, prop_libs) = get_link_props()
     if sys.platform == 'darwin':
         ### need to get '/opt/local/lib/gcc5' from gfortran directly
         rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
@@ -1778,7 +1786,8 @@ if __name__ == '__main__':
         archflags = [ ]
         archlibs = ['gomp']
 
-    grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
+    # grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
+    grpc_libs = get_grpc_libs()
     ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
 
     # casacdir = os.path.join(moduledir, '__casac__')
