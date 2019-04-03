@@ -1239,7 +1239,8 @@ class create_makefile(Command):
         fortran_target = "f_compile"
         soabi = sysconfig.get_config_var('SOABI')
         lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
-        output_lib = os.sep.join([get_casac_dir(), "lib", "lib{libname}." + soabi + "." + lib_ext])
+        casac_dir = get_casac_dir()
+        output_lib = os.sep.join([casac_dir, "lib", "lib{libname}." + soabi + "." + lib_ext])
         # libcasatools = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libcasatools.cpython-36m-x86_64-linux-gnu.so'
         libcasatools = output_lib.format(libname='casatools')
         gen_tool_dep_target = 'generate_tool_dependencies'
@@ -1467,23 +1468,25 @@ class create_makefile(Command):
         # casatools link
         linker = props['build.compiler.cxx']
         (prop_ldflags, prop_libs) = get_link_props()
-        ldflags1 = sep.join(props['build.flags.compile.pthread'])
+        (archflags, archlibs) = get_arch_link()
+        ldflags1 = sep.join(props['build.flags.compile.pthread'] + archflags)
         # FIXME hardcoded because I don't know where it comes from
         ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64-Wl,-z,relro -Wl,-rpath,'
         ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
-        ldflags2 = '-Lbuild/lib.linux-x86_64-3.6/casatools/__casac__/lib '
+        ldflags2 = '-L' + casac_dir + os.sep + 'lib '
         ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 ' 
         # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
         # the libcasatools link 
         # -lcasatools.cpython-36m-x86_64-linux-gnu '
         sepl = " -l"
         ldflags2 += sepl + sepl.join(prop_libs)
-        ldflags2 += sepl + sepl.join(get_tp_libs())
+        ldflags2 += sepl + sepl.join(get_tp_libs() + archlibs)
 
         # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
         # $$ escapes the literal $ from make, the \ escapes the literal $ from the shell
-        ldflags3 = sep.join(prop_ldflags + ['-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'])
-        # ldflags3 += '-Lbuild/lib.linux-x86_64-3.6/casatools/__casac__/lib -Wl,-rpath,$$ORIGIN/lib:/usr/lib64'
+        # ldflags3 = sep.join(prop_ldflags + ['-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'])
+        rpath = get_casatools_rpath(True)
+        ldflags3 = sep.join(prop_ldflags + rpath)
         # ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
         ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
         with open("makefile", "a") as mk:
@@ -1518,7 +1521,7 @@ class create_makefile(Command):
         # necessary, but it's so quick it's easiest to just do it using the existing
         # python functionality for now
         install_version_header(casatools_major,casatools_minor,casatools_version)
-        generate_config(moduledir,props)
+        generate_config(moduledir, props)
 
         # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files 
         # some of this is copied and pasted from the C++ section above, so can be
@@ -1700,6 +1703,24 @@ def get_tp_libs():
             'fftw3','lapack','wcs','cfitsio','rpfits','blas'
         ] + get_grpc_libs() + ['readline', 'gfortran', 'dl']
 
+def get_casatools_rpath(escape_for_make=False):
+    if sys.platform == 'darwin':
+        ### need to get '/opt/local/lib/gcc5' from gfortran directly
+        return [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
+    else:
+        myorigin = '\$$ORIGIN/lib' if escape_for_make else '$ORIGIN/lib'
+        return [ '-Wl,-rpath,' + ":".join([myorigin] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))) ]
+
+# get architecture specific data used for linking
+def get_arch_link():
+    if sys.platform == 'darwin':
+        archflags = ['-L/opt/local/lib/gcc5']
+        archlibs = [ ]
+    else:
+        archflags = [ ]
+        archlibs = ['gomp']
+    return (archflags, archlibs)
+
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
     targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print(sys.executable)"])).split('\n')[0]
@@ -1770,6 +1791,7 @@ if __name__ == '__main__':
                             #file_filter=['fgridsdclip.f']
     )
     (ldflags, prop_libs) = get_link_props()
+    """
     if sys.platform == 'darwin':
         ### need to get '/opt/local/lib/gcc5' from gfortran directly
         rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
@@ -1779,11 +1801,15 @@ if __name__ == '__main__':
         rpath = [ '-Wl,-rpath,' + ":".join(['$ORIGIN/lib'] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))) ]
         archflags = [ ]
         archlibs = ['gomp']
+    """
+    rpath = get_casatools_rpath()
+    (archflags, archlibs) = get_arch_link()
 
     # grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
-    grpc_libs = get_grpc_libs()
+    # grpc_libs = get_grpc_libs()
     # ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
-    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + get_tp_libs() + archlibs ) ]
+    tp_libs = get_tp_libs()
+    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + tp_libs + archlibs ) ]
 
     # casacdir = os.path.join(moduledir, '__casac__')
     casacdir = get_casac_dir()
@@ -1806,7 +1832,10 @@ if __name__ == '__main__':
     for lb in LIBS:
         if sys.platform == 'darwin':
             rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
-        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+        # ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+
+        # ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + tp_libs + archlibs ))
 
     for t in TOOLS:
         inc = [ ]; lib = [ ]; src = [ ]
@@ -1819,7 +1848,8 @@ if __name__ == '__main__':
 
         if sys.platform == 'darwin':
             rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
-        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
+        # ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
+        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + tp_libs + lib + archlibs + closure_libraries ))
 
     setup( name="casatools",version=casatools_version,
            maintainer="Darrell Schiebel",
