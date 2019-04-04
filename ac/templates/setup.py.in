@@ -1593,18 +1593,18 @@ class create_makefile(Command):
             mk.write(".PHONY: " + statics_wrap_target + "\n")
             mk.write(statics_wrap_target + ": " + mkdirs_statics_wrap_target + " " + sep.join(cpp_list) + "\n")
        
-            cmpt_o_dir = os.sep.join([build_distutils_temp, "binding", "tools", "{toolname}"])
-            statics_wrap_o_dir = os.sep.join([build_distutils_temp, "binding", "generated", "tools", "{toolname}"])
-            tool_lib_deps = [
-                cmpt_o_dir + os.sep + "{cmptname}_cmpt.o", statics_wrap_o_dir + os.sep + "{toolname}_statics.o",
-                statics_wrap_o_dir + os.sep + "{toolname}_wrap.o"
-            ]
             mk.write("\n\n# Create tool shared libraries")
             # update ldflags2 to add libcasatools
             ldflags2 = '-L' + casac_dir + os.sep + 'lib '
             ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 ' 
             ldflags2 += sepl + sepl.join([os.path.basename(libcasatools)[3:][:-3]] + link_libs)
 
+            tool_bind_dir = os.sep.join([build_distutils_temp, "binding", "tools", "{toolname}"])
+            tool_gen_dir = os.sep.join([build_distutils_temp, "binding", "generated", "tools", "{toolname}"])
+            # tool_lib_deps = [
+            #    cmpt_o_dir + os.sep + "{cmptname}_cmpt.o", statics_wrap_o_dir + os.sep + "{toolname}_statics.o",
+            #    statics_wrap_o_dir + os.sep + "{toolname}_wrap.o"
+            # ]
             # make targets for libraries on which tool libraries depend
             tool_shared_lib = os.sep.join([casac_dir, "lib", "{libname}." + soabi + "." + lib_ext])
             tool_libs_targ_deps = []
@@ -1613,9 +1613,16 @@ class create_makefile(Command):
                 dep_cmpt_statics_wrap = []
                 tsl = tool_shared_lib.format(libname=mylib)
                 tool_libs_targ_deps.append(tsl)
+                needed_objs = []
                 for tn in g_tool_shared_libs[mylib]:
-                    dep_cmpt_statics_wrap.append(sep.join(tool_lib_deps).format(cmptname=tn, toolname=tn))
-                mk.write(tsl + ": " + sep.join(dep_cmpt_statics_wrap) + "\n\t" + ld_cmd+ "\n")
+                    needed_objs += (
+                        source_files(tool_bind_dir.format(toolname=tn), file_suffix_filter=".o") 
+                        + source_files(tool_gen_dir.format(toolname=tn), file_suffix_filter=".o")
+                    )
+                    # dep_cmpt_statics_wrap.append(sep.join(tool_lib_deps).format(cmptname=tn, toolname=tn))
+                # mk.write(tsl + ": " + sep.join(dep_cmpt_statics_wrap) + "\n\t" + ld_cmd+ "\n")
+                ld_cmd = linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 + ' -o $@ ' + ldflags3
+                mk.write(tsl + ": " + libcasatools + " " + sep.join(needed_objs) + "\n\t" + ld_cmd+ "\n")
 
             # make rules for tool libraries
             all_tool_names = g_tools.keys()
@@ -1626,22 +1633,35 @@ class create_makefile(Command):
                 dep_libs = g_tools[tn]
                 tln = tool_lib_name.format(libname=tn) 
                 tool_libs_targ_deps.append(tln)
-                tool_lib_create = tln + ": " + sep.join(tool_lib_deps)
+                tool_lib_create = tln + ": " + libcasatools
                 # of course, we have to have one that breaks the rule, vlafiller is that one
                 cn = tn + "task" if tn == "vlafiller" else tn 
                 if len(dep_libs) == 1 and dep_libs[0] == tn:
-                    ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
+                    needed_objs = (
+                        source_files(tool_bind_dir.format(toolname=tn), file_suffix_filter=".o") 
+                        + source_files(tool_gen_dir.format(toolname=tn), file_suffix_filter=".o")
+                    )
+                    tool_lib_create += " " + sep.join(needed_objs)
+                    ld_cmd = linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 + ' -o $@ ' + ldflags3
                 else:
                     needed_libs = []
+                    needed_objs = []
                     for mydl in dep_libs:
-                        if tn != mydl:
+                        if tn == mydl:
+                            needed_objs = (
+                                source_files(tool_bind_dir.format(toolname=tn), file_suffix_filter=".o") 
+                                + source_files(tool_gen_dir.format(toolname=tn), file_suffix_filter=".o")
+                            )
+                            tool_lib_create + " " + sep.join(needed_objs)
+                            tool_lib_create += " " + sep.join(needed_objs)
+                        else:
                             tool_lib_create += " " + tool_shared_lib.format(libname=mydl)
                             needed_libs.append(sh_lib_flag.format(libname=mydl[3:]))
                     ld_cmd = (
-                        linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + sepl 
+                        linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 + sepl 
                         + sepl.join(needed_libs) + ' -o $@ ' + ldflags3
                     )
-                mk.write("\n" + tool_lib_create.format(cmptname=cn, toolname=tn))     
+                mk.write("\n" + tool_lib_create)     
                 mk.write('\n\t' + ld_cmd + '\n')
                
             mk.write("\n\n# Create all tool libraries\n")
