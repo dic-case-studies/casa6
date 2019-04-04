@@ -1501,8 +1501,9 @@ class create_makefile(Command):
         swig = self.swig
         flags = sep.join(['-python'] + get_swig_flags())
         xml_casa = 'scripts' + os.sep + 'xml-casa'
+        xml_tool_dir = os.sep.join(["xml", "tools"])
         wrap_cpp_create = (
-            wrap_cpp_name + ': {base}.i xml' + os.sep + 'tools' + os.sep + '{toolname}.xml '
+            wrap_cpp_name + ': {base}.i ' + xml_tool_dir + os.sep + '{toolname}.xml '
             + xml_casa + '\n\t' + swig + ' ' + flags + ' -o $@ $<'
         )
         i_list = []
@@ -1552,7 +1553,7 @@ class create_makefile(Command):
         mkdirs_statics_wrap_target = "mk_static_cc_obj_dirs"
         targdirs = set()
         with open("makefile", "a") as mk:
-            for s in STATICS_CC + WRAP_CPP + CODE_BINDING: # + SOURCE_BINDING:
+            for s in STATICS_CC + WRAP_CPP + CODE_BINDING:
                 base = os.path.splitext(s)[0]
                 myinc = includes
                 toolname = base.split(os.sep)[-2]
@@ -1585,14 +1586,23 @@ class create_makefile(Command):
             mk.write("\n# targets to compile statics C++ code to object files\n")
             mk.write(".PHONY: " + statics_wrap_target + "\n")
             mk.write(statics_wrap_target + ": " + mkdirs_statics_wrap_target + " " + sep.join(cpp_list) + "\n")
-
-        # link shared libraries
-        shlib = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libmsmetadata.cpython-36m-x86_64-linux-gnu.so'
-        deps = 'build/temp.linux-x86_64-3.6/binding/tools/msmetadata/msmetadata_cmpt.o build/temp.linux-x86_64-3.6/binding/generated/tools/msmetadata/msmetadata_statics.o build/temp.linux-x86_64-3.6/binding/generated/tools/msmetadata/msmetadata_wrap.o'
-        ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
-        with open("makefile", "a") as mk:
-            mk.write('\n\n' + shlib + ': ' + deps);
-            mk.write('\n\t' + ld_cmd + '\n')
+       
+            cmpt_o_dir = os.sep.join([build_distutils_temp, "binding", "tools", "{toolname}"])
+            statics_wrap_o_dir = os.sep.join([build_distutils_temp, "binding", "generated", "tools", "{toolname}"])
+            tool_lib_deps = [
+                cmpt_o_dir + os.sep + "{toolname}_cmpt.o", statics_wrap_o_dir + os.sep + "{toolname}_statics.o",
+                statics_wrap_o_dir + os.sep + "{toolname}_wrap.o"
+            ]
+            mk.write("\n\n# Create tool shared libraries")
+            ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
+            all_tool_names = g_tools.keys()
+            standalone_lib = os.sep.join([casac_dir, "_{libname}." + soabi + "." + lib_ext])
+            for tn in (all_tool_names):
+                dep_libs = g_tools[tn]
+                if len(dep_libs) == 1 and dep_libs[0] == tn: 
+                    tool_lib_create = standalone_lib + ": " + sep.join(tool_lib_deps) 
+                    mk.write("\n\n" + tool_lib_create.format(libname=tn, toolname=tn))     
+                    mk.write('\n\t' + ld_cmd + '\n')
 
         # straight file copies
         files_to_copy = source_files("src/python", file_suffix_filter=".py")
