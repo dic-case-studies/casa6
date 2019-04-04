@@ -1604,23 +1604,10 @@ class create_makefile(Command):
             ldflags2 = '-L' + casac_dir + os.sep + 'lib '
             ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 ' 
             ldflags2 += sepl + sepl.join([os.path.basename(libcasatools)[3:][:-3]] + link_libs)
-            ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
 
-            all_tool_names = g_tools.keys()
-            standalone_lib = os.sep.join([casac_dir, "_{libname}." + soabi + "." + lib_ext])
-            tool_libs_targ_deps = []
-            mk.write("\n\n# rules for tool libraries that depend only on that individual tool's files\n")
-            for tn in (all_tool_names):
-                dep_libs = g_tools[tn]
-                if len(dep_libs) == 1 and dep_libs[0] == tn:
-                    sal = standalone_lib.format(libname=tn) 
-                    tool_libs_targ_deps.append(sal)
-                    tool_lib_create = sal + ": " + sep.join(tool_lib_deps)
-                    # of course, we have to have one that breaks the rule, vlafiller is that one
-                    cn = tn + "task" if tn == "vlafiller" else tn 
-                    mk.write("\n" + tool_lib_create.format(cmptname=cn, toolname=tn))     
-                    mk.write('\n\t' + ld_cmd + '\n')
+            # make targets for libraries on which tool libraries depend
             tool_shared_lib = os.sep.join([casac_dir, "lib", "{libname}." + soabi + "." + lib_ext])
+            tool_libs_targ_deps = []
             mk.write("\n\n# rules for tool libraries on which other tools depend\n")
             for mylib in g_tool_shared_libs.keys():
                 dep_cmpt_statics_wrap = []
@@ -1629,7 +1616,34 @@ class create_makefile(Command):
                 for tn in g_tool_shared_libs[mylib]:
                     dep_cmpt_statics_wrap.append(sep.join(tool_lib_deps).format(cmptname=tn, toolname=tn))
                 mk.write(tsl + ": " + sep.join(dep_cmpt_statics_wrap) + "\n\t" + ld_cmd+ "\n")
-                
+
+            # make rules for tool libraries
+            all_tool_names = g_tools.keys()
+            tool_lib_name = os.sep.join([casac_dir, "_{libname}." + soabi + "." + lib_ext])
+            sh_lib_flag = "{libname}." + soabi
+            mk.write("\n\n# rules for tool libraries\n")
+            for tn in (all_tool_names):
+                dep_libs = g_tools[tn]
+                tln = tool_lib_name.format(libname=tn) 
+                tool_libs_targ_deps.append(tln)
+                tool_lib_create = tln + ": " + sep.join(tool_lib_deps)
+                # of course, we have to have one that breaks the rule, vlafiller is that one
+                cn = tn + "task" if tn == "vlafiller" else tn 
+                if len(dep_libs) == 1 and dep_libs[0] == tn:
+                    ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
+                else:
+                    needed_libs = []
+                    for mydl in dep_libs:
+                        if tn != mydl:
+                            tool_lib_create += " " + tool_shared_lib.format(libname=mydl)
+                            needed_libs.append(sh_lib_flag.format(libname=mydl[3:]))
+                    ld_cmd = (
+                        linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + sepl 
+                        + sepl.join(needed_libs) + ' -o $@ ' + ldflags3
+                    )
+                mk.write("\n" + tool_lib_create.format(cmptname=cn, toolname=tn))     
+                mk.write('\n\t' + ld_cmd + '\n')
+               
             mk.write("\n\n# Create all tool libraries\n")
             mk.write(".PHONY: " + tool_libs_target + "\n")
             mk.write(tool_libs_target + ": " + sep.join(tool_libs_targ_deps) + "\n")
