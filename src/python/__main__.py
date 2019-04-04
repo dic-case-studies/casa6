@@ -17,3 +17,7 @@ for flag in sys.argv:
         print(' '.join(map(lambda y: y[2:],filter(lambda x: x.startswith('-L'), build['build.flags.link.grpc']))))
     if flag == '--proto-registrar':
         print(__os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','proto','registrar.proto'))
+    if flag == '--compiler-cc':
+        print(build['build.compiler.cc'])
+    if flag == '--compiler-cxx':
+        print(build['build.compiler.cxx'])
