@@ -1625,6 +1625,7 @@ class create_makefile(Command):
 
             # make rules for tool libraries
             all_tool_names = g_tools.keys()
+            wrap_obj = tool_gen_dir + os.sep + "{toolname}_wrap.o"
             tool_lib_name = os.sep.join([casac_dir, "_{libname}." + soabi + "." + lib_ext])
             sh_lib_flag = "{libname}." + soabi
             mk.write("\n\n# rules for tool libraries\n")
@@ -1667,16 +1668,19 @@ class create_makefile(Command):
                 for mydl in dep_libs:
                     if tn == mydl:
                         for mydir in (tool_bind_dir, tool_gen_dir):
-                            for myext in (".cc", ".cpp"):
-                                needed_objs += (
-                                    source_files(mydir.format(toolname=tn), file_suffix_filter=myext)
-                                )
+                            # need to make it .cc rather than cc to avoid tcc files
+                            needed_objs += (
+                                source_files(mydir.format(toolname=tn), file_suffix_filter=".cc")
+                            )
                     else:
                         tool_lib_create += " " + tool_shared_lib.format(libname=mydl)
                         needed_libs.append(sh_lib_flag.format(libname=mydl[3:]))
-                        print(tn,"adding",mydl[3:])        
                 needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
-                needed_objs = [o.replace('.cpp', '.o') for o in needed_objs]
+                # needed_objs = [o.replace('.cpp', '.o') for o in needed_objs]
+                # The *_wrap.cc files are generated when running make, they won't exist
+                # after the first time setup.py genmake is run, so the _wrap.o dependency
+                # needs to be explicitly added here
+                needed_objs += [wrap_obj.format(toolname=tn)] 
                 needed_objs = [prepend_dir + o for o in needed_objs]
                 tool_lib_create += " " + sep.join(needed_objs)
                 ld_cmd = (
