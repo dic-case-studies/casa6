@@ -1555,9 +1555,6 @@ class create_makefile(Command):
         cpp_list = []
         mkdirs_statics_wrap_target = "mk_static_cc_obj_dirs"
         targdirs = set()
-        print ("g_tools", g_tools)
-        print ("g_tool_shared_libs",g_tool_shared_libs)
-        print ("g_tools__using_shared_libs", g_tools_using_shared_libs)
         with open("makefile", "a") as mk:
             for s in STATICS_CC + WRAP_CPP + CODE_BINDING:
                 base = os.path.splitext(s)[0]
@@ -1606,6 +1603,7 @@ class create_makefile(Command):
             tool_libs_targ_deps = []
             mk.write("\n\n# rules for tool libraries on which other tools depend\n")
             prepend_dir = os.sep.join([build_distutils_temp]) + os.sep
+            wrap_obj = tool_gen_dir + os.sep + "{toolname}_wrap.o"
             for mylib in g_tool_shared_libs.keys():
                 dep_cmpt_statics_wrap = []
                 tsl = tool_shared_lib.format(libname=mylib)
@@ -1613,19 +1611,23 @@ class create_makefile(Command):
                 needed_objs = []
                 for tn in g_tool_shared_libs[mylib]:
                     for mydir in (tool_bind_dir, tool_gen_dir):
-                        for myext in (".cc", ".cpp"):
-                            needed_objs += (
-                                source_files(mydir.format(toolname=tn), file_suffix_filter=myext)
-                            ) 
+                        # for myext in (".cc", ".cpp"):
+                        needed_objs += (
+                            source_files(mydir.format(toolname=tn), file_suffix_filter=".cc")
+                        )
+                    # The *_wrap.cc files are generated when running make, they won't exist
+                    # after the first time setup.py genmake is run, so the _wrap.o dependency
+                    # needs to be explicitly added here
+                    needed_objs += [wrap_obj.format(toolname=tn)] 
+
                 needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
-                needed_objs = [o.replace('.cpp', '.o') for o in needed_objs]
+                # needed_objs = [o.replace('.cpp', '.o') for o in needed_objs]
                 needed_objs = [prepend_dir + o for o in needed_objs]
                 ld_cmd = linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 + ' -o $@ ' + ldflags3
                 mk.write(tsl + ": " + libcasatools + " " + sep.join(needed_objs) + "\n\t" + ld_cmd+ "\n")
 
             # make rules for tool libraries
             all_tool_names = g_tools.keys()
-            wrap_obj = tool_gen_dir + os.sep + "{toolname}_wrap.o"
             tool_lib_name = os.sep.join([casac_dir, "_{libname}." + soabi + "." + lib_ext])
             sh_lib_flag = "{libname}." + soabi
             mk.write("\n\n# rules for tool libraries\n")
@@ -1634,35 +1636,6 @@ class create_makefile(Command):
                 tln = tool_lib_name.format(libname=tn) 
                 tool_libs_targ_deps.append(tln)
                 tool_lib_create = tln + ": " + libcasatools
-                # of course, we have to have one that breaks the rule, vlafiller is that one
-                # cn = tn + "task" if tn == "vlafiller" else tn 
-                """
-                if len(dep_libs) == 1 and dep_libs[0] == tn:
-                    needed_objs = (
-                        source_files(tool_bind_dir.format(toolname=tn), file_suffix_filter=".o") 
-                        + source_files(tool_gen_dir.format(toolname=tn), file_suffix_filter=".o")
-                    )
-                    tool_lib_create += " " + sep.join(needed_objs)
-                    ld_cmd = linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 + ' -o $@ ' + ldflags3
-                else:
-                    needed_libs = []
-                    needed_objs = []
-                    for mydl in dep_libs:
-                        if tn == mydl:
-                            needed_objs = (
-                                source_files(tool_bind_dir.format(toolname=tn), file_suffix_filter=".o") 
-                                + source_files(tool_gen_dir.format(toolname=tn), file_suffix_filter=".o")
-                            )
-                            tool_lib_create + " " + sep.join(needed_objs)
-                            tool_lib_create += " " + sep.join(needed_objs)
-                        else:
-                            tool_lib_create += " " + tool_shared_lib.format(libname=mydl)
-                            needed_libs.append(sh_lib_flag.format(libname=mydl[3:]))
-                    ld_cmd = (
-                        linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 + sepl 
-                        + sepl.join(needed_libs) + ' -o $@ ' + ldflags3
-                    )
-                """
                 needed_objs = []
                 needed_libs = []
                 for mydl in dep_libs:
@@ -1676,7 +1649,6 @@ class create_makefile(Command):
                         tool_lib_create += " " + tool_shared_lib.format(libname=mydl)
                         needed_libs.append(sh_lib_flag.format(libname=mydl[3:]))
                 needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
-                # needed_objs = [o.replace('.cpp', '.o') for o in needed_objs]
                 # The *_wrap.cc files are generated when running make, they won't exist
                 # after the first time setup.py genmake is run, so the _wrap.o dependency
                 # needs to be explicitly added here
@@ -1687,7 +1659,6 @@ class create_makefile(Command):
                     linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 
                     + (sepl + sepl.join(needed_libs) if len(needed_libs) > 0 else "") + ' -o $@ ' + ldflags3
                 )
-                
                 mk.write("\n" + tool_lib_create)     
                 mk.write('\n\t' + ld_cmd + '\n')
                
