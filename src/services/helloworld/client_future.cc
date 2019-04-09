@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
       "localhost:50051", grpc::InsecureChannelCredentials()));
   std::string user("world");
 
+  // without std::launch::async, the std::async behaves more like coroutines...
   auto reply = std::async( std::launch::async, &GreeterClient::SayHello, &greeter, user );
   std::cout << "\tentering loop" << std::endl;
   while ( reply.wait_for(std::chrono::milliseconds(10)) != std::future_status::ready ) {
