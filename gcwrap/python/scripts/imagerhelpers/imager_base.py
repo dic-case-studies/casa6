@@ -297,6 +297,13 @@ class PySynthesisImager:
                 if immod <= len(self.SDtools) - 1:
                     self.SDtools[immod].checkrestoringbeam()
 
+
+#############################################
+    def calcVisAppSens(self):
+
+        return self.SItool.apparentsens()
+
+
 #############################################
 
     def runMajorCycle(self):
