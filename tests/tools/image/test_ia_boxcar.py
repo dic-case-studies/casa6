@@ -104,8 +104,6 @@ class ia_boxcar_test(unittest.TestCase):
         yy.done()
         zz.done()
     
-
-    @unittest.skip("uses a task")
     def test_general(self):
         """Test general behavior"""
         myia = iatool()
@@ -125,12 +123,6 @@ class ia_boxcar_test(unittest.TestCase):
                 if (i < width-1):
                     self.assertRaises(
                         Exception, myia.boxcar, region=reg, axis=2, width=width
-                    )
-                    self.assertFalse(
-                        specsmooth(
-                            imagename=imagename, outfile=outfile, region=reg, axis=2,
-                            function="b", width=width
-                        )
                     )
                 else:
                     undec = []
@@ -157,13 +149,7 @@ class ia_boxcar_test(unittest.TestCase):
                                             Exception, myia.boxcar, region=reg, axis=2,
                                             width=width, dmethod=dmethod
                                         )
-                                        self.assertFalse(
-                                            specsmooth(
-                                                imagename=imagename, outfile=outfile, function="b",
-                                                region=reg, axis=2, width=width, dmethod=dmethod
-                                            )
-                                        )
-                                    while kk < len(undec)/width*width:
+                                    while kk < int(len(undec)/width)*width:
                                         sum = 0
                                         npoints = 0
                                         for jj in range(width):
@@ -175,41 +161,23 @@ class ia_boxcar_test(unittest.TestCase):
                                         expec.append(sum/float(npoints))
                                         kk += width
                                 if runit:
-                                    for mm in [0, 1]:
-                                        if mm == 0:
-                                            boxcar = myia.boxcar(
-                                                region=reg, axis=2, drop=drop, dmethod=dmethod,
-                                                width=width
-                                            )
-                                        elif mm == 1:
-                                            specsmooth(
-                                                imagename=imagename, outfile=outfile,
-                                                region=reg, axis=2, function="b",
-                                                dmethod=dmethod, width=width
-                                            )
-                                            boxcar.open(outfile)
-                                        got = boxcar.getchunk().ravel()
-                                        self.assertTrue((abs(got/expec - 1) < 1e-6).all())
-                                        boxcar.done()
-                        else:
-                            dmethod = "c"
-                            expec = undec
-                            for mm in [0, 1]:
-                                if mm == 0:
                                     boxcar = myia.boxcar(
                                         region=reg, axis=2, drop=drop, dmethod=dmethod,
                                         width=width
                                     )
-                                elif mm == 1:
-                                    specsmooth(
-                                        imagename=imagename, outfile=outfile,
-                                        region=reg, axis=2, function="b",
-                                        dmethod="", width=width
-                                    )
-                                    boxcar.open(outfile)
-                                got = boxcar.getchunk().ravel()
-                                self.assertTrue((abs(got/expec - 1) < 1e-6).all())
-                                boxcar.done()
+                                    got = boxcar.getchunk().ravel()
+                                    self.assertTrue((abs(got/expec - 1) < 1e-6).all())
+                                    boxcar.done()
+                        else:
+                            dmethod = "c"
+                            expec = undec
+                            boxcar = myia.boxcar(
+                                region=reg, axis=2, drop=drop, dmethod=dmethod,
+                                width=width
+                            )
+                            got = boxcar.getchunk().ravel()
+                            self.assertTrue((abs(got/expec - 1) < 1e-6).all())
+                            boxcar.done()
         rg.done( )
         myia.done()
 
