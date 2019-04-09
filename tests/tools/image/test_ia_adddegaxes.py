@@ -80,7 +80,6 @@ class ia_adddegaxes_test(unittest.TestCase):
     def tearDown(self):
         self._myia.done()
 
-    @unittest.skip("test fails, needs debugging")
     def test_general(self):
         """general tests"""
         cs = coordsys( )
