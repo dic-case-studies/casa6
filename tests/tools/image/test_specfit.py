@@ -131,41 +131,7 @@ def run_fitprofile (
     myia.done()
     return res
 
-def run_specfit(
-    imagename, box, region, chans, stokes,
-    axis, mask, ngauss, poly, multifit, model="",
-    residual="", amp="", amperr="", center="", centererr="",
-    fwhm="", fwhmerr="", integral="", integralerr="",
-    wantreturn=True, estimates="", logresults=None,
-    pampest="", pcenterest="", pfwhmest="", pfix="",
-    gmncomps=0, gmampcon="", gmcentercon="",
-    gmfwhmcon="", gmampest=[0], gmcenterest=[0],
-    gmfwhmest=[0], gmfix="", logfile="", pfunc="",
-    goodamprange=[0.0], goodcenterrange=[0.0], goodfwhmrange=[0.0],
-    sigma="", outsigma=""
-):
-    return specfit(
-        imagename=imagename, box=box, region=region,
-        chans=chans, stokes=stokes, axis=axis, mask=mask,
-        ngauss=ngauss, poly=poly, estimates=estimates,
-        multifit=multifit,
-        model=model, residual=residual, amp=amp,
-        amperr=amperr, center=center, centererr=centererr,
-        fwhm=fwhm, fwhmerr=fwhmerr, integral=integral,
-        integralerr=integralerr,
-        wantreturn=wantreturn, logresults=logresults, pampest=pampest,
-        pcenterest=pcenterest, pfwhmest=pfwhmest, pfix=pfix,
-        gmncomps=gmncomps, gmampcon=gmampcon,
-        gmcentercon=gmcentercon, gmfwhmcon=gmfwhmcon,
-        gmampest=gmampest, gmcenterest=gmcenterest,
-        gmfwhmest=gmfwhmest, gmfix=gmfix, logfile=logfile,
-        pfunc=pfunc,
-        goodamprange=goodamprange,
-        goodcenterrange=goodcenterrange,
-        goodfwhmrange=goodfwhmrange, sigma=sigma, outsigma=outsigma
-    )
-
-class specfit_test(unittest.TestCase):
+class ia_fitprofile_test(unittest.TestCase):
     
     def setUp(self):
         shutil.copy(ctsys.resolve(datapath + twogauss), twogauss)
@@ -220,28 +186,18 @@ class specfit_test(unittest.TestCase):
         expected.done()
 
     def test_exceptions(self):
-        """specfit: Test various exception cases"""
+        """ia_fitprofile(): Test various exception cases"""
         
         def testit(
             imagename, box, region, chans, stokes,
             axis, mask, ngauss, poly, multifit, model,
             residual
         ):
-            for i in [0]:
-                if (i==0):
-                    self.assertRaises(
-                        Exception, run_fitprofile, imagename,
-                        box, region, chans, stokes, axis, mask,
-                        ngauss, poly, multifit, model, residual
-                    )
-                else:
-                    self.assertFalse(
-                        run_specfit(
-                            imagename, box, region, chans,
-                            stokes, axis, mask, ngauss, poly,
-                            multifit, model, residual
-                        )
-                    )
+            self.assertRaises(
+                Exception, run_fitprofile, imagename,
+                box, region, chans, stokes, axis, mask,
+                ngauss, poly, multifit, model, residual
+            )
         # Exception if no image name given",
         testit(
             "", "", "", "", "", 2, "", False, 1, -1, "", ""
@@ -552,7 +508,7 @@ class specfit_test(unittest.TestCase):
 
             
     def test_stretch(self):
-        """specfit : test mask stretch"""
+        """ia.fitprofile(): test mask stretch"""
         imagename = twogauss
         yy = iatool()
         yy.open(imagename)
@@ -569,22 +525,12 @@ class specfit_test(unittest.TestCase):
             ngauss=2, mask=mymask + ">-100",
             stretch=False
         )
-        #zz = specfit(
-        #    imagename, ngauss=2, mask=mymask + ">-100",
-        #    stretch=False
-        #)
-        #self.assertTrue(zz == None)
         zz = yy.fitprofile(
             ngauss=2, mask=mymask + ">-100",
             stretch=True
         )
         self.assertTrue(len(zz.keys()) > 0)
         yy.done()
-        #zz = specfit(
-        #    imagename, ngauss=2, mask=mymask + ">-100",
-        #    stretch=True
-        #)
-        #self.assertTrue(len(zz.keys()) > 0)
 
     def test_8(self):
         """ Test two gaussian + one polynomial image with estimates"""
@@ -949,25 +895,6 @@ class specfit_test(unittest.TestCase):
                                 self.assertTrue(((mymax*myia.getchunk() - fullsigma)/fullsigma < 1e-7).all())
                             myia.remove()
                 
-    @unittest.skip("uses a task")
-    def test_multiregion(self):
-        """Test that multiple regions are supported - CAS-6115"""
-        imagename = datapath + "simple.im"
-        resid = "myres.im"
-        res = specfit(
-            imagename=datapath + 'simple.im',
-            region='circle [[5pix, 5pix], 3pix], range=[1chan,14chan]',
-            multifit=True,residual=resid
-        )
-        myia = iatool()
-        myia.open(datapath + resid)
-        expec = myia.getchunk(getmask=True)
-        myia.done()
-        myia.open(resid)
-        got = myia.getchunk(getmask=True)
-        myia.done()
-        self.assertTrue((got == expec).all())
-
     def test_planes(self):
         """Test setting planes to use for fit"""
         myia = iatool()
@@ -1036,38 +963,15 @@ class specfit_test(unittest.TestCase):
         multifit = False
         model = ""
         residual = ""
-        #for code in [run_fitprofile]:
         self.assertRaises(
             Exception, run_fitprofile,
             imagename, box, region, chans,
             stokes, axis, mask, ngauss, poly,
             multifit, model, residual
         )
-        #self.assertFalse(
-        #    run_specfit(
-        #        imagename, box, region, chans,
-        #        stokes, axis, mask, ngauss, poly,
-        #        multifit, model, residual
-        #    )
-        #)
-        
-    @unittest.skip("uses a task")
-    def test_noinf(self):
-        """Test that output images have infs and nans masked"""
-        pixfit = specfit(
-            imagename=datapath + 'IRC10216_HC3N.cube_r0.5.image',
-            region=datapath + 'specfit.crtf', ngauss=2,
-            multifit=True, amp='fit.amp.image', center='fitcenter.image',
-            fwhm='fitfwhm.image'
-        )
-        for im in ('fit.amp.image', 'fitcenter.image', 'fitfwhm.image'):
-            for k in ('0', '1'):
-                image = im + '_' + k
-                res = imstat(image)
-                self.assertTrue(numpy.isfinite(res['sum']))
-
+       
 def suite():
-    return [specfit_test]
+    return [ia_fitprofile_test]
 
 if __name__ == '__main__':
     unittest.main()
