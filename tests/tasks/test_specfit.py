@@ -92,44 +92,6 @@ datapath=ctsys.resolve('regression/unittest/specfit')
 _ia = image( )
 _rg = regionmanager( )
 
-def run_fitprofile (
-    imagename, box, region, chans, stokes,
-    axis, mask, ngauss, poly, multifit, model="",
-    residual="", amp="", amperr="", center="", centererr="",
-    fwhm="", fwhmerr="", integral="", integralerr="",
-    estimates="", logresults=True, pampest=[ ], pcenterest=[ ], pfwhmest=[ ],
-    pfix=[ ], gmncomps=0, gmampcon=[ ], gmcentercon=[ ],
-    gmfwhmcon=[ ], gmampest=[0], gmcenterest=[0],
-    gmfwhmest=[0], gmfix="", logfile="", pfunc="",
-    goodamprange=[0.0], goodcenterrange=[0.0], goodfwhmrange=[0.0],
-    sigma="", outsigma=""
-):
-    myia = image()
-    myia.open(imagename)
-    if (not myia.isopen()):
-        myia.done()
-        raise Exception
-    res = myia.fitprofile(
-        box=box, region=region, chans=chans,
-        stokes=stokes, axis=axis, mask=mask,
-        ngauss=ngauss, poly=poly, estimates=estimates,
-        multifit=multifit,
-        model=model, residual=residual, amp=amp,
-        amperr=amperr, center=center, centererr=centererr,
-        fwhm=fwhm, fwhmerr=fwhmerr, integral=integral,
-        integralerr=integralerr, logresults=logresults, pampest=pampest,
-        pcenterest=pcenterest, pfwhmest=pfwhmest, pfix=pfix,
-        gmncomps=gmncomps, gmampcon=gmampcon,
-        gmcentercon=gmcentercon, gmfwhmcon=gmfwhmcon,
-        gmampest=gmampest, gmcenterest=gmcenterest,
-        gmfwhmest=gmfwhmest, gmfix=gmfix, logfile=logfile,
-        pfunc=pfunc, goodamprange=goodamprange,
-        goodcenterrange=goodcenterrange,
-        goodfwhmrange=goodfwhmrange, sigma=sigma, outsigma=outsigma    )
-    myia.close()
-    myia.done()
-    return res
-
 def run_specfit(
     imagename, box, region, chans, stokes,
     axis, mask, ngauss, poly, multifit, model="",
@@ -226,21 +188,13 @@ class specfit_test(unittest.TestCase):
             axis, mask, ngauss, poly, multifit, model,
             residual
         ):
-            for i in [0,1]:
-                if (i==0):
-                    self.assertRaises(
-                        Exception, run_fitprofile, imagename,
-                        box, region, chans, stokes, axis, mask,
-                        ngauss, poly, multifit, model, residual
-                    )
-                else:
-                    self.assertFalse(
-                        run_specfit(
-                            imagename, box, region, chans,
-                            stokes, axis, mask, ngauss, poly,
-                            multifit, model, residual
-                        )
-                    )
+            self.assertFalse(
+                run_specfit(
+                    imagename, box, region, chans,
+                    stokes, axis, mask, ngauss, poly,
+                    multifit, model, residual
+                )
+            )
         # Exception if no image name given",
         try:
             OK = False
@@ -563,23 +517,11 @@ class specfit_test(unittest.TestCase):
         yy.setcoordsys(mycsys)
         yy.addnoise()
         yy.done()
-        yy.open(imagename)
-        self.assertRaises(
-            Exception, yy.fitprofile,
-            ngauss=2, mask=mymask + ">-100",
-            stretch=False
-        )
         zz = specfit(
             imagename, ngauss=2, mask=mymask + ">-100",
             stretch=False
         )
         self.assertTrue(zz == None)
-        zz = yy.fitprofile(
-            ngauss=2, mask=mymask + ">-100",
-            stretch=True
-        )
-        self.assertTrue(len(zz.keys()) > 0)
-        yy.done()
         zz = specfit(
             imagename, ngauss=2, mask=mymask + ">-100",
             stretch=True
@@ -699,22 +641,6 @@ class specfit_test(unittest.TestCase):
             self.assertTrue((res['ncomps'] == 3).all())                   
         fn.done( )
 
-    def test_9(self):
-        """Polynomial fitting, moved from imagetest_regression.py"""
-        shape = [16,16,128]
-        imname = 'ia.fromshape.image'
-        myim = _ia.newimagefromshape(shape=shape)
-        myim.set(pixels='1.0')        #
-        residname = 'ia.fromshape.resid'
-        fitname = 'ia.fromshape.fit'
-        res = myim.fitprofile (multifit=True, residual=residname, model=fitname, poly=0, ngauss=0, axis=2)
-        myim.done()
-        myim.open(residname)
-        pixels = myim.getchunk()
-        self.assertTrue(pixels.shape == tuple(shape))
-        self.assertTrue((pixels == 0).all())
-        myim.done()
-        
     def test_10(self):
         """test results of non-multi-fit gaussian triplet"""
         imagename=os.path.join(datapath,gauss_triplet)
@@ -963,58 +889,6 @@ class specfit_test(unittest.TestCase):
         myia.done()
         self.assertTrue((got == expec).all())
 
-    def test_planes(self):
-        """Test setting planes to use for fit"""
-        myia = image()
-        myia.fromshape("", [1, 1, 20])
-        myia.setbrightnessunit("Jy/pixel")
-        bb = myia.getchunk()
-        for i in range(20):
-            bb[:,:,i] = 0.2 - 0.3*i + 0.04*i*i
-        bb[:,:,5] = 1000
-        bb[:,:,10] = 1000
-        bb[:,:,15] = 1000
-        myia.putchunk(bb)
-        residual = "bad.im"
-        res = myia.fitprofile(ngauss=0, poly=2, residual=residual)
-        zz = list(range(20))
-        del zz[15]
-        del zz[10]
-        del zz[5]
-        mask = "indexin(2," + str(zz) +")"
-        tt = image()
-        tt.open(residual)
-        stats = tt.statistics(mask=mask)
-        tt.done()
-        self.assertTrue(stats['rms'][0] > 100)
-        residual = "good1.im"
-        res2 = myia.fitprofile(ngauss=0, poly=2, planes=zz, residual=residual)
-        tt.open(residual)
-        stats = tt.statistics(mask=mask)
-        tt.done()
-        self.assertTrue(stats['rms'][0] < 1e-6)
-        residual = "good2.im"
-        res3 = myia.fitprofile(
-            ngauss=0, poly=2, planes=zz, residual=residual,
-            region=_rg.box([0,0,2], [0,0,18])
-        )
-        tt.open(residual)
-        mask = mask = "indexin(2,[0, 1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15])"
-        stats = tt.statistics(mask=mask)
-        tt.done()
-        self.assertTrue(stats['rms'][0] < 1e-6)
-        residual = "good3.im"
-        res4 = myia.fitprofile(
-            ngauss=0, poly=2, planes=zz, residual=residual,
-            region=_rg.box([0,0,6], [0,0,18])
-        )
-        tt.open(residual)
-        mask = mask = "indexin(2,[0, 1, 2, 3, 5, 6, 7, 8, 10, 11])"
-        stats = tt.statistics(mask=mask)
-        tt.done()
-        self.assertTrue(stats['rms'][0] < 1e-6)
-        myia.done()
-
     def test_CAS_7620(self):
         """Test fix of segfault that occurred for small channel ranges"""
         imagename = twogauss
@@ -1029,13 +903,6 @@ class specfit_test(unittest.TestCase):
         multifit = False
         model = ""
         residual = ""
-        #for code in [run_fitprofile, run_specfit]:
-        self.assertRaises(
-            Exception, run_fitprofile,
-            imagename, box, region, chans,
-            stokes, axis, mask, ngauss, poly,
-            multifit, model, residual
-        )
         self.assertFalse(
             run_specfit(
                 imagename, box, region, chans,
