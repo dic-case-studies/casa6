@@ -29,18 +29,32 @@
 
 from __future__ import absolute_import
 from numpy import searchsorted
-from scipy import array
+from numpy import array
 from scipy.interpolate import interp1d
 from math import exp, pi, cos, sin, isnan, sqrt
 import os
-from taskinit import gentools
-(tb,me)=gentools(['tb','me'])
-from casac import *
-qa = casac.quanta()
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, measures, quanta, ctsys
+    qa = quanta( )
+    _tb = table( )
+    _me = measures( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from taskinit import gentools
+    (_tb,_me)=gentools(['tb','me'])
+    from casac import *
+    qa = casac.quanta()
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+
 HH = qa.constants('H')['value'] 
 KK = qa.constants('K')['value']
 CC = qa.constants('C')['value'] 
-
 
 class solar_system_setjy:
     def __init__(self):
@@ -133,13 +147,13 @@ class solar_system_setjy:
                 fds.append(efds)
                 dfds.append(edfds)
                 Rhats.append([0.0, 0.0, 0.0])
-                directions.append(me.direction('J2000',0.0,0.0))
+                directions.append(_me.direction('J2000',0.0,0.0))
             return [ statuses, fds, dfds, Rhats, directions ]
 
     #
     # check that observatory is known
     #
-        if not observatory in me.obslist():
+        if not observatory in _me.obslist():
             for MJD in MJDs:
                 estatuses = []
                 efds = []
@@ -152,7 +166,7 @@ class solar_system_setjy:
                 fds.append(efds)
                 dfds.append(edfds)
                 Rhats.append([0.0, 0.0, 0.0])
-                directions.append(me.direction('J2000',0.0,0.0))
+                directions.append(_me.direction('J2000',0.0,0.0))
             return [ statuses, fds, dfds, Rhats, directions ]
 
     #
@@ -160,7 +174,7 @@ class solar_system_setjy:
     # information.  otherwise don't waste our time calculating the model.
     # only really important for mars, but do it for them all.
     #
-        ephemeris_path = os.environ['CASAPATH'].split()[0]+'/data/ephemerides/JPL-Horizons/'
+        ephemeris_path = ctsys_resolve('ephemerides/JPL-Horizons')
         ephemeris_file_list = os.listdir(ephemeris_path)
         ephemeris_files = []
         for ephemeris_file in ephemeris_file_list:
@@ -180,16 +194,16 @@ class solar_system_setjy:
     # ephemeris tables by casacore's MeasComet class.
 
         for ephemeris_file in ephemeris_files:
-            tb.open(ephemeris_path + ephemeris_file)
-            table_source_name = tb.getkeyword('NAME').capitalize()
+            _tb.open(os.path.join(ephemeris_path,ephemeris_file))
+            table_source_name = _tb.getkeyword('NAME').capitalize()
             if (table_source_name != capitalized_source_name):
                 continue
-            first_time = tb.getkeyword('earliest')['m0']['value']
-            last_time = tb.getkeyword('latest')['m0']['value']
+            first_time = _tb.getkeyword('earliest')['m0']['value']
+            last_time = _tb.getkeyword('latest')['m0']['value']
             if (first_time < MJDs[0] and last_time > MJDs[-1]):
                 ephemeris_file_OK = True
                 break
-            tb.close()
+            _tb.close()
     #
     # if we didn't find an ephemeris file, set the statuses and return.
     #
@@ -206,30 +220,30 @@ class solar_system_setjy:
                 fds.append(efds)
                 dfds.append(edfds)
                 Rhats.append([0.0, 0.0, 0.0])
-                directions.append(me.direction('J2000',0.0,0.0))
+                directions.append(_me.direction('J2000',0.0,0.0))
             return [ statuses, fds, dfds, Rhats, directions ]
 
-        Req = 1000.0 * (tb.getkeyword('radii')['value'][0] + tb.getkeyword('radii')['value'][1]) / 2
-        Rp = 1000.0 * tb.getkeyword('radii')['value'][2]
-        times = tb.getcol('MJD').tolist()
-        RAs = tb.getcol('RA').tolist()
-        DECs = tb.getcol('DEC').tolist()
-        distances = tb.getcol('Rho').tolist()
-        RadVels = tb.getcol('RadVel').tolist()
-        column_names = tb.colnames()
+        Req = 1000.0 * (_tb.getkeyword('radii')['value'][0] + _tb.getkeyword('radii')['value'][1]) / 2
+        Rp = 1000.0 * _tb.getkeyword('radii')['value'][2]
+        times = _tb.getcol('MJD').tolist()
+        RAs = _tb.getcol('RA').tolist()
+        DECs = _tb.getcol('DEC').tolist()
+        distances = _tb.getcol('Rho').tolist()
+        RadVels = _tb.getcol('RadVel').tolist()
+        column_names = _tb.colnames()
         if ('DiskLat' in column_names):
-            selats = tb.getcol('DiskLat').tolist()
+            selats = _tb.getcol('DiskLat').tolist()
             has_selats = 1
         else:
             has_selats = 0
             selat = 0.0
         if ('NP_ang' in column_names):
-            NPangs = tb.getcol('NP_ang').tolist()
+            NPangs = _tb.getcol('NP_ang').tolist()
             has_NPangs= 1
         else:
             has_NPangs = 0
             NPang = 0.0
-        tb.close()
+        _tb.close()
         MJD_shifted_frequencies = []
         DDs = []
         Rmeans = []
@@ -259,7 +273,7 @@ class solar_system_setjy:
             RAstr=str(RA)+'deg'
             DEC = self.interpolate_list (times, DECs, MJD)[1]
             DECstr=str(DEC)+'deg'
-            directions.append(me.direction('J2000',RAstr,DECstr))
+            directions.append(_me.direction('J2000',RAstr,DECstr))
     #
     # now get the doppler shift
     #
@@ -274,9 +288,9 @@ class solar_system_setjy:
     # and it looks to be of order 1 m/s for these bodies, so i'm not going
     # to worry about it.
     #
-            me.doframe(me.observatory(observatory))
-            me.doframe(me.epoch('utc',str(MJD)+'d'))
-            me.doframe(directions[-1])
+            _me.doframe(_me.observatory(observatory))
+            _me.doframe(_me.epoch('utc',str(MJD)+'d'))
+            _me.doframe(directions[-1])
     #
     # instead of the call to me.doframe() in the line above, i thought the
     # following call to me.framecomet() would be right, but it doesn't give
@@ -286,7 +300,7 @@ class solar_system_setjy:
     # RadVel is currently in AU/day.  we want it in km/s.
     #
             RadVel = self.interpolate_list (times, RadVels, MJD)[1] * AU / 86400000.0
-            rv = me.radialvelocity('geo',str(RadVel)+'km/s')
+            rv = _me.radialvelocity('geo',str(RadVel)+'km/s')
             shifted_frequencies = []
             for frequency in frequencies:
     #
@@ -296,8 +310,8 @@ class solar_system_setjy:
     # hand, but i'd rather do it with casa toolkit calls.  unfortunately,
     # it's a bit convoluted in casa...
     #
-                newfreq0 = me.tofrequency('topo',me.todoppler('optical',me.measure(rv,'topo')),me.frequency('topo',str(frequency[0])+'Hz'))['m0']['value']
-                newfreq1 = me.tofrequency('topo',me.todoppler('optical',me.measure(rv,'topo')),me.frequency('topo',str(frequency[1])+'Hz'))['m0']['value']
+                newfreq0 = _me.tofrequency('topo',_me.todoppler('optical',_me.measure(rv,'topo')),_me.frequency('topo',str(frequency[0])+'Hz'))['m0']['value']
+                newfreq1 = _me.tofrequency('topo',_me.todoppler('optical',_me.measure(rv,'topo')),_me.frequency('topo',str(frequency[1])+'Hz'))['m0']['value']
     #
     # should check units to be sure frequencies are in Hz
     #
@@ -316,10 +330,10 @@ class solar_system_setjy:
     #           print 'MJD, geo & topo velocities (km/s), and shift (MHz) = %7.1f  %5.1f  %5.1f  %6.3f' % \
     #                 (MJD, RadVel, me.measure(rv,'topo')['m0']['value']/1000, average_delta_frequency/1.0e6)
                 msg='MJD, geo & topo velocities (km/s), and shift (MHz) = %7.1f  %5.1f  %5.1f  %6.3f' % \
-                     (MJD, RadVel, me.measure(rv,'topo')['m0']['value']/1000, average_delta_frequency/1.0e6)
+                     (MJD, RadVel, _me.measure(rv,'topo')['m0']['value']/1000, average_delta_frequency/1.0e6)
                 casalog.post(msg, 'INFO2')
             MJD_shifted_frequencies.append(shifted_frequencies)
-    #       me.done()
+    #       _me.done()
         for ii in range(len(MJDs)):
             shifted_frequencies = MJD_shifted_frequencies[ii]
             if (capitalized_source_name in TIME_VARIABLE_BODIES):
@@ -391,11 +405,11 @@ class solar_system_setjy:
         statuses = []
         Tbs = []
         dTbs = []
-        model_data_path = os.environ['CASAPATH'].split()[0]+'/data/alma/SolarSystemModels/'
+        model_data_path = ctsys_resolve('alma/SolarSystemModels')
         if (source_name in MODEL_IS_FD_BODIES):
-            model_data_filename = model_data_path + source_name + '_fd_time.dat'
+            model_data_filename = os.path.join(model_data_path,source_name + '_fd_time.dat')
         else:
-            model_data_filename = model_data_path + source_name + '_Tb_time.dat'
+            model_data_filename = os.path.join(model_data_path,source_name + '_Tb_time.dat')
         try:
             ff = open(model_data_filename)
         except:
@@ -549,12 +563,12 @@ class solar_system_setjy:
     # (evolved stars, for instance).
         MODEL_IS_FD_BODIES = [ ]
 
-        if source_name not in self.models:
-            model_data_path = os.environ['CASAPATH'].split()[0]+'/data/alma/SolarSystemModels/'
+        if not source_name in self.models:
+            model_data_path = ctsys_resolve('alma/SolarSystemModels')
             if (source_name in MODEL_IS_FD_BODIES):
-                model_data_filename = model_data_path + source_name + '_fd.dat'
+                model_data_filename = os.path.join(model_data_path,source_name + '_fd.dat')
             else:
-                model_data_filename = model_data_path + source_name + '_Tb.dat'
+                model_data_filename = os.path.join(model_data_path,source_name + '_Tb.dat')
             try:
                 ff = open(model_data_filename)
             except:

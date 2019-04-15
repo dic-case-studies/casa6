@@ -4,13 +4,27 @@ from __future__ import print_function
 import os
 import time
 import numpy as np
-from taskinit import *
-from mstools import write_history
-from callibrary import *
-import flaghelper as fh
-from parallel.parallel_data_helper import ParallelDataHelper
-from parallel.parallel_task_helper import ParallelTaskHelper
 
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .. import casalog
+    from .callibrary import *
+    from . import flaghelper as fh
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from .mstools import write_history
+    from casatools import ms, calibrater
+else:
+    from taskinit import *
+    from mstools import write_history
+    from callibrary import *
+    import flaghelper as fh
+    from parallel.parallel_data_helper import ParallelDataHelper
+    from parallel.parallel_task_helper import ParallelTaskHelper
+
+    calibrater = cbtool
+    ms = mstool
 
 def applycal(
     vis=None,
@@ -57,13 +71,13 @@ def applycal(
             return
 
     try:
-        mycb = cbtool()
+        mycb = calibrater( )
         if (type(vis) == str) & os.path.exists(vis):
             # add CORRECTED_DATA column
             mycb.open(filename=vis, compress=False, addcorr=True,
                       addmodel=False)
         else:
-            raise Exception('Visibility data set not found - please verify the name')
+            raise Exception( 'Visibility data set not found - please verify the name' )
 
         # enforce default if unspecified
         if applymode == '':
@@ -182,10 +196,14 @@ def applycal(
             # write history
         try:
             param_names = \
-                applycal.__code__.co_varnames[:applycal.__code__.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+                          applycal.__code__.co_varnames[:applycal.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             write_history(
-                mstool(),
+                ms(),
                 vis,
                 'applycal',
                 param_names,
@@ -199,7 +217,7 @@ def applycal(
         print('*** Error ***', instance)
         mycb.close()
         casalog.post("Error in applycal: %s" % str(instance), "SEVERE")
-        raise Exception("Error in applycal: "+str(instance))
+        raise Exception( "Error in applycal: "+str(instance) )
 
 def reportflags(rec):
     try:

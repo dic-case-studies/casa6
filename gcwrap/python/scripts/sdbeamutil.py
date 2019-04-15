@@ -1,13 +1,22 @@
 from __future__ import absolute_import
 from __future__ import print_function
+
 import numpy as np
 from numpy import sqrt, cos, sin
-from taskinit import casalog, gentools, qatool
-
 import scipy.special as spspec
 import scipy.signal
 import scipy.interpolate
 from scipy import optimize
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import quanta
+    from casatasks import casalog
+else:
+    from taskinit import casalog, qatool
+
+    quanta = qatool
+    
 
 ##################################################
 ### Prediction of theoretical beam size
@@ -49,7 +58,7 @@ class TheoreticalBeam:
 
     def __to_arcsec(self, angle):
         """convert angle to arcsec and return the value without unit."""
-        my_qa = qatool()
+        my_qa = quanta( )
         if my_qa.isangle(angle):
             return my_qa.getvalue(my_qa.convert(angle, "arcsec"))[0]
         elif my_qa.getunit(angle)=='': return float(angle)
@@ -61,7 +70,7 @@ class TheoreticalBeam:
         if val is angle, returns a float value in unit of arcsec.
         else the unit is assumed to be pixel and multiplied by cell_size_arcsec
         """
-        my_qa = qatool()
+        my_qa = quanta( )
         if my_qa.isangle(val): return self.__to_arcsec(val)
         elif my_qa.getunit(val) in ('', 'pixel'):
             return my_qa.getvalue(val)*cell_size_arcsec
@@ -75,7 +84,7 @@ class TheoreticalBeam:
         taper: the illumination taper in dB
         """
         # try quantity
-        my_qa = qatool()
+        my_qa = quanta( )
         self.antenna_diam_m  = my_qa.getvalue(my_qa.convert(diam, "m"))[0]
         self.antenna_block_m = my_qa.getvalue(my_qa.convert(blockage, "m"))[0]
         self.taper = taper
@@ -612,11 +621,11 @@ class TheoreticalBeam:
         mask = np.zeros(len(result))
         truncateBefore = 0
         truncateBeyond = len(mask)
-        for r in range(len(result)/2,len(result)):
+        for r in range(len(result)//2,len(result)):
             if (result[r]<0):
                 truncateBeyond = r
                 break
-        for r in range(len(result)/2,0,-1):
+        for r in range(len(result)//2,0,-1):
             if (result[r]<0):
                 truncateBefore = r
                 break
@@ -724,7 +733,7 @@ def primaryBeamArcsec(frequency, diameter, obscuration, taper,
         print("This central obscuration is too large for the method of calculation employed here.")
         return
     if (type(frequency) == str):
-        my_qa = qatool()
+        my_qa = quanta( )
         frequency = my_qa.getvalue(my_qa.convert(frequency, "Hz"))[0]
     lambdaMeters = 2.99792458e8/frequency
     b = baarsTaperFactor(taper,use2007formula) * centralObstructionFactor(diameter, obscuration)

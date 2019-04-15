@@ -164,7 +164,7 @@ class callibrary(object):
 
     def addrec(self,crec,calwt):
 
-        ctname=crec.keys()[0]
+        ctname=list(crec.keys())[0]
 
         irec=0
         if (ctname in self.cld):
@@ -185,7 +185,7 @@ class callibrary(object):
 
     def list(self):
         print('There are '+str(len(self.cld))+' caltables in the cal library:')
-        keys=self.cld.keys()
+        keys=list(self.cld.keys())
         keys.sort()
         for ct in keys:
             print(ct+': calwt='+str(self.cld[ct]['calwt'])+str(' (')+str(len(self.cld[ct])-1)+str(' instance[s]):'))
@@ -197,7 +197,7 @@ class callibrary(object):
                     print(' obs=\''+str(self.cld[ct][ims]['obs'])+'\'')
                     print('  tinterp=\''+str(self.cld[ct][ims]['tinterp'])+'\'', end=' ')
                     print(' finterp=\''+str(self.cld[ct][ims]['finterp'])+'\'')
-                    #print ' reach=\''+str(self.cld[ct][ims]['reach'])+'\''
+                    #print( ' reach=\''+str(self.cld[ct][ims]['reach'])+'\'')
                     print('  obsmap='+str(self.cld[ct][ims]['obsmap']), end=' ')
                     print(' fldmap='+str(self.cld[ct][ims]['fldmap']), end=' ')
                     print(' spwmap='+str(self.cld[ct][ims]['spwmap']), end=' ')
@@ -215,11 +215,11 @@ class callibrary(object):
             fw="a"
         
         f=open(filename,fw)
-        keys0=self.cld.keys()
+        keys0=list(self.cld.keys())
         keys0.sort()
         for ct in keys0:
             ict0=self.cld[ct]
-            keys1=ict0.keys()
+            keys1=list(ict0.keys())
             keys1.sort()
             for ims in keys1:
                 ict1=ict0[ims]

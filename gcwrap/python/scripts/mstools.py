@@ -1,5 +1,9 @@
-
 from __future__ import print_function
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+
 def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=False):
         """
         Update vis with the parameters that task tname was called with.
@@ -14,12 +18,19 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
 
         Example:
         The end of split does
+
+           In python 2.x:
         param_names = split.func_code.co_varnames[:split.func_code.co_argcount]
         param_vals = [eval(p) for p in param_names]  # Must be done in the task.
+           In python 3.x:
+        vars = locals( )
+        param_names = split.__code__.co_varnames[:split.__code__.co_argcount]
+        param_vals = [vars[p] for p in param_names]  # Must be done in the task.
+
         write_history(myms, outputvis, 'split', param_names, param_vals,
                       casalog),
         which appends, e.g.,
-
+        
         vis = 'TWHydra_CO3_2.ms'
         outputvis   = 'scan9.ms'
         datacolumn  = 'data'
@@ -40,59 +51,63 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
         to the HISTORY of outputvis.
         """
         if not hasattr(myms, 'writehistory'):
-                if debug:
-                        print("write_history(myms, %s, %s): myms is not an ms tool" % (vis, tname))
-                return False
+            if debug:
+                print("write_history(myms, %s, %s): myms is not an ms tool" % (vis, tname))
+            return False
         retval = True
         isopen = False
         try:
-                if not myclog and hasattr(casalog, 'post'):
-                        myclog = casalog
-        except Exception as instance:
-                # There's no logger to complain to, and I don't want to exit
-                # just because of that.
-                pass
+            if not myclog and hasattr(casalog, 'post'):
+                myclog = casalog
+        except Exception:
+            # There's no logger to complain to, and I don't want to exit
+            # just because of that.
+            pass
         try:
-                myms.open(vis, nomodify=False)
-                isopen = True
-                messages = ['taskname={0}'.format(tname)]
-                vestr = 'version: '
-                try:
-                    # Don't use myclog.version(); it also prints to the
-                    # logger, which is confusing.
+            myms.open(vis, nomodify=False)
+            isopen = True
+            messages = ['taskname={0}'.format(tname)]
+            vestr = 'version: '
+            try:
+                # Don't use myclog.version(); it also prints to the
+                # logger, which is confusing.
+                if is_CASA6:
+                    vestr += ctsys.version_string( ) + ' '
+                    vestr += ctsys.version_desc( )
+                else:
                     vestr += casa['build']['version'] + ' '
                     vestr += casa['source']['url'].split('/')[-2]
                     vestr += ' rev. ' + casa['source']['revision']
                     vestr += ' ' + casa['build']['time']
-                except Exception as instance:
-                    if hasattr(myclog, 'version'):
-                        # Now give it a try.
-                        vestr += myclog.version()
-                    else:
-                        vestr += ' could not be determined' # We tried.
+                                
+            except Exception:
+                if hasattr(myclog, 'version'):
+                    # Now give it a try.
+                    vestr += myclog.version()
+                else:
+                    vestr += ' could not be determined' # We tried.
+            messages.append(vestr)
 
-                messages.append(vestr)
+            # Add the task arguments.
+            for argnum in range(len(param_names)):
+                msg = "%-11s = " % param_names[argnum]
+                val = param_vals[argnum]
+                if type(val) == str:
+                    msg += '"'
+                msg += str(val)
+                if type(val) == str:
+                    msg += '"'
+                messages.append(msg)
 
-                # Add the task arguments.
-                for argnum in xrange(len(param_names)):
-                    msg = "%-11s = " % param_names[argnum]
-                    val = param_vals[argnum]
-                    if type(val) == str:
-                        msg += '"'
-                    msg += str(val)
-                    if type(val) == str:
-                        msg += '"'
-                    messages.append(msg)
-
-                myms.writehistory_batch(messages=messages, origin=tname)
+            myms.writehistory_batch(messages=messages, origin=tname)
 
         except Exception as instance:
-                if hasattr(myclog, 'post'):
-                        myclog.post("*** Error \"%s\" updating HISTORY of %s" % (instance, vis),
-                                    'SEVERE')
-                retval = False
+            if hasattr(myclog, 'post'):
+                myclog.post("*** Error \"%s\" updating HISTORY of %s" % (instance, vis),
+                            'SEVERE')
+            retval = False
         finally:
-                if isopen:
-                        myms.close()
-        return retval
+            if isopen:
+                myms.close()
+        return retval        
 

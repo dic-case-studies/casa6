@@ -1,11 +1,29 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from taskinit import *
-import urllib2
+
 import datetime
 import re
 
-(tb,)=gentools(['tb'])
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from urllib.request import urlopen
+    from urllib.error import URLError
+    from casatools import table, quanta
+    from casatasks import casalog
+    from casatools.platform import bytes2str
+
+    _tb = table( )
+    _qa = quanta( )
+else:
+    from urllib2 import urlopen
+    from urllib2 import URLError
+
+    from taskinit import *
+
+    (_tb,)=gentools(['tb'])
+
+    # to make the following code the same as the CASA6 version
+    _qa = qa
 
 def correct_ant_posns_evla(vis_name, print_offsets=False):
     '''
@@ -38,14 +56,14 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
     #
     # get start date+time of observation
     #
-    observation = tb.open(vis_name+'/OBSERVATION')
+    observation = _tb.open(vis_name+'/OBSERVATION')
     # specific code for different telescopes
-    tel_name = tb.getcol('TELESCOPE_NAME')
-    time_range = tb.getcol('TIME_RANGE')
-    tb.close()
+    tel_name = _tb.getcol('TELESCOPE_NAME')
+    time_range = _tb.getcol('TIME_RANGE')
+    _tb.close()
     MJD_start_time = time_range[0][0] / 86400
-    q1 = qa.quantity(time_range[0][0],'s')
-    date_time = qa.time(q1,form='ymd')[0]
+    q1 = _qa.quantity(time_range[0][0],'s')
+    date_time = _qa.time(q1,form='ymd')[0]
 # date_time looks like: '2011/08/10/06:56:49'
     [obs_year,obs_month,obs_day,obs_time_string] = date_time.split('/')
     if (int(obs_year) < 2010):
@@ -62,10 +80,10 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
 #
 # get antenna to station mappings
 #
-    observation = tb.open(vis_name+'/ANTENNA')
-    ant_names = tb.getcol('NAME')
-    ant_stations = tb.getcol('STATION')
-    tb.close()
+    observation = _tb.open(vis_name+'/ANTENNA')
+    ant_names = _tb.getcol('NAME')
+    ant_stations = _tb.getcol('STATION')
+    _tb.close()
     ant_num_stas = []
     for ii in range(len(ant_names)):
         ant_num_stas.append([int(ant_names[ii][2:]), ant_names[ii], \
@@ -75,19 +93,21 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
     current_year = datetime.datetime.now().year
 # first, see if the internet connection is possible
     try:
-        response = urllib2.urlopen(URL_BASE + '2010')
-    except urllib2.URLError as err:
+        response = urlopen(URL_BASE + '2010')
+    except URLError as err:
         if (print_offsets):
-            print('No internet connection to antenna position correction URL ', \
-                  err.reason)
+            print('No internet connection to antenna position correction URL %s' % err.reason)
         else:
            casalog.post('No internet connection to antenna position correction URL '+ \
                   str(err.reason),"WARN")
         return [2, '', []]
     response.close()
     for year in range(2010,current_year+1):
-        response = urllib2.urlopen(URL_BASE + str(year))
-        html = response.read()
+        response = urlopen(URL_BASE + str(year))
+        if is_CASA6:
+            html = bytes2str(response.read())
+        else:
+            html = response.read()
         response.close()
         html_lines = html.split('\n')
         for correction_line in html_lines:
@@ -176,7 +196,7 @@ def correct_ant_posns_evla(vis_name, print_offsets=False):
         if ((ant_num_sta[3] != 0.0) or (ant_num_sta[4] != 0.0) or \
             (ant_num_sta[3] != 0.0)):
             if (print_offsets):
-                print("offsets for antenna %4s : %8.5f  %8.5f  %8.5f" % \
+                print("offsets for antenna %4s : %8.5f  %8.5f  %8.5f" %
                       (ant_num_sta[1], ant_num_sta[3], ant_num_sta[4], ant_num_sta[5]))
             else:
                 casalog.post("offsets for antenna %4s : %8.5f  %8.5f  %8.5f" % \

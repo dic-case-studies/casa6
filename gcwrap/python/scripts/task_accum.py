@@ -2,8 +2,15 @@ from __future__ import absolute_import
 from __future__ import print_function
 import sys
 import os
-from taskinit import *
-_cb = cbtool( )
+from numpy import unique
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+       from casatools import calibrater
+       _cb = calibrater( )
+else:
+       from taskinit import *
+       _cb = cbtool( )
 
 def accum(vis=None,tablein=None,incrtable=None,caltable=None,field=None,calfield=None,interp=None,accumtime=None,spwmap=None):
 
@@ -150,7 +157,6 @@ def accum(vis=None,tablein=None,incrtable=None,caltable=None,field=None,calfield
               _cb.close()
 
        except Exception as instance:
-              print('*** Error ***',instance)
+              print('*** Error *** %s' % str(instance))
               _cb.close()
-              raise Exception(instance)
-
+              raise

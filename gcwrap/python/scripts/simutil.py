@@ -3,22 +3,37 @@
 # geodesy from NGS: http://www.ngs.noaa.gov/TOOLS/program_descriptions.html
 from __future__ import absolute_import
 from __future__ import print_function
-import casac
 import os
 import shutil
-import commands
-# all I really need is casalog, but how to get it:?
-from taskinit import *
 import pylab as pl
 
-# qa doesn't hold state.
-#qatool = casac.homefinder.find_home_by_name('quantaHome')
-#qa = qatool.create()
-im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
+    from casatasks import casalog
+    tb = table( )
+    ia = image( )
+    po = imagepol( )
+    rg = regionmanager( )
+    cb = calibrater( )
+    me = measures( )
+    qa = quanta( )
+    cs = coordsys( )
+    cl = componentlist( )
+    sm = simulator( )
 
+else:
+    #import casac
+    # all I really need is casalog, but how to get it:?
+    from taskinit import *
 
-# 4.2.2:
-#im, cb, ms, tb, fl, me, ia, po, sm, cl, cs, rg, sl, dc, vp, msmd, fi, fn, imd = gentools()
+    # qa doesn't hold state.
+    #qatool = casac.homefinder.find_home_by_name('quantaHome')
+    #qa = qatool.create()
+    im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+
+    # 4.2.2:
+    #im, cb, ms, tb, fl, me, ia, po, sm, cl, cs, rg, sl, dc, vp, msmd, fi, fn, imd = gentools()
 
 # functions defined outside of the simutil class
 def is_array_type(value):
@@ -526,7 +541,7 @@ class simutil:
 
             # Start from the top because in the Southern hemisphere it sets first.
             y = qa.add(centy, qa.mul(0.5 * (nrows - 1), yspacing))
-            for row in xrange(0, nrows):         # xrange stops early.
+            for row in range(0, nrows):         # xrange stops early.
                 xspacing = qa.mul(1.0 / pl.cos(qa.convert(y, 'rad')['value']),spacing)
                 ystr = qa.formxxx(y, format='dms',prec=5)
                 
@@ -537,7 +552,7 @@ class simutil:
                     xmin = qa.sub(centx, qa.mul(ncolstomin - 0.5,
                                                 xspacing))
                     stopcolp1 = evencols
-                for col in xrange(0, stopcolp1):        # xrange stops early.
+                for col in range(0, stopcolp1):        # xrange stops early.
                     x = qa.formxxx(qa.add(xmin, qa.mul(col, xspacing)),
                                    format='hms',prec=5)
                     pointings.append("%s%s %s" % (epoch, x, ystr))
@@ -564,14 +579,14 @@ class simutil:
 
             # Start from the top because in the Southern hemisphere it sets first.
             y = qa.add(centy, qa.mul(0.5 * (nrows - 1), yspacing))
-            for row in xrange(0, nrows):         # xrange stops early.
+            for row in range(0, nrows):         # xrange stops early.
                 xspacing = qa.mul(1.0 / pl.cos(qa.convert(y, 'rad')['value']),spacing)
                 ystr = qa.formxxx(y, format='dms',prec=5)
 
                 xmin = qa.sub(centx, qa.mul(ncolstomin, xspacing))
                 stopcolp1 = ncols
         
-                for col in xrange(0, stopcolp1):        # xrange stops early.
+                for col in range(0, stopcolp1):        # xrange stops early.
                     x = qa.formxxx(qa.add(xmin, qa.mul(col, xspacing)),
                                    format='hms',prec=5)
                     pointings.append("%s%s %s" % (epoch, x, ystr))
@@ -2281,7 +2296,7 @@ class simutil:
         csinlat=pl.sin(clat)
         ccoslat=pl.cos(clat)
         import types
-        if isinstance(x,float): # weak
+        if isinstance(x,types.FloatType): # weak
             x=[x]
             y=[y]
             z=[z]
@@ -2487,9 +2502,9 @@ class simutil:
                     inbright=inb
             try:
                 scalefactor=float(inbright)/pl.nanmax(arr)
-            except Exception as e:
+            except Exception:
                 in_ia.close()
-                raise Exception(e)
+                raise
 
         # check shape characteristics of the input;
         # add degenerate axes as neeed:
@@ -2527,10 +2542,10 @@ class simutil:
                 incell = qa.abs(qa.convert(incell,'arcsec'))
                 # incell[0]<0 for RA increasing left
                 incell = [qa.mul(incell,-1),incell]
-        except Exception as e:
+        except Exception:
             # invalid incell
             in_ia.close()
-            raise Exception(e)
+            raise
         # later, we can test validity with qa.compare()
 
 

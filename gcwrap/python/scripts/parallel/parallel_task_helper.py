@@ -1,21 +1,52 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
-from taskinit import *
 import os
+import sys
 import copy
 import shutil
-import partitionhelper as ph
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .. import partitionhelper as ph
+    from casatools import table as tbtool
+    from casatools import ms as mstool
+    from casatasks import casalog
+else:
+    import partitionhelper as ph
+    from taskinit import *
+
+# string.find (python 2) vs str_instance.find
+if is_python3:
+    def strfind(a):
+        return str_instance.find(a)
+else:
+    def strfind(a):
+        return string.find(str_instance,a)
+
+# common function to use to get a dictionary values iterator
+if is_python3:
+    def locitervalues(adict):
+        return adict.values()
+else:
+    def locitervalues(adict):
+        return adict.itervalues()
 
 # To handle thread-based Tier-2 parallelization
-import thread 
 import threading
+if not is_python3:
+    import thread
 
 # jagonzal (CAS-4106): Properly report all the exceptions and errors in the cluster framework
 import traceback
 
 # jagonzal (Migration to MPI)
-from mpi4casa.MPIEnvironment import MPIEnvironment
-from mpi4casa.MPICommandClient import MPICommandClient
+try:
+    from mpi4casa.MPIEnvironment import MPIEnvironment
+    from mpi4casa.MPICommandClient import MPICommandClient
+    mpi_available = True
+except:
+    mpi_available = False
 
 class JobData:
     """
@@ -72,7 +103,7 @@ class JobData:
         the JobQueueManager.
         """
         output = ''
-        for idx in xrange(len(self._commandList)):
+        for idx in range(len(self._commandList)):
             if idx > 0:
                 output += '; '
             output += self._commandList[idx].getCommandLine()
@@ -103,7 +134,7 @@ class JobData:
                 returnValue[command.commandName] = command.commandInfo
                                                    
         if len(returnValue) == 1:
-            return returnValue.values()[0]
+            return list(returnValue.values())[0]
         return returnValue
     
     def getReturnVariableList(self):
@@ -142,7 +173,7 @@ class ParallelTaskHelper:
         self._cluster = None
         self._mpi_cluster = False
         self._command_request_id_list = None
-        if not MPIEnvironment.is_mpi_enabled:
+        if not mpi_available or not MPIEnvironment.is_mpi_enabled:
             self.__bypass_parallel_processing = 1
         if (self.__bypass_parallel_processing == 0):
             self._mpi_cluster = True
@@ -173,7 +204,7 @@ class ParallelTaskHelper:
         """
         Return the number of engines (iPython cluster) or the number of servers (MPI cluster)
         """
-        if (self.__bypass_parallel_processing == 0):
+        if (mpi_available and self.__bypass_parallel_processing == 0):
             return len(MPIEnvironment.mpi_server_rank_list())
         else:
             return None
@@ -225,15 +256,30 @@ class ParallelTaskHelper:
             for job in self._executionList:
                 parameters = job.getCommandArguments()
                 try:
-                    exec("from taskinit import *; from tasks import *; " + job.getCommandLine())
-                    # jagonzal: Special case for partition
-                    if ('outputvis' in parameters):
-                        self._sequential_return_list[parameters['outputvis']] = returnVar0
+                    if is_CASA6:
+                        vars = globals( )
+                        try:
+                            exec("from casatasks import *; " + job.getCommandLine(),vars)
+                        except Exception as e:
+                            print("exec in parallel_task_helper.executeJobs failed: %s" % e)
+
+                        # jagonzal: Special case for partition
+                        if 'outputvis' in parameters:
+                            self._sequential_return_list[parameters['outputvis']] = vars['returnVar0']
+                        else:
+                            self._sequential_return_list[parameters['vis']] = vars['returnVar0']
                     else:
-                        self._sequential_return_list[parameters['vis']] = returnVar0
+                        exec("from taskinit import *; from tasks import *; " + job.getCommandLine())
+
+                        # jagonzal: Special case for partition
+                        if ('outputvis' in parameters):
+                            self._sequential_return_list[parameters['outputvis']] = returnVar0
+                        else:
+                            self._sequential_return_list[parameters['vis']] = returnVar0
+
                 except Exception as instance:
                     str_instance = str(instance)
-                    if (string.find(str_instance,"NullSelection") == 0):
+                    if (strfind("NullSelection") == 0):
                         casalog.post("Error running task sequentially %s: %s" % (job.getCommandLine(),str_instance),"WARN","executeJobs")
                         traceback.print_tb(sys.exc_info()[2])
                     else:
@@ -279,22 +325,25 @@ class ParallelTaskHelper:
         
     @staticmethod
     def consolidateResults(ret_list,taskname):
-        if isinstance(ret_list.values()[0],bool):
+        if isinstance(list(ret_list.values())[0],bool):
             retval = True
             for subMs in ret_list:
                 if not ret_list[subMs]:
                     casalog.post("%s failed for sub-MS %s" % (taskname,subMs),"WARN","consolidateResults")
                     retval = False
             return retval
-        elif any(isinstance(v,dict) for v in ret_list.itervalues()):
+        elif any(isinstance(v,dict) for v in locitervalues(ret_list)):
             ret_dict = {}
             for _key, subMS_dict in ret_list.items():
+                casalog.post(" ***** consolidateResults, subMS: {0}".format(subMS_dict),
+                             "WARN", "consolidateResults")
                 if isinstance(subMS_dict, dict):
                     try:
                         ret_dict = ParallelTaskHelper.combine_dictionaries(subMS_dict, ret_dict)
                     except Exception as instance:
                         casalog.post("Error post processing MMS results {0}: {1}".format(
                             subMS_dict, instance), 'WARN', 'consolidateResults')
+                        raise
             return ParallelTaskHelper.finalize_consolidate_results(ret_dict)
 
 
@@ -422,7 +471,7 @@ class ParallelTaskHelper:
         theSubMSs = msTool.getreferencedtables()
         msTool.close()
 
-        tbTool = tbtool();
+        tbTool = tbtool( );
         
         if mastersubms=='':
             tbTool.open(vis)
@@ -439,7 +488,7 @@ class ParallelTaskHelper:
         else:
             for s in subtables:
                 if not (s in theSubTables):
-                    raise ValueError(s+' is not a subtable of '+ mastersubms)
+                    raise ValueError( s+' is not a subtable of '+ mastersubms )
 
         origpath = os.getcwd()      
         masterbase = os.path.basename(mastersubms)
@@ -509,7 +558,7 @@ class ParallelTaskHelper:
         
         msTool = mstool()
         if not msTool.open(vis):
-            raise ValueError("Unable to open MS %s," % vis)
+            raise ValueError( "Unable to open MS %s," % vis)
         rtnVal = msTool.ismultims() and \
                  isinstance(msTool.getreferencedtables(), list)
 
@@ -532,11 +581,11 @@ class ParallelTaskHelper:
 
     @staticmethod
     def isMPIEnabled():
-        return MPIEnvironment.is_mpi_enabled
+        return MPIEnvironment.is_mpi_enabled if mpi_available else False
 
     @staticmethod
     def isMPIClient():
-        return MPIEnvironment.is_mpi_client
+        return MPIEnvironment.is_mpi_client if mpi_available else False
 
     @staticmethod
     def listToCasaString(inputList):
@@ -597,8 +646,13 @@ class ParallelTaskWorker:
         self.__completion_event.clear()        
                
         # Spawn thread
-        self.__thread = thread.start_new_thread(self.runCmd, ())
-        
+        if is_python3:
+            self.__thread = threading.Thread(target=self.runCmd, args=(), kwargs=())
+            self.__thread.setDaemon(True)
+            self.__thread.start()
+        else:
+            self.__thread = thread.start_new_thread(self.runCmd, ())
+
         # Mark state as running
         self.__state = "running"        
 
