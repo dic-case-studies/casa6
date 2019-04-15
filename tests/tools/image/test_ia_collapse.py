@@ -82,7 +82,6 @@ good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"
 datapath='regression/unittest/imcollapse/'
 
-
 def run_collapse(
     imagename, function, axes, outfile, region, box, chans,
     stokes, mask, overwrite, stretch=False
@@ -387,7 +386,10 @@ class ia_collapse_test(unittest.TestCase):
         yy.done()
         maskim = "ymask"
         yy.fromshape(maskim,[3,3,1,1])
-        yy.addnoise()
+        bb = yy.getchunk()
+        bb = bb + 1
+        bb[1,1] = -1
+        yy.putchunk(bb)
         yy.setcoordsys(mycs)
         yy.done()
         yy = run_collapse(
