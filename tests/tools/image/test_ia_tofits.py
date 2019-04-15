@@ -103,7 +103,6 @@ class ia_tofits_test(unittest.TestCase):
         self.assertTrue(zz and type(zz) == type(True))
         yy.done()
 
-    @unittest.skip("uses a task")        
     def test_CAS3675(self):
         """ test fix for CAS 3675, outfile must be specified """
         name = "my.im"
@@ -111,7 +110,6 @@ class ia_tofits_test(unittest.TestCase):
         yy.fromshape(name, [1,1,1,1])
         self.assertRaises(Exception, yy.tofits, overwrite=True)
         yy.done()
-        self.assertFalse(exportfits(imagename=name, overwrite=True))
     
     def test_multibeam(self):
         """Test exporting and importing an image with multiple beams"""
