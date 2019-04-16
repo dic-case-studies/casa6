@@ -1,6 +1,13 @@
 from __future__ import absolute_import
-from taskinit import *
+import os
 import glob
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table as tbtool
+    from casatasks import casalog
+else:
+    from taskinit import *
 
 # Concatenation of ephemeris tables
 #
@@ -281,7 +288,7 @@ def concatreplaceephem(vis=[], field='', commontime=False):
     thetabs = findephems(vis, ephemfield)
 
     if not (type(commontime)==bool) and not (type(commontime)==float):
-        raise Exception('ERROR: parameter commontime must be bool or float')	
+        raise Exception('ERROR: parameter commontime must be bool or float')
 
     if thetabs != [] and not ('' in thetabs):
         tmptab = os.path.basename(thetabs[0])+'.concattmp'
@@ -289,7 +296,7 @@ def concatreplaceephem(vis=[], field='', commontime=False):
         if os.path.exists(tmptab):
             for targettab in thetabs:
                 if not os.path.exists(targettab):
-                    raise Exception('Internal ERROR: ephemeris '+targettab+' does not exist')	
+                    raise Exception('Internal ERROR: ephemeris '+targettab+' does not exist')
                 os.system('rm -rf '+targettab)
                 os.system('cp -R '+tmptab+' '+targettab)
         else:

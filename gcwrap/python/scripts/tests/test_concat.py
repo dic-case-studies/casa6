@@ -11,13 +11,31 @@ import os
 import sys
 import shutil
 import glob
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
 from math import sqrt
 
-cb = cbtool( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, calibrater
+    from casatools import table as tbtool
+    from casatools import ms as mstool
+    from casatasks import split, concat
+
+    cb = calibrater( )
+    tb = tbtool( )
+    ms = mstool( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    cb = cbtool( )
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 myname = 'test_concat'
 
@@ -72,22 +90,22 @@ def checktable(thename, theexpectation, multims=False):
 # beginning of actual test 
 
 class test_concat(unittest.TestCase):
-    
+
     def setUp(self):
         global testmms
         res = None
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/concat/input/'
+        datapath=ctsys_resolve('regression/unittest/concat/input')
         datapathmms = ''
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
-        if 'TEST_DATADIR' in os.environ:   
+        if 'TEST_DATADIR' in os.environ:
             testmms = True
             DATADIR = str(os.environ.get('TEST_DATADIR'))
             if os.path.isdir(DATADIR):
                 datapathmms = DATADIR+'/concat/input/'
 
-        
+
         cpath = os.path.abspath(os.curdir)
         filespresent = sorted(glob.glob("*.ms"))
         if(datapathmms!=''): 
@@ -121,7 +139,7 @@ class test_concat(unittest.TestCase):
             for mymsname in myinputmslist:
                 if not mymsname in filespresent:
                     print("Copying ", mymsname)
-                    rval = os.system('cp -R '+datapath+'/'+mymsname+' .')
+                    rval = os.system('cp -R '+os.path.join(datapath,mymsname)+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
 
@@ -157,9 +175,9 @@ class test_concat(unittest.TestCase):
             shutil.copytree('xy1.ms', 'xy1-noephem.ms')
 
             ms.open('xy1.ms', nomodify=False)
-            ms.addephemeris(0,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab',
+            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
                             'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
-            ms.addephemeris(1,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab',
+            ms.addephemeris(1,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
                             'Jupiter_54708-55437dUTC', 0)
             ms.close()
 
@@ -187,7 +205,7 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2.ms', nomodify=False)
-            ms.addephemeris(0,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab',
+            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
                             'Uranus_54708-55437dUTC', '1908-201')
             ms.close()
 
@@ -215,7 +233,7 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2late.ms', nomodify=False)
-            ms.addephemeris(0,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab',
+            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
                             'Uranus_55437-56293dUTC', '1908-201')
             ms.close()
 
@@ -228,12 +246,13 @@ class test_concat(unittest.TestCase):
         if not 'xyb.ms' in filespresent:
             split(vis='xy1.ms', outputvis='xyb.ms', spw='0:64~127', datacolumn='data')
 
-
-        default(concat)
+        if is_CASA6:
+            default(concat)
         return True
         
     def tearDown(self):
-        shutil.rmtree(msname,ignore_errors=True)
+        pass
+        # shutil.rmtree(msname,ignore_errors=True)
 
     def test1(self):
         '''Concat 1: 4 parts, same sources but different spws'''
@@ -931,7 +950,7 @@ class test_concat(unittest.TestCase):
             tb.close()
             result = True
             print(myname, ": OK. Checking baseline labels ...")
-            for i in xrange(0,len(ant1)):
+            for i in range(0,len(ant1)):
                 if(ant1[i]>ant2[i]):
                     print("Found incorrectly ordered baseline label in row ", i, ": ", ant1, " ", ant2)
                     result = False
@@ -1019,7 +1038,7 @@ class test_concat(unittest.TestCase):
             tb.close()
             result = True
             print(myname, ": OK. Checking baseline labels ...")
-            for i in xrange(0,len(ant1)):
+            for i in range(0,len(ant1)):
                 if(ant1[i]>ant2[i]):
                     print("Found incorrectly ordered baseline label in row ", i, ": ", ant1, " ", ant2)
                     result = False
@@ -1401,7 +1420,7 @@ class test_concat(unittest.TestCase):
             if 'test12.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test12.ms',ignore_errors=True)
             shutil.copytree(msname,'test12.ms')
-            #print myname, ": OK. Checking tables in detail ..."
+            #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
         self.assertTrue(retValue['success'])
@@ -1472,7 +1491,7 @@ class test_concat(unittest.TestCase):
             if 'test13.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test13.ms',ignore_errors=True)
             shutil.copytree(msname,'test13.ms')
-            #print myname, ": OK. Checking tables in detail ..."
+            #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
         self.assertTrue(retValue['success'])
@@ -1781,7 +1800,7 @@ class test_concat(unittest.TestCase):
             if 'test17.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test17.ms',ignore_errors=True)
             shutil.copytree(msname,'test17.ms')
-            #print myname, ": OK. Checking tables in detail ..."
+            #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
         self.assertTrue(retValue['success'])
@@ -1863,7 +1882,7 @@ class test_concat(unittest.TestCase):
             if 'test18.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test18.ms',ignore_errors=True)
             shutil.copytree(msname,'test18.ms')
-            #print myname, ": OK. Checking tables in detail ..."
+            #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
         self.assertTrue(retValue['success'])
@@ -1883,4 +1902,7 @@ class concat_cleanup(unittest.TestCase):
     
 def suite():
     return [test_concat,concat_cleanup]        
-        
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

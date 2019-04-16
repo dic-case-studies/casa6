@@ -1,5 +1,13 @@
 from __future__ import absolute_import
-from taskinit import *
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import table
+    _tb = table( )
+else:
+    from taskinit import *
+    _tb = tb
 
 def calstat(caltable=None,
             axis=None,
@@ -8,8 +16,8 @@ def calstat(caltable=None,
 
     casalog.origin('calstat')
 
-    tb.close()
-    tb.open(caltable)
+    _tb.close()
+    _tb.open(caltable)
 
     if axis in ['amp', 'amplitude', 'phase', 'imag', 'imaginary', 'real']:
         complex_type = axis
@@ -22,11 +30,11 @@ def calstat(caltable=None,
         col = 'CORRECTED_DATA'
     if col == 'model':
         col = 'MODEL_DATA'
-    s = tb.statistics(column=col.upper(),
+    s = _tb.statistics(column=col.upper(),
                       complex_value=complex_type,
                       useflags=useflags)
         
-    tb.close()
+    _tb.close()
 
     for stats in s.keys():
         casalog.post(stats + " values --- ", "NORMAL")
