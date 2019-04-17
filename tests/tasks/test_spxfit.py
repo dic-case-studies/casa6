@@ -82,78 +82,6 @@ datapath=ctsys.resolve('regression/unittest/spxfit')
 myia = image()
 _fn = functional()
 
-def run_fitprofile (
-    imagename, box, region, chans, stokes,
-    axis, mask, ngauss, poly, multifit, model="",
-    residual="", amp="", amperr="", center="", centererr="",
-    fwhm="", fwhmerr="", integral="", integralerr="",
-    estimates="", logresults=True, pampest="", pcenterest="", pfwhmest="",
-    pfix="", gmncomps=0, gmampcon="", gmcentercon="",
-    gmfwhmcon="", gmampest=[0], gmcenterest=[0],
-    gmfwhmest=[0], gmfix="", logfile="", pfunc="",
-    goodamprange=[0.0], goodcenterrange=[0.0], goodfwhmrange=[0.0],
-    sigma="", outsigma=""
-):
-    myia = image()
-    myia.open(imagename)
-    if (not myia.isopen()):
-        myia.done()
-        raise Exception
-    res = myia.fitprofile(
-        box=box, region=region, chans=chans,
-        stokes=stokes, axis=axis, mask=mask,
-        ngauss=ngauss, poly=poly, estimates=estimates,
-        multifit=multifit,
-        model=model, residual=residual, amp=amp,
-        amperr=amperr, center=center, centererr=centererr,
-        fwhm=fwhm, fwhmerr=fwhmerr, integral=integral,
-        integralerr=integralerr, logresults=logresults, pampest=pampest,
-        pcenterest=pcenterest, pfwhmest=pfwhmest, pfix=pfix,
-        gmncomps=gmncomps, gmampcon=gmampcon,
-        gmcentercon=gmcentercon, gmfwhmcon=gmfwhmcon,
-        gmampest=gmampest, gmcenterest=gmcenterest,
-        gmfwhmest=gmfwhmest, gmfix=gmfix, logfile=logfile,
-        pfunc=pfunc, goodamprange=goodamprange,
-        goodcenterrange=goodcenterrange,
-        goodfwhmrange=goodfwhmrange, sigma=sigma, outsigma=outsigma    )
-    myia.close()
-    myia.done()
-    return res
-
-def run_specfit(
-    imagename, box, region, chans, stokes,
-    axis, mask, ngauss, poly, multifit, model="",
-    residual="", amp="", amperr="", center="", centererr="",
-    fwhm="", fwhmerr="", integral="", integralerr="",
-    wantreturn=True, estimates="", logresults=None,
-    pampest="", pcenterest="", pfwhmest="", pfix="",
-    gmncomps=0, gmampcon="", gmcentercon="",
-    gmfwhmcon="", gmampest=[0], gmcenterest=[0],
-    gmfwhmest=[0], gmfix="", logfile="", pfunc="",
-    goodamprange=[0.0], goodcenterrange=[0.0], goodfwhmrange=[0.0],
-    sigma="", outsigma=""
-):
-    return specfit(
-        imagename=imagename, box=box, region=region,
-        chans=chans, stokes=stokes, axis=axis, mask=mask,
-        ngauss=ngauss, poly=poly, estimates=estimates,
-        multifit=multifit,
-        model=model, residual=residual, amp=amp,
-        amperr=amperr, center=center, centererr=centererr,
-        fwhm=fwhm, fwhmerr=fwhmerr, integral=integral,
-        integralerr=integralerr,
-        wantreturn=wantreturn, logresults=logresults, pampest=pampest,
-        pcenterest=pcenterest, pfwhmest=pfwhmest, pfix=pfix,
-        gmncomps=gmncomps, gmampcon=gmampcon,
-        gmcentercon=gmcentercon, gmfwhmcon=gmfwhmcon,
-        gmampest=gmampest, gmcenterest=gmcenterest,
-        gmfwhmest=gmfwhmest, gmfix=gmfix, logfile=logfile,
-        pfunc=pfunc,
-        goodamprange=goodamprange,
-        goodcenterrange=goodcenterrange,
-        goodfwhmrange=goodfwhmrange, sigma=sigma, outsigma=outsigma
-    )
-
 class spxfit_test(unittest.TestCase):
 
     def setUp(self):
@@ -207,11 +135,6 @@ class spxfit_test(unittest.TestCase):
         expected.close()
         expected.done()
 
-    def test_exceptions(self):
-        """spxfit: Test various exception cases"""
-        myia.fromshape("", [1,1,10])
-        self.assertRaises(Exception, myia.fitprofile, poly=2, plpest=[1,2])
-
     def test_plpfit(self):
         """ Test fitting a power logarithmic polynomial"""
         imagename = "spxfit.im"
@@ -229,65 +152,42 @@ class spxfit_test(unittest.TestCase):
             zz[:,:,i] = myfn.f(world/1e9)
         myia.putchunk(zz)
 
-        for i in [0,1]:
-            if i == 0:
-                rec = myia.fitprofile(ngauss=0, spxtype="plp", spxest=plpest)
-            if i == 1:
-                rec = spxfit(imagename=imagename, spxtype="plp", spxest=plpest)
-            sols = rec['plp']['solution'].ravel()
-            self.assertTrue((abs(1 - sols/plpest) < 0.1e-7).all())
-            if i == 1:
-                rec = myia.fitprofile(ngauss=0, spxtype="plp", spxest=[0.4, 3])
-            if i == 2:
-                rec = spxfit(imagename=imagename, spxtype="plp", spxest=[0.4, 3])
-            sols = rec['plp']['solution'].ravel()
-            self.assertTrue((abs(1 - sols/plpest) < 0.1e-7).all())
-
+        rec = spxfit(imagename=imagename, spxtype="plp", spxest=plpest)
+        sols = rec['plp']['solution'].ravel()
+        self.assertTrue((abs(1 - sols/plpest) < 0.1e-7).all())
+        rec = spxfit(imagename=imagename, spxtype="plp", spxest=[0.4, 3])
+        sols = rec['plp']['solution'].ravel()
+        self.assertTrue((abs(1 - sols/plpest) < 0.1e-7).all())
 
         myia.addnoise(pars=[0, 0.001])
-        for i in [0, 1]:
-            plpestoff = [0.4, 3]
-            if i == 0:
-                rec = myia.fitprofile(ngauss=0, spxtype="plp", spxest=plpestoff)
-            if i == 1:
-                rec = spxfit(imagename=imagename, spxtype="plp", spxest=plpestoff)
-            sols = rec['plp']['solution'].ravel()
-            print("*** i " + str(i))
-            print("** max ", sols/plpest)
-            self.assertTrue((abs(1 - sols/plpest) < 4e-2).all())
-            plpsol = "plpsol.im"
-            plperr = "plperr.im"
-            plpestoff = [0.4, 2.2]
-            plpfix = [False, True]
-            if i == 0:
-                rec = myia.fitprofile(
-                        ngauss=0, spxtype="plp", spxest=plpestoff, spxfix=plpfix,
-                        multifit=True, spxsol=plpsol, spxerr=plperr
-                )
-            if i == 1:
-                rec = spxfit(
-                    imagename=imagename, spxtype="plp", spxest=plpestoff, spxfix=plpfix,
-                    multifit=True, spxsol=plpsol, spxerr=plperr
-                )
-                myia.done(remove=True)
-            sols = rec['plp']['solution']
-            self.assertTrue((sols[:,:,:,1] == 2.2).all())
-            for j in [0, 1]:
-                myia.open(plpsol + "_" + str(j))
-                self.assertTrue(
-                    (
-                     abs(myia.getchunk()/sols[:,:,:,j] - 1) < 1e-7
-                    ).all()
-                )
-                myia.done(remove=True)
-
-                myia.open(plperr + "_" + str(j))
-                self.assertTrue(
-                    (
-                     abs(myia.getchunk() - rec['plp']['error'][:, :, :, j]) < 1e-8
-                    ).all()
-                )
-                myia.done(remove=True)
+        plpestoff = [0.4, 3]
+        rec = spxfit(imagename=imagename, spxtype="plp", spxest=plpestoff)
+        sols = rec['plp']['solution'].ravel()
+        print("*** i " + str(i))
+        print("** max ", sols/plpest)
+        self.assertTrue((abs(1 - sols/plpest) < 4e-2).all())
+        plpsol = "plpsol.im"
+        plperr = "plperr.im"
+        plpestoff = [0.4, 2.2]
+        plpfix = [False, True]
+        rec = spxfit(
+            imagename=imagename, spxtype="plp", spxest=plpestoff, spxfix=plpfix,
+            multifit=True, spxsol=plpsol, spxerr=plperr
+        )
+        myia.done(remove=True)
+        sols = rec['plp']['solution']
+        self.assertTrue((sols[:,:,:,1] == 2.2).all())
+        for j in [0, 1]:
+            myia.open(plpsol + "_" + str(j))
+            self.assertTrue(
+                (abs(myia.getchunk()/sols[:,:,:,j] - 1) < 1e-7).all()
+            )
+            myia.done(remove=True)
+            myia.open(plperr + "_" + str(j))
+            self.assertTrue(
+                (abs(myia.getchunk() - rec['plp']['error'][:, :, :, j]) < 1e-8).all()
+            )
+            myia.done(remove=True)
 
     def test_ltpfit(self):
         """ Test fitting a logarithmic transformed polynomial"""
@@ -308,68 +208,47 @@ class spxfit_test(unittest.TestCase):
         ltpest = plpest
         ltpest[:] = plpest
         ltpest[0] = math.log(plpest[0])
-        for i in [0,1]:
-            if i == 0:
-                rec = myia.fitprofile(ngauss=0, spxtype="ltp", spxest=ltpest)
-            if i == 1:
-                rec = spxfit(imagename=imagename, spxtype="ltp", spxest=ltpest)
-            print(str(rec))
-            sols = rec['ltp']['solution'].ravel()
-            self.assertTrue((abs(1 - sols/ltpest) < 0.1e-7).all())
-            if i == 1:
-                rec = myia.fitprofile(ngauss=0, spxtype="ltp", spxest=[0.4, 3])
-            if i == 2:
-                rec = spxfit(imagename=imagename, spxtype="ltp", spxest=[0.4, 3])
-            sols = rec['ltp']['solution'].ravel()
-            self.assertTrue((abs(1 - sols/ltpest) < 0.1e-7).all())
-            print('*** xUnit ' + rec['xUnit'])
-            self.assertTrue(rec['xUnit'] == "Hz")
+        rec = spxfit(imagename=imagename, spxtype="ltp", spxest=ltpest)
+        print(str(rec))
+        sols = rec['ltp']['solution'].ravel()
+        self.assertTrue((abs(1 - sols/ltpest) < 0.1e-7).all())
+        rec = spxfit(imagename=imagename, spxtype="ltp", spxest=[0.4, 3])
+        sols = rec['ltp']['solution'].ravel()
+        self.assertTrue((abs(1 - sols/ltpest) < 0.1e-7).all())
+        print('*** xUnit ' + rec['xUnit'])
+        self.assertTrue(rec['xUnit'] == "Hz")
 
         myia.addnoise(pars=[0, 0.001])
-        for i in [0, 1]:
-            ltpestoff = [0.4, 3]
-            if i == 0:
-                rec = myia.fitprofile(ngauss=0, spxtype="ltp", spxest=ltpestoff)
-            if i == 1:
-                rec = spxfit(imagename=imagename, spxtype="ltp", spxest=ltpestoff)
-            sols = rec['ltp']['solution'].ravel()
+        ltpestoff = [0.4, 3]
+        rec = spxfit(imagename=imagename, spxtype="ltp", spxest=ltpestoff)
+        sols = rec['ltp']['solution'].ravel()
+        self.assertTrue(
+            (abs(1 - sols/ltpest) < 3e-2).all(),
+            "sols " + str(sols) + " ltpest " + str(ltpest)
+        )
+        spxsol = "ltpsol.im"
+        spxerr = "ltperr.im"
+        ltpestoff = [0.4, 2.2]
+        ltpfix = [False, True]
+        rec = spxfit(
+            imagename=imagename, spxtype="ltp", spxest=ltpestoff, spxfix=ltpfix,
+            multifit=True, spxsol=spxsol, spxerr=spxerr
+        )
+        myia.done(remove=True)
+        sols = rec['ltp']['solution']
+        self.assertTrue((sols[:,:,:,1] == 2.2).all())
+        for j in [0, 1]:
+            self.assertTrue(myia.open(spxsol + "_" + str(j)))
             self.assertTrue(
-                (abs(1 - sols/ltpest) < 3e-2).all(),
-                "sols " + str(sols) + " ltpest " + str(ltpest)
+                (abs(myia.getchunk()/sols[:,:,:,j] - 1) < 1e-7).all()
             )
-            spxsol = "ltpsol.im"
-            spxerr = "ltperr.im"
-            ltpestoff = [0.4, 2.2]
-            ltpfix = [False, True]
-            if i == 0:
-                rec = myia.fitprofile(
-                    ngauss=0,  spxtype="ltp", spxest=ltpestoff, spxfix=ltpfix,
-                    multifit=True, spxsol=spxsol, spxerr=spxerr
-                )
-            if i == 1:
-                rec = spxfit(
-                    imagename=imagename, spxtype="ltp", spxest=ltpestoff, spxfix=ltpfix,
-                    multifit=True, spxsol=spxsol, spxerr=spxerr
-                )
-                myia.done(remove=True)
-            sols = rec['ltp']['solution']
-            self.assertTrue((sols[:,:,:,1] == 2.2).all())
-            for j in [0, 1]:
-                self.assertTrue(myia.open(spxsol + "_" + str(j)))
-                self.assertTrue(
-                    (
-                     abs(myia.getchunk()/sols[:,:,:,j] - 1) < 1e-7
-                   ).all()
-                )
-                myia.done(remove=True)
+            myia.done(remove=True)
 
-                self.assertTrue(myia.open(spxerr + "_" + str(j)))
-                self.assertTrue(
-                    (
-                     abs(myia.getchunk() - rec['ltp']['error'][:,:,:,j]) < 1e-8
-                    ).all()
-                )
-                myia.done(remove=True)
+            self.assertTrue(myia.open(spxerr + "_" + str(j)))
+            self.assertTrue(
+                (abs(myia.getchunk() - rec['ltp']['error'][:,:,:,j]) < 1e-8).all()
+            )
+            myia.done(remove=True)
 
     def test_multi_image(self):
         """Test multi image support"""
@@ -524,26 +403,6 @@ class spxfit_test(unittest.TestCase):
             got = res2['direction'][0,0,0,0]
             expec = res['direction'][pixel[0],pixel[1],0,0]
             self.assertTrue(got == expec)
-
-
-    def test_ltpfit_with_negative_values(self):
-        """Test fitting of ltp when y values are negative returns something reasonable because of auto masking"""
-        global myia
-        myia.fromshape("", [1, 1, 10])
-        f = []
-        for i in range(10):
-            f.append(myia.toworld([0,0,i])['numeric'][2])
-        f = numpy.array(f)
-        vals = (f/f[0])**(3.0)
-        # add a negative value to the array to test that it's not used in the fit
-        vals[0] = -1
-        bb = myia.getchunk()
-        bb[0, 0, :] = vals
-        myia.putchunk(bb)
-        res = myia.fitprofile(spxtype="ltp",spxest=[0, 3],div=f[0])
-        myia.done()
-        self.assertTrue(abs(res['ltp']['solution'][0][0][0][1] - 3) < 0.01 )
-
 
 def suite():
     return [spxfit_test]
