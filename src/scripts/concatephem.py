@@ -1,8 +1,13 @@
+from __future__ import absolute_import
 import os
 import glob
 
-from casatools import table
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table as tbtool
+    from casatasks import casalog
+else:
+    from taskinit import *
 
 # Concatenation of ephemeris tables
 #
@@ -28,7 +33,7 @@ def concatephem(ephems=[], outputephem=''):
             default: ''
     
     """
-    mytb = table()
+    mytb = tbtool()
     starts = []
     ends = []
     stepsizes = []
@@ -121,7 +126,7 @@ def concatephem(ephems=[], outputephem=''):
 
         os.system('cp -R '+ephems[0]+' '+outputephem)
         
-        mytb2 = table()
+        mytb2 = tbtool()
         
         try:
             mytb.open(outputephem, nomodify=False)
@@ -204,7 +209,7 @@ def findephems(vis=[], field=''):
     if type(vis) == str:
         vis = [vis]
 
-    mytb=table()
+    mytb=tbtool()
 
     rval = [] # list of ephemeris tables to be returned
 
@@ -305,7 +310,7 @@ def concatreplaceephem(vis=[], field='', commontime=False):
             thecommontime = commontime
             if type(commontime)==float:
                 casalog.post('   '+str(thecommontime), 'INFO')
-            mytb = table()
+            mytb = tbtool()
             for thevis in vis:
                 mytb.open(thevis+'/FIELD', nomodify=False)
                 thenames = mytb.getcol('NAME')

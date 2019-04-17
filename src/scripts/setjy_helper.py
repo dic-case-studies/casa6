@@ -1,17 +1,26 @@
 # setjy helper functions
+from __future__ import absolute_import
 import os
 import sys
 import shutil
-from collections import OrderedDict
 import numpy
-from casatasks import casalog
-from casatools import quanta, ms, table, componentlist, measures, calibrater, msmetadata
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import casalog as default_casalog
+    from casatools import quanta, ms, table, componentlist, measures, calibrater, msmetadata
+    from collections import OrderedDict as odict
+else:
+    from casac import casac
+    from odict import odict
+    default_casalog = casac.logsink()
 
 class ss_setjy_helper:
     def __init__(self,imtool, vis, casalog=None):
         self.im = imtool
         self.vis = vis
+        if not casalog:
+            casalog = default_casalog
         self._casalog = casalog
 
     def setSolarObjectJy(self,field,spw,scalebychan, timerange,observation, scan, intent, useephemdir, usescratch=False):
@@ -26,15 +35,20 @@ class ss_setjy_helper:
         output = {}
         cleanupcomps = True # leave generated cl files 
 
-        qa = quanta()
- 
+        if is_CASA6:
+            qa = quanta()
+            myms = ms( )
+            mytb = table( )
+            mycl = componentlist( )
+            myme = measures( )
+            mycb = calibrater( )
+            mymsmd = msmetadata( )
+        else:
+            #from taskinit import * 
+            from taskinit import gentools 
+            qa = casac.quanta()
+            (myms, mytb, mycl, myme, mycb, mymsmd) = gentools(['ms','tb','cl','me', 'cb','msmd'])
 
-        myms = ms( )
-        mytb = table( )
-        mycl = componentlist( )
-        myme = measures( )
-        mycb = calibrater( )
-        mymsmd = msmetadata( )
         # prepare parameters need to pass to the Bryan's code
         # make ms selections
         # get source name
@@ -230,7 +244,10 @@ class ss_setjy_helper:
         # size: [majoraxis, minoraxis, pa]
         # direction: direction for each time stamp
         # 
-        from . import solar_system_setjy as SSsetjy 
+        if is_CASA6:
+            from . import solar_system_setjy as SSsetjy 
+        else:
+            import solar_system_setjy as SSsetjy 
         #import solar_system_setjy2 as SSsetjy 
         retdict={} # for returning flux densities?
         ss_setjy=SSsetjy.solar_system_setjy()
@@ -303,7 +320,7 @@ class ss_setjy_helper:
           reffreqs=inparams[vfid]['reffreqs']
           spwids=inparams[vfid]['spwids']
 
-          clrecs=OrderedDict( )
+          clrecs=odict( )
           #print "LOOP over multiple dir..."
           labels = []
           # loop for over for multiple directions (=multiple  MJDs) for a given src
@@ -656,7 +673,11 @@ class ss_setjy_helper:
         Update history table when setSolarObjectJy is run
         """
         # 
-        mytb = table( )
+        if is_CASA6:
+            mytb = table( )
+        else:
+            from taskinit import gentools 
+            (mytb,) = gentools(['tb'])
         mytb.open(os.path.join(vis,'HISTORY'),nomodify=False)
         nrow = mytb.nrows()
         lasttime=mytb.getcol('TIME')[nrow-1]
@@ -696,7 +717,11 @@ class ss_setjy_helper:
         (mulitple comopents in one version)
         """
         #
-        mytb = table( )
+        if is_CASA6:
+            mytb = table( )
+        else:
+            from taskinit import gentools
+            (mytb,) = gentools(['tb'])
         mytb.open(os.path.join(vis,'HISTORY'),nomodify=False)
         nrow = mytb.nrows()
         lasttime=mytb.getcol('TIME')[nrow-1]
@@ -826,13 +851,13 @@ def testerrs(errcode,srcname):
       if ec != 0:
         errcount += 1
       if ec == 1:
-         casalog.post("The model for %s is not supported" % srcname, 'WARN')
+         default_casalog.post("The model for %s is not supported" % srcname, 'WARN')
       elif ec == 2:
-         casalog.post("Unsupported frequency range",'WARN')
+         default_casalog.post("Unsupported frequency range",'WARN')
       elif ec == 3:
-         casalog.post("Tb model not found",'WARN')
+         default_casalog.post("Tb model not found",'WARN')
       elif ec == 4:
-         casalog.post("The ephemeris table is not found or the time is out of range",'WARN')
+         default_casalog.post("The ephemeris table is not found or the time is out of range",'WARN')
     if errcount == len(errcode):
       return 2
     if errcount != 0:

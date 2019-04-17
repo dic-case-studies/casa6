@@ -27,19 +27,34 @@
 # Modified by TT to avoid uncessary file open: 2012Dec13
 
 
+from __future__ import absolute_import
 from numpy import searchsorted
 from numpy import array
 from scipy.interpolate import interp1d
 from math import exp, pi, cos, sin, isnan, sqrt
 import os
-from casatools import table, measures, quanta, ctsys
-qa = quanta( )
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, measures, quanta, ctsys
+    qa = quanta( )
+    _tb = table( )
+    _me = measures( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from taskinit import gentools
+    (_tb,_me)=gentools(['tb','me'])
+    from casac import *
+    qa = casac.quanta()
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+
 HH = qa.constants('H')['value'] 
 KK = qa.constants('K')['value']
 CC = qa.constants('C')['value'] 
-
-_tb = table( )
-_me = measures( )
 
 class solar_system_setjy:
     def __init__(self):
@@ -159,7 +174,7 @@ class solar_system_setjy:
     # information.  otherwise don't waste our time calculating the model.
     # only really important for mars, but do it for them all.
     #
-        ephemeris_path = ctsys.resolve('ephemerides/JPL-Horizons')
+        ephemeris_path = ctsys_resolve('ephemerides/JPL-Horizons')
         ephemeris_file_list = os.listdir(ephemeris_path)
         ephemeris_files = []
         for ephemeris_file in ephemeris_file_list:
@@ -390,7 +405,7 @@ class solar_system_setjy:
         statuses = []
         Tbs = []
         dTbs = []
-        model_data_path = ctsys.resolve('alma/SolarSystemModels')
+        model_data_path = ctsys_resolve('alma/SolarSystemModels')
         if (source_name in MODEL_IS_FD_BODIES):
             model_data_filename = os.path.join(model_data_path,source_name + '_fd_time.dat')
         else:
@@ -549,7 +564,7 @@ class solar_system_setjy:
         MODEL_IS_FD_BODIES = [ ]
 
         if not source_name in self.models:
-            model_data_path = ctsys.resolve('alma/SolarSystemModels')
+            model_data_path = ctsys_resolve('alma/SolarSystemModels')
             if (source_name in MODEL_IS_FD_BODIES):
                 model_data_filename = os.path.join(model_data_path,source_name + '_fd.dat')
             else:

@@ -15,12 +15,21 @@ Example:
 '3'
 """
 
+from __future__ import absolute_import
 import copy
 import os
-#from taskinit import mstool
-from casatools import ms
 
-_ms = ms( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ms
+    from casatools import table as tbtool
+    _ms = ms( )
+else:
+    #from taskinit import mstool
+    from casac import *
+    from taskinit import ms as _ms
+
+    tbtool = casac.table
 
 def update_spw(spw, spwmap=None):
     """
@@ -220,7 +229,7 @@ def spwchan_to_sets(vis, spw):
                 if spwd[s] == '':
                     # We need to get the spw's # of channels without using
                     # _ms.msseltoindex.
-                    mytb = casac.table()
+                    mytb = tbtool()
                     mytb.open(vis + '/SPECTRAL_WINDOW')
                     spwd[s] = range(mytb.getcell('NUM_CHAN', s))
                     mytb.close()

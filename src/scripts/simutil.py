@@ -1,22 +1,39 @@
 # geodesy and pointing and other helper functions that are useful
 # to be available outside of the simdata task
 # geodesy from NGS: http://www.ngs.noaa.gov/TOOLS/program_descriptions.html
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 import pylab as pl
 
-from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
-from casatasks import casalog
-tb = table( )
-ia = image( )
-po = imagepol( )
-rg = regionmanager( )
-cb = calibrater( )
-me = measures( )
-qa = quanta( )
-cs = coordsys( )
-cl = componentlist( )
-sm = simulator( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
+    from casatasks import casalog
+    tb = table( )
+    ia = image( )
+    po = imagepol( )
+    rg = regionmanager( )
+    cb = calibrater( )
+    me = measures( )
+    qa = quanta( )
+    cs = coordsys( )
+    cl = componentlist( )
+    sm = simulator( )
+
+else:
+    #import casac
+    # all I really need is casalog, but how to get it:?
+    from taskinit import *
+
+    # qa doesn't hold state.
+    #qatool = casac.homefinder.find_home_by_name('quantaHome')
+    #qa = qatool.create()
+    im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+
+    # 4.2.2:
+    #im, cb, ms, tb, fl, me, ia, po, sm, cl, cs, rg, sl, dc, vp, msmd, fi, fn, imd = gentools()
 
 # functions defined outside of the simutil class
 def is_array_type(value):

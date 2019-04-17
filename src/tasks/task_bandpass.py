@@ -1,8 +1,19 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
 import numpy as np
-from .callibrary import *
-from casatasks import casalog
-from casatools import calibrater
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+        from .callibrary import *
+        from casatasks import casalog
+        from casatools import calibrater
+else:
+        from callibrary import *
+        from taskinit import *
+
+        calibrater = cbtool
 
 def bandpass(vis=None,caltable=None,
              field=None,spw=None,intent=None,

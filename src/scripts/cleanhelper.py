@@ -1,26 +1,51 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
-import subprocess
 import math
 #import pdb
 import numpy
 import shutil
 import pwd
 from numpy import unique
-from collections import OrderedDict
 
-###some helper tools
-from casatasks import casalog as default_casalog
-from casatools import table, quanta, measures, regionmanager, image, imager, msmetadata
-from casatools import ms as mstool
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    import subprocess
+    from collections import OrderedDict as odict
 
-ms = mstool( )
-tb = table( )
-qa = quanta( )
-me = measures( )
-rg = regionmanager( )
-ia = image( )
-im = imager( )
-msmd=msmetadata( )
+    ###some helper tools
+    from casatasks import casalog as default_casalog
+    from casatools import table, quanta, measures, regionmanager, image, imager, msmetadata
+    from casatools import ms as mstool
+
+    ms = mstool( )
+    tb = table( )
+    qa = quanta( )
+    me = measures( )
+    rg = regionmanager( )
+    ia = image( )
+    im = imager( )
+    msmd=msmetadata( )
+
+else:
+    # possibly not an exact equivalent, but as used here it is
+    import commands as subprocess
+
+    import string
+    from odict import odict
+
+    ###some helper tools
+    from  casac import *
+    ms = casac.ms()
+    tb = casac.table()
+    qa = casac.quanta()
+    me = casac.measures()
+    rg = casac.regionmanager()
+    ia = casac.image()
+    im = casac.imager()
+    msmd=casac.msmetadata()
+    default_casalog = casac.logsink()
 
 class cleanhelper:
     def __init__(self, imtool='', vis='', usescratch=False, casalog=default_casalog):
@@ -42,7 +67,7 @@ class cleanhelper:
         #    else:
         #        self.initsinglems(imtool, vis, usescratch)
         #self.maskimages={}
-        self.maskimages=OrderedDict( )
+        self.maskimages=odict( )
         self.finalimages={}
         self.usescratch=usescratch
         self.dataspecframe='LSRK'
@@ -54,7 +79,7 @@ class cleanhelper:
         # for multims handling
         self.sortedvislist=[]
         if not casalog:  # Not good!
-            casalog = casac.logsink()
+            casalog = default_casalog
             #casalog.setglobal(True)
         self._casalog = casalog
         
@@ -63,7 +88,11 @@ class cleanhelper:
         """needed because mms has it somewhere else
         """
         tb.open(visname)
-        spectable=str.split(tb.getkeyword(subtab))
+        if is_CASA6:
+            spectable=str.split(tb.getkeyword(subtab))
+        else:
+            spectable=string.split(tb.getkeyword(subtab))
+
         if(len(spectable) ==2):
             spectable=spectable[1]
         else:
@@ -572,9 +601,9 @@ class cleanhelper:
         #print("Inside makemultifieldmask2")
         if((len(self.maskimages)==(len(self.imagelist)))):
             if(self.imagelist[0] not in self.maskimages):
-                self.maskimages=OrderedDict()
+                self.maskimages=odict()
         else:
-            self.maskimages=OrderedDict()
+            self.maskimages=odict()
         # clean up temp mask image 
         if os.path.exists('__tmp_mask'):
            shutil.rmtree('__tmp_mask')
@@ -1215,8 +1244,12 @@ class cleanhelper:
 #                         npixels=npixels, noise=qa.quantity(noise,'Jy'), mosaic=mosweight)
         self.im.weight(type=weighting,rmode=rmode,robust=robust, 
                          npixels=npixels, noise=qa.quantity(noise,'Jy'), mosaic=mosweight)
-     
-        if((uvtaper==True) and (type(outertaper) in (str, int, float, long))):
+        if is_CASA6:
+            # long isn't a type in python 3
+            oktypes = (str,int,float)
+        else:
+            oktypes = (str,int,float,long)
+        if((uvtaper==True) and (type(outertaper) in oktypes)):
             outertaper=[outertaper]
         if((uvtaper==True) and (type(outertaper)==list) and (len(outertaper) > 0)):
             if(len(outertaper)==1):
@@ -2607,7 +2640,7 @@ class cleanhelper:
                 widt=qa.quantity(width)['value']
     
             if widt>0:
-                #print(star, widt, (freqs[-1]-star)/widt)
+                #print(star, widt, (freqs[-1]-star)//widt)
                 nchan=max(min(int((freqs[-1]-star)//widt), nchan), 1)
             else:
                 nchan=max(min(int(freqs[0]-star)//widt, nchan), 1)
@@ -3008,8 +3041,8 @@ class cleanhelper:
         # to select with nchan=-1
         retparms['imnchan']=1
         retparms['chanslice']=chan
-        qat=casac.quanta()
-        q = qat.quantity
+
+        q = qa.quantity
 
         # 2010-08-18 note: disable this. Has the problem 
         # getting imaging weights correctly when the beginning 

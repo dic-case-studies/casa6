@@ -3,12 +3,27 @@
 #when working with measurement sets as tables.
 #"""
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
-from casatools import table, quanta
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, quanta
+    _tb = table( )
+    _qa = quanta( )
 
-_tb = table( )
-_qa = quanta( )
+    # basestring is use in the CASA5 code, now use str and hide it a bit from any other basestring
+    # this is really a python3 difference
+    _basestring = str
+else:
+    from taskinit import *
+    _tb = tb
+    _qa = qa
+
+    # basestring is use in the CASA5 code, fudge that here and hide it a bit from any other basestring
+    # this is really a python3 difference
+    _basestring = basestring
 
 def getput_keyw(mode, vis, key, hdindex, hdvalue='', hdref=None):
     table = vis + '/' + key[0]
@@ -52,7 +67,7 @@ def getput_keyw(mode, vis, key, hdindex, hdvalue='', hdref=None):
                 c = _tb.getcol(col)
 
                 # Must be careful here:
-                if isinstance(c[0], str):
+                if isinstance(c[0], _basestring):
                     # The new hdvalue may be longer than
                     # the current string.
                     # numpy arrays do *not* expand flexibly,
