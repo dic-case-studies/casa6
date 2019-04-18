@@ -82,7 +82,6 @@ good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"
 datapath='regression/unittest/imcollapse/'
 
-
 def run_collapse(
     imagename, function, axes, outfile, region, box, chans,
     stokes, mask, overwrite, stretch=False
@@ -98,18 +97,7 @@ def run_collapse(
     myia.done()
     return res
 
-def run_imcollapse(
-    imagename, function, axes, outfile, region, box, chans,
-    stokes, mask, overwrite, stretch=False
-):
-    return imcollapse(
-        imagename=imagename, function=function, axes=axes,
-        outfile=outfile, region=region, box=box, chans=chans,
-        stokes=stokes, mask=mask, overwrite=overwrite,
-        stretch=stretch
-    )
-
-class imcollapse_test(unittest.TestCase):
+class ia_collapse_test(unittest.TestCase):
     
     def setUp(self):
         self.rg = regionmanager( )
@@ -154,7 +142,7 @@ class imcollapse_test(unittest.TestCase):
         expected.done()
 
     def test_exceptions(self):
-        """imcollapse: Test various exception cases"""
+        """ia.collapse: Test various exception cases"""
         
         bogus = "mybogus.im"
         def testit(
@@ -188,7 +176,7 @@ class imcollapse_test(unittest.TestCase):
         testit(good_image, "mean", 10, "", "", "", "", "", "", False, True)
 
     def test_1(self):
-        """imcollapse: average full image collapse along axis 0"""
+        """ia.collapse(): average full image collapse along axis 0"""
         expected = "collapse_avg_0.fits"
         shutil.copy(ctsys.resolve(datapath + expected), expected)
         for axis in (0 ,"r", "right"):
@@ -202,7 +190,7 @@ class imcollapse_test(unittest.TestCase):
             self.checkImage(outname, expected)
 
     def test_2(self):
-        """imcollapse: average full image collapse along axis 2"""
+        """ia.collapse(): average full image collapse along axis 2"""
         expected = "collapse_avg_2.fits"
         shutil.copy(ctsys.resolve(datapath + expected), expected)
         for axis in (2, "f", "freq"):
@@ -216,7 +204,7 @@ class imcollapse_test(unittest.TestCase):
             self.checkImage(outname, expected)
 
     def test_3(self):
-        """imcollapse: average full image collapse along axis 2 and check output overwritability"""
+        """ia.collapse(): average full image collapse along axis 2 and check output overwritability"""
         expected = "collapse_sum_1.fits"
         shutil.copy(ctsys.resolve(datapath + expected), expected)
         box = "1,1,2,2"
@@ -245,7 +233,7 @@ class imcollapse_test(unittest.TestCase):
         mytool.done()
 
     def test_4(self):
-        """imcollapse: not specifying an output image is ok"""
+        """ia.collapse(): not specifying an output image is ok"""
         expected = "collapse_avg_2.fits"
         shutil.copy(ctsys.resolve(datapath + expected), expected)
         mytool = run_collapse(
@@ -256,7 +244,7 @@ class imcollapse_test(unittest.TestCase):
         self.checkImage(mytool, expected)
         
     def test_6(self):
-        """imcollapse: memory only images can be collapsed"""
+        """ia.collapse(): memory only images can be collapsed"""
         mytool = run_collapse(
             good_image, "mean", 2, "", "", "",
             "", "", "", False
@@ -266,7 +254,7 @@ class imcollapse_test(unittest.TestCase):
         self.assertTrue(all(mytool2.shape() == expected))
  
     def test_7(self):
-        """imcollapse: verify collapsing along multiple axes works"""
+        """ia.collapse(): verify collapsing along multiple axes works"""
         expected = "collapse_avg_0_1.fits"
         shutil.copy(ctsys.resolve(datapath + expected), expected)
         for axes in ([0, 1], ["r", "d"], ["right", "dec"]):
@@ -278,7 +266,7 @@ class imcollapse_test(unittest.TestCase):
             self.checkImage(mytool, expected)
 
     def test_8(self):
-        """imcollapse: test both OTF and permanent masking works"""
+        """ia.collapse(): test both OTF and permanent masking works"""
         xx = iatool()
         good_image_im = "collapse_in.im"
         xx.fromfits(good_image_im, good_image)
@@ -357,7 +345,7 @@ class imcollapse_test(unittest.TestCase):
         collapsed.done()
 
     def test_CAS_3418(self):
-        """imcollapse: Test separate code for median due to performance issues"""
+        """ia.collapse(): Test separate code for median due to performance issues"""
         for i in range(0,4):
             xx = iatool()
             xx.open(good_image)
@@ -374,7 +362,7 @@ class imcollapse_test(unittest.TestCase):
             zz.done()
             
     def test_region(self):
-        """ imcollapse: Test region"""
+        """ ia.collapse(): Test region"""
         myia = iatool()
         myia.fromshape("", [10, 10, 10])
         bb = myia.getchunk()
@@ -391,14 +379,17 @@ class imcollapse_test(unittest.TestCase):
         self.assertTrue((expec == got).all())
         
     def test_stretch(self):
-        """ imcollapse: Test stretch parameter"""
+        """ ia.collapse(): Test stretch parameter"""
         yy = iatool()
         yy.open(good_image)
         mycs = yy.coordsys().torecord()
         yy.done()
         maskim = "ymask"
         yy.fromshape(maskim,[3,3,1,1])
-        yy.addnoise()
+        bb = yy.getchunk()
+        bb = bb + 1
+        bb[1,1] = -1
+        yy.putchunk(bb)
         yy.setcoordsys(mycs)
         yy.done()
         yy = run_collapse(
@@ -409,7 +400,7 @@ class imcollapse_test(unittest.TestCase):
         yy.done()
             
     def test_CAS3737(self):
-        """ imcollapse: test tabular spectral axis has correct collapsed reference value """
+        """ ia.collapse(): test tabular spectral axis has correct collapsed reference value """
         image = self.tabular_spectral_image
         for chans in ["2445~2555", "range=[2445pix,2555pix]"]:
             mytool = run_collapse(
@@ -570,7 +561,7 @@ class imcollapse_test(unittest.TestCase):
         self.assertTrue("ia.collapse" in msgs[-1])
 
 def suite():
-    return [imcollapse_test]
+    return [ia_collapse_test]
 
 if __name__ == '__main__':
     unittest.main()

@@ -217,6 +217,15 @@ def distutils_dir_name(dname):
     f = "{dirname}.{platform}-{version[0]}.{version[1]}"
     return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
 
+def distutils_shared_library_name(base):
+    shared_ext = "dylib" if sys.platform == 'darwin' else "so"
+    f = "lib{name}.{abi}.{ext}"
+    return f.format(name=base, abi=sysconfig.get_config_var('SOABI'), ext=shared_ext)
+
+def distutils_loadable_object(base):
+    f = "_{name}{so}"
+    return f.format(name=base,so=sysconfig.get_config_var('SO'))
+
 def sakura_files( ):
     return [ 'sakura-source/src/baseline.cc', 'sakura-source/src/bit_operation.cc',
              'sakura-source/src/bool_filter_collection.cc', 'sakura-source/src/concurrent.cc',
@@ -296,12 +305,16 @@ def install_xml_casa( ):
     copy2(script,bindir)
     copy2(jar,javadir)
 
+def get_grpc_srcdir():
+    return os.path.join('build', distutils_dir_name('binding'),'grpc')
+
 def generate_grpc(protos):
     protoc = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "protoc")
     grpc_plugin = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "grpc_cpp_plugin")
     proto_export_dir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "proto")
     assert os.path.exists(grpc_plugin), 'gRPC plugin not found'
-    outdir=os.path.join('build', distutils_dir_name('binding'),'grpc')
+    #outdir=os.path.join('build', distutils_dir_name('binding'),'grpc')
+    outdir=get_grpc_srcdir()
     mkpath(outdir)
     mkpath(proto_export_dir)
     for p in protos:
@@ -568,7 +581,6 @@ def build_grpc( prefix, srcdir, collectdir ):
     if os.path.isdir("grpc-source"):
 
         if not os.path.isdir(srcdir):
-
             print("copying the grpc source directory...")
             run_process( ["rsync","-aq","grpc-source/",srcdir], err='could not copy the grpc source tree' )
             #### need to set @rpath/ prefix for install name...
@@ -597,7 +609,8 @@ def build_grpc( prefix, srcdir, collectdir ):
             mkpath(collectdir_arg)
 
             print("building google grpc...")
-            run_process( ["make", "RPATH_DIR=@rpath/", "prefix=%s" % prefix_arg, "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "VERBOSE=1", "install"],
+            run_process( [ "make", "RPATH_DIR=@rpath/", "prefix=%s" % prefix_arg,
+                           "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "VERBOSE=1", "install"],
                          err='build of grpc failed', dir=srcdir_arg, env=extra_env )
 
             print("installing google protobuf...")
@@ -744,6 +757,60 @@ module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION
                                         '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
                                         '-DUSE_THREADS', '-DCASATOOLS', '-DWITHOUT_DBUS' ] + platform_cflags[sys.platform] }
 
+def get_ccache():
+    return [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
+
+def get_cflags():
+    cflags = map(
+        lambda pair: pair[1],
+        filter(lambda pair: pair[0].startswith('build.flags.compile') and "boost" not in pair[0],props.items())
+    )
+    cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
+    if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
+        cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
+                                                                      ###     /usr/include (e.g. rhel6)
+    return cflags
+
+def get_new_cxx_compiler_flags():
+    return ['-g', '-std=c++11']
+
+def get_new_cxx_compiler_includes():
+    return [
+        '-Ibinding/include', '-Ibinding/generated/include', '-Ilibcasatools/generated/include',
+        '-Icasa-source/code', '-Icasa-source', '-Icasa-source/casacore', '-Iinclude',
+        '-Isakura-source/src'
+    ]
+
+def get_new_c_compiler_flags():
+    return ['-g']
+
+def get_use_grpc():
+   return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] ) 
+     
+
+def get_fortran_compiler_flags(ext):
+    arch = platform.architecture()[0].lower()
+    if (ext == ".f90"):
+        cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+    if (ext == ".f"):
+        cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+    if real_gnu and len(props['build.flags.compile.openmp']) > 0:
+        ### we'll assume our fortran compiler is gfortran and set the openmp
+        ### flags for gfortran if our main C++ compiler is really GNU and the
+        ### openmp flags are set...
+        cc_args = cc_args + ['-fopenmp']
+    # Force architecture of shared library.
+    if arch == "32bit":
+        cc_args.append("-m32")
+    elif arch == "64bit":
+        cc_args.append("-m64")
+    else:
+        print(
+            "\nPlatform has architecture '%s' which is unknown to "
+            "the setup script. Proceed with caution\n" % arch
+        )
+    return cc_args
+
 def customize_compiler(self):
     """inject customization into distutils.
 
@@ -766,13 +833,12 @@ def customize_compiler(self):
     default_linker_so = self.linker_so
     supercc = self._compile
     superld = self.link
-    ccache = [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
-    cflags = map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.compile') and "boost" not in pair[0],props.items()))
-    cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
-    if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
-        cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
-                                                                      ###     /usr/include (e.g. rhel6)
-    new_compiler_cxx = ccache + [props['build.compiler.cxx'], '-g', '-std=c++11','-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', '-Isakura-source/src'] + cflags + default_compiler_so[1:]
+    ccache = get_ccache()
+    cflags = get_cflags()                                                                 ###     /usr/include (e.g. rhel6)
+    new_compiler_cxx = (
+        ccache + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags() 
+        + get_new_cxx_compiler_includes() + cflags + default_compiler_so[1:]
+    )
     new_compiler_cc = ccache + [props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
 
@@ -831,9 +897,9 @@ def customize_compiler(self):
     def _compile(obj, src, ext, cc_args, postargs, pp_opts):
         if ext == ".f" or ext == ".f90" :
             print("fortran compile...")
-            arch = platform.architecture()[0].lower()
             if sys.platform == 'darwin' or sys.platform.startswith('linux'):
                 compiler_so = new_compiler_fortran
+                """
                 if (ext == ".f90"):
                     cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
                 if (ext == ".f"):
@@ -851,7 +917,8 @@ def customize_compiler(self):
                 else:
                     print("\nPlatform has architecture '%s' which is unknown to "
                           "the setup script. Proceed with caution\n" % arch)
-
+                """
+                cc_args = get_fortran_compiler_flags(ext)
             try:
                 self.spawn(compiler_so + cc_args + [src, '-o', obj] + postargs)
             except DistutilsExecError as msg:
@@ -866,7 +933,8 @@ def customize_compiler(self):
             ## get the cflags for the module being built; key is a subdir, value are flags
             m_cflags = map(lambda x: x[1] if x[0] in src else [], module_cflags.items())
             m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
-            self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )))
+            #self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )))
+            self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + get_use_grpc()))
             supercc(obj, src, ext, clean_args(cc_args), clean_args(postargs), clean_args(pp_opts))
 
         # reset the default compiler_so (may not be necessary)
@@ -899,6 +967,31 @@ try:
 except ImportError:
     pass  # custom command not needed if wheel is not installed
 
+def do_cerberus():
+    moduledir = get_module_dir()
+    cerberusdir = os.path.join(moduledir, '__cerberus__')
+    if os.path.exists(cerberusdir):
+        remove_tree(cerberusdir)
+    copy_tree("cerberus/cerberus",cerberusdir)
+    for root, dirs, files in os.walk(cerberusdir):
+        for file in files:
+            if file.endswith('.py'):
+                fpath = os.path.join(root, file)
+                with io.open(fpath,'r',encoding='utf8',newline='\n') as fd:
+                    s = fd.read()
+                s = s.replace("from cerberus", "from casatools.__cerberus__")
+                with io.open(fpath,'w',encoding='utf8',newline='\n') as fd:
+                    fd.write(s)
+
+def generate_casac_init_py():
+    ### this generates the __init__.py for the __casac__ submodule...
+    imports = "\n".join([ "from %s.__casac__.%s import %s" % (module_name,t,t) for t in TOOLS ])
+    alllist = ",\n            ".join([ "'%s'" % t for t in TOOLS ])
+    with open(os.path.join(casacdir,'__init__.py'),"w") as fd:
+        fd.write("from __future__ import absolute_import\n")
+        fd.write("__name__ = '__casac__'\n")
+        fd.write("__all__ = [ %s ]\n\n" % alllist)
+        fd.write("%s\n" % imports)
 
 # run the customize_compiler
 class casa_build_ext(build_ext):
@@ -913,7 +1006,7 @@ class casa_build_ext(build_ext):
         global a_priori_exclusions
         do_wheel_closure = doing_wheel_build
         moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
-        cerberusdir = os.path.join(moduledir, '__cerberus__')
+        # cerberusdir = os.path.join(moduledir, '__cerberus__')
         casacdir = os.path.join(moduledir, '__casac__')
 
         mkpath(moduledir)
@@ -927,7 +1020,7 @@ class casa_build_ext(build_ext):
         install_version_header(casatools_major,casatools_minor,casatools_version)
 
         build_ext.run(self)
-
+        """
         if os.path.exists(cerberusdir):
             remove_tree(cerberusdir)
         copy_tree("cerberus/cerberus",cerberusdir)
@@ -940,7 +1033,9 @@ class casa_build_ext(build_ext):
                     s = s.replace("from cerberus", "from casatools.__cerberus__")
                     with io.open(fpath,'w',encoding='utf8',newline='\n') as fd:
                         fd.write(s)
-
+        """
+        do_cerberus()
+        """
         ###
         ### this generates the __init__.py for the __casac__ submodule...
         ###
@@ -951,6 +1046,8 @@ class casa_build_ext(build_ext):
             fd.write("__name__ = '__casac__'\n")
             fd.write("__all__ = [ %s ]\n\n" % alllist)
             fd.write("%s\n" % imports)
+        """
+        generate_casac_init_py()
 
         try:
             spawn(["rsync", "-avz", "rsync://casa-rsync.nrao.edu/casa-data", "%s/__data__" % moduledir])
@@ -1116,6 +1213,594 @@ class casa_binary_dist(Distribution):
     def is_pure(self):
         return False
 
+class create_makefile(Command):
+    user_options = [
+      # The format is (long option, short option, description).
+#     ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
+    ]
+
+
+    def initialize_options(self):
+        print("setting up options")
+
+    def finalize_options(self):
+        pass
+
+    def __build_developer_grpc(self):
+        if not os.path.exists('.built.grpc'):
+            # hopefully this will replace dbus
+            build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                        os.path.join('build', distutils_dir_name('grpc')),
+                        os.path.join('build', distutils_dir_name('grpc-install')) )
+            build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                            os.path.join('build', distutils_dir_name('protobuf')),
+                            os.path.join('build', distutils_dir_name('grpc-install')) )
+            open(".built.grpc",'a').close( )
+
+
+    def __generate_casa_makefile(self):
+        # declare some .PHONY targets
+        cpp_target = "cpp_compile"
+        yacc_target = "yacc_compile"
+        lex_target = "lex_compile"
+        c_target = "c_compile"
+        fortran_target = "f_compile"
+        soabi = sysconfig.get_config_var('SOABI')
+        lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
+        casac_dir = get_casac_dir()
+        output_lib = os.sep.join([casac_dir, "lib", "lib{libname}." + soabi + "." + lib_ext])
+        # libcasatools = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libcasatools.cpython-36m-x86_64-linux-gnu.so'
+        libcasatools = output_lib.format(libname='casatools')
+        gen_tool_dep_target = 'generate_tool_dependencies'
+        swig_target = "swig_compile"
+        statics_wrap_target = "statics_wrap_cc_compile"
+        tool_libs_target = "tool_libs_link"
+        straight_copies_target = "straight_file_copies"
+        rsync_data_target = "rsync_data"
+        all_target = "all"
+        clean_target = "clean"
+        build_distutils_temp = os.path.join('build',distutils_dir_name('temp'))
+        depdir = '.d'
+        sep = ' '
+        cc = sep.join(get_ccache() + [props['build.compiler.cxx']])
+        f77 = props['build.compiler.fortran']
+        with open("makefile", "w") as mk:
+            mk.write("# THIS MAKEFILE IS AUTO GENERATED BY setup.py genmake. EDIT AT YOUR OWN PERIL!\n")
+            mk.write("\nCXX := " + cc)
+            mk.write("\nF77 := " + f77)
+            mk.write("\nDEPDIR := " + depdir + "\n")
+            mk.write("\n.PHONY: " + all_target + "\n")
+            mk.write(
+                sep.join([
+                    all_target + ":", yacc_target, lex_target, cpp_target, c_target,
+                    fortran_target, libcasatools, swig_target, statics_wrap_target, 
+                    tool_libs_target, straight_copies_target, rsync_data_target, "\n"
+                ])
+            )
+            mk.write(
+                sep.join([
+                    "\n", clean_target, ": \n\t @rm -rf ", build_distutils_temp, " $(DEPDIR)",
+                    "\n.PHONY: ", clean_target, "\n"
+                ])
+            )
+        # c++ casacore and casacode + others but not gcwrap
+        CODE_SRC = source_files(
+            "casa-source/code", file_suffix_filter=".cc",
+            subdir_filter=[
+                'tests', 'test', 'apps', 'display', 'plotms', 'guitools', 'display3d',
+                'demo', 'casaqt', 'convert', 'Filling', 'ImagerObjects2'
+            ],
+            file_filter=['MeasurementComponents/rGridFT.cc'],
+            path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc']
+        )
+        CORE_SRC = source_files( "casa-source/casacore",file_suffix_filter=".cc" )
+        SAKURA_SRC = sakura_files( )
+        CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
+        # the gprc registrar files may not be present when this code gets run
+        duse_grpc = get_use_grpc()
+        GRPC_REGISTRAR = []
+        if duse_grpc:
+            grpc_registrar_dir = 'build' + os.sep + distutils_dir_name("binding") + os.sep + "grpc"
+            grpc_registrar_files = ['registrar.grpc.pb.cc', 'registrar.pb.cc']
+            GRPC_REGISTRAR = [grpc_registrar_dir + os.sep + s for s in grpc_registrar_files]
+        # the binding/source files need to be put into the casatools library, so compile 
+        # them here
+        SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
+        obj_name = os.path.join(build_distutils_temp, "{base}.o")
+        dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
+        cpp_obj = (
+            obj_name + ': {src} ' + dep_name + '\n\t$(CXX) {flags} {includes} {cflags} {dflags} -c $< -o $@'
+            + '\n\t$(POSTCOMPILE)'
+        )
+        dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
+        src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING]
+        python_inc = props['build.python.include']
+        cflags = [
+            module_cflags['/code/'], module_cflags['/casacore/'],
+            platform_cflags[sys.platform], platform_cflags[sys.platform],
+            platform_cflags[sys.platform], platform_cflags[sys.platform]
+        ]
+        includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
+        flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
+        # add_cflags = sysconfig.get_config_var('CFLAGS')
+        # filter out the optimization flags which Darrell has done for C and C++ compiles for setup.py build
+        sys_cflags = sep.join(
+            list(
+                filter(lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split())
+            )
+        )
+        grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()] if duse_grpc else []
+        cpp_list = []
+        mkdirs_cc_target = "mk_cc_obj_dirs"
+        targdirs = set()
+        with open("makefile", "a") as mk:
+            for (mysrc, myflags) in zip(src, cflags):
+                dflags = sep.join(myflags + duse_grpc + grpc_dirs)
+                myinc = includes
+                if mysrc == SOURCE_BINDING:
+                    myinc += " -I" + python_inc
+                for s in mysrc:
+                    b = os.path.splitext(s)[0]
+                    objfile = obj_name.format(base=b)
+                    cpp_list.append(objfile)
+                    targdirs.add(os.path.dirname(objfile))
+                    mk.write(
+                        "\n\n" + cpp_obj.format(
+                            base=b,src=s, flags=flags, includes=myinc, 
+                            cflags=sys_cflags, dflags=dflags
+                        )
+                    )
+                    mk.write("\n" + dep_targ.format(base=b))
+            mk.write("\n# make directories for C++ object files\n")
+            mk.write(".PHONY: " + mkdirs_cc_target + "\n")
+            mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+            mk.write(mkdirs_cc_target + ":\n\t@mkdir -p " + mydirs + "\n")
+            mk.write("\n# targets to compile C++ code to object files\n")
+            mk.write(".PHONY: " + cpp_target + "\n")
+            mk.write(cpp_target + ": " + mkdirs_cc_target + " " + sep.join(cpp_list) + "\n")
+    
+        casatools_obj_list = cpp_list
+
+        # yacc 
+        CASACORE_YACC = source_files("casa-source/casacore", file_suffix_filter=".yy")
+        CODE_YACC = source_files(
+            "casa-source/code", file_suffix_filter=".yy",
+            subdir_filter=[
+                'tests','test', 'apps', 'display', 'plotms', 'guitools',
+                'display3d', 'demo', 'casaqt', 'Filling'
+            ]
+        )
+        output_dir="libcasatools/generated/include"
+        obj_name = os.path.join(output_dir,'{base}.ycc')
+        yacc_obj_targ = (
+            obj_name + ": {src}\n\t" + props["build.compiler.bison"] + " -y -p {base} -o $@ $<\n"
+        )
+        yacc_list = []
+        with open("makefile", "a") as mk:
+            for f in CASACORE_YACC + CODE_YACC:
+                #for f in mysrc:
+                name = os.path.basename(f)
+                base = os.path.splitext(name)[0]
+                objfile = obj_name.format(base=base)
+                yacc_list.append(objfile)
+                mk.write('\n\n' + yacc_obj_targ.format(src=f, base=base))
+            mk.write("\n# targets to compile yacc code to object files\n")
+            mk.write(".PHONY: " + yacc_target + "\n")
+            mk.write(yacc_target + ": " + sep.join(yacc_list) + "\n")
+                        
+        # lex
+        CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
+        CODE_LEX = source_files( "casa-source/code",file_suffix_filter=".ll",
+                                 subdir_filter=[ 'tests','test','apps','display','plotms','guitools',
+                                                 'display3d','demo','casaqt','Filling' ])
+        output_dir="libcasatools/generated/include"
+        obj_name = os.path.join(output_dir,'{base}.lcc')
+        lex_obj_targ = (
+            obj_name + ": {src}\n\t" + props["build.compiler.flex"] + " -P{base} -o $@ $<\n"
+        )
+        lex_list = []
+        with open("makefile", "a") as mk:
+            for f in CASACORE_LEX + CODE_LEX:
+                name = os.path.basename(f)
+                base = os.path.splitext(name)[0]
+                objfile = obj_name.format(base=base)
+                lex_list.append(objfile)
+                mk.write(lex_obj_targ.format(src=f, base=base))
+            mk.write("\n# targets to compile lex code to object files\n")
+            mk.write(".PHONY: " + lex_target + "\n")
+            mk.write(lex_target + ": " + sep.join(lex_list) + "\n")
+
+        MIR_SRC =  source_files( "casa-source/casacore/mirlib",file_suffix_filter=".c" )
+        includes = sep.join(get_new_cxx_compiler_includes())
+        flags = sep.join(["$(DEPFLAGS)"] + get_new_c_compiler_flags())
+        obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+        dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
+        cc = sep.join(get_ccache() + [props['build.compiler.cc']])
+        dflags = sep.join(module_cflags['/casacore/'])
+        c_obj = (
+            obj_name + ': {src} ' + dep_name + '\n\t{cc} {includes} {flags} {cflags} {dflags} -c $< -o $@'
+            + '\n\t$(POSTCOMPILE)'
+        )
+        c_list = []
+        mkdirs_c_target = "mk_c_obj_dirs"
+        with open("makefile", "a") as mk:
+            targdirs = set()
+            for f in MIR_SRC:
+                name = os.path.basename(f)
+                base = os.path.splitext(f)[0]
+                objfile = obj_name.format(base=base)
+                c_list.append(objfile)
+                targdirs.add(os.path.dirname(objfile))
+                # sys_cflags same as C++ above
+                mk.write(
+                    "\n\n" + c_obj.format(
+                        base=base, src=f, cc=cc, includes=includes, flags=flags,
+                        cflags=sys_cflags, dflags=dflags
+                    )
+                )
+                mk.write("\n" + dep_targ.format(base=base))
+            mk.write("\n# targets to compile C code to object files\n")
+            mk.write(".PHONY: " + c_target + "\n")
+            mk.write(c_target + ": " + mkdirs_c_target + " " + sep.join(c_list) + "\n")
+            mk.write("\n# make directories for C object files\n")
+            mk.write(".PHONY: " + mkdirs_c_target + "\n")
+            mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+            mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
+        casatools_obj_list += c_list
+
+        CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f", file_filter=['fgridft.f'])
+        CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f")
+        obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+        f_obj = (
+            obj_name + ': {src} \n\t{f77} {flags} $< -o $@'
+        )
+        f_list = []
+        mkdirs_f77_target = "mk_f77_obj_dirs"
+        with open("makefile", "a") as mk:
+            targdirs = set()
+            for f in CORE_F77 + CODE_F77:
+                (base, ext) = os.path.splitext(f)
+                flags = sep.join(get_fortran_compiler_flags(ext))
+                objfile = obj_name.format(base=base)
+                targdirs.add(os.path.dirname(objfile))
+                f_list.append(objfile)
+                mk.write("\n\n" + f_obj.format(base=base, src=f, f77=f77, flags=flags))
+            mk.write("\n# make directories for fortran object files\n")
+            mk.write(".PHONY: " + mkdirs_f77_target + "\n")
+            mydirs = sep.join(list(targdirs))
+            mk.write(mkdirs_f77_target + ":\n\t@mkdir -p " + mydirs + "\n")
+            mk.write("\n# targets to compile fortran code to object files\n")
+            mk.write(".PHONY: " + fortran_target + "\n")
+            mk.write(fortran_target + ": " + mkdirs_f77_target + " " + sep.join(f_list) + "\n")
+        casatools_obj_list += f_list
+
+        # casatools link
+        linker = props['build.compiler.cxx']
+        (prop_ldflags, prop_libs) = get_link_props()
+        (arch_flags, arch_libs) = get_arch_link()
+        # remove duplicates, preserving order
+        link_libs = list(dict.fromkeys((prop_libs + get_tp_libs() + arch_libs)))
+
+        ldflags1 = sep.join(props['build.flags.compile.pthread'] + arch_flags)
+        # FIXME hardcoded because I don't know where it comes from
+        ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64-Wl,-z,relro -Wl,-rpath,'
+        ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
+        ldflags2 = '-L' + casac_dir + os.sep + 'lib '
+        ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 ' 
+        # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
+        # the libcasatools link 
+        # -lcasatools.cpython-36m-x86_64-linux-gnu '
+        sepl = " -l"
+        ldflags2 += sepl + sepl.join(link_libs)
+
+        # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
+        # $$ escapes the literal $ from make, the \ escapes the literal $ from the shell
+        # ldflags3 = sep.join(prop_ldflags + ['-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'])
+        rpath = get_casatools_rpath(True)
+        ldflags3 = sep.join(prop_ldflags + rpath)
+        # ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
+        ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
+        with open("makefile", "a") as mk:
+            mk.write('\n\n' + libcasatools + ': ' + sep.join(casatools_obj_list))
+            mk.write('\n\t@mkdir -p build/lib.linux-x86_64-3.6/casatools/__casac__/lib')
+            mk.write('\n\t' + ld_cmd)
+
+        # swig *.i -> *_wrap.cpp
+        BINDING_I = source_files("binding/generated/tools", file_suffix_filter=".i")
+        wrap_cpp_name = '{base}_wrap.cpp'
+        customize_swig(self)
+        swig = self.swig
+        flags = sep.join(['-python'] + get_swig_flags())
+        xml_casa = 'scripts' + os.sep + 'xml-casa'
+        xml_tool_dir = os.sep.join(["xml", "tools"])
+        wrap_cpp_create = (
+            wrap_cpp_name + ': {base}.i ' + xml_tool_dir + os.sep + '{toolname}.xml '
+            + xml_casa + '\n\t' + swig + ' ' + flags + ' -o $@ $<'
+        )
+        i_list = []
+        with open("makefile", "a") as mk:
+            for ifile in BINDING_I:
+                (base, ext) = os.path.splitext(ifile)
+                toolname = base.split(os.sep)[-2]
+                wrapcpp_file = wrap_cpp_name.format(base=base)
+                i_list.append(wrapcpp_file)
+                mk.write("\n\n" + wrap_cpp_create.format(base=base, toolname=toolname))
+            mk.write("\n# targets to compile swig .i files to _wrap.cpp files\n")
+            mk.write(".PHONY: " + swig_target + "\n")
+            mk.write(swig_target + ": " + sep.join(i_list) + "\n")
+      
+        # Generation of various files. This can probably be done in make, if really
+        # necessary, but it's so quick it's easiest to just do it using the existing
+        # python functionality for now
+        install_version_header(casatools_major,casatools_minor,casatools_version)
+        generate_config(moduledir, props)
+
+        # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files 
+        # some of this is copied and pasted from the C++ section above, so can be
+        # refactored
+        # NOTE: If changes to xml files modify tool interdependencies, setup.py must
+        # be run again. The makefile can't check for and modify these (yet).
+        STATICS_CC = source_files("binding/generated/tools", file_suffix_filter=".cc")
+        # the wrap files won't be there for the initial run of this script, so we
+        # cannot use source_files() to find them
+        WRAP_CPP = [filename.replace('_statics.cc', '_wrap.cpp') for filename in STATICS_CC]
+        CODE_BINDING = source_files("binding/tools", file_suffix_filter=".cc")
+        obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+        dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
+        obj_create = (
+            obj_name + ': {src} ' + dep_name + '\n\t$(CXX) {flags} {includes} {cflags} {dflags} -c $< -o $@'
+            + '\n\t$(POSTCOMPILE)'
+        )
+        dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
+        cflags = module_cflags['binding/'] + platform_cflags[sys.platform]
+        includes = sep.join(get_new_cxx_compiler_includes() + get_cflags() + ["-Ibinding"])
+        tool_inc = "-Ibinding/generated/tools/{toolname} -Ibinding/tools/{toolname}"
+        flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
+        add_cflags = sysconfig.get_config_var('CFLAGS')
+        duse_grpc = get_use_grpc()
+        grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()]
+        dflags = sep.join(cflags + duse_grpc + grpc_dirs)
+        cpp_list = []
+        mkdirs_statics_wrap_target = "mk_static_cc_obj_dirs"
+        targdirs = set()
+        with open("makefile", "a") as mk:
+            for s in STATICS_CC + WRAP_CPP + CODE_BINDING:
+                base = os.path.splitext(s)[0]
+                myinc = includes
+                toolname = base.split(os.sep)[-2]
+                if s in WRAP_CPP:
+                    myinc += " -I" + python_inc
+                # for tn in tool_deps[toolname]:
+                mylibs = set([toolname] + g_tools[toolname] if toolname in g_tools else [])
+                dependencies = set()
+                for mylib in g_tools[toolname]:
+                    if mylib in g_tool_shared_libs:
+                        dependencies.update(g_tool_shared_libs[mylib])
+                    else:
+                        dependencies.add(mylib)
+                for dependency in dependencies:
+                    myinc += " " + tool_inc.format(toolname=dependency)
+                objfile = obj_name.format(base=base)
+                cpp_list.append(objfile)
+                targdirs.add(os.path.dirname(objfile))
+                mk.write(
+                    "\n\n" + obj_create.format(
+                        base=base, src=s, flags=flags, includes=myinc, 
+                        cflags=add_cflags, dflags=dflags
+                    )
+                )
+                mk.write("\n" + dep_targ.format(base=base))
+            mk.write("\n# make directories for statics C++ object files\n")
+            mk.write(".PHONY: " + mkdirs_statics_wrap_target + "\n")
+            mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+            mk.write(mkdirs_statics_wrap_target + ":\n\t@mkdir -p " + mydirs + "\n")
+            mk.write("\n# targets to compile statics C++ code to object files\n")
+            mk.write(".PHONY: " + statics_wrap_target + "\n")
+            mk.write(statics_wrap_target + ": " + mkdirs_statics_wrap_target + " " + sep.join(cpp_list) + "\n")
+       
+            mk.write("\n\n# Create tool shared libraries")
+            # update ldflags2 to add libcasatools
+            ldflags2 = '-L' + casac_dir + os.sep + 'lib '
+            ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 ' 
+            ldflags2 += sepl + sepl.join([os.path.basename(libcasatools)[3:][:-3]] + link_libs)
+
+            tool_bind_dir = os.sep.join(["binding", "tools", "{toolname}"])
+            tool_gen_dir = os.sep.join(["binding", "generated", "tools", "{toolname}"])
+            # make targets for libraries on which tool libraries depend
+            tool_shared_lib = os.sep.join([casac_dir, "lib", "{libname}." + soabi + "." + lib_ext])
+            tool_libs_targ_deps = []
+            mk.write("\n\n# rules for tool libraries on which other tools depend\n")
+            prepend_dir = os.sep.join([build_distutils_temp]) + os.sep
+            wrap_obj = tool_gen_dir + os.sep + "{toolname}_wrap.o"
+            for mylib in g_tool_shared_libs.keys():
+                dep_cmpt_statics_wrap = []
+                tsl = tool_shared_lib.format(libname=mylib)
+                tool_libs_targ_deps.append(tsl)
+                needed_objs = []
+                for tn in g_tool_shared_libs[mylib]:
+                    for mydir in (tool_bind_dir, tool_gen_dir):
+                        # for myext in (".cc", ".cpp"):
+                        needed_objs += (
+                            source_files(mydir.format(toolname=tn), file_suffix_filter=".cc")
+                        )
+                    # The *_wrap.cc files are generated when running make, they won't exist
+                    # after the first time setup.py genmake is run, so the _wrap.o dependency
+                    # needs to be explicitly added here
+                    needed_objs += [wrap_obj.format(toolname=tn)] 
+
+                needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
+                # needed_objs = [o.replace('.cpp', '.o') for o in needed_objs]
+                needed_objs = [prepend_dir + o for o in needed_objs]
+                ld_cmd = linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 + ' -o $@ ' + ldflags3
+                mk.write(tsl + ": " + libcasatools + " " + sep.join(needed_objs) + "\n\t" + ld_cmd+ "\n")
+
+            # make rules for tool libraries
+            all_tool_names = g_tools.keys()
+            tool_lib_name = os.sep.join([casac_dir, "_{libname}." + soabi + "." + lib_ext])
+            sh_lib_flag = "{libname}." + soabi
+            mk.write("\n\n# rules for tool libraries\n")
+            for tn in (all_tool_names):
+                dep_libs = g_tools[tn]
+                tln = tool_lib_name.format(libname=tn) 
+                tool_libs_targ_deps.append(tln)
+                tool_lib_create = tln + ": " + libcasatools
+                needed_objs = []
+                needed_libs = []
+                for mydl in dep_libs:
+                    if tn == mydl:
+                        for mydir in (tool_bind_dir, tool_gen_dir):
+                            # need to make it .cc rather than cc to avoid tcc files
+                            needed_objs += (
+                                source_files(mydir.format(toolname=tn), file_suffix_filter=".cc")
+                            )
+                    else:
+                        tool_lib_create += " " + tool_shared_lib.format(libname=mydl)
+                        needed_libs.append(sh_lib_flag.format(libname=mydl[3:]))
+                needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
+                # The *_wrap.cc files are generated when running make, they won't exist
+                # after the first time setup.py genmake is run, so the _wrap.o dependency
+                # needs to be explicitly added here
+                needed_objs += [wrap_obj.format(toolname=tn)] 
+                needed_objs = [prepend_dir + o for o in needed_objs]
+                tool_lib_create += " " + sep.join(needed_objs)
+                ld_cmd = (
+                    linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 
+                    + (sepl + sepl.join(needed_libs) if len(needed_libs) > 0 else "") + ' -o $@ ' + ldflags3
+                )
+                mk.write("\n" + tool_lib_create)     
+                mk.write('\n\t' + ld_cmd + '\n')
+               
+            mk.write("\n\n# Create all tool libraries\n")
+            mk.write(".PHONY: " + tool_libs_target + "\n")
+            mk.write(tool_libs_target + ": " + sep.join(tool_libs_targ_deps) + "\n")
+
+        # straight file copies
+        files_to_copy = source_files("src/python", file_suffix_filter=".py")
+        files_to_copy.append("build.properties")
+        bindir = os.sep.join([moduledir, "__casac__", "bin"])
+        copy_to_dirs = {}
+        files_to_copy.append(xml_casa)
+        copy_to_dirs[os.path.basename(xml_casa)] = bindir
+        assembly_jar = "xml-casa-assembly-1.5.jar"
+        files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
+        copy_to_dirs[assembly_jar] = bindir + os.sep + "java" 
+        copy_to_list = []
+        with open("makefile", "a") as mk:
+            mk.write("\n\n# straight file copies\n")
+            for f in files_to_copy:
+                filename = os.path.basename(f)
+                copy_to_dir = copy_to_dirs[filename] if filename in copy_to_dirs else moduledir
+                copy_to = copy_to_dir + os.sep + filename
+                mk.write(
+                    "\n" + copy_to + ": " +f 
+                    + "\n\tmkdir -p " + copy_to_dir + " && cp -f $< $@\n"
+                ) 
+                copy_to_list.append(copy_to)
+            mk.write("\n\n.PHONY: " + straight_copies_target + "\n")
+            mk.write(straight_copies_target + ": " + sep.join(copy_to_list))
+        # cerberus, just use the python implementation for now, no make target yet
+        do_cerberus()
+        # casac __init__.py generation, just use the python implmentation for now, no make target yet
+        generate_casac_init_py()
+        # rsync
+        with open("makefile", "a") as mk:
+            mk.write("\n# targets to rsync data repos\n")
+            mk.write(".PHONY: " + rsync_data_target + "\n")
+            mk.write(
+                rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
+                + moduledir + "/__data__"
+            )
+        
+        # C++ and C dependency tracking to makefile
+        with open("makefile", "a") as mk:
+            mk.write("""
+$(shell mkdir -p $(DEPDIR) >/dev/null)
+# IMPORTANT: These dependency flags are for gcc. clang may use different flags for this purpose
+# DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
+# the include of the dependencies must come after the first target
+# so just put it at the end of the file
+MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
+include $(MY_DEPS)
+            """)
+
+    def run(self):
+        self.__build_developer_grpc( )
+        self.__generate_casa_makefile( )
+
+def get_module_dir():
+    return os.path.join('build', distutils_dir_name('lib'), module_name)
+
+def get_casac_dir():
+    return os.path.join(get_module_dir(), '__casac__')
+
+def get_swig_flags():
+    swig_flags = ['-outdir', get_casac_dir(), '-c++', '-threads', "-Ibinding/include" ]
+    if pyversion >= 3:
+        print('generating python3 bindings...')
+        swig_flags.insert(0,"-py3")
+    return swig_flags
+
+def get_grpc_incdir():
+    return os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
+
+# set these globals so we don't have to run generate_binding() twice for genmake
+g_tools_using_shared_libs = None
+g_tool_shared_libs = None
+g_tools = None
+
+def get_grpc_libs():
+    return [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
+
+# includes and libs for linking from build.properties
+def get_link_props():
+    prop_linking = list(
+        filter(
+            lambda x:
+                len(x) > 0, list(
+                    chain.from_iterable(
+                        map(
+                            lambda pair:
+                                pair[1], filter(
+                                    lambda pair: pair[0].startswith('build.flags.link'),props.items()
+                                )
+                        )
+                    )
+                )
+        )
+    )
+
+    ldflags = list(filter(lambda x:  not x.startswith('-l'),prop_linking))
+    prop_libs = list(map(lambda x: x[2:],list(filter(lambda x: x.startswith('-l'),prop_linking))))
+    return (ldflags, prop_libs)
+
+# third party libs for linking
+def get_tp_libs():
+    return [
+            'sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f', 'fftw3_threads',
+            'fftw3','lapack','wcs','cfitsio','rpfits','blas'
+        ] + get_grpc_libs() + ['readline', 'gfortran', 'dl']
+
+def get_casatools_rpath(escape_for_make=False):
+    if sys.platform == 'darwin':
+        ### need to get '/opt/local/lib/gcc5' from gfortran directly
+        return [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
+    else:
+        myorigin = '\$$ORIGIN/lib' if escape_for_make else '$ORIGIN/lib'
+        return [ '-Wl,-rpath,' + ":".join([myorigin] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))) ]
+
+# get architecture specific data used for linking
+def get_arch_link():
+    if sys.platform == 'darwin':
+        archflags = ['-L/opt/local/lib/gcc5']
+        archlibs = [ ]
+    else:
+        archflags = [ ]
+        archlibs = ['gomp']
+    return (archflags, archlibs)
+
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
     targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print(sys.executable)"])).split('\n')[0]
@@ -1138,7 +1823,8 @@ if __name__ == '__main__':
 
     TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
     tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]
-    moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
+    # moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
+    moduledir = get_module_dir()
     generate_pyinit(moduledir,tools)
 
     a_priori_directory_exclusions += [ 'casadbus/session', 'casadbus/plotserver', 'casadbus/synthesis', 'casadbus/utilities', 'casadbus/viewer' ]
@@ -1152,6 +1838,8 @@ if __name__ == '__main__':
     generate_lex(CASACORE_LEX + CODE_LEX)
     generate_yacc(CASACORE_YACC + CODE_YACC)
     (NEEDED,LIBS,TOOLS) = generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
+    # stuff in globals for genmake
+    (g_tools_using_shared_libs, g_tool_shared_libs, g_tools) = (NEEDED, LIBS, TOOLS)
 
     CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
     MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
@@ -1170,9 +1858,10 @@ if __name__ == '__main__':
                         os.path.join('build', distutils_dir_name('grpc-install')) )
         open(".built.grpc",'a').close( )
 
+    # grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
+    grpc_incdir = get_grpc_incdir()
     grpc_srcdir = generate_grpc( [ os.path.join('casa-source','code','casatools','protos','registrar.proto'),
                                    os.path.join('casa-source','code','casatools','protos','shutdown.proto')  ] )
-    grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
     GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
     BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
     CODE_SRC = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
@@ -1182,12 +1871,8 @@ if __name__ == '__main__':
     CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",
                             #file_filter=['fgridsdclip.f']
     )
-
-    prop_linking = list(filter(lambda x: len(x) > 0,list(chain.from_iterable(map(lambda pair: pair[1],filter(lambda pair: pair[0].startswith('build.flags.link'),props.items()))))))
-
-    ldflags = list(filter(lambda x:  not x.startswith('-l'),prop_linking))
-    prop_libs = list(map(lambda x: x[2:],list(filter(lambda x: x.startswith('-l'),prop_linking))))
-
+    (ldflags, prop_libs) = get_link_props()
+    """
     if sys.platform == 'darwin':
         ### need to get '/opt/local/lib/gcc5' from gfortran directly
         rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
@@ -1197,16 +1882,24 @@ if __name__ == '__main__':
         rpath = [ '-Wl,-rpath,' + ":".join(['$ORIGIN/lib'] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))) ]
         archflags = [ ]
         archlibs = ['gomp']
+    """
+    rpath = get_casatools_rpath()
+    (archflags, archlibs) = get_arch_link()
 
-    grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
-    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
+    # grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
+    # grpc_libs = get_grpc_libs()
+    # ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
+    tp_libs = get_tp_libs()
+    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + tp_libs + archlibs ) ]
 
-    casacdir = os.path.join(moduledir, '__casac__')
+    # casacdir = os.path.join(moduledir, '__casac__')
+    casacdir = get_casac_dir()
     libdir = os.path.join(casacdir, 'lib')
-    swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
-    if pyversion >= 3:
-        print('generating python3 bindings...')
-        swig_opt.insert(0,"-py3")
+    # swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
+    # if pyversion >= 3:
+    #    print('generating python3 bindings...')
+    #    swig_opt.insert(0,"-py3")
+    swig_opt = get_swig_flags()
     incdirs = { }
     libsrc = { }
     for t in TOOLS:
@@ -1220,7 +1913,10 @@ if __name__ == '__main__':
     for lb in LIBS:
         if sys.platform == 'darwin':
             rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
-        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+        # ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+
+        # ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + tp_libs + archlibs ))
 
     for t in TOOLS:
         inc = [ ]; lib = [ ]; src = [ ]
@@ -1233,7 +1929,8 @@ if __name__ == '__main__':
 
         if sys.platform == 'darwin':
             rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
-        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
+        # ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
+        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + tp_libs + lib + archlibs + closure_libraries ))
 
     setup( name="casatools",version=casatools_version,
            maintainer="Darrell Schiebel",
@@ -1250,8 +1947,8 @@ if __name__ == '__main__':
            classifiers=filter(None, classifiers.split("\n")),
            package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
            packages=[module_name],
-           cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build } \
+           cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build, 'genmake': create_makefile } \
                                    if wheel_build \
-                                   else { 'build_ext': casa_build_ext, 'test': casa_test },
+                                   else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile },
            ext_modules=ext,
            install_requires=[ 'numpy' ] )
