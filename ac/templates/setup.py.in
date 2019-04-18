@@ -1718,6 +1718,11 @@ MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
 include $(MY_DEPS)
             """)
 
+        print(
+            "Successfully generated makefile! Now, run 'make [-j<n>]' "
+            "(eg 'make -j8' or just 'make') to complete your build"
+        )
+
     def run(self):
         self.__build_developer_grpc( )
         self.__generate_casa_makefile( )
