@@ -77,7 +77,7 @@ $tool_dir = "binding/tools";
 $src_dir = "binding/source";
 $hdr_dir = "binding/include";
 
-%xml_files = ( 'utils' => 'casa-source/gcwrap/tools/utils/utils.xml',
+%xml_files = ( 'utils' => 'src/cmpt/utils/utils.xml',
                'quanta' => 'casa-source/gcwrap/tools/casa/quanta.xml',
                'image' => 'casa-source/gcwrap/tools/images/image.xml',
                'coordsys' => 'casa-source/gcwrap/tools/images/coordsys.xml',
