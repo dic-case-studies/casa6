@@ -1,10 +1,37 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
 import unittest
 import os
 import filecmp
-from casatasks import flagcmd, flagdata, flagmanager
-from casatools import ctsys, agentflagger, table
-from collections import OrderedDict
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import flagcmd, flagdata, flagmanager
+    from casatools import ctsys, agentflagger, table
+    from collections import OrderedDict
+
+    # Local copy of the agentflagger tool
+    aflocal = agentflagger()
+
+    # default isn't necessary in CASA6
+    def default(atask):
+        pass
+
+    # Path for data
+    datapath = ctsys.resolve("regression/unittest/flagdata")
+else:
+    from tasks import flagcmd, flagdata, flagmanager
+    from taskinit import aftool
+    from taskinit import tbtool as table
+    from __main__ import default
+    from OrderedDictionary import OrderedDict
+
+    # Local copy of the agentflagger tool
+    aflocal = aftool()
+
+    # Path for data
+    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
 
 #
 # Test of flagcmd task. It uses flagdata to unflag and summary
@@ -60,13 +87,6 @@ def create_input1(str_text, filename):
     
     return
 
-    
-# Path for data
-datapath = ctsys.resolve("regression/unittest/flagdata")
-
-# Local copy of the agentflagger tool
-aflocal = agentflagger()
-
 # Base class which defines setUp functions
 # for importing different data sets
 class test_base(unittest.TestCase):
@@ -81,6 +101,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
+        default(flagcmd)
 
     def setUp_multi(self):
         self.vis = "multiobs.ms"
@@ -93,6 +114,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
+        default(flagcmd)
 
     def setUp_alma_ms(self):
         '''ALMA MS, scan=1,8,10 spw=0~3 4,128,128,1 chans, I,XX,YY'''
@@ -106,6 +128,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
+        default(flagcmd)
         
     def setUp_evla(self):
         self.vis = "tosr0001_scan3_noonline.ms"
@@ -118,6 +141,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
+        default(flagcmd)
         
     def setUp_shadowdata(self):
         self.vis = "shadowtest_part.ms"
@@ -130,6 +154,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
+        default(flagcmd)
         
     def setUp_data4rflag(self):
         self.vis = "Four_ants_3C286.ms"
@@ -142,6 +167,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
+        default(flagcmd)
 
     def setUp_bpass_case(self):
         self.vis = "cal.fewscans.bpass"
@@ -154,6 +180,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
+        default(flagcmd)        
 
     def unflag_ms(self):
         aflocal.open(self.vis)
@@ -263,7 +290,11 @@ class test_unapply(test_base):
         try:
             self.assertFalse(flagcmd( vis=self.vis, action='unapply', inpmode='list',
                                       inpfile=["spw='0' reason='MANUAL'"]) )
+            # CASA6 throws an except, CASA5 returns False
+            # only CASA6 gets here, but that's OK
+            passes = True
         except ValueError:
+            # CASA6 gets here
             print('Expected error!')
             passes = True
 
@@ -659,17 +690,26 @@ class test_savepars(test_base):
         # Create different flag command 
         myinput = "scan='1'\n"
         filename = create_input(myinput)
-
+        
         passes = False
         try:
             # Apply flags from filename and try to save in newfile
-            # Overwrite parameter should allow this
-            flagcmd( vis=self.vis, action='apply', inpmode='list',inpfile=filename, savepars=True, outfile=newfile,
-                     flagbackup=False, overwrite=False )
+            # Overwrite parameter at False should reject this
+            flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=filename, savepars=True, outfile=newfile,
+                    flagbackup=False, overwrite=False)
+            # CASA5 gets here, that's OK
+            passes = True
+    
+            # do this additional test for CASA5 to make sure
+            # newfile should contain what was in filename
+            self.assertFalse(filecmp.cmp(filename, newfile, 1), 'Files should be different')        
         except:
+            # CASA 6 throws an exception
             print('Expected error!')
             passes = True
 
+        self.assertTrue(passes)
+        
     def test_overwrite_false1(self):
         '''flagcmd: Use savepars and overwrite=False'''
         
@@ -725,8 +765,10 @@ class test_XML(test_base):
         
         # The MS only contains clip and shadow commands
 
-        # without syncing the ms, we get an error that there are no flags in the table
-        os.system('rsync -a '+os.path.join(datapath,self.vis)+' .')
+        # CASA6 needs this
+        if is_CASA6:
+            # without syncing the ms, we get an error that there are no flags in the table
+            os.system('rsync -a '+os.path.join(datapath,self.vis)+' .')
         # Apply the shadow command
         flagcmd(vis=self.vis, action='apply', reason='SHADOW', flagbackup=False)
         res = flagdata(vis=self.vis, mode='summary')
@@ -935,15 +977,15 @@ class test_rflag(test_base):
     def test_rflagauto(self):
         """flagcmd:: Test of rflag with defaults
         """
-        # (6) flagcmd AUTO. Should give same answers as test_flagdata[test_rflag1]
+        # (6) flagcmd AUTO. Should give same answers as test_flagdata[test_rflag_auto_thresholds]
         flagdata(vis=self.vis,mode='unflag');
-        flagcmd(vis=self.vis, inpmode='list', inpfile=['mode=rflag spw=9,10 extendflags=False'], 
-                action='apply',
-                flagbackup=False)
+        flagcmd(vis=self.vis, inpmode='list',
+                inpfile=['mode=rflag spw=9,10 extendflags=False'],
+                action='apply', flagbackup=False)
         res6 = flagdata(vis=self.vis, mode='summary')
         print("(6) Finished flagcmd test : auto : ", res6['flagged'])
 
-        #(7) flagdata AUTO (same as test_flagdata[test_rflag1])
+        #(7) flagdata AUTO (same as test_flagdata[test_rflag_auto_thresholds])
         #flagdata(vis=self.vis,mode='unflag');
         #flagdata(vis=self.vis, mode='rflag', spw='9,10');
         #res7 = flagdata(vis=self.vis, mode='summary')
@@ -1325,5 +1367,6 @@ def suite():
             test_cmdbandpass,
             cleanup]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

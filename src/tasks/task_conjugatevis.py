@@ -1,8 +1,16 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-from casatasks import casalog
-from casatools import table
 
-_tb = table( )
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import table as tbtool
+    from casatools import ms as mstool
+    from .mstools import write_history
+else:
+    from taskinit import *
+    from mstools import write_history
 
 def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
     """:
@@ -21,6 +29,9 @@ def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
     """
 
     #Python script
+
+    _tb = tbtool()
+        
     try:
         casalog.origin('conjugatevis')
         myddlist = []
@@ -83,6 +94,20 @@ def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
         else:
             _tb.close()
             casalog.post('Cannot write to output MS '+str(outname), 'WARN')
+
+        # Write history to output MS 
+        try:
+            param_names = conjugatevis.__code__.co_varnames[:conjugatevis.__code__.co_argcount]
+            if is_python3:
+                vars = locals()
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
+            write_history(mstool(), outputvis, 'conjugatevis', param_names,
+                          param_vals, casalog)
+
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
 
     except Exception as instance:
         _tb.close()

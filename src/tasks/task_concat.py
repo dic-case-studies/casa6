@@ -14,6 +14,7 @@ if is_CASA6:
         from casatools import table as tbtool
         from casatools import ms as mstool
         from casatasks import casalog
+        from .mstools import write_history
 
         _cb = calibrater( )
         _qa = quanta( )

@@ -1,17 +1,37 @@
 # unit test for the exportasdm task
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-import sys
 import shutil
 
 import unittest
-from casatools import ctsys, ms
-from casatasks import exportasdm
-### for testhelper import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import testhelper as th
 
-_ms = ms( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    import sys
+    from casatools import ctsys, ms
+    from casatasks import exportasdm, importasdm
+    ### for testhelper import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import testhelper as th
+
+    _ms = ms( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import mstool
+    import unittest
+    import testhelper as th
+
+    _ms = mstool( )
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+
 class exportasdm_test(unittest.TestCase):
     
     #vis_a = 'ngc4826.ms'
@@ -28,25 +48,33 @@ class exportasdm_test(unittest.TestCase):
     
     def setUp(self):    
         self.rval = False
+        #if(not os.path.exists(self.vis_a)):
+        #    _ms.fromfits( self.vis_a, '/regression/ngc4826/fitsfiles/ngc4826.ll.fits5')
+        #    _ms.close( )
         if(not os.path.exists(self.vis_b)):
-            os.system('cp -R '+ctsys.resolve('regression/fits-import-export/input/test.ms')+' .')
+            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .')
         if(not os.path.exists(self.vis_c)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/M100-X220-shortened.ms')+' .')
+            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/M100-X220-shortened.ms')+' .')
         if(not os.path.exists(self.vis_d)):
-            _ms.fromfits( self.vis_d, 'regression/ngc4826/fitsfiles/ngc4826.ll.fits5' )
+            # CASA6 will fetch this from the repo without the need for ctsys_resolve
+            _ms.fromfits( self.vis_d, ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5') )
             _ms.close( )
         if(not os.path.exists(self.vis_e)):
-            os.system('cp -R '+ctsys.resolve('regression/cvel/input/g19_d2usb_targets_line-shortened.ms')+' .')
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened.ms')+' .')
         if(not os.path.exists(self.vis_f)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/Itziar.ms')+' .')
+            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/Itziar.ms')+' .')            
         if(not os.path.exists(self.vis_g)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/M51.ms')+' .')
-
-        #> to be factored back in when sdm.toms( ) is implemented
-        #> ---- --- --- ---- --- --- ---- --- --- ---- --- --- ---- --- --- ---- --- --- ---- --- ---
-        #> if(not os.path.exists(self.vis_i)):
-        #>     os.system('ln -sf '+os.environ['CASAPATH'].split()[0]+'/data/regression/asdm-import/input/uid___A002_X72bc38_X000')
-        #>     importasdm('uid___A002_X72bc38_X000', vis = 'asdm.ms', scans='0:2')
+            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/M51.ms')+' .')
+        if(not os.path.exists(self.vis_h)):
+            os.system('ln -sf '+ctsys_resolve('regression/unittest/importevla/X_osro_013.55979.93803716435'))
+            # the final two arguments are equivalent to the defaults for the original importevla used here
+            importasdm('X_osro_013.55979.93803716435', vis = 'xosro2ref.ms', process_flags=False, scans='0:2', ocorr_mode='co', with_pointing_correction=True)
+        if(not os.path.exists(self.vis_i)):
+            os.system('ln -sf '+ctsys_resolve('regression/asdm-import/input/uid___A002_X72bc38_X000'))
+            importasdm('uid___A002_X72bc38_X000', vis = 'asdm.ms', scans='0:2')
+            
+        if not is_CASA6:
+            default(exportasdm)
 
     def tearDown(self):
         os.system('rm -rf myinput.ms')
@@ -123,8 +151,12 @@ class exportasdm_test(unittest.TestCase):
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         self.rval = False
+        # CASA5 returns False on fail, CASA6 throws an exception
+        # this is an expected fail
         try:
             self.rval = exportasdm()
+            if not self.rval:
+                self.rval = True
         except:
             self.rval = True
         self.assertTrue(self.rval)
@@ -274,23 +306,34 @@ class exportasdm_test(unittest.TestCase):
 ##        os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
 ##        self.verify_asdm(omsname, True)
 
-    @unittest.skip("waiting for sdm.toms(...)")
+    def test11(self):
+        '''Test 11: v3, EVLA MS from X_osro_013.55979.93803716435 scan 2, full pol!'''
+        myvis = self.vis_h
+        os.system('rm -rf xosro2ref-reimp.ms xosro2asdm')
+        self.rval =  exportasdm(vis=myvis, asdm='xosro2asdm', apcorrected=False, verbose=True)
+        # mirroring the importasdm arguments used to create the MS that was just exported
+        importasdm(asdm='xosro2asdm', vis='xosro2ref-reimp.ms', process_flags=False, verbose=True, ocorr_mode='co', with_pointing_correction=True)
+        self.rval = self.rval  and th.compmsmainnumcol(myvis, 'xosro2ref-reimp.ms', 1E-5)
+        self.rval = self.rval and th.compmsmainboolcol(myvis, 'xosro2ref-reimp.ms')
+
+        self.assertNotEqual(self.rval,False)
+        omsname = "test"+str(11)+self.out
+        os.system('rm -rf '+omsname+'; mv  xosro2asdm '+omsname)
+
     def test12(self):
         '''Test 12: v3, ALMA MS from uid___A002_X72bc38_X000 scan 2, only XX and YY'''
         myvis = self.vis_i
         os.system('rm -rf asdmasdm asdm-reimp.ms')
-        mysdm = sdm('asdmasdm')
-        self.rval = mysdm.fromms(myvis, apcorrected=False, verbose=True)
-        self.rval = self.rval and mysdm.toms('asdm-reimp.ms', verbose=True)
+
+        self.rval = exportasdm(vis=myvis, asdm='asdmasdm', apcorrected=False, verbose=True)
+        self.rval = self.rval and importasdm(asdm='asdmasdm', vis='asdm-reimp.ms', verbose=True)
 
         self.rval = self.rval  and th.compmsmainnumcol(myvis, 'asdm-reimp.ms', 1E-5)
         self.rval = self.rval and th.compmsmainboolcol(myvis, 'asdm-reimp.ms')
 
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(12)+self.out
-        os.system('rm -rf '+omsname+'; mv  asdm '+omsname)
-
-
+        os.system('rm -rf '+omsname+'; mv  asdmasdm '+omsname)
 
 class exportasdm_test2(unittest.TestCase):
 
@@ -324,5 +367,6 @@ class exportasdm_test2(unittest.TestCase):
 def suite():
     return [exportasdm_test,exportasdm_test2]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

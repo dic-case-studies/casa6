@@ -1,11 +1,11 @@
 """
 Updated version to support the current JPL-Horizons query results as of 2013 June.
 (when S-T-O is requested the current query result returns phi, PAB-LON, PAB-LAT along
-with S-T-O value).
+with S-T-O value).  
 
 casapy functions for converting ASCII ephemerides from JPL-Horizons into
 CASA tables and installing them where casapy can find them.
-
+                    
 jplfiles_to_repository() puts it all together, so it is most likely the
 function you want.
 
@@ -13,6 +13,8 @@ There are various utilities like convert_radec, datestr*, get_num_from_str,
 mean_radius*, and construct_tablepath defined in here as well.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 from glob import glob
 import os
 import re
@@ -20,13 +22,22 @@ import sys
 import scipy.special
 import time                  # We can always use more time.
 import numpy
-import traceback
 
-from casatools import quanta, measures, table, quanta
-from casatasks import casalog
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import quanta, measures
+    from casatools import table as tbtool
+    from casatasks import casalog
 
-_qa = quanta( )
-_me = measures( )
+    _qa = quanta( )
+    _me = measures( )
+else:
+    from taskinit import gentools, tbtool, qa, casalog
+
+    _me = gentools(['me'])[0]
+    # not really a local tool
+    _qa = qa
 
 # Possible columns, as announced by their column titles.
 # The data is scooped up by 'pat'.  Either use ONE group named by the column
@@ -35,7 +46,7 @@ _me = measures( )
 # Sample lines:
 #  Date__(UT)__HR:MN     R.A.___(ICRF/J2000.0)___DEC Ob-lon Ob-lat Sl-lon Sl-lat   NP.ang   NP.dist               r        rdot            delta      deldot    S-T-O   L_s
 #  2010-May-01 00:00     09 01 43.1966 +19 04 28.673 286.52  18.22 246.99  25.34 358.6230      3.44  1.661167637023  -0.5303431 1.28664311447968  15.7195833  37.3033   84.50
-#
+# 
 # some mod to label names and comments so that they corresponds to
 # JPL-Horizons naming comvension
 cols = {
@@ -62,9 +73,9 @@ cols = {
              'pat':    r'(?P<illu>[0-9.]+)',
              'unit': r'%'},
     # put back to original heading...
-    # TT: query result header name change (sometime in 2018)
-    # Ob_lon -> Obsrv_lon, Ob_lat->Obsrv_lat,
-    # Sl_lon -> Solar-lon, Sl_lat ->Solar-lat
+    # TT: query result header name change (sometime in 2018) 
+    # Ob_lon -> Obsrv_lon, Ob_lat->Obsrv_lat,  
+    # Sl_lon -> Solar-lon, Sl_lat ->Solar-lat 
     #'DiskLong': {'header': r'Ob-lon',
     'DiskLong': {'header': r'Obsrv-lon',
                'comment': 'Sub-observer longitude',
@@ -95,7 +106,7 @@ cols = {
     'NP_DEC': {'header': r'N\.Pole-DC',
                'comment': 'North Pole declination',
                'pat':    r'(?P<NP_DEC>([-+]?\d+ \d+ )?[-+]?\d+\.\d+)'},
-
+    
     'r': {'header': 'r',
           'comment': 'heliocentric distance',
           'unit':    'AU',
@@ -119,20 +130,20 @@ cols = {
               'comment': 'phase angle',
               'unit':    'deg',
               'pat':     r'(?P<phang>[0-9.]+)'},
-    # added columns to match current(as of June 2013) query result
+    # added columns to match current(as of June 2013) query result 
     'phi': {'header':  'phi',
-            'comment': 'phase angle',
-            'unit':    'deg',
+	    'comment': 'phase angle',
+	    'unit':    'deg',
             'pat':     r'(?P<phi>[0-9.]+)',
             'unwanted': True},
     'PAB_LON': {'header':  'PAB-LON',
-            'comment': 'ecliptic longitude',
-            'unit':    'deg',
+	    'comment': 'ecliptic longitude',
+	    'unit':    'deg',
             'pat':     r'(?P<PAB_LON>[0-9.]+)',
             'unwanted': True},
     'PAB_LAT': {'header':  'PAB-LAT',
-            'comment': 'ecliptic latitude',
-            'unit':    'deg',
+	    'comment': 'ecliptic latitude',
+	    'unit':    'deg',
             'pat':     r'(?P<PAB_LAT>[-+0-9.]+)',
             'unwanted': True},
     # -----------------------------------------------------------
@@ -196,7 +207,7 @@ def readJPLephem(fmfile,version=''):
     # Setup the regexps.
 
     # Headers (one time only things)
-
+    
     # Dictionary of quantity label: regexp pattern pairs that will be searched
     # for once.  The matching quantity will go in retdict[label].  Only a
     # single quantity (group) will be retrieved per line.
@@ -229,7 +240,7 @@ def readJPLephem(fmfile,version=''):
         headers[hk]['pat'] = re.compile(headers[hk]['pat'])
 
     # Data ("the rows of the table")
-
+    
     # need date, r (heliocentric distance), delta (geocentric distance), and phang (phase angle).
     # (Could use the "dot" time derivatives for Doppler shifting, but it's
     # likely unnecessary.)
@@ -246,8 +257,11 @@ def readJPLephem(fmfile,version=''):
     # define interpretation of invalid values ('n.a.')
     invalid=-999.
     for origline in ephem:
-        #line = origline.decode("utf-8").rstrip('\r\n')
-        line = origline.decode(sys.getdefaultencoding( ),"strict").rstrip('\r\n')
+        if is_python3:
+            #line = origline.decode("utf-8").rstrip('\r\n')
+            line = origline.decode(sys.getdefaultencoding( ),"strict").rstrip('\r\n')
+        else:
+            line = origline.rstrip('\r\n')
         if in_data:
             if re.match(stoppat, line):
                 break
@@ -260,7 +274,7 @@ def readJPLephem(fmfile,version=''):
                     if gdict[col]=='n.a.':
                         gdict[col]=invalid
                 #    print "cols.key=",cols.keys()
-
+ 
                     if not cols[col].get('unwanted'):
                         retdict['data'][col]['data'].append(gdict[col])
                 if len(gdict) < num_cols:
@@ -324,7 +338,7 @@ def readJPLephem(fmfile,version=''):
             in_data = True
         else:
             #print "line =", line
-            #print "looking for",
+            #print "looking for", 
             for hk in headers:
                  #print "hk=",hk
 
@@ -424,7 +438,7 @@ def readJPLephem(fmfile,version=''):
                     retdict[hk] = {'unit': unit, 'value': value}
                 else:
                     del retdict[hk]
-
+                    
     # The rotation period might depend on the orbital period ("Synchronous"),
     # so handle it after all the other headers have been done.
     if 'rot_per' in retdict:
@@ -450,7 +464,7 @@ def readJPLephem(fmfile,version=''):
                 except:
                     print("Error parsing the rotation period from")
                     print(rpstr)
-
+    
     if 'ang_sep' in retdict['data']:
         retdict['data']['obs_code'] = {'comment': 'Obscuration code'}
     for dk in retdict['data']:
@@ -490,7 +504,7 @@ def readJPLephem(fmfile,version=''):
     if version=='':
         version='0003.0001'
     #retdict['VS_VERSION'] = '0003.0001'
-    retdict['VS_VERSION'] = version
+    retdict['VS_VERSION'] = version 
     if 'VS_CREATE' in retdict:
         dt = time.strptime(retdict['VS_CREATE'], "%b %d %H:%M:%S %Y")
     else:
@@ -513,7 +527,7 @@ def readJPLephem(fmfile,version=''):
         retdict['posrefsys']='ICRF/J2000.0'
     if cols['RA']['comment'].count('B1950'):
         retdict['posrefsys']='FK4/B1950.0'
-
+   
     return retdict
 
 def convert_radec(radec_col):
@@ -563,7 +577,7 @@ def get_num_from_str(fstr, wanted="float"):
 
     wanted: an optional label for the type of number you wanted.
             Only used for distinguishing error messages.
-
+            
     Example:
     >>> from JPLephem_reader import get_num_from_str
     >>> get_num_from_str('  Sidereal rot. period  =    58.6462 d  ')
@@ -661,13 +675,13 @@ def datestrs_to_MJDs(cdsdict):
 
     # Convert to FITS format, otherwise qa.totime() will silently drop the hours.
     datestrlist = [d.replace(' ', 'T') for d in datestrlist]
-
+    
     timeq = {}
     # Do first conversion to get unit.
     firsttime = _qa.totime(datestrlist[0])
     timeq['unit'] = firsttime['unit']
     timeq['value'] = [firsttime['value']]
-
+    
     for datestr in datestrlist[1:]:
         timeq['value'].append(_qa.totime(datestr)['value'])
 
@@ -718,7 +732,7 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
               'phang': {'comment': 'phase angle',
                         'data': {'unit': 'deg',
                                  'value': array([37.30, 37.33, 37.36])}}}
-
+                                 
     # Produces a table with, in order, a measure column (date), two bare
     # columns (delta and obs_code), and a commented quantity column (phang).
     # The comment goes in the 'comment' field of the column description.
@@ -749,7 +763,7 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
             if isinstance(barecol,dict) and 'unit' in barecol and 'value' in barecol:
                 barecol = barecol['value']
         return barecol
-
+        
     # Divvy up the known keywords and columns, if present, preserving the
     # requested order.
     for kw in kwkeys:
@@ -797,7 +811,7 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
         if isinstance(data,dict):
             #print "comment =", data.get('comment', '')
             coldesc['comment'] = data.get('comment', '')
-
+            
         data = get_bare_col(data)
         datatype = type(data[0])
         if datatype == float or datatype == numpy.float:
@@ -812,7 +826,7 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
         # Use double (not float!) for columns that will be read by MeasIERS.
         if valtype == 'float':
             valtype = 'double'
-
+            
         coldesc['valueType'] = valtype
 
         tabdesc[c] = coldesc.copy()
@@ -835,10 +849,10 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
     # Create and fill the table.
     retval = True
     try:
-        mytb = table( )
+        mytb = tbtool()
         tmpfname='_tmp_fake.dat'
         if keepcolorder:
-            # try to keep order of cols
+            # try to keep order of cols 
             # Ugly, but since tb.create() cannot accept odered dictionary
             # for tabledesc, I cannot find any other way to keep column order.
             # * comment for each column will not be filled
@@ -849,12 +863,12 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
             szarr=szarr.replace(']','')
             szarr=szarr.replace(',','')
             scollist=''
-            sdtypes=''
+            sdtypes='' 
             for c in cols:
-                scollist+=c+' '
+                scollist+=c+' '   
                 vt=tabdesc[c]['valueType']
                 if vt=='string':
-                   sdtypes+='A '
+                   sdtypes+='A '    
                 elif vt=='integer':
                    sdtypes+='I '
                 elif vt=='double':
@@ -867,15 +881,14 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
             f.write(szarr)
 
             f.close()
-
-            mytb.fromascii(tablepath,tmpfname,sep=' ')
+            mytb.fromascii(tablepath,tmpfname,sep=' ')     
             # close and re-open since tb.fromascii(nomodify=False) has not
             # implemented yet
-            mytb.close()
-            os.remove(tmpfname)
+            mytb.close() 
+            os.remove(tmpfname) 
             mytb.open(tablepath, nomodify=False)
             mytb.removerows(0)
-        else:
+        else: 
             mytb.create(tablepath, tabdesc)
         if type(info) == dict:
             mytb.putinfo(info)
@@ -894,7 +907,7 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
             if type(data)==dict and _me.ismeasure(data):
                 mytb.putcolkeyword(c, 'MEASINFO', {'Ref': data['refer'],
                                                    'type': data['type']})
-                data = data['m0']   # = quantity
+                data = data['m0']   # = quantity         
             # if qa.isquantity(data) can't be trusted.
             if isinstance(data,dict) and 'unit' in data and 'value' in data:
                 mytb.putcolkeyword(c, 'QuantumUnits',
@@ -947,7 +960,7 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
         outdict = fmdict.copy() # Yes, I want a shallow copy.
         #kws = fmdict.keys()
         # reorder the keywords
-        okws=['VS_CREATE','VS_DATE','VS_TYPE', 'VS_VERSION', 'NAME', 'MJD0', 'dMJD',
+        okws=['VS_CREATE','VS_DATE','VS_TYPE', 'VS_VERSION', 'NAME', 'MJD0', 'dMJD', 
               'GeoDist', 'GeoLat', 'GeoLong', 'obsloc', 'posrefsys','earliest','latest',
               'radii','meanrad','orb_per','data']
         oldkws = list(fmdict.keys())
@@ -956,7 +969,7 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
             if oldkws.count(ik):
               kws.append(ik)
               oldkws.remove(ik)
-        kws+=oldkws
+        kws+=oldkws 
         kws.remove('data')
         collist = list(outdict['data'].keys())
 
@@ -977,7 +990,7 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
             if c in collist:
                 collist.remove(c)
                 collist.insert(0, c)
-
+        
         clashing_cols = [c for c in collist if c in kws]
         if clashing_cols:
             raise ValueError('The input dictionary lists %s as both keyword(s) and column(s)' % ', '.join(clashing_cols))

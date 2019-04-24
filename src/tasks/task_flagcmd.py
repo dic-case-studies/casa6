@@ -1,16 +1,40 @@
-
-from casatasks import casalog
-from casatools import ms, quanta, table, agentflagger
-from .mstools import write_history
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import copy
-from . import flaghelper as fh
 import numpy as np
 from collections import defaultdict
 
-aflocal = agentflagger( )
-qalocal = quanta( )
-tblocal = table( )
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import ms, quanta, table, agentflagger
+    from .mstools import write_history
+    from . import flaghelper as fh
+
+    qalocal = quanta( )
+    tblocal = table( )
+else:
+    from taskinit import casalog, casac, qa, tb
+    from mstools import write_history
+    import flaghelper as fh
+
+    # naked tool constructors ala CASA6
+    agentflagger = casac.agentflagger
+    ms = casac.ms
+
+    # not really local
+    qalocal = qa
+    tblocal = tb
+
+# common function to use to get a dictionary item iterator
+if is_python3:
+    def lociteritems(adict):
+        return adict.items()
+else:
+    def lociteritems(adict):
+        return adict.iteritems()
 
 def flagcmd(
     vis=None,
@@ -42,6 +66,7 @@ def flagcmd(
 
     casalog.origin('flagcmd')
 
+    aflocal = agentflagger()
     mslocal = ms()
     mslocal2 = ms()           
 
@@ -382,7 +407,7 @@ def flagcmd(
                 for key in myflagcmd.keys():
                     cmddict = myflagcmd[key]['command']
                     cmdline = ""
-                    for k,v in cmddict.items():
+                    for k,v in lociteritems(cmddict):
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     cmdline.rstrip()
                     outdict[key]['command'] = cmdline
@@ -404,9 +429,13 @@ def flagcmd(
         if not iscal and (action == 'apply' or action == 'unapply'):
             retval = True
             try:
-                vars = locals( )
                 param_names = flagcmd.__code__.co_varnames[:flagcmd.__code__.co_argcount]
-                param_vals = [vars[p] for p in param_names]
+                if is_python3:
+                    vars = locals( )
+                    param_vals = [vars[p] for p in param_names]
+                else:
+                    param_vals = [eval(p) for p in param_names]
+
                 retval &= write_history(mslocal, vis, 'flagcmd', param_names,
                                         param_vals, casalog)
                 
@@ -1021,7 +1050,7 @@ def listFlagCommands(myflags=None, listmode=''):
             
             cmddict = myflags[k]['command']
             cmdline = ""
-            for key,val in cmddict.items():
+            for key,val in lociteritems(cmddict):
                 cmdstr = ""
                 if isinstance(val, str):
                     # Add quotes to string values
@@ -1048,7 +1077,7 @@ def listFlagCommands(myflags=None, listmode=''):
                 cmddict.pop('reason')
                 
             cmdline = ""
-            for key,val in cmddict.items():
+            for key,val in lociteritems(cmddict):
                 cmdstr = ""
                 if isinstance(val, str):
                     # Add quotes to string values
@@ -1167,7 +1196,7 @@ def listFlagCmd(
 
     if myoutfile != '':
         # list to output file
-        print(phdr,file=lfout)
+        print(phdr, file=lfout)
     else:
         # list to logger and screen
         if doterm:
@@ -1213,7 +1242,7 @@ def listFlagCmd(
             levl = str(fld['level'])
         else:
             levl = '0'
-        if 'severity'in fld:
+        if 'severity' in fld:
             sevr = str(fld['severity'])
         else:
             sevr = '0'
@@ -1231,7 +1260,7 @@ def listFlagCmd(
                 elif listmode == 'cmd':
                     # Loop over dictionary with commands
                     cmdline = ""
-                    for k,v in cmd.items():
+                    for k,v in lociteritems(cmd):
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     
                     cmdline = cmdline.rstrip()                       
@@ -1247,7 +1276,7 @@ def listFlagCmd(
                         )
                 else:
                     cmdline = ""
-                    for k,v in cmd.items():
+                    for k,v in lociteritems(cmd):
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     
                     cmdline = cmdline.rstrip()                       
@@ -1264,7 +1293,7 @@ def listFlagCmd(
                     pstr = '%8s %32s %s' % (skey, reas, cmdline)
                 if myoutfile != '':
                     # list to output file
-                    print(pstr,file=lfout)
+                    print(pstr, file=lfout)
                 else:
                     # list to logger and screen
                     if doterm:
@@ -1611,6 +1640,14 @@ def newplotflags(
     # Updated STM v4.2 2012-04-10 bug fix in trim flag times to data times
     # Updated STM v4.2 2012-04-10 messages to logger
 
+    # this CASA5 code seems unnecessary now since casac is already imported early on
+    # and casac.qa is already available - but not even needed here as it was
+    # try:
+    #     import casac
+    # except ImportError as e:
+    #     print('failed to load casa:\n', e)
+    #    exit(1)
+
     # After the swig converstion, it seems that the following
     # line is not needed anymore
 #    qa = casac.qa = qatool = casac.quanta()
@@ -1854,7 +1891,7 @@ def newplotflags(
         pl.ioff()
 
     plotflagperant = defaultdict(list)
-    for ipf, flag in plotflag.items():
+    for ipf, flag in lociteritems(plotflag):
         if not flag['show']:
             continue
         nflag = flag.copy()

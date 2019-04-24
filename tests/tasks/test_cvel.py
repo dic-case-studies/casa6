@@ -1,11 +1,35 @@
 # unit test for the cvel task
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import numpy
 import shutil
-from casatasks import cvel, split, importuvfits
-from casatools import ctsys, table, quanta, ms
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import cvel, split, importuvfits
+    from casatools import ctsys, table, quanta, ms
+
+    _tb = table( )
+    _qa = quanta( )
+    _ms = ms( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    # these aren't local tools in the CASA5 version
+    _tb = tb
+    _qa = qa
+    _ms = ms
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 myname = 'test_cvel'
 vis_a = 'ngc4826.ms'
@@ -16,10 +40,6 @@ vis_e = 'evla-highres-sample-thinned.ms'
 vis_f = 'test_cvel1.ms'
 vis_g = 'jup.ms'
 outfile = 'cvel-output.ms'
-
-_tb = table( )
-_qa = quanta( )
-_ms = ms( )
 
 def verify_ms(msname, expnumspws, expnumchan, inspw, expchanfreqs=[]):
     msg = ''
@@ -58,28 +78,30 @@ def verify_ms(msname, expnumspws, expnumchan, inspw, expchanfreqs=[]):
 
 class cvel_test(unittest.TestCase):
 
-    def setUp(self):    
+    def setUp(self):
+        if not is_CASA6:
+            default('cvel')
         forcereload=False
         
         if(forcereload or not os.path.exists(vis_a)):
             shutil.rmtree(vis_a, ignore_errors=True)
-            importuvfits(fitsfile=ctsys.resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5'), # 10 MB
+            importuvfits(fitsfile=ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5'), # 10 MB
                          vis=vis_a)
         if(forcereload or not os.path.exists(vis_b)):
             shutil.rmtree(vis_b, ignore_errors=True)
-            os.system('cp -R '+ctsys.resolve('regression/fits-import-export/input/test.ms')+' .') # 27 MB
+            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .') # 27 MB
         if(forcereload or not os.path.exists(vis_c)):
             shutil.rmtree(vis_c, ignore_errors=True)
-            os.system('cp -R '+ctsys.resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') # 124 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') # 124 MB
         if(forcereload or not os.path.exists(vis_d)):
             shutil.rmtree(vis_d, ignore_errors=True)
-            os.system('cp -R '+ctsys.resolve('regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
         if(forcereload or not os.path.exists(vis_e)):
             shutil.rmtree(vis_e, ignore_errors=True)
-            os.system('cp -R '+ctsys.resolve('regression/cvel/input/evla-highres-sample-thinned.ms')+' .') # 74 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/evla-highres-sample-thinned.ms')+' .') # 74 MB
         if(forcereload or not os.path.exists(vis_f)):
             shutil.rmtree(vis_f, ignore_errors=True)
-            os.system('cp -R '+ctsys.resolve('regression/unittest/cvel/test_cvel1.ms')+' .') # 39 MB
+            os.system('cp -R '+ctsys_resolve('regression/unittest/cvel/test_cvel1.ms')+' .') # 39 MB
         if(forcereload or not os.path.exists(vis_g)):
             # construct an MS with attached Jupiter ephemeris from vis_c
             shutil.rmtree(vis_g, ignore_errors=True)
@@ -107,8 +129,8 @@ class cvel_test(unittest.TestCase):
             _tb.putcol('TIME', a)
             _tb.close()
             _ms.open(vis_g, nomodify=False)
-            _ms.addephemeris( 0,ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
-                              'Jupiter_54708-55437dUTC', 0 )
+            _ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+                             'Jupiter_54708-55437dUTC', 0 )
             _ms.close()
 
             
@@ -132,6 +154,8 @@ class cvel_test(unittest.TestCase):
         passes = False
         try:
             rval = cvel()
+            # CASA5 returns False for this expected error
+            passes = not rval
         except AssertionError:
             passes = True
             print("*** Expected error ***")
@@ -144,6 +168,8 @@ class cvel_test(unittest.TestCase):
         passes = False
         try:
             rval = cvel(vis = 'myinput.ms')
+            # CASA5 returns False for this expected error
+            passes = not rval
         except AssertionError:
             passes = True
             print("*** Expected error ***")
@@ -460,6 +486,8 @@ class cvel_test(unittest.TestCase):
                 width = 2,
                 phasecenter = "J2000 18h25m56.09 -12d04m28.20"
             )
+            # CASA5 returns False
+            passes = not rval
         except RuntimeError:
             passes = True
             print("*** Expected error ***")
@@ -1239,5 +1267,6 @@ class cleanup(unittest.TestCase):
 def suite():
     return [cvel_test,cleanup]
     
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

@@ -52,6 +52,7 @@ else:
     from taskinit import msmdtool as msmetadata
     from taskinit import tbtool as table
     from parallel.parallel_task_helper import ParallelTaskHelper
+    from casa_stack_manip import stack_frame_find
 
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
@@ -256,6 +257,7 @@ class SplitChecker(unittest.TestCase):
         assert listshapes(mspat=oms)[oms] == set(expected)
         shutil.rmtree(oms)
 
+@unittest.skip("split_test_tav is skipped")
 class split_test_tav(SplitChecker):
     need_to_initialize = True
     inpms = '../../0420+417/0420+417.ms'
@@ -1032,6 +1034,7 @@ class split_test_blankov(unittest.TestCase):
         splitran = False
         # this value is only used for the python 2 case
         original_throw_pref = False 
+        myf = None
         try:
             # this is only needed for python2
             if not is_python3:
@@ -1051,8 +1054,8 @@ class split_test_blankov(unittest.TestCase):
             splitran = False
         except Exception as e:
             print("Unexpected but probably benign exception:", e)
-        # for the python 2 case, restore the original_throw_pref
-        if not is_python3:
+        # only does something in the python 2 case
+        if myf is not None:
             myf['__rethrow_casa_exceptions'] = original_throw_pref 
         assert not splitran
 
@@ -1427,6 +1430,7 @@ class split_test_optswc(SplitChecker):
         check_eq(self.records[('', '3')]['bbc_no'], 0)
 
         
+@unittest.skip("split_test_tav_then_cvel is skipped")
 class split_test_tav_then_cvel(SplitChecker):
     need_to_initialize = True
     # doppler01fine-01.ms was altered by
@@ -1568,6 +1572,7 @@ class split_test_tav_then_cvel(SplitChecker):
         shutil.rmtree(self.records['cvms'])
         #self.__class__.n_tests_passed += 1
 
+@unittest.skip("split_test_wttosig is skipped")
 class split_test_wttosig(SplitChecker):
     """
     Check WEIGHT and SIGMA after various datacolumn selections and averagings.
@@ -1760,6 +1765,7 @@ class split_test_singlespw_severalchranges(unittest.TestCase):
         tblocal.close()
         check_eq(nrows_ddi, 1)
 
+@unittest.skip("FLAG_CATEGORY not supported in mstransform (new split)")
 class split_test_fc(SplitChecker):
     """
     Check FLAG_CATEGORY after various selections and averagings.
@@ -2264,6 +2270,8 @@ class splitUpdateFlagCmd(test_base):
         self.assertTrue(filecmp.cmp(self.flagfile, 'spwnames.txt',1))
         
 
+# Note: this list of tests is only relevant for CASA5, skipped tests must be indicated by the
+# use of the @unittest.skip decorator as shown above in order for those tests to be skipped in CASA6
 def suite():
     return [
 #            split_test_tav,
@@ -2276,7 +2284,7 @@ def suite():
             split_test_singchan, 
             split_test_unorderedpolspw, 
             split_test_blankov,
-            split_test_tav_then_cvel,
+#            split_test_tav_then_cvel,
             split_test_genericsubtables,
             split_test_sw_and_fc, 
             split_test_cavcd, 

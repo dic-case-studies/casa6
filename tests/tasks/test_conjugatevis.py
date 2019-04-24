@@ -5,22 +5,34 @@
 #
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import glob
-from casatools import ctsys, table, ms
-from casatasks import conjugatevis
 import unittest
 
-_tb = table( )
-_ms = ms( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms
+    from casatasks import conjugatevis
+
+    _tb = table( )
+    _ms = ms( )
+    datapath=ctsys.resolve('regression/unittest/concat/input')
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    _tb = tb
+    _ms = ms
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/concat/input/'
 
 myname = 'test_conjugatevis'
 
 # name of the resulting MS
 msname = 'conjugated.ms'
-datapath=ctsys.resolve('regression/unittest/concat/input')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -89,6 +101,9 @@ class test_conjugatevis(unittest.TestCase):
             shutil.copytree(mymsname, cpath+'/'+mymsname)
         os.chdir(cpath)
 
+        if not is_CASA6:
+            default(conjugatevis)
+        
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
 
@@ -161,5 +176,6 @@ class conjugatevis_cleanup(unittest.TestCase):
 def suite():
     return [test_conjugatevis,conjugatevis_cleanup]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
