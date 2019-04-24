@@ -4,11 +4,34 @@ import shutil
 import unittest
 import os
 import filecmp
-import exceptions
-from tasks import flagcmd, flagdata, flagmanager
-from taskinit import aftool, tbtool
-from __main__ import default
-from OrderedDictionary import OrderedDict
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import flagcmd, flagdata, flagmanager
+    from casatools import ctsys, agentflagger, table
+    from collections import OrderedDict
+
+    # Local copy of the agentflagger tool
+    aflocal = agentflagger()
+
+    # default isn't necessary in CASA6
+    def default(atask):
+        pass
+
+    # Path for data
+    datapath = ctsys.resolve("regression/unittest/flagdata")
+else:
+    from tasks import flagcmd, flagdata, flagmanager
+    from taskinit import aftool
+    from taskinit import tbtool as table
+    from __main__ import default
+    from OrderedDictionary import OrderedDict
+
+    # Local copy of the agentflagger tool
+    aflocal = aftool()
+
+    # Path for data
+    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
 
 #
 # Test of flagcmd task. It uses flagdata to unflag and summary
@@ -17,7 +40,7 @@ from OrderedDictionary import OrderedDict
 def test_eq(result, total, flagged):
 
     print("%s of %s data was flagged, expected %s of %s" % \
-    (result['flagged'], result['total'], flagged, total))
+          (result['flagged'], result['total'], flagged, total))
     assert result['total'] == total, \
                "%s data in total; %s expected" % (result['total'], total)
     assert result['flagged'] == flagged, \
@@ -64,13 +87,6 @@ def create_input1(str_text, filename):
     
     return
 
-    
-# Path for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
-
-# Local copy of the agentflagger tool
-aflocal = aftool()
-
 # Base class which defines setUp functions
 # for importing different data sets
 class test_base(unittest.TestCase):
@@ -81,7 +97,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.vis):
             print("The MS is already around, just unflag")
         else:
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -r '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -94,7 +110,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -r '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -108,7 +124,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -r '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -121,7 +137,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -r '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -134,7 +150,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -r '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -147,7 +163,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -r '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -160,9 +176,7 @@ class test_base(unittest.TestCase):
             print("The CalTable is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            os.system('cp -r '+os.path.join(datapath,self.vis)+' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -272,10 +286,20 @@ class test_unapply(test_base):
         
     def test_unsupported_unapply(self):
         '''flagcmd: raise exception from inpmode=list and unapply'''
-#        try:
-        self.assertFalse(flagcmd(vis=self.vis, action='unapply', inpmode='list',
-                inpfile=["spw='0' reason='MANUAL'"]))
-#
+        passes = False
+        try:
+            self.assertFalse(flagcmd( vis=self.vis, action='unapply', inpmode='list',
+                                      inpfile=["spw='0' reason='MANUAL'"]) )
+            # CASA6 throws an except, CASA5 returns False
+            # only CASA6 gets here, but that's OK
+            passes = True
+        except ValueError:
+            # CASA6 gets here
+            print('Expected error!')
+            passes = True
+
+        self.assertTrue(passes)
+
     def test_utfcrop(self):
         '''flagcmd: unapply tfcrop agent'''
         # Remove any cmd from table
@@ -317,7 +341,7 @@ class test_unapply(test_base):
         flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False)
         
         # Check FLAG_ROW is all set to true
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -332,7 +356,7 @@ class test_unapply(test_base):
                 flagbackup=False)
         
         # Check FLAG_ROW is all set to true
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -344,7 +368,7 @@ class test_unapply(test_base):
         flagcmd(vis=self.vis, action='unapply', useapplied=True, tablerows=0, savepars=False)
        
         # Check FLAG_ROW is now all set to false
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -363,7 +387,7 @@ class test_unapply(test_base):
         flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False)
         
         # Check FLAG_ROW is all set to true
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -378,7 +402,7 @@ class test_unapply(test_base):
                 flagbackup=False)
         
         # Check FLAG_ROW is all set to true
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -390,7 +414,7 @@ class test_unapply(test_base):
         flagcmd(vis=self.vis, action='unapply', useapplied=True, tablerows=0, savepars=False)
        
         # Check FLAG_ROW is now all set to false
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -409,7 +433,7 @@ class test_unapply(test_base):
         flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False)
         
         # Check FLAG_ROW is all set to true
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -424,7 +448,7 @@ class test_unapply(test_base):
                 flagbackup=False)
         
         # Check FLAG_ROW is all set to true
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -436,7 +460,7 @@ class test_unapply(test_base):
         flagcmd(vis=self.vis, action='unapply', useapplied=True, tablerows=0, savepars=False)
        
         # Check FLAG_ROW is now all set to false
-        mytb = tbtool()
+        mytb = table()
         mytb.open(self.vis)
         selectedtb = mytb.query('SCAN_NUMBER in [4]')
         FLAG_ROW = selectedtb.getcol('FLAG_ROW')
@@ -666,15 +690,26 @@ class test_savepars(test_base):
         # Create different flag command 
         myinput = "scan='1'\n"
         filename = create_input(myinput)
-                
-        # Apply flags from filename and try to save in newfile
-        # Overwrite parameter should allow this
-        flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=filename, savepars=True, outfile=newfile,
-                flagbackup=False, overwrite=False)
         
-        # newfile should contain what was in filename
-        self.assertFalse(filecmp.cmp(filename, newfile, 1), 'Files should be different')        
+        passes = False
+        try:
+            # Apply flags from filename and try to save in newfile
+            # Overwrite parameter at False should reject this
+            flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=filename, savepars=True, outfile=newfile,
+                    flagbackup=False, overwrite=False)
+            # CASA5 gets here, that's OK
+            passes = True
+    
+            # do this additional test for CASA5 to make sure
+            # newfile should contain what was in filename
+            self.assertFalse(filecmp.cmp(filename, newfile, 1), 'Files should be different')        
+        except:
+            # CASA 6 throws an exception
+            print('Expected error!')
+            passes = True
 
+        self.assertTrue(passes)
+        
     def test_overwrite_false1(self):
         '''flagcmd: Use savepars and overwrite=False'''
         
@@ -729,7 +764,11 @@ class test_XML(test_base):
         '''flagcmd: list xml file and save in outfile'''
         
         # The MS only contains clip and shadow commands
-        
+
+        # CASA6 needs this
+        if is_CASA6:
+            # without syncing the ms, we get an error that there are no flags in the table
+            os.system('rsync -a '+os.path.join(datapath,self.vis)+' .')
         # Apply the shadow command
         flagcmd(vis=self.vis, action='apply', reason='SHADOW', flagbackup=False)
         res = flagdata(vis=self.vis, mode='summary')
@@ -950,7 +989,7 @@ class test_rflag(test_base):
         #flagdata(vis=self.vis,mode='unflag');
         #flagdata(vis=self.vis, mode='rflag', spw='9,10');
         #res7 = flagdata(vis=self.vis, mode='summary')
-        #print "\n---------------------- Finished flagdata test : auto : ", res7['flagged']
+        #print("\n---------------------- Finished flagdata test : auto : ", res7['flagged'])
 
         self.assertEqual(res6['flagged'], 42728.0)
 
@@ -1120,7 +1159,7 @@ class test_actions(test_base):
         # Copy the input flagcmd file with a non-existing spw name
         # flagsfile has spw='"Subband:1","Subband:2","Subband:8"
         flagsfile = 'cas9366.flags.txt'
-        os.system('cp -rf '+datapath + flagsfile +' '+ ' .')
+        os.system('cp -rf '+os.path.join(datapath,flagsfile)+' '+ ' .')
         
         # Save flags commands to FLAG_CMD table
         flagcmd(self.vis, inpmode='list', inpfile=flagsfile, action='list', savepars=True)
@@ -1327,8 +1366,7 @@ def suite():
             test_actions,
             test_cmdbandpass,
             cleanup]
-        
-        
-        
-        
-        
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

@@ -246,13 +246,12 @@ class test_concat(unittest.TestCase):
         if not 'xyb.ms' in filespresent:
             split(vis='xy1.ms', outputvis='xyb.ms', spw='0:64~127', datacolumn='data')
 
-        if is_CASA6:
+        if not is_CASA6:
             default(concat)
         return True
         
     def tearDown(self):
-        pass
-        # shutil.rmtree(msname,ignore_errors=True)
+        shutil.rmtree(msname,ignore_errors=True)
 
     def test1(self):
         '''Concat 1: 4 parts, same sources but different spws'''

@@ -14,6 +14,7 @@ if is_CASA6:
         from casatools import table as tbtool
         from casatools import ms as mstool
         from casatasks import casalog
+        from .mstools import write_history
 
         _cb = calibrater( )
         _qa = quanta( )
@@ -423,19 +424,19 @@ def concat(vislist,concatvis,freqtol,dirtol,respectname,timesort,copypointing,
                         casalog.post('Sorting main table by TIME ...', 'INFO')
                         m.timesort()
 
-		# Write history to output MS, not the input ms.
-		try:
-			param_names = concat.__code__.co_varnames[:concat.__code__.co_argcount]
+                # Write history to output MS, not the input ms.
+                try:
+                        param_names = concat.__code__.co_varnames[:concat.__code__.co_argcount]
                         if is_python3:
                                 vars = locals( )
                                 param_vals = [vars[p] for p in param_names]
                         else:
                                 param_vals = [eval(p) for p in param_names]
-			write_history(mstool(), concatvis, 'concat', param_names,
-						  param_vals, casalog)
-		except Exception as instance:
-			casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-						 'WARN')
+                                write_history(mstool(), concatvis, 'concat', param_names,
+                                              param_vals, casalog)
+                except Exception as instance:
+                        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
+                                     'WARN')
 
                 m.close()
 

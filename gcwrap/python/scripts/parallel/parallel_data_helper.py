@@ -18,6 +18,8 @@ if is_CASA6:
     from .. import partitionhelper as ph
     from casatools import quanta, ms, msmetadata, mstransformer, table
     from casatasks import casalog
+
+    _qa = quanta()
 else:
     from taskinit import *
     from parallel.parallel_task_helper import ParallelTaskHelper, JobData
@@ -27,6 +29,8 @@ else:
     msmetadata = msmdtool
     table = tbtool
     mstransformer = mttool
+
+    _qa = qa
 
 # common function to use to get a dictionary item iterator
 if is_python3:
@@ -143,8 +147,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         self.__ddistart = None
         self._msTool = None
         self._tbTool = None
-        self._qa = quanta( )
-        
+
         if not 'spw' in self.__args:
             self.__args['spw'] = ''
             
@@ -245,7 +248,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 (self.__args['combinespws'] == False and self.__args['nspw'] == 1):
                 # Get the value of timebin as a float
                 timebin = self.__args['timebin']
-                tsec = self._qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 # For each subms, check if scans length is <=  timebin
                 for subms in subMSList:
@@ -265,7 +268,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 spwdict = ph.getScanSpwSummary(subMSList) 
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 timebin = self.__args['timebin']
-                tsec = self._qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 for subms in subMSList:
                     subms_spwids = ph.getSubMSSpwIds(subms, spwdict)
                     slist = map(str,subms_spwids)
@@ -286,7 +289,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             if (sepaxis != 'spw' and self.__args['combine'] == 'scan'):
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 timebin = self.__args['timebin']
-                tsec = self._qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 for subms in subMSList:
                     if not self.__isScanContained(subms, scansel, tsec):
                         casalog.post('Cannot process MMS in parallel when combine=\'scan\' because the subMSs do not contain all the selected scans',\
@@ -1459,11 +1462,11 @@ class ParallelDataHelper(ParallelTaskHelper):
 
             # Check if the parameter has valid velocity units
             if not self.__args['start'] == '':
-                if (self._qa.quantity(self.__args['start'])['unit'].find('m/s') < 0):
+                if (_qa.quantity(self.__args['start'])['unit'].find('m/s') < 0):
                     raise TypeError('Parameter start does not have valid velocity units')
             
             if not self.__args['width'] == '':
-                if (self._qa.quantity(self.__args['width'])['unit'].find('m/s') < 0):
+                if (_qa.quantity(self.__args['width'])['unit'].find('m/s') < 0):
                     raise TypeError('Parameter width does not have valid velocity units')
                                             
         elif self.__args['mode'] == 'frequency':
@@ -1474,11 +1477,11 @@ class ParallelDataHelper(ParallelTaskHelper):
     
             # Check if the parameter has valid frequency units
             if not self.__args['start'] == '':
-                if (self._qa.quantity(self.__args['start'])['unit'].find('Hz') < 0):
+                if (_qa.quantity(self.__args['start'])['unit'].find('Hz') < 0):
                     raise TypeError('Parameter start does not have valid frequency units')
     
             if not self.__args['width'] == '':
-                if (self._qa.quantity(self.__args['width'])['unit'].find('Hz') < 0):
+                if (_qa.quantity(self.__args['width'])['unit'].find('Hz') < 0):
                     raise TypeError('Parameter width does not have valid frequency units')
         
         start = self.__args['start']

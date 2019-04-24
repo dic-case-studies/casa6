@@ -4,25 +4,45 @@ from __future__ import print_function
 import os
 import numpy
 import shutil
-from __main__ import default
-from tasks import cvel2, cvel, partition, importuvfits, split
-from taskinit import tbtool, mstool, qa
-from parallel.parallel_task_helper import ParallelTaskHelper
-from parallel.parallel_data_helper import ParallelDataHelper
 import unittest
 
-# Path for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/"
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import cvel2, cvel, split, importuvfits, partition
+    from casatools import ms as mstool
+    from casatools import ctsys, table, quanta
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+    from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
+
+    mytb = table()
+    myqa = quanta()
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import cvel2, cvel, partition, importuvfits, split
+    from taskinit import tbtool, mstool, qa
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    from parallel.parallel_data_helper import ParallelDataHelper
+
+    mytb = tbtool()
+    myqa = qa
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+
+# Alternative path for data
+datapath = None
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if 'TEST_DATADIR' in os.environ:   
+if 'TEST_DATADIR' in os.environ:
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/cvel/'
     if os.path.isdir(DATADIR):
         testmms = True
         datapath = DATADIR
-
-print('cvel2 tests will use data from '+datapath)     
+        print('cvel2 tests will use data from '+datapath)
     
 if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
     ParallelTaskHelper.bypassParallelProcessing(1)
@@ -37,7 +57,6 @@ vis_f = 'test_cvel1.ms'
 vis_g = 'jup.ms'
 outfile = 'cvel-output.ms'
 
-mytb = tbtool()
 myms = mstool()
 
 def verify_ms(msname, expnumspws, expnumchan, inspw, expchanfreqs=[]):
@@ -82,7 +101,7 @@ class test_base(unittest.TestCase):
         if testmms:
             os.system('cp -RL ' + datapath + vis_a + ' .')
         elif (not os.path.exists(vis_a)):
-            importuvfits(fitsfile=os.environ.get('CASAPATH').split()[0] + '/data/regression/ngc4826/fitsfiles/ngc4826.ll.fits5', # 10 MB
+            importuvfits(fitsfile=ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5'), # 10 MB
                          vis=vis_a)
             
     def setUp_vis_b(self):
@@ -90,35 +109,35 @@ class test_base(unittest.TestCase):
         if testmms:
             os.system('cp -RL ' + datapath + vis_b + ' .')
         elif(not os.path.exists(vis_b)):
-            os.system('cp -R '+os.environ.get('CASAPATH').split()[0] + '/data/regression/fits-import-export/input/test.ms .') # 27 MB
+            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .') # 27 MB
     
     def setUp_vis_c(self):
         # 93 scans, spw=0,1, data
         if testmms:
             os.system('cp -RL ' + datapath + vis_c + ' .')
         elif(not os.path.exists(vis_c)):
-            os.system('cp -R '+os.environ.get('CASAPATH').split()[0] + '/data/regression/cvel/input/jupiter6cm.demo-thinned.ms .') # 124 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') # 124 MB
 
     def setUp_vis_d(self):
         # scan=3,4 spw=0~23, data
         if testmms:
             os.system('cp -RL ' + datapath + vis_d + ' .')
         elif(not os.path.exists(vis_d)):
-            os.system('cp -R '+os.environ.get('CASAPATH').split()[0] + '/data/regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms .') # 48 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
 
     def setUp_vis_e(self):
         # scan=44,45 spw=0,1, data
         if testmms:
             os.system('cp -RL ' + datapath + vis_e + ' .')
         elif(not os.path.exists(vis_e)):
-            os.system('cp -R '+os.environ.get('CASAPATH').split()[0] + '/data/regression/cvel/input/evla-highres-sample-thinned.ms .') # 74 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/evla-highres-sample-thinned.ms')+' .') # 74 MB
 
     def setUp_vis_f(self):
         # scan=1,2 spw=0~23, data
         if testmms:
             os.system('cp -RL ' + datapath + vis_f + ' .')
         elif(not os.path.exists(vis_f)):
-            os.system('cp -R '+os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/cvel/test_cvel1.ms .') # 39 MB
+            os.system('cp -R '+ctsys_resolve('regression/unittest/cvel/test_cvel1.ms')+' .') # 39 MB
             
     def setUp_vis_g(self):
         if testmms:
@@ -150,7 +169,7 @@ class test_base(unittest.TestCase):
             mytb.putcol('TIME', a)
             mytb.close()
             myms.open(vis_g, nomodify=False)
-            myms.addephemeris(0,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab',
+            myms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
                             'Jupiter_54708-55437dUTC', 0)
             myms.close()
     
@@ -162,12 +181,13 @@ class test_base(unittest.TestCase):
            self.cleanup()
 
         os.system('cp -RL '+self.datapath + self.vis +' '+ self.vis)
-        default(cvel2)
+        if not is_CASA6:
+            default(cvel2)
 
     def setUp_mms_vis_c(self):
         # 93 scans, spw=0,1
         if (not os.path.exists(vis_c)):
-            os.system('cp -R '+os.environ.get('CASAPATH').split()[0] + '/data/regression/cvel/input/jupiter6cm.demo-thinned.ms .') 
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') 
 
     def createMMS(self, msfile, axis='auto',scans='',spws='', fields='', numms=64):
         '''Create MMSs for tests with input MMS'''
@@ -175,7 +195,8 @@ class test_base(unittest.TestCase):
         
         # Create an MMS for the tests
         self.testmms = "cvel_input_test.mms"
-        default(partition)
+        if not is_CASA6:
+            default(partition)
         
         if os.path.exists(self.testmms):
             os.system("rm -rf " + self.testmms)
@@ -195,21 +216,31 @@ class cvel2_test(test_base):
         self.setUp_vis_b()
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
+        passes = False
         try:
-            cvel2()
-        except Exception:
+            rval = cvel2()
+            # CASA5 returns False for this expected error
+            passes = not rval
+        except AssertionError:
+            passes = True
             print('Expected error!')
-    
+        self.assertTrue(passes)
+
     def test2(self):
         '''cvel2 2: Only input vis set - expected error'''
         self.setUp_vis_b()
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
+        passes = False
         try:
-            cvel2(vis = 'myinput.ms')
-        except Exception:
+            rval = cvel2(vis = 'myinput.ms')
+            # CASA5 returns False for this expected error
+            passes = not rval
+        except AssertionError:
+            passes = True
             print('Expected error!')
-            
+        self.assertTrue(passes)
+
     def test3(self):
         '''cvel2 3: Input and output vis set'''
         self.setUp_vis_b()
@@ -936,7 +967,7 @@ class cvel2_test(test_base):
         os.system('ln -sf ' + myvis + ' myinput.ms')
         mytb.open('myinput.ms/SPECTRAL_WINDOW')
         a = mytb.getcell('CHAN_FREQ')
-        c =  qa.constants('c')['value']
+        c =  myqa.constants('c')['value']
         mytb.close()
         
         restf = a[0] 
@@ -965,7 +996,7 @@ class cvel2_test(test_base):
         os.system('ln -sf ' + myvis + ' myinput.ms')
         mytb.open('myinput.ms/SPECTRAL_WINDOW')
         a = mytb.getcell('CHAN_FREQ')
-        c =  qa.constants('c')['value']
+        c =  myqa.constants('c')['value']
         mytb.close()
 
         restf = a[0] 
@@ -994,7 +1025,7 @@ class cvel2_test(test_base):
         os.system('ln -sf ' + myvis + ' myinput.ms')
         mytb.open('myinput.ms/SPECTRAL_WINDOW')
         a = mytb.getcell('CHAN_FREQ')
-        c =  qa.constants('c')['value']
+        c =  myqa.constants('c')['value']
         mytb.close()
         
         restf = a[0] 
@@ -1027,7 +1058,7 @@ class cvel2_test(test_base):
         os.system('ln -sf ' + myvis + ' myinput.ms')
         mytb.open('myinput.ms/SPECTRAL_WINDOW')
         a = mytb.getcell('CHAN_FREQ')
-        c =  qa.constants('c')['value']
+        c =  myqa.constants('c')['value']
         mytb.close()
         
         restf = a[0] 
@@ -1395,7 +1426,7 @@ class cvel2_test(test_base):
             keepmms=False
             )
 
-        self.assertFalse(ParallelDataHelper.isParallelMS(outfile),'Output shold be an MS')
+        self.assertFalse(ParallelDataHelper.isParallelMS(outfile),'Output should be an MS')
         self.assertNotEqual(rval,False)
         ret = verify_ms(outfile, 1, 2, 0)
         self.assertTrue(ret[0],ret[1])
@@ -1423,3 +1454,6 @@ class cleanup(unittest.TestCase):
 def suite():
     return [cvel2_test, cleanup]
 
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
