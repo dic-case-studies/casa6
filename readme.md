@@ -88,7 +88,7 @@ The **./setup.py genmake** command creates a file named *makefile* with the make
 
 A non-exhaustive list of when **./setup.py genmake** followed by **make** will need to be rerun includes:
 * modification of cerberus files. These are copied by **./setup.py genmake**; **make** does not deal with them
-* changes in tool dependencies when modifying *<tool>.xml* files. If one does not change tool dependencies when modifying *<tool.xml>* files, they need only rerun **make**. However, if a new tool dependency is introduced or an existing dependency removed (eg via a function return value), one will have to start by rerunning **./setup.py genmake** so the new dependency can propagate to the the *makefile*.
+* changes in tool dependencies when modifying *&lt;tool&gt;.xml* files. If one does not change tool dependencies when modifying *&lt;tool&gt;.xml* files, they need only rerun **make**. However, if a new tool dependency is introduced or an existing dependency removed (eg via a function return value), one will have to start by rerunning **./setup.py genmake** so the new dependency can propagate to the the *makefile*.
 
 #### See If It Works
 
