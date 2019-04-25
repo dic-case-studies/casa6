@@ -1301,8 +1301,7 @@ class create_makefile(Command):
         GRPC_REGISTRAR = []
         if duse_grpc:
             grpc_registrar_dir = 'build' + os.sep + distutils_dir_name("binding") + os.sep + "grpc"
-            grpc_registrar_files = ['registrar.grpc.pb.cc', 'registrar.pb.cc']
-            GRPC_REGISTRAR = [grpc_registrar_dir + os.sep + s for s in grpc_registrar_files]
+            GRPC_REGISTRAR = source_files(grpc_registrar_dir, file_suffix_filter=".cc")
         # the binding/source files need to be put into the casatools library, so compile 
         # them here
         SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
