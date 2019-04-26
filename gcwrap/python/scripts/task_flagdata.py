@@ -5,13 +5,48 @@ import os
 import sys
 import copy
 import pprint
-from taskinit import casalog, mstool, aftool, tbtool, qa
-from mstools import write_history
-import flaghelper as fh
-from parallel.parallel_task_helper import ParallelTaskHelper
-from parallel.parallel_data_helper import ParallelDataHelper
-# this should be replaced when CASA really moves to Python 2.7
-from OrderedDictionary import OrderedDict
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from . import flaghelper as fh
+    from .mstools import write_history
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    # this should be replaced when CASA really moves to Python 2.7
+    from collections import OrderedDict
+    from casatasks import casalog
+    from casatools import ms, agentflagger, quanta, table
+
+    localqa = quanta()
+else:
+    from taskinit import casalog, qa
+    from taskinit import mstool as ms
+    from taskinit import aftool as agentflagger
+    from taskinit import tbtool as table
+    from mstools import write_history
+    import flaghelper as fh
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    from parallel.parallel_data_helper import ParallelDataHelper
+    # this should be replaced when CASA really moves to Python 2.7
+    from OrderedDictionary import OrderedDict
+
+    # not really local
+    localqa = qa
+
+# common function to use to get dictionary item and keys iterators
+if is_python3:
+    def lociteritems(adict):
+        return adict.items()
+
+    def lociterkeys(adict):
+        return adict.keys()
+else:
+    def lociteritems(adict):
+        return adict.iteritems()
+
+    def lociterkeys(adict):
+        return adict.iterkeys()
 
 debug = False
 
@@ -226,7 +261,7 @@ def flagdata(vis,
         if ((mode == 'summary') and ((minrel != 0.0) or (maxrel != 1.0) or (minabs != 0) or (maxabs != -1))):
             filterSummary = True
             
-            myms = mstool()
+            myms = ms()
             myms.open(vis)
             subMS_list = myms.getreferencedtables()
             myms.close()
@@ -247,7 +282,7 @@ def flagdata(vis,
         # By-pass options to filter summary
         if savepars:  
             
-            myms = mstool()
+            myms = ms()
             myms.open(vis)
             subMS_list = myms.getreferencedtables()
             myms.close()
@@ -284,9 +319,8 @@ def flagdata(vis,
     # ***************** Input is a normal MS/cal table ****************
     
     # Create local tools
-#    aflocal = casac.agentflagger()
-    aflocal = aftool()
-    mslocal = mstool()
+    aflocal = agentflagger()
+    mslocal = ms()
 
     try: 
         # Verify the ntime value
@@ -304,11 +338,11 @@ def flagdata(vis,
                 newtime = 0.0
             else:
                 # read the units from the string
-                qtime = qa.quantity(ntime)
+                qtime = localqa.quantity(ntime)
                 
                 if qtime['unit'] == 'min':
                     # convert to seconds
-                    qtime = qa.convert(qtime, 's')
+                    qtime = localqa.convert(qtime, 's')
                 elif qtime['unit'] == '':
                     qtime['unit'] = 's'
                     
@@ -571,7 +605,7 @@ def flagdata(vis,
             
             tempdict = copy.deepcopy(seldic)
             # Remove the empty parameters
-            for k,v in seldic.iteritems():
+            for k,v in lociteritems(seldic):
                 if v == '':
                     tempdict.pop(k)
             
@@ -673,7 +707,7 @@ def flagdata(vis,
                 
             # CAS-3966 Add datacolumn to display agent parameters
             # Check if FLOAT_DATA exist instead
-            tblocal = tbtool()
+            tblocal = table()
             tblocal.open(vis)
             allcols = tblocal.colnames()
             tblocal.close()
@@ -745,7 +779,11 @@ def flagdata(vis,
             if mode != 'summary' and action == 'apply':
                 try:
                     param_names = flagdata.__code__.co_varnames[:flagdata.__code__.co_argcount]
-                    param_vals = [eval(p) for p in param_names]
+                    if is_python3:
+                        vars = locals( )
+                        param_vals = [vars[p] for p in param_names]
+                    else:
+                        param_vals = [eval(p) for p in param_names]
                     retval &= write_history(mslocal, vis, 'flagdata', param_names,
                                             param_vals, casalog)
                     
@@ -774,14 +812,14 @@ def flagdata(vis,
                ordered_summary_list.pop('nreport')
                
                if len(ordered_summary_list) == 1:
-                   repkey = ordered_summary_list.keys()
+                   repkey = list(ordered_summary_list.keys())
                    summary_stats_list = ordered_summary_list.pop(repkey[0])
                else:                       
                    # rename the keys of the dictionary according to
                    # the number of reports left in dictionary
                    counter = 0
                    summary_reports = OrderedDict()
-                   for k in ordered_summary_list.iterkeys():
+                   for k in lociterkeys(ordered_summary_list):
                        repname = "report"+str(counter)
                        summary_reports[repname] = ordered_summary_list[k]
                        counter += 1
@@ -821,14 +859,14 @@ def filter_summary(summary_stats,minrel,maxrel,minabs,maxabs):
     if type(summary_stats) is dict:
         if  'flagged' in summary_stats and \
             'total' in summary_stats and \
-            'type' not in summary_stats:
+            not 'type' in summary_stats:
             if  (summary_stats['flagged'] < minabs) or \
                 (summary_stats['flagged'] > maxabs and maxabs >= 0) or \
                 (summary_stats['flagged'] * 1.0 / summary_stats['total'] < minrel) or \
                 (summary_stats['flagged'] * 1.0 / summary_stats['total'] > maxrel):
                 return None
         else:
-             for x in summary_stats.keys():
+             for x in list(summary_stats.keys()):
                  res = filter_summary(summary_stats[x],minrel,maxrel,minabs,maxabs)
                  if res == None: del summary_stats[x]
                  

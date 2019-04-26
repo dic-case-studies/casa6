@@ -3,7 +3,15 @@ from __future__ import print_function
 import os
 import time
 import copy
-from taskinit import *
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import agentflagger
+    from casatasks import casalog
+else:
+    from taskinit import *
+
+    agentflagger = casac.agentflagger
 
 
 def flagmanager(
@@ -16,7 +24,7 @@ def flagmanager(
     ):
 
     casalog.origin('flagmanager')
-    aflocal = casac.agentflagger()
+    aflocal = agentflagger()
 
     try:
         if type(vis) == str and os.path.exists(vis):
@@ -109,11 +117,9 @@ def flagmanager(
                 raise Exception('No such flagversions: ' + str(oldname))
             
             if os.path.exists(newdir):
-                raise Exception('Flagversions ' + str(versionname) \
-                    + ' already exists!')
+                raise Exception('Flagversions ' + str(versionname) + ' already exists!')
 
-            casalog.post('Rename flagversions "%s" to "%s"' % (oldname,
-                         versionname))
+            casalog.post('Rename flagversions "%s" to "%s"' % (oldname,versionname))
 
             os.rename(olddir, newdir)
 
@@ -137,9 +143,6 @@ def flagmanager(
             raise Exception('Unknown mode' + str(mode))
         
         aflocal.done()
-    except Exception as instance:
-#        print '*** Error ***', instance
+    except Exception:
         aflocal.done()
-        raise instance
-
-
+        raise

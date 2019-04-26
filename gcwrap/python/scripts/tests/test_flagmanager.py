@@ -4,22 +4,33 @@ import shutil
 import unittest
 import os
 import sys
-from tasks import flagdata, flagmanager
-from taskinit import aftool, tbtool
-from __main__ import default
-import exceptions
-import __builtin__
-from parallel.parallel_task_helper import ParallelTaskHelper
-from casa_stack_manip import stack_frame_find
-import flaghelper as fh
 
-# to rethrow exception 
-import inspect
-g = stack_frame_find( )
-g['__rethrow_casa_exceptions'] = True
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import flagdata, flagmanager
+    from casatools import ctsys, agentflagger
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
-# Path for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+    # CASA6 doesn't need default
+    def default(atask):
+        pass
+
+    # Path for data
+    datapath = ctsys.resolve('regression/unittest/flagdata')
+else:
+    from tasks import flagdata, flagmanager
+    from taskinit import aftool as agentflagger
+    from __main__ import default
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    from casa_stack_manip import stack_frame_find
+
+    # to rethrow exception - not relevant in casatasks
+    import inspect
+    g = stack_frame_find( )
+    g['__rethrow_casa_exceptions'] = True
+
+    # Path for data
+    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -36,7 +47,7 @@ if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
     ParallelTaskHelper.bypassParallelProcessing(1)
 
 # Local copy of the agentflagger tool
-aflocal = aftool()
+aflocal = agentflagger()
 
 # Base class which defines setUp functions for importing different data sets
 class test_base(unittest.TestCase):
@@ -49,7 +60,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -r ' + os.path.join(datapath,self.vis) + ' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -62,9 +73,7 @@ class test_base(unittest.TestCase):
             print("The CalTable is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            os.system('cp -r ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
         default(flagdata)
@@ -308,7 +317,6 @@ def suite():
             test_flagmanager_caltables,
             cleanup]
 
-
-
-
- 
+if is_CASA6:    
+    if __name__ == '__main__':
+        unittest.main()

@@ -1,16 +1,45 @@
 from __future__ import absolute_import
 from __future__ import print_function
+import os
 import shutil
 import unittest
-import os
 import filecmp
 import pprint
-from tasks import flagcmd, flagdata, mstransform, setjy
-from taskinit import aftool, tbtool
-from __main__ import default
-import exceptions
-from parallel.parallel_task_helper import ParallelTaskHelper
-import flaghelper as fh
+import numpy as np
+from numpy import array
+import ast
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    import sys
+
+    from casatasks import flagcmd, flagdata, mstransform, setjy, delmod, split
+    from casatools import ctsys, agentflagger, table
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+    from casatasks.private import flaghelper as fh
+
+    ### for testhelper import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import testhelper as th
+
+    # CASA6 doesn't need defaul
+    def default(atask):
+        pass
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from tasks import flagcmd, flagdata, mstransform, setjy, delmod, split
+    from taskinit import aftool as agentflagger
+    from taskinit import tbtool as table
+    from __main__ import default
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    import flaghelper as fh
+    import testhelper as th
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+
 #from IPython.kernel.core.display_formatter import PPrintDisplayFormatter
 
 #
@@ -45,7 +74,7 @@ def create_input(str_text, filename):
     return
 
 # Path for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+datapath = ctsys_resolve("regression/unittest/flagdata")
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -62,7 +91,7 @@ if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
     ParallelTaskHelper.bypassParallelProcessing(1)
 
 # Local copy of the agentflagger tool
-aflocal = aftool()
+aflocal = agentflagger()
 
 
 class test_dict_consolidation(unittest.TestCase):
@@ -71,8 +100,6 @@ class test_dict_consolidation(unittest.TestCase):
     a start as a bunch of checks specific to flagdata dictionaries and rflag in particular'''
     def test_flagdata_dict_consolidation(self):
         '''flagdata:: test return dictionary consolidation functions from parallel_task_helper'''
-        import numpy as np
-        from numpy import array
 
         def assert_dict_allclose(dicta, dictb):
             """
@@ -212,7 +239,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -226,10 +253,10 @@ class test_base(unittest.TestCase):
         if force:
             # Need a fresh restart. Copy the MS
             shutil.rmtree(self.vis, True)
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
  
         elif not os.path.exists(self.vis):
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)            
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)            
             
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -245,7 +272,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 #        self.unflag_ms()
@@ -274,7 +301,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         default(flagdata)
@@ -288,7 +315,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         default(flagdata)
@@ -301,7 +328,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -315,7 +342,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -329,7 +356,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -342,10 +369,10 @@ class test_base(unittest.TestCase):
         if force:
             # Need a fresh restart. Copy the MS
             shutil.rmtree(self.vis, True)
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
  
         elif not os.path.exists(self.vis):
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)            
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)            
             
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -364,8 +391,8 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
@@ -379,8 +406,8 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
         self.unflag_ms()        
@@ -395,8 +422,8 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -404,7 +431,7 @@ class test_base(unittest.TestCase):
         
     def setUp_weightcol(self):
         '''Small MS with two rows and WEIGHT column'''
-        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
+        datapath = ctsys_resolve("regression/unittest/mstransform")
 
         inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
         self.vis = "msweight.ms"
@@ -413,7 +440,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH ' + datapath + inpvis + ' ' + self.vis)
+            os.system('cp -RH '+os.path.join(datapath,inpvis)+' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -421,20 +448,20 @@ class test_base(unittest.TestCase):
         
     def setUp_tbuff(self):
         '''Small ALMA MS with low-amp points to be flagged with tbuff parameter'''
-        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+        datapath = ctsys_resolve("regression/unittest/flagdata")
         
         self.vis = 'uid___A002_X72c4aa_X8f5_scan21_spw18_field2_corrXX.ms'
         if os.path.exists(self.vis):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH ' + datapath + self.vis + ' ' + self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' ' + self.vis)
 
         # Copy the online flags file
         self.online = 'uid___A002_X72c4aa_X8f5_online.txt'
         self.user = 'uid___A002_X72c4aa_X8f5_user.txt'
-        os.system('cp -RH ' + datapath + self.online + ' ' + self.online)
-        os.system('cp -RH ' + datapath + self.user + ' ' + self.user)
+        os.system('cp -RH '+os.path.join(datapath,self.online)+' ' + self.online)
+        os.system('cp -RH '+os.path.join(datapath,self.user)+' ' + self.user)
         
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
@@ -466,7 +493,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 
@@ -629,7 +656,6 @@ class test_rflag(test_base):
     def test_rflag_numpy_types(self):
         '''flagdata:: mode = rflag : partially-specified thresholds using numpy types'''
         # Results should be the same as in test_rflag_partial_thresholds above
-        import numpy as np
         t1 = [np.int32(1), 10, np.float32(0.1)]
         t2 = [1, np.int16(11), np.float64(0.07)]
 
@@ -645,9 +671,6 @@ class test_rflag(test_base):
         '''flagdata:: mode = rflag : use output/input time/freq threshold files via two methods, and with different scales'''
             
         def check_threshold_files_saved(timedev_filename, freqdev_filename):
-            import ast
-            import numpy as np
-            import os.path
 
             self.assertTrue(os.path.isfile(freqdev_filename))
             self.assertTrue(os.path.isfile(timedev_filename))
@@ -750,7 +773,6 @@ class test_rflag(test_base):
         '''flagdata:: mode = rflag : output/input via returned dictionary and cmd'''
         # (1) Test input/output files, through the task, mode='rflag'
         # Files tdevfile.txt and fdevfile.txt are created in this step
-        import numpy as np
 
         rdict = flagdata(vis=self.vis, mode='rflag', spw='9,10', timedev='', 
                           freqdev='', action='calculate', extendflags=False)
@@ -818,7 +840,6 @@ class test_rflag(test_base):
         fdev = rflag_dict['report0']['freqdev']
         tdev = rflag_dict['report0']['timedev']
 
-        import numpy as np
         self.assertTrue(isinstance(fdev, np.ndarray))
         self.assertEqual(fdev.ndim, 2)
         self.assertEqual(fdev.shape, (1,3))
@@ -909,7 +930,6 @@ class test_rflag(test_base):
 
     def test_rflag_residual_data(self):
         '''flagdata: rflag using MODEL and virtual MODEL columns'''
-        from tasks import delmod
 
         # Delete model columns, if any
         delmod(vis=self.vis,otf=True,scr=True)
@@ -970,7 +990,7 @@ class test_shadow(test_base):
         
         flagdata(vis=self.vis, mode='shadow', tolerance=0.0, addantenna=filename,flagbackup=False)
         res = flagdata(vis=self.vis, mode='summary')
-        ##print res['antenna']['VLA3']['flagged'], res['antenna']['VLA4']['flagged'], res['antenna']['VLA5']['flagged']
+        ##print(res['antenna']['VLA3']['flagged'], res['antenna']['VLA4']['flagged'], res['antenna']['VLA5']['flagged'])
         self.assertEqual(res['antenna']['VLA3']['flagged'], 3752)
         self.assertEqual(res['antenna']['VLA4']['flagged'], 1320)
         self.assertEqual(res['antenna']['VLA5']['flagged'], 1104)
@@ -1113,7 +1133,7 @@ class test_msselection(test_base):
         # Copy the input flagcmd file with a non-existing spw name
         # flagsfile has spw='"Subband:1","Subband:2","Subband:8"
         flagsfile = 'cas9366.flags.txt'
-        os.system('cp -rf '+datapath + flagsfile +' '+ ' .')
+        os.system('cp -rf '+os.path.join(datapath,flagsfile)+' '+ ' .')
         
         # Try to flag
         try:
@@ -1211,18 +1231,18 @@ class test_statistics_queries(test_base):
         flagdata(vis=self.vis, antenna='VA14', savepars=False, flagbackup=False)
         flagdata(vis=self.vis, field='1', savepars=False, flagbackup=False)
         s = flagdata(vis=self.vis, mode='summary', minrel=0.9, spwchan=True, basecnt=True)
-        assert s['antenna'].keys() == ['VA14']
-        assert 'VA05&&VA09' in s['baseline'].keys()
-        assert set(s['spw:channel'].keys()) == set(['0:17', '0:18', '0:19'])
-        assert s['correlation'].keys() == ['LL']  # LL
-        assert s['field'].keys() == ['1445+09900002_0']
-        assert set(s['scan'].keys()) == set(['2', '4', '5', '7']) # field 1
+        assert list(s['antenna'].keys()) == ['VA14']
+        assert 'VA05&&VA09' in s['baseline']
+        assert set(s['spw:channel']) == set(['0:17', '0:18', '0:19'])
+        assert list(s['correlation'].keys()) == ['LL']  # LL
+        assert list(s['field'].keys()) == ['1445+09900002_0']
+        assert set(s['scan']) == set(['2', '4', '5', '7']) # field 1
         s = flagdata(vis=self.vis, mode='summary', maxrel=0.8)
-        assert set(s['field'].keys()) == set(['1331+30500002_0', 'N5921_2'])
+        assert set(s['field']) == set(['1331+30500002_0', 'N5921_2'])
         s = flagdata(vis=self.vis, mode='summary', minabs=400000)
-        assert set(s['scan'].keys()) == set(['3', '6'])
+        assert set(s['scan']) == set(['3', '6'])
         s = flagdata(vis=self.vis, mode='summary', minabs=400000, maxabs=450000)
-        assert s['scan'].keys() == ['3']
+        assert list(s['scan'].keys()) == ['3']
 
     def test_chanavg0(self):
         print("Test of channel average")
@@ -1251,8 +1271,8 @@ class test_statistics_queries(test_base):
                
 
 #    def test8(self):
-#        print "Test of mode = 'quack'"
-#        print "parallel quack"
+#        print("Test of mode = 'quack'")
+#        print("parallel quack")
 #        flagdata(vis=self.vis, mode='quack', quackinterval=[1.0, 5.0], antenna=['2', '3'], correlation='RR')
 #        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 22365)
 #
@@ -1965,7 +1985,7 @@ class test_list_file(test_base):
             if ( ind > 0 ):
                  flagcount = flagcount - summary_reps[ind-1]['flagged'];
          
-            print("Summary ", ind , "(" , summary_reps[ind]['name']  , ") :  Flagged : " , flagcount , " out of " , totalcount) ;   
+            print("Summary ", ind , "(" , summary_reps[ind]['name']  , ") :  Flagged : " , flagcount , " out of " , totalcount)
          
         self.assertEqual(summary_reps[0]['flagged'],238140, 'Should show only scan=2 flagged')    
         self.assertEqual(summary_reps[1]['flagged']-summary_reps[0]['flagged'],0, 'Should not flag any zeros')    
@@ -2009,7 +2029,7 @@ class test_list_file(test_base):
         try:
             res = flagdata(vis=self.vis, mode='list', inpfile=filename, flagbackup=False)
             
-        except exceptions.IOError as instance:
+        except IOError as instance:
             print('Expected error!')
         
     def test_file_scan_list(self):
@@ -2024,7 +2044,7 @@ class test_list_file(test_base):
         try:
             res = flagdata(vis=self.vis, mode='list', inpfile=filename, flagbackup=False)
             
-        except exceptions.IOError as instance:
+        except IOError as instance:
             print('Expected error!')
                
     def test_file_overwrite_true(self):
@@ -2259,7 +2279,7 @@ class test_clip(test_base):
         self.setUp_data4tfcrop()
         
     def test_clipzeros(self):
-    	'''flagdata: clip only zero-value data'''
+        '''flagdata: clip only zero-value data'''
         flagdata(vis=self.vis, mode='clip', clipzeros=True, flagbackup=False)
         res = flagdata(vis=self.vis, mode='summary', spw='8')
         self.assertEqual(res['flagged'],274944,'Should clip only spw=8')
@@ -2323,7 +2343,6 @@ class test_clip(test_base):
     def test_timeavg1(self):
         '''flagdata: clip with time average and compare with mstransform'''
         # Create an output with 4 rows
-        from tasks import split
         split(vis=self.vis,outputvis='timeavg.ms',datacolumn='data',spw='9',scan='30',antenna='1&2',
                timerange='2010/10/16/14:45:08.50~2010/10/16/14:45:11.50')
         
@@ -2428,7 +2447,6 @@ class test_clip(test_base):
     def test_clip_virtual_model_col_use_delmod(self):
         "flagdata: Should flag DATA-MODEL when RESIDUAL-DATA is asked"
         self.setUp_ngc5921(True)
-        from tasks import delmod
         os.system('cp -r '+self.vis + ' ngc5921_virtual_model_col.ms')
 
         # Create virtual MODEL column
@@ -2458,7 +2476,7 @@ class test_antint(test_base):
         self.setUp_data4tfcrop()
         
     def test_antint_spw3_high_threshold(self):
-    	'''flagdata: mode = antint, spw = 3, minchanfrac = 0.6'''
+        '''flagdata: mode = antint, spw = 3, minchanfrac = 0.6'''
 
         flagdata(vis=self.vis, mode='antint', spw='3', antint_ref_antenna='ea01', minchanfrac=0.6)
         res = flagdata(vis=self.vis, mode='summary', spw='3')
@@ -2469,7 +2487,7 @@ class test_antint(test_base):
         self.assertEqual(res['spw']['3']['flagged'], 0)
 
     def test_antint_spw3_low_threshold(self):
-    	'''flagdata: mode = antint, spw = 3, minchanfrac = -.1'''
+        '''flagdata: mode = antint, spw = 3, minchanfrac = -.1'''
 
         flagdata(vis=self.vis, mode='antint', spw='3', antint_ref_antenna='ea01', minchanfrac=-.1)
         res = flagdata(vis=self.vis, mode='summary', spw='3')
@@ -2480,7 +2498,7 @@ class test_antint(test_base):
         self.assertEqual(res['spw']['3']['flagged'], 274944)
 
     def test_antint_spw0_high_threshold(self):
-    	'''flagdata: mode = antint, spw = 0, minchanfrac = 0.45'''
+        '''flagdata: mode = antint, spw = 0, minchanfrac = 0.45'''
 
         flagdata(vis=self.vis, mode='antint', spw='0', antint_ref_antenna='ea01', minchanfrac=0.45)
         res = flagdata(vis=self.vis, mode='summary', spw='0')
@@ -2491,7 +2509,7 @@ class test_antint(test_base):
         self.assertEqual(res['spw']['0']['flagged'], 0)
 
     def test_antint_spw0_low_threshold(self):
-    	'''flagdata: mode = antint, spw = 0, minchanfrac = 0.05'''
+        '''flagdata: mode = antint, spw = 0, minchanfrac = 0.05'''
 
         flagdata(vis=self.vis, mode='antint', spw='0', antint_ref_antenna='ea01', minchanfrac=0.05)
         res = flagdata(vis=self.vis, mode='summary', spw='0')
@@ -2737,7 +2755,7 @@ class test_tsys(test_base):
         '''Flagdata: unsupported scan selection'''
         try:
             flagdata(vis=self.vis, scan='2', flagbackup=False)
-        except exceptions.RuntimeError as instance:
+        except RuntimeError as instance:
             print('Expected error: %s'%instance)
 
     def test_default_fparam(self):
@@ -3053,7 +3071,7 @@ class test_bandpass(test_base):
         '''Flagdata: unkonwn scan selection in cal tables'''
         try:
             flagdata(vis=self.vis, scan='1', flagbackup=False)
-        except exceptions.RuntimeError as instance:
+        except RuntimeError as instance:
             print('Expected error: %s'%instance)
 
     def test_default_cparam(self):
@@ -3879,7 +3897,6 @@ class test_preaveraging(test_base):
         self.assertEqual(res1['type'], 'list')
         self.assertEqual(res1['type'], res2['type'])
 
-        import numpy as np
         # The tolerance for timedev needs to be absurdly big because of osx 10.12
         # See CAS-11572, the "data4preaveraging" dataset should have more than 4 rows.
         tolerances = [1.1, 7.5e-1]
@@ -4010,7 +4027,6 @@ class test_preaveraging_rflag_residual(test_base):
                         extendflags=False)
 
         def check_reports_timeavg(report1, report2, report3):
-            import numpy as np
             self.assertEqual(report2['type'], 'rflag')
             self.assertEqual(report3['type'], report2['type'])
             freq_tol = 1e-1
@@ -4060,7 +4076,6 @@ class test_preaveraging_rflag_residual(test_base):
                         extendflags=False)
 
         def check_reports_channelavg(report1, report2, report3):
-            import numpy as np
             self.assertEqual(report2['type'], 'rflag')
             self.assertEqual(report3['type'], report2['type'])
             # divide 3rd column (thresholds). Matrices have rows like: field, spw, threshold.
@@ -4096,7 +4111,7 @@ class test_virtual_col(test_base):
     def test_no_model_col(self):
         '''flagdata: catch failure when MODEL or virtual MODEL do not exist'''
         # Verify that a MODEL or virtual MODEL column do not exist in MS
-        tblocal = tbtool()
+        tblocal = table()
         tblocal.open(self.vis)
         cols = tblocal.colnames()
         tblocal.close()
@@ -4123,7 +4138,6 @@ class test_virtual_col(test_base):
                 scalebychan=False, usescratch=False)
         
         # Verify that the virtual column exist
-        import testhelper as th
         mcol = th.getColDesc(self.MSvirtual+'/SOURCE', 'SOURCE_MODEL')
         mkeys = mcol.keys()
         self.assertTrue(mkeys.__len__() > 0, 'Should have a SOURCE_MODEL column')
@@ -4197,3 +4211,7 @@ def suite():
             test_preaveraging_rflag_residual,
             test_virtual_col,
             cleanup]
+
+if is_CASA6:    
+    if __name__ == '__main__':
+        unittest.main()
