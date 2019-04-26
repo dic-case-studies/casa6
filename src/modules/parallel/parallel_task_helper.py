@@ -12,7 +12,11 @@ if is_CASA6:
     from casatools import table as tbtool
     from casatools import ms as mstool
     from casatasks import casalog
+    from casatasks.private.parallel.rflag_post_proc import combine_rflag_subreport, is_rflag_report
+    from casatasks.private.parallel.rflag_post_proc import finalize_agg_rflag_thresholds
 else:
+    from parallel.rflag_post_proc import combine_rflag_subreport, is_rflag_report
+    from parallel.rflag_post_proc import finalize_agg_rflag_thresholds
     import partitionhelper as ph
     from taskinit import *
 
@@ -353,8 +357,6 @@ class ParallelTaskHelper:
         Combines a flagging (sub-)report dictionary dict_list (from a subMS) into an overall
         report dictionary (ret_dict).
         """
-        from parallel.rflag_post_proc import combine_rflag_subreport, is_rflag_report
-
         for key, item in dict_list.items():
             if isinstance(item, dict):
                 if key in ret_dict:
@@ -381,8 +383,6 @@ class ParallelTaskHelper:
         """ Applies final step to the items of the report dictionary.
         For now only needs specific processing to finalize the aggregation of the RFlag
         thresholds (freqdev/timedev) vectors. """
-
-        from parallel.rflag_post_proc import finalize_agg_rflag_thresholds, is_rflag_report
 
         for key, item in ret.items():
             if isinstance(item, dict) and is_rflag_report(item):
