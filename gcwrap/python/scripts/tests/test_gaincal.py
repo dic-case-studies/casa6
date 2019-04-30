@@ -2,12 +2,31 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import shutil
-import testhelper as th
-from __main__ import default
-from tasks import gaincal
-from taskinit import *
 import unittest
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    ### for testhelper import
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    import testhelper as th
+
+    from casatools import ctsys
+    from casatasks import gaincal
+
+    # default is not used in CASA6
+    def default(atask):
+        pass
+    
+    datapath = ctsys.resolve('regression/unittest/gaincal')
+else:
+    import testhelper as th
+    from __main__ import default
+    from tasks import gaincal
+    from taskinit import *
+
+    datapath = os.environ.get('CASAPATH').split()[0] +\
+        '/data/regression/unittest/gaincal/'
 
 ''' Python unit tests for the gaincal task
 
@@ -15,10 +34,6 @@ These tests will only verify if the gain calibration
 tables created for an MS and an MMS agree. These are
 not full unit tests for the gaincal task.
 '''
-
-datapath = os.environ.get('CASAPATH').split()[0] +\
-                            '/data/regression/unittest/gaincal/'
-
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -30,7 +45,7 @@ if 'TEST_DATADIR' in os.environ:
     else:
         print('WARN: directory '+DATADIR+' does not exist')
 
-print('gaincal tests will use data from '+datapath)         
+print('gaincal tests will use data from %s' % datapath)
 
 
 # Base class which defines setUp functions
@@ -49,7 +64,7 @@ class test_base(unittest.TestCase):
 #        if testmms:
 #            self.msfile = prefix + '.mms'
             
-        self.reffile = datapath + prefix
+        self.reffile = os.path.join(datapath,prefix)
         self.cleanUp()
         
         fpath = os.path.join(datapath,self.msfile)
@@ -69,7 +84,7 @@ class test_base(unittest.TestCase):
 #        if testmms:
 #            self.msfile = prefix + '.mms'
             
-        self.reffile = datapath + prefix
+        self.reffile = os.path.join(datapath,prefix)
         self.cleanUp()
 
         fpath = os.path.join(datapath,self.msfile)
@@ -141,14 +156,11 @@ class gaincal2_test(test_base):
 
         # Compare the calibration tables
         self.assertTrue(th.compTables(msgcal, reference, ['WEIGHT']))
-                    
-   
+
+
 def suite():
     return [gaincal1_test, gaincal2_test]
 
-
-
-
-
-
-        
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
