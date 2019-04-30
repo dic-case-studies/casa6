@@ -1,12 +1,20 @@
-import os
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
+import os
 import warnings
 
-from casatools import calibrater
-from casatasks import casalog
-from . import correct_ant_posns as getantposns 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+       from casatools import calibrater
+       from casatasks import casalog
+       from . import correct_ant_posns as getantposns 
 
-_cb = calibrater( )
+       _cb = calibrater( )
+else:
+       from taskinit import *
+       import correct_ant_posns as getantposns 
+       (_cb,) = gentools(['cb'])
 
 def gencal(vis=None,caltable=None,caltype=None,infile=None,
            spw=None,antenna=None,pol=None,
@@ -14,7 +22,7 @@ def gencal(vis=None,caltable=None,caltype=None,infile=None,
 
        """ Externally specify calibration solutions af various types
        """
-
+       
        #Python script
        try:
 
