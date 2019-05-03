@@ -62,15 +62,44 @@
 #
 
 ###########################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import hashlib
 import shutil
 import unittest
 import numpy
 
-from casatools import ctsys, table, image, quanta, componentlist, regionmanager
-from casatools.platform import str2bytes
-from casatasks import imfit
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, image, quanta, componentlist, regionmanager, functional
+    from casatools.platform import str2bytes
+    from casatasks import imfit
+
+    _qa = quanta( )
+    _tb = table( )
+    _rg = regionmanager( )
+
+    datapath=ctsys.resolve('regression/unittest/imfit')
+
+    # CASAtasks doesn't use default
+    def default(atask):
+        pass
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
+    _qa = qa
+    _tb = tb
+    _rg = rg
+
+    image = iatool
+    componentlist =  cltool
+    functional = fntool
+    
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imfit'
 
 noisy_image = "gaussian_model_with_noise.im"
 noisy_image_xx = "gaussian_model_with_noise_xx.im"
@@ -94,12 +123,6 @@ twogest = "2g_estimates.txt"
 circular = "circular_gaussian.im"
 kimage = "bunitk.im"
 decon_im = "decon_test.im"
-
-datapath='regression/unittest/imfit'
-
-_qa = quanta( )
-_tb = table( )
-_rg = regionmanager( )
 
 # are the two specified numeric values relatively close to each other? 
 def near (first, second, epsilon):
@@ -157,7 +180,7 @@ class imfit_test(unittest.TestCase):
             twogim, twogest
         ] :
             if not os.path.exists(f):
-                resolved = ctsys.resolve(os.path.join(datapath,f))
+                resolved = os.path.join(datapath,f)
                 if (os.path.isdir(resolved)):
                     shutil.copytree(resolved,f)
                 if (os.path.isfile(resolved)):
@@ -189,6 +212,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=noisy_image)
     
         for i in [0 ,1]:
@@ -283,6 +307,7 @@ class imfit_test(unittest.TestCase):
                 myia.close()
                 return res
             def run_imfit():
+                default('imfit')
                 return imfit(imagename=noisy_image, box=box, region=region)
             for code in [run_fitcomponents, run_imfit]:
                 self._check_box_results(code())
@@ -400,6 +425,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=noisy_image, box=box)
     
         for code in [run_fitcomponents, run_imfit]:
@@ -452,6 +478,7 @@ class imfit_test(unittest.TestCase):
                 myia.close()
                 return res
             def run_imfit():
+                default('imfit')
                 return imfit(imagename=masked_image, mask=mask, includepix=includepix, excludepix=excludepix)
     
             for code in [run_fitcomponents, run_imfit]:
@@ -524,6 +551,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit(model, residual):
+            default('imfit')
             return imfit(
                 imagename=noisy_image, box=box, residual=residual,
                 model=model
@@ -553,6 +581,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(
                 imagename=convolved_model, box=box,
                 estimates=estimates_convolved
@@ -638,6 +667,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=convolved_model, box=box)
     
         for code in [run_fitcomponents, run_imfit]:
@@ -675,6 +705,7 @@ class imfit_test(unittest.TestCase):
                 code = run_fitcomponents
             else:
                 def run_imfit(append=None):
+                    default('imfit')
                     if (append == None):
                         return imfit(imagename=two_gaussians_image, box=box, estimates=two_gaussians_estimates, logfile=logfile)
                     else:
@@ -690,6 +721,7 @@ class imfit_test(unittest.TestCase):
                 count_matches(logfile, "****** Fit performed") == 1,
                 "unexpected logfile"
             )
+            #default, append
             res = code()
             self.assertTrue(
                 os.path.exists(logfile), "logfile was not written"
@@ -732,6 +764,7 @@ class imfit_test(unittest.TestCase):
                 code = run_fitcomponents
             else:
                 def run_imfit():
+                    default('imfit')
                     return imfit(
                         imagename=two_gaussians_image, box=box, estimates=two_gaussians_estimates,
                         newestimates=newestimates
@@ -740,10 +773,16 @@ class imfit_test(unittest.TestCase):
             res = code()
     
             self.assertTrue(os.path.exists(newestimates)) 
-            expec = ctsys.resolve(os.path.join(datapath,expected_new_estimates))
-            expected_sha = hashlib.sha512(str2bytes(open(expec, 'r').read())).hexdigest()
+            expec = os.path.join(datapath,expected_new_estimates)
+            if is_CASA6:
+                expected_sha = hashlib.sha512(str2bytes(open(expec, 'r').read())).hexdigest()
     
-            got_sha = hashlib.sha512(str2bytes(open(newestimates, 'r').read())).hexdigest()
+                got_sha = hashlib.sha512(str2bytes(open(newestimates, 'r').read())).hexdigest()
+            else:
+                expected_sha = hashlib.sha512(open(expec, 'r').read()).hexdigest()
+    
+                got_sha = hashlib.sha512(open(newestimates, 'r').read()).hexdigest()
+
             self.assertTrue(
                 got_sha == expected_sha,
                 newestimates + " differs from " + expec
@@ -761,6 +800,7 @@ class imfit_test(unittest.TestCase):
             res = myia.fitcomponents(stokes=stokes)
             return res
         def run_imfit(stokes):
+            default('imfit')
             return imfit(imagename=stokes_image, stokes=stokes)
     
         stokes = ['I','Q','U','V']
@@ -836,6 +876,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=gauss_no_pol)
         
         for code in [run_fitcomponents, run_imfit]:
@@ -855,6 +896,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=jyperbeamkms, box=box)
     
         for i in [0 ,1]:
@@ -929,6 +971,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=jyperbeamkms, box=box)
     
         for i in [0 ,1]:
@@ -963,6 +1006,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit(imagename, estimates, overwrite, box=""):
+            default('imfit')
             return imfit(
                 imagename=imagename, estimates=estimates, box=box,
                 complist=complist, overwrite=overwrite
@@ -1023,6 +1067,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(
                 imagename=imagename, chans=chans,
                 mask=mask, complist=complist, estimates=estimates,
@@ -1061,6 +1106,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit(imagename):
+            default('imfit')
             return imfit(
                 imagename=imagename, 
                 box="130,89,170,129", dooff=True, offset=0.0
@@ -1150,6 +1196,7 @@ class imfit_test(unittest.TestCase):
             return res
         j = 0
         def run_imfit(imagename):
+            default('imfit')
             return imfit(
                 imagename=imagename, 
                 box="130,89,170,129", dooff=True,
@@ -1252,6 +1299,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(
                 imagename=imagename, box=box, chans=chans,
                 mask="", complist="", estimates="",
@@ -1311,6 +1359,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=noisy_image_xx)
     
         for i in [0 ,1]:
@@ -1399,6 +1448,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=outname, box=box)
     
         for i in [0 ,1]:
@@ -1422,7 +1472,7 @@ class imfit_test(unittest.TestCase):
     def test_region_selection(self):
         """Test region selection raised in CAS-5093"""
         # from George's tests
-        imagename = ctsys.resolve(os.path.join(datapath,'CAS-5093.im'))
+        imagename = os.path.join(datapath, 'CAS-5093.im')
         myia = image()
         residual = 'framework.resid.tmp'
         myia.open(imagename)
@@ -1440,14 +1490,14 @@ class imfit_test(unittest.TestCase):
     def test_circular_gaussian(self):
         """Test convolved circular gaussian with noise doesn't throw exception (CAS-5211)""" 
         myia = image()
-        myia.open(ctsys.resolve(os.path.join(datapath,"circular_gaussian.im")))
+        myia.open(os.path.join(datapath,"circular_gaussian.im"))
         self.assertTrue(myia.fitcomponents())
         myia.done()
         
     def test_k_image(self):
         """Test brightness units = K, CAS-5711"""
         myia = image()
-        myia.open(ctsys.resolve(os.path.join(datapath,kimage)))
+        myia.open(os.path.join(datapath,kimage))
         # we modify the image, so want to leave the original intact
         sub = myia.subimage()
         myia.done()
@@ -1495,6 +1545,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(imagename=noisy_image, box=box, rms=rms)
         mycl = componentlist()
         for i in [0 ,1]:
@@ -1583,7 +1634,7 @@ class imfit_test(unittest.TestCase):
             self.assertFalse((decon.getshape(0) == con.getshape(0)))
             return [decon, con]
             
-        shutil.copytree(ctsys.resolve(os.path.join(datapath,decon_im)), decon_im)
+        shutil.copytree(os.path.join(datapath,decon_im), decon_im)
         myia = image()
         myia.open(decon_im)
         myia.setrestoringbeam("3arcmin", "3arcmin", "0deg")
@@ -1642,7 +1693,7 @@ class imfit_test(unittest.TestCase):
         
     def test_uncertainties(self):
         """Test uncertainties, CAS-3476"""
-        imagename = ctsys.resolve(os.path.join(datapath,"uncertainties_fixture.im"))
+        imagename = os.path.join(datapath,"uncertainties_fixture.im")
         myia = image()
         mycl = componentlist()
         
@@ -1655,6 +1706,7 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
+            default('imfit')
             return imfit(
                 imagename=imagename, chans=chans,
                 rms=rms, noisefwhm=noisefwhm
@@ -1819,7 +1871,7 @@ class imfit_test(unittest.TestCase):
         resid = "myresid.im"
         model = "mymodel.im"
         myia = image()
-        imagename = ctsys.resolve(os.path.join(datapath,"one_chan_out_of_ten.im"))
+        imagename = os.path.join(datapath,"one_chan_out_of_ten.im")
         self.assertTrue(myia.open(imagename))
         zz = myia.fitcomponents(chans="5", residual=resid, model=model)
         self.assertTrue(zz)
@@ -1840,7 +1892,7 @@ class imfit_test(unittest.TestCase):
     def test_history(self):
         """Test history records are written"""
         myia = image( )
-        im = ctsys.resolve(os.path.join(datapath,convolved_model))
+        im = os.path.join(datapath,convolved_model)
         resid = "myres.im"
         model = "mymod.im"
         myia.open(im)
@@ -1866,8 +1918,8 @@ class imfit_test(unittest.TestCase):
     def test_summary(self):
         """Test summary file, CAS-3478"""
         myia = image()
-        im = ctsys.resolve(os.path.join(datapath,"CAS-3478.im"))
-        estimates = ctsys.resolve(os.path.join(datapath,"CAS-3478_estimates.txt"))
+        im = os.path.join(datapath,"CAS-3478.im")
+        estimates = os.path.join(datapath,"CAS-3478_estimates.txt")
         summary = "summary1.txt"
         myia.open(im)
         zz = myia.fitcomponents(estimates=estimates, summary=summary)
@@ -1877,8 +1929,28 @@ class imfit_test(unittest.TestCase):
         zz = imfit(imagename=im, estimates=estimates, summary=summary)
         self.assertTrue(sum(1 for line in open(summary)) == 6, "summary line count")
         
+    def test_precision(self):
+        """Test double precision image works"""
+        myfn = functional()
+        g2d = myfn.gaussian2d(1, [50,60], [20,10], "-20deg")
+        nxpix = 120
+        nypix = 100
+        pixels = numpy.zeros([nxpix, nypix], dtype=numpy.float64)
+        for x in range(nxpix):
+            for y in range(nypix):
+                pixels[x, y] = g2d.f([x, y])
+        myia = image()
+        for mytype in ['f', 'd']:
+            myia.fromarray("", pixels, type=mytype)
+            zz = myia.fitcomponents()
+            myia.done()
+            self.assertTrue(
+                zz['converged'][0], "did not converge for type " + mytype
+            )
+            
 def suite():
     return [imfit_test]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

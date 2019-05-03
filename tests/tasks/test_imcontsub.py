@@ -97,14 +97,27 @@
 # </todo>
 
 #import random
+from __future__ import absolute_import
 import os
 import shutil
 import unittest
 
-from casatools import ctsys, image
-from casatasks import casalog, imcontsub, immath
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image
+    from casatasks import casalog, imcontsub, immath
 
-_ia = image( )
+    _ia = image( )
+
+    datapath = ctsys.resolve('regression/g192redux/reference')
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+
+    _ia = iatool( )
+    
+    datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/g192redux/reference/'
 
 # Input files
 list = ['g192_a2.image', 'g192_a2.image-2.rgn', 
@@ -132,8 +145,12 @@ class imcontsub_test(unittest.TestCase):
 
     def try_imcs(self, *args, **kwargs):
         passes = False
+        # CASA6 tasks throw exceptions, CASA5 tasks return False
+        # this test is used for expected errors
         try:
-            imcontsub(*args, **kwargs)
+            results = imcontsub(*args, **kwargs)
+            if not results:
+                passes = True
         except:
             passes = True
         self.assertTrue(passes)
@@ -144,7 +161,7 @@ class imcontsub_test(unittest.TestCase):
                 os.system('rm -rf ' +file)
         
         for file in list:
-            os.system('cp -r '+ctsys.resolve(os.path.join('regression/g192redux/reference',file))+' '+file)
+            os.system('cp -r '+os.path.join(datapath,file)+' '+file)
 
 
     def tearDown(self):
@@ -180,6 +197,7 @@ class imcontsub_test(unittest.TestCase):
     def test_bad_linefile(self):
         """ Test bad line file name fails"""
         
+        # FIXME shouldn't a bad linefile name throw an exception?
         filename = 'input_test_line1'
         myfile = open(filename, mode="w")
         myfile.write("x")
@@ -478,5 +496,6 @@ class imcontsub_test(unittest.TestCase):
 def suite():
     return [imcontsub_test]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

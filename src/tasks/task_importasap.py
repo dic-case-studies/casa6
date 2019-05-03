@@ -1,11 +1,25 @@
+from __future__ import absolute_import
 import os
 import re
 
-from casatools import singledishms, calibrater, agentflagger
-from casatasks import casalog
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import singledishms, calibrater, agentflagger, ms
+    from casatasks import casalog
+    from .mstools import write_history
 
-mysdms = singledishms( )
-mycb = calibrater( )
+    mysdms = singledishms( )
+    mycb = calibrater( )
+    myms = ms( )
+else:
+    from taskinit import *
+    from mstools import write_history
+    from casac import casac
+
+    agentflagger = casac.agentflagger
+
+    mysdms, mycb, myms = gentools(['sdms', 'cb', 'ms'])
 
 def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, parallel=None):
     """
@@ -51,6 +65,16 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
                                         comment='Original flags at import into CASA using importasap',
                                         merge='save')
                 aflocal.done()
+
+       # Write history to output MS
+        param_names = importasap.__code__.co_varnames[:importasap.__code__.co_argcount]
+        if is_python3:
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
+        write_history(myms, outputvis, 'importasap', param_names,
+                      param_vals, casalog)
 
         return status
     except Exception as instance:

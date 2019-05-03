@@ -16,17 +16,34 @@
 # Input data:                                                               #
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import unittest
 import numpy
 
-from casatools import ctsys, ms, table
-from casatasks import importatca
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, ms, table
+    from casatasks import importatca
 
-_ms = ms( )
-_tb = table( )
+    _ms = ms( )
+    _tb = table( )
+
+    # enhanced later using ctsys.resolve
+    datapath = 'regression/unittest/importatca'
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    # not local tools
+    _ms = ms
+    _tb = tb
+
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importatca'
 
 myname = 'importatca-unit-test'
 
@@ -58,7 +75,11 @@ def checktable(thename, theexpectation, dataslice=[]):
             else:
                 in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
         else:
-            if isinstance(value, str):
+            if is_CASA6:
+                stype = str
+            else:
+                stype = basestring
+            if isinstance(value, stype):
                 in_agreement = value == mycell[2]
             else:
                 # it's an array
@@ -91,7 +112,12 @@ class test_importatca(unittest.TestCase):
         for fname in my_dataset_names:
             if(os.path.exists(fname)):
                 os.remove(fname)
-            shutil.copy(ctsys.resolve(os.path.join('regression/unittest/importatca',fname)), fname)
+            datasetPath = os.path.join(datapath,fname)
+            if is_CASA6:
+                datasetPath = ctsys.resolve(datasetPath)
+            shutil.copy(datasetPath, fname)
+        if not is_CASA6:
+            default(importatca)
         
     def tearDown(self):
         for fname in my_dataset_names:
@@ -268,6 +294,7 @@ class test_importatca(unittest.TestCase):
     
 def suite():
     return [test_importatca]
-        
-if __name__ == '__main__':
-    unittest.main()
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

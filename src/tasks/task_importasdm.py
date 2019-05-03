@@ -1,13 +1,33 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
-from casatasks import casalog
-from casatools import table, agentflagger, ms, imager, measures, msmetadata, sdm
-from .mstools import write_history
-from . import flaghelper as fh
-from . import convertephem as ce
-from .parallel.parallel_data_helper import ParallelDataHelper
 
-_tb = table( )
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import table, agentflagger, ms, imager, measures, msmetadata, sdm
+    from .mstools import write_history
+    from . import flaghelper as fh
+    from . import convertephem as ce
+    from .parallel.parallel_data_helper import ParallelDataHelper
+
+    _tb = table( )
+else:
+    from taskinit import *
+    from mstools import write_history
+    import flaghelper as fh
+    from casac import casac
+    from parallel.parallel_data_helper import ParallelDataHelper
+    import recipes.ephemerides.convertephem as ce
+
+    agentflagger = casac.agentflagger
+    table = casac.table
+    msmetadata = casac.msmetadata
+    imager = imtool
+    measures = metool
+    ms = mstool
 
 def importasdm(
     asdm=None,
@@ -76,7 +96,7 @@ def importasdm(
                             (ao) or CROSS_ONLY (co) or CROSS_AND_AUTO (ca)
            default: ca
 
-      compression  -- produces comrpressed columns in the resulting measurement set.
+       compression  -- produces comrpressed columns in the resulting measurement set.
                  default: False
 
        lazy         -- Make the MS DATA column read the ASDM Binary data directly
@@ -89,7 +109,7 @@ def importasdm(
                     by space characters; the wildcard character '*' is 
                             allowed in table names.
 
-       wvr_corrected_data -- specifies wich values are considered in the 
+       wvr_corrected_data -- specifies which values are considered in the 
                       ASDM binary data to fill the DATA column in 
                       the MAIN table of the MS. Expected values for 
                       this option are 'no' for the uncorrected data 
@@ -177,12 +197,13 @@ def importasdm(
     if vis is None or type(vis) is str and len(vis) == 0:
         vis = asdm+".ms"
 
-    # make local sdm tool
-    sdmlocal = sdm(asdm)
-    if showversion:
-        casalog.post("You set option \'showversion\' to True. Will just output the version information and then return.", 'WARN')
-        casalog.post("Current SDM version " + sdm.sdmversion( ))
-        return
+    # make local sdm tool - CASA6 only, CASA5 uses asdm2MS executable
+    if is_CASA6:
+        sdmlocal = sdm(asdm)
+        if showversion:
+            casalog.post("You set option \'showversion\' to True. Will just output the version information and then return.", 'WARN')
+            casalog.post("Current SDM version " + sdm.sdmversion( ))
+            return
 
     # make agentflagger tool local
     aflocal = agentflagger()
@@ -204,8 +225,6 @@ def importasdm(
             viso = asdm.rstrip("/") + '.ms'
             visoc = asdm.rstrip("/") + '-wvr-corrected.ms'
             vis = asdm.rstrip("/")
-
-
 
         useversion = 'v3'
 
@@ -264,134 +283,231 @@ def importasdm(
             if not overwrite:
                 for of in outfile:
                     if os.path.exists(of):
-                        raise Exception("Cannot overwrite online flags file '%s'; overwrite is set to False." % of)
-                
+                        raise Exception("Cannot overwrite online flags file '%s'; overwrite is set to False."% of)
+
+        # assemble the asdm2MS executable for CASA5
+        if not is_CASA6:
+            theexecutable = 'asdm2MS'
+
+            execute_string = theexecutable + ' --icm "' + corr_mode \
+                             + '" --isrt "' + srt + '" --its "' + time_sampling \
+                             + '" --ocm "' + ocorr_mode + '" --wvr-corrected-data "' \
+                             + wvr_corrected_data + '" --asis "' + asis \
+                             + '" --logfile "' + casalog.logfile() + '"'
+
+            if len(scans) > 0:
+                execute_string = execute_string + ' --scans ' + scans
+            if ignore_time:
+                execute_string = execute_string + ' --ignore-time'
+            if useversion == 'v3':
+                if not process_syspower:
+                    execute_string = execute_string + ' --no-syspower'
+                if not process_caldevice:
+                    execute_string = execute_string + ' --no-caldevice'
+                if not process_pointing:
+                    execute_string = execute_string + ' --no-pointing'
+
+            if compression:
+                execute_string = execute_string + ' --compression'
+            elif lazy:
+                execute_string = execute_string + ' --lazy'
+            
+            if verbose:
+                execute_string = execute_string + ' --verbose'
+
+            execute_string = execute_string + ' ' + asdm + ' ' + viso
+
+            # showversion for CASA6 already handled
+            if showversion:
+                casalog.post("You set option \'showversion\' to True. Will just output the version information and then terminate."
+                         , 'WARN')
+                execute_string = theexecutable + ' --revision'
+
+            if with_pointing_correction:
+                execute_string = execute_string + ' --with-pointing-correction'
+
         if (polyephem_tabtimestep!=None) and (type(polyephem_tabtimestep)==int or type(polyephem_tabtimestep)==float):
             if polyephem_tabtimestep>0:
                 casalog.post('Will tabulate all attached polynomial ephemerides with a time step of '
                              +str(polyephem_tabtimestep)+' days.')
                 if polyephem_tabtimestep>1.:
                     casalog.post('A tabulation timestep of <= 1 days is recommended.', 'WARN')
+                # one more addition to the asdm2MS execution string
+                if not is_CASA6:
+                    execute_string = execute_string + ' --polyephem-tabtimestep '+str(polyephem_tabtimestep)
 
-        exitcode = sdmlocal.toms( vis, createmms, separationaxis, numsubms, corr_mode, srt, time_sampling,
-                                  ocorr_mode, compression, lazy, asis, wvr_corrected_data, scans,
-                                  ignore_time, process_syspower, process_caldevice, process_pointing,
-                                  process_flags, tbuff, applyflags, savecmds, outfile, flagbackup,
-                                  verbose, overwrite, showversion, useversion, bdfflags,
-                                  with_pointing_correction, remove_ref_undef, convert_ephem2geo,
-                                  polyephem_tabtimestep )
+        if is_CASA6:
+            exitcode = sdmlocal.toms( vis, createmms, separationaxis, numsubms, corr_mode, srt, time_sampling,
+                                      ocorr_mode, compression, lazy, asis, wvr_corrected_data, scans,
+                                      ignore_time, process_syspower, process_caldevice, process_pointing,
+                                      process_flags, tbuff, applyflags, savecmds, outfile, flagbackup,
+                                      verbose, overwrite, showversion, useversion, bdfflags,
+                                      with_pointing_correction, remove_ref_undef, convert_ephem2geo,
+                                      polyephem_tabtimestep )
 
-        if exitcode != True:
-            casalog.post("initial creation of the measurement set failed", 'SEVERE')
-            raise Exception('ASDM conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.')
+            if exitcode != True:
+                casalog.post("initial creation of the measurement set failed", 'SEVERE')
+                raise Exception('ASDM conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.')
+        else:
+            casalog.post('Running ' + theexecutable
+                         + ' standalone invoked as:')
+            # print execute_string
+            casalog.post(execute_string)
+            exitcode = os.system(execute_string)
 
+            if exitcode != 0:
+                if not showversion:
+                    casalog.post(theexecutable
+                                 + ' terminated with exit code '
+                                 + str(exitcode), 'SEVERE')
+                    raise Exception('ASDM conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.')
+
+            # showversion and return case for CASA6 handled earlier
+            if showversion:
+                return
+        
         #
         # Possibly remove the name of the measurement set expected to contain the corrected data from the list of of produced measurement
         # sets if it appears the filler did not find any corrected data.
         #
         if not os.path.exists(visoc):
             vistoproc = [myviso for myviso in vistoproc if myviso != visoc]
-
-        # CAS-7369. HISTORY should be written after createmms is tested
-        #
-        # Populate the HISTORY table of the MS with information about the context in which it's been created
-        #
-        try: 
-            mslocal = ms( )
-            vars = locals( )
-            param_names = importasdm.__code__.co_varnames[:importasdm.__code__.co_argcount]
-            param_vals = [vars[p] for p in param_names]
-
-            for myviso in vistoproc:
-                write_history( mslocal, myviso, 'importasdm', param_names, param_vals, casalog) 
-
-        except Exception as instance: 
-            casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
-            return False 
-
-        if mslocal:
-            mslocal = None 
+         
+        # this is only necessary for CASA5, for CASA6 these steps are handled by the toms method in sdm
+        if not is_CASA6:
+            #
+            # Do we apply fixspwbackport
+            if remove_ref_undef :
+                casalog.post('remove_ref_undef=True: fixspwbackport will be applied ...')
             
-        theephemfields = ce.findattachedephemfields(myviso,field='*')
-        if len(theephemfields)>0: 
-            # until asdm2MS does this internally: recalc the UVW coordinates for ephem fields
-            imt = imager( )
-            imt.open(myviso, usescratch=False)
-            imt.calcuvw(theephemfields, refcode='J2000', reuse=False)
-            imt.close( )
+                for myviso in vistoproc:
+                    cmd = 'fixspwbackport ' + myviso
+                    casalog.post('Running fixspwbackport standalone invoked as:')
+                    casalog.post(cmd)
+                    cmdexitcode = os.system(cmd)
+
+                    if cmdexitcode != 0:
+                        casalog.post(cmd
+                                     + ' terminated with exit code '
+                                     + str(cmdexitcode), 'SEVERE')
+                        raise Exception('fixspwbackport error.')
+
+            # Binary Flag processing
+            if bdfflags:
+            
+                casalog.post('Parameter bdfflags==True: flags from the ASDM binary data will be used to set the MS flags ...')
+            
+                bdffexecutable = 'bdflags2MS '
+                bdffexecstring_base = bdffexecutable + ' -f ALL' + ' --ocm "' + ocorr_mode \
+                                      + '" --logfile "' + casalog.logfile() + '"'
+ 
+                if len(scans) > 0:
+                    bdffexecstring_base = bdffexecstring_base + ' --scans ' + scans
+
+                if lazy and not compression:
+                    bdffexecstring_base = bdffexecstring_base + ' --lazy=true'
+
+                for myviso in vistoproc:
+                    if myviso.find("wvr-corrected") != -1:
+                        options = " --wvr-corrected=True " 
+                    else:
+                        options = " "
+
+                    bdffexecstring = bdffexecstring_base + options + asdm + ' ' + myviso
+
+                    casalog.post('Running '+bdffexecutable+' standalone invoked as:')
+                    casalog.post(bdffexecstring)
+
+                    bdffexitcode = os.system(bdffexecstring)
+                    if bdffexitcode != 0:
+                        casalog.post(bdffexecutable
+                                     + ' terminated with exit code '
+                                     + str(bdffexitcode), 'SEVERE')
+                        raise Exception('ASDM binary flags conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.')
+
 
         if convert_ephem2geo:
             for myviso in vistoproc:
                 ce.convert2geo(myviso, '*') # convert any attached ephemerides to GEO
+
+        for myviso in vistoproc:
+            theephemfields = ce.findattachedephemfields(myviso,field='*')
+            if len(theephemfields)>0: 
+                # until asdm2MS or sdm.toms  does this internally: recalc the UVW coordinates for ephem fields
+                imt = imager()
+                imt.open(myviso, usescratch=False)
+                imt.calcuvw(theephemfields, refcode='J2000', reuse=False)
+                imt.close()
         
-        if len(theephemfields)>0: 
-            # also set the direction column in the SOURCE table
-            tblocal.open(myviso+'/FIELD', nomodify=False)
-            sourceids = tblocal.getcol('SOURCE_ID')
-            ftimes = tblocal.getcol('TIME')
-            ftimekw = tblocal.getcolkeywords('TIME')
-            tmpa = tblocal.getcol('PHASE_DIR')
-            origphasedir = tmpa
+            if len(theephemfields)>0: 
+                # also set the direction column in the SOURCE table
+                tblocal.open(myviso+'/FIELD', nomodify=False)
+                sourceids = tblocal.getcol('SOURCE_ID')
+                ftimes = tblocal.getcol('TIME')
+                ftimekw = tblocal.getcolkeywords('TIME')
+                tmpa = tblocal.getcol('PHASE_DIR')
+                origphasedir = tmpa
 
-            affectedsids = []
-            thesamplefields = []
-            for fld in theephemfields: # determine all source ids used by the ephem fields
-                if not (sourceids[fld] in affectedsids): # this source id wasn't handled yet
-                    affectedsids.append(sourceids[fld])
-                    thesamplefields.append(fld)
-                    # need to temporarily change the offset (not all mosaics have an element at (0,0))
-                    tmpa[0][0][fld]=0.
-                    tmpa[1][0][fld]=0.
-                #endif
-            #endfor
-            tblocal.putcol('PHASE_DIR', tmpa)
-            tblocal.close()
-
-            tblocal.open(myviso+'/SOURCE')
-            sourceposref = tblocal.getcolkeywords('DIRECTION')['MEASINFO']['Ref']
-            tblocal.close()
-
-            directions = []
-            melocal = measures( )
-            msmdlocal = msmetadata( )
-            msmdlocal.open(myviso)
-            
-            for fld in thesamplefields:
-                thedirmeas = msmdlocal.phasecenter(fld)
-                if thedirmeas['refer']!=sourceposref:
-                    casalog.post('Ephemeris is in '+thedirmeas['refer']+' instead of '+sourceposref
-                                 +' frame.\nEntry in SOURCE table will be converted to '+sourceposref, 'WARN')
-                    melocal.doframe(thedirmeas)
-                    thedirmeas = melocal.measure(thedirmeas, sourceposref)
-
-                directions.append([thedirmeas['m0']['value'], thedirmeas['m1']['value']])
-                thetime = melocal.epoch(v0=str(ftimes[fld])+'s', rf=ftimekw['MEASINFO']['Ref'])
-                casalog.post("Will set SOURCE direction for SOURCE_ID "+str(sourceids[fld])
-                             +" to ephemeris phase center for time "+str(thetime['m0']['value'])+" "+thetime['m0']['unit']+" "+thetime['refer']) 
-            #endfor
-            msmdlocal.close()
-             
-            # restore original PHASE_DIR
-            tblocal.open(myviso+'/FIELD', nomodify=False)
-            tblocal.putcol('PHASE_DIR', origphasedir)
-            tblocal.close()
-
-            # write source directions
-            tblocal.open(myviso+'/SOURCE', nomodify=False)
-            ssourceids = tblocal.getcol('SOURCE_ID')
-            sdirs = tblocal.getcol('DIRECTION')
-            for row in range(0,len(ssourceids)):
-                for i in range(0,len(affectedsids)):
-                    if ssourceids[row]==affectedsids[i]:
-                        sdirs[0][row] = directions[i][0]
-                        sdirs[1][row] = directions[i][1]
-                        break
+                affectedsids = []
+                thesamplefields = []
+                for fld in theephemfields: # determine all source ids used by the ephem fields
+                    if not (sourceids[fld] in affectedsids): # this source id wasn't handled yet
+                        affectedsids.append(sourceids[fld])
+                        thesamplefields.append(fld)
+                        # need to temporarily change the offset (not all mosaics have an element at (0,0))
+                        tmpa[0][0][fld]=0.
+                        tmpa[1][0][fld]=0.
+                    #endif
                 #endfor
-            #endfor
-            tblocal.putcol('DIRECTION', sdirs) # write back corrected directions
-            tblocal.close()
+                tblocal.putcol('PHASE_DIR', tmpa)
+                tblocal.close()
+
+                tblocal.open(myviso+'/SOURCE')
+                sourceposref = tblocal.getcolkeywords('DIRECTION')['MEASINFO']['Ref']
+                tblocal.close()
+
+                directions = []
+                melocal = measures()
+                msmdlocal = msmetadata()
+                msmdlocal.open(myviso)
+            
+                for fld in thesamplefields:
+                    thedirmeas = msmdlocal.phasecenter(fld)
+                    if thedirmeas['refer']!=sourceposref:
+                        casalog.post('Ephemeris is in '+thedirmeas['refer']+' instead of '+sourceposref
+                                     +' frame.\nEntry in SOURCE table will be converted to '+sourceposref, 'WARN')
+                        melocal.doframe(thedirmeas)
+                        thedirmeas = melocal.measure(thedirmeas, sourceposref)
+
+                    directions.append([thedirmeas['m0']['value'], thedirmeas['m1']['value']])
+                    thetime = melocal.epoch(v0=str(ftimes[fld])+'s', rf=ftimekw['MEASINFO']['Ref'])
+                    casalog.post("Will set SOURCE direction for SOURCE_ID "+str(sourceids[fld])
+                                 +" to ephemeris phase center for time "+str(thetime['m0']['value'])+" "+thetime['m0']['unit']+" "+thetime['refer']) 
+                #endfor
+                msmdlocal.close()
+             
+                # restore original PHASE_DIR
+                tblocal.open(myviso+'/FIELD', nomodify=False)
+                tblocal.putcol('PHASE_DIR', origphasedir)
+                tblocal.close()
+
+                # write source directions
+                tblocal.open(myviso+'/SOURCE', nomodify=False)
+                ssourceids = tblocal.getcol('SOURCE_ID')
+                sdirs = tblocal.getcol('DIRECTION')
+                for row in range(0,len(ssourceids)):
+                    for i in range(0,len(affectedsids)):
+                        if ssourceids[row]==affectedsids[i]:
+                            sdirs[0][row] = directions[i][0]
+                            sdirs[1][row] = directions[i][1]
+                            break
+                    #endfor
+                #endfor
+                tblocal.putcol('DIRECTION', sdirs) # write back corrected directions
+                tblocal.close()
                 
-        #end if        
+            #end if
+        #end for
 
         ##############################################################################################3
         # CAS-7369 - Create an output Multi-MS (MMS)
@@ -430,13 +546,15 @@ def importasdm(
                 fpars['outputvis'] = outputmms
                 fpars['separationaxis'] = separationaxis
                 fpars['numsubms'] = numsubms
+                
+                # Run partition only at the MPIServers
                 pdh = ParallelDataHelper('partition', fpars) 
             
                 # Get a cluster
                 pdh.setupCluster(thistask='partition')
                 try:
                     pdh.go()
-                    
+                                        
                     # Remove original MS
                     shutil.rmtree(tempname)
 
@@ -524,7 +642,30 @@ def importasdm(
         else:
             casalog.post('There is no Flag.xml in ASDM', 'WARN')
 
-        
+
+        # CAS-7369. HISTORY should be written after createmms is tested
+        #
+        # Populate the HISTORY table of the MS with information about the context in which it's been created
+        #
+        try: 
+            mslocal = ms() 
+            param_names = importasdm.__code__.co_varnames[:importasdm.__code__.co_argcount] 
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
+
+            for myviso in vistoproc:
+                write_history(mslocal, myviso, 'importasdm', param_names, param_vals, casalog)
+
+        except Exception as instance: 
+            casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
+            return False 
+
+        if mslocal:
+            mslocal = None 
+       
         return
     
     except Exception as instance:
