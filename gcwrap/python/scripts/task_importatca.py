@@ -1,8 +1,18 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-from taskinit import casac, casalog, mstool
-from mstools import write_history
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import atcafiller
+    from .mstools import write_history
+else:
+    from taskinit import casac, casalog
+    from mstools import write_history
+
+    atcafiller = casac.atcafiller
 
 def importatca (
     files=None,
@@ -61,7 +71,7 @@ def importatca (
         """
 
     # Python script
-    myaf = casac.atcafiller()
+    myaf = atcafiller()
     try:
         try:
             casalog.origin('importatca')
@@ -80,19 +90,22 @@ def importatca (
             fields,edge)
             myaf.fill()
         except Exception as e:
-          print(e);
+          print(e)
           casalog.post("Failed to import atca rpfits file(s) %s" % files)
           raise
         # Write the args to HISTORY.
         try:
-            mslocal = mstool()
             param_names = importatca.__code__.co_varnames[:importatca.__code__.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             write_history(
-                mslocal, vis, 'importatca', param_names, 
+                myaf, vis, 'importatca', param_names, 
                 param_vals, casalog
             )
-        except Exception as instance:
+        except Exception:
             casalog.post("Failed to updated HISTORY", 'WARN')
     except:
         pass

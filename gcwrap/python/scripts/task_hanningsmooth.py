@@ -4,10 +4,24 @@ import shutil
 import string
 import copy
 import math
-from taskinit import mttool, mstool, casalog
-from mstools import write_history
-from parallel.parallel_data_helper import ParallelDataHelper
-import testhelper as th
+
+# get is_CASA6, is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .mstools import write_history
+    from casatools import table, ms, mstransformer
+    from casatasks import casalog
+    from .parallel.parallel_data_helper import ParallelDataHelper
+
+    _tb = table()
+else:
+    from taskinit import mttool as mstransformer
+    from taskinit import mstool as ms
+    from taskinit import tbtool, casalog
+    from mstools import write_history
+    from parallel.parallel_data_helper import ParallelDataHelper
+
+    _tb = tbtool()
 
 def hanningsmooth(vis=None, 
                    outputvis=None,
@@ -64,8 +78,8 @@ def hanningsmooth(vis=None,
     # Actual task code starts here
 
     # Create local copies of the MSTransform and ms tools
-    mtlocal = mttool()
-    mslocal = mstool()
+    mtlocal = mstransformer()
+    mslocal = ms()
 
     try:
                     
@@ -81,10 +95,11 @@ def hanningsmooth(vis=None,
         # Check if CORRECTED column exists, when requested
         datacolumn = datacolumn.upper()
         if datacolumn == 'CORRECTED':
-            dc = 'CORRECTED_DATA'
-            if th.getColDesc(vis,dc) == {}:
+            _tb.open(vis)
+            if 'CORRECTED_DATA' not in _tb.colnames():
                 casalog.post('Input CORRECTED_DATA does not exist. Will use DATA','WARN')
                 datacolumn = 'DATA'
+            _tb.close()
              
         casalog.post('Will use datacolumn = %s'%datacolumn, 'DEBUG')
         config['datacolumn'] = datacolumn
@@ -113,13 +128,16 @@ def hanningsmooth(vis=None,
     # Write history to output MS, not the input ms.
     try:
         param_names = hanningsmooth.__code__.co_varnames[:hanningsmooth.__code__.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        if is_python3:
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
         casalog.post('Updating the history in the output', 'DEBUG1')
         write_history(mslocal, outputvis, 'hanningsmooth', param_names,
                       param_vals, casalog)
     except Exception as instance:
-        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                     'WARN')
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
         return False
 
     mslocal = None

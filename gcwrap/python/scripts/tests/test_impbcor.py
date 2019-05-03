@@ -68,12 +68,30 @@
 ###########################################################################
 from __future__ import absolute_import
 from __future__ import print_function
+import os
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image, table
+    from casatasks import impbcor
+
+    _ia = image( )
+    _tb = table( )
+
+    datapath=ctsys.resolve('regression/unittest/imageanalysis/ImageAnalysis')
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
+    image = iatool
+    _ia = iatool()
+    _tb = tbtool()
+
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imageanalysis/ImageAnalysis'
 
 im1 = "pbtest1_im.fits"
 pb1 = "pbtest1_pb.fits"
@@ -88,14 +106,11 @@ pb4 = "CAS_5096template.im"
 
 data = [im1, pb1, co1_1, co1_2, im2, pb2, co2, pb4]
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imageanalysis/ImageAnalysis/'
-
-
 def run_pbcor(
     imagename, pbimage, outfile, overwrite, region, box, chans,
     stokes, mask, mode, cutoff
 ):
-    myia = iatool()
+    myia = image()
     myia.open(imagename)
     res = myia.pbcor(
         pbimage=pbimage, outfile=outfile, overwrite=overwrite,
@@ -121,10 +136,11 @@ class impbcor_test(unittest.TestCase):
     def setUp(self):
         
         for f in data:
-            if os.path.isdir(datapath + f):
-                shutil.copytree(datapath + f, f)
-            else:
-                shutil.copy(datapath + f, f)
+            resolved = os.path.join(datapath,f)
+            if os.path.isdir(resolved):
+                shutil.copytree(resolved, f)
+            if os.path.isfile(resolved):
+                shutil.copy(resolved,f)
     
     def tearDown(self):
         for f in data:
@@ -132,12 +148,12 @@ class impbcor_test(unittest.TestCase):
                 shutil.rmtree(f)
             else:
                 os.remove(f)
-            self.assertTrue(len(tb.showcache()) == 0)
+            self.assertTrue(len(_tb.showcache()) == 0)
 
     def checkImage(self, gotImage, expectedName):
-        expected = iatool()                                
+        expected = image()                                
         expected.open(expectedName)
-        got = iatool()
+        got = image()
         if type(gotImage) == str:
             got.open(gotImage)
         else:
@@ -174,8 +190,9 @@ class impbcor_test(unittest.TestCase):
             imagename, pbimage, outfile, overwrite, region,
             box, chans, stokes, mask, mode, cutoff, wantreturn
         ):
-            for i in [0,1]:
-                if (i==0):
+           # differences in exception behavior between CASA5 and CASA6
+            if is_CASA6:
+                for i in [0,1]:
                     self.assertRaises(
                         Exception, run_pbcor, imagename=imagename,
                         pbimage=pbimage, outfile=outfile,
@@ -183,16 +200,27 @@ class impbcor_test(unittest.TestCase):
                         chans=chans, stokes=stokes, mask=mask,
                         mode=mode, cutoff=cutoff
                     )
-                else:
-                    self.assertFalse(
-                        run_impbcor(
-                            imagename=imagename, pbimage=pbimage,
-                            outfile=outfile, overwrite=overwrite,
-                            region=region, box=box, chans=chans,
-                            stokes=stokes, mask=mask, mode=mode,
-                            cutoff=cutoff
+            else:
+                for i in [0,1]:
+                    if (i==0):
+                        self.assertRaises(
+                            Exception, run_pbcor, imagename=imagename,
+                            pbimage=pbimage, outfile=outfile,
+                            overwrite=overwrite, region=region, box=box,
+                            chans=chans, stokes=stokes, mask=mask,
+                            mode=mode, cutoff=cutoff
                         )
-                    )
+                    else:
+                        self.assertFalse(
+                            run_impbcor(
+                                imagename=imagename, pbimage=pbimage,
+                                outfile=outfile, overwrite=overwrite,
+                                region=region, box=box, chans=chans,
+                                stokes=stokes, mask=mask, mode=mode,
+                                cutoff=cutoff
+                            )
+                        )
+                        
         # no image name given
         testit(
             imagename="", pbimage=pb1, outfile="",
@@ -254,7 +282,7 @@ class impbcor_test(unittest.TestCase):
         self, expected, imagename, pbimage, overwrite, region, box,
         chans, stokes, mask, mode, cutoff
     ):
-        myia = iatool()
+        myia = image()
         myia.open(pbimage)
         pbpix = myia.getchunk()
         myia.done()
@@ -273,7 +301,7 @@ class impbcor_test(unittest.TestCase):
                         cutoff=cutoff
                     )
                             
-                    self.assertTrue(type(mytool) == type(ia))
+                    self.assertTrue(type(mytool) == type(_ia))
                     self.checkImage(mytool, expected)
                     self.checkImage(outfile, expected)
                     shutil.rmtree(outfile)
@@ -319,7 +347,7 @@ class impbcor_test(unittest.TestCase):
 
     def test_stretch(self):
         """ ia.pbcor(): Test stretch parameter"""
-        yy = iatool()
+        yy = image()
         mymask = "maskim"
         yy.fromshape("", [113, 76, 1, 1])
         yy.addnoise()
@@ -341,11 +369,21 @@ class impbcor_test(unittest.TestCase):
                 yy.done()
                 zz.done()
             else:
-                zz = impbcor(
-                    imagename=im2, pbimage=pb2,
-                    mask=mymask + ">0", stretch=False
-                )
-                self.assertFalse(zz)
+                # CASA6 raises an exception, CASA5 returns False
+                if is_CASA6:
+                    self.assertRaises(
+                        RuntimeError,
+                        impbcor,
+                        imagename=im2, pbimage=pb2,
+                        mask=mymask + ">0", stretch=False, outfile="garbage"
+                    )
+                else:
+                    zz = impbcor(
+                        imagename=im2, pbimage=pb2,
+                        mask=mymask + ">0", stretch=False
+                    )
+                    self.assertFalse(zz)
+
                 zz = impbcor(
                     imagename=im2, pbimage=pb2, outfile="blahblah", mask=mymask + ">0", stretch=True
                 )
@@ -353,7 +391,7 @@ class impbcor_test(unittest.TestCase):
         
     def test_diff_spectral_coordinate(self):
         """Verify fix that a different spectral coordinates in target and template don't matter, CAS-5096"""
-        imagename = datapath + "CAS_5096target.im"
+        imagename = os.path.join(datapath,"CAS_5096target.im")
         template = pb4
         outfile = "mypb.im"
         impbcor(
@@ -364,7 +402,7 @@ class impbcor_test(unittest.TestCase):
 
     def test_history(self):
         """Test history records are written"""
-        myia = iatool()
+        myia = image()
         imagename = "zz.im"
         myia.fromshape(imagename, [20,20])
         gg = myia.getchunk()
@@ -388,7 +426,7 @@ class impbcor_test(unittest.TestCase):
 
     def test_empty_region_and_stokes(self):
         """Test specifying stokes with empty region works (CAS-11708)"""
-        myia = iatool()
+        myia = image()
         imagename = "t_in.im"
         pbimage = "t_pb_in.im"
         shape = [20, 20, 4, 20]
@@ -404,3 +442,7 @@ class impbcor_test(unittest.TestCase):
 
 def suite():
     return [impbcor_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

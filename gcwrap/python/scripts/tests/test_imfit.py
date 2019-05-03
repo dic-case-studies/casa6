@@ -65,15 +65,41 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import casac
-from tasks import *
-from taskinit import *
 import hashlib
 import shutil
-from __main__ import *
 import unittest
 import numpy
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, image, quanta, componentlist, regionmanager, functional
+    from casatools.platform import str2bytes
+    from casatasks import imfit
+
+    _qa = quanta( )
+    _tb = table( )
+    _rg = regionmanager( )
+
+    datapath=ctsys.resolve('regression/unittest/imfit')
+
+    # CASAtasks doesn't use default
+    def default(atask):
+        pass
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
+    _qa = qa
+    _tb = tb
+    _rg = rg
+
+    image = iatool
+    componentlist =  cltool
+    functional = fntool
+    
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imfit'
 
 noisy_image = "gaussian_model_with_noise.im"
 noisy_image_xx = "gaussian_model_with_noise_xx.im"
@@ -98,8 +124,6 @@ circular = "circular_gaussian.im"
 kimage = "bunitk.im"
 decon_im = "decon_test.im"
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imfit/'
-
 # are the two specified numeric values relatively close to each other? 
 def near (first, second, epsilon):
     if first == 0 and second == 0:
@@ -116,7 +140,7 @@ def near_abs(first, second, epsilon):
 # @param expected The name of the expected image
 # @param difference The name of the difference image to write
 def check_image(got, expected):
-    myia = iatool()
+    myia = image()
     if not myia.open(got):
         casalog.post("Cannot find image " + got, 'SEVERE')
         return False
@@ -156,10 +180,11 @@ class imfit_test(unittest.TestCase):
             twogim, twogest
         ] :
             if not os.path.exists(f):
-                if (os.path.isdir(datapath + f)):
-                    shutil.copytree(datapath + f, f)
-                if (os.path.isfile(datapath + f)):
-                    shutil.copy(datapath + f, f)
+                resolved = os.path.join(datapath,f)
+                if (os.path.isdir(resolved)):
+                    shutil.copytree(resolved,f)
+                if (os.path.isfile(resolved)):
+                    shutil.copy(resolved,f)
 
     def tearDown(self):
         for f in [
@@ -175,13 +200,13 @@ class imfit_test(unittest.TestCase):
                 #shutil.rmtree(f)
             if (os.path.isfile(f)):
                 os.remove(f)
-        self.assertTrue(len(tb.showcache()) == 0)
+        self.assertTrue(len(_tb.showcache()) == 0)
 
     def test_fit_using_full_image(self):
         '''Imfit: Fit using full image'''
         test = "fit_using_full_image: "
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(noisy_image)
             res = myia.fitcomponents()
             myia.done()
@@ -270,13 +295,13 @@ class imfit_test(unittest.TestCase):
                 region = ""
             elif (i == 1):
                 box = ''
-                region = rg.box([130,89,0,0],[170,129,0,0])
+                region = _rg.box([130,89,0,0],[170,129,0,0])
             elif (i == 2):
                 box = ''
                 region = 'mybox'
     
             def run_fitcomponents():
-                myia = iatool()
+                myia = image()
                 myia.open(noisy_image)
                 res = myia.fitcomponents(box=box, region=region)
                 myia.close()
@@ -394,7 +419,7 @@ class imfit_test(unittest.TestCase):
     
         box = '0,0,20,20'
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(noisy_image)
             res = myia.fitcomponents(box=box)
             myia.done()
@@ -446,7 +471,7 @@ class imfit_test(unittest.TestCase):
                 pixelmask = "mymask"
     
             def run_fitcomponents():
-                myia = iatool()
+                myia = image()
                 myia.open(masked_image)
                 myia.maskhandler("set", pixelmask)
                 res = myia.fitcomponents(mask=mask, includepix=includepix, excludepix=excludepix)
@@ -518,7 +543,7 @@ class imfit_test(unittest.TestCase):
         '''Imfit: Test residual and model'''        
         box="100,100,200,200"
         def run_fitcomponents(model, residual):
-            myia = iatool()
+            myia = image()
             myia.open(noisy_image)
             res = myia.fitcomponents(
                 box=box, residual=residual, model=model
@@ -550,7 +575,7 @@ class imfit_test(unittest.TestCase):
         global msgs
         box = "121,84,178,135"
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(convolved_model)
             res = myia.fitcomponents(estimates=estimates_convolved, box=box)
             myia.done()
@@ -625,7 +650,7 @@ class imfit_test(unittest.TestCase):
         myest = "empty.txt"
         f = open(myest,"w")
         f.close()
-        myia = iatool()
+        myia = image()
         myia.open(convolved_model)
         self.assertRaises(Exception, myia.fitcomponents, estimates=myest, box=box)
         myia.done()
@@ -636,7 +661,7 @@ class imfit_test(unittest.TestCase):
         test = 'test_position_errors: '
         box = "122, 85, 177, 138"
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(convolved_model)
             res = myia.fitcomponents(box=box)
             myia.done()
@@ -668,7 +693,7 @@ class imfit_test(unittest.TestCase):
             box = "21, 159, 93, 237, 126, 89, 169, 131"
             if (i == 0):
                 def run_fitcomponents(append=None):
-                    myia = iatool()
+                    myia = image()
                     myia.open(two_gaussians_image)
                     if (append == None):
                         res = myia.fitcomponents(box=box, estimates=two_gaussians_estimates, logfile=logfile)
@@ -732,7 +757,7 @@ class imfit_test(unittest.TestCase):
             newestimates = "newestimates" + str(i) + ".txt"
             if (i == 0):
                 def run_fitcomponents():
-                    myia = iatool()
+                    myia = image()
                     myia.open(two_gaussians_image)
                     res = myia.fitcomponents(box=box, estimates=two_gaussians_estimates, newestimates=newestimates)
                     return res
@@ -748,10 +773,16 @@ class imfit_test(unittest.TestCase):
             res = code()
     
             self.assertTrue(os.path.exists(newestimates)) 
-            expec = datapath + expected_new_estimates
-            expected_sha = hashlib.sha512(open(expec, 'r').read()).hexdigest()
+            expec = os.path.join(datapath,expected_new_estimates)
+            if is_CASA6:
+                expected_sha = hashlib.sha512(str2bytes(open(expec, 'r').read())).hexdigest()
     
-            got_sha = hashlib.sha512(open(newestimates, 'r').read()).hexdigest()
+                got_sha = hashlib.sha512(str2bytes(open(newestimates, 'r').read())).hexdigest()
+            else:
+                expected_sha = hashlib.sha512(open(expec, 'r').read()).hexdigest()
+    
+                got_sha = hashlib.sha512(open(newestimates, 'r').read()).hexdigest()
+
             self.assertTrue(
                 got_sha == expected_sha,
                 newestimates + " differs from " + expec
@@ -764,7 +795,7 @@ class imfit_test(unittest.TestCase):
         test = 'test_polarization_image: '
         global msgs
         def run_fitcomponents(stokes):
-            myia = iatool()
+            myia = image()
             myia.open(stokes_image)
             res = myia.fitcomponents(stokes=stokes)
             return res
@@ -839,7 +870,7 @@ class imfit_test(unittest.TestCase):
         test = 'test_CAS_2318: '
         global msgs
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(gauss_no_pol)
             res = myia.fitcomponents()
             myia.done()
@@ -859,7 +890,7 @@ class imfit_test(unittest.TestCase):
     def test_CAS_1233(self):
         box = "124, 88, 173, 134"
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(jyperbeamkms)
             res = myia.fitcomponents(box=box)
             myia.done()
@@ -934,7 +965,7 @@ class imfit_test(unittest.TestCase):
         test = "test_CAS_2633"
         box = "120, 90, 175, 130"
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(jyperbeamkms)
             res = myia.fitcomponents(box=box)
             myia.done()
@@ -963,10 +994,10 @@ class imfit_test(unittest.TestCase):
         """ Test CAS-2595 feature addition: write component list table"""
         method = "test_CAS_2595"
         test = "test_CAS_2595"
-        mycl = cltool()
+        mycl = componentlist()
         complist = "mycomplist_CAS-2595.tbl"
         def run_fitcomponents(imagename, estimates, overwrite, box=""):
-            myia = iatool()
+            myia = image()
             myia.open(imagename)
             res = myia.fitcomponents(
                 complist=complist, estimates=estimates,
@@ -1026,7 +1057,7 @@ class imfit_test(unittest.TestCase):
         model = "modelImage_multi"
         mask = "gauss_multiplane.fits<15";
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(imagename)
             res = myia.fitcomponents(
                 chans=chans, mask=mask, complist=complist,
@@ -1042,7 +1073,7 @@ class imfit_test(unittest.TestCase):
                 mask=mask, complist=complist, estimates=estimates,
                 overwrite=True, model=model, residual=resid
             )
-        mycl = cltool()
+        mycl = componentlist()
         for code in (run_fitcomponents, run_imfit):
             res = code()
             mycl.open(complist)
@@ -1063,11 +1094,11 @@ class imfit_test(unittest.TestCase):
     def test_zero_level(self):
         """Test zero level fitting"""
         
-        mycl = cltool()
-        myia = iatool()
+        mycl = componentlist()
+        myia = image()
 
         def run_fitcomponents(imagename):
-            myia = iatool()
+            myia = image()
             myia.open(imagename)
             res = myia.fitcomponents(
                 box="130,89,170,129", dooff=True, offset=0.0
@@ -1149,13 +1180,13 @@ class imfit_test(unittest.TestCase):
         
         method = "test_fix_zero_level"
         test = method
-        mycl = cltool()
-        myia = iatool()
+        mycl = componentlist()
+        myia = image()
         offset = -0.102277
         imagename = noisy_image
 
         def run_fitcomponents(imagename):
-            myia = iatool()
+            myia = image()
             myia.open(imagename)
             res = myia.fitcomponents(
                 box="130,89,170,129", dooff=True,
@@ -1218,7 +1249,7 @@ class imfit_test(unittest.TestCase):
     def test_stretch(self):
         """imfit : test mask stretch"""
         imagename = multiplane_image
-        yy = iatool()
+        yy = image()
         yy.open(imagename)
         mycsys = yy.coordsys().torecord()
         yy.done()
@@ -1258,7 +1289,7 @@ class imfit_test(unittest.TestCase):
         chans = "1~3"
         box = "8, 10, 69, 69"
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(imagename)
             res = myia.fitcomponents(
                 box=box, chans=chans, mask="", complist="",
@@ -1274,7 +1305,7 @@ class imfit_test(unittest.TestCase):
                 mask="", complist="", estimates="",
                 overwrite=True, model="", residual=""
             )
-        mycl = cltool()
+        mycl = componentlist()
         epsilon = 1e-5
         for code in (run_fitcomponents, run_imfit):
             res = code()
@@ -1322,7 +1353,7 @@ class imfit_test(unittest.TestCase):
         test = "fit_xx: "
         global msgs
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(noisy_image_xx)
             res = myia.fitcomponents()
             myia.done()
@@ -1392,7 +1423,7 @@ class imfit_test(unittest.TestCase):
         self.assertTrue(success,msgs)
         
     def test_multibeam(self):
-        myia = iatool()
+        myia = image()
         myia.open(multibeam_image)
         # just confirm it finishes successfully
         res = myia.fitcomponents()
@@ -1400,7 +1431,7 @@ class imfit_test(unittest.TestCase):
         
     def test_strange_units(self):
         '''Imfit: Test strange units'''
-        myia = iatool()
+        myia = image()
         test = "test_strange_units: "
         myia.open(noisy_image)
         box = "130,89,170,129"
@@ -1431,7 +1462,7 @@ class imfit_test(unittest.TestCase):
             
     def test_multiple_boxes(self):
         """Test support for multiple boxes (CAS-4978)"""
-        myia = iatool()
+        myia = image()
         myia.open(twogim)
         # just that it runs successfully is test enough
         myia.fitcomponents(box="37,43,59,56,143,142,157,159", estimates=twogest)
@@ -1441,15 +1472,15 @@ class imfit_test(unittest.TestCase):
     def test_region_selection(self):
         """Test region selection raised in CAS-5093"""
         # from George's tests
-        imagename = os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imfit/CAS-5093.im'
-        myia = iatool()
+        imagename = os.path.join(datapath, 'CAS-5093.im')
+        myia = image()
         residual = 'framework.resid.tmp'
         myia.open(imagename)
         shape=myia.shape()
         plane = 23
         blc = [174, 164, 0, plane]
         trc = [213, 206, 0, plane]
-        reg=rg.box(blc=blc, trc=trc)
+        reg=_rg.box(blc=blc, trc=trc)
         a = myia.fitcomponents(region=reg, residual=residual)
         self.assertTrue(a['converged'])
         a = myia.fitcomponents(box="174, 164, 213, 206", chans="23", residual=residual)
@@ -1458,15 +1489,15 @@ class imfit_test(unittest.TestCase):
         
     def test_circular_gaussian(self):
         """Test convolved circular gaussian with noise doesn't throw exception (CAS-5211)""" 
-        myia = iatool()
-        myia.open(datapath + "circular_gaussian.im")
+        myia = image()
+        myia.open(os.path.join(datapath,"circular_gaussian.im"))
         self.assertTrue(myia.fitcomponents())
         myia.done()
         
     def test_k_image(self):
         """Test brightness units = K, CAS-5711"""
-        myia = iatool()
-        myia.open(datapath + kimage)
+        myia = image()
+        myia.open(os.path.join(datapath,kimage))
         # we modify the image, so want to leave the original intact
         sub = myia.subimage()
         myia.done()
@@ -1508,7 +1539,7 @@ class imfit_test(unittest.TestCase):
         '''Test rms parameter'''
         box = "130,89,170,129"
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(noisy_image)
             res = myia.fitcomponents(box=box, rms=rms)
             myia.done()
@@ -1516,7 +1547,7 @@ class imfit_test(unittest.TestCase):
         def run_imfit():
             default('imfit')
             return imfit(imagename=noisy_image, box=box, rms=rms)
-        mycl = cltool()
+        mycl = componentlist()
         for i in [0 ,1]:
             for rms in [5, "5Jy/pixel"]:
                 if (i == 0):
@@ -1591,9 +1622,9 @@ class imfit_test(unittest.TestCase):
     def test_deconvolved_dictionary(self):
         """Test deconvolved dictionary"""
         def _comp_lists(zz):
-            decon = cltool()
+            decon = componentlist()
             decon.fromrecord(zz['deconvolved'])
-            con = cltool()
+            con = componentlist()
             con.fromrecord(zz['results'])
             self.assertTrue((decon.getfluxvalue(0) == con.getfluxvalue(0)).all())
             self.assertTrue((decon.getfluxerror(0) == con.getfluxerror(0)).all())
@@ -1603,8 +1634,8 @@ class imfit_test(unittest.TestCase):
             self.assertFalse((decon.getshape(0) == con.getshape(0)))
             return [decon, con]
             
-        shutil.copytree(datapath + decon_im, decon_im)
-        myia = iatool()
+        shutil.copytree(os.path.join(datapath,decon_im), decon_im)
+        myia = image()
         myia.open(decon_im)
         myia.setrestoringbeam("3arcmin", "3arcmin", "0deg")
         # force use of uncorrelated noise
@@ -1662,12 +1693,12 @@ class imfit_test(unittest.TestCase):
         
     def test_uncertainties(self):
         """Test uncertainties, CAS-3476"""
-        imagename = datapath + "uncertainties_fixture.im"
-        myia = iatool()
-        mycl = cltool()
+        imagename = os.path.join(datapath,"uncertainties_fixture.im")
+        myia = image()
+        mycl = componentlist()
         
         def run_fitcomponents():
-            myia = iatool()
+            myia = image()
             myia.open(imagename)
             res = myia.fitcomponents(
                 chans=chans, rms=rms, noisefwhm=noisefwhm
@@ -1681,9 +1712,9 @@ class imfit_test(unittest.TestCase):
                 rms=rms, noisefwhm=noisefwhm
             )
         def frac(val, err):
-            f = qa.div(err, val)
-            f = qa.convert(f, "")
-            return qa.getvalue(f)
+            f = _qa.div(err, val)
+            f = _qa.convert(f, "")
+            return _qa.getvalue(f)
         
         # first channel has gaussian elongated along x axis
         # second channel has gaussian elongated along y axis
@@ -1701,56 +1732,56 @@ class imfit_test(unittest.TestCase):
                 got = mycl.getfluxerror(0)[0]
                 self.assertTrue(near(got, 0.2214, 1e-3))
                 shape = mycl.getshape(0)
-                mj = qa.quantity(shape['majoraxis'])
-                mjerr = qa.quantity(shape['majoraxiserror'])
+                mj = _qa.quantity(shape['majoraxis'])
+                mjerr = _qa.quantity(shape['majoraxiserror'])
                 f = frac(mj, mjerr)
                 self.assertTrue(near(f, expfrac, 1e-3))
-                mn = qa.quantity(shape['minoraxis'])
-                mnerr = qa.quantity(shape['minoraxiserror'])
+                mn = _qa.quantity(shape['minoraxis'])
+                mnerr = _qa.quantity(shape['minoraxiserror'])
                 f = frac(mn, mnerr)
                 self.assertTrue(near(f, expfrac, 1e-3))
-                paerr = qa.quantity(shape['positionangleerror'])
-                paerr = qa.convert(paerr,"rad")
-                paerr = qa.getvalue(paerr)
+                paerr = _qa.quantity(shape['positionangleerror'])
+                paerr = _qa.convert(paerr,"rad")
+                paerr = _qa.getvalue(paerr)
                 self.assertTrue(near(paerr, 0.012526, 1e-3))
                 direrr = res['results']['component0']['shape']['direction']['error']
-                longerr = qa.convert(direrr['longitude'], "arcsec")
-                laterr = qa.convert(direrr['latitude'], "arcsec")
+                longerr = _qa.convert(direrr['longitude'], "arcsec")
+                laterr = _qa.convert(direrr['latitude'], "arcsec")
                 if chans == 0:
-                    self.assertTrue(near(qa.getvalue(longerr), 6.77, 1e-3))
-                    self.assertTrue(near(qa.getvalue(laterr), 3.39, 1e-2))
-                    got = qa.quantity(
+                    self.assertTrue(near(_qa.getvalue(longerr), 6.77, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(laterr), 3.39, 1e-2))
+                    got = _qa.quantity(
                         res['deconvolved']['component0']['shape']['majoraxis']
                     )
                     # arcsec
-                    self.assertTrue(near(qa.getvalue(got), 1181, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(got), 1181, 1e-3))
                     
-                    got = qa.quantity(
+                    got = _qa.quantity(
                         res['deconvolved']['component0']['shape']['majoraxiserror']
                     )
-                    self.assertTrue(near(qa.getvalue(got), 16.33, 1e-3))
-                    got = qa.quantity(
+                    self.assertTrue(near(_qa.getvalue(got), 16.33, 1e-3))
+                    got = _qa.quantity(
                         res['deconvolved']['component0']['shape']['minoraxis']
                     )
-                    self.assertTrue(near(qa.getvalue(got), 561.1, 1e-3))
-                    got = qa.quantity(
+                    self.assertTrue(near(_qa.getvalue(got), 561.1, 1e-3))
+                    got = _qa.quantity(
                         res['deconvolved']['component0']['shape']['minoraxiserror']
                     )
-                    self.assertTrue(near(qa.getvalue(got), 8.821, 1e-3))
-                    got = qa.quantity(
+                    self.assertTrue(near(_qa.getvalue(got), 8.821, 1e-3))
+                    got = _qa.quantity(
                         res['deconvolved']['component0']['shape']['positionangle']
                     )
-                    self.assertTrue(near(qa.getvalue(got), 90.67, 1e-3))
-                    got = qa.quantity(
+                    self.assertTrue(near(_qa.getvalue(got), 90.67, 1e-3))
+                    got = _qa.quantity(
                         res['deconvolved']['component0']['shape']['positionangleerror']
                     )
-                    self.assertTrue(near(qa.getvalue(got), 0.7479, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(got), 0.7479, 1e-3))
                 if chans == 1:
-                    self.assertTrue(near(qa.getvalue(longerr), 3.39, 1e-2))
-                    self.assertTrue(near(qa.getvalue(laterr), 6.77, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(longerr), 3.39, 1e-2))
+                    self.assertTrue(near(_qa.getvalue(laterr), 6.77, 1e-3))
                 if chans == 2:
-                    self.assertTrue(near(qa.getvalue(longerr), 6.10, 1e-2))
-                    self.assertTrue(near(qa.getvalue(laterr), 4.48, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(longerr), 6.10, 1e-2))
+                    self.assertTrue(near(_qa.getvalue(laterr), 4.48, 1e-3))
                     
                 noisefwhm = "-1arcmin"        
         
@@ -1767,30 +1798,30 @@ class imfit_test(unittest.TestCase):
                 got = mycl.getfluxerror(0)[0]
                 self.assertTrue(near(got, 1.248, 1e-3))
                 shape = mycl.getshape(0)
-                mj = qa.quantity(shape['majoraxis'])
-                mjerr = qa.quantity(shape['majoraxiserror'])
+                mj = _qa.quantity(shape['majoraxis'])
+                mjerr = _qa.quantity(shape['majoraxiserror'])
                 f = frac(mj, mjerr)
                 self.assertTrue(near(f, 0.073398, 1e-3))
-                mn = qa.quantity(shape['minoraxis'])
-                mnerr = qa.quantity(shape['minoraxiserror'])
+                mn = _qa.quantity(shape['minoraxis'])
+                mnerr = _qa.quantity(shape['minoraxiserror'])
                 f = frac(mn, mnerr)
                 self.assertTrue(near(f, 0.065805, 1e-3))
-                paerr = qa.quantity(shape['positionangleerror'])
-                paerr = qa.convert(paerr,"rad")
-                paerr = qa.getvalue(paerr)
+                paerr = _qa.quantity(shape['positionangleerror'])
+                paerr = _qa.convert(paerr,"rad")
+                paerr = _qa.getvalue(paerr)
                 self.assertTrue(near(paerr, 0.06204, 1e-3))
                 direrr = res['results']['component0']['shape']['direction']['error']
-                longerr = qa.convert(direrr['longitude'], "arcsec")
-                laterr = qa.convert(direrr['latitude'], "arcsec")
+                longerr = _qa.convert(direrr['longitude'], "arcsec")
+                laterr = _qa.convert(direrr['latitude'], "arcsec")
                 if chans == 0:
-                    self.assertTrue(near(qa.getvalue(longerr), 37.403, 1e-3))
-                    self.assertTrue(near(qa.getvalue(laterr), 16.766, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(longerr), 37.403, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(laterr), 16.766, 1e-3))
                 if chans == 1:
-                    self.assertTrue(near(qa.getvalue(longerr), 16.766, 1e-3))
-                    self.assertTrue(near(qa.getvalue(laterr), 37.403, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(longerr), 16.766, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(laterr), 37.403, 1e-3))
                 if chans == 2:
-                    self.assertTrue(near(qa.getvalue(longerr), 33.46, 1e-3))
-                    self.assertTrue(near(qa.getvalue(laterr), 23.68, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(longerr), 33.46, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(laterr), 23.68, 1e-3))
                     
         # correlated noise for rms = 0.1 and noisefwhm not specified, image has beam
         # so noisefwhm used is sqrt(12.0) arcmin
@@ -1807,40 +1838,40 @@ class imfit_test(unittest.TestCase):
                 print("*** got", got)
                 self.assertTrue(near(got, 1.09766, 1e-3))
                 shape = mycl.getshape(0)
-                mj = qa.quantity(shape['majoraxis'])
-                mjerr = qa.quantity(shape['majoraxiserror'])
+                mj = _qa.quantity(shape['majoraxis'])
+                mjerr = _qa.quantity(shape['majoraxiserror'])
                 f = frac(mj, mjerr)
                 self.assertTrue(near(f, 0.064904, 1e-3))
-                mn = qa.quantity(shape['minoraxis'])
-                mnerr = qa.quantity(shape['minoraxiserror'])
+                mn = _qa.quantity(shape['minoraxis'])
+                mnerr = _qa.quantity(shape['minoraxiserror'])
                 f = frac(mn, mnerr)
                 self.assertTrue(near(f, 0.059688, 1e-3))
-                paerr = qa.quantity(shape['positionangleerror'])
-                paerr = qa.convert(paerr,"rad")
-                paerr = qa.getvalue(paerr)
+                paerr = _qa.quantity(shape['positionangleerror'])
+                paerr = _qa.convert(paerr,"rad")
+                paerr = _qa.getvalue(paerr)
                 self.assertTrue(near(paerr, 0.0562746, 1e-3))
                 direrr = res['results']['component0']['shape']['direction']['error']
-                longerr = qa.convert(direrr['longitude'], "arcsec")
-                laterr = qa.convert(direrr['latitude'], "arcsec")
+                longerr = _qa.convert(direrr['longitude'], "arcsec")
+                laterr = _qa.convert(direrr['latitude'], "arcsec")
                 if chans == 0:
                     
-                    self.assertTrue(near(qa.getvalue(longerr), 33.0745, 1e-3))
-                    self.assertTrue(near(qa.getvalue(laterr), 15.2083, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(longerr), 33.0745, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(laterr), 15.2083, 1e-3))
                 if chans == 1:
-                    self.assertTrue(near(qa.getvalue(longerr), 15.2083, 1e-3))
-                    self.assertTrue(near(qa.getvalue(laterr), 33.0745, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(longerr), 15.2083, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(laterr), 33.0745, 1e-3))
                 if chans == 2:
-                    print("long ", qa.getvalue(longerr))
-                    print("lat ", qa.getvalue(laterr))
-                    self.assertTrue(near(qa.getvalue(longerr), 29.6355, 1e-3))
-                    self.assertTrue(near(qa.getvalue(laterr), 21.1412, 1e-3))
+                    print("long ", _qa.getvalue(longerr))
+                    print("lat ", _qa.getvalue(laterr))
+                    self.assertTrue(near(_qa.getvalue(longerr), 29.6355, 1e-3))
+                    self.assertTrue(near(_qa.getvalue(laterr), 21.1412, 1e-3))
 
     def test_CAS_7621(self):
         """Test that results are written to the proper channels in output images"""
         resid = "myresid.im"
         model = "mymodel.im"
-        myia = iatool()
-        imagename = datapath + "one_chan_out_of_ten.im"
+        myia = image()
+        imagename = os.path.join(datapath,"one_chan_out_of_ten.im")
         self.assertTrue(myia.open(imagename))
         zz = myia.fitcomponents(chans="5", residual=resid, model=model)
         self.assertTrue(zz)
@@ -1850,21 +1881,21 @@ class imfit_test(unittest.TestCase):
             self.assertTrue(res['maxpos'][2] == 5)
             if im == resid:
                 self.assertTrue(res['minpos'][2] == 5)
-            res = myia.statistics(region=rg.box([0, 0, 0], [99, 99, 4]))
+            res = myia.statistics(region=_rg.box([0, 0, 0], [99, 99, 4]))
             self.assertTrue(res['max'][0] == 0)
             self.assertTrue(res['min'][0] == 0)
-            res = myia.statistics(region=rg.box([0, 0, 6], [99, 99, 9]))
+            res = myia.statistics(region=_rg.box([0, 0, 6], [99, 99, 9]))
             self.assertTrue(res['max'][0] == 0)
             self.assertTrue(res['min'][0] == 0)
         myia.done()
 
     def test_history(self):
         """Test history records are written"""
-        myia = iatool()
-        image = datapath + convolved_model
+        myia = image( )
+        im = os.path.join(datapath,convolved_model)
         resid = "myres.im"
         model = "mymod.im"
-        myia.open(image)
+        myia.open(im)
         myia.fitcomponents(residual=resid, model=model)
         teststr = "ia.fitcomponents"
         for im in (resid, model):
@@ -1874,7 +1905,7 @@ class imfit_test(unittest.TestCase):
             self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")    
             self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
             
-        imfit(imagename=image, residual=resid, model=model)
+        imfit(imagename=im, residual=resid, model=model)
         for im in (resid, model):
             myia.open(im)
             msgs = myia.history()
@@ -1886,29 +1917,29 @@ class imfit_test(unittest.TestCase):
 
     def test_summary(self):
         """Test summary file, CAS-3478"""
-        myia = iatool()
-        image = datapath + "CAS-3478.im"
-        estimates = datapath + "CAS-3478_estimates.txt"
+        myia = image()
+        im = os.path.join(datapath,"CAS-3478.im")
+        estimates = os.path.join(datapath,"CAS-3478_estimates.txt")
         summary = "summary1.txt"
-        myia.open(image)
+        myia.open(im)
         zz = myia.fitcomponents(estimates=estimates, summary=summary)
         myia.done()
         self.assertTrue(sum(1 for line in open(summary)) == 6, "summary line count")
         summary = "summary2.txt"
-        zz = imfit(imagename=image, estimates=estimates, summary=summary)
+        zz = imfit(imagename=im, estimates=estimates, summary=summary)
         self.assertTrue(sum(1 for line in open(summary)) == 6, "summary line count")
         
     def test_precision(self):
         """Test double precision image works"""
-        myfn = fntool()
+        myfn = functional()
         g2d = myfn.gaussian2d(1, [50,60], [20,10], "-20deg")
         nxpix = 120
         nypix = 100
-        pixels = numpy.zeros([nxpix, nypix], dtype=np.float64)
+        pixels = numpy.zeros([nxpix, nypix], dtype=numpy.float64)
         for x in range(nxpix):
             for y in range(nypix):
                 pixels[x, y] = g2d.f([x, y])
-        myia = iatool()
+        myia = image()
         for mytype in ['f', 'd']:
             myia.fromarray("", pixels, type=mytype)
             zz = myia.fitcomponents()
@@ -1919,3 +1950,7 @@ class imfit_test(unittest.TestCase):
             
 def suite():
     return [imfit_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

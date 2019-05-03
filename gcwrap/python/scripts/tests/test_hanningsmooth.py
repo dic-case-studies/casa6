@@ -1,22 +1,39 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import sys
 import shutil
-from __main__ import default
-from tasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
-from taskinit import mstool
-import exceptions
-import testhelper as th
-from parallel.parallel_data_helper import ParallelDataHelper
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    ### for testhelper import
+    import sys
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import testhelper as th
+    from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
+
+    from casatasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
+    from casatools import ctsys, ms
+
+    # default is not used in CASAtasks
+    def default(atask):
+        pass
+
+    # Path for data
+    datapath = ctsys.resolve('regression/unittest/hanningsmooth')
+else:
+    from __main__ import default
+    from tasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
+    from taskinit import mstool as ms
+    import testhelper as th
+    from parallel.parallel_data_helper import ParallelDataHelper
+
+    # Path for data
+    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/hanningsmooth/'
 
 '''
 functional tests for task hanningsmooth
 '''
-
-# Path for data
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/hanningsmooth/'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -26,7 +43,7 @@ if 'TEST_DATADIR' in os.environ:
         testmms = True
         datapath = DATADIR
 
-print('hanningsmooth tests will use data from '+datapath)         
+print('hanningsmooth tests will use data from %s' % datapath)
 
 class test_base(unittest.TestCase):
 
@@ -37,7 +54,7 @@ class test_base(unittest.TestCase):
             self.msfile = 'ngc5921_ut.mms'
             
         if (not os.path.exists(self.msfile)):
-            shutil.copytree(datapath+self.msfile, self.msfile)
+            shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
             
         default(hanningsmooth)
     
@@ -48,7 +65,7 @@ class test_base(unittest.TestCase):
             self.msfile = 'ALMA-data-mst-science-testing-CAS-5013-one-baseline-one-timestamp.mms'
             
         if (not os.path.exists(self.msfile)):
-            shutil.copytree(datapath+self.msfile, self.msfile)
+            shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
             
         default(hanningsmooth)
 
@@ -56,7 +73,7 @@ class test_base(unittest.TestCase):
         '''Create MMSs for tests with input MMS'''
         prefix = msfile.rstrip('.ms')
         if not os.path.exists(msfile):
-            os.system('cp -RL '+datapath + msfile +' '+ msfile)
+            os.system('cp -RL '+os.path.join(datapath,msfile)+' '+ msfile)
         
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
@@ -83,10 +100,15 @@ class hanningsmooth_test1(test_base):
         """hanningsmooth - Test 1: Wrong input MS should raise an exception"""
         msfile = 'badmsfile'
         self.outputms = 'none.ms'
+        passes = False
+        # CASA5 tasks do not throw exceptions, they return a value of False
         try:
-            hanningsmooth(vis=msfile)
-        except exceptions.RuntimeError as instance:
-            print('Expected error: %s'%instance)
+            ret = hanningsmooth(vis=msfile)
+            if not ret:
+                passes = True
+        except:
+            passes = True
+        self.assertTrue(passes)
         
     def test2(self):
         '''hanningsmooth - Test 2: Check that output MS is created'''
@@ -151,7 +173,7 @@ class hanningsmooth_test1(test_base):
         self.outputms = 'hann4.mms'
         
       # check correct flagging (just for one row as a sample)
-        mslocal = mstool()
+        mslocal = ms()
         mslocal.open(self.msfile)
         mslocal.sort('sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
         mslocal.close()
@@ -364,4 +386,6 @@ class Cleanup(test_base):
 def suite():
     return [hanningsmooth_test1,hanningsmooth_test2,Cleanup]
 
-
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
