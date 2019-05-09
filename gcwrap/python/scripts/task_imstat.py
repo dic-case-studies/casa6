@@ -1,15 +1,25 @@
 from __future__ import absolute_import
-from taskinit import *
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image, regionmanager, coordsys
+    from casatasks import casalog
+else:
+    from taskinit import *
+
+    image = iatool
+    regionmanager = rgtool
+    coordsys = cstool
+    
 def imstat(
     imagename, axes, region, box, chans,
     stokes, listit, verbose, mask, stretch,
     logfile, append, algorithm, fence, center,
     lside, zscore, maxiter, clmethod, niter
 ):
-    _myia = iatool()
-    _myrg = rgtool()
-    _mycs = cstool()
+    _myia = image()
+    _myrg = regionmanager()
+    _mycs = coordsys()
     try:
         casalog.origin('imstat')
         _myia.open(imagename)

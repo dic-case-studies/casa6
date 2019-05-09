@@ -2,8 +2,13 @@ from __future__ import absolute_import
 import os
 import shutil
 import string
-from taskinit import *
-import pdb
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image, measures
+    from casatasks import casalog
+else:
+    from taskinit import *
 
 def imreframe(imagename=None, output=None, outframe=None, epoch=None, restfreq=None):
     try:
@@ -14,7 +19,11 @@ def imreframe(imagename=None, output=None, outframe=None, epoch=None, restfreq=N
         outframe=string.lower(outframe)
         if(((outframe == 'topo') or (outframe=='geo')) and (epoch != '')):
             needregrid=True
-        myia,me=gentools(['ia', 'me'])
+        if is_CASA6:
+            myia = image()
+            me = measures()
+        else:
+            myia,me=gentools(['ia', 'me'])
         myia.open(imagename)
         c=myia.coordsys()
         me.doframe(me.observatory(c.telescope()))
@@ -57,10 +66,9 @@ def imreframe(imagename=None, output=None, outframe=None, epoch=None, restfreq=N
             ib.done()
         return True
         
-    except Exception as instance:
+    except Exception:
         if('myia' in locals()):
             myia.close()
         if('ib' in locals()):
             ib.close()
-        raise instance
- 
+        raise

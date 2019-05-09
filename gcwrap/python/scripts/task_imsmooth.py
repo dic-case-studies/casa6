@@ -69,9 +69,26 @@
 
 from __future__ import absolute_import
 import os
+import sys
 import numpy
-from taskinit import *
-from ialib import write_image_history
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image, regionmanager, quanta
+    from casatasks import casalog
+    from .ialib import write_image_history
+
+    _qa = quanta( )
+else:
+    from taskinit import *
+    from ialib import write_image_history
+
+    image = iatool
+    regionmanager = rgtool
+
+    # not a local tool
+    _qa = qa
 
 def imsmooth(
     imagename, kernel, major, minor, pa, targetres, kimage, scale, region,
@@ -95,7 +112,7 @@ def imsmooth(
             err = "beam cannot be a non-empty string"
             casalog.post(err, "SEVERE")
             raise Exception(err)
-        beam = {}    
+        beam = {}
 
     # First check to see if the output file exists.  If it
     # does then we abort.  CASA doesn't allow files to be
@@ -105,12 +122,12 @@ def imsmooth(
         casalog.post( "The outfile paramter is empty, consequently the" \
                       +" smoothed image will be\nsaved on disk in file, " \
                       + outfile, 'WARN')
-    _myia = iatool()
+    _myia = image()
     _myia.dohistory(False)
-    retia = iatool()
+    retia = image()
     _myia.open(imagename)
     mycsys = _myia.coordsys()
-    myrg = rgtool()
+    myrg = regionmanager()
     reg = myrg.frombcs(
         mycsys.torecord(), _myia.shape(), box, chans,
         stokes, "a", region
@@ -121,22 +138,23 @@ def imsmooth(
     # If the values given are integers we assume they are given in
     # arcsecs and alter appropriately
     if not ikernel:
-        if isinstance(major, (int, int, float)):
+        if isinstance(major, (int, float)):
             major=str(major)+'arcsec'
-        if isinstance(minor, (int, int, float)):
+        if isinstance(minor, (int, float)):
             minor=str(minor)+'arcsec'
-        if isinstance(pa, (int, int, float)):
+        if isinstance(pa, (int, float)):
             pa=str(pa)+'deg'
         
-    try:       
+    try:
+        outia = None
         if ( gkernel or ckernel):
             _myia.open(imagename)
             if ckernel:
                 beam = _myia.commonbeam()
                 # add a small epsilon to avoid convolving with a null beam to reach
                 # a target resolution that already exists
-                beam['major'] = qa.mul(beam['major'], 1 + 1e-10)
-                beam['minor'] = qa.mul(beam['minor'], 1 + 1e-10)
+                beam['major'] = _qa.mul(beam['major'], 1 + 1e-10)
+                beam['minor'] = _qa.mul(beam['minor'], 1 + 1e-10)
                 major = ""
                 minor = ""
                 pa = ""
@@ -198,7 +216,11 @@ def imsmooth(
             return False
         try:
             param_names = imsmooth.__code__.co_varnames[:imsmooth.__code__.co_argcount]
-            param_vals = [eval(p) for p in param_names]   
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]   
             write_image_history(
                 outia, sys._getframe().f_code.co_name,
                 param_names, param_vals, casalog
@@ -211,5 +233,4 @@ def imsmooth(
         return False
     finally:
         _myia.done()
-        outia.done()
-    
+        if outia: outia.done()
