@@ -30,7 +30,7 @@ In addition, [Java 8](https://java.com/en/download/) or greater is required. You
 java version "1.8.0_121"
 Java(TM) SE Runtime Environment (build 1.8.0_121-b13)
 Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
--bash-4.2$ 
+-bash-4.2$
 ```
 
 ##### Notable Dependencies
@@ -67,39 +67,51 @@ A particular version of Python can be selected at configure time like:
 ```
 but as noted above, [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatasks/browse) will use whatever version of python is in your path so it is best to configure your ```PATH``` to get a particular version of Python.
 
+#### Alternate Developer Build For Linux
+
+On Linux, one can alternately use **make**, which supports incremental and parallel builds that are useful for development. In this case, the steps are
+```
+-bash-4.2$ cd casatools
+-bash-4.2$ scripts/gcw-pick
+-bash-4.2$ autoconf
+-bash-4.2$ ./configure
+-bash-4.2$ ./setup.py genmake
+-bash-4.2$ make
+```
+The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, eg
+```
+-bash-4.2$ make -j8
+```
+To execute a parallel build with eight threads.
+
+The **./setup.py genmake** command creates a file named *makefile* with the make commands. In general, this file should only be modified if one knows what they are doing. Once the *makefile* has been generated, one can make changes to most source files (eg, .cc and .h files) and simply rerun the **make** command to generate an updated build. However, there are cases when earlier commands will have to be rerun. For example, if *ac/templates/setup.py.in* is modified, commands starting with **autoconf** will have to be rerun to generate a new *setup.py* file.
+
+A non-exhaustive list of when **./setup.py genmake** followed by **make** will need to be rerun includes:
+* modification of cerberus files. These are copied by **./setup.py genmake**; **make** does not deal with them
+* changes in tool dependencies when modifying *&lt;tool&gt;.xml* files. If one does not change tool dependencies when modifying *&lt;tool&gt;.xml* files, they need only rerun **make**. However, if a new tool dependency is introduced or an existing dependency removed (eg via a function return value), one will have to start by rerunning **./setup.py genmake** so the new dependency can propagate to the the *makefile*.
+
 #### See If It Works
 
 If the build completes successfully, try loading the CASAtools module:
 
 ```
--bash-4.2$ type ipython
-ipython is hashed (/opt/casa/02/bin/ipython)
--bash-4.2$ PYTHONPATH=build/lib.linux-x86_64-2.7 ipython 
-Python 2.7.12 (default, Apr  4 2017, 16:53:53) 
-Type "copyright", "credits" or "license" for more information.
-
-IPython 5.1.0 -- An enhanced Interactive Python.
-?         -> Introduction and overview of IPython's features.
-%quickref -> Quick reference.
-help      -> Python's own help system.
-object?   -> Details about 'object', use 'object??' for extra details.
-
-In [1]: from casatools import image
-
-In [2]: ia = image( )
-
-In [3]: ia.fromshape("mytest.im",[20,20])
-2017-10-11 20:49:13	INFO		Created Paged image 'mytest.im' of shape [20, 20] with float valued pixels.
-Out[3]: True
-
-In [4]: exit
--bash-4.2$ 
+-bash-4.2$ PYTHONPATH=build/lib.linux-x86_64-3.6 python3
+Python 3.6.3 (default, Jan  9 2018, 10:19:07)
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-11)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from casatools import image
+>>> ia = image( )
+>>> ia.fromshape("mytest.im",[20,20])
+2019-03-25 16:15:08     INFO    ImageFactory::createImage       Created Paged image 'mytest.im' of shape [20, 20] with float valued pixels.
+True
+>>>
+-bash-4.2$
 ```
 CASAtools can be configured using *~/.casa/toolrc.py*. For example, extra data search paths can be added like:
 ```
 -bash-4.2$ cat ~/.casa/toolrc.py
 datapath=[ "~/develop/casa/data/unittests" ]
--bash-4.2$ 
+-bash-4.2$
 ```
 
 #### Run Available Tests
@@ -114,7 +126,7 @@ After the checkout is complete, you must update your CASAtools RC file to indica
 ```
 -bash-4.2$ cat ~/.casa/toolrc.py
 datapath=[ "~/develop/casa/data/unittests" ]
--bash-4.2$ 
+-bash-4.2$
 ```
 The `datapath` list specifies directories where CASAtools should look for data files, and should include the directory we just checked out. After all of this is set, the full suite of tests can be run with:
 ```
@@ -137,9 +149,9 @@ Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCas
 
 #### Notes
 
-If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.5.jar*, e.g.
+If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.6.jar*, e.g.
 ```
--bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.5.jar
+-bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.6.jar
 -bash-4.2$ scripts/gcw-pick
 ```
 before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) file is automatically fetched from a download site by *gcw-pick*. However, it is not fetched if it already exists. Deleting the current copy will result in a new copy being fetched which *may* be newer.
@@ -230,20 +242,20 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 <pre>
     &lt;tool name="<i><font color="red">tool-name</font></i>"&gt;
-        <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
+        <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font>
         <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
-        
+
         <font color="#7CFC00">&lt;needs&gt;</font><i><font color="red">tool-name</font></i><font color="#7CFC00">&lt;/needs&gt;</font>
-        
+
         <font color="blue">&lt;code&gt;</font>
             <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
             <font color="blue">&lt;private&gt;</font>
                 <font color="blue">&lt;include&gt;</font>path to headerfile<font color="blue">&lt;/include&gt;</font>
             <font color="blue">&lt;/private&gt;</font>
         <font color="blue">&lt;/code&gt;</font>
-        
+
         <font color="#7CFC00">&lt;method</font> name="<i><font color="red">method-name</font></i>"<font color="#7CFC00">&gt;</font>
-            <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font> 
+            <font color="blue">&lt;shortdescription&gt;</font><i>one-line description</i><font color="blue">&lt;/shortdescription&gt;</font>
             <font color="blue">&lt;description&gt;</font><i>paragraph description</i><font color="blue">&lt;/description&gt;</font>
             <font color="blue">&lt;input&gt;</font>
                 <font color="#7CFC00">&lt;param</font> name="<font color="red">param-name</font>"<font color="#7CFC00">&gt;</font>

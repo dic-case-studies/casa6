@@ -13,8 +13,6 @@ m4_include([ac/m4/m4_ax_rpfits.m4])
 m4_include([ac/m4/m4_ax_check_compile_flag.m4])
 m4_include([ac/m4/m4_ax_cxx11.m4])
 m4_include([ac/m4/m4_ax_cxx_compile_stdcxx_11.m4])
-m4_include([ac/m4/m4_ax_dbus.m4])
-m4_include([ac/m4/m4_ax_dbus_cpp.m4])
 m4_include([ac/m4/m4_ax_expand_path.m4])
 m4_include([ac/m4/m4_ax_lib_stdcxx.m4])
 m4_include([ac/m4/m4_ax_libsakura.m4])
@@ -35,7 +33,6 @@ AC_MSG_NOTICE([host os is ${host_osname}])
 PWD=`pwd`
 AC_SUBST(PWD)
 
-AC_ARG_ENABLE([dbus], [  --enable-dbus           compile in support for DBus (deprecated feature)])
 AC_ARG_ENABLE([grpc], [  --disable-grpc          compile in support for gRPC],
   [case "${enableval}" in
      yes ) WITH_GRPC=1 ;;
@@ -44,6 +41,18 @@ AC_ARG_ENABLE([grpc], [  --disable-grpc          compile in support for gRPC],
    esac],
   [WITH_GRPC=1]
 )
+if [[ "x${CXX}" != "x" ]]; then
+    dnl#########################################################################
+    dnl##### set CXX_OVERRIDE to prevent all of our C++ machinations from  #####
+    dnl##### selecting some other C++ compiler...                          #####
+    dnl#####                                                               #####
+    dnl##### since compilers have different ABIs and different STLs        #####
+    dnl#########################################################################
+    CXX_OVERRIDE="${CXX}"
+else
+    CXX_OVERRIDE=""
+fi
+
 AC_SUBST(WITH_GRPC)
 
 AC_LANG(C++)
@@ -145,17 +154,26 @@ else
 fi
 AX_PATH_TO_BINARY(${CC},CC)
 AC_MSG_NOTICE([C compiler ${CC}])
-PATH=$(dirname ${CXX})${PATH_SEPARATOR}${PATH}
 
 AC_LANG_PUSH([C])
 AX_CHECK_COMPILE_FLAG(-fcx-fortran-rules,[CC_FORTRAN_COMPLEX=-fcx-fortran-rules],[CC_FORTRAN_COMPLEX=])
 AC_SUBST(CC_FORTRAN_COMPLEX)
 AC_LANG_POP([C])
 
-AC_PROG_FC([gfortran-mp-5 gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
-AX_PATH_TO_BINARY(${FC},FC)
-AC_MSG_NOTICE([Fortran compiler ${FC}])
-if test -f "$FC" -a ! -x "$FC"; then
+for pp in $(dirname ${CXX})${PATH_SEPARATOR}${PATH} ${save_PATH_save}; do
+    PATH=${pp}
+    AC_PROG_FC([gfortran-mp-5 gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
+    AX_PATH_TO_BINARY(${FC},FC)
+    if [[ -f "$FC" -a -x "$FC" ]]; then
+        AC_MSG_NOTICE([Fortran compiler ${FC}])
+        break
+    else
+        unset ac_cv_prog_FC
+        unset FC
+    fi
+done
+
+if [[ ! -f "$FC" -o ! -x "$FC" ]]; then
    echo "could not find fortran compiler..."
    exit 1
 fi
@@ -228,23 +246,6 @@ AC_SUBST(CASA_VERSION_PATCH)
 AC_SUBST(CASA_VERSION_FEATURE)
 AC_SUBST(CASA_VERSION_DESC)
 AC_SUBST(CASA_VERSION)
-
-AS_IF([test "x$enable_dbus" = "xyes"], [
-    HAVE_DBUS=1
-    AX_DBUS
-    AX_DBUSCPP
-],[
-    HAVE_DBUS=0
-    AC_SUBST(HAVE_DBUS)
-    AC_SUBST(DBUSCPP_XML2CPP)
-    AC_SUBST(DBUSCPP_CFLAGS)
-    AC_SUBST(DBUSCPP_NAME)
-    AC_SUBST(DBUSCPP_LDFLAGS)
-    DBUS_CFLAGS="-DWITHOUT_DBUS"
-    AC_SUBST(DBUS_CFLAGS)
-    AC_SUBST(DBUS_LDFLAGS)
-])
-AC_SUBST(HAVE_DBUS)
 
 AX_LIBXML
 AX_EIGEN

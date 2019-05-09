@@ -20,7 +20,7 @@ $File::Fetch::BLACKLIST = [qw|lwp httptiny httplite|];
 $exe = abs_path($0);
 $path = abs_path(dirname($exe));
 $java = '/usr/bin/java';
-$jarfile_name = "xml-casa-assembly-1.5.jar";
+$jarfile_name = "xml-casa-assembly-1.6.jar";
 $sakura_release = "libsakura-4.0.2065-01.tar.gz";
 @java_version = ( );
 open(JAVAVER, "$java -version 2>&1 |");
@@ -77,7 +77,7 @@ $tool_dir = "binding/tools";
 $src_dir = "binding/source";
 $hdr_dir = "binding/include";
 
-%xml_files = ( 'utils' => 'casa-source/gcwrap/tools/utils/utils.xml',
+%xml_files = ( 'utils' => 'src/cmpt/utils/utils.xml',
                'quanta' => 'casa-source/gcwrap/tools/casa/quanta.xml',
                'image' => 'casa-source/gcwrap/tools/images/image.xml',
                'coordsys' => 'casa-source/gcwrap/tools/images/coordsys.xml',

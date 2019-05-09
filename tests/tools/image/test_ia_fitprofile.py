@@ -68,6 +68,7 @@
 ###########################################################################
 import shutil
 import unittest
+import math
 import numpy
 import os
 from numpy import isnan
@@ -131,41 +132,7 @@ def run_fitprofile (
     myia.done()
     return res
 
-def run_specfit(
-    imagename, box, region, chans, stokes,
-    axis, mask, ngauss, poly, multifit, model="",
-    residual="", amp="", amperr="", center="", centererr="",
-    fwhm="", fwhmerr="", integral="", integralerr="",
-    wantreturn=True, estimates="", logresults=None,
-    pampest="", pcenterest="", pfwhmest="", pfix="",
-    gmncomps=0, gmampcon="", gmcentercon="",
-    gmfwhmcon="", gmampest=[0], gmcenterest=[0],
-    gmfwhmest=[0], gmfix="", logfile="", pfunc="",
-    goodamprange=[0.0], goodcenterrange=[0.0], goodfwhmrange=[0.0],
-    sigma="", outsigma=""
-):
-    return specfit(
-        imagename=imagename, box=box, region=region,
-        chans=chans, stokes=stokes, axis=axis, mask=mask,
-        ngauss=ngauss, poly=poly, estimates=estimates,
-        multifit=multifit,
-        model=model, residual=residual, amp=amp,
-        amperr=amperr, center=center, centererr=centererr,
-        fwhm=fwhm, fwhmerr=fwhmerr, integral=integral,
-        integralerr=integralerr,
-        wantreturn=wantreturn, logresults=logresults, pampest=pampest,
-        pcenterest=pcenterest, pfwhmest=pfwhmest, pfix=pfix,
-        gmncomps=gmncomps, gmampcon=gmampcon,
-        gmcentercon=gmcentercon, gmfwhmcon=gmfwhmcon,
-        gmampest=gmampest, gmcenterest=gmcenterest,
-        gmfwhmest=gmfwhmest, gmfix=gmfix, logfile=logfile,
-        pfunc=pfunc,
-        goodamprange=goodamprange,
-        goodcenterrange=goodcenterrange,
-        goodfwhmrange=goodfwhmrange, sigma=sigma, outsigma=outsigma
-    )
-
-class specfit_test(unittest.TestCase):
+class ia_fitprofile_test(unittest.TestCase):
     
     def setUp(self):
         shutil.copy(ctsys.resolve(datapath + twogauss), twogauss)
@@ -220,28 +187,18 @@ class specfit_test(unittest.TestCase):
         expected.done()
 
     def test_exceptions(self):
-        """specfit: Test various exception cases"""
+        """ia_fitprofile(): Test various exception cases"""
         
         def testit(
             imagename, box, region, chans, stokes,
             axis, mask, ngauss, poly, multifit, model,
             residual
         ):
-            for i in [0]:
-                if (i==0):
-                    self.assertRaises(
-                        Exception, run_fitprofile, imagename,
-                        box, region, chans, stokes, axis, mask,
-                        ngauss, poly, multifit, model, residual
-                    )
-                else:
-                    self.assertFalse(
-                        run_specfit(
-                            imagename, box, region, chans,
-                            stokes, axis, mask, ngauss, poly,
-                            multifit, model, residual
-                        )
-                    )
+            self.assertRaises(
+                Exception, run_fitprofile, imagename,
+                box, region, chans, stokes, axis, mask,
+                ngauss, poly, multifit, model, residual
+            )
         # Exception if no image name given",
         testit(
             "", "", "", "", "", 2, "", False, 1, -1, "", ""
@@ -552,7 +509,7 @@ class specfit_test(unittest.TestCase):
 
             
     def test_stretch(self):
-        """specfit : test mask stretch"""
+        """ia.fitprofile(): test mask stretch"""
         imagename = twogauss
         yy = iatool()
         yy.open(imagename)
@@ -569,22 +526,12 @@ class specfit_test(unittest.TestCase):
             ngauss=2, mask=mymask + ">-100",
             stretch=False
         )
-        #zz = specfit(
-        #    imagename, ngauss=2, mask=mymask + ">-100",
-        #    stretch=False
-        #)
-        #self.assertTrue(zz == None)
         zz = yy.fitprofile(
             ngauss=2, mask=mymask + ">-100",
             stretch=True
         )
         self.assertTrue(len(zz.keys()) > 0)
         yy.done()
-        #zz = specfit(
-        #    imagename, ngauss=2, mask=mymask + ">-100",
-        #    stretch=True
-        #)
-        #self.assertTrue(len(zz.keys()) > 0)
 
     def test_8(self):
         """ Test two gaussian + one polynomial image with estimates"""
@@ -949,25 +896,6 @@ class specfit_test(unittest.TestCase):
                                 self.assertTrue(((mymax*myia.getchunk() - fullsigma)/fullsigma < 1e-7).all())
                             myia.remove()
                 
-    @unittest.skip("uses a task")
-    def test_multiregion(self):
-        """Test that multiple regions are supported - CAS-6115"""
-        imagename = datapath + "simple.im"
-        resid = "myres.im"
-        res = specfit(
-            imagename=datapath + 'simple.im',
-            region='circle [[5pix, 5pix], 3pix], range=[1chan,14chan]',
-            multifit=True,residual=resid
-        )
-        myia = iatool()
-        myia.open(datapath + resid)
-        expec = myia.getchunk(getmask=True)
-        myia.done()
-        myia.open(resid)
-        got = myia.getchunk(getmask=True)
-        myia.done()
-        self.assertTrue((got == expec).all())
-
     def test_planes(self):
         """Test setting planes to use for fit"""
         myia = iatool()
@@ -1036,38 +964,160 @@ class specfit_test(unittest.TestCase):
         multifit = False
         model = ""
         residual = ""
-        #for code in [run_fitprofile]:
         self.assertRaises(
             Exception, run_fitprofile,
             imagename, box, region, chans,
             stokes, axis, mask, ngauss, poly,
             multifit, model, residual
         )
-        #self.assertFalse(
-        #    run_specfit(
-        #        imagename, box, region, chans,
-        #        stokes, axis, mask, ngauss, poly,
-        #        multifit, model, residual
-        #    )
-        #)
+       
+    ### begin tests for spectral index fitting
+    def test_exceptions(self):
+        """spxfit: Test various exception cases"""
+        myia = iatool()
+        myia.fromshape("", [1,1,10])
+        self.assertRaises(Exception, myia.fitprofile, poly=2, plpest=[1,2])
         
-    @unittest.skip("uses a task")
-    def test_noinf(self):
-        """Test that output images have infs and nans masked"""
-        pixfit = specfit(
-            imagename=datapath + 'IRC10216_HC3N.cube_r0.5.image',
-            region=datapath + 'specfit.crtf', ngauss=2,
-            multifit=True, amp='fit.amp.image', center='fitcenter.image',
-            fwhm='fitfwhm.image'
+    def test_plpfit(self):
+        """ Test fitting a power logarithmic polynomial"""
+        imagename = "spxfit.im"
+        myia = iatool()
+        myia.fromshape(imagename,[2, 2, 100])
+        csys = myia.coordsys()
+        inc = csys.increment()['numeric']
+        inc[2] = 1e7
+        csys.setincrement(inc)
+        myia.setcoordsys(csys.torecord())
+        zz = myia.getchunk()
+        plpest = [0.5, 2]
+        fn = functional()
+        myfn = fn.powerlogpoly(plpest)
+        for i in range(zz.shape[2]):
+            world = myia.toworld([0,0,i])['numeric'][2]
+            zz[:,:,i] = myfn.f(world/1e9)
+        myia.putchunk(zz)
+        
+        rec = myia.fitprofile(ngauss=0, spxtype="plp", spxest=plpest)
+        sols = rec['plp']['solution'].ravel()
+        self.assertTrue((abs(1 - sols/plpest) < 0.1e-7).all())
+        if i == 1:
+            rec = myia.fitprofile(ngauss=0, spxtype="plp", spxest=[0.4, 3])
+        sols = rec['plp']['solution'].ravel()
+        self.assertTrue((abs(1 - sols/plpest) < 0.1e-7).all())
+            
+        myia.addnoise(pars=[0, 0.001])
+        plpestoff = [0.4, 3]
+        rec = myia.fitprofile(ngauss=0, spxtype="plp", spxest=plpestoff)
+        sols = rec['plp']['solution'].ravel()
+        print("*** i %d" % i)
+        print("** max %s" % (sols/plpest))
+        self.assertTrue((abs(1 - sols/plpest) < 4e-2).all())
+        plpsol = "plpsol.im"
+        plperr = "plperr.im"
+        plpestoff = [0.4, 2.2]
+        plpfix = [False, True]
+        rec = myia.fitprofile(
+            ngauss=0, spxtype="plp", spxest=plpestoff, spxfix=plpfix,
+            multifit=True, spxsol=plpsol, spxerr=plperr
         )
-        for im in ('fit.amp.image', 'fitcenter.image', 'fitfwhm.image'):
-            for k in ('0', '1'):
-                image = im + '_' + k
-                res = imstat(image)
-                self.assertTrue(numpy.isfinite(res['sum']))
+        sols = rec['plp']['solution']
+        self.assertTrue((sols[:,:,:,1] == 2.2).all())
+        for j in [0, 1]:
+            myia.open(plpsol + "_" + str(j))
+            self.assertTrue(
+                (abs(myia.getchunk()/sols[:,:,:,j] - 1) < 1e-7).all()
+            )
+            myia.done(remove=True)
+
+            myia.open(plperr + "_" + str(j))
+            self.assertTrue(
+                (abs(myia.getchunk() - rec['plp']['error'][:, :, :, j]) < 1e-8).all()
+            )
+            myia.done(remove=True)
+            
+    def test_ltpfit(self):
+        """ Test fitting a logarithmic transformed polynomial"""
+        imagename = "ltpfit.im"
+        myia = iatool()
+        myia.fromshape(imagename,[2, 2, 100])
+        csys = myia.coordsys()
+        inc = csys.increment()['numeric']
+        inc[2] = 1e7
+        csys.setincrement(inc)
+        myia.setcoordsys(csys.torecord())
+        zz = myia.getchunk()
+        plpest = [0.5, 2]
+        fn = functional()
+        myfn = fn.powerlogpoly(plpest)
+        for i in range(zz.shape[2]):
+            world = myia.toworld([0,0,i])['numeric'][2]
+            zz[:,:,i] = myfn.f(world/1e9)
+        myia.putchunk(zz)
+        ltpest = plpest
+        ltpest[:] = plpest
+        ltpest[0] = math.log(plpest[0])
+        rec = myia.fitprofile(ngauss=0, spxtype="ltp", spxest=ltpest)
+        print(str(rec))
+        sols = rec['ltp']['solution'].ravel()
+        self.assertTrue((abs(1 - sols/ltpest) < 0.1e-7).all())
+        rec = myia.fitprofile(ngauss=0, spxtype="ltp", spxest=[0.4, 3])
+        sols = rec['ltp']['solution'].ravel()
+        self.assertTrue((abs(1 - sols/ltpest) < 0.1e-7).all())
+        print('*** xUnit %s' % rec['xUnit'])
+        self.assertTrue(rec['xUnit'] == "Hz")
+        
+        myia.addnoise(pars=[0, 0.001])
+        ltpestoff = [0.4, 3]
+        rec = myia.fitprofile(ngauss=0, spxtype="ltp", spxest=ltpestoff)
+        sols = rec['ltp']['solution'].ravel()
+        self.assertTrue(
+            (abs(1 - sols/ltpest) < 3e-2).all(),
+            "sols " + str(sols) + " ltpest " + str(ltpest)
+        )
+        spxsol = "ltpsol.im"
+        spxerr = "ltperr.im"
+        ltpestoff = [0.4, 2.2]
+        ltpfix = [False, True]
+        rec = myia.fitprofile(
+            ngauss=0,  spxtype="ltp", spxest=ltpestoff, spxfix=ltpfix,
+            multifit=True, spxsol=spxsol, spxerr=spxerr
+        )
+        sols = rec['ltp']['solution']
+        self.assertTrue((sols[:,:,:,1] == 2.2).all())
+        for j in [0, 1]:
+            self.assertTrue(myia.open(spxsol + "_" + str(j)))
+            self.assertTrue(
+                (abs(myia.getchunk()/sols[:,:,:,j] - 1) < 1e-7).all()
+            )
+            myia.done(remove=True)
+
+            self.assertTrue(myia.open(spxerr + "_" + str(j)))
+            self.assertTrue(
+                (abs(myia.getchunk() - rec['ltp']['error'][:,:,:,j]) < 1e-8).all()
+            )
+            myia.done(remove=True)
+            
+    def test_ltpfit_with_negative_values(self):
+        """Test fitting of ltp when y values are negative returns something reasonable because of auto masking"""
+        myia = iatool()
+        myia.fromshape("", [1, 1, 10])
+        f = []
+        for i in range(10):
+            f.append(myia.toworld([0,0,i])['numeric'][2])
+        f = numpy.array(f)
+        vals = (f/f[0])**(3.0)
+        # add a negative value to the array to test that it's not used in the fit
+        vals[0] = -1
+        bb = myia.getchunk()
+        bb[0, 0, :] = vals
+        myia.putchunk(bb)
+        res = myia.fitprofile(spxtype="ltp",spxest=[0, 3],div=f[0])
+        myia.done()
+        self.assertTrue(abs(res['ltp']['solution'][0][0][0][1] - 3) < 0.01 )
 
 def suite():
-    return [specfit_test]
+    return [ia_fitprofile_test]
 
 if __name__ == '__main__':
     unittest.main()
+
