@@ -1,19 +1,32 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import unittest
 import numpy
-import itertools
 
-from casatools import ctsys, measures, ms, table, quanta
-from casatools.platform import str2bytes
-from casatasks import importnro
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, measures, ms, table, quanta
+    from casatools.platform import str2bytes
+    from casatasks import importnro
 
-_qa = quanta( )
-_me = measures( )
-myms = ms( )
-mytb = table( )
+    _qa = quanta( )
+    _me = measures( )
+    myms = ms( )
+    mytb = table( )
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from importnro import importnro
 
+    myms, mytb = gentools(['ms','tb'])
+
+    # not local tools
+    _qa = qa
+    _me = me
 
 # Utilities
 def get_antenna_position(vis, row):
@@ -77,7 +90,14 @@ class importnro_test(unittest.TestCase):
     def setUp(self):
         self.res=None
         if (not os.path.exists(self.infile)):
-            shutil.copy(ctsys.resolve(os.path.join('regression/unittest/importnro',self.infile)), self.infile)
+            if is_CASA6:
+                datapath = ctsys.resolve(os.path.join('regression/unittest/importnro',self.infile))
+            else:
+                datapath=os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/importnro'),self.infile)
+            shutil.copy(datapath, self.infile)
+
+        if not is_CASA6:
+            default(importnro)
 
     def tearDown(self):
         if (os.path.exists(self.infile)):
@@ -92,7 +112,10 @@ class importnro_test(unittest.TestCase):
     
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
-        with open(self.infile, 'wb') as f: f.write(str2bytes('AA'))
+        if is_CASA6:
+            with open(self.infile, 'wb') as f: f.write(str2bytes('AA'))
+        else:
+            with open(self.infile, 'wb') as f: f.write('AA')
         #os.remove(os.path.join(self.infile, 'table.info'))
         with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$') as cm:
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
@@ -298,6 +321,7 @@ class importnro_test(unittest.TestCase):
 
 def suite():
     return [importnro_test]
-    
-if __name__ == '__main__':
-    unittest.main()
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

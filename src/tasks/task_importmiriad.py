@@ -1,7 +1,17 @@
+from __future__ import absolute_import
+from __future__ import print_function
 
-from casatools import miriadfiller
-from casatasks import casalog
-from .mstools import write_history
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import miriadfiller
+    from casatasks import casalog
+    from .mstools import write_history
+else:
+    from taskinit import *
+    from mstools import write_history
+
+    miriadfiller = casac.miriadfiller
 
 def importmiriad (
     mirfile=None,
@@ -46,7 +56,7 @@ def importmiriad (
         """
 
     # Python script
-    mymf = miriadfiller( )
+    mymf = miriadfiller()
     try:
         try:
             casalog.origin('importmiriad')
@@ -60,9 +70,12 @@ def importmiriad (
           raise
         # Write the args to HISTORY.
         try:
-            vars = locals( )
             param_names = importmiriad.__code__.co_varnames[:importmiriad.__code__.co_argcount]
-            param_vals = [vars[p] for p in param_names]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             write_history(
                 mymf, vis, 'importmiriad', param_names, 
                 param_vals, casalog

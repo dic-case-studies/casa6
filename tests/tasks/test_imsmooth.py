@@ -96,6 +96,8 @@
 # 
 # </todo>
 
+from __future__ import absolute_import
+from __future__ import print_function
 import random
 import os
 import numpy
@@ -103,13 +105,36 @@ import shutil
 import unittest
 import math
 
-from casatools import ctsys, image, regionmanager, componentlist, table, quanta
-from casatasks import imsmooth, casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image, regionmanager, componentlist, table, quanta
+    from casatasks import imsmooth, casalog
 
-_ia = image( )
-_rg = regionmanager( )
-_tb = table( )
-_qa = quanta( )
+    _ia = image()
+    _rg = regionmanager()
+    _tb = table()
+    _qa = quanta()
+
+    ctsys_resolve = ctsys.resolve
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+
+    componentlist = cltool
+    image = iatool
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+
+    _ia = iatool( )
+    _rg = rgtool( )
+
+    # not local tools
+    _tb = tb
+    _qa = qa
 
 targetres_im = "imsmooth_targetres.fits"
 tiny = "tiny.im"
@@ -151,7 +176,7 @@ def run_convolve2d(
     imagename, major, minor, pa, targetres,
     outfile, kernel="gauss", beam={}, overwrite=False
 ):
-    myia = image( )
+    myia = image()
     myia.open(imagename)
     res = myia.convolve2d(
         type=kernel,
@@ -171,13 +196,13 @@ class imsmooth_test(unittest.TestCase):
         
         datapath = 'regression/g192redux/reference'
         for file in image_names:
-            os.system('cp -r '+ctsys.resolve(os.path.join(datapath,file))+' ' + file)
-        self.ia = image( )
+            os.system('cp -r '+ctsys_resolve(os.path.join(datapath,file))+' ' + file)
+        self.ia = image()
         self.datapath = 'regression/imsmooth'
         for f in [targetres_im, tiny]:
             if(os.path.exists(f)):
                 os.system('rm -rf ' +f)
-            os.system('cp -r '+ctsys.resolve(os.path.join(self.datapath,f))+' ' + f)
+            os.system('cp -r '+ctsys_resolve(os.path.join(self.datapath,f))+' ' + f)
 
     def tearDown(self):
         for file in image_names:
@@ -441,17 +466,18 @@ class imsmooth_test(unittest.TestCase):
         ####################################################################### 
         casalog.post( "The REGION parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
 
+        # CASA6 tasks throw exceptions, CASA5 tasks return False
         passes = False
         try:
             results = imsmooth( tiny, region=7, beam=beam )
+            if not results:
+                passes = True 
         except:
             passes = True
         if ( not passes ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad region file, 7, was not reported as bad."
-    
-    
     
         try:
             results = imsmooth( tiny, region='garbage.rgn', beam=beam )
@@ -504,9 +530,12 @@ class imsmooth_test(unittest.TestCase):
         #######################################################################
         casalog.post( "The BOX parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
 
-        self.assertRaises(Exception, imsmooth, tiny, box='-3,0,511,511', beam=beam)
-        
-       
+        # CASA6 task throw exceptions, CASA5 tasks return False
+        if is_CASA6:
+            self.assertRaises(Exception, imsmooth, tiny, box='-3,0,511,511', beam=beam)
+        else:
+            self.assertFalse(imsmooth(tiny, box='-3,0,511,511', beam=beam))
+
         x1=random.randint(0,127)
         x2=random.randint(x1,127)
         y1=random.randint(0,127)
@@ -1008,7 +1037,7 @@ class imsmooth_test(unittest.TestCase):
 
     def test_stretch(self):
         """ imsmooth(): Test stretch parameter"""
-        yy = image( )
+        yy = image()
         mymask = "maskim"
         yy.fromshape(mymask, [200, 200, 1, 1])
         yy.addnoise()
@@ -1033,7 +1062,7 @@ class imsmooth_test(unittest.TestCase):
     def test_multibeam(self):
         """Test per plane beams"""
         myia = self.ia
-        myia.open(ctsys.resolve(os.path.join(self.datapath,"test_image2dconvolver_multibeam.im")))
+        myia.open(ctsys_resolve(os.path.join(self.datapath,"test_image2dconvolver_multibeam.im")))
         major = "10arcmin"
         minor = "8arcmin"
         pa = "80deg"
@@ -1133,7 +1162,7 @@ class imsmooth_test(unittest.TestCase):
                     yfwhm = 4
                 values[:,:,k] = make_gauss2d([shape[0], shape[1]], xfwhm, yfwhm)
             myia.putchunk(values)
-            outia = image( )
+            outia = image()
             for targetres in [False, True]:
                 ebeam = []
                 if targetres:
@@ -1277,10 +1306,10 @@ class imsmooth_test(unittest.TestCase):
         for unit in ("K", "cm-2"):
             myia.setbrightnessunit(unit)
             zz = myia.fitcomponents()
-            mycl = componentlist( )
+            mycl = componentlist()
             mycl.fromrecord(zz['results'])
             expected = mycl.getfluxvalue(0)
-            gg = image( )
+            gg = image()
             outfile = "gxg_" + unit + ".im"
             imsmooth(
                 imagename=imagename, targetres=True, major="10arcsec", minor="5arcsec",
@@ -1385,8 +1414,8 @@ class imsmooth_test(unittest.TestCase):
         
     def test_image_kernel(self):
         """Test image as kernel, CAS-5844"""
-        imagename = ctsys.resolve(os.path.join(self.datapath,"point.im"))
-        kimage = ctsys.resolve(os.path.join(self.datapath,"bessel.im"))
+        imagename = ctsys_resolve(os.path.join(self.datapath,"point.im"))
+        kimage = ctsys_resolve(os.path.join(self.datapath,"bessel.im"))
         outfile = "point_c_bessel.im"
         self.assertTrue(
             imsmooth(
@@ -1450,5 +1479,6 @@ class imsmooth_test(unittest.TestCase):
 def suite():
     return [imsmooth_test]    
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
