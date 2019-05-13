@@ -65,6 +65,7 @@ from distutils.core import Command
 from distutils.util import spawn, get_platform
 
 from functools import reduce
+from itertools import dropwhile,takewhile
 from collections import defaultdict
 from subprocess import call as Proc
 from subprocess import Popen, PIPE
@@ -493,6 +494,7 @@ def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='bin
     return (needed,libs,tools)
 
 def run_process( cmd, err, dir=".", stdin=None, env=None ):
+    print("\t]=> %s (cwd: %s)" % (cmd,os.path.abspath(dir)))
     sys.stdout.flush( )
     proc = Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=None if env is None else dict(os.environ,**env) ) if stdin is None else Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=stdin, env=None if env is None else dict(os.environ, **env) )
     out,err = pipe_decode(proc.communicate( ))
@@ -572,7 +574,7 @@ def build_grpc( prefix, srcdir, collectdir ):
            (1) do a straight build of grpc to get the C/C++ libraries and protoc compiler
            (2) rebuild protobuf to install and then cherry pick the include files
     """
-    extra_env = { 'PATH': "%s:%s" % (broken_autoconf_compiler_dir, os.environ['PATH']),
+    extra_env = { 'PATH': "%s:%s:%s" % ( broken_autoconf_compiler_dir, os.path.join(collectdir,'bin'), os.environ['PATH']),
                   'CC': os.path.basename(props['build.compiler.cc']), 'CXX': os.path.basename(props['build.compiler.cxx']),
                   'DOLLAR': '$$',
                   'ORIGIN': '$ORIGIN',
@@ -609,7 +611,7 @@ def build_grpc( prefix, srcdir, collectdir ):
             mkpath(collectdir_arg)
 
             print("building google grpc...")
-            run_process( [ "make", "RPATH_DIR=@rpath/", "prefix=%s" % prefix_arg,
+            run_process( [ "make", "RPATH_DIR=@rpath/", "prefix=%s" % prefix_arg, "HAS_SYSTEM_PROTOBUF=false",
                            "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "VERBOSE=1", "install"],
                          err='build of grpc failed', dir=srcdir_arg, env=extra_env )
 
@@ -676,7 +678,7 @@ def build_protobuf( prefix, srcdir, collectdir ):
             collectdir_arg = os.path.realpath(collectdir)
             mkpath(collectdir_arg)
 
-            extra_env = { 'PATH': "%s:%s" % (broken_autoconf_compiler_dir, os.environ['PATH']),
+            extra_env = { 'PATH': "%s:%s:%s" % (broken_autoconf_compiler_dir, os.path.join(collectdir,'bin'), os.environ['PATH']),
                           'CC': os.path.basename(props['build.compiler.cc']), 'CXX': os.path.basename(props['build.compiler.cxx']) }
             print("autogen for google protobuf...")
             run_process( ["autoreconf","-f", "-i", "-Wall,no-obsolete"], err='autogen of protobuf failed', dir=srcdir_arg, env=extra_env )
@@ -771,18 +773,26 @@ def get_cflags():
                                                                       ###     /usr/include (e.g. rhel6)
     return cflags
 
+_debug_build_ = False
+def debug_build():
+    return _debug_build_
+
+def get_optimization_flags():
+    return ['-g'] if debug_build( ) else ['-O2']
+
 def get_new_cxx_compiler_flags():
-    return ['-g', '-std=c++11']
+    return get_optimization_flags() + ['-std=c++11']
 
 def get_new_cxx_compiler_includes():
     return [
+        '-Ibuild/%s/include' % distutils_dir_name('grpc-install'),
         '-Ibinding/include', '-Ibinding/generated/include', '-Ilibcasatools/generated/include',
         '-Icasa-source/code', '-Icasa-source', '-Icasa-source/casacore', '-Iinclude',
         '-Isakura-source/src'
     ]
 
 def get_new_c_compiler_flags():
-    return ['-g']
+    return get_optimization_flags()
 
 def get_use_grpc():
    return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] ) 
@@ -839,11 +849,15 @@ def customize_compiler(self):
         ccache + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags() 
         + get_new_cxx_compiler_includes() + cflags + default_compiler_so[1:]
     )
-    new_compiler_cc = ccache + [props['build.compiler.cc'], '-g', '-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
+    new_compiler_cc = ccache + [props['build.compiler.cc']] + get_optimization_flags() + ['-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
 
-    new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
-    new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cc))
+    if debug_build( ):
+        new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
+        new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cc))
+    else:
+        new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cxx))
+        new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cc))
 
     local_path_file = ".lib-path.%d" % sys.hexversion
     local_mangle_file = ".lib-mangle.%d" % sys.hexversion
@@ -885,10 +899,19 @@ def customize_compiler(self):
             with open(local_mangle_file,'wb') as f:
                 pickle.dump(library_mangle,f)
 
+
+        ## allowing pthread library path (e.g. /opt/local/lib for macos) to be first results
+        ## in any macports (or other) protobuf library being used in preference to the one
+        ## we built...
+        self.linker_so = list(takewhile(lambda x: not x.startswith('-L'),self.linker_so)) + \
+            ['-L' + get_casac_dir() + os.sep + 'lib'] + \
+            list(dropwhile(lambda x: not x.startswith('-L'),self.linker_so))
+
         superld(target_desc, objects, output_filename, output_dir,
                 [library_mangle[l] if l in library_mangle else l for l in libraries],
                 library_dirs+local_library_path, runtime_library_dirs, export_symbols,
                 debug, extra_preargs, extra_postargs, build_temp, target_lang)
+
         self.linker_so = default_linker_so
 
     # now redefine the _compile method. This gets executed for each
@@ -956,6 +979,20 @@ try:
     from wheel.bdist_wheel import bdist_wheel
 
     class casa_binary_wheel(bdist_wheel):
+        user_options = bdist_wheel.user_options + [
+            # The format is (long option, short option, description).
+            ('debug', None, 'build a debugging version'),
+        ]
+
+        def initialize_options(self):
+            bdist_wheel.initialize_options(self)
+            if '--debug' in sys.argv:
+                global _debug_build_
+                _debug_build_ = True
+                self.debug = 1
+            else:
+                self.debug = 0
+
         def run(self):
             global doing_wheel_build
             doing_wheel_build = True
@@ -995,6 +1032,19 @@ def generate_casac_init_py():
 
 # run the customize_compiler
 class casa_build_ext(build_ext):
+    user_options = build_ext.user_options + [
+        # The format is (long option, short option, description).
+        ('debug', None, 'build a debugging version'),
+    ]
+
+    def initialize_options(self):
+        build_ext.initialize_options(self)
+        if '--debug' in sys.argv:
+            global _debug_build_
+            _debug_build_ = True
+            self.debug = 1
+        else:
+            self.debug = 0
 
     def build_extensions(self):
         customize_compiler(self.compiler)
@@ -1482,10 +1532,9 @@ class create_makefile(Command):
 
         ldflags1 = sep.join(props['build.flags.compile.pthread'] + arch_flags)
         # FIXME hardcoded because I don't know where it comes from
-        ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64-Wl,-z,relro -Wl,-rpath,'
+        ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64 -Wl,-z,relro -Wl,-rpath,'
         ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
-        ldflags2 = '-L' + casac_dir + os.sep + 'lib '
-        ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 ' 
+        ldflags2 = '-L/opt/rh/rh-python36/root/usr/lib64 '
         # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
         # the libcasatools link 
         # -lcasatools.cpython-36m-x86_64-linux-gnu '
