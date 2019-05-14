@@ -1,7 +1,14 @@
+from __future__ import absolute_import
 import os
-from casatools import ms
-from casatasks import casalog
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ms
+    from casatasks import casalog
+else:
+    from taskinit import *
+    ms = mstool
+    
 def listobs(
     vis, selectdata, spw, field, antenna, uvrange,
     timerange, correlation, scan, intent, feed,

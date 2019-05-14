@@ -6,6 +6,8 @@
 #
 # Original code based on readscans.py, courtesy S. Meyers
 
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 
 try:
@@ -15,12 +17,21 @@ except ImportError as e:
     print("Warning, listsdm task not available: %s" % e)
     _setup_successful = False
 
-from casatools import quanta, measures
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import quanta, measures
+    from casatasks import casalog
 
-_qa = quanta( )
-me = measures( )
-
+    _qa = quanta( )
+    _me = measures( )
+    str_split = str.split
+else:
+    from taskinit import *
+    # not local tools
+    _qa = qa
+    _me = me
+    str_split = string.split
+    
 def listsdm(sdm=None):
 
     if not _setup_successful:
@@ -28,7 +39,7 @@ def listsdm(sdm=None):
 
     # read Scan.xml
     xmlscans = minidom.parse(sdm+'/Scan.xml')
-    scandict = { }
+    scandict = {}
     startTimeShort = []
     endTimeShort = []
     rowlist = xmlscans.getElementsByTagName("row")
@@ -105,7 +116,7 @@ def listsdm(sdm=None):
         
         # get the field ID
         rowfieldid = rownode.getElementsByTagName("fieldId")
-        fieldid = str.split(str(rowfieldid[0].childNodes[0].nodeValue), '_')[1]
+        fieldid = str_split(str(rowfieldid[0].childNodes[0].nodeValue), '_')[1]
         fieldIdList.append(fieldid)
 
     # read ConfigDescription.xml to relate the configuration
@@ -214,7 +225,7 @@ def listsdm(sdm=None):
         rowSrcId = rownode.getElementsByTagName("sourceId")
         
         # convert to values or strings and append to relevent lists:
-        fieldList.append(int(str.split(str(rowField[0].childNodes[0].nodeValue),'_')[1]))
+        fieldList.append(int(str_split(str(rowField[0].childNodes[0].nodeValue),'_')[1]))
         fieldNameList.append(str(rowName[0].childNodes[0].nodeValue))
         fieldCodeList.append(str(rowCode[0].childNodes[0].nodeValue))
         coordInfo = rowCoords[0].childNodes[0].nodeValue.split()
@@ -242,7 +253,7 @@ def listsdm(sdm=None):
         rowStation = rownode.getElementsByTagName("stationId")
         
         # convert and append
-        antList.append(int(str.split(str(rowAnt[0].childNodes[0].nodeValue), '_')[1]))
+        antList.append(int(str_split(str(rowAnt[0].childNodes[0].nodeValue), '_')[1]))
         antNameList.append(str(rowAntName[0].childNodes[0].nodeValue))
         dishDiamList.append(float(rowDishDiam[0].childNodes[0].nodeValue))
         stationList.append(str(rowStation[0].childNodes[0].nodeValue))
@@ -262,11 +273,11 @@ def listsdm(sdm=None):
         # convert and append
         statIdList.append(str(rowStatId[0].childNodes[0].nodeValue))
         statNameList.append(str(rowStatName[0].childNodes[0].nodeValue))
-        posInfo = str.split(str(rowStatPos[0].childNodes[0].nodeValue))
+        posInfo = str_split(str(rowStatPos[0].childNodes[0].nodeValue))
         x = _qa.quantity([float(posInfo[2])], 'm')
         y = _qa.quantity([float(posInfo[3])], 'm')
         z = _qa.quantity([float(posInfo[4])], 'm')
-        pos = me.position('ITRF', x, y, z)
+        pos = _me.position('ITRF', x, y, z)
         qLon = pos['m0']
         qLat = pos['m1']
         statLatList.append(_qa.formxxx(qLat, 'dms', prec=0))
@@ -312,7 +323,7 @@ def listsdm(sdm=None):
             el = np.where(np.array(dataDescElList) == dDesc)[0][0]
             spwIdN = spwIdDataDescList[el]
             spwEl = np.where(np.array(spwIdList) == spwIdN)[0][0]
-            spwTempList.append(int(str.split(spwIdList[spwEl], '_')[1]))
+            spwTempList.append(int(str_split(spwIdList[spwEl], '_')[1]))
             nChanTempList.append(nChanList[spwEl])
             rFreqTempList.append(refFreqList[spwEl])
             cWidthTempList.append(chanWidthList[spwEl])
@@ -341,7 +352,10 @@ def listsdm(sdm=None):
             rFreqOrdList.append(rFreqOrd[listEl])
             cWidthOrdList.append(cWidthOrd[listEl])
             bbandOrdList.append(bbandOrd[listEl])
-        scandict[scanNum]['field'] = int(fieldIdList[scanEl[0]])
+        if len(scanEl) > 0:
+            scandict[scanNum]['field'] = int(fieldIdList[scanEl[0]])
+        else:
+            scandict[scanNum]['field'] = -1
         scandict[scanNum]['spws'] = spwOrdList
         scandict[scanNum]['nchan'] = nChanOrdList
         scandict[scanNum]['reffreq'] = rFreqOrdList
@@ -377,7 +391,7 @@ def listsdm(sdm=None):
     casalog.post("  SpwID  #Chans  Ch0(MHz)  ChWidth(kHz) TotBW(MHz)  Baseband")
 
     for i in range(0, len(spwIdList)):
-        casalog.post("  %s   %s    %s  %s     %s    %s" % (str.split(spwIdList[i], '_')[1].ljust(4), str(nChanList[i]).ljust(4), str(refFreqList[i]/1e6).ljust(8), str(np.array(chanWidthList[i])/1e3).ljust(8), str(np.array(chanWidthList[i])*nChanList[i]/1e6).ljust(8), basebandList[i].ljust(8)))
+        casalog.post("  %s   %s    %s  %s     %s    %s" % (str_split(spwIdList[i], '_')[1].ljust(4), str(nChanList[i]).ljust(4), str(refFreqList[i]/1e6).ljust(8), str(np.array(chanWidthList[i])/1e3).ljust(8), str(np.array(chanWidthList[i])*nChanList[i]/1e6).ljust(8), basebandList[i].ljust(8)))
     
     casalog.post(" ")
     casalog.post("Field information:")

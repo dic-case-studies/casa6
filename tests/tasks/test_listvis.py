@@ -1,13 +1,29 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-### for listing import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import listing as lt
 import unittest
 
-from casatools import ctsys
-from casatasks import listvis
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import listvis
+    
+    datapath = ctsys.resolve('regression/unittest/listvis')
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    
+    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/listvis/'
+
+if is_python3:
+    ### for listing import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import listing as lt
+else:
+    import listing as lt
 
 '''
 Unit tests for task listvis. It tests the following parameters:
@@ -20,11 +36,9 @@ Unit tests for task listvis. It tests the following parameters:
     
 '''
 
-datapath = ctsys.resolve('regression/unittest/listvis')
-
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if 'TEST_DATADIR' in os.environ:
+if 'TEST_DATADIR' in os.environ:   
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/listvis/'
     if os.path.isdir(DATADIR):
         testmms = True
@@ -32,7 +46,7 @@ if 'TEST_DATADIR' in os.environ:
     else:
         print('WARN: directory %s does not exist' % DATADIR)
 
-print('listvis tests will use data from %s' % datapath)
+print('listvis tests will use data from %s' % datapath)         
 
 # Reference files
 reffile = os.path.join(datapath,'reflistvis')
@@ -50,13 +64,16 @@ class listvis_test1(unittest.TestCase):
 
     def setUp(self):
         fpath = os.path.join(datapath, msfile1)
-        os.symlink(fpath, msfile1)
+        os.symlink(fpath, msfile1)       
 
         fpath = os.path.join(datapath, msfile2)
-        os.symlink(fpath, msfile2)
+        os.symlink(fpath, msfile2)       
 
         fpath = os.path.join(datapath, msfile3)
-        os.symlink(fpath, msfile3)
+        os.symlink(fpath, msfile3)       
+
+        if not is_CASA6:
+            default(listvis)
     
     def tearDown(self):
         if os.path.lexists(msfile1):
@@ -140,5 +157,6 @@ class listvis_test1(unittest.TestCase):
 def suite():
     return [listvis_test1]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

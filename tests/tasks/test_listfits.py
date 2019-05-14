@@ -1,10 +1,19 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import unittest
 
-from casatools import ctsys
-from casatasks import casalog, listfits
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import casalog, listfits
+else:
+    import commands
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
 
 class listfits_test(unittest.TestCase):
     
@@ -18,7 +27,12 @@ class listfits_test(unittest.TestCase):
         if(os.path.exists(self.fitsfile)):
             os.system('rm -rf ' + self.fitsfile)
 
-        shutil.copyfile(ctsys.resolve(os.path.join('regression/ngc5921',self.fitsfile)), self.fitsfile)
+        if is_CASA6:
+            shutil.copyfile(ctsys.resolve(os.path.join('regression/ngc5921',self.fitsfile)), self.fitsfile)
+        else:
+            default(listfits)
+            shutil.copyfile(os.environ.get('CASAPATH').split()[0] +\
+                            '/data/regression/ngc5921/'+self.fitsfile, self.fitsfile)
     
     def tearDown(self):
         if (os.path.exists(self.fitsfile)):
@@ -26,8 +40,13 @@ class listfits_test(unittest.TestCase):
         
     def test1(self):
         '''Test 1: Empty input should return False'''
+        # CASA5 tasks return False, casatasks throw exceptions
         fitsfile = ''
-        self.assertRaises(Exception, listfits, fitsfile)
+        if is_CASA6:
+            self.assertRaises(Exception, listfits, fitsfile)
+        else:
+            self.res = listfits(fitsfile)
+            self.assertFalse(self.res)
         
     def test2(self):
         '''Test 2: Good input should return None'''
@@ -49,5 +68,6 @@ class listfits_test(unittest.TestCase):
 def suite():
     return [listfits_test]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

@@ -18,7 +18,7 @@ else:
 
     _filler = casac.vlafillertask()
     _af = casac.agentflagger()
-    _ms = casa.ms()
+    _ms = casac.ms()
 
 def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
               stoptime,applytsys,autocorr,antnamescheme,keepblanks,evlabands):
