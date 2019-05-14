@@ -1,9 +1,22 @@
 from __future__ import absolute_import
-from taskinit import casalog, cltool, imtool, metool, qa
-from plotcomp import plotcomp
-from predictcomp_helper import *
-import pylab as pl
 import os
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import componentlist, imager, measures, quanta, ms, table
+    from casatasks import casalog
+    from .setjy_helper import testerrs
+    from . import solar_system_setjy as SSSetjy
+
+    _qa = quanta( )
+else:
+    from taskinit import casalog, cltool, imtool, metool, qa
+    from plotcomp import plotcomp
+    from predictcomp_helper import *
+    import pylab as pl
+
+    # not a local tool
+    _qa = qa
 
 def predictcomp(objname=None, standard=None, epoch=None,
                 minfreq=None, maxfreq=None, nfreqs=None, prefix=None,

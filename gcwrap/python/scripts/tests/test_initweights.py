@@ -1,31 +1,37 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import sys
 import shutil
-import re
 import numpy
-import math
-
-from __main__ import default
-from tasks import initweights
-from taskinit import tbtool
 import unittest
-from casa_stack_manip import stack_frame_find
 
-from initweights import initweights
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table
+    from casatasks import initweights
+else:
+    from __main__ import default
+    from tasks import initweights
+    from taskinit import tbtool as table
+    from initweights import initweights
 
-# to rethrow exception 
-import inspect
-g = stack_frame_find( )
-exception_stat = g['__rethrow_casa_exceptions'] if '__rethrow_casa_exceptions' in g else False
+    # this is used in a commented out version of testWeight, so this commented out here
+    # to rethrow exception - not relevant in casatasks
+    # import inspect
+    # from casa_stack_manip import stack_frame_find
+
+    # g = stack_frame_find( )
+    # exception_stat = g['__rethrow_casa_exceptions'] if '__rethrow_casa_exceptions' in g else False
 
 class initweights_common(unittest.TestCase):
     """
     A base test class for initweights task
     """
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-        '/data/regression/unittest/initweights/'
+    if is_CASA6:
+        datapath = ctsys.resolve('regression/unittest/initweights')
+    else:
+        datapath = os.path.join(os.environ.get('CASAPATH').split()[0],
+                                'data/regression/unittest/initweights')
         
     # Pick up alternative data directory to run tests on MMSs
     testmms = False
@@ -35,9 +41,9 @@ class initweights_common(unittest.TestCase):
             testmms = True
             datapath = DATADIR
         else: 
-            raise ValueError('Could not find input data in datapath='+DATADIR)
+            raise ValueError('Could not find input data in datapath=%s' % DATADIR)
     
-    print('initweights tests will use data from '+datapath)         
+    print('initweights tests will use data from %s' % datapath)
         
     inputms = "tsysweight_ave.ms"
     tsystable = "tsysweight_ave.tsys.cal"
@@ -60,13 +66,16 @@ class initweights_common(unittest.TestCase):
     verbose = False
 
     def setUp(self):
-        default(initweights)
+        # default not relevant for casatasks
+        if not is_CASA6:
+            default(initweights)
+
         for name in self.templist:
             # remove old ones (if exists)
             if (os.path.exists(name)):
                 shutil.rmtree(name)
             # copy a new ones
-            shutil.copytree(self.datapath+name, name)
+            shutil.copytree(os.path.join(self.datapath,name), name)
     
     def tearDown(self):
         # remove list of files
@@ -93,7 +102,7 @@ class initweights_common(unittest.TestCase):
     def _column_exists(self, tbname, colname):
         """Returns True if the column exists in the table"""
         self._check_file(tbname)
-        tb = tbtool()
+        tb = table( )
         tb.open(tbname)
         cols = tb.colnames()
         tb.close()
@@ -115,7 +124,7 @@ class initweights_common(unittest.TestCase):
             else: raise ValueError("No valid coefficient given.")
         polyarr = numpy.zeros(nchan)
         for iorder in range(len(coeff)):
-            polyarr += coeff[iorder]*numpy.array(xrange(nchan))**iorder
+            polyarr += coeff[iorder]*numpy.array(range(nchan))**iorder
         return polyarr
 
     def _compare_arrays(self, data, reference, atol=1.e-5, rtol=1.e-5):
@@ -198,13 +207,13 @@ class initweights_common(unittest.TestCase):
         self._run_local_tests(mode, dowtsp, spwlist, interplist, atol, rtol)
         # common tests
         # calculate results for each time
-        tb = tbtool()
+        tb = table()
         self._check_file(self.inputms)
         has_wtsp = self._column_exists(self.inputms, "WEIGHT_SPECTRUM")
         has_sigsp = self._column_exists(self.inputms, "SIGMA_SPECTRUM")
         if self.verbose: print("Test of values in MS after operation")
         for spw in spwlist:
-            if self.verbose: print(("SPW %d" % spw))
+            if self.verbose: print("SPW %d" % spw)
             nchan = -1
             data_found = False
             tb.open(self.inputms)
@@ -263,8 +272,8 @@ class initweights_common(unittest.TestCase):
                 self._testCell(testarr, refarr)
         else:
             if self.verbose and refarr.size < 130:
-                print(("Reference = %s" % str(refarr)))
-                print(("Data = %s" % str(cellarr)))
+                print("Reference = %s" % str(refarr))
+                print("Data = %s" % str(cellarr))
             self.assertEqual(cellarr.shape,refarr.shape)
             self.assertTrue(self._compare_arrays(cellarr, refarr,
                                                  rtol=rtol, atol=atol))
@@ -307,7 +316,7 @@ class initweights_common(unittest.TestCase):
         if takeEvenMean:
             return numpy.median(in_arr)
         else:
-            return numpy.sort(in_arr, axis=None)[(in_arr.size-1)/2]
+            return numpy.sort(in_arr, axis=None)[(in_arr.size-1)//2]
 
 
 class initweights_tsys_base(initweights_common):
@@ -534,10 +543,10 @@ class initweights_base(initweights_common):
 
     # Just not to raise error at verification stage.
     def _make_consistent(self):
-        tb = tbtool()
+        tb = table()
         tb.open(self.inputms,nomodify=False)
         try:
-            for irow in xrange(tb.nrows()):
+            for irow in range(tb.nrows()):
                 tb.putcell("SIGMA", irow, 1./numpy.sqrt(tb.getcell("WEIGHT", irow)))
         except:
             raise RuntimeError("Failed to manually make SIGMA and WEIGHT consistent.")
@@ -629,3 +638,6 @@ class initweights_delspcol(initweights_common):
 def suite():
     return [initweights_tsys_base, initweights_tsys_map,
             initweights_base, initweights_delspcol]
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

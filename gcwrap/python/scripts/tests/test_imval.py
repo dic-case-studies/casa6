@@ -111,13 +111,28 @@ import os
 import shutil
 import glob
 import numpy
-import casac
-from tasks import *
-from taskinit import *
 import unittest
-import traceback
 
-_ia = iatool( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image
+    from casatasks import imval, casalog
+
+    _ia = image()
+
+    ctsys_resolve = ctsys.resolve
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+
+    image = iatool
+
+    _ia = image( )
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
 
 # Input files
 image_file = 'n4826_bima.im'
@@ -178,9 +193,9 @@ class imval_test(unittest.TestCase):
         if (os.path.exists(image_file)):
             os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
             
-        datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/ATST3/NGC4826/'
-        os.system('cp -r ' +datapath + image_file +' ' + image_file)
-        os.system('cp -r ' +datapath + good_rgn_file +' ' + good_rgn_file)
+        datapath = 'regression/ATST3/NGC4826'
+        os.system('cp -r '+ctsys_resolve(os.path.join(datapath,image_file))+' ' + image_file)
+        os.system('cp -r '+ctsys_resolve(os.path.join(datapath,good_rgn_file))+' ' + good_rgn_file)
 
     def tearDown(self):
             os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
@@ -457,11 +472,11 @@ class imval_test(unittest.TestCase):
             fp=open( rgn_file, 'w' )
             fp.writelines('This file does NOT contain a valid CASA region specification\n')
             fp.close()
-        except Exception as err:
+        except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Unable to create bad region file.\n\t"
-            raise Exception(err)
+            raise
     
             
     
@@ -595,8 +610,7 @@ class imval_test(unittest.TestCase):
                 msg='Bottom right corner, '+str(results['blc'])+', value is: '\
                      +str(results['data'])+str(results['unit'])\
                      +' with mask '+str(results['mask'])
-            if ( results==None or 'data' not in results \
-                 or 'data' not in results or \
+            if ( results==None or 'data' not in results or \
                 ( results['data']+1.172165e-09 > 0.00001 or not results['mask'])):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
@@ -625,8 +639,7 @@ class imval_test(unittest.TestCase):
                 msg='Top left corner, '+str(results['blc'])+', value is: '\
                      +str(results['data'])+str(results['unit'])\
                      +' with mask '+str(results['mask'])
-            if ( results==None or 'data' not in results \
-                 or 'data' not in results or \
+            if ( results==None or 'data' not in results or \
                  ( results['data']+4.2731923e-09>error_margin or not results['mask'])):
                 retValue['success']=False
                 retValue['error_msgs'] = retValue['error_msgs'] + "\nError: Expected value of -4.273192e-09, and mask=True"  + "\n\t" + msg
@@ -652,8 +665,7 @@ class imval_test(unittest.TestCase):
                 msg='Top right corner, '+str(results['blc'])+', value is: '\
                      +str(results['data'])+str(results['unit'])\
                      +' with mask '+str(results['mask'])
-            if ( results==None or 'data' not in results \
-                 or 'data' not in results or \
+            if ( results==None or 'data' not in results or \
                  (results['data']+3.647830e-09>error_margin or not results['mask'])):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
@@ -921,7 +933,7 @@ class imval_test(unittest.TestCase):
     def test_coord_return(self):
         """Test returned coordinates CAS-2651"""
         myimval = imval(imagename=image_file, box="40,40,50,50", chans="5")
-        myia = iatool()
+        myia = image()
         myia.open(image_file)
         mycsys = myia.coordsys()
         myia.done()
@@ -933,7 +945,7 @@ class imval_test(unittest.TestCase):
         
     def test_non_rect_region(self):
         """ verify imval works on non-rectangular regions, CAS-5734"""
-        myia = iatool()
+        myia = image()
         imagename = "xxyy.im"
         myia.fromshape(imagename, [20,20,4,10])
         myia.done()
@@ -944,7 +956,7 @@ class imval_test(unittest.TestCase):
         
     def test_pv(self):
         """Test fix so imval works with pv images, CAS-7573"""
-        myia = iatool()
+        myia = image()
         imagename = "mypv.im"
         myia.fromshape("", [20,20,20])
         myia.addnoise()
@@ -959,4 +971,6 @@ class imval_test(unittest.TestCase):
 def suite():
     return [imval_test]
 
-    
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

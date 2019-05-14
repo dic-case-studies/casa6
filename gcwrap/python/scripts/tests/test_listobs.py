@@ -4,14 +4,34 @@ import os
 import sys
 import shutil
 import string
-import listing as lt
 import hashlib
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
 
-'''
+# is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ms, ctsys
+    from casatasks import listobs
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+        
+if is_python3:
+    ### for listing import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import listing as lt
+else:
+    import listing as lt
+
+    '''
 Unit tests for task listobs. It tests the following parameters:
     vis:        wrong and correct values
     selectdata: several data selection parameters
@@ -19,9 +39,8 @@ Unit tests for task listobs. It tests the following parameters:
     listfile:   save on a file
     
 '''
-dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/'
-datapath = dataroot + 'listobs/'
-datapath2 = dataroot + 'mstransform/'
+datapath  = ctsys_resolve('regression/unittest/listobs')
+datapath2 = ctsys_resolve('regression/unittest/mstransform')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -34,9 +53,10 @@ if 'TEST_DATADIR' in os.environ:
         print('WARN: directory '+DATADIR+' does not exist')
 
 print('listobs tests will use data from '+datapath)         
+print('                        and from '+datapath2)
 
 # Reference files
-reffile = datapath+'reflistobs'
+reffile = os.path.join(datapath,'reflistobs')
 
 # Input and output names
 msfile1 = 'ngc5921_ut.ms'
@@ -57,24 +77,34 @@ class listobs_test1(unittest.TestCase):
 
     def setUp(self):
         self.res = None
+        if is_CASA6:
+            self.ms = ms()
+        else:
+            # not a local copy
+            self.ms = ms
+
         if (not os.path.lexists(msfile1)):            
-            shutil.copytree(datapath+msfile1, msfile1, symlinks=True)
+            shutil.copytree(os.path.join(datapath,msfile1), msfile1, symlinks=True)
 
         if (not os.path.lexists(msfile2)):            
-            shutil.copytree(datapath+msfile2, msfile2, symlinks=True)
+            shutil.copytree(os.path.join(datapath,msfile2), msfile2, symlinks=True)
         
-        default(listobs)
+        if not is_CASA6:
+            default(listobs)
         
-            
+    def tearDown(self):
+        if is_CASA6:
+            self.ms.done( )
+
     def test1(self):
         '''Listobs 1: Input MS'''
         self.assertTrue(listobs(vis=msfile1, listunfl=True))
 
     def test2(self):
         '''Listobs 2: CSV-591. Check if long field names are fully displayed'''
-        ms.open(msfile1)
-        res = ms.summary(True, listunfl=True)
-        ms.close()
+        self.ms.open(msfile1)
+        res = self.ms.summary(True, listunfl=True)
+        self.ms.close()
         name = res['field_0']['name']
         self.assertFalse(name.__contains__('*'), "Field name contains a *")
         name = res['scan_7']['0']['FieldName']
@@ -82,9 +112,9 @@ class listobs_test1(unittest.TestCase):
         
     def test3(self):
         '''Listobs 3: CAS-2751. Check that ALMA MS displays one row per scan'''
-        ms.open(msfile2)
-        res = ms.summary(True, listunfl=True)
-        ms.close()
+        self.ms.open(msfile2)
+        res = self.ms.summary(True, listunfl=True)
+        self.ms.close()
         # Begin and end times should be different
         btime = res['scan_1']['0']['BeginTime']
         etime = res['scan_1']['0']['EndTime']
@@ -179,7 +209,7 @@ class listobs_test1(unittest.TestCase):
         out = "newobs9.txt"
         diff = "difflistobs9"
         reference = reffile+'9'
-        self.res = listobs(vis=datapath + nep, listfile=output, verbose=True, listunfl=False)
+        self.res = listobs(vis=os.path.join(datapath,nep), listfile=output, verbose=True, listunfl=False)
 #        # Remove the name of the MS from output before comparison
         os.system("sed '1,3d' "+ output+ ' > '+ out)        
         os.system("diff "+reference+" "+out+" > "+diff)    
@@ -209,7 +239,7 @@ class listobs_test1(unittest.TestCase):
 
     def test_CAS_6733(self):
         """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""
-        vis = datapath2 + "CAS-6733.ms"
+        vis = os.path.join(datapath2,"CAS-6733.ms")
         self.assertTrue(listobs(vis=vis))
         
 class listobs_cleanup(unittest.TestCase):
@@ -226,3 +256,8 @@ class listobs_cleanup(unittest.TestCase):
         
 def suite():
     return [listobs_test1,listobs_cleanup]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
+

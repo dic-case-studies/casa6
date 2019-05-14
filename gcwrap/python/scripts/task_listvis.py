@@ -3,7 +3,14 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-from taskinit import *
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ms
+    from casatasks import casalog
+else:
+    from taskinit import *
+    ms = casac.ms
 
 def listvis(vis, options, datacolumn, field,spw, selectdata, antenna, timerange,
             correlation, scan, feed, array, observation, uvrange, average,
@@ -11,7 +18,7 @@ def listvis(vis, options, datacolumn, field,spw, selectdata, antenna, timerange,
     """List visibilities on terminal."""
         
     casalog.origin('listvis')
-    myms = casac.ms()
+    myms = ms()
     
     isInteractive=False;
     
@@ -26,5 +33,6 @@ def listvis(vis, options, datacolumn, field,spw, selectdata, antenna, timerange,
                     average, showflags, "", pagerows, listfile)
         myms.close()
     except Exception as instance:
-        print('*** Error in listvis *** ', instance)
-    
+        print('*** Error in listvis *** %s' % instance)
+        return False
+    return True

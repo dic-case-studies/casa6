@@ -9,9 +9,8 @@ import sys
 import filecmp
 import glob
 
-try:
-    # CASA 6
-    ### for testhelper import
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     import testhelper as th
     from casatools import ctsys, ms, table, msmetadata, agentflagger
@@ -29,9 +28,7 @@ try:
     msmd_local = msmetadata()
     ms_local = ms()
     tb_local = table()
-
-except ImportError:
-    # 2nd try, CASA 5
+else:
     from tasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, importasdm, flagcmd
     from taskinit import mstool, tbtool, msmdtool, aftool
     from __main__ import default
@@ -90,7 +87,7 @@ def check_eq(val, expval, tol=None):
                 errmsg = "\n%r\n!=\n%r" % (val, expval)
             raise ValueError(errmsg)
         except Exception:
-            print(("Error comparing", val, "to", expval))
+            print("Error comparing", val, "to", expval)
             raise
 
 # Base class which defines setUp functions
@@ -1917,7 +1914,7 @@ class test_timeaverage_limits(test_base):
 
         tb_local.open(self.outvis)
         interval = tb_local.getcol('INTERVAL')
-        print((interval[0]))
+        print(interval[0])
         tb_local.close()
         check_eq(interval[0] >= 40.0,True)
 
@@ -2384,7 +2381,7 @@ class testFlags(test_base):
         try:
             mstransform(self.vis, outputvis=self.outputms, datacolumn='data', spw='>14', keepflags=False)
         except RuntimeError as instance:
-            print(('Expected Error: {0}'.format(instance)))
+            print('Expected Error: {0}'.format(instance))
         
         print('Expected Error!')
         

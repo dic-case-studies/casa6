@@ -1,7 +1,14 @@
 from __future__ import absolute_import
 import os
-from taskinit import *
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ms
+    from casatasks import casalog
+else:
+    from taskinit import *
+    ms = mstool
+    
 def listobs(
     vis, selectdata, spw, field, antenna, uvrange,
     timerange, correlation, scan, intent, feed,
@@ -32,7 +39,7 @@ def listobs(
        # Python script
        # parameter_printvalues(arg_names,arg_values,arg_types)
     try:
-        myms = mstool()
+        myms = ms()
         if (type(vis) == str) & os.path.exists(vis):
             myms.open(thems=vis, check=True)
         else:
@@ -64,5 +71,3 @@ def listobs(
         return False
     finally:
         myms.close()
-
-

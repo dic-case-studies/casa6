@@ -4,10 +4,23 @@ import shutil
 import string
 import copy
 import math
-from taskinit import mttool, mstool, casalog
-from mstools import write_history
-from parallel.parallel_data_helper import ParallelDataHelper
-import flaghelper as fh
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import ms, mstransformer
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from . import flaghelper as fh
+    from .mstools import write_history
+else:
+    from taskinit import mttool, mstool, casalog
+    from mstools import write_history
+    from parallel.parallel_data_helper import ParallelDataHelper
+    import flaghelper as fh
+
+    ms = mstool
+    mstransformer = mttool
 
 def partition(vis,
            outputvis,
@@ -126,9 +139,13 @@ def partition(vis,
         # Write history to output MS, not the input ms.
         try:
             param_names = partition.__code__.co_varnames[:partition.__code__.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             casalog.post('Updating the history in the output', 'DEBUG1')
-            write_history(mstool(), outputvis, 'partition', param_names,
+            write_history(ms(), outputvis, 'partition', param_names,
                           param_vals, casalog)
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
@@ -137,10 +154,9 @@ def partition(vis,
 
         return True
 
-
     # Create local copies of the MSTransform and ms tools
-    mtlocal = mttool()
-    mslocal = mstool()
+    mtlocal = mstransformer()
+    mslocal = ms()
         
     try:
                     
@@ -174,8 +190,6 @@ def partition(vis,
         mtlocal.done()
         casalog.post('%s'%instance,'ERROR')
         return False
-
-
 
     mslocal = None
     

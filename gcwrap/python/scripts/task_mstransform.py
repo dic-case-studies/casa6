@@ -6,13 +6,30 @@ import string
 import copy
 import math
 import time
-from taskinit import mttool, mstool, tbtool, casalog, qa
-from mstools import write_history
-from parallel.parallel_data_helper import ParallelDataHelper
-import flaghelper as fh
-from update_spw import update_spwchan
-from callibrary import callibrary
 
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import table, quanta, ms, mstransformer
+    from casatasks import casalog
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from . import flaghelper as fh
+    from .update_spw import update_spwchan
+    from .mstools import write_history
+    from .callibrary import callibrary
+else:
+    from taskinit import mttool, mstool, tbtool, casalog, qatool
+    from mstools import write_history
+    from parallel.parallel_data_helper import ParallelDataHelper
+    import flaghelper as fh
+    from update_spw import update_spwchan
+    from callibrary import callibrary
+
+    mstransformer = mttool
+    ms = mstool
+    table = tbtool
+    # not a local tool
+    quanta = qatool
 
 def mstransform(
              vis, 
@@ -146,8 +163,7 @@ def mstransform(
         # Check the heuristics of separationaxis and the requested transformations
         pval = pdh.validateOutputParams()
         if pval == 0:
-            raise Exception('Cannot create MMS using separationaxis=%s with some of the requested transformations.'\
-                            %separationaxis)
+            raise Exception('Cannot create MMS using separationaxis=%s with some of the requested transformations.' % separationaxis)
                              
         try:
             pdh.setupCluster('mstransform')
@@ -161,8 +177,9 @@ def mstransform(
                     
         
     # Create a local copy of the MSTransform tool
-    mtlocal = mttool()
-    mslocal = mstool()
+    mtlocal = mstransformer()
+    mslocal = ms()
+    qalocal = quanta()
         
     try:
                     
@@ -260,7 +277,7 @@ def mstransform(
             
         # Only parse timeaverage parameters when timebin > 0s
         if timeaverage:
-            tb = qa.convert(qa.quantity(timebin), 's')['value']
+            tb = qalocal.convert(qalocal.quantity(timebin), 's')['value']
             if not tb > 0:
                 raise Exception("Parameter timebin must be > '0s' to do time averaging")
                        
@@ -316,7 +333,7 @@ def mstransform(
         isopen = False
 
         try:
-            mytb = tbtool()
+            mytb = table()
             mytb.open(outputvis + '/FLAG_CMD', nomodify=False)
             isopen = True
             nflgcmds = mytb.nrows()
@@ -346,7 +363,7 @@ def mstransform(
                         widths = chanbin
                     else:
                         if hasattr(chanbin, '__iter__') and len(chanbin) > 1:
-                            for i in xrange(len(chanbin)):
+                            for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
     #                        print 'using ms.msseltoindex + a scalar width'
@@ -356,10 +373,10 @@ def mstransform(
                                 w = chanbin[0]
                             else:
                                 w = chanbin
-                            for i in xrange(numspw):
+                            for i in range(numspw):
                                 widths[i] = w
     #                print 'widths =', widths 
-                    for rownum in xrange(nflgcmds):
+                    for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
                         if spwmatch:
@@ -382,10 +399,7 @@ def mstransform(
                                     cmd = cmds[rownum].replace(spwmatch.group(), repl)
                             #except: # cmd[rownum] no longer applies.
                             except Exception as e:
-                                casalog.post(
-                                    "Error %s updating row %d of FLAG_CMD" % (e,
-                                                                              rownum),
-                                             'WARN')
+                                casalog.post("Error %s updating row %d of FLAG_CMD" % (e,rownum),'WARN')
                                 casalog.post('sch1 = ' + sch1, 'DEBUG1')
                                 casalog.post('cmd = ' + cmd, 'DEBUG1')
                             if cmd != cmds[rownum]:
@@ -414,12 +428,14 @@ def mstransform(
     # Write history to output MS, not the input ms.
     try:
         param_names = mstransform.__code__.co_varnames[:mstransform.__code__.co_argcount]
-        param_vals = [eval(p) for p in param_names]
-        write_history(mslocal, outputvis, 'mstransform', param_names,
-                      param_vals, casalog)
+        if is_python3:
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
+        write_history(mslocal, outputvis, 'mstransform', param_names, param_vals, casalog)
     except Exception as instance:
-        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                     'WARN')
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
         return False
 
     mslocal = None

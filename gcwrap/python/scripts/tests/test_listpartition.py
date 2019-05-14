@@ -4,11 +4,27 @@ import os
 import sys
 import shutil
 import string
-from __main__ import default
-import partitionhelper as ph
-from tasks import listpartition
 import unittest
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import listpartition
+    from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
+
+    ctsys_resolve = ctsys.resolve
+
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    import partitionhelper as ph
+    from tasks import listpartition
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+    
 '''
 Unit tests for task listpartition. It tests the following parameters:
     vis:        wrong and correct values
@@ -31,8 +47,7 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + os.environ.get('CASAPATH').split()[0] +
-                      "/data/regression/unittest/partition/" + self.vis + ' ' + self.vis)
+            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
             
         default(listpartition)
 
@@ -44,8 +59,7 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + os.environ.get('CASAPATH').split()[0] +
-                      "/data/regression/unittest/partition/" + self.vis + ' ' + self.vis)
+            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
 
         default(listpartition)
 
@@ -57,8 +71,7 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + os.environ.get('CASAPATH').split()[0] +
-                      "/data/regression/unittest/partition/" + self.vis + ' ' + self.vis)
+            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
 
         default(listpartition)
 
@@ -70,8 +83,7 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + os.environ.get('CASAPATH').split()[0] +
-                      "/data/regression/unittest/partition/" + self.vis + ' ' + self.vis)
+            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
 
         default(listpartition)
 
@@ -208,27 +220,25 @@ class test_MMS_scan(test_base):
         self.assertTrue(os.path.exists(output))
 
         # Compare the sizes of the sub-MSs with the output of du -hs
-        ff = open(output,'r')
-        mslist = ff.readlines()
-        i = 0
-        for l in mslist:
-            if i == 0:
-                i += 1
-                continue
+        with open(output,'r') as ff:
+            mslist = ff.readlines()
+            i = 0
+            for l in mslist:
+                if i == 0:
+                    i += 1
+                    continue
             
-            ll = l.rstrip()
-            rear = ll.rpartition(' ')
-            front = ll.partition(' ')
+                ll = l.rstrip()
+                rear = ll.rpartition(' ')
+                front = ll.partition(' ')
             
-            # Now get the du -hs for the same sub-MS
-            # Step into the data directory
-            dusize = ph.getDiskUsage(self.visdata+front[0])
+                # Now get the du -hs for the same sub-MS
+                # Step into the data directory
+                dusize = ph.getDiskUsage(self.visdata+front[0])
 
-            # Compare both
-            self.assertEqual(dusize, rear[2], '%s is not equal to %s for %s'%(dusize,rear[2],front[0]))
+                # Compare both
+                self.assertEqual(dusize, rear[2], '%s is not equal to %s for %s'%(dusize,rear[2],front[0]))
             
-        ff.close()        
-
 class test_MMS_mix(test_base):
 
     def setUp(self):
@@ -286,26 +296,25 @@ class test_MMS_mix(test_base):
         self.assertTrue(os.path.exists(output))
 
         # Compare the sizes of the sub-MSs with the output of du -hs
-        ff = open(output,'r')
-        mslist = ff.readlines()
-        i = 0
-        for l in mslist:
-            if i == 0:
-                i += 1
-                continue
+        with open(output,'r') as ff:
+            mslist = ff.readlines()
+            i = 0
+            for l in mslist:
+                if i == 0:
+                    i += 1
+                    continue
             
-            ll = l.rstrip()
-            rear = ll.rpartition(' ')
-            front = ll.partition(' ')
+                ll = l.rstrip()
+                rear = ll.rpartition(' ')
+                front = ll.partition(' ')
             
-            # Now get the du -hs for the same sub-MS
-            # Step into the data directory
-            dusize = ph.getDiskUsage(self.visdata+front[0])
+                # Now get the du -hs for the same sub-MS
+                # Step into the data directory
+                dusize = ph.getDiskUsage(self.visdata+front[0])
 
-            # Compare both
-            self.assertEqual(dusize, rear[2], '%s is not equal to %s for %s'%(dusize,rear[2],front[0]))
+                # Compare both
+                self.assertEqual(dusize, rear[2], '%s is not equal to %s for %s'%(dusize,rear[2],front[0]))
             
-        ff.close()        
 
 class listpartition_cleanup(unittest.TestCase):
 
@@ -330,5 +339,6 @@ def suite():
             test_MMS_mix,
             listpartition_cleanup]
     
-    
-    
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

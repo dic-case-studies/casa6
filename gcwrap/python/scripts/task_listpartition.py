@@ -3,9 +3,20 @@ from __future__ import print_function
 import os
 import numpy as np
 import pprint
-from taskinit import *
-import partitionhelper as ph
-from parallel.parallel_task_helper import ParallelTaskHelper
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import ms
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from . import partitionhelper as ph
+    from . import flaghelper as fh
+else:
+    from taskinit import *
+    import partitionhelper as ph
+    from parallel.parallel_task_helper import ParallelTaskHelper
+
+    ms = casac.ms
 
 
 def listpartition(vis=None, createdict=None, listfile=None):
@@ -29,9 +40,9 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
     casalog.origin('listpartition')
 
-    mslocal = casac.ms()
-    mslocal1 = casac.ms()
-            
+    mslocal = ms()
+    mslocal1 = ms()
+    ffout = None
 
     try:
         if (type(vis) == str) & os.path.exists(vis):
@@ -46,8 +57,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
             
             casalog.post('Will save output to \'%s\''%listfile)
             ffout = open(listfile, 'w')
-            
-                
+
         # Is it a multi-MS?
         ismms = mslocal.ismultims()
         
@@ -86,7 +96,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
         if outdict.keys() == []:
             casalog.post('Error in processing dictionaries','ERROR')
         
-        indices = outdict.keys()
+        indices = list(outdict.keys())
         indices.sort()
             
         counter = 0
@@ -100,7 +110,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
             # Sort scans for more optimal printing
             # Print information per scan
             firstscan = True
-            skeys = SCAN.keys()
+            skeys = list(SCAN.keys())
             skeys.sort()
             for myscan in skeys:
                 SPW = outdict[index]['scanId'][myscan]['spwIds']
@@ -132,15 +142,16 @@ def listpartition(vis=None, createdict=None, listfile=None):
                 firstscan = False            
 
                 # Print to a file
-                if listfile != '':
-                    print(text, file=ffout)
+                if ffout is not None:
+                    print(text,file=ffout)
                 else:
                     # Print to the logger
                     casalog.post(text)
                                 
                 
-        if listfile != '':    
-            ffout.close()
+        if ffout is not None:
+            ffout.close( )
+            ffout = None
                                         
      
         # Return the scan dictionary
@@ -151,6 +162,8 @@ def listpartition(vis=None, createdict=None, listfile=None):
             
     except Exception as instance:
 #        mslocal.close()
+        if ffout is not None:
+            ffout.close( )
         print('*** Error ***', instance)
     
 

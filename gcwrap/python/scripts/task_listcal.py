@@ -1,7 +1,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-from taskinit import *
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+       from casatools import calibrater
+else:
+       from taskinit import *
+       calibrater = cbtool
 
 def listcal(vis=None,caltable=None,field=None,antenna=None,spw=None,
             listfile=None,pagerows=None):
@@ -12,7 +18,7 @@ def listcal(vis=None,caltable=None,field=None,antenna=None,spw=None,
        #Python script
 
        try:
-              mycb=cbtool()
+              mycb=calibrater( )
               if ((type(vis)==str) & (os.path.exists(vis))):
                      mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
               else:
@@ -21,6 +27,4 @@ def listcal(vis=None,caltable=None,field=None,antenna=None,spw=None,
                          listfile=listfile,pagerows=pagerows)
               mycb.close()
        except Exception as instance:
-              print('*** Error ***',instance)
-
-
+              print('*** Error *** %s' % instance)

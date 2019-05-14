@@ -3,11 +3,27 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-import listing as lt
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
+
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import listvis
+    
+    datapath = ctsys.resolve('regression/unittest/listvis')
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    
+    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/listvis/'
+
+if is_python3:
+    ### for listing import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import listing as lt
+else:
+    import listing as lt
 
 '''
 Unit tests for task listvis. It tests the following parameters:
@@ -20,8 +36,6 @@ Unit tests for task listvis. It tests the following parameters:
     
 '''
 
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/listvis/'
-
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
 if 'TEST_DATADIR' in os.environ:   
@@ -30,12 +44,12 @@ if 'TEST_DATADIR' in os.environ:
         testmms = True
         datapath = DATADIR
     else:
-        print('WARN: directory '+DATADIR+' does not exist')
+        print('WARN: directory %s does not exist' % DATADIR)
 
-print('listvis tests will use data from '+datapath)         
+print('listvis tests will use data from %s' % datapath)         
 
 # Reference files
-reffile = datapath+'reflistvis'
+reffile = os.path.join(datapath,'reflistvis')
 
 # Input and output names
 msfile1 = 'ngc5921_ut.ms'
@@ -58,8 +72,8 @@ class listvis_test1(unittest.TestCase):
         fpath = os.path.join(datapath, msfile3)
         os.symlink(fpath, msfile3)       
 
-        default(listvis)
-        
+        if not is_CASA6:
+            default(listvis)
     
     def tearDown(self):
         if os.path.lexists(msfile1):
@@ -142,3 +156,7 @@ class listvis_test1(unittest.TestCase):
         
 def suite():
     return [listvis_test1]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
