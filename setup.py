@@ -251,6 +251,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_visstat.py',
                     'src/tasks/task_widebandpbcor.py',
                     'src/tasks/task_importmiriad.py',
+                    'src/scripts/predictcomp_helper.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
