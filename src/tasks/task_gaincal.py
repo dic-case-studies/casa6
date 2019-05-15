@@ -159,7 +159,7 @@ def gaincal(vis=None,caltable=None,
         mycb.close()
 
     except Exception as instance:
-        print('*** Error ***', instance)
+        print('*** Error *** %s' % instance)
         mycb.close()
         casalog.post("Error in gaincal: %s" % str(instance), "SEVERE")
         raise Exception("Error in gaincal: "+str(instance))
