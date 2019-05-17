@@ -2,8 +2,9 @@ import os
 import shutil
 import string
 
-from casatools import image, measures
+from casatools import image, measures, quanta
 from casatasks import casalog
+qa = quanta()
 
 
 def imreframe(imagename=None, output=None, outframe=None, epoch=None, restfreq=None):
@@ -12,7 +13,7 @@ def imreframe(imagename=None, output=None, outframe=None, epoch=None, restfreq=N
         if(output==imagename):
             output=''
         needregrid=False
-        outframe=string.lower(outframe)
+        outframe=str.lower(outframe)
         if(((outframe == 'topo') or (outframe=='geo')) and (epoch != '')):
             needregrid=True
         myia = image( )
