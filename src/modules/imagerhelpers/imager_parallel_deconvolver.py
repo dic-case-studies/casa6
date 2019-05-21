@@ -1,5 +1,6 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-import commands
 import math
 import shutil
 import string
@@ -7,11 +8,19 @@ import time
 import re;
 import copy
 
-from casatools import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import casalog, synthesisdeconvolver
 
-from .imager_base import PySynthesisImager
-from .parallel_imager_helper import PyParallelImagerHelper
+    from .imager_base import PySynthesisImager
+    from .parallel_imager_helper import PyParallelImagerHelper
+else:
+    from taskinit import *
 
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+
+    synthesisdeconvolver = casac.synthesisdeconvolver
 '''
 A set of helper functions for the tasks  tclean
 
@@ -34,8 +43,8 @@ class PyParallelDeconvolver(PySynthesisImager):
         #self.NN = self.PH.NN
         self.NN = len(self.listOfNodes);
         if self.NF != self.NN:
-             print 'For now, cannot handle nfields != nnodes. Will implement round robin allocation later.'
-             print 'Using only ', self.NN, ' fields and nodes'
+             print('For now, cannot handle nfields != nnodes. Will implement round robin allocation later.')
+             print('Using only ', self.NN, ' fields and nodes')
              
 
 #############################################
@@ -77,7 +86,7 @@ class PyParallelDeconvolver(PySynthesisImager):
 
         # Check with the iteration controller about convergence.
         stopflag = self.IBtool.cleanComplete()
-        print 'Converged : ', stopflag
+        print('Converged : ', stopflag)
         if( stopflag>0 ):
             stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 5 times from the previous major cycle','peak residual increased by more than 5 times from the minimum reached']
             casalog.post("Reached global stopping criterion : " + stopreasons[stopflag-1], "INFO")

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import math
 import shutil
@@ -5,6 +7,15 @@ import string
 import time
 import re;
 import copy
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import synthesisutils
+    from casatasks import casalog
+else:
+    from taskinit import *
+
+    synthesisutils = casac.synthesisutils
 
 '''
 A set of helper functions for the tasks  tclean
@@ -108,7 +119,7 @@ class PyParallelImagerHelper():
 ## Very rudimentary partitioning - only for tests. The actual code needs to go here.
     def partitionContDataSelection(self,oneselpars={}):
 
-        synu = casac.synthesisutils()
+        synu = synthesisutils()
         allselpars =  synu.contdatapartition( oneselpars , self.NN )
         synu.done()
 
@@ -119,7 +130,7 @@ class PyParallelImagerHelper():
 ## Very rudimentary partitioning - only for tests. The actual code needs to go here.
     def partitionCubeDataSelection(self,oneselpars={}):
 
-        synu = casac.synthesisutils()
+        synu = synthesisutils()
         allselpars =  synu.cubedatapartition( oneselpars , self.NN )
         synu.done()
 
@@ -129,7 +140,7 @@ class PyParallelImagerHelper():
 #############################################
     def partitionCubeDeconvolution(self,impars={}):
 
-        synu = casac.synthesisutils()
+        synu = synthesisutils()
         allimpars =  synu.cubeimagepartition( impars , self.NN )
         synu.done()
 
@@ -140,7 +151,7 @@ class PyParallelImagerHelper():
     def partitionCubeSelection(self, oneselpars={}, oneimpars={}):
         incsys = oneimpars['csys']
         nchan = oneimpars['nchan']
-        synu = casac.synthesisutils()
+        synu = synthesisutils()
         allpars = synu.cubedataimagepartition(oneselpars, incsys, self.NN, nchan)
         synu.done()
 
