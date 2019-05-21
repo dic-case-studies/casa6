@@ -1534,7 +1534,8 @@ class create_makefile(Command):
         # FIXME hardcoded because I don't know where it comes from
         ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64 -Wl,-z,relro -Wl,-rpath,'
         ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
-        ldflags2 = '-L/opt/rh/rh-python36/root/usr/lib64 '
+        modulelib = os.sep.join([moduledir, "__casac__", "lib"])
+        ldflags2 = '-L/opt/rh/rh-python36/root/usr/lib64 -L' + modulelib
         # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
         # the libcasatools link 
         # -lcasatools.cpython-36m-x86_64-linux-gnu '
@@ -1550,7 +1551,7 @@ class create_makefile(Command):
         ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
         with open("makefile", "a") as mk:
             mk.write('\n\n' + libcasatools + ': ' + sep.join(casatools_obj_list))
-            mk.write('\n\t@mkdir -p build/lib.linux-x86_64-3.6/casatools/__casac__/lib')
+            mk.write('\n\t@mkdir -p ' + modulelib)
             mk.write('\n\t' + ld_cmd)
 
         # swig *.i -> *_wrap.cpp
