@@ -66,6 +66,7 @@ class ImagerParameters():
                  sysvel='', 
                  sysvelframe='',
                  interpolation='nearest',
+                 perchanweightdensity=False,
 
                  gridder="standard",
 #                 ftmachine='gridft', 
@@ -96,6 +97,7 @@ class ImagerParameters():
 
                  weighting='natural', 
                  robust=0.5,
+                 noise='0.0Jy',
                  npixels=0,
                  uvtaper=[],
 
@@ -196,8 +198,14 @@ class ImagerParameters():
                                    'truncate': truncate, 'gwidth': gwidth, 'jwidth': jwidth,
                                    'minweight': minweight, 'clipminmax': clipminmax, 'imagename':imagename}     }
         ######### weighting
+        rmode='none'
+        if(weighting=='briggsabs'):
+            rmode='abs'
+            weighting='briggs'
+        elif(weighting=='briggs'):
+            rmode='norm'
+        self.weightpars = {'type':weighting,'rmode':rmode,'robust':robust, 'noise': noise, 'npixels':npixels,'uvtaper':uvtaper, 'multifield':mosweight, 'usecubebriggs': perchanweightdensity}
 
-        self.weightpars = {'type':weighting,'robust':robust, 'npixels':npixels,'uvtaper':uvtaper, 'multifield':mosweight}
 
         ######### Normalizers ( this is where flat noise, flat sky rules will go... )
         self.allnormpars = { self.defaultKey : {#'mtype': mtype,
