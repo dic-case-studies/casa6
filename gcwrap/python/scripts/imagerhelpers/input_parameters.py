@@ -1,16 +1,21 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import commands
 import math
 import shutil
 import string
 import time
-import re;
-from taskinit import *
+import re
 import copy
-#from imagerhelpers.fixedDict import fixedDict
-fixedDict=dict
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import synthesisutils
+    from casatasks import casalog
+else:
+    from taskinit import *
+
+    synthesisutils = casac.synthesisutils
 
 '''
 A set of helper functions for the tasks  tclean
@@ -152,15 +157,15 @@ class ImagerParameters():
                  minweight=0.0,
                  clipminmax=False
                  ):
-        self.allparameters=fixedDict(locals())
+        self.allparameters=dict(locals())
         del self.allparameters['self']
         self.defaultKey="0";
         ## Selection params. For multiple MSs, all are lists.
         ## For multiple nodes, the selection parameters are modified inside PySynthesisImager
-        self.allselpars = fixedDict({'msname':msname, 'field':field, 'spw':spw, 'scan':scan,
+        self.allselpars = {'msname':msname, 'field':field, 'spw':spw, 'scan':scan,
                            'timestr':timestr, 'uvdist':uvdist, 'antenna':antenna, 'obs':obs,'state':state,
                            'datacolumn':datacolumn,
-                           'savemodel':savemodel })
+                           'savemodel':savemodel }
 #                           'usescratch':usescratch, 'readonly':readonly}
 
         ## Imaging/deconvolution parameters
@@ -170,40 +175,39 @@ class ImagerParameters():
         self.outlierfile = outlierfile
         ## Initialize the parameter lists with the 'main' or '0' field's parameters
         ######### Image definition
-        self.allimpars = fixedDict({ self.defaultKey :fixedDict({'imagename':imagename, 'nchan':nchan, 'imsize':imsize, 
+        self.allimpars = { self.defaultKey :{'imagename':imagename, 'nchan':nchan, 'imsize':imsize, 
                                  'cell':cell, 'phasecenter':phasecenter, 'stokes': stokes,
                                  'specmode':specmode, 'start':start, 'width':width, 'veltype':veltype,
                                  'nterms':nterms,'restfreq':restfreq, 
                                  'outframe':outframe, 'reffreq':reffreq, 'sysvel':sysvel, 'sysvelframe':sysvelframe,
                                  'projection':projection,
-                                 'restart':restart, 'startmodel':startmodel,'deconvolver':deconvolver})    })
+                                 'restart':restart, 'startmodel':startmodel,'deconvolver':deconvolver}    }
         ######### Gridding
-        self.allgridpars = fixedDict({ self.defaultKey :fixedDict({'gridder':gridder,
+        self.allgridpars = { self.defaultKey :{'gridder':gridder,
                                    'aterm': aterm, 'psterm':psterm, 'mterm': mterm, 'wbawp': wbawp, 
                                    'cfcache': cfcache,'dopointing':dopointing, 'dopbcorr':dopbcorr, 
                                    'conjbeams':conjbeams, 'computepastep':computepastep,
                                    'rotatepastep':rotatepastep, #'mtype':mtype, # 'weightlimit':weightlimit,
                                    'facets':facets,'chanchunks':chanchunks,
                                    'interpolation':interpolation, 'wprojplanes':wprojplanes,
-                                               'deconvolver':deconvolver, 'vptable':vptable, 'usepointing':usepointing,
+                                   'deconvolver':deconvolver, 'vptable':vptable, 'usepointing':usepointing,
                                    ## single-dish specific
                                    'convfunc': gridfunction, 'convsupport': convsupport,
                                    'truncate': truncate, 'gwidth': gwidth, 'jwidth': jwidth,
-                                   'minweight': minweight, 'clipminmax': clipminmax, 'imagename':imagename})     })
+                                   'minweight': minweight, 'clipminmax': clipminmax, 'imagename':imagename}     }
         ######### weighting
 
-        self.weightpars = fixedDict({'type':weighting,'robust':robust, 'npixels':npixels,'uvtaper':uvtaper, 'multifield':mosweight})
+        self.weightpars = {'type':weighting,'robust':robust, 'npixels':npixels,'uvtaper':uvtaper, 'multifield':mosweight}
 
         ######### Normalizers ( this is where flat noise, flat sky rules will go... )
-        self.allnormpars = fixedDict({ self.defaultKey : fixedDict({#'mtype': mtype,
+        self.allnormpars = { self.defaultKey : {#'mtype': mtype,
                                  'pblimit': pblimit,'nterms':nterms,'facets':facets,
                                  'normtype':normtype, 'workdir':workdir,
-
-                                 'deconvolver':deconvolver, 'imagename': imagename, 'restoringbeam':restoringbeam} )    })
+                                 'deconvolver':deconvolver, 'imagename': imagename, 'restoringbeam':restoringbeam}   }
 
 
         ######### Deconvolution
-        self.alldecpars = fixedDict({ self.defaultKey: fixedDict({ 'id':0, 'deconvolver':deconvolver, 'nterms':nterms, 
+        self.alldecpars = { self.defaultKey:{ 'id':0, 'deconvolver':deconvolver, 'nterms':nterms, 
                                     'scales':scales, 'scalebias':scalebias, 'restoringbeam':restoringbeam, 'usemask':usemask, 
                                     'mask':mask, 'pbmask':pbmask, 'maskthreshold':maskthreshold,
                                     'maskresolution':maskresolution, 'nmask':nmask,
@@ -213,17 +217,17 @@ class ImagerParameters():
 
                                     'minbeamfrac':minbeamfrac, 'cutthreshold':cutthreshold, 'growiterations':growiterations, 
                                      'dogrowprune':dogrowprune, 'minpercentchange':minpercentchange, 'verbose':verbose, 'fastnoise':fastnoise,
-                                    'interactive':interactive, 'startmodel':startmodel, 'nsigma':nsigma,  'imagename':imagename}) })
+                                    'interactive':interactive, 'startmodel':startmodel, 'nsigma':nsigma,  'imagename':imagename} }
 
         ######### Iteration control. 
-        self.iterpars = fixedDict({ 'niter':niter, 'cycleniter':cycleniter, 'threshold':threshold, 
+        self.iterpars = { 'niter':niter, 'cycleniter':cycleniter, 'threshold':threshold, 
                           'loopgain':loopgain, 'interactive':interactive,
                           'cyclefactor':cyclefactor, 'minpsffraction':minpsffraction, 
                           'maxpsffraction':maxpsffraction,
-                          'savemodel':savemodel,'nsigma':nsigma})
+                          'savemodel':savemodel,'nsigma':nsigma}
 
         ######### CFCache params. 
-        self.cfcachepars = fixedDict({'cflist': cflist});
+        self.cfcachepars = {'cflist': cflist}
 
 
         #self.reusename=reuse
@@ -306,7 +310,7 @@ class ImagerParameters():
                  self.allselpars[mss]['outframe']='REST'
         ### MOVE this segment of code to the constructor so that it's clear which parameters go where ! 
         ### Copy them from 'impars' to 'normpars' and 'decpars'
-        self.iterpars.update({'allimages':{} })
+        self.iterpars['allimages']={}
         for immod in self.allimpars.keys() :
             self.allnormpars[immod]['imagename'] = self.allimpars[immod]['imagename']
             self.alldecpars[immod]['imagename'] = self.allimpars[immod]['imagename']
@@ -342,11 +346,11 @@ class ImagerParameters():
                 ok=False
 
         if ok==True:
-            #print "Already in correct format"
+            #print("Already in correct format")
             return errs
 
         # msname, field, spw, etc must all be equal-length lists of strings, or all except msname must be of length 1.
-        if 'msname' not in self.allselpars:
+        if not 'msname'in self.allselpars:
             errs = errs + 'MS name(s) not specified'
         else:
 
@@ -378,11 +382,11 @@ class ImagerParameters():
                 for par in selkeys:
                     selparlist[ 'ms'+str(ms) ][ par ] = self.allselpars[par][ms]
 
-                synu = casac.synthesisutils()
+                synu = synthesisutils()
                 selparlist[ 'ms'+str(ms) ] = synu.checkselectionparams( selparlist[ 'ms'+str(ms)] )
                 synu.done()
 
-#            print selparlist
+#            print(selparlist)
 
             self.allselpars = selparlist
 
@@ -414,29 +418,29 @@ class ImagerParameters():
         # Update outlier parameters with modifications from outlier files
         for immod in range(0, len(outlierpars)):
             modelid = str(immod+1)
-            self.allimpars.update({modelid : self.allimpars[ '0' ].copy()})
+            self.allimpars[ modelid ] = copy.deepcopy(self.allimpars[ '0' ])
             self.allimpars[ modelid ].update(outlierpars[immod]['impars'])
-            self.allgridpars.update({ modelid : self.allgridpars[ '0' ].copy()})
+            self.allgridpars[ modelid ] = copy.deepcopy(self.allgridpars[ '0' ])
             self.allgridpars[ modelid ].update(outlierpars[immod]['gridpars'])
-            self.alldecpars.update( {modelid : self.alldecpars[ '0' ].copy()})
+            self.alldecpars[ modelid ] = copy.deepcopy(self.alldecpars[ '0' ])
             self.alldecpars[ modelid ].update(outlierpars[immod]['decpars'])
-            self.allnormpars.update( {modelid : self.allnormpars[ '0' ].copy()})
+            self.allnormpars[ modelid ] = copy.deepcopy(self.allnormpars[ '0' ])
             self.allnormpars[ modelid ].update(outlierpars[immod]['normpars'])
             self.alldecpars[ modelid ][ 'id' ] = immod+1  ## Try to eliminate.
 
 
-        #print self.allimpars
+        #print(self.allimpars)
 
 #
-#        print "REMOVING CHECKS to check..."
+#        print("REMOVING CHECKS to check...")
 #### This does not handle the conversions of the csys correctly.....
 ####
 #        for immod in self.allimpars.keys() :
 #            tempcsys = {}
-#            if self.allimpars[immod].has_key('csys'):
+#            if 'csys' in self.allimpars[immod]:
 #                tempcsys = self.allimpars[immod]['csys']
 #
-#            synu = casac.synthesisutils()
+#            synu = synthesisutils()
 #            self.allimpars[immod] = synu.checkimageparams( self.allimpars[immod] )
 #            synu.done()
 #
@@ -526,7 +530,7 @@ class ImagerParameters():
             if len(aline)>0 and aline.find('#')!=0:
                 parpair = aline.split("=")  
                 parpair[0] = parpair[0].replace(' ','')
-                #print parpair
+                #print(parpair)
                 if len(parpair) != 2:
                     errs += 'Error in line containing : ' + oneline + '\n'
                 if parpair[0] == 'imagename' and tempimpar != {}:
@@ -570,7 +574,7 @@ class ImagerParameters():
 #        returnlist = self.evalToTarget( returnlist, 'impars', 'reffreq', 'strvec' )
 
 
-        #print returnlist
+        #print(returnlist)
         return returnlist, errs
 
 
@@ -700,11 +704,11 @@ class ImagerParameters():
             else:
                 newimagenamelist[immod] = dirnames[immod][2:] + prefixes[immod] + '_' + str(maxid+1) 
 
-#        print 'Input : ',  inpnamelist
-#        print 'Dirs : ', dirnames
-#        print 'Pre : ', prefixes
-#        print 'Max id : ', maxid
-#        print 'Using : ',  newimagenamelist
+#        print('Input : ',  inpnamelist)
+#        print('Dirs : ', dirnames)
+#        print('Pre : ', prefixes)
+#        print('Max id : ', maxid)
+#        print('Using : ',  newimagenamelist)
         return newimagenamelist
 
     ## Guard against numpy int32,int64 types which don't convert well across tool boundary.

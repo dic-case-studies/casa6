@@ -7,25 +7,33 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-from taskinit import *
 
 import os
 import shutil
 import numpy
-from taskinit import *
 import copy
-import time;
-import pdb
-#from refimagerhelper import PySynthesisImager
-#from refimagerhelper import PyParallelContSynthesisImager,PyParallelCubeSynthesisImager
-#from refimagerhelper import ImagerParameters
+import time
 
-from imagerhelpers.imager_base import PySynthesisImager
-from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
-from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
-from imagerhelpers.input_parameters import ImagerParameters
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
 
+    from .imagerhelpers.imager_base import PySynthesisImager
+    from .imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
+    from .imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from .imagerhelpers.input_parameters import ImagerParameters
+else:
+    from taskinit import *
 
+    #from refimagerhelper import PySynthesisImager
+    #from refimagerhelper import PyParallelContSynthesisImager,PyParallelCubeSynthesisImager
+    #from refimagerhelper import ImagerParameters
+
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
+    from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from imagerhelpers.input_parameters import ImagerParameters
 
 def tclean(
     ####### Data Selection
@@ -66,7 +74,7 @@ def tclean(
     ####### Gridding parameters
     gridder,#='ft',
     facets,#=1,
-    psfphasecenter, #=''
+    psfphasecenter,#='',
     chanchunks,#=1,
 
     wprojplanes,#=1,
@@ -168,6 +176,7 @@ def tclean(
     inpparams['state']= inpparams.pop('intent')
     inpparams['loopgain']=inpparams.pop('gain')
     inpparams['scalebias']=inpparams.pop('smallscalebias')
+
     if specmode=='cont':
         specmode='mfs'
         inpparams['specmode']='mfs'
@@ -185,12 +194,21 @@ def tclean(
 
     imager = None
     paramList = None
+
     # Put all parameters into dictionaries and check them.
     ##make a dictionary of parameters that ImagerParameters take
-    defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__))
-    ###assign values to the ones passed to tclean and if not defined yet in tclean...
-    ###assign them the default value of the constructor
-    bparm={k:  inpparams[k] if k in inpparams else defparm[k]  for k in ImagerParameters.__init__.__func__.__code__.co_varnames[1:-1]}
+    if is_python3:
+        defparm=dict(list(zip(ImagerParameters.__init__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__)))
+        ###assign values to the ones passed to tclean and if not defined yet in tclean...
+        ###assign them the default value of the constructor
+        #bparm={k:  inpparams[k] if inpparams.has_key(k) else defparm[k]  for k in ImagerParameters.__init__.__code__.co_varnames[1:-1]}
+        bparm={k:  inpparams[k] if k in inpparams else defparm[k]  for k in ImagerParameters.__init__.__code__.co_varnames[1:-1]}
+    else:
+        defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__))
+        ###assign values to the ones passed to tclean and if not defined yet in tclean...
+        ###assign them the default value of the constructor
+        bparm={k:  inpparams[k] if k in inpparams else defparm[k]  for k in ImagerParameters.__init__.__func__.__code__.co_varnames[1:-1]}
+
     ###default mosweight=True is tripping other gridders as they are not
     ###expecting it to be true
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):

@@ -1,16 +1,27 @@
 from __future__ import absolute_import
 import os
-import commands
 import math
 import shutil
 import string
 import time
-import re;
-from taskinit import *
+import re
 import copy
 
-from imagerhelpers.imager_base import PySynthesisImager
-from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import synthesisutils, synthesisimager
+    from casatasks import casalog
+
+    from .imager_base import PySynthesisImager
+    from .parallel_imager_helper import PyParallelImagerHelper
+else:
+    from taskinit import *
+
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+
+    synthesisimager = casac.synthesisimager
+    synthesisutils = casac.synthesisutils
 
 '''
 An implementation of parallel cube imaging, using synthesisxxxx tools.
@@ -56,7 +67,7 @@ class PyParallelCubeSynthesisImager():
         #self.allimpars = self.PH.partitionCubeDeconvolution(allimagepars)
 
         # to define final image coordinates, run selecdata and definemage
-        self.SItool = casac.synthesisimager()
+        self.SItool = synthesisimager()
         #print "allselpars=",allselpars
         origspw={}
         for mss in sorted( allselpars.keys() ): 
@@ -78,7 +89,7 @@ class PyParallelCubeSynthesisImager():
         #    print "KEY : ", kk , " --->", alldataimpars[kk].keys()
             
         # reorganize allselpars and allimpars for partitioned data        
-        synu = casac.synthesisutils()
+        synu = synthesisutils()
         self.allselpars={}
         self.allimpars={}
         ###print "self.listOfNodes=",self.listOfNodes

@@ -1,18 +1,28 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import commands
 import math
 import shutil
 import string
 import time
 import re;
-from taskinit import *
 import copy
-import pdb
 
-from imagerhelpers.imager_base import PySynthesisImager
-from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import synthesisimager, synthesisnormalizer
+    from casatasks import casalog
+
+    from .imager_base import PySynthesisImager
+    from .parallel_imager_helper import PyParallelImagerHelper
+else:
+    from taskinit import *
+
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+
+    synthesisimager = casac.synthesisimager
+    synthesisnormalizer = casac.synthesisnormalizer
 
 '''
 An implementation of parallel continuum imaging, using synthesisxxxx tools
@@ -69,7 +79,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             #
             # Use the already-created imager on MAIN node
             #
-            ##self.toolsi = casac.synthesisimager()
+            ##self.toolsi = synthesisimager()
 
             #
             # Select data. 
@@ -106,7 +116,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             #
             joblist=[]
             for node in self.listOfNodes:
-                joblist.append( self.PH.runcmd("toolsi = casac.synthesisimager()", node) );
+                joblist.append( self.PH.runcmd("toolsi = synthesisimager()", node) );
             self.PH.checkJobs(joblist);
 
             #
@@ -128,7 +138,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             for node in nodes:
                 ## For each image-field, define imaging parameters
                 nimpars = copy.deepcopy(self.allimpars)
-                #print "nimpars = ",nimpars;
+                #print("nimpars = ",nimpars)
                 ngridpars = copy.deepcopy(self.allgridpars)
                 for fld in range(0,self.NF):
                     if self.NN>1:
@@ -161,13 +171,13 @@ class PyParallelContSynthesisImager(PySynthesisImager):
                     casalog.post(cfCacheName + " exists, but is empty.  Attempt is being made to fill it now.","WARN")
                     cfcExists = False;
 
-        # print "##########################################"
-        # print "CFCACHE = ",cfCacheName,cfcExists;
-        # print "##########################################"
+        # print("##########################################")
+        # print("CFCACHE = ",cfCacheName,cfcExists)
+        # print("##########################################")
 
        
         # Start one imager on MAIN node
-        self.toolsi = casac.synthesisimager()
+        self.toolsi = synthesisimager()
 
         # Init one SI tool ( it records the csys per field in self.coordsyspars )
         self.initializeImagersBase(self.selpars,False);
@@ -217,7 +227,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
 #         for node in self.listOfNodes:
 #             ## For each image-field, define imaging parameters
 #             nimpars = copy.deepcopy(self.allimpars)
-#             #print "nimpars = ",nimpars;
+#             #print("nimpars = ",nimpars)
 #             ngridpars = copy.deepcopy(self.allgridpars)
 #             for fld in range(0,self.NF):
 #                 if self.NN>1:
@@ -246,7 +256,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         # joblist=[]
 
         # for node in self.listOfNodes:
-        #     joblist.append( self.PH.runcmd("toolsi = casac.synthesisimager()", node) );
+        #     joblist.append( self.PH.runcmd("toolsi = synthesisimager()", node) );
         # self.PH.checkJobs(joblist);
 
         # joblist=[];
@@ -279,7 +289,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
 
     def initializeNormalizers(self):
         for immod in range(0,self.NF):
-            self.PStools.append(casac.synthesisnormalizer())
+            self.PStools.append(synthesisnormalizer())
             normpars = copy.deepcopy( self.allnormpars[str(immod)] )
             partnames = []
             if(self.NN>1):
@@ -303,7 +313,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         if( (self.weightpars['type']=='briggs')  and (self.weightpars['multifield'])):
             ###master created the weight density for all fields
             ##Should have been in  initializeImagersBase_New but it is not being called !
-            self.toolsi = casac.synthesisimager()
+            self.toolsi = synthesisimager()
             for mss in sorted( self.selpars.keys() ):
                 self.toolsi.selectdata( self.selpars[mss] )
             for fld in range(0,self.NF):
@@ -398,12 +408,12 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         joblist=[];
         for node in self.listOfNodes:
             cmd = "toolsi.reloadcfcache()";
-            #print "CMD = ",node," ",cmd;
+            print("CMD = ",node," ",cmd)
             joblist.append(self.PH.runcmd(cmd,node));
         self.PH.checkJobs(joblist);
 #############################################
     def fillCFCache(self):
-        #print "-----------------------fillCFCache------------------------------------"
+        #print("-----------------------fillCFCache------------------------------------")
         # cflist=[f for f in os.listdir(self.allgridpars['cfcache']) if re.match(r'CFS*', f)];
         # partCFList = 
         allcflist = self.PH.partitionCFCacheList(self.allgridpars['0']);
@@ -413,17 +423,17 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         aTermOn = str(self.allgridpars['0']['aterm']);
         conjBeams = str(self.allgridpars['0']['conjbeams']);
         #aTermOn = str(True);
-        # print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
-        # print "AllCFList = ",allcflist;
+        # print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        # print("AllCFList = ",allcflist)
         m = len(allcflist);
-        # print "No. of nodes used: ", m,cfcPath,ftmname;
-        # print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
+        # print("No. of nodes used: ", m,cfcPath,ftmname)
+        # print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
         joblist=[];
         for node in self.listOfNodes[:m]:
-            #print "#!$#!%#!$#@$#@$ ",allcflist;
+            #print("#!$#!%#!$#@$#@$ ",allcflist)
             cmd = "toolsi.fillcfcache("+str(allcflist[node])+","+str(ftmname)+","+str(cfcPath)+","+psTermOn+","+aTermOn+","+conjBeams+")";
-            # print "CMD = ",node," ",cmd;
+            # print("CMD = ",node," ",cmd)
             joblist.append(self.PH.runcmd(cmd,node));
         self.PH.checkJobs(joblist);
 

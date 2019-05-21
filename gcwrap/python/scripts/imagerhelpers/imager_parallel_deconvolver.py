@@ -1,18 +1,26 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import commands
 import math
 import shutil
 import string
 import time
 import re;
-from taskinit import *
 import copy
 
-from imagerhelpers.imager_base import PySynthesisImager
-from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import casalog, synthesisdeconvolver
 
+    from .imager_base import PySynthesisImager
+    from .parallel_imager_helper import PyParallelImagerHelper
+else:
+    from taskinit import *
+
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+
+    synthesisdeconvolver = casac.synthesisdeconvolver
 '''
 A set of helper functions for the tasks  tclean
 
@@ -45,7 +53,7 @@ class PyParallelDeconvolver(PySynthesisImager):
          #### MPIInterface related changes
          #for immod in range(0,self.NF):
          for immod in self.listOfNodes:
-              self.PH.runcmd("toolsd = casac.synthesisdeconvolver()", immod )
+              self.PH.runcmd("toolsd = synthesisdeconvolver()", immod )
               joblist.append( self.PH.runcmd("toolsd.setupdeconvolution(decpars="+ str(self.alldecpars[str(immod)]) +")", immod ) )
          self.PH.checkJobs( joblist )
 
