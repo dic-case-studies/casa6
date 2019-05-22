@@ -1,16 +1,27 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy
 import os
 from collections import Counter
 
-from casatools import singledishms, table, msmetadata
-from casatools import ms as mstool
-from casatasks import casalog
-from . import sdutil
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import singledishms, table, msmetadata
+    from casatools import ms as mstool
+    from casatasks import casalog
+    from .mstools import write_history
+    from . import sdutil
 
-ms = mstool( )
-sdms = singledishms( )
-tb = table( )
-msmd = msmetadata( )
+    ms = mstool( )
+    sdms = singledishms( )
+    tb = table( )
+    msmd = msmetadata( )
+else:
+    from taskinit import gentools, casalog
+    from mstools import write_history
+    import sdutil
+    ms,sdms,tb,msmd = gentools(['ms','sdms','tb', 'msmd'])
 
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
@@ -121,6 +132,17 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             
             if (blfunc == 'variable'):
                 restore_sorted_table_keyword(infile, sorttab_info)
+
+        # Write history to outfile
+        param_names = sdbaseline.__code__.co_varnames[:sdbaseline.__code__.co_argcount]
+        if is_python3:
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
+        write_history(ms, outfile, 'sdbaseline', param_names,
+                      param_vals, casalog)
+
 
     except Exception:
         raise
