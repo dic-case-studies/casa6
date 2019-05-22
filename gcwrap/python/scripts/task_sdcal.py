@@ -6,14 +6,28 @@ import numpy
 import numpy.random as random
 import shutil
 
-from taskinit import *
-from applycal import applycal
-from mstools import write_history
-import types
-import sdutil
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import calibrater, table, ms
+    from casatasks import casalog, applycal
+    from . import sdutil
+    from .mstools import write_history
 
-# Calibrator tool
-(cb,myms) = gentools(['cb','ms'])
+    # Table tool
+    tb = table()
+    # Calibrator tool
+    cb = calibrater()
+    # MS tool
+    myms = ms()
+else:
+    from taskinit import *
+    from applycal import applycal
+    from mstools import write_history
+    import sdutil
+
+    # Calibrator tool
+    (cb,myms) = gentools(['cb','ms'])
 
 def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
            width=0.5, elongated=False, applytable='',interp='', spwmap={},
@@ -95,7 +109,7 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
                 tb.close()
                 
                 spwmap_dict = spwmap
-                spwmap_list = range(total_spwID)
+                spwmap_list = list(range(total_spwID))
 
                 for key, value in spwmap_dict.items():
                     for v in value:
@@ -120,11 +134,15 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
             cb.correct(applymode='calflag')
             
             # Write to HISTORY table of MS
-            param_names = sdcal.__code__.co_varnames[:sdcal.__code__.co_argcount] 
-            param_vals = [eval(p) for p in param_names]
+            param_names = sdcal.__code__.co_varnames[:sdcal.__code__.co_argcount]
+            if is_python3:
+                vars = locals()
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
+                
             write_history(myms, infile, 'sdcal', param_names, 
                               param_vals, casalog) 
-            
 
         else: # Compute calibration table
             # Reconciliating 'Python world' calmode with 'C++ world' calmode
@@ -151,11 +169,11 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
                 cb.solve()
 
     except UserWarning as instance:
-        print('*** Warning ***',instance)
+        print('*** Warning *** %s' % instance)
 
     except Exception as instance:
-        print('*** Error ***',instance)
-        raise Exception(instance)
+        print('*** Error *** %s' % instance)
+        raise
 
     finally:
         cb.close()
@@ -191,7 +209,7 @@ def to_numeric_fraction(fraction):
     
 def temporary_name(calmode):
     num_trial = 100
-    for i in xrange(num_trial):
+    for i in range(num_trial):
         number = random.random_integers(num_trial)
         name = ('__sdcal_composite_mode_%s_%3s.tab'%(calmode,number)).replace(' ','0')
         if not os.path.exists(name):
@@ -226,7 +244,7 @@ def fix_for_intent(calmodes, input_args):
     else:
         output_args = input_args
     return output_args
-        
+
 
 def handle_composite_mode(args):
     kwargs = args.copy()

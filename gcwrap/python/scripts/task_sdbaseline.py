@@ -2,11 +2,26 @@ from __future__ import absolute_import
 from __future__ import print_function
 import numpy
 import os
-from taskinit import gentools, casalog
-from mstools import write_history
-import sdutil
 from collections import Counter
-ms,sdms,tb,msmd = gentools(['ms','sdms','tb', 'msmd'])
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import singledishms, table, msmetadata
+    from casatools import ms as mstool
+    from casatasks import casalog
+    from .mstools import write_history
+    from . import sdutil
+
+    ms = mstool( )
+    sdms = singledishms( )
+    tb = table( )
+    msmd = msmetadata( )
+else:
+    from taskinit import gentools, casalog
+    from mstools import write_history
+    import sdutil
+    ms,sdms,tb,msmd = gentools(['ms','sdms','tb', 'msmd'])
 
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
@@ -26,7 +41,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             #print("type=%s, value=%s" % (type(outfile), str(outfile)))
             #raise ValueError, "outfile name is empty."
             outfile = infile.rstrip('/') + '_bs'
-            print(("outfile is empty or non-string. set to '" + outfile + "'"))
+            print("outfile is empty or non-string. set to '" + outfile + "'")
         if os.path.exists(outfile) and not overwrite:
             raise Exception("outfile='%s' exists, and cannot overwrite it." % (outfile))
         if (maskmode == 'interact'):
@@ -120,13 +135,17 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
         # Write history to outfile
         param_names = sdbaseline.__code__.co_varnames[:sdbaseline.__code__.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        if is_python3:
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
         write_history(ms, outfile, 'sdbaseline', param_names,
                       param_vals, casalog)
 
 
-    except Exception as instance:
-        raise Exception(instance)
+    except Exception:
+        raise
 
 
 blformat_item = ['csv', 'text', 'table']
@@ -159,7 +178,7 @@ def check_fftthresh(fftthresh):
             if val_not_positive:
                 raise ValueError(not_positive_mesg)
         except Exception as e:
-            if (e.message == not_positive_mesg):
+            if (str(e) == not_positive_mesg):
                 raise
             else:
                 raise ValueError('fftthresh has a wrong format.')
@@ -287,7 +306,7 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
     separator = '#' * 60 + '\n'
     
     f.write(separator)
-    for i in xrange(len(info)):
+    for i in range(len(info)):
         f.write('%12s: %s\n' % tuple(info[i]))
     f.write(separator)
     f.write('\n')
@@ -332,8 +351,8 @@ def remove_sorted_table_keyword(infile):
                 res['sorttab_keywd'] = sorttab_keywd
                 res['sorttab_name'] = tb.getkeyword(sorttab_keywd)
                 tb.removekeyword(sorttab_keywd)
-        except Exception as e:
-            raise Exception(e)
+        except Exception:
+            raise
 
     return res
 
@@ -343,5 +362,5 @@ def restore_sorted_table_keyword(infile, sorttab_info):
             try:
                 tb.putkeyword(sorttab_info['sorttab_keywd'],
                               sorttab_info['sorttab_name'])
-            except Exception as e:
-                raise Exception(e)
+            except Exception:
+                raise

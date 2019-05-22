@@ -1,18 +1,27 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-import commands
 import math
 import shutil
 import string
 import time
-import re;
+import re
 import numpy as np
-from taskinit import *
-import copy
 import operator
-_ia = iatool( )
-_cb = cbtool( )
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, image, calibrater
+    _ia = image( )
+    _cb = calibrater( )
+    _tb = table( )
+else:
+    from taskinit import *
+    _ia = iatool( )
+    _cb = cbtool( )
+
+    # not a local tool
+    _tb = tb
 
 '''
 A set of helper functions for the tasks  tclean
@@ -45,7 +54,6 @@ class PerformanceMeasure():
 import os
 import sys
 import shutil
-import commands
 import numpy
 import inspect
 #from tasks import delmod
@@ -223,16 +231,16 @@ class TestHelpers():
                     if nmajordone != None:
                          pstr += self.checkval( val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True )
 
-               except Exception as e:
+               except Exception:
                     print(ret)
                     raise
 
           if imexist != None:
                if type(imexist)==list:
                     pstr += self.checkims(imexist, True)
-                    print("pstr after checkims=",pstr)
+                    print("pstr after checkims= %s " % pstr)
                     pstr += self.check_keywords(imexist)
-                    print("pstr after check_keywords=",pstr)
+                    print("pstr after check_keywords=%s " % pstr)
 
 
           if imexistnot != None:
@@ -258,7 +266,7 @@ class TestHelpers():
                               pstr += self.checkpixmask(ii[0],ii[1],ii[2])
 
           if tabcache==True:
-               opentabs = tb.showcache()
+               opentabs = _tb.showcache()
                if len(opentabs)>0 : 
                     pstr += "["+inspect.stack()[1][3]+"] "+self.verdict(False) + ": Found open tables after run "
 
@@ -612,24 +620,24 @@ class TestHelpers():
 
      def delmodkeywords(self,msname=""):
 #          delmod(msname)
-          tb.open( msname+'/SOURCE', nomodify=False )
-          keys = tb.getkeywords()
+          _tb.open( msname+'/SOURCE', nomodify=False )
+          keys = _tb.getkeywords()
           for key in keys:
-               tb.removekeyword( key )
-          tb.close()
+               _tb.removekeyword( key )
+          _tb.close()
 
      def resetmodelcol(self,msname="",val=0.0):
-          tb.open( msname, nomodify=False )
-          hasmodcol = (  (tb.colnames()).count('MODEL_DATA')>0 )
+          _tb.open( msname, nomodify=False )
+          hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
           if not hasmodcol:
                _cb.open(msname)
                _cb.close()
-          hasmodcol = (  (tb.colnames()).count('MODEL_DATA')>0 )
+          hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
           if hasmodcol:
-               dat = tb.getcol('MODEL_DATA')
+               dat = _tb.getcol('MODEL_DATA')
                dat.fill( complex(val,0.0) )
-               tb.putcol('MODEL_DATA', dat)
-          tb.close();
+               _tb.putcol('MODEL_DATA', dat)
+          _tb.close();
 
      def delmodels(self,msname="",modcol='nochange'):
 #          delmod(msname)  ## Get rid of OTF model and model column
@@ -643,48 +651,48 @@ class TestHelpers():
                self.resetmodelcol(msname,1.0)  ## Set model column to one
 
      def delmodelcol(self,msname=""):
-          tb.open( msname, nomodify=False )
-          hasmodcol = (  (tb.colnames()).count('MODEL_DATA')>0 )
+          _tb.open( msname, nomodify=False )
+          hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
           if hasmodcol:
-               tb.removecols('MODEL_DATA')
-          tb.close()
+               _tb.removecols('MODEL_DATA')
+          _tb.close()
 
      def checkmodel(self,msname=""):
-          tb.open( msname )
-          hasmodcol = (  (tb.colnames()).count('MODEL_DATA')>0 )
+          _tb.open( msname )
+          hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
           modsum=0.0
           if hasmodcol:
-               dat = tb.getcol('MODEL_DATA')
+               dat = _tb.getcol('MODEL_DATA')
                modsum=dat.sum()
-          tb.close()
+          _tb.close()
 
           hasvirmod=False
 
-          tb.open( msname+'/SOURCE' )
-          keys = tb.getkeywords()
+          _tb.open( msname+'/SOURCE' )
+          keys = _tb.getkeywords()
           if len(keys)>0:
                hasvirmod=True
-          tb.close()
+          _tb.close()
 
-          tb.open( msname )
-          keys = tb.getkeywords()
+          _tb.open( msname )
+          keys = _tb.getkeywords()
           for key in keys:
                if key.count("model_")>0:
                     hasvirmod=True
-          tb.close()
+          _tb.close()
 
           print(msname , ": modelcol=", hasmodcol, " modsum=", modsum, " virmod=", hasvirmod)
           return hasmodcol, modsum, hasvirmod
 
      def checkmodelchan(self,msname="",chan=0):
-          tb.open( msname )
-          hasmodcol = (  (tb.colnames()).count('MODEL_DATA')>0 )
+          _tb.open( msname )
+          hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
           modsum=0.0
           if hasmodcol:
-               dat = tb.getcol('MODEL_DATA')[:,chan,:]
+               dat = _tb.getcol('MODEL_DATA')[:,chan,:]
                modsum=dat.mean()
-          tb.close()
-          ##print modsum
+          _tb.close()
+          ##print(modsum)
           return modsum
 
      def checkMPI(self):
@@ -692,7 +700,7 @@ class TestHelpers():
           try:
                self.nproc = len(mpi_clustermanager.getCluster()._cluster.get_engines())
                return True
-          except Exception as e:
+          except Exception:
                self.nproc = 0
                return False
           
@@ -702,7 +710,7 @@ class TestHelpers():
           from mpi4casa.MPIInterface import MPIInterface as mpi_clustermanager
           try:
                self.nproc = len(mpi_clustermanager.getCluster()._cluster.get_engines())
-          except Exception as e:
+          except Exception:
                self.nproc = 0
 
           if( self.nproc>0 ):
@@ -737,9 +745,9 @@ class TestHelpers():
                           #reffreq=None # list of tuples of (imagename, reffreq)
                           ):
          if ret!=None and type(ret)==dict:
-             if ret.keys()[0].count('node'):
+             if list(ret.keys())[0].count('node'):
                  mergedret={}
-                 nodenames = ret.keys()
+                 nodenames = list(ret.keys())
                  print("ret NOW=",ret)
                  # must be parallel cube results
                  if parlist.count('iterdone'):
