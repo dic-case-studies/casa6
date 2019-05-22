@@ -75,10 +75,10 @@ On Linux, one can alternately use **make**, which supports incremental and paral
 -bash-4.2$ scripts/gcw-pick
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
--bash-4.2$ ./setup.py genmake
+-bash-4.2$ ./setup.py genmake [--debug]
 -bash-4.2$ make
 ```
-The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, eg
+The **--debug** parameter of the **./setup.py genmake** is optional. If provided, the resulting makefile is configured to use the -g option when compiling C++ code. Otherwise, the makefile is configured to produce an optimized build using the -O2 option when compiling C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, eg
 ```
 -bash-4.2$ make -j8
 ```
