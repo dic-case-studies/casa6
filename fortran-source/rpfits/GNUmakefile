@@ -70,9 +70,9 @@ MEMBERS := $(patsubst %,$(RPFITSLIB)(%),$(FOBJS) $(COBJS))
 
 # Shared (dynamic) library  (Copied from WCSLIB's makedefs)
 SHRLIB   := librpfits.so.$(VERS)
-SONAME   := librpfits.so.$(MAJOR)
+SONAME   := librpfits-casatools.so.$(MAJOR)
 SHRFLAGS := -fPIC
-SHRLD    := $(CC) $(SHRFLAGS) -shared -Wl,-h$(SONAME)
+SHRLD    := $(FC) -L$(PREFIX)/lib $(SHRFLAGS) -Wl,-rpath,some-path-that-does-not-exist-for-the-purpose-of-reserving-a-buffer-for-future-adjustments-to-the-rpath -shared -Wl,-h$(SONAME)
 SHRLN    := librpfits.so
 # End Shared (dynamic) library addition
 
