@@ -17,11 +17,10 @@ if is_CASA6:
     _tb = table( )
 else:
     from taskinit import *
-    _ia = iatool( )
-    _cb = cbtool( )
-
-    # not a local tool
-    _tb = tb
+    table = tbtool
+    _ia = iatool()
+    _cb = cbtool()
+    _tb = tbtool()
 
 '''
 A set of helper functions for the tasks  tclean
@@ -538,7 +537,7 @@ class TestHelpers():
          Errors marked with '(Fail' as per self.verdict().
          """
 
-         tbt = tbtool()
+         tbt = table()
          try:
              tbt.open(imname)
              keys = tbt.getkeywords()

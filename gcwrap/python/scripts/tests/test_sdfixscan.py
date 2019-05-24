@@ -3,19 +3,32 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
-import sha
 import time
 import numpy
 import re
-import string
 
-from sdfixscan import sdfixscan
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, quanta
+    from casatools import image as iatool
+    from casatasks import sdfixscan
 
-_ia = iatool( )
+    _ia = iatool( )
+    qa = quanta( )
+
+    # default is not used in casatasks
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import iatool
+    from sdfixscan import sdfixscan
+    from taskinit import *
+    
+    _ia = iatool()
+    # global qa tool is used here
 
 #
 # Unit test of sdfixscan task.
@@ -28,7 +41,7 @@ def drop_stokes_axis(imagename, outimagename):
     The function intends to drop Stokes axis and assumes that
     the third axis is Stokes.
     """
-    (myia,) = gentools(['ia'])
+    myia = iatool( )
     myia.open(imagename)
     subimage = myia.subimage(outfile=outimagename, dropdeg=True,
                              keepaxes=[0,1,3])
@@ -41,7 +54,7 @@ def drop_deg_axes(imagename, outimagename):
     The function intends to drop both Stokes and Spectral axis and assumes that
     the third axis is Spectral and fourth axis is Stokes.
     """
-    (myia,) = gentools(['ia'])
+    myia = iatool( )
     myia.open(imagename)
     subimage = myia.subimage(outfile=outimagename, dropdeg=True,
                              keepaxes=[0,1])
@@ -56,7 +69,10 @@ class sdfixscan_unittest_base:
     Base class for sdfixscan unit test
     """
     taskname='sdfixscan'
-    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdfixscan/'
+    if is_CASA6:
+        datapath=ctsys.resolve('regression/unittest/sdfixscan')
+    else:
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/sdfixscan')
     
     def _checkfile( self, name ):
         isthere=os.path.exists(name)
@@ -130,7 +146,7 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
         self.res=None
         for name in self.rawfiles:
             if (not os.path.exists(name)):
-                shutil.copytree(self.datapath+name, name)
+                shutil.copytree(os.path.join(self.datapath,name), name)
 
         default(sdfixscan)
 
@@ -142,8 +158,12 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
 
     def test000(self):
         """Test 000: Default parameters"""
-        res=sdfixscan()
-        self.assertEqual(res,False)
+        # casatasks throw exception, CASA 5 tasks return False on failure
+        if is_CASA6:
+            self.assertRaises(Exception,sdfixscan)
+        else:
+            res=sdfixscan()
+            self.assertEqual(res,False)
 
     def test001(self):
         """Test 001: only 1 image is given for Basket-Weaving"""
@@ -191,32 +211,12 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
 
     def test005(self):
         """Test 005: Existing output image file"""
-        shutil.copytree(self.datapath+self.rawfiles[0], self.outfile)
-        try:
-            res=sdfixscan(infiles=self.rawfiles,mode='fft_mask',direction=[0.,90.0],outfile=self.outfile,overwrite=False)
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('%s already exists'%(self.outfile))
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))        
-        except Exception as e:
-            self.assertTrue(False,
-                            msg='Unexpected exception was thrown: %s'%(str(e)))        
+        shutil.copytree(os.path.join(self.datapath,self.rawfiles[0]), self.outfile)
+        self.assertRaises(Exception, sdfixscan, infiles=self.rawfiles,mode='fft_mask',direction=[0.,90.0],outfile=self.outfile,overwrite=False)
 
     def test006(self):
         """Test 006: Zero beamsize for Press"""
-        try:
-            res=sdfixscan(infiles=[self.rawfiles[0]],mode='model',beamsize=0.0,direction=[0.],outfile=self.outfile,overwrite=True)
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('Gaussian2DParam')
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))        
-        except Exception as e:
-            self.assertTrue(False,
-                            msg='Unexpected exception was thrown: %s'%(str(e)))        
+        self.assertRaises(Exception, sdfixscan, infiles=[self.rawfiles[0]],mode='model',beamsize=0.0,direction=[0.],outfile=self.outfile,overwrite=True)
 
 ###
 # Test on Pressed method
@@ -247,7 +247,7 @@ class sdfixscan_test1(unittest.TestCase,sdfixscan_unittest_base):
         self.res=None
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
-        shutil.copytree(self.datapath+self.rawfile, self.rawfile)
+        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
 
         default(sdfixscan)
 
@@ -315,7 +315,7 @@ class sdfixscan_test1(unittest.TestCase,sdfixscan_unittest_base):
     def test102(self):
         """Test 102: Test mask in pressed method using whole pixels"""
         # add spurious to image and mask the spurious.
-        my_ia = gentools(['ia'])[0]
+        my_ia = iatool( )
         my_ia.open(self.rawfile)
         try:
             maxval = my_ia.statistics()['max'][0]
@@ -442,7 +442,7 @@ class sdfixscan_test2(unittest.TestCase,sdfixscan_unittest_base):
     """
     # Input and output names
     rawfiles=['scan_x.im','scan_y.im']
-    rawfilesmod = map(lambda x: x.replace('.im', '_mod.im'), rawfiles)
+    rawfilesmod = list(map(lambda x: x.replace('.im', '_mod.im'), rawfiles))
     prefix=sdfixscan_unittest_base.taskname+'Test2'
     outfile=prefix+'.im'
     mode='fft_mask'
@@ -452,7 +452,7 @@ class sdfixscan_test2(unittest.TestCase,sdfixscan_unittest_base):
         for name in self.rawfiles:
             if os.path.exists(name):
                 shutil.rmtree(name)
-            shutil.copytree(self.datapath+name, name)
+            shutil.copytree(os.path.join(self.datapath,name), name)
 
         default(sdfixscan)
 
@@ -521,7 +521,7 @@ class sdfixscan_test2(unittest.TestCase,sdfixscan_unittest_base):
         spix = [10, 15]
         epix = [20, 25]
         mask_in = []
-        my_ia = gentools(['ia'])[0]
+        my_ia = iatool( )
         for i in range(len(self.rawfiles)):
             name = self.rawfiles[i]
             s = spix[i % len(spix)]
@@ -663,3 +663,7 @@ def suite():
     return [sdfixscan_test0,
             sdfixscan_test1,
             sdfixscan_test2]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

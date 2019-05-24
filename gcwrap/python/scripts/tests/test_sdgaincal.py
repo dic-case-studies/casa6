@@ -6,18 +6,35 @@ import shutil
 import re
 import numpy
 import math
-import sdutil
-
-from __main__ import default
-from taskinit import gentools
 import unittest
 
-from sdgaincal import sdgaincal
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatools import table as tbtool
+    from casatools import ms as mstool
+    from casatasks import sdgaincal, mstransform, sdcal
+    from casatasks.private import sdutil
 
-try:
-    from .testutils import copytree_ignore_subversion
-except:
-    from tests.testutils import copytree_ignore_subversion
+    ### for testhelper import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from testhelper import copytree_ignore_subversion
+
+    # this distinction doesn't exist in casatasks
+    mstransform_cli = mstransform
+    sdcal_cli = sdcal
+else:
+    from __main__ import default
+    from taskinit import tbtool, mstool
+    from sdgaincal import sdgaincal
+    from mstransform_cli import mstransform_cli
+    from sdcal_cli import sdcal_cli
+    import sdutil
+
+    try:
+        from .testutils import copytree_ignore_subversion
+    except:
+        from tests.testutils import copytree_ignore_subversion
 
 
 class sdgaincal_test_base(unittest.TestCase):
@@ -26,7 +43,10 @@ class sdgaincal_test_base(unittest.TestCase):
     
     This class defines attributes and methods common to test cases 
     """
-    datapath=os.environ.get('CASAPATH').split()[0]+ '/data/regression/unittest/sdgaincal/'
+    if is_CASA6:
+        datapath=ctsys.resolve('regression/unittest/sdgaincal')
+    else:
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/sdgaincal')
     
     def __copy_from_datapath(self, filename):
         if os.path.exists(filename):
@@ -39,7 +59,8 @@ class sdgaincal_test_base(unittest.TestCase):
         if hasattr(self, 'reffile'):
             self.__copy_from_datapath(self.reffile)
 
-        default(sdgaincal)
+        if not is_CASA6:
+            default(sdgaincal)
 
     def tearDown(self):
         to_be_removed = [self.infile, self.outfile]
@@ -90,7 +111,7 @@ class sdgaincal_test_base(unittest.TestCase):
         self.assertTrue(os.path.isdir(caltable))
         
         # caltable must be opened by table tool
-        (tb,) = gentools(['tb'])
+        tb = tbtool()
         is_open_successful = tb.open(caltable)
         self.assertTrue(is_open_successful)
         
@@ -106,7 +127,8 @@ class sdgaincal_test_base(unittest.TestCase):
             tb.close()
             
     def _generic_verify(self, **params):
-        (tb,ms,) = gentools(['tb','ms'])
+        tb = tbtool()
+        ms = mstool()
         
         nrow_per_spw = 102
         
@@ -147,7 +169,7 @@ class sdgaincal_test_base(unittest.TestCase):
                 mean_gain = ma.mean(axis=2)
                 print(mean_gain)
                 npol = fparam.shape[0]
-                for ipol in xrange(npol):
+                for ipol in range(npol):
                     if numpy.any(flag[ipol] == False):
                         self.assertTrue(abs(mean_gain[ipol] - 1.0) < 0.01)
                 
@@ -185,7 +207,11 @@ class sdgaincal_fail_test(sdgaincal_test_base):
     def test_fail01(self):
         """test_fail01: infile not exist"""
         params = self.generate_params(infile=self.infile+'.notexist')
-        self._test_fail(**params)
+        # casatasks throw exceptions to indicate failure
+        if is_CASA6:
+            self.assertRaises(Exception, self.run_task, **params)
+        else:
+            self._test_fail(**params)
 
     def test_fail02(self):
         """test_fail02: not overwrite existing outfile"""
@@ -193,21 +219,32 @@ class sdgaincal_fail_test(sdgaincal_test_base):
         
         # outfile exists
         shutil.copytree(params['infile'], params['outfile'])
-
-        self._test_except_regex(RuntimeError, '.* exists\.$', **params)
-        
+        # these may be equivalent
+        if is_CASA6:
+            self.assertRaises(Exception, self.run_task, **params)
+        else:
+            self._test_except_regex(RuntimeError, '.* exists\.$', **params)
+           
     def test_fail03(self):
         """test_fail03: wrong calibration mode"""
         params = self.generate_params(calmode='otf')
-        self._test_fail(**params)
-        
+        # casatasks throw exceptions to indicate failure
+        if is_CASA6:
+            self.assertRaises(Exception, self.run_task, **params)
+        else:
+            self._test_fail(**params)
+            
     def test_fail04(self):
         """test_fail04: negative radius"""
         params = self.generate_params(radius='-30arcsec')
-        self._test_except_regex(RuntimeError, 
-                                '^Error in Calibrater::setsolve\.$', 
-                                **params)
-        
+        # these may be equivalent
+        if is_CASA6:
+            self.assertRaises(Exception, self.run_task, **params)
+        else:
+            self._test_except_regex(RuntimeError, 
+                                    '^Error in Calibrater::setsolve\.$', 
+                                    **params)
+            
 class sdgaincal_const_test(sdgaincal_test_base):
     """
     Unit tests for task sdgaincal.
@@ -226,7 +263,7 @@ class sdgaincal_const_test(sdgaincal_test_base):
     outfile = 'sdgaincal_const_test.sdgain.caltable'
     
     def _is_empty_caltable(self, **params):
-        (tb,) = gentools(['tb'])
+        tb = tbtool()
         tb.open(params['outfile'])
         try:
             nrow = tb.nrows()
@@ -235,7 +272,7 @@ class sdgaincal_const_test(sdgaincal_test_base):
         self.assertEqual(nrow, 0)
         
     def _verify_param_and_flag(self, table):
-        for irow in xrange(table.nrows()):
+        for irow in range(table.nrows()):
             fparam = table.getcell('CPARAM', irow).real
             self.assertTrue(numpy.all(fparam == 1.0))
                 
@@ -282,7 +319,7 @@ class sdgaincal_variable_test(sdgaincal_test_base):
     reffile = 'doublecircletest_autoscale.sdgain.caltable'
     
     def _verify_param_and_flag(self, table):
-        (reftable,) = gentools(['tb'])
+        reftable = tbtool()
         reftable.open(self.reffile)
         
         try:
@@ -290,7 +327,7 @@ class sdgaincal_variable_test(sdgaincal_test_base):
             ref_nrow = reftable.nrows()
             self.assertEqual(nrow, ref_nrow)
             
-            for irow in xrange(nrow):
+            for irow in range(nrow):
                 ref_fparam = reftable.getcell('CPARAM', irow).real
                 fparam = table.getcell('CPARAM', irow).real
                 self.assertTrue(numpy.all(ref_fparam == fparam))
@@ -346,7 +383,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
             shutil.rmtree(self.skytable)
     
     def _verify_param_and_flag_const(self, table):
-        for irow in xrange(table.nrows()):
+        for irow in range(table.nrows()):
             param = table.getcell('CPARAM', irow).real
             self.assertTrue(numpy.all(param == 1.0))
                 
@@ -355,7 +392,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
     
     def _verify_param_and_flag_variable(self, table):
         nrow = table.nrows()
-        nrow_per_spw = nrow / 2
+        nrow_per_spw = nrow // 2
         ref_min = 0.90240508
         ref_max = 1.08644176
         delta = (ref_max - ref_min) / nrow_per_spw
@@ -381,7 +418,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
               1.07135618,  1.07277775,  1.07423937,  1.07552946,  1.07685661,
               1.07822275,  1.07963037,  1.08108199,  1.08235824,  1.08367515,
               1.08503532,  1.08644176], dtype=numpy.float64)
-        for irow in xrange(nrow):
+        for irow in range(nrow):
             ref_param = ref[irow % nrow_per_spw]
             param = table.getcell('CPARAM', irow).real
             diff = numpy.abs((param - ref_param) / ref_param)
@@ -398,14 +435,14 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
            
     def generate(self):
         # generate Tsys table
-        from sdcal_cli import sdcal_cli as sdcal
-        sdcal(infile=self.infile, outfile=self.tsystable, 
-              calmode='tsys', overwrite=True)
+        # in casatasks, sdcal_cli IS sdcal
+        sdcal_cli(infile=self.infile, outfile=self.tsystable, 
+                  calmode='tsys', overwrite=True)
         
         self.assertTrue(os.path.exists(self.tsystable))
         
         # get information from MS
-        (tb,) = gentools(['tb'])
+        tb = tbtool()
         tb.open(self.infile)
         s = tb.getcol('FLOAT_DATA', 0, 2)
         w = tb.getcol('WEIGHT', 0, 2).reshape((2, 1, 2))
@@ -454,11 +491,11 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
         tb.close()
         
     def _edit_tsys_spw(self, spwmap):
-        (tb,) = gentools(['tb'])
+        tb = tbtool()
         tb.open(self.tsystable, nomodify=False)
         spw_id = tb.getcol('SPECTRAL_WINDOW_ID')
         print('before ', spw_id)
-        for i in xrange(len(spw_id)):
+        for i in range(len(spw_id)):
             spw_id[i] = spwmap[spw_id[i]]
         print('after', spw_id)
         tb.putcol('SPECTRAL_WINDOW_ID', spw_id)
@@ -529,7 +566,7 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
         Second polarization should be all flagged.
         """
         print('sdgaincal_single_polarization_test._verify_param_and_flag')
-        for irow in xrange(table.nrows()):
+        for irow in range(table.nrows()):
             fparam = table.getcell('CPARAM', irow).real
             self.assertTrue(numpy.all(fparam[0] == 1.0))
             self.assertTrue(numpy.all(fparam[1] == 0.0))
@@ -541,14 +578,14 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
     def test_single_pol(self):
         """test_single_pol: test single-polarization calibration (YY)"""
         # generate single-polarization MS
-        from mstransform_cli import mstransform_cli as mstransform
-        mstransform(vis=self.infile, outputvis=self.infile_YY, correlation='YY',
-                    datacolumn='float_data')
+        # for casatasks, mstransform_cli IS mstransform
+        mstransform_cli(vis=self.infile, outputvis=self.infile_YY, correlation='YY',
+                        datacolumn='float_data')
         
         self.assertTrue(os.path.exists(self.infile_YY))
         with sdutil.tbmanager(self.infile_YY) as tb:
             try:
-                for irow in xrange(tb.nrows()):
+                for irow in range(tb.nrows()):
                     flag = tb.getcell('FLAG', irow)
                     self.assertEqual(flag.shape[0], 1)
             finally:
@@ -567,4 +604,6 @@ def suite():
             sdgaincal_preapply_test,
             sdgaincal_single_polarization_test]
 
-
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

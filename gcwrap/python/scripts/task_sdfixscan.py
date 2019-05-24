@@ -5,12 +5,22 @@ import time
 import numpy
 import numpy.fft as npfft
 
-from taskinit import casalog, gentools, utilstool, qatool
-
-import sdutil
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, quanta
+    from casatools import image as iatool
+    from casatasks import casalog
+    from . import sdutil
+    _removetable = ctsys.removetable
+else:
+    from taskinit import casalog, utilstool, iatool
+    from taskinit import qatool as quanta
+    import sdutil
+    cu = utilstool()
+    _removetable = cu.removetable
 
 def create_4d_image(infile, outfile):
-    (ia,) = gentools(['ia'])
+    ia = iatool()
     ia.open(infile)
     image_shape = ia.shape()
     try:
@@ -139,7 +149,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         casalog.post( 'Apply Pressed-out method' )
 
         # CAS-5410 Use private tools inside task scripts
-        ia = gentools(['ia'])[0]
+        ia = iatool()
 
         # mask
         self.image = ia.newimagefromimage(infile=self.infiles,outfile=self.tmpmskname)
@@ -168,7 +178,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         #bmajor = 0.0
         #bminor = 0.0
         # CAS-5410 Use private tools inside task scripts
-        qa = qatool()
+        qa = quanta()
         if type(self.beamsize) == str:
             qbeamsize = qa.quantity(self.beamsize)
         else:
@@ -209,8 +219,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         #polyimage.done()
         if os.path.exists( self.tmppolyname ):
             # CAS-5410 Use private tools inside task scripts
-            cu = utilstool()
-            cu.removetable([self.tmppolyname])
+            _removetable([self.tmppolyname])
         self.convimage.setbrightnessunit('K')
         # Unfortunately, ia.fitprofile is very fragile.
         # Using numpy instead for fitting with masked pixels (KS, 2014/07/02)
@@ -244,9 +253,8 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             raise RuntimeError("No image found to fit.")
         if os.path.exists( model ):
             # CAS-5410 Use private tools inside task scripts
-            cu = utilstool()
-            cu.removetable([model])
-        tmpia = gentools(['ia'])[0]
+            _removetable([model])
+        tmpia = iatool()
         modelimg = tmpia.newimagefromimage(infile=image,outfile=model)
         try:
             if tmpia.isopen(): tmpia.close()
@@ -316,7 +324,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         casalog.post( 'Apply Basket-Weaving' )
 
         # CAS-5410 Use private tools inside task scripts
-        ia = gentools(['ia'])[0]
+        ia = iatool()
 
         # initial setup
         outimage = ia.newimagefromimage( infile=self.infiles[0], outfile=self.outfile, overwrite=self.overwrite )
@@ -334,7 +342,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         ny = imshape_out[direction_axis1]
         tmp=[]
         nfile = len(self.infiles)
-        for i in xrange(nfile):
+        for i in range(nfile):
             tmp.append(numpy.zeros(imshape_out,dtype=float))
         maskedpixel=numpy.array(tmp)
         del tmp
@@ -422,9 +430,9 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             else:
                 maskw = 0.5 * numpy.sqrt(nx*ny) * masks[i]
             for ix in range(nx):
-                halfwx = (nx-1)/2
+                halfwx = (nx-1)//2
                 for iy in range(ny):
-                    halfwy = (ny-1)/2
+                    halfwy = (ny-1)//2
                     if scan_direction == 'horizontal':
                         #dd = abs(float(ix) - 0.5*(nx-1))
                         dd = abs(float(ix) - halfwx) # for CAS-9434
@@ -478,13 +486,13 @@ class sdfixscan_worker(sdutil.sdtask_interface):
                             weights[i][ix][iy] += eps*0.01 
             """
             # shift
-            xshift = -((ny-1)/2)
-            yshift = -((nx-1)/2)
-            for ix in range(xshift,0,1):
+            xshift = -((ny-1)//2)
+            yshift = -((nx-1)//2)
+            for ix in range(int(xshift),0,1):
                 tmp = weights[i,:,0].copy()
                 weights[i,:,0:ny-1] = weights[i,:,1:ny].copy()
                 weights[i,:,ny-1] = tmp
-            for iy in range(yshift,0,1):
+            for iy in range(int(yshift),0,1):
                 tmp = weights[i,0:1].copy()
                 weights[i,0:nx-1] = weights[i,1:nx].copy()
                 weights[i,nx-1:nx] = tmp
@@ -588,6 +596,5 @@ class sdfixscan_worker(sdutil.sdtask_interface):
                         existing_files.append(f)
         # CAS-5410 Use private tools inside task scripts
         if len(existing_files) > 0:
-            cu = utilstool()
-            cu.removetable(existing_files)
+            _removetable(existing_files)
     
