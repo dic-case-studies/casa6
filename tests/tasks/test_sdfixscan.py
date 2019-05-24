@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -6,11 +8,27 @@ import time
 import numpy
 import re
 
-from casatools import ctsys, image, quanta
-from casatasks import sdfixscan
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, quanta
+    from casatools import image as iatool
+    from casatasks import sdfixscan
 
-_ia = image( )
-qa = quanta( )
+    _ia = iatool( )
+    qa = quanta( )
+
+    # default is not used in casatasks
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import iatool
+    from sdfixscan import sdfixscan
+    from taskinit import *
+    
+    _ia = iatool()
+    # global qa tool is used here
 
 #
 # Unit test of sdfixscan task.
@@ -23,7 +41,7 @@ def drop_stokes_axis(imagename, outimagename):
     The function intends to drop Stokes axis and assumes that
     the third axis is Stokes.
     """
-    myia = image( )
+    myia = iatool( )
     myia.open(imagename)
     subimage = myia.subimage(outfile=outimagename, dropdeg=True,
                              keepaxes=[0,1,3])
@@ -36,7 +54,7 @@ def drop_deg_axes(imagename, outimagename):
     The function intends to drop both Stokes and Spectral axis and assumes that
     the third axis is Spectral and fourth axis is Stokes.
     """
-    myia = image( )
+    myia = iatool( )
     myia.open(imagename)
     subimage = myia.subimage(outfile=outimagename, dropdeg=True,
                              keepaxes=[0,1])
@@ -51,7 +69,10 @@ class sdfixscan_unittest_base:
     Base class for sdfixscan unit test
     """
     taskname='sdfixscan'
-    datapath=ctsys.resolve('regression/unittest/sdfixscan')
+    if is_CASA6:
+        datapath=ctsys.resolve('regression/unittest/sdfixscan')
+    else:
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/sdfixscan')
     
     def _checkfile( self, name ):
         isthere=os.path.exists(name)
@@ -127,6 +148,8 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
             if (not os.path.exists(name)):
                 shutil.copytree(os.path.join(self.datapath,name), name)
 
+        default(sdfixscan)
+
     def tearDown(self):
         for name in self.rawfiles:
             if (os.path.exists(name)):
@@ -135,7 +158,12 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
 
     def test000(self):
         """Test 000: Default parameters"""
-        self.assertRaises(Exception,sdfixscan)
+        # casatasks throw exception, CASA 5 tasks return False on failure
+        if is_CASA6:
+            self.assertRaises(Exception,sdfixscan)
+        else:
+            res=sdfixscan()
+            self.assertEqual(res,False)
 
     def test001(self):
         """Test 001: only 1 image is given for Basket-Weaving"""
@@ -221,6 +249,8 @@ class sdfixscan_test1(unittest.TestCase,sdfixscan_unittest_base):
             shutil.rmtree(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
 
+        default(sdfixscan)
+
     def tearDown(self):
         if (os.path.exists(self.rawfile)):
             shutil.rmtree(self.rawfile)
@@ -285,7 +315,7 @@ class sdfixscan_test1(unittest.TestCase,sdfixscan_unittest_base):
     def test102(self):
         """Test 102: Test mask in pressed method using whole pixels"""
         # add spurious to image and mask the spurious.
-        my_ia = image( )
+        my_ia = iatool( )
         my_ia.open(self.rawfile)
         try:
             maxval = my_ia.statistics()['max'][0]
@@ -424,6 +454,8 @@ class sdfixscan_test2(unittest.TestCase,sdfixscan_unittest_base):
                 shutil.rmtree(name)
             shutil.copytree(os.path.join(self.datapath,name), name)
 
+        default(sdfixscan)
+
     def tearDown(self):
         for name in self.rawfiles:
             if (os.path.exists(name)):
@@ -489,7 +521,7 @@ class sdfixscan_test2(unittest.TestCase,sdfixscan_unittest_base):
         spix = [10, 15]
         epix = [20, 25]
         mask_in = []
-        my_ia = image( )
+        my_ia = iatool( )
         for i in range(len(self.rawfiles)):
             name = self.rawfiles[i]
             s = spix[i % len(spix)]
@@ -632,5 +664,6 @@ def suite():
             sdfixscan_test1,
             sdfixscan_test2]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

@@ -1,17 +1,23 @@
+from __future__ import absolute_import
 import numpy
 import os
 import time, datetime
 from numpy import ma, array, logical_not, logical_and
 
-from casatools import table, singledishms
-from casatools import ms as mstool
-from casatasks import casalog
-from . import sdutil
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, singledishms
+    from casatools import ms as mstool
+    from casatasks import casalog
+    from . import sdutil
 
-ms = mstool( )
-sdms = singledishms( )
-tb = table( )
-
+    ms = mstool( )
+    sdms = singledishms( )
+    tb = table( )
+else:
+    from taskinit import gentools, casalog
+    import sdutil
+    ms, sdms, tb = gentools(['ms','sdms','tb'])
 
 @sdutil.sdtask_decorator
 def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,

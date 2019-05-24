@@ -1,16 +1,26 @@
 # sd task for image processing (fft_mask or model)
+from __future__ import absolute_import
 import os
 import time
 import numpy
 import numpy.fft as npfft
 
-from casatools import ctsys, quanta
-from casatools import image as iatool
-from casatasks import casalog
-from . import sdutil
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, quanta
+    from casatools import image as iatool
+    from casatasks import casalog
+    from . import sdutil
+    _removetable = ctsys.removetable
+else:
+    from taskinit import casalog, utilstool, iatool
+    from taskinit import qatool as quanta
+    import sdutil
+    cu = utilstool()
+    _removetable = cu.removetable
 
 def create_4d_image(infile, outfile):
-    ia = iatool( )
+    ia = iatool()
     ia.open(infile)
     image_shape = ia.shape()
     try:
@@ -101,7 +111,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             # check input file
             if type(self.infiles) == list:
                 if len(self.infiles) != 1:
-                    raise Exception("infiles allows only one input file for pressed-out method.")
+                    raise Exception("infiles allows only one input file for pressed-out method.") 
                 else:
                     self.infiles = self.infiles[0]
             # check direction
@@ -139,7 +149,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         casalog.post( 'Apply Pressed-out method' )
 
         # CAS-5410 Use private tools inside task scripts
-        ia = iatool( )
+        ia = iatool()
 
         # mask
         self.image = ia.newimagefromimage(infile=self.infiles,outfile=self.tmpmskname)
@@ -168,7 +178,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         #bmajor = 0.0
         #bminor = 0.0
         # CAS-5410 Use private tools inside task scripts
-        qa = quanta( )
+        qa = quanta()
         if type(self.beamsize) == str:
             qbeamsize = qa.quantity(self.beamsize)
         else:
@@ -209,7 +219,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         #polyimage.done()
         if os.path.exists( self.tmppolyname ):
             # CAS-5410 Use private tools inside task scripts
-            ctsys.removetable([self.tmppolyname])
+            _removetable([self.tmppolyname])
         self.convimage.setbrightnessunit('K')
         # Unfortunately, ia.fitprofile is very fragile.
         # Using numpy instead for fitting with masked pixels (KS, 2014/07/02)
@@ -243,8 +253,8 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             raise RuntimeError("No image found to fit.")
         if os.path.exists( model ):
             # CAS-5410 Use private tools inside task scripts
-            ctsys.removetable([model])
-        tmpia = iatool( )
+            _removetable([model])
+        tmpia = iatool()
         modelimg = tmpia.newimagefromimage(infile=image,outfile=model)
         try:
             if tmpia.isopen(): tmpia.close()
@@ -314,7 +324,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         casalog.post( 'Apply Basket-Weaving' )
 
         # CAS-5410 Use private tools inside task scripts
-        ia = iatool( )
+        ia = iatool()
 
         # initial setup
         outimage = ia.newimagefromimage( infile=self.infiles[0], outfile=self.outfile, overwrite=self.overwrite )
@@ -586,5 +596,5 @@ class sdfixscan_worker(sdutil.sdtask_interface):
                         existing_files.append(f)
         # CAS-5410 Use private tools inside task scripts
         if len(existing_files) > 0:
-            ctsys.removetable(existing_files)
+            _removetable(existing_files)
     
