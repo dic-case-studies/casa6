@@ -1,11 +1,20 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 import pylab as pl
 
-from casatools import ctsys
-from casatasks import casalog
-from .simutil import *
-from .simutil import is_array_type
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import casalog
+    from .simutil import *
+    from .simutil import is_array_type
+else:
+    from taskinit import *
+    from simutil import *
+    from casa_stack_manip import stack_frame_find
+    from simutil import is_array_type
 
 def simobserve(
     project=None, 
@@ -53,7 +62,8 @@ def simobserve(
         casalog.origin('simobserve')
         if verbose: casalog.filter(level="DEBUG2")
 
-        myf = stack_frame_find( )
+        if not is_CASA6:
+            myf = stack_frame_find( )
 
         # create the utility object:
         util = simutil(direction)  # this is the dir of the observation - could be ""
@@ -89,7 +99,10 @@ def simobserve(
 
         # filename parsing of cfg file here so that the project filenames 
         # can contain the cfg
-        repodir = ctsys.resolve("alma/simmos")
+        if is_CASA6:
+            repodir = ctsys.resolve("alma/simmos")
+        else:
+            repodir = os.getenv("CASAPATH").split(' ')[0] + "/data/alma/simmos"
 
         # convert "alma;0.4arcsec" to an actual configuration
         # can only be done after reading skymodel, so here, we just string parse
@@ -117,11 +130,14 @@ def simobserve(
                 return False
 
 
-        saveinputs = myf['saveinputs']
-        # something broken in saveinputs
-        in_params['antennalist']=''+in_params['antennalist']+''
-        saveinputs('simobserve',fileroot+"/"+project+".simobserve.last",
-                   myparams=in_params)
+        if not is_CASA6:
+            saveinputs = myf['saveinputs']
+            # something broken in saveinputs
+            in_params['antennalist']=''+in_params['antennalist']+''
+            saveinputs('simobserve',fileroot+"/"+project+".simobserve.last",
+                       myparams=in_params)
+        else:
+            casalog.post("saveinputs not available in casatasks, skipping saving simobserve inputs", priority='WARN')
 
 
         if is_array_type(skymodel):

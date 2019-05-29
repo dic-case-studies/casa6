@@ -1,13 +1,26 @@
 # sd task for imaging
+from __future__ import absolute_import
 import os
 import re
 import numpy
 
-from casatools import quanta, ms, image, table, msmetadata
-from casatasks import casalog
-from . import sdutil
-from . import sdbeamutil
-from .cleanhelper import cleanhelper
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import quanta, ms, image, table, msmetadata
+    from casatasks import casalog
+    from . import sdutil
+    from . import sdbeamutil
+    from .cleanhelper import cleanhelper
+else:
+    from taskinit import casalog
+    from taskinit import msmdtool as msmetadata
+    from taskinit import tbtool as table
+    from taskinit import mstool as ms
+    from taskinit import iatool as image
+    from taskinit import qatool as quanta
+    import sdutil
+    import sdbeamutil
+    from cleanhelper import cleanhelper
 
 @sdutil.sdtask_decorator
 def sdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, 
@@ -106,7 +119,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         Otherwise, returns input data as a quantum string. The input
         unit is added to the return value if no unit is in data.
         """
-        my_qa = quanta( )
+        my_qa = quanta()
         if data == '' or my_qa.compare(data, unit):
             return data
         if my_qa.getunit(data) == '':
@@ -153,7 +166,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             if antenna == -1: antenna = ''
             scan = self.get_selection_param_for_ms(file_idx, self.scanno)
             intent = self.get_selection_param_for_ms(file_idx, self.intent) 
-            my_ms = ms( )
+            my_ms = ms()
             sel_ids = my_ms.msseltoindex(vis=vis, spw=spw, field=field,
                                          baseline=antenna, scan=scan)
             fieldid = list(sel_ids['field']) if len(sel_ids['field']) > 0 else -1
@@ -276,7 +289,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
                 self.imager_param['outframe'] = 'LSRK'
             else:
                 # get from MS
-                my_ms = ms( )
+                my_ms = ms()
                 my_ms.open(self.infiles[0])
                 spwinfo = my_ms.getspectralwindowinfo()
                 my_ms.close()
@@ -462,7 +475,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         if not os.path.exists(weightfile):
             raise RuntimeError("Failed to generate weight image '%s'" % weightfile)
         # Convert output images to proper output frame and set brightness unit (if necessary)
-        my_ia = image( )
+        my_ia = image()
         my_ia.open(self.outfile)
         csys = my_ia.coordsys()
         csys.setconversiontype(spectral=csys.referencecode('spectra')[0])
@@ -502,7 +515,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         ### number of pixels set to false 
         ### e.g  after masking self.outfile below one could just do this 
         ### nmasked_pixels=tb.calc('[select from "'+self.outfile+'"/mask0'+'"  giving [nfalse(PagedArray )]]')
-        my_tb = table( )
+        my_tb = table()
         nmask_pixels=0
         nchan=stat['trc'][3]+1
         casalog.filter('ERROR') ### hide the useless message of tb.calc
@@ -532,7 +545,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         if self.gridfunction.upper() not in  ['SF']:
             casalog.post("Beam size definition for '%s' kernel is experimental." % self.gridfunction, priority='WARN')
             casalog.post("You may want to take careful look at the restoring beam in the image.",priority='WARN')
-        my_msmd = msmetadata( )
+        my_msmd = msmetadata()
         # antenna diameter and blockage
         ref_ms_idx = self.sorted_idx[0]
         ref_ms_name = self.infiles[ref_ms_idx]
@@ -580,7 +593,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
                                                 pointingcolumntouse=self.pointingcolumn,
                                                 antenna=('%s&&&' % ant_name[0]))
         self.close_imager()
-        my_qa = quanta( )
+        my_qa = quanta()
         xSampling, ySampling = my_qa.getvalue(my_qa.convert(ptg_samp['sampling'], 'arcsec'))
         angle = my_qa.getvalue(my_qa.convert(ptg_samp['angle'], "deg"))[0]
 
@@ -637,7 +650,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         """
         casalog.post("Calculating Pirimary beam size:")
         # CAS-5410 Use private tools inside task scripts
-        my_qa = quanta( )
+        my_qa = quanta()
         
         pb_factor = 1.175
         # Reference frequency
@@ -667,7 +680,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
     def _get_imsize(self, width, height, dx, dy):
         casalog.post("Calculating pixel size.")
         # CAS-5410 Use private tools inside task scripts
-        my_qa = quanta( )
+        my_qa = quanta()
         ny = numpy.ceil( ( my_qa.convert(height, my_qa.getunit(dy))['value'] /  \
                            my_qa.getvalue(dy) ) )
         nx = numpy.ceil( ( my_qa.convert(width, my_qa.getunit(dx))['value'] /  \
@@ -683,7 +696,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         ### MS selection is ignored. This is not quite right.
         casalog.post("Calculating map extent from pointings.")
         # CAS-5410 Use private tools inside task scripts
-        my_qa = quanta( )
+        my_qa = quanta()
         ret_dict = {}
         
         colname = self.pointingcolumn.upper()
@@ -778,7 +791,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         self.pointing_table = sdutil.get_subtable_name(keys['POINTING'])        
 
     def _get_average_antenna_diameter(self, antenna):
-        my_qa = quanta( )
+        my_qa = quanta()
         self.open_table(self.antenna_table)
         try:
             antdiam_unit = self.table.getcolkeyword('DISH_DIAMETER', 'QuantumUnits')[0]

@@ -38,7 +38,7 @@
 #
 # <prerequisite>
 # <ul>
-#   <li> <linkto class="task_slsearch.py:description">slsearch</linkto>
+#   <li> <linkto class="task_slsearch.py:description">slsearch</linkto> 
 # </ul>
 # </prerequisite>
 #
@@ -48,30 +48,40 @@
 #
 # <synopsis>
 # Test the slsearch task and the sl.search() method upon which it is built.
-# </synopsis>
+# </synopsis> 
 #
 # <example>
 #
 # This test runs as part of the CASA python unit test suite and can be run from
 # the command line via eg
-#
+# 
 # `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_slsearch[test1,test2,...]
 #
 # </example>
 #
 # <motivation>
 # To provide a test standard for the slsearch task to ensure
-# coding changes do not break the associated bits
+# coding changes do not break the associated bits 
 # </motivation>
 #
 
 ###########################################################################
+from __future__ import absolute_import
 import os
 import shutil
 import unittest
 
-from casatools import ctsys, spectralline, table
-from casatasks import slsearch
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, spectralline, table
+    from casatasks import slsearch
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from taskinit import sltool as spectralline
+    from taskinit import tbtool as table
+    from __main__ import *
 
 good_table = "biglist.tbl"
 
@@ -83,7 +93,7 @@ def run_search(
     eu, rrlinclude, rrlonly, verbose, logfile,
     append
 ):
-    mysl = spectralline( )
+    mysl = spectralline()
     restool = None
     if (not mysl.open(tab)):
         raise Exception
@@ -101,7 +111,7 @@ def run_search(
         raise
     finally:
         mysl.done()
-
+   
 
 def run_slsearch(
     tab, outfile, freqrange, species, reconly,
@@ -109,6 +119,8 @@ def run_slsearch(
     eu, rrlinclude, rrlonly, verbose, logfile,
     append
 ):
+    if not is_CASA6:
+        default(slsearch)
     return slsearch(
         tablename=tab, outfile=outfile, freqrange=freqrange,
         species=species, reconly=reconly,
@@ -123,7 +135,7 @@ def run_slsearch(
 _mycount = 0
 
 class slsearch_test(unittest.TestCase):
-
+    
     def _testit(
         self, tab, outfile, freqrange, species, reconly,
         chemnames, qns, intensity, smu2, loga, el,
@@ -131,14 +143,14 @@ class slsearch_test(unittest.TestCase):
         append, nrows
     ):
         global _mycount
-        mysl = spectralline( )
-        mytb = table( )
-        for i in [1]:
+        mysl = spectralline()
+        mytb = table()
+        for i in [0, 1]:
             if (i==0):
                 mysl = run_search(tab, outfile,
                     freqrange, species, reconly, chemnames,
                     qns, intensity, smu2, loga, el, eu,
-                    rrlinclude, rrlonly, verbose, logfile,
+                    rrlinclude, rrlonly, verbose, logfile, 
                     append
                 )
             else:
@@ -163,9 +175,12 @@ class slsearch_test(unittest.TestCase):
                 shutil.rmtree(outfile)
             mytb.done()
 
-
+    
     def setUp(self):
-        datapath=ctsys.resolve('regression/unittest/slsearch')
+        if is_CASA6:
+            datapath=ctsys.resolve('regression/unittest/slsearch')
+        else:
+            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/slsearch')
         shutil.copytree(os.path.join(datapath,good_table), good_table)
 
     def tearDown(self):
@@ -177,16 +192,16 @@ class slsearch_test(unittest.TestCase):
         def testit(
             tab, outfile, freqrange, species, reconly,
             chemnames, qns, intensity, smu2, loga, el,
-            eu, rrlinclude, rrlonly, verbose, logfile,
+            eu, rrlinclude, rrlonly, verbose, logfile, 
             append
         ):
-            for i in [1]:
+            for i in [0, 1]:
                 if (i==0):
                     self.assertRaises(
                         Exception, run_search, tab, outfile,
                         freqrange, species, reconly, chemnames,
                         qns, intensity, smu2, loga, el, eu,
-                        rrlinclude, rrlonly, verbose, logfile,
+                        rrlinclude, rrlonly, verbose, logfile, 
                         append
                     )
                     self.assertTrue(len(_tb.showcache()) == 0)
@@ -202,6 +217,7 @@ class slsearch_test(unittest.TestCase):
                     self.assertTrue(len(_tb.showcache()) == 0)
 
         # bogus input table name
+        # CASA6 throws an exception, 5 does not, this captures both cases
         try:
             OK = False
             testit(
@@ -210,9 +226,16 @@ class slsearch_test(unittest.TestCase):
                 loga=[-1], el=[-1], eu=[-1], rrlinclude=True, rrlonly=True,
                 verbose=True, logfile="", append=True
             )
+            # this can only be OK if it's not CASA6
+            if not is_CASA6:
+                # bad output name
+                self.assertTrue(len(_tb.showcache()) == 0)
+                OK = True
         except:
-            self.assertTrue(len(_tb.showcache()) == 0)
-            OK = True
+            # this can only be OK if it is CASA6
+            if is_CASA6:
+                self.assertTrue(len(_tb.showcache()) == 0)
+                OK = True
 
         self.assertTrue(OK)
 
@@ -225,8 +248,11 @@ class slsearch_test(unittest.TestCase):
                 loga=[-1], el=[-1], eu=[-1], rrlinclude=True, rrlonly=True,
                 verbose=True, logfile="", append=True
             )
+            if not is_CASA6:
+                OK = True
         except:
-            OK = True
+            if is_CASA6:
+                OK = True
 
         self.assertTrue(OK)
 
@@ -258,7 +284,7 @@ class slsearch_test(unittest.TestCase):
             loga=[-1], el=[-1], eu=[-1], rrlinclude=True, rrlonly=False,
             verbose=False, logfile="", append=True, nrows=67858
         )
-
+        
     def test_freqrange(self):
         """ test various settings of the freqrange parameter"""
 
@@ -290,7 +316,7 @@ class slsearch_test(unittest.TestCase):
             loga=[-1], el=[-1], eu=[-1], rrlinclude=True, rrlonly=False,
             verbose=False, logfile="", append=True, nrows=81
         )
-
+        
     def test_chemnames(self):
         """ test various settings of the chemnames parameter"""
 
@@ -492,12 +518,13 @@ class slsearch_test(unittest.TestCase):
         )
         self.assertTrue(os.path.exists(logfile))
         num_lines = sum(1 for line in open(logfile))
-        self.assertEquals(num_lines, 2*5822)
+        self.assertEquals(num_lines, 3*5822)
         os.remove(logfile)
 
 
 def suite():
     return [slsearch_test]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

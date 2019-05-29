@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -7,12 +9,28 @@ import math
 from scipy import signal
 import unittest
 
-from casatools import ctsys, table, ms
-from casatasks import sdsmooth
-from casatasks.private import sdutil
-from testhelper import copytree_ignore_subversion
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms
+    from casatasks import sdsmooth
+    from casatasks.private import sdutil
+    from testhelper import copytree_ignore_subversion
 
-tb = table( )
+    tb = table( )
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    import sdutil
+    from sdsmooth import sdsmooth
+    from taskinit import mstool as ms
+
+    try:
+        from .testutils import copytree_ignore_subversion
+    except:
+        from tests.testutils import copytree_ignore_subversion
+
+    # the global tb tool is used here
 
 def gaussian_kernel(nchan, kwidth):
     sigma = kwidth / (2.0 * math.sqrt(2.0 * math.log(2.0)))
@@ -32,7 +50,10 @@ class sdsmooth_test_base(unittest.TestCase):
         decorators (invalid_argument_case, exception_case)
     """
     # Data path of input
-    datapath=ctsys.resolve('regression/unittest/tsdsmooth')
+    if is_CASA6:
+        datapath=ctsys.resolve('regression/unittest/tsdsmooth')
+    else:
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/tsdsmooth')
 
     # Input
     infile_data = 'tsdsmooth_test.ms'
@@ -127,7 +148,7 @@ class sdsmooth_test_base(unittest.TestCase):
                 if weight_mode is True:
                     weight_in = tb.getvarcol('WEIGHT_SPECTRUM')
         else:
-            myms = ms( )
+            myms = ms()
             a = myms.msseltoindex(self.infile, spw=spw)
             spw_selection = a['spw']
             dd_selection = a['dd']
@@ -206,6 +227,9 @@ class sdsmooth_test_base(unittest.TestCase):
                 shutil.rmtree(f)
             copytree_ignore_subversion(self.datapath, f)
 
+        if not is_CASA6:
+            default(task)
+
     def _tearDown(self, files):
         for f in files:
             if os.path.exists(f):
@@ -237,12 +261,20 @@ class sdsmooth_test_fail(sdsmooth_test_base):
     @invalid_argument_case
     def test_sdsmooth_fail01(self):
         """test_sdsmooth_fail01 --- default parameters (raises an error)"""
-        self.assertRaises(Exception, sdsmooth)
+        # casatasks throw exceptions, CASA5 tasks return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdsmooth)
+        else:
+            self.result = sdsmooth()
         
     @invalid_argument_case
     def test_sdsmooth_fail02(self):
         """test_sdsmooth_fail02 --- invalid kernel type"""
-        self.assertRaises(Exception, sdsmooth, infile=self.infile, kernel='normal', outfile=self.outfile)
+        # casatasks throw exceptions, CASA5 tasks return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdsmooth, infile=self.infile, kernel='normal', outfile=self.outfile)
+        else:
+            self.result = sdsmooth(infile=self.infile, kernel='normal', outfile=self.outfile)
         
     @exception_case(RuntimeError, 'Spw Expression: No match found for 3')
     def test_sdsmooth_fail03(self):
@@ -263,7 +295,11 @@ class sdsmooth_test_fail(sdsmooth_test_base):
     @invalid_argument_case
     def test_sdsmooth_fail06(self):
         """test_sdsmooth_fail06 --- invalid data column name"""
-        self.assertRaises(Exception, sdsmooth, infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
+        # casatasks throw exceptions, CASA5 tasks return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdsmooth, infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
+        else:
+            self.result = sdsmooth(infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
 
 
 class sdsmooth_test_complex(sdsmooth_test_base):   
@@ -603,5 +639,6 @@ def suite():
             sdsmooth_test_float, sdsmooth_test_weight,
             sdsmooth_test_boxcar, sdsmooth_selection]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
