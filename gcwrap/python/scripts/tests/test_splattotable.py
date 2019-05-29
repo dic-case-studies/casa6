@@ -67,73 +67,112 @@
 
 ###########################################################################
 from __future__ import absolute_import
+import os
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, spectralline
+    from casatasks import splattotable
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from taskinit import sltool as spectralline
+    from taskinit import tbtool as table
+    from __main__ import *
 
 good_list = "list1.txt"
 bad_list = "list2.txt"
 
-def run_sttmethod(list, table):
-    mysl = sltool()
-    restool = mysl.splattotable(filenames=list, table=table)
+def run_sttmethod(list, tab):
+    mysl = spectralline()
+    restool = mysl.splattotable(filenames=list, table=tab)
     mysl.close()
     return restool
 
-def run_stttask(list, table):
-    default(splattotable)
-    return splattotable(filenames=list, table=table)
+def run_stttask(list, tab):
+    if not is_CASA6:
+        default(splattotable)
+    return splattotable(filenames=list, table=tab)
 
 
 class splattotable_test(unittest.TestCase):
     
     def setUp(self):
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/splattotable/'
-        shutil.copy(datapath + good_list, good_list)
-        shutil.copy(datapath + bad_list, bad_list)
+        self._tb = table()
+        if is_CASA6:
+            datapath=ctsys.resolve('regression/unittest/splattotable')
+        else:
+            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/splattotable')
+
+        shutil.copy(os.path.join(datapath,good_list), good_list)
+        shutil.copy(os.path.join(datapath,bad_list), bad_list)
 
     
     def tearDown(self):
         os.remove(good_list)
         os.remove(bad_list)
-        self.assertTrue(len(tb.showcache()) == 0)
+        self.assertTrue(len(self._tb.showcache()) == 0)
 
     def test_exceptions(self):
         """splattotable: Test various exception cases"""
         
-        def testit(filenames, table):
+        def testit(filenames, tab):
             for i in [0,1]:
                 if (i==0):
-                    self.assertRaises(Exception, run_sttmethod, filenames, table)
+                    self.assertRaises(Exception, run_sttmethod, filenames, tab)
                 else:
-                    self.assertEqual(run_stttask(filenames, table), None)
+                    self.assertEqual(run_stttask(filenames, tab), None)
 
+        # CASA6 throws exceptions here, CASA5 does not
         # blank output table name
-        testit("list1.txt", "")
-        
-        # bad list 
-        testit("list2.txt", "myout");
-        
+        try:
+            OK = False
+            testit("list1.txt", "")
+            if not is_CASA6:
+                OK = True
+        except:
+            if is_CASA6:
+                OK = True
+        self.assertEqual(OK,True)
+
+        # bad list
+        try:
+            OK = False
+            testit("list2.txt", "myout");
+            if not is_CASA6:
+                OK = True
+        except:
+            if is_CASA6:
+                OK = True
+        self.assertEqual(OK,True)
+
         # unwritable table
-        testit("list1.txt", "/myout");
-        
+        try:
+            OK = False
+            testit("list1.txt", "/myout");
+            if not is_CASA6:
+                OK = True
+        except:
+            if is_CASA6:
+                OK = True
+        self.assertEqual(OK,True)
 
     def test_good_list(self):
         """splattotable: Test converting a good list"""
-        def testit(filenames, table):
-            mytb = tbtool()
+        def testit(filenames, tab):
+            mytb = table()
             for i in [0,1]:
-                table = table + str(i)
+                tab = tab + str(i)
                 if (i==0):
-                    newsl = run_sttmethod(filenames, table)
+                    newsl = run_sttmethod(filenames, tab)
                     newsl.done()
                 else:
-                    self.assertTrue(run_stttask(filenames, table))
+                    self.assertTrue(run_stttask(filenames, tab))
                     
-                self.assertTrue(mytb.open(table))
+                self.assertTrue(mytb.open(tab))
             mytb.done()
                     
         testit("list1.txt", "good_table")
@@ -141,3 +180,7 @@ class splattotable_test(unittest.TestCase):
 
 def suite():
     return [splattotable_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

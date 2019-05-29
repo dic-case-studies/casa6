@@ -1,14 +1,28 @@
 from __future__ import absolute_import
-from taskinit import *
-from simutil import *
 import os
 import re
+import glob
 import pylab as pl
-import pdb
-from sdimaging import sdimaging
-from imregrid import imregrid
-from immath import immath
-from casa_stack_manip import stack_frame_find
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, image, imager
+    from casatasks import casalog, sdimaging, imregrid, immath, concat, feather
+    from . import sdbeamutil
+    from .simutil import *
+
+    tb = table( )
+    ia = image( )
+    im = imager( )
+else:
+    from taskinit import *
+    from simutil import *
+    from sdimaging import sdimaging
+    from imregrid import imregrid
+    from immath import immath
+    from casa_stack_manip import stack_frame_find
+
+    # the global tb, ia, and im tools are used
 
 def simanalyze(
     project=None,
@@ -39,13 +53,11 @@ def simanalyze(
     # Collect a list of parameter values to save inputs
     in_params =  locals()
 
-    import re
-    import glob
-
     casalog.origin('simanalyze')
     if verbose: casalog.filter(level="DEBUG2")
 
-    myf = stack_frame_find( )
+    if not is_CASA6:
+        myf = stack_frame_find( )
     
     # create the utility object:    
     myutil = simutil()
@@ -54,7 +66,6 @@ def simanalyze(
         myutil.openreport()
     if verbose: myutil.verbose = True
     msg = myutil.msg
-    from simutil import is_array_type
 
     # put output in directory called "project"
     fileroot = project
@@ -63,9 +74,12 @@ def simanalyze(
         # msg should raise an exception for priority=error
 
 
-    saveinputs = myf['saveinputs']
-    saveinputs('simanalyze',fileroot+"/"+project+".simanalyze.last")
-#               myparams=in_params)
+    if not is_CASA6:
+        saveinputs = myf['saveinputs']
+        saveinputs('simanalyze',fileroot+"/"+project+".simanalyze.last")
+        #               myparams=in_params)
+    else:
+        casalog.post("saveinputs not available in casatasks, skipping saving simanalyze inputs", priority='WARN')
 
     if (not image) and (not analyze):
         casalog.post("No operation to be done. Exiting from task.", "WARN")
@@ -229,7 +243,6 @@ def simanalyze(
                     msg(" "+mstoimage[i],priority="info",origin='simanalyze')
                 msg(" will be concated and simultaneously deconvolved; if something else is desired, please specify vis, or image manually and use image=F",priority="info",origin='simanalyze')
                 concatms=project+"/"+project+".concat.ms"
-                from concat import concat
                 weights = get_concatweights(mstoimage)
                 msg(" concat("+str(mstoimage)+",concatvis='"+concatms+"',visweightscale="+str(weights)+")",origin='simanalyze')
                 if not dryrun:
@@ -409,7 +422,6 @@ def simanalyze(
                     tb.close()
                     aveant = pl.mean(diams)
                     # theoretical antenna beam size
-                    import sdbeamutil
                     pb_asec = sdbeamutil.primaryBeamArcsec(qa.tos(qa.convert(qa.quantity(model_specrefval),'GHz')),aveant,(0.75 if aveant==12.0 else 0.0),10.0)
                 elif dryrun:
                     aveant = 12.0
@@ -624,7 +636,6 @@ def simanalyze(
 
             if os.path.exists(featherimage):
                 msg("feathering the interfermetric image "+imagename+".image with "+featherimage,origin='simanalyze',priority="info")
-                from feather import feather 
                 # TODO call with params?
                 msg("feather('"+imagename+".feather.image','"+imagename+".image','"+featherimage+"')",priority="info")
                 if not dryrun:
@@ -1005,19 +1016,19 @@ def simanalyze(
         finalize_tools()
         #msg("simanalyze -- TypeError: %s" % e,priority="error")
         casalog.post("simanalyze -- TypeError: %s" % e, priority="ERROR")
-        raise TypeError(e)
+        raise
         return
     except ValueError as e:
         finalize_tools()
         #print "simanalyze -- OptionError: ", e
         casalog.post("simanalyze -- OptionError: %s" % e, priority="ERROR")
-        raise ValueError(e)
+        raise
         return
     except Exception as instance:
         finalize_tools()
         #print '***Error***',instance
         casalog.post("simanalyze -- Exception: %s" % instance, priority="ERROR")
-        raise Exception(instance)
+        raise
         return
 
 
@@ -1028,7 +1039,6 @@ def finalize_tools():
 
 ### A helper function to get concat weight
 def get_concatweights(mslist):
-    from simutil import is_array_type
     if type(mslist) == str:
         mslist = [mslist]
     if not is_array_type(mslist):

@@ -61,12 +61,19 @@
 #
 ###########################################################################
 from __future__ import absolute_import
-from taskinit import *
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import spectralline
+    from casatasks import casalog
+else:
+    from taskinit import *
+    from taskinit import sltool as spectralline
 
 def splattotable(filenames=None, table=None):
     casalog.origin('splattotable')
     newsl = None
-    mysl = sltool()
+    mysl = spectralline()
 
     try:
         if (len(table) == 0):

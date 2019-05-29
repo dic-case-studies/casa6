@@ -64,10 +64,22 @@
 
 ###########################################################################
 from __future__ import absolute_import
-from taskinit import *
-from ialib import write_image_history, get_created_images
+
+import sys
 import glob
 import time
+
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image
+    from casatasks import casalog
+
+    from .ialib import write_image_history, get_created_images
+else:
+    from taskinit import *
+    from taskinit import iatool as image
+    from ialib import write_image_history, get_created_images
 
 def specfit(
 	imagename, box, region, chans, stokes, axis, mask, ngauss,
@@ -80,7 +92,7 @@ def specfit(
 ):
     casalog.origin('specfit')
     retval = None
-    myia = iatool()
+    myia = image()
     myia.dohistory(False)
     try:
         if (not myia.open(imagename)):
@@ -109,7 +121,11 @@ def specfit(
 		)
         try:
             param_names = specfit.__code__.co_varnames[:specfit.__code__.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             ims = [model, residual]
             for x in [amp, amperr, center, centererr, fwhm, fwhmerr, integral, integralerr]:
             	if x:
@@ -129,9 +145,6 @@ def specfit(
     if (wantreturn):
     	return retval
     else:
-    	if (retval):
-    	   del retval
-    	return None
-
-
-
+        if (retval):
+           del retval
+        return None

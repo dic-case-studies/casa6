@@ -3,33 +3,63 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
-import sha
-import time
 import numpy
 import math
-import re
-import string
 import copy
 
-_ia = iatool( )
-_rg = rgtool( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
+    from casatools import ms as mstool
+    from casatasks import sdimaging, flagdata
+    from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
 
-try:
-    from . import selection_syntax
-except:
-    import tests.selection_syntax as selection_syntax
+    ### for selection_syntax import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import selection_syntax
+    from testhelper import copytree_ignore_subversion, TableCacheValidator
 
-try:
-    from . import testutils
-except:
-    import tests.testutils as testutils
+    # default isn't used in casatasks
+    def default(atask):
+        pass
 
-from sdimaging import sdimaging
-from sdutil import tbmanager, toolmanager, table_selector
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from taskinit import metool as measures
+    from taskinit import qatool as quanta
+    from taskinit import tbtool as table
+    from taskinit import mstool
+    from taskinit import iatool as image
+    from taskinit import rgtool as regionmanager
+    from taskinit import msmdtool as msmetadata
+
+    try:
+        from . import selection_syntax
+    except:
+        import tests.selection_syntax as selection_syntax
+
+    try:
+        from . import testutils
+    except:
+        from tests.testutils import copytree_ignore_subversion, TableCacheValidator
+
+    from sdimaging import sdimaging
+    from sdutil import tbmanager, toolmanager, table_selector
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+
+_ia = image()
+_rg = regionmanager()
+me = measures()
+qa = quanta()
+tb = table()
+ms = mstool()
 
 #
 # Unit test of sdimaging task.
@@ -63,7 +93,7 @@ def merge_dict(d1, d2):
     """
     if type(d1) != dict or type(d2) != dict:
         raise ValueError("Internal error. inputs should be dictionaries.")
-    d12 = d1.copy()
+    d12 = copy.deepcopy(d1)
     d12.update(d2)
     return d12
 
@@ -100,7 +130,7 @@ class sdimaging_unittest_base(unittest.TestCase):
     
     """
     taskname='sdimaging'
-    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdimaging/'
+    datapath=ctsys_resolve('regression/unittest/sdimaging')
     rawfile='sdimaging.ms'
     postfix='.im'
     ms_nchan = 1024
@@ -283,10 +313,10 @@ class sdimaging_unittest_base(unittest.TestCase):
         _ia.open(image)
         beam = _ia.restoringbeam()
         _ia.close()
-        maj_asec = qa.getvalue(qa.convert(beam['major'], 'arcsec'))
-        min_asec = qa.getvalue(qa.convert(beam['minor'], 'arcsec'))
-        maj_asec_ref = qa.getvalue(qa.convert(ref_beam['major'], 'arcsec'))
-        min_asec_ref = qa.getvalue(qa.convert(ref_beam['minor'], 'arcsec'))
+        maj_asec = numpy.asscalar(qa.getvalue(qa.convert(beam['major'], 'arcsec')))
+        min_asec = numpy.asscalar(qa.getvalue(qa.convert(beam['minor'], 'arcsec')))
+        maj_asec_ref = numpy.asscalar(qa.getvalue(qa.convert(ref_beam['major'], 'arcsec')))
+        min_asec_ref = numpy.asscalar(qa.getvalue(qa.convert(ref_beam['minor'], 'arcsec')))
         self.assertAlmostEqual(abs(maj_asec-maj_asec_ref)/max(maj_asec_ref,1.e-12), 0., places=3, msg="major axis = %f arcsec (expected: %f)" % (maj_asec, maj_asec_ref))
         self.assertAlmostEqual(abs(min_asec-min_asec_ref)/max(min_asec_ref,1.e-12), 0., places=3, msg="minor axis = %f arcsec (expected: %f)" % (min_asec, min_asec_ref))
     
@@ -317,11 +347,11 @@ class sdimaging_test0(sdimaging_unittest_base):
     outfile = prefix+sdimaging_unittest_base.postfix
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
-        shutil.copytree(self.datapath+self.rawfile, self.rawfile)
+        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
 
         default(sdimaging)
 
@@ -335,26 +365,27 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test000(self):
         """Test 000: Default parameters"""
         # argument verification error
-        res=sdimaging()
-        self.assertFalse(res)
+        # casatasks throws an exception, CASA5 return False
+        if is_CASA6:
+            self.assertRaises(Exception,sdimaging)
+        else:
+            res = sdimaging()
+            self.assertFalse(res)
 
     def test001(self):
         """Test001: Bad mode"""
         # argument verification error
-        res=sdimaging(infiles=self.rawfile,mode='badmode',intent='',outfile=self.outfile)
-        self.assertFalse(res)
+        # casatasks throws an exception, CASA5 return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdimaging, infiles=self.rawfile,mode='badmode',intent='',outfile=self.outfile)
+        else:
+            res=sdimaging(infiles=self.rawfile,mode='badmode',intent='',outfile=self.outfile)
+            self.assertFalse(res)
 
     def test002(self):
         """Test002: Bad field id"""
         outfile=self.prefix+self.postfix
-        try:
-            res=sdimaging(infiles=self.rawfile,field=self.badid,intent='',outfile=self.outfile)
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('Field Expression: Partial or no match for Field ID list [%s]' % self.badid)
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        self.assertRaises(Exception, sdimaging, infiles=self.rawfile,field=self.badid,intent='',outfile=self.outfile)
 
     def test003(self):
         """Test003: Bad spectral window id"""
@@ -393,8 +424,12 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test006(self):
         """Test006: Bad gridfunction"""
         # argument verification error
-        res=sdimaging(infiles=self.rawfile,gridfunction='BAD',intent='',outfile=self.outfile)
-        self.assertFalse(res)
+        # casatasks throws an exception, CASA5 return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdimaging, infiles=self.rawfile,gridfunction='BAD',intent='',outfile=self.outfile)
+        else:
+            res=sdimaging(infiles=self.rawfile,gridfunction='BAD',intent='',outfile=self.outfile)
+            self.assertFalse(res)
 
     def test007(self):
         """Test007: Bad scanlist"""
@@ -449,8 +484,12 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test011(self):
         """Test011: Bad pointingcolumn name"""
         # argument verification error
-        res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,pointingcolumn='non_exist')
-        self.assertFalse(res)
+        # casatasks throws an exception, CASA5 return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdimaging, infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,pointingcolumn='non_exist')
+        else:
+            res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,pointingcolumn='non_exist')
+            self.assertFalse(res)
 
     def test012(self):
         """Test012: Bad imsize"""
@@ -515,11 +554,11 @@ class sdimaging_test1(sdimaging_unittest_base):
     width=10
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
-        shutil.copytree(self.datapath+self.rawfile, self.rawfile)
+        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
                                outfile=self.outfile,intent='',
@@ -839,11 +878,11 @@ class sdimaging_test2(sdimaging_unittest_base):
     mode = "frequency"
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
-        shutil.copytree(self.datapath+self.rawfile, self.rawfile)
+        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
                                outfile=self.outfile,intent='',
@@ -867,7 +906,7 @@ class sdimaging_test2(sdimaging_unittest_base):
         ms.open(self.rawfile)
         spwinfo =  ms.getspectralwindowinfo()
         ms.close()
-        spwid0 = spwinfo.keys()[0]
+        spwid0 = list(spwinfo.keys())[0]
         start = '%fHz' % (spwinfo[spwid0]['Chan1Freq']+0.5*(spwinfo[spwid0]['TotalWidth']-spwinfo[spwid0]['ChanWidth'])) 
         width = '%fHz' % (spwinfo[spwid0]['TotalWidth'])
         self.task_param.update(dict(nchan=nchan,start=start,width=width))
@@ -969,11 +1008,11 @@ class sdimaging_test3(sdimaging_unittest_base):
     mode = "velocity"
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
-        shutil.copytree(self.datapath+self.rawfile, self.rawfile)
+        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
                                outfile=self.outfile,intent='',
@@ -1102,11 +1141,11 @@ class sdimaging_autocoord(sdimaging_unittest_base):
     phasecenter = "J2000 17:18:05 59.30.05"
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
-        shutil.copytree(self.datapath+self.rawfile, self.rawfile)
+        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         if os.path.exists(self.outfile):
             shutil.rmtree(self.outfile)
         # Common task parameters of the class
@@ -1247,12 +1286,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         return True
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         for name in self.rawfiles:
             if os.path.exists(name):
                 shutil.rmtree(name)
-            shutil.copytree(self.datapath+name, name)
+            shutil.copytree(os.path.join(self.datapath,name), name)
         if os.path.exists(self.outfile):
             shutil.rmtree(self.outfile)
         # Common task parameters of the class
@@ -2057,11 +2096,11 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     phasecenter = "J2000 00:00:0"+str(pcra)+" 00.00."+str(pcdec)
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
-        shutil.copytree(self.datapath+self.rawfile, self.rawfile)
+        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         if os.path.exists(self.outfile):
             shutil.rmtree(self.outfile)
         default(sdimaging)
@@ -2098,49 +2137,49 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     
     def _set_data_ranges(self, chanmerge=False):
         xn = 2
-        xw = self.imsize[0]/xn
+        xw = self.imsize[0]//xn
         self.x_range = []
-        for i in xrange(xn):
+        for i in range(xn):
             self.x_range.append([xw*i, xw*(i+1)])
         yn = 3
-        yw = self.imsize[1]/yn
+        yw = self.imsize[1]//yn
         self.y_range = []
-        for i in xrange(yn):
+        for i in range(yn):
             self.y_range.append([yw*i, yw*(i+1)])
         self.f_range = [[0,1]] if chanmerge else [[0,2],[2,7],[7,10]]
 
     def _check_data(self, chanmerge=False):
         val = self._get_refvalues(self.rawfile, chanmerge)
         idx = 0
-        for i in xrange(len(self.x_range)):
-            for j in xrange(len(self.y_range)):
-                for k in xrange(len(self.f_range)):
+        for i in range(len(self.x_range)):
+            for j in range(len(self.y_range)):
+                for k in range(len(self.f_range)):
                     self._checkvalue(self.outfile, False, self.x_range[i], self.y_range[j], self.f_range[k],  val[idx], chanmerge)
                     idx += 1
 
     def _check_mask(self, chanmerge=False):
         val = self._get_refmask(self.maskfile, chanmerge)
         idx = 0
-        for i in xrange(len(self.x_range)):
-            for j in xrange(len(self.y_range)):
-                for k in xrange(len(self.f_range)):
+        for i in range(len(self.x_range)):
+            for j in range(len(self.y_range)):
+                for k in range(len(self.f_range)):
                     self._checkvalue(self.maskfile, True, self.x_range[i], self.y_range[j], self.f_range[k],  val[idx], chanmerge)
                     idx += 1
 
     def _check_weight(self, chanmerge=False):
         val = self._get_refweight(self.weightfile, chanmerge)
         idx = 0
-        for i in xrange(len(self.x_range)):
-            for j in xrange(len(self.y_range)):
-                for k in xrange(len(self.f_range)):
+        for i in range(len(self.x_range)):
+            for j in range(len(self.y_range)):
+                for k in range(len(self.f_range)):
                     self._checkvalue(self.weightfile, False, self.x_range[i], self.y_range[j], self.f_range[k],  val[idx], chanmerge)
                     idx += 1
 
     def _get_refmask(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
-            for i in [0, self.imsize[0]/2]:
-                for j in [0, self.imsize[1]/3, self.imsize[1]*2/3]:
+            for i in [0, self.imsize[0]//2]:
+                for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
                     for k in k_range:
                         res.append(tb.getcell('PagedArray', 0)[i][j][0][k].real)
@@ -2149,8 +2188,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _get_refweight(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
-            for i in [0, self.imsize[0]/2]:
-                for j in [0, self.imsize[1]/3, self.imsize[1]*2/3]:
+            for i in [0, self.imsize[0]//2]:
+                for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
                     for k in k_range:
                         res.append(tb.getcell('map', 0)[i][j][0][k].real)
@@ -2159,8 +2198,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _get_refvalues(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
-            for i in [self.imsize[0]/2, 0]:
-                for j in [0, self.imsize[1]/3, self.imsize[1]*2/3]:
+            for i in [self.imsize[0]//2, 0]:
+                for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
                     irow = self.imsize[0]*j+i
                     if chanmerge:
                         if (tb.getcell('FLAG', irow)[0]==True).all():
@@ -2169,7 +2208,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                             res.append(tb.getcell('DATA', irow)[0][0].real)
                     else:
                         if (tb.getcell('FLAG', irow)[0]==True).all():
-                            for k in xrange(3): res.append(0.0)
+                            for k in range(3): res.append(0.0)
                         else:
                             res.append(tb.getcell('DATA', irow)[0][0].real)
                             if (tb.getcell('FLAG', irow)[0][5]):
@@ -2185,11 +2224,15 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         with tbmanager(file) as tb:
             val = tb.getcell(colname, 0)
 
-        for i in xrange(x_range[0], x_range[1]):
-            for j in xrange(y_range[0], y_range[1]):
-                for k in xrange(f_range[0], f_range[1]):
-                    diff_value = abs(val[i][j][0][k]-ref_value)
-                    self.assertTrue(diff_value < tol)
+        boolean_types = (bool, numpy.bool, numpy.bool_)
+        for i in range(x_range[0], x_range[1]):
+            for j in range(y_range[0], y_range[1]):
+                for k in range(f_range[0], f_range[1]):
+                    if type(val[i][j][0][k]) in boolean_types or type(ref_value) in boolean_types:
+                        self.assertEqual(val[i][j][0][k], ref_value)
+                    else:
+                        diff_value = abs(val[i][j][0][k]-ref_value)
+                        self.assertTrue(diff_value < tol)
 
 
 class sdimaging_test_polflag(sdimaging_unittest_base):
@@ -2221,11 +2264,11 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
     region_all = {'blc': blc_auto, 'trc': trc_auto}
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.infiles):
             shutil.rmtree(self.infiles)
-        shutil.copytree(self.datapath+self.infiles, self.infiles)
+        shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
         os.system( 'rm -rf '+self.prefix+'*' )
 
         # Common task parameters of the class
@@ -2350,14 +2393,14 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     # 'blc': blc,'trc': trc, 'blcf': blcf, 'trcf': trcf}
     
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.outfile):
             os.system('rm -rf %s*' % self.outfile)
         for name in self.infiles:
             if os.path.exists(name):
                 shutil.rmtree(name)
-            shutil.copytree(self.datapath+self.org_ms, name)
+            shutil.copytree(os.path.join(self.datapath,self.org_ms), name)
 
         default(sdimaging)
         self.default_param = dict(infiles = self.infiles,
@@ -2438,7 +2481,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     - the default cell size of the image
     - the beam size of the image
     """
-    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdimaging/'
+    datapath=ctsys_resolve('regression/unittest/sdimaging')
     infiles = 'selection_spw.ms'
     outfile = 'sdimaging_restfreq.im'
     param_base = dict(infiles=infiles,outfile=outfile,intent="",
@@ -2448,11 +2491,11 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     unifval = 5.98155
 
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.infiles):
             shutil.rmtree(self.infiles)
-        shutil.copytree(self.datapath+self.infiles, self.infiles)
+        shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
         default(sdimaging)
         self.param = self.param_base.copy()
         
@@ -2506,7 +2549,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         tb.open(self.infiles+'/SOURCE', nomodify=False)
         rf = tb.getcell('REST_FREQUENCY',0)
         rf.resize(0)
-        for idx in xrange(tb.nrows()):
+        for idx in range(tb.nrows()):
             tb.putcell('REST_FREQUENCY', idx, rf)
             self.assertTrue(len(tb.getcell('REST_FREQUENCY',idx))==0)
         tb.flush()
@@ -2533,7 +2576,7 @@ class sdimaging_test_mapextent(unittest.TestCase):
                                only selected data
         test_ephemeris -- Verify phasecenter for ephemeris source
     """
-    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdimaging/'
+    datapath=ctsys_resolve('regression/unittest/sdimaging')
     infiles_ephem = ['Uranus1.cal.Ant0.spw34.ms',
                      'Uranus2.cal.Ant0.spw34.ms']
     infiles_selection = 'selection_misc.ms'
@@ -2558,10 +2601,10 @@ class sdimaging_test_mapextent(unittest.TestCase):
     
     def __copy_table(self, f):
         self.__remove_table(f)
-        testutils.copytree_ignore_subversion(self.datapath, f)
+        copytree_ignore_subversion(self.datapath, f)
         
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         default(sdimaging)
         self.param = self.param_base.copy()
@@ -2653,8 +2696,8 @@ class sdimaging_test_mapextent(unittest.TestCase):
         # ephemeris object is difficult to calculate 
         blcf_ref = '00:46:43.672 +04.14.51.504'
         trcf_ref = '00:46:27.547 +04.17.39.004'
-        blc_ref = numpy.array(map(lambda x: qa.quantity(x)['value'], blcf_ref.split()))
-        trc_ref = numpy.array(map(lambda x: qa.quantity(x)['value'], trcf_ref.split()))
+        blc_ref = numpy.array(list(map(lambda x: qa.quantity(x)['value'], blcf_ref.split())))
+        trc_ref = numpy.array(list(map(lambda x: qa.quantity(x)['value'], trcf_ref.split())))
         #blc_ref, trc_ref = get_mapextent_ephemeris(self.infiles_ephem)
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
     
@@ -2680,7 +2723,7 @@ class sdimaging_test_interp(unittest.TestCase):
     applied.
     Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'. 
     """
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdimaging/'
+    datapath = ctsys_resolve('regression/unittest/sdimaging')
     params = dict(antenna = "0",
                   intent  = "*ON_SOURCE*",
                   gridfunction = "SF",
@@ -2699,10 +2742,10 @@ class sdimaging_test_interp(unittest.TestCase):
     
     def __copy_table(self, f):
         self.__remove_table(f)
-        testutils.copytree_ignore_subversion(self.datapath, f)
+        copytree_ignore_subversion(self.datapath, f)
         
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         self.infiles = []
         self.outfiles = []
@@ -2781,7 +2824,7 @@ class sdimaging_test_interp(unittest.TestCase):
             """
             self.assertTrue(((dist_llim[i] < dist_answer[i]) and (dist_answer[i] < dist_ulim[i])),
                             msg = 'spline interpolation seems not working.')
-            #print '['+str(i)+'] --- ' + str(dist_llim[i]) + ' - ' + str(dist_ulim[i])
+            #print('['+str(i)+'] --- ' + str(dist_llim[i]) + ' - ' + str(dist_ulim[i]))
 
 
     def check_images_identical(self, image1, image2, weight_image=False):
@@ -2836,7 +2879,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
     outfile = 'sdimaging_test_clipping.im'
     outfile_ref = 'sdimaging_test_clipping.ref.im'
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         default(sdimaging)
         
@@ -2868,7 +2911,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         for infile in infiles:
             self.assertTrue(infile in self.data_list)
             self.assertFalse(os.path.exists(infile))
-            testutils.copytree_ignore_subversion(self.datapath, infile)
+            copytree_ignore_subversion(self.datapath, infile)
             
         # image with clipping
         outfile = self.outfile
@@ -2889,8 +2932,10 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         
         if is_clip_effective == True:
             # pre-flag the data to be clipped
-            myme, mymsmd, mytb = gentools(['me', 'msmd', 'tb'])
-            myqa = qa
+            myme = measures()
+            mymsmd = msmetadata()
+            mytb = table()
+            myqa = quanta()
             center = myme.direction('J2000', myqa.quantity(0, 'rad'), myqa.quantity(0, 'rad'))
             offset_plus = myqa.convert(myqa.quantity('1arcmin'), 'rad')
             offset_minus = myqa.mul(offset_plus, -1)
@@ -2905,15 +2950,15 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
             for infile in infiles:
                 mymsmd.open(infile)
                 try:
-                    for irow in xrange(int(mymsmd.nrows())):
+                    for irow in range(int(mymsmd.nrows())):
                         pointingdirection = mymsmd.pointingdirection(irow)['antenna1']['pointingdirection']
                         ra = pointingdirection['m0']['value']
                         dec = pointingdirection['m1']['value']
                         min_separation = 1e10
                         min_ra = -1
                         min_dec = -1
-                        for ira in xrange(imsize):
-                            for idec in xrange(imsize):
+                        for ira in range(imsize):
+                            for idec in range(imsize):
                                 gra = ra_list[ira]
                                 gdec = dec_list[idec]
                                 separation = math.sqrt(math.pow(ra - gra, 2) + math.pow(dec - gdec, 2))
@@ -2926,10 +2971,10 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                     mymsmd.close()
             
             print('### gridmeta', gridmeta)
-            for ira in xrange(imsize):
-                for idec in xrange(imsize):
+            for ira in range(imsize):
+                for idec in range(imsize):
                     meta = gridmeta[ira][idec]
-                    for imeta in xrange(len(meta)):
+                    for imeta in range(len(meta)):
                         infile, irow = meta[imeta]
                         mytb.open(infile)
                         try:
@@ -2938,13 +2983,13 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                             mytb.close()
                         grid[ira][idec].append(data)
             
-            for ira in xrange(imsize):
-                for idec in xrange(imsize):
+            for ira in range(imsize):
+                for idec in range(imsize):
                     data = numpy.asarray(grid[ira][idec], dtype=numpy.float64)
                     if len(data) < 3:
                         continue
                     print('### ira', ira, 'idec', idec, 'data', data)
-                    for ichan in xrange(data.shape[1]):
+                    for ichan in range(data.shape[1]):
                         slice = data[:,ichan]
                         argmin = numpy.argmin(slice)
                         argmax = numpy.argmax(slice)
@@ -2971,7 +3016,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         self.assertTrue(os.path.exists(self.outfile_ref))
             
         # compare
-        myia = gentools(['ia'])[0]
+        myia = image()
         myia.open(self.outfile)
         result = myia.getchunk()
         result_mask = myia.getchunk(getmask=True)
@@ -3082,11 +3127,11 @@ class sdimaging_test_projection(sdimaging_unittest_base):
           'npts','rms','blc','blcf','trc','trcf','sigma','sum','sumsq']
     
     def setUp(self):
-        self.cache_validator = testutils.TableCacheValidator()
+        self.cache_validator = TableCacheValidator()
         
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
-        shutil.copytree(self.datapath+self.rawfile, self.rawfile)
+        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
                                outfile=self.outfile,intent='OBSERVE_TARGET_ON_SOURCE',
@@ -3124,9 +3169,13 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         """test_projection_GSL: unsupported projection type"""
         projection = 'GSL'
         self.task_param.update(dict(projection=projection))
-        res=sdimaging(**self.task_param)
-        self.assertFalse(res)
-        self.assertFalse(os.path.exists(self.outfile))
+        # casatasks throws and exception, CASA5 returns False
+        if is_CASA6:
+            self.assertRaises(Exception, sdimaging, **self.task_param)
+        else:
+            res=sdimaging(**self.task_param)
+            self.assertFalse(res)
+            self.assertFalse(os.path.exists(self.outfile))
 
     def test_projection_SIN(self):
         """test_projection_SIN: create image with SIN (Slant Orthographic) projection"""
@@ -3293,7 +3342,7 @@ def str_to_deg(s):
     return qa.quantity(s)['value']
 
 def calc_statistics(imagename):
-    with toolmanager(imagename, 'ia') as ia:
+    with toolmanager(imagename, image) as ia:
         s = ia.statistics()
     return s
     
@@ -3329,3 +3378,7 @@ def suite():
             sdimaging_test_clipping,
             sdimaging_test_projection
             ]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
