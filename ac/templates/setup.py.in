@@ -1505,7 +1505,10 @@ class create_makefile(Command):
             mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
         casatools_obj_list += c_list
 
-        CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f", file_filter=['fgridft.f'])
+        CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f",
+                                 file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
+                                               'fmosft.f', 'fwproj.f', 'phasol.f' ]
+        )
         CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f")
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         f_obj = (
@@ -1907,8 +1910,8 @@ if __name__ == '__main__':
     MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
     SAKURA_SRC = sakura_files( )
     CORE_F77 = source_files("casa-source/casacore",file_suffix_filter=".f",
-                            #file_filter=['fgridsd.f']
-                            file_filter=['fgridft.f']
+                            file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
+                                          'fmosft.f', 'fwproj.f', 'phasol.f' ]
     )
 
     if not os.path.exists('.built.grpc'):
