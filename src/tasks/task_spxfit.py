@@ -50,7 +50,7 @@
 #
 # <synopsis>
 # spxfit fits models to 1-d profiles. It is built on top of ia.fitprofile()
-# </synopsis>
+# </synopsis> 
 #
 # <example>
 #
@@ -62,10 +62,15 @@
 #
 
 ###########################################################################
+from __future__ import absolute_import
 
-from casatools import image
-from casatasks import casalog
-
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image
+    from casatasks import casalog
+else:
+    from taskinit import *
+    from taskinit import iatool as image
 
 def spxfit(
         imagename, box, region, chans,

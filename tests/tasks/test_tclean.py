@@ -2534,8 +2534,7 @@ class test_widefield(testref_base):
 
           #do stokes V too..
 
-
-# individual tests are also ski
+     
 class test_widefield_failing(testref_base):
 
      @unittest.skip("Skip failing widefield test")

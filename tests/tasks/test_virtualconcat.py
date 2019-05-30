@@ -5,6 +5,8 @@
 #    
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -12,12 +14,23 @@ import glob
 import time
 import unittest
 
-from casatools import ctsys, calibrater, table, ms
-from casatasks import virtualconcat, concat, listobs
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, calibrater, table, ms
+    from casatasks import virtualconcat, concat, listobs
 
-cb = calibrater( )
-tb = table( )
-_ms = ms( )
+    cb = calibrater( )
+    tb = table( )
+    _ms = ms( )
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    cb = cbtool( )
+    # global tb is used
+    # use global ms as _ms
+    _ms = ms
 
 myname = 'test_virtualconcat'
 
@@ -77,10 +90,14 @@ class test_virtualconcat(unittest.TestCase):
         global testmms
         res = None
 
-        datapath=ctsys.resolve('regression/unittest/concat/input')
+        if is_CASA6:
+            datapath=ctsys.resolve('regression/unittest/concat/input')
+        else:
+            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/concat/input')
+
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
-        if 'TEST_DATADIR' in os.environ:
+        if 'TEST_DATADIR' in os.environ:   
             testmms = True
             print("\nTesting on MMSs ...\n")
             DATADIR = str(os.environ.get('TEST_DATADIR'))
@@ -96,6 +113,9 @@ class test_virtualconcat(unittest.TestCase):
                 shutil.copytree(mymsname, cpath+'/'+mymsname, True)
         os.chdir(cpath)
 
+        if not is_CASA6:
+            default(virtualconcat)
+        
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
 
@@ -796,5 +816,6 @@ class virtualconcat_cleanup(unittest.TestCase):
 def suite():
     return [test_virtualconcat,virtualconcat_cleanup]        
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

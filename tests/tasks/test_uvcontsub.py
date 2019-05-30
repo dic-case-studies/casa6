@@ -1,14 +1,31 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import numpy
 import sys
 import shutil
 import unittest
 
-from casatools import ctsys, table
-from casatasks import uvcontsub
-from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ctsys, table
+    from casatasks import uvcontsub
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
-tb = table( )
+    tb = table( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from parallel.parallel_task_helper import ParallelTaskHelper
+
+    # uses the global tb tool
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
 
 '''
 Unit tests for task uvcontsub.
@@ -25,7 +42,7 @@ datapath = 'regression/unittest'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if 'TEST_DATADIR'in os.environ:
+if 'TEST_DATADIR' in os.environ:   
     testmms = True
     DATADIR = str(os.environ.get('TEST_DATADIR'))
     if os.path.isdir(DATADIR):
@@ -85,9 +102,9 @@ class UVContsubUnitTestBase(unittest.TestCase):
 
         if not os.path.exists(self.inpms):
             try:
-                shutil.copytree(ctsys.resolve(os.path.join(datapath,self.inpms)), self.inpms)
+                shutil.copytree(ctsys_resolve(os.path.join(datapath,self.inpms)), self.inpms)
             except Exception:
-                raise Exception("Missing input MS: " + datapath + '/' + self.inpms)
+                raise Exception("Missing input MS: " + datapath + '/' + self.inpms) 
 
 
     def cleanup(self):
@@ -468,5 +485,6 @@ class freqrangeselection(UVContsubUnitTestBase):
 def suite():
     return [zeroth, fourth, combspw, excludechans, excludechans2, freqrangeselection]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

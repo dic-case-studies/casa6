@@ -1,7 +1,14 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-from casatools import calibrater
-from casatasks import casalog
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+        from casatools import calibrater
+        from casatasks import casalog
+else:
+        from taskinit import *
+        from taskinit import cbtool as calibrater
 
 def uvmodelfit(vis=None,
                field=None,spw=None,
@@ -10,7 +17,7 @@ def uvmodelfit(vis=None,
 
         #Python script
         try:
-                mycb = calibrater( )
+                mycb = calibrater()
 
                 casalog.origin('uvmodelfit')
                 if ((type(vis)==str) & (os.path.exists(vis))):
