@@ -4,12 +4,28 @@ import os
 import numpy
 import sys
 import shutil
-from __main__ import default
-from tasks import *
-from taskinit import *
-from parallel.parallel_task_helper import ParallelTaskHelper
-#from tests.test_split import check_eq, SplitChecker
 import unittest
+
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ctsys, table
+    from casatasks import uvcontsub
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+
+    tb = table( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from parallel.parallel_task_helper import ParallelTaskHelper
+
+    # uses the global tb tool
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
 
 '''
 Unit tests for task uvcontsub.
@@ -21,8 +37,8 @@ Features tested:
   4. It gets the right answer for a known line + 0th order continuum,
      even when fitorder = 4.
 '''
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest'
 uvcdatadir = 'uvcontsub' 
+datapath = 'regression/unittest'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -86,8 +102,8 @@ class UVContsubUnitTestBase(unittest.TestCase):
 
         if not os.path.exists(self.inpms):
             try:
-                shutil.copytree(datapath + '/' + self.inpms, self.inpms)
-            except Exception as e:
+                shutil.copytree(ctsys_resolve(os.path.join(datapath,self.inpms)), self.inpms)
+            except Exception:
                 raise Exception("Missing input MS: " + datapath + '/' + self.inpms) 
 
 
@@ -101,27 +117,27 @@ class UVContsubUnitTestBase(unittest.TestCase):
 
     def check_eq(self, val, expval, tol=None):
         """Checks that val matches expval within tol."""
-	if type(val) == dict:
-	    for k in val:
-		check_eq(val[k], expval[k], tol)
-	else:
-	    try:
-		if tol and hasattr(val, '__rsub__'):
-		    are_eq = abs(val - expval) < tol
-		else:
-		    are_eq = val == expval
-		if hasattr(are_eq, 'all'):
-		    are_eq = are_eq.all()
-		if not are_eq:
-		    raise ValueError('!=')
-	    except ValueError:
-		errmsg = "%r != %r" % (val, expval)
-		if (len(errmsg) > 66): # 66 = 78 - len('ValueError: ')
-		    errmsg = "\n%r\n!=\n%r" % (val, expval)
-		raise ValueError(errmsg)
-	    except Exception as e:
-		print("Error comparing", val, "to", expval)
-		raise e
+        if type(val) == dict:
+            for k in val:
+                check_eq(val[k], expval[k], tol)
+        else:
+            try:
+                if tol and hasattr(val, '__rsub__'):
+                    are_eq = abs(val - expval) < tol
+                else:
+                    are_eq = val == expval
+                if hasattr(are_eq, 'all'):
+                    are_eq = are_eq.all()
+                if not are_eq:
+                    raise ValueError('!=')
+            except ValueError:
+                errmsg = "%r != %r" % (val, expval)
+                if (len(errmsg) > 66): # 66 = 78 - len('ValueError: ')
+                    errmsg = "\n%r\n!=\n%r" % (val, expval)
+                raise ValueError(errmsg)
+            except Exception:
+                print("Error comparing", val, "to", expval)
+                raise
 
 
 #class zeroth(UVContChecker):
@@ -143,9 +159,9 @@ class zeroth(UVContsubUnitTestBase):
             uvran = uvcontsub(self.inpms, fitspw='0:0~5;18~23',
                                fitorder=0, want_cont=True
                                )
-        except Exception as e:
+        except Exception:
             print("Error running uvcontsub")
-            raise e
+            raise
 
 
         for spec in ('cont', 'contsub'):
@@ -199,9 +215,9 @@ class fourth(UVContsubUnitTestBase):
             uvran = uvcontsub(self.inpms, fitspw='0:0~5;18~23',
                                fitorder=infitorder, want_cont=True
                                )
-        except Exception as e:
+        except Exception:
             print("Error running uvcontsub")
-            raise e
+            raise
 
 
         for spec in ('cont', 'contsub'):
@@ -285,24 +301,24 @@ class combspw(UVContsubUnitTestBase):
         record = {}
         for infitorder in fitorders:
             record[infitorder]={}
-	    try:
-		print("\nRunning uvcontsub")
-		uvran = uvcontsub(self.inpms, fitspw='1~10:5~122,15~22:5~122',
-				   spw='6~14', combine='spw',
-				   fitorder=infitorder, want_cont=False
-				   )
-	    except Exception as e:
-		print("Error running uvcontsub")
-		raise e
+            try:
+                print("\nRunning uvcontsub")
+                uvran = uvcontsub(self.inpms, fitspw='1~10:5~122,15~22:5~122',
+                                   spw='6~14', combine='spw',
+                                   fitorder=infitorder, want_cont=False
+                                   )
+            except Exception:
+                print("Error running uvcontsub")
+                raise
 
-	    specms = self.inpms + '.contsub'
-	    tb.open(specms)
-	    record[infitorder]['contsub'] = tb.getcell('DATA', 52)[0][73]
-	    tb.close()
-	    shutil.rmtree(specms)
-	    #self.__class__.records[corrsel] = record
-	    #return uvran
-	    self.assertEqual(uvran,True)
+            specms = self.inpms + '.contsub'
+            tb.open(specms)
+            record[infitorder]['contsub'] = tb.getcell('DATA', 52)[0][73]
+            tb.close()
+            shutil.rmtree(specms)
+            #self.__class__.records[corrsel] = record
+            #return uvran
+            self.assertEqual(uvran,True)
 
         print("combspw fitorder=0 line estimate")
         self.check_eq(record[0]['contsub'], -6.2324+17.9865j, 0.001)
@@ -331,9 +347,9 @@ class excludechans(UVContsubUnitTestBase):
             uvran = uvcontsub(self.inpms, fitspw='0:6~17', #'0:0~5;18~23'
                                excludechans=True, fitorder=0, 
                                want_cont=True)
-        except Exception as e:
+        except Exception:
             print("Error running uvcontsub")
-            raise e
+            raise
 
 
         for spec in ('cont', 'contsub'):
@@ -380,28 +396,28 @@ class excludechans2(UVContsubUnitTestBase):
     def test_excludechans2(self):
         record = {}
         infitspw = '1:0~5;10~15;123~127,3:0~5;11~15;123~127,2:0~5;10~15;123~127'
-	try:
-	    print("\nRunning uvcontsub")
-	    uvran = uvcontsub(self.inpms, fitspw=infitspw,
-				   spw='1~3', want_cont=False, excludechans=True)
-	except Exception as e:
-	    print("Error running uvcontsub")
-	    raise e
+        try:
+            print("\nRunning uvcontsub")
+            uvran = uvcontsub(self.inpms, fitspw=infitspw,
+                                   spw='1~3', want_cont=False, excludechans=True)
+        except Exception:
+            print("Error running uvcontsub")
+            raise
 
-	specms = self.inpms + '.contsub'
+        specms = self.inpms + '.contsub'
         # TODO: add value tests?
-	#tb.open(specms)
-	#record[infitorder]['contsub'] = tb.getcell('DATA', 52)[0][73]
-	#tb.close()
-	#shutil.rmtree(specms)
-	#self.__class__.records[corrsel] = record
-	#return uvran
-	self.assertEqual(uvran,True)
+        #tb.open(specms)
+        #record[infitorder]['contsub'] = tb.getcell('DATA', 52)[0][73]
+        #tb.close()
+        #shutil.rmtree(specms)
+        #self.__class__.records[corrsel] = record
+        #return uvran
+        self.assertEqual(uvran,True)
 
-        #print "combspw fitorder=0 line estimate"
+        #print("combspw fitorder=0 line estimate")
         #self.check_eq(record[0]['contsub'], -6.2324+17.9865j, 0.001)
 
-        #print "combspw fitorder=1 line estimate"
+        #print("combspw fitorder=1 line estimate")
         #self.check_eq(record[1]['contsub'], -6.2533+17.6584j, 0.001)
     
     
@@ -426,9 +442,9 @@ class freqrangeselection(UVContsubUnitTestBase):
                                fitspw='*:1412665073.7687755~1412787144.0812755Hz;1413104526.8937755~1413226597.2062755Hz',
                                fitorder=0,
                                want_cont=True)
-        except Exception as e:
+        except Exception:
             print("Error running uvcontsub")
-            raise e
+            raise
 
 
         for spec in ('cont', 'contsub'):
@@ -468,3 +484,7 @@ class freqrangeselection(UVContsubUnitTestBase):
     
 def suite():
     return [zeroth, fourth, combspw, excludechans, excludechans2, freqrangeselection]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

@@ -12,12 +12,25 @@ import sys
 import shutil
 import glob
 import time
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
 
-cb = cbtool( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, calibrater, table, ms
+    from casatasks import virtualconcat, concat, listobs
+
+    cb = calibrater( )
+    tb = table( )
+    _ms = ms( )
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    cb = cbtool( )
+    # global tb is used
+    # use global ms as _ms
+    _ms = ms
 
 myname = 'test_virtualconcat'
 
@@ -77,7 +90,11 @@ class test_virtualconcat(unittest.TestCase):
         global testmms
         res = None
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/concat/input/'
+        if is_CASA6:
+            datapath=ctsys.resolve('regression/unittest/concat/input')
+        else:
+            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/concat/input')
+
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
         if 'TEST_DATADIR' in os.environ:   
@@ -96,7 +113,8 @@ class test_virtualconcat(unittest.TestCase):
                 shutil.copytree(mymsname, cpath+'/'+mymsname, True)
         os.chdir(cpath)
 
-        default(virtualconcat)
+        if not is_CASA6:
+            default(virtualconcat)
         
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
@@ -110,14 +128,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output MS ", msname)
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test1.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test1.ms',ignore_errors=True)
             shutil.copytree(msname,'test1.ms', True)
@@ -157,14 +175,14 @@ class test_virtualconcat(unittest.TestCase):
         
         print(myname, ": Now checking output MS ", msname)
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test2.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test2.ms',ignore_errors=True)
             shutil.copytree(msname,'test2.ms', True)
@@ -233,14 +251,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output MS ", msname)
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test3.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test3.ms',ignore_errors=True)
             shutil.copytree(msname,'test3.ms', True)
@@ -282,14 +300,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test4.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test4.ms',ignore_errors=True)
             shutil.copytree(msname,'test4.ms', True)
@@ -369,13 +387,13 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test5.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test5.ms',ignore_errors=True)
             shutil.copytree(msname,'test5.ms', True)
@@ -408,14 +426,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test6.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test6.ms',ignore_errors=True)
             shutil.copytree(msname,'test6.ms', True)
@@ -449,14 +467,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test7.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test7.ms',ignore_errors=True)
             shutil.copytree(msname,'test7.ms', True)
@@ -470,7 +488,7 @@ class test_virtualconcat(unittest.TestCase):
             tb.close()
             result = True
             print(myname, ": OK. Checking baseline labels ...")
-            for i in xrange(0,len(ant1)):
+            for i in range(0,len(ant1)):
                 if(ant1[i]>ant2[i]):
                     print("Found incorrectly ordered baseline label in row ", i, ": ", ant1, " ", ant2)
                     result = False
@@ -497,14 +515,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test8.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test8.ms',ignore_errors=True)
             shutil.copytree(msname,'test8.ms', True)
@@ -523,7 +541,7 @@ class test_virtualconcat(unittest.TestCase):
             tb.close()
             result = True
             print(myname, ": OK. Checking baseline labels ...")
-            for i in xrange(0,len(ant1)):
+            for i in range(0,len(ant1)):
                 if(ant1[i]>ant2[i]):
                     print("Found incorrectly ordered baseline label in row ", i, ": ", ant1, " ", ant2)
                     result = False
@@ -566,9 +584,9 @@ class test_virtualconcat(unittest.TestCase):
         shutil.copytree('part2-mod2.ms', 'part2-mod2-wscratch.ms', True)
         print('creating scratch columns in part2-mod2-wscratch.ms')
         if testmms:
-            ms.open('part2-mod2-wscratch.ms')
-            mses = ms.getreferencedtables()
-            ms.close()
+            _ms.open('part2-mod2-wscratch.ms')
+            mses = _ms.getreferencedtables()
+            _ms.close()
             mses.sort()
             for mname in mses:
                 cb.open(mname)
@@ -582,14 +600,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test9.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test9.ms',ignore_errors=True)
             shutil.copytree(msname,'test9.ms', True)
@@ -629,9 +647,9 @@ class test_virtualconcat(unittest.TestCase):
         shutil.copytree('part1.ms', 'part1-wscratch.ms', True)
         print('creating scratch columns in part1-wscratch.ms')
         if testmms:
-            ms.open('part1-wscratch.ms')
-            mses = ms.getreferencedtables()
-            ms.close()
+            _ms.open('part1-wscratch.ms')
+            mses = _ms.getreferencedtables()
+            _ms.close()
             mses.sort()
             for mname in mses:
                 cb.open(mname)
@@ -645,14 +663,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test10.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test10.ms',ignore_errors=True)
             shutil.copytree(msname,'test10.ms', True)
@@ -725,14 +743,14 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            ms.close()
+            _ms.close()
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test12.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test12.ms',ignore_errors=True)
             shutil.copytree(msname,'test12.ms', True)
@@ -760,13 +778,13 @@ class test_virtualconcat(unittest.TestCase):
 
         print(myname, ": Now checking output ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
             print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
+            _ms.close()
             if 'test13.ms' in glob.glob("*.ms"):
                 shutil.rmtree('test13.ms',ignore_errors=True)
             shutil.copytree(msname,'test13.ms')
@@ -797,4 +815,7 @@ class virtualconcat_cleanup(unittest.TestCase):
     
 def suite():
     return [test_virtualconcat,virtualconcat_cleanup]        
-        
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

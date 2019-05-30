@@ -4,12 +4,29 @@ import os
 import shutil
 import stat
 import time
-from taskinit import *
-from mstools import write_history
-import partitionhelper as ph
-from parallel.parallel_task_helper import ParallelTaskHelper
 
-_cb = cbtool( )
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from . import partitionhelper as ph
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from .mstools import write_history
+
+    from casatools import calibrater, quanta
+    from casatools import ms as mstool
+    from casatools import table as tbtool
+    from casatasks import casalog
+
+    qa = quanta( )
+    _cb = calibrater( )
+else:
+    from taskinit import *
+    from mstools import write_history
+    import partitionhelper as ph
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    
+    # uses the global qa tool
+    _cb = cbtool( )
 
 def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
           visweightscale,keepcopy,copypointing):
@@ -247,7 +264,7 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
                 t.open(theconcatvis, nomodify=False)
                 for colname in [ 'WEIGHT', 'WEIGHT_SPECTRUM']:
                     if (colname in t.colnames()) and (t.iscelldefined(colname,0)):
-                        for j in xrange(0,t.nrows()):
+                        for j in range(0,t.nrows()):
                             a = t.getcell(colname, j)
                             a *= wscale
                             t.putcell(colname, j, a)
@@ -290,7 +307,11 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
         # Write history to MS
         try:
             param_names = virtualconcat.__code__.co_varnames[:virtualconcat.__code__.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             write_history(mstool(), theconcatvis, 'virtualconcat', param_names,
                           param_vals, casalog)
         except Exception as instance:
@@ -304,7 +325,7 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
         if os.path.exists(masterptable) and copypointing:
             casalog.post('Concatenating the POINTING tables ...', 'INFO')
             i = 0
-            for i in xrange(len(mmsmembers)):
+            for i in range(len(mmsmembers)):
                 ptable = mmsmembers[i]+'/POINTING'
                 if ismaster[i] and os.path.exists(ptable):
                     casalog.post('   '+ptable, 'INFO')
@@ -337,7 +358,7 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
             os.rmdir(tempdir)
 
     except Exception as instance:
-        print('*** Error ***',instance)
+        print('*** Error *** %s' % instance)
         if keepcopy and tempdir!='':
             print("Restoring original MSs ...")
             for elvis in originalvis:
@@ -345,4 +366,4 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
                     shutil.rmtree(elvis)
                     shutil.move(tempdir+'/'+elvis, elvis)
             os.rmdir(tempdir)
-        raise Exception(instance)
+        raise
