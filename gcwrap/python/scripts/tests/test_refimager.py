@@ -16,9 +16,9 @@
 #
 # To run from within casapy :  
 #
-#  runUnitTest.main(['test_refimager'])                                              # Run all tests
-#  runUnitTest.main(['test_refimager[test_onefield]'])                               # Run tests from test_onefield
-#  runUnitTest.main(['test_refimager[test_onefield_mtmfs]'])                         # Run one specific test
+#  runUnitTest.main(['test_refimager'])                                                                           # Run all tests
+#  runUnitTest.main(['test_refimager[test_onefield]'])                                                    # Run tests from test_onefield
+#  runUnitTest.main(['test_refimager[test_onefield_mtmfs]'])                                        # Run one specific test
 #  runUnitTest.main(['test_refimager[test_onefield_mtmfs,test_onefield_hogbom]'])    # Multiple specific tests
 #
 # To see the full list of tests :   grep "\"\"\" \[" test_refimager.py
@@ -82,57 +82,38 @@
 #
 ##########################################################################
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import shutil
+import commands
+import numpy
+from __main__ import default
+from tasks import *
+from taskinit import *
 import unittest
+import operator
 import inspect
 import numpy as np
-import operator
+from parallel.parallel_task_helper import ParallelTaskHelper
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-     from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub
-     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
-     sys.path.append(os.path.abspath(os.path.basename(__file__)))
-     from testhelper_imager import TestHelpers
+_ia = iatool( )
+_vp = vptool( )
+_cb = cbtool( )
 
-     _ia = image( )
-     _vp = vpmanager( )
-     _cb = calibrater( )
-     _qa = quanta( )
-     _me = measures( )
-     
-     refdatapath = ctsys.resolve('regression/unittest/clean/refimager')
-     #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
-     #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
-else:
-     from __main__ import default
-     from tasks import *
-     from taskinit import *
-     from parallel.parallel_task_helper import ParallelTaskHelper
-     from imagerhelpers.testhelper_imager import TestHelpers
+from imagerhelpers.test_imager_helper import TestHelpers
 
-     _ia = iatool( )
-     _vp = vptool( )
-     _cb = cbtool( )
-     # not local tools
-     _qa = qa
-     _me = me
-
-     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager'
-     #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
-     #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
-     
 ## List to be run
 def suite():
      return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor]
 #     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
+
+refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
+#refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData/"
+#refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests/"
+
  
+
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
 
@@ -160,7 +141,7 @@ class testref_base(unittest.TestCase):
                self.msfile=msname
           if (os.path.exists(self.msfile)):
                os.system('rm -rf ' + self.msfile)
-          shutil.copytree(os.path.join(refdatapath,self.msfile), self.msfile)
+          shutil.copytree(refdatapath+self.msfile, self.msfile)
           
      def delData(self,msname=""):
           if msname != "":
@@ -175,7 +156,7 @@ class testref_base(unittest.TestCase):
               self.maskname=maskname
           if (os.path.exists(self.maskname)):
               os.system('rm -rf ' + self.maskname)
-          shutil.copytree(os.path.join(refdatapath,self.maskname), self.maskname)
+          shutil.copytree(refdatapath+self.maskname, self.maskname)
 
      def checkfinal(self,pstr=""):
           #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
@@ -183,6 +164,7 @@ class testref_base(unittest.TestCase):
           casalog.post(pstr,'INFO')
           if( pstr.count("(Fail") > 0 ):
                self.fail("\n"+pstr)
+
 
 ##############################################
 ##############################################
@@ -1091,27 +1073,27 @@ class test_cube(testref_base):
           ## Setup some variables to use in all the tests
 
           ## chan 4 (TOPO)
-          qfstart=_qa.quantity("1.2GHz")
-          #qvstart=_qa.quantity("-59958.5km/s")
+          qfstart=qa.quantity("1.2GHz")
+          #qvstart=qa.quantity("-59958.5km/s")
           # for restf=1.25GHz
-          qvstart=_qa.quantity("11991.7km/s")
+          qvstart=qa.quantity("11991.7km/s")
           # ch10
-          #qvstart=_qa.quantity("16788.4km/s")
+          #qvstart=qa.quantity("16788.4km/s")
 
-          #mfstart=_me.frequency('LSRK',_qa.quantity("1.09999GHz"))
+          #mfstart=me.frequency('LSRK',qa.quantity("1.09999GHz"))
           # ch4 (for rest 1.25GHz)
-          mfstart=_me.frequency('LSRK',_qa.quantity("1.199989GHz"))
-          mvstart=_me.radialvelocity('BARY',_qa.quantity("11977.6km/s"))
-          #dop = _me.todoppler('radio',mfstart,_qa.quantity('1.0GHz'))
-          mfstart10=_me.frequency('LSRK',_qa.quantity(" 1.17999GHz"))                                                        
+          mfstart=me.frequency('LSRK',qa.quantity("1.199989GHz"))
+          mvstart=me.radialvelocity('BARY',qa.quantity("11977.6km/s"))
+          #dop = me.todoppler('radio',mfstart,qa.quantity('1.0GHz'))
+          mfstart10=me.frequency('LSRK',qa.quantity(" 1.17999GHz"))                                                        
           # doppler with ch4 freq
-          dop = _me.todoppler('radio',mfstart,_qa.quantity('1.25GHz'))                                              
+          dop = me.todoppler('radio',mfstart,qa.quantity('1.25GHz'))                                              
 
           #1chan width 
-          #qvwidth = _qa.quantity("11991.700km/s")
-          #qvwidth = _qa.quantity("4796.7km/s")
-          qvwidth = _qa.quantity("11991.7km/s")
-          mvwidth = _me.radialvelocity('TOPO',qvwidth)
+          #qvwidth = qa.quantity("11991.700km/s")
+          #qvwidth = qa.quantity("4796.7km/s")
+          qvwidth = qa.quantity("11991.7km/s")
+          mvwidth = me.radialvelocity('TOPO',qvwidth)
 
           # restf = 1.25GHz
           # vel range: 59961.1 -  -31174.7 km/s (lsrk/radio)
@@ -1186,7 +1168,7 @@ class test_cube(testref_base):
 
      def run_cubetclean(self, testid):
           """ core function to execute a cube tclean """
-          if 'interpolation' in self.testList[testid]:
+          if self.testList[testid].has_key('interpolation'):
               interpolation = self.testList[testid]['interpolation']
           else:
               interpolation = 'linear'
@@ -1206,7 +1188,7 @@ class test_cube(testref_base):
      def test_cube_0(self):
           """ [cube] Test_Cube_0 new """
           testid=0
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1220,7 +1202,7 @@ class test_cube(testref_base):
      def test_cube_1(self):
           """ [cube] Test_Cube_1  """
           testid=1
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1235,7 +1217,7 @@ class test_cube(testref_base):
      def test_cube_2(self):
           """ [cube] Test_Cube_2  """
           testid=2
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1250,7 +1232,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_3  """
           # start = 5 (1.25GHZ IN TOPO)
           testid=3
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1264,7 +1246,7 @@ class test_cube(testref_base):
      def test_cube_4(self):
           """ [cube] Test_Cube_4  """
           testid=4
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1279,7 +1261,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_5  """
           # width by freq (2x chanw) result should be the same as #2
           testid=5
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1294,7 +1276,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_6  """ 
           # start in freq=1.1GHz (=chan5)
           testid=6
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1315,7 +1297,7 @@ class test_cube(testref_base):
           # select overlapping data and image selections (this seems to me more correct? behavior)
           # as of 2019.01.08, this is no longer true, psf blanked for chan 0 and 1 for parallel
           testid=7
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1338,7 +1320,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_8  """
           # start =1.5GHz(chan10)  width=-50MHz TOPO (descending freq)
           testid=8
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1353,7 +1335,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_9  """
           # width in vel (=23983.4km/s=2xChanW) def start (=cube will be ascending order in vel)
           testid=9
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1368,7 +1350,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_10  """
           # width in vel = -23983.4m/s def start (cube will be in descending order in vel)
           testid=10
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1383,7 +1365,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_11  """
           # start 11991.7km/s (chan4)
           testid=11
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1398,7 +1380,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_12  """
           # start 11977.6km/s (BARY) = chan4
           testid=12
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1413,7 +1395,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_13  """
           # 
           testid=13
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           # use own tclean command as nchan need to modify
           ret = tclean(vis=self.msfile,field='0',imsize=100,cell='8.0arcsec',niter=10,specmode='cube',nchan=8,restfreq=['1.25GHz'],
@@ -1432,7 +1414,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_14  """
           # start = quantity ('1.2GHz') frame default(LSRK)
           testid=14
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1447,7 +1429,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_15  """
           # measure freq in LSRK ch4
           testid=15
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1462,7 +1444,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_16  """
           # start quantity vel=11991.7km/s outframe=topo (ascending vel order)
           testid=16
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1477,7 +1459,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_17  """
           # start measure vel=11977.6km/s BARY, outframe=TOPO will be overridedden (ascending vel order)
           testid=17
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1493,7 +1475,7 @@ class test_cube(testref_base):
           # defaut start, width in vel (quantity) +11991.7km/s (TOPO, radio)=datachan width, will be
           # ascending order in vel so highet DATA channel will be chan 0 in the image (image chan0=1.45GHz)
           testid=18
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1508,7 +1490,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_19  """
           # default start, width in vel (measure) +11991.7km/s (TOPO, radio)
           testid=19
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1523,7 +1505,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_20  """
           # doppler (with ch4 LSRK freq, rest freq=1.25GHz)
           testid=20
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1540,7 +1522,7 @@ class test_cube(testref_base):
           # data sel with channel gap (10,11 excluded) 4~9, 12~14
           testid=21
           self.testList[testid]['interpolation']='nearest'
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1557,7 +1539,7 @@ class test_cube(testref_base):
           # stride (step=2) use nearest interpolation (other interpotion methods
           # may not work well...)
           testid=22
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1571,7 +1553,7 @@ class test_cube(testref_base):
      def test_cube_23(self):
           """ [cube] Test_Cube_23  """
           testid=23
-          print(" : " , self.testList[testid]['desc'])
+          print " : " , self.testList[testid]['desc']
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1817,6 +1799,8 @@ class test_cube(testref_base):
 #          ret = tclean(vis=self.msfile,field='1',spw='0:105~135',specmode='cubesrc',nchan=30,start=105,width=1,veltype='radio',imagename=self.img,imsize=256,cell='0.01arcmin',phasecenter=1,deconvolver='hogbom',niter=10)
 #          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
 
+
+
      def test_cube_continuum_subtract_uvsub(self):
           """ [cube] Test_Cube_continuum_subtract :  Using uvsub """
           self.prepData('refim_point_withline.ms')
@@ -1827,7 +1811,7 @@ class test_cube(testref_base):
           # Let's include a subdir in the output image name. This could cause failures, at
           # least in parallel mode (CAS-10937).
           imagename = os.path.join(self.img_subdir, self.img)
-          print("IMAGENAME=",imagename)
+          print "IMAGENAME=",imagename
           ret = tclean(vis=self.msfile,imagename=imagename,imsize=100,cell='8.0arcsec', spw='0:12~19',niter=50,gain=0.2,savemodel='modelcolumn',
                        deconvolver='mtmfs',parallel=self.parallel)
 #          self.assertTrue(self.th.exists(self.img+'.model') )
@@ -1896,7 +1880,7 @@ class test_cube(testref_base):
           
           header = imhead(self.img+'.image',verbose=False)
                
-          estr = "["+inspect.stack()[1][3]+"] Has single restoring beam ? : " + self.th.verdict( 'restoringbeam' in header) + "\n"
+          estr = "["+inspect.stack()[1][3]+"] Has single restoring beam ? : " + self.th.verdict( header.has_key('restoringbeam')) + "\n"
 
           report2 = self.th.checkall(imexist=[self.img+'.image'], 
                                      imval=[(self.img+'.image',0.770445,[54,50,0,1]),
@@ -2220,7 +2204,7 @@ class test_mask(testref_base):
           report=self.th.checkall(ret=ret, imexist=[self.img+'.mask'],
           imval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,0,1]),(self.img+'.mask',1.0,[50,50,0,2]), (self.img+'.mask',0.0,[65,65,0,1])])
 
-        
+	
      def test_mask_expand_contstokesImask_to_IQUV(self):
           """ [mask] test_mask_expand_contstokesImask_to_IQUV : Test for expanding
           input continuum Stokes I mask to continuum multi-stokes imaging  """
@@ -3060,7 +3044,3 @@ class test_pbcor(testref_base):
           report2=self.th.checkall(imexist=[self.img+'.image', self.img+'.pb'], imval=[(self.img+'.pb',0.7,[256,256,0,0])] , immask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])]  )
 
           self.checkfinal(report1+report2)
-
-if is_CASA6:
-     if __name__ == '__main__':
-          unittest.main()
