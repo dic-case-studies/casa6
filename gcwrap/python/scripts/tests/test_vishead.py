@@ -6,10 +6,23 @@ import string
 import numpy
 import os
 import shutil
-from __main__ import default
-from task_vishead import vishead
 import unittest
 
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import vishead
+else:
+    from __main__ import default
+    from task_vishead import vishead
+
+# used in a type comparison
+if is_python3:
+    numpy_str_ = numpy.str_
+else:
+    numpy_str_ = numpy.string_
+    
 '''
 Unit tests for task vishead. It tests the following modes:
     list, summary, get, put
@@ -22,7 +35,10 @@ Unit tests for task vishead. It tests the following modes:
 
 '''
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/vishead/'
+if is_CASA6:
+    datapath=ctsys.resolve('regression/unittest/vishead')
+else:
+    datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/vishead')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -91,8 +107,9 @@ class vishead_test(unittest.TestCase):
         if(os.path.exists(input_file)):
             os.system('rm -rf ' +input_file)
 
-        os.system('cp -RL ' +datapath + input_file +' ' + input_file)
-        default('vishead')
+        os.system('cp -RL ' +os.path.join(datapath,input_file) +' ' + input_file)
+        if not is_CASA6:
+            default('vishead')
 
     def tearDown(self):
         if os.path.exists(input_file):
@@ -165,7 +182,7 @@ class vishead_test(unittest.TestCase):
                 continue
     
             if len(val) == 1:
-                if type(val[0]) == numpy.string_:
+                if type(val[0]) == numpy_str_:
                     myval = 'the_coolest_' + val[0]
                 else:
                     myval = 42.0 + val[0]
@@ -185,7 +202,7 @@ class vishead_test(unittest.TestCase):
                 
                 i = 0
                 for e in val:
-                    if type(e) == numpy.string_:
+                    if type(e) == numpy_str_:
                         myval = 'the_coolest_' + e
                     else:
                         myval = 42.0 + e
@@ -211,3 +228,6 @@ class vishead_test(unittest.TestCase):
 def suite():
     return [vishead_test]
 
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

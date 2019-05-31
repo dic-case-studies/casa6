@@ -179,7 +179,7 @@ def diffAmpPhsFloat(test, standard, prefix="", precision="1e-6"):
     # Preliminary messages
     floatOut = prefix + '.diffAmpPhsFloat'  
     print("  - Comparing float content of output.")
-    #print "  - Assuming all floats are Amplitude-Phase pairs!"
+    #print("  - Assuming all floats are Amplitude-Phase pairs!")
     print("  - Writing to " + floatOut)
     temp = sys.stdout
     sys.stdout = open(floatOut,'w')
@@ -213,7 +213,7 @@ def diffAmpPhsFloat(test, standard, prefix="", precision="1e-6"):
         # Generate a list of all floats
         tFloatList = floatPat.findall(testList[linenum])
         sFloatList = floatPat.findall(standardList[linenum])
-        #print 'tFloatList=', tFloatList
+        #print('tFloatList=', tFloatList)
         # Test floats
         # Same number of floats in both lines?
         if ( len(tFloatList) != len(sFloatList) ):
@@ -223,13 +223,13 @@ def diffAmpPhsFloat(test, standard, prefix="", precision="1e-6"):
             continue
         # Number of floats per line should be even
         #elif ( len(tFloatList) % 2 ): 
-            #print "- (line ", linenum, ") Odd number of floats! All must be Amp-Phs pairs!"
+            #print("- (line ", linenum, ") Odd number of floats! All must be Amp-Phs pairs!")
         #    continue
-            #print "stopping listing.diffAmpPhsFloat now!"
+            #print("stopping listing.diffAmpPhsFloat now!")
             #return 
         
         # Compare all Amp-Phs pairs on this line
-        for i in range(len(tFloatList)/2):
+        for i in range(len(tFloatList)//2):
 
             # If the Amp or Phs not exactly equal
             if ( ( tFloatList[i*2] != sFloatList[i*2] ) or 
@@ -305,9 +305,9 @@ def diffAmpPhsFloat(test, standard, prefix="", precision="1e-6"):
                     print("  Min sig figs = ", minSigFigs)
                     print("  Difference amplitude :", amp_diff, " > ", precision)
                 # else:
-                #     print "- (line ", linenum, ") Amp,Phs within required precision:"
+                #     print("- (line ", linenum, ") Amp,Phs within required precision:")
                 #     printDiff(standardList[linenum],testList[linenum])
-                #     print "  Difference amplitude :", amp_diff, " <= ", precision
+                #     print("  Difference amplitude :", amp_diff, " <= ", precision)
 
     print("")
     print("SUMMARY (diffAmpPhsFloat): ")
@@ -339,8 +339,8 @@ def printDiff(s1, s2, filenames=[]):
         print("  < ", filenames[0])
         print("  > ", filenames[1])
     else:
-        print("< " + s1, end=' ')
-        print("> " + s2, end=' ')
+        print("< " + s1)
+        print("> " + s2)
 
 #=============================================================================
 
@@ -437,7 +437,7 @@ def reduce(filename, N):
     
     reducedListing = [ listing[i] for i in picks ]
 
-    #for i in range(20): print reducedListing[i]
+    #for i in range(20): print(reducedListing[i])
 
     infile.close()
     return reducedListing
@@ -464,11 +464,11 @@ def reduce(filename, N):
 ##     absDiff = abs(sfloat - tfloat)
 ##     # Relative difference
 ##     relDiff = abs( (sfloat - tfloat) / sfloat)
-##     print "Difference order = ", diffOrd
-##     print "Digits same = ", digits
-##     print "Sign difference = ", signDiff
-##     print "Absolute difference = ", absDiff
-##     print "Relative difference = ", relDiff
+##     print("Difference order = ", diffOrd)
+##     print("Digits same = ", digits)
+##     print("Sign difference = ", signDiff)
+##     print("Absolute difference = ", absDiff)
+##     print("Relative difference = ", relDiff)
 ## 
 ##     diffDict['diffOrd'].append(diffOrd)
 ##     diffDict['digits'].append(digits)

@@ -14,14 +14,13 @@ if is_CASA6:
     from casatasks import casalog
     from .mstools import write_history
 
-    # because the CASA5 version uses the global ms tool in places
     _ms = mstool()
 else:
     from taskinit import mstool, casalog
     from mstools import write_history
 
     # uses the global ms tool
-    _ms = ms
+    _ms = mstool()
 
 def uvsub(vis=None,reverse=False):
 

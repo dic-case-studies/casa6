@@ -9,9 +9,22 @@ import os
 import numpy as np
 import shutil
 from scipy import linalg
-from taskinit import *
 
-im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+   from casatools import imager, image, quanta, measures
+   from casatasks import casalog
+
+   im = imager( )
+   ia = image( )
+   qa = quanta( )
+   me = measures( )
+else:
+   from taskinit import *
+
+   im,me,ia=gentools(['im','me','ia'])
+   # also uses the global qa tool
+
 def widebandpbcor(vis='',
                   imagename='mfim',
                   nterms=2,
@@ -42,8 +55,8 @@ def widebandpbcor(vis='',
    taylorlist=[]
    residuallist=[]
    for i in range(0,nterms):
-	taylorlist.append(imagename+'.image.tt'+str(i));
-	residuallist.append(imagename+'.residual.tt'+str(i));
+        taylorlist.append(imagename+'.image.tt'+str(i));
+        residuallist.append(imagename+'.residual.tt'+str(i));
         if(not os.path.exists(taylorlist[i])):
             casalog.post('Taylor-coeff Restored Image : ' + taylorlist[i] + ' not found.','SEVERE')
             return False

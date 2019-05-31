@@ -1,22 +1,45 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from tasks import *
-from taskinit import *
-from __main__ import inp
-from __main__ import default
 import os
 import shutil
 import unittest
-from itertools import izip
 import copy
 import numpy as np
+
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ctsys, table, quanta, measures
+    from casatasks import visstat, clearcal
+
+    # create local tools
+    tb = table( )
+    qa = quanta( )
+    me = measures( )
+else:
+    from tasks import *
+    from taskinit import *
+    from __main__ import inp
+    from __main__ import default
+
+    # the global tb, qa, and me tools are used
+
+# make zip and izip invocations look the same here
+if is_python3:
+    loc_zip = zip
+else:
+    from itertools import izip
+    loc_zip = izip
 
 #     Functional tests of visstat
 
 epsilon = 0.0001
 
 # Path for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/visstat2/"
+if is_CASA6:
+    datapath = ctsys.resolve('regression/unittest/visstat2')
+else:
+    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],"data/regression/unittest/visstat2")
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -27,6 +50,30 @@ if 'TEST_DATADIR' in os.environ:
         datapath = DATADIR
 
 print('visstat tests will use data from '+datapath)
+
+if is_python3:
+    ###
+    ### this test uses a sort(...) "cmp" function, but python 3 uses a key function...
+    ### this function from the python 3 documentation converts...
+    ###
+    def cmp_to_key(mycmp):
+        'Convert a cmp= function into a key= function'
+        class K:
+            def __init__(self, obj, *args):
+                self.obj = obj
+            def __lt__(self, other):
+                return mycmp(self.obj, other.obj) < 0
+            def __gt__(self, other):
+                return mycmp(self.obj, other.obj) > 0
+            def __eq__(self, other):
+                return mycmp(self.obj, other.obj) == 0
+            def __le__(self, other):
+                return mycmp(self.obj, other.obj) <= 0
+            def __ge__(self, other):
+                return mycmp(self.obj, other.obj) >= 0
+            def __ne__(self, other):
+                return mycmp(self.obj, other.obj) != 0
+        return K
 
 class visstat_test(unittest.TestCase):
     def setUp(self):
@@ -45,22 +92,23 @@ class visstat_test(unittest.TestCase):
         self.msfile13='visstat2_test10_check_on.txt'
         self.msfile14='visstat2_test10_check_off.txt'
 
-        shutil.copytree(datapath+self.msfile, self.msfile)
-        shutil.copytree(datapath+self.msfile2, self.msfile2)
-        shutil.copytree(datapath+self.msfile2_asap, self.msfile2_asap)
-        shutil.copytree(datapath+self.msfile3, self.msfile3)
-        shutil.copytree(datapath+self.msfile4, self.msfile4)
-        shutil.copytree(datapath+self.msfile5, self.msfile5)
-        shutil.copytree(datapath+self.msfile6, self.msfile6)
-        shutil.copyfile(datapath+self.msfile7, self.msfile7)
-        shutil.copyfile(datapath+self.msfile8, self.msfile8)
-        shutil.copyfile(datapath+self.msfile9, self.msfile9)
-        shutil.copyfile(datapath+self.msfile10, self.msfile10)
-        shutil.copyfile(datapath+self.msfile11, self.msfile11)
-        shutil.copyfile(datapath+self.msfile13, self.msfile13)
-        shutil.copyfile(datapath+self.msfile14, self.msfile14)
+        shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
+        shutil.copytree(os.path.join(datapath,self.msfile2), self.msfile2)
+        shutil.copytree(os.path.join(datapath,self.msfile2_asap), self.msfile2_asap)
+        shutil.copytree(os.path.join(datapath,self.msfile3), self.msfile3)
+        shutil.copytree(os.path.join(datapath,self.msfile4), self.msfile4)
+        shutil.copytree(os.path.join(datapath,self.msfile5), self.msfile5)
+        shutil.copytree(os.path.join(datapath,self.msfile6), self.msfile6)
+        shutil.copyfile(os.path.join(datapath,self.msfile7), self.msfile7)
+        shutil.copyfile(os.path.join(datapath,self.msfile8), self.msfile8)
+        shutil.copyfile(os.path.join(datapath,self.msfile9), self.msfile9)
+        shutil.copyfile(os.path.join(datapath,self.msfile10), self.msfile10)
+        shutil.copyfile(os.path.join(datapath,self.msfile11), self.msfile11)
+        shutil.copyfile(os.path.join(datapath,self.msfile13), self.msfile13)
+        shutil.copyfile(os.path.join(datapath,self.msfile14), self.msfile14)
 
-        default('visstat')
+        if not is_CASA6:
+            default('visstat')
 
     def tearDown(self):
         shutil.rmtree(self.msfile)
@@ -79,7 +127,7 @@ class visstat_test(unittest.TestCase):
         os.remove(self.msfile14)
 
     def compare(self, a, b):
-        for d1, d2 in izip(a,b):
+        for d1, d2 in loc_zip(a,b):
             if(d1.split(':')[0]==d2.split(':')[0]):
                 if(not np.allclose(np.array([float(d1.split(':')[1])]), np.array([float(d2.split(':')[1])]))):
                     raise Exception(d1.split(':')[0] + ' ' + 'values are not consistent!')
@@ -287,14 +335,14 @@ class visstat_test(unittest.TestCase):
         result_list=[]
 
         for dt in datacolumn_list:
-            for col, sd_pol in izip(correlation_type, sd_correlation_type):
+            for col, sd_pol in loc_zip(correlation_type, sd_correlation_type):
                 num_tt=0
                 for time in tt:
                     for spwin in spw_list:
                         trange = qa.time(me.epoch('ref','%fs' % time)['m0'], prec=8, form='ymd')[0]
                         v2 = visstat(vis=self.msfile2, axis='amp', timerange=str(trange),reportingaxes=reporting_axes[0],
                                       correlation=col, datacolumn=dt, spw=spwin, intent=intent_list[0])
-                        v2_keys=v2.keys()
+                        v2_keys=list(v2.keys())
                         for check in check_list:
                             print(check, v2[str(v2_keys[0])][check])
                             result_list.append(check+':' + str(v2[str(v2_keys[0])][check]))
@@ -430,7 +478,7 @@ class visstat_test(unittest.TestCase):
 
         trange = qa.time(me.epoch('ref','%fs' % tt[0])['m0'], prec=8, form='ymd')[0]
         s2 = visstat(vis=self.msfile, axis='amp', timerange=str(trange),reportingaxes='integration')
-        s2_keys=s2.keys()
+        s2_keys=list(s2.keys())
 
         check_list=['rms', 'medabsdevmed', 'min', 'max', 'sum', 'median', 'sumsq', 'stddev', 'variance', 'npts', 'mean']
         result_list=[]
@@ -473,14 +521,14 @@ class visstat_test(unittest.TestCase):
         result_list=[]
 
         for dt in datacolumn_list:
-            for col, sd_pol in izip(correlation_type, sd_correlation_type):
+            for col, sd_pol in loc_zip(correlation_type, sd_correlation_type):
                 num_tt=0
                 for time in tt:
                     for spwin in spw_list:
                         trange = qa.time(me.epoch('ref','%fs' % time)['m0'], prec=8, form='ymd')[0]
                         v2 = visstat(vis=self.msfile2, axis='amp', timerange=str(trange),reportingaxes=reporting_axes[0],
                                       correlation=col, datacolumn=dt, spw=spwin, intent=intent_list[0])
-                        v2_keys=v2.keys()
+                        v2_keys=list(v2.keys())
                         for check in check_list:
                             result_list.append(check+':' + str(v2[str(v2_keys[0])][check]))
                         num_tt +=1
@@ -508,7 +556,7 @@ class visstat_test(unittest.TestCase):
         intent_off=[]
 
         for dt in datacolumn_list:
-            for col, sd_pol in izip(correlation_type, sd_correlation_type):
+            for col, sd_pol in loc_zip(correlation_type, sd_correlation_type):
                     for fd in field_list:
                         v2_intent_on = visstat(vis=self.msfile3, axis='real',reportingaxes=reporting_axes[0],
                                          correlation=col, datacolumn=dt, intent='OBSERVE_TARGET#ON_SOURCE',field=fd)
@@ -558,12 +606,20 @@ class visstat_test(unittest.TestCase):
 
         def compareKeys(x, y):
             '''Comparison of visstat dictionary keys: scan number, then time'''
-            return cmp(scanTime(x), scanTime(y))
+            if is_python3:
+                x = scanTime(x)
+                y = scanTime(y)
+                return (x>y)-(x<y)
+            else:
+                return cmp(scanTime(x), scanTime(y))
 
         # sort the dictionary keys, and create an ordered list of dictionary
         # elements (i.e, statistics for every averaging interval)
         v2_keys = v2.keys()
-        v2_keys.sort(cmp=compareKeys)
+        if is_python3:
+            v2_keys = sorted(v2_keys,key=cmp_to_key(compareKeys))
+        else:
+            v2_keys.sort(cmp=compareKeys)
         ordered_v2 = [(scanTime(k), v2[k]) for k in v2_keys]
 
         # get ordered list of scan numbers in visstat results
@@ -612,12 +668,20 @@ class visstat_test(unittest.TestCase):
 
         def compareKeys(x, y):
             '''Comparison of visstat dictionary keys by time'''
-            return cmp(statTime(x), statTime(y))
+            if is_python3:
+                x = statTime(x)
+                y = statTime(y)
+                return (x>y)-(x<y)
+            else:
+                return cmp(statTime(x), statTime(y))
 
         # sort the dictionary keys, and create an ordered list of dictionary
         # elements (i.e, statistics for every averaging interval)
-        v2_keys = v2.keys()
-        v2_keys.sort(cmp=compareKeys)
+        v2_keys = list(v2.keys())
+        if is_python3:
+            v2_keys = sorted(v2_keys,key=cmp_to_key(compareKeys))
+        else:
+            v2_keys.sort(cmp=compareKeys)
         ordered_v2 = [(statTime(k), v2[k]) for k in v2_keys]
 
         # reported statistics should have timestamps that differ by, at least,
@@ -636,3 +700,7 @@ class visstat_test(unittest.TestCase):
 
 def suite():
     return [visstat_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
