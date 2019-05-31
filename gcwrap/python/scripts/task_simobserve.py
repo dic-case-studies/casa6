@@ -6,10 +6,12 @@ import pylab as pl
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import ctsys
+    from casatools import ctsys, quanta
     from casatasks import casalog
     from .simutil import *
     from .simutil import is_array_type
+
+    qa = quanta()
 else:
     from taskinit import *
     from simutil import *
@@ -858,8 +860,7 @@ def simobserve(
                 msg("Total observing time = "+str(totalsec)+"s.")
             else:
                 if not qa.compare(totaltime,"1s"):
-                    msg("totaltime "+totaltime+
-" does not appear to represent a time interval (use 's','min','h'; not 'sec','m','hr')",priority="error")
+                    msg("totaltime "+totaltime+" does not appear to represent a time interval (use 's','min','h'; not 'sec','m','hr')",priority="error")
                     return False
                 totalsec = qa.convert(qa.quantity(totaltime),'s')['value']
 

@@ -32,7 +32,6 @@ def importuvfits(fitsfile, vis, antnamescheme=None):
         new: Antenna name is not a number, 'VA04' or 'EA04'
              With this scheme, data selection via
              antenna names and indices is non-ambiguous.
-    async --  Run asynchronously
         default = false; do not run asychronously
 
 

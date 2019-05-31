@@ -46,7 +46,6 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
         uvrange     = ''
         correlation = ''
         keepflags   = True
-        async       = False
 
         to the HISTORY of outputvis.
         """

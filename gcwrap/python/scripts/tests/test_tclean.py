@@ -95,7 +95,7 @@ import operator
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
      from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead
+     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
      sys.path.append(os.path.abspath(os.path.basename(__file__)))
@@ -468,7 +468,7 @@ class test_onefield(testref_base):
           
           header = imhead(self.img+'.rest.image',verbose=False)
           
-          estr = "["+inspect.stack()[1][3]+"] Has single restoring beam ? : " + self.th.verdict( header.has_key('restoringbeam')) + "\n"
+          estr = "["+inspect.stack()[1][3]+"] Has single restoring beam ? : " + self.th.verdict('restoringbeam' in header) + "\n"
 
           report = self.th.checkall(imexist=[self.img+'.rest.image'],
                                      imval=[(self.img+'.image',1.36,[50,50,0,2]),

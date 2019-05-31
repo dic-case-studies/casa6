@@ -736,7 +736,7 @@ class simutil:
         J2000 23h59m36.61 -019d52m12.35 60.0
         
         """
-        f=open(filename,"write")
+        f=open(filename,'w')
         f.write('#Epoch     RA          DEC      TIME[sec]\n')
         if type(pointings)!=type([]):
             pointings=[pointings]
@@ -2295,8 +2295,8 @@ class simutil:
         csinlon=pl.sin(clon)        
         csinlat=pl.sin(clat)
         ccoslat=pl.cos(clat)
-        import types
-        if isinstance(x,types.FloatType): # weak
+
+        if isinstance(x,float): # weak
             x=[x]
             y=[y]
             z=[z]
@@ -2980,7 +2980,7 @@ class simutil:
             interactive=False
         # print clean inputs no matter what, so user can use them.
         # and write a clean.last file
-        cleanlast=open(imagename+".clean.last","write")
+        cleanlast=open(imagename+".clean.last",'w')
         cleanlast.write('taskname            = "clean"\n')
 
         #self.msg("clean inputs:")        
@@ -3526,7 +3526,7 @@ class simutil:
         maxlength = 0
         minlength = 1e9
         #mylengths = pl.zeros([nAntennas,nAntennas])
-        mylengths=pl.zeros(nAntennas*(nAntennas-1)/2)
+        mylengths=pl.zeros(nAntennas*(nAntennas-1)//2)
         k=0
 
         for i in range(nAntennas):
