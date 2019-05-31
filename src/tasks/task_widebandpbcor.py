@@ -4,18 +4,26 @@
 # v1.0: 2012.09.10, U.R.V.
 #
 ################################################
+from __future__ import absolute_import
 import os
 import numpy as np
 import shutil
 from scipy import linalg
 
-from casatools import imager, image, quanta, measures
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+   from casatools import imager, image, quanta, measures
+   from casatasks import casalog
 
-im = imager( )
-ia = image( )
-qa = quanta( )
-me = measures( )
+   im = imager( )
+   ia = image( )
+   qa = quanta( )
+   me = measures( )
+else:
+   from taskinit import *
+
+   im,me,ia=gentools(['im','me','ia'])
+   # also uses the global qa tool
 
 def widebandpbcor(vis='',
                   imagename='mfim',

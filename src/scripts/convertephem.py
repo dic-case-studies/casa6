@@ -1,7 +1,17 @@
-from casatools import table, measures, quanta, ms
-from casatasks import casalog
+from __future__ import absolute_import
 import glob
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, measures, quanta, ms
+    from casatasks import casalog
+else:
+    from taskinit import *
+    from taskinit import tbtool as table
+    from taskinit import metool as measures
+    from taskinit import qatool as quanta
+    from taskinit import mstool as ms
+    
 # Conversion of TOPO ephemerides to GEO (ICRS)
 #
 # Example:
@@ -34,9 +44,9 @@ def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
         return False
 
     #convert RA, DEC, and RadVel
-    tbt = table( )
-    met = measures( )
-    qat = quanta( )
+    tbt = table()
+    met = measures()
+    qat = quanta()
 
     tbt.open(tablename)
     ra = tbt.getcol('RA')
@@ -171,8 +181,8 @@ def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
 
 
 def findattachedephemfields(vis='',field='*'):
-    mst = ms( )
-    tbt = table( )
+    mst = ms()
+    tbt = table()
 
     tbt.open(vis+'/FIELD')
     fields = mst.msseltoindex(vis=vis,field=field)['field']
@@ -199,8 +209,8 @@ def convert2geo(vis='', field=''):
     If there is attached ephemeris or if the ephemeris is already in GEO, nothing is done.
     """
 
-    mst = ms( )
-    tbt = table( )
+    mst = ms()
+    tbt = table()
 
     rval = True
 
