@@ -6,10 +6,12 @@ import pylab as pl
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import ctsys
+    from casatools import ctsys, quanta
     from casatasks import casalog
     from .simutil import *
     from .simutil import is_array_type
+
+    qa = quanta()
 else:
     from taskinit import *
     from simutil import *
@@ -810,24 +812,29 @@ def simobserve(
                 refdate=z[0]
                 if len(z)>1:
                     if len(z[1])>1:
-                        msg("Discarding time part of refdate, '"+z[1]+"', in favor of hourangle parameter = "+hourangle,origin='simobserve')
+                        msg("Discarding time part of refdate, '"+z[1]+
+                            "', in favor of hourangle parameter = "+hourangle,origin='simobserve')
 
             if hourangle=="transit":
                 haoffset=0.0
             else:                
                 haoffset="no"
                 # is this a time quantity?
+                if qa.isquantity(str(hourangle)+"h"): 
+                    if qa.compare(str(hourangle)+"h","s"):
+                        haoffset=qa.convert(qa.quantity(str(hourangle)+
+                                                        "h"),'s')['value']
                 if qa.isquantity(hourangle):
                     qha=qa.convert(hourangle,"s")
                     if qa.compare(qha,"s"):
                         haoffset=qa.convert(qha,'s')['value']
-                elif qa.isquantity(hourangle+"h"):
-                    if qa.compare(hourangle+"h","s"):
-                        haoffset=qa.convert(qa.quantity(hourangle+"h"),'s')['value']
             if haoffset=="no":
-                msg("Cannot interpret your hourangle parameter "+hourangle+" as a time quantity e.g. '5h', 30min'",origin="simobserve",priority="error")
+                msg("Cannot interpret your hourangle parameter "+hourangle+
+                    " as a time quantity e.g. '5h', 30min'",
+                    origin="simobserve",priority="error")
             else:
-                msg("You desire an hour angle of "+str(haoffset/3600.)+" hours",origin="simobserve")                    
+                msg("You desire an hour angle of "+
+                    str(haoffset/3600.)+" hours",origin="simobserve")
 
             refdate=refdate+"/00:00:00"
             usehourangle=True
@@ -858,7 +865,8 @@ def simobserve(
                 totalsec = qa.convert(qa.quantity(totaltime),'s')['value']
 
             if os.path.exists(msfile) and not overwrite: #redundant check?
-                util.msg("measurement set "+msfile+" already exists and user does not wish to overwrite",priority="error")
+                util.msg("measurement set "+msfile+
+                         " already exists and user does not wish to overwrite",priority="error")
                 return False
             sm.open(msfile)
 
@@ -891,8 +899,9 @@ def simobserve(
                                stokes='XX YY')
                 sm.setfeed(mode='perfect X Y',pol=[''])
 
-            if verbose: msg(" spectral window set at %s" % qa.tos(model_specrefval),origin='simobserve')
-            sm.setlimits(shadowlimit=0.01, elevationlimit='10deg')
+            if verbose: 
+                msg(" spectral window set at %s" % qa.tos(model_specrefval),origin='simobserve')
+                sm.setlimits(shadowlimit=0.01, elevationlimit='10deg')
             if uvmode:
                 sm.setauto(0.0)
             else: #Single-dish
