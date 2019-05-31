@@ -16,7 +16,7 @@ else:
     from tasks import predictcomp 
     from taskinit import *
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH'.split()[0],'data'))
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -86,27 +86,26 @@ class predictcomp_test(unittest.TestCase):
             # CASA 5 tasks do not
             self.res=predictcomp(objname='Titan', epoch='2017/09/01/00:00', minfreq='100',maxfreq='120')
             self.assertIsNone(self.res)
-    
+   
+    @unittest.skipIf(is_CASA6,"no plotting in casatasks")
     def test_predicted_visplot(self):
-        # no plotting in this part of casa, skip this test
-        if is_CASA6:
-            casalog.post('test_predicted_visplot SKIPPED: no plotting in this part of casa','INFO')
-        else:
-            '''predictcomp: generate visibility plot for a given array configuration''' 
-            self.res=predictcomp( objname='Titan', epoch='2017/09/01/00:00', minfreq='100GHz',
-                                  maxfreq='120GHz', standard='Butler-JPL-Horizons 2012',
-                                  antennalist=ctsys.resolve(os.path.join(datapath,'alma.cycle5.1.cfg')),
-                                  showplot=False,savefig='visplot.png' )
-            self.assertTrue(type(self.res)==dict)
-            self.assertTrue(os.path.exists(self.res['clist']))
-            self.assertTrue(os.path.exists('visplot.png'))
+        '''predictcomp: generate visibility plot for a given array configuration''' 
+        self.res=predictcomp( objname='Titan', epoch='2017/09/01/00:00', minfreq='100GHz',
+                              maxfreq='120GHz', standard='Butler-JPL-Horizons 2012',
+                              antennalist=ctsys_resolve(os.path.join(datapath,'alma.cycle5.1.cfg')),
+                              showplot=False,savefig='visplot.png' )
+        print("self.res : %s" % self.res)
+        print("type : %s" % type(self.res))
+        self.assertTrue(type(self.res)==dict)
+        self.assertTrue(os.path.exists(self.res['clist']))
+        self.assertTrue(os.path.exists('visplot.png'))
           
     def test_valid_but_not_visible_objname(self):
         '''predictcomp: valid but not visible objname'''
         if is_CASA6:
             # casatasks throw exceptions
             self.assertRaises( Exception, predictcomp, objname='Mars', epoch='2018/09/01/00:00', minfreq='100GHz', maxfreq='120GHz',
-                               antennalist=ctsys.resolve(os.path.join(datapath,'alma.cycle5.1.cfg')), showplot=False )
+                               antennalist=ctsys_resolve(os.path.join(datapath,'alma.cycle5.1.cfg')), showplot=False )
         else:
             # CASA 5 tasks do not
             self.res=predictcomp(objname='Mars', epoch='2018/09/01/00:00', minfreq='100GHz',maxfreq='120GHz',
