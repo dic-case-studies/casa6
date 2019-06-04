@@ -230,7 +230,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		// as selection defaults.  Also save a Vector of the number of
 		// channels in each spectral window.
 
-		msCols_ = new ROMSColumns(*itsMS);
+		msCols_ = new MSColumns(*itsMS);
 		nFieldIds_ = msCols_->field().nrow();
 		fieldIds_.resize(nFieldIds_);
 		indgen(fieldIds_);

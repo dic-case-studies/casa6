@@ -148,7 +148,7 @@ EVLASwPow::EVLASwPow(String msname,Int MSnAnt,Int MSnSpw) :
   calDevTabName_ = ms.rwKeywordSet().asTable("CALDEVICE").tableName();
 
   // Get spw total bandwidths
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
   const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
   effChBW_.resize(nSpw());
   for (Int ispw=0;ispw<nSpw();++ispw) 
@@ -181,7 +181,7 @@ EVLASwPow::EVLASwPow(const MSMetaInfoForCal& msmc) :
   calDevTabName_ = ms.rwKeywordSet().asTable("CALDEVICE").tableName();
 
   // Get spw total bandwidths
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
   const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
   effChBW_.resize(nSpw());
   for (Int ispw=0;ispw<nSpw();++ispw) 

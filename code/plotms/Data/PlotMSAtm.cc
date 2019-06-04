@@ -95,7 +95,7 @@ void PlotMSAtm::setUpMS(casacore::String filename, PlotMSSelection& userSel) {
     tableName_ = ms_->tableName();
     if (!userSel.isEmpty()) 
         applyMSSelection(userSel, *ms_);
-    ROMSColumns msCol(*ms_);
+    MSColumns msCol(*ms_);
     telescopeName_ = msCol.observation().telescopeName().get(0);
     getMSTimes(); // for weather and pwv
 }
@@ -507,7 +507,7 @@ casacore::Double PlotMSAtm::getElevation(casacore::Int fieldId) {
     // Get RADec (DELAY_DIR) from FIELD table
     casacore::Array<casacore::Double> raDec;
     if (isMS_) {
-        ROMSColumns msCol(*ms_);
+        MSColumns msCol(*ms_);
         raDec = msCol.field().delayDir().get(fieldId);
     } else {
         ROCTColumns ctCol(*caltable_);

@@ -70,7 +70,7 @@ void PI_TVI::setupInterpolator(){
 
 		// Selected, data-taking antennas
 		Vector<Bool> isSelected(nAnts);
-		ROMSColumns msCols(ms);
+		MSColumns msCols(ms);
 		cout << "Extracting active antennas ..." << endl;
 		for (auto antId : msCols.antenna1().getColumn()) isSelected[antId] = true;
 		for (auto antId : msCols.antenna2().getColumn()) isSelected[antId] = true;

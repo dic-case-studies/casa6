@@ -104,7 +104,7 @@ TEST_F( PlotMSCacheTest, testMetadata) {
 	Int ddID(msmc.dataDescId().get(0)); // for spw, pol
 
 	// subtable columns
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int polID(mscol.dataDescription().polarizationId().get(ddID));
 	uInt nAnt(mscol.antenna().nrow());
 	Vector<Int> expChan,

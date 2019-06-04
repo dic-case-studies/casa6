@@ -597,7 +597,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   // case for scan intent specified 
                   if (userstate!="*") {
                     MeasurementSet elselms((elms)(exprNode), &elms);
-                    ROMSColumns tmpmsc(elselms);
+                    MSColumns tmpmsc(elselms);
                     Vector<Int> fldidv=tmpmsc.fieldId().getColumn();
                     if (fldidv.nelements()==0)
                       throw(AipsError("No field ids were selected, please check input parameters"));
@@ -2032,7 +2032,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  freqFrameValid=(freqFrame != MFrequency::REST || mode=="cubesource");
 	  
 	  //MFrequency::Types dataFrame=(MFrequency::Types)vi2.subtableColumns().spectralWindow().measFreqRef()(spwids[0]);
-	  MFrequency::Types dataFrame=(MFrequency::Types)ROMSColumns(*mss[j]).spectralWindow().measFreqRef()(spwids[0]);
+	  MFrequency::Types dataFrame=(MFrequency::Types)MSColumns(*mss[j]).spectralWindow().measFreqRef()(spwids[0]);
 	  
 	  Double datafstart, datafend;
 	  //VisBufferUtil::getFreqRange(datafstart, datafend, vi2, dataFrame );
@@ -2054,10 +2054,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    }
 	    String ephemtab(movingSource);
 	    if(movingSource=="TRACKFIELD"){
-	      Int fieldID=ROMSColumns(*mss[j]).fieldId()(0);
-	      ephemtab=Path(ROMSColumns(*mss[j]).field().ephemPath(fieldID)).absoluteName();
+	      Int fieldID=MSColumns(*mss[j]).fieldId()(0);
+	      ephemtab=Path(MSColumns(*mss[j]).field().ephemPath(fieldID)).absoluteName();
 	    }
-	    MEpoch refep=ROMSColumns(*mss[j]).timeMeas()(0);
+	    MEpoch refep=MSColumns(*mss[j]).timeMeas()(0);
 	    Quantity refsysvel;
 	    MSUtil::getFreqRangeAndRefFreqShift(freqmin,freqmax,refsysvel, refep, spwids,firstChannels, nChannels, *mss[j], ephemtab, trackDir, true);
 	    if(j==0)
@@ -2101,7 +2101,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Double datafstart, datafend;
     //freqFrameValid=(freqFrame != MFrequency::REST || mode != "cubedata" );
     freqFrameValid=(freqFrame != MFrequency::REST );
-    ROMSColumns msc(msobj);
+    MSColumns msc(msobj);
     MFrequency::Types dataFrame=(MFrequency::Types)msc.spectralWindow().measFreqRef()(spwids[0]);
     rvi->getFreqInSpwRange(datafstart, datafend, dataFrame );
     if (mode=="cubedata") {
@@ -2138,7 +2138,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       }
     else {
-      ROMSColumns msc(msobj);
+      MSColumns msc(msobj);
       String telescop = msc.observation().telescopeName()(0);
       MEpoch obsEpoch = msc.timeMeas()(0);
       MPosition obsPosition;
@@ -2476,7 +2476,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( ! msobj.isNull() )
       {
 	//defining observatory...needed for position on earth
-	ROMSColumns msc(msobj);
+	MSColumns msc(msobj);
 	String telescop = msc.observation().telescopeName()(0);
 	MEpoch obsEpoch = msc.timeMeas()(0);
 	MPosition obsPosition;
@@ -2571,7 +2571,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //defining observatory...needed for position on earth
     // get the first ms for multiple MSes
-    ROMSColumns msc(msobj);
+    MSColumns msc(msobj);
     String telescop = msc.observation().telescopeName()(0);
     MEpoch obsEpoch = msc.timeMeas()(0);
     MPosition obsPosition;
@@ -2761,8 +2761,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     MDirection outdir;
     String ephemtab(movingSource);
     if(movingSource=="TRACKFIELD"){
-      Int fieldID=ROMSColumns(ms).fieldId()(0);
-      ephemtab=Path(ROMSColumns(ms).field().ephemPath(fieldID)).absoluteName();
+      Int fieldID=MSColumns(ms).fieldId()(0);
+      ephemtab=Path(MSColumns(ms).field().ephemPath(fieldID)).absoluteName();
     }
     casacore::MDirection::Types planetType=MDirection::castType(trackDir.getRef().getType());
     if( (! Table::isReadable(ephemtab)) &&   ( (planetType <= MDirection::N_Types) || (planetType >= MDirection::COMET)))

@@ -884,7 +884,7 @@ protected:
                        casacore::String& fluxScaleName, casacore::MEpoch& aveEpoch,
                        const casacore::Vector<casacore::Vector<casacore::MFrequency> >& mfreqs,
                        const casacore::String& model, const casacore::String& fieldName, 
-                       const casacore::ROMSColumns& msc, const casacore::Int fldid,
+                       const casacore::MSColumns& msc, const casacore::Int fldid,
                        const casacore::MDirection& fieldDir, const casacore::Vector<casacore::Int>& selToRawSpwIds,
                        const casacore::String& standard);
 

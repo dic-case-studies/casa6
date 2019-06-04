@@ -330,7 +330,7 @@ public:
   //  Not meaningful for non-I/O
   virtual void slurp () const override { SSVi2NotPossible() };
 
-  // Access the current casacore::ROMSColumns object in MSIter -- NOT POSSIBLE
+  // Access the current casacore::MSColumns object in MSIter -- NOT POSSIBLE
   virtual const vi::SubtableColumns & subtableColumns () const override { SSVi2NotPossible() };
 
 

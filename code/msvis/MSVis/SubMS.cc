@@ -739,7 +739,7 @@ Bool SubMS::pickAntennas(Vector<Int>& selected_antennaids,
         ms_p=MeasurementSet();
         return false;
       }
-      mscIn_p=new ROMSColumns(mssel_p);
+      mscIn_p=new MSColumns(mssel_p);
       // Note again the parseColumnNames() a few lines back that stops setupMS()
       // from being called if the MS doesn't have the requested columns.
       MeasurementSet* outpointer=0;
@@ -922,7 +922,7 @@ Bool SubMS::pickAntennas(Vector<Int>& selected_antennaids,
       ms_p=MeasurementSet();
       return 0;
     }
-    mscIn_p=new ROMSColumns(mssel_p);
+    mscIn_p=new MSColumns(mssel_p);
     Double sizeInMB= 1.5 * n_bytes() / (1024.0 * 1024.0);
     String msname=AppInfo::workFileName(uInt(sizeInMB), "TempSubMS");
     
@@ -8923,7 +8923,7 @@ uInt SubMS::remapped(const Int ov, const Vector<Int>& mapper, uInt i=0)
   return i;  
 }
 
-uInt SubMS::fillAntIndexer(std::map<Int, Int>& antIndexer, const ROMSColumns *msc)
+uInt SubMS::fillAntIndexer(std::map<Int, Int>& antIndexer, const MSColumns *msc)
 {
   const Vector<Int>& ant1 = msc->antenna1().getColumn();
   const Vector<Int>& ant2 = msc->antenna2().getColumn();
@@ -8948,7 +8948,7 @@ uInt SubMS::fillAntIndexer(std::map<Int, Int>& antIndexer, const ROMSColumns *ms
   return nant;
 }
 
-const ArrayColumn<Complex>& SubMS::right_column(const ROMSColumns *msclala,
+const ArrayColumn<Complex>& SubMS::right_column(const MSColumns *msclala,
                                                 const MS::PredefinedColumns col)
 {
   if(col == MS::DATA)

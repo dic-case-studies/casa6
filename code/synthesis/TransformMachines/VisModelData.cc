@@ -92,7 +92,7 @@ void VisModelData::listModel(const MeasurementSet& thems){
  
   //Table newTab(thems);
 
-  ROMSColumns msc(thems);
+  MSColumns msc(thems);
   Vector<String> fldnames=msc.field().name().getColumn();
   Vector<Int> fields=msc.fieldId().getColumn();
   const Sort::Order order=Sort::Ascending;
@@ -183,7 +183,7 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   logio << "Clearing all model records in MS header."
 	  << LogIO::POST;
 
-  ROMSColumns msc(thems);
+  MSColumns msc(thems);
   Vector<Int> fields=msc.fieldId().getColumn();
   Vector<String> fldnames=msc.field().name().getColumn();
   const Sort::Order order=Sort::Ascending;
@@ -247,7 +247,7 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   if(!newTab.isWritable())
     return;
 
-  ROMSColumns msc(thems);
+  MSColumns msc(thems);
   Vector<String> fldnames=msc.field().name().getColumn();
   Int nfields=0;
   Vector<Int> fields(0);

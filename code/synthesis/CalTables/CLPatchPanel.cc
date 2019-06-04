@@ -1160,7 +1160,7 @@ Vector<Int> CLPatchPanel::getCLuniqueIds(NewCalTable& ct, String vcol) {
 
 Vector<Int> CLPatchPanel::getMSuniqueIds(MeasurementSet& ms, String which) {
 
-  ROMSColumns msc(ms);
+  MSColumns msc(ms);
 
   // Extract the requested column as a Vector
   Vector<Int> colv;

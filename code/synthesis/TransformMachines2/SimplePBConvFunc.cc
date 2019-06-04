@@ -121,7 +121,7 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
       ObsInfo imInfo=csys_p.obsInfo();
       String tel= imInfo.telescope();
       MPosition pos;
-      ROMSColumns mscol(vb.ms());
+      MSColumns mscol(vb.ms());
       if (vb.subtableColumns().observation().nrow() > 0) {
 	tel =vb.subtableColumns().observation().telescopeName()(mscol.observationId()(0));
       }

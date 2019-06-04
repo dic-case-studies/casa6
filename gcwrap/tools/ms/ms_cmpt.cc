@@ -2626,7 +2626,7 @@ ms::selectchannel(const int nchan, const int start, const int width, const int i
                 }
                 int end = selChans(selChans.size()-1);
                 Vector<Int> spws = getspectralwindows();
-                ROMSColumns msc(*itsSelectedMS);
+                MSColumns msc(*itsSelectedMS);
                 Int numchans = msc.spectralWindow().numChan().getColumn()(spws(0));
                 if (start>numchans || end>numchans) {
                     *itsLog << LogIO::SEVERE << "Illegal channel selection"<<LogIO::POST;
@@ -3474,7 +3474,7 @@ Vector<Int> ms::addgaps(Vector<Int> ifrnums, Int gap) {
 
 Vector<Int> ms::getifrnumbers() {
     // Get vector of ifr numbers in MS
-    ROMSColumns msc(*itsSelectedMS);
+    MSColumns msc(*itsSelectedMS);
     const Sort::Order order = Sort::Ascending;
     const Int option = Sort::HeapSort | Sort::NoDuplicates;
     // form ifr numbers
@@ -3665,7 +3665,7 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int
             // Check for ha, last, ut -- included in AXIS_INFO
             // Check data columns: empty array if does not exist
             // (issue warning once!)
-            ROMSColumns msc(*itsSelectedMS);
+            MSColumns msc(*itsSelectedMS);
             Bool noCorrectedCol = msc.correctedData().isNull();
             Bool noModelCol = msc.modelData().isNull();
             Bool noFloatCol = msc.floatData().isNull();
@@ -4281,7 +4281,7 @@ void ms::getInfoOptions(Vector<Bool> info_options, Record& outputRec) {
         Vector<Int> fields = outputRec.asArrayInt("field_id");
         // set up MSDerivedValues
         MSDerivedValues msd;
-        ROMSColumns msCol(*itsSelectedMS);
+        MSColumns msCol(*itsSelectedMS);
         msd.setAntennas(msCol.antenna());
         MEpoch ep=msCol.timeMeas()(0);
         // iterate through fields
@@ -4327,7 +4327,7 @@ Vector<String> ms::getCorrAxis(vi::VisBuffer2* vb2) {
     return names;
 }
 
-Vector<String> ms::getCorrAxis(ROMSColumns& msc) {
+Vector<String> ms::getCorrAxis(MSColumns& msc) {
     Vector<String> names;
     getWantedPolNames(names);  // user selected poln needing conversion
     if (names.size() == 0) {
@@ -4340,7 +4340,7 @@ Vector<String> ms::getCorrAxis(ROMSColumns& msc) {
     return names;
 }
 
-Vector<Int> ms::getCorrTypes(ROMSColumns& msc) {
+Vector<Int> ms::getCorrTypes(MSColumns& msc) {
     // return all or selected corr types in POLN table
     Int ddid = msc.dataDescId()(0);
     Int polId = msc.dataDescription().polarizationId()(ddid);
@@ -4376,7 +4376,7 @@ void ms::getWantedPolNames(casacore::Vector<casacore::String>& names) {
 }
 
 Record ms::getFreqAxis() {
-    ROMSColumns msCol(*itsSelectedMS);
+    MSColumns msCol(*itsSelectedMS);
     // get columns from SPECTRAL_WINDOW table
     Vector<Int> spws = getspectralwindows();
     int nSpw = spws.nelements();
@@ -4427,7 +4427,7 @@ Record ms::getIfrAxis() {
     Vector<String> ifrshortnames(ifrnumbers_p.size());
     Vector<Double> baselines(ifrnumbers_p.size(), 0.0);
     // read columns from MS
-    ROMSColumns msCol(*itsSelectedMS);
+    MSColumns msCol(*itsSelectedMS);
     Vector<String> antnames = msCol.antenna().name().getColumn();
     Array<Double> antpos = msCol.antenna().position().getColumn();
 
@@ -4912,7 +4912,7 @@ bool ms::getitem(String item, vi::VisBuffer2* vb2, Record& outputRec, bool ifrax
     return getokay;
 }
 
-bool ms::getitem(String item, ROMSColumns& msc, Record& outputRec) {
+bool ms::getitem(String item, MSColumns& msc, Record& outputRec) {
     bool getokay(true);
     String itemname = downcase(item);
     Record intermediateValue(RecordInterface::Variable); // for visibilities, get data first
@@ -5367,7 +5367,7 @@ ms::putdata(const ::casac::record& items)
 }
 
 bool ms::allowPut(String fieldname) {
-    ROMSColumns msc(*itsSelectedMS);
+    MSColumns msc(*itsSelectedMS);
     MSS::Field fld = MSS::field(fieldname);
     bool allow(true);
     switch(fld) {
@@ -6182,7 +6182,7 @@ ms::partition(const std::string&      outputms,   const ::casac::variant& field,
 
 Vector<Int> ms::getspectralwindows() {
     // Get list of selected SPWs from DDID selection
-    ROMSColumns msc(*itsSelectedMS);
+    MSColumns msc(*itsSelectedMS);
     Vector<Int> allDDIDs = msc.dataDescId().getColumn();
     Vector<Int> allSPWs = msc.dataDescription().spectralWindowId().getColumn();
     Int n = GenSort<Int>::sort(allDDIDs, Sort::Ascending, Sort::NoDuplicates);

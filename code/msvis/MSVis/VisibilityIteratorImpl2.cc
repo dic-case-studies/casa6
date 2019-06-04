@@ -1619,7 +1619,7 @@ VisibilityIteratorImpl2::moreChunks() const
 	return msIter_p->more();
 }
 
-const ROMSColumns *
+const MSColumns *
 VisibilityIteratorImpl2::msColumnsKluge() const
 {
 	return & msIter_p->msColumns();
@@ -3673,7 +3673,7 @@ VisibilityIteratorImpl2::writeModel(
 	*/
 
 	Matrix<Int>  combiIndex;
-	MSUtil::getIndexCombination(ROMSColumns(ms()), combiIndex);
+	MSUtil::getIndexCombination(MSColumns(ms()), combiIndex);
 	Vector<Int> selectedWindows;
 	Vector<Int> nChannels;
 	Vector<Int> firstChannels;

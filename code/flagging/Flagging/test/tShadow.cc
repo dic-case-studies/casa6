@@ -12,7 +12,7 @@ int main()
 {
 
     MeasurementSet ms("/tmp/ngc5921.ms");//, Table::Update);
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
 
 
     //    ROMSFieldColumns msfcs(msc.field());

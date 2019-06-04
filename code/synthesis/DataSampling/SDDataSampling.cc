@@ -104,7 +104,7 @@ SDDataSampling::SDDataSampling(MeasurementSet& ms,
   // First try the POINTING sub-table
   Int pointIndex=getIndex(mspc, vb.time()(0));
   // If no valid POINTING entry, then use FIELD phase center
-  ROMSColumns msc(ms);
+  MSColumns msc(ms);
   if(pointIndex >= 0 || pointIndex < static_cast<Int>(mspc.time().nrow()))
     worldPosMeas = mspc.directionMeas(pointIndex);
   else

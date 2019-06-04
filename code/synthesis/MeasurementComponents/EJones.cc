@@ -166,7 +166,7 @@ void EGainCurve::setSpecify(const Record& specify) {
   //  the right gain curves
 
   MeasurementSet ms(msName());
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
 
   // The antenna names
   const ROMSAntennaColumns& antcol(mscol.antenna());

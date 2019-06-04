@@ -517,7 +517,7 @@ void MultiTermFTNew::finalizeToSkyNew(Bool dopsf,
       Vector<Double> refpix = (theImage[0]->coordinates().spectralCoordinate()).referencePixel();
       (theImage[0]->coordinates().spectralCoordinate()).toWorld( reffreq_p, refpix[0] );
     }
-    Bool useCorrected= !(ROMSColumns(vi.ms()).correctedData().isNull());
+    Bool useCorrected= !(MSColumns(vi.ms()).correctedData().isNull());
     if((type==FTMachine::CORRECTED) && (!useCorrected))
       type=FTMachine::OBSERVED;
    

@@ -547,7 +547,7 @@ public:
 
 //    virtual void getFreqInSpwRange(casacore::Double& freqStart, casacore::Double& freqEnd, casacore::MFrequency::Types freqframe = casacore::MFrequency::LSRK) const;
 
-	// Access the current casacore::ROMSColumns object in MSIter
+	// Access the current casacore::MSColumns object in MSIter
 	virtual const vi::SubtableColumns &
 	subtableColumns() const override;
 
@@ -910,7 +910,7 @@ protected:
 	// Allow access to the casacore::MSColumns object; for use by
 	// VisBuffer2Adapter *KLUGE*
 
-	const casacore::ROMSColumns *
+	const casacore::MSColumns *
 	msColumnsKluge() const;
 
 	// Method to reset the VI back to the start.  Unlike the public version

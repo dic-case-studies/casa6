@@ -434,7 +434,7 @@ String MSCache::normalizeColumnName(String plotmscol)
 
 void MSCache::getNamesFromMS(MeasurementSet& ms)
 {
-	ROMSColumns msCol(ms);
+	MSColumns msCol(ms);
 	antnames_.resize();
 	stanames_.resize();
 	antstanames_.resize();
@@ -2004,7 +2004,7 @@ bool MSCache::isEphemeris(){
 		}
 
 		// Check the field subtable for ephemeris fields
-		ROMSColumns msc(ms);
+		MSColumns msc(ms);
 		const ROMSFieldColumns& fieldColumns = msc.field();
 		uInt nrow = fieldColumns.nrow();
 
@@ -2316,7 +2316,7 @@ void MSCache::loadPageHeaderCache(const casacore::MeasurementSet& selectedMS){
 
 	const uInt firstSelectedRow = 0;
 
-	ROMSColumns selMSColumns(selectedMS);
+	MSColumns selMSColumns(selectedMS);
 
 	// ---- Queries on Observation table
 	auto firstObservationId = selMSColumns.observationId().get(firstSelectedRow);

@@ -82,7 +82,7 @@ public:
 		  const casacore::String& timetype,
 		  const casacore::String& freqtype,
 		  const casacore::String& fieldtype,
-		  const casacore::ROMSColumns& mscol,
+		  const casacore::MSColumns& mscol,
 		  casacore::Vector<casacore::Int> spwmap=casacore::Vector<casacore::Int>(),
 		  const CTTIFactoryPtr cttifactoryptr=&CTTimeInterp1::factory);
 

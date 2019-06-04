@@ -398,7 +398,7 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
 				 const String& timetype,
 				 const String& freqtype,
 				 const String& fieldtype,
-				 const ROMSColumns& mscol,
+				 const MSColumns& mscol,
 				 Vector<Int> spwmap,
 				 const CTTIFactoryPtr cttifactoryptr) :
   ct_(ct),

@@ -1128,7 +1128,7 @@ using namespace casa::vi;
 	(ftname != "awprojectft" && ftname != "mawprojectft" && ftname != "proroft") )
       {
 	CountedPtr<SkyJones> vp = NULL;
-	ROMSColumns msc(*mss_p[0]);
+	MSColumns msc(*mss_p[0]);
 	Quantity parang(0.0,"deg");
 	Quantity skyposthreshold(0.0,"deg");
 	vp = new VPSkyJones(msc, true,  parang, BeamSquint::NONE,skyposthreshold);

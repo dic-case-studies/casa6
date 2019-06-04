@@ -802,7 +802,7 @@ Bool MSTransformDataHandler::makeMSBasicStructure(String& msname,
 		return false;
 	}
 
-	mscIn_p = new ROMSColumns(mssel_p);
+	mscIn_p = new MSColumns(mssel_p);
 
 	// Note again the parseColumnNames() a few lines back that stops setupMS()
 	// from being called if the MS doesn't have the requested columns.

@@ -87,7 +87,7 @@ StandardTsys::StandardTsys(String msname,Int MSnAnt,Int MSnSpw) :
   sysCalTabName_ = ms.sysCalTableName();
 
   // OK?
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
   const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
   nChanParList()=spwcols.numChan().getColumn();
   startChanList().set(0);
@@ -109,7 +109,7 @@ StandardTsys::StandardTsys(const MSMetaInfoForCal& msmc) :
   sysCalTabName_ = ms.sysCalTableName();
 
   // OK?
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
   const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
   nChanParList()=spwcols.numChan().getColumn();
   startChanList().set(0);

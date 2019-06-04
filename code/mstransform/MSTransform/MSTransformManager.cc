@@ -1410,7 +1410,7 @@ Bool MSTransformManager::shouldCreateOutputWtSpectrum(Bool usewtspectrum)
                         "in the output MS: the input MS has not been initialized.");
     }
 
-    auto wtSpec = ROMSColumns(*inputMs_p).weightSpectrum();
+    auto wtSpec = MSColumns(*inputMs_p).weightSpectrum();
     auto inputWeightSpectrumAvailable = !wtSpec.isNull() and wtSpec.isDefined(0);
     return inputWeightSpectrumAvailable or usewtspectrum;
 }

@@ -474,7 +474,7 @@ public:
 
     virtual void slurp () const override;
 
-    // Access the current casacore::ROMSColumns object in MSIter
+    // Access the current casacore::MSColumns object in MSIter
 
     virtual const vi::SubtableColumns & subtableColumns () const override;
 

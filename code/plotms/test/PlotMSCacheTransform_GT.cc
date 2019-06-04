@@ -79,7 +79,7 @@ TEST_F( PlotMSCacheTest, testFreqFrame) {
 	Int obsID(msmc.observationId().get(0)); // for phasedir
 	MEpoch epoch(msmc.timeMeas()(0));
 	// values from subtables for freq conversion
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> inputFreq(mscol.spectralWindow().chanFreq()(spw));
 	Int refFrame(mscol.spectralWindow().measFreqRef()(spw));
@@ -133,7 +133,7 @@ TEST_F( PlotMSCacheTest, testRestFreq) {
 	ROMSMainColumns msmc(sortedMS);
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	// values from subtables for freq conversion
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> inputFreq(mscol.spectralWindow().chanFreq()(spw));
 	Vector<MFrequency> inputFreqMeas(mscol.spectralWindow().chanFreqMeas()(spw));
@@ -176,7 +176,7 @@ TEST_F( PlotMSCacheTest, testVelDef) {
 	ROMSMainColumns msmc(sortedMS);
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	// values from subtables for freq conversion
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> inputFreq(mscol.spectralWindow().chanFreq()(spw));
 	Vector<MFrequency> inputFreqMeas(mscol.spectralWindow().chanFreqMeas()(spw));
@@ -228,7 +228,7 @@ TEST_F( PlotMSCacheTest, testPhaseShift) {
 	Cube<Complex> visData(msmc.data().getColumn());
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	// values from subtables for freq conversion
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> inputFreq(mscol.spectralWindow().chanFreq()(spw));
 

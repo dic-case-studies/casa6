@@ -739,7 +739,7 @@ VisBufferAsync::lsrFrequency (const Int& spw, Vector<Double>& freq, Bool& conver
                                         channelGroupNumber_p, chanFreqs, obsMFreqTypes, mEpoch_p, obsPos, dir);
 }
 
-const ROMSColumns &
+const MSColumns &
 VisBufferAsync::msColumns() const
 {
     if (isFilling_p){
@@ -753,7 +753,7 @@ VisBufferAsync::msColumns() const
         Assert (measurementSet_p != NULL);
 
         if (msColumns_p == NULL){
-            msColumns_p = new ROMSColumns (* measurementSet_p);
+            msColumns_p = new MSColumns (* measurementSet_p);
         }
 
         return * msColumns_p;

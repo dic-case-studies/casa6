@@ -245,7 +245,7 @@ MsPlot::setupConvertFn( const String& axisStr, const Char& axis  )
     //# First we need to create the values needed by the convert function.
     //# TODO cleanup the msColumns when done with it.
     MSDerivedValues * msDerived = new MSDerivedValues();
-    ROMSColumns * msColumns = new ROMSColumns( itsSelectedMS );
+    MSColumns * msColumns = new MSColumns( itsSelectedMS );
     if (  ! upcase( axisStr ).compare( "AZIMUTH" ) 
         || ! upcase( axisStr ).compare( "ELEVATION" ) 
         || ! upcase( axisStr ).compare( "HOURANGLE" ) 
@@ -760,7 +760,7 @@ MsPlot::getAllAntennaNames()
     }
 
      //# Get the antenna column from the MS
-     //#ROMSColumns antColumn( *itsMS );
+     //#MSColumns antColumn( *itsMS );
      const ROMSAntennaColumns & antColumn  = itsMS->antenna();
      //#const ScalarColumn<String> antNames = antColumn.name();
      uInt numAnts= antColumn.position().nrow();
@@ -1132,7 +1132,7 @@ MsPlot::getAllScanNumbers()
        return; 
     }
         
-    ROMSColumns * msColumns = new ROMSColumns( itsSelectedMS );
+    MSColumns * msColumns = new MSColumns( itsSelectedMS );
     ScalarColumn<Int> scanColumn = msColumns->scanNumber();
     uInt numRows = scanColumn.nrow();
     itsScanNumbers.resize( numRows );
@@ -1202,7 +1202,7 @@ MsPlot::getAllTimes()
        return; 
     }
         
-    ROMSColumns msColumns( itsSelectedMS );
+    MSColumns msColumns( itsSelectedMS );
     Double startTime, endTime;
     ::casacore::minMax( startTime, endTime, msColumns.time().getColumn() );
     
@@ -2211,7 +2211,7 @@ MsPlot::setData( const String& baselineExpr,
 
    //Timer tmr;
    // TODO Move this to init.
-   ROMSColumns msColumn(*itsMS);
+   MSColumns msColumn(*itsMS);
    const ScalarColumn<Double>& timeInterval = msColumn.interval();
    Int nrow = timeInterval.nrow();
    itsMinTimeInterval = 86400.;
@@ -2473,7 +2473,7 @@ Bool MsPlot::average(
    doVel = aveVel;
  
 
-   ROMSColumns msColumn(*itsMS);
+   MSColumns msColumn(*itsMS);
    const ScalarColumn<Double>& timeInterval = msColumn.interval();
    Int nrow = timeInterval.nrow();
    itsMinTimeInterval = 86400.;
@@ -4643,7 +4643,7 @@ MsPlot::createSaQL(  const String& x, const String& y,
       else if (!upcase(axis(i)).compare("BASELINE")) {
          Int nAnt = 2;
          //if (msa) nAnt = msa->nAnt();
-         ROMSColumns msColumn( itsSelectedMS );
+         MSColumns msColumn( itsSelectedMS );
          const ROMSAntennaColumns & antColumns = msColumn.antenna();
          nAnt = antColumns.nrow();
          //looks like that a1<=a2 always, so
@@ -5094,7 +5094,7 @@ MsPlot::getTaQL( const String& axisStr, const String& column,
       //#     Then, if they do a sub-selection on antennas 4-10 only..
       //#     And then want to look at the same plot, the baseline 5-8
       //#     should retain the same baseline number.....
-      ROMSColumns msColumn( itsSelectedMS );
+      MSColumns msColumn( itsSelectedMS );
       const ROMSAntennaColumns & antColumns = msColumn.antenna();
       uInt numAnts = antColumns.nrow();
    

@@ -154,7 +154,7 @@ void MSUVBin::createOutputMS(const Int nrrow){
 		throw(AipsError("no ms selected for input yet"));
 	Vector<Int> tileShape(3);
 	tileShape[0]=4; tileShape[1]=200; tileShape[2]=500;
-        auto wtSpec = ROMSColumns(*mss_p[0]).weightSpectrum();
+        auto wtSpec = MSColumns(*mss_p[0]).weightSpectrum();
         //auto createdWeightSpectrumCols = !wtSpec.isNull() && wtSpec.isDefined(0);
         outMsPtr_p = MSTransformDataHandler::setupMS(outMSName_p, nchan_p, npol_p,
                                                      Vector<MS::PredefinedColumns>(1, MS::DATA),
@@ -354,7 +354,7 @@ Bool MSUVBin::fillNewBigOutputMS(){
 	Matrix<Float> wght(npol_p, nrrows);
 	createOutputMS(nrrows);
 	setTileCache();
-	ROMSColumns msc(*outMsPtr_p);
+	MSColumns msc(*outMsPtr_p);
 	vi::VisibilityIterator2 iter(mss_p, vi::SortColumns(), doFlag_p);
 	vi::VisBuffer2* vb=iter.getVisBuffer();
 	iter.originChunks();
@@ -577,7 +577,7 @@ Bool MSUVBin::fillSmallOutputMS(){
 	if(existOut_p){
         //recover the previous data for summing
 
-		ROMSColumns msc(*outMsPtr_p);
+		MSColumns msc(*outMsPtr_p);
 		msc.data().getColumn(grid);
 		msc.weightSpectrum().getColumn(wghtSpec);
 		msc.weight().getColumn(wght);
@@ -740,7 +740,7 @@ void MSUVBin::makeCoordsys(){
 	//make freqstart the centre of channel
 	freqStart_p=freqStart_p+freqStep_p/2.0;
 	SpectralCoordinate mySpectral(outFreqFrame, freqStart_p, freqStep_p, 0.0);
-	ROMSColumns msc(*mss_p[0]);
+	MSColumns msc(*mss_p[0]);
 	Int ddId=msc.dataDescId()(0);
 	Int firstPolId=msc.dataDescription().polarizationId()(ddId);
 	Int polType = Vector<Int>(msc.polarization().corrType()(firstPolId))(0);
@@ -2236,7 +2236,7 @@ void MSUVBin::fillFieldTable() {
     msField.sourceId().put(0, 0);
     msField.code().put(0, "");
     String sourceName="MSUVBIN";
-    Int fieldId=ROMSColumns(*mss_p[0]).fieldId()(0);
+    Int fieldId=MSColumns(*mss_p[0]).fieldId()(0);
 
     sourceName=ROMSFieldColumns((mss_p[0])->field()).name()(fieldId);
     msField.name().put(0, sourceName);
@@ -2246,7 +2246,7 @@ void MSUVBin::fillFieldTable() {
     Vector<MDirection> radecMeas(1);
     radecMeas(0)=phaseCenter_p;
 
-    Double obsTime=ROMSColumns(*mss_p[0]).time()(0);
+    Double obsTime=MSColumns(*mss_p[0]).time()(0);
     msField.time().put(0, obsTime);
     msField.numPoly().put(0, numPoly);
     msField.delayDirMeasCol().put(0, radecMeas);

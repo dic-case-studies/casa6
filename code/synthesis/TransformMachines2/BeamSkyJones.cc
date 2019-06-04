@@ -723,7 +723,7 @@ MDirection BeamSkyJones::convertDir(const vi::VisBuffer2& vb, const MDirection& 
   }
    MPosition pos;
    String tel("");
-   ROMSColumns msc(vb.ms());
+   MSColumns msc(vb.ms());
    if (vb.subtableColumns().observation().nrow() > 0) {
      tel = vb.subtableColumns().observation().telescopeName()(vb.observationId()(0));
    }

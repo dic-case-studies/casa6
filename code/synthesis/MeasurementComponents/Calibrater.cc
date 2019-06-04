@@ -1629,7 +1629,7 @@ Bool Calibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 		vi::VisibilityIterator2 vi2(*ms_p, sc, true);
 		vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-		ROMSColumns mscol(*ms_p);
+		MSColumns mscol(*ms_p);
 		const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
 		uInt nSpw = msspw.nrow();
 		Vector<Double> effChBw(nSpw, 0.0);
@@ -1946,7 +1946,7 @@ Bool Calibrater::initWeights(String wtmode, Bool dowtsp) {
     vi::VisibilityIterator2 vi2(*ms_p,sc,true);
     vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-    ROMSColumns mscol(*ms_p);
+    MSColumns mscol(*ms_p);
     const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
     uInt nSpw=msspw.nrow();
     Vector<Double> effChBw(nSpw,0.0);
@@ -2167,7 +2167,7 @@ Bool Calibrater::initWeights(Bool doBT, Bool dowtsp) {
     vi::VisibilityIterator2 vi2(*ms_p,sc,true);
     vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-    ROMSColumns mscol(*ms_p);
+    MSColumns mscol(*ms_p);
     const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
     uInt nSpw=msspw.nrow();
     Vector<Double> effChBw(nSpw,0.0);
@@ -4438,7 +4438,7 @@ Bool OldCalibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 		vi::VisibilityIterator2 vi2(*ms_p, sc, true);
 		vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-		ROMSColumns mscol(*ms_p);
+		MSColumns mscol(*ms_p);
 		const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
 		uInt nSpw = msspw.nrow();
 		Vector<Double> effChBw(nSpw, 0.0);

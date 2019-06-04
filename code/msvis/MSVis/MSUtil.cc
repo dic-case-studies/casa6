@@ -74,7 +74,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     String observatory;
     MPosition obsPos;
     /////observatory position
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
     if (ms.observation().nrow() > 0) {
       observatory = msc.observation().telescopeName()(msc.observationId()(0));
     }
@@ -230,7 +230,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     String observatory;
     MPosition obsPos;
     /////observatory position
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
     if (ms.observation().nrow() > 0) {
       observatory = msc.observation().telescopeName()(msc.observationId()(0));
     }
@@ -365,7 +365,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     String observatory;
     MPosition obsPos;
     /////observatory position
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
     if (ms.observation().nrow() > 0) {
       observatory = msc.observation().telescopeName()(msc.observationId()(0));
     }
@@ -532,7 +532,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     String observatory;
     MPosition obsPos;
     /////observatory position
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
     if (ms.observation().nrow() > 0) {
       observatory = msc.observation().telescopeName()(msc.observationId()(0));
     }
@@ -699,7 +699,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  return retval;
 
   }
-  void MSUtil::getIndexCombination(const ROMSColumns& mscol, Matrix<Int>& retval2){
+  void MSUtil::getIndexCombination(const MSColumns& mscol, Matrix<Int>& retval2){
     Vector<Vector<Int> >retval;
     Vector<Int> state = mscol.stateId().getColumn();
     Vector<Int> scan=mscol.scanNumber().getColumn();

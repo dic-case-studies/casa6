@@ -1197,7 +1197,7 @@ void CalCache::loadCalAxis(ROSolvableVisJonesMCol& mcol,
 void CalCache::getChanFreqsFromMS(Vector< Vector<Double> >& mschanfreqs) {
   // shape is (nchan, nspw)
   MeasurementSet ms(msname_);
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
   uInt nspw = mscol.spectralWindow().nrow();
   mschanfreqs.resize(nspw);
   for (uInt spw=0; spw<nspw; ++spw) {

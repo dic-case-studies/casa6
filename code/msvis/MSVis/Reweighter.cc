@@ -651,7 +651,7 @@ Bool Reweighter::setSortOrder(Block<Int>& sort, const String& uncombinable,
   return !conflict;
 }
 
-const ArrayColumn<Complex>& Reweighter::right_column(const ROMSColumns *msclala,
+const ArrayColumn<Complex>& Reweighter::right_column(const MSColumns *msclala,
                                                        const MS::PredefinedColumns col)
 {
   if(col == MS::DATA)
