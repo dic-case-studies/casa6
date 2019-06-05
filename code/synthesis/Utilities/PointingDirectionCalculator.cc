@@ -91,12 +91,12 @@ NullLogger nulllogger;
 
 namespace {
 #define ARRAY_DIRECTION(ColumnName) \
-inline MDirection ColumnName ## Accessor(ROMSPointingColumns &pointingColumns, uInt rownr) { \
+inline MDirection ColumnName ## Accessor(MSPointingColumns &pointingColumns, uInt rownr) { \
     return pointingColumns.ColumnName ## Meas(rownr); \
 }
 
 #define SCALAR_DIRECTION(ColumnName) \
-inline MDirection ColumnName ## Accessor(ROMSPointingColumns &pointingColumns, uInt rownr) { \
+inline MDirection ColumnName ## Accessor(MSPointingColumns &pointingColumns, uInt rownr) { \
     return pointingColumns.ColumnName ## Meas()(rownr); \
 }
 
@@ -606,7 +606,7 @@ void PointingDirectionCalculator::initPointingTable(Int const antennaId) {
     pointingTable_ = new MSPointing(selected.sort("TIME"));
 
     // attach columns
-    pointingColumns_ = new ROMSPointingColumns(*pointingTable_);
+    pointingColumns_ = new MSPointingColumns(*pointingTable_);
 
     // initialize pointingTimeUTC_
     uInt const nrowPointing = pointingTable_->nrow();

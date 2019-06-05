@@ -3226,17 +3226,17 @@ ms::cvelfreqs(const std::vector<int>& spwids,
             Vector<Double> newCHAN_WIDTH;
 
 
-            ROMSMainColumns mainCols(*itsMS);
+            MSMainColumns mainCols(*itsMS);
             ScalarColumn<Double> timeCol(mainCols.time());
             ScalarColumn<Int> ddCol(mainCols.dataDescId());
             ScalarColumn<Int> fieldCol(mainCols.fieldId());
 
-            ROMSDataDescColumns DDCols(itsMS->dataDescription());
+            MSDataDescColumns DDCols(itsMS->dataDescription());
             ScalarColumn<Int> spwidCol(DDCols.spectralWindowId());
 
-            ROMSSpWindowColumns SPWCols(itsMS->spectralWindow());
-            ROMSFieldColumns FIELDCols(itsMS->field());
-            ROMSAntennaColumns ANTCols(itsMS->antenna());
+            MSSpWindowColumns SPWCols(itsMS->spectralWindow());
+            MSFieldColumns FIELDCols(itsMS->field());
+            MSAntennaColumns ANTCols(itsMS->antenna());
 
             // extract grid from SPW given by spwids
             Vector<Double> oldCHAN_FREQ;
@@ -3385,7 +3385,7 @@ ms::cvelfreqs(const std::vector<int>& spwids,
             {
                 casacore::MPosition Xpos;
                 String Xobservatory;
-                ROMSObservationColumns XObsCols(itsMS->observation());
+                MSObservationColumns XObsCols(itsMS->observation());
                 if (itsMS->observation().nrow() > 0) {
                     Xobservatory = XObsCols.telescopeName()(mainCols.observationId()(0));
                 }
@@ -7107,7 +7107,7 @@ ms::addephemcol(const casacore::MeasurementSet& appendedMS)
     if(!itsMS->field().actualTableDesc().isColumn(MSField::columnName(MSField::EPHEMERIS_ID))){
         // if not, test if the other MS uses ephem objects
         Bool usesEphems = false;
-        const ROMSFieldColumns otherFldCol(appendedMS.field());
+        const MSFieldColumns otherFldCol(appendedMS.field());
         for(uInt i=0; i<otherFldCol.nrow(); i++){
             if(!otherFldCol.ephemPath(i).empty()){
                 usesEphems = true;

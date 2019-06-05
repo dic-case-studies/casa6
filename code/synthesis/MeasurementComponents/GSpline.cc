@@ -1338,7 +1338,7 @@ Vector<Int> GJonesSpline::fieldIdRange()
   if (!vs_p) throw(AipsError("Error in GJonesSpline::fieldIdRange()"));
 
   const MSColumns& mscol(vs_p->iter().msColumns());
-  const ROMSFieldColumns& fldCol(mscol.field());
+  const MSFieldColumns& fldCol(mscol.field());
 
   // Fill vector containing all field id.'s
   Vector<Int> retval(fldCol.nrow());

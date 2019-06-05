@@ -79,7 +79,7 @@ SDDataSampling::SDDataSampling(MeasurementSet& ms,
 
   Int lastRow = 0;
 
-  ROMSPointingColumns mspc(ms.pointing());
+  MSPointingColumns mspc(ms.pointing());
 
   lastIndex_p=0;
 
@@ -222,7 +222,7 @@ SDDataSampling::~SDDataSampling() {
 void SDDataSampling::ok() {
 }
 
-Int SDDataSampling::getIndex(const ROMSPointingColumns& mspc, const Double& time) {
+Int SDDataSampling::getIndex(const MSPointingColumns& mspc, const Double& time) {
   Int start=lastIndex_p;
   // Search forwards
   Int nrows=mspc.time().nrow();

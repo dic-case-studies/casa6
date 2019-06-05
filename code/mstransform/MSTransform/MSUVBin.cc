@@ -932,7 +932,7 @@ void MSUVBin::inplaceGridData(const vi::VisBuffer2& vb){
   void MSUVBin::inplaceLargeBW(const vi::VisBuffer2& vb){
 	//Dang i thought the new vb will return Data or FloatData if correctedData was
 	//not there
-	Bool hasCorrected=!(ROMSMainColumns(vb.ms()).correctedData().isNull());
+	Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
 	Int nrows=vb.nRows();
 	//	Cube<Complex> grid(npol_p, nchan_p, nrows);
 	//	Matrix<Float> wght(npol_p,nrows);
@@ -1073,7 +1073,7 @@ void MSUVBin::inplaceGridData(const vi::VisBuffer2& vb){
   void MSUVBin::inplaceSmallBW(const vi::VisBuffer2& vb){
 	//Dang i thought the new vb will return Data or FloatData if correctedData was
 	//not there
-	Bool hasCorrected=!(ROMSMainColumns(vb.ms()).correctedData().isNull());
+	Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
 	Int nrows=vb.nRows();
 	MSColumns msc(*outMsPtr_p);
 	SpectralCoordinate spec=csys_p.spectralCoordinate(2);
@@ -1229,7 +1229,7 @@ void MSUVBin::gridData(const vi::VisBuffer2& vb, Cube<Complex>& grid,
     scale(1)=fabs(ny_p*thedir.increment()(1))/C::c;
     //Dang i thought the new vb will return Data or FloatData if correctedData was
 	    //not there
-	    Bool hasCorrected=!(ROMSMainColumns(vb.ms()).correctedData().isNull());
+	    Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
 		//locateuvw(locuv, vb.uvw());
 	    Vector<Double> visFreq=vb.getFrequencies(0, MFrequency::LSRK);
 		for (Int k=0; k < vb.nRows(); ++k){
@@ -1335,7 +1335,7 @@ void MSUVBin::gridData(const vi::VisBuffer2& vb, Cube<Complex>& grid,
     //cerr << "chanmap " << chanMap_p << " pol map " <<polMap_p << " weight " << wghtSpec.shape() << endl;
     //Dang i thought the new vb will return Data or FloatData if correctedData was
 	    //not there
-	    Bool hasCorrected=!(ROMSMainColumns(vb.ms()).correctedData().isNull());
+	    Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
 		//locateuvw(locuv, vb.uvw());
 	    Vector<Double> visFreq=vb.getFrequencies(0, MFrequency::LSRK);
 		for (Int k=0; k < vb.nRows(); ++k){
@@ -1436,7 +1436,7 @@ void MSUVBin::gridDataConv(const vi::VisBuffer2& vb, Cube<Complex>& grid,
   scale(1)=fabs(Double(ny_p)*thedir.increment()(1))/C::c;
   //Dang i thought the new vb will return Data or FloatData if correctedData was
   //not there
-  Bool hasCorrected=!(ROMSMainColumns(vb.ms()).correctedData().isNull());
+  Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
   //locateuvw(locu v, vb.uvw());
   Vector<Double> visFreq=vb.getFrequencies(0, MFrequency::LSRK);
   //cerr << "support " << convSupport << endl;
@@ -1601,7 +1601,7 @@ void MSUVBin::gridDataConvThr(const vi::VisBuffer2& vb, Cube<Complex>& grid,
   scale(1)=fabs(Double(ny_p)*thedir.increment()(1))/C::c;
   //Dang i thought the new vb will return Data or FloatData if correctedData was
   //not there
-  Bool hasCorrected=!(ROMSMainColumns(vb.ms()).correctedData().isNull());
+  Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
   Vector<Double> visFreq=vb.getFrequencies(0, MFrequency::LSRK);
   //cerr << "support " << convSupport << endl;
   Vector<Double> phasor;
@@ -1928,7 +1928,7 @@ void MSUVBin::multiThrLoop(const Int outchan, const vi::VisBuffer2& vb, Double r
     scale(1)=fabs(ny_p*thedir.increment()(1))/C::c;
     //Dang i thought the new vb will return Data or FloatData if correctedData was
 	    //not there
-	    //Bool hasCorrected=!(ROMSMainColumns(vb.ms()).correctedData().isNull());
+	    //Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
 		//locateuvw(locuv, vb.uvw());
 	    Vector<Double> visFreq=vb.getFrequencies(0, MFrequency::LSRK);
 		for (Int k=0; k < vb.nRows(); ++k){
@@ -2238,7 +2238,7 @@ void MSUVBin::fillFieldTable() {
     String sourceName="MSUVBIN";
     Int fieldId=MSColumns(*mss_p[0]).fieldId()(0);
 
-    sourceName=ROMSFieldColumns((mss_p[0])->field()).name()(fieldId);
+    sourceName=MSFieldColumns((mss_p[0])->field()).name()(fieldId);
     msField.name().put(0, sourceName);
     Int numPoly = 0;
 
@@ -2265,7 +2265,7 @@ Bool MSUVBin::String2MDirection(const String& theString,
   if(!istr.fail() && msname != ""){
 	  //We'll interprete string as a field id of ms
 	  MeasurementSet thems(msname);
-	  theMeas=ROMSFieldColumns(thems.field()).phaseDirMeas(fieldid);
+	  theMeas=MSFieldColumns(thems.field()).phaseDirMeas(fieldid);
 	  return true;
   }
 

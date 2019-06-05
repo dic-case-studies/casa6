@@ -103,7 +103,7 @@ void createAWPFTMachine(CountedPtr<refim::FTMachine>& theFT, CountedPtr<refim::F
       os << LogIO::NORMAL << "Performing WBAW-Projection" << LogIO::POST; // Loglevel PROGRESS
     }
   
-  // ROMSObservationColumns msoc(mss4vi_p[0].observation());
+  // MSObservationColumns msoc(mss4vi_p[0].observation());
   // String telescopeName=msoc.telescopeName()(0);
   CountedPtr<refim::ConvolutionFunction> awConvFunc = AWProjectFT::makeCFObject(telescopeName, 
 									 aTermOn,

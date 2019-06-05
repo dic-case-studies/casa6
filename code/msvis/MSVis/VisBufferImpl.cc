@@ -2019,7 +2019,7 @@ VisBufferImpl::fillDirectionAux (Vector<MDirection>& value,
 {
   value.resize (antenna.nelements()); // could also use nRow()
 
-  const ROMSPointingColumns & mspc = getViP()->msColumns().pointing();
+  const MSPointingColumns & mspc = getViP()->msColumns().pointing();
   state_p->lastPointTableRow_p = mspc.pointingIndex (antenna (0),
                                             time()(0), state_p->lastPointTableRow_p);
   if (getViP()->allBeamOffsetsZero() && state_p->lastPointTableRow_p < 0) {

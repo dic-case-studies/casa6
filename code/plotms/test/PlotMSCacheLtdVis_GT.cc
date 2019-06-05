@@ -56,7 +56,7 @@ TEST( PlotMSCacheTest, testDataOnlyMS ) {
 	sortCols[3] = MS::columnName(MS::TIME);
 	MeasurementSet sortedMS = ms.sort(sortCols);
 	// main table columns
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Array<Complex> visdata(msmc.data().getColumn());
 	IPosition visshape = visdata.shape();
 	visshape.setLast(IPosition(1,expNRow));
@@ -140,7 +140,7 @@ TEST( PlotMSCacheTest, testFloatOnlyMS) {
 	MeasurementSet sortedMS = ms.sort(sortCols);
 
 	// main table columns: get first row (==first chunk)
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Array<Float> floatData = msmc.floatData().get(0); // matrix
 	Cube<Float> floatCube = floatData.addDegenerate(1); // cube
 	Int expNChunk(3843), expNRow(1);  // since only 1 "baseline"

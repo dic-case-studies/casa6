@@ -165,7 +165,7 @@ Bool Reweighter::selectSpw(std::set<Int>& spwset, Vector<Int>& chanStartv,
     }
   }
   else{                            // select everything and rely on widths.
-    ROMSSpWindowColumns mySpwTab(ms_p.spectralWindow());
+    MSSpWindowColumns mySpwTab(ms_p.spectralWindow());
     uInt nspw = mySpwTab.nrow();
     Vector<Int> nchan(nspw);
 

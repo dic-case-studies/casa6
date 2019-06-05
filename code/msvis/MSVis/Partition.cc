@@ -183,7 +183,7 @@ Bool Partition::selectSpw(const String& spwstr)
 		spw_p   = chansel.column(0);
 	}
 	else{                            // select everything
-		ROMSSpWindowColumns mySpwTab(ms_p.spectralWindow());
+		MSSpWindowColumns mySpwTab(ms_p.spectralWindow());
 
 		spw_p.resize(mySpwTab.nrow());
 		indgen(spw_p);
@@ -458,7 +458,7 @@ Bool Partition::makePartition(String& msname, String& colname,
 		{
 			// SMC: use the read-only Table Column class to
 			// avoid an exception from the CHAN_FREQ column
-			ROMSSpWindowColumns msSpW(msOut_p.spectralWindow());
+			MSSpWindowColumns msSpW(msOut_p.spectralWindow());
 //			MSSpWindowColumns msSpW(msOut_p.spectralWindow());
 			Int nSpw=msOut_p.spectralWindow().nrow();
 			if(nSpw==0) nSpw=1;

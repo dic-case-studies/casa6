@@ -88,7 +88,7 @@ StandardTsys::StandardTsys(String msname,Int MSnAnt,Int MSnSpw) :
 
   // OK?
   MSColumns mscol(ms);
-  const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
+  const MSSpWindowColumns& spwcols = mscol.spectralWindow();
   nChanParList()=spwcols.numChan().getColumn();
   startChanList().set(0);
 
@@ -110,7 +110,7 @@ StandardTsys::StandardTsys(const MSMetaInfoForCal& msmc) :
 
   // OK?
   MSColumns mscol(ms);
-  const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
+  const MSSpWindowColumns& spwcols = mscol.spectralWindow();
   nChanParList()=spwcols.numChan().getColumn();
   startChanList().set(0);
 
@@ -161,7 +161,7 @@ void StandardTsys::setSpecify(const Record& specify) {
   // Verify required columns in SYSCAL
   {
     MSSysCal mssc(sysCalTab);
-    ROMSSysCalColumns sscol(mssc);
+    MSSysCalColumns sscol(mssc);
     if ( (sscol.spectralWindowId().isNull() || 
 	  !sscol.spectralWindowId().isDefined(0)) ||
 	 (sscol.time().isNull() || 
@@ -214,7 +214,7 @@ void StandardTsys::specify(const Record& specify) {
 
     // First extract info from SYSCAL
     MSSysCal mssc(sysCalIter.table());
-    ROMSSysCalColumns sccol(mssc);
+    MSSysCalColumns sccol(mssc);
 
     Int ispw=sccol.spectralWindowId()(0);
     currSpw()=ispw; // registers everything else!

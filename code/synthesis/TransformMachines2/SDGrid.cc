@@ -438,7 +438,7 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
   // system used in the POINTING table.
   {
     uInt row=0;
-    const ROMSPointingColumns& act_mspc = vb.subtableColumns().pointing();
+    const MSPointingColumns& act_mspc = vb.subtableColumns().pointing();
     Bool nullPointingTable=(act_mspc.nrow() < 1);
     // uInt pointIndex=getIndex(*mspc, vb.time()(row), vb.timeInterval()(row), vb.antenna1()(row));
     Int pointIndex=-1;
@@ -1230,7 +1230,7 @@ void SDGrid::get(vi::VisBuffer2& vb, Int row)
     else {
       StokesImageUtil::changeCStokesRep(theImage, StokesImageUtil::CIRCULAR);
     }
-    Bool useCorrected= !(ROMSMainColumns(vi.ms()).correctedData().isNull());
+    Bool useCorrected= !(MSMainColumns(vi.ms()).correctedData().isNull());
     if((type==FTMachine::CORRECTED) && (!useCorrected))
       type=FTMachine::OBSERVED;
     Bool normalize=true;
@@ -1458,7 +1458,7 @@ void SDGrid::ok() {
 // history of previous matches. It is deterministic but not obvious.
 // One could cure this by searching but it would be considerably
 // costlier.
-Int SDGrid::getIndex(const ROMSPointingColumns& mspc, const Double& time,
+Int SDGrid::getIndex(const MSPointingColumns& mspc, const Double& time,
 		     const Double& interval, const Int& antid) {
   //Int start=lastIndex_p;
   Int start=lastIndexPerAnt_p[antid];
@@ -1523,7 +1523,7 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
 
   Bool dointerp;
   Bool nullPointingTable = false;
-  const ROMSPointingColumns& act_mspc = vb.subtableColumns().pointing();
+  const MSPointingColumns& act_mspc = vb.subtableColumns().pointing();
   nullPointingTable = (act_mspc.nrow() < 1);
   Int pointIndex = -1;
   if (!nullPointingTable) {
@@ -1650,7 +1650,7 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
   // Convert to pixel coordinates
 }
 
-MDirection SDGrid::directionMeas(const ROMSPointingColumns& mspc, const Int& index){
+MDirection SDGrid::directionMeas(const MSPointingColumns& mspc, const Int& index){
   if (pointingDirCol_p == "TARGET") {
     return mspc.targetMeas(index);
   } else if (pointingDirCol_p == "POINTING_OFFSET") {
@@ -1677,7 +1677,7 @@ MDirection SDGrid::directionMeas(const ROMSPointingColumns& mspc, const Int& ind
 // for the cases, interpolation of the pointing direction requires 
 // when data sampling rate higher than the pointing data recording 
 // (e.g. fast OTF)
-MDirection SDGrid::directionMeas(const ROMSPointingColumns& mspc, const Int& index,
+MDirection SDGrid::directionMeas(const MSPointingColumns& mspc, const Int& index,
                                  const Double& time){
   //spline interpolation
   if (isSplineInterpolationReady) {
@@ -1709,7 +1709,7 @@ MDirection SDGrid::directionMeas(const ROMSPointingColumns& mspc, const Int& ind
   return interpolateDirectionMeas(mspc, time, index, index1, index2);
 }
 
-MDirection SDGrid::interpolateDirectionMeas(const ROMSPointingColumns& mspc,
+MDirection SDGrid::interpolateDirectionMeas(const MSPointingColumns& mspc,
                                             const Double& time,
                                             const Int& index,
                                             const Int& indx1,

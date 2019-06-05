@@ -1355,7 +1355,7 @@ MeasurementSet SingleDishOtfCal::selectMS(MeasurementSet const &ms)
 
   // Check the coordinates system type used to store the pointing measurements
   const MSPointing& tbl_pointing = ms.pointing();
-  ROMSPointingColumns pointing_cols(tbl_pointing);
+  MSPointingColumns pointing_cols(tbl_pointing);
   const ROArrayMeasColumn< MDirection >& direction_cols =  pointing_cols.directionMeasCol();
   const MeasRef<MDirection>& direction_ref_frame = direction_cols.getMeasRef();
   uInt ref_frame_type = direction_ref_frame.getType();

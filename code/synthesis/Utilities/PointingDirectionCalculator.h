@@ -268,13 +268,13 @@ private:
     casacore::CountedPtr<casacore::MeasurementSet> 		originalMS_;
     casacore::CountedPtr<casacore::MeasurementSet> 		selectedMS_;
     casacore::CountedPtr<casacore::MSPointing> 			pointingTable_;
-    casacore::CountedPtr<casacore::ROMSPointingColumns> 	pointingColumns_;
+    casacore::CountedPtr<casacore::MSPointingColumns> 	pointingColumns_;
     casacore::ROScalarMeasColumn<casacore::MEpoch> 		timeColumn_;
     casacore::ScalarColumn<casacore::Double> 			intervalColumn_;
     casacore::ScalarColumn<casacore::Int> 			antennaColumn_;
     casacore::String 						directionColumnName_;
 
-    casacore::MDirection (*accessor_)(	casacore::ROMSPointingColumns &pointingColumns,
+    casacore::MDirection (*accessor_)(	casacore::MSPointingColumns &pointingColumns,
             				casacore::uInt rownr);
 
     // conversion stuff

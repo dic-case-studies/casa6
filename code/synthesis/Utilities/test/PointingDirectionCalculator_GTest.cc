@@ -1037,8 +1037,8 @@ void MsEdit::writeDataToPointingTable(String MsName )
 
         // create the Smart Pointer in use. //
 
-        std::unique_ptr<casacore::ROMSPointingColumns> 
-                columnPointing( new casacore::ROMSPointingColumns( hPointingTable ));
+        std::unique_ptr<casacore::MSPointingColumns> 
+                columnPointing( new casacore::MSPointingColumns( hPointingTable ));
 
     //+
     // Listing  (Pointing) 
@@ -1250,8 +1250,8 @@ void  MsEdit::writeInterpolationTestDataOnPointingTable(Double dt, String MsName
 
         // create the Smart Pointer in use. //
 
-        std::unique_ptr<casacore::ROMSPointingColumns> 
-                columnPointing( new casacore::ROMSPointingColumns( hPointingTable ));
+        std::unique_ptr<casacore::MSPointingColumns> 
+                columnPointing( new casacore::MSPointingColumns( hPointingTable ));
 
     //+
     // Time Info
@@ -2318,8 +2318,8 @@ void DumpPointingTable(String MsName)
     // Get Column handle from Table  (Pointing)
     //  
 
-        std::unique_ptr<casacore::ROMSPointingColumns> 
-                columnPointing( new casacore::ROMSPointingColumns( hPointingTable ));
+        std::unique_ptr<casacore::MSPointingColumns> 
+                columnPointing( new casacore::MSPointingColumns( hPointingTable ));
 
     //+
     // Listing  (Pointing) 

@@ -95,7 +95,7 @@ void SDPosInterpolator::setup(const Vector<Vector<Double> >& time,
 }
 
 void SDPosInterpolator::setup(const VisBuffer& vb, const String& pointingDirCol_p) {
-  const ROMSPointingColumns& act_mspc = vb.msColumns().pointing();
+  const MSPointingColumns& act_mspc = vb.msColumns().pointing();
   auto check_col = [&](Bool isnull){
     if (isnull) {
       cerr << "No " << pointingDirCol_p << " column in POINTING table" << endl;
@@ -189,7 +189,7 @@ void SDPosInterpolator::setup(const VisBuffer& vb, const String& pointingDirCol_
 }
 
 void SDPosInterpolator::setup(const vi::VisBuffer2& vb, const String& pointingDirCol_p) {
-  const ROMSPointingColumns& act_mspc = vb.subtableColumns().pointing();
+  const MSPointingColumns& act_mspc = vb.subtableColumns().pointing();
   auto check_col = [&](Bool isnull){
     if (isnull) {
       cerr << "No " << pointingDirCol_p << " column in POINTING table" << endl;
@@ -353,7 +353,7 @@ void SDPosInterpolator::calcSplineCoeff(const Vector<Double>& time,
   }
 }
 
-MDirection SDPosInterpolator::interpolateDirectionMeasSpline(const ROMSPointingColumns& mspc,
+MDirection SDPosInterpolator::interpolateDirectionMeasSpline(const MSPointingColumns& mspc,
                                                              const Double& time,
                                                              const Int& index,
                                                              const Int& antid) {

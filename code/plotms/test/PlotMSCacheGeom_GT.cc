@@ -89,7 +89,7 @@ TEST_F( PlotMSCacheTest, testObsGeom) {
 
 	// Load expected/needed values from MeasurementSet
 	// main table columns
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Matrix<Double> uvw(msmc.uvw().getColumn());
 	Int ddID(msmc.dataDescId().get(0)),
 		fieldId(msmc.fieldId().get(0));

@@ -1911,7 +1911,7 @@ Bool Imager::pbguts(ImageInterface<Float>& inImage,
 	myPBp = new PBMath(whichPB);
       }
       else{
-	ROMSAntennaColumns ac(ms_p->antenna());
+	MSAntennaColumns ac(ms_p->antenna());
 	Double dishDiam=ac.dishDiameter()(0);
 	myPBp= new PBMath(dishDiam, true, qFreq);
 
@@ -4170,7 +4170,7 @@ Bool Imager::makePBImage(PBMath& pbMath, ImageInterface<Float>& pbImage){
 
   return true;
 }
-void Imager::transferHistory(LoggerHolder& imagelog, ROMSHistoryColumns& msHis){
+void Imager::transferHistory(LoggerHolder& imagelog, MSHistoryColumns& msHis){
   LogIO os(LogOrigin("imager", "transferHistory"));
   LogSink& sink = imagelog.sink();
   const ScalarColumn<Double> &time_col = msHis.time();
@@ -4439,7 +4439,7 @@ ATerm* Imager::createTelescopeATerm(MeasurementSet& ms, const Bool& isATermOn)
 
   if (!isATermOn) return new NoOpATerm();
 
-  ROMSObservationColumns msoc(ms.observation());
+  MSObservationColumns msoc(ms.observation());
   String ObsName=msoc.telescopeName()(0);
   if ((ObsName == "EVLA") || (ObsName == "VLA"))
     return new EVLAAperture();

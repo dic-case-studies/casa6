@@ -997,12 +997,12 @@ void CTPatchedInterp::makeInterpolators() {
 
 void CTPatchedInterp::setFldMap(const MSField& msfld) {
   
-  ROMSFieldColumns fcol(msfld);
+  MSFieldColumns fcol(msfld);
   setFldMap(fcol);
 
 }
 
-void CTPatchedInterp::setFldMap(const ROMSFieldColumns& fcol) {
+void CTPatchedInterp::setFldMap(const MSFieldColumns& fcol) {
 
    // Set the default fldmap
    setDefFldMap();

@@ -55,9 +55,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //Vector<Int> ddId;
     //Vector<Int> fldId;
     
-    ROMSFieldColumns fieldCol(ms.field());
-    ROMSDataDescColumns ddCol(ms.dataDescription());
-    ROMSSpWindowColumns spwCol(ms.spectralWindow());
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
+    MSSpWindowColumns spwCol(ms.spectralWindow());
     ROScalarMeasColumn<MEpoch> timeCol(ms, MS::columnName(MS::TIME));
     Vector<uInt>  uniqIndx;
     uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
@@ -192,8 +192,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     start=-1;
     nchan=-1;
-    ROMSFieldColumns fieldCol(ms.field());
-    ROMSDataDescColumns ddCol(ms.dataDescription());
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
 	Vector<Int> dataDescSel=MSDataDescIndex(ms.dataDescription()).matchSpwId(spw);
 	//cerr << "dataDescSel " << dataDescSel << endl;
 	if(dataDescSel.nelements()==0)
@@ -202,7 +202,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
 	Vector<Int> ddId;
     ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
-    ROMSSpWindowColumns spwCol(ms.spectralWindow());
+    MSSpWindowColumns spwCol(ms.spectralWindow());
     Vector<Double> ddIdD(ddId.shape());
     convertArray(ddIdD, ddId);
     ddIdD+= 1.0; //no zero id
@@ -334,9 +334,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Vector<Int> fldId;
     ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
     ScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
-    ROMSFieldColumns fieldCol(ms.field());
-    ROMSDataDescColumns ddCol(ms.dataDescription());
-    ROMSSpWindowColumns spwCol(ms.spectralWindow());
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
+    MSSpWindowColumns spwCol(ms.spectralWindow());
     ROScalarMeasColumn<MEpoch> timeCol(ms, MS::columnName(MS::TIME));
     Vector<Double> ddIdD(ddId.shape());
     convertArray(ddIdD, ddId);
@@ -505,9 +505,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Vector<Int> fldId;
     ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
     ScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
-    ROMSFieldColumns fieldCol(ms.field());
-    ROMSDataDescColumns ddCol(ms.dataDescription());
-    ROMSSpWindowColumns spwCol(ms.spectralWindow());
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
+    MSSpWindowColumns spwCol(ms.spectralWindow());
     ROScalarMeasColumn<MEpoch> timeCol(ms, MS::columnName(MS::TIME));
     Vector<Double> ddIdD(ddId.shape());
     convertArray(ddIdD, ddId);
@@ -666,7 +666,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   Vector<String> MSUtil::getSpectralFrames(Vector<MFrequency::Types>& types, const MeasurementSet& ms)
   {
 	  Vector<String> retval;
-	  Vector<Int> typesAsInt=ROMSSpWindowColumns(ms.spectralWindow()).measFreqRef().getColumn();
+	  Vector<Int> typesAsInt=MSSpWindowColumns(ms.spectralWindow()).measFreqRef().getColumn();
 	  if(ms.nrow()==Table(ms.getPartNames()).nrow()){
 		  types.resize(typesAsInt.nelements());
 		  for (uInt k=0; k < types.nelements(); ++k)
@@ -679,7 +679,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		  uInt nTimes=GenSort<Int>::sort (ddId, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 		  ddId.resize(nTimes, true);
 		  Vector<Int> spwids(nTimes);
-		  Vector<Int> spwInDD=ROMSDataDescColumns(ms.dataDescription()).spectralWindowId().getColumn();
+		  Vector<Int> spwInDD=MSDataDescColumns(ms.dataDescription()).spectralWindowId().getColumn();
 		  for (uInt k=0; k < nTimes; ++k)
 			  spwids[k]=spwInDD[ddId[k]];
 

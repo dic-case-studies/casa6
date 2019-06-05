@@ -116,7 +116,7 @@ EVLASwPow::EVLASwPow(VisSet& vs) :
   startChanList().set(0);
 
   // Get spw total bandwidths
-  const ROMSSpWindowColumns& spwcols = vs.iter().msColumns().spectralWindow();
+  const MSSpWindowColumns& spwcols = vs.iter().msColumns().spectralWindow();
   effChBW_.resize(nSpw());
   for (Int ispw=0;ispw<nSpw();++ispw) 
     effChBW_(ispw)=Vector<Double>(spwcols.effectiveBW()(0))(0);
@@ -149,7 +149,7 @@ EVLASwPow::EVLASwPow(String msname,Int MSnAnt,Int MSnSpw) :
 
   // Get spw total bandwidths
   MSColumns mscol(ms);
-  const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
+  const MSSpWindowColumns& spwcols = mscol.spectralWindow();
   effChBW_.resize(nSpw());
   for (Int ispw=0;ispw<nSpw();++ispw) 
     effChBW_(ispw)=Vector<Double>(spwcols.effectiveBW()(0))(0);
@@ -182,7 +182,7 @@ EVLASwPow::EVLASwPow(const MSMetaInfoForCal& msmc) :
 
   // Get spw total bandwidths
   MSColumns mscol(ms);
-  const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
+  const MSSpWindowColumns& spwcols = mscol.spectralWindow();
   effChBW_.resize(nSpw());
   for (Int ispw=0;ispw<nSpw();++ispw) 
     effChBW_(ispw)=Vector<Double>(spwcols.effectiveBW()(0))(0);

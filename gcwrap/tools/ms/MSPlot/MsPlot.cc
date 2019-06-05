@@ -257,7 +257,7 @@ MsPlot::setupConvertFn( const String& axisStr, const Char& axis  )
 	//# class constructors.
 
 	//# Set the antenna information in the MSDerivedValue class.
-	const ROMSAntennaColumns & antColumns = msColumns->antenna();
+	const MSAntennaColumns & antColumns = msColumns->antenna();
    
 	//# this is the average of all antennas. Use observatory position 
 	//# instead?
@@ -442,7 +442,7 @@ MsPlot::getMeterToKlambdaConvertValue( uInt spwId )
 
     //# Get the spectral window column since it has the REF_FREQ value
     //# in it.
-    //#ROMSSpWindowColumns spwc(itsSelectedMS.spectralWindow());
+    //#MSSpWindowColumns spwc(itsSelectedMS.spectralWindow());
     //#ScalarColumn<Double> refFrequencies = spwc.refFrequency();
   
 
@@ -613,8 +613,8 @@ MsPlot::initAllLists()
      }
 
      //# Find out what we have for polarizations.
-     ROMSDataDescColumns dataDescColumn( itsMS->dataDescription() );
-     ROMSPolarizationColumns polarColumn( itsMS->polarization());
+     MSDataDescColumns dataDescColumn( itsMS->dataDescription() );
+     MSPolarizationColumns polarColumn( itsMS->polarization());
 
      //# Reserve some memory and set class vars
      itsMaxPolId = polarColumn.nrow();
@@ -723,7 +723,7 @@ MsPlot::getAllFieldNames()
    }
 
    //# Gets the field column of the MS
-   ROMSFieldColumns fieldColumn( itsMS->field() );
+   MSFieldColumns fieldColumn( itsMS->field() );
    uInt numFields = fieldColumn.nrow();
    if (numFields==0 )
    {
@@ -761,7 +761,7 @@ MsPlot::getAllAntennaNames()
 
      //# Get the antenna column from the MS
      //#MSColumns antColumn( *itsMS );
-     const ROMSAntennaColumns & antColumn  = itsMS->antenna();
+     const MSAntennaColumns & antColumn  = itsMS->antenna();
      //#const ScalarColumn<String> antNames = antColumn.name();
      uInt numAnts= antColumn.position().nrow();
      
@@ -801,7 +801,7 @@ MsPlot::getAllSpwsAndFreqs()
     }
     
     //# Find out how many SPWs we have in this MS
-    ROMSSpWindowColumns spwColumn(itsSelectedMS.spectralWindow());
+    MSSpWindowColumns spwColumn(itsSelectedMS.spectralWindow());
     itsMaxSpwId = spwColumn.nrow();
     itsUsedSpws.resize( itsMaxSpwId );
     itsUsedSpws.set( false );
@@ -811,7 +811,7 @@ MsPlot::getAllSpwsAndFreqs()
     //# SPW or not.  We may have more entries in the SPW column the
     //# spectral windows used. For example, if the only SPWs are 2 and 3
     //# we will also have rows 0 and 1.
-    ROMSDataDescColumns dataDescColumn(itsMS->dataDescription());
+    MSDataDescColumns dataDescColumn(itsMS->dataDescription());
     MSRange msRange( *itsMS );
     //cout << " be careful a crash here !+++++++++" << endl;
     Record rc = msRange.range(MSS::DATA_DESC_ID);
@@ -3411,7 +3411,7 @@ MsPlot::setInputTable( const String& xcolumn, const String& ycolumn )
 	  //cout << "Ave Time: " << itsAveTime << endl;
 	  //cout << "Data Column: " << itsDataColumn << endl;
 	  
-         ROMSMainColumns msColumn(itsSelectedMS);
+         MSMainColumns msColumn(itsSelectedMS);
          Vector<Int> ant1 = msColumn.antenna1().getColumn();
          Vector<Int> ant2 = msColumn.antenna2().getColumn();
          uInt nrrec = ant1.nelements();
@@ -4644,7 +4644,7 @@ MsPlot::createSaQL(  const String& x, const String& y,
          Int nAnt = 2;
          //if (msa) nAnt = msa->nAnt();
          MSColumns msColumn( itsSelectedMS );
-         const ROMSAntennaColumns & antColumns = msColumn.antenna();
+         const MSAntennaColumns & antColumns = msColumn.antenna();
          nAnt = antColumns.nrow();
          //looks like that a1<=a2 always, so
          //bl = nAnt * a1 - (a1 * (a1 - 1)) / 2 + a2 - a1;
@@ -5095,7 +5095,7 @@ MsPlot::getTaQL( const String& axisStr, const String& column,
       //#     And then want to look at the same plot, the baseline 5-8
       //#     should retain the same baseline number.....
       MSColumns msColumn( itsSelectedMS );
-      const ROMSAntennaColumns & antColumns = msColumn.antenna();
+      const MSAntennaColumns & antColumns = msColumn.antenna();
       uInt numAnts = antColumns.nrow();
    
       //# Baseline number is calculated as:
@@ -5625,7 +5625,7 @@ MsPlot::validateCorrAndStokes( Vector<Vector<String> >& names )
       ids[polId].resize( numIds, true );
       names[polId].resize( numIds );
       
-      ROMSPolarizationColumns polarColumn( itsMS->polarization());
+      MSPolarizationColumns polarColumn( itsMS->polarization());
       const Vector<Int> corrType = polarColumn.corrType()(polId);
       for( uInt k=0; k < numIds; k++ ){
           Int corr = ids[polId][k]-1;
@@ -7007,7 +7007,7 @@ MsPlot::updatePlotOptions( const String& title,
     }
     spwids.resize(k, true);
  
-    ROMSDataDescColumns dataDescColumn(itsMS->dataDescription());
+    MSDataDescColumns dataDescColumn(itsMS->dataDescription());
     Vector<Int> spwIds = dataDescColumn.spectralWindowId().getColumn();
     //cout << "spwIds=" << spwIds << endl;
 

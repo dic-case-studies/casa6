@@ -322,7 +322,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       ////Channel selection 'flags' need for when using old VI/VB
       //set up Cube for storing the 'flags' for all MSes
       //find max no. channels from the current ms 
-      const ROMSSpWindowColumns spwc(thisms.spectralWindow());
+      const MSSpWindowColumns spwc(thisms.spectralWindow());
       uInt nspw = spwc.nrow();
       const ScalarColumn<Int> spwNchans(spwc.numChan());
       Vector<Int> nchanvec = spwNchans.getColumn();
@@ -1850,7 +1850,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // else
     //   awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP);
 
-    ROMSObservationColumns msoc(mss4vi_p[0].observation());
+    MSObservationColumns msoc(mss4vi_p[0].observation());
     String telescopeName=msoc.telescopeName()(0);
     CountedPtr<ConvolutionFunction> awConvFunc = AWProjectFT::makeCFObject(telescopeName, 
 									   aTermOn,
@@ -1940,7 +1940,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     if (!isATermOn) return new NoOpATerm();
     
-    ROMSObservationColumns msoc(ms.observation());
+    MSObservationColumns msoc(ms.observation());
     String ObsName=msoc.telescopeName()(0);
     if ((ObsName == "EVLA") || (ObsName == "VLA"))
       return new EVLAAperture();
@@ -2727,7 +2727,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  
 	  if (doDefaultVP) {
 	    
-	    ROMSAntennaColumns ac(mss4vi_p[0].antenna());
+	    MSAntennaColumns ac(mss4vi_p[0].antenna());
 	    Double dishDiam=ac.dishDiameter()(0);
 	    if(!allEQ(ac.dishDiameter().getColumn(), dishDiam))
 	      os << LogIO::WARN

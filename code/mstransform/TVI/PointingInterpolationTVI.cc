@@ -47,7 +47,7 @@ PI_TVI::PointingInterpolationTVI(ViImplementation2 *inputVII) :
 	inputVII->ms().pointing().throwIfNull();
 
 	// Input MS / pointing direction units and ref
-	ROMSPointingColumns mspc(getVii()->ms().pointing());
+	MSPointingColumns mspc(getVii()->ms().pointing());
 	auto dirUnits = mspc.directionMeasCol().measDesc().getUnits();
 	lonUnit_ = dirUnits[0];
 	latUnit_ = dirUnits[1];
@@ -401,7 +401,7 @@ void PI_Interp::computeSplineCoeffs(const PointingTimes& time,
 
 
 Vector<Double> PI_Interp::pointingDir(int antId, double timeStamp) const {
-//const ROMSPointingColumns& mspc,
+//const MSPointingColumns& mspc,
 //const Double& time,
 //const Int& index,
 //const Int& antid) {

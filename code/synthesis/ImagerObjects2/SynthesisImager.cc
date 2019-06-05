@@ -1280,7 +1280,7 @@ using namespace casa::vi;
     
     if (!isATermOn) return new refim::NoOpATerm();
     
-    ROMSObservationColumns msoc(ms.observation());
+    MSObservationColumns msoc(ms.observation());
     String ObsName=msoc.telescopeName()(0);
     if ((ObsName == "EVLA") || (ObsName == "VLA"))
       return new refim::EVLAAperture();

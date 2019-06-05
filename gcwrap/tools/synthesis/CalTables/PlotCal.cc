@@ -1630,8 +1630,8 @@ Int PlotCal::multiTables(const Table& tablein,
       Vector<String> fieldNames;
       Vector<String> antNames;
       MeasurementSet ms(msName_p);
-      fieldNames = ROMSFieldColumns(ms.field()).name().getColumn();
-      antNames = ROMSAntennaColumns(ms.antenna()).name().getColumn();
+      fieldNames = MSFieldColumns(ms.field()).name().getColumn();
+      antNames = MSAntennaColumns(ms.antenna()).name().getColumn();
      
       if (calType_p.contains("M")) {
 	Int nant=antNames.nelements();
@@ -1868,7 +1868,7 @@ Int PlotCal::multiTables(const Table& tablein,
 
     if (isNCT_p) {
       // Direct from the NCT
-      ArrayColumn<Double> chanfreqcol(ROMSSpWindowColumns(ct_p.spectralWindow()).chanFreq());
+      ArrayColumn<Double> chanfreqcol(MSSpWindowColumns(ct_p.spectralWindow()).chanFreq());
 
       startFreq_p.resize(nCalDesc_p);
       stepFreq_p.resize(nCalDesc_p);
@@ -1899,7 +1899,7 @@ Int PlotCal::multiTables(const Table& tablein,
 	throw(AipsError("MS is not available to get frequencies for freq axis. Please plot channels instead."));
       
       MeasurementSet ms(msName_p);
-      ArrayColumn<Double> chanfreqcol(ROMSSpWindowColumns(ms.spectralWindow()).chanFreq());
+      ArrayColumn<Double> chanfreqcol(MSSpWindowColumns(ms.spectralWindow()).chanFreq());
 
       startFreq_p.resize(nCalDesc_p);
       stepFreq_p.resize(nCalDesc_p);

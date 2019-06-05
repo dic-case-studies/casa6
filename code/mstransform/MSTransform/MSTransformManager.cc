@@ -4933,7 +4933,7 @@ void MSTransformManager::checkCorrelatorPreaveraging()
   if (hanningSmooth_p || channelAverage_p)
   {
     auto spwTable = inputMs_p->spectralWindow();
-    ROMSSpWindowColumns spwColumns(spwTable);
+    MSSpWindowColumns spwColumns(spwTable);
     if (spwTable.tableDesc().isColumn("SDM_WINDOW_FUNCTION") &&
         spwTable.tableDesc().columnDescSet().isDefined("SDM_WINDOW_FUNCTION") &&
         spwTable.tableDesc().isColumn("SDM_NUM_BIN") &&

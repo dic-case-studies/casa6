@@ -1269,7 +1269,7 @@ Double BJonesPoly::meanFrequency (const Vector<Int>& spwid)
   if (!vs_p) throw(AipsError("Error in BJonesPoly::meanFrequency"));
 
   const MSColumns& mscol(vs_p->iter().msColumns());
-  const ROMSSpWindowColumns& spwcol(mscol.spectralWindow());
+  const MSSpWindowColumns& spwcol(mscol.spectralWindow());
   const ArrayColumn<Double>& frequencies(spwcol.chanFreq());
   const ScalarColumn<Double>& totalbw(spwcol.totalBandwidth());
 
@@ -1304,7 +1304,7 @@ String BJonesPoly::freqGrpName (const Int& spwId)
   if (!vs_p) throw(AipsError("Error in BJonesPoly::freqGrpName"));
 
   const MSColumns& mscol(vs_p->iter().msColumns());
-  const ROMSSpWindowColumns& spwCol(mscol.spectralWindow());
+  const MSSpWindowColumns& spwCol(mscol.spectralWindow());
 
   return spwCol.freqGroupName().asString(spwId);
 }
@@ -1344,14 +1344,14 @@ Vector<Double> BJonesPoly::freqAxis (const Int& spwId)
   Vector<Double> freqVal;
   if (vs_p) {
     const MSColumns& mscol(vs_p->iter().msColumns());
-    const ROMSSpWindowColumns& spwCol(mscol.spectralWindow());
+    const MSSpWindowColumns& spwCol(mscol.spectralWindow());
     
     spwCol.chanFreq().get(spwId, freqVal);
   }
   else {
     // Try msmc...
     const MSColumns& mscol(*(msmc().msmd().getMS()));
-    const ROMSSpWindowColumns& spwCol(mscol.spectralWindow());
+    const MSSpWindowColumns& spwCol(mscol.spectralWindow());
     spwCol.chanFreq().get(spwId, freqVal);
   }
 

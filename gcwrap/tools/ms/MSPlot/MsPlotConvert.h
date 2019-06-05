@@ -530,7 +530,7 @@ class MSPlotConvertHourangle : public TPConvertBase
        itsColumns = columns;
        
        // Set the antenna info in the casacore::MS Derived
-       const casacore::ROMSAntennaColumns & antColumns = itsColumns->antenna();
+       const casacore::MSAntennaColumns & antColumns = itsColumns->antenna();
 
        // this is the average of all antennas. Use observatory 
        // position instead?
@@ -725,7 +725,7 @@ class MSPlotConvertParallacticangle : public TPConvertBase
        lastFieldId = -1;
 
        // Set the antenna info in the casacore::MS Derived
-       const casacore::ROMSAntennaColumns & antColumns = itsColumns->antenna();
+       const casacore::MSAntennaColumns & antColumns = itsColumns->antenna();
 
        // this is the average of all antennas. Use observatory 
        // position instead?

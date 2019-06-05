@@ -1765,7 +1765,7 @@ void VLAFiller::logChanges(IterationStatus& counts) {
   }
   const Int subArray = arrayId()(nrow() - 1);
   {
-    const ROMSAntennaColumns& ant = antenna();
+    const MSAntennaColumns& ant = antenna();
     const uInt nAnt = itsRecord.RCA().nAntennas();
     Bool changed = (nAnt != counts.lastAnt[subArray].nelements());
     {
@@ -1803,9 +1803,9 @@ void VLAFiller::logChanges(IterationStatus& counts) {
     itsLog << LogIO::POST;
   }
   {
-    const ROMSDataDescColumns& dd = dataDescription();
-    const ROMSSpWindowColumns& spw = spectralWindow();
-    const ROMSPolarizationColumns& pol = polarization();
+    const MSDataDescColumns& dd = dataDescription();
+    const MSSpWindowColumns& spw = spectralWindow();
+    const MSPolarizationColumns& pol = polarization();
     const Block<Int>& thisDataId = itsDataId[subArray];
     Block<Int>& lastSpw = counts.lastSpw[subArray];
     Block<Int>& lastPol = counts.lastPol[subArray];
@@ -1865,7 +1865,7 @@ void VLAFiller::logChanges(IterationStatus& counts) {
     }
   }
   {
-    const ROMSFieldColumns& fld = field();
+    const MSFieldColumns& fld = field();
     const Int thisFld = itsFldId[subArray];
     if (counts.lastFld[subArray] != thisFld) {
       counts.lastFld[subArray] = thisFld;

@@ -671,7 +671,7 @@ class Imager
 
   //Helper function to transfer history table to a logger holder
   //which can be stored in images
-  static void transferHistory(casacore::LoggerHolder& imageLog, casacore::ROMSHistoryColumns& msHis);
+  static void transferHistory(casacore::LoggerHolder& imageLog, casacore::MSHistoryColumns& msHis);
 
 protected:
 
@@ -857,7 +857,7 @@ protected:
                       casacore::Vector<casacore::Vector<casacore::Double> >& fluxUsed, // mainly for logging purpose
                       casacore::Vector<casacore::String>& tempCLs,
                       casacore::Vector<casacore::Vector<casacore::MFrequency> >& mfreqs,
-                      const casacore::ROMSSpWindowColumns& spwcols, const casacore::uInt nspws,
+                      const casacore::MSSpWindowColumns& spwcols, const casacore::uInt nspws,
                       const casacore::Vector<casacore::Int>& selToRawSpwIds, const casacore::Bool chanDep);
   // Returns whether it might have made any visibilities.
   casacore::Bool sjy_make_visibilities(casacore::TempImage<casacore::Float> *tmodimage, casacore::LogIO& os,
@@ -909,7 +909,7 @@ protected:
                                   casacore::Vector<casacore::Double>& fluxUsed, 
 				  casacore::Vector<casacore::Double>& freq, 
 				  casacore::Vector<casacore::Double>& scale, const casacore::String& model,
-                                  const casacore::ROMSSpWindowColumns& spwcols,
+                                  const casacore::MSSpWindowColumns& spwcols,
                                   //const casacore::Int rawspwid, const casacore::Bool chanDep,
                                   const casacore::Vector<casacore::Int> rawspwids, const casacore::Bool chanDep,
                                   const casacore::Vector<casacore::Vector<casacore::MFrequency> >& mfreqs,

@@ -260,7 +260,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // at some point we may need the rest refrequencies for the
         // misc sources...
         //
-        //ROMSSourceColumns src(itsMS->source( ));
+        //MSSourceColumns src(itsMS->source( ));
         //cout << "#######>>>> source ids:\n" << src.sourceId( ).getColumn( ) << endl;
         //cout << "#######>>>> rest frequencies per id for each spectral window:\n" << src.restFrequency( ).getColumn( ) << endl;
         //

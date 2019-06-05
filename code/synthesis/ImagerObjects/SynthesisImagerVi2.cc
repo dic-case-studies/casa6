@@ -590,12 +590,12 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
         } else if (impars.phaseCenterFieldId >= 0) {
           // FIELD_ID
           auto const msobj = mss_p[0];
-          ROMSFieldColumns msfield(msobj->field());
+          MSFieldColumns msfield(msobj->field());
           phaseCenter_p=msfield.phaseDirMeas(impars.phaseCenterFieldId);
         } else {
           // use default FIELD_ID (0)
           auto const msobj = mss_p[0];
-          ROMSFieldColumns msfield(msobj->field());
+          MSFieldColumns msfield(msobj->field());
           phaseCenter_p=msfield.phaseDirMeas(0);
         }
 
@@ -1755,7 +1755,7 @@ void SynthesisImagerVi2::unlockMSs()
     // else
     //   awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP);
 
-    ROMSObservationColumns msoc((mss_p[0])->observation());
+    MSObservationColumns msoc((mss_p[0])->observation());
     String telescopeName=msoc.telescopeName()(0);
     CountedPtr<refim::ConvolutionFunction> awConvFunc = refim::AWProjectFT::makeCFObject(telescopeName, 
 									   aTermOn,
@@ -2459,7 +2459,7 @@ void SynthesisImagerVi2::unlockMSs()
 	  
 	  if (doDefaultVP) {
 	    
-	    ROMSAntennaColumns ac(mss_p[0]->antenna());
+	    MSAntennaColumns ac(mss_p[0]->antenna());
 	    Double dishDiam=ac.dishDiameter()(0);
 	    if(!allEQ(ac.dishDiameter().getColumn(), dishDiam))
 	      os << LogIO::WARN

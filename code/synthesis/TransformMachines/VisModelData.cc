@@ -679,7 +679,7 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
 	{
 	//Get the row for the model 
         Int row=theMs.source().keywordSet().asInt(theKey);
-	//ROMSSourceColumns srcCol(theMs.source());
+	//MSSourceColumns srcCol(theMs.source());
      
 	ScalarColumn<TableRecord> scol(theMs.source(), "SOURCE_MODEL");
 	scol.get(row, theRec);
@@ -735,7 +735,7 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
       theMS.rwKeywordSet().removeField(elkey);
     Int row=-1;
     //Prefer the Source table first    
-    ROMSFieldColumns fCol(theMS.field());
+    MSFieldColumns fCol(theMS.field());
     if(Table::isReadable(theMS.sourceTableName()) && (theMS.source().nrow() > 0) &&  (!fCol.sourceId().isNull()) && (fCol.sourceId().get(fieldIds[0]) != -1) ){
       //
       row=0;
@@ -1460,7 +1460,7 @@ Int VisModelData::firstSourceRowRecord(const Int field, const MeasurementSet& th
     Int row=-1;
     
     //Prefer the Source table first    
-    ROMSFieldColumns fCol(theMS.field());
+    MSFieldColumns fCol(theMS.field());
     if(Table::isReadable(theMS.sourceTableName()) && (theMS.source().nrow() > 0) &&  (!fCol.sourceId().isNull()) && (fCol.sourceId().get(field) != -1) ){
     
       const MSSource& mss=theMS.source();

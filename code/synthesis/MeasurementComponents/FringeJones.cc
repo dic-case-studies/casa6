@@ -1852,7 +1852,7 @@ void CTRateAwareTimeInterp1::applyPhaseRate(Bool single)
 
   Int ispw=mcols_p->spwId()(0);  // should only be one (sliced ct_)!
   MSSpectralWindow msSpw(ct_.spectralWindow());
-  ROMSSpWindowColumns msCol(msSpw);
+  MSSpWindowColumns msCol(msSpw);
   //Vector<Double> refFreqs;
   //msCol.refFrequency().getColumn(refFreqs,True);
 
@@ -1959,7 +1959,7 @@ void FringeJones::setApply(const Record& apply) {
     //  from the CalTable
     // TBD:  revise as per refFreq decisions
     MSSpectralWindow msSpw(ct_->spectralWindow());
-    ROMSSpWindowColumns msCol(msSpw);
+    MSSpWindowColumns msCol(msSpw);
     msCol.refFrequency().getColumn(KrefFreqs_,true);
     KrefFreqs_/=1.0e9;  // in GHz
 
@@ -1975,7 +1975,7 @@ void FringeJones::setApply(const Record& apply) {
 
     // Use the "physical" (centroid) frequency, per spw 
     MSSpectralWindow msSpw(ct_->spectralWindow());
-    ROMSSpWindowColumns msCol(msSpw);
+    MSSpWindowColumns msCol(msSpw);
     Vector<Double> chanfreq;
     KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
     for (Int ispw=0;ispw<nSpw();++ispw) {
@@ -2201,7 +2201,7 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
     Vector<Double> myRefFreqs;
     // Cannot assume we have a calibration table (ct_) in this method.
     // MSSpectralWindow msSpw(ct_->spectralWindow());
-    /// ROMSSpWindowColumns spwCol(msSpw);
+    /// MSSpWindowColumns spwCol(msSpw);
     // spwCol.refFrequency().getColumn(myRefFreqs, true);
     //Double ref_freq = myRefFreqs(currSpw());
     //Double ref_freq = sdbs.freqs()(0);
@@ -2416,7 +2416,7 @@ void FringeJones::applyRefAnt() {
   Matrix<Double> xyz;
   if (msName()!="<noms>") {
     MeasurementSet ms(msName());
-    ROMSAntennaColumns msant(ms.antenna());
+    MSAntennaColumns msant(ms.antenna());
     msant.position().getColumn(xyz);
   }
   else {

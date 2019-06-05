@@ -21,7 +21,7 @@ using namespace casacore;
 namespace casa {
 namespace vi {
 
-PointingColumns::PointingColumns (const ROMSPointingColumns & pointingColumns)
+PointingColumns::PointingColumns (const MSPointingColumns & pointingColumns)
 : pointingColumns_p (pointingColumns)
 {}
 

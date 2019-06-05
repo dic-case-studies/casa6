@@ -398,7 +398,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	// Use the selectedMS to generate time selection strings per part
 	//
 	//	Double Tint;
-	ROMSMainColumns mainCols(selectedMS);
+	MSMainColumns mainCols(selectedMS);
 	Vector<uInt> rowNumbers = selectedMS.rowNumbers();
 	Int nRows=selectedMS.nrow(), 
 	  dRows=nRows/npart;
@@ -2157,7 +2157,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       
     if( phaseCenterFieldId != -1 )
       {
-	ROMSFieldColumns msfield(msobj.field());
+	MSFieldColumns msfield(msobj.field());
         if(phaseCenterFieldId == -2) // the case for  phasecenter=''
           {
 	    if(trackSource){
@@ -2529,7 +2529,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     MDirection phaseCenterToUse = phaseCenter;
     if( phaseCenterFieldId != -1 )
       {
-	ROMSFieldColumns msfield(msobj.field());
+	MSFieldColumns msfield(msobj.field());
 	phaseCenterToUse=msfield.phaseDirMeas( phaseCenterFieldId ); 
       }
     // Setup Phase center if it is specified only by field id.

@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
 TEST_F( PlotMSCacheTest, testFreqFrame) {
 	// Test frequency conversion transformations
 	// Load values from MeasurementSet main table
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	Int fieldID(msmc.fieldId().get(0)); // for phasedir
 	Int obsID(msmc.observationId().get(0)); // for phasedir
@@ -130,7 +130,7 @@ TEST_F( PlotMSCacheTest, testFreqFrame) {
 TEST_F( PlotMSCacheTest, testRestFreq) {
 	// Test velocity rest frequency options
 	// Load values from MeasurementSet main table
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	// values from subtables for freq conversion
 	MSColumns mscol(sortedMS);
@@ -173,7 +173,7 @@ TEST_F( PlotMSCacheTest, testRestFreq) {
 TEST_F( PlotMSCacheTest, testVelDef) {
 	// Test velocity definition options
 	// Load values from MeasurementSet main table
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	// values from subtables for freq conversion
 	MSColumns mscol(sortedMS);
@@ -223,7 +223,7 @@ TEST_F( PlotMSCacheTest, testPhaseShift) {
 	mssSetData2(sortedMS, selMS, "", "", "",
 		"", "", "", "", "", scanExpr, "", "", "", "");
 	// Load values from MeasurementSet main table
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Matrix<Double> uvw(msmc.uvw().getColumn());
 	Cube<Complex> visData(msmc.data().getColumn());
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq

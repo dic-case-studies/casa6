@@ -89,7 +89,7 @@ TEST_F( PlotMSCacheTest, testMetadata) {
 	ASSERT_NE(nullptr, cache);  // make sure we have a cache
 
 	// Load expected values from MeasurementSet main table columns
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Int expScan(msmc.scanNumber().get(0)),
 		expField(msmc.fieldId().get(0));
 	Double expTime(msmc.time().get(0)),

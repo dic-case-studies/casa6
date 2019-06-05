@@ -114,7 +114,7 @@ void PlotMSAtm::setUpCalTable(casacore::String filename,
 void PlotMSAtm::getMSTimes() {
     // unique times in TIME column of ms
     // ms could be original or selected ms
-    ROMSMainColumns msmc(*ms_);
+    MSMainColumns msmc(*ms_);
     casacore::Vector<casacore::Double> times = msmc.time().getColumn();
     getUniqueTimes(times);
 }
@@ -144,7 +144,7 @@ void PlotMSAtm::getUniqueTimes(casacore::Vector<casacore::Double> alltimes) {
 void PlotMSAtm::getMSFields() {
     // unique fields in FIELD_ID column of ms
     // needed later for elevation calculation for airmass
-    ROMSMainColumns ctmc(*selms_);
+    MSMainColumns ctmc(*selms_);
     casacore::Vector<casacore::Int> fields = ctmc.fieldId().getColumn();
     getUniqueFields(fields);
 }
@@ -538,7 +538,7 @@ casacore::Double PlotMSAtm::getMeanScantime() {
     // get mean timestamp from selected table
     casacore::Vector<casacore::Double> times;
     if (isMS_) {
-        ROMSMainColumns msmc(*selms_);
+        MSMainColumns msmc(*selms_);
         times = msmc.time().getColumn();
     } else {
         ROCTMainColumns ctmc(*selct_);

@@ -2123,7 +2123,7 @@ Vector<MDirection>& VisBuffer::fillDirection1()
   direction1OK_p = true;
   firstDirection1OK_p=true;
   direction1_p.resize(antenna1_p.nelements()); // could also use nRow()
-  const ROMSPointingColumns & mspc = msColumns().pointing();
+  const MSPointingColumns & mspc = msColumns().pointing();
   lastPointTableRow_p = mspc.pointingIndex(antenna1()(0),
                                            time()(0), lastPointTableRow_p);
   if (visIter_p->allBeamOffsetsZero() && lastPointTableRow_p < 0) {
@@ -2187,7 +2187,7 @@ MDirection& VisBuffer::fillFirstDirection1()
   
   //feed1_pa();
   firstDirection1OK_p=true;
-  const ROMSPointingColumns & mspc = msColumns().pointing();
+  const MSPointingColumns & mspc = msColumns().pointing();
   lastPointTableRow_p = mspc.pointingIndex(antenna1()(0),
                                            time()(0), lastPointTableRow_p);
   if (visIter_p->allBeamOffsetsZero() && lastPointTableRow_p < 0) {
@@ -2239,7 +2239,7 @@ Vector<MDirection>& VisBuffer::fillDirection2()
   feed2_pa();
   direction2OK_p = true;
   direction2_p.resize(antenna2_p.nelements()); // could also use nRow()
-  const ROMSPointingColumns & mspc = msColumns().pointing();
+  const MSPointingColumns & mspc = msColumns().pointing();
   lastPointTableRow_p = mspc.pointingIndex(antenna2()(0), time()(0), lastPointTableRow_p);
   if (visIter_p->allBeamOffsetsZero() && lastPointTableRow_p < 0) {
     // if no true pointing information is found

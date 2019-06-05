@@ -644,7 +644,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
        Vector<uInt>  uniqIndx;
        uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
        uInt nAnt=msc.antenna().nrow();
-       const ROMSPointingColumns& mspc=msc.pointing();
+       const MSPointingColumns& mspc=msc.pointing();
        Vector<Double> tUniq(nTimes);
        for (uInt k=0; k <nTimes; ++k){
 	 tUniq[k]= t[uniqIndx[k]];
@@ -750,7 +750,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 	       Vector<uInt>  uniqIndx;
 	       uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 	       uInt nAnt=msc.antenna().nrow();
-			 const ROMSPointingColumns& mspc=msc.pointing();
+			 const MSPointingColumns& mspc=msc.pointing();
 			 Vector<Double> tUniq(nTimes);
 			 for (uInt k=0; k <nTimes; ++k){
 			   tUniq[k]= t[uniqIndx[k]];
@@ -917,7 +917,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 		   
 		   uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 		   //cerr << "ntimes " << nTimes << "  " << uniqIndx  << "\n  origInx " << origindx << endl;
-		   const ROMSFieldColumns& msfc=msc.field();
+		   const MSFieldColumns& msfc=msc.field();
 		   for (uInt k=0; k <nTimes; ++k){
 		     //cerr << t[uniqIndx[k]] << "   " <<  fieldId[origindx[uniqIndx[k]]] << endl;
 		     //cerr << msfc.phaseDirMeas(fieldId[origindx[uniqIndx[k]]], t[uniqIndx[k]]) << endl;
@@ -969,7 +969,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 
      Double timeEphem = timeo > 0.0 ? timeo : vb.time()(0); 
      MSColumns msc(vb.ms());
-     const ROMSFieldColumns& msfc=msc.field();
+     const MSFieldColumns& msfc=msc.field();
      Int fieldId=vb.fieldId()(0);
      return msfc.ephemerisDirMeas(fieldId, timeEphem);
      
