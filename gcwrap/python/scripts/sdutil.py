@@ -16,7 +16,7 @@ if is_CASA6:
     from casatasks import casalog
 else:
     from casac import casac
-    from taskinit import casalog
+    from taskinit import casalog, gentools
     # make CASA5 tools constructors look like CASA6 tools
     from taskinit import qatool as quanta
     from taskinit import tbtool as table
@@ -30,7 +30,20 @@ else:
 
 @contextlib.contextmanager
 def toolmanager(vis, ctor, *args, **kwargs):
-    tool = ctor()
+    if is_CASA6:
+        # this is the only syntax allowed in CASA6, code in CASA6 should be converted to
+        # call this method with a tool constructor directly 
+        tool = ctor()
+    else:
+        # CASA5 code can invoke this with a tool name, shared CASA5 and CASA6 source 
+        # uses the CASA6 syntax - use callable to tell the difference
+        if callable(ctor):
+            tool = ctor()
+        else:
+            # assume the argument is string and use it to get the appropriate tool constructor
+            # the original argument name here was 'tooltype'
+            tool = gentools([ctor])[0]
+
     tool.open(vis, *args, **kwargs)
     try:
         yield tool
