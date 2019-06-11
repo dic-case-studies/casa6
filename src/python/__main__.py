@@ -25,3 +25,13 @@ for flag in sys.argv:
         print(build['build.compiler.cc'])
     if flag == '--compiler-cxx':
         print(build['build.compiler.cxx'])
+    if flag == '--help':
+        print("--compiler-cc\t\tpath to C compiler used to build casatools")
+        print("--compiler-cxx\t\tpath to C++ compiler used to build casatools")
+        print("--grpc-compile\t\tflags to compile C++ source files")
+        print("--grpc-link\t\tflags to use to link gRPC C++ applications")
+        print("--grpc-libpath\t\tpath to gRPC C++ libraries")
+        print("--grpc-protocpp\t\tpath to C++ protoc compiler")
+        print("--grpc-protopy\t\tpath to Python protoc compiler")
+        print("--proto-registrar\tpath to registrar protobuf spec")
+        print("--proto-shutdown\tpath to shutdown protobuf spec")
