@@ -116,7 +116,8 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             #
             joblist=[]
             for node in self.listOfNodes:
-                joblist.append( self.PH.runcmd("toolsi = synthesisimager()", node) );
+                # this will only run in CASA5 - CASA6 version is still pending
+                joblist.append( self.PH.runcmd("toolsi = casac.synthesisimager()", node) );
             self.PH.checkJobs(joblist);
 
             #
@@ -256,7 +257,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         # joblist=[]
 
         # for node in self.listOfNodes:
-        #     joblist.append( self.PH.runcmd("toolsi = synthesisimager()", node) );
+        #     joblist.append( self.PH.runcmd("toolsi = casac.synthesisimager()", node) );
         # self.PH.checkJobs(joblist);
 
         # joblist=[];
