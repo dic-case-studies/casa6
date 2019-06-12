@@ -12,8 +12,6 @@ if is_CASA6:
     from . import flaghelper as fh
     from . import convertephem as ce
     from .parallel.parallel_data_helper import ParallelDataHelper
-
-    _tb = table( )
 else:
     from taskinit import *
     from mstools import write_history
@@ -28,6 +26,8 @@ else:
     imager = imtool
     measures = metool
     ms = mstool
+
+_tb = table()
 
 def importasdm(
     asdm=None,
