@@ -1,11 +1,18 @@
+from __future__ import absolute_import
 import sys
 import os
 import numpy
 import numpy.random as random
 import shutil
 
-from casatools import calibrater
-from casatasks import casalog, applycal
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import calibrater
+    from casatasks import casalog, applycal
+else:
+    from taskinit import casalog
+    from taskinit import cbtool as calibrater
+    from applycal import applycal
 
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}
@@ -63,8 +70,8 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
     
     casalog.origin('sdgaincal')
     
-    # Calibrator tool
-    mycb = calibrater( )
+    # Calibrater tool
+    mycb = calibrater()
 
     try:
         # outfile must be specified

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import glob
 import sys
@@ -5,16 +7,42 @@ import shutil
 import numpy
 import unittest
 from numpy import array
+#
+#import listing
 
-from casatools import ctsys, table
-from casatasks import sdbaseline
-from casatasks.private.sdutil import tbmanager
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table
+    from casatasks import sdbaseline
+    from casatasks.private.sdutil import tbmanager
 
-### for selection_syntax import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import selection_syntax
+    ### for selection_syntax import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import selection_syntax
 
-tb = table( )
+    tb = table( )
+
+    ctsys_resolve = ctsys.resolve
+
+    # default is not necessary in CASA6
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from sdbaseline import sdbaseline
+    from sdutil import tbmanager
+    # the global tb tool is used here as is
+
+    try:
+        from . import selection_syntax
+    except:
+        import tests.selection_syntax as selection_syntax
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
 
 ### Utilities for reading blparam file
 class FileReader(object):
@@ -133,7 +161,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
     Base class for sdbaseline unit test
     """
     # Data path of input/output
-    datapath = ctsys.resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
     taskname = "sdbaseline"
     verboselog = False
 
@@ -569,6 +597,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
 
+        default(sdbaseline)
+
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
         if os.path.exists(self.infile+'_blparam.csv'):
@@ -825,6 +855,7 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdbaseline)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -984,6 +1015,8 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+
+        default(sdbaseline)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -1785,6 +1818,80 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         except Exception as e:
             self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
+
+# this class is not included in the suite, skip the tests (needed for CASA6)
+class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
+    """
+    Unit tests for task sdbaseline. No interactive testing.
+
+    This test intends to check whether sdbaseline task works fine
+    for data that has multiple IFs whose nchan differ each other. 
+
+    List of tests:
+    test200 --- test multi IF data input
+    """
+    # Input and output names
+    infile = 'testMultiIF.asap'
+    blparamfile_suffix = '_blparam.txt'
+    outroot = os.path.join(sdbaseline_unittest_base.taskname,'_multi')
+    refblparamfile = 'refblparam_multiIF'
+
+    def setUp(self):
+        if os.path.exists(self.infile):
+            shutil.rmtree(self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdbaseline)
+
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+        if os.path.exists(self.infile+'_blparam.csv'):
+            os.remove(self.infile+ '_blparam.csv')
+        if os.path.exists(self.infile+'_blparam.btable'):
+            shutil.rmtree(self.infile+ '_blparam.btable')
+
+
+    def tearDown(self):
+        if os.path.exists(self.infile):
+            shutil.rmtree(self.infile)
+        os.system('rm -rf '+self.outroot+'*')
+
+    @unittest.skip("Not currently part of the the test suite")
+    def test200(self):
+        """test200: Test the task works with multi IF data"""
+        infile = self.infile
+        mode = "list"
+        blfunc = "poly"
+        order = 1
+        outfile = os.path.join(self.outroot,".asap")
+        blparamfile = os.path.join(outfile,self.blparamfile_suffix)
+        
+        result = sdbaseline(infile=infile,maskmode=mode,outfile=outfile,blfunc=blfunc,order=order)
+        self.assertEqual(result, None, msg="The task returned '"+str(result)+"' instead of None")
+        self._compareBLparam(blparamfile,self.datapath+self.refblparamfile)
+        reference = {5: {'rms': 1.4250789880752563,
+                         'min': -4.2702846527099609,
+                         'max': 5.5566844940185547,
+                         'max_abscissa': {'value': 823.0,
+                                          'unit': 'channel'},
+                         'median': 0.017315864562988281,
+                         'min_abscissa': {'value': 520.0,
+                                          'unit': 'channel'},
+                         'stddev': 1.425775408744812},
+                     7: {'rms': 1.4971292018890381,
+                         'min': -4.7103700637817383,
+                         'max': 5.4820127487182617,
+                         'max_abscissa': {'value': 1335.0,
+                                          'unit': 'channel'},
+                         'median': 0.027227401733398438,
+                         'min_abscissa': {'value': 1490.0,
+                                          'unit': 'channel'},
+                         'stddev': 1.4974949359893799}}
+        for ifno in [5,7]:
+            currstat = self._getStats(outfile,ifno)
+            self._compareStats(currstat,reference[ifno])
+
+
 class sdbaseline_outbltableTest(sdbaseline_unittest_base):
     """
     Tests for outputting baseline table
@@ -1828,6 +1935,8 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdbaseline)
+
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2133,6 +2242,7 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdbaseline)
        
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2151,6 +2261,7 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
                              dosubtract=True,outfile=self.reffile)
         self.assertEqual(result,None,
                          msg="The task returned '"+str(result)+"' instead of None")
+        default(sdbaseline)
 
     def tearDown(self):
         if (os.path.exists(self.infile)):
@@ -2248,7 +2359,7 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         try:
             tb.open(tablename=self.bltable, nomodify=False)
             tb.removerows([2])
-            self.assertEquals(tb.nrows(), 3, msg='failed to remove a row in bltable.')
+            self.assertEqual(tb.nrows(), 3, msg='failed to remove a row in bltable.')
         finally:
             tb.close()
         
@@ -2286,20 +2397,11 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         if hasattr(self, 'infile'):
             self.__refetch_files(self.infile)
 
+        default(sdbaseline)
+
 
     def tearDown(self):
         self._remove([self.infile, self.outfile])
-        
-        # remove possible input/output files
-        infiles = ['analytic_variable.ms', 'analytic_order3_withoffset.ms']
-        extensions = ['_blparam.txt', '_blparam.csv', '_blparam.btable']
-        for infile in infiles:
-            self._remove([infile])
-            self._remove(map(lambda x: '{}{}'.format(infile, x), extensions))
-            
-        if hasattr(self, 'paramfile'):
-            self._remove([self.paramfile])
-            
 
     def _refetch_files(self, files, from_dir=None):
         if type(files)==str: files = [files]
@@ -2386,12 +2488,26 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile,self.refstat0,flag_spec=[(0,0)],blparam=self.paramfile,datacolumn=self.column)
 
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+        if os.path.exists(self.infile+'_blparam.csv'):
+            os.remove(self.infile+ '_blparam.csv')
+        if os.path.exists(self.infile+'_blparam.btable'):
+            shutil.rmtree(self.infile+ '_blparam.btable')
+
     def testVariable02(self):
         """Test blfunc='variable' with non-existent lines in blparam file (rows should be flagged)"""
         infile='analytic_variable.ms'
         self.paramfile='analytic_variable_blparam_2lines.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile,self.refstat0,flag_spec=[(0,0),(1,1)],blparam=self.paramfile,datacolumn=self.column)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+        if os.path.exists(self.infile+'_blparam.csv'):
+            os.remove(self.infile+ '_blparam.csv')
+        if os.path.exists(self.infile+'_blparam.btable'):
+            shutil.rmtree(self.infile+ '_blparam.btable')
 
     def testVariable03(self):
         """Test blfunc='variable' with mask selection"""
@@ -2400,6 +2516,13 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         mask = [[[0,4000],[6000,8000]], [[0,5000],[6000,8000]], [[0,3000],[5000,8000]], None]
         self._run_test(infile,self.refstat0,mask=mask,blparam=self.paramfile,datacolumn=self.column)
+    
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+        if os.path.exists(self.infile+'_blparam.csv'):
+            os.remove(self.infile+ '_blparam.csv')
+        if os.path.exists(self.infile+'_blparam.btable'):
+            shutil.rmtree(self.infile+ '_blparam.btable')
 
     def testVariable04(self):
         """Test blfunc='variable' with data selection (spw='1')"""
@@ -2407,6 +2530,13 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self.paramfile='analytic_variable_blparam_spw1.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile,self.refstat0,spw='1',blparam=self.paramfile,datacolumn=self.column)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+        if os.path.exists(self.infile+'_blparam.csv'):
+            os.remove(self.infile+ '_blparam.csv')
+        if os.path.exists(self.infile+'_blparam.btable'):
+            shutil.rmtree(self.infile+ '_blparam.btable')
 
     def testVariable05(self):
         """Test blfunc='variable' with clipping"""
@@ -2417,12 +2547,26 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._run_test(infile,self.refstat0,atol=1.e-5,
                        mask=mask,blparam=self.paramfile,datacolumn=self.column)
 
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+        if os.path.exists(self.infile+'_blparam.csv'):
+            os.remove(self.infile+ '_blparam.csv')
+        if os.path.exists(self.infile+'_blparam.btable'):
+            shutil.rmtree(self.infile+ '_blparam.btable')
+
     def testVariable06(self):
         """Test blfunc='variable' with duplicated fitting parameters (the last one is adopted)"""
         infile='analytic_variable.ms'
         self.paramfile='analytic_variable_blparam_duplicate.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile,self.refstat0,blparam=self.paramfile,datacolumn=self.column)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+        if os.path.exists(self.infile+'_blparam.csv'):
+            os.remove(self.infile+ '_blparam.csv')
+        if os.path.exists(self.infile+'_blparam.btable'):
+            shutil.rmtree(self.infile+ '_blparam.btable')
 
 
 class sdbaseline_bloutputTest(sdbaseline_unittest_base):
@@ -2564,6 +2708,8 @@ Basic unit tests for task sdbaseline. No interactive testing.
         shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwn012_rejwn1_csv), self.bloutput_sinusoid_addwn012_rejwn1_csv)
 
         shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt), self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
+
+        default(sdbaseline)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -4347,6 +4493,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdbaseline)
 
     def tearDown(self):
         if (os.path.exists(self.infile)):
@@ -4456,7 +4603,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
 #         self.run_test(self.sinustat, spw=self.spw, edge=self.noedge, blfunc='sinusoid')
 
 class sdbaseline_selection(unittest.TestCase):
-    datapath = ctsys.resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
     infile = "analytic_type1.bl.ms"
     outfile = "baselined.ms"
     bloutfile = infile + "_blparam.txt"
@@ -4491,6 +4638,7 @@ class sdbaseline_selection(unittest.TestCase):
     def setUp(self):
         self._clearup()
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdbaseline)
 
     def tearDown(self):
         self._clearup()
@@ -4698,5 +4846,6 @@ def suite():
             sdbaseline_selection
             ]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

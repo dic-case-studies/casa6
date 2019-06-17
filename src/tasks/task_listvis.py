@@ -1,8 +1,16 @@
 # Task listvis
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-from casatools import ms
-from casatasks import casalog
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ms
+    from casatasks import casalog
+else:
+    from taskinit import *
+    ms = casac.ms
 
 def listvis(vis, options, datacolumn, field,spw, selectdata, antenna, timerange,
             correlation, scan, feed, array, observation, uvrange, average,
@@ -10,7 +18,7 @@ def listvis(vis, options, datacolumn, field,spw, selectdata, antenna, timerange,
     """List visibilities on terminal."""
         
     casalog.origin('listvis')
-    myms = ms( )
+    myms = ms()
     
     isInteractive=False;
     

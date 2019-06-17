@@ -1,12 +1,22 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import unittest
-from casatools import ctsys, image, table
-from casatasks import clearstat
 
-_ia = image( )
-_tb = table( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image, table
+    from casatasks import clearstat
+    _ia = image( )
+    _tb = table( )
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    _ia = iatool( )
+    _tb = tb
 
 '''
 Unit tests of task clearstat. It tests the following parameters:
@@ -16,6 +26,11 @@ Unit tests of task clearstat. It tests the following parameters:
     clears write lock on image,
     clears all locks
 '''
+# find the data in the standard place unless TEST_DATADIR is set
+# for some tests, the standard place should always be used
+# CASA5 and CASA6 approach this differently
+
+# this is the relative path where most of the test data is found
 datapath = 'regression/exportasdm/input'
 
 # Pick up alternative data directory to run tests on MMSs
@@ -27,6 +42,21 @@ if 'TEST_DATADIR' in os.environ:
         datapath = DATADIR
     print('clearstat tests will use data from %s' % datapath)
 
+# CASA5 and CASA6 differences to handle this
+if is_CASA6:
+    def ctsys_resolve(apath,ignore_testmms=False):
+        # ignore_testmms isn't necessary here given how datapath is used in the tests
+        return ctsys.resolve(apath)
+else:
+    def ctsys_resolve(apath,ignore_testmms=False):
+        result = apath
+        if not testmms or ignore_testmms:
+            # find it in the standard place
+            dataRoot = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+            result = os.path.join(dataRoot,apath)
+        # otherwise apath should already be the full path
+        return result
+
 class clearstat_test(unittest.TestCase):
     
     # Input names
@@ -36,13 +66,16 @@ class clearstat_test(unittest.TestCase):
     
     def setUp(self):
         self.res = None
+        if not is_CASA6:
+            default('clearstat')
         if(os.path.exists(self.msfile)):
             os.system('rm -rf ' + self.msfile)
         if(os.path.exists(self.img)):
             os.system('rm -rf ' + self.img)
             
-        shutil.copytree(ctsys.resolve(os.path.join(datapath,self.msfile)), self.msfile)
-        shutil.copytree(ctsys.resolve(os.path.join('regression/ngc4826redux/reference', self.img)), self.img)
+        shutil.copytree(ctsys_resolve(os.path.join(datapath,self.msfile)), self.msfile)
+        # always get this from the standard place, ignoring any testmms value
+        shutil.copytree(ctsys_resolve(os.path.join('regression/ngc4826redux/reference',self.img),True), self.img)
     
     def tearDown(self):
         os.system('rm -rf ' + self.msfile)
@@ -119,5 +152,6 @@ class clearstat_test(unittest.TestCase):
 def suite():
     return [clearstat_test]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

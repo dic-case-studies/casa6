@@ -1,18 +1,30 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import io
 import sys
 import shutil
-import subprocess
 import unittest
 
-from casatools import ctsys
-from casatools.platform import bytes2str
-from casatasks import casalog, listhistory
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatools.platform import bytes2str
+    from casatasks import casalog, listhistory
+    import subprocess
 
-datapath = ctsys.resolve('regression/unittest/listhistory')
+    datapath = ctsys.resolve('regression/unittest/listhistory')
+else:
+    import commands
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    datapath = os.environ.get('CASAPATH').split()[0] +\
+        '/data/regression/unittest/listhistory/'
 
 testmms = False
-if 'TEST_DATADIR' in os.environ:
+if 'TEST_DATADIR' in os.environ:   
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/listhistory/'
     if os.path.isdir(DATADIR):
         testmms = True
@@ -41,9 +53,14 @@ class listhistory_test(unittest.TestCase):
         
     def test1(self):
         '''Test 1: Empty input should return False'''
+        # CASA5 tasks return False, casatasks throw exceptions
         myms = ''
-        self.assertRaises(Exception,listhistory,myms)
-        
+        if is_CASA6:
+            self.assertRaises(Exception,listhistory,myms)
+        else:
+            res = listhistory(myms)
+            self.assertFalse(res)
+            
     def test2(self):
         '''Test 2: Good input should return None'''
         res = listhistory(self.msfile)
@@ -58,13 +75,33 @@ class listhistory_test(unittest.TestCase):
         res = listhistory(self.msfile)
 
         # Get the number of lines in file
-        refnum=10
-        if self.itismms:
-            refnum = 36
+        # the number of expected lines differs
+        if is_CASA6:
+            refnum=10
+            if self.itismms:
+                # this is a guess, not tested
+                refnum = 33
+        else:
+            # for CASA5, get only the relevant lines in the logfile
+            newfile= "newlisth.log"
+            cmd="sed -n \"/Begin Task/,/End Task/p\" %s > %s " %(logfile,newfile)
+            print(cmd)
+            os.system(cmd)
+            logfile = newfile
 
-        cmd=['wc', '-l', logfile]
-        print(cmd)
-        output=bytes2str(subprocess.check_output(cmd))
+            refnum = 13
+            if self.itismms:
+                refnum = 36
+
+        if is_CASA6:
+            cmd=['wc', '-l', logfile]
+            print(cmd)
+            output = bytes2str(subprocess.check_output(cmd))
+        else:
+            cmd="wc -l %s" % logfile
+            print(cmd)
+            output=commands.getoutput(cmd)
+
         num = int(output.split()[0])
         self.assertEqual(refnum,num)
 
@@ -81,5 +118,6 @@ class listhistory_cleanup(unittest.TestCase):
 def suite():
     return [listhistory_test, listhistory_cleanup]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

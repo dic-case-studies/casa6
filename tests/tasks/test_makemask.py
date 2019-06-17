@@ -1,17 +1,40 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 import unittest
 import numpy
 
-from casatools import ctsys, image
-from casatasks import makemask
-from casatasks.private.imtools import pixelmask2cleanmask   ##### <----<<< this dependency should be removed
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image
+    from casatasks import makemask
+    from casatasks.private.imtools import pixelmask2cleanmask   ##### <----<<< this dependency should be removed
+
+    ctsys_resolve = ctsys.resolve
+
+    _ia = image( )
+else:
+    from recipes.pixelmask2cleanmask import *
+    from tasks import *
+    from taskinit import *
+    from __main__ import default
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+
+    _ia = iatool( )
+
+"""
+Unit tests for task makemask 
+
+"""
 
 datapath = 'regression/unittest/makemask'
 
 #debug=True
 debug=False
-_ia = image( )
 
 class makemaskTestBase(unittest.TestCase):
     """ base class for makemask unit test"""
@@ -56,8 +79,8 @@ class test_copy(makemaskTestBase):
     outimage4='ngc5921.cube2.copy.mask'
     outimage5='3x3b.image'
    
-    refimage4=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.copytest4.ref.mask'))
-    refimage6=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.copytest6.ref.mask'))
+    refimage4=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.copytest4.ref.mask'))
+    refimage6=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.copytest6.ref.mask'))
 
     def setUp(self):
         #for img in [self.inimage,self.outimage1,self.outimage2, self.outimage3]:
@@ -66,7 +89,7 @@ class test_copy(makemaskTestBase):
         for img in [self.inimage,self.inimage2,self.inimage3, self.inimage4,
             self.inimage5, self.inimage6]:
             if not os.path.isdir(img):
-                shutil.copytree(ctsys.resolve(os.path.join(datapath,img)),img)
+                shutil.copytree(ctsys_resolve(os.path.join(datapath,img)),img)
 
     def tearDown(self):
         if not debug:
@@ -261,9 +284,9 @@ class test_merge(makemaskTestBase):
     outimage1='ngc5921.cube1.merge.mask'
     outimage2='ngc5921.cube1.merge.copyinmage.mask'
 
-    refimage1=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.mergetest1.ref.mask'))
-    refimage2=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.mergetest2.ref.mask'))
-    refimage3=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.mergetest3.ref.mask'))
+    refimage1=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.mergetest1.ref.mask'))
+    refimage2=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.mergetest2.ref.mask'))
+    refimage3=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.mergetest3.ref.mask'))
 
     def setUp(self):
         #for img in [self.inimage,self.outimage1,self.outimage2, self.outimage3]:
@@ -271,7 +294,7 @@ class test_merge(makemaskTestBase):
         #        shutil.rmtree(img)
         for img in [self.inimage,self.inimage2,self.inimage3]:
             if not os.path.isdir(img):
-                shutil.copytree(ctsys.resolve(os.path.join(datapath,img)),img)
+                shutil.copytree(ctsys_resolve(os.path.join(datapath,img)),img)
 
     def tearDown(self):
         if not debug:
@@ -322,7 +345,7 @@ class test_merge(makemaskTestBase):
             # Note: if make a copy of outfile from inimage, comparison with the current ref image will fail ....
             #shutil.copytree(self.inimage,self.outimage1)
             if not os.path.exists(self.infile1):
-                shutil.copy(ctsys.resolve(os.path.join(datapath,self.infile1)), self.infile1)
+                shutil.copy(ctsys_resolve(os.path.join(datapath,self.infile1)), self.infile1)
             makemask(mode='copy',inpimage=self.inimage,\
             #        inpmask=[self.inimage3, self.inimage2+':maskoo','ellipse_rg.txt','box[[130pix,135pix],[160pix,165pix]]'],\
                     inpmask=[self.inimage3, self.inimage2+':maskformergetest','ellipse_rg.txt','box[[130pix,135pix],[160pix,165pix]]'],\
@@ -343,7 +366,7 @@ class test_merge(makemaskTestBase):
         try:
             #shutil.copytree(self.inimage,self.outimage1)
             if not os.path.exists(self.infile1):
-                shutil.copy(ctsys.resolve(os.path.join(datapath,self.infile1)), self.infile1)
+                shutil.copy(ctsys_resolve(os.path.join(datapath,self.infile1)), self.infile1)
             makemask(mode='copy',inpimage=self.inimage,\
                     #inpmask=[self.inimage3, self.inimage2+':maskoo','ellipse_rg.txt','box[[130pix,135pix],[160pix,165pix]]'],\
                     inpmask=[self.inimage3, self.inimage2+':maskformergetest','ellipse_rg.txt','box[[130pix,135pix],[160pix,165pix]]'],\
@@ -396,12 +419,12 @@ class test_expand(makemaskTestBase):
     outimage2='ngc5921.cube1.copyinmage.mask'
     outimage3='ngc5921.cube2.expand.mask'
 
-    refimage1=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.expandtest1.ref.mask'))
-    refimage2=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.expandtest2.ref.mask'))
-    refimage3=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.expandtest5.ref.mask'))
-    refimage4=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.expandtest6.ref.mask'))
-    refimage5=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.expandtest2b.ref.mask'))
-    refimage6=ctsys.resolve(os.path.join(datapath,'reference/ngc5921.expandtest7.ref.mask'))
+    refimage1=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.expandtest1.ref.mask'))
+    refimage2=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.expandtest2.ref.mask'))
+    refimage3=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.expandtest5.ref.mask'))
+    refimage4=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.expandtest6.ref.mask'))
+    refimage5=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.expandtest2b.ref.mask'))
+    refimage6=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.expandtest7.ref.mask'))
 
     def setUp(self):
         #for img in [self.inimage,self.outimage1,self.outimage2, self.outimage3]:
@@ -409,7 +432,7 @@ class test_expand(makemaskTestBase):
         #        shutil.rmtree(img)
         for img in [self.inimage,self.inimage2,self.inimage3,self.inimage4]:
             if not os.path.isdir(img):
-                shutil.copytree(ctsys.resolve(os.path.join(datapath,img)),img)
+                shutil.copytree(ctsys_resolve(os.path.join(datapath,img)),img)
 
     def tearDown(self):
         if not debug:
@@ -576,7 +599,7 @@ class test_inmask(makemaskTestBase):
     def setUp(self):
         for img in [self.inimage]:
             if not os.path.isdir(img):
-                shutil.copytree(ctsys.resolve(os.path.join(datapath,img)),img)
+                shutil.copytree(ctsys_resolve(os.path.join(datapath,img)),img)
 
     def tearDown(self):
         if not debug:
@@ -616,5 +639,6 @@ def suite():
     #return [test_inmask]
     return [test_merge,test_expand,test_copy,test_inmask]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

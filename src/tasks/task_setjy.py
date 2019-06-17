@@ -1,13 +1,52 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from glob import glob
 import os
 import re
 import sys
 import shutil
-from .setjy_helper import * 
-from .parallel.parallel_task_helper import ParallelTaskHelper
-from .mstools import write_history
-from casatools import ctsys, ms, imager
-from casatasks import casalog
+
+# the solution here to findCalModels should be reworked
+# CASA5 uses the casa dict to set the default roots parameter values
+# and that dict is not available in CASA6, where ctsys.resolve is
+# available
+# Here: defaultRoots is defined differently for CASA6 and CASA5 and
+# that values is used as the default value for the roots parameter in
+# findCalModels.
+# Inside findCalModels there is a new section at the top to use
+# ctsys.resolve to make the initial attempt to find the models.
+# If that fails or is unavailable it falls back to the CASA5 code.
+
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .setjy_helper import * 
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from .mstools import write_history
+    from casatools import ctsys, ms, imager, calibrater
+    from casatasks import casalog
+
+    # used in one type comparison
+    strType = str
+
+    # default roots argument for findCalModels
+    defaultRoots = ['.']
+else:
+    from setjy_helper import * 
+    from taskinit import *
+    from taskinit import mstool as ms
+    from taskinit import imtool as imager
+    from taskinit import cbtool as calibrater
+    from mstools import write_history
+    from parallel.parallel_data_helper import ParallelDataHelper
+    from parallel.parallel_task_helper import ParallelTaskHelper
+
+    # used in one type comparison
+    strType = string
+
+    # default roots argument for findCalModels
+    defaultRoots = ['.', casa['dirs']['data']]
 
 # Helper class for Multi-MS processing (by SC)
 class SetjyHelper():
@@ -36,7 +75,7 @@ class SetjyHelper():
                 else:
                     rstatus = False
 
-            mycb = cbtool()
+            mycb = calibrater()
             if parentms!= submslist[0]:
                 for subms in submslist:
                     mycb.open(subms, addcorr=False, addmodel=True)
@@ -67,7 +106,7 @@ def setjy(vis=None, field=None, spw=None,
 
 
     # Take care of the trivial parallelization
-    if ( not listmodels and ParallelTaskHelper.isParallelMS(vis) and usescratch):
+    if ( not listmodels and ParallelDataHelper.isMMSAndNotServer(vis) and usescratch):
         # jagonzal: We actually operate in parallel when usescratch=True because only
         # in this case there is a good trade-off between the parallelization overhead
         # and speed up due to the load involved with MODEL_DATA column creation
@@ -141,8 +180,10 @@ def setjy_core(vis=None, field=None, spw=None,
 
             if standard=='Butler-JPL-Horizons 2012':
                 tpm_supported_objects = ['Ceres','Lutetia','Pallas','Vesta']
-                ssmoddirs = findCalModels(target='SolarSystemModels', exts=['.im','.ms','tab'])
-                sstpmdirs = findCalModels(target='SolarSystemModels', exts=['.im','.ms','tab'])
+                ssmoddirs = findCalModels(target='SolarSystemModels',
+                                          exts=['.im','.ms','tab'])
+                sstpmdirs = findCalModels(target='SolarSystemModels',
+                                          exts=['.im','.ms','tab'])
                 if ssmoddirs==set([]):
                      casalog.post("No models were found. Missing SolarSystemModels in the CASA data directory","WARN")           
                 for d in ssmoddirs:
@@ -154,7 +195,7 @@ def setjy_core(vis=None, field=None, spw=None,
                                 'Io', 'Europa', 'Ganymede', 'Callisto', 'Titan','Triton',
                                 'Ceres', 'Pallas', 'Vesta', 'Juno', 'Victoria', 'Davida']
                 print("Solar system objects recognized by %s:" % standard)
-                print(availmodellist)
+                print(availmodellist) 
             else:
                 lsmodims('.', modpat='*.im* *.mod*')
                 calmoddirs = findCalModels()
@@ -167,7 +208,7 @@ def setjy_core(vis=None, field=None, spw=None,
             if not os.path.isdir(vis):
               #casalog.post(vis + " must be a valid MS unless listmodels is True.",
               #             "SEVERE")
-                raise Exception("%s is not a valid MS" % vis)
+                raise Exception("%s is not a valid MS" % vis) 
                 #return False
 
             myms = ms()
@@ -203,8 +244,8 @@ def setjy_core(vis=None, field=None, spw=None,
                 raise Exception('Visibility data set not found - please verify the name')
 
             if modimage==None:  # defined as 'hidden' with default '' in the xml
-                                # but the default value does not seem to set so deal
-                                # with it here...
+      	                        # but the default value does not seem to set so deal
+			        # with it here...
                 modimage=''
             if model:
                 modimage=model
@@ -214,7 +255,12 @@ def setjy_core(vis=None, field=None, spw=None,
             if modimage and modimage[0] != '/':
                 cwd = os.path.abspath('.')
                 calmoddirs = [cwd]
-                calmoddirs += findCalModels(roots=[cwd])
+                # casa dict unavailable in CASA6
+                if is_CASA6:
+                    calmoddirs += findCalModels()
+                else:
+                    calmoddirs += findCalModels(roots=[cwd,
+                                                       casa['dirs']['data']])
                 candidates = []
                 for calmoddir in calmoddirs:
                     cand = os.path.join(calmoddir,modimage)
@@ -238,10 +284,13 @@ def setjy_core(vis=None, field=None, spw=None,
 
             # Write the parameters to HISTORY before the tool writes anything.
             try:
-                vars = locals( )
                 param_names = setjy.__code__.co_varnames[:setjy.__code__.co_argcount]
-                param_vals = [vars[p] for p in param_names]   
-                #retval &= write_history(myms, vis, 'setjy', param_names,
+                if is_python3:
+                    vars = locals()
+                    param_vals = [vars[p] for p in param_names]
+                else:
+                    param_vals = [eval(p) for p in param_names]
+
                 retval = write_history(myms, vis, 'setjy', param_names,
                                     param_vals, casalog)
             except Exception as instance:
@@ -267,7 +316,8 @@ def setjy_core(vis=None, field=None, spw=None,
             #if standard=="Butler-JPL-Horizons 2012" and not userFluxDensity:
             if standard=="Butler-JPL-Horizons 2012":
                 casalog.post("Using Butler-JPL-Horizons 2012")
-                ssmoddirs = findCalModels(target='SolarSystemModels',exts=['.im','.ms','tab'])
+                ssmoddirs = findCalModels(target='SolarSystemModels',
+                                          exts=['.im','.ms','tab'])
                 if ssmoddirs==set([]):
                      raise Exception("Missing Tb or fd  models in the data directory")
 
@@ -408,7 +458,7 @@ def lsmodims(path, modpat='*', header='Candidate modimages'):
 
 
 def findCalModels(target='CalModels',
-                  roots=['.'],
+                  roots=defaultRoots,
                   #permexcludes = ['.svn', 'regression', 'ephemerides',
                   permexcludes = ['regression', 'ephemerides',
                                   'geodetic', 'gui'],
@@ -419,18 +469,19 @@ def findCalModels(target='CalModels',
     Because casa['dirs']['data'] can contain a lot, and CASA tables are
     directories, branches matching permexcludes or exts are excluded for speed.
     """
-    standard_locations = { 'CalModels': [ 'nrao/VLA/CalModels' ],
-                           'SolarSystemModels': [ 'alma/SolarSystemModels' ] }
 
     retset = set([])
     ##
-    ## first attempt to resolve using data path
+    ## first attempt to resolve using data path - only available in CASA6
     ##
-    if target in standard_locations:
-        for p in standard_locations[target]:
-            candidate = ctsys.resolve(p)
-            if os.path.isdir(candidate):
-                retset.add(candidate)
+    if is_CASA6:
+        standard_locations = { 'CalModels': [ 'nrao/VLA/CalModels' ],
+                               'SolarSystemModels': [ 'alma/SolarSystemModels' ] }
+        if target in standard_locations:
+            for p in standard_locations[target]:
+                candidate = ctsys.resolve(p)
+                if os.path.isdir(candidate):
+                    retset.add(candidate)
 
     if len(retset) > 0:
         return retset
@@ -458,7 +509,7 @@ def findCalModels(target='CalModels',
               if path.split('/')[-1] == target:
               # make path realpath to resolve the issue with duplicated path resulted from symlinks
                   retset.add(realpath)
-    return retset
+    return retset             
 
 
 def nselrows(vis, field='', spw='', obs='', timerange='', scan='', intent='', usescratch=None, ismms=False):
@@ -479,7 +530,7 @@ def nselrows(vis, field='', spw='', obs='', timerange='', scan='', intent='', us
   # only applicable for usescratch=T
     if usescratch:
         if obs:
-            if not type(obs) == str:
+            if not type(obs) == strType:
                sobs = str(obs)
             msselargs['observation'] = sobs
         if timerange:
@@ -569,11 +620,11 @@ def parse_fluxdict(fluxdict, vis, field='', spw='', observation='', timerange=''
     """
     # set spix and reffreq if there  
 
-    myms = ms( )
+    myms = ms()
 
     # dictionary for storing modified (taking AND between the data selection
     # and fluxdict content)
-    modmsselargs={ }
+    modmsselargs={}
                     
     msselargs={}
     msselargs['field']=field 

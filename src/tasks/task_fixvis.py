@@ -1,16 +1,26 @@
+from __future__ import absolute_import
 import shutil
-from casatools import quanta, measures, table, ms, imager
-from casatasks import casalog
-from .mstools import write_history
 
-_myqa = quanta( )
-_myme = measures( )
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import quanta, measures, table, ms, imager
+    from casatasks import casalog
+    from .mstools import write_history
+    
+    _myqa = quanta( )
+    _myme = measures( )
+else:
+    from taskinit import *
+    # not local tools
+    _myqa = qa
+    _myme = me
 
 def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', distances='', datacolumn='all'):
     """
     Input Parameters
     vis        -- Name of the input visibility set
-
+    
     outputvis  -- Name of the output visibility set, default: same as vis
 
     field      -- field selection string
@@ -18,7 +28,7 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
     refcode    -- Reference frame to convert to,
                   default: the refcode of PHASE_DIR in the FIELD table
                   example: 'B1950'
-
+    
     reuse      -- base recalculation on existing UVW coordinates? default=True
                   ignored if parameter 'phasecenter' is set
 
@@ -61,13 +71,16 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
             shutil.rmtree(outputvis, ignore_errors=True)
             shutil.copytree(vis, outputvis)
 
-        tbt = table( )
-        myms = ms( )
-        myim = imager( )
+        if is_CASA6:
+            tbt = table( )
+            myms = ms( )
+            myim = imager( )
+        else:
+            tbt, myms, myim = gentools(['tb', 'ms', 'im'])
 
         if field == '' or isinstance(field,list) and len(field) == 0:
             field='*'
-
+            
         fields = myms.msseltoindex(vis=outputvis,field=field)['field']
 
         if len(fields) == 0:
@@ -85,7 +98,7 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
                     for f in fields: # put nfields copies into the list
                         thedistances.append(thedist['value'])
                 else:
-                    casalog.post("Parameter distances needs to contain quanta with units of length.", 'SEVERE')
+                    casalog.post("Parameter distances needs to contain quanta with units of length.", 'SEVERE')                
                     return False
             elif type(distances) == list:
                 if len(fields) != len(distances):
@@ -98,16 +111,16 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
                             if thedist['unit'] == 'm': # a length
                                 thedistances.append(thedist['value'])
                             else:
-                                casalog.post("Parameter distances needs to contain quanta with units of length.", 'SEVERE')
+                                casalog.post("Parameter distances needs to contain quanta with units of length.", 'SEVERE')       
                                 return False
             else:
-                casalog.post("Invalid parameter distances.", 'SEVERE')
+                casalog.post("Invalid parameter distances.", 'SEVERE')       
                 return False
 
 
         if thedistances != []:
             casalog.post('Will refocus to the given distances: '+str(distances), 'NORMAL')
-
+        
         #determine therefcode, the reference frame to be used for the output UVWs
         tbt.open(outputvis+"/FIELD")
         numfields = tbt.nrows()
@@ -146,7 +159,7 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
                 if (i in fields):
                     fldids.append(i)
 
-            #
+            # 
             myim.open(outputvis, usescratch=False)
             myim.calcuvw(fields=fldids, refcode=therefcode, reuse=reuse)
             myim.close()
@@ -165,7 +178,7 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
             except ValueError:
                 return False
 
-            # for the case of a non-variable reference column and several selected fields
+            # for the case of a non-variable reference column and several selected fields 
             commonoldrefstr = ''
 
             # handle the datacolumn parameter
@@ -214,16 +227,20 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
 
         # Write history to output MS
         try:
-            vars = locals( )
             param_names = fixvis.__code__.co_varnames[:fixvis.__code__.co_argcount]
-            param_vals = [vars[p] for p in param_names]
-            retval &= write_history(myms, outputvis, 'fixvis', param_names, param_vals, casalog)
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:           
+                param_vals = [eval(p) for p in param_names]   
+            retval &= write_history(myms, outputvis, 'fixvis', param_names, param_vals,
+                                    casalog)
         except Exception as instance:
-            casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
+            casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')        
     except Exception as instance:
         casalog.post("*** Error \'%s\' " % (instance), 'SEVERE')
         retval = False
-
+        
     return retval
 
 def get_validcodes(code=None):
@@ -258,7 +275,7 @@ def log_phasecenter(oldnew, refstr, ra, dec):
 def get_oldref(outputvis, tbt):
     """Returns the original reference code, string, ckwdict, and isvarref."""
     theoldref = -1
-    theoldrefstr = ''
+    theoldrefstr = ''    
     tbt.open(outputvis + "/FIELD")
     ckwdict = tbt.getcolkeyword('PHASE_DIR', 'MEASINFO')
     flddict = {}
@@ -308,7 +325,7 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
         else:
             commonoldrefstr = theoldrefstr
 
-
+    
     theoldphasecenter = theoldrefstr + ' ' + \
                         _myqa.time(_myqa.quantity(theolddir[0], 'rad'), 14)[0] + ' ' + \
                         _myqa.angle(_myqa.quantity(theolddir[1],'rad'), 14)[0]
@@ -367,7 +384,7 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
     except Exception as instance:
         casalog.post("*** Error \'%s\' when interpreting parameter \'phasecenter\': "
                      % (instance), 'SEVERE')
-        return False
+        return False 
 
     if not is_valid_refcode(thenewrefstr):
         casalog.post('Refcode for the new phase center is valid but not yet supported: '
@@ -377,16 +394,16 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
     if theolddir[0] >= _myqa.constants('pi')['value']: # old RA uses range 0 ... 2 pi, not -pi ... pi
         while (thenewra_rad < 0.): # keep RA positive in order not to confuse the user
             thenewra_rad += 2. * _myqa.constants('pi')['value']
-
+                
     log_phasecenter('new', thenewrefstr, thenewra_rad, thenewdec_rad)
 
-    # modify FIELD table
+    # modify FIELD table                
     tbt.open(outputvis + '/FIELD', nomodify=False)
     pcol = tbt.getcol('PHASE_DIR')
     pcol[0][0][fld] = thenewra_rad
     pcol[1][0][fld] = thenewdec_rad
     tbt.putcol('PHASE_DIR', pcol)
-
+        
     casalog.post("FIELD table PHASE_DIR column changed for field " + str(fld) + ".",
                  'NORMAL')
 
@@ -400,10 +417,10 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
             #theoldref was already determined further above
             #theoldref = pcol[fld]
             pcol[fld] = thenewref
-
+            
             pcol2 = tbt.getcol('DelayDir_Ref')
             theoldref2 = pcol2[fld]
-
+            
             pcol3 = tbt.getcol('RefDir_Ref')
             theoldref3 = pcol3[fld]
 
@@ -436,12 +453,12 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
             tmprec = tbt.getcolkeyword('PHASE_DIR', 'MEASINFO')
             if theoldrefstr != thenewrefstr:
                 tmprec['Ref'] = thenewrefstr
-                tbt.putcolkeyword('PHASE_DIR', 'MEASINFO', tmprec)
+                tbt.putcolkeyword('PHASE_DIR', 'MEASINFO', tmprec) 
                 casalog.post(
                     "FIELD table phase center direction reference frame changed from "
                              + theoldrefstr + " to " + thenewrefstr, 'NORMAL')
     tbt.close()
-
+    
     fldids = []
     phdirs = []
     for i in range(numfields):
@@ -452,7 +469,7 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
     if thedistances==[]:
         thedistances = 0. # the default value
 
-    #
+    # 
     myim.open(outputvis, usescratch=False)
     myim.fixvis(fields=fldids, phasedirs=phdirs, refcode=therefcode, datacolumn=datacol, distances=thedistances)
     myim.close()
@@ -462,7 +479,7 @@ def parse_phasecenter(phasecenter, isvarref, ref, refstr, theolddir):
     dirstr = phasecenter.split(' ')
     if len(dirstr) == 2: # interpret phasecenter as an offset
         casalog.post("No equinox given in parameter \'phasecenter\': "
-                     + phasecenter, 'NORMAL')
+                     + phasecenter, 'NORMAL')         
         casalog.post("Interpreting it as pair of offsets in (RA,DEC) ...",
                      'NORMAL')
 
@@ -472,8 +489,8 @@ def parse_phasecenter(phasecenter, isvarref, ref, refstr, theolddir):
             casalog.post(
         '*** Will use the nominal entry in the PHASE_DIR column to calculate new phase center',
                          'NORMAL')
-
-        qra = _myqa.quantity(theolddir[0], 'rad')
+                    
+        qra = _myqa.quantity(theolddir[0], 'rad') 
         qdec = _myqa.quantity(theolddir[1], 'rad')
         qraoffset = _myqa.quantity(dirstr[0])
         qdecoffset = _myqa.quantity(dirstr[1])

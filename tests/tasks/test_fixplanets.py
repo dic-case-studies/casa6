@@ -1,14 +1,31 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import unittest
-from casatools import ctsys, ms, msmetadata
-from casatasks import fixplanets
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatools import ms as mstool
+    from casatools import msmetadata as msmdtool
+    from casatasks import fixplanets
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 '''
 Unit tests for task fixplanets.
 
-Features tested:
+Features tested:                                                       
   1. Does a standard fixplanets work on an MS imported from an ASDM from April 2011
   2. Does the setting of a given direction work on an MS imported from an ASDM from April 2011
   3. Does the setting of a given direction with ref !=J2000 and != sol.sys. object give the expected error?
@@ -20,18 +37,20 @@ outms = 'uid___A002_X1c6e54_X223-thinned.ms'
 inpms = os.path.join('regression/unittest/listvis',outms)
 outms2 = 'uid___A002_X1c6e54_X223-thinned.mms'
 inpms2 = os.path.join('regression/unittest/listvis',outms2)
-mymst = ms( )
-mymsmdt = msmetadata( )
+mymst = mstool()
+mymsmdt = msmdtool()
 
 class fixplanets_test1(unittest.TestCase):
     def setUp(self):
         res = None
         shutil.rmtree(outms, ignore_errors=True)
-        shutil.copytree(ctsys.resolve(inpms), outms)
+        shutil.copytree(ctsys_resolve(inpms), outms)
         shutil.rmtree(outms2, ignore_errors=True)
-        os.system('cp -R '+ctsys.resolve(inpms2) + ' ' + outms2)
-        #shutil.copytree(ctsys.resolve(inpms2), outms2)
-
+        os.system('cp -R '+ctsys_resolve(inpms2) + ' ' + outms2) 
+        #shutil.copytree(ctsys_resolve(inpms2), outms2)
+        if not is_CASA6:
+            default(fixplanets)
+        
     def tearDown(self):
         shutil.rmtree(outms, ignore_errors=True)
         shutil.rmtree(outms2, ignore_errors=True)
@@ -49,7 +68,7 @@ class fixplanets_test1(unittest.TestCase):
             print("ERROR: reference not as expected: expected %s, got %s" % (theref,thedir['refer']))
             therval = False
         return therval
-
+    
     def test1(self):
         '''test1: Does a standard fixplanets work on an MS imported from an ASDM from April 2011'''
         for myms in [outms,outms2]:
@@ -97,15 +116,16 @@ class fixplanets_test1(unittest.TestCase):
     def test8(self):
         '''test8: Does a fixplanets with an ephemeris work'''
         for myms in [outms,outms2]:
-            rval = fixplanets( vis=myms, field='Titan', fixuvw=True,
-                               direction=ctsys.resolve('regression/unittest/fixplanets/Titan_55437-56293dUTC.tab') )
+            rval = fixplanets(vis=myms, field='Titan', fixuvw=True,
+                              direction=ctsys_resolve('regression/unittest/fixplanets/Titan_55437-56293dUTC.tab') )
+                
             self.assertTrue(rval)
             self.assertTrue(os.path.exists(myms+'/FIELD/EPHEM0_Titan.tab'))
             self.assertTrue(self.verify(myms, 'Titan', 'APP'))
 
     def test9(self):
         '''test9: Does a fixplanets with an ephemeris in mime format work'''
-        os.system('cp '+ctsys.resolve('regression/unittest/fixplanets/titan.eml')+' .')
+        os.system('cp '+ctsys_resolve('regression/unittest/fixplanets/titan.eml')+' .')
         for myms in [outms,outms2]:
             os.system("rm -rf titan.eml.tab")
             rval = fixplanets( vis=myms, field='Titan', fixuvw=True, direction='titan.eml' )
@@ -114,7 +134,8 @@ class fixplanets_test1(unittest.TestCase):
             self.assertTrue(self.verify(myms, 'Titan', 'J2000'))
 
 def suite():
-    return [fixplanets_test1]
+    return [fixplanets_test1]        
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

@@ -5,20 +5,37 @@
 #    
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import glob
 import unittest
 from math import sqrt
-from casatools import ctsys, calibrater
-from casatools import table as tbtool
-from casatools import ms as mstool
-from casatasks import split, concat
 
-cb = calibrater( )
-tb = tbtool( )
-ms = mstool( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, calibrater
+    from casatools import table as tbtool
+    from casatools import ms as mstool
+    from casatasks import split, concat
+
+    cb = calibrater( )
+    tb = tbtool( )
+    ms = mstool( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    cb = cbtool( )
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 myname = 'test_concat'
 
@@ -78,7 +95,7 @@ class test_concat(unittest.TestCase):
         global testmms
         res = None
 
-        datapath=ctsys.resolve('regression/unittest/concat/input')
+        datapath=ctsys_resolve('regression/unittest/concat/input')
         datapathmms = ''
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
@@ -158,9 +175,9 @@ class test_concat(unittest.TestCase):
             shutil.copytree('xy1.ms', 'xy1-noephem.ms')
 
             ms.open('xy1.ms', nomodify=False)
-            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
                             'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
-            ms.addephemeris(1,ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+            ms.addephemeris(1,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
                             'Jupiter_54708-55437dUTC', 0)
             ms.close()
 
@@ -188,7 +205,7 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2.ms', nomodify=False)
-            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
                             'Uranus_54708-55437dUTC', '1908-201')
             ms.close()
 
@@ -216,7 +233,7 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2late.ms', nomodify=False)
-            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
+            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
                             'Uranus_55437-56293dUTC', '1908-201')
             ms.close()
 
@@ -229,7 +246,8 @@ class test_concat(unittest.TestCase):
         if not 'xyb.ms' in filespresent:
             split(vis='xy1.ms', outputvis='xyb.ms', spw='0:64~127', datacolumn='data')
 
-
+        if not is_CASA6:
+            default(concat)
         return True
         
     def tearDown(self):
@@ -1884,5 +1902,6 @@ class concat_cleanup(unittest.TestCase):
 def suite():
     return [test_concat,concat_cleanup]        
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

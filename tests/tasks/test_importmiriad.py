@@ -16,16 +16,38 @@
 # Input data:                                                               #
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import unittest
 
-from casatools import ctsys, table, ms
-from casatasks import importmiriad
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms
+    from casatasks import importmiriad
 
-_tb = table( )
-_ms = ms( )
+    ctsys_resolve = ctsys.resolve
+
+    _tb = table( )
+    _ms = ms( )
+
+    stype = str
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    def ctsys_resolve(apath):
+        dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+        return os.path.join(dataRoot,apath)
+
+    # not local tools
+    _tb = tb
+    _ms = ms
+
+    stype = basestring
 
 myname = 'importmiriad-unit-test'
 
@@ -57,7 +79,7 @@ def checktable(thename, theexpectation, dataslice=[]):
             else:
                 in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
         else:
-            if isinstance(value,str):
+            if isinstance(value, stype):
                 in_agreement = value == mycell[2]
             else:
                 # it's an array
@@ -92,7 +114,9 @@ class test_importmiriad(unittest.TestCase):
         for fname in my_dataset_names:
             if(os.path.exists(fname)):
                 shutil.rmtree(fname)
-            shutil.copytree(ctsys.resolve(os.path.join(datapath,fname)), fname)
+            shutil.copytree(ctsys_resolve(os.path.join(datapath,fname)), fname)
+        if not is_CASA6:
+            default(importmiriad)
         
     def tearDown(self):
         for fname in my_dataset_names:
@@ -230,5 +254,6 @@ class test_importmiriad(unittest.TestCase):
 def suite():
     return [test_importmiriad]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

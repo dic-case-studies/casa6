@@ -1,11 +1,22 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 import pylab as pl
 
-from casatools import ctsys
-from casatasks import casalog
-from .simutil import *
-from .simutil import is_array_type
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, quanta
+    from casatasks import casalog
+    from .simutil import *
+    from .simutil import is_array_type
+
+    qa = quanta()
+else:
+    from taskinit import *
+    from simutil import *
+    from casa_stack_manip import stack_frame_find
+    from simutil import is_array_type
 
 def simobserve(
     project=None, 
@@ -53,7 +64,8 @@ def simobserve(
         casalog.origin('simobserve')
         if verbose: casalog.filter(level="DEBUG2")
 
-        myf = stack_frame_find( )
+        if not is_CASA6:
+            myf = stack_frame_find( )
 
         # create the utility object:
         util = simutil(direction)  # this is the dir of the observation - could be ""
@@ -89,7 +101,10 @@ def simobserve(
 
         # filename parsing of cfg file here so that the project filenames 
         # can contain the cfg
-        repodir = ctsys.resolve("alma/simmos")
+        if is_CASA6:
+            repodir = ctsys.resolve("alma/simmos")
+        else:
+            repodir = os.getenv("CASAPATH").split(' ')[0] + "/data/alma/simmos"
 
         # convert "alma;0.4arcsec" to an actual configuration
         # can only be done after reading skymodel, so here, we just string parse
@@ -117,11 +132,14 @@ def simobserve(
                 return False
 
 
-        saveinputs = myf['saveinputs']
-        # something broken in saveinputs
-        in_params['antennalist']=''+in_params['antennalist']+''
-        saveinputs('simobserve',fileroot+"/"+project+".simobserve.last",
-                   myparams=in_params)
+        if not is_CASA6:
+            saveinputs = myf['saveinputs']
+            # something broken in saveinputs
+            in_params['antennalist']=''+in_params['antennalist']+''
+            saveinputs('simobserve',fileroot+"/"+project+".simobserve.last",
+                       myparams=in_params)
+        else:
+            casalog.post("saveinputs not available in casatasks, skipping saving simobserve inputs", priority='WARN')
 
 
         if is_array_type(skymodel):
@@ -794,24 +812,29 @@ def simobserve(
                 refdate=z[0]
                 if len(z)>1:
                     if len(z[1])>1:
-                        msg("Discarding time part of refdate, '"+z[1]+"', in favor of hourangle parameter = "+hourangle,origin='simobserve')
+                        msg("Discarding time part of refdate, '"+z[1]+
+                            "', in favor of hourangle parameter = "+hourangle,origin='simobserve')
 
             if hourangle=="transit":
                 haoffset=0.0
             else:                
                 haoffset="no"
                 # is this a time quantity?
+                if qa.isquantity(str(hourangle)+"h"): 
+                    if qa.compare(str(hourangle)+"h","s"):
+                        haoffset=qa.convert(qa.quantity(str(hourangle)+
+                                                        "h"),'s')['value']
                 if qa.isquantity(hourangle):
                     qha=qa.convert(hourangle,"s")
                     if qa.compare(qha,"s"):
                         haoffset=qa.convert(qha,'s')['value']
-                elif qa.isquantity(hourangle+"h"):
-                    if qa.compare(hourangle+"h","s"):
-                        haoffset=qa.convert(qa.quantity(hourangle+"h"),'s')['value']
             if haoffset=="no":
-                msg("Cannot interpret your hourangle parameter "+hourangle+" as a time quantity e.g. '5h', 30min'",origin="simobserve",priority="error")
+                msg("Cannot interpret your hourangle parameter "+hourangle+
+                    " as a time quantity e.g. '5h', 30min'",
+                    origin="simobserve",priority="error")
             else:
-                msg("You desire an hour angle of "+str(haoffset/3600.)+" hours",origin="simobserve")                    
+                msg("You desire an hour angle of "+
+                    str(haoffset/3600.)+" hours",origin="simobserve")
 
             refdate=refdate+"/00:00:00"
             usehourangle=True
@@ -842,7 +865,8 @@ def simobserve(
                 totalsec = qa.convert(qa.quantity(totaltime),'s')['value']
 
             if os.path.exists(msfile) and not overwrite: #redundant check?
-                util.msg("measurement set "+msfile+" already exists and user does not wish to overwrite",priority="error")
+                util.msg("measurement set "+msfile+
+                         " already exists and user does not wish to overwrite",priority="error")
                 return False
             sm.open(msfile)
 
@@ -875,8 +899,9 @@ def simobserve(
                                stokes='XX YY')
                 sm.setfeed(mode='perfect X Y',pol=[''])
 
-            if verbose: msg(" spectral window set at %s" % qa.tos(model_specrefval),origin='simobserve')
-            sm.setlimits(shadowlimit=0.01, elevationlimit='10deg')
+            if verbose: 
+                msg(" spectral window set at %s" % qa.tos(model_specrefval),origin='simobserve')
+                sm.setlimits(shadowlimit=0.01, elevationlimit='10deg')
             if uvmode:
                 sm.setauto(0.0)
             else: #Single-dish

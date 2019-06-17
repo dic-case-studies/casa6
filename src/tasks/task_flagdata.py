@@ -1,17 +1,52 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 import os
 import sys
 import copy
 import pprint
-from . import flaghelper as fh
-from .mstools import write_history
-from .parallel.parallel_task_helper import ParallelTaskHelper
-# this should be replaced when CASA really moves to Python 2.7
-from collections import OrderedDict
-from casatasks import casalog
-from casatools import ms, agentflagger, quanta, table
 
-localqa = quanta( )
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from . import flaghelper as fh
+    from .mstools import write_history
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    # this should be replaced when CASA really moves to Python 2.7
+    from collections import OrderedDict
+    from casatasks import casalog
+    from casatools import ms, agentflagger, quanta, table
+
+    localqa = quanta()
+else:
+    from taskinit import casalog, qa
+    from taskinit import mstool as ms
+    from taskinit import aftool as agentflagger
+    from taskinit import tbtool as table
+    from mstools import write_history
+    import flaghelper as fh
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    from parallel.parallel_data_helper import ParallelDataHelper
+    # this should be replaced when CASA really moves to Python 2.7
+    from OrderedDictionary import OrderedDict
+
+    # not really local
+    localqa = qa
+
+# common function to use to get dictionary item and keys iterators
+if is_python3:
+    def lociteritems(adict):
+        return adict.items()
+
+    def lociterkeys(adict):
+        return adict.keys()
+else:
+    def lociteritems(adict):
+        return adict.iteritems()
+
+    def lociterkeys(adict):
+        return adict.iterkeys()
 
 debug = False
 
@@ -187,9 +222,9 @@ def flagdata(vis,
         iscal = True
 
 
-    # ***************** Input is MMS -- Parallel Processing ***********************   
-         
-    if FHelper.isMPIEnabled() and typevis == 2 and action != '' and action != 'none':
+    # ***************** Input is MMS -- Parallel Processing ***********************
+    if typevis == 2 and ParallelDataHelper.isMMSAndNotServer(vis) and\
+       action != '' and action != 'none':
                             
         # Create a temporary input file with .tmp extension.
         # Use this file for all the processing from now on.
@@ -215,7 +250,7 @@ def flagdata(vis,
         FHelper.__init__(orig_locals)
         
         # For tests only
-#        FHelper.bypassParallelProcessing(1)
+        # FHelper.bypassParallelProcessing(1)
 
         FHelper.setupCluster('flagdata')
         # (CAS-4119): Override summary minabs,maxabs,minrel,maxrel 
@@ -226,7 +261,7 @@ def flagdata(vis,
         if ((mode == 'summary') and ((minrel != 0.0) or (maxrel != 1.0) or (minabs != 0) or (maxabs != -1))):
             filterSummary = True
             
-            myms = ms( )
+            myms = ms()
             myms.open(vis)
             subMS_list = myms.getreferencedtables()
             myms.close()
@@ -247,7 +282,7 @@ def flagdata(vis,
         # By-pass options to filter summary
         if savepars:  
             
-            myms = ms( )
+            myms = ms()
             myms.open(vis)
             subMS_list = myms.getreferencedtables()
             myms.close()
@@ -257,8 +292,13 @@ def flagdata(vis,
             
         # Execute the parallel engines
         retVar = FHelper.go()
-        
-        # In async mode return the job ids
+
+        # Save overall RFlag values into timedev/freqdev files once the subMS results have
+        # been consolidated, if needed for RFlag (introduced in CAS-11850)
+        opts_dict = {'writeflags': writeflags, 'timedev': timedev, 'freqdev': freqdev}
+        fh.save_rflag_consolidated_files(mode, action, retVar, opts_dict, inpfile)
+
+        # In async_mode return the job ids
         if ParallelTaskHelper.getAsyncMode():
             return retVar
         else:
@@ -287,7 +327,7 @@ def flagdata(vis,
         newtime = 0.0
         if type(ntime) == float or type(ntime) == int:
             if ntime <= 0:
-                raise Exception( 'Parameter ntime cannot be < = 0' )
+                raise Exception('Parameter ntime cannot be < = 0')
             else:
                 # units are seconds
                 newtime = float(ntime)
@@ -318,7 +358,7 @@ def flagdata(vis,
         if ((type(vis) == str) & (os.path.exists(vis))):
             aflocal.open(vis, newtime)
         else:
-            raise Exception( 'Visibility data set not found - please verify the name' )
+            raise Exception('Visibility data set not found - please verify the name')
 
 
         # Get the parameters for the mode
@@ -359,45 +399,30 @@ def flagdata(vis,
                          
                     # read in the list and do a simple parsing to apply tbuff
                     flaglist = fh.readAndParse(inpfile, tbuff)
-                     
-                else:                    
-                    # inpfile is a file
-                    if isinstance(inpfile, str) and os.path.isfile(inpfile):
-                        flaglist = fh.readFile(inpfile)
-                        nlines = len(flaglist)
-                        casalog.post('Read %s command(s) from file: %s'%(nlines, inpfile))                              
-                         
-                    # inpfile is a list of files
-                    elif isinstance(inpfile, list) and os.path.isfile(inpfile[0]):
-                        flaglist = fh.readFiles(inpfile)
-                         
-                    # Python list of strings
-                    elif isinstance(inpfile, list):                    
-                        flaglist = inpfile
-                        
-                    else:
-                        raise Exception( 'Unsupported input list of flag commands or input file does not exist' )
-                             
-                         
+
+                else:
+                    flaglist = fh.get_flag_cmd_list(inpfile)
+
+
                 # Parse and create a dictionary
                 flagcmd = fh.parseDictionary(flaglist, reason)
-                 
+
                 # Validate the dictionary. 
                 # IMPORTANT: if any parameter changes its type, the following
                 # function needs to be updated. The same if any new parameter is
                 # added or removed from the task
                 fh.evaluateFlagParameters(flagcmd,orig_locals)
-                     
+
                 # List of flag commands in dictionary
                 vrows = flagcmd.keys()
- 
+
                 casalog.post('%s'%flagcmd,'DEBUG1')
-                 
-                 
+
+
             except Exception as instance:
                 casalog.post('%s'%instance,'ERROR')
-                raise Exception( 'Error reading the input list. Make sure the syntax used in the list '\
-                                 'follows the rules given in the inline help of the task.' )
+                raise Exception('Error reading the input list. Make sure the syntax used in the list '\
+                                 'follows the rules given in the inline help of the task.')
 
             casalog.post('Selected ' + str(vrows.__len__())
                          + ' commands from combined input list(s) ')
@@ -422,8 +447,8 @@ def flagdata(vis,
                 casalog.post('Error : clipminmax must be a list : [min,max]', 'ERROR')
             # If clipminmax = [], do not write it in the dictionary.
             # It will be handled by the framework to flag NaNs only
-            if clipminmax.__len__() == 2:
-                # Cast to float to avoid the missing decimal point
+            if clipminmax.__len__() == 2:      
+                # Cast to float to avoid the missing decimal point                 
                 clipmin = float(clipminmax[0])
                 clipmax = float(clipminmax[1])
                 clipminmax = []
@@ -580,7 +605,7 @@ def flagdata(vis,
             
             tempdict = copy.deepcopy(seldic)
             # Remove the empty parameters
-            for k,v in seldic.items():
+            for k,v in lociteritems(seldic):
                 if v == '':
                     tempdict.pop(k)
             
@@ -615,7 +640,7 @@ def flagdata(vis,
                     casalog.post('Saving to FLAG_CMD is not supported for cal tables', 'WARN')
 
                 if not overwrite and os.path.exists(outfile):
-                    raise Exception( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
+                    raise Exception('You have set overwrite to False. Remove %s before saving the flag commands'%outfile)
 
                 else:                                 
                     fh.writeFlagCommands(vis, flagcmd, writeflags, cmdreason, outfile, False) 
@@ -637,7 +662,7 @@ def flagdata(vis,
             casalog.post('Parsing the parameters for %s mode'%mode, 'DEBUG1')
             if (not aflocal.parseagentparameters(agent_pars)):
 #                casalog.post('Failed to parse parameters for mode %s' %mode, 'ERROR')
-                raise ValueError( 'Failed to parse parameters for mode %s' %mode )
+                raise ValueError('Failed to parse parameters for mode %s' %mode)
                 
             casalog.post('%s'%agent_pars, 'DEBUG')
        
@@ -646,7 +671,7 @@ def flagdata(vis,
             # The loose union will be calculated for field and spw only;
             # antenna, correlation and timerange should be handled by the agent
             if vrows.__len__() == 0:
-                raise Exception( 'There are no valid commands in list' )
+                raise Exception('There are no valid commands in list')
             
             unionpars = {}
                 
@@ -717,14 +742,16 @@ def flagdata(vis,
         # Rflag : There can be many 'rflags' in list mode.
 
         ## Pull out RFlag outputs. There will be outputs only if writeflags=False
-        if (mode == 'rflag' or mode== 'list') and (writeflags==False):  
-            pprint.pprint(summary_stats_list)
-            fh.parseRFlagOutputFromSummary(mode,summary_stats_list, modified_flagcmd)
+        if (mode == 'rflag' or mode== 'list') and (writeflags==False):
+            casalog.post('Saving RFlag return dictionary: {0}'.
+                         format(pprint.pformat(summary_stats_list)), 'INFO')
+            fh.parseRFlagOutputFromSummary(mode, summary_stats_list, modified_flagcmd)
+
 
         # Save the current parameters/list to FLAG_CMD or to output
         if savepars:  
             if not overwrite and os.path.exists(outfile):
-                raise Exception( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
+                raise Exception('You have set overwrite to False. Remove %s before saving the flag commands'%outfile)            
             
             # Cal table type
             if iscal:
@@ -751,16 +778,19 @@ def flagdata(vis,
         if not iscal:
             if mode != 'summary' and action == 'apply':
                 try:
-                    vars = locals( )
                     param_names = flagdata.__code__.co_varnames[:flagdata.__code__.co_argcount]
-                    param_vals = [vars[p] for p in param_names]
+                    if is_python3:
+                        vars = locals( )
+                        param_vals = [vars[p] for p in param_names]
+                    else:
+                        param_vals = [eval(p) for p in param_names]
                     retval &= write_history(mslocal, vis, 'flagdata', param_names,
                                             param_vals, casalog)
                     
                 except Exception as instance:
                     casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                                  'WARN')
-        
+
         # Pull out the 'summary' reports of summary_stats_list.
         if mode == 'summary' or mode == 'list':
            ordered_summary_list = OrderedDict(summary_stats_list)
@@ -789,7 +819,7 @@ def flagdata(vis,
                    # the number of reports left in dictionary
                    counter = 0
                    summary_reports = OrderedDict()
-                   for k in ordered_summary_list.keys( ):
+                   for k in lociterkeys(ordered_summary_list):
                        repname = "report"+str(counter)
                        summary_reports[repname] = ordered_summary_list[k]
                        counter += 1
@@ -836,7 +866,7 @@ def filter_summary(summary_stats,minrel,maxrel,minabs,maxabs):
                 (summary_stats['flagged'] * 1.0 / summary_stats['total'] > maxrel):
                 return None
         else:
-             for x in summary_stats.keys():
+             for x in list(summary_stats.keys()):
                  res = filter_summary(summary_stats[x],minrel,maxrel,minabs,maxabs)
                  if res == None: del summary_stats[x]
                  

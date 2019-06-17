@@ -1,11 +1,22 @@
+from __future__ import absolute_import
 import os
 import numpy
 
-from casatools import image, regionmanager, coordsys
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image, regionmanager, coordsys
+    from casatasks import casalog
 
-_ia = image( )
-_rg = regionmanager( )
+    _ia = image( )
+    _rg = regionmanager( )
+else:
+    from taskinit import *
+
+    image = iatool
+    coordsys = cstool
+
+    _ia = iatool( )
+    _rg = rgtool( )
 
 # AUTHOR: S. Jaeger
 #
@@ -27,69 +38,69 @@ _rg = regionmanager( )
 #       list4: ['axis num of stokes axis', 'Stokes' ]
 
 def getimaxes(imagename):
-	"""
-	Open an image file, looking at its coordinate system information
-	to determine which axes are directional, linear, spectral, and
-	the stokes axies.
+        """
+        Open an image file, looking at its coordinate system information
+        to determine which axes are directional, linear, spectral, and
+        the stokes axies.
 
-	The return list or lists contains the axis numbers and names in
-	the following order:
-	     1. Directional or Linear
-	     2. Directional or Linear
-	     3. Spectral
-	     4. Stokes
+        The return list or lists contains the axis numbers and names in
+        the following order:
+             1. Directional or Linear
+             2. Directional or Linear
+             3. Spectral
+             4. Stokes
 
-	Note that if an axis type is not found an empty list is returned
+        Note that if an axis type is not found an empty list is returned
         for that axis.
-	"""
+        """
 
-	# Get the images coord. sys.
-	csys=None
-	_ia.open( imagename )
-	csys=_ia.coordsys()
+        # Get the images coord. sys.
+        csys=None
+        _ia.open( imagename )
+        csys=_ia.coordsys()
 
-	# Find where the directional and channel axies are
-	# Save the internal placement of the axies in a list
-	# (which will be in the following order:
-	#    direction1: RA, Longitude, Linear, el, ..
-	#    direction2: DEC, Lattitude, Linear, az, ..
-	#    spectral:
-	#    stokes: I or V
-	axisTypes=csys.axiscoordinatetypes()
-	axisNames=csys.names()
-	
-	# Note that we make a potentially dangerous assumption here
-	# that the first directional access is always RA, but it
-	# may not be.  The names given to the axies are completely
-	# arbitrary and can not be used to determine one axis from
-	# another.
-	# TODO throw exception??? if we find extra axies or
-	#      unrecognized axies.
-	retValue=[['',''],['',''],['',''],['','']]
-	foundFirstDir=False
-	for i in range( len( axisTypes ) ):
-		if ( axisTypes[i]=='Direction' or axisTypes[i]=='Linear' ):
-			if ( not foundFirstDir ) :
-				retValue[0]=[i,axisNames[i]]
-				foundFirstDir=True
-			else:
-				retValue[1]=[i,axisNames[i]]
-		elif ( axisTypes[i]=='Spectral' ) :
-			retValue[2]=[i,axisNames[i]]
-		elif ( axisTypes[i]=='Stokes' ) :
-			retValue[3]=[i,axisNames[i]]
+        # Find where the directional and channel axies are
+        # Save the internal placement of the axies in a list
+        # (which will be in the following order:
+        #    direction1: RA, Longitude, Linear, el, ..
+        #    direction2: DEC, Lattitude, Linear, az, ..
+        #    spectral:
+        #    stokes: I or V
+        axisTypes=csys.axiscoordinatetypes()
+        axisNames=csys.names()
+        
+        # Note that we make a potentially dangerous assumption here
+        # that the first directional access is always RA, but it
+        # may not be.  The names given to the axies are completely
+        # arbitrary and can not be used to determine one axis from
+        # another.
+        # TODO throw exception??? if we find extra axies or
+        #      unrecognized axies.
+        retValue=[['',''],['',''],['',''],['','']]
+        foundFirstDir=False
+        for i in range( len( axisTypes ) ):
+                if ( axisTypes[i]=='Direction' or axisTypes[i]=='Linear' ):
+                        if ( not foundFirstDir ) :
+                                retValue[0]=[i,axisNames[i]]
+                                foundFirstDir=True
+                        else:
+                                retValue[1]=[i,axisNames[i]]
+                elif ( axisTypes[i]=='Spectral' ) :
+                        retValue[2]=[i,axisNames[i]]
+                elif ( axisTypes[i]=='Stokes' ) :
+                        retValue[3]=[i,axisNames[i]]
 
-	if ( csys != None ):
-	    del csys
-	if ( _ia.isopen() ):
-	    _ia.close()
-	return retValue
+        if ( csys != None ):
+            del csys
+        if ( _ia.isopen() ):
+            _ia.close()
+        return retValue
 
 
 # The function that handles the imval task.
 def imval(imagename, region, box, chans, stokes):
-    myia = image( )
-    mycsys = coordsys( )
+    myia = image()
+    mycsys = coordsys()
     try:
         # Blank return value.
         retValue = { 'blc':[], 'trc':[], 'unit': '', 'data': [], 'mask': []}
@@ -313,7 +324,7 @@ def _imval_get_single( box, chans, stokes, axes ):
 # Use the ia.getregion() function to construct the requested data.
 def _imval_getregion( imagename, region):
     retvalue= {}
-    myia = image( )
+    myia = image()
     try:
         # Open the image for processing!
         myia.open(imagename)

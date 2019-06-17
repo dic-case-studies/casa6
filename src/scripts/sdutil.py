@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import numpy
 import traceback
@@ -8,13 +9,41 @@ import abc
 import datetime
 import contextlib
 
-from casatools import quanta, table, calibrater, imager, table
-from casatools.platform import bytes2str
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import quanta, table, calibrater, imager
+    from casatools.platform import bytes2str
+    from casatasks import casalog
+else:
+    from casac import casac
+    from taskinit import casalog, gentools
+    # make CASA5 tools constructors look like CASA6 tools
+    from taskinit import qatool as quanta
+    from taskinit import tbtool as table
+    from taskinit import cbtool as calibrater
+    from taskinit import imtool as imager
+    
+    #import asap as sd
+    #from asap import _to_list
+    #from asap.scantable import is_scantable, is_ms, scantable
+    #import rasterutil
 
 @contextlib.contextmanager
 def toolmanager(vis, ctor, *args, **kwargs):
-    tool = ctor( )
+    if is_CASA6:
+        # this is the only syntax allowed in CASA6, code in CASA6 should be converted to
+        # call this method with a tool constructor directly 
+        tool = ctor()
+    else:
+        # CASA5 code can invoke this with a tool name, shared CASA5 and CASA6 source 
+        # uses the CASA6 syntax - use callable to tell the difference
+        if callable(ctor):
+            tool = ctor()
+        else:
+            # assume the argument is string and use it to get the appropriate tool constructor
+            # the original argument name here was 'tooltype'
+            tool = gentools([ctor])[0]
+
     tool.open(vis, *args, **kwargs)
     try:
         yield tool
@@ -30,7 +59,10 @@ def cbmanager(vis, *args, **kwargs):
 def is_ms(filename):
     if (os.path.isdir(filename) and os.path.exists(filename+'/table.info') and os.path.exists(filename+'/table.dat')):
         f = open(filename + '/table.info')
-        l = bytes2str(f.readline( ))
+        if is_CASA6:
+            l = bytes2str(f.readline( ))
+        else:
+            l = f.readline()
         f.close()
         if (l.find('Measurement Set') != -1):
             return True
@@ -511,8 +543,8 @@ class sdtask_template_imaging(sdtask_interface):
         super(sdtask_template_imaging,self).__init__(**kwargs)
         self.is_table_opened = False
         self.is_imager_opened = False
-        self.table = table( )
-        self.imager = imager( )
+        self.table = table()
+        self.imager = imager()
         # workaround for sdtpimaging
         if not hasattr(self, 'infiles') and hasattr(self, 'infile'):
             self.infiles = [self.infile]
@@ -723,7 +755,7 @@ def combine_masklist(masklist1, masklist2, mode='and'):
     return res
 
 def get_restfreq_in_Hz(s_restfreq):
-    qatl = casac.quanta()
+    qatl = quanta()
     if not qatl.isquantity(s_restfreq):
         mesg = "Input value is not a quantity: %s" % (str(s_restfreq))
         raise Exception(mesg)
@@ -1323,7 +1355,7 @@ def sub_time(date, delta):
     return t-dt
 
 def select_by_timerange(data, timerange):
-    tb = gentools(['tb'])[0]
+    tb = table()
     qa = quanta()
 
     # first get default time and interval
@@ -1481,7 +1513,6 @@ def get_spwchs(selection, infile):
     for key in d.keys():
         l.append(':'.join([key, nchanmap[key], ';'.join(d[key])]))
     return ','.join(l)
-
 
 ##### OBSOLETE METHOD #####
 """

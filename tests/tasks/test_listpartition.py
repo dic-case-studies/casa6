@@ -1,12 +1,30 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import string
-from casatools import ctsys
-from casatasks import listpartition
-from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
 import unittest
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import listpartition
+    from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
+
+    ctsys_resolve = ctsys.resolve
+
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    import partitionhelper as ph
+    from tasks import listpartition
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+    
 '''
 Unit tests for task listpartition. It tests the following parameters:
     vis:        wrong and correct values
@@ -29,7 +47,9 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + ctsys.resolve('regression/unittest/partition/' + self.vis) + ' ' + self.vis)
+            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
+            
+        default(listpartition)
 
     def setUp_MMSdata1(self):
         self.vis = 'pFourantsSpw.mms'
@@ -39,7 +59,9 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + ctsys.resolve('regression/unittest/partition/' + self.vis) + ' ' + self.vis)
+            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
+
+        default(listpartition)
 
     def setUp_MMSdata2(self):
         self.vis = 'pFourantsScan.mms'
@@ -49,7 +71,9 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + ctsys.resolve('regression/unittest/partition/' + self.vis) + ' ' + self.vis)
+            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
+
+        default(listpartition)
 
     def setUp_MMSdata3(self):
         self.vis = 'pFourantsMix.mms'
@@ -59,7 +83,9 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + ctsys.resolve('regression/unittest/partition/' + self.vis) + ' ' + self.vis)
+            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
+
+        default(listpartition)
 
 
 class test_MS(test_base):
@@ -212,8 +238,7 @@ class test_MMS_scan(test_base):
 
                 # Compare both
                 self.assertEqual(dusize, rear[2], '%s is not equal to %s for %s'%(dusize,rear[2],front[0]))
-
-
+            
 class test_MMS_mix(test_base):
 
     def setUp(self):
@@ -289,7 +314,7 @@ class test_MMS_mix(test_base):
 
                 # Compare both
                 self.assertEqual(dusize, rear[2], '%s is not equal to %s for %s'%(dusize,rear[2],front[0]))
-
+            
 
 class listpartition_cleanup(unittest.TestCase):
 
@@ -313,6 +338,7 @@ def suite():
             test_MMS_scan,
             test_MMS_mix,
             listpartition_cleanup]
-
-if __name__ == '__main__':
-    unittest.main()
+    
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

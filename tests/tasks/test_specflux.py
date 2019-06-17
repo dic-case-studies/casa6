@@ -65,14 +65,25 @@
 #
 
 ###########################################################################
+from __future__ import absolute_import
 import os
 import shutil
 import unittest
 
-from casatools import ctsys
-from casatasks import specflux
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import specflux
 
-datapath = ctsys.resolve('regression/unittest/specflux')
+    datapath = ctsys.resolve('regression/unittest/specflux')
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
+    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/specflux')
+
 im1 = os.path.join(datapath,"specflux1.im")
 im2 = os.path.join(datapath,"specflux2.im")
 
@@ -147,7 +158,6 @@ class specflux_test(unittest.TestCase):
             expec = f.readlines()
         self.assertTrue(len(got) == len(expec))
         # skip first element because paths will in general be different
-        count = 1
         for (myg, mye) in zip(got[2:], expec[2:]):
             self.assertTrue(
                 myg == mye,
@@ -156,6 +166,7 @@ class specflux_test(unittest.TestCase):
  
 def suite():
     return [specflux_test]
-    
-if __name__ == '__main__':
-    unittest.main()
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

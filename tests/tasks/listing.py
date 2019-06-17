@@ -4,6 +4,8 @@
 # Module for testing the output of listing tasks (eg. liscal and listvis).
 #
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os, sys, re, math, decimal
 
 #=============================================================================
@@ -143,21 +145,21 @@ def diffMetadata(testOut, standardOut, prefix=""):
     for linenum in range(nlines):
         if ( testList[linenum] != stndList[linenum] ):
             countDiff += 1
-            print("- (line ", linenum, ") Non-float data differs:")
+            print("- (line ", linenum, ") Non-float data differs:") 
             printDiff(stndList[linenum],testList[linenum])
 
     ndiffl = 0
     if nlines < len(stndList):
       ndiffl = len(stndList)-nlines
-      print(" missing %s lines" % ndiffl)
+      print(" missing %s lines" % ndiffl) 
     if nlines == len(stndList):
       ndiffl = len(testList)-nlines
-      print(" extra %s lines" % ndiffl)
+      print(" extra %s lines" % ndiffl) 
 
     countDiff += ndiffl
     print("")
     print("SUMMARY (diffMetadata): ")
-    print(" %10i = Total number of lines with non-float differences" % countDiff)
+    print(" %10i = Total number of lines with non-float differences" % countDiff) 
 
     # Restore stdout
     #sys.stdout = sys.__stdout__
@@ -296,7 +298,7 @@ def diffAmpPhsFloat(test, standard, prefix="", precision="1e-6"):
                     if (countBigDif == 0): printDiff("","",[standard,test]) # Print header info
                     equal = False # test evaluates false
                     countBigDif += 1
-                    print("- (line ", linenum, ") Amp,Phs differ by more than precision:")
+                    print("- (line ", linenum, ") Amp,Phs differ by more than precision:") 
                     printDiff(standardList[linenum],testList[linenum])
                     print("  (Amp,Phs): (", samp,",",sphs_deg,") , (",tamp,",",tphs_deg,")")
                     print("  ( Re, Im): (", sre ,",",sim ,") , (",tre ,",",tim ,")")

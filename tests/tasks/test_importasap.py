@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -5,13 +7,30 @@ import re
 import unittest
 import numpy
 
-from casatools import ctsys, ms, table, agentflagger
-from casatasks import importasap
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, ms, table, agentflagger
+    from casatasks import importasap
 
-datapath='regression/unittest/importasap'
+    myms = ms( )
+    _tb = table( )
 
-myms = ms( )
-_tb = table( )
+    datapath=ctsys.resolve('regression/unittest/importasap')
+
+    # default isn't needed for casatasks
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from casac import casac
+    from importasap import importasap
+    agentflagger = casac.agentflagger
+
+    myms, _tb = gentools(['ms','tb'])
+
+    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/importasap'
 
 class importasap_test(unittest.TestCase):
     """
@@ -29,7 +48,9 @@ class importasap_test(unittest.TestCase):
     def setUp(self):
         self.res=None
         if (not os.path.exists(self.infile)):
-            shutil.copytree(ctsys.resolve(os.path.join(datapath,self.infile)), self.infile)
+            shutil.copytree(os.path.join(datapath,self.infile), self.infile)
+
+        default(importasap)
 
     def tearDown(self):
         if (os.path.exists(self.infile)):
@@ -219,6 +240,7 @@ class importasap_test(unittest.TestCase):
 
 def suite():
     return [importasap_test]
-        
-if __name__ == '__main__':
-    unittest.main()
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

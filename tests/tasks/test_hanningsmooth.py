@@ -1,26 +1,43 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-import sys
 import shutil
-
-### for testhelper import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import testhelper as th
-from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
 import unittest
 
-from casatasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
-from casatools import ctsys, ms
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    ### for testhelper import
+    import sys
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import testhelper as th
+    from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
+
+    from casatasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
+    from casatools import ctsys, ms
+
+    # default is not used in CASAtasks
+    def default(atask):
+        pass
+
+    # Path for data
+    datapath = ctsys.resolve('regression/unittest/hanningsmooth')
+else:
+    from __main__ import default
+    from tasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
+    from taskinit import mstool as ms
+    import testhelper as th
+    from parallel.parallel_data_helper import ParallelDataHelper
+
+    # Path for data
+    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/hanningsmooth/'
 
 '''
 functional tests for task hanningsmooth
 '''
 
-# Path for data
-datapath = ctsys.resolve('regression/unittest/hanningsmooth')
-
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if 'TEST_DATADIR' in os.environ:
+if 'TEST_DATADIR' in os.environ:   
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/hanningsmooth/'
     if os.path.isdir(DATADIR):
         testmms = True
@@ -39,6 +56,7 @@ class test_base(unittest.TestCase):
         if (not os.path.exists(self.msfile)):
             shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
             
+        default(hanningsmooth)
     
     def setUp_almams(self):
         # MS with DATA and CORRECTED_DATA
@@ -49,6 +67,7 @@ class test_base(unittest.TestCase):
         if (not os.path.exists(self.msfile)):
             shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
             
+        default(hanningsmooth)
 
     def createMMS(self, msfile, column='data', axis='auto',scans='',spws=''):
         '''Create MMSs for tests with input MMS'''
@@ -58,6 +77,7 @@ class test_base(unittest.TestCase):
         
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
+        default(partition)
         
         if os.path.exists(self.testmms):
             os.system("rm -rf " + self.testmms)
@@ -81,8 +101,11 @@ class hanningsmooth_test1(test_base):
         msfile = 'badmsfile'
         self.outputms = 'none.ms'
         passes = False
+        # CASA5 tasks do not throw exceptions, they return a value of False
         try:
-            hanningsmooth(vis=msfile)
+            ret = hanningsmooth(vis=msfile)
+            if not ret:
+                passes = True
         except:
             passes = True
         self.assertTrue(passes)
@@ -150,7 +173,7 @@ class hanningsmooth_test1(test_base):
         self.outputms = 'hann4.mms'
         
       # check correct flagging (just for one row as a sample)
-        mslocal = ms( )
+        mslocal = ms()
         mslocal.open(self.msfile)
         mslocal.sort('sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
         mslocal.close()
@@ -312,16 +335,16 @@ class hanningsmooth_test2(test_base):
         self.assertTrue(flag_col['r1'][0][1] == [False])
         self.assertTrue(flag_col['r1'][0][3838] == [False])
         self.assertTrue(flag_col['r1'][0][3839] == [False])
-
+        
         # input column
-        data_col = th.getVarCol(self.msfile, 'CORRECTED_DATA')
-
+        data_col = th.getVarCol(self.msfile, 'CORRECTED_DATA') 
+               
         hanningsmooth(vis=self.msfile, outputvis=self.outputms, datacolumn='corrected')
-
+        
         # output smoothed column
         corr_col = th.getVarCol(self.outputms, 'DATA')
         nrows = len(corr_col)
-
+        
       # check correct flagging after (just for one row as a sample)
         flag_col = th.getVarCol(self.outputms, 'FLAG')
         self.assertTrue(flag_col['r1'][0][0] == [True])
@@ -363,5 +386,6 @@ class Cleanup(test_base):
 def suite():
     return [hanningsmooth_test1,hanningsmooth_test2,Cleanup]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

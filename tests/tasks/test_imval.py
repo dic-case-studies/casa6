@@ -104,6 +104,8 @@
 #----------------------------
 
 ###########################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 import os
 import shutil
@@ -111,10 +113,26 @@ import glob
 import numpy
 import unittest
 
-from casatools import ctsys, image
-from casatasks import imval, casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image
+    from casatasks import imval, casalog
 
-_ia = image( )
+    _ia = image()
+
+    ctsys_resolve = ctsys.resolve
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+
+    image = iatool
+
+    _ia = image( )
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
 
 # Input files
 image_file = 'n4826_bima.im'
@@ -176,8 +194,8 @@ class imval_test(unittest.TestCase):
             os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
             
         datapath = 'regression/ATST3/NGC4826'
-        os.system('cp -r '+ctsys.resolve(os.path.join(datapath,image_file))+' ' + image_file)
-        os.system('cp -r '+ctsys.resolve(os.path.join(datapath,good_rgn_file))+' ' + good_rgn_file)
+        os.system('cp -r '+ctsys_resolve(os.path.join(datapath,image_file))+' ' + image_file)
+        os.system('cp -r '+ctsys_resolve(os.path.join(datapath,good_rgn_file))+' ' + good_rgn_file)
 
     def tearDown(self):
             os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
@@ -558,7 +576,7 @@ class imval_test(unittest.TestCase):
                      +" corner, "+tbox+"."
         else:
             if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results \
+                 and 'data' in results and 'unit' in results\
                  and 'mask' in results ):
                 msg='Bottom left corner valus is, '+str(results['blc'])\
                      +', value is: '+str(results['data'])+str(results['unit'])\
@@ -587,7 +605,7 @@ class imval_test(unittest.TestCase):
                      +" corner. "+tbox+"."                
         else:
             if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results \
+                 and 'data' in results and 'unit' in results\
                  and 'mask' in results ):
                 msg='Bottom right corner, '+str(results['blc'])+', value is: '\
                      +str(results['data'])+str(results['unit'])\
@@ -616,7 +634,7 @@ class imval_test(unittest.TestCase):
                      +" corner, "+tbox+"."
         else:
             if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results \
+                 and 'data' in results and 'unit' in results\
                  and 'mask' in results ):
                 msg='Top left corner, '+str(results['blc'])+', value is: '\
                      +str(results['data'])+str(results['unit'])\
@@ -642,7 +660,7 @@ class imval_test(unittest.TestCase):
                      +" corner. "+tbox+"."
         else:
             if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results \
+                 and 'data' in results and 'unit' in results\
                  and 'mask' in results ):
                 msg='Top right corner, '+str(results['blc'])+', value is: '\
                      +str(results['data'])+str(results['unit'])\
@@ -671,7 +689,7 @@ class imval_test(unittest.TestCase):
                      +" and last stokes, "+tbox+"."
         else:
             if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results \
+                 and 'data' in results and 'unit' in results\
                  and 'mask' in results ):
                 msg='Value found at'+str(results['blc'])+' is: '\
                      +str(results['data'])+str(results['unit'])\
@@ -699,7 +717,7 @@ class imval_test(unittest.TestCase):
                      +"\nError: "+msg
             else:
                 if ( results!=None and 'blc' in results \
-                     and 'data' in results and 'unit' in results \
+                     and 'data' in results and 'unit' in results\
                      and 'mask' in results ):
                     msg='Value found at'+str(results['blc'])+' is: '\
                          +str(results['data'])+str(results['unit'])\
@@ -726,7 +744,7 @@ class imval_test(unittest.TestCase):
                      +"\nError: "+msg
             else:
                 if ( results!=None and 'blc' in results \
-                     and 'data' in results and 'unit' in results \
+                     and 'data' in results and 'unit' in results\
                      and 'mask' in results ):
                      msg='Value found at'+str(results['blc'])+' is: '\
                      +str(results['data'])+str(results['unit'])\
@@ -915,7 +933,7 @@ class imval_test(unittest.TestCase):
     def test_coord_return(self):
         """Test returned coordinates CAS-2651"""
         myimval = imval(imagename=image_file, box="40,40,50,50", chans="5")
-        myia = image( )
+        myia = image()
         myia.open(image_file)
         mycsys = myia.coordsys()
         myia.done()
@@ -927,7 +945,7 @@ class imval_test(unittest.TestCase):
         
     def test_non_rect_region(self):
         """ verify imval works on non-rectangular regions, CAS-5734"""
-        myia = image( )
+        myia = image()
         imagename = "xxyy.im"
         myia.fromshape(imagename, [20,20,4,10])
         myia.done()
@@ -938,7 +956,7 @@ class imval_test(unittest.TestCase):
         
     def test_pv(self):
         """Test fix so imval works with pv images, CAS-7573"""
-        myia = image( )
+        myia = image()
         imagename = "mypv.im"
         myia.fromshape("", [20,20,20])
         myia.addnoise()
@@ -953,5 +971,6 @@ class imval_test(unittest.TestCase):
 def suite():
     return [imval_test]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

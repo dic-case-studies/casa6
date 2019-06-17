@@ -1,24 +1,59 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import copy
 import glob
 import sys
 import shutil
 import numpy
-import unittest
 from numpy import array
+#import listing
+import unittest
 
-from casatools import ctsys, table, ms
-from casatasks import sdfit, flagdata
-from casatasks.private.sdutil import tbmanager
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms
+    from casatasks import sdfit, flagdata
+    from casatasks.private.sdutil import tbmanager
 
-### for selection_syntax import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import selection_syntax
+    ### for selection_syntax import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import selection_syntax
 
-from testhelper import copytree_ignore_subversion
+    from testhelper import copytree_ignore_subversion
 
-tb = table( )
+    tb = table()
 
+    ctsys_resolve = ctsys.resolve
+
+    # default is not used in casatasks
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    from sdfit import sdfit
+    from sdutil import tbmanager
+    
+    try:
+        from . import selection_syntax
+    except:
+        import tests.selection_syntax as selection_syntax
+        
+    try:
+        from . import testutils
+    except:
+        import tests.testutils as testutils
+    copytree_ignore_subversion = testutils.copytree_ignore_subversion
+
+    # the global tb tool is used here
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+    
 ### Utilities for reading blparam file
 class FileReader(object):
     def __init__(self, filename):
@@ -136,7 +171,7 @@ class sdfit_unittest_base(unittest.TestCase):
     Base class for sdfit unit test
     """
     # Data path of input/output
-    datapath = ctsys.resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('regression/unittest/tsdfit')
     taskname = "sdfit"
     verboselog = False
 
@@ -489,7 +524,6 @@ class sdfit_unittest_base(unittest.TestCase):
         Convert input to a list
         If input is None, this method simply returns None.
         """
-        import numpy
         listtypes = (list, tuple, numpy.ndarray)
         if input == None:
             return None
@@ -534,6 +568,9 @@ class sdfit_unittest_base(unittest.TestCase):
                 self.assertTrue((abs(rdiff)<allowdiff),
                                 msg='row %s: coefficient for order %s is different'%(irow,ic))
         print('')
+#         self.assertTrue(listing.compare(out,reference),
+#                         'New and reference files are different. %s != %s. '
+#                         %(out,reference))
 
 
 class sdfit_basicTest(sdfit_unittest_base):
@@ -601,6 +638,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             if os.path.exists(infile):
                 shutil.rmtree(infile)
             shutil.copytree(os.path.join(self.datapath,infile), infile)
+        default(sdfit)
 
     def tearDown(self):
         for infile in self.infiles:
@@ -827,7 +865,7 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
         intent, antenna, field, spw, timerange, scan, and pol,
     in combination with datacolumn selection = {corrected | float_data}
     """
-    datapath = ctsys.resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('regression/unittest/tsdfit')
     infile = "analytic_type1.fit.ms"
     common_param = dict(infile=infile, outfile='',
                         fitfunc='gaussian',nfit=[1],fitmode='list')
@@ -851,6 +889,7 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
     def setUp(self):
         self._remove(self.templist)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdfit)
 
     def tearDown(self):
         self._remove(self.templist)
@@ -982,7 +1021,7 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
     """
     This class tests fitmode='auto'
     """
-    datapath = ctsys.resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('regression/unittest/tsdfit')
     infile = "analytic_type2.fit1row.ms"
     common_param = dict(infile=infile, outfile='',datacolumn='float_data',
                         fitfunc='gaussian',fitmode='auto')
@@ -999,6 +1038,7 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
     def setUp(self):
         self._remove([self.infile])
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdfit)
 
     def tearDown(self):
         self._remove([self.infile])
@@ -1120,7 +1160,7 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
           Averaging the first 4 rows, taking account of weight, gives
           Gaussian with peak amplitude of 1. 
     """
-    datapath = ctsys.resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('regression/unittest/tsdfit')
     infile = "sdfit_tave.ms"
     outfile = "sdfit.out"
     common_param = dict(infile=infile, outfile=outfile, datacolumn='float_data',
@@ -1129,6 +1169,7 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
     def setUp(self):
         self._remove([self.infile])
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+        default(sdfit)
 
     def tearDown(self):
         self._remove([self.infile, self.outfile])
@@ -1226,7 +1267,10 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
             shutil.rmtree(self.infile)
 
     def edit_weight(self):
-        mytb = table( )
+        if is_CASA6:
+            mytb = table( )
+        else:
+            (mytb,) = gentools(['tb'])
         mytb.open(self.infile, nomodify=False)
         try:
             print('Editing weight')
@@ -1246,7 +1290,6 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         Edit DATA_DESC_ID and TIME (TIME_CENTROID) so taht VI/VB2 takes more than 
         one row in one (sub)chunk
         """
-        mytb = table( )
         tb.open(self.infile, nomodify=False)
         try:
             ddid = tb.getcol('DATA_DESC_ID')
@@ -1270,8 +1313,12 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         if mode == 'default' or mode == 'stokes':
             scaled /= 2.0
         elif mode == 'geometric':
-            myms = ms( )
-            mytb = table( )
+            if is_CASA6:
+                myms = ms()
+                mytb = table()
+            else:
+                (myms, mytb,) = gentools(['ms', 'tb'])
+                
             sel = myms.msseltoindex(vis=self.infile, spw='0')
             ddid = sel['dd'][0]
             mytb.open(self.infile)
@@ -1313,8 +1360,8 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         cent_expected = numpy.asarray(self.answer['cent'])[where].squeeze()
         sort_index = numpy.argsort(cent_expected)
         cent_expected = cent_expected[sort_index]
-        print('cent (result)={}\ncent (expected)={}'.format(cent_result,
-                                                            cent_expected))
+        print('cent (result)={}\ncent (expected)={}'.format(cent_result, 
+                                                            cent_expected)) 
         err_factor = 2.0
         for i in range(2):
             self.assertLessEqual(cent_expected[i], cent_result[i] + err_factor * cent_err[i])
@@ -1327,8 +1374,8 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         fwhm_err = fwhm[0,:,1]
         fwhm_expected = numpy.asarray(self.answer['fwhm'])[where].squeeze()
         fwhm_expected = fwhm_expected[sort_index]
-        print('fwhm (result)={}\nfwhm (expected)={}'.format(fwhm_result,
-                                                            fwhm_expected))
+        print('fwhm (result)={}\nfwhm (expected)={}'.format(fwhm_result, 
+                                                            fwhm_expected)) 
         err_factor = 2.0
         for i in range(2):
             self.assertLessEqual(fwhm_expected[i], fwhm_result[i] + err_factor * fwhm_err[i])
@@ -1342,8 +1389,8 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         peak_expected = numpy.asarray(self.answer['peak'])[where].squeeze()
         peak_expected_scaled = self.scale_expected_peak(mode, peak_expected)
         peak_expected_scaled = peak_expected_scaled[sort_index]
-        print('peak (result)={}\npeak (expected)={}'.format(peak_result,
-                                                            peak_expected_scaled))
+        print('peak (result)={}\npeak (expected)={}'.format(peak_result, 
+                                                            peak_expected_scaled)) 
         err_factor = 2.0
         for i in range(2):
             self.assertLessEqual(peak_expected_scaled[i], peak_result[i] + err_factor * peak_err[i])
@@ -1401,5 +1448,6 @@ def suite():
             sdfit_polaverage
            ]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

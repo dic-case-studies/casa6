@@ -1,8 +1,14 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
-from casatools import imager
-from casatasks import casalog
-
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+        from casatools import imager
+        from casatasks import casalog
+else:
+        from taskinit import *
+        imager = imtool
 
 def feather(imagename=None,highres=None,lowres=None, sdfactor=None, effdishdiam=None, lowpassfiltersd=None):
         """ Feathering: Combine two images using the Fourier Addition:
@@ -40,3 +46,4 @@ def feather(imagename=None,highres=None,lowres=None, sdfactor=None, effdishdiam=
         except Exception as instance:
                 print('*** Error *** %s' % instance)
                 raise
+

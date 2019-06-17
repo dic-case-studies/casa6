@@ -1,9 +1,17 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
-from casatools import calibrater
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import calibrater
+    from casatasks import casalog
 
-_cb = calibrater( )
+    _cb = calibrater()
+else:
+    from taskinit import *
+
+    _cb = cbtool( )
 
 def smoothcal(vis,tablein,caltable,field,smoothtype,smoothtime):
         """ Smooth calibration solution(s) derived from one or more sources:
@@ -29,7 +37,7 @@ def smoothcal(vis,tablein,caltable,field,smoothtype,smoothtime):
                 casalog.origin('smoothcal')
                 if ((type(vis)==str) & (os.path.exists(vis))):
                         _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
-
+                               
                 else:
                         raise Exception('Visibility data set not found - please verify the name')
 

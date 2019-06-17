@@ -1,15 +1,32 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 import stat
 import time
-from . import partitionhelper as ph
-from .parallel.parallel_task_helper import ParallelTaskHelper
 
-from casatools import calibrater, table, ms, quanta
-from casatasks import casalog
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from . import partitionhelper as ph
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from .mstools import write_history
 
-qa = quanta( )
-_cb = calibrater( )
+    from casatools import calibrater, quanta
+    from casatools import ms as mstool
+    from casatools import table as tbtool
+    from casatasks import casalog
+
+    qa = quanta( )
+    _cb = calibrater( )
+else:
+    from taskinit import *
+    from mstools import write_history
+    import partitionhelper as ph
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    
+    # uses the global qa tool
+    _cb = cbtool( )
 
 def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
           visweightscale,keepcopy,copypointing):
@@ -57,8 +74,8 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
     originalvis = vislist
     try:
         casalog.origin('virtualconcat')
-        t = table( )
-        m = ms( )
+        t = tbtool()
+        m = mstool()
         
         #break the reference between vis and vislist as we modify vis
         if(type(vislist)==str):
@@ -285,16 +302,22 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
                       weightscale=wscale)
         #end for
         os.remove(auxfile)
-
-        m.writehistory(message='taskname=virtualconcat',origin='virtualconcat')
-        m.writehistory(message='vis          = "'+str(vis)+'"',origin='virtualconcat')
-        m.writehistory(message='concatvis    = "'+str(concatvis)+'"',origin='virtualconcat')
-        m.writehistory(message='freqtol      = "'+str(freqtol)+'"',origin='virtualconcat')
-        m.writehistory(message='dirtol       = "'+str(dirtol)+'"',origin='virtualconcat')
-        m.writehistory(message='respectname  = "'+str(respectname)+'"',origin='virtualconcat')
-        m.writehistory(message='visweightscale = "'+str(visweightscale)+'"',origin='virtualconcat')
-
         m.close()
+
+        # Write history to MS
+        try:
+            param_names = virtualconcat.__code__.co_varnames[:virtualconcat.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
+            write_history(mstool(), theconcatvis, 'virtualconcat', param_names,
+                          param_vals, casalog)
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
+                     'WARN')
+
 
         # concatenate the POINTING tables
         masterptable = mmsmembers[0]+'/POINTING'

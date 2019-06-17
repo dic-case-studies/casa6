@@ -1,23 +1,38 @@
+from __future__ import absolute_import
 import os
 import shutil
-import string
 
-from casatools import image, measures, quanta
-from casatasks import casalog
-qa = quanta()
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image, measures, quanta
+    from casatasks import casalog
+    # this is a local tool
+    qa = quanta()
+else:
+    from taskinit import *
+    # uses qa, not a local tool
 
-
+if is_python3:
+    str_lower = str.lower
+else:
+    import string
+    str_lower = string.lower
+    
 def imreframe(imagename=None, output=None, outframe=None, epoch=None, restfreq=None):
     try:
         casalog.origin('imreframe')
         if(output==imagename):
             output=''
         needregrid=False
-        outframe=str.lower(outframe)
+        outframe=str_lower(outframe)
         if(((outframe == 'topo') or (outframe=='geo')) and (epoch != '')):
             needregrid=True
-        myia = image( )
-        me = measures( )
+        if is_CASA6:
+            myia = image()
+            me = measures()
+        else:
+            myia,me=gentools(['ia', 'me'])
         myia.open(imagename)
         c=myia.coordsys()
         me.doframe(me.observatory(c.telescope()))

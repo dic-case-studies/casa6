@@ -1,6 +1,21 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-from casatasks import casalog
-from casatools import sdm, table, quanta, ms
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+        from casatasks import casalog
+        from casatools import sdm, table, quanta, ms
+
+        _ms = ms()
+        _tb = table()
+        _qa = quanta()
+else:
+        from taskinit import *
+
+        _ms = casac.ms()
+        _tb = casac.table()
+        _qa = qa         # not really local, but it has no state as used here
 
 def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=None,
                subscanduration=None, sbduration=None, apcorrected=None,
@@ -44,19 +59,22 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
         """
         #Python script
 
-        # make ms and tb tool local 
-        _ms = ms( )
-        _tb = table( )
-        _qa = quanta( )
-
         try:
                 casalog.origin('exportasdm')
+                parsummary = 'vis=\"'+str(vis)+'\", asdm=\"'+str(asdm)+'\", datacolumn=\"'+str(datacolumn)+'\",'
+                casalog.post(parsummary)
+                parsummary = 'archiveid=\"'+str(archiveid)+'\", rangeid=\"'+str(rangeid)+'\", subscanduration=\"'+str(subscanduration)+'\",'
+                casalog.post(parsummary)
+                parsummary = 'sbduration=\"'+str(sbduration)+'\", apcorrected='+str(apcorrected)+', verbose='+str(verbose)+','
+                casalog.post(parsummary)
+                parsummary = 'showversion='+str(showversion)+', useversion=\"'+str(useversion)+'\"'
+                casalog.post(parsummary)
 
                 if not (type(vis)==str) or not (os.path.exists(vis)):
                         raise Exception('Visibility data set not found - please verify the name')
                 
                 if (asdm == ""):
-                        raise Exception("Must provide output data set name in parameter asdm.")
+                        raise Exception("Must provide output data set name in parameter asdm.")            
                 
                 if os.path.exists(asdm):
                         raise Exception("Output ASDM %s already exists - will not overwrite." % asdm)
@@ -77,12 +95,11 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
                                 sbdur_secs = _qa.canonical(sbduration)['value']
 
                 # create timesorted copy of the input ms
-                os.system('rm -rf '+vis+'-tsorted')
-                _ms.open(vis)
-                _ms.timesort(vis+'-tsorted')
-                _ms.close()
-
                 tsortvis = vis+'-tsorted'
+                os.system('rm -rf '+tsortvis)
+                _ms.open(vis)
+                _ms.timesort(tsortvis)
+                _ms.close()
 
                 # Prepare for actual exportasdm
                 casalog.post("Checking timesorted MS for potential problems ... ")
@@ -169,12 +186,53 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
                                 _tb.close()
                         casalog.post("Done.")
                 else:
-                        raise Exception("More than one processor id in use in the main table. Cannot proceed.")
+                        raise Exception("More than one processor id in use in the main table. Cannot proceed.")                    
+                
+                if is_CASA6:
+                        # sdm tool
+                        _sdm = sdm(asdm)
+                        rval = _sdm.fromms(tsortvis, datacolumn, archiveid, rangeid, ssdur_secs, sbdur_secs, apcorrected, verbose)
+                        # this line is independent of CASA version, but is here so that the CASA5 version can do additional error reporting after cleaning up this temporary MS
+                        os.system('rm -rf '+tsortvis)
+                        return rval
+                else:
+                        # use MS2asdm executable
+                        execute_string=  '--datacolumn \"' + datacolumn 
+                        execute_string+= '\" --archiveid \"' + archiveid + '\" --rangeid \"' + rangeid
+                        execute_string+= '\" --subscanduration \"' + str(ssdur_secs)
+                        execute_string+= '\" --schedblockduration \"' + str(sbdur_secs) 
+                        execute_string+= '\" --logfile \"' + casalog.logfile() +'\"'
+                
+                        if(not apcorrected):
+                                execute_string+= ' --apuncorrected'
+                        if(verbose):
+                                execute_string+= ' --verbose'
+                        if(showversion):
+                                execute_string+= ' --revision'
 
-                _sdm = sdm(asdm)
-                rval = _sdm.fromms(vis, datacolumn, archiveid, rangeid, ssdur_secs, sbdur_secs, apcorrected, verbose)
-                os.system('rm -rf '+vis+'-tsorted')
-                return rval
+                        theexecutable = 'MS2asdm'
+                        if (useversion == 'v3'):
+                                theexecutable = 'MS2asdm'
+
+                        execute_string += ' ' + tsortvis + ' ' + asdm
+
+                        execute_string = theexecutable+' '+execute_string
+
+                        if(verbose):
+                                casalog.post('Running '+theexecutable+' standalone invoked as:')
+                                casalog.post(execute_string)
+                        else:
+                                print(execute_string)
+
+                        rval = os.system(execute_string)
+
+                        os.system('rm -rf '+tsortvis)
+                
+                        if(rval == 0):
+                                return True
+                        else:
+                                casalog.post(theexecutable+' terminated with exit code '+str(rval),'WARN')
+                                return False
         
         except Exception as instance:
                 casalog.post("Error: %s" % instance, 'SEVERE')

@@ -1,15 +1,45 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 import os
 import sys
 import copy
 import shutil
-from .. import partitionhelper as ph
-from casatools import table
-from casatools import ms as mstool
-from casatasks import casalog
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .. import partitionhelper as ph
+    from casatools import table as tbtool
+    from casatools import ms as mstool
+    from casatasks import casalog
+    from casatasks.private.parallel.rflag_post_proc import combine_rflag_subreport, is_rflag_report
+    from casatasks.private.parallel.rflag_post_proc import finalize_agg_rflag_thresholds
+else:
+    from parallel.rflag_post_proc import combine_rflag_subreport, is_rflag_report
+    from parallel.rflag_post_proc import finalize_agg_rflag_thresholds
+    import partitionhelper as ph
+    from taskinit import *
+
+# string.find (python 2) vs str_instance.find
+if is_python3:
+    def strfind(a):
+        return str_instance.find(a)
+else:
+    def strfind(a):
+        return string.find(str_instance,a)
+
+# common function to use to get a dictionary values iterator
+if is_python3:
+    def locitervalues(adict):
+        return adict.values()
+else:
+    def locitervalues(adict):
+        return adict.itervalues()
 
 # To handle thread-based Tier-2 parallelization
 import threading
+if not is_python3:
+    import thread
 
 # jagonzal (CAS-4106): Properly report all the exceptions and errors in the cluster framework
 import traceback
@@ -186,7 +216,7 @@ class ParallelTaskHelper:
     def generateJobs(self):
         """
         This is the method which generates all of the actual jobs to be
-        done.  The default is to asume the input vis is a reference ms and
+        done.  The default is to assume the input vis is a reference ms and
         build one job for each referenced ms.
         """
         
@@ -197,8 +227,7 @@ class ParallelTaskHelper:
             if not msTool.open(self._arg['vis']):
                 raise ValueError("Unable to open MS %s," % self._arg['vis'])
             if not msTool.ismultims():
-                raise ValueError( \
-                      "MS is not a MultiMS, simple parallelization failed")
+                raise ValueError("MS is not a MultiMS, simple parallelization failed")
 
             subMs_idx = 0
             for subMS in msTool.getreferencedtables():
@@ -223,6 +252,7 @@ class ParallelTaskHelper:
 
 
     def executeJobs(self):
+        
         casalog.origin("ParallelTaskHelper")
         
         # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested 
@@ -230,19 +260,30 @@ class ParallelTaskHelper:
             for job in self._executionList:
                 parameters = job.getCommandArguments()
                 try:
-                    vars = globals( )
-                    try:
-                        exec("from casatasks import *; " + job.getCommandLine(),vars)
-                    except Exception as e:
-                        print("exec in parallel_task_helper.executeJobs failed: %s" % e)
-                    # jagonzal: Special case for partition
-                    if 'outputvis' in parameters:
-                        self._sequential_return_list[parameters['outputvis']] = vars['returnVar0']
+                    if is_CASA6:
+                        vars = globals( )
+                        try:
+                            exec("from casatasks import *; " + job.getCommandLine(),vars)
+                        except Exception as e:
+                            print("exec in parallel_task_helper.executeJobs failed: %s" % e)
+
+                        # jagonzal: Special case for partition
+                        if 'outputvis' in parameters:
+                            self._sequential_return_list[parameters['outputvis']] = vars['returnVar0']
+                        else:
+                            self._sequential_return_list[parameters['vis']] = vars['returnVar0']
                     else:
-                        self._sequential_return_list[parameters['vis']] = vars['returnVar0']
+                        exec("from taskinit import *; from tasks import *; " + job.getCommandLine())
+
+                        # jagonzal: Special case for partition
+                        if ('outputvis' in parameters):
+                            self._sequential_return_list[parameters['outputvis']] = returnVar0
+                        else:
+                            self._sequential_return_list[parameters['vis']] = returnVar0
+
                 except Exception as instance:
                     str_instance = str(instance)
-                    if (str_instance.find("NullSelection") == 0):
+                    if (strfind("NullSelection") == 0):
                         casalog.post("Error running task sequentially %s: %s" % (job.getCommandLine(),str_instance),"WARN","executeJobs")
                         traceback.print_tb(sys.exc_info()[2])
                     else:
@@ -280,53 +321,76 @@ class ParallelTaskHelper:
             return None
         
         ret = ret_list
-        if self._consolidateOutput: ret = ParallelTaskHelper.consolidateResults(ret_list,self._taskName)
+        if self._consolidateOutput:
+            ret = ParallelTaskHelper.consolidateResults(ret_list,self._taskName)
         
         return ret
         
         
     @staticmethod
     def consolidateResults(ret_list,taskname):
-        
-        index = 0
         if isinstance(list(ret_list.values())[0],bool):
             retval = True
             for subMs in ret_list:
                 if not ret_list[subMs]:
                     casalog.post("%s failed for sub-MS %s" % (taskname,subMs),"WARN","consolidateResults")
                     retval = False
-                index += 1
             return retval
-        elif any(isinstance(v,dict) for v in ret_list.itervalues()):
+        elif any(isinstance(v,dict) for v in locitervalues(ret_list)):
             ret_dict = {}
-            for subMs in ret_list:
-                dict_i = ret_list[subMs]
-                if isinstance(dict_i,dict):
+            for _key, subMS_dict in ret_list.items():
+                casalog.post(" ***** consolidateResults, subMS: {0}".format(subMS_dict),
+                             "WARN", "consolidateResults")
+                if isinstance(subMS_dict, dict):
                     try:
-                        ret_dict = ParallelTaskHelper.sum_dictionaries(dict_i,ret_dict)
+                        ret_dict = ParallelTaskHelper.combine_dictionaries(subMS_dict, ret_dict)
                     except Exception as instance:
-                        casalog.post("Error post processing MMS results %s: %s" % (subMs,instance),"WARN","consolidateResults")
-            return ret_dict
-        
-        
+                        casalog.post("Error post processing MMS results {0}: {1}".format(
+                            subMS_dict, instance), 'WARN', 'consolidateResults')
+                        raise
+            return ParallelTaskHelper.finalize_consolidate_results(ret_dict)
+
+
     @staticmethod
-    def sum_dictionaries(dict_list,ret_dict):
-        for key in dict_list:
-            item = dict_list[key]
-            if isinstance(item,dict):
+    def combine_dictionaries(dict_list,ret_dict):
+        """
+        Combines a flagging (sub-)report dictionary dict_list (from a subMS) into an overall
+        report dictionary (ret_dict).
+        """
+        for key, item in dict_list.items():
+            if isinstance(item, dict):
                 if key in ret_dict:
-                    ret_dict[key] = ParallelTaskHelper.sum_dictionaries(item,ret_dict[key])
+                    if is_rflag_report(item):
+                        ret_dict[key] = combine_rflag_subreport(item, ret_dict[key])
+                    else:
+                        ret_dict[key] = ParallelTaskHelper.combine_dictionaries(item,ret_dict[key])
                 else:
-                    ret_dict[key] = ParallelTaskHelper.sum_dictionaries(item,{})
+                    ret_dict[key] = ParallelTaskHelper.combine_dictionaries(item,{})
             else:
                 if key in ret_dict:
-                    if not isinstance(ret_dict[key],str):
+                    # the 'nreport' field should not be summed - it's an index
+                    if not isinstance(ret_dict[key],str) and 'nreport' != key:
+                        # This is a good default for all reports that have flag counters
                         ret_dict[key] += item
                 else:
                     ret_dict[key] = item
-        return ret_dict   
-    
-    
+
+        return ret_dict
+
+
+    @staticmethod
+    def finalize_consolidate_results(ret):
+        """ Applies final step to the items of the report dictionary.
+        For now only needs specific processing to finalize the aggregation of the RFlag
+        thresholds (freqdev/timedev) vectors. """
+
+        for key, item in ret.items():
+            if isinstance(item, dict) and is_rflag_report(item):
+                ret[key] = finalize_agg_rflag_thresholds(item)
+
+        return ret
+
+
     @staticmethod
     def getResult(command_request_id_list,taskname):
         
@@ -407,7 +471,7 @@ class ParallelTaskHelper:
         theSubMSs = msTool.getreferencedtables()
         msTool.close()
 
-        tbTool = table( );
+        tbTool = tbtool( );
         
         if mastersubms=='':
             tbTool.open(vis)
@@ -466,8 +530,8 @@ class ParallelTaskHelper:
         return ParallelTaskHelper.__bypass_parallel_processing        
     
     @staticmethod
-    def setAsyncMode(async=False):     
-        ParallelTaskHelper.__async_mode = async
+    def setAsyncMode(async_mode=False):     
+        ParallelTaskHelper.__async_mode = async_mode
         
     @staticmethod
     def getAsyncMode():
@@ -518,6 +582,10 @@ class ParallelTaskHelper:
     @staticmethod
     def isMPIEnabled():
         return MPIEnvironment.is_mpi_enabled if mpi_available else False
+
+    @staticmethod
+    def isMPIClient():
+        return MPIEnvironment.is_mpi_client if mpi_available else False
 
     @staticmethod
     def listToCasaString(inputList):
@@ -578,9 +646,12 @@ class ParallelTaskWorker:
         self.__completion_event.clear()        
                
         # Spawn thread
-        self.__thread = threading.Thread(target=self.runCmd, args=(), kwargs=())
-        self.__thread.setDaemon(True)
-        self.__thread.start()
+        if is_python3:
+            self.__thread = threading.Thread(target=self.runCmd, args=(), kwargs=())
+            self.__thread.setDaemon(True)
+            self.__thread.start()
+        else:
+            self.__thread = thread.start_new_thread(self.runCmd, ())
 
         # Mark state as running
         self.__state = "running"        

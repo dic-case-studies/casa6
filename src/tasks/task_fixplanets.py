@@ -1,14 +1,29 @@
-import traceback
-import os
+from __future__ import absolute_import
 import shutil
+import os
 import string
-from .parallel.parallel_task_helper import ParallelTaskHelper
-from . import JPLephem_reader2 as jplreader
-from casatools import ms, table, measures, quanta, image, imager
-from casatasks import casalog
 
-_qa = quanta( )
-_me = measures( )
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from . import JPLephem_reader2 as jplreader
+    from casatools import ms as mstool
+    from casatools import table as tbtool
+    from casatools import imager as imtool
+    from casatools import measures, quanta
+    from casatasks import casalog
+    from .mstools import write_history
+    _qa = quanta( )
+    _me = measures( )
+else:
+    from taskinit import *
+    from mstools import write_history
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    import recipes.ephemerides.JPLephem_reader2 as jplreader
+    # not really local copies
+    _qa = qa
+    _me = me
 
 def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'):
     """
@@ -23,9 +38,9 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
 
     Input Parameters
     vis        -- Name of the input visibility set
-
+    
     field      -- field selection string
-
+    
     fixuvw     -- recalc uvw coordinates? (default: False)
 
     direction  -- if set, don't use pointing table but set direction to this value.
@@ -49,20 +64,20 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
     reftime    -- if using pointing table information, use it from this timestamp
                   default: 'first'
                   examples: 'median' will use the median timestamp for the given field
-		              using only the unflagged maintable rows
+                              using only the unflagged maintable rows 
                             '2012/07/11/08:41:32' will use the given timestamp (must be
                             within the observaton time)
     """
-
+    
     casalog.origin('fixplanets')
 
-    mst = ms( )
-    tbt = table( )
+    mst = mstool()
+    tbt = tbtool()
     imt = None
 
     try:
         fields = mst.msseltoindex(vis=vis,field=field)['field']
-        numfields = 0
+        numfields = 0 
         if(len(fields) == 0):
             casalog.post( "Field selection returned zero results.", 'WARN')
             return True
@@ -75,14 +90,14 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
 
         fixplanetstemp = 'fixplanetstemp-'+os.path.basename(vis) # temp file name
         fixplanetstemp2 = 'fixplanetstemp2-'+os.path.basename(vis) # temp file name
-
+        
         for fld in fields:
             thenewra_rad = 0.
             thenewdec_rad = 0.
             thenewref = -1
             thenewrefstr = ''
             theephemeris = ''
-
+            
             if(direction==''): # use information from the pointing table
                 # find median timestamp for this field in the main table
                 shutil.rmtree(fixplanetstemp, ignore_errors=True)
@@ -140,7 +155,7 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                         casalog.post( "No pointing table rows for field "+field, 'NORMAL')
                         tbt.close()
                         shutil.rmtree(fixplanetstemp, ignore_errors=True)
-                        return True
+                        return True        
                     shutil.rmtree(fixplanetstemp, ignore_errors=True)
                     if (thefirsttime<=thetime and thetime<=thelasttime):
                         casalog.post( "GIVEN TIME "+reftime+" == "+str(thetime), 'NORMAL')
@@ -158,7 +173,7 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                     casalog.post( "Antenna selection returned zero results.", 'WARN')
                     return False
                 antid = int(antids[0])
-                casalog.post('Using antenna id '+str(antid)+' as reference antenna.', 'NORMAL')
+                casalog.post('Using antenna id '+str(antid)+' as reference antenna.', 'NORMAL') 
                 tbt.open(vis+'/ANTENNA')
                 flgcol = tbt.getcol('FLAG_ROW')
                 tbt.close()
@@ -189,7 +204,7 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                         casalog.post( "Will try without requiring TRACKING==True ...", 'NORMAL')
                         shutil.rmtree(fixplanetstemp2, ignore_errors=True)
                         ttb3 = tbt.query('NEARABS(TIME,'+str(thetime)+',INTERVAL/2.) AND ANTENNA_ID=='
-                                         +str(antid),
+                                         +str(antid), 
                                          name=fixplanetstemp2)
                         nr = ttb3.nrows()
                         ttb3.close()
@@ -213,7 +228,7 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                 tbt.close()
                 casalog.post( ' field id '+str(fld)+ ' AZ EL '+str(thedir[0])+" "+str(thedir[1]), 'NORMAL')
                 thedirme = _me.direction(rf='AZELGEO',v0=_qa.quantity(thedir[0][0], 'rad'),
-                                        v1=_qa.quantity(thedir[1][0],'rad'))
+                                         v1=_qa.quantity(thedir[1][0],'rad'))
                 # convert AZEL to J2000 coordinates
                 _me.doframe(_me.epoch(rf='UTC', v0=_qa.quantity(thetime,'s')))
 
@@ -225,9 +240,9 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                 casalog.post( "Ref. antenna position is "+str(thepos)+' ('+theposunits[0]+', '+theposunits[1]+', '
                               +theposunits[2]+')('+theposref+')', 'NORMAL')
                 _me.doframe(_me.position(theposref,
-                                       _qa.quantity(thepos[0],theposunits[0]),
-                                       _qa.quantity(thepos[1],theposunits[1]),
-                                       _qa.quantity(thepos[2],theposunits[2]))
+                                         _qa.quantity(thepos[0],theposunits[0]),
+                                         _qa.quantity(thepos[1],theposunits[1]),
+                                         _qa.quantity(thepos[2],theposunits[2]))
                            )
                 thedirmemod = _me.measure(v=thedirme, rf='J2000')
                 #print thedirmemod
@@ -256,7 +271,7 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                             else: # not a file, assume it is a CASA table
                                 theephemeris = dirstr[0]
                                 casalog.post('Will use ephemeris table '+theephemeris+' with offset (0,0)', 'NORMAL')
-
+                            
                             thenewra_rad = 0.
                             thenewdec_rad = 0.
 
@@ -326,7 +341,7 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
             casalog.post("FIELD table PHASE_DIR, DELAY_DIR, and REFERENCE_DIR columns changed for field "+str(fld)+".", 'NORMAL')
 
             if(theephemeris==''):
-
+                
                 if ('EPHEMERIS_ID' in tbt.colnames()) and (tbt.getcell('EPHEMERIS_ID',fld)>=0): # originally an ephemeris was used
                     eidc = tbt.getcol('EPHEMERIS_ID')
                     eidc[fld] = -1
@@ -376,9 +391,8 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                                      +" set to "+str(thenewref)+" ("+thenewrefstr+")", 'NORMAL')
                     else:
                         casalog.post("FIELD table direction reference frame entries for field "+str(fld)
-                                     +" unchanged.", 'NORMAL')
+                                     +" unchanged.", 'NORMAL')                        
             else: # we are working with an ephemeris
-
                 try:
                     mst.open(vis, nomodify=False)
                     # sanitize the internal ephemeris table name
@@ -392,7 +406,7 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                                      'SEVERE')
                     return False
 
-            if(fixuvw and (oldrefcol!=[]) and (thenewref>0)):
+            if(fixuvw and (oldrefcol!=[]) and (thenewref>0)): 
                 # modify reference of phase dir for fixuvw
                 pcol = tbt.getcol('PhaseDir_Ref')
                 pcol[fld] = 0 # J2000
@@ -435,14 +449,14 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
             for i in range(numfields):
                 if (i in fields):
                     fldids.append(i)
-
-            imt = imager()
+                    
+            imt = imtool()
             imt.open(vis, usescratch=False)
             imt.calcuvw(fldids, refcode='J2000', reuse=False)
             imt.close()
             imt = None
 
-            if((oldrefcol!=[]) and (thenewref>0)):
+            if((oldrefcol!=[]) and (thenewref>0)): 
                 tbt.open(vis+'/FIELD', nomodify=False)
                 tbt.putcol('PhaseDir_Ref', oldrefcol)
                 tbt.close()
@@ -454,14 +468,28 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
             casalog.post("Tidying up the MMS subtables ...", 'NORMAL')
             ParallelTaskHelper.restoreSubtableAgreement(vis)
 
-        mst = None
-        tbt = None
-
-        return True
-
     except Exception as instance:
         mst = None
         tbt = None
         imt = None
         casalog.post("*** Error \'%s\' " % (instance), 'SEVERE')
         return False
+
+    # Write history to MS
+    try:
+        param_names = fixplanets.__code__.co_varnames[:fixplanets.__code__.co_argcount]
+        if is_python3:
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
+        write_history(mstool(), vis, 'fixplanets', param_names,
+                      param_vals, casalog)
+    except Exception as instance:
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
+                     'WARN')
+
+    mst = None
+    tbt = None
+        
+    return True    

@@ -1,13 +1,25 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import math
 import shutil
 import string
 import time
-import re;
+import re
 import copy
 
-from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink
+    from casatasks import casalog
+else:
+    from taskinit import *
+
+    synthesisimager = casac.synthesisimager
+    synthesisdeconvolver = casac.synthesisdeconvolver
+    synthesisnormalizer = casac.synthesisnormalizer
+    # make it look like the CASA6 version even though it's using the CASA5 named tool not present in CASA6
+    iterbotsink = casac.synthesisiterbot
 
 '''
 A set of helper functions for tclean.
@@ -128,7 +140,8 @@ class PySynthesisImager:
 #############################################
 
     def initializeIterationControl(self):
-        self.IBtool = iterbotsink( )
+        # note that in CASA5 this is casac.synthesisiterbot
+        self.IBtool = iterbotsink()
         itbot = self.IBtool.setupiteration(iterpars=self.iterpars)
 
 #############################################
@@ -296,6 +309,13 @@ class PySynthesisImager:
                 if immod <= len(self.SDtools) - 1:
                     self.SDtools[immod].checkrestoringbeam()
 
+
+#############################################
+    def calcVisAppSens(self):
+
+        return self.SItool.apparentsens()
+
+
 #############################################
 
     def runMajorCycle(self):
@@ -387,6 +407,18 @@ class PySynthesisImager:
         self.SItool.makesdpsf()
 
 #############################################
+    def makeImage(self, imagetype='observed', image='', compleximage='', imagefieldid=0):
+        """
+        This should replace makeSDImage, makeSDPSF  and makePSF 
+        etc in the long run
+        But for now you can do the following images i.e string recognized by type
+        "observed", "model", "corrected", "psf", "residual", "singledish-observed", 
+        "singledish", "coverage", "holography", "holography-observed"
+        For holography the FTmachine should be SDGrid and the baselines
+        selected should be those that are pointed up with the antenna which is rastering.
+        """
+        self.SItool.makeimage(imagetype, image, compleximage, imagefieldid)
+#############################################
 
 ## Overloaded for parallel runs
     def setWeighting(self):
@@ -422,6 +454,14 @@ class PySynthesisImager:
 #############################################
 
     def runMinorCycleCore(self):
+
+        # Set False for release packages. 
+        # Only set this to True for testing and debugging automask in parallel mode
+        # since in parallel mode, runtime setting of the enviroment variable
+        # currently does not work.
+        # False = disable always save intermediate images mode
+        alwaysSaveIntermediateImages=False
+
         # Get iteration control parameters
         iterbotrec = self.IBtool.getminorcyclecontrols()
         ##print("Minor Cycle controls : ", iterbotrec)
@@ -434,16 +474,18 @@ class PySynthesisImager:
         for immod in range(0,self.NF):  
             if self.stopMinor[str(immod)]<3 :
 
-                if 'SAVE_ALL_RESIMS' in os.environ and os.environ['SAVE_ALL_RESIMS']=="true":
+                # temporarily disable the check (=> always save the intermediate images
+                if alwaysSaveIntermediateImages or ('SAVE_ALL_RESIMS' in os.environ and os.environ['SAVE_ALL_RESIMS']=="true"):
                     resname = self.allimpars[str(immod)]['imagename']+'.residual'
                     tempresname = self.allimpars[str(immod)]['imagename']+'.inputres'+str(self.ncycle)
                     if os.path.isdir(resname):
                         shutil.copytree(resname, tempresname)
 
                 exrec = self.SDtools[immod].executeminorcycle( iterbotrecord = iterbotrec )
+
                 #print('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
                 self.IBtool.mergeexecrecord( exrec )
-                if 'SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true":
+                if alwaysSaveIntermediateImages or ('SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     tempmaskname = self.allimpars[str(immod)]['imagename']+'.autothresh'+str(self.ncycle)
                     if os.path.isdir(maskname):
@@ -556,7 +598,18 @@ class PySynthesisImager:
             pl.ion()
 
         return summ;
+    #############################################
 
+    def unlockimages( self, imageid=0 ):
+        """
+        Will try to unlock images attached for the image or outlier field id 
+        in this instance
+        """
+        retval=False;
+        if(len(self.PStools)> imageid):
+            retval=self.SItool.unlockimages(imageid)
+            retval=retval and self.PStools[imageid].unlockimages()
+        return retval
 #######################################################
 #######################################################
 

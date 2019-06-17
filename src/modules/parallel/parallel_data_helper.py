@@ -1,31 +1,53 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 import shutil
 import string
 import copy
-import math
 import time
 import subprocess
-from .parallel_task_helper import ParallelTaskHelper, JobData
-from .. import partitionhelper as ph
-import inspect
-from numpy.f2py.auxfuncs import throw_error
-from casatools import quanta, ms, msmetadata, mstransformer, table
-from casatasks import casalog
 
-try:
-    from mpi4casa.MPIEnvironment import MPIEnvironment
-    from mpi4casa.MPICommandClient import MPICommandClient
-    mpi_available = True
-except:
-    mpi_available = False
+from numpy.f2py.auxfuncs import throw_error
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .parallel_task_helper import ParallelTaskHelper, JobData
+    from .. import partitionhelper as ph
+    from casatools import quanta, ms, msmetadata, mstransformer, table
+    from casatasks import casalog
+
+    _qa = quanta()
+else:
+    from taskinit import *
+    from parallel.parallel_task_helper import ParallelTaskHelper, JobData
+    import partitionhelper as ph
+
+    ms = mstool
+    msmetadata = msmdtool
+    table = tbtool
+    mstransformer = mttool
+
+    _qa = qa
+
+# common function to use to get a dictionary item iterator
+if is_python3:
+    def lociteritems(adict):
+        return adict.items()
+else:
+    def lociteritems(adict):
+        return adict.iteritems()
 
 # Decorator function to print the arguments of a function
 def dump_args(func):
     "This decorator dumps out the arguments passed to a function before calling it"
     argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
-    fname = func.func_name
+    if is_python3:
+        fname = func.func_name
+    else:
+        fname = func.__name__
    
     def echo_func(*args,**kwargs):
         print(fname, ":", ', '.join('%s=%r' % entry for entry in zip(argnames,args) + kwargs.items()))
@@ -125,8 +147,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         self.__ddistart = None
         self._msTool = None
         self._tbTool = None
-        self._qa = quanta( )
-        
+
         if not 'spw' in self.__args:
             self.__args['spw'] = ''
             
@@ -227,7 +248,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 (self.__args['combinespws'] == False and self.__args['nspw'] == 1):
                 # Get the value of timebin as a float
                 timebin = self.__args['timebin']
-                tsec = self._qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 # For each subms, check if scans length is <=  timebin
                 for subms in subMSList:
@@ -247,7 +268,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 spwdict = ph.getScanSpwSummary(subMSList) 
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 timebin = self.__args['timebin']
-                tsec = self._qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 for subms in subMSList:
                     subms_spwids = ph.getSubMSSpwIds(subms, spwdict)
                     slist = map(str,subms_spwids)
@@ -268,7 +289,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             if (sepaxis != 'spw' and self.__args['combine'] == 'scan'):
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 timebin = self.__args['timebin']
-                tsec = self._qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 for subms in subMSList:
                     if not self.__isScanContained(subms, scansel, tsec):
                         casalog.post('Cannot process MMS in parallel when combine=\'scan\' because the subMSs do not contain all the selected scans',\
@@ -311,7 +332,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             myspwsel = '*'
     
         spwlist = []
-        msTool = m( )
+        msTool = ms( )
         try:
             seldict = msTool.msseltoindex(vis=msfile,spw=myspwsel)
         except:
@@ -429,9 +450,28 @@ class ParallelDataHelper(ParallelTaskHelper):
         return retval
 
     @staticmethod
+    def isMMSAndNotServer(vis):
+        """
+        Is vis a Multi-MS, and I am not an MPI server?
+        The return value is used to know if sub-MS (sub-task) commands should be dispatched
+        to servers in parallel (MPI) mode.
+
+        :param vis: an MS
+        """
+        # This checks the "NotServer" condition. If I'm a server, no need to check more
+        # if MPIEnvironment.is_mpi_enabled and not MPIEnvironment.is_mpi_client:
+        if ParallelTaskHelper.isMPIEnabled() and not ParallelTaskHelper.isMPIClient():
+            return False
+
+        # Note: using the ParalleTaskHelper version which honors the __bypass_parallel trick
+        return ParallelTaskHelper.isParallelMS(vis)
+
+    @staticmethod
     def isParallelMS(vis):
         """ This method will read the value of SubType in table.info
             of the Multi-MS or MS. 
+        NOTE: this method is duplicated in in parallel_task_helper, with the addition of
+        a check on "ParallelTaskHelper.__bypass_parallel_processing".
             
         Keyword arguments:
             vis  -- name of MS or Multi-MS
@@ -753,6 +793,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         """ This method is to generate a list of commands to partition
              the data based on both scan/spw axes.
         """
+        import math
         
         casalog.post('Partition per scan/spw will ignore NULL combinations of these two parameters.')
 
@@ -1007,8 +1048,8 @@ class ParallelDataHelper(ParallelTaskHelper):
         # scan+spw separation axis 
         if hasscans:
             count = 0
-            for k,spws in partedspws.items():
-                for ks,scans in partedscans.items():
+            for k,spws in lociteritems(partedspws):
+                for ks,scans in lociteritems(partedscans):
                     if self._msTool is None:
                         self._msTool = ms( )
                         self._msTool.open(self._arg['vis'],nomodify=False)
@@ -1036,7 +1077,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         # spw separation axis 
         else:
             count = 0
-            for k,spws in partedspws.items():
+            for k,spws in lociteritems(partedspws):
                 if self._msTool is None:
                     self._msTool = ms( )
                     self._msTool.open(self._arg['vis'],nomodify=False)
@@ -1421,11 +1462,11 @@ class ParallelDataHelper(ParallelTaskHelper):
 
             # Check if the parameter has valid velocity units
             if not self.__args['start'] == '':
-                if (self._qa.quantity(self.__args['start'])['unit'].find('m/s') < 0):
+                if (_qa.quantity(self.__args['start'])['unit'].find('m/s') < 0):
                     raise TypeError('Parameter start does not have valid velocity units')
             
             if not self.__args['width'] == '':
-                if (self._qa.quantity(self.__args['width'])['unit'].find('m/s') < 0):
+                if (_qa.quantity(self.__args['width'])['unit'].find('m/s') < 0):
                     raise TypeError('Parameter width does not have valid velocity units')
                                             
         elif self.__args['mode'] == 'frequency':
@@ -1436,11 +1477,11 @@ class ParallelDataHelper(ParallelTaskHelper):
     
             # Check if the parameter has valid frequency units
             if not self.__args['start'] == '':
-                if (self._qa.quantity(self.__args['start'])['unit'].find('Hz') < 0):
+                if (_qa.quantity(self.__args['start'])['unit'].find('Hz') < 0):
                     raise TypeError('Parameter start does not have valid frequency units')
     
             if not self.__args['width'] == '':
-                if (self._qa.quantity(self.__args['width'])['unit'].find('Hz') < 0):
+                if (_qa.quantity(self.__args['width'])['unit'].find('Hz') < 0):
                     raise TypeError('Parameter width does not have valid frequency units')
         
         start = self.__args['start']

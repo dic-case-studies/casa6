@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -6,19 +8,47 @@ import numpy
 import math
 import contextlib
 import unittest
-#
 import listing
 
-from casatools import ctsys, table, ms, measures
-from casatasks import casalog, sdcal, partition, initweights
-from casatasks.private import sdutil
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms, measures
+    from casatasks import casalog, sdcal, partition, initweights
+    from casatasks.private import sdutil
 
-### for testhelper import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-from testhelper import copytree_ignore_subversion
+    ### for testhelper import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from testhelper import copytree_ignore_subversion
 
-tb = table( )
+    tb = table()
 
+    ctsys_resolve = ctsys.resolve
+    # default isn't used in CASA6
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    import sdutil
+    from sdcal import sdcal
+    from partition import partition
+
+    try:
+        from .testutils import copytree_ignore_subversion
+    except:
+        from tests.testutils import copytree_ignore_subversion
+
+    # make the CASA5 tool constuctors used here look the CASA6 versions
+    ms = mstool
+    table = tbtool
+    # the global tb is also used here
+    measures = metool
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+    
 @contextlib.contextmanager
 def mmshelper(vis, separationaxis='auto'):
     outputvis = vis.rstrip('/') + '.mms'
@@ -47,7 +77,7 @@ class sdcal_test(unittest.TestCase):
     """
 
     # Data path of input
-    datapath=ctsys.resolve('regression/unittest/tsdcal')
+    datapath=ctsys_resolve('regression/unittest/tsdcal')
 
     # Input 
     infile1 = 'uid___A002_X6218fb_X264.ms.sel'
@@ -476,7 +506,7 @@ class sdcal_test_base(unittest.TestCase):
         decorators (invalid_argument_case, exception_case)
     """
     # Data path of input
-    datapath=ctsys.resolve('regression/unittest/tsdcal')
+    datapath=ctsys_resolve('regression/unittest/tsdcal')
 
     # Input
     infile = 'uid___A002_X6218fb_X264.ms.sel'
@@ -528,6 +558,8 @@ class sdcal_test_base(unittest.TestCase):
             if os.path.exists(f):
                 shutil.rmtree(f)
             copytree_ignore_subversion(self.datapath, f)
+
+        default(task)
 
     def _tearDown(self, files):
         for f in files:
@@ -604,7 +636,7 @@ class sdcal_test_ps(sdcal_test_base):
                     antenna1_selection = None
                     spw_selection = None
                 else:
-                    myms = ms( )
+                    myms = ms()
                     myargs = kwargs.copy()
                     if 'baseline' not in myargs:
                         with sdutil.tbmanager(self.infile) as tb:
@@ -655,14 +687,22 @@ class sdcal_test_ps(sdcal_test_base):
         """
         test_ps00 --- default parameters (raises an error)
         """
-        self.assertRaises(Exception, sdcal)
+        # CASA6 throws an exception
+        if is_CASA6:
+            self.assertRaises(Exception, sdcal)
+        else:
+            self.result = sdcal()
 
     @invalid_argument_case
     def test_ps01(self):
         """
         test_ps01 --- invalid calibration type
         """
-        self.assertRaises(Exception, sdcal, infile=self.infile, calmode='invalid_type', outfile=self.outfile)
+        # CASA6 throwa nan exception
+        if is_CASA6:
+            self.assertRaises(Exception, sdcal, infile=self.infile, calmode='invalid_type', outfile=self.outfile)
+        else:
+            self.result = sdcal(infile=self.infile, calmode='invalid_type', outfile=self.outfile)
 
     @exception_case(RuntimeError, 'Spw Expression: No match found for 99,')
     def test_ps02(self):
@@ -845,7 +885,7 @@ class sdcal_test_otfraster(sdcal_test_base):
                     antenna1_selection = None
                     spw_selection = None
                 else:
-                    myms = ms( )
+                    myms = ms()
                     myargs = kwargs.copy()
                     if 'baseline' not in myargs:
                         with sdutil.tbmanager(self.infile) as tb:
@@ -1028,7 +1068,7 @@ def assert_true(condition,err_msg):
 class CasaTableChecker:
     """Base class for OTF mode checkers"""
     def __init__(self,tbl_path): 
-        self.tb = table( )
+        self.tb = table()
         self.path = tbl_path
         self.tb.open(self.path) # Raises RuntimeError on failure
         assert self.tb.ok()
@@ -1061,7 +1101,7 @@ class MsCorrectedDataChecker(CasaTableChecker):
                    str(self.path) + ': CORRECTED_DATA column missing')
         self.cdata = self.tb.getcol('CORRECTED_DATA')
         if convert_to_kelvin:
-            tbl_syscal = table( )
+            tbl_syscal = table()
             tbl_syscal.open(os.path.join(tbl_path,'SYSCAL'))
             tsys_spectrum = tbl_syscal.getcol('TSYS_SPECTRUM')
             self.cdata = tsys_spectrum * self.cdata
@@ -1100,7 +1140,7 @@ class sdcal_test_otf(unittest.TestCase):
     # Required checkers:
     # - compare 2 calibration tables
     # - compare 2 corrected data
-    datapath=ctsys.resolve('regression/unittest/tsdcal')
+    datapath=ctsys_resolve('regression/unittest/tsdcal')
     ref_datapath=os.path.join(datapath,'otf_reference_data')
     sdcal_params = {}
     current_test_params = {}
@@ -1322,7 +1362,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
     test_otfephem02 | otf_ephem.ms     | 10%      | otf,apply
     """
     
-    datapath=ctsys.resolve('regression/unittest/tsdcal')
+    datapath=ctsys_resolve('regression/unittest/tsdcal')
     infile = 'otf_ephem.ms'
     outfile = infile + '.otfcal'
         
@@ -1330,6 +1370,8 @@ class sdcal_test_otf_ephem(unittest.TestCase):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         copytree_ignore_subversion(self.datapath, self.infile)
+
+        default(sdcal)
 
     def tearDown(self):
         to_be_removed = [self.infile, self.outfile]
@@ -1341,7 +1383,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
         with sdutil.tbmanager(os.path.join(vis, 'SOURCE')) as tb:
             names = tb.getcol('NAME')
         self.assertEqual(len(names), 1)
-        me = measures( )
+        me = measures()
         direction_refcodes = me.listcodes(me.direction())
         ephemeris_codes = direction_refcodes['extra']
         self.assertIn(names[0].upper(), ephemeris_codes)
@@ -1656,7 +1698,7 @@ class sdcal_test_apply(sdcal_test_base):
             @functools.wraps(func)
             def _wrapper(self):
                 # data selection 
-                myms = ms( )
+                myms = ms()
                 myargs = kwargs.copy()
                 if 'baseline' not in myargs:
                     with sdutil.tbmanager(self.infile) as tb:
@@ -2003,7 +2045,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
     test_single_pol_apply --- apply caltable to single-polarization data
     test_single_pol_apply_composite --- on-the-fly calibration/application on single-polarization data
     """
-    datapath = ctsys.resolve('regression/unittest/singledish')
+    datapath = ctsys_resolve('regression/unittest/singledish')
     # Input
     infile = 'analytic_spectra.ms'
     #applytable = infile + '.sky'
@@ -2182,5 +2224,6 @@ def suite():
             , sdcal_test_otf_ephem
             , sdcal_test_single_polarization]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

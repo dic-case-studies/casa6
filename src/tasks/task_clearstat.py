@@ -1,8 +1,15 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-from casatools import table
-from casatasks import casalog
 
-_tb = table( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table
+    from casatasks import casalog
+    _tb = table( )
+else:
+    from taskinit import *
+    _tb = tb
 
 def clearstat():
     """Clear all read/write locks on tables. This can be used if a task has
@@ -12,4 +19,8 @@ def clearstat():
     try:
         _tb.clearlocks( )
     except Exception as instance:
-        casalog.post('*** Error *** %s' % instance)
+        if is_CASA6:
+            casalog.post('*** Error *** %s' % instance)
+        else:
+            print('*** Error ***',instance)
+

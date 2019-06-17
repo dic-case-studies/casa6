@@ -1,12 +1,28 @@
+from __future__ import absolute_import
 import os
 import shutil
 import re
 #import pdb
 
-from casatools import ctsys
-from casatasks import concat, imregrid, immath, sdimaging, impbcor, simobserve, simanalyze, feather
-from .simutil import *
-from . import sdbeamutil
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import concat, imregrid, immath, sdimaging, impbcor, simobserve, simanalyze, feather, casalog
+    from .simutil import *
+    from . import sdbeamutil
+else:
+    from taskinit import *
+    from simutil import *
+    from simobserve import simobserve
+    from simanalyze import simanalyze
+    from feather import feather
+    from concat import concat
+    from imregrid import imregrid
+    from immath import immath
+    from impbcor import impbcor
+    from sdimaging import sdimaging
+    import sdbeamutil
+    from casa_stack_manip import stack_frame_find
 
 def simalma(
     project=None,
@@ -126,18 +142,23 @@ def simalma(
 
         #----------------------------------------
         # Get globals to call saveinputs()
-        myf = stack_frame_find( )
+        # CASA5 only
+        if not is_CASA6:
+            myf = stack_frame_find( )
 
-        # Save input parameters of simalma
-        saveinputs = myf['saveinputs']
-        saveinputs('simalma',fileroot+"/"+project+".simalma.last")
-#                   myparams=in_params)
-
-
+            # Save input parameters of simalma
+            saveinputs = myf['saveinputs']
+            saveinputs('simalma',fileroot+"/"+project+".simalma.last")
+            #                   myparams=in_params)
+        else:
+            casalog.post("saveinputs not available in casatasks, skipping saving simalma inputs", priority='WARN')
 
         # filename parsing of cfg file here so that the project filenames 
         # can contain the cfg
-        repodir = ctsys.resolve("alma/simmos")
+        if is_CASA6:
+            repodir = ctsys.resolve("alma/simmos")
+        else:
+            repodir = os.getenv("CASAPATH").split(' ')[0] + "/data/alma/simmos"
 
 
         #--------------------------
@@ -1134,9 +1155,13 @@ def simalma(
                     task_param['gwidth'] = gwidth
                     task_param['jwidth'] = jwidth
 
-                saveinputs('sdimaging',
-                           fileroot+"/"+project+".sd.sdimaging.last",
-                           myparams=task_param)
+                if not is_CASA6:
+                    saveinputs('sdimaging',
+                               fileroot+"/"+project+".sd.sdimaging.last",
+                               myparams=task_param)
+                else:
+                    casalog.post("saveinputs not available in casatasks, skipping saving sdimaging inputs", priority='WARN')
+
                 msg("Having set up the gridding parameters, the sdimaging task is called to actually creage the image:",priority=v_priority)
                 msg(get_taskstr('sdimaging', task_param), priority="info")
 
@@ -1170,9 +1195,13 @@ def simalma(
                 task_param = dict(imagename=temp_out, mode='evalexpr',
                                   expr=("IM0*%f" % (beam_area_ratio)),
                                   outfile = fileroot+"/"+imagename_tp)
-                saveinputs('immath',
-                           fileroot+"/"+project+".sd.immath.last",
-                           myparams=task_param)
+                if not is_CASA6:
+                    saveinputs('immath',
+                               fileroot+"/"+project+".sd.immath.last",
+                               myparams=task_param)
+                else:
+                    casalog.post("saveinputs not available in casatasks, skipping saving inmath inputs", priority='WARN')
+
                 msg(get_taskstr('immath', task_param), priority="info")
                 if not dryrun:
                     immath(**task_param)
@@ -1555,9 +1584,13 @@ def simalma(
                 msg(" ",priority="info")
                 msg(get_taskstr('feather', task_param), priority="info")
                 try:
-                    saveinputs('feather',
-                               fileroot+"/"+project+".feather.last",
-                               myparams=task_param)
+                    if not is_CASA6:
+                        saveinputs('feather',
+                                   fileroot+"/"+project+".feather.last",
+                                   myparams=task_param)
+                    else:
+                        casalog.post("saveinputs not available in casatasks, skipping saving feather inputs", priority='WARN')
+
                     if not dryrun: feather(**task_param)
                     del task_param
 

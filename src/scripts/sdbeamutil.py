@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import numpy as np
 from numpy import sqrt, cos, sin
 import scipy.special as spspec
@@ -5,8 +8,15 @@ import scipy.signal
 import scipy.interpolate
 from scipy import optimize
 
-from casatools import quanta
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import quanta
+    from casatasks import casalog
+else:
+    from taskinit import casalog, qatool
+
+    quanta = qatool
+    
 
 ##################################################
 ### Prediction of theoretical beam size

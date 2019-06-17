@@ -1,11 +1,28 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-from casatasks import applycal,casalog
-from casatools import calibrater,ctsys
+
 import unittest
 import time
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import applycal,casalog
+    from casatools import calibrater,ctsys
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import applycal
+    from taskinit import cbtool, casalog
+
+    calibrater = cbtool
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
     
 class test_base(unittest.TestCase):
         
@@ -30,7 +47,7 @@ class test_base(unittest.TestCase):
              print("%s file %s is already in the working area, deleting ..." % (type_file,file))
              os.system('rm -rf ' + file)
         print("Copy %s file %s into the working area..." % (type_file,file))
-        os.system('cp -R ' + ctsys.resolve('regression/unittest/simplecluster/') + file + ' ' + file)
+        os.system('cp -R ' + ctsys_resolve('regression/unittest/simplecluster/') + file + ' ' + file)
     
  
 class Applycal_mms_tests(test_base):
@@ -80,5 +97,6 @@ class Applycal_mms_tests(test_base):
 def suite():
     return [Applycal_mms_tests]
      
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

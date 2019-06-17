@@ -1,5 +1,6 @@
 
 
+from __future__ import print_function
 class callibrary(object):
 
     def __init__(self):
@@ -36,7 +37,7 @@ class callibrary(object):
                gaintable='',gainfield='',interp='',spwmap=[],calwt=False):
 
         if len(gaintable)<1:
-            raise Exception( 'Please specify at least a gaintable.' )
+            raise Exception('Please specify at least a gaintable.')
 
         # insist all cal params are lists
         #  NB: data selection params are _not_ lists
@@ -190,24 +191,24 @@ class callibrary(object):
             print(ct+': calwt='+str(self.cld[ct]['calwt'])+str(' (')+str(len(self.cld[ct])-1)+str(' instance[s]):'))
             for ims in self.cld[ct].keys():
                 if (isinstance(self.cld[ct][ims],dict)):
-                    print(' field=\''+str(self.cld[ct][ims]['field'])+'\'',)
-                    print(' intent=\''+str(self.cld[ct][ims]['intent'])+'\'',)
-                    print(' spw=\''+str(self.cld[ct][ims]['spw'])+'\'',)
+                    print(' field=\''+str(self.cld[ct][ims]['field'])+'\'', end=' ')
+                    print(' intent=\''+str(self.cld[ct][ims]['intent'])+'\'', end=' ')
+                    print(' spw=\''+str(self.cld[ct][ims]['spw'])+'\'', end=' ')
                     print(' obs=\''+str(self.cld[ct][ims]['obs'])+'\'')
-                    print('  tinterp=\''+str(self.cld[ct][ims]['tinterp'])+'\'',)
+                    print('  tinterp=\''+str(self.cld[ct][ims]['tinterp'])+'\'', end=' ')
                     print(' finterp=\''+str(self.cld[ct][ims]['finterp'])+'\'')
-                    #print(' reach=\''+str(self.cld[ct][ims]['reach'])+'\'')
-                    print('  obsmap='+str(self.cld[ct][ims]['obsmap']),)
-                    print(' fldmap='+str(self.cld[ct][ims]['fldmap']),)
-                    print(' spwmap='+str(self.cld[ct][ims]['spwmap']),)
+                    #print( ' reach=\''+str(self.cld[ct][ims]['reach'])+'\'')
+                    print('  obsmap='+str(self.cld[ct][ims]['obsmap']), end=' ')
+                    print(' fldmap='+str(self.cld[ct][ims]['fldmap']), end=' ')
+                    print(' spwmap='+str(self.cld[ct][ims]['spwmap']), end=' ')
                     print(' antmap='+str(self.cld[ct][ims]['antmap']))
 
 
     def write(self,filename,append=False):
         if len(filename)<1:
-            raise Exception( 'Please specify a filename' )
+            raise Exception('Please specify a filename')
         if len(self.cld)<1:
-            raise Exception( 'There is no cal library to write' )
+            raise Exception('There is no cal library to write')
 
         fw="w"
         if append:
@@ -223,37 +224,37 @@ class callibrary(object):
             for ims in keys1:
                 ict1=ict0[ims]
                 if isinstance(ict1,dict):
-                    print('caltable=\''+ct+'\'',file=f)
-                    print('calwt='+str(ict0['calwt']),file=f)
+                    print('caltable=\''+ct+'\'', end=' ', file=f)
+                    print('calwt='+str(ict0['calwt']), end=' ', file=f)
                     if len(ict1['field'])>0:
-                        print('field=\''+str(ict1['field'])+'\'',file=f)
+                        print('field=\''+str(ict1['field'])+'\'', end=' ', file=f)
                     if len(ict1['intent'])>0:
-                        print('intent=\''+str(ict1['intent'])+'\'',file=f)
+                        print('intent=\''+str(ict1['intent'])+'\'', end=' ', file=f)
                     if len(ict1['spw'])>0:
-                        print('spw=\''+str(ict1['spw'])+'\'',file=f)
+                        print('spw=\''+str(ict1['spw'])+'\'', end=' ', file=f)
                     if len(ict1['obs'])>0:
-                        print('obs=\''+str(ict1['obs'])+'\'',file=f)
+                        print('obs=\''+str(ict1['obs'])+'\'', end=' ', file=f)
 
                     if len(ict1['tinterp'])>0:
-                        print('tinterp=\''+str(ict1['tinterp'])+'\'',file=f)
+                        print('tinterp=\''+str(ict1['tinterp'])+'\'', end=' ', file=f)
                     if len(ict1['finterp'])>0:
-                        print('finterp=\''+str(ict1['finterp'])+'\'',file=f)
+                        print('finterp=\''+str(ict1['finterp'])+'\'', end=' ', file=f)
                     if len(ict1['reach'])>0:
-                        print('reach=\''+str(ict1['reach'])+'\'',file=f)
+                        print('reach=\''+str(ict1['reach'])+'\'', end=' ', file=f)
 
                     if len(ict1['obsmap'])>0:
-                        print('obsmap='+str(ict1['obsmap']),file=f)
+                        print('obsmap='+str(ict1['obsmap']), end=' ', file=f)
                     if len(ict1['fldmap'])>0:
                         if isinstance(ict1['fldmap'],str):
-                            print('fldmap=\''+str(ict1['fldmap'])+'\'',file=f)
+                            print('fldmap=\''+str(ict1['fldmap'])+'\'', end=' ', file=f)
                         else:
-                            print('fldmap='+str(ict1['fldmap']),file=f)
+                            print('fldmap='+str(ict1['fldmap']), end=' ', file=f)
                     if len(ict1['spwmap'])>0:
-                        print('spwmap='+str(ict1['spwmap']),file=f)
+                        print('spwmap='+str(ict1['spwmap']), end=' ', file=f)
                     if len(ict1['antmap'])>0:
-                        print('antmap='+str(ict1['antmap']),file=f)
+                        print('antmap='+str(ict1['antmap']), end=' ', file=f)
 
-                    print('',file=f)
+                    print('', file=f)
 
         f.close()
 
@@ -305,7 +306,7 @@ class callibrary(object):
                         self.clear()
                         print('Error: ',errline)
                         print('Problem parsing cal library line (check for typos): "'+line+'"')
-                        raise Exception( 'Problem parsing cal library line (check for typos): '+line )
+                        raise Exception('Problem parsing cal library line (check for typos): '+line)
 
     def compare(self,other):
         return self.cld==other.cld
@@ -315,10 +316,10 @@ def applycaltocallib(filename,append=False,field='',spw='',intent='',
                      gaintable='',gainfield='',interp='',spwmap=[],calwt=True):
     
     if len(filename)<1:
-        raise Exception( 'Please specify a filename' )
+        raise Exception('Please specify a filename')
 
     if len(gaintable)<1:
-        raise Exception( 'No caltable specified in gaintable' )
+        raise Exception('No caltable specified in gaintable')
 
     c=callibrary()
     c.addold(field=field,spw=spw,intent=intent,gaintable=gaintable,

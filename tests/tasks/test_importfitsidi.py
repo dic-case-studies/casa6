@@ -17,16 +17,33 @@
 # Input data:                                                               #
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import unittest
 
-from casatools import ctsys, ms, table
-from casatasks import importfitsidi
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, ms, table
+    from casatasks import importfitsidi
 
-_ms = ms( )
-_tb = table( )
+    _ms = ms( )
+    _tb = table( )
+
+    # enhanced later using ctsys.resolve
+    datapath = 'regression/fitsidi_import/input'
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    # not local tools
+    _ms = ms
+    _tb = tb
+
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/fitsidi_import/input'
 
 myname = 'importfitsidi-unit-test'
 
@@ -58,7 +75,11 @@ def checktable(thename, theexpectation):
             else:
                 in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
         else:
-            if isinstance(value, str):
+            if is_CASA6:
+                stype = str
+            else:
+                stype = basestring
+            if isinstance(value, stype):
                 in_agreement = value == mycell[2]
             else:
                 # it's an array
@@ -92,7 +113,13 @@ class test_importfitsidi(unittest.TestCase):
         for fname in my_dataset_names:
             if(os.path.exists(fname)):
                 os.remove(fname)
-            shutil.copy(ctsys.resolve(os.path.join('regression/fitsidi_import/input',fname)), fname)
+            datasetPath = os.path.join(datapath,fname)
+            if is_CASA6:
+                datasetPath = ctsys.resolve(datasetPath)
+            shutil.copy(datasetPath, fname)
+
+        if not is_CASA6:
+            default(importfitsidi)
         
     def tearDown(self):
         for fname in my_dataset_names:
@@ -803,5 +830,6 @@ class test_importfitsidi(unittest.TestCase):
 def suite():
     return [test_importfitsidi]
     
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

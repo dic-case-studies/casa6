@@ -1,14 +1,27 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import numpy
 import numpy.ma as ma
-### for testhelper import
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import testhelper as th
-from casatools import ctsys
-from casatasks import gencal
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    ### for testhelper import
+    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    import testhelper as th
+    from casatools import ctsys
+    from casatasks import gencal
+    
+    datapath=ctsys.resolve('regression/unittest/gencal')
+else:
+    import testhelper as th
+    from tasks import gencal
+    from taskinit import *
+    
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal/'
 
 '''
 Unit tests for gencal 
@@ -21,11 +34,9 @@ Unit tests for gencal
 # and do tests against them
 # 
 
-datapath=ctsys.resolve('regression/unittest/gencal')
-
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if 'TEST_DATADIR' in os.environ:
+if 'TEST_DATADIR' in os.environ:   
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/gencal/'
     if os.path.isdir(DATADIR):
         testmms = True
@@ -33,7 +44,7 @@ if 'TEST_DATADIR' in os.environ:
     else:
         print('WARN: directory '+DATADIR+' does not exist')
 
-print('gencal tests will use data from '+datapath)
+print('gencal tests will use data from '+datapath)         
 
 
 class gencal_antpostest(unittest.TestCase):
@@ -82,8 +93,12 @@ class gencal_antpostest(unittest.TestCase):
         gencal: test automated antenna position correction
         """
         # check if the URL is reachable
-        from urllib.request import urlopen
-        from urllib.error import URLError
+        if is_CASA6:
+            from urllib.request import urlopen
+            from urllib.error import URLError
+        else:
+            from urllib2 import urlopen, URLError
+    
         # current EVLA baseline correction URL
         evlabslncorrURL="http://www.vla.nrao.edu/cgi-bin/evlais_blines.cgi?Year="
         try: 
@@ -181,6 +196,7 @@ class test_gencal_antpos_alma(unittest.TestCase):
         gencal: connection to alma TCM DB AntennaPadService for ALMA
         """
         try:
+            # these imports don't work in CASA6 - test is being skipped so not important
             import urllib2
             from suds.client import Client
             ws_cli = Client(self.ALMA_SRV_WSDL_URL)
@@ -320,5 +336,6 @@ def suite():
     return [gencal_antpostest,
             test_gencal_antpos_alma]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

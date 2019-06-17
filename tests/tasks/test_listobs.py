@@ -1,16 +1,37 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import string
-### for listing import
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import listing as lt
 import hashlib
 import unittest
-from casatools import ms, ctsys
-from casatasks import listobs
 
-'''
+# is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ms, ctsys
+    from casatasks import listobs
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+        
+if is_python3:
+    ### for listing import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import listing as lt
+else:
+    import listing as lt
+
+    '''
 Unit tests for task listobs. It tests the following parameters:
     vis:        wrong and correct values
     selectdata: several data selection parameters
@@ -18,12 +39,12 @@ Unit tests for task listobs. It tests the following parameters:
     listfile:   save on a file
     
 '''
-datapath  = ctsys.resolve('regression/unittest/listobs')
-datapath2 = ctsys.resolve('regression/unittest/mstransform')
+datapath  = ctsys_resolve('regression/unittest/listobs')
+datapath2 = ctsys_resolve('regression/unittest/mstransform')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if 'TEST_DATADIR' in os.environ:
+if 'TEST_DATADIR' in os.environ:   
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/listobs/'
     if os.path.isdir(DATADIR):
         testmms = True
@@ -31,7 +52,7 @@ if 'TEST_DATADIR' in os.environ:
     else:
         print('WARN: directory '+DATADIR+' does not exist')
 
-print('listobs tests will use data from '+datapath)
+print('listobs tests will use data from '+datapath)         
 print('                        and from '+datapath2)
 
 # Reference files
@@ -56,15 +77,24 @@ class listobs_test1(unittest.TestCase):
 
     def setUp(self):
         self.res = None
-        self.ms = ms( )
+        if is_CASA6:
+            self.ms = ms()
+        else:
+            # not a local copy
+            self.ms = ms
+
         if (not os.path.lexists(msfile1)):            
             shutil.copytree(os.path.join(datapath,msfile1), msfile1, symlinks=True)
 
         if (not os.path.lexists(msfile2)):            
             shutil.copytree(os.path.join(datapath,msfile2), msfile2, symlinks=True)
-            
+        
+        if not is_CASA6:
+            default(listobs)
+        
     def tearDown(self):
-        self.ms.done( )
+        if is_CASA6:
+            self.ms.done( )
 
     def test1(self):
         '''Listobs 1: Input MS'''
@@ -227,6 +257,7 @@ class listobs_cleanup(unittest.TestCase):
 def suite():
     return [listobs_test1,listobs_cleanup]
 
-if __name__ == '__main__':
-    unittest.main()
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
 

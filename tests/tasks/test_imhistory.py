@@ -65,11 +65,23 @@
 #
 
 ###########################################################################
-import os
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
 import unittest
-from casatools import image, table
-from casatasks import imhistory
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image, table
+    from casatasks import imhistory
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
+    image = iatool
+    table = tbtool
 
 class imhistory_test(unittest.TestCase):
     def setUp(self):
@@ -106,6 +118,7 @@ class imhistory_test(unittest.TestCase):
  
 def suite():
     return [imhistory_test]
-    
-if __name__ == '__main__':
-    unittest.main()
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

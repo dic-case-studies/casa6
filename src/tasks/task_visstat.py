@@ -1,6 +1,11 @@
+from __future__ import absolute_import
 
-from casatools import ms
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ms as mstool
+    from casatasks import casalog
+else:
+    from taskinit import mstool, casalog
 
 def visstat(vis=None,
             axis=None,
@@ -29,7 +34,7 @@ def visstat(vis=None,
 
     casalog.origin('visstat')
 
-    mslocal = ms( )
+    mslocal = mstool()
 
     mslocal.open(vis)
 

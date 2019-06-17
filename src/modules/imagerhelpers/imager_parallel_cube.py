@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import math
 import shutil
@@ -6,11 +7,21 @@ import time
 import re
 import copy
 
-from casatools import synthesisutils, synthesisimager
-from casatasks import casalog
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import synthesisutils, synthesisimager
+    from casatasks import casalog
 
-from .imager_base import PySynthesisImager
-from .parallel_imager_helper import PyParallelImagerHelper
+    from .imager_base import PySynthesisImager
+    from .parallel_imager_helper import PyParallelImagerHelper
+else:
+    from taskinit import *
+
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+
+    synthesisimager = casac.synthesisimager
+    synthesisutils = casac.synthesisutils
 
 '''
 An implementation of parallel cube imaging, using synthesisxxxx tools.
@@ -76,7 +87,7 @@ class PyParallelCubeSynthesisImager():
         #print "********************** ", alldataimpars.keys()
         #for kk in alldataimpars.keys():
         #    print "KEY : ", kk , " --->", alldataimpars[kk].keys()
-
+            
         # reorganize allselpars and allimpars for partitioned data        
         synu = synthesisutils()
         self.allselpars={}
@@ -127,8 +138,8 @@ class PyParallelCubeSynthesisImager():
             self.allimpars.update(imparsPerNode)
 
 
-        #print "****** SELPARS in init **********", self.allselpars
-        #print "****** SELIMPARS in init **********", self.allimpars
+            #print "****** SELPARS in init **********", self.allselpars
+            #print "****** SELIMPARS in init **********", self.allimpars
         
         joblist=[]
         #### MPIInterface related changes

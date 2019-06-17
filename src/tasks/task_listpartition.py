@@ -1,11 +1,22 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import numpy as np
 import pprint
-from casatasks import casalog
-from casatools import ms
-from .parallel.parallel_data_helper import ParallelDataHelper
-from . import partitionhelper as ph
-from . import flaghelper as fh
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import ms
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from . import partitionhelper as ph
+    from . import flaghelper as fh
+else:
+    from taskinit import *
+    import partitionhelper as ph
+    from parallel.parallel_task_helper import ParallelTaskHelper
+
+    ms = casac.ms
 
 
 def listpartition(vis=None, createdict=None, listfile=None):
@@ -29,8 +40,8 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
     casalog.origin('listpartition')
 
-    mslocal = ms( )
-    mslocal1 = ms( )
+    mslocal = ms()
+    mslocal1 = ms()
     ffout = None
 
     try:
@@ -46,7 +57,6 @@ def listpartition(vis=None, createdict=None, listfile=None):
             
             casalog.post('Will save output to \'%s\''%listfile)
             ffout = open(listfile, 'w')
-
 
         # Is it a multi-MS?
         ismms = mslocal.ismultims()
