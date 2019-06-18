@@ -291,8 +291,6 @@ casa_add_assay( imageanalysis IO/test/tFitterEstimatesFileParser.cc )
 casa_add_assay( imageanalysis IO/test/tProfileFitterEstimatesFileParser.cc )
 casa_add_assay( imageanalysis IO/test/tRegionTextParser.cc )
 
-casa_add_assay( imageanalysis Regions/test/tCasacRegionManager.cc )
-
 casa_add_google_test (MODULES imageanalysis SOURCES Images/test/ComponentListImage_Gtest.cc Images/test/ComponentListImageTest.cc)
 
 casa_add_google_test (MODULES imageanalysis SOURCES ImageAnalysis/test/ImageMaskHandler_Gtest.cc ImageAnalysis/test/ImageMaskHandlerTest.cc)
@@ -318,3 +316,4 @@ casa_add_unit_test ( MODULES imageanalysis SOURCES ImageAnalysis/test/tImageColl
 casa_add_unit_test ( MODULES imageanalysis SOURCES ImageAnalysis/test/tImageFitter.cc )
 casa_add_unit_test ( MODULES imageanalysis SOURCES ImageAnalysis/test/tImageStatsCalculator.cc )
 
+casa_add_unit_test( MODULES imageanalysis SOURCES Regions/test/tCasacRegionManager.cc )
