@@ -8,7 +8,7 @@ import unittest
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import ctsys
+    from casatools import ctsys, table
     from casatasks import fluxscale
 
     # CASA6 does not use default
@@ -20,6 +20,8 @@ else:
     from __main__ import default
     from tasks import fluxscale
     from taskinit import *
+
+    table = tbtool
     
     datapath = os.environ.get('CASAPATH').split()[0] +\
         '/data/regression/unittest/fluxscale/'
@@ -225,6 +227,35 @@ class fluxscale1_test(unittest.TestCase):
                              transfer='1445*,1331*', incremental=True)
         self.assertTrue(os.path.exists(outtable))
         self.assertFalse('0' in thisdict)
+
+    def test_append(self):
+        '''Fluxscale test 1.8: test append=True: append to the existing fluxtable'''
+
+        tblocal = table()
+        # Output(append)
+        outtable = self.msfile + '.test1.8.fcal'
+
+        fpath = os.path.join(datapath,self.reffile)
+        if os.path.lexists(fpath):        
+            shutil.copytree(fpath, outtable, symlinks=True)
+            tblocal.open(outtable)
+            nrowinit=tblocal.nrows() 
+            tblocal.close()
+        else:
+            self.fail('Data does not exist -> '+fpath)
+      
+        #input
+        gtable = self.gtable
+
+
+        thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*',
+                  transfer='1445*,1331*', append=True)
+        self.assertTrue(os.path.exists(outtable))
+        self.assertFalse('0' in thisdict)
+        tblocal.open(outtable)
+        nrowafter=tblocal.nrows() 
+        tblocal.close()
+        self.assertTrue(2*nrowinit==nrowafter)
 
 class fluxscale2_test(unittest.TestCase):
 
