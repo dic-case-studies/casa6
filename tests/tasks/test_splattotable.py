@@ -74,7 +74,7 @@ import unittest
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table, spectralline
-    from casatasks import splattotable
+    from casatasks import splattotable, casalog
 else:
     import casac
     from tasks import *
@@ -88,9 +88,11 @@ bad_list = "list2.txt"
 
 def run_sttmethod(list, tab):
     mysl = spectralline()
-    restool = mysl.splattotable(filenames=list, table=tab)
-    mysl.close()
-    return restool
+    try:
+        return mysl.splattotable(filenames=list, table=tab)
+    except:
+        raise
+    mysl.done()
 
 def run_stttask(list, tab):
     if not is_CASA6:
@@ -118,47 +120,48 @@ class splattotable_test(unittest.TestCase):
 
     def test_exceptions(self):
         """splattotable: Test various exception cases"""
+
+        # these functions are used where exceptions are expected (here)
+        # so that clean-up can happen if the exceptions do NOT occur (the test fails)
+        # otherwise the test may leave a file open, causing other tests to appear to fail
+        def check_run_sttmethod(filenames, tab):
+            rst = run_sttmethod(filenames,tab)
+            rst.done()
         
         def testit(filenames, tab):
             for i in [0,1]:
                 if (i==0):
-                    self.assertRaises(Exception, run_sttmethod, filenames, tab)
+                    self.assertRaises(Exception, check_run_sttmethod, filenames, tab)
                 else:
-                    self.assertEqual(run_stttask(filenames, tab), None)
+                    # CASA6 task raises an exception, CASA5 returns None
+                    if is_CASA6:
+                        self.assertRaises(Exception, run_stttask, filenames, tab)
+                    else:
+                        self.assertEqual(run_stttask(filenames, tab), None)
+                # in all cases, nothing should be opened
+                self.assertTrue(len(self._tb.showcache()) == 0)
 
         # CASA6 throws exceptions here, CASA5 does not
         # blank output table name
         try:
-            OK = False
             testit("list1.txt", "")
-            if not is_CASA6:
-                OK = True
         except:
-            if is_CASA6:
-                OK = True
-        self.assertEqual(OK,True)
-
+            casalog.post("Failure in test_exceptions testing blank output table name",'SEVERE')
+            raise
+        
         # bad list
         try:
-            OK = False
             testit("list2.txt", "myout");
-            if not is_CASA6:
-                OK = True
         except:
-            if is_CASA6:
-                OK = True
-        self.assertEqual(OK,True)
-
+            casalog.post("Failure in test_exceptions testing bad list",'SEVERE')
+            raise
+        
         # unwritable table
         try:
-            OK = False
-            testit("list1.txt", "/myout");
-            if not is_CASA6:
-                OK = True
+            testit("list1.txt", "foo/bar/myout");
         except:
-            if is_CASA6:
-                OK = True
-        self.assertEqual(OK,True)
+            casalog.post("Failure in test_exceptions testing unwritable table",'SEVERE')
+            raise
 
     def test_good_list(self):
         """splattotable: Test converting a good list"""

@@ -340,7 +340,12 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
             needtoregrid=False
             bychanindx=False
 
-            try: 
+            try:
+                # These coordsys objects will need to be closed, if created
+                incsys = None
+                inmaskcsys = None
+                ocsys = None
+
                 #print "expand mode main processing blocks..."
                 # do not allow list in this mode (for inpimage and inpmask) - maybe this is redundant now
                 if type(inpmask)==list:
@@ -559,6 +564,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 #                           #_ia.putchunk(pixels=pix,blc=[inshp[0]-1,inshp[1]-1,0,j])
 #                           _ia.putchunk(pixels=pix.transpose(),blc=[0,0,0,j])
                         needtoregrid=False
+
                         if _ia.isopen(): _ia.close()
                         _ia.open(tmp_outmaskimage)
                 # 
@@ -633,6 +639,12 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 _ia.done()
                 raise
             finally:
+                if inmaskcsys:
+                    inmaskcsys.done()
+                if incsys:
+                    incsys.done()
+                if ocsys:
+                    ocsys.done()
                 if os.path.exists(tmp_maskimage):
                     shutil.rmtree(tmp_maskimage)
                 if os.path.exists(tmp_regridim):
@@ -667,6 +679,8 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
             usedbmasks=[]
             usedrgfiles=[]
             usedrglist=[]
+            # This coordsys object used in several places below will need to be closed, if created
+            tcsys = None
             try:
                 # check outparentim - image part of output and set as a template image
                 if not (os.path.isdir(outparentim) or (outparentim==inpimage)):
@@ -784,6 +798,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         _ia.close()
                       
                 if debug: print("check rgfiles and rglist")
+
                 if len(rgfiles)>0 or len(rglist)>0:
                     # create an empty image with input image coords.
                     #print "Using %s as a template for regions" % inpimage 
@@ -865,7 +880,6 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     for tmpfile in [tmp_allrgmaskim,tmp_rgmaskim,regridded_mask]:
                         if os.path.isdir(tmpfile):
                             shutil.rmtree(tmpfile)
-
                                         
                 # merge the bmasks with AND
                 if os.path.exists('__tmp_fromTFmask_'+pid) and len(bmasks)>0:
@@ -953,6 +967,9 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     shutil.rmtree(tmp_allrgmaskim)
                 if os.path.exists(tmp_rgmaskim):
                     shutil.rmtree(tmp_rgmaskim)
+                if tcsys:
+                    tcsys.done()
+
 
                 if type(inpimage)==list:
                    for im in inpimage:
@@ -1056,6 +1073,7 @@ def regridmask(inputmask,template,outputmask,axes=[3,0,1],method='linear',chanra
         intrc=chanrange[1]
         casalog.post("Regridmask: spaxis=%s, inblc=%s, intrc=%s" % (spaxis,inblc,intrc), 'DEBUG1')
         rgn = _rg.wbox(blc=inblc,trc=intrc,pixelaxes=spaxis.tolist(),csys=incsys.torecord())
+        incsys.done()
     else:
         rgn={}     
     # for continuum case
@@ -1075,15 +1093,14 @@ def regridmask(inputmask,template,outputmask,axes=[3,0,1],method='linear',chanra
     except:
         pass
     finally:
+        ocsys.done()
         _ia.remove()
         _ia.done()
-        if ir is not None:
-            # to ensure to create 1/0 mask image
-            #ir.calc('iif (%s>0.0 && %s<1.0,1,%s)'%(outputmask,outputmask,outputmask))
-            # treat everything not = 0.0 to be mask
-            if os.path.exists(outputmask):
-                ir.calc('iif (abs("%s")>0.0,1,"%s")'%(outputmask,outputmask),False)
-                ir.done()
+        # to ensure to create 1/0 mask image
+        #ir.calc('iif (%s>0.0 && %s<1.0,1,%s)'%(outputmask,outputmask,outputmask))
+        # treat everything not = 0.0 to be mask
+        ir.calc('iif (abs("%s")>0.0,1,"%s")'%(outputmask,outputmask),False)
+        ir.done()
         if os.path.isdir(inputmaskcopy):
             shutil.rmtree(inputmaskcopy)
 
@@ -1244,11 +1261,13 @@ def makeEmptyimage(template,outimage):
     make an empty image with the coords
     from template
     """
+
     _ia = image()
     _ia.open(template)
     inshp=_ia.shape()
     incsys=_ia.coordsys()
     _ia.fromshape(outimage,shape=inshp,csys=incsys.torecord())
+    incsys.done()
     _ia.done()
 
 def cleanuptempfiles(tempfilelist):
