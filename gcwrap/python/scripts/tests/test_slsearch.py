@@ -55,7 +55,7 @@
 # This test runs as part of the CASA python unit test suite and can be run from
 # the command line via eg
 # 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_slsearch[test1,test2,...]
+# casa --nogui --log2term -c runUnitTest.py test_slsearch
 #
 # </example>
 #
@@ -74,7 +74,7 @@ import unittest
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, spectralline, table
-    from casatasks import slsearch
+    from casatasks import slsearch, casalog
 else:
     import casac
     from tasks import *
@@ -111,7 +111,6 @@ def run_search(
         raise
     finally:
         mysl.done()
-   
 
 def run_slsearch(
     tab, outfile, freqrange, species, reconly,
@@ -189,16 +188,33 @@ class slsearch_test(unittest.TestCase):
 
     def test_exceptions(self):
         """slsearch: Test various exception cases"""
+        
+        # check_search is used when run_search is expected to fail
+        # includes closing the returned spectralline tool in
+        # case run_search does not throw an exception
+        def check_search(
+                tab, outfile, freqrange, species, reconly,
+                chemnames, qns, intensity, smu2, loga, el,
+                eu, rrlinclude, rrlonly, verbose, logfile,
+                append
+        ):
+            mysl = run_search(tab, outfile, freqrange, species, reconly,
+                              chemnames, qns, intensity, smu2, loga, el,
+                              eu, rrlinclude, rrlonly, verbose, logfile,
+                              append)
+            mysl.done()
+
+            
         def testit(
             tab, outfile, freqrange, species, reconly,
             chemnames, qns, intensity, smu2, loga, el,
             eu, rrlinclude, rrlonly, verbose, logfile, 
             append
         ):
-            for i in [0, 1]:
+            for i in [0,1]:
                 if (i==0):
                     self.assertRaises(
-                        Exception, run_search, tab, outfile,
+                        Exception, check_search, tab, outfile,
                         freqrange, species, reconly, chemnames,
                         qns, intensity, smu2, loga, el, eu,
                         rrlinclude, rrlonly, verbose, logfile, 
@@ -206,56 +222,53 @@ class slsearch_test(unittest.TestCase):
                     )
                     self.assertTrue(len(_tb.showcache()) == 0)
                 else:
-                    self.assertEqual(
-                        run_slsearch(
+                    # CASA6 slsearch raises an exception, CASA5 returns None
+                    if is_CASA6:
+                        self.assertRaises(
+                            Exception, run_slsearch,
                             tab, outfile, freqrange, species,
                             reconly, chemnames, qns, intensity,
                             smu2, loga, el, eu, rrlinclude, rrlonly,
                             verbose, logfile, append
-                        ), None
-                    )
+                        )
+                    else:
+                        self.assertEqual(
+                            run_slsearch(
+                                tab, outfile, freqrange, species,
+                                reconly, chemnames, qns, intensity,
+                                smu2, loga, el, eu, rrlinclude, rrlonly,
+                                verbose, logfile, append
+                            ), None
+                        )
+                    # either way, no tables should be open
                     self.assertTrue(len(_tb.showcache()) == 0)
 
         # bogus input table name
-        # CASA6 throws an exception, 5 does not, this captures both cases
+        # the version of testit used here throws an exception if the
+        # expected exceptions or return values did not happen
         try:
-            OK = False
             testit(
                 tab="fred.tbl", outfile="x", freqrange=[0, 100], species=[],
                 reconly=True, chemnames=[], qns=[], intensity=[-1], smu2=[-1],
                 loga=[-1], el=[-1], eu=[-1], rrlinclude=True, rrlonly=True,
                 verbose=True, logfile="", append=True
             )
-            # this can only be OK if it's not CASA6
-            if not is_CASA6:
-                # bad output name
-                self.assertTrue(len(_tb.showcache()) == 0)
-                OK = True
         except:
-            # this can only be OK if it is CASA6
-            if is_CASA6:
-                self.assertTrue(len(_tb.showcache()) == 0)
-                OK = True
-
-        self.assertTrue(OK)
+            casalog.post("Failure in test_exceptions testing bogus input table name", 'SEVERE')
+            raise
 
         # bad output name
         try:
-            OK = False
             testit(
-                tab=good_table, outfile="/x", freqrange=[0, 100], species=[],
+                tab=good_table, outfile="foo/bar/bad", freqrange=[0, 100], species=[],
                 reconly=True, chemnames=[], qns=[], intensity=[-1], smu2=[-1],
                 loga=[-1], el=[-1], eu=[-1], rrlinclude=True, rrlonly=True,
                 verbose=True, logfile="", append=True
             )
-            if not is_CASA6:
-                OK = True
         except:
-            if is_CASA6:
-                OK = True
-
-        self.assertTrue(OK)
-
+            casalog.post("Failure in test_exceptions testing bad output name", 'SEVERE')
+            raise
+            
     def test_table(self):
         """ test various settings of the table parameter"""
 
@@ -486,6 +499,13 @@ class slsearch_test(unittest.TestCase):
     def test_logfile(self):
         """ test various settings of the logfile and append parameters"""
 
+        def count_lines(txtfile):
+            count = 0
+            with open(txtfile,'r')  as f:
+                for count,l in enumerate(f,1):
+                    pass
+            return count
+        
         logfile = "xx.log"
         # verbose = False so no logfile should be written
         self._testit(
@@ -506,9 +526,9 @@ class slsearch_test(unittest.TestCase):
         )
         self.assertTrue(os.path.exists(logfile))
 
-        num_lines = sum(1 for line in open(logfile))
+        num_lines = count_lines(logfile)
+        self.assertEqual(num_lines, 5822)
         # append (twice)
-        self.assertEquals(num_lines, 5822)
         self._testit(
             tab=good_table, outfile="", freqrange=[0, 100], species=[],
             reconly=True, chemnames=[], qns=[],
@@ -517,8 +537,8 @@ class slsearch_test(unittest.TestCase):
             verbose=True, logfile=logfile, append=True, nrows=5821
         )
         self.assertTrue(os.path.exists(logfile))
-        num_lines = sum(1 for line in open(logfile))
-        self.assertEquals(num_lines, 3*5822)
+        num_lines = count_lines(logfile)
+        self.assertEqual(num_lines, 3*5822)
         os.remove(logfile)
 
 

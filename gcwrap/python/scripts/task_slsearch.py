@@ -83,17 +83,18 @@ def slsearch(
     newsl = None
     mysl = spectralline()
     try:
-        mysl.open(table)
-        newsl = mysl.search(
-            outfile=outfile, freqrange=freqrange,
-            species=species, reconly=reconly,
-            chemnames=chemnames, qns=qns,
-            intensity=intensity, smu2=smu2,
-            loga=loga, el=el, eu=eu,
-            rrlinclude=rrlinclude, rrlonly=rrlonly,
-            verbose=verbose, logfile=logfile,
-            append=append
-        )
+        newsl = False
+        if (mysl.open(table)):
+            newsl = mysl.search(
+                outfile=outfile, freqrange=freqrange,
+                species=species, reconly=reconly,
+                chemnames=chemnames, qns=qns,
+                intensity=intensity, smu2=smu2,
+                loga=loga, el=el, eu=eu,
+                rrlinclude=rrlinclude, rrlonly=rrlonly,
+                verbose=verbose, logfile=logfile,
+                append=append
+            )
             
         if (not newsl):
             raise Exception("Exception when running sl.search()")
