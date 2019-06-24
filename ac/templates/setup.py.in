@@ -1376,8 +1376,8 @@ class create_makefile(Command):
         python_inc = props['build.python.include']
         cflags = [
             module_cflags['/code/'], module_cflags['/casacore/'],
-            platform_cflags[sys.platform], platform_cflags[sys.platform],
-            platform_cflags[sys.platform], platform_cflags[sys.platform]
+            platform_cflags[sys.platform], module_cflags['/code/'],
+            platform_cflags[sys.platform], module_cflags['binding/']
         ]
         includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
         flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
