@@ -24,6 +24,7 @@ def imsubimage(
     myia = image()
     myia.dohistory(False)
     outia = None
+    tmp_csys = None
     try:
         if (not myia.open(imagename)):
             raise Exception("Cannot create image analysis tool using " + imagename)
@@ -59,8 +60,11 @@ def imsubimage(
         casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
         raise
     finally:
+        _rg.done()
         if myia:
             myia.done()
         if outia:
             outia.done()
+        if tmp_csys:
+            tmp_csys.done()
         
