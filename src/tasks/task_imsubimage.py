@@ -60,9 +60,8 @@ def imsubimage(
         casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
         raise
     finally:
+        myia.done()
         _rg.done()
-        if myia:
-            myia.done()
         if outia:
             outia.done()
         if tmp_csys:
