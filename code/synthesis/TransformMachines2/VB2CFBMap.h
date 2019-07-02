@@ -63,14 +63,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      					    const VisBuffer2& vb, const casacore::Quantity& dPA,
      					    const casacore::Vector<casacore::Int>& dataChan2ImChanMap,
      					    const casacore::Vector<casacore::Int>& dataPol2ImPolMap,
-     					    const casacore::Vector<casacore::Vector<casacore::Double>>& pointingOffset);
-     void setPhaseGradPerRow(const casacore::Vector< casacore::Vector<double> >& pointingOffset,
+     					    const casacore::CountedPtr<PointingOffsets>& po_p);
+     void setPhaseGradPerRow(const casacore::CountedPtr<PointingOffsets>& po_p,
 			     const casacore::CountedPtr<CFBuffer>& cfb,
 			     const vi::VisBuffer2& vb,
 			     const int& row);
      inline casacore::Matrix<casacore::Complex>& getCFPhaseGrad(const int& row)//, const int& ant0, const int& ant1)
      {return cfPhaseGrad_p(row);}
-     void setDoPointing(const bool& dop=false) {doPointing_p = dop;newPhaseGradComputed_p=false;}
+     //void setDoPointing(const bool& dop=false) {doPointing_p = dop;newPhaseGradComputed_p=false;}
   //   protected:
      casacore::Vector<casacore::CountedPtr<CFBuffer > > vb2CFBMap_p;
      casacore::Vector<casacore::Matrix<casacore::Complex> > cfPhaseGrad_p;

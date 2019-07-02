@@ -1761,8 +1761,6 @@ void SynthesisImagerVi2::unlockMSs()
 									   psTermOn, (wprojPlane > 1),
 									   mTermOn, wbAWP, conjBeams);
 
-    CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets(awConvFunc->getOversampling());
-    awConvFunc->setPointingOffsets(po);
     //
     // Construct the appropriate re-sampler.
     //

@@ -33,6 +33,7 @@
 #include <casa/Arrays/Vector.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <synthesis/TransformMachines2/CFBuffer.h>
+#include <synthesis/TransformMachines2/PointingOffsets.h>
 
 // #include <coordinates/Coordinates/DirectionCoordinate.h>
 // #include <images/Images/ImageInterface.h>
@@ -58,15 +59,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     inline const casacore::Matrix<casacore::Complex>& getFieldPointingGrad() {return field_phaseGrad_p;}
     inline const casacore::Matrix<casacore::Complex>& getAntennaPointingGrad() {return antenna_phaseGrad_p;}
-    bool needsNewPhaseGrad(const casacore::Vector<casacore::Vector<double> >& pointingOffset,
+    bool needsNewPhaseGrad(const casacore::CountedPtr<PointingOffsets>& pointingOffset,
 			   const vi::VisBuffer2& vb,
 			   const int& row);
     //    void getPhaseGrad(casacore::Matrix<casacore::Complex>& fullPhaseGrad) {fullPhaseGrad = antenna_phaseGrad_p + sky_phaseGrad_p;}
 
-    bool ComputeFieldPointingGrad(const casacore::Vector<double>& pointingOffset,
+    bool ComputeFieldPointingGrad(const casacore::CountedPtr<PointingOffsets>& pointingOffset,
 				  const casacore::CountedPtr<CFBuffer>& cfb,
 				  const vi::VisBuffer2& vb);
-    bool ComputeFieldPointingGrad(const casacore::Vector<casacore::Vector<double> >& pointingOffset,
+    bool ComputeFieldPointingGrad(const casacore::CountedPtr<PointingOffsets>& pointingOffset,
 				  const casacore::CountedPtr<CFBuffer>& cfb,
 				  const vi::VisBuffer2& vb,
 				  const int& row);

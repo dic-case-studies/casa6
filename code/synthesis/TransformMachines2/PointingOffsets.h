@@ -46,9 +46,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   class PointingOffsets 
   {
   public:
-    PointingOffsets(const int& convOversampling):epJ_p(), doPointing_p(false),vbUtils_p()
+    PointingOffsets():epJ_p(), doPointing_p(false),vbUtils_p(), cachedPointingOffsets_p()
     {
-      convOversampling_p = convOversampling;
       PO_DEBUG_P = SynthesisUtils::getenv("PO_DEBUG",0);
       cerr << "PO_DEBUG = " << PO_DEBUG_P << endl;
    }
@@ -62,8 +61,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     virtual casacore::Vector<casacore::Vector<casacore::Double> >findAntennaPointingOffset(const casacore::ImageInterface<casacore::Complex>& image,
 									 const vi::VisBuffer2& vb, const casacore::Bool& doPointing=true);
 
-    virtual casacore::Vector<casacore::Vector<casacore::Double> >findPointingOffset(const casacore::ImageInterface<casacore::Complex>& image,
-								  const vi::VisBuffer2& vb, const casacore::Bool doPointing=false);
+    virtual void fetchPointingOffset(const casacore::ImageInterface<casacore::Complex>& image,
+				     const vi::VisBuffer2& vb, const casacore::Bool doPointing=false);
 
     casacore::Vector<double> gradPerPixel(const casacore::Vector<double>& p);
     casacore::Vector<casacore::Double>& toPix(const vi::VisBuffer2& vb, 
@@ -71,6 +70,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     void storeImageParams(const casacore::ImageInterface<casacore::Complex>& iimage, const vi::VisBuffer2& vb);
 
     void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
+
+    void setOverSampling(const int& os) {convOversampling_p=os;}
+    casacore::Vector<casacore::Vector<casacore::Double> > pullPointingOffsets(){return cachedPointingOffsets_p;};
 
   private:
 
@@ -89,6 +91,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::CountedPtr<SolvableVisJones> epJ_p;
     bool doPointing_p;
     VisBufferUtil vbUtils_p;
+    casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets_p;
 
     int PO_DEBUG_P;
   };

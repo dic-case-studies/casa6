@@ -52,11 +52,12 @@ namespace casa{
   //
   //----------------------------------------------------------------------
   //
-  bool PhaseGrad::needsNewPhaseGrad(const Vector<Vector<double> >& pointingOffset,
+  bool PhaseGrad::needsNewPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
 				    const VisBuffer2& vb,
 				    const int& row)
   {
     unsigned int nRow=vb.nRows();
+    Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
     if (cached_FieldOffset_p.nelements() < nRow) cached_FieldOffset_p.resize(nRow,true);
 
     return (
@@ -76,7 +77,7 @@ namespace casa{
   // 					   const double& /*cfRefFreq*/,
   // 					   const double& /*imRefFreq*/,
   // 					   const int& spwID, const int& fieldId)
-  bool PhaseGrad::ComputeFieldPointingGrad(const Vector<Vector<double> >& pointingOffset,
+  bool PhaseGrad::ComputeFieldPointingGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
 					   const CountedPtr<CFBuffer>& cfb,
 					   const VisBuffer2& vb,
 					   const int& row
@@ -99,8 +100,9 @@ namespace casa{
       //
       // If the pointing or the max. CF size changed, recompute the phase gradient.
       //
-      if (needsNewPhaseGrad(pointingOffset, vb, row))
+      if (needsNewPhaseGrad(pointingOffsets_p, vb, row))
 	{
+	  Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
 	  LogIO log_l(LogOrigin("PhaseGrad","computeFieldPointingGrad"));
 	  log_l << "Computing Phase Grad: " << row << " " << pointingOffset[row][0] << " " << pointingOffset[row][1] << " " << cached_FieldOffset_p[row](0) << " " 
 		<< cached_FieldOffset_p[row](1) << " " << field_phaseGrad_p.shape() << " " << maxCFShape_p[0]  << " "

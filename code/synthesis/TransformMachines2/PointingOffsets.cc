@@ -49,6 +49,7 @@ namespace casa{
       {
 	imageDC_p = other.imageDC_p;
 	imageObsInfo_p = other.imageObsInfo_p;
+	cachedPointingOffsets_p = other.cachedPointingOffsets_p;
       }
     return *this;
   }
@@ -124,17 +125,17 @@ namespace casa{
   //
   //----------------------------------------------------------------------
   //
-  Vector< Vector<Double> > PointingOffsets::findPointingOffset(const ImageInterface<Complex>& image,
-							       const VisBuffer2& vb, const Bool doPointing)
+  void PointingOffsets::fetchPointingOffset(const ImageInterface<Complex>& image,
+					   const VisBuffer2& vb, const Bool doPointing)
   {
     setDoPointing(doPointing);
     if (!doPointing) 
       { 
-	return findMosaicPointingOffset(image,vb,doPointing);
+	cachedPointingOffsets_p.assign(findMosaicPointingOffset(image,vb,doPointing));
       }
     else 
       {
-	return findAntennaPointingOffset(image,vb,doPointing);
+	cachedPointingOffsets_p.assign(findAntennaPointingOffset(image,vb,doPointing));
       }
   }
   //

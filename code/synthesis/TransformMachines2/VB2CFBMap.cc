@@ -63,7 +63,7 @@ using namespace vi;
       return *this;
     };
 
-    void VB2CFBMap::setPhaseGradPerRow(const casacore::Vector<casacore::Vector<double> >& pointingOffset,
+    void VB2CFBMap::setPhaseGradPerRow(const CountedPtr<PointingOffsets>& pointingOffset,
 				       const casacore::CountedPtr<CFBuffer>& cfb,
 				       const vi::VisBuffer2& vb,
 				       const int& row)
@@ -91,7 +91,7 @@ using namespace vi;
 				    const Quantity& dPA,
 				    const Vector<Int>& /*dataChan2ImChanMap*/,
 				    const Vector<Int>& /*dataPol2ImPolMap*/,
-				    const Vector<Vector<Double> >& pointingOffset)
+				    const CountedPtr<PointingOffsets>& po_p)
 				    //const Bool& /*doPointing*/)
     {
       //    VBRow2CFMapType& vbRow2CFMap_p,
@@ -143,10 +143,10 @@ using namespace vi;
 	  else
 	    {
 	      // Set the phase grad for the CF per VB row
-	      setPhaseGradPerRow(pointingOffset, cfb_l, vb, irow);
+	      setPhaseGradPerRow(po_p, cfb_l, vb, irow);
 
 	      // Set the CFB per VB row
-	      cfb_l->setPointingOffset(pointingOffset);
+	      cfb_l->setPointingOffset(po_p->pullPointingOffsets());
 	      vb2CFBMap_p(irow) = cfb_l;
 	    }
 	}
