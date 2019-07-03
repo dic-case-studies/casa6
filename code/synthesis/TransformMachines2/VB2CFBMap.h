@@ -70,12 +70,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			     const int& row);
      inline casacore::Matrix<casacore::Complex>& getCFPhaseGrad(const int& row)//, const int& ant0, const int& ant1)
      {return cfPhaseGrad_p(row);}
+
+     casacore::Matrix<vector<Int> > findAntennaGroups(const vi::VisBuffer2& vb, 
+								const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
+								const double& sigmaDev);
+     void makeVBRow2BLGMap(const vi::VisBuffer2& vb);
+					       /* const Matrix<vector<int> >& antennaGroups); */
+
      //void setDoPointing(const bool& dop=false) {doPointing_p = dop;newPhaseGradComputed_p=false;}
   //   protected:
      casacore::Vector<casacore::CountedPtr<CFBuffer > > vb2CFBMap_p;
      casacore::Vector<casacore::Matrix<casacore::Complex> > cfPhaseGrad_p;
      casacore::CountedPtr<PhaseGrad> phaseGradCalculator_p;
      bool doPointing_p, newPhaseGradComputed_p;
+     casacore::Int PO_DEBUG_P;
+     casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p;
+     casacore::Matrix< vector<float> > antennaPO_p, cachedAntennaPO_p;
+     vector<int> vbRow2BLMap_p;
+     casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p;
+
      
    };
  }

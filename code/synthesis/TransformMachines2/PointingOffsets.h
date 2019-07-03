@@ -67,6 +67,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Vector<double> gradPerPixel(const casacore::Vector<double>& p);
     casacore::Vector<casacore::Double>& toPix(const vi::VisBuffer2& vb, 
 					      const casacore::MDirection& dir1, const casacore::MDirection& dir2);
+
+    std::vector<std::vector<double> > fetchAntOffsetToPix(const vi::VisBuffer2& vb, const casacore::Bool doPointing);
+
     void storeImageParams(const casacore::ImageInterface<casacore::Complex>& iimage, const vi::VisBuffer2& vb);
 
     void setDoPointing(const bool& dop=false) {doPointing_p = dop;}

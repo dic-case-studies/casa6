@@ -190,6 +190,34 @@ namespace casa{
   //
   //----------------------------------------------------------------------
   //
+
+  vector<vector<double> > PointingOffsets::fetchAntOffsetToPix(const VisBuffer2& vb, const Bool doPointing)
+  {
+    Int numRow_p = vb.nRows();
+    vector<vector<double> > pix_l;
+    pix_l.resize(4);
+    MVDirection vbdir=vb.direction1()(0).getValue();
+    for (int irow=0; irow<numRow_p;irow++)
+      {
+	for (int ii=0; ii<4;ii++)
+      	pix_l[ii].resize(numRow_p);
+	MDirection antDir1 =vbUtils_p.getPointingDir(vb, vb.antenna1()[irow], irow, dc_p.directionType(), doPointing); 
+	MDirection antDir2 =vbUtils_p.getPointingDir(vb, vb.antenna2()[irow], irow, dc_p.directionType(), doPointing);        
+	Vector<double> tmp = toPix(vb, antDir1, vbdir);
+	pix_l[0][irow]=tmp[0];
+	pix_l[1][irow]=tmp[1];
+	tmp = toPix(vb, antDir2, vbdir);
+	pix_l[2][irow]=tmp[0];
+	pix_l[3][irow]=tmp[1];
+      }
+
+    return pix_l;
+  }
+
+
+  //
+  //----------------------------------------------------------------------
+  //
   void PointingOffsets::storeImageParams(const ImageInterface<Complex>& iimage,
 					 const VisBuffer2& vb) 
   {
