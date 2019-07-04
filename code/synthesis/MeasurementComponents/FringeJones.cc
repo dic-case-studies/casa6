@@ -125,6 +125,19 @@ SDBListGridManager::SDBListGridManager(SDBList& sdbs_) :
             continue;
         }
     }
+    if (nchan == 1) {
+      nt = sdbs.nSDB()/spwins.size();
+      tmin = *(times.begin());
+      tmax = *(times.rbegin());
+      dt = (tmax - tmin)/(nt - 1);
+      nSPWChan = nchan;
+      fmin = *(fmins.begin());
+      fmax = fmin;
+      totalChans = 1;
+      df = 1;
+      return;
+    }
+      
     nt = sdbs.nSDB()/spwins.size();
     tmin = *(times.begin());
     tmax = *(times.rbegin());
@@ -455,6 +468,9 @@ DelayRateFFT::FFT() {
 
 std::pair<Bool, Float>
 DelayRateFFT::xinterp(Float alo, Float amax, Float ahi) {
+    if (amax > 0.0 && alo == amax && amax == ahi)
+        return std::make_pair(true, 0.5);
+
     Float denom(alo-2.0*amax+ahi);
     Bool cond = amax>0.0 && abs(denom)>0.0 ;
     Float fpk = cond ? 0.5-(ahi-amax)/denom : 0.0;
