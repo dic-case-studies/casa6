@@ -111,6 +111,18 @@ else:
         else:
             return ("","")
 
+lib_dirs = ["/opt/casa/03", "/opt/casa/02", "/opt/casa/01", "/opt/local"]
+
+third_party_lib_path = ""
+
+for d in lib_dirs:
+    if os.path.isdir(d):
+        third_party_lib_path = d
+        break
+
+print ("Using " + third_party_lib_path + " for third party libraries")
+
+
 if sys.platform == 'darwin':
     def islib(l):
         return l.endswith('.dylib')
@@ -797,8 +809,8 @@ def get_new_c_compiler_flags():
     return get_optimization_flags()
 
 def get_use_grpc():
-   return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] ) 
-     
+   return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )
+
 
 def get_fortran_compiler_flags(ext):
     arch = platform.architecture()[0].lower()
@@ -848,7 +860,7 @@ def customize_compiler(self):
     ccache = get_ccache()
     cflags = get_cflags()                                                                 ###     /usr/include (e.g. rhel6)
     new_compiler_cxx = (
-        ccache + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags() 
+        ccache + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags()
         + get_new_cxx_compiler_includes() + cflags + default_compiler_so[1:]
     )
     new_compiler_cc = ccache + [props['build.compiler.cc']] + get_optimization_flags() + ['-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
@@ -1331,7 +1343,7 @@ class create_makefile(Command):
             mk.write(
                 sep.join([
                     all_target + ":", yacc_target, lex_target, cpp_target, c_target,
-                    fortran_target, libcasatools, swig_target, statics_wrap_target, 
+                    fortran_target, libcasatools, swig_target, statics_wrap_target,
                     tool_libs_target, straight_copies_target, rsync_data_target, "\n"
                 ])
             )
@@ -1360,7 +1372,7 @@ class create_makefile(Command):
         if duse_grpc:
             grpc_registrar_dir = 'build' + os.sep + distutils_dir_name("binding") + os.sep + "grpc"
             GRPC_REGISTRAR = source_files(grpc_registrar_dir, file_suffix_filter=".cc")
-        # the binding/source files need to be put into the casatools library, so compile 
+        # the binding/source files need to be put into the casatools library, so compile
         # them here
         SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
         obj_name = os.path.join(build_distutils_temp, "{base}.o")
@@ -1405,7 +1417,7 @@ class create_makefile(Command):
                     targdirs.add(os.path.dirname(objfile))
                     mk.write(
                         "\n\n" + cpp_obj.format(
-                            base=b,src=s, flags=flags, includes=myinc, 
+                            base=b,src=s, flags=flags, includes=myinc,
                             cflags=sys_cflags, dflags=dflags
                         )
                     )
@@ -1417,10 +1429,10 @@ class create_makefile(Command):
             mk.write("\n# targets to compile C++ code to object files\n")
             mk.write(".PHONY: " + cpp_target + "\n")
             mk.write(cpp_target + ": " + mkdirs_cc_target + " " + sep.join(cpp_list) + "\n")
-    
+
         casatools_obj_list = cpp_list
 
-        # yacc 
+        # yacc
         CASACORE_YACC = source_files("casa-source/casacore", file_suffix_filter=".yy")
         CODE_YACC = source_files(
             "casa-source/code", file_suffix_filter=".yy",
@@ -1446,7 +1458,7 @@ class create_makefile(Command):
             mk.write("\n# targets to compile yacc code to object files\n")
             mk.write(".PHONY: " + yacc_target + "\n")
             mk.write(yacc_target + ": " + sep.join(yacc_list) + "\n")
-                        
+
         # lex
         CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
         CODE_LEX = source_files( "casa-source/code",file_suffix_filter=".ll",
@@ -1550,7 +1562,7 @@ class create_makefile(Command):
         modulelib = os.sep.join([moduledir, "__casac__", "lib"])
         ldflags2 = '-L/opt/rh/rh-python36/root/usr/lib64 -L' + modulelib
         # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
-        # the libcasatools link 
+        # the libcasatools link
         # -lcasatools.cpython-36m-x86_64-linux-gnu '
         sepl = " -l"
         ldflags2 += sepl + sepl.join(link_libs)
@@ -1590,14 +1602,14 @@ class create_makefile(Command):
             mk.write("\n# targets to compile swig .i files to _wrap.cpp files\n")
             mk.write(".PHONY: " + swig_target + "\n")
             mk.write(swig_target + ": " + sep.join(i_list) + "\n")
-      
+
         # Generation of various files. This can probably be done in make, if really
         # necessary, but it's so quick it's easiest to just do it using the existing
         # python functionality for now
         install_version_header(casatools_major,casatools_minor,casatools_version)
         generate_config(moduledir, props)
 
-        # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files 
+        # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files
         # some of this is copied and pasted from the C++ section above, so can be
         # refactored
         # NOTE: If changes to xml files modify tool interdependencies, setup.py must
@@ -1647,7 +1659,7 @@ class create_makefile(Command):
                 targdirs.add(os.path.dirname(objfile))
                 mk.write(
                     "\n\n" + obj_create.format(
-                        base=base, src=s, flags=flags, includes=myinc, 
+                        base=base, src=s, flags=flags, includes=myinc,
                         cflags=add_cflags, dflags=dflags
                     )
                 )
@@ -1659,11 +1671,11 @@ class create_makefile(Command):
             mk.write("\n# targets to compile statics C++ code to object files\n")
             mk.write(".PHONY: " + statics_wrap_target + "\n")
             mk.write(statics_wrap_target + ": " + mkdirs_statics_wrap_target + " " + sep.join(cpp_list) + "\n")
-       
+
             mk.write("\n\n# Create tool shared libraries")
             # update ldflags2 to add libcasatools
             ldflags2 = '-L' + casac_dir + os.sep + 'lib '
-            ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 ' 
+            ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 '
             ldflags2 += sepl + sepl.join([os.path.basename(libcasatools)[3:][:-3]] + link_libs)
 
             tool_bind_dir = os.sep.join(["binding", "tools", "{toolname}"])
@@ -1688,7 +1700,7 @@ class create_makefile(Command):
                     # The *_wrap.cc files are generated when running make, they won't exist
                     # after the first time setup.py genmake is run, so the _wrap.o dependency
                     # needs to be explicitly added here
-                    needed_objs += [wrap_obj.format(toolname=tn)] 
+                    needed_objs += [wrap_obj.format(toolname=tn)]
 
                 needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
                 # needed_objs = [o.replace('.cpp', '.o') for o in needed_objs]
@@ -1703,7 +1715,7 @@ class create_makefile(Command):
             mk.write("\n\n# rules for tool libraries\n")
             for tn in (all_tool_names):
                 dep_libs = g_tools[tn]
-                tln = tool_lib_name.format(libname=tn) 
+                tln = tool_lib_name.format(libname=tn)
                 tool_libs_targ_deps.append(tln)
                 tool_lib_create = tln + ": " + libcasatools
                 needed_objs = []
@@ -1722,16 +1734,16 @@ class create_makefile(Command):
                 # The *_wrap.cc files are generated when running make, they won't exist
                 # after the first time setup.py genmake is run, so the _wrap.o dependency
                 # needs to be explicitly added here
-                needed_objs += [wrap_obj.format(toolname=tn)] 
+                needed_objs += [wrap_obj.format(toolname=tn)]
                 needed_objs = [prepend_dir + o for o in needed_objs]
                 tool_lib_create += " " + sep.join(needed_objs)
                 ld_cmd = (
-                    linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 
+                    linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2
                     + (sepl + sepl.join(needed_libs) if len(needed_libs) > 0 else "") + ' -o $@ ' + ldflags3
                 )
-                mk.write("\n" + tool_lib_create)     
+                mk.write("\n" + tool_lib_create)
                 mk.write('\n\t' + ld_cmd + '\n')
-               
+
             mk.write("\n\n# Create all tool libraries\n")
             mk.write(".PHONY: " + tool_libs_target + "\n")
             mk.write(tool_libs_target + ": " + sep.join(tool_libs_targ_deps) + "\n")
@@ -1745,7 +1757,7 @@ class create_makefile(Command):
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
         assembly_jar = "xml-casa-assembly-1.6.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
-        copy_to_dirs[assembly_jar] = bindir + os.sep + "java" 
+        copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
         copy_to_list = []
         with open("makefile", "a") as mk:
             mk.write("\n\n# straight file copies\n")
@@ -1754,9 +1766,9 @@ class create_makefile(Command):
                 copy_to_dir = copy_to_dirs[filename] if filename in copy_to_dirs else moduledir
                 copy_to = copy_to_dir + os.sep + filename
                 mk.write(
-                    "\n" + copy_to + ": " +f 
+                    "\n" + copy_to + ": " +f
                     + "\n\tmkdir -p " + copy_to_dir + " && cp -f $< $@\n"
-                ) 
+                )
                 copy_to_list.append(copy_to)
             mk.write("\n\n.PHONY: " + straight_copies_target + "\n")
             mk.write(straight_copies_target + ": " + sep.join(copy_to_list))
@@ -1772,7 +1784,7 @@ class create_makefile(Command):
                 rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
                 + moduledir + "/__data__"
             )
-        
+
         # C++ and C dependency tracking to makefile
         with open("makefile", "a") as mk:
             mk.write("""
@@ -1861,7 +1873,7 @@ def get_casatools_rpath(escape_for_make=False):
 # get architecture specific data used for linking
 def get_arch_link():
     if sys.platform == 'darwin':
-        archflags = ['-L/opt/local/lib/gcc5']
+        archflags = ['-L' + third_party_lib_path + '/lib/gcc5']
         archlibs = [ ]
     else:
         archflags = [ ]
@@ -1941,15 +1953,15 @@ if __name__ == '__main__':
     (ldflags, prop_libs) = get_link_props()
     """
     if sys.platform == 'darwin':
-        ### need to get '/opt/local/lib/gcc5' from gfortran directly
+        ### need to get '{third_party_lib_path}/lib/gcc5' from gfortran directly
         rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
-        archflags = ['-L/opt/local/lib/gcc5']
+        archflags = ['-L{third_party_lib_path}/lib/gcc5']
         archlibs = [ ]
     else:
         rpath = [ '-Wl,-rpath,' + ":".join(['$ORIGIN/lib'] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))) ]
         archflags = [ ]
         archlibs = ['gomp']
-    """
+    """.format(third_party_lib_path=third_party_lib_path)
     rpath = get_casatools_rpath()
     (archflags, archlibs) = get_arch_link()
 
