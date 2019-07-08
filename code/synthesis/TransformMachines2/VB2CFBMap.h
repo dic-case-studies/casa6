@@ -34,7 +34,7 @@
 #include <msvis/MSVis/VisBuffer2.h>
 #include <synthesis/TransformMachines2/CFBuffer.h>
 #include <synthesis/TransformMachines2/CFStore2.h>
-#include <synthesis/TransformMachines2/PhaseGrad.h>
+#include <synthesis/TransformMachines2/BaselineType.h>
 #include <casa/Utilities/CountedPtr.h>
 #include <coordinates/Coordinates/DirectionCoordinate.h>
 #include <images/Images/ImageInterface.h>
@@ -81,7 +81,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   //   protected:
      casacore::Vector<casacore::CountedPtr<CFBuffer > > vb2CFBMap_p;
      casacore::Vector<casacore::Matrix<casacore::Complex> > cfPhaseGrad_p;
-     casacore::CountedPtr<PhaseGrad> phaseGradCalculator_p;
+     casacore::CountedPtr<BaselineType> baselineType_p;
      bool doPointing_p, newPhaseGradComputed_p;
      casacore::Int PO_DEBUG_P;
      casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p;

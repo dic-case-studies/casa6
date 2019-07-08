@@ -37,7 +37,6 @@
 #include <synthesis/TransformMachines2/CFStore2.h>
 #include <synthesis/TransformMachines2/ConvolutionFunction.h>
 #include <synthesis/TransformMachines2/CFBuffer.h>
-#include <synthesis/TransformMachines2/PhaseGrad.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <synthesis/TransformMachines2/VB2CFBMap.h>
 namespace casa{
@@ -45,9 +44,9 @@ using namespace vi;
   namespace refim{
   Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
 
-    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), phaseGradCalculator_p(),doPointing_p(false)
+    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(),doPointing_p(false)
     {
-      phaseGradCalculator_p = new PhaseGrad();
+      baselineType_p = new BaselineType();
       newPhaseGradComputed_p = false;
     };
 
@@ -55,7 +54,7 @@ using namespace vi;
     {
       if(this!=&other) 
 	{
-	  phaseGradCalculator_p = other.phaseGradCalculator_p;
+	  baselineType_p = other.baselineType_p;
 	  cfPhaseGrad_p.assign(other.cfPhaseGrad_p);
 	  vb2CFBMap_p.assign(other.vb2CFBMap_p);
 	  doPointing_p = other.doPointing_p;
@@ -78,11 +77,11 @@ using namespace vi;
       // 	}
       // else
 	{
-	  phaseGradCalculator_p->ComputeFieldPointingGrad(pointingOffset,cfb,vb, 0);
+	  baselineType_p->phaseGradCalculator_p->ComputeFieldPointingGrad(pointingOffset,cfb,vb, 0);
 	}
 	{
 	  //cfPhaseGrad_p(row).assign(phaseGradCalculator_p->getFieldPointingGrad());
-	  cfPhaseGrad_p(row).reference(phaseGradCalculator_p->field_phaseGrad_p);
+	  cfPhaseGrad_p(row).reference(baselineType_p->phaseGradCalculator_p->field_phaseGrad_p);
 	}
     }
 
