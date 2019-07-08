@@ -157,6 +157,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //if ((ftmName=="mawprojectft") || (mTermOn))
 
     awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP, conjBeams);
+
     return awConvFunc;
   }
   //
@@ -1175,7 +1176,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     lastPAUsedForWtImg = currentCFPA = pa;
 
     //Vector<Vector<Double> > pointingOffset(convFuncCtor_p->findPointingOffset(image,vb, doPointing));
+
+    // PO::setOverSampling needs to be called here since
+    // convFuncCtor_p gets that value from a combination of (1)
+    // ATerm_OVERSAMPLING env. variable, (2) ATERM.OVERSAMPLING in
+    // ~/.casa and (3) from existing CFCache.  This setting in the AWP
+    // constructor will only get the default value from ATerm.h
+    po_p->setOverSampling(convFuncCtor_p->getOversampling());
+    // PO::fetchPointingOffset() only updates the internal cache in PO
+    // class.  PO::pullPointingOffset() is required to extract in the
+    // calling class.
     po_p->fetchPointingOffset(image,vb, doPointing);
+
     Float dPA = paChangeDetector.getParAngleTolerance().getValue("rad");
     Quantity dPAQuant = Quantity(paChangeDetector.getParAngleTolerance());
     // cfSource = visResampler_p->makeVBRow2CFBMap(*cfs2_p,
