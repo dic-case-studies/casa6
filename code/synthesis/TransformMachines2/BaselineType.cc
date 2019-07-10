@@ -94,11 +94,11 @@ namespace casa{
       {
 	makeVBRow2BLGMap(vb);
       
-	if (vectorPhaseGradCalculator_p.nelements() <= vbRow2BLMap_p[row])
+	if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
 	  {
-	    cerr<<"vbRow2BLMap_p [row] "<< vbRow2BLMap_p[row] << " " <<row <<endl;
+	    //  cerr<<"vbRow2BLMap_p [row] doP=T "<< vbRow2BLMap_p[row] << " " <<row <<endl;
 	    vectorPhaseGradCalculator_p.resize(vbRow2BLMap_p[row]+1,true);
-	    for (int i=0;i<vectorPhaseGradCalculator_p.nelements(); i++)
+	    for (unsigned int i=0;i<vectorPhaseGradCalculator_p.nelements(); i++)
 	      if (vectorPhaseGradCalculator_p[i].null())
 		vectorPhaseGradCalculator_p[i]=new PhaseGrad();
 	  }
@@ -109,9 +109,14 @@ namespace casa{
       {
 	myrow=0;
 	vbRow2BLMap_p.resize(1);
-	vectorPhaseGradCalculator_p.resize(1);
-	if (vectorPhaseGradCalculator_p[myrow].null())
-	  vectorPhaseGradCalculator_p[myrow]=new PhaseGrad();
+	vbRow2BLMap_p[0]=0;
+	if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[myrow])
+	  {
+	    //	    cerr<<"vbRow2BLMap_p [row] doP=F "<< vbRow2BLMap_p[myrow] << " " <<myrow <<endl;
+	    vectorPhaseGradCalculator_p.resize(1);
+	    if (vectorPhaseGradCalculator_p[myrow].null())
+	      vectorPhaseGradCalculator_p[myrow]=new PhaseGrad();
+	  }
       }
 	
   
@@ -126,6 +131,7 @@ namespace casa{
 						      const CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						      const double& sigmaDev)
     {
+      if (doPointing_p==false) return antennaGroups_p;
      
       const Int nRows = vb.nRows();
       vector< vector <double> > antDirPix_l = pointingOffsets_p->fetchAntOffsetToPix(vb, doPointing_p);
@@ -236,7 +242,7 @@ namespace casa{
 	  antennaGroups_p(kk+int(binsx/2),ll+int(binsy/2)).push_back(vb.antenna2()[irow]);
 	}
 
-      LogIO log_l(LogOrigin("VB2CFBMap", "VB2CFMap::findAntennaGroups[R&D]"));
+      //LogIO log_l(LogOrigin("VB2CFBMap", "VB2CFMap::findAntennaGroups[R&D]"));
       for (int ii=0; ii<2; ii++) // This binning is a bit arbitrary and it looks like its time for some negative indices.
       	for (int jj=0; jj<2;jj++)
 	  {

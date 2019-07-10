@@ -45,10 +45,11 @@ using namespace vi;
   namespace refim{
   Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
 
-    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(),doPointing_p(false)
+    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(),doPointing_p(false),timer_p()
     {
       baselineType_p = new BaselineType();
       newPhaseGradComputed_p = false;
+      totalCost_p=totalVB_p = 0.0;
     };
 
     VB2CFBMap& VB2CFBMap::operator=(const VB2CFBMap& other)
@@ -149,9 +150,12 @@ using namespace vi;
 	      // setPhaseGradPerRow(po_p, cfb_l, vb, irow);
      	          double sigmaDev = 3.0;
 		  sigmaDev = SynthesisUtils::getenv("PO_SIGMADEV",3.0);
+		  timer_p.mark();
 		  baselineType_p->setDoPointing(doPointing_p);
 		  baselineType_p->findAntennaGroups(vb,po_p,sigmaDev);
 		  cfPhaseGrad_p(irow).reference(baselineType_p->setBLPhaseGrad(po_p, cfb_l, vb, irow));
+		  totalCost_p += timer_p.real();
+		  totalVB_p++;
 	      // Set the CFB per VB row
 		  cfb_l->setPointingOffset(po_p->pullPointingOffsets());
 		  vb2CFBMap_p(irow) = cfb_l;

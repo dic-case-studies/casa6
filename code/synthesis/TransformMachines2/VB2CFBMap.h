@@ -42,6 +42,7 @@
 #include <msvis/MSVis/VisBuffer2.h>
 #include <synthesis/MeasurementComponents/SolvableVisCal.h>
 #include <synthesis/TransformMachines2/Utils.h>
+#include <casa/OS/Timer.h>
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
  namespace refim{
@@ -51,7 +52,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
    public:
      VB2CFBMap();
      
-     ~VB2CFBMap() {};
+     ~VB2CFBMap() 
+     {
+       LogIO log_l(LogOrigin("VB2CFBMap", "~VB2CFMap[R&D]"));
+
+       log_l << "Total extra cost of heterogeneous array pointing correction = " << totalCost_p << "sec.  Total VBs processed =  " << totalVB_p << LogIO::POST;
+     };
      
      VB2CFBMap& operator=(const VB2CFBMap& other);
      const casacore::CountedPtr<CFBuffer >& operator[](const int& i) {return vb2CFBMap_p[i];};
@@ -86,7 +92,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      vector<int> vbRow2BLMap_p;
      casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p;
 
-     
+     casacore::Timer timer_p;
+     float totalCost_p, totalVB_p;
    };
  }
 }
