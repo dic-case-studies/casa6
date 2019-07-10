@@ -39,6 +39,7 @@
 #include <synthesis/TransformMachines2/CFBuffer.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <synthesis/TransformMachines2/VB2CFBMap.h>
+#include <synthesis/TransformMachines2/Utils.h>
 namespace casa{
 using namespace vi;
   namespace refim{
@@ -62,28 +63,28 @@ using namespace vi;
       return *this;
     };
 
-    void VB2CFBMap::setPhaseGradPerRow(const CountedPtr<PointingOffsets>& pointingOffset,
-				       const casacore::CountedPtr<CFBuffer>& cfb,
-				       const vi::VisBuffer2& vb,
-				       const int& row)
-    {
-      // if (doPointing_p)
-      // 	{
-      // 	  if (phaseGradCalculator_p->needsNewPhaseGrad(pointingOffset, vb, 0))
-      // 	    {
-      // 	      phaseGradCalculator_p->ComputeFieldPointingGrad(pointingOffset,cfb,vb, 0);
-      // 	      newPhaseGradComputed_p=true;
-      // 	    }
-      // 	}
-      // else
-	{
-	  baselineType_p->phaseGradCalculator_p->ComputeFieldPointingGrad(pointingOffset,cfb,vb, 0);
-	}
-	{
-	  //cfPhaseGrad_p(row).assign(phaseGradCalculator_p->getFieldPointingGrad());
-	  cfPhaseGrad_p(row).reference(baselineType_p->phaseGradCalculator_p->field_phaseGrad_p);
-	}
-    }
+    // void VB2CFBMap::setPhaseGradPerRow(const CountedPtr<PointingOffsets>& pointingOffset,
+    // 				       const casacore::CountedPtr<CFBuffer>& cfb,
+    // 				       const vi::VisBuffer2& vb,
+    // 				       const int& row)
+    // {
+    //   // if (doPointing_p)
+    //   // 	{
+    //   // 	  if (phaseGradCalculator_p->needsNewPhaseGrad(pointingOffset, vb, 0))
+    //   // 	    {
+    //   // 	      phaseGradCalculator_p->ComputeFieldPointingGrad(pointingOffset,cfb,vb, 0);
+    //   // 	      newPhaseGradComputed_p=true;
+    //   // 	    }
+    //   // 	}
+    //   // else
+    // 	{
+    // 	  baselineType_p->phaseGradCalculator_p->ComputeFieldPointingGrad(pointingOffset,cfb,vb, 0);
+    // 	}
+    // 	{
+    // 	  //cfPhaseGrad_p(row).assign(phaseGradCalculator_p->getFieldPointingGrad());
+    // 	  cfPhaseGrad_p(row).reference(baselineType_p->phaseGradCalculator_p->field_phaseGrad_p);
+    // 	}
+    // }
 
 
     //______________________________________________________
@@ -145,11 +146,15 @@ using namespace vi;
 	  else
 	    {
 	      // Set the phase grad for the CF per VB row
-	      setPhaseGradPerRow(po_p, cfb_l, vb, irow);
-
+	      // setPhaseGradPerRow(po_p, cfb_l, vb, irow);
+     	          double sigmaDev = 3.0;
+		  sigmaDev = SynthesisUtils::getenv("PO_SIGMADEV",3.0);
+		  baselineType_p->setDoPointing(doPointing_p);
+		  baselineType_p->findAntennaGroups(vb,po_p,sigmaDev);
+		  cfPhaseGrad_p(irow).reference(baselineType_p->setBLPhaseGrad(po_p, cfb_l, vb, irow));
 	      // Set the CFB per VB row
-	      cfb_l->setPointingOffset(po_p->pullPointingOffsets());
-	      vb2CFBMap_p(irow) = cfb_l;
+		  cfb_l->setPointingOffset(po_p->pullPointingOffsets());
+		  vb2CFBMap_p(irow) = cfb_l;
 	    }
 	}
       // {

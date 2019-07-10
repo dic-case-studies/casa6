@@ -53,7 +53,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     PhaseGrad():field_phaseGrad_p(), antenna_phaseGrad_p(), cached_FieldOffset_p(), cachedCFBPtr_p(NULL), maxCFShape_p(2)
     {};
 
-    ~PhaseGrad() {};
+    ~PhaseGrad() {cerr << "PG good bye" << endl;};
 
     PhaseGrad& operator=(const PhaseGrad& other);
     

@@ -46,7 +46,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   public:
     BaselineType();
 
-    ~BaselineType() {};
+    ~BaselineType();
 
     BaselineType& operator=(const BaselineType& other);
     
@@ -55,7 +55,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     /* inline void setTelescopeType(const casacore::String& telescopeName){telescopeName_p = telescopeName;}; */
     int numPhaseGrads(const int& nG);
 
-    bool needsNewBLPhaseGrad(const casacore::CountedPtr<PointingOffsets>& pointingOffset_p,
+    casacore::Matrix<casacore::Complex> setBLPhaseGrad(const casacore::CountedPtr<PointingOffsets>& pointingOffset_p,
 				       const casacore::CountedPtr<CFBuffer>& cfb,
 			   const vi::VisBuffer2& vb,
 			   const int& row);
@@ -65,8 +65,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 								const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
 								const double& sigmaDev);
      void makeVBRow2BLGMap(const vi::VisBuffer2& vb);
- 
+     void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
+
      casacore::CountedPtr<PhaseGrad> phaseGradCalculator_p;
+     casacore::Vector< casacore::CountedPtr<PhaseGrad> >vectorPhaseGradCalculator_p;
      bool doPointing_p, newPhaseGradComputed_p;
      casacore::Int PO_DEBUG_P;
      casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p;

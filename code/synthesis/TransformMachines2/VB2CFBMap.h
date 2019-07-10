@@ -41,6 +41,7 @@
 #include <images/Images/TempImage.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <synthesis/MeasurementComponents/SolvableVisCal.h>
+#include <synthesis/TransformMachines2/Utils.h>
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
  namespace refim{
@@ -64,20 +65,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      					    const casacore::Vector<casacore::Int>& dataChan2ImChanMap,
      					    const casacore::Vector<casacore::Int>& dataPol2ImPolMap,
      					    const casacore::CountedPtr<PointingOffsets>& po_p);
-     void setPhaseGradPerRow(const casacore::CountedPtr<PointingOffsets>& po_p,
-			     const casacore::CountedPtr<CFBuffer>& cfb,
-			     const vi::VisBuffer2& vb,
-			     const int& row);
+     /* void setPhaseGradPerRow(const casacore::CountedPtr<PointingOffsets>& po_p, */
+     /* 			     const casacore::CountedPtr<CFBuffer>& cfb, */
+     /* 			     const vi::VisBuffer2& vb, */
+     /* 			     const int& row); */
      inline casacore::Matrix<casacore::Complex>& getCFPhaseGrad(const int& row)//, const int& ant0, const int& ant1)
      {return cfPhaseGrad_p(row);}
 
-     casacore::Matrix<vector<Int> > findAntennaGroups(const vi::VisBuffer2& vb, 
-								const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
-								const double& sigmaDev);
-     void makeVBRow2BLGMap(const vi::VisBuffer2& vb);
 					       /* const Matrix<vector<int> >& antennaGroups); */
 
-     //void setDoPointing(const bool& dop=false) {doPointing_p = dop;newPhaseGradComputed_p=false;}
+     void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
   //   protected:
      casacore::Vector<casacore::CountedPtr<CFBuffer > > vb2CFBMap_p;
      casacore::Vector<casacore::Matrix<casacore::Complex> > cfPhaseGrad_p;
