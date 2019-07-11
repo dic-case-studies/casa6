@@ -306,6 +306,7 @@ casa_add_library( synthesis
  MeasurementComponents/WFCleanImageSkyModel.cc
  TransformMachines/WOnlyConvFunc.cc
  TransformMachines/WTerm.cc
+ MeasurementEquations/AntennaResponses.cc
  MeasurementEquations/CCList.cc
  MeasurementEquations/CEMemModel.cc
  MeasurementEquations/CEMemProgress.cc
@@ -582,6 +583,7 @@ install (FILES
 	DESTINATION include/casacode/synthesis/MeasurementComponents
 	)
 install (FILES
+    MeasurementEquations/AntennaResponses.h
 	MeasurementEquations/ArrayModel.h
 	MeasurementEquations/CCList.h
 	MeasurementEquations/CEMemModel.h
@@ -876,6 +878,7 @@ casa_add_assay( synthesis CalTables/test/tCTGenericFill.cc )
 
 
 casa_add_test( synthesis CalLibrary/test/tCalLibraryParse.cc )
+casa_add_unit_test( MODULES synthesis SOURCES MeasurementEquations/test/tAntennaResponses.cc ) 
 casa_add_unit_test( MODULES synthesis SOURCES MeasurementEquations/test/tPredictComp.cc TransformMachines2/test/MakeMS.cc ) 
 casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tAWPFTM.cc TransformMachines2/test/MakeMS.cc ) 
 casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tFTMachine.cc TransformMachines2/test/MakeMS.cc ) 
