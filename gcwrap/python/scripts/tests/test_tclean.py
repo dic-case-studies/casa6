@@ -284,14 +284,14 @@ class test_onefield(testref_base):
 
           # beamareas: uniform < briggs-r=-2 < briggs r=0.5 < briggs r=+2 < natural, ...
           # by default, it checks if im1's beam < im2's beam
-          print "Test beamarea of tst0.image (natural) is greater than beamarea of tst.image (uniform)"
+          print("Test beamarea of tst0.image (natural) is greater than beamarea of tst.image (uniform)")
           self.assertTrue(self.th.check_beam_compare(self.img+'.image', self.img+'0.image'))
           # parallel fails - uniform wt. psf seems to be bigger in parallel than that of serial run
-          #print "Test beamarea of tst2.image (briggs -2) is greater than beamarea of tst.image (uniform)"
+          #print("Test beamarea of tst2.image (briggs -2) is greater than beamarea of tst.image (uniform)")
           #self.assertTrue(self.th.check_beam_compare(self.img+'.image', self.img+'2.image'))
-          print "Test beamarea of tst3.image (briggs 0.5) is greater than beamarea of tst2.image (briggs -2))"
+          print("Test beamarea of tst3.image (briggs 0.5) is greater than beamarea of tst2.image (briggs -2))")
           self.assertTrue(self.th.check_beam_compare(self.img+'2.image', self.img+'3.image'))
-          print "Test beamarea of tst4.image (briggs 2) is greater than beamarea of tst3.image (briggs 0.5))"
+          print("Test beamarea of tst4.image (briggs 2) is greater than beamarea of tst3.image (briggs 0.5))")
           self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
      
      

@@ -163,7 +163,7 @@ class TestHelpers():
           # CLEANed.
           #print " summ=",summ
           # print " summ.keys()=", summ.keys()
-          if 'summaryminor' in summ':
+          if 'summaryminor' in summ:
                reslist = summ['summaryminor'][1,:]
                #print "reslist=",reslist
                peakres = reslist[ len(reslist)-1 ]
@@ -775,7 +775,7 @@ class TestHelpers():
                          #    tempresval=0.0
                          #retPeakres = max(tempresval,retPeakres) 
                      #mergedret['summaryminor']=ret['node1'][1]['summaryminor']
-                     if not mergedret.has_key('summaryminor'):
+                     if 'summaryminor' not in mergedret:
                          for inode in nodenames:
                              nodeid = int(inode.strip('node'))
                              if ret[inode][nodeid]['summaryminor'].size!=0:
