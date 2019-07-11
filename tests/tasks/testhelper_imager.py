@@ -159,8 +159,13 @@ class TestHelpers():
 #          return out, iters
 
      def getpeakres(self,summ):
+          # for cube this gets peakres of the last channel that has been
+          # CLEANed.
+          #print " summ=",summ
+          # print " summ.keys()=", summ.keys()
           if 'summaryminor' in summ:
                reslist = summ['summaryminor'][1,:]
+               #print "reslist=",reslist
                peakres = reslist[ len(reslist)-1 ]
           else:
                peakres = None
@@ -747,13 +752,12 @@ class TestHelpers():
              if list(ret.keys())[0].count('node'):
                  mergedret={}
                  nodenames = list(ret.keys())
-                 print("ret NOW=",ret)
                  # must be parallel cube results
                  if parlist.count('iterdone'):
                      retIterdone = 0
                      for inode in nodenames:
-                         print("ret[",inode,"]=",ret[inode])
-                         print("inode.strip = ", int(inode.strip('node')))
+                         #print("ret[",inode,"]=",ret[inode])
+                         #print("inode.strip = ", int(inode.strip('node')))
                          retIterdone+=ret[inode][int(inode.strip('node'))]['iterdone']
                      mergedret['iterdone']=retIterdone
                  if parlist.count('nmajordone'):
@@ -770,7 +774,15 @@ class TestHelpers():
                          #else: 
                          #    tempresval=0.0
                          #retPeakres = max(tempresval,retPeakres) 
-                     mergedret['summaryminor']=ret['node1'][1]['summaryminor']
+                     #mergedret['summaryminor']=ret['node1'][1]['summaryminor']
+                     if 'summaryminor' not in mergedret:
+                         for inode in nodenames:
+                             nodeid = int(inode.strip('node'))
+                             if ret[inode][nodeid]['summaryminor'].size!=0:
+                                 lastnode = inode
+                                 lastid = nodeid
+                            
+                         mergedret['summaryminor']=ret[lastnode][lastid]['summaryminor']
                  if parlist.count('modflux'):
                      #retModflux = 0
                      #for inode in nodenames:
@@ -782,8 +794,14 @@ class TestHelpers():
                      #         tempmodval=0.0
                      #    retModflux += tempmodval
                      #mergedret['modflux']=retModflux
-                    if 'summaryminor' not in mergedret:
-                        mergedret['summryminor']=et['node1'][1]['summaryminor']
+                     if 'summaryminor' not in mergedret:
+                         for inode in nodenames:
+                             nodeid = int(inode.strip('node'))
+                             if ret[inode][nodeid]['summaryminor'].size!=0:
+                                 lastnode = inode
+                                 lastid = nodeid
+                            
+                         mergedret['summaryminor']=ret[lastnode][lastid]['summaryminor']
                  if parlist.count('stopcode'):
                      mergedret['stopcode']=ret['node1'][1]['stopcode']
              else:
