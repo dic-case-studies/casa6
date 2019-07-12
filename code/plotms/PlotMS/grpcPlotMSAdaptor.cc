@@ -71,10 +71,34 @@ namespace casa {
             *sys_pphead(sp) = *((PMS_PP_PageHeader*)iter->second); break;                         \
     }
 
-    void grpcPlotMS::update_parameters( int index ) {
+    void grpcPlotMS::hold_notification( PlotMSPlotParameters *sp ) {
+        sp->holdNotification( );
+    }
+
+    void grpcPlotMS::release_notification( PlotMSPlotParameters *sp ) {
+        sp->releaseNotification();
+    }
+
+    PlotMSPlotParameters *grpcPlotMS::get_sysparams(int index) {
         PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
+        if ( sp == NULL && index == itsPlotms_->getPlotManager( ).numPlots( ) ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      itsPlotms_->getPlotManager( ).addOverPlot( );
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+            sp = itsPlotms_->getPlotManager().plotParameters(index);
+        }
+        return sp;
+    }
+
+    void grpcPlotMS::update_parameters( int index ) {
+        PlotMSPlotParameters* sp = get_sysparams(index);
         if ( sp == NULL ) {
-            fprintf(stderr, "internal inconsistency, plot parameter %d not available\n", index);
+            fprintf( stderr, "internal inconsistency, plot parameter %d (of %d) not available\n",
+                     index, itsPlotms_->getPlotManager( ).numPlots( ) );
             return;
         }
         sp->holdNotification( );
@@ -86,24 +110,23 @@ namespace casa {
     }
 
     void grpcPlotMS::update_parameters( ) {
-        auto mgr = itsPlotms_->getPlotManager();
         // -----  hold all notifications
-        for ( int index = 0; index < mgr.numPlots( ); ++index ) {
-            PlotMSPlotParameters* sp = mgr.plotParameters(index);
+        for ( int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
+            PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
             if ( sp == NULL ) continue;
             sp->holdNotification( );
         }
 
         // -----  update parameters
         for ( auto iter = param_groups.begin( ); iter != param_groups.end( ); ++iter ) {
-            PlotMSPlotParameters* sp = mgr.plotParameters(iter->first.first);
+            PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(iter->first.first);
             if ( sp == NULL ) continue;
             DO_ONE_UPDATE
         }
 
         // -----  release all notifications
-        for ( int index = 0; index < mgr.numPlots( ); ++index ) {
-            PlotMSPlotParameters* sp = mgr.plotParameters(index);
+        for ( int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
+            PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
             if ( sp == NULL ) continue;
             sp->releaseNotification();
         }
@@ -134,10 +157,10 @@ namespace casa {
         auto ptr = (TYPE*) param_groups[idx];                                                     \
         if ( ptr == NULL ) {                                                                      \
             param_groups[idx] = ptr = new TYPE(itsPlotms_->getPlotFactory( ));                    \
-            PlotMSPlotParameters *sp = itsPlotms_->getPlotManager().plotParameters(index);        \
-            sp->holdNotification( );                                                              \
+            PlotMSPlotParameters *sp = get_sysparams(index);                                      \
+            /*sp->holdNotification( );*/                                                          \
             *ptr = *sys_ ## NAME(sp);                                                             \
-            sp->releaseNotification();                                                            \
+            /*sp->releaseNotification();*/                                                        \
         }                                                                                         \
         return ptr;                                                                               \
     }
@@ -151,9 +174,27 @@ namespace casa {
     GRPC_PARAM(pphead,T_HEAD,PMS_PP_PageHeader)
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     void grpcPlotMS::qtGO( std::function<void()> func ) {
-        std::lock_guard<std::mutex> exc(plotter_->grpc_queue_mutex);
-        plotter_->grpc_queue.push(func);
-        emit new_op( );
+        static std::thread::id gui_thread;
+        if ( gui_thread == std::thread::id( ) ) {
+            std::promise<bool> prom;
+            plotter_->grpc_queue.push(
+                [&]( ) {
+                    gui_thread = std::this_thread::get_id();
+                    prom.set_value(true);
+                } );
+            emit new_op( );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
+
+        if ( std::this_thread::get_id() == gui_thread ) {
+            try { func( ); }
+            catch(...) { fprintf( stderr, "exception encountered (gui call)\n"); }
+        } else {
+            std::lock_guard<std::mutex> exc(plotter_->grpc_queue_mutex);
+            plotter_->grpc_queue.push(func);
+            emit new_op( );
+        }
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
@@ -236,7 +277,13 @@ namespace casa {
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stdout);
         }
-		qtGO( [=]( ){ itsPlotms_->clearPlots( ); } );
+        std::promise<bool> prom;
+        qtGO( [&]( ){
+                  itsPlotms_->clearPlots( );
+                  prom.set_value(true);
+              } );
+        auto fut = prom.get_future( );
+        fut.get( );
         return grpc::Status::OK;
     }
 
@@ -250,8 +297,18 @@ namespace casa {
         bool update = req->update( );
         std::string name = req->name( );
 
-        ppdata(index)->setFilename(name);
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      ppdata(index)->setFilename(name);
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
+
         return grpc::Status::OK;
     }
 
@@ -318,7 +375,15 @@ namespace casa {
         }
         if (yaxisloc.size( ) > 0) ppaxes(index)->setYAxis(yaxisloc == "right" ? Y_RIGHT : Y_LEFT,dataindex);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
 
     }
@@ -333,7 +398,15 @@ namespace casa {
         bool show = req->state( );
         bool update = req->update( );
         ppcache(index)->setShowAtm(show);
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -347,7 +420,15 @@ namespace casa {
         bool show = req->state( );
         bool update = req->update( );
         ppcache(index)->setShowTsky(show);
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -382,7 +463,15 @@ namespace casa {
         populate_selection( *req, sel );
         data->setSelection(sel);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -407,7 +496,15 @@ namespace casa {
         avg.setScalarAve(req->scalar( ));
         data->setAveraging(avg);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -431,7 +528,15 @@ namespace casa {
         trans.setYpcOffset(req->yshift( ));
         data->setTransformations(trans);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -450,7 +555,15 @@ namespace casa {
         cal.setCalLibrary(req->callib( ));
         data->setCalibration(cal);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -535,7 +648,15 @@ namespace casa {
         if (ok) ppdisp(index)->setColorize(true,a);
         else ppdisp(index)->setColorize(false);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -551,7 +672,15 @@ namespace casa {
         PlotSymbolPtr ps = itsPlotms_->createSymbol( req->shape( ), req->size( ), req->color( ), req->fill( ), req->outline( ) );
         ppdisp(index)->setUnflaggedSymbol(ps, req->dataindex( ));
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -567,7 +696,15 @@ namespace casa {
         PlotSymbolPtr ps = itsPlotms_->createSymbol( req->shape( ), req->size( ), req->color( ), req->fill( ), req->outline( ) );
         ppdisp(index)->setFlaggedSymbol(ps, req->dataindex( ));
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -580,10 +717,28 @@ namespace casa {
 
         bool update = req->update( );
 
-        ppdisp(index)->setXConnect(req->xconnector( ));
-		ppdisp(index)->setTimeConnect(req->timeconnector( ));
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      // #2  0x00007f9cdbf49029 in QPixmap::QPixmap() () from /tmp/.mount_casaplpO2S8L/usr/bin/../lib/libQtGui.so.4
+                      // #3  0x00007f9ce077a5e3 in QwtSymbol::QwtSymbol(QwtSymbol::Style) () from /tmp/.mount_casaplpO2S8L/usr/bin/../lib/libqwt.so.6
+                      // #4  0x000000000120af1a in casa::QPSymbol::QPSymbol (this=0x7f9cb8011cc0, copy=...) at casa-source/code/casaqt/QwtPlotter/QPOptions.cc:267
+                      // #5  0x00000000011f13b9 in casa::QPFactory::symbol (this=0x37bee50, copy=..., smartDelete=true) at casa-source/code/casaqt/QwtPlotter/QPFactory.cc:232
+                      // #6  0x00000000016fcd7c in casa::PMS::DEFAULT_UNFLAGGED_SYMBOL (factory=...) at casa-source/code/plotms/PlotMS/PlotMSConstants.cc:346
+                      // #7  0x000000000175db92 in casa::PMS_PP_Display::setDefaults (this=0x7f9cb800ddc0) at casa-source/code/plotms/Plots/PlotMSPlotParameterGroups.cc:1498
+                      // #8  0x000000000175b07f in casa::PMS_PP_Display::PMS_PP_Display (this=0x7f9cb800ddc0, factory=...)
+                      //     at casa-source/code/plotms/Plots/PlotMSPlotParameterGroups.cc:1262
+                      // #9  0x00000000016d66fd in casa::grpcPlotMS::ppdisp (this=0x393efd0, index=0) at casa-source/code/plotms/PlotMS/grpcPlotMSAdaptor.cc:174
+                      auto sp = ppdisp(index);
+                      sp->setXConnect(req->xconnector( ));
+                      sp->setTimeConnect(req->timeconnector( ));
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -600,7 +755,15 @@ namespace casa {
         if ( show && pos == "" ) pos = "upperright";
 		ppcan(index)->showLegend( show, pos, 0);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -620,7 +783,15 @@ namespace casa {
 		else f.format = title;
 		canvas->setTitleFormat(f);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -639,7 +810,16 @@ namespace casa {
         canvas->set ## SETNAME ## FontSet(size > 0);                                                           \
         canvas->set ## NAME ## Font(size);                                                                     \
                                                                                                                \
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );                                            \
+        if ( update ) {                                                                                        \
+            std::promise<bool> prom;                                                                           \
+            qtGO( [&]( ) {                                                                                     \
+                      update_parameters(index);                                                                \
+                      prom.set_value(true);                                                                    \
+                  } );                                                                                         \
+            auto fut = prom.get_future( );                                                                     \
+            fut.get( );                                                                                        \
+        }                                                                                                      \
+                                                                                                               \
         return grpc::Status::OK;                                                                               \
     }
 
@@ -664,7 +844,16 @@ namespace casa {
         else f.format = fmt;                                                                                   \
         canvas->set ## TUP ## LabelFormat(f);                                                                  \
                                                                                                                \
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );                                            \
+        if ( update ) {                                                                                        \
+            std::promise<bool> prom;                                                                           \
+            qtGO( [&]( ) {                                                                                     \
+                      update_parameters(index);                                                                \
+                      prom.set_value(true);                                                                    \
+                  } );                                                                                         \
+            auto fut = prom.get_future( );                                                                     \
+            fut.get( );                                                                                        \
+        }                                                                                                      \
+                                                                                                               \
         return grpc::Status::OK;                                                                               \
     }
     SETAXISLABEL(X,x)
@@ -711,7 +900,15 @@ namespace casa {
 			canvas->setGridMinorLine(plp);
         }
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
@@ -735,7 +932,16 @@ namespace casa {
         }                                                                                                      \
         ppaxes(index)->set ## TYPE ## Range( false , minmax );                                                 \
                                                                                                                \
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );                                            \
+        if ( update ) {                                                                                        \
+            std::promise<bool> prom;                                                                           \
+            qtGO( [&]( ) {                                                                                     \
+                      update_parameters(index);                                                                \
+                      prom.set_value(true);                                                                    \
+                  } );                                                                                         \
+            auto fut = prom.get_future( );                                                                     \
+            fut.get( );                                                                                        \
+        }                                                                                                      \
+                                                                                                               \
         return grpc::Status::OK;                                                                               \
     }
 
@@ -755,14 +961,49 @@ namespace casa {
         items.setItems(req->value( ));
         pphead(index)->setPageHeaderItems(items);
 
-        if ( update ) qtGO( [=]( ) { update_parameters(index); } );
+        if ( update ) {
+            std::promise<bool> prom;
+            qtGO( [&]( ) {
+                      update_parameters(index);
+                      prom.set_value(true);
+                  } );
+            auto fut = prom.get_future( );
+            fut.get( );
+        }
         return grpc::Status::OK;
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
+    std::string grpcPlotMS::group_str(int t) const {
+        switch (t) {
+            case T_MSDATA: return "MSDATA";
+            case T_CACHE: return "CACHE";
+            case T_AXES: return "AXES";
+            case T_ITER: return "ITER";
+            case T_DISP: return "DISP";
+            case T_CAN: return "CAN";
+            case T_HEAD: return "HEAD";
+            default: return "ERROR";
+        }
+    }
+
     ::grpc::Status grpcPlotMS::save( ::grpc::ServerContext *context,
                                      const ::rpc::plotms::Save *req,
                                      ::google::protobuf::Empty* ) {
+        fprintf(stderr,"**** --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ****\n");
+        for ( auto iter = param_groups.begin( ); iter != param_groups.end( ); ++iter ) {
+            fprintf(stderr, "[%d]\t%s\n", iter->first.first, group_str(iter->first.second).c_str( ));
+        }
+        fprintf(stderr,"**** --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ****\n");
+
+//      std::promise<bool> uprom;
+//      qtGO( [&]( ) {
+//                update_parameters( );
+//                uprom.set_value(true);
+//            } );
+//      auto ufut = uprom.get_future( );
+//      ufut.get( );
+
         auto path = req->path( );
         if ( path.size( ) == 0 ) return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "path must be provided");
         bool ok = false;
@@ -791,7 +1032,14 @@ namespace casa {
     ::grpc::Status grpcPlotMS::update( ::grpc::ServerContext *context,
                                        const ::google::protobuf::Empty *req,
                                        ::google::protobuf::Empty* ) {
-        qtGO( [=]( ) { update_parameters( ); } );
+        std::promise<bool> prom;
+        qtGO( [&]( ) {
+                  update_parameters( );
+                  prom.set_value(true);
+              } );
+        auto fut = prom.get_future( );
+        fut.get( );
+
         return grpc::Status::OK;
     }
 
