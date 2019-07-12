@@ -979,6 +979,7 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
         This function adds key value pairs to a provided dictionary. Any additional keys and values can be added as keyword arguments to this function
        
         @param output: This is the dictionary that the key-value pairs will be appended to
+        @param filename: This is the name of the test script file
         @param dataset: This is the name of the dataset used when executing this test case
        
         @return: Nothing is returned, the output dict is modified by this function
@@ -1022,21 +1023,22 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
                         #func_calls.append(call)
                         func_calls.append(line)
                 
-    #values['images'] = [ ]
     values['runtime'] = -1.0
     #This is a temp error value
     values['status'] = status
-    
+    if test_case not in output.keys():
+        output[test_case]= {}
     
     for key in values.keys():
         if test_case in output.keys():
+            print(output[test_case].keys())
             if key in output[test_case].keys():
-                output[test_case][key] = [output[test_case][key], values[key]]
+                values[key] = output[test_case][key].append(values[key])
             else:
-                output[test_case][key] = values[key]
-    if test_case not in output.keys():
-        output[test_case] = values
-        
+                print('FIRST')
+                output[test_case][key] = [values[key]]
+    
+    #output[test_case] = values
     output[test_case]['taskcall'] = func_calls
     output[test_case]['rerun'] = rerun
     output[test_case]['description'] = unittest.TestCase.shortDescription(self)
