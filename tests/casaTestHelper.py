@@ -7,7 +7,7 @@ casa6tools = [
     ]
 """
 casa6tasks = set([
-    "accor", "accum", "applycal", "asdmsummary", "bandpass", "blcal", "calstat","clearcal", "clearstat", "concat", "config", "conjugatevis", "cvel", "cvel2",
+    "accor", "accum", "applycal", "asdmsummary", "bandpass", "blcal", "calstat","clearcal", "clearstat", "concat", "conjugatevis", "cvel", "cvel2",
     "delmod", "exportasdm", "exportfits", "exportuvfits", "feather", "fixplanets","fixvis", "flagcmd", "flagdata", "flagmanager", "fluxscale", "ft", "gaincal",
     "gencal", "hanningsmooth", "imcollapse", "imcontsub", "imdev", "imfit", "imhead","imhistory", "immath", "immoments", "impbcor", "importasap", "importasdm",
     "importatca", "importfits", "importfitsidi", "importgmrt", "importmiriad","importnro", "importuvfits", "importvla", "impv", "imrebin", "imreframe",
@@ -20,18 +20,18 @@ miscellaneous_tasks = set(['wvrgcal','plotms'])
 
 import os, sys, time
 from functools import wraps
-import psutil
+
 import fnmatch
 import logging
 import filecmp
 import unittest
-import tracemalloc
 import pickle
 import numpy
 import math
 import numbers
-
-
+import six
+import operator
+import subprocess
 
 logging.basicConfig(level=logging.INFO,format='%(message)s')
 #logging.basicConfig(level=logging.DEBUG,format='%(levelname)s-%(message)s')
@@ -56,6 +56,7 @@ try:
 
     tb  = casatools.table()
     tb2 = casatools.table()
+    tbt = casatools.table()
     ms  = casatools.ms()
     ia  = casatools.image()
 
@@ -63,6 +64,7 @@ try:
     casa6 = True
 except ImportError:
     # CASA 5
+    logging.debug("Import casa6 errors. Trying CASA5...")
     from __main__ import default
     from taskinit import tbtool, mstool, iatool
     from taskinit import *
@@ -70,6 +72,7 @@ except ImportError:
 
     tb  = tbtool()
     tb2 = tbtool()
+    tbt = tbtool()
     ms  = mstool()
     ia  = iatool()
 
@@ -276,6 +279,13 @@ class Weblog:
         html.write('<th class="tg-0lax">Run Time</th>' + '\n')
         html.write('<th class="tg-0lax">Status</th>' + '\n')
         html.write('</tr>' + '\n')
+
+
+        print("##############   Begin   ################")
+        print(dictionary.items())
+        print("##############   End     ################")
+
+
         for key, value in dictionary.items():
             Weblog(self.taskname, self.localdict).generate_table_row(str(key), dictionary[key]['description'],  dictionary[key]['runtime'], "tg-ck9b" if dictionary[key]['status'] == True else "tg-r50r" )
         html.write('</table>' + '\n')
@@ -352,7 +362,7 @@ def compare_CASA_variable_cols(referencetab, testtab, varcol, tolerance=0.0):
 
        @return: True if reference tab == test table else False
     '''
-    logging.info("Comparing {} to {}".format(referencetab, testtab))
+    logging.info("Comparing Column: {} within {} and {}".format(varcol,referencetab, testtab))
     logging.debug("Executing: compare_CASA_variable_cols(referencetab={},testtab={}, varcol={}, tolerance={})".format(referencetab, testtab, varcol, tolerance))
     retval = True
 
@@ -365,7 +375,7 @@ def compare_CASA_variable_cols(referencetab, testtab, varcol, tolerance=0.0):
         try:
             # First check
             if tb.nrows() != tb2.nrows():
-                logging.error('Length of {} differ from {}, {} != {}'.format(referencetab,testtab,tb.nrows(),tb.nrows()))
+                logging.error('Length of {} differ from {}, {} != {}'.format(referencetab,testtab,tb.nrows(),tb2.nrows()))
                 retval = False
             else:
                 for therow in range(tb.nrows()):
@@ -618,7 +628,9 @@ def compare_files(file1, file2, shallow=False):
        @return: True if file1 & file2 seem equal, False otherwise
     '''
     logging.info("Comparing {} to {}".format(file1, file2))
-    filecmp.clear_cache()
+    logging.debug("Executing: compare_files(file1 = {}, file2 = {}, shallow = {})".format(file1, file2, shallow))
+    if (sys.version_info > (3,0)):
+        filecmp.clear_cache()
     return filecmp.cmp(file1, file2, shallow=shallow)
 
 def compare_caltables(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
@@ -659,13 +671,16 @@ def compare_caltables(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
 
     truthDict = {}
 
+
     for col in tableVal1.keys():
+        logging.debug("Column: {}, dtype: {}".format(col, tableVal1[col].dtype))
         try:
-            if tableVal1[col].dtype == '<U16' and tableVal2[col].dtype == '<U16': #16-character string 
-                truthDict[col] = numpy.array_equal(tableVal1[col],tableVal2[col])
-            else:
+            if numpy.issubdtype(tableVal1[col].dtype, numpy.number):
                 truthDict[col] = numpy.isclose(tableVal1[col], tableVal2[col], rtol=rtol, atol=atol)
-        except TypeError:
+            else:
+                # Compare Non Numeric Types
+                truthDict[col] = numpy.array_equal(tableVal1[col],tableVal2[col])
+        except:
             print(col, 'ERROR in finding truth value')
             casalog.post(message=col+': ERROR in determining the truth value')
 
@@ -692,6 +707,7 @@ def compare_caltables(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
 def compare_dictionaries( dictionary1, dictionary2, skipkeys = [], rtol=8e-7, atol=1e-8):
     '''
     compare_dictionaries - compare two dictionaries
+       Dictionaries will fail when 1st instance of a failure
        @param dictionary1  --> the dictionary which is assumed to be correct
        @param dictionary2  --> the dictionary which is to be compared
        @param skipkeys     --> list of keys which are to be ignored
@@ -721,14 +737,20 @@ def compare_dictionaries( dictionary1, dictionary2, skipkeys = [], rtol=8e-7, at
                 For finite values, isclose uses the following equation to test whether two floating point values are equivalent.
                 absolute(a - b) <= (atol + rtol * absolute(b))
             """
-            if any( val == False for val in numpy.isclose(dictionary1[key], dictionary2[key], rtol=rtol, atol=atol, equal_nan=False)):
-                logging.info("{0}:{1} != {0}:{2}".format(key,dictionary1[key],dictionary2[key]))
-                return False
+            if numpy.issubdtype(dictionary1[key].dtype, numpy.number) and numpy.issubdtype(dictionary2[key].dtype, numpy.number):
+                if any( val == False for val in numpy.isclose(dictionary1[key], dictionary2[key], rtol=rtol, atol=atol, equal_nan=False)):
+                    logging.info("{0}:{1} != {0}:{2}".format(key,dictionary1[key],dictionary2[key]))
+                    return False
+            else:
+
+                if any( val == False for val in numpy.array_equal(dictionary1[key], dictionary2[key])):
+                    logging.info("{0}:{1} != {0}:{2}".format(key,dictionary1[key],dictionary2[key]))
+                    return False
 
         # Compare Strings
-        elif isinstance(dictionary1[key], str) and isinstance(dictionary2[key], str):
+        elif isinstance(dictionary1[key], six.string_types) and isinstance(dictionary2[key], six.string_types):
 
-            if (dictionary1[key] == dictionary2[key]) and (dictionary1[key] is dictionary2[key]):
+            if (dictionary1[key] == dictionary2[key]):
                 pass
             else:
                 logging.info("{0}:{1} != {0}:{2}".format(key,dictionary1[key],dictionary2[key]))
@@ -744,15 +766,15 @@ def compare_dictionaries( dictionary1, dictionary2, skipkeys = [], rtol=8e-7, at
         # Compare Numerics
         elif isinstance(dictionary1[key], numbers.Number) and isinstance(dictionary2[key], numbers.Number):
             """
-            rel_tol is the relative tolerance â€“ it is the maximum allowed difference between a and b, relative to the larger absolute value of a or b. 
+            rel_tol is the relative tolerance :  it is the maximum allowed difference between a and b, relative to the larger absolute value of a or b. 
             For example, to set a tolerance of 5%, pass rel_tol=0.05. The default tolerance is 1e-09, which assures that the two values are the same within about 9 decimal digits. rel_tol must be greater than zero.
 
-            abs_tol is the minimum absolute tolerance â€“ useful for comparisons near zero. abs_tol must be at least zero.
+            abs_tol is the minimum absolute tolerance : useful for comparisons near zero. abs_tol must be at least zero.
 
             If no errors occur, the result will be: abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol).
             """
 
-            if not math.isclose(dictionary1[key],dictionary2[key],rel_tol = rtol, abs_tol=atol):
+            if not numpy.isclose(dictionary1[key],dictionary2[key],rtol = rtol, atol=atol):
                 logging.info("{0}:{1} != {0}:{2}".format(key,dictionary1[key],dictionary2[key]))
                 return False
         else:
@@ -804,7 +826,7 @@ def check_pixels(imagename='', loc=None, refval=None,  rtol=1e-05, atol=1e-08):
         @return: True if the shape and value of the refval and selected pixel match.
 
     '''
-    if not isinstance(loc,str):
+    if not isinstance(loc,six.string_types):
         raise TypeError('Please give target location in string list format "20,30,2:4"')
 
     if os.path.exists(imagename):
@@ -952,22 +974,31 @@ def compare_pixel_mask(maskname='', refmask=None, refval=None, loc=None):
         logging.warning('Invalid mask file name')
 
 
-def add_to_dict(self, output=None, filename=None, dataset=None, **kwargs):
+def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
     '''
         This function adds key value pairs to a provided dictionary. Any additional keys and values can be added as keyword arguments to this function
        
         @param output: This is the dictionary that the key-value pairs will be appended to
-        @param filename: This is the name of the test script file
         @param dataset: This is the name of the dataset used when executing this test case
        
         @return: Nothing is returned, the output dict is modified by this function
     '''
+    import inspect
+    frame = inspect.stack()[1]
+    module = inspect.getmodule(frame[0])
+    filename = module.__file__
+    
     testcase = unittest.TestCase.id(self)
     test_split = testcase.split('.')
     test_case = test_split[-1]
     taskname = test_split[1].split('_')[0]
     
-    rerun = "python {} {}.{}".format(filename, test_split[1], test_split[2])
+    if (sys.version_info > (3, 3)):
+        rerun = "python {} {}.{}".format(filename, test_split[1], test_split[2])
+    else:
+        filename = "{}.py".format(filename.split('.')[0])
+        casapath = os.environ.get('CASAPATH').split()[0]
+        rerun = "casa -c {}/lib/python2.7/runUnitTest.py {}".format(casapath, filename.split('.')[0])
     
     current_case = None
     
@@ -982,17 +1013,34 @@ def add_to_dict(self, output=None, filename=None, dataset=None, **kwargs):
                     current_case = test_case
                 else:
                     current_case = None
-                    
-            if current_case == test_case:
-                if line.startswith(taskname):
-                    params = line.split(',')[1::]
-                    call = "{}({},{})".format(taskname, dataset, ','.join(params))
-                    func_calls.append(call)
+                    #casa6tasks, miscellaneous_tasks
+            for i in casa6tasks.union(miscellaneous_tasks):
+                if current_case == test_case:
+                    if "{}(".format(i) in line:
+                        params = line.split(',')[1::]
+                        call = "{}({},{})".format(taskname, dataset, ','.join(params))
+                        #func_calls.append(call)
+                        func_calls.append(line)
                 
-    values['taskcall'] = func_calls
-    values['rerun'] = rerun
-    values['images'] = [ ]
-    output[test_case] = values
+    #values['images'] = [ ]
+    values['runtime'] = -1.0
+    #This is a temp error value
+    values['status'] = status
+    
+    
+    for key in values.keys():
+        if test_case in output.keys():
+            if key in output[test_case].keys():
+                output[test_case][key] = [output[test_case][key], values[key]]
+            else:
+                output[test_case][key] = values[key]
+    if test_case not in output.keys():
+        output[test_case] = values
+        
+    output[test_case]['taskcall'] = func_calls
+    output[test_case]['rerun'] = rerun
+    output[test_case]['description'] = unittest.TestCase.shortDescription(self)
+    output[test_case]['images'] = [ ]
 
 def topickle(input_dict, picklefile):
     '''
@@ -1022,6 +1070,7 @@ def default_CASA_tasks():
 
        Returns 
     '''
+    logging.debug("Executing: default_CASA_tasks")
     # Get a list of all files in directory
     for rootDir, subdirs, filenames in os.walk(os.getcwd()):
         # Find the files that matches the given patterm
@@ -1032,8 +1081,10 @@ def default_CASA_tasks():
                 logging.error("Error while deleting file")
     if casa5:
         for task in casa6tasks:
+            logging.debug("Defaulting Task: {}".format(task))
             default(task)
         for task in miscellaneous_tasks:
+            logging.debug("Defaulting Task: {}".format(task))
             default(task)
     return
 
@@ -1044,11 +1095,13 @@ def get_directory_size(directory):
 
        Returns Return the size, in bytes, of directory
     '''
+    logging.debug("Executing: get_directory_size(directory = {})".format(directory))
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(directory):
         for filename in filenames:
             fp = os.path.join(dirpath, filename)
             total_size += os.path.getsize(fp)
+    logging.debug("Directory: {}, Size: {} Bytes ( {}MB, {}GB) ".format(directory, total_size, (total_size/(1024.0**2)), float(total_size/(1024.0**3))))
     return total_size
 
 def get_table_column(table, colname):
@@ -1123,9 +1176,10 @@ def check_plotfile(plotfileName, min_size, max_size=None):
         logging.info( '{} file size is: {}'.format( plotfileName, plotSize))
         if plotSize > min_size:
             val = True
-        if maxSize not None:
+        if max_size is not None:
             if not plotSize < max_size:
                 val = False
+
     else:
         logging.critical("Plot was not created")
     
@@ -1141,6 +1195,533 @@ def generate_weblog(task,dictionary):
     html = open("test_{}_weblog.html".format(task.lower()), 'w')
     Weblog(task, dictionary).generate_weblog()
     html.close()
+
+############################################################################################
+##################################       imagerhelpers       ###############################
+############################################################################################
+
+def check_model(msname=""):
+    hasmodcol = False
+    modsum=0.0
+    hasvirmod = False
+
+    tb.open( msname )
+    hasmodcol = (  (tb.colnames()).count('MODEL_DATA')>0 )
+
+    if hasmodcol:
+        model_data = tb.getcol('MODEL_DATA')
+        modsum = model_data.sum()
+    tb.close()
+
+
+    tb.open( msname+'/SOURCE' )
+    keys = tb.getkeywords()
+    if len(keys)>0:
+        hasvirmod=True
+    tb.close()
+
+    tb.open( msname )
+    keys = tb.getkeywords()
+    for key in keys:
+        if key.count("model_")>0:
+            hasvirmod=True
+    tb.close()
+
+    logging.info("MS Name: {}, modelcol= {},  modsum = {}, virmod = {}".format( msname, hasmodcol, modsum, hasvirmod ))
+
+    return hasmodcol, modsum, hasvirmod
+
+def get_max(imname):
+    """Get Image max"""
+    ia.open(imname)
+    stat = ia.statistics()
+    ia.close()
+    return stat['max'],stat['maxpos']
+
+def get_pix(imname,pos):
+    """Get Image val"""
+    ia.open(imname)
+    apos = ia.pixelvalue(pos)
+    ia.close()
+    if apos == {}:
+        return None
+    else:
+        return apos['value']['value']
+
+def get_pixmask(imname,pos):
+    """Get Image Mask val"""
+    ia.open(imname)
+    apos = ia.pixelvalue(pos)
+    ia.close()
+
+    if apos == {}:
+       return None
+    else:
+       return apos['mask']
+
+def check_beam_compare(image1, image2, op=operator.le):
+    """Compare all plane of cube beam image1 operator op than image1"""
+    ia.open(image1)
+    nchan = ia.shape()[3]
+    beam1 = numpy.zeros(nchan)
+    for k in range(nchan):
+        beam1[k]= ia.beamarea(k,0)['arcsec2']
+    ia.close()
+
+    ia.open(image2)
+    if(nchan != ia.shape()[3]):
+        return False
+    beam2 = numpy.zeros(nchan)
+    for k in range(nchan):
+        beam2[k] = ia.beamarea(k,0)['arcsec2']
+    ia.close()
+
+    return numpy.alltrue(op(beam1, beam2))
+
+def exists(imname):
+    """ Image exists """
+    return os.path.exists(imname)
+
+def get_peak_res(summ):
+    if summ.has_key('summaryminor'):
+        reslist = summ['summaryminor'][1,:]
+        peakres = reslist[ len(reslist)-1 ]
+    else:
+        peakres = None
+    return peakres
+
+
+def check_peak_res(summ,correctres, epsilon=0.05):
+
+    peakres = get_peak_res(summ)
+    out = True
+    if correctres == None and peakres != None: 
+        out = False
+        return out,peakres
+    if correctres != None and peakres == None: 
+        out = False
+        return out,peakres
+
+    if out==True and peakres != None:
+        if abs(correctres - peakres)/abs(correctres) > epsilon:
+            out=False
+            return out,peakres
+    return out,peakres
+
+def get_mod_flux(summ):
+    if summ.has_key('summaryminor'):
+        modlist = summ['summaryminor'][2,:]
+        modflux = modlist[ len(modlist)-1 ]
+    else:
+        modflux = None
+
+    return modflux
+
+def check_mod_flux(summ,correctmod, epsilon=0.05):
+    modflux = get_mod_flux(summ)
+    out = True
+    if correctmod == None and modflux != None: 
+        out = False
+        return out,peakres
+    if correctmod != None and modflux == None: 
+        out = False
+        return out,peakres
+    if out==True and modflux != None:
+        if abs(correctmod - modflux)/abs(correctmod) > epsilon:
+            out=False
+            return out,peakres
+    return out,modflux
+
+def get_iter_done(summ):
+    if summ.has_key('iterdone'):
+        iters = summ['iterdone']
+    else:
+        iters = None
+    return iters
+
+def verdict(boolval):
+    return "Pass" if boolval else "Fail"
+
+def check_ret( summ,correctres,correctmod):
+    pstr = ''
+    if casa5:
+        testname = inspect.stack()[1][3] # Make Sure this is correct
+    else:
+        testname = "TODO"
+    retres, peakres = check_peak_res(summ,correctres)
+    retmod, modflux = check_mod_flux(summ,correctmod)
+    
+    pstr_peak =  "[ {} ] PeakRes is  {}  ( {} : should be  {} + )\n".format(testname, str(peakres), verdict(retres) , str(correctres)) 
+    pstr_mod  =  "[ {} ] Modflux is  {}  ( {} : should be  {} + )".format(testname, str(modflux), verdict(retmod) , str(correctmod)) 
+    pstr =  pstr_peak + pstr_mod
+    logging.info(pstr)
+    if retres==False or retmod==False:
+        return False, pstr
+    else:
+        return True, pstr
+
+def check_val(val, correctval, valname='Value', exact=False, epsilon=0.05):
+    pstr = ''
+    if casa5:
+        testname = inspect.stack()[2][3] # Make Sure this is correct
+    else:
+        testname = "TODO"
+
+    out = True
+
+    if numpy.isnan(val) or numpy.isinf(val):
+        out=False
+    if correctval == None and val != None: 
+        out = False
+    if correctval != None and val == None: 
+        out = False
+    if out==True and val != None:
+        if exact==True:
+            if correctval != val:
+                out=False
+        else:
+            if abs(correctval - val)/abs(correctval) > epsilon:
+                out=False
+
+    pstr = "[ {} ] {} is {} ( {} : should be {} )\n".format(testname, valname, str(val), verdict(out), str(correctval) )
+
+    logging.info(pstr)
+    return out, pstr
+
+def check_ims(imlist,truth):
+    if casa5:
+        testname = inspect.stack()[2][3]
+    else:
+        testname = "TODO"
+
+    imex=[]
+    out=True
+
+    for imname in imlist:
+        ondisk = exists(imname)
+        imex.append( ondisk )
+        if ondisk != truth:
+            out=False
+
+    pstr = "[ {} ] Image made : {} =  {} ( {} : should all be {} )\n".format(testname, str(imlist), str(imex), verdict(out),str(truth))
+    logging.info(pstr)
+    return pstr
+
+def check_keywords(imlist):
+    """
+    Keyword related checks (presence/absence of records and entries in these records,
+    in the keywords of the image table).
+
+    :param imlist: names of the images produced by a test execution.
+
+    :returns: the usual (test_imager_helper) string with success/error messages.
+    """
+    # Keeping the general approach. This is fragile!
+    if casa5:
+        testname = inspect.stack()[2][3]
+    else:
+        testname = "TODO"
+
+    # accumulator of error strings
+    pstr = ''
+    for imname in imlist:
+        if os.path.exists(imname):
+            issues = check_im_keywords(imname, check_misc=True, check_extended=True)
+            if issues:
+                pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
+
+    if not pstr:
+        pstr += 'All expected keywords in imageinfo, miscinfo, and coords found.\n'
+    return pstr
+
+def check_im_keywords(imname, check_misc=True, check_extended=True):
+    """
+    Checks several lists of expected and forbidden keywords and entries of these
+    keywords.
+    Forbidden keywords lists introduced with CAS-9231 (prevent duplication of
+    TELESCOP and OBJECT).
+
+    Note that if imname is the top level of a refconcat image, there's no table to open
+    to look for its keywords. In these cases nothing is checked. We would not have the
+    'imageinfo' keywords, only the MiscInfo that goes in imageconcat.json and I'm not
+    sure yet how that one is supposed to behave.
+    Tests should check the 'getNParts() from imname' to make sure the components of
+    the refconcat image exist, have the expected keywords, etc.
+
+    :param imname: image name (output image from tclean)
+    :param check_misc: whether to check miscinfo in addition to imageinfo'
+    :param check_extended: can leave enabled for images other than .tt?, .alpha, etc.
+
+    :returns: the usual (test_imager_helper) string with success/error messages.
+    Errors marked with '(Fail' as per self.verdict().
+    """
+
+    try:
+        tbt.open(imname)
+        keys = tbt.getkeywords()
+    except RuntimeError as exc:
+        if os.path.isfile(os.path.join(os.path.abspath(imname), 'imageconcat.json')):
+            # Looks like a refconcat image, nothing to check
+            #return ''
+            # make a bit more informative
+            pstr = 'Looks like it is a refconcat image. Skipping the imageinfo keywords check.'
+            return pstr
+        else:
+            pstr = 'Cannot open image table to check keywords: {0}'.format(imname)
+            return pstr
+    finally:
+        tbt.close()
+
+    pstr = ''
+    if len(keys) <= 0:
+        pstr += ('No keywords found ({0})'.format(verdict(False)))
+    return pstr
+
+    # Records that need to be present
+    imageinfo = 'imageinfo'
+    miscinfo = 'miscinfo'
+    coords = 'coords'
+    mandatory_recs = [imageinfo, coords]
+    if check_misc:
+        mandatory_recs.append(miscinfo)
+    for rec in mandatory_recs:
+        if rec not in keys:
+            pstr += ('{0} record not found ({1})\n'.format(rec, verdict(False)))
+
+    if len(pstr) > 0:
+        return pstr
+
+    mandatory_imageinfo = ['objectname', 'imagetype']
+    pstr += check_expected_entries(mandatory_imageinfo, imageinfo, keys)
+
+    if check_misc:
+        if check_extended:
+            mandatory_miscinfo = ['INSTRUME', 'distance']
+            pstr += check_expected_entries(mandatory_miscinfo, miscinfo, keys)
+        forbidden_miscinfo = ['OBJECT', 'TELESCOP']
+        pstr += check_forbidden_entries(forbidden_miscinfo, miscinfo, keys)
+
+    mandatory_coords = ['telescope']
+    pstr += check_expected_entries(mandatory_coords, coords, keys)
+
+    return pstr
+
+def check_expected_entries( entries, record, keys):
+    pstr = ''
+    for entry in entries:
+        if entry not in keys[record]:
+            pstr += ('entry {0} not found in record {1} ({2})\n'.format(entry, record, verdict(False)))
+        else:
+            # TODO: many tests leave 'distance' empty. Assume that's acceptable...
+            if entry != 'distance' and not keys[record][entry]:
+                pstr += ('entry {0} is found in record {1} but it is empty ({2})\n'.format(entry, record, verdict(False)))
+    return pstr
+
+def check_forbidden_entries( entries, record, keys):
+    pstr = ''
+    for entry in entries:
+        if entry in keys[record]:
+            pstr += ('entry {0} should not be in record {1} ({2})\n'.format(entry, record, verdict(False)))
+    return pstr
+
+def check_pix_val(imname,theval=0, thepos=[0,0,0,0], exact=False,  epsilon=0.05):
+    if casa5:
+        testname = inspect.stack()[2][3]
+    else:
+        testname = "TODO"
+
+    readval = get_pix(imname,thepos)
+
+    res=True
+
+    if readval==None:
+        res=False
+    elif numpy.isnan(readval) or numpy.isinf(readval):
+        res=False
+    else:
+        if abs(theval) > epsilon:
+            if exact==False:
+                if abs(readval - theval)/abs(theval) > epsilon: 
+                    res = False
+                else:
+                   res = True
+            else:
+                if abs(readval - theval) > 0.0: 
+                   res = False
+                else:
+                   res = True
+        else:  ## this is to guard against exact zero... sort of.
+            if abs(readval - theval) > epsilon: 
+                res = False
+            else:
+                res = True
+
+    pstr =  "[ {} ] {} : Value is {} at {} ( {} : should be {} )\n".format(testname, imname, str(readval), str(thepos), verdict(res), str(theval))
+    logging.info(pstr)
+    return pstr
+
+def check_pixmask(imname,theval=True, thepos=[0,0,0,0]):
+    if casa5:
+        testname = inspect.stack()[2][3]
+    else:
+        testname = "TODO"
+    readval = get_pixmask(imname,thepos)
+
+    res=True
+
+    if readval==None:
+        res=False
+    elif numpy.isnan(readval) or numpy.isinf(readval) or type(readval)!=bool:
+        res=False
+    else:
+        if readval == theval:
+            res = True
+        else:
+            res = False
+    pstr =  "[ {} ] {} : Mask is {} at {} ( {} : should be {} )\n".format(testname, imname, str(readval), str(thepos), verdict(res), str(theval))
+    logging.info(pstr)
+    return pstr
+
+def check_ref_freq(imname,theval=0, epsilon=0.05):
+    testname = inspect.stack()[2][3]
+
+    retres=True
+
+    ia.open(imname)
+    csys = ia.coordsys()
+    ia.close()
+
+    reffreq = csys.referencevalue()['numeric'][3]
+    if  abs(reffreq - theval)/theval > epsilon :
+        retres=False
+    else:
+        retres=True
+
+
+    pstr = "[ {} ] Ref-Freq is {} ( {} : should be {} )\n".format(testname , str(reffreq) , verdict(retres),  str(theval))
+    logging.info(pstr)
+    return pstr
+
+###################################
+def check_imexist(imexist):
+    pstr = ''
+    if imexist != None:
+        if type(imexist)==list:
+            pstr += check_ims(imexist, True)
+            print "pstr after checkims=",pstr
+            pstr += check_keywords(imexist)
+            print "pstr after check_keywords=",pstr
+    return pstr
+
+def check_imexistnot(imexistnot):
+    pstr = ''
+    if imexistnot != None:
+        if type(imexistnot)==list:
+            pstr += check_ims(imexistnot, False)
+    return pstr
+
+def check_imval(imval):
+    pstr = ''
+    if imval != None:
+        if type(imval)==list:
+            for ii in imval:
+                if type(ii)==tuple and len(ii)==3:
+                    pstr += check_pix_val(ii[0],ii[1],ii[2])
+    return pstr
+
+def check_imvalexact(imvalexact):
+    pstr = ''
+    if imvalexact != None:
+        if type(imvalexact)==list:
+            for ii in imvalexact:
+                if type(ii)==tuple and len(ii)==3:
+                    pstr += check_pix_val(ii[0],ii[1],ii[2], exact=True)
+    return pstr
+
+def check_immask(immask):
+    pstr = ''
+    if immask != None:
+        if type(immask)==list:
+            for ii in immask:
+                if type(ii)==tuple and len(ii)==3:
+                    pstr += check_pixmask(ii[0],ii[1],ii[2])
+    return pstr
+
+def check_tabcache(tabcache):
+    pstr = ''
+    if tabcache==True:
+        opentabs = tb.showcache()
+        if len(opentabs)>0 : 
+            pstr += "["+inspect.stack()[1][3]+"] " + verdict(False) + ": Found open tables after run "
+    return pstr
+
+def check_stopcode(stopcode):
+    pstr = ''
+    if stopcode != None:
+        if type(stopcode)==int:
+            stopstr = "["+inspect.stack()[1][3]+"] Stopcode is " + str(ret['stopcode']) + " (" + verdict(ret['stopcode']==stopcode)  +  " : should be " + str(stopcode) + ")\n"
+            print stopstr
+            pstr += stopstr
+    return pstr
+
+def check_reffreq(reffreq):
+    pstr = ''
+    if reffreq != None:
+        if type(reffreq)==list:
+            for ii in reffreq:
+                if type(ii)==tuple and len(ii)==2:
+                    pstr += check_ref_freq(ii[0],ii[1])
+    return pstr
+
+
+def checkall( ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imexist=None, imexistnot=None, imval=None, imvalexact=None, immask=None,  tabcache=True, stopcode=None, reffreq=None ):
+    """
+        ret=None,
+        peakres=None, # a float
+        modflux=None, # a float
+        iterdone=None, # an int
+        nmajordone=None, # an int
+        imexist=None,  # list of image names
+        imexistnot=None, # list of image names
+        imval=None,  # list of tuples of (imagename,val,pos)
+        imvalexact=None, # list of tuples of (imagename,val,pos)
+        immask=None,  #list of tuples to check mask value
+        tabcache=True,
+        stopcode=None,
+        reffreq=None # list of tuples of (imagename, reffreq)
+    """
+
+    pstr = ""
+
+    if ret != None and type(ret)==dict:
+        try:
+            if peakres != None:
+                pstr += check_val( val=get_peak_res(ret), correctval=peakres, valname="peak res" )
+
+            if modflux != None:
+                pstr += check_val( val=get_mod_flux(ret), correctval=modflux, valname="mod flux" )
+
+            if iterdone != None:
+                pstr += check_val( val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True )
+
+            if nmajordone != None:
+                pstr += check_val( val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True )
+
+        except Exception as e:
+            logging.info(ret)
+            raise
+
+    pstr += check_imexist(imexist)
+    pstr += check_imexistnot(imexistnot)
+    pstr += check_imval(imval)
+    pstr += check_imvalexact(imvalexact)
+    pstr += check_immask(immask)
+    pstr += check_tabcache(tabcache)
+    pstr += check_stopcode(stopcode)
+    pstr += check_reffreq(reffreq)
+
+    return pstr
+
 ############################################################################################
 ##################################       Decorators       ##################################
 ############################################################################################
@@ -1169,7 +1750,7 @@ def skipIfMissingModule(required_module,strict=False):
             if not flag:
                 # If there is a strict flag run the tests as normal
                 print(sys.argv)
-                if stri/ct:
+                if strict:
                     function(self)
                     pass
                 else:
@@ -1226,15 +1807,16 @@ def time_execution_alternative(out_dict):
                 t1 = time.time()
                 out_dict[function.__name__]['runtime'] = t1-t0
                 casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
-                out_dict[function.__name__]['status'] = False
+                #out_dict[function.__name__]['status'] = False
                 raise
                 
             t1 = time.time()
             #print ("Total time running %s: %s seconds" % (function.__name__, str(t1-t0)))
             casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
+            print('======================================================')
+            print(function.__name__)
             out_dict[function.__name__]['runtime'] = t1-t0
             out_dict[function.__name__]['status'] = True
-
             
             return result
             
@@ -1245,67 +1827,109 @@ def cpu_usage(out_dict):
     def cpu_decorator(function):
         @wraps(function)
         def function_usage(*args, **kwargs):
-            
-            process = psutil.Process(os.getpid())
-            snapshot1 = process.memory_info()
-            open_files1 = process.open_files()
-            num_file_descriptors1 = process.num_fds()
+            #Temp Fix : CASA 5 Doesnt Have psutil by default
 
-            #print ("Function: {}, {} MBs".format(function.__name__, megs1))
-            #print ("Function: {}, Open Files: {}".format(function.__name__, open_files1))
-            #print ("Function: {}, num_file_descriptors: {}".format(function.__name__, num_file_descriptors1))
+            try:
+                import psutil
+                use_psutil = True
+            except ImportError:
+                use_psutil = False
+            if use_psutil:
+                process = psutil.Process(os.getpid())
+                snapshot1 = process.memory_info()
+                open_files1 = process.open_files()
+                num_file_descriptors1 = process.num_fds()
 
-            result = function(*args, **kwargs)
+                #print ("Function: {}, {} MBs".format(function.__name__, megs1))
+                #print ("Function: {}, Open Files: {}".format(function.__name__, open_files1))
+                #print ("Function: {}, num_file_descriptors: {}".format(function.__name__, num_file_descriptors1))
 
-            process = psutil.Process(os.getpid())
-            snapshot2 = process.memory_info()
-            open_files2 = process.open_files()
-            num_file_descriptors2 = process.num_fds()
+                result = function(*args, **kwargs)
 
-            #print ("Function: {}, {} MBs".format(function.__name__, megs2))
-            #print ("Function: {}, Open Files: {}".format(function.__name__, open_files2))
-            #print ("Function: {}, num_file_descriptors: {}".format(function.__name__, num_file_descriptors2))
-            #print('{:.2f} MB\n'.format(process.memory_info().rss / 1024 / 1024))
+                process = psutil.Process(os.getpid())
+                snapshot2 = process.memory_info()
+                open_files2 = process.open_files()
+                num_file_descriptors2 = process.num_fds()
 
-            #print ("Total Mem Info { }: {:.2f} MB".format(function.__name__,(process.memory_info().rss) / 1024 / 1024 ))
-            out_dict[function.__name__]['cpu_usage'] = { "number of file descriptors opened" :  num_file_descriptors2 - num_file_descriptors1,
-                                                      "Open files" : open_files2,
-                                                      "Pre Memory Snapshot (bytes)" : snapshot1,
-                                                      "Post Memory Snapshot (bytes)" : snapshot2
-                                                    }
+                #print ("Function: {}, {} MBs".format(function.__name__, megs2))
+                #print ("Function: {}, Open Files: {}".format(function.__name__, open_files2))
+                #print ("Function: {}, num_file_descriptors: {}".format(function.__name__, num_file_descriptors2))
+                #print('{:.2f} MB\n'.format(process.memory_info().rss / 1024 / 1024))
+
+                #print ("Total Mem Info { }: {:.2f} MB".format(function.__name__,(process.memory_info().rss) / 1024 / 1024 ))
+                out_dict[function.__name__]['cpu_usage'] = {    "number of file descriptors opened" :  num_file_descriptors2 - num_file_descriptors1,
+                                                                "Open files" : open_files2,
+                                                                "Pre Memory Snapshot (bytes)" : snapshot1,
+                                                                "Post Memory Snapshot (bytes)" : snapshot2
+                                                        }
+            else:
+                #TODO: Add methods to get mem snapshots when psutils is not available
+                result = function(*args, **kwargs)
+                out_dict[function.__name__]['cpu_usage'] = {    "number of file descriptors opened" : "Unknown",
+                                                                "Open files" : "Unknown",
+                                                                "Pre Memory Snapshot (bytes)" : "Unknown",
+                                                                "Post Memory Snapshot (bytes)" : "Unknown"
+                                                        }
             return result
         return function_usage
     return cpu_decorator
 
 def peakmem(out_dict):
     #TODO: https://pytracemalloc.readthedocs.io/examples.html
-    # Only for python3.4+
+    ### NOTE: Only for python3.4+
+
     def mem_decorator(function):
         @wraps(function)
         def function_mem(*args, **kwargs):
-            tracemalloc.clear_traces()
-            tracemalloc.start()
-            snapshot1 = tracemalloc.take_snapshot() # Snapshot of traces of memory blocks allocated by Python.
+            import sys
+            if (sys.version_info > (3, 3)):
+                import tracemalloc
+                tracemalloc.clear_traces()
+                tracemalloc.start()
+                snapshot1 = tracemalloc.take_snapshot() # Snapshot of traces of memory blocks allocated by Python.
 
+                result = function(*args, **kwargs)
+
+                snapshot2 = tracemalloc.take_snapshot()
+                peakmem = ("{} MiB".format(tracemalloc.get_traced_memory()[1] / 1024 /1024)) #Get the current size and peak size of memory blocks traced by the tracemalloc module as a tuple: (current: int, peak: int)
+                tracemalloc.stop()
+                top_stats = snapshot2.compare_to(snapshot1, 'lineno') # Compute the differences with an old snapshot.
+                out_dict[function.__name__]['peakmem'] = peakmem 
+                out_dict[function.__name__]['memleaks'] = top_stats[:10] #
+            else:
+                result = function(*args, **kwargs)
+                out_dict[function.__name__]['peakmem'] =  "Unknown" 
+                out_dict[function.__name__]['memleaks'] =  "Unknown" #
+            return result
+        return function_mem
+    return mem_decorator
+    
+def mem_use_deco(out_dict):
+    def mem_decorator(function):
+        @wraps(function)
+        def function_mem(*args, **kwargs):
+            out = subprocess.Popen(['ps','v','-p', str(os.getpid())], stdout=subprocess.PIPE).communicate()[0].split(b'\n')
+            vsz_index = out[0].split().index(b'RSS')
+            out_start = float(out[1].split()[vsz_index]) / 1024
+            
             result = function(*args, **kwargs)
-
-            snapshot2 = tracemalloc.take_snapshot()
-            peakmem = ("{} MiB".format(tracemalloc.get_traced_memory()[1] / 1024 /1024)) #Get the current size and peak size of memory blocks traced by the tracemalloc module as a tuple: (current: int, peak: int)
-            tracemalloc.stop()
-            top_stats = snapshot2.compare_to(snapshot1, 'lineno') # Compute the differences with an old snapshot.
-            out_dict[function.__name__]['peakmem'] = peakmem 
-            out_dict[function.__name__]['memleaks'] = top_stats[:10] #
+            
+            out = subprocess.Popen(['ps','v','-p', str(os.getpid())], stdout=subprocess.PIPE).communicate()[0].split(b'\n')
+            vsz_index = out[0].split().index(b'RSS')
+            out_end = float(out[1].split()[vsz_index]) / 1024
+            
+            out_dict[function.__name__]['Mem Use'] = "{} MiB".format(out_end-out_start)
             
             return result
         return function_mem
     return mem_decorator
     
-    
 def stats_dict(out_dict):
     def stats_decorator(function):
         @time_execution_alternative(out_dict)
-        @cpu_usage(out_dict)
-        @peakmem(out_dict)
+        #@cpu_usage(out_dict)
+        #@peakmem(out_dict)
+        @mem_use_deco(out_dict)
         @wraps(function)
         def all_wrapped(*args, **kwargs):
             return function(*args, **kwargs)
