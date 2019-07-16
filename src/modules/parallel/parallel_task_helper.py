@@ -267,17 +267,17 @@ class ParallelTaskHelper:
                 parameters = job.getCommandArguments()
                 try:
                     if is_CASA6:
-                        vars = globals( )
+                        gvars = globals( )
                         try:
-                            exec("from casatasks import *; " + job.getCommandLine(),vars)
-                        except Exception as e:
-                            print("exec in parallel_task_helper.executeJobs failed: %s" % e)
+                            exec("from casatasks import *; " + job.getCommandLine(),gvars)
+                        except Exception as exc:
+                            casalog.post("exec in parallel_task_helper.executeJobs failed: {}'".format(exc))
 
                         # jagonzal: Special case for partition
                         if 'outputvis' in parameters:
-                            self._sequential_return_list[parameters['outputvis']] = vars['returnVar0']
+                            self._sequential_return_list[parameters['outputvis']] = gvars['returnVar0']
                         else:
-                            self._sequential_return_list[parameters['vis']] = vars['returnVar0']
+                            self._sequential_return_list[parameters['vis']] = gvars['returnVar0']
                     else:
                         exec("from taskinit import *; from tasks import *; " + job.getCommandLine())
 
@@ -416,18 +416,19 @@ class ParallelTaskHelper:
         ret = ParallelTaskHelper.consolidateResults(ret_list,taskname)
         
         return ret                    
-            
-            
+
+
     def go(self):
-        
+
         casalog.origin("ParallelTaskHelper")
-        
+
         self.initialize()
         if (self.generateJobs()):
             self.executeJobs()
-            
+
             if ParallelTaskHelper.__async_mode:
-                return list(self._command_request_id_list)
+                res_list = [] if self._command_request_id_list is None else list(self._command_request_id_list)
+                return res_list
             else:
                 try:
                     retVar = self.postExecution()
@@ -437,10 +438,10 @@ class ParallelTaskHelper:
                     return False
         else:
             retVar = False
-            
+
         # Restore casalog origin
         casalog.origin(self._taskName)
-        
+
         return retVar
 
     @staticmethod
@@ -637,14 +638,19 @@ class ParallelTaskWorker:
         self.__completion_event = threading.Event()  
 
     def getEnvironment(self):
-        
-        stack=inspect.stack()
-        for stack_level in range(len(stack)):
-            frame_globals=sys._getframe(stack_level).f_globals
-            if 'update_params' in frame_globals:
-                return dict(frame_globals)
-            
-        raise Exception("CASA top level environment not found")
+        try:
+            # casampi should not depend on globals (casashell). And CASA6/casashell doesn't
+            # anyway have init_tasks:update_params. Keep going w/o globals
+            import casampi
+            return {}
+        except ImportError:
+            stack=inspect.stack()
+            for stack_level in range(len(stack)):
+                frame_globals=sys._getframe(stack_level).f_globals
+                if 'update_params' in frame_globals:
+                    return dict(frame_globals)
+
+            raise Exception("CASA top level environment not found")
         
     def start(self):
         
