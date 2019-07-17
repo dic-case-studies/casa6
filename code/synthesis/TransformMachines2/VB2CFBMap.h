@@ -87,11 +87,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      casacore::CountedPtr<BaselineType> baselineType_p;
      bool doPointing_p, newPhaseGradComputed_p;
      casacore::Int PO_DEBUG_P;
-     casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p;
-     casacore::Matrix< vector<float> > antennaPO_p, cachedAntennaPO_p;
+     /* casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p; */
+     /* casacore::Matrix< vector<float> > antennaPO_p, cachedAntennaPO_p; */
      vector<int> vbRow2BLMap_p;
-     casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p;
-
+     int vbRows_p;
+     /* casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p; */
+     double sigmaDev = 3.0;
      casacore::Timer timer_p;
      float totalCost_p, totalVB_p;
    };
