@@ -580,6 +580,13 @@ def generate_pyinit(moduledir,tasks):
         fd.write("def version_string( ): return \"%s\"\n" % casatasks_version)
         fd.write("casalog.setglobal(True)\n")
         fd.write("\n")
+        fd.write("# When in MPI mode, this will put servers into their serve() loop.\n")
+        fd.write("# From this point on user scripts can use tclean parallelization, Tier0 parallelization,\n")
+        fd.write("# and MMS-parallel tasks\n")
+        fd.write("try:\n")
+        fd.write("    import casampi.scripts.init_mpi\n")
+        fd.write("except ImportError:\n")
+        fd.write("    pass\n")
 
 class BuildCasa(build):
     description = "Description of the command"
