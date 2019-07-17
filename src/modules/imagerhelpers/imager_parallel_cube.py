@@ -10,6 +10,7 @@ import copy
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import synthesisutils, synthesisimager
+    from casatools import image as imageanalysis
     from casatasks import casalog
 
     from .imager_base import PySynthesisImager
@@ -22,6 +23,7 @@ else:
 
     synthesisimager = casac.synthesisimager
     synthesisutils = casac.synthesisutils
+    imageanalysis = casac.image
 
 '''
 An implementation of parallel cube imaging, using synthesisxxxx tools.
@@ -115,12 +117,12 @@ class PyParallelCubeSynthesisImager():
             tnode = str(ipart)
             selparsPerNode= {tnode:{}}
             imparsPerNode= {tnode:{}}
-            for fid in allimagepars.iterkeys():
+            for fid in allimagepars:
                 ###restoring original spw selection just to allow weight density to be the same
                 ###ultimately should be passed by MPI if done this way
                 for mss in origspw.keys():
                     alldataimpars[fid][nodeidx][mss]['spw']=origspw[mss]['spw']
-                for ky in alldataimpars[fid][nodeidx].iterkeys():
+                for ky in alldataimpars[fid][nodeidx]:
 ###                commenting this as it is resetting the selpars when key is not "msxxx" 
 ##                    selparsPerNode[tnode]={}
                     if ky.find('ms')==0:
@@ -155,12 +157,19 @@ class PyParallelCubeSynthesisImager():
             #print "****** SELIMPARS in init **********", self.allimpars
         
         joblist=[]
+        casa6_import_prefix = ''
+        if is_CASA6:
+            casa6_import_prefix = 'casatasks.private.'
+        cmd_import_pars = ('from {0}imagerhelpers.input_parameters import ImagerParameters'.
+                      format(casa6_import_prefix))
+        cmd_import_synth = ('from {0}imagerhelpers.imager_base import PySynthesisImager'.
+                     format(casa6_import_prefix))
         #### MPIInterface related changes
         #for node in range(0,self.NN):
         #for node in self.listOfNodes:
         for node in self.modifiedListOfNodes:
-            joblist.append( self.PH.runcmd("from imagerhelpers.input_parameters import ImagerParameters", node) )
-            joblist.append( self.PH.runcmd("from imagerhelpers.imager_base import PySynthesisImager", node) )
+            joblist.append( self.PH.runcmd(cmd_import_pars, node) )
+            joblist.append( self.PH.runcmd(cmd_import_synth, node) )
         self.PH.checkJobs( joblist )
 
         self.exitflag={}
@@ -354,12 +363,11 @@ class PyParallelCubeSynthesisImager():
                             casalog.post("Cleaning up the existing file named "+fullconcatimname,"DEBUG")
                             os.remove(fullconcatimname)
                     # set tempclose = false to avoid a long accessing issue
-                    cmd = 'imageconcat inimages='+subimliststr+' outimage='+"'"+fullconcatimname+"'"+' type='+type+' tempclose=false'      
+                    cmd = 'imageconcat inimages='+subimliststr+' outimage='+"'"+fullconcatimname+"'"+' type='+type+' tempclose=false'
                     # run virtual concat
                     ret=os.system(cmd)
                     if ret!=0:
                         casalog.post("concatenation of "+concatimname+" failed","WARN")
-             
 
 
     def getSummary(self):
