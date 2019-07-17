@@ -46,16 +46,15 @@ import traceback
 
 # jagonzal (Migration to MPI)
 try:
+    # CASA 6
+    from casampi.MPIEnvironment import MPIEnvironment
+    from casampi.MPICommandClient import MPICommandClient
+    mpi_available = True
+except ImportError:
     from mpi4casa.MPIEnvironment import MPIEnvironment
     from mpi4casa.MPICommandClient import MPICommandClient
     mpi_available = True
 except ImportError:
-    # CASA 6
-    import casampi
-    from casampi.MPIEnvironment import MPIEnvironment
-    from casampi.MPICommandClient import MPICommandClient
-    mpi_available = True
-except:
     mpi_available = False
 
 class JobData:
@@ -166,7 +165,7 @@ class ParallelTaskHelper:
     a task parallel is to use this rather than the TaskHelper method
     above
     """
-    
+
     __bypass_parallel_processing = 0
     __async_mode = False
     __multithreading = False    
