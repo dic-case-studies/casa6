@@ -4414,7 +4414,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     os<<LogIO::DEBUG1 <<"rmss shape="<< String::toString(statshp) <<LogIO::POST;
     // For the historical reason it is called chanidx but it is an index for a single plane stats
     IPosition chanidx = statshp;
-    uInt ndim = rmss.ndim();
+    //uInt ndim = rmss.ndim();
 
     //Int nchan = maskthreshold.nelements(); 
     for (uInt ich = 0; ich < (uInt) nchan; ich++) {

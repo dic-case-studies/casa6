@@ -366,7 +366,7 @@ namespace casa{
 		{
 		  PolnRIndex(0)=PolnLIndex(0)=tndx(0);
 		  PolnRIndex(1)=PolnLIndex(1)=tndx(1);
-		  Complex val, Rval, Lval;
+		  Complex val, Rval /*, Lval*/;
 		  Float phase;
 		  val = ap.aperture->getAt(tndx);
 		  Rval = ap.aperture->getAt(PolnRIndex);

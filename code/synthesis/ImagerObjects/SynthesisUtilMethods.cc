@@ -3709,7 +3709,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           // FIXME ! usebeam.length() == 0 is a poorly formed conditional, it
           // probably needs simplification or parenthesis, the compiler is
           // compaining about it
-		  if( (! usebeam.matches("common")) && ! usebeam.length()==0 )
+		  if( (! usebeam.matches("common")) && usebeam.length()!=0 )
 		    {
 		      Quantity bsize;
 		      err += readVal( inrec, String("restoringbeam"), bsize );

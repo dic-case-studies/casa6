@@ -80,7 +80,7 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
         npol_p(-1), pointToPix_p(), directionIndex_p(-1), thePix_p(0),
         filledFluxScale_p(false),doneMainConv_p(0),
                                       
-				      calcFluxScale_p(true), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p(), usePointingTable_p(False)  {
+				      calcFluxScale_p(true), usePointingTable_p(False), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p()    {
     //
 
     pbClass_p=PBMathInterface::COMMONPB;
@@ -91,7 +91,7 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
   SimplePBConvFunc::SimplePBConvFunc(const PBMathInterface::PBClass typeToUse): 
     nchan_p(-1),npol_p(-1),pointToPix_p(),
     directionIndex_p(-1), thePix_p(0), filledFluxScale_p(false),doneMainConv_p(0), 
-    calcFluxScale_p(true), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p(), usePointingTable_p(False) {
+    calcFluxScale_p(true), usePointingTable_p(False), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p() {
     //
     pbClass_p=typeToUse;
     ft_p=FFT2D(true);
@@ -100,7 +100,7 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
   SimplePBConvFunc::SimplePBConvFunc(const RecordInterface& rec, const Bool calcfluxneeded)
   : nchan_p(-1),npol_p(-1),pointToPix_p(), directionIndex_p(-1), thePix_p(0), filledFluxScale_p(false),
     doneMainConv_p(0), 
-    calcFluxScale_p(calcfluxneeded), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p(), usePointingTable_p(False)
+    calcFluxScale_p(calcfluxneeded), usePointingTable_p(False), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p() 
   {
     String err;
     fromRecord(err, rec, calcfluxneeded);
