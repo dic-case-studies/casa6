@@ -1809,6 +1809,66 @@ include $(MY_DEPS)
         self.__build_developer_grpc( )
         self.__generate_casa_makefile( )
 
+class create_makefile_ia(Command):
+    user_options = [
+        # The format is (long option, short option, description).
+        # ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
+      ('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
+    ]
+
+
+    def initialize_options(self):
+        print("setting up options for CARTA ia only build")
+        global _debug_build_
+        _debug_build_ = '--debug' in sys.argv
+        self.debug = 1 if _debug_build_ else 0
+        print("create debug build is ", _debug_build_)
+
+    def finalize_options(self):
+        pass
+
+    def __build_developer_grpc(self):
+        if not os.path.exists('.built.grpc'):
+            # hopefully this will replace dbus
+            build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                        os.path.join('build', distutils_dir_name('grpc')),
+                        os.path.join('build', distutils_dir_name('grpc-install')) )
+            build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                            os.path.join('build', distutils_dir_name('protobuf')),
+                            os.path.join('build', distutils_dir_name('grpc-install')) )
+            open(".built.grpc",'a').close( )
+
+    def __generate_casa_ia_makefile(self):
+        # declare some .PHONY targets
+        cpp_target = "cpp_compile"
+        yacc_target = "yacc_compile"
+        lex_target = "lex_compile"
+        c_target = "c_compile"
+        fortran_target = "f_compile"
+        soabi = sysconfig.get_config_var('SOABI')
+        lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
+        casac_dir = get_casac_dir()
+        output_lib = os.sep.join([casac_dir, "lib", "lib{libname}." + soabi + "." + lib_ext])
+        # libcasatools = 'build/lib.linux-x86_64-3.6/casatools/__casac__/lib/libcasatools.cpython-36m-x86_64-linux-gnu.so'
+        libcasatools = output_lib.format(libname='casatools')
+        gen_tool_dep_target = 'generate_tool_dependencies'
+        swig_target = "swig_compile"
+        statics_wrap_target = "statics_wrap_cc_compile"
+        tool_libs_target = "tool_libs_link"
+        straight_copies_target = "straight_file_copies"
+        # rsync_data_target = "rsync_data"
+        all_target = "all"
+        clean_target = "clean"
+        build_distutils_temp = os.path.join('build',distutils_dir_name('temp'))
+        depdir = '.d'
+        sep = ' '
+        cc = sep.join(get_ccache() + [props['build.compiler.cxx']])
+        f77 = props['build.compiler.fortran']
+
+    def run(self):
+        self.__build_developer_grpc( )
+        self.__generate_casa_ia_makefile( )
+
 def get_module_dir():
     return os.path.join('build', distutils_dir_name('lib'), module_name)
 
@@ -2026,8 +2086,8 @@ if __name__ == '__main__':
            classifiers=filter(None, classifiers.split("\n")),
            package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
            packages=[module_name],
-           cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build, 'genmake': create_makefile } \
+           cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build, 'genmake': create_makefile, 'ia': create_makefile_ia } \
                                    if wheel_build \
-                                   else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile },
+                                   else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
            ext_modules=ext,
            install_requires=[ 'numpy' ] )
