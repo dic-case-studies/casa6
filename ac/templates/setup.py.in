@@ -1344,7 +1344,8 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
         path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc']
     )
     CORE_SRC = source_files(
-        "casa-source/casacore", file_suffix_filter=".cc", subdir_filter=additional_subdir_filters)
+        "casa-source/casacore", file_suffix_filter=".cc")
+    #, subdir_filter=additional_subdir_filters)
     SAKURA_SRC = sakura_files() if use_sakura else []
     CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp") if use_atm else []
     # the gprc registrar files may not be present when this code gets run
