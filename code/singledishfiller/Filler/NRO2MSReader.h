@@ -100,36 +100,6 @@ public:
   // for DataAccumulator
   virtual casacore::Bool getData(size_t irow, sdfiller::DataRecord &record);
 
-  int getNROArraySize() const {
-//    return obs_header_.ARYNM0; //obs_header_.NBEAM * obs_header_.NPOL * obs_header_.NSPWIN;
-    return NRO_ARYMAX;
-  }
-  int getNRONumBeam() const {
-    return obs_header_.NBEAM;
-  }
-  int getNRONumPol() const {
-    return obs_header_.NPOL;
-  }
-  int getNRONumSpw() const {
-    return obs_header_.NSPWIN;
-  }
-
-  bool isNROArrayUsed(int array_id) const {
-    return array_mapper_[array_id].isUsed();
-  }
-  int getNROArrayBeamId(int array_id) const {
-//	  assert(array_id >= 0 && array_id < getNROArraySize());
-    return array_mapper_[array_id].getBeamId();
-  }
-  casacore::Stokes::StokesTypes getNROArrayPol(int array_id) const {
-//	  assert(array_id >= 0 && array_id < getNROArraySize());
-    return array_mapper_[array_id].getPol();
-  }
-  int getNROArraySpwId(int array_id) const {
-//	  assert(array_id >= 0 && array_id < getNROArraySize());
-    return array_mapper_[array_id].getSpwId();
-  }
-
 protected:
   void initializeSpecific();
   void finalizeSpecific();
@@ -286,6 +256,40 @@ private:
     POST_START;POST_END;
     return false;
   }
+
+  // methods that are only accessible from NROOptionalTables
+  int getNROArraySize() const {
+//    return obs_header_.ARYNM0; //obs_header_.NBEAM * obs_header_.NPOL * obs_header_.NSPWIN;
+    return NRO_ARYMAX;
+  }
+  int getNRONumBeam() const {
+    return obs_header_.NBEAM;
+  }
+  int getNRONumPol() const {
+    return obs_header_.NPOL;
+  }
+  int getNRONumSpw() const {
+    return obs_header_.NSPWIN;
+  }
+
+  bool isNROArrayUsed(int array_id) const {
+    return array_mapper_[array_id].isUsed();
+  }
+  int getNROArrayBeamId(int array_id) const {
+//	  assert(array_id >= 0 && array_id < getNROArraySize());
+    return array_mapper_[array_id].getBeamId();
+  }
+  casacore::Stokes::StokesTypes getNROArrayPol(int array_id) const {
+//	  assert(array_id >= 0 && array_id < getNROArraySize());
+    return array_mapper_[array_id].getPol();
+  }
+  int getNROArraySpwId(int array_id) const {
+//	  assert(array_id >= 0 && array_id < getNROArraySize());
+    return array_mapper_[array_id].getSpwId();
+  }
+
+  // friend: NROOptionalTables
+  friend NROOptionalTables;
 };
 
 // OptionalTables class for NRO data
