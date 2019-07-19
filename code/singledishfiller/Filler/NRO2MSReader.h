@@ -23,14 +23,16 @@
 using namespace std;
 
 namespace casa { //# NAMESPACE CASA - BEGIN
-  
+
 // forward declaration
 class NROOptionalTables;
 
 class NRO2MSReader: public ReaderInterface {
 public:
-  typedef NROOptionalTables OptionalTables;
-  
+  // NROOptionalTables generates optional tables
+  // required for NRO data
+  using OptionalTables = NROOptionalTables;
+
   NRO2MSReader(std::string const &scantable_name);
   virtual ~NRO2MSReader();
 
@@ -38,7 +40,7 @@ public:
   virtual size_t getNumberOfRows();
 
   virtual casacore::MDirection::Types getDirectionFrame() const;
-  
+
   virtual casacore::Bool isFloatData() const {
     return true;
   }

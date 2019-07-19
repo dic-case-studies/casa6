@@ -50,7 +50,16 @@ private:
 
 class ReaderInterface: private NonCopyable<ReaderInterface> {
 public:
-  typedef NullOptionalTables<ReaderInterface> OptionalTables;
+  // OptionalTables must have a public static method, Generate,
+  // whose signature is as follows:
+  //
+  // static void Generate(casacore::Table &, Reader const &)
+  //
+  // OptionalTables::Generate is responsible for generating
+  // optional subtables that stores supplemental information
+  // not being able to stored into any other tables.
+  // NullOptionalTables is an implementation of "do nothing".
+  using OptionalTables = NullOptionalTables<ReaderInterface>;
 
   ReaderInterface(std::string const &name) :
     name_(name) {

@@ -23,6 +23,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 class Scantable2MSReader: public ReaderInterface {
 public:
+  // do nothing implementation for OptionalTables
+  using OptionalTables = NullOptionalTables<Scantable2MSReader>;
+
   Scantable2MSReader(std::string const &scantable_name);
   virtual ~Scantable2MSReader();
 
