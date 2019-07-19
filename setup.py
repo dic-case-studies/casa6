@@ -584,7 +584,7 @@ def generate_pyinit(moduledir,tasks):
         fd.write("# From this point on user scripts can use tclean parallelization, Tier0 parallelization,\n")
         fd.write("# and MMS-parallel tasks\n")
         fd.write("try:\n")
-        fd.write("    import casampi.scripts.init_mpi\n")
+        fd.write("    import casampi.private.init_mpi\n")
         fd.write("except ImportError:\n")
         fd.write("    pass\n")
 
