@@ -1967,9 +1967,11 @@ void FringeJones::setApply(const Record& apply) {
     Vector<Double> chanfreq;
     KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
     for (Int ispw=0;ispw<nSpw();++ispw) {
-      msCol.chanFreq().get(ispw,chanfreq,true);  // reshape, if nec.
-      Int nch=chanfreq.nelements();
-      KrefFreqs_(ispw)=chanfreq(nch/2);
+      if (ispw < msSpw.nrow()) {
+	msCol.chanFreq().get(ispw,chanfreq,true);  // reshape, if nec.
+	Int nch=chanfreq.nelements();
+	KrefFreqs_(ispw)=chanfreq(nch/2);
+      }
     }
     KrefFreqs_/=1.0e9;  // in GHz
 
