@@ -21,7 +21,7 @@
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-class Scantable2MSReader: public ReaderInterface {
+class Scantable2MSReader final : public ReaderInterface {
 public:
   // do nothing implementation for OptionalTables
   using OptionalTables = NullOptionalTables<Scantable2MSReader>;
@@ -30,14 +30,14 @@ public:
   virtual ~Scantable2MSReader();
 
   // get number of rows for MAIN table
-  virtual size_t getNumberOfRows() {
+  size_t getNumberOfRows() override {
     if (!main_table_) {
       return 0;
     }
     return main_table_->nrow();
   }
 
-  virtual casacore::Bool isFloatData() const {
+  casacore::Bool isFloatData() const override {
     casacore::Bool is_float = true;
     if (!main_table_) {
       is_float = false;
@@ -54,12 +54,16 @@ public:
     return is_float;
   }
 
-  virtual casacore::String getDataUnit() const {
+  casacore::MDirection::Types getDirectionFrame() const override {
+    return casacore::MDirection::J2000;
+  }
+
+  casacore::String getDataUnit() const override {
 	return main_table_->keywordSet().asString("FluxUnit");
   }
 
   // to get OBSERVATION table
-  virtual casacore::Bool getObservationRow(sdfiller::ObservationRecord &record) {
+  casacore::Bool getObservationRow(sdfiller::ObservationRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_observation_row_)(record);
@@ -69,7 +73,7 @@ public:
   }
 
   // to get ANTENNA table
-  virtual casacore::Bool getAntennaRow(sdfiller::AntennaRecord &record) {
+  casacore::Bool getAntennaRow(sdfiller::AntennaRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_antenna_row_)(record);
@@ -79,7 +83,7 @@ public:
   }
 
   // to get PROCESSOR table
-  virtual casacore::Bool getProcessorRow(sdfiller::ProcessorRecord &record) {
+  casacore::Bool getProcessorRow(sdfiller::ProcessorRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_processor_row_)(record);
@@ -89,7 +93,7 @@ public:
   }
 
   // to get SOURCE table
-  virtual casacore::Bool getSourceRow(sdfiller::SourceRecord &record) {
+  casacore::Bool getSourceRow(sdfiller::SourceRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_source_row_)(record);
@@ -99,7 +103,7 @@ public:
   }
 
   // to get FIELD table
-  virtual casacore::Bool getFieldRow(sdfiller::FieldRecord &record) {
+  casacore::Bool getFieldRow(sdfiller::FieldRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_field_row_)(record);
@@ -109,7 +113,7 @@ public:
   }
 
   // to get SOURCE table
-  virtual casacore::Bool getSpectralWindowRow(sdfiller::SpectralWindowRecord &record) {
+  casacore::Bool getSpectralWindowRow(sdfiller::SpectralWindowRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_spw_row_)(record);
@@ -119,11 +123,11 @@ public:
   }
 
   // for DataAccumulator
-  virtual casacore::Bool getData(size_t irow, sdfiller::DataRecord &record);
+  casacore::Bool getData(size_t irow, sdfiller::DataRecord &record) override ;
 
 protected:
-  void initializeSpecific();
-  void finalizeSpecific();
+  void initializeSpecific() override ;
+  void finalizeSpecific() override ;
 
 private:
   std::unique_ptr<casacore::Table> main_table_;

@@ -81,7 +81,7 @@ public:
   }
 
   virtual casacore::MDirection::Types getDirectionFrame() const {
-    return casacore::MDirection::J2000;
+    return casacore::MDirection::DEFAULT;
   }
 
   void initialize() {
