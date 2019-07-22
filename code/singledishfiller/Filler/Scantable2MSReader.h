@@ -134,19 +134,29 @@ private:
   casacore::Table tcal_table_;
   casacore::Table weather_table_;
 
-  casacore::ScalarColumn<casacore::uInt> scan_column_;casacore::ScalarColumn<casacore::uInt> cycle_column_;casacore::ScalarColumn<
-      casacore::uInt> ifno_column_;casacore::ScalarColumn<casacore::uInt> polno_column_;casacore::ScalarColumn<casacore::uInt> beam_column_;casacore::ScalarColumn<
-      casacore::uInt> flagrow_column_;casacore::ScalarColumn<casacore::Double> time_column_;casacore::ScalarColumn<
-      casacore::Double> interval_column_;casacore::ScalarColumn<casacore::Int> srctype_column_;
+  casacore::ScalarColumn<casacore::uInt> scan_column_;
+  casacore::ScalarColumn<casacore::uInt> cycle_column_;
+  casacore::ScalarColumn<casacore::uInt> ifno_column_;
+  casacore::ScalarColumn<casacore::uInt> polno_column_;
+  casacore::ScalarColumn<casacore::uInt> beam_column_;
+  casacore::ScalarColumn<casacore::uInt> flagrow_column_;
+  casacore::ScalarColumn<casacore::Double> time_column_;
+  casacore::ScalarColumn<casacore::Double> interval_column_;
+  casacore::ScalarColumn<casacore::Int> srctype_column_;
   casacore::ArrayColumn<casacore::Float> data_column_;
   casacore::ArrayColumn<casacore::uChar> flag_column_;
   casacore::ArrayColumn<casacore::Double> direction_column_;
-  casacore::ArrayColumn<casacore::Double> scanrate_column_;casacore::ScalarColumn<casacore::String> fieldname_column_;
-  casacore::ArrayColumn<casacore::Float> tsys_column_;casacore::ScalarColumn<casacore::uInt> tcal_id_column_;casacore::ScalarColumn<
-      casacore::uInt> weather_id_column_;
-  casacore::ArrayColumn<casacore::Float> tcal_column_;casacore::ScalarColumn<casacore::Float> temperature_column_;casacore::ScalarColumn<
-      casacore::Float> pressure_column_;casacore::ScalarColumn<casacore::Float> humidity_column_;casacore::ScalarColumn<
-      casacore::Float> wind_speed_column_;casacore::ScalarColumn<casacore::Float> wind_direction_column_;
+  casacore::ArrayColumn<casacore::Double> scanrate_column_;
+  casacore::ScalarColumn<casacore::String> fieldname_column_;
+  casacore::ArrayColumn<casacore::Float> tsys_column_;
+  casacore::ScalarColumn<casacore::uInt> tcal_id_column_;
+  casacore::ScalarColumn<casacore::uInt> weather_id_column_;
+  casacore::ArrayColumn<casacore::Float> tcal_column_;
+  casacore::ScalarColumn<casacore::Float> temperature_column_;
+  casacore::ScalarColumn<casacore::Float> pressure_column_;
+  casacore::ScalarColumn<casacore::Float> humidity_column_;
+  casacore::ScalarColumn<casacore::Float> wind_speed_column_;
+  casacore::ScalarColumn<casacore::Float> wind_direction_column_;
   casacore::Vector<casacore::uInt> sorted_rows_;
   ScantableFieldIterator::Product field_map_;
   ScantableFrequenciesIterator::Product num_chan_map_;
@@ -156,8 +166,7 @@ private:
 
   casacore::Bool (Scantable2MSReader::*get_antenna_row_)(sdfiller::AntennaRecord &);
   casacore::Bool (Scantable2MSReader::*get_field_row_)(sdfiller::FieldRecord &);
-  casacore::Bool (Scantable2MSReader::*get_observation_row_)(
-      sdfiller::ObservationRecord &);
+  casacore::Bool (Scantable2MSReader::*get_observation_row_)(sdfiller::ObservationRecord &);
   casacore::Bool (Scantable2MSReader::*get_processor_row_)(sdfiller::ProcessorRecord &);
   casacore::Bool (Scantable2MSReader::*get_source_row_)(sdfiller::SourceRecord &);
   casacore::Bool (Scantable2MSReader::*get_spw_row_)(sdfiller::SpectralWindowRecord &);
