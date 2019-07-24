@@ -31,7 +31,7 @@ import math
 import numbers
 import six
 import operator
-import subprocess
+
 
 logging.basicConfig(level=logging.INFO,format='%(message)s')
 #logging.basicConfig(level=logging.DEBUG,format='%(levelname)s-%(message)s')
@@ -375,7 +375,7 @@ def compare_CASA_variable_cols(referencetab, testtab, varcol, tolerance=0.0):
         try:
             # First check
             if tb.nrows() != tb2.nrows():
-                logging.error('Length of {} differ from {}, {} != {}'.format(referencetab,testtab,tb.nrows(),tb2.nrows()))
+                logging.error('Length of {} differ from {}, {} != {}'.format(referencetab,testtab,tb.nrows(),tb.nrows()))
                 retval = False
             else:
                 for therow in range(tb.nrows()):
@@ -974,7 +974,7 @@ def compare_pixel_mask(maskname='', refmask=None, refval=None, loc=None):
         logging.warning('Invalid mask file name')
 
 
-def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
+def add_to_dict(self, output=None, dataset="TestData", **kwargs):
     '''
         This function adds key value pairs to a provided dictionary. Any additional keys and values can be added as keyword arguments to this function
        
@@ -994,12 +994,7 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
     test_case = test_split[-1]
     taskname = test_split[1].split('_')[0]
     
-    if (sys.version_info > (3, 3)):
-        rerun = "python {} {}.{}".format(filename, test_split[1], test_split[2])
-    else:
-        filename = "{}.py".format(filename.split('.')[0])
-        casapath = os.environ.get('CASAPATH').split()[0]
-        rerun = "casa -c {}/lib/python2.7/runUnitTest.py {}".format(casapath, filename.split('.')[0])
+    rerun = "python {} {}.{}".format(filename, test_split[1], test_split[2])
     
     current_case = None
     
@@ -1014,35 +1009,18 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
                     current_case = test_case
                 else:
                     current_case = None
-                    #casa6tasks, miscellaneous_tasks
-            for i in casa6tasks.union(miscellaneous_tasks):
-                if current_case == test_case:
-                    if "{}(".format(i) in line:
-                        params = line.split(',')[1::]
-                        call = "{}({},{})".format(taskname, dataset, ','.join(params))
-                        #func_calls.append(call)
-                        func_calls.append(line)
+                    
+            if current_case == test_case:
+                if line.startswith(taskname):
+                    params = line.split(',')[1::]
+                    call = "{}({},{})".format(taskname, dataset, ','.join(params))
+                    func_calls.append(call)
                 
-    values['runtime'] = -1.0
-    #This is a temp error value
-    values['status'] = status
-    if test_case not in output.keys():
-        output[test_case]= {}
-    
-    for key in values.keys():
-        if test_case in output.keys():
-            print(output[test_case].keys())
-            if key in output[test_case].keys():
-                values[key] = output[test_case][key].append(values[key])
-            else:
-                print('FIRST')
-                output[test_case][key] = [values[key]]
-    
-    #output[test_case] = values
-    output[test_case]['taskcall'] = func_calls
-    output[test_case]['rerun'] = rerun
-    output[test_case]['description'] = unittest.TestCase.shortDescription(self)
-    output[test_case]['images'] = [ ]
+    values['taskcall'] = func_calls
+    values['rerun'] = rerun
+    values['images'] = [ ]
+    values['description'] = unittest.TestCase.shortDescription(self)
+    output[test_case] = values
 
 def topickle(input_dict, picklefile):
     '''
@@ -1809,14 +1787,12 @@ def time_execution_alternative(out_dict):
                 t1 = time.time()
                 out_dict[function.__name__]['runtime'] = t1-t0
                 casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
-                #out_dict[function.__name__]['status'] = False
+                out_dict[function.__name__]['status'] = False
                 raise
                 
             t1 = time.time()
             #print ("Total time running %s: %s seconds" % (function.__name__, str(t1-t0)))
             casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
-            print('======================================================')
-            print(function.__name__)
             out_dict[function.__name__]['runtime'] = t1-t0
             out_dict[function.__name__]['status'] = True
             
