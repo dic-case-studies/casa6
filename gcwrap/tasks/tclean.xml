@@ -2692,7 +2692,7 @@ that come from playing with this parameter value. Do not change from the default
 	 <default param="cfcache"><value>""</value></default>
 	 <default param="computepastep"><value>360.0</value></default>
 	 <default param="rotatepastep"><value>360.0</value></default>
-	 <default param="pointingoffsetsigdev"><value>0.0</value></default>
+	 <default param="pointingoffsetsigdev"><value>10.0</value></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
 <!--	 <default param="vptable"><value>""</value></default> -->
@@ -2709,7 +2709,7 @@ that come from playing with this parameter value. Do not change from the default
 	 <default param="cfcache"><value>""</value></default>
 	 <default param="computepastep"><value>360.0</value></default>
 	 <default param="rotatepastep"><value>360.0</value></default>
-	 <default param="pointingoffsetsigdev"><value>0.0</value></default>
+	 <default param="pointingoffsetsigdev"><value>10.0</value></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
 <!--	 <default param="vptable"><value>""</value></default> -->
