@@ -56,7 +56,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      {
        LogIO log_l(LogOrigin("VB2CFBMap", "~VB2CFMap[R&D]"));
 
-       log_l << "Total extra cost of heterogeneous array pointing correction = " << totalCost_p << "sec.  Total VBs processed =  " << totalVB_p << LogIO::POST;
+       log_l << "Total extra cost of heterogeneous array pointing correction = " << totalCost_p << "sec.  Total VBs processed =  " << totalVB_p << 
+	 ". The pointingsigdev use was = "<< sigmaDev <<LogIO::POST;
+       
      };
      
      VB2CFBMap& operator=(const VB2CFBMap& other);
@@ -81,6 +83,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					       /* const Matrix<vector<int> >& antennaGroups); */
 
      void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
+     void setPOSigmaDev(const Float& sigdev=3.0) {sigmaDev = double(sigdev);}
   //   protected:
      casacore::Vector<casacore::CountedPtr<CFBuffer > > vb2CFBMap_p;
      casacore::Vector<casacore::Matrix<casacore::Complex> > cfPhaseGrad_p;

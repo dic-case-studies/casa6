@@ -103,12 +103,12 @@ namespace casa{
 	      if (vectorPhaseGradCalculator_p[i].null())
 		vectorPhaseGradCalculator_p[i]=new PhaseGrad();
 	  }
-	if (vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPhaseGrad(pointingOffsets_p,vb,0))
-	  {
-	    cachedGroups_p = false;
-	    findAntennaGroups(vb,pointingOffsets_p,sigmaDev);	    
-	  }
-	vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);
+	// if (vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPhaseGrad(pointingOffsets_p,vb,row))
+	//   {
+	//     cachedGroups_p = false;
+	//     findAntennaGroups(vb,pointingOffsets_p,sigmaDev);	    
+	//   }
+	vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row);
       }
     else
       {
@@ -122,11 +122,10 @@ namespace casa{
 	    if (vectorPhaseGradCalculator_p[myrow].null())
 	      vectorPhaseGradCalculator_p[myrow]=new PhaseGrad();
 	  }
+	vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
       }
 	
-  
-    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
-    
+      
      return  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->field_phaseGrad_p;
     
   };
@@ -345,10 +344,10 @@ namespace casa{
 	  for (int kk=0; kk<vecLen; kk++)
 	    {
 	      cachedAntennaGroups_p(ii,jj)[kk] = antennaGroups_p(ii,jj)[kk];
-	      cachedAntennaPO_p(ii,jj)[0][kk] = antennaPO_p(ii,jj)[0][kk];
-	      cachedAntennaPO_p(ii,jj)[1][kk] = antennaPO_p(ii,jj)[1][kk];
-	      cachedAntennaPO_p(ii,jj)[2][kk] = antennaPO_p(ii,jj)[2][kk];
-	      cachedAntennaPO_p(ii,jj)[3][kk] = antennaPO_p(ii,jj)[3][kk];
+	      // cachedAntennaPO_p(ii,jj)[0][kk] = antennaPO_p(ii,jj)[0][kk];
+	      // cachedAntennaPO_p(ii,jj)[1][kk] = antennaPO_p(ii,jj)[1][kk];
+	      // cachedAntennaPO_p(ii,jj)[2][kk] = antennaPO_p(ii,jj)[2][kk];
+	      // cachedAntennaPO_p(ii,jj)[3][kk] = antennaPO_p(ii,jj)[3][kk];
 	    }
 	}
     cachedGroups_p=true;

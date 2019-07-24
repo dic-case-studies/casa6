@@ -218,6 +218,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			   CountedPtr<ConvolutionFunction>& cf,
 			   CountedPtr<VisibilityResamplerBase>& visResampler,
 			   Bool applyPointingOffset,
+			   Float pointingOffsetSigDev,
 			   Bool doPBCorr,
 			   Int itilesize, 
 			   Float pbLimit,
@@ -276,6 +277,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     vb2CFBMap_p = new VB2CFBMap();
     po_p = new PointingOffsets();
     po_p->setOverSampling(convSampling);
+    vb2CFBMap_p->setPOSigmaDev(pointingOffsetSigDev);
   }
   //
   //---------------------------------------------------------------

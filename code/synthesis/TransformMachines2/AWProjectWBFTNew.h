@@ -45,6 +45,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		     casacore::CountedPtr<ConvolutionFunction>& cf,
 		     casacore::CountedPtr<VisibilityResamplerBase>& visResampler,
 		     casacore::Bool applyPointingOffset=true,
+		     casacore::Float pointingOffsetSigDev=10.0,
 		     casacore::Bool doPBCorr=true,
 		     casacore::Int tilesize=16, 
 		     casacore::Float paSteps=5.0, 
@@ -52,7 +53,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		     casacore::Bool usezero=false,
 		     casacore::Bool conjBeams_p=true,
 		     casacore::Bool doublePrecGrid=false):
-      AWProjectWBFT(nFacets, cachesize, cfcache, cf, visResampler, applyPointingOffset, 
+    AWProjectWBFT(nFacets, cachesize, cfcache, cf, visResampler, applyPointingOffset, pointingOffsetSigDev,
 		    doPBCorr, tilesize, paSteps, pbLimit, usezero, conjBeams_p, doublePrecGrid){}
 
     // Construct from a casacore::Record containing the AWProjectWBFT state

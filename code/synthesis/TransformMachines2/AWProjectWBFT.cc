@@ -92,6 +92,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       CountedPtr<ConvolutionFunction>& cf,
 			       CountedPtr<VisibilityResamplerBase>& visResampler,
 			       Bool applyPointingOffset,
+			       Float pointingOffsetSigDev,
 			       Bool doPBCorr,
 			       Int itilesize, 
 			       Float paSteps,
@@ -99,7 +100,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       Bool usezero,
 			       Bool conjBeams,
 			       Bool doublePrecGrid)
-    : AWProjectFT(nWPlanes,icachesize,cfcache,cf,visResampler,applyPointingOffset,doPBCorr, itilesize,pbLimit,usezero,conjBeams,doublePrecGrid),
+    : AWProjectFT(nWPlanes,icachesize,cfcache,cf,visResampler,applyPointingOffset,pointingOffsetSigDev,doPBCorr, itilesize,pbLimit,usezero,conjBeams,doublePrecGrid),
       avgPBReady_p(false),resetPBs_p(true),wtImageFTDone_p(false),fieldIds_p(0),rotatedCFWts_p(),visResamplerWt_p(),oneTimeMessage_p(false)
   {
     (void)paSteps;

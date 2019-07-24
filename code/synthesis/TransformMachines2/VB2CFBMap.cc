@@ -50,7 +50,7 @@ using namespace vi;
       baselineType_p = new BaselineType();
       newPhaseGradComputed_p = false;
       totalCost_p=totalVB_p = 0.0;
-      sigmaDev = SynthesisUtils::getenv("PO_SIGMADEV",3.0);
+      // sigmaDev = SynthesisUtils::getenv("PO_SIGMADEV",3.0);
     };
 
     VB2CFBMap& VB2CFBMap::operator=(const VB2CFBMap& other)
