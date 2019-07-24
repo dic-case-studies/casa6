@@ -1947,6 +1947,31 @@ def get_arch_link():
         archlibs = ['gomp']
     return (archflags, archlibs)
 
+def generate_casacore_version_header():
+    with open("casa-source/casacore/CMakeLists.txt") as f:
+        for line in f:
+            r = re.match(".*set\(PROJECT_VERSION_MAJOR (\d+)\)",line)
+            if r is not None:
+                casacore_version_major = r.group(1)
+
+            r = re.match(".*set\(PROJECT_VERSION_MINOR (\d+)\)",line)
+            if r is not None:
+                casacore_version_minor = r.group(1)
+
+            r = re.match(".*set\(PROJECT_VERSION_PATCH (\d+)\)",line)
+            if r is not None:
+                casacore_version_patch = r.group(1)
+
+    print("Casacore version " + casacore_version_major + "." + casacore_version_minor + "." + casacore_version_patch)
+
+    with open("include/casacore/casa/version.h","w") as out, open("casa-source/casacore/casa/version.h.in") as f:
+        for line in f:
+            l = line.replace("@PROJECT_VERSION_MAJOR@",str(casacore_version_major)) \
+                     .replace("@PROJECT_VERSION_MINOR@",str(casacore_version_minor)) \
+                     .replace("@PROJECT_VERSION_PATCH@",casacore_version_patch)
+            out.write(l)
+
+
 if __name__ == '__main__':
     ## ensure that we use the version of python selected by configure...
     targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print(sys.executable)"])).split('\n')[0]
@@ -1994,6 +2019,8 @@ if __name__ == '__main__':
                             file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
                                           'fmosft.f', 'fwproj.f', 'phasol.f' ]
     )
+
+    generate_casacore_version_header()
 
     if not os.path.exists('.built.grpc'):
         build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
