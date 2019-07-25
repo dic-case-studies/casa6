@@ -95,6 +95,15 @@ namespace casa {
     }
 
     void grpcPlotMS::update_parameters( int index ) {
+
+        // do not do updates when there have been no changes...
+        if ( param_groups.size( ) <= 0 ) return;
+        int index_count = std::accumulate( param_groups.begin( ), param_groups.end( ), 0,
+                                           [=]( int acc, std::pair<std::pair<int,int>,PlotMSPlotParameters::Group*> p ) {
+                                               return p.first.first == index ? acc+1 : acc; } );
+        if ( index_count == 0 ) return;
+
+
         PlotMSPlotParameters* sp = get_sysparams(index);
         if ( sp == NULL ) {
             fprintf( stderr, "internal inconsistency, plot parameter %d (of %d) not available\n",
@@ -114,6 +123,10 @@ namespace casa {
     }
 
     void grpcPlotMS::update_parameters( ) {
+
+        // do not do updates when there have been no changes...
+        if ( param_groups.size( ) <= 0 ) return;
+
         // -----  hold all notifications
         for ( int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
             PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
@@ -181,7 +194,6 @@ namespace casa {
     void grpcPlotMS::qtGO( std::function<void()> func ) {
         static std::thread::id gui_thread;
         if ( gui_thread == std::thread::id( ) ) {
-            std::cout << "\t\t[SETUP INVOCATION-]:\t" << gui_thread << "/" << std::this_thread::get_id() << std::endl;
             std::promise<bool> prom;
             plotter_->grpc_queue.push(
                 [&]( ) {
@@ -194,11 +206,9 @@ namespace casa {
         }
 
         if ( std::this_thread::get_id() == gui_thread ) {
-            std::cout << "\t\t[DIRECT INVOCATION]:\t" << gui_thread << "/" << std::this_thread::get_id() << std::endl;
             try { func( ); }
             catch(...) { fprintf( stderr, "exception encountered (gui call)\n"); }
         } else {
-            std::cout << "\t\t[EMIT INVOCATION--]:\t" << gui_thread << "/" << std::this_thread::get_id() << std::endl;
             std::lock_guard<std::mutex> exc(plotter_->grpc_queue_mutex);
             plotter_->grpc_queue.push(func);
             emit new_op( );
