@@ -221,9 +221,8 @@ def applycal(
 
 def reportflags(rec):
     try:
-        if rec.keys().count('origin') == 1 and rec['origin'] \
-            == 'Calibrater::correct' and rec.keys().count('VisEquation'
-                ) == 1:
+        if 'origin' in rec and rec['origin'] \
+            == 'Calibrater::correct' and 'VisEquation' in rec:
             casalog.post('Calibration apply flagging statistics (among calibrateable spws):'
                          )
             VE = rec['VisEquation']
@@ -261,6 +260,6 @@ def reportflags(rec):
     except Exception as instance:
         # complain mildly, but don't alarm
         casalog.post('Error formatting some or all of the applycal flagging log info: '
-                      + str(instance))
+                      + str(instance), 'SEVERE')
 
 
