@@ -5,20 +5,21 @@ import os
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
 if is_CASA6:
-    from casatools import vlafiller, ms, agentflagger
+    from casatools import vlafiller, ms, agentflagger, table
     from casatasks import casalog
     from .mstools import write_history
 
     _ms = ms( )
-    _af = agentflagger( )
     _filler = vlafiller( )
 else:
     from taskinit import casac, casalog
+    from taskinit import tbtool as table
     from mstools import write_history
 
     _filler = casac.vlafillertask()
-    _af = casac.agentflagger()
     _ms = casac.ms()
+
+    agentflagger = casac.agentflagger
 
 def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
               stoptime,applytsys,autocorr,antnamescheme,keepblanks,evlabands):
@@ -42,8 +43,24 @@ def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
             else:
                 raise Exception('Archive file not found - please verify the name')
     except Exception:
-        print('*** Error importing %s to %s:' % (archivefiles, vis))
+        casalog.post("*** Error importing %s to %s" % (archivefiles, vis), 'SEVERE')
+        casalog.post("    %s" % instance, 'SEVERE')
         raise
+
+    nrows = 0
+    try:
+        _tb = table()
+        ok &=_tb.open(vis)
+        nrows =  _tb.nrows()
+        _tb.done()
+    except Exception:
+        casalog.post("*** Error checking size of visibility file %s: %s" % (vis,instance), 'SEVERE')
+        raise
+
+    if nrows == 0:
+        msg = "*** visibility file is empty: %s" % vis
+        casalog.post(msg, 'SEVERE')
+        raise Exception(msg)
 
     # Write history
     try:
@@ -58,10 +75,12 @@ def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
         casalog.post("*** Error \'%s\' updating HISTORY" % instance, 'WARN')
 
     # write initial flag version
-    try:
-        ok &= _af.open(vis);
-        ok &= _af.saveflagversion('Original', comment='Original flags at import into CASA', merge='replace')
-        ok &= _af.done();
-    except:
-        print('*** Error writing initial flag version of %s:' % vis)
-        raise
+    if ok:
+        try:
+            _af = agentflagger()
+            ok &= _af.open(vis);
+            ok &= _af.saveflagversion('Original', comment='Original flags at import into CASA', merge='replace')
+            ok &= _af.done();
+        except:
+            casalog.post("*** Error writing initial flag version of %s: %s" % (vis, instance), 'SEVERE')
+            raise

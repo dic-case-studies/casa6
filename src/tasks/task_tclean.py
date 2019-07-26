@@ -96,7 +96,7 @@ def tclean(
     deconvolver,#='hogbom',
     scales,#=[],
     nterms,#=1,
-    smallscalebias,#=0.6
+    smallscalebias,#=0.0
 
     ### restoration options
     restoration,
@@ -183,8 +183,12 @@ def tclean(
 #        casalog.post( "The MTMFS deconvolution algorithm (deconvolver='mtmfs') needs nterms>1.Please set nterms=2 (or more). ", "WARN", "task_tclean" )
 #        return
 
-    if specmode!='mfs' and deconvolver=="mtmfs":
-        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs'.", "WARN", "task_tclean" )
+    if (deconvolver=="mtmfs") and (specmode!='mfs') and (specmode!='cube' or nterms!=1) and (specmode!='cubedata' or nterms!=1):
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_tclean" )
+        return
+      
+    if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 and parallel==True):
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_tclean" )
         return
 
     #####################################################
@@ -275,6 +279,9 @@ def tclean(
             t1=time.time();
             casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
+        ####now is the time to check estimated memory
+        imager.estimatememory()
+            
         if niter>0:
             t0=time.time();
             imager.initializeIterationControl()

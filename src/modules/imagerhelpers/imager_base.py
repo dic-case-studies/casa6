@@ -10,8 +10,11 @@ import copy
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink
+    from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink, ctsys, table
     from casatasks import casalog
+
+    ctsys_hostinfo = ctsys.hostinfo
+    _tb = table()
 else:
     from taskinit import *
 
@@ -21,6 +24,9 @@ else:
     # make it look like the CASA6 version even though it's using the CASA5 named tool not present in CASA6
     iterbotsink = casac.synthesisiterbot
 
+    ctsys_hostinfo = casac.cu.hostinfo
+
+    _tb = tb
 '''
 A set of helper functions for tclean.
 
@@ -119,7 +125,6 @@ class PySynthesisImager:
         # For cube imaging:  align the data selections and image setup
         #if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
          #   self.SItool.tuneselectdata()
-
         #self.makeCFCache(exists);
 
 #############################################
@@ -128,6 +133,7 @@ class PySynthesisImager:
          for immod in range(0,self.NF):
               self.SDtools.append(synthesisdeconvolver())
               self.SDtools[immod].setupdeconvolution(decpars=self.alldecpars[str(immod)])
+             
 
 #############################################
     ## Overloaded by ParallelCont
@@ -145,9 +151,32 @@ class PySynthesisImager:
         itbot = self.IBtool.setupiteration(iterpars=self.iterpars)
 
 #############################################
-
+    def estimatememory(self):
+        #print "MEMORY usage ", self.SItool.estimatememory(), type(self.SItool.estimatememory())
+        #griddermem=0
+        if(self.SItool != None):
+            griddermem= self.SItool.estimatememory()
+        deconmem=0
+        for immod in range(0,self.NF):
+            ims= self.allimpars[str(immod)]['imsize']
+            if(type(ims)==int) :
+                ims=[ims, ims]
+            if(len(ims) ==1):
+                ims.append(ims[0])
+            #print 'shape', self.allimpars[str(immod)]['imsize'], len(ims) 
+            #print "DECON mem usage ", self.SDtools[immod].estimatememory(ims)
+            if(len(self.SDtools) > immod):
+                if(self.SDtools != None):
+                    deconmem+=self.SDtools[immod].estimatememory(ims)
+        availmem=ctsys_hostinfo()['memory']['available']
+        if((deconmem+griddermem) > 0.8*availmem):
+            casalog.post("Memory available "+str(availmem)+" kB is very close to amount of required memory "+str(deconmem+griddermem)+" kB" , "WARN")
+        else:
+            casalog.post("Memory available "+str(availmem)+" kB and  required memory "+str(deconmem+griddermem)+" kB" , "INFO2")
+############################################
     def restoreImages(self):
-         for immod in range(0,self.NF):
+        print("SHOW cache ",_tb.showcache())
+        for immod in range(0,self.NF):
               self.SDtools[immod].restore()
 
 #############################################
