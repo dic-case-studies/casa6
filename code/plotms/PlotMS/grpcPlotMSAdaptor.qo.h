@@ -164,6 +164,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     protected:
         // update parameters
+        void clear_parameters( );
         void update_parameters( );
         void update_parameters(int index);
         void populate_selection( const ::rpc::plotms::SetSelection &req, PlotMSSelection &sel );
