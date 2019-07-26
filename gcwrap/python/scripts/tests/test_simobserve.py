@@ -55,7 +55,7 @@ class simobserve_unittest_base(unittest.TestCase):
         
     thistask = "simobserve"
     imkeys=['max','mean','min','npts','rms','blc','blcf','trc','trcf','sigma','sum','sumsq']
-    # relative and ablsolute tolerance
+    # relative and absolute tolerance
     # (atol=0. means to ignore absolute tolerance)
     rtol = 5.0e-3
     atol = 0.
@@ -83,7 +83,6 @@ class simobserve_unittest_base(unittest.TestCase):
         _ms.close()
         return stats[stats.keys()[0]]
 
-    # TODO: need to check image axes
     def _check_imstats(self, name, ref, rtol=None, atol=None):
         # ref: a dictionary of reference statistics or reference image name
         # name: the name of image to compare statistics
@@ -110,10 +109,27 @@ class simobserve_unittest_base(unittest.TestCase):
                       (key, type(stats[key]), str(stats[key]), str(ref[key]))))
             message="image statistic '%s' does not match: %s (expected: %s)" % \
                      (key, str(stats[key]), str(ref[key]))
-            if type(stats[key])==str:
-                self.assertEqual(stats[key],ref[key],
-                                 msg=message)
+            if type(stats[key])==str: 
+                # only maxposf, minposf, blcf, trcf return <type 'str'>
+                # these are actually all lists
+                ax_stats = [x.strip() for x in stats[key].split(',')]
+                ax_ref = [x.strip() for x in ref[key].split(',')]
+                # compare dimension of image axes
+                self.assertEqual(len(ax_stats),len(ax_ref),msg=message)
+                # extract, compare numerical data from axis world coordinates
+                for kk in zip(ax_stats, ax_ref):
+                    # only check the first element in tuple
+                    if qa.isquantity(kk[0]):
+                        # test and reference numbers
+                        s_val = qa.quantity(kk[0])['value']
+                        r_val = qa.quantity(kk[1])['value']
+                        ret=numpy.allclose(s_val,r_val,
+                                           rtol=rtol,atol=atol)
+                        self.assertEqual(ret,True,msg=message)
+                    else: # should only be Stokes axis
+                        self.assertEqual(kk[0],kk[1],msg=message)
             else:
+                # not a string so expect numpy arrays
                 ret=numpy.allclose(stats[key],ref[key],
                                    rtol=rtol,atol=atol)
                 self.assertEqual(ret,True,msg=message)
@@ -481,6 +497,7 @@ class simobserve_comp(simobserve_unittest_base):
     project = simobserve_unittest_base.thistask+"_comp"
     incomp = "core5ps.clist"
     compwidth = "10MHz"
+    comp_nchan = 1
     direction = "J2000 19h00m00 -23d00m00"
     sdantlist = "aca.tp.cfg"
     antlist = "alma.out01.cfg"
@@ -505,6 +522,11 @@ class simobserve_comp(simobserve_unittest_base):
         # reference simulated MS
         self.refms_sd = self.refpref_sd+".sd.ms"
         self.refms_int = self.refpref_int+".ms"
+
+        # new data for comp_nchan > 1
+        self.refmodel_int_8ch = self.refpref_int+".8ch.compskymodel"
+        self.refms_int_8ch = self.refpref_int+".8ch.ms"
+
         # copy input components list
         self._copy_input(self.incomp)
 
@@ -518,11 +540,12 @@ class simobserve_comp(simobserve_unittest_base):
         """Test complist simulation: only generating input model"""
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         obsmode = ""
         antennalist="alma.out01.cfg" # necessary even if only modifymodel
         sdantlist = ""
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,
+                         compwidth=compwidth,comp_nchan=comp_nchan,
                          setpointings=True,obsmode=obsmode,
                          antennalist=antennalist,sdantlist=sdantlist,
                          thermalnoise="",graphics=self.graphics)
@@ -536,13 +559,14 @@ class simobserve_comp(simobserve_unittest_base):
         """Test complist simulation: only setpointing (maptype='ALMA')"""
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = True
         maptype = "ALMA"
         obsmode = ""
         antennalist = "alma.out01.cfg"
         sdantlist = ""
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,
+                         compwidth=compwidth,comp_nchan=comp_nchan,
                          setpointings=setpointings,maptype=maptype,
                          obsmode=obsmode,antennalist=antennalist,
                          sdantlist=sdantlist,
@@ -558,13 +582,14 @@ class simobserve_comp(simobserve_unittest_base):
         """Test complist simulation: only setpointing (maptype='hexagonal')"""
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = True
         maptype = "hexagonal"
         obsmode = ""
         antennalist = "aca.i.cfg"
         sdantlist = ""
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,
+                         compwidth=compwidth,comp_nchan=comp_nchan,
                          setpointings=setpointings,maptype=maptype,
                          obsmode=obsmode,antennalist=antennalist,
                          sdantlist=sdantlist,
@@ -580,13 +605,14 @@ class simobserve_comp(simobserve_unittest_base):
         """Test complist simulation: only setpointing (maptype='square')"""
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = True
         maptype = "square"
         obsmode = ""
         antennalist = ""
         sdantlist = self.sdantlist
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,
+                         compwidth=compwidth,comp_nchan=comp_nchan,
                          setpointings=setpointings,maptype=maptype,
                          obsmode=obsmode,antennalist=antennalist,
                          sdantlist=sdantlist,
@@ -610,7 +636,7 @@ class simobserve_comp(simobserve_unittest_base):
         sdantlist = self.sdantlist
         totaltime = "144s"
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,
+                         compwidth=compwidth,comp_nchan=comp_nchan,
                          setpointings=setpointings,ptgfile=ptgfile,
                          integration=integration,obsmode=obsmode,
                          sdantlist=sdantlist,totaltime=totaltime,
@@ -626,6 +652,7 @@ class simobserve_comp(simobserve_unittest_base):
         """Test complist simulation: only observation (INT)"""
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = False
         ptgfile = self.refpref_int + ".ptg.txt"
         integration = "4s"
@@ -633,7 +660,7 @@ class simobserve_comp(simobserve_unittest_base):
         antennalist = 'alma.out01.cfg'
         totaltime = "28s"
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,
+                         compwidth=compwidth,comp_nchan=comp_nchan,
                          setpointings=setpointings,ptgfile=ptgfile,
                          integration=integration,obsmode=obsmode,
                          antennalist=antennalist,totaltime=totaltime,
@@ -654,7 +681,7 @@ class simobserve_comp(simobserve_unittest_base):
         obsmode = ""
         leakage = 0.5
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,
+                         compwidth=compwidth,comp_nchan=comp_nchan,
                          setpointings=setpointings,ptgfile=ptgfile,
                          obsmode=obsmode,thermalnoise="",
                          leakage=leakage,graphics=self.graphics)
@@ -664,6 +691,7 @@ class simobserve_comp(simobserve_unittest_base):
         """Test complist simulation: single dish"""
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         integration = "4s"
         direction = self.direction
         mapsize = ["60arcsec", "60arcsec"]
@@ -672,7 +700,8 @@ class simobserve_comp(simobserve_unittest_base):
         sdantlist = "aca.tp.cfg"
         totaltime = "144s"
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,setpointings=True,
+                         compwidth =
+                         compwidth,comp_nchan=comp_nchan,setpointings=True,
                          integration=integration,direction=direction,
                          mapsize=mapsize,maptype=maptype,obsmode=obsmode,
                          totaltime=totaltime,antennalist="",sdantlist=sdantlist,
@@ -690,6 +719,7 @@ class simobserve_comp(simobserve_unittest_base):
         """Test complist simulation: interferometer"""
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         integration = "4s"
         direction = self.direction
         mapsize = ['20arcsec', '20arcsec']
@@ -698,11 +728,12 @@ class simobserve_comp(simobserve_unittest_base):
         antennalist = 'alma.out01.cfg'
         totaltime = "28s"
         res = simobserve(project=self.project,complist=complist,
-                         compwidth = compwidth,setpointings=True,
-                         integration=integration,direction=direction,
-                         mapsize=mapsize,maptype=maptype,obsmode=obsmode,
-                         totaltime=totaltime,antennalist=antennalist,
-                         thermalnoise="",graphics=self.graphics)
+                         compwidth=compwidth,comp_nchan=comp_nchan,
+                         setpointings=True,integration=integration,
+                         direction=direction,mapsize=mapsize,maptype=maptype,
+                         obsmode=obsmode,totaltime=totaltime,
+                         antennalist=antennalist,thermalnoise="",
+                         graphics=self.graphics)
         self.assertTrue(res)
         # compare outputs
         currpref = self.project + "/" + \
@@ -711,6 +742,35 @@ class simobserve_comp(simobserve_unittest_base):
         self._check_ptgfile(currpref+".ptg.txt", self.refpref_int+".ptg.txt")
         self._check_msstats(currpref+".ms",self.refms_int)
 
+    def testComp_intNchan(self):
+        """Test complist simulation: interferometer, but with comp_nchan > 1"""
+        complist = self.incomp
+        compwidth = self.compwidth
+        comp_nchan = 8
+        integration = "4s"
+        direction = self.direction
+        mapsize = ['20arcsec', '20arcsec']
+        maptype = "ALMA"
+        obsmode = 'int'
+        antennalist = 'alma.out01.cfg'
+        totaltime = "28s"
+        res = simobserve(project=self.project,complist=complist,
+                         compwidth=compwidth,comp_nchan=comp_nchan,
+                         setpointings=True,
+                         integration=integration,direction=direction,
+                         mapsize=mapsize,maptype=maptype,obsmode=obsmode,
+                         totaltime=totaltime,antennalist=antennalist,
+                         thermalnoise="",graphics=self.graphics)
+        self.assertTrue(res)
+        # compare outputs
+        currpref = self.project + "/" + \
+                 self._get_data_prefix(antennalist,self.project)
+        self._check_imstats(currpref+".compskymodel", 
+                            self.refmodel_int_8ch)
+        self._check_ptgfile(currpref+".ptg.txt", 
+                            self.refpref_int+".8ch.ptg.txt")
+        self._check_msstats(currpref+".ms",
+                            self.refms_int_8ch)
 
 
 ########################################################################
@@ -728,6 +788,7 @@ class simobserve_skycomp(simobserve_unittest_base):
     indirection = "J2000 19h00m00 -23d00m00"
     incomp = "ps5.clist"
     compwidth = "10MHz"
+    comp_nchan = 1
     sdantlist = "aca.tp.cfg"
     antlist = "alma.out01.cfg"
 
@@ -770,6 +831,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         #setpointings = False
         #ptgfile =   # necessary even if only modifymodel
         obsmode = ""
@@ -777,6 +839,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         sdantlist = ""
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=True,obsmode=obsmode,
                          antennalist=antennalist,sdantlist=sdantlist,
                          thermalnoise="",graphics=self.graphics)
@@ -792,6 +855,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = True
         maptype = "ALMA"
         obsmode = ""
@@ -799,6 +863,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         sdantlist = ""
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=setpointings,maptype=maptype,
                          obsmode=obsmode,antennalist=antennalist,
                          sdantlist=sdantlist,
@@ -815,6 +880,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = True
         maptype = "hexagonal"
         obsmode = ""
@@ -822,6 +888,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         sdantlist = ""
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=setpointings,maptype=maptype,
                          obsmode=obsmode,antennalist=antennalist,
                          sdantlist=sdantlist,
@@ -838,6 +905,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = True
         maptype = "square"
         obsmode = ""
@@ -845,6 +913,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         sdantlist = self.sdantlist
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=setpointings,maptype=maptype,
                          obsmode=obsmode,antennalist=antennalist,
                          sdantlist=sdantlist,
@@ -862,6 +931,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = False
         ptgfile = self.refpref_sd + ".ptg.txt"
         integration = "4s"
@@ -870,6 +940,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         totaltime = "144s"
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=setpointings,ptgfile=ptgfile,
                          integration=integration,obsmode=obsmode,
                          sdantlist=sdantlist,totaltime=totaltime,
@@ -886,6 +957,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = False
         ptgfile = self.refpref_int + ".ptg.txt"
         integration = "4s"
@@ -894,6 +966,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         totaltime = "28s"
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=setpointings,ptgfile=ptgfile,
                          integration=integration,obsmode=obsmode,
                          antennalist=antennalist,totaltime=totaltime,
@@ -910,11 +983,13 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         setpointings = False
         obsmode = ""
         leakage = 0.5
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=setpointings,ptgfile=ptgfile,
                          obsmode=obsmode,thermalnoise="",
                          leakage=leakage,graphics=self.graphics)
@@ -925,6 +1000,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         integration = "4s"
         mapsize = ["60arcsec", "60arcsec"]
         maptype = "square"
@@ -933,6 +1009,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         totaltime = "144s"
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=True,integration=integration,
                          mapsize=mapsize,maptype=maptype,obsmode=obsmode,
                          totaltime=totaltime,antennalist="",sdantlist=sdantlist,
@@ -951,6 +1028,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         skymodel = self.inmodel
         complist = self.incomp
         compwidth = self.compwidth
+        comp_nchan = self.comp_nchan
         integration = "4s"
         mapsize = ['20arcsec', '20arcsec']
         maptype = "ALMA"
@@ -959,6 +1037,7 @@ class simobserve_skycomp(simobserve_unittest_base):
         totaltime = "28s"
         res = simobserve(project=self.project,skymodel=skymodel,
                          complist=complist,compwidth=compwidth,
+                         comp_nchan=comp_nchan,
                          setpointings=True,integration=integration,
                          mapsize=mapsize,maptype=maptype,obsmode=obsmode,
                          totaltime=totaltime,antennalist=antennalist,
@@ -1704,15 +1783,30 @@ class simobserve_badinputs(simobserve_unittest_base):
         """Test bad compwidth"""
         # not frequency
         compwidth="2arcsec"
+        comp_nchan=1
         try:
             res = simobserve(project=self.project,complist=self.incomp,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             compwidth=compwidth)
+                             compwidth=compwidth,comp_nchan=comp_nchan)
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("Quantum::operator- unequal units 'GHz, 'arcsec'")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
+
+    def testBad_comp_nchan(self):
+        """Test bad comp_nchan"""
+        compwidth="2arcsec"
+        comp_nchan=self.badnum
+        try:
+            res = simobserve(project=self.project,complist=self.incomp,
+                             totaltime=self.tottime,mapsize=self.mapsize,
+                             compwidth=compwidth,comp_nchan=comp_nchan)
+            self.fail(self.failmsg)
+        except Exception, e:
+            pos=str(e).find("Parameter verification failed")
+            msg =  self.errmsg % str(e)
+            self.assertNotEqual(pos,-1,msg=msg)        
         
     @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_ptgfile(self):

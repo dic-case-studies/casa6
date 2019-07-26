@@ -2886,16 +2886,22 @@ Bool SolvableVisCal::syncSolveMeta(VisBuffGroupAcc& vbga) {
 void SolvableVisCal::syncSolveMeta(SDBList& sdbs) {  // VI2
   
   //  cout << "spwMap() = " << spwMap() << endl;
-  
-  
 
   // Ask the sdbs
+  Vector<Double> freqs;
+  if (freqDepPar()) 
+    // nominally channelized
+    freqs.reference(sdbs.freqs());
+  else
+    // a single aggregate frequency (as a Vector)
+    freqs.reference(Vector<Double>(1,sdbs.aggregateCentroidFreq()));
+
   setMeta(sdbs.aggregateObsId(),
 	  sdbs.aggregateScan(),
 	  //sdbs.aggregateTime(),   
 	  sdbs.aggregateTimeCentroid(),
 	  sdbs.aggregateSpw(),
-	  sdbs.freqs(),
+	  freqs,        
 	  sdbs.aggregateFld());
 }
 
@@ -3597,9 +3603,23 @@ void SolvableVisCal::calcPar() {
 
   // Interpolate solution   (CTPatchedInterp)
   if (freqDepPar()) {
-    //    cout << "currFreq() = " << currFreq().shape() << " " << currFreq() << endl;
+
+    //cout << "currFreq() = " << currFreq().shape() << " " << currFreq() << endl;
+
     // Call w/ freq-dep
-    newcal=ci_->interpolate(currObs(),currField(),currSpw(),currTime(),currFreq());
+    if (fInterpType().contains("rel")) {
+      // Relative freq
+      Double freqOff(msmc().centerFreq(currSpw()));
+      Double SBfactor(1.0);
+      if (currFreq().nelements()>1 && currFreq()(0)>currFreq()(1))
+	SBfactor=-1.0f;
+      //cout << "freqOff=" << freqOff << " SBfactor=" << SBfactor << " netSB=" << msmc().msmd().getNetSidebands()[currSpw()] << endl;
+      newcal=ci_->interpolate(currObs(),currField(),currSpw(),currTime(),(currFreq()-freqOff)*SBfactor);
+    }
+    else
+      // absolute freq
+      newcal=ci_->interpolate(currObs(),currField(),currSpw(),currTime(),currFreq());
+
     //    cout.precision(12);
     //    cout << typeName() << " t="<< currTime() << " newcal=" << boolalpha << newcal << endl;
   }
