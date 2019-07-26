@@ -10,8 +10,11 @@ import copy
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink
+    from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink, ctsys, table
     from casatasks import casalog
+
+    ctsys_hostinfo = ctsys.hostinfo
+    _tb = table()
 else:
     from taskinit import *
 
@@ -21,6 +24,9 @@ else:
     # make it look like the CASA6 version even though it's using the CASA5 named tool not present in CASA6
     iterbotsink = casac.synthesisiterbot
 
+    ctsys_hostinfo = casac.cu.hostinfo
+
+    _tb = tb
 '''
 A set of helper functions for tclean.
 
@@ -162,14 +168,14 @@ class PySynthesisImager:
             if(len(self.SDtools) > immod):
                 if(self.SDtools != None):
                     deconmem+=self.SDtools[immod].estimatememory(ims)
-        availmem=casac.cu.hostinfo()['memory']['available']
+        availmem=ctsys_hostinfo()['memory']['available']
         if((deconmem+griddermem) > 0.8*availmem):
             casalog.post("Memory available "+str(availmem)+" kB is very close to amount of required memory "+str(deconmem+griddermem)+" kB" , "WARN")
         else:
             casalog.post("Memory available "+str(availmem)+" kB and  required memory "+str(deconmem+griddermem)+" kB" , "INFO2")
 ############################################
     def restoreImages(self):
-        print "SHOW cache ", tb.showcache()
+        print("SHOW cache ",_tb.showcache())
         for immod in range(0,self.NF):
               self.SDtools[immod].restore()
 

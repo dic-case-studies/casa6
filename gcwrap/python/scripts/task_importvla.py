@@ -13,13 +13,13 @@ if is_CASA6:
     _filler = vlafiller( )
 else:
     from taskinit import casac, casalog
+    from taskinit import tbtool as table
     from mstools import write_history
 
     _filler = casac.vlafillertask()
     _ms = casac.ms()
 
     agentflagger = casac.agentflagger
-    table = tbtool
 
 def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
               stoptime,applytsys,autocorr,antnamescheme,keepblanks,evlabands):
@@ -45,14 +45,14 @@ def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
     except Exception:
         casalog.post("*** Error importing %s to %s" % (archivefiles, vis), 'SEVERE')
         casalog.post("    %s" % instance, 'SEVERE')
-	raise
+        raise
 
     nrows = 0
     try:
         _tb = table()
         ok &=_tb.open(vis)
         nrows =  _tb.nrows()
-	_tb.done()
+        _tb.done()
     except Exception:
         casalog.post("*** Error checking size of visibility file %s: %s" % (vis,instance), 'SEVERE')
         raise
@@ -76,11 +76,11 @@ def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
 
     # write initial flag version
     if ok:
-    try:
-        _af = agentflagger()
-        ok &= _af.open(vis);
-        ok &= _af.saveflagversion('Original', comment='Original flags at import into CASA', merge='replace')
-        ok &= _af.done();
-    except:
-	casalog.post("*** Error writing initial flag version of %s: %s" % (vis, instance), 'SEVERE')
-	raise
+        try:
+            _af = agentflagger()
+            ok &= _af.open(vis);
+            ok &= _af.saveflagversion('Original', comment='Original flags at import into CASA', merge='replace')
+            ok &= _af.done();
+        except:
+            casalog.post("*** Error writing initial flag version of %s: %s" % (vis, instance), 'SEVERE')
+            raise
