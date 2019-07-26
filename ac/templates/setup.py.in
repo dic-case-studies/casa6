@@ -1448,6 +1448,37 @@ def write_yacc(additional_casacore_filtered_dirs=[], additional_casacode_filtere
         mk.write(".PHONY: " + yacc_target + "\n")
         mk.write(yacc_target + ": " + sep.join(yacc_list) + "\n")
 
+def write_lex(additional_casacore_filtered_dirs=[], additional_casacode_filtered_dirs=[]):
+    # lex
+    CASACORE_LEX = source_files(
+        "casa-source/casacore", file_suffix_filter=".ll",
+        subdir_filter=additional_casacore_filtered_dirs
+    ) if additional_casacore_filtered_dirs else source_files(
+        "casa-source/casacore",file_suffix_filter=".ll"
+    )
+    CODE_LEX = source_files(
+        "casa-source/code",file_suffix_filter=".ll",
+        subdir_filter=[ 'tests','test','apps','display','plotms','guitools',
+        'display3d','demo','casaqt','Filling' ] + additional_casacode_filtered_dirs
+    )
+    output_dir="libcasatools/generated/include"
+    obj_name = os.path.join(output_dir,'{base}.lcc')
+    lex_obj_targ = (
+        obj_name + ": {src}\n\t" + props["build.compiler.flex"] + " -P{base} -o $@ $<\n"
+    )
+    lex_list = []
+    with open("makefile", "a") as mk:
+        for f in CASACORE_LEX + CODE_LEX:
+            name = os.path.basename(f)
+            base = os.path.splitext(name)[0]
+            objfile = obj_name.format(base=base)
+            lex_list.append(objfile)
+            mk.write(lex_obj_targ.format(src=f, base=base))
+        mk.write("\n# targets to compile lex code to object files\n")
+        mk.write(".PHONY: " + lex_target + "\n")
+        mk.write(lex_target + ": " + sep.join(lex_list) + "\n")
+
+
 class create_makefile(Command):
     user_options = [
       # The format is (long option, short option, description).
@@ -1486,35 +1517,7 @@ class create_makefile(Command):
         write_makefile_begin(my_targets)
         write_make_cpp()
         write_yacc()
-        """
-        # yacc
-        CASACORE_YACC = source_files(
-            "casa-source/casacore", file_suffix_filter=".yy"
-        )
-        CODE_YACC = source_files(
-            "casa-source/code", file_suffix_filter=".yy",
-            subdir_filter=[
-                'tests','test', 'apps', 'display', 'plotms', 'guitools',
-                'display3d', 'demo', 'casaqt', 'Filling'
-            ]
-        )
-        output_dir="libcasatools/generated/include"
-        obj_name = os.path.join(output_dir,'{base}.ycc')
-        yacc_obj_targ = (
-            obj_name + ": {src}\n\t" + props["build.compiler.bison"] + " -y -p {base} -o $@ $<\n"
-        )
-        yacc_list = []
-        with open("makefile", "a") as mk:
-            for f in CASACORE_YACC + CODE_YACC:
-                #for f in mysrc:
-                name = os.path.basename(f)
-                base = os.path.splitext(name)[0]
-                objfile = obj_name.format(base=base)
-                yacc_list.append(objfile)
-                mk.write('\n\n' + yacc_obj_targ.format(src=f, base=base))
-            mk.write("\n# targets to compile yacc code to object files\n")
-            mk.write(".PHONY: " + yacc_target + "\n")
-            mk.write(yacc_target + ": " + sep.join(yacc_list) + "\n")
+        write_lex()
         """
         # lex
         CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
@@ -1537,7 +1540,7 @@ class create_makefile(Command):
             mk.write("\n# targets to compile lex code to object files\n")
             mk.write(".PHONY: " + lex_target + "\n")
             mk.write(lex_target + ": " + sep.join(lex_list) + "\n")
-
+        """
         MIR_SRC =  source_files( "casa-source/casacore/mirlib",file_suffix_filter=".c" )
         includes = sep.join(get_new_cxx_compiler_includes())
         flags = sep.join(["$(DEPFLAGS)"] + get_new_c_compiler_flags())
@@ -1913,6 +1916,7 @@ class create_makefile_ia(Command):
         additional_subdir_filters = casacore_filters + casacode_filters
         write_make_cpp(additional_subdir_filters, False, False)
         write_yacc(["ms"], ["synthesis"])
+        write_lex(["ms"], ["synthesis"])
 
     def run(self):
         self.__build_developer_grpc( )
