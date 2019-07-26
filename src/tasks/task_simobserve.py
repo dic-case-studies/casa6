@@ -19,17 +19,17 @@ else:
     from simutil import is_array_type
 
 def simobserve(
-    project=None, 
-    skymodel=None, inbright=None, indirection=None, incell=None, 
+    project=None,
+    skymodel=None, inbright=None, indirection=None, incell=None,
     incenter=None, inwidth=None, # innchan=None,
-    complist=None, compwidth=None,
+    complist=None, compwidth=None, comp_nchan=1,
     setpointings=None,
-    ptgfile=None, integration=None, direction=None, mapsize=None, 
-    maptype=None, pointingspacing=None, caldirection=None, calflux=None, 
+    ptgfile=None, integration=None, direction=None, mapsize=None,
+    maptype=None, pointingspacing=None, caldirection=None, calflux=None,
     # observe=None,
-    obsmode=None, 
-    refdate=None, hourangle=None, 
-    totaltime=None, antennalist=None, 
+    obsmode=None,
+    refdate=None, hourangle=None,
+    totaltime=None, antennalist=None,
     sdantlist=None,
     sdant=None,
     outframe=None,
@@ -37,7 +37,7 @@ def simobserve(
     user_pwv=None, t_ground=None, t_sky=None, tau0=None, seed=None,
     leakage=None,
     graphics=None,
-    verbose=None, 
+    verbose=None,
     overwrite=None
     ):
 
@@ -72,7 +72,7 @@ def simobserve(
         if verbose: util.verbose = True
         msg = util.msg
 
-        # it was requested to make the user interface "observe" for what 
+        # it was requested to make the user interface "observe" for what
         # is sm.observe and sm.predict.
         # interally the code is clearer if we stick with predict so
         predict = obsmode.startswith('i') or obsmode.startswith('s')
@@ -99,7 +99,7 @@ def simobserve(
             os.mkdir(fileroot)
 
 
-        # filename parsing of cfg file here so that the project filenames 
+        # filename parsing of cfg file here so that the project filenames
         # can contain the cfg
         if is_CASA6:
             repodir = ctsys.resolve("alma/simmos")
@@ -156,7 +156,7 @@ def simobserve(
                 msg("Your complist '"+complist+"' could not be found.",priority="warn")
             if len(skymodel)==0 and len(complist)==0:
                 msg("At least one of skymodel or complist must be set.",priority="error")
-                
+
             else:
                 msg("No sky input found.  At least one of skymodel or complist must exist.",priority="error")
 
@@ -211,13 +211,13 @@ def simobserve(
             modelflat = fileroot + "/" + project + ".skymodel.flat"
             if os.path.exists(modelflat) and (not predict):
                 # if we're not predicting, then we want to use the previously
-                # created modelflat, because it may have components added 
+                # created modelflat, because it may have components added
                 msg("flat sky model "+modelflat+" exists, predict not requested",priority="warn")
                 msg(" working from existing model image - please delete it if you wish to overwrite.",priority="warn")
             else:
                 # create and add components into modelflat with util.flatimage()
                 util.flatimage(newmodel,complist=complist,verbose=verbose)
-                # we want the skymodel.flat image to be called that no matter what 
+                # we want the skymodel.flat image to be called that no matter what
                 # the skymodel image is called, since that's what used in analysis
                 if modelflat != newmodel+".flat":
                     if os.path.exists(modelflat):
@@ -251,7 +251,12 @@ def simobserve(
                 model_width = "2GHz"
                 msg("component-only simulation, compwidth unset: setting bandwidth to 2GHz",priority="warn")
 
-            model_nchan = 1
+            model_nchan = comp_nchan
+            # channelize component-only MS 
+            # currently assuming equal width and center as frequency reference
+            model_specrefpix = 0.5*(comp_nchan-1)
+            msg("scaling model bandwidth by model_nchan",priority="info")
+            model_width = qa.div(model_width,model_nchan)
             model_stokes = "I"
 
             cmax = 0.0014 # ~5 arcsec
@@ -419,19 +424,19 @@ def simobserve(
             return False
 
 
-        # now we have an estimate of the psf from the antenna configuration, 
-        # so we can guess a model_cell for the case of component-only 
-        # simulation, 
+        # now we have an estimate of the psf from the antenna configuration,
+        # so we can guess a model_cell for the case of component-only
+        # simulation,
         if components_only:
             # first set based on psfsize:
-            # needs high subsampling because small shifts in placement of 
+            # needs high subsampling because small shifts in placement of
             # components lead to large changes in the difference image.
             model_cell = [ qa.quantity(str(psfsize/20)+"arcsec"), qa.quantity(str(psfsize/20)+"arcsec") ]
-            
+
             # XXX if the user has set direction should we center the compskymodel there?
             # if len(direction)>0: model_refdir = direction
 
-        # and can create a compskymodel image (tmp) and 
+        # and can create a compskymodel image (tmp) and
         # skymodel.flat which is what is needed for analysis.
 
         if components_only:
@@ -558,9 +563,9 @@ def simobserve(
             if len(pointingspacing) < 1:
                 if uvmode:
                     # ALMA OT uses lambda/d/sqrt(3)
-                    pointingspacing = "%fPB" % (gridratio_int/pbcoeff) 
+                    pointingspacing = "%fPB" % (gridratio_int/pbcoeff)
                 else:
-                    pointingspacing = "%fPB" % (gridratio_tp/pbcoeff) 
+                    pointingspacing = "%fPB" % (gridratio_tp/pbcoeff)
             if str.upper(pointingspacing)=="NYQUIST":
                 pointingspacing="%fPB" % nyquist
             q = re.compile('(\d+.?\d+)\s*PB')
@@ -617,7 +622,7 @@ def simobserve(
 
 
         # find imcenter - phase center
-        imcenter , offsets = util.median_direction(pointings)     
+        imcenter , offsets = util.median_direction(pointings)
         epoch, ra, dec = util.direction_splitter(imcenter)
 
         # model is centered at model_refdir, and has model_size;
@@ -650,12 +655,12 @@ def simobserve(
         shift = [ (qa.convert(ra,'deg')['value'] -
                    qa.convert(mra,'deg')['value'])*pl.cos(qa.convert(dec,'rad')['value'] ),
                   (qa.convert(dec,'deg')['value'] - qa.convert(mdec,'deg')['value']) ]
-        if verbose: 
+        if verbose:
             msg("pointings are shifted relative to the model by %g,%g arcsec" % (shift[0]*3600,shift[1]*3600),origin='simobserve')
 
         xmax = qa.convert(model_size[0],'deg')['value']*0.5
         ymax = qa.convert(model_size[1],'deg')['value']*0.5
-        # add PB halfwidth (relmargin=0.5) 
+        # add PB halfwidth (relmargin=0.5)
         # for mosaics of small model images
         xmax=xmax+pb*relmargin/3600
         ymax=ymax+pb*relmargin/3600
@@ -716,13 +721,13 @@ def simobserve(
 
 
         ##################################################################
-        # create one figure for model and pointings - need antenna diam 
+        # create one figure for model and pointings - need antenna diam
         # to determine primary beam
         if grfile:
             file = fileroot + "/" + project + ".skymodel.png"
         else:
             file = ""
-    
+
         if grscreen or grfile:
             util.newfig(show=grscreen)
 
@@ -734,7 +739,7 @@ def simobserve(
                 pl.axis("equal")
             else:
                 discard = util.statim(modelflat,plot=True,incell=model_cell)
-            
+
             lims = pl.xlim(),pl.ylim()
             if pb <= 0 and verbose:
                 msg("unknown primary beam size for plot",priority="warn")
@@ -764,7 +769,7 @@ def simobserve(
             ylim = max(abs(pl.array(lims[1])))
             # show entire pb: (statim doesn't by default)
             pl.xlim([max([xlim,pb/2]),min([-xlim,-pb/2])])
-            pl.ylim([min([-ylim,-pb/2]),max([ylim,pb/2])])         
+            pl.ylim([min([-ylim,-pb/2]),max([ylim,pb/2])])
             pl.xlabel("resized model sky",fontsize="x-small")
             util.endfig(show=grscreen,filename=file)
 
@@ -817,10 +822,10 @@ def simobserve(
 
             if hourangle=="transit":
                 haoffset=0.0
-            else:                
+            else:
                 haoffset="no"
                 # is this a time quantity?
-                if qa.isquantity(str(hourangle)+"h"): 
+                if qa.isquantity(str(hourangle)+"h"):
                     if qa.compare(str(hourangle)+"h","s"):
                         haoffset=qa.convert(qa.quantity(str(hourangle)+
                                                         "h"),'s')['value']
@@ -882,7 +887,7 @@ def simobserve(
 
             sm.setconfig(telescopename=telescopename, x=stnx, y=stny, z=stnz,
                          dishdiameter=diam.tolist(),
-                         mount=[mounttype], antname=antnames, padname=padnames, 
+                         mount=[mounttype], antname=antnames, padname=padnames,
                          coordsystem='global', referencelocation=posobs)
             if str.upper(telescopename).find('VLA') >= 0:
                 sm.setspwindow(spwname=fband, freq=qa.tos(model_start),
@@ -894,12 +899,12 @@ def simobserve(
             else:
                 sm.setspwindow(spwname=fband, freq=qa.tos(model_start),
                                deltafreq=qa.tos(model_width),
-                               freqresolution=qa.tos(model_width), 
+                               freqresolution=qa.tos(model_width),
                                nchannels=model_nchan, refcode=outframe,
                                stokes='XX YY')
                 sm.setfeed(mode='perfect X Y',pol=[''])
 
-            if verbose: 
+            if verbose:
                 msg(" spectral window set at %s" % qa.tos(model_specrefval),origin='simobserve')
                 sm.setlimits(shadowlimit=0.01, elevationlimit='10deg')
             if uvmode:
@@ -910,7 +915,7 @@ def simobserve(
 
             mereftime = me.epoch('UTC', refdate)
             # integration is a scalar quantity, etime is a vector of seconds
-            sm.settimes(integrationtime=integration, usehourangle=usehourangle, 
+            sm.settimes(integrationtime=integration, usehourangle=usehourangle,
                         referencetime=mereftime)
 
             for k in range(0,nfld):
@@ -922,7 +927,7 @@ def simobserve(
                 else:
                     sourcefieldlist = sourcefieldlist + ',' + src
             if docalibrator:
-                sm.setfield(sourcename="phase calibrator", 
+                sm.setfield(sourcename="phase calibrator",
                             sourcedirection=caldirection,calcode='C',
                             distance='0m')
 
@@ -972,9 +977,9 @@ def simobserve(
 
                 if kfld == nfld:
                     if docalibrator:
-                        endtime = sttime + qa.convert(integration,'s')['value'] 
+                        endtime = sttime + qa.convert(integration,'s')['value']
 
-                        # need to observe cal singly to get new row in obs table, so 
+                        # need to observe cal singly to get new row in obs table, so
                         # first observemany the on-source pointing(s)
                         sm.observemany(sourcenames=srces,spwname=fband,starttimes=starttimes,stoptimes=stoptimes,project=project)
                         # and clear the list
@@ -1000,7 +1005,7 @@ def simobserve(
             sm.setdata(fieldid=range(0,nfld))
             if uvmode or components_only: #Interferometer only
                 sm.setvp(dovp=True,usedefaultvp=False)
-                # only use mosaic gridding for Het arrays for now - 
+                # only use mosaic gridding for Het arrays for now -
                 # the standard gridding with a VPSkyJones is less susceptible
                 # to issues if the image is too small which can happen a lot
                 # in Simulation.
@@ -1010,7 +1015,7 @@ def simobserve(
                     else:
                         msg("Heterogeneous array only supported for mosaics (nfld>1), and make sure that your image is larger than the primary beam or results may be unstable",priority="error")
                 else:
-                    # checks have to be manual since there's no way to 
+                    # checks have to be manual since there's no way to
                     # get the "diam" out of PBMath AFAIK
                     if telescopename=="ALMA":
                         if (diam[0]<10)|(diam[0]>13):
@@ -1083,13 +1088,13 @@ def simobserve(
                 restfreq[i]=qa.convert(qa.quantity(model_specrefval),'Hz')['value']
             tb.putcol("REST_FREQUENCY",restfreq)
             tb.done()
-            
+
 
 
 
 
             ############################################
-            # create figure 
+            # create figure
             if grfile:
                 file = fileroot + "/" + project + ".observe.png"
             else:
@@ -1152,7 +1157,7 @@ def simobserve(
 
                     # if obs is unknown, casalog will send a warning to screen - temporarily suppress that
                     if not telescopename in me.obslist():
-                        casalog.filter("ERROR")                        
+                        casalog.filter("ERROR")
                     im.approximatepsf(psf=fileroot+"/"+project+".quick.psf")
                     if not telescopename in me.obslist():
                         casalog.filter() # set back to default level.
@@ -1203,7 +1208,7 @@ def simobserve(
             if not uvmode: #Single-dish
                 msroot += ".sd"
                 noisymsroot += ".sd"
- 
+
             # Cosmic background radiation temperature in K.
             t_cmb = 2.725
 
@@ -1243,7 +1248,7 @@ def simobserve(
 
             # antenna efficiency
             eta_a = eta_p * eta_s * eta_b * eta_t
-            if verbose: 
+            if verbose:
                 msg('antenna efficiency    = '+str(eta_a), origin="simobserve")
                 msg('spillover efficiency  = '+str(eta_s), origin="simobserve")
                 msg('correlator efficiency = '+str(eta_q), origin="simobserve")
@@ -1310,7 +1315,7 @@ def simobserve(
             if not uvmode: #Single-dish
                 msg("Can't corrupt SD data with polarization leakage",priority="warn")
             if os.path.exists(msfile):
-                msg('copying '+msfile+' to ' + 
+                msg('copying '+msfile+' to ' +
                     noisymsroot+'.ms and adding polarization leakage',
                     origin="noise",priority="warn")
                 if os.path.exists(noisymsroot+".ms"):
@@ -1395,7 +1400,7 @@ def plotpb(pb,axes,lims=None,color='k'):
         #ecy = lims[1][0] + bheight/2.*incy
         ccx = lims[0][0] + boxsize/2.*incx
         ccy = lims[1][0] + boxsize/2.*incy
-    
+
         #box = Rectangle((lims[0][0],lims[1][0]),incx*bwidth,incy*bheight,
         box = Rectangle((lims[0][0],lims[1][0]),incx*boxsize,incy*boxsize,
                         alpha=0.7,facecolor='w',
