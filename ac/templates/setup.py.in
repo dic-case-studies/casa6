@@ -1626,7 +1626,7 @@ class create_makefile(Command):
             mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
             mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
         global casatools_obj_list
-        casatools_obj_list = c_list
+        casatools_obj_list += c_list
         # write_fortran()
         # fortran files
         CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f",
