@@ -12,7 +12,7 @@ from collections import deque,defaultdict
 from casatasks.private.casa_transition import *
 if is_CASA6:
     import inspect
-    from casatasks import casalog, flagdata
+    from casatasks import casalog
     from casatools import table,quanta,ms,agentflagger
     from .parallel.parallel_task_helper import ParallelTaskHelper
     from collections import OrderedDict
@@ -1968,13 +1968,18 @@ def evaluateFlagParameters(pardict, pars):
         It raises an exception if any parameter or type of value do not match.
 
     """
+    if is_CASA6:
+        from casatasks import flagdata
+    else:
+        from tasks import flagdata
+     
     # Make a deepcopy of flagdata parameters dictionary for modification
     fpars = copy.deepcopy(pars)
  
     # Get the defaults of each parameter 
     for par in fpars.keys():
         if is_CASA6:
-            fpars[par] = get_task_arg_default(flagdata.flagdata, par)
+            fpars[par] = get_task_arg_default(flagdata,par)
         else:
             fpars[par] = flagdata.itsdefault(par)
      
@@ -1996,7 +2001,7 @@ def evaluateFlagParameters(pardict, pars):
      
     # Create a list of the tuples
     flist = list(ftup)
-
+ 
     # Append the duplicated types
     for d in range(len(dup_pars)):
         # Create a tuple and append to list

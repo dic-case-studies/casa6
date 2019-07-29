@@ -46,14 +46,14 @@ import traceback
 
 # jagonzal (Migration to MPI)
 try:
-    # CASA 6
-    from casampi.MPIEnvironment import MPIEnvironment
-    from casampi.MPICommandClient import MPICommandClient
-    mpi_available = True
-except ImportError:
-    from mpi4casa.MPIEnvironment import MPIEnvironment
-    from mpi4casa.MPICommandClient import MPICommandClient
-    mpi_available = True
+    if is_CASA6:
+        from casampi.MPIEnvironment import MPIEnvironment
+        from casampi.MPICommandClient import MPICommandClient
+        mpi_available = True
+    else:
+        from mpi4casa.MPIEnvironment import MPIEnvironment
+        from mpi4casa.MPICommandClient import MPICommandClient
+        mpi_available = True
 except ImportError:
     mpi_available = False
 
