@@ -775,11 +775,10 @@ namespace casa {
 
         bool ok = false;
         auto a = PMS::axis(req->value( ), &ok);
-        if (ok) ppdisp(index)->setColorize(true,a);
-        else ppdisp(index)->setColorize(false);
-
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  if (ok) ppdisp(index)->setColorize(true,a);
+                  else ppdisp(index)->setColorize(false);
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -808,13 +807,14 @@ namespace casa {
 
         bool update = req->update( );
 
-        PlotSymbolPtr ps = itsPlotms_->createSymbol( req->shape( ), req->size( ), req->color( ), req->fill( ), req->outline( ) );
-        ppdisp(index)->setUnflaggedSymbol(ps, req->dataindex( ));
-
         std::promise<bool> prom;
         qtGO( [&]( ) {
-                  if (update) update_parameters(index);
-                  prom.set_value(true);
+                PlotSymbolPtr ps = itsPlotms_->createSymbol( req->shape( ), req->size( ), req->color( ),
+                                                             req->fill( ), req->outline( ) );
+                ppdisp(index)->setUnflaggedSymbol(ps, req->dataindex( ));
+
+                if (update) update_parameters(index);
+                prom.set_value(true);
               } );
         auto fut = prom.get_future( );
         fut.get( );
@@ -841,13 +841,14 @@ namespace casa {
 
         bool update = req->update( );
 
-        PlotSymbolPtr ps = itsPlotms_->createSymbol( req->shape( ), req->size( ), req->color( ), req->fill( ), req->outline( ) );
-        ppdisp(index)->setFlaggedSymbol(ps, req->dataindex( ));
-
         std::promise<bool> prom;
         qtGO( [&]( ) {
-                  if (update) update_parameters(index);
-                  prom.set_value(true);
+                PlotSymbolPtr ps = itsPlotms_->createSymbol( req->shape( ), req->size( ), req->color( ),
+                                                             req->fill( ), req->outline( ) );
+                ppdisp(index)->setFlaggedSymbol(ps, req->dataindex( ));
+
+                if (update) update_parameters(index);
+                prom.set_value(true);
               } );
         auto fut = prom.get_future( );
         fut.get( );
