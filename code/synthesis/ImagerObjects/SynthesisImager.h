@@ -126,7 +126,7 @@ class SynthesisImager
 			   const casacore::Bool mTermOn    = false,
 			   const casacore::Bool wbAWP      = true,
 			   const casacore::String cfCache  = "",
-			   const casacore::Bool doPointing = false,
+			   const casacore::Bool usePointing = false,
 			   const casacore::Bool doPBCorr   = true,
 			   const casacore::Bool conjBeams  = true,
 			   const casacore::Float computePAStep=360.0,
@@ -214,7 +214,8 @@ class SynthesisImager
   const SynthesisParamsImage& getSynthesisParamsImage() {return impars_p;};
   ///This will set the movingSource_p
   void setMovingSource(const casacore::String& movsource);
-
+  ///return an estimate of memory it is going to use in kB
+  virtual casacore::Long estimateRAM();
 
 protected:
  
@@ -239,7 +240,7 @@ protected:
 		       const casacore::Bool mTermOn    = false,
 		       const casacore::Bool wbAWP      = true,
 		       const casacore::String cfCache  = "",
-		       const casacore::Bool doPointing = false,
+		       const casacore::Bool usePointing = false,
 		       const casacore::Bool doPBCorr   = true,
 		       const casacore::Bool conjBeams  = true,
 		       const casacore::Float computePAStep   = 360.0,
@@ -308,7 +309,7 @@ protected:
 			  const casacore::Bool mTermOn,      
 			  const casacore::Bool wbAWP,        
 			  const casacore::String cfCache,    
-			  const casacore::Bool doPointing,   
+			  const casacore::Bool usePointing,   
 			  const casacore::Bool doPBCorr,     
 			  const casacore::Bool conjBeams,    
 			  const casacore::Float computePAStep,

@@ -551,6 +551,7 @@ using namespace casa::vi;
     if(!briggsWeightor_p.null()){
       String error;
       Record rec;
+      AlwaysAssert(image, AipsError);
       if(!toRecord(error, rec))
         throw (AipsError("Could not initialize BriggsWeightor")); 
       briggsWeightor_p->init(vi, *image, rec);
@@ -624,6 +625,25 @@ using namespace casa::vi;
 
   }
 
+  
+  Long FTMachine::estimateRAM(const CountedPtr<SIImageStore>& imstor){
+    //not set up yet 
+    if(!image && !imstor)
+      return -1;
+    Long npixels=0;
+    if(image)
+      npixels=((image->shape()).product())/1024;
+    else{
+      if((imstor->getShape()).product() !=0)
+        npixels=(imstor->getShape()).product()/1024;
+    }
+    if(npixels==0) npixels=1; //1 kPixels is minimum then
+    Long factor=sizeof(Complex);
+    if(!toVis_p && useDoubleGrid_p)
+      factor=sizeof(DComplex);
+    return (npixels*factor);
+  }
+  
   void FTMachine::shiftFreqToSource(Vector<Double>& freqs){
     MDoppler dopshift;
     MEpoch ep(mFrame_p.epoch());
@@ -2373,6 +2393,8 @@ using namespace casa::vi;
 
     Matrix<Float> tempWts;
 
+    if(!(imstore->forwardGrid()).get())
+      throw(AipsError("FTMAchine::InitializeToVisNew error imagestore has no valid grid initialized"));
     // Convert from Stokes planes to Correlation planes
     stokesToCorrelation(*(imstore->model()), *(imstore->forwardGrid()));
 
@@ -2415,6 +2437,8 @@ using namespace casa::vi;
 
     // Initialize the complex grid (i.e. tell FTMachine what array to use internally)
     Matrix<Float> sumWeight;
+    if(!(imstore->backwardGrid()).get())
+      throw(AipsError("FTMAchine::InitializeToSkyNew error imagestore has no valid grid initialized"));
     initializeToSky(*(imstore->backwardGrid()) , sumWeight , vb);
 
   };
