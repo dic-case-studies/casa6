@@ -256,7 +256,14 @@ namespace casa {
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stdout);
         }
-        qtGO( [=]( ){ itsPlotms_->showGUI(req->state( )); } );
+
+        std::promise<bool> prom;
+        qtGO( [&]( ){
+                itsPlotms_->showGUI(req->state( ));
+                prom.set_value(true);
+            } );
+        auto fut = prom.get_future( );
+        fut.get( );
         return grpc::Status::OK;
     }
 
@@ -274,10 +281,14 @@ namespace casa {
         auto rows = req->rows( );
         auto cols = req->cols( );
 		clear_parameters( );
-		qtGO( [=]( ){
+        std::promise<bool> prom;
+		qtGO( [&]( ){
 				itsPlotms_->getParameters().setGridSize( rows, cols );
 				update_parameters( );
+                prom.set_value(true);
 			} );
+        auto fut = prom.get_future( );
+        fut.get( );
         return grpc::Status::OK;
     }
 
@@ -700,7 +711,13 @@ namespace casa {
             flag.setSelectionSelected(true);
         }
 
-        qtGO( [=]( ) { itsPlotms_->setFlagging( flag ); } );
+        std::promise<bool> prom;
+        qtGO( [&]( ) {
+                itsPlotms_->setFlagging( flag );
+                prom.set_value(true);
+            } );
+        auto fut = prom.get_future( );
+        fut.get( );
         return grpc::Status::OK;
     }
 
