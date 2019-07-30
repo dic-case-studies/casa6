@@ -169,7 +169,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         void update_parameters(int index);
         void populate_selection( const ::rpc::plotms::SetSelection &req, PlotMSSelection &sel );
         enum group_tags { T_MSDATA, T_CACHE, T_AXES, T_ITER, T_DISP, T_CAN, T_HEAD };
-        std::string group_str(int) const;
         std::map<std::pair<int,int>,PlotMSPlotParameters::Group*> param_groups;
         PMS_PP_MSData *sys_ppdata(PlotMSPlotParameters* sp);
         PMS_PP_Cache *sys_ppcache(PlotMSPlotParameters* sp);

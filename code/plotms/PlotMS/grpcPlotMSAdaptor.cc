@@ -1206,28 +1206,9 @@ namespace casa {
         return grpc::Status::OK;
     }
 
-    // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
-    std::string grpcPlotMS::group_str(int t) const {
-        switch (t) {
-            case T_MSDATA: return "MSDATA";
-            case T_CACHE: return "CACHE";
-            case T_AXES: return "AXES";
-            case T_ITER: return "ITER";
-            case T_DISP: return "DISP";
-            case T_CAN: return "CAN";
-            case T_HEAD: return "HEAD";
-            default: return "ERROR";
-        }
-    }
-
     ::grpc::Status grpcPlotMS::save( ::grpc::ServerContext *context,
                                      const ::rpc::plotms::Save *req,
                                      ::google::protobuf::Empty* ) {
-        fprintf(stderr,"**** --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ****\n");
-        for ( auto iter = param_groups.begin( ); iter != param_groups.end( ); ++iter ) {
-            fprintf(stderr, "[%d]\t%s\n", iter->first.first, group_str(iter->first.second).c_str( ));
-        }
-        fprintf(stderr,"**** --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ****\n");
 
         std::promise<bool> uprom;
         qtGO( [&]( ) {
@@ -1236,12 +1217,6 @@ namespace casa {
               } );
         auto ufut = uprom.get_future( );
         ufut.get( );
-
-        fprintf(stderr,"**** --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ****\n");
-        for ( auto iter = param_groups.begin( ); iter != param_groups.end( ); ++iter ) {
-            fprintf(stderr, "[%d]\t%s\n", iter->first.first, group_str(iter->first.second).c_str( ));
-        }
-        fprintf(stderr,"**** --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ****\n");
 
         auto path = req->path( );
         if ( path.size( ) == 0 ) return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "path must be provided");
