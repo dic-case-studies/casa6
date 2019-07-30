@@ -41,6 +41,7 @@ using casatools::rpc::Registrar;
 #include <display/QtViewer/QtDisplayPanelGui.qo.h>
 #include <display/QtViewer/QtCleanPanelGui.qo.h>
 #include <display/QtViewer/QtCleanPanelGui2.qo.h>
+#include <display/Display/ColormapDefinition.h>
 
 extern int qInitResources_QtViewer();
 
@@ -311,6 +312,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
 
 	void QtViewer::quit() {
+
+		ColormapDefinition::shutdown( );
+
 #if defined(WITHOUT_DBUS)
 		static const auto debug = getenv("GRPC_DEBUG");
 		if ( grpc_ && grpc_->server ) {
