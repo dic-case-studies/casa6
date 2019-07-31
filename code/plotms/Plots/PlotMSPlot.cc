@@ -1044,11 +1044,17 @@ void PlotMSPlot::parametersHaveChanged(const PlotMSWatchedParameters& p, int upd
 		}
 	}
 
-	// If something went wrong, clear the cache and plots.
-	if (!dataSuccess) {
-		itsCache_->clear();
-		plotDataChanged();
-	}
+    // If something went wrong, clear the cache and plots.
+    if (!dataSuccess) {
+#if ! defined(WITHOUT_DBUS)
+        // with casa6 (WITHOUT_DBUS) avoid clearing the cache if we haven't even started
+        // with this plot... doing otherwise seems to result in a SEGV...
+        // this seems to be an issue when "itsPlotms_->getPlotManager( ).addOverPlot( )" is
+        // used instead of "itsPlotms_->getPlotManager( ).addOverPlot( &ppp )"...
+        itsCache_->clear();
+#endif
+        plotDataChanged();
+    }
     
 	// Let the child handle the rest of the parameter changes, and release
 	// drawing if needed.
