@@ -95,7 +95,7 @@ public:
   }
 
   // get number of rows for MAIN table
-  virtual size_t getNumberOfRows() = 0;
+  virtual size_t getNumberOfRows() const = 0;
 
   // to get OBSERVATION table
   // The method should return true if row entry is available.

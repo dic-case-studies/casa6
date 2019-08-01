@@ -37,7 +37,7 @@ public:
   virtual ~NRO2MSReader();
 
   // get number of rows
-  size_t getNumberOfRows() override;
+  size_t getNumberOfRows() const override;
 
   casacore::MDirection::Types getDirectionFrame() const override;
 

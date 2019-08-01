@@ -30,7 +30,7 @@ public:
   virtual ~Scantable2MSReader();
 
   // get number of rows for MAIN table
-  size_t getNumberOfRows() override {
+  size_t getNumberOfRows() const override {
     if (!main_table_) {
       return 0;
     }

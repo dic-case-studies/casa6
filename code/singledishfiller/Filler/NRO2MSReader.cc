@@ -207,7 +207,7 @@ void NRO2MSReader::checkEndian() {
     same_endian_ = false;
   }
 }
-  
+
 void NRO2MSReader::readObsHeader() {
   fseek(fp_, 0, SEEK_SET);
 
@@ -529,7 +529,7 @@ std::vector<double> NRO2MSReader::getSpectrum(int const irow, sdfiller::NRODataS
     }
     return spec;
   }
-  
+
   unsigned char *cdata = reinterpret_cast<unsigned char *>(const_cast<char *>(data.LDATA.c_str()));
   vector<double> mscale;
   mscale.resize(NRO_ARYMAX);
@@ -570,9 +570,9 @@ std::vector<double> NRO2MSReader::getSpectrum(int const irow, sdfiller::NRODataS
       }
       return spec;
     }
-    
+
     // int -> double
-    *iter = (double)(ivalue * scale + offset) * dscale; 
+    *iter = (double)(ivalue * scale + offset) * dscale;
     // DEBUG
     //cout << "NRODataset::getSpectrum()  spec[" << i << "] = " << *iter << endl ;
     iter++;
@@ -614,7 +614,7 @@ void NRO2MSReader::initializeSpecific() {
     throw AipsError("Input data doesn't exist or is invalid");
   }
   checkEndian();
-  
+
   readObsHeader();
   getFullTimeRange();
   constructArrayTable();
@@ -628,7 +628,7 @@ void NRO2MSReader::finalizeSpecific() {
   fp_ = NULL;
 }
 
-size_t NRO2MSReader::getNumberOfRows() {
+size_t NRO2MSReader::getNumberOfRows() const {
   int nrows = obs_header_.ARYNM0 * obs_header_.NSCAN0;
   return (nrows >= 0) ? nrows : 0;
 }
@@ -798,7 +798,7 @@ Bool NRO2MSReader::getSpectralWindowRowImpl(
   record.refpix = chcal[0] - 1; // 0-based
   record.refval = freqs[0];
   record.increment = chan_width;
-  
+
   spw_id_counter_++;
   if (obs_header_.NSPWIN <= spw_id_counter_) {
     get_spw_row_ = &NRO2MSReader::noMoreRowImpl<SpectralWindowRecord>;
@@ -835,7 +835,7 @@ Bool NRO2MSReader::getData(size_t irow, DataRecord &record) {
   Int srctype = (scan_data.SCNTP0 == "ON") ? 0 : 1;
   record.intent = getIntent(srctype);
   record.scan = (Int)scan_data.ISCN0;
-  record.subscan = getSubscan(srctype); 
+  record.subscan = getSubscan(srctype);
   record.field_id = 0;
 //  Int ndata_per_ant = obs_header_.NPOL * obs_header_.NSPWIN;
   record.antenna_id = (Int) getNROArrayBeamId(array_id); //(irow / ndata_per_ant % obs_header_.NBEAM);
