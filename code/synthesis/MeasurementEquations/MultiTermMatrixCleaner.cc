@@ -1074,12 +1074,18 @@ Note : This function is called within the 'scale' omp/pragma loop. Needs to be t
     {
       Matrix<Float> coeffs1 = (matCoeffs_p[IND2(taylor1,scale)])(blc,trc);
       Matrix<Float> resid = (matR_p[IND2(taylor1,scale)])(blc,trc);
+
+      /*
       work = work + (Float)2.0 * coeffs1 * resid;
       for(Int taylor2=0;taylor2<ntaylor;taylor2++)
 	{
 	  Matrix<Float> coeffs2 = (matCoeffs_p[IND2(taylor2,scale)])(blc,trc);
 	  work = work - (Float)((matA_p[scale])(taylor1,taylor2)) * coeffs1 * coeffs2;
 	}
+      */
+
+      work = work +  coeffs1 * resid;
+
     }
   findMaxAbsMask(vecWork_p[scale],vecScaleMasks_p[scale],maxScaleVal_p[scale],maxScalePos_p[scale]);
   
