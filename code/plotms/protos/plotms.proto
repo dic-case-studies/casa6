@@ -31,11 +31,11 @@ service app {
     rpc setXAxisLabel(SetString) returns (google.protobuf.Empty);
     rpc setYAxisLabel(SetString) returns (google.protobuf.Empty);
     rpc setTitleFont(SetInt) returns (google.protobuf.Empty);
-    rpc setXAxisFont(SetString) returns (google.protobuf.Empty);
-    rpc setYAxisFont(SetString) returns (google.protobuf.Empty);
+    rpc setXAxisFont(SetInt) returns (google.protobuf.Empty);
+    rpc setYAxisFont(SetInt) returns (google.protobuf.Empty);
     rpc setGridParams(SetGrid) returns (google.protobuf.Empty);
-    rpc SetXRange(SetRange) returns (google.protobuf.Empty);
-    rpc SetYRange(SetRange) returns (google.protobuf.Empty);
+    rpc setXRange(SetRange) returns (google.protobuf.Empty);
+    rpc setYRange(SetRange) returns (google.protobuf.Empty);
     rpc setPlotMSPageHeaderItems(SetString) returns (google.protobuf.Empty);
     rpc save(Save) returns (google.protobuf.Empty);
     rpc update(google.protobuf.Empty) returns (google.protobuf.Empty);
