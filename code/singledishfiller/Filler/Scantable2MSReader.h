@@ -59,7 +59,7 @@ public:
   }
 
   casacore::String getDataUnit() const override {
-	return main_table_->keywordSet().asString("FluxUnit");
+	  return main_table_->keywordSet().asString("FluxUnit");
   }
 
   // to get OBSERVATION table
