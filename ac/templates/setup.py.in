@@ -1509,43 +1509,6 @@ def write_fortran(do_code=True):
         mk.write(fortran_target + ": " + mkdirs_f77_target + " " + sep.join(f_list) + "\n")
     global casatools_obj_list
     casatools_obj_list += f_list
-    """
-    # fortran files
-    CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f",
-        file_filter=[
-            'fgridft.f', 'grd2dwts.f', 'grd2d.f', 'ADDGRD.f', 'grdde2d.f',
-            'atmroutines.f', 'fmosft.f', 'fwproj.f', 'phasol.f'
-        ]
-    )
-    CODE_F77 = source_files(
-        "casa-source/code/synthesis/fortran",file_suffix_filter=".f"
-    ) if do_code else []
-    print("***** CODE_F77", CODE_F77)
-    obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
-    f_obj = (
-        obj_name + ': {src} \n\t{f77} {flags} $< -o $@'
-    )
-    f_list = []
-    mkdirs_f77_target = "mk_f77_obj_dirs"
-    with open("makefile", "a") as mk:
-        targdirs = set()
-        for f in CORE_F77 + CODE_F77:
-            (base, ext) = os.path.splitext(f)
-            flags = sep.join(get_fortran_compiler_flags(ext))
-            objfile = obj_name.format(base=base)
-            targdirs.add(os.path.dirname(objfile))
-            f_list.append(objfile)
-            mk.write("\n\n" + f_obj.format(base=base, src=f, f77=f77, flags=flags))
-        mk.write("\n# make directories for fortran object files\n")
-        mk.write(".PHONY: " + mkdirs_f77_target + "\n")
-        mydirs = sep.join(list(targdirs))
-        mk.write(mkdirs_f77_target + ":\n\t@mkdir -p " + mydirs + "\n")
-        mk.write("\n# targets to compile fortran code to object files\n")
-        mk.write(".PHONY: " + fortran_target + "\n")
-        mk.write(fortran_target + ": " + mkdirs_f77_target + " " + sep.join(f_list) + "\n")
-    global casatools_obj_list 
-    casatools_obj_list += f_list
-    """
 
 class create_makefile(Command):
     user_options = [
@@ -1627,38 +1590,7 @@ class create_makefile(Command):
             mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
         global casatools_obj_list
         casatools_obj_list += c_list
-        # write_fortran()
-        # fortran files
-        CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f",
-                                 file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
-                                               'fmosft.f', 'fwproj.f', 'phasol.f' ]
-        )
-        CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f")
-        obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
-        f_obj = (
-            obj_name + ': {src} \n\t{f77} {flags} $< -o $@'
-        )
-        f_list = []
-        mkdirs_f77_target = "mk_f77_obj_dirs"
-        with open("makefile", "a") as mk:
-            targdirs = set()
-            for f in CORE_F77 + CODE_F77:
-                (base, ext) = os.path.splitext(f)
-                flags = sep.join(get_fortran_compiler_flags(ext))
-                objfile = obj_name.format(base=base)
-                targdirs.add(os.path.dirname(objfile))
-                f_list.append(objfile)
-                mk.write("\n\n" + f_obj.format(base=base, src=f, f77=f77, flags=flags))
-            mk.write("\n# make directories for fortran object files\n")
-            mk.write(".PHONY: " + mkdirs_f77_target + "\n")
-            mydirs = sep.join(list(targdirs))
-            mk.write(mkdirs_f77_target + ":\n\t@mkdir -p " + mydirs + "\n")
-            mk.write("\n# targets to compile fortran code to object files\n")
-            mk.write(".PHONY: " + fortran_target + "\n")
-            mk.write(fortran_target + ": " + mkdirs_f77_target + " " + sep.join(f_list) + "\n")
-        # global casatools_obj_list
-        casatools_obj_list += f_list
-
+        write_fortran()
         # casatools link
         linker = props['build.compiler.cxx']
         (prop_ldflags, prop_libs) = get_link_props()
