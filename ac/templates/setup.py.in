@@ -1607,6 +1607,22 @@ def write_casacode_linker():
         mk.write('\n\t@mkdir -p ' + modulelib)
         mk.write('\n\t' + ld_cmd)
 
+def write_dependency_tracking():
+    # C++ and C dependency tracking to makefile
+    with open("makefile", "a") as mk:
+        mk.write("""
+$(shell mkdir -p $(DEPDIR) >/dev/null)
+# IMPORTANT: These dependency flags are for gcc. clang may use different flags for this purpose
+# DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
+# the include of the dependencies must come after the first target
+# so just put it at the end of the file
+MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
+include $(MY_DEPS)
+        """)
+
 class create_makefile(Command):
     user_options = [
       # The format is (long option, short option, description).
@@ -1689,38 +1705,6 @@ class create_makefile(Command):
         casatools_obj_list += c_list
         write_fortran()
         write_casacode_linker()
-        """
-        # casatools link
-        linker = props['build.compiler.cxx']
-        (prop_ldflags, prop_libs) = get_link_props()
-        (arch_flags, arch_libs) = get_arch_link()
-        # remove duplicates, preserving order
-        link_libs = list(dict.fromkeys((prop_libs + get_tp_libs() + arch_libs)))
-
-        ldflags1 = sep.join(props['build.flags.compile.pthread'] + arch_flags)
-        # FIXME hardcoded because I don't know where it comes from
-        ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64 -Wl,-z,relro -Wl,-rpath,'
-        ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
-        modulelib = os.sep.join([moduledir, "__casac__", "lib"])
-        ldflags2 = '-L/opt/rh/rh-python36/root/usr/lib64 -L' + modulelib
-        # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
-        # the libcasatools link
-        # -lcasatools.cpython-36m-x86_64-linux-gnu '
-        sepl = " -l"
-        ldflags2 += sepl + sepl.join(link_libs)
-
-        # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
-        # $$ escapes the literal $ from make, the \ escapes the literal $ from the shell
-        # ldflags3 = sep.join(prop_ldflags + ['-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'])
-        rpath = get_casatools_rpath(True)
-        ldflags3 = sep.join(prop_ldflags + rpath)
-        # ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
-        ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
-        with open("makefile", "a") as mk:
-            mk.write('\n\n' + libcasatools + ': ' + sep.join(casatools_obj_list))
-            mk.write('\n\t@mkdir -p ' + modulelib)
-            mk.write('\n\t' + ld_cmd)
-        """
         # swig *.i -> *_wrap.cpp
         BINDING_I = source_files("binding/generated/tools", file_suffix_filter=".i")
         wrap_cpp_name = '{base}_wrap.cpp'
@@ -1928,10 +1912,13 @@ class create_makefile(Command):
                 rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
                 + moduledir + "/__data__"
             )
-
+        write_dependency_tracking()
+        """
         # C++ and C dependency tracking to makefile
         with open("makefile", "a") as mk:
-            mk.write("""
+        """
+        #    mk.write("""
+        """
 $(shell mkdir -p $(DEPDIR) >/dev/null)
 # IMPORTANT: These dependency flags are for gcc. clang may use different flags for this purpose
 # DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
@@ -1942,8 +1929,8 @@ POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 # so just put it at the end of the file
 MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
 include $(MY_DEPS)
-            """)
-
+        """
+        #    """)
         print(
             "Successfully generated makefile! Now, run 'make [-j<n>]' "
             "(eg 'make -j8' or just 'make') to complete your build"
@@ -1999,6 +1986,8 @@ class create_makefile_ia(Command):
         write_lex(["ms"], ["synthesis"])
         write_fortran(False)
         write_casacode_linker()
+        write_dependency_tracking()
+        # don't need gcwrap files to make ia library
 
     def run(self):
         self.__build_developer_grpc( )
