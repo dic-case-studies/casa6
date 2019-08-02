@@ -193,6 +193,8 @@ NRO2MSReader::NRO2MSReader(std::string const &scantable_name) :
 
 NRO2MSReader::~NRO2MSReader() {
 //  std::cout << "NRO2MSReader::~NRO2MSReader" << std::endl;
+  // to ensure file pointer is closed
+  finalizeSpecific();
 }
 
 void NRO2MSReader::checkEndian() {
