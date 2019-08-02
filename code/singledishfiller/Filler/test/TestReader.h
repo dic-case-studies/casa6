@@ -435,7 +435,7 @@ struct ComplexDataStorage {
 };
 
 template<class DataStorage>
-class TestReader: public casa::ReaderInterface {
+class TestReader final : public casa::ReaderInterface {
 public:
   TestReader(std::string const &name) :
       casa::ReaderInterface(name), source_iterator_(nullptr),
@@ -454,17 +454,17 @@ public:
   }
 
   // get number of rows
-  virtual size_t getNumberOfRows() {
+  size_t getNumberOfRows() const override {
     return storage_.nrow();
   }
 
   // query for data type
-  virtual casacore::Bool isFloatData() const {
+  casacore::Bool isFloatData() const override {
     return true;
   }
 
   // to get OBSERVATION table
-  virtual casacore::Bool getObservationRow(ObservationRecord &record) {
+  casacore::Bool getObservationRow(ObservationRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_observation_row_)(record);
@@ -474,7 +474,7 @@ public:
   }
 
   // to get ANTENNA table
-  virtual casacore::Bool getAntennaRow(AntennaRecord &record) {
+  casacore::Bool getAntennaRow(AntennaRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_antenna_row_)(record);
@@ -485,7 +485,7 @@ public:
   }
 
   // to get PROCESSOR table
-  virtual casacore::Bool getProcessorRow(ProcessorRecord &record) {
+  casacore::Bool getProcessorRow(ProcessorRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_processor_row_)(record);
@@ -495,7 +495,7 @@ public:
   }
 
   // to get SOURCE table
-  virtual casacore::Bool getSourceRow(SourceRecord &record) {
+  casacore::Bool getSourceRow(SourceRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_source_row_)(record);
@@ -506,7 +506,7 @@ public:
   }
 
   // to get FIELD table
-  virtual casacore::Bool getFieldRow(FieldRecord &record) {
+  casacore::Bool getFieldRow(FieldRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_field_row_)(record);
@@ -517,7 +517,7 @@ public:
   }
 
   // to get SPECTRAL WINDOW table
-  virtual casacore::Bool getSpectralWindowRow(SpectralWindowRecord &record) {
+  casacore::Bool getSpectralWindowRow(SpectralWindowRecord &record) override {
     POST_START;
 
     casacore::Bool return_value = (*this.*get_spw_row_)(record);
@@ -528,7 +528,7 @@ public:
   }
 
   // for DataAccumulator
-  virtual casacore::Bool getData(size_t irow, DataRecord &record) {
+  casacore::Bool getData(size_t irow, DataRecord &record) override {
     POST_START;
 
     casacore::Bool status = storage_.getData(irow, record);
@@ -549,11 +549,11 @@ public:
   std::map<casacore::uInt, DataRecord> main_record_;
 
 protected:
-  void initializeSpecific() {
+  void initializeSpecific() override {
     POST_START;POST_END;
   }
 
-  void finalizeSpecific() {
+  void finalizeSpecific() override {
     POST_START;POST_END;
   }
 
