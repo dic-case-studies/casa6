@@ -1550,7 +1550,9 @@ def write_fortran(do_code=True):
                              file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
                                            'fmosft.f', 'fwproj.f', 'phasol.f' ]
     )
-    CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f")
+    CODE_F77 = source_files(
+        "casa-source/code/synthesis/fortran",file_suffix_filter=".f"
+    ) if do_code else []
     obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
     f_obj = (
         obj_name + ': {src} \n\t{f77} {flags} $< -o $@'
