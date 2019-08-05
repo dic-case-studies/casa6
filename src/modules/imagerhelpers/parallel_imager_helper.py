@@ -29,15 +29,15 @@ Summary...
 #############################################
 #casalog.post('Using clustermanager from MPIInterface', 'WARN')
 try:
-    from mpi4casa.MPIInterface import MPIInterface as mpi_clustermanager
-    mpi_available = True
+    if is_CASA6:
+        from casampi.MPIInterface import MPIInterface as mpi_clustermanager
+        mpi_available = True
+    else:
+        from mpi4casa.MPIInterface import MPIInterface as mpi_clustermanager
+        mpi_available = True
 except ImportError:
-    from casampi.MPIInterface import MPIInterface as mpi_clustermanager
-    mpi_available = True
-except Exception:
     mpi_available = False
     
-
 class PyParallelImagerHelper():
 
     def __init__(self):
