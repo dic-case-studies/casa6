@@ -31,7 +31,10 @@ Summary...
 try:
     from mpi4casa.MPIInterface import MPIInterface as mpi_clustermanager
     mpi_available = True
-except:
+except ImportError:
+    from casampi.MPIInterface import MPIInterface as mpi_clustermanager
+    mpi_available = True
+except Exception:
     mpi_available = False
     
 
@@ -199,7 +202,7 @@ class PyParallelImagerHelper():
         numcpu = len(self.nodeList)
         
         if len(joblist)==0:
-             joblist = range(numcpu)
+             joblist = list(range(numcpu))
              #for k in range(numcpu):
              for k in self.nodeList:
                  joblist[k-1] = self.CL.odo('casalog.post("node '+str(k)+' has completed its job")', k)
