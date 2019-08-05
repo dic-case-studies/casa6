@@ -15,6 +15,9 @@ if is_CASA6:
 
     from .imager_base import PySynthesisImager
     from .parallel_imager_helper import PyParallelImagerHelper
+    synth_imager_name = 'synthesisimager'
+    synth_imager_import = 'from casatools import synthesisimager'
+
 else:
     from taskinit import *
 
@@ -23,6 +26,9 @@ else:
 
     synthesisimager = casac.synthesisimager
     synthesisnormalizer = casac.synthesisnormalizer
+    synth_imager_name = 'casac.synthesisimager'
+    synth_imager_import = 'pass'
+
 
 '''
 An implementation of parallel continuum imaging, using synthesisxxxx tools
@@ -116,8 +122,9 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             #
             joblist=[]
             for node in self.listOfNodes:
-                # this will only run in CASA5 - CASA6 version is still pending
-                joblist.append( self.PH.runcmd("toolsi = casac.synthesisimager()", node) );
+                joblist.append( self.PH.runcmd('{0}; toolsi = {1}()'.format(
+                    synth_imager_import, synth_imager_name),
+                                               node) );
             self.PH.checkJobs(joblist);
 
             #
