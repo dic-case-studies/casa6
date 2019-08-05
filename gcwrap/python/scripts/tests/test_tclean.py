@@ -3287,7 +3287,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
           field='0'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbTrue'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbTrue')
           
           ## Run the standard gridder imaging.
           tclean(vis=self.msfile, imagename='std',niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='standard',field=field,cfcache=cfcache_path,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
@@ -3312,7 +3312,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
           field='0,1'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbTrue'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbTrue')
           
           ## Run the standard gridder imaging.
           tclean(vis=self.msfile, imagename='std',niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='standard',field=field,cfcache=cfcache_path,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
@@ -3338,7 +3338,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter =''
           field='0'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field, cfcache=cfcache_path, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.5269711,[512,596,0,0]),(self.img+'.pb.tt0',0.50752753,[512,596,0,0]),(self.img+'.alpha',-3.24132061,[512,596,0,0])])
           
@@ -3351,7 +3351,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
           field='0,1'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=cfcache_path, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.97862583398,[512,596,0,0]),(self.img+'.pb.tt0',0.979142010212,[512,596,0,0]),(self.img+'.alpha',-1.24368548393,[512,596,0,0])])
           
@@ -3364,7 +3364,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
           field='0'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbTrue'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbTrue')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=cfcache_path, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.477538466454,[512,596,0,0]),(self.img+'.pb.tt0', 0.479197412729,[512,596,0,0]),(self.img+'.alpha',  -0.562356948853,[512,596,0,0])])
           
@@ -3376,7 +3376,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
           field='0,1'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbTrue'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbTrue')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache= cfcache_path, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.tt0', 0.974482476711 ,[512,596,0,0]),(self.img+'.pb.tt0',0.979797422886,[512,596,0,0]),(self.img+'.alpha', -0.538577735424 ,[512,596,0,0])])
           
@@ -3388,7 +3388,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
           field='0'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbTrue'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbTrue')
           
           ## Run the standard gridder imaging.
           tclean(vis=self.msfile, imagename='std',niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='standard',field=field,cfcache=cfcache_path,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
@@ -3413,7 +3413,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
           field='0,1'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbTrue'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbTrue')
           
           ## Run the standard gridder imaging.
           tclean(vis=self.msfile, imagename='std',niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='standard',field=field,cfcache=cfcache_path,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
@@ -3462,7 +3462,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter =''
           field='0'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field, usepointing=True, cfcache=cfcache_path, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.5269711,[512,596,0,0]),(self.img+'.pb.tt0',0.50752753,[512,596,0,0]),(self.img+'.alpha',-3.24132061,[512,596,0,0])])
           
@@ -3475,7 +3475,7 @@ class test_mosaic_mtmfs(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
           field='0,1'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  usepointing=True, cfcache=cfcache_path, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.97862583398,[512,596,0,0]),(self.img+'.pb.tt0',0.979142010212,[512,596,0,0]),(self.img+'.alpha',-1.24368548393,[512,596,0,0])])
           
@@ -3647,7 +3647,7 @@ class test_mosaic_cube(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
           field='0'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=cfcache_path, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.pbcor', 1.1262229681,[512,596,0,0]),(self.img+'.image.pbcor', 0.996681272984,[512,596,0,1]),(self.img+'.image.pbcor', 0.879481077194,[512,596,0,2])])
           
@@ -3673,7 +3673,7 @@ class test_mosaic_cube(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
           field='0,1'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=cfcache_path, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11765027046,[512,596,0,0]),(self.img+'.image.pbcor',0.990656971931,[512,596,0,1]),(self.img+'.image.pbcor', 0.879846811295,[512,596,0,2])])
           
@@ -3700,7 +3700,7 @@ class test_mosaic_cube(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
           field='0'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=cfcache_path, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.1262229681,[512,596,0,0]),(self.img+'.image.pbcor', 0.996681272984,[512,596,0,1]),(self.img+'.image.pbcor', 0.8681204319,[512,596,0,2])])
           
@@ -3726,7 +3726,7 @@ class test_mosaic_cube(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
           field='0,1'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=cfcache_path, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11765027046,[512,596,0,0]),(self.img+'.image.pbcor',0.990656971931,[512,596,0,1]),(self.img+'.image.pbcor', 0.879846811295,[512,596,0,2])])
           
@@ -3806,7 +3806,7 @@ class test_mosaic_cube(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
           field='0'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=cfcache_path, usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.pbcor', 1.1262229681,[512,596,0,0]),(self.img+'.image.pbcor', 0.996681272984,[512,596,0,1]),(self.img+'.image.pbcor', 0.879481077194,[512,596,0,2])])
           
@@ -3832,7 +3832,7 @@ class test_mosaic_cube(testref_base):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
           field='0,1'
-          cfcache_path = refdatapath + 'cfcache_oneshiftpoint_mosaic_cbFalse'
+          cfcache_path = os.path.join(refdatapath,'cfcache_oneshiftpoint_mosaic_cbFalse')
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=cfcache_path, usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11765027046,[512,596,0,0]),(self.img+'.image.pbcor',0.990656971931,[512,596,0,1]),(self.img+'.image.pbcor', 0.879846811295,[512,596,0,2])])
           
