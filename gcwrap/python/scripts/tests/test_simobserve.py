@@ -540,7 +540,6 @@ class simobserve_comp(simobserve_unittest_base):
         #pass
 
     # Tests of complist simulations
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan argument - needs to be fixed")
     def testComp_complist(self):
         """Test complist simulation: only generating input model"""
         complist = self.incomp
@@ -560,7 +559,6 @@ class simobserve_comp(simobserve_unittest_base):
                     self._get_data_prefix(antennalist,self.project)+".compskymodel"
         self._check_imstats(currmodel, self.refmodel_int)
 
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan argument - needs to be fixed")
     def testComp_almaptg(self):
         """Test complist simulation: only setpointing (maptype='ALMA')"""
         complist = self.incomp
@@ -584,7 +582,6 @@ class simobserve_comp(simobserve_unittest_base):
         refptg = self.refpref + "alma.alma.out01.ptg.txt"
         self._check_ptgfile(currptg, refptg)
 
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan argument - needs to be fixed")
     def testComp_hexptg(self):
         """Test complist simulation: only setpointing (maptype='hexagonal')"""
         complist = self.incomp
@@ -608,7 +605,7 @@ class simobserve_comp(simobserve_unittest_base):
         refptg = self.refpref + "hex.aca.i.ptg.txt"
         self._check_ptgfile(currptg, refptg)
 
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan argument - needs to be fixed")
+
     def testComp_sqptg(self):
         """Test complist simulation: only setpointing (maptype='square')"""
         complist = self.incomp
@@ -750,7 +747,7 @@ class simobserve_comp(simobserve_unittest_base):
         self._check_ptgfile(currpref+".ptg.txt", self.refpref_int+".ptg.txt")
         self._check_msstats(currpref+".ms",self.refms_int)
 
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan argument - needs to be fixed")
+    @unittest.skipIf(is_CASA6,"Failed AlwaysAssert sdirections.nelements() == nptg - needs to be fixed.")
     def testComp_intNchan(self):
         """Test complist simulation: interferometer, but with comp_nchan > 1"""
         complist = self.incomp
@@ -835,7 +832,6 @@ class simobserve_skycomp(simobserve_unittest_base):
         #pass
 
     # Tests of skymodel + components list simulations
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan keyword. - needs to be fixed")
     def testSC_skymodel(self):
         """Test skymodel + complist simulation: only modify model"""
         skymodel = self.inmodel
@@ -860,7 +856,6 @@ class simobserve_skycomp(simobserve_unittest_base):
                     #self._get_data_prefix(antennalist,self.project)+".skymodel"
         self._check_imstats(currmodel, self.refmodel)
 
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan keyword. - needs to be fixed")
     def testSC_almaptg(self):
         """Test skymodel + complist simulation: only setpointing (maptype='ALMA')"""
         skymodel = self.inmodel
@@ -886,7 +881,6 @@ class simobserve_skycomp(simobserve_unittest_base):
         refptg = self.refpref + "alma.alma.out01.ptg.txt"
         self._check_ptgfile(currptg, refptg)
 
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan keyword. - needs to be fixed")
     def testSC_hexptg(self):
         """Test skymodel + complist simulation: only setpointing (maptype='hexagonal')"""
         skymodel = self.inmodel
@@ -912,7 +906,6 @@ class simobserve_skycomp(simobserve_unittest_base):
         refptg = self.refpref + "hex.aca.i.ptg.txt"
         self._check_ptgfile(currptg, refptg)
 
-    @unittest.skipIf(is_CASA6,"unexpected comp_nchan keyword. - needs to be fixed")
     def testSC_sqptg(self):
         """Test skymodel + complist simulation: only setpointing (maptype='square')"""
         skymodel = self.inmodel
