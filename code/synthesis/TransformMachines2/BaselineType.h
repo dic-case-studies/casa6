@@ -71,10 +71,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
      void setCacheGroups(const int& vbRows, const vi::VisBuffer2& vb);
 
-     casacore::CountedPtr<PhaseGrad> phaseGradCalculator_p;
+     
+     
+     bool doPointing_p, newPhaseGradComputed_p, cachedGroups_p;
      casacore::Vector< casacore::CountedPtr<PhaseGrad> >vectorPhaseGradCalculator_p;
      int vbRows_p;
-     bool doPointing_p, newPhaseGradComputed_p, cachedGroups_p;
      casacore::Int PO_DEBUG_P;
      casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p;
      casacore::Matrix< vector < vector <double> > > antennaPO_p, cachedAntennaPO_p;

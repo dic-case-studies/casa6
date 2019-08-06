@@ -56,7 +56,7 @@ imaging with doPointing=True
 #include <scimath/Mathematics/Combinatorics.h>
 #include <casa/Arrays/Array.h>
 #include <casa/Arrays/ArrayMath.h>
-
+#include <casa/BasicSL/Constants.h>
 using namespace casacore;
 namespace casa{
   using namespace refim;
@@ -66,7 +66,7 @@ namespace casa{
   };
   
   // -----------------------------------------------------------------
-  BaselineType::BaselineType(): doPointing_p(true), vectorPhaseGradCalculator_p(),vbRows_p(),cachedGroups_p(false)
+  BaselineType::BaselineType(): doPointing_p(true),cachedGroups_p(false),vectorPhaseGradCalculator_p(),vbRows_p()
   {
     newPhaseGradComputed_p = false;
     vectorPhaseGradCalculator_p.resize(0);
@@ -83,7 +83,7 @@ namespace casa{
   
   };
   
-  Matrix<Complex> BaselineType::setBLPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
+  Matrix<Complex> BaselineType::setBLPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p ,
 					       const CountedPtr<CFBuffer>& cfb,
 					       const vi::VisBuffer2& vb,
 					       const int& row,
@@ -92,8 +92,12 @@ namespace casa{
     int myrow=row;
     if(doPointing_p)
       {
-	cachedGroups_p = false;
-	findAntennaGroups(vb,pointingOffsets_p,sigmaDev);
+	Vector<Double> poIncrement = pointingOffsets_p->getIncrement();
+	Float A2R = 4.848137E-06;
+	// Double offsetDeviation = sigmaDev * A2R / (acos(sin(poIncrement[0])*sin(poIncrement[1])) + cos(poIncrement[0])*cos(poIncrement[1])*cos(poIncrement[0] - poIncrement[1]));
+	Double offsetDeviation = sigmaDev * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
+
+	findAntennaGroups(vb,pointingOffsets_p,offsetDeviation);
 	makeVBRow2BLGMap(vb);
       
 	if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])

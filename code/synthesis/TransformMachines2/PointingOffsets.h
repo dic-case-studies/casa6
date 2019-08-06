@@ -76,6 +76,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     void setOverSampling(const int& os) {convOversampling_p=os;}
     casacore::Vector<casacore::Vector<casacore::Double> > pullPointingOffsets(){return cachedPointingOffsets_p;};
+    casacore::Vector<casacore::Double> getIncrement(){return dc_p.increment();}
 
   private:
 
