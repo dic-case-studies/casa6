@@ -298,6 +298,34 @@ ITUPLE ImageFactory::fromFile(const String& infile, Bool cache) {
     return imagePtrs;
 }
 
+SPIIF ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Float, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<0>(t);
+}
+
+SPIIC ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Complex, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<1>(t);
+}
+
+SPIID ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Double, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<2>(t);
+}
+
+SPIIDC ImageFactory::fromFile(
+    const casacore::String& filename, casacore::DComplex, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<3>(t);
+}
+ 
 ITUPLE ImageFactory::_fromLatticeBase(
     unique_ptr<LatticeBase>& latt
 ) {
