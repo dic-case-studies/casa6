@@ -1343,7 +1343,7 @@ collapsed.done()
   
      <param type="string"  name="outfile">
      <description>Output image file name.  Default is unset.</description>
-     <value></value>
+     <value/>
      </param>
   
      <param type="any"  name="infiles">
@@ -1376,6 +1376,11 @@ wild cards accepted.  Default is empty string.</description>
      <param type="bool" name="reorder">
         <description>Automatically reorder the images if necessary.</description>
         <value>false</value>
+     </param>
+
+     <param type="string" name="mode">
+        <description>Type of output image. "paged", "movevirtual", "nomoveevirtual", "copyvirtual". Minimal match supported.</description>
+        <value>paged</value>
      </param>
      
 </input>

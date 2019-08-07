@@ -98,7 +98,7 @@ template<class T> SPIIT _concat(
     std::shared_ptr<casacore::LatticeBase> latt, const string& outfile,
     const variant& infiles, int axis, bool relax, bool tempclose,
     bool overwrite, bool reorder,
-    const std::vector<casacore::String>& imageNames
+    std::vector<casacore::String>& imageNames, const string& mode
 );
 
 template<class T> image* _convolve(

@@ -3212,7 +3212,8 @@ template<class T> SPIIT image::_imagecalc(
 
 image* image::imageconcat(
     const string& outfile, const variant& infiles, int axis,
-    bool relax, bool tempclose, bool overwrite, bool reorder
+    bool relax, bool tempclose, bool overwrite, bool reorder,
+    const string& mode
 ) {
     try {
         Vector<String> inFiles;
@@ -3234,7 +3235,7 @@ image* image::imageconcat(
             "You must provide at least two images to concatentate"
         );
         auto first = imageNames[0];
-        imageNames.erase(imageNames.begin());
+        // imageNames.erase(imageNames.begin());
         std::shared_ptr<LatticeBase> latt(ImageOpener::openImage(first));
         ThrowIf (! latt, "Unable to open image " + first);
         auto dataType = latt->dataType();
@@ -3242,7 +3243,7 @@ image* image::imageconcat(
             return new image(
                 _concat<Float>(
                     latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
@@ -3250,7 +3251,7 @@ image* image::imageconcat(
             return new image(
                 _concat<Complex>(
                     latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
@@ -3258,7 +3259,7 @@ image* image::imageconcat(
             return new image(
                 _concat<Double>(
                     latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
@@ -3266,7 +3267,7 @@ image* image::imageconcat(
             return new image(
                 _concat<DComplex>(
                     latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
@@ -3287,26 +3288,30 @@ image* image::imageconcat(
 template<class T> SPIIT image::_concat(
     std::shared_ptr<LatticeBase> latt, const string& outfile,
     const variant& infiles, int axis, bool relax, bool tempclose,
-    bool overwrite, bool reorder, const vector<String>& imageNames
+    bool overwrite, bool reorder, vector<String>& imageNames,
+    const string& mode
 ) {
-    SPIIT im = std::dynamic_pointer_cast<ImageInterface<T>>(latt);
-    ThrowIf(! im, "dynamic cast failed");
-    ImageConcatenator<T> concat(im, outfile, overwrite);
+    // SPIIT im = std::dynamic_pointer_cast<ImageInterface<T>>(latt);
+    // ThrowIf(! im, "dynamic cast failed");
+    // ImageConcatenator<T> concat(im, outfile, overwrite);
+    ImageConcatenator<T> concat(imageNames, outfile, overwrite);
     concat.setAxis(axis);
     concat.setRelax(relax);
     concat.setReorder(reorder);
     concat.setTempClose(tempclose);
+    concat.setMode(mode);
     if (_doHistory) {
         vector<String> names {
             "outfile", "infiles", "axis", "relax", "tempclose",
-            "overwrite", "reorder"
+            "overwrite", "reorder", "mode"
         };
         vector<variant> values {
-            outfile, infiles, axis,  relax, tempclose, overwrite, reorder
+            outfile, infiles, axis,  relax, tempclose,
+            overwrite, reorder, mode
         };
         concat.addHistory(_ORIGIN, "ia.imageconcat", names, values);
     }
-    return concat.concatenate(imageNames);
+    return concat.concatenate();
 }
 
 bool image::insert(

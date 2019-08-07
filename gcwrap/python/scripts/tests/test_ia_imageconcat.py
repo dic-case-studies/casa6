@@ -325,5 +325,56 @@ class ia_imageconcat_test(unittest.TestCase):
             )
             concat.done()
 
+    def test_mode(self):
+        """Test various output formats CAS-12600"""
+        myia = self._myia
+        myia.fromshape("", [1, 1, 5])
+        names = []
+        for i in range(5):
+            name = "chan_" + str(i)
+            names.append(name) 
+            subi = myia.subimage(name, region=rg.box([0, 0, i], [0, 0,i]))
+            got = subi.toworld([0 ,0, 0])['numeric'][2]
+            expec = myia.toworld([0 ,0, i])['numeric'][2]
+            self.assertTrue(got == expec)
+            subi.done()
+        modes = ['c', 'm', 'n', 'p']
+        for mode in modes:
+            outname = "loop1_" + mode + ".im"
+            concat = myia.imageconcat(outname, infiles=names, mode=mode)
+            for i in range(3):
+                got = concat.toworld([0 ,0, i])['numeric'][2]
+                expec = myia.toworld([0 ,0, i])['numeric'][2]
+                self.assertTrue(got == expec)
+        self.assertRaises(
+            Exception, myia.imageconcat, outfile="blah.im",
+            infiles=[names[0], names[1], names[3]]
+        )
+        for mode in modes:
+            outname = "loop2_" + mode + ".im"
+            concat = myia.imageconcat(
+                outname, infiles=[names[0], names[1], names[3]], relax=True, mode=mode
+            )
+            for i in range(3):
+                k = i
+                if i == 2: k = 3
+                got = concat.toworld([0 ,0, i])['numeric'][2]
+                expec = myia.toworld([0 ,0, k])['numeric'][2]
+                self.assertTrue(got == expec)
+        for mode in modes:
+            outname = "loop3_" + mode + ".im"
+            concat = myia.imageconcat(
+                outname, infiles=[names[0], names[1], names[3],
+                names[4]], relax=True, mode=mode
+            )
+            for i in range(4):
+                k = i
+                if i >= 2: k = i+1
+                got = concat.toworld([0 ,0, i])['numeric'][2]
+                expec = myia.toworld([0 ,0, k])['numeric'][2]
+                self.assertTrue(got == expec)
+        concat.done()
+        myia.done() 
+
 def suite():
     return [ia_imageconcat_test]
