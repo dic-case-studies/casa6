@@ -63,10 +63,23 @@
 #
 
 ###########################################################################
-from taskinit import *
-from ialib import write_image_history, get_created_images
+from __future__ import absolute_import
+
+import sys
 import glob
 import time
+
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image
+    from casatasks import casalog
+
+    from .ialib import write_image_history, get_created_images
+else:
+    from taskinit import *
+    from taskinit import iatool as image
+    from ialib import write_image_history, get_created_images
 
 def specfit(
 	imagename, box, region, chans, stokes, axis, mask, ngauss,
@@ -79,11 +92,11 @@ def specfit(
 ):
     casalog.origin('specfit')
     retval = None
-    myia = iatool()
+    myia = image()
     myia.dohistory(False)
     try:
         if (not myia.open(imagename)):
-            raise Exception, "Cannot create image analysis tool using " + imagename
+            raise Exception("Cannot create image analysis tool using " + imagename)
         target_time = time.time()
         retval = myia.fitprofile(
 			box=box, region=region, chans=chans,
@@ -107,8 +120,12 @@ def specfit(
 			sigma=sigma, outsigma=outsigma
 		)
         try:
-            param_names = specfit.func_code.co_varnames[:specfit.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            param_names = specfit.__code__.co_varnames[:specfit.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             ims = [model, residual]
             for x in [amp, amperr, center, centererr, fwhm, fwhmerr, integral, integralerr]:
             	if x:
@@ -118,19 +135,16 @@ def specfit(
              	    im, sys._getframe().f_code.co_name,
             	    param_names, param_vals, casalog
          		)
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
 
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('*** Error *** ' + str(instance), 'SEVERE')
         retval = None
     myia.done()
     if (wantreturn):
     	return retval
     else:
-    	if (retval):
-    	   del retval
-    	return None
-
-
-
+        if (retval):
+           del retval
+        return None

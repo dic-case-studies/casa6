@@ -1,10 +1,22 @@
-from taskinit import *
-from simutil import *
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 import pylab as pl
-import pdb
-from casa_stack_manip import stack_frame_find
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, quanta
+    from casatasks import casalog
+    from .simutil import *
+    from .simutil import is_array_type
+
+    qa = quanta()
+else:
+    from taskinit import *
+    from simutil import *
+    from casa_stack_manip import stack_frame_find
+    from simutil import is_array_type
 
 def simobserve(
     project=None, 
@@ -32,8 +44,6 @@ def simobserve(
     # Collect a list of parameter values to save inputs
     in_params =  locals()
 
-    import re
-
     try:
 
         #########################
@@ -54,14 +64,14 @@ def simobserve(
         casalog.origin('simobserve')
         if verbose: casalog.filter(level="DEBUG2")
 
-        myf = stack_frame_find( )
+        if not is_CASA6:
+            myf = stack_frame_find( )
 
         # create the utility object
         # this is the dir of the observation (could be "")
         util = simutil(direction)  
         if verbose: util.verbose = True
         msg = util.msg
-        from simutil import is_array_type
 
         # it was requested to make the user interface "observe" for what 
         # is sm.observe and sm.predict.
@@ -92,7 +102,10 @@ def simobserve(
 
         # filename parsing of cfg file here so that the project filenames 
         # can contain the cfg
-        repodir = os.getenv("CASAPATH").split(' ')[0] + "/data/alma/simmos/"
+        if is_CASA6:
+            repodir = ctsys.resolve("alma/simmos")
+        else:
+            repodir = os.getenv("CASAPATH").split(' ')[0] + "/data/alma/simmos"
 
         # convert "alma;0.4arcsec" to an actual configuration
         # can only be done after reading skymodel, so here, we just string parse
@@ -124,11 +137,14 @@ def simobserve(
                 return False
 
 
-        saveinputs = myf['saveinputs']
-        # something broken in saveinputs
-        in_params['antennalist']=''+in_params['antennalist']+''
-        saveinputs('simobserve',fileroot+"/"+project+".simobserve.last",
-                   myparams=in_params)
+        if not is_CASA6:
+            saveinputs = myf['saveinputs']
+            # something broken in saveinputs
+            in_params['antennalist']=''+in_params['antennalist']+''
+            saveinputs('simobserve',fileroot+"/"+project+".simobserve.last",
+                       myparams=in_params)
+        else:
+            casalog.post("saveinputs not available in casatasks, skipping saving simobserve inputs", priority='WARN')
 
 
         if is_array_type(skymodel):
@@ -325,7 +341,7 @@ def simobserve(
                         confnum = (1.044 - 6.733 * pl.log10(resl * qa.convert(model_specrefval,"GHz")['value'] / 345.))
                         confnum = max(1,min(6,confnum))
                         conf = str(int(round(confnum)))
-                        antennalist = repodir + "alma.cycle1." + conf + ".cfg"
+                        antennalist = os.path.join(repodir,"alma.cycle1." + conf + ".cfg")
                         msg("converted resolution to antennalist "+antennalist)
                         resparsed=True
                     else:
@@ -344,10 +360,8 @@ def simobserve(
                             confnum = 10. ** (0.91 - 0.74 * (resl * qa.convert(model_specrefval,"GHz")['value']/345.))
                             confnum = max(1,min(7,confnum))
                             conf = str(int(round(confnum)))
-                            antennalist = (repodir + "alma.cycle2." + 
-                                           conf + ".cfg")
-                            msg("converted resolution to antennalist "+
-                                antennalist)
+                            antennalist = os.path.join(repodir,"alma.cycle2." + conf + ".cfg")
+                            msg("converted resolution to antennalist "+antennalist)
                             resparsed=True
                         else:
                             msg("failed to find antenna configuration repository at "+repodir,priority="error")
@@ -361,7 +375,7 @@ def simobserve(
                         confnum = max(1,min(28,confnum))
                         conf = str(int(round(confnum)))
                         if len(conf) < 2: conf = '0' + conf
-                        antennalist = repodir + "alma.out" + conf + ".cfg"
+                        antennalist = os.path.join(repodir,"alma.out" + conf + ".cfg")
                         msg("converted resolution to antennalist "+antennalist)
                     else:
                         msg("failed to find antenna configuration repository at "+repodir,priority="error")
@@ -372,8 +386,8 @@ def simobserve(
             if os.path.exists(fileroot+"/"+antennalist):
                 antennalist = fileroot + "/" + antennalist
             elif not os.path.exists(antennalist) and \
-                     os.path.exists(repodir+antennalist):
-                antennalist = repodir + antennalist
+                     os.path.exists(os.path.join(repodir,antennalist)):
+                antennalist = os.path.join(repodir,antennalist)
             # Now make sure the antennalist exists
             if not os.path.exists(antennalist):
                 util.msg("Couldn't find antennalist: %s" % antennalist,
@@ -411,7 +425,7 @@ def simobserve(
             # (set back to simdata - there must be an automatic way to do this)
             casalog.origin('simobserve')
 
-            for k in xrange(0,nant): antnames.append('A%02d'%k)
+            for k in range(0,nant): antnames.append('A%02d'%k)
             aveant = stnd.mean()
             # TODO use max ant = min PB instead?
             pb = pbcoeff*0.29979/qa.convert(qa.quantity(model_specrefval),'GHz')['value']/aveant*3600.*180/pl.pi # arcsec
@@ -685,7 +699,7 @@ def simobserve(
         ymax=ymax+pb*relmargin/3600
         overlap = False
         # wrapang in median_direction should make offsets always small, not >360
-        for i in xrange(offsets.shape[1]):
+        for i in range(offsets.shape[1]):
             xc = pl.absolute(offsets[0,i]+shift[0])  # offsets and shift are in degrees
             yc = pl.absolute(offsets[1,i]+shift[1])
             if xc < xmax and yc < ymax:
@@ -779,7 +793,7 @@ def simobserve(
                     plotpb(pb,pl.gca(),lims=lims,color=plotcolor)
             else:
                 from matplotlib.patches import Circle
-                for i in xrange(offsets.shape[1]):
+                for i in range(offsets.shape[1]):
                     pl.gca().add_artist(Circle(
                         ((offsets[0,i]+shift[0])*3600,
                          (offsets[1,i]+shift[1])*3600),
@@ -942,7 +956,7 @@ def simobserve(
             sm.settimes(integrationtime=integration, usehourangle=usehourangle, 
                         referencetime=mereftime)
 
-            for k in xrange(0,nfld):
+            for k in range(0,nfld):
                 src = project + '_%d' % k
                 sm.setfield(sourcename=src, sourcedirection=pointings[k],
                             calcode="OBJ", distance='0m')
@@ -1396,25 +1410,25 @@ def simobserve(
         if os.path.exists(fileroot+"/"+project+".noisy.sd.T.cal"):
             shutil.rmtree(fileroot+"/"+project+".noisy.sd.T.cal")
 
-    except TypeError, e:
+    except TypeError as e:
         finalize_tools()
         #msg("simobserve -- TypeError: %s" % e, priority="error")
         casalog.post("simobserve -- TypeError: %s" % e, priority="ERROR")
-        raise TypeError, e
+        raise
         return False
-    except ValueError, e:
+    except ValueError as e:
         finalize_tools()
         #print "task_simobserve -- OptionError: ", e
         #msg("simobserve -- OptionError: %s" % e, priority="error")
         casalog.post("simobserve -- OptionError: %s" % e, priority="ERROR")
-        raise ValueError, e
+        raise
         return False
-    except Exception, instance:
+    except Exception as instance:
         finalize_tools()
         #print '***Error***',instance
         #msg("simobserve -- Exception: %s" % instance, priority="error")
         casalog.post("simobserve -- Exception: %s" % instance, priority="ERROR")
-        raise Exception, instance
+        raise
         return False
     return True
 
@@ -1441,7 +1455,7 @@ def plotpb(pb,axes,lims=None,color='k'):
         pblegend.set_alpha(0.7)
         axes.add_artist(pblegend)
     except:
-        print "Using old matplotlib substituting with circle"
+        print("Using old matplotlib substituting with circle")
         # work around for old matplotlib
         boxsize = pb*1.1
         if not lims: lims = axes.get_xlim(),axes.get_ylim()

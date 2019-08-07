@@ -1,13 +1,36 @@
 # unit test for the exportasdm task
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
-import testhelper as th
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    import sys
+    from casatools import ctsys, ms
+    from casatasks import exportasdm, importasdm
+    ### for testhelper import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import testhelper as th
+
+    _ms = ms( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import mstool
+    import unittest
+    import testhelper as th
+
+    _ms = mstool( )
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 class exportasdm_test(unittest.TestCase):
     
@@ -25,30 +48,33 @@ class exportasdm_test(unittest.TestCase):
     
     def setUp(self):    
         self.rval = False
-        #if(not os.path.exists(vis_a)):
-        #    importuvfits(fitsfile=os.environ['CASADATA']+'/regression/ngc4826/fitsfiles/ngc4826.ll.fits5', vis=vis_a)
+        #if(not os.path.exists(self.vis_a)):
+        #    _ms.fromfits( self.vis_a, '/regression/ngc4826/fitsfiles/ngc4826.ll.fits5')
+        #    _ms.close( )
         if(not os.path.exists(self.vis_b)):
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/fits-import-export/input/test.ms .')
+            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .')
         if(not os.path.exists(self.vis_c)):
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/exportasdm/input/M100-X220-shortened.ms .')
+            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/M100-X220-shortened.ms')+' .')
         if(not os.path.exists(self.vis_d)):
-            importuvfits(fitsfile=os.environ['CASAPATH'].split()[0]+'/data/regression/ngc4826/fitsfiles/ngc4826.ll.fits5', 
-                         vis=self.vis_d)
+            # CASA6 will fetch this from the repo without the need for ctsys_resolve
+            _ms.fromfits( self.vis_d, ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5') )
+            _ms.close( )
         if(not os.path.exists(self.vis_e)):
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/cvel/input/g19_d2usb_targets_line-shortened.ms .')
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened.ms')+' .')
         if(not os.path.exists(self.vis_f)):
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/exportasdm/input/Itziar.ms .')            
+            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/Itziar.ms')+' .')            
         if(not os.path.exists(self.vis_g)):
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/exportasdm/input/M51.ms .')
+            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/M51.ms')+' .')
         if(not os.path.exists(self.vis_h)):
-            os.system('ln -sf '+os.environ['CASAPATH'].split()[0]+'/data/regression/unittest/importevla/X_osro_013.55979.93803716435')
+            os.system('ln -sf '+ctsys_resolve('regression/unittest/importevla/X_osro_013.55979.93803716435'))
             # the final two arguments are equivalent to the defaults for the original importevla used here
             importasdm('X_osro_013.55979.93803716435', vis = 'xosro2ref.ms', process_flags=False, scans='0:2', ocorr_mode='co', with_pointing_correction=True)
         if(not os.path.exists(self.vis_i)):
-            os.system('ln -sf '+os.environ['CASAPATH'].split()[0]+'/data/regression/asdm-import/input/uid___A002_X72bc38_X000')
+            os.system('ln -sf '+ctsys_resolve('regression/asdm-import/input/uid___A002_X72bc38_X000'))
             importasdm('uid___A002_X72bc38_X000', vis = 'asdm.ms', scans='0:2')
             
-        default(exportasdm)
+        if not is_CASA6:
+            default(exportasdm)
 
     def tearDown(self):
         os.system('rm -rf myinput.ms')
@@ -56,9 +82,9 @@ class exportasdm_test(unittest.TestCase):
 
 
     def verify_asdm(self,asdmname, withPointing):
-        print "Verifying asdm ", asdmname
+        print("Verifying asdm %s" % asdmname)
         if(not os.path.exists(asdmname)):
-            print "asdm ", asdmname, " doesn't exist."
+            print("asdm %s doesn't exist." % asdmname)
             raise Exception
         # test for the existence of all obligatory tables
         allTables = [ "Antenna.xml",
@@ -94,25 +120,25 @@ class exportasdm_test(unittest.TestCase):
         for fileName in allTables:
             filePath = asdmname+'/'+fileName
             if(not os.path.exists(filePath)):
-                print "ASDM table file ", filePath, " doesn't exist."
+                print("ASDM table file %s doesn't exist." % filePath)
                 isOK = False
             elif(xmllint_ok):
                 # test if well formed
                 rval = os.system('xmllint --noout '+filePath)
                 if(rval !=0):
-                    print "Table ", filePath, " is not a well formed XML document."
+                    print("Table %s is not a well formed XML document." % filePath)
                     isOK = False
         if(isOK and not xmllint_ok):
-            print "Note: Test of XML well-formedness not possible since xmllint not available."
+            print("Note: Test of XML well-formedness not possible since xmllint not available.")
         else:
-            print "Note: xml validation not possible since ASDM DTDs (schemas) not yet online."
+            print("Note: xml validation not possible since ASDM DTDs (schemas) not yet online.")
             
         if(not os.path.exists(asdmname+"/ASDMBinary")):
-            print "ASDM binary directory "+asdmname+"/ASDMBinary doesn't exist."
+            print("ASDM binary directory %s/ASDMBinary doesn't exist." % asdmname)
             isOK = False
     
         if(withPointing and not os.path.exists(asdmname+"/Pointing.bin")):
-            print "ASDM binary file "+asdmname+"/Pointing.bin doesn't exist."
+            print("ASDM binary file %s/Pointing.bin doesn't exist." % asdmname)
             isOK = False
     
         if (not isOK):
@@ -124,9 +150,16 @@ class exportasdm_test(unittest.TestCase):
         myvis = self.vis_b
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
-        # this fails because there are no arguments, that's expected
-        self.rval = exportasdm()
-        self.assertFalse(self.rval)
+        self.rval = False
+        # CASA5 returns False on fail, CASA6 throws an exception
+        # this is an expected fail
+        try:
+            self.rval = exportasdm()
+            if not self.rval:
+                self.rval = True
+        except:
+            self.rval = True
+        self.assertTrue(self.rval)
 
     def test2(self):
         '''Test 2: small input MS, default output, v3'''
@@ -255,6 +288,7 @@ class exportasdm_test(unittest.TestCase):
         os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
         self.verify_asdm(omsname, True)
 
+    @unittest.skip("test disabled")
     def test10(self):
         '''Test 10: v3, ALMA input MS with pointing table and various shortcomings, default output'''
         myvis = self.vis_c
@@ -267,9 +301,6 @@ class exportasdm_test(unittest.TestCase):
 ##             apcorrected=False,
 ##             useversion='v3'
 ##             )
-        self.rval = True
-        print "Test disabled."
-
         self.assertNotEqual(self.rval,False)
 ##        omsname = "test"+str(10)+self.out
 ##        os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
@@ -295,7 +326,7 @@ class exportasdm_test(unittest.TestCase):
         os.system('rm -rf asdmasdm asdm-reimp.ms')
 
         self.rval = exportasdm(vis=myvis, asdm='asdmasdm', apcorrected=False, verbose=True)
-        importasdm(asdm='asdmasdm', vis='asdm-reimp.ms', verbose=True)
+        self.rval = self.rval and importasdm(asdm='asdmasdm', vis='asdm-reimp.ms', verbose=True)
 
         self.rval = self.rval  and th.compmsmainnumcol(myvis, 'asdm-reimp.ms', 1E-5)
         self.rval = self.rval and th.compmsmainboolcol(myvis, 'asdm-reimp.ms')
@@ -303,8 +334,6 @@ class exportasdm_test(unittest.TestCase):
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(12)+self.out
         os.system('rm -rf '+omsname+'; mv  asdmasdm '+omsname)
-
-
 
 class exportasdm_test2(unittest.TestCase):
 
@@ -338,3 +367,6 @@ class exportasdm_test2(unittest.TestCase):
 def suite():
     return [exportasdm_test,exportasdm_test2]
 
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

@@ -1,21 +1,36 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-import inspect
 import re
-from __main__ import default
-from tasks import *
-from taskinit import *
-from casac import casac
 import unittest
-import sha
-import time
 import numpy
 
-from importasap import importasap
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, ms, table, agentflagger
+    from casatasks import importasap
 
-myms = gentools(['ms'])[0]
+    myms = ms( )
+    _tb = table( )
 
+    datapath=ctsys.resolve('regression/unittest/importasap')
+
+    # default isn't needed for casatasks
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from casac import casac
+    from importasap import importasap
+    agentflagger = casac.agentflagger
+
+    myms, _tb = gentools(['ms','tb'])
+
+    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/importasap'
 
 class importasap_test(unittest.TestCase):
     """
@@ -26,7 +41,6 @@ class importasap_test(unittest.TestCase):
        test_noflagversions -- Do not create flagversions file
     """
     # Input and output names
-    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/importasap/'
     infile='uid___A002_X85c183_X36f.test.asap'
     prefix='importasap_test'
     outfile=prefix+'.ms'
@@ -34,7 +48,7 @@ class importasap_test(unittest.TestCase):
     def setUp(self):
         self.res=None
         if (not os.path.exists(self.infile)):
-            shutil.copytree(self.datapath+self.infile, self.infile)
+            shutil.copytree(os.path.join(datapath,self.infile), self.infile)
 
         default(importasap)
 
@@ -65,8 +79,8 @@ class importasap_test(unittest.TestCase):
             myms.open(self.outfile)
             myms.close()
             
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             self.fail('outputvis is not a valid ms')
         
         # check weight initialization
@@ -88,7 +102,7 @@ class importasap_test(unittest.TestCase):
 
         # save state with different name
         version_name = 'OverwriteTest'
-        aflocal = casac.agentflagger()
+        aflocal = agentflagger( )
         aflocal.open(self.outfile)
         aflocal.saveflagversion(versionname=version_name,
                                 comment='flag state for testing',
@@ -102,7 +116,7 @@ class importasap_test(unittest.TestCase):
         self._check_flagversions(self.outfile)
 
         # verification
-        aflocal = casac.agentflagger()
+        aflocal = agentflagger( )
         aflocal.open(self.outfile)
         versions_list = aflocal.getflagversionlist()
         self.assertTrue(all(map(lambda x: re.match('^%s : .*$'%(version_name), x) is None, versions_list)))
@@ -126,7 +140,6 @@ class importasap_test(unittest.TestCase):
         self.assertFalse(os.path.exists(flagversions))
     
     def _check_weights(self, vis):
-        _tb = gentools(['tb'])[0]
         take_diff = lambda actual, expected: numpy.abs((actual - expected) / expected)
         tolerance = 1.0e-7
         try:
@@ -136,13 +149,13 @@ class importasap_test(unittest.TestCase):
             
             _tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
             nrow = _tb.nrows()
-            g = (numpy.mean(_tb.getcell('EFFECTIVE_BW', irow)) for irow in xrange(nrow))
+            g = (numpy.mean(_tb.getcell('EFFECTIVE_BW', irow)) for irow in range(nrow))
             effbws = numpy.fromiter(g, dtype=float)
             _tb.close()
             
             _tb.open(vis)
             nrow = _tb.nrows()
-            for irow in xrange(nrow):
+            for irow in range(nrow):
                 weight = _tb.getcell('WEIGHT', irow)
                 sigma = _tb.getcell('SIGMA', irow)
                 interval = _tb.getcell('INTERVAL', irow)
@@ -166,16 +179,16 @@ class importasap_test(unittest.TestCase):
         self.assertTrue(os.path.exists(flagversions))
 
         # keep current flag state
-        tb.open(vis)
-        nrow = tb.nrows()
-        flag_row_org = tb.getcol('FLAG_ROW')
-        flag_org = tb.getvarcol('FLAG')
-        tb.close()
+        _tb.open(vis)
+        nrow = _tb.nrows()
+        flag_row_org = _tb.getcol('FLAG_ROW')
+        flag_org = _tb.getvarcol('FLAG')
+        _tb.close()
         
         # flag version named 'Original' should be created
         # its content should match with current flag status
         version_name = 'Original'
-        aflocal = casac.agentflagger()
+        aflocal = agentflagger( )
         aflocal.open(vis)
         versions_list = aflocal.getflagversionlist()
         self.assertTrue(any(map(lambda x: re.match('^%s : .*$'%(version_name), x) is not None, versions_list)))
@@ -185,13 +198,13 @@ class importasap_test(unittest.TestCase):
         aflocal.done()
 
         # get restored flag state
-        tb.open(vis)
-        flag_row = tb.getcol('FLAG_ROW')
-        flag = tb.getvarcol('FLAG')
-        tb.close()
+        _tb.open(vis)
+        flag_row = _tb.getcol('FLAG_ROW')
+        flag = _tb.getvarcol('FLAG')
+        _tb.close()
 
         # verification
-        for irow in xrange(nrow):
+        for irow in range(nrow):
             self.assertEqual(flag_row_org[irow], flag_row[irow], msg='row %s: FLAG_ROW is different'%(irow))
 
         for (row, val_org) in flag_org.items():
@@ -203,13 +216,13 @@ class importasap_test(unittest.TestCase):
     
     def _check_atm_pressure(self, vis):
         weather_table = os.path.join(vis, 'WEATHER')
-        tb.open(weather_table)
+        _tb.open(weather_table)
         try:
             # PRESSURE column should exist
-            self.assertTrue('PRESSURE' in tb.colnames())
+            self.assertTrue('PRESSURE' in _tb.colnames())
             
             # unit should be hPa
-            colkeys = tb.getcolkeywords('PRESSURE')
+            colkeys = _tb.getcolkeywords('PRESSURE')
             self.assertTrue('QuantumUnits' in colkeys)
             pressure_unit = colkeys['QuantumUnits'][0]
             print('Pressure unit is {0}'.format(pressure_unit))
@@ -218,12 +231,16 @@ class importasap_test(unittest.TestCase):
             # value should be in reasonable range
             pressure_min = 400.0
             pressure_max = 1100.0
-            pressure_value = tb.getcol('PRESSURE')
+            pressure_value = _tb.getcol('PRESSURE')
             self.assertTrue(numpy.all(pressure_min < pressure_value))
             self.assertTrue(numpy.all(pressure_value < pressure_max))
         finally:
-            tb.close()
+            _tb.close()
 
 
 def suite():
     return [importasap_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

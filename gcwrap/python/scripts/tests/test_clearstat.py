@@ -1,12 +1,22 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
 
-_ia = iatool( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image, table
+    from casatasks import clearstat
+    _ia = image( )
+    _tb = table( )
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    _ia = iatool( )
+    _tb = tb
 
 '''
 Unit tests of task clearstat. It tests the following parameters:
@@ -16,16 +26,36 @@ Unit tests of task clearstat. It tests the following parameters:
     clears write lock on image,
     clears all locks
 '''
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/exportasdm/input/'
+# find the data in the standard place unless TEST_DATADIR is set
+# for some tests, the standard place should always be used
+# CASA5 and CASA6 approach this differently
+
+# this is the relative path where most of the test data is found
+datapath = 'regression/exportasdm/input'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):   
+if 'TEST_DATADIR' in os.environ:
     testmms = True
-    DATADIR = str(os.environ.get('TEST_DATADIR'))+'/clearstat/'
+    DATADIR = os.path.join(str(os.environ.get('TEST_DATADIR')),'clearstat')
     if os.path.isdir(DATADIR):
         datapath = DATADIR
-    print 'clearstat tests will use data from '+datapath    
+    print('clearstat tests will use data from %s' % datapath)
+
+# CASA5 and CASA6 differences to handle this
+if is_CASA6:
+    def ctsys_resolve(apath,ignore_testmms=False):
+        # ignore_testmms isn't necessary here given how datapath is used in the tests
+        return ctsys.resolve(apath)
+else:
+    def ctsys_resolve(apath,ignore_testmms=False):
+        result = apath
+        if not testmms or ignore_testmms:
+            # find it in the standard place
+            dataRoot = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+            result = os.path.join(dataRoot,apath)
+        # otherwise apath should already be the full path
+        return result
 
 class clearstat_test(unittest.TestCase):
     
@@ -36,47 +66,45 @@ class clearstat_test(unittest.TestCase):
     
     def setUp(self):
         self.res = None
-        default('clearstat')
+        if not is_CASA6:
+            default('clearstat')
         if(os.path.exists(self.msfile)):
             os.system('rm -rf ' + self.msfile)
         if(os.path.exists(self.img)):
             os.system('rm -rf ' + self.img)
             
-#        shutil.copytree(os.environ.get('CASAPATH').split()[0] +\
-#                            '/data/regression/exportasdm/input/'+self.msfile, self.msfile)
-        shutil.copytree(datapath +self.msfile, self.msfile)
-            
-        imgpath = os.environ.get('CASAPATH').split()[0] + '/data/regression/ngc4826redux/reference/'
-        shutil.copytree(imgpath+self.img, self.img)
+        shutil.copytree(ctsys_resolve(os.path.join(datapath,self.msfile)), self.msfile)
+        # always get this from the standard place, ignoring any testmms value
+        shutil.copytree(ctsys_resolve(os.path.join('regression/ngc4826redux/reference',self.img),True), self.img)
     
     def tearDown(self):
         os.system('rm -rf ' + self.msfile)
         os.system('rm -rf ' + self.img)
 
-        tb.close()
+        _tb.close()
         if(_ia.isopen == True):
             _ia.close()
             
         
     def test1(self):
         '''Test 1: Clear table read lock'''
-        tb.open(self.msfile)
-        lock = tb.haslock(write=False)
+        _tb.open(self.msfile)
+        lock = _tb.haslock(write=False)
         self.assertTrue(lock,'Cannot acquire read lock on table')
-        clearstat()
-        lock = tb.haslock(write=False)
-        tb.close()
+        clearstat( )
+        lock = _tb.haslock(write=False)
+        _tb.close( )
         self.assertFalse(lock,'Failed to clear table read lock')
 
     def test2(self):
         '''Test 2: Clear table write lock'''
-        tb.open(self.msfile)
-        tb.lock()
-        lock = tb.haslock(write=True)
+        _tb.open(self.msfile)
+        _tb.lock()
+        lock = _tb.haslock(write=True)
         self.assertTrue(lock,'Cannot acquire write lock on table')
-        clearstat()
-        lock = tb.haslock(write=True)
-        tb.close()
+        clearstat( )
+        lock = _tb.haslock(write=True)
+        _tb.close()
         self.assertFalse(lock,'Failed to clear table write lock')
 
     def test3(self):
@@ -102,29 +130,28 @@ class clearstat_test(unittest.TestCase):
 
     def test5(self):
         '''Test 5: Clear all locks'''
-        tb.open(self.msfile)
-        tbreadlock = tb.haslock(write=False)
-        tb.lock()
-        tbwritelock = tb.haslock(write=True)
+        _tb.open(self.msfile)
+        tbreadlock = _tb.haslock(write=False)
+        _tb.lock()
+        tbwritelock = _tb.haslock(write=True)
         _ia.open(self.img)
         _ia.lock(writelock=True)
         lock = _ia.haslock()
         self.assertTrue(tbreadlock==True and tbwritelock==True and lock[0]==True and lock[1]==True,
                         'Cannot acquire locks on table and/or image')
         clearstat()
-        tbreadlock = tb.haslock(write=False)
-        tbwritelock = tb.haslock(write=True)
+        tbreadlock = _tb.haslock(write=False)
+        tbwritelock = _tb.haslock(write=True)
         lock = _ia.haslock()
-        tb.close()
+        _tb.close()
         _ia.close()
 
         self.assertTrue(tbreadlock==False and tbwritelock==False and lock[0]==False and lock[1]==False,
                         'Failed to clear locks on table and/or image')
-        
-
 
 def suite():
     return [clearstat_test]
-    
-    
-    
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

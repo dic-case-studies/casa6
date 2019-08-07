@@ -1,20 +1,36 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
 import re
 import numpy as np
-from __main__ import default
-from tasks import importvla
-from taskinit import tbtool
-from taskinit import qatool
 import unittest
 
-# local copy of the table tool
-tblocal = tbtool()
-qalocal = qatool()
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, quanta
+    from casatasks import importvla
 
-# these tests use existing regression test data
-regressionpath = os.environ.get('CASAPATH').split()[0] + "/data/regression/"
+    ctsys_resolve = ctsys.resolve
+
+    # local copy of the table tool
+    tblocal = table( )
+    qalocal = quanta( )
+else:
+    from __main__ import default
+    from tasks import importvla
+    from taskinit import tbtool
+    from taskinit import qatool
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],"data")
+
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+        
+    # local copy of the table tool
+    tblocal = tbtool()
+    qalocal = qatool()
 
 def checkms(msname, expectedNrows, antnamescheme='new', autocorrRows = 0):
     '''Check on the named MS.  Each table in expectedNrows dict should have
@@ -93,11 +109,12 @@ def rmMS(msPath):
 class importvla_test_1(unittest.TestCase):
 
     # these tests all use the 3C129 regression data
-    datapath = regressionpath + "3C129/"
+    datapath = 'regression/3C129'
     msfile = "impvla_3c129_test.ms"
 
     def setUp(self):
-        default(importvla)
+        if not is_CASA6:
+            default(importvla)
         rmMS(self.msfile)
 
     def tearDown(self):
@@ -112,8 +129,8 @@ class importvla_test_1(unittest.TestCase):
         # use AT166_1 and AT166_3 but not AT166_2 so that multiple files are used
         # but the resulting MS is smaller and the test runs faster than it would
         # if all 3 are used.
-        importvla(archivefiles=[self.datapath+'AT166_1',
-                                self.datapath+'AT166_3'],
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AT166_1')),
+                                 ctsys_resolve(os.path.join(self.datapath,'AT166_3')) ],
                   vis=self.msfile)
 
         expectedRows = {"MAIN":1509300,'SOURCE':8,'ANTENNA':47,'DATA_DESCRIPTION':8,'FEED':47,
@@ -128,9 +145,9 @@ class importvla_test_1(unittest.TestCase):
         '''test_timeTsys: time selection, 'old' antnamescheme, tests applytsys=False'''
 
         # use all 3 files as inputs, only a small number of rows are actually selected.
-        importvla(archivefiles=[self.datapath+'AT166_1',
-                                self.datapath+'AT166_2',
-                                self.datapath+'AT166_3'],
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AT166_1')),
+                                 ctsys_resolve(os.path.join(self.datapath,'AT166_2')),
+                                 ctsys_resolve(os.path.join(self.datapath,'AT166_3')) ],
                   vis=self.msfile, 
                   starttime='1994/7/25/07:34:00',
                   stoptime='1994/7/25/07:40:00',
@@ -157,9 +174,9 @@ class importvla_test_1(unittest.TestCase):
 
         # refill with applytsys off
         rmMS(self.msfile)
-        importvla(archivefiles=[self.datapath+'AT166_1',
-                                self.datapath+'AT166_2',
-                                self.datapath+'AT166_3'],
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AT166_1')),
+                                 ctsys_resolve(os.path.join(self.datapath,'AT166_2')),
+                                 ctsys_resolve(os.path.join(self.datapath,'AT166_3')) ],
                   vis=self.msfile, 
                   starttime='1994/7/25/07:34:00',
                   stoptime='1994/7/25/07:40:00',
@@ -174,9 +191,9 @@ class importvla_test_1(unittest.TestCase):
     def test_bandSel(self):
         '''test_bandSel: test bandname selection, U data from the 3C129 regression test data'''
         # use all 3 files as inputs, only a small number of rows are actually selected.
-        importvla(archivefiles=[self.datapath+'AT166_1',
-                                self.datapath+'AT166_2',
-                                self.datapath+'AT166_3'],
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AT166_1')),
+                                 ctsys_resolve(os.path.join(self.datapath,'AT166_2')),
+                                 ctsys_resolve(os.path.join(self.datapath,'AT166_3')) ],
                   vis=self.msfile, bandname='U')
 
         expectedRows = {"MAIN":490698,'SOURCE':5,'ANTENNA':27,'DATA_DESCRIPTION':2,'FEED':27,
@@ -203,16 +220,16 @@ class importvla_test_1(unittest.TestCase):
                         'POLARIZATION':1,'PROCESSOR':0,'SPECTRAL_WINDOW':8,'STATE':0,
                         'DOPPLER':8}
         # fill an ms to use in subsequent tests
-        importvla(archivefiles=[self.datapath+'AT166_1'], vis=self.msfile)
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AT166_1')) ], vis=self.msfile)
         (msOK, status) = checkms(self.msfile,expectedRows)
         self.assertTrue(msOK,"initial fill failed "+status)
 
-        print "internal checkms test, the following printed status messages are expected here and are not test errors."
+        print("internal checkms test, the following printed status messages are expected here and are not test errors.")
 
         # bad msname
         (msOK, status) = checkms("__dummy__.ms",expectedRows)
         self.assertTrue(not msOK,'checkms test of bad msname failed to report the MS as bad')
-        print status
+        print(status)
 
         # bad number of rows in MAIN
         trueRows = expectedRows["MAIN"]
@@ -220,24 +237,24 @@ class importvla_test_1(unittest.TestCase):
         (msOK, status) = checkms(self.msfile,expectedRows)
         self.assertTrue(not msOK,'checkms test of wrong MAIN rows failed to report the MS as bad')
         expectedRows["MAIN"] = trueRows
-        print status
+        print(status)
 
         # bad autocorrRows value
         (msOK, status) = checkms(self.msfile,expectedRows,autocorrRows=1)
         self.assertTrue(not msOK,'checkms test of wrong autocorrRows value failed to report the MS as bad')
-        print status
+        print(status)
 
         # check for a table that doesn't exit
         badExpectedRows = dict(expectedRows)
         badExpectedRows["NotATable"] = 1
         (msOK, status) = checkms(self.msfile,badExpectedRows)
         self.assertTrue(not msOK,'checkms test for non-existant subtable failed to report the MS as bad')
-        print status
+        print(status)
 
         # check that the ANTENNA follows the "old" scheme when the "new" was actually used
         (msOK, status) = checkms(self.msfile,expectedRows,antnamescheme="old")
         self.assertTrue(not msOK,'checkms test for old antnamescheme failed to report the MS as bad')
-        print status
+        print(status)
 
         # check using an incorrect number of rows for one of the subtables
         badExpectedRows = dict(expectedRows)
@@ -245,16 +262,17 @@ class importvla_test_1(unittest.TestCase):
         badExpectedRows["FLAG_CMD"] = 1
         (msOK, status) = checkms(self.msfile,badExpectedRows)
         self.assertTrue(not msOK,'checkms test for bad number of FLAG_CMD rows failed to report the MS as bad')
-        print status
+        print(status)
 
 class importvla_test_2(unittest.TestCase):
 
     # these tests all use the ATST1/G192 regression data
-    datapath = regressionpath + "ATST1/G192/"
+    datapath = 'regression/ATST1/G192'
     msfile = "impvla_g192_test.ms"
 
     def setUp(self):
-        default(importvla)
+        if not is_CASA6:
+            default(importvla)
         rmMS(self.msfile)
 
     def tearDown(self):
@@ -265,7 +283,7 @@ class importvla_test_2(unittest.TestCase):
 
         # only use the xp5 data to limit size, but provide enough variation to test this parameter
         # first pass, wide frequencytol value that results in a single spectral window
-        importvla(archivefiles=[self.datapath+'AS758_C030426.xp5'],
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AS758_C030426.xp5')) ],
                   vis=self.msfile,bandname='K',frequencytol=10000000.0)
 
         expectedRows = {"MAIN":214825,'SOURCE':4,'ANTENNA':26,'DATA_DESCRIPTION':1,'FEED':26,
@@ -278,7 +296,7 @@ class importvla_test_2(unittest.TestCase):
         
         # second pass, default frequencytol results in 2 SWs
         rmMS(self.msfile)
-        importvla(archivefiles=[self.datapath+'AS758_C030426.xp5'],
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AS758_C030426.xp5')) ],
                   vis=self.msfile,bandname='K')
 
         expectedRows = {"MAIN":214825,'SOURCE':4,'ANTENNA':26,'DATA_DESCRIPTION':2,'FEED':26,
@@ -294,7 +312,7 @@ class importvla_test_2(unittest.TestCase):
 
         # only use the xp1 data to limit size
         # first pass, default (no autocorrlation data)
-        importvla(archivefiles=[self.datapath+'AS758_C030425.xp1'],
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AS758_C030425.xp1')) ],
                   vis=self.msfile,bandname='K',frequencytol=10000000.0)
 
         expectedRows = {"MAIN":44928,'SOURCE':3,'ANTENNA':27,'DATA_DESCRIPTION':1,'FEED':27,
@@ -307,7 +325,7 @@ class importvla_test_2(unittest.TestCase):
         
         # second pass, autocorr=True
         rmMS(self.msfile)
-        importvla(archivefiles=[self.datapath+'AS758_C030425.xp1'],
+        importvla(archivefiles=[ ctsys_resolve(os.path.join(self.datapath,'AS758_C030425.xp1')) ],
                   vis=self.msfile,bandname='K',frequencytol=10000000.0, autocorr=True)
 
         expectedRows = {"MAIN":48384,'SOURCE':3,'ANTENNA':27,'DATA_DESCRIPTION':1,'FEED':27,
@@ -321,3 +339,7 @@ class importvla_test_2(unittest.TestCase):
 
 def suite():
     return [importvla_test_1, importvla_test_2]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

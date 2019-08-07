@@ -1,25 +1,35 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-import inspect
-import re
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
-import sha
-import time
 import numpy
-import itertools
 
-from importnro import importnro
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, measures, ms, table, quanta
+    from casatools.platform import str2bytes
+    from casatasks import importnro
 
-myms = gentools(['ms'])[0]
+    _qa = quanta( )
+    _me = measures( )
+    myms = ms( )
+    mytb = table( )
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from importnro import importnro
 
+    myms, mytb = gentools(['ms','tb'])
+
+    # not local tools
+    _qa = qa
+    _me = me
 
 # Utilities
 def get_antenna_position(vis, row):
-    (mytb,) = gentools(['tb'])
     antenna_table = os.path.join(vis, 'ANTENNA')
     
     mytb.open(antenna_table)
@@ -30,13 +40,12 @@ def get_antenna_position(vis, row):
         mytb.close()
         
     posref = poskey['MEASINFO']['Ref']
-    qpos = [qa.quantity(v,u) for v,u in itertools.izip(pos, poskey['QuantumUnits'])]
-    mantpos = me.position(rf=posref, v0=qpos[0], v1=qpos[1], v2=qpos[2])
+    qpos = [_qa.quantity(v,u) for v,u in zip(pos, poskey['QuantumUnits'])]
+    mantpos = _me.position(rf=posref, v0=qpos[0], v1=qpos[1], v2=qpos[2])
     
     return mantpos
 
 def get_valid_pointing_info(vis):
-    (mytb,) = gentools(['tb'])
     pointing_table = os.path.join(vis, 'POINTING')
     
     mytb.open(pointing_table)
@@ -57,12 +66,12 @@ def get_valid_pointing_info(vis):
         mytb.close()
         
     dirref = dirkey['MEASINFO']['Ref']
-    qdir = [qa.quantity(v,u) for v,u in itertools.izip(pdir[:,0], dirkey['QuantumUnits'])]
-    mpdir = me.direction(rf=dirref, v0=qdir[0], v1=qdir[1])
+    qdir = [_qa.quantity(v,u) for v,u in zip(pdir[:,0], dirkey['QuantumUnits'])]
+    mpdir = _me.direction(rf=dirref, v0=qdir[0], v1=qdir[1])
 
     timeref = timekey['MEASINFO']['Ref']
-    qtime = qa.quantity(ptime, timekey['QuantumUnits'][0])
-    mepoch = me.epoch(rf=timeref, v0=qtime)
+    qtime = _qa.quantity(ptime, timekey['QuantumUnits'][0])
+    mepoch = _me.epoch(rf=timeref, v0=qtime)
     
     return mepoch, mpdir
         
@@ -74,7 +83,6 @@ class importnro_test(unittest.TestCase):
        test_normal -- Normal data import
     """
     # Input and output names
-    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/importnro/'
     infile='orixa.OrionKL.20151209212931.16.Y'
     prefix='importnro_test'
     outfile=prefix+'.ms'
@@ -82,9 +90,14 @@ class importnro_test(unittest.TestCase):
     def setUp(self):
         self.res=None
         if (not os.path.exists(self.infile)):
-            shutil.copy(self.datapath+self.infile, self.infile)
+            if is_CASA6:
+                datapath = ctsys.resolve(os.path.join('regression/unittest/importnro',self.infile))
+            else:
+                datapath=os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/importnro'),self.infile)
+            shutil.copy(datapath, self.infile)
 
-        default(importnro)
+        if not is_CASA6:
+            default(importnro)
 
     def tearDown(self):
         if (os.path.exists(self.infile)):
@@ -99,7 +112,10 @@ class importnro_test(unittest.TestCase):
     
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
-        with open(self.infile, 'wb') as f: f.write('AA')
+        if is_CASA6:
+            with open(self.infile, 'wb') as f: f.write(str2bytes('AA'))
+        else:
+            with open(self.infile, 'wb') as f: f.write('AA')
         #os.remove(os.path.join(self.infile, 'table.info'))
         with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$') as cm:
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
@@ -113,8 +129,8 @@ class importnro_test(unittest.TestCase):
             myms.open(self.outfile)
             myms.close()
             
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             self.fail('outputvis is not a valid ms')
         
         # check weight initialization
@@ -130,27 +146,26 @@ class importnro_test(unittest.TestCase):
         self._check_weather(self.outfile)
         
     def _check_weights(self, vis):
-        _tb = gentools(['tb'])[0]
         take_diff = lambda actual, expected: numpy.abs((actual - expected) / expected)
         tolerance = 1.0e-7
         try:
-            _tb.open(os.path.join(vis, 'DATA_DESCRIPTION'))
-            spwids = _tb.getcol('SPECTRAL_WINDOW_ID')
-            _tb.close()
+            mytb.open(os.path.join(vis, 'DATA_DESCRIPTION'))
+            spwids = mytb.getcol('SPECTRAL_WINDOW_ID')
+            mytb.close()
             
-            _tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
-            nrow = _tb.nrows()
-            g = (numpy.mean(_tb.getcell('EFFECTIVE_BW', irow)) for irow in xrange(nrow))
+            mytb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
+            nrow = mytb.nrows()
+            g = (numpy.mean(mytb.getcell('EFFECTIVE_BW', irow)) for irow in range(nrow))
             effbws = numpy.fromiter(g, dtype=float)
-            _tb.close()
+            mytb.close()
             
-            _tb.open(vis)
-            nrow = _tb.nrows()
-            for irow in xrange(nrow):
-                weight = _tb.getcell('WEIGHT', irow)
-                sigma = _tb.getcell('SIGMA', irow)
-                interval = _tb.getcell('INTERVAL', irow)
-                ddid = _tb.getcell('DATA_DESC_ID', irow)
+            mytb.open(vis)
+            nrow = mytb.nrows()
+            for irow in range(nrow):
+                weight = mytb.getcell('WEIGHT', irow)
+                sigma = mytb.getcell('SIGMA', irow)
+                interval = mytb.getcell('INTERVAL', irow)
+                ddid = mytb.getcell('DATA_DESC_ID', irow)
                 spwid = spwids[ddid]
                 effbw = effbws[spwid]
                 weight_expected = interval * effbw
@@ -161,9 +176,9 @@ class importnro_test(unittest.TestCase):
                 #print irow, 'weight_diff', weight_diff, 'sigma_diff', sigma_diff
                 self.assertTrue(all(weight_diff < tolerance), msg='Row %s: weight verification failed'%(irow))
                 self.assertTrue(all(sigma_diff < tolerance), msg='Row %s: sigma verification failed'%(irow))
-            _tb.close()
+            mytb.close()
         finally:
-            _tb.close()
+            mytb.close()
             
     def _check_optional_subtables(self, vis):
         """Check if optional subtables are valid"""
@@ -172,7 +187,6 @@ class importnro_test(unittest.TestCase):
     def _check_NRO_ARRAY(self, vis):
         """Check if NRO_ARRAY table is valid"""
         table_name = 'NRO_ARRAY'
-        (mytb,) = gentools(['tb'])
         mytb.open(vis)
         try:
             self.assertTrue(table_name in mytb.keywordnames())
@@ -217,8 +231,6 @@ class importnro_test(unittest.TestCase):
         
     def _check_source_interval(self, vis):
         """Check if SOURCE INTERVAL is consistent with OBSERVATION TIME_RANGE"""
-        (mytb,) = gentools(['tb'])
-        
         source_table = os.path.join(vis, 'SOURCE')
         observation_table = os.path.join(vis, 'OBSERVATION')
         
@@ -237,7 +249,7 @@ class importnro_test(unittest.TestCase):
         finally:
             mytb.close()
             
-        for t, dt in itertools.izip(source_time, source_interval):
+        for t, dt in zip(source_time, source_interval):
             source_time_range = numpy.asarray([t-dt/2, t+dt/2])
             diff = numpy.abs((source_time_range - time_range) / time_range)
             #print 'diff={}'.format(diff)
@@ -248,37 +260,32 @@ class importnro_test(unittest.TestCase):
         ret = importnro(infile=self.infile, outputvis=self.outfile, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         
-        # test if telescope elevation has reasonable value
-        (myme,) = gentools(['me'])
-        # make sure me tool is initialized
-        myme.done()
-        
         # antenna_position should be a position measure
         antenna_position = get_antenna_position(self.outfile, 0)
-        self.assertTrue(myme.ismeasure(antenna_position))
+        self.assertTrue(_me.ismeasure(antenna_position))
         self.assertTrue(antenna_position['type'] == 'position')
         
         # pointing_time should be a time (epoch) measure
         # pointing_direction should be a direction measure
         # pointing_direction should not be [0,0]
         pointing_time, pointing_direction = get_valid_pointing_info(self.outfile)
-        self.assertTrue(myme.ismeasure(pointing_time))
+        self.assertTrue(_me.ismeasure(pointing_time))
         self.assertTrue(pointing_time['type'] == 'epoch')
-        self.assertTrue(myme.ismeasure(pointing_direction))
+        self.assertTrue(_me.ismeasure(pointing_direction))
         self.assertTrue(pointing_direction['type'] == 'direction')
         self.assertFalse(pointing_direction['m0']['value'] == 0.0 and pointing_direction['m1']['value'])
         
         # convert pointing_direction (J2000) to AZELGEO
         # frame configuration
-        myme.doframe(pointing_time)
-        myme.doframe(antenna_position)
+        _me.doframe(pointing_time)
+        _me.doframe(antenna_position)
         
         # frame cnversion
-        azel = myme.measure(v=pointing_direction, rf='AZELGEO')
-        myme.done()
+        azel = _me.measure(v=pointing_direction, rf='AZELGEO')
+        _me.done()
         
         # check if elevation is in range [0deg, 90deg]
-        elevation = qa.convert(azel['m1'], 'deg')
+        elevation = _qa.convert(azel['m1'], 'deg')
         msg = 'Timestamp used for the conversion could be wrong.: calculated elevation={value}{unit}'.format(**elevation)
         self.assertLessEqual(elevation['value'], 90.0, msg='Elevation is above the upper limit (> 90deg). {}'.format(msg))
         self.assertGreaterEqual(elevation['value'], 0.0, msg='Elevation is below the lower limit (< 0deg). {}'.format(msg))
@@ -292,25 +299,29 @@ class importnro_test(unittest.TestCase):
         
     def _check_weather_column(self, vis, colname, unit, value_min, value_max):
         weather_table = os.path.join(vis, 'WEATHER')
-        tb.open(weather_table)
+        mytb.open(weather_table)
         try:
             # column should exist
-            self.assertTrue(colname in tb.colnames())
+            self.assertTrue(colname in mytb.colnames())
             
             # unit check
-            colkeys = tb.getcolkeywords(colname)
+            colkeys = mytb.getcolkeywords(colname)
             self.assertTrue('QuantumUnits' in colkeys)
             column_unit = colkeys['QuantumUnits'][0]
             print('{0} unit is {1}'.format(colname, column_unit))
             self.assertEqual(column_unit, unit)
             
             # value should be in reasonable range
-            column_value = tb.getcol(colname)
+            column_value = mytb.getcol(colname)
             self.assertTrue(numpy.all(value_min < column_value))
             self.assertTrue(numpy.all(column_value < value_max))
         finally:
-            tb.close()
+            mytb.close()
         
 
 def suite():
     return [importnro_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

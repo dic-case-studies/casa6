@@ -16,14 +16,34 @@
 # Input data:                                                               #
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
 import numpy
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, ms, table
+    from casatasks import importatca
+
+    _ms = ms( )
+    _tb = table( )
+
+    # enhanced later using ctsys.resolve
+    datapath = 'regression/unittest/importatca'
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    # not local tools
+    _ms = ms
+    _tb = tb
+
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importatca'
 
 myname = 'importatca-unit-test'
 
@@ -35,15 +55,15 @@ msname = my_dataset_names[0].split('.')[1].lower()+'.ms'
 
 def checktable(thename, theexpectation, dataslice=[]):
     global msname, myname
-    tb.open(msname+"/"+thename)
+    _tb.open(msname+"/"+thename)
     if thename == "":
         thename = "MAIN"
     for mycell in theexpectation:
-        print myname, ": comparing ", mycell
+        print(myname, ": comparing ", mycell)
         if mycell[0]=="DATA" or mycell[0]=="CHAN_WIDTH" or mycell[0]=="CHAN_FREQ":
-	    value = tb.getcellslice(mycell[0], mycell[1],dataslice[0],dataslice[1],dataslice[2])
-	else:
-	    value = tb.getcell(mycell[0], mycell[1])
+            value = _tb.getcellslice(mycell[0], mycell[1],dataslice[0],dataslice[1],dataslice[2])
+        else:
+            value = _tb.getcell(mycell[0], mycell[1])
         # see if value is array
         try:
             isarray = value.__len__
@@ -55,7 +75,11 @@ def checktable(thename, theexpectation, dataslice=[]):
             else:
                 in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
         else:
-            if isinstance(value, basestring):
+            if is_CASA6:
+                stype = str
+            else:
+                stype = basestring
+            if isinstance(value, stype):
                 in_agreement = value == mycell[2]
             else:
                 # it's an array
@@ -68,13 +92,13 @@ def checktable(thename, theexpectation, dataslice=[]):
                     except:
                         in_agreement = False
         if not in_agreement:
-            print myname, ":  Error in MS subtable", thename, ":"
-            print "     column ", mycell[0], " row ", mycell[1], " contains ", value
-            print "     expected value is ", mycell[2]
-            tb.close()
+            print(myname, ":  Error in MS subtable", thename, ":")
+            print("     column ", mycell[0], " row ", mycell[1], " contains ", value)
+            print("     expected value is ", mycell[2])
+            _tb.close()
             return False
-    tb.close()
-    print myname, ": table ", thename, " as expected."
+    _tb.close()
+    print(myname, ": table ", thename, " as expected.")
     return True
 
 
@@ -84,14 +108,16 @@ def checktable(thename, theexpectation, dataslice=[]):
 class test_importatca(unittest.TestCase):
     
     def setUp(self):
-        res = None
-
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importatca/'
+        self.res = None
         for fname in my_dataset_names:
             if(os.path.exists(fname)):
                 os.remove(fname)
-            shutil.copy(datapath + fname, fname)
-        default(importatca)
+            datasetPath = os.path.join(datapath,fname)
+            if is_CASA6:
+                datasetPath = ctsys.resolve(datasetPath)
+            shutil.copy(datasetPath, fname)
+        if not is_CASA6:
+            default(importatca)
         
     def tearDown(self):
         for fname in my_dataset_names:
@@ -104,10 +130,10 @@ class test_importatca(unittest.TestCase):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
         self.res = importatca(my_dataset_names[0], msname, options="noac")
-        print myname, ": Success! Now checking output ..."
+        print(myname, ": Success! Now checking output ...")
         mscomponents = set(["table.dat",
                             "table.f0",
-			    "table.f0i",
+                            "table.f0i",
                             "table.f1",
                             "table.f2",
                             "table.f2_TSM1",
@@ -168,21 +194,21 @@ class test_importatca(unittest.TestCase):
                             ])
         for name in mscomponents:
             if not os.access(msname+"/"+name, os.F_OK):
-                print myname, ": Error  ", msname+"/"+name, "doesn't exist ..."
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
             else:
-                print myname, ": ", name, "present."
-        print myname, ": MS exists. All tables present. Try opening as MS ..."
+                print(myname, ": ", name, "present.")
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            print myname, ": Error  Cannot open MS table", tablename
+            print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
-            print myname, ": OK. Checking tables in detail ..."
+            _ms.close()
+            print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
     
             # check main table first
@@ -192,11 +218,11 @@ class test_importatca(unittest.TestCase):
                          ['UVW',       0, [ 37.08396912, 110.68421173, 121.33368683], 1E-8],
                          ['EXPOSURE',  0, 9.856, 1E-4],
                          ['DATA',      0,[[-0.19179995-0.27503902j],
-					  [-0.07504284-0.07763118j],
-					  [-0.13403413+0.04170537j],
-					  [ 0.24940215-0.23159257j]], 1E-8]
+                                          [-0.07504284-0.07763118j],
+                                          [-0.13403413+0.04170537j],
+                                          [ 0.24940215-0.23159257j]], 1E-8]
                          ]
-	    dataslice=[[0,1025],[3,1025],[1,1]]
+            dataslice=[[0,1025],[3,1025],[1,1]]
             results = checktable(name, expected, dataslice)
             if not results:
                 retValue['success']=False
@@ -206,9 +232,9 @@ class test_importatca(unittest.TestCase):
                          ['UVW',       854, [870.02380371, 2447.86230469, 2683.08862305], 1E-8],
                          ['EXPOSURE',  854, 9.856, 1E-4],
                          ['DATA',      854,[[ 0.69642496-0.57600111j],
-					    [ 0.01779159+0.27384654j],
-					    [-0.07370736-0.30479908j],
-					    [ 0.45262983+0.29306653j]], 1E-8]
+                                            [ 0.01779159+0.27384654j],
+                                            [-0.07370736-0.30479908j],
+                                            [ 0.45262983+0.29306653j]], 1E-8]
                          ]
             results = checktable(name, expected, dataslice)
             if not results:
@@ -232,7 +258,7 @@ class test_importatca(unittest.TestCase):
                          ['CHAN_FREQ',       0, [ 3124e6,   3123e6,  3122e6], 0.01E6],
                          ['CHAN_FREQ',       2, [ 1411e6, 1410.96875e6, 1410.9375e6], 10.]
                          ]
-	    freqSlice=[[0],[2],[1]]
+            freqSlice=[[0],[2],[1]]
             results = checktable(name, expected,freqSlice)
             if not results:
                 retValue['success']=False
@@ -245,13 +271,13 @@ class test_importatca(unittest.TestCase):
                 
     def _check_atm_pressure(self, vis):
         weather_table = os.path.join(vis, 'WEATHER')
-        tb.open(weather_table)
+        _tb.open(weather_table)
         try:
             # PRESSURE column should exist
-            self.assertTrue('PRESSURE' in tb.colnames())
+            self.assertTrue('PRESSURE' in _tb.colnames())
             
             # unit should be hPa
-            colkeys = tb.getcolkeywords('PRESSURE')
+            colkeys = _tb.getcolkeywords('PRESSURE')
             self.assertTrue('QuantumUnits' in colkeys)
             pressure_unit = colkeys['QuantumUnits'][0]
             print('Pressure unit is {0}'.format(pressure_unit))
@@ -260,11 +286,15 @@ class test_importatca(unittest.TestCase):
             # value should be in reasonable range
             pressure_min = 400.0
             pressure_max = 1100.0
-            pressure_value = tb.getcol('PRESSURE')
+            pressure_value = _tb.getcol('PRESSURE')
             self.assertTrue(numpy.all(pressure_min < pressure_value))
             self.assertTrue(numpy.all(pressure_value < pressure_max))
         finally:
-            tb.close()
+            _tb.close()
     
 def suite():
     return [test_importatca]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

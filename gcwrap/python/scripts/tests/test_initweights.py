@@ -1,41 +1,49 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-import sys
 import shutil
-import re
 import numpy
-import math
-
-from __main__ import default
-from tasks import initweights
-from taskinit import tbtool
 import unittest
-from casa_stack_manip import stack_frame_find
 
-from initweights import initweights
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table
+    from casatasks import initweights
+else:
+    from __main__ import default
+    from tasks import initweights
+    from taskinit import tbtool as table
+    from initweights import initweights
 
-# to rethrow exception 
-import inspect
-g = stack_frame_find( )
-exception_stat = g['__rethrow_casa_exceptions'] if g.has_key('__rethrow_casa_exceptions') else False
+    # this is used in a commented out version of testWeight, so this commented out here
+    # to rethrow exception - not relevant in casatasks
+    # import inspect
+    # from casa_stack_manip import stack_frame_find
+
+    # g = stack_frame_find( )
+    # exception_stat = g['__rethrow_casa_exceptions'] if '__rethrow_casa_exceptions' in g else False
 
 class initweights_common(unittest.TestCase):
     """
     A base test class for initweights task
     """
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-        '/data/regression/unittest/initweights/'
+    if is_CASA6:
+        datapath = ctsys.resolve('regression/unittest/initweights')
+    else:
+        datapath = os.path.join(os.environ.get('CASAPATH').split()[0],
+                                'data/regression/unittest/initweights')
         
     # Pick up alternative data directory to run tests on MMSs
     testmms = False
-    if os.environ.has_key('TEST_DATADIR'):   
+    if 'TEST_DATADIR' in os.environ:   
         DATADIR = str(os.environ.get('TEST_DATADIR'))+'/initweights/'
         if os.path.isdir(DATADIR):
             testmms = True
             datapath = DATADIR
         else: 
-            raise ValueError, 'Could not find input data in datapath='+DATADIR
+            raise ValueError('Could not find input data in datapath=%s' % DATADIR)
     
-    print 'initweights tests will use data from '+datapath         
+    print('initweights tests will use data from %s' % datapath)
         
     inputms = "tsysweight_ave.ms"
     tsystable = "tsysweight_ave.tsys.cal"
@@ -58,13 +66,16 @@ class initweights_common(unittest.TestCase):
     verbose = False
 
     def setUp(self):
-        default(initweights)
+        # default not relevant for casatasks
+        if not is_CASA6:
+            default(initweights)
+
         for name in self.templist:
             # remove old ones (if exists)
             if (os.path.exists(name)):
                 shutil.rmtree(name)
             # copy a new ones
-            shutil.copytree(self.datapath+name, name)
+            shutil.copytree(os.path.join(self.datapath,name), name)
     
     def tearDown(self):
         # remove list of files
@@ -91,7 +102,7 @@ class initweights_common(unittest.TestCase):
     def _column_exists(self, tbname, colname):
         """Returns True if the column exists in the table"""
         self._check_file(tbname)
-        tb = tbtool()
+        tb = table( )
         tb.open(tbname)
         cols = tb.colnames()
         tb.close()
@@ -107,13 +118,13 @@ class initweights_common(unittest.TestCase):
         polyarr[ichan] = 1.0 + 2.0*ichan + 3.0*ichan**2 (ichan=0~nchan-1)
         """
         if nchan < 0:
-            raise ValueError, "nchan should be >=0"
+            raise ValueError("nchan should be >=0")
         if len(coeff)==0:
             if nchan ==0: return []
-            else: raise ValueError, "No valid coefficient given."
+            else: raise ValueError("No valid coefficient given.")
         polyarr = numpy.zeros(nchan)
         for iorder in range(len(coeff)):
-            polyarr += coeff[iorder]*numpy.array(xrange(nchan))**iorder
+            polyarr += coeff[iorder]*numpy.array(range(nchan))**iorder
         return polyarr
 
     def _compare_arrays(self, data, reference, atol=1.e-5, rtol=1.e-5):
@@ -196,7 +207,7 @@ class initweights_common(unittest.TestCase):
         self._run_local_tests(mode, dowtsp, spwlist, interplist, atol, rtol)
         # common tests
         # calculate results for each time
-        tb = tbtool()
+        tb = table()
         self._check_file(self.inputms)
         has_wtsp = self._column_exists(self.inputms, "WEIGHT_SPECTRUM")
         has_sigsp = self._column_exists(self.inputms, "SIGMA_SPECTRUM")
@@ -305,7 +316,7 @@ class initweights_common(unittest.TestCase):
         if takeEvenMean:
             return numpy.median(in_arr)
         else:
-            return numpy.sort(in_arr, axis=None)[(in_arr.size-1)/2]
+            return numpy.sort(in_arr, axis=None)[(in_arr.size-1)//2]
 
 
 class initweights_tsys_base(initweights_common):
@@ -331,7 +342,7 @@ class initweights_tsys_base(initweights_common):
         elif mode=='tinttsys':
             factor = self.chw*self.exposure
         else:
-            raise ValueError, "invalid mode for tests"
+            raise ValueError("invalid mode for tests")
         if self.tsys_funcs[spw]:
             tsys = self._generate_poly_array(nchan, self.tsys_funcs[spw])
             if not dowtsp:
@@ -426,16 +437,16 @@ class initweights_tsys_map(initweights_common):
         elif interplist[0].startswith('lin'):
             tsys_funcs = self.tsys_linear
         else:
-            raise ValueError, "got unexpected time interpolation"
+            raise ValueError("got unexpected time interpolation")
         if spw not in tsys_funcs.keys():
-            raise ValueError, "Testing unexpected spw %d" % spw
+            raise ValueError("Testing unexpected spw %d" % spw)
         spwintent = 'tsys' if spw in [1,3,5,7] else 'sci'
         if mode=='tsys':
             factor = self.chw[spwintent]
         elif mode=='tinttsys':
             factor = self.chw[spwintent]*self.exposure[spwintent][irow]
         else:
-            raise ValueError, "invalid mode for tests"
+            raise ValueError("invalid mode for tests")
         if tsys_funcs[spw]:
             tsys = self._generate_poly_array(nchan, tsys_funcs[spw][irow])
             if not dowtsp:
@@ -515,7 +526,7 @@ class initweights_base(initweights_common):
 
     def _get_interpolated_wtsp(self, mode, spw, nchan, interplist, irow, dowtsp):
         if spw not in self.valid_spw:
-            raise ValueError, "Testing unexpected spw %d" % spw
+            raise ValueError("Testing unexpected spw %d" % spw)
         wt = -1.0
         if mode=='nyq':
             wt = self.chw[spw]*self.exposure[spw][irow]
@@ -526,19 +537,19 @@ class initweights_base(initweights_common):
         elif mode=='weight':
             wt = self.weight
         else:
-            raise ValueError, "invalid mode for tests"
+            raise ValueError("invalid mode for tests")
 
         return self._generate_poly_array(nchan, [wt])
 
     # Just not to raise error at verification stage.
     def _make_consistent(self):
-        tb = tbtool()
+        tb = table()
         tb.open(self.inputms,nomodify=False)
         try:
-            for irow in xrange(tb.nrows()):
+            for irow in range(tb.nrows()):
                 tb.putcell("SIGMA", irow, 1./numpy.sqrt(tb.getcell("WEIGHT", irow)))
         except:
-            raise RuntimeError, "Failed to manually make SIGMA and WEIGHT consistent."
+            raise RuntimeError("Failed to manually make SIGMA and WEIGHT consistent.")
         finally:
             tb.close()
 
@@ -627,3 +638,6 @@ class initweights_delspcol(initweights_common):
 def suite():
     return [initweights_tsys_base, initweights_tsys_map,
             initweights_base, initweights_delspcol]
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()
