@@ -286,7 +286,7 @@ ITUPLE ImageFactory::fromFile(const String& infile, Bool cache) {
     _checkInfile(infile);
     ComponentListImage::registerOpenFunction();
     unique_ptr<LatticeBase> latt(ImageOpener::openImage(infile));
-    ThrowIf (! latt, "Unable to open image");
+    ThrowIf (! latt, "Unable to open image " + infile);
     auto imagePtrs = _fromLatticeBase(latt);
     auto imageF = std::get<0>(imagePtrs);
     if (

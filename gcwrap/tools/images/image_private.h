@@ -25,10 +25,8 @@ typedef casacore::GaussianBeam Angular2DGaussian;
 
 mutable casacore::LogIO _log = casacore::LogIO();
 
-// This class needs to be templated. For now, we maintain two pointers.
-// At least one of which will be zero for a valid object state.
-// std::shared_ptr<casacore::ImageInterface<casacore::Float> > _imageFloat;
-// std::shared_ptr<casacore::ImageInterface<casacore::Complex> > _imageComplex;
+// This class needs to be templated. For now, we maintain four pointers,
+// at least three of which will be zero for a valid object state.
 
 casa::SPIIF _imageF = casa::SPIIF();
 casa::SPIIC _imageC = casa::SPIIC();
@@ -50,10 +48,7 @@ template <class T> static casac::coordsys* _coordsys(
 
 bool _doHistory = true;
 
-// Having private version of IS and IH means that they will
-// only recreate storage images if they have to
-
-// Logs a message if the image DO is detached and returns true,
+// Logs a message if the image is detached and returns true,
 // otherwise returns false
 bool _detached() const;
 
@@ -95,9 +90,8 @@ template <class T> image* _boxcar(
 casacore::Quantity _casaQuantityFromVar(const ::casac::variant& theVar);
 
 template<class T> SPIIT _concat(
-    std::shared_ptr<casacore::LatticeBase> latt, const string& outfile,
-    const variant& infiles, int axis, bool relax, bool tempclose,
-    bool overwrite, bool reorder,
+    const string& outfile, const variant& infiles, int axis, bool relax,
+    bool tempclose, bool overwrite, bool reorder,
     std::vector<casacore::String>& imageNames, const string& mode
 );
 

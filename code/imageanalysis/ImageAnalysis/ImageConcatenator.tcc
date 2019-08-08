@@ -35,40 +35,23 @@ namespace casa {
 
 template <class T>
 const casacore::String ImageConcatenator<T>::_class = "ImageConcatenator";
-/*
-template <class T>
-ImageConcatenator<T>::ImageConcatenator(
-	SPIIT image, const casacore::String& outname,
-	casacore::Bool overwrite
-) : ImageTask<T>(
-		image, "", 0, "", "", "",
-		"", outname, overwrite
-	), _axis(-1), _tempClose(false), _relax(false), _reorder(false) {
-	this->_construct();
-}
-*/
 
 template <class T>
 ImageConcatenator<T>::ImageConcatenator(
     std::vector<casacore::String>& imageNames, const casacore::String& outname,
 	casacore::Bool overwrite
-) : _imageNames(imageNames), _outname(_outname), _overwrite(overwrite) {
-	// this->_construct();
+) : _imageNames(imageNames), _outname(outname), _overwrite(overwrite) {
     ThrowIf(
         _imageNames.size() < 2,
         "You must give at least two extant images to concatenate"
     );
-	// SPCIIT myImage = this->_getImage();
-    // vector<casacore::String> imageList;
-	// imageList.push_back(myImage->name());
-	// imageList.insert(
-	//     imageList.end(), imageNames.begin(), imageNames.end()
-	// );
-    casacore::File p(_outname);
-    ThrowIf(
-        p.exists() && ! _overwrite,
-        _outname + " exists and overwrite is false"
-    );
+    if (! _outname.empty()) {
+        casacore::File p(_outname);
+        ThrowIf(
+            p.exists() && ! _overwrite,
+            _outname + " exists and overwrite is false"
+        );
+    }
     LogIO log;
     log << casacore::LogOrigin(_class, __func__, WHERE);
     log << casacore::LogIO::NORMAL << "Number of images to concatenate = "
@@ -76,29 +59,41 @@ ImageConcatenator<T>::ImageConcatenator(
 }
 
 template <class T>
-ImageConcatenator<T>::~ImageConcatenator() {
-    if (_mode == MOVEVIRTUAL) {
-        ImageFactory::remove(this->_getImage(), false);
-    }
-}
+ImageConcatenator<T>::~ImageConcatenator() {}
 
 template <class T>
 void ImageConcatenator<T>::setAxis(int axis) {
-	ThrowIf(
-		axis >= (casacore::Int)this->_getImage()->ndim(),
-		"Specified zero-based value of axis exceeds "
-		"number of dimensions in image"
-	);
-	if (axis < 0) {
-		ThrowIf(
-			! this->_getImage()->coordinates().hasSpectralAxis(),
-			"This image has no spectral axis"
-		);
-		_axis = this->_getImage()->coordinates().spectralAxisNumber(false);
-	}
-	else {
-		_axis = axis;
-	}
+    uInt count = 0;
+    Int oAxis = 0;
+    for (const auto name: _imageNames) {
+        auto image = ImageFactory::fromFile(name, T(0), false);
+        if (axis >= 0) {
+            ThrowIf(
+                axis >= (casacore::Int)image->ndim(),
+                "Specified zero-based value of axis exceeds "
+                "number of dimensions in " + image->name()
+            );
+            _axis = axis;
+        }
+        else {
+            const auto& csys = image->coordinates();
+            ThrowIf(
+                ! csys.hasSpectralAxis(),
+                "Image " + name + " has no spectral axis"
+            );
+            _axis = csys.spectralAxisNumber(false);
+            if (count == 0) {
+                oAxis = _axis;
+            }
+            else {
+                ThrowIf(
+                    _axis != oAxis,
+                    "Spectral axis numbers between images are not the same"
+                );
+            }
+        }
+        ++count;
+    }
 }
 
 template <class T>
@@ -119,32 +114,29 @@ SPIIT ImageConcatenator<T>::concatenate() {
         }
     }
     auto myImage = ImageFactory::fromFile(_imageNames[0], T(0), false);
+    auto ndim = myImage->ndim();
 	const auto& csys = myImage->coordinates();
-	casacore::Int whichCoordinate, axisInCoordinate;
+    casacore::Int whichCoordinate, axisInCoordinate;
 	csys.findPixelAxis(whichCoordinate, axisInCoordinate, _axis);
 	const auto ctype = csys.coordinate(whichCoordinate).type();
 	const auto pix = csys.referencePixel();
    	auto isIncreasing = false;
-	vector<casacore::Double> minVals, maxVals;
+    casacore::Vector<casacore::Double> minVals;
 	casacore::uInt n = 0;
 	if (! _relax || _reorder) {
-        // The image held by ImageTask is compared to
 		n = _imageNames.size();
 		minVals.resize(n);
-		maxVals.resize(n);
-		isIncreasing = _minMaxAxisValues(
-			minVals[0], maxVals[0], myImage->ndim(),
-			csys, myImage->shape()
-		);
-	}
+        isIncreasing = _minAxisValues(
+            minVals[0], csys, myImage->shape()
+        );
+    }
     auto dataType = myImage->dataType();
-    uInt i = 0;
-    for(casacore::String name: _imageNames) {
-        if (i == 0) {
-            // The imageNames[0] is in myImage, so don't open it again
-            continue;
-        }
-        auto myIm = ImageFactory::fromFile(name, T(0), false);
+    for (auto i = 1; i < n; ++i) { 
+        auto myIm = ImageFactory::fromFile(_imageNames[i], T(0), false);
+        ThrowIf(
+            myIm->ndim() != ndim,
+            "Images do not have the same number of dimensions"
+        );
         auto oDType = myIm->dataType();
    		ThrowIf(
 			oDType != dataType,
@@ -153,14 +145,12 @@ SPIIT ImageConcatenator<T>::concatenate() {
         if (! _relax || _reorder) {
             auto shape = myIm->shape();
             const auto& oCsys = myIm->coordinates();
-			ThrowIf(
-				_minMaxAxisValues(
-					minVals[i], maxVals[i], shape.size(), oCsys, shape
-				) != isIncreasing,
+            ThrowIf(
+                _minAxisValues(minVals[i], oCsys, shape) != isIncreasing,
 				"Coordinate axes in different images with opposing increment "
 				"signs is not permitted if relax=false or reorder=true"
 			);
-		}
+        }
 		if (! _relax) {
             const auto& oCsys = myIm->coordinates();
 			oCsys.findPixelAxis(
@@ -172,7 +162,6 @@ SPIIT ImageConcatenator<T>::concatenate() {
 				"if relax=false"
 			);
 		}
-		++i;
     }
 	if (_reorder) {
 		casacore::Sort sorter;
@@ -183,7 +172,7 @@ SPIIT ImageConcatenator<T>::concatenate() {
 		);
 		casacore::Vector<casacore::uInt> indices;
 		sorter.sort(indices, n);
-		auto tmp = _imageNames;
+        auto tmp = _imageNames;
 		auto iter = tmp.begin();
 		auto end = tmp.end();
 		auto index = indices.begin();
@@ -199,34 +188,17 @@ SPIIT ImageConcatenator<T>::concatenate() {
 			<< _imageNames[0] << " will be used as the reference"
 			<< casacore::LogIO::POST;
 	}
-	std::shared_ptr<casacore::ImageConcat<T>> pConcat(
+    std::shared_ptr<casacore::ImageConcat<T>> pConcat(
 	    new casacore::ImageConcat<T>(_axis, _tempClose)
-	);
+    );
 	ThrowIf(
 		! pConcat.get(), "Failed to create ImageConcat object"
 	);
-    // auto copyNames = imageList;
     if (_mode == COPYVIRTUAL || _mode == MOVEVIRTUAL) {
         casacore::File p(_outname);
         casacore::Directory eldir(p);
         eldir.create(_overwrite);
         auto rootdir = eldir.path().absoluteName();
-        /*
-        uInt k = 0;
-        for (auto& name: copyNames) {
-            name = rootdir + Path(imageNames[k]).baseName();
-            ++k;
-        }
-        */
-        // if mode == MOVE the first image gets removed during object destruction.
-        /*
-        auto inname = myImage->name();
-        Directory myFirst(inname);
-        ThrowIf(
-            myFirst.copy(outname),
-            "Error copying image " + inname
-        );
-        */
         casacore::uInt k = 0;
         auto copyNames = _imageNames;
         // FIXME probably needs to be imageList since imageList can get screwed around above
@@ -244,103 +216,11 @@ SPIIT ImageConcatenator<T>::concatenate() {
             }
             ++k;
         }
-        //	    imageList.insert(imageList.begin(), copyNames.begin(), copyNames.end());
         _imageNames = copyNames;
     }
 	if (_axis < 0) {
         setAxis(-1);
 	}
-    /*
-	*this->_getLog() << casacore::LogOrigin(_class, __func__, WHERE);
-	*this->_getLog() << casacore::LogIO::NORMAL << "Number of images to concatenate = "
-		<< (imageNames.size() + 1) << casacore::LogIO::POST;
-	const auto& csys = myImage->coordinates();
-	casacore::Int whichCoordinate, axisInCoordinate;
-	csys.findPixelAxis(whichCoordinate, axisInCoordinate, _axis);
-	casacore::Coordinate::Type ctype = csys.coordinate(whichCoordinate).type();
-	casacore::Vector<casacore::Double> pix = csys.referencePixel();
-    vector<casacore::String> imageList;
-	imageList.push_back(myImage->name());
-	imageList.insert(
-	    imageList.end(), copyNames.begin(), copyNames.end()
-	);
-	casacore::Bool isIncreasing = false;
-	vector<casacore::Double> minVals, maxVals;
-	casacore::uInt n = 0;
-	if (! _relax || _reorder) {
-		n = imageList.size();
-		minVals.resize(n);
-		maxVals.resize(n);
-		isIncreasing = _minMaxAxisValues(
-			minVals[0], maxVals[0], myImage->ndim(),
-			csys, myImage->shape()
-		);
-	}
-    */
-	//casacore::uInt i = 1;
-	//for(casacore::String name: copyNames) {
-		//auto myIm = ImageFactory::fromFile(name, T(0), false);
-        //oDType = myIm->dataType();
-        // oCsys = myIm->coordinates();
-        // shape = myIm->shape();
-        /*
-        SPCIIF imageF;
-        SPCIIC imageC;
-        SPCIID imageD;
-        SPCIIDC imageDC;
-        std::tie(imageF, imageC, imageD, imageDC) = imagePtrs;
-		casacore::DataType oDType;
-		casacore::CoordinateSystem oCsys;
-		casacore::IPosition shape;
-		if (imageF) {
-		    oDType = imageF->dataType();
-		    oCsys = imageF->coordinates();
-		    shape = imageF->shape();
-		}
-		else if (imageC) {
-		    oDType = imageC->dataType();
-		    oCsys = imageC->coordinates();
-		    shape = imageC->shape();
-		}
-		else if (imageD) {
-		    oDType = imageD->dataType();
-		    oCsys = imageD->coordinates();
-		    shape = imageD->shape();
-		}
-		else if (imageDC) {
-		    oDType = imageDC->dataType();
-		    oCsys = imageDC->coordinates();
-		    shape = imageDC->shape();
-		}
-		else {
-		    ThrowCc("Logic error");
-		}
-		ThrowIf(
-			oDType != dataType,
-			"Concatenation of images of different data types is not supported"
-		);
-        if (! _relax || _reorder) {
-			ThrowIf(
-				_minMaxAxisValues(
-					minVals[i], maxVals[i], shape.size(), oCsys, shape
-				) != isIncreasing,
-				"Coordinate axes in different images with opposing increment "
-				"signs is not permitted if relax=false or reorder=true"
-			);
-		}
-		if (! _relax) {
-			oCsys.findPixelAxis(
-				whichCoordinate, axisInCoordinate, _axis
-			);
-			ThrowIf(
-				oCsys.coordinate(whichCoordinate).type() != ctype,
-				"Cannot concatenate different coordinates in different images "
-				"if relax=false"
-			);
-		}
-		++i;
-        */
-	// }
     auto first = true;
 	for(const auto& name: _imageNames) {
 		_addImage(pConcat, name, first);
@@ -355,30 +235,8 @@ SPIIT ImageConcatenator<T>::concatenate() {
             _overwrite, true, false, false
         );  
     }
-    else {
-        return SPIIT(ImageFactory::fromFile(_outname), T(0), false);
-    }
-    /*
-    switch (_mode) i{
-        case PAGED:
-	    return this->_prepareOutputImage(*pConcat);
-      default: {
-          cout << __FILE__ << " " << __LINE__ << endl;
-          auto outname = this->_getOutname();
-          cout << __FILE__ << " " << __LINE__ << endl;
-          if (outname.empty()) {
-          cout << __FILE__ << " " << __LINE__ << endl;
-              return pConcat;
-          }
-          else {
-          cout << __FILE__ << " " << __LINE__ << endl;
-            pConcat->save(outname);
-          cout << __FILE__ << " " << __LINE__ << endl;
-              return ImageFactory::fromFile(outname, T(0), False);
-          }
-        }
-    }
-    */
+    pConcat->save(_outname);
+    return ImageFactory::fromFile(_outname, T(0), false);
 }
 
 template <class T> void ImageConcatenator<T>::setMode(const casacore::String& mymode) {
@@ -405,23 +263,13 @@ template <class T> void ImageConcatenator<T>::_addImage(
 	std::shared_ptr<casacore::ImageConcat<T>> pConcat, const casacore::String& name,
     casacore::Bool first
 ) const {
-    cout << this->_getImage()->name() << " " << name << endl;
     if (first) {
-        /*
-        auto outname = _mode == PAGED ? "" : name;
-        SPIIT mycopy = SubImageFactory<T>::createImage(
-			*this->_getImage(), outname, casacore::Record(), "", false, false, false, false
-		);
-        cout << "added temporary image copy" << endl;
-		pConcat->setImage(*mycopy, _relax);
-        */
         pConcat->setImage(*ImageFactory::fromFile(name, T(0), false), _relax);
 		return;
 	}
-	casacore::Bool doneOpen = false;
+	auto doneOpen = false;
 	try {
 		SPIIT im2 = casacore::ImageUtilities::openImage<T>(name);
-        cout << im2->imageType() << endl;
         doneOpen = true;
 		pConcat->setImage(*im2, _relax);
 	}
@@ -436,28 +284,26 @@ template <class T> void ImageConcatenator<T>::_addImage(
 	}
 }
 
-template <class T> casacore::Bool ImageConcatenator<T>::_minMaxAxisValues(
-	casacore::Double& mymin, casacore::Double& mymax, casacore::uInt ndim, const casacore::CoordinateSystem& csys,
-	const casacore::IPosition& shape
+template <class T> casacore::Bool ImageConcatenator<T>::_minAxisValues(
+    casacore::Double& mymin, const casacore::CoordinateSystem& csys,
+    const casacore::IPosition& shape
 ) const {
-	ThrowIf(
-		ndim != this->_getImage()->ndim(),
-		"All images must have the same number of dimensions"
-	);
-	casacore::Vector<casacore::Double> pix = csys.referencePixel();
-	pix[_axis] = 0;
-	mymin = csys.toWorld(pix)[_axis];
-	if (shape[_axis] == 1) {
-		mymax = mymin;
-		return this->_getImage()->coordinates().increment()[_axis] > 0;
-	}
-	pix[_axis] = shape[_axis] - 1;
-	mymax = csys.toWorld(pix)[_axis];
-	casacore::Bool isIncreasing = mymax > mymin;
-	if (! isIncreasing) {
-        std::swap(mymin, mymax);
-	}
-	return isIncreasing;
+    auto pix = csys.referencePixel();
+    auto isIncreasing = csys.increment()[_axis] > 0;
+    pix[_axis] = isIncreasing ? 0 : shape[_axis] - 1;
+    mymin = csys.toWorld(pix)[_axis];
+    if (isIncreasing) {
+        return true;
+    }
+    else if (shape[_axis] == 1) {
+        // _axis is degenerate
+        return isIncreasing;
+    }
+    else {
+        // axis is decreasing, so the max pixel coordinate
+        // has the minimum world value
+        return false;
+    }
 }
 
 template <class T>

@@ -105,15 +105,7 @@ protected:
         NOMOVEVIRTUAL,
         PAGED
     };
-/*
-	inline  CasacRegionManager::StokesControl _getStokesControl() const {
-		return CasacRegionManager::USE_ALL_STOKES;
-	}
 
-	inline std::vector<casacore::Coordinate::Type> _getNecessaryCoordinates() const {
-		return std::vector<casacore::Coordinate::Type>(0);
- 	}
-*/
 private:
     std::vector<casacore::String> _imageNames;
     casacore::String _outname;
@@ -125,15 +117,14 @@ private:
     MODE _mode = PAGED;
     static const casacore::String _class;
 
+    // returns true if world coordinate values increase
+    // with pixel coordinate values
+    casacore::Bool _minAxisValues(
+        casacore::Double& min, const casacore::CoordinateSystem& csys,
+        const casacore::IPosition& shape
+    ) const;
 
-	// returns true if world coordinate values increase
-	// with pixel coordinate values
-	casacore::Bool _minMaxAxisValues(
-		casacore::Double& min, casacore::Double& max, casacore::uInt ndim,
-		const casacore::CoordinateSystem& csys, const casacore::IPosition& shape
-	) const;
-
-	void _addImage(
+    void _addImage(
 	    std::shared_ptr<casacore::ImageConcat<T>> pConcat,
 	    const casacore::String& name, casacore::Bool first
 	) const;
