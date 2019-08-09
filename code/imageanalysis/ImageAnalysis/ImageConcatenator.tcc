@@ -115,15 +115,15 @@ SPIIT ImageConcatenator<T>::concatenate() {
     }
     auto myImage = ImageFactory::fromFile(_imageNames[0], T(0), false);
     auto ndim = myImage->ndim();
-	const auto& csys = myImage->coordinates();
+    const auto& csys = myImage->coordinates();
     casacore::Int whichCoordinate, axisInCoordinate;
-	csys.findPixelAxis(whichCoordinate, axisInCoordinate, _axis);
-	const auto ctype = csys.coordinate(whichCoordinate).type();
-	const auto pix = csys.referencePixel();
+    csys.findPixelAxis(whichCoordinate, axisInCoordinate, _axis);
+    const auto ctype = csys.coordinate(whichCoordinate).type();
+    const auto pix = csys.referencePixel();
    	auto isIncreasing = false;
     casacore::Vector<casacore::Double> minVals;
-	casacore::uInt n = 0;
-	if (! _relax || _reorder) {
+    casacore::uInt n = 0;
+    if (! _relax || _reorder) {
 		n = _imageNames.size();
 		minVals.resize(n);
         isIncreasing = _minAxisValues(
@@ -131,7 +131,7 @@ SPIIT ImageConcatenator<T>::concatenate() {
         );
     }
     auto dataType = myImage->dataType();
-    for (auto i = 1; i < n; ++i) { 
+    for (uInt i = 1; i < n; ++i) { 
         auto myIm = ImageFactory::fromFile(_imageNames[i], T(0), false);
         ThrowIf(
             myIm->ndim() != ndim,
