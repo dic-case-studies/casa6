@@ -66,7 +66,7 @@ namespace casa{
   };
   
   // -----------------------------------------------------------------
-  BaselineType::BaselineType(): doPointing_p(true), vectorPhaseGradCalculator_p(),vbRows_p(),cachedGroups_p(false)
+  BaselineType::BaselineType(): doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(),vbRows_p()
   {
     newPhaseGradComputed_p = false;
     vectorPhaseGradCalculator_p.resize(0);
@@ -92,7 +92,6 @@ namespace casa{
     int myrow=row;
     if(doPointing_p)
       {
-	cachedGroups_p = false;
 	findAntennaGroups(vb,pointingOffsets_p,sigmaDev);
 	makeVBRow2BLGMap(vb);
       
