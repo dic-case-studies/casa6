@@ -56,7 +56,7 @@ imaging with doPointing=True
 #include <scimath/Mathematics/Combinatorics.h>
 #include <casa/Arrays/Array.h>
 #include <casa/Arrays/ArrayMath.h>
-
+#include <casa/BasicSL/Constants.h>
 using namespace casacore;
 namespace casa{
   using namespace refim;
@@ -66,7 +66,8 @@ namespace casa{
   };
   
   // -----------------------------------------------------------------
-  BaselineType::BaselineType(): doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(),vbRows_p()
+
+  BaselineType::BaselineType(): doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), vbRows_p()
   {
     newPhaseGradComputed_p = false;
     vectorPhaseGradCalculator_p.resize(0);
@@ -83,7 +84,7 @@ namespace casa{
   
   };
   
-  Matrix<Complex> BaselineType::setBLPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
+  Matrix<Complex> BaselineType::setBLPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p ,
 					       const CountedPtr<CFBuffer>& cfb,
 					       const vi::VisBuffer2& vb,
 					       const int& row,
@@ -92,7 +93,36 @@ namespace casa{
     int myrow=row;
     if(doPointing_p)
       {
+	Float A2R = 4.848137E-06;
+	Vector<Double> poIncrement = pointingOffsets_p->getIncrement();
+	Vector<Double> sumResPO_l;
+	if(cachedGroups_p)
+	  {
+	    unsigned int cachedPOSize_l = cachedPointingOffsets_p.size();
+	    unsigned int poSize_l = (pointingOffsets_p->pullPointingOffsets()).size();
+	    sumResPO_l.resize(2);
+	    sumResPO_l[0]=0;
+	    sumResPO_l[1]=0;
+	    // cerr << "sumResPO_l "<< sumResPO_l << " poSize_l " << poSize_l << " cachedPOSize_l"<< cachedPOSize_l <<endl;
+	    if(poSize_l == cachedPOSize_l)
+	      {
+		Vector < Vector <Double> > residualPointingOffsets_l = cachedPointingOffsets_p - pointingOffsets_p->pullPointingOffsets(); 
+	    	for(unsigned int ii=0; ii < poSize_l; ii++) 
+	    	  sumResPO_l = sumResPO_l + residualPointingOffsets_l[ii];
+	      }
+	    else
+	      {
+	    	cachedGroups_p = false;
+	      }
+	    // cerr << "Sum of the Residual Pointing Offsets "<< sumResPO_l << endl; 
+	  }
+
+	cachedPointingOffsets_p.assign(pointingOffsets_p->pullPointingOffsets());
+
+	// Double offsetDeviation = sigmaDev * A2R / (acos(sin(poIncrement[0])*sin(poIncrement[1])) + cos(poIncrement[0])*cos(poIncrement[1])*cos(poIncrement[0] - poIncrement[1]));
+	Double offsetDeviation = sigmaDev * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
 	findAntennaGroups(vb,pointingOffsets_p,sigmaDev);
+
 	makeVBRow2BLGMap(vb);
       
 	if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
@@ -103,12 +133,10 @@ namespace casa{
 	      if (vectorPhaseGradCalculator_p[i].null())
 		vectorPhaseGradCalculator_p[i]=new PhaseGrad();
 	  }
-	// if (vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPhaseGrad(pointingOffsets_p,vb,row))
-	//   {
-	//     cachedGroups_p = false;
-	//     findAntennaGroups(vb,pointingOffsets_p,sigmaDev);	    
-	//   }
-	vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row);
+	if(cachedGroups_p)
+	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);
+	else
+	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row);
       }
     else
       {

@@ -71,6 +71,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
      void setCacheGroups(const int& vbRows, const vi::VisBuffer2& vb);
 
+
+     
+     
+
      bool doPointing_p, newPhaseGradComputed_p, cachedGroups_p;
      casacore::Vector< casacore::CountedPtr<PhaseGrad> >vectorPhaseGradCalculator_p;
      int vbRows_p;
