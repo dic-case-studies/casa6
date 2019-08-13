@@ -257,7 +257,7 @@ using namespace casa::vi;
   }
 
   void FTMachine::reset(){
-    ft_p=FFT2D(true);
+    //ft_p=FFT2D(true);
   }
   
   //----------------------------------------------------------------------
