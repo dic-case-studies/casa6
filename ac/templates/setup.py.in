@@ -1882,7 +1882,9 @@ class create_makefile(Command):
             mk.write(tool_libs_target + ": " + sep.join(tool_libs_targ_deps) + "\n")
 
         # straight file copies
-        files_to_copy = source_files("src/python", file_suffix_filter=".py")
+        mkpath(moduledir)
+        run_process( ["rsync","-aq","src/python/",moduledir], err='could not copy python module files' )
+        files_to_copy = [ ]
         files_to_copy.append("build.properties")
         bindir = os.sep.join([moduledir, "__casac__", "bin"])
         copy_to_dirs = {}
@@ -2190,7 +2192,7 @@ if __name__ == '__main__':
            long_description="\n".join(__doc__.split("\n")[2:]),
            classifiers=filter(None, classifiers.split("\n")),
            package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
-           packages=[module_name],
+           packages=[ module_name, "%s.util" % module_name ],
            cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build, 'genmake': create_makefile, 'ia': create_makefile_ia } \
                                    if wheel_build \
                                    else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
