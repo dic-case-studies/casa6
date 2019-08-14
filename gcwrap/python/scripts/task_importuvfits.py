@@ -1,6 +1,17 @@
+from __future__ import absolute_import
 import os
-from taskinit import *
-from mstools import write_history
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ms
+    from casatasks import casalog
+    from .mstools import write_history
+else:
+    from taskinit import *
+    from mstools import write_history
+
+    ms = mstool
 
 def importuvfits(fitsfile, vis, antnamescheme=None):
     """
@@ -21,31 +32,33 @@ def importuvfits(fitsfile, vis, antnamescheme=None):
         new: Antenna name is not a number, 'VA04' or 'EA04'
              With this scheme, data selection via
              antenna names and indices is non-ambiguous.
-    async --  Run asynchronously
         default = false; do not run asychronously
 
 
     """
-    myms = mstool()
+    myms = ms()
     try:
         try:
             casalog.origin('importuvfits')
             casalog.post("")
             myms.fromfits(vis, fitsfile, antnamescheme=antnamescheme)
             myms.close()
-        except Exception, instance: 
+        except Exception as instance: 
             casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
             raise
         # Write the args to HISTORY.
         try:
-            param_names = \
-                importuvfits.func_code.co_varnames[:importuvfits.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            param_names = importuvfits.__code__.co_varnames[:importuvfits.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             write_history(
                 myms, vis, 'importuvfits', param_names, 
                 param_vals, casalog
             )
-        except Exception, instance:
+        except Exception:
             casalog.post("Failed to updated HISTORY table", 'WARN')
     except:
         pass

@@ -1,13 +1,30 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
 import testhelper as th
 import numpy as np
-from __main__ import default
-from tasks import fluxscale
-from taskinit import *
 import unittest
-import exceptions
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table
+    from casatasks import fluxscale
+
+    # CASA6 does not use default
+    def default(atask):
+        pass
+
+    datapath = ctsys.resolve('regression/unittest/fluxscale')
+else:
+    from __main__ import default
+    from tasks import fluxscale
+    from taskinit import *
+
+    table = tbtool
+    
+    datapath = os.environ.get('CASAPATH').split()[0] +\
+        '/data/regression/unittest/fluxscale/'
 
 ''' Python unit tests for the fluxscale task
 
@@ -16,23 +33,18 @@ tables created for an MS and an MMS agree. These are
 not full unit tests for the fluxscale task.
 '''
 
-datapath = os.environ.get('CASAPATH').split()[0] +\
-                            '/data/regression/unittest/fluxscale/'
-
-
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):   
-    DATADIR = str(os.environ.get('TEST_DATADIR'))+'/fluxscale/'
+if 'TEST_DATADIR' in os.environ:
+    DATADIR = os.path.join(str(os.environ.get('TEST_DATADIR')),'fluxscale')
     if os.path.isdir(DATADIR):
         testmms = True
         datapath = DATADIR
     else:
-        print 'WARN: directory '+DATADIR+' does not exist'
+        print('WARN: directory %s does not exist' % DATADIR)
 
-print 'fluxscale tests will use data from '+datapath         
+print('fluxscale tests will use data from %s' % datapath)
 
-    
 class fluxscale1_test(unittest.TestCase):
 
     def setUp(self):
@@ -57,7 +69,7 @@ class fluxscale1_test(unittest.TestCase):
             fpath = os.path.join(datapath,self.reffile2)
             shutil.copytree(fpath, self.reffile2, symlinks=True)
         else:
-            self.fail('Data does not exist -> '+fpath)
+            self.fail('Data does not exist -> %s' % fpath)
 
         default('fluxscale')
 
@@ -77,8 +89,7 @@ class fluxscale1_test(unittest.TestCase):
         # Output
         outtable = self.msfile + '.fcal'
         
-        thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*', 
-                  transfer='1445*')
+        thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*', transfer='1445*')
         self.assertTrue(os.path.exists(outtable))
         
         # File to compare with
@@ -94,8 +105,8 @@ class fluxscale1_test(unittest.TestCase):
         #         'fieldName': '1445+09900002_0', 'numSol': np.array([54]), \
                  #'fluxd': np.array([0.16825763])}, \
                  # flux density seems changed a bit. Updated - 2013.01.29 TT
-		 # for linux on current trunk 22670
-		 # for OSX 10.6 got the previous value 
+                 # for linux on current trunk 22670
+                 # for OSX 10.6 got the previous value 
         #         'fluxd': np.array([0.16825765])}, \
         #         'freq': np.array([1.41266507e+09]), \
         #         'spwName': np.array(['none'], dtype='|S5'), \
@@ -116,10 +127,9 @@ class fluxscale1_test(unittest.TestCase):
                   'spwName': np.array(['none'], dtype='|S5'), 
                   'spwID': np.array([0], dtype=np.int32)}
 
-        
         diff_fluxd=abs(refdict['1']['0']['fluxd'][0]-thisdict['1']['0']['fluxd'][0])/refdict['1']['0']['fluxd'][0]
         #self.assertTrue(diff_fluxd<1.5e-8)
-	# increase the tolerance level
+        # increase the tolerance level
         self.assertTrue(diff_fluxd<1e-5)
         
             
@@ -132,7 +142,7 @@ class fluxscale1_test(unittest.TestCase):
         outtable = self.msfile + '.inc.fcal'
 
         thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*',
-                  transfer='1445*', incremental=True)
+                             transfer='1445*', incremental=True)
         self.assertTrue(os.path.exists(outtable))
 
         # File to compare with
@@ -150,7 +160,7 @@ class fluxscale1_test(unittest.TestCase):
         outtable = self.msfile + '.thres.fcal'
 
         thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*',
-                  transfer='1445*', gainthreshold=0.05,incremental=True)
+                             transfer='1445*', gainthreshold=0.05,incremental=True)
         self.assertTrue(os.path.exists(outtable))
 
         # File to compare with
@@ -187,10 +197,10 @@ class fluxscale1_test(unittest.TestCase):
 
         # This time selection deselect all the data for the reference source and would raise an exception.
         try:
-          thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*',
-                  transfer='1445*', antenna='!24', timerange='>1995/04/13/09:38:00', incremental=True)
-        except exceptions.RuntimeError, instance:
-          print "Expected exception raised:",instance
+            thisdict = fluxscale( vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*',
+                                  transfer='1445*', antenna='!24', timerange='>1995/04/13/09:38:00', incremental=True )
+        except RuntimeError as instance:
+            print("Expected exception raised: %s" % instance)
 
     def test_antennaselwithscan(self):
         '''Fluxscale test 1.6: antenna selection with scan selection test'''
@@ -201,7 +211,7 @@ class fluxscale1_test(unittest.TestCase):
         outtable = self.msfile + '.antsel.fcal'
 
         thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*',
-                  transfer='1445*', antenna='!24', scan='1~5', incremental=True)
+                             transfer='1445*', antenna='!24', scan='1~5', incremental=True)
         self.assertTrue(os.path.exists(outtable))
 
     def test_refintransfer(self):
@@ -214,14 +224,14 @@ class fluxscale1_test(unittest.TestCase):
         outtable = self.msfile + '.test1.7.fcal'
 
         thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*',
-                  transfer='1445*,1331*', incremental=True)
+                             transfer='1445*,1331*', incremental=True)
         self.assertTrue(os.path.exists(outtable))
-        self.assertFalse(thisdict.has_key('0'))
+        self.assertFalse('0' in thisdict)
 
     def test_append(self):
         '''Fluxscale test 1.8: test append=True: append to the existing fluxtable'''
 
-        tblocal = tbtool()
+        tblocal = table()
         # Output(append)
         outtable = self.msfile + '.test1.8.fcal'
 
@@ -241,7 +251,7 @@ class fluxscale1_test(unittest.TestCase):
         thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1331*',
                   transfer='1445*,1331*', append=True)
         self.assertTrue(os.path.exists(outtable))
-        self.assertFalse(thisdict.has_key('0'))
+        self.assertFalse('0' in thisdict)
         tblocal.open(outtable)
         nrowafter=tblocal.nrows() 
         tblocal.close()
@@ -394,8 +404,7 @@ class fluxscale3_test(unittest.TestCase):
         # torelance for value test
         tol = 1.e-5
 
-        thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1,3,4',
-                             transfer='2')
+        thisdict = fluxscale( vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1,3,4', transfer='2' )
         self.assertTrue(os.path.exists(outtable))
 
         # File to compare with
@@ -434,8 +443,7 @@ class fluxscale3_test(unittest.TestCase):
         # torelance for value test
         tol = 1.e-5
 
-        thisdict = fluxscale(vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1,3,4',
-                             transfer='2')
+        thisdict = fluxscale( vis=self.msfile, caltable=gtable, fluxtable=outtable, reference='1,3,4', transfer='2' )
         self.assertTrue(os.path.exists(outtable))
 
         # File to compare with
@@ -705,12 +713,15 @@ class fluxscale_fit_test(unittest.TestCase):
         self.assertTrue(diff_fluxd<tol)
        
         diff_spidx0=abs(refdict['4']['spidx'][0]-thisdict['4']['spidx'][0])/refdict['4']['spidx'][0]
-        print ("diff for a_0 for field 4: diff_spidx0=",diff_spidx0)
+        print(("diff for a_0 for field 4: diff_spidx0=",diff_spidx0))
         self.assertTrue(diff_spidx0<tolspidx)
         diff_spidx3=abs(refdict['4']['spidx'][3]-thisdict['4']['spidx'][3])/refdict['4']['spidx'][3]
         self.assertTrue(diff_spidx3<tolspidx)
-        print ("diff for a_3 for field 4: diff_spidx3=",diff_spidx3)
+        print(("diff for a_3 for field 4: diff_spidx3=",diff_spidx3))
 
 def suite():
     return [fluxscale1_test, fluxscale2_test, fluxscale3_test, fluxscale_fit_test]
 
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

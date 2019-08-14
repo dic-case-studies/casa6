@@ -38,7 +38,10 @@ AnnRotBox::AnnRotBox(
 		dopplerString, restfreq, stokes, annotationOnly
 	), _inputCenter(AnnotationBase::Direction(1, std::make_pair(xcenter, ycenter))),
 	_inputWidths(Vector<Quantity>(2)),
-	_positionAngle(positionAngle) {}
+	_positionAngle(positionAngle) {
+	_inputWidths(0) = xwidth;
+	_inputWidths(1) = ywidth;
+}
 
 AnnRotBox::AnnRotBox(
 	const Quantity& xcenter,
@@ -53,7 +56,10 @@ AnnRotBox::AnnRotBox(
 	),
 	_inputCenter(AnnotationBase::Direction(1, std::make_pair(xcenter, ycenter))),
 	_inputWidths(Vector<Quantity>(2)),
-	_positionAngle(positionAngle) {}
+	_positionAngle(positionAngle) {
+	_inputWidths(0) = xwidth;
+	_inputWidths(1) = ywidth;
+}
 
 AnnRotBox& AnnRotBox::operator= (
 	const AnnRotBox& other

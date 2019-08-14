@@ -3,8 +3,8 @@ import shutil
 import time
 import unittest
 
-try:
-    # CASA 6
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
     from casatasks import listobs, listpartition, flagdata, flagmanager, partition, setjy, split
     from casatools import ctsys, msmetadata, ms, agentflagger, table
     ### for testhelper import
@@ -23,9 +23,7 @@ try:
     datapath_flagdata = ctsys.resolve('regression/unittest/flagdata')
     datapath_mstransform = ctsys.resolve('regression/unittest/mstransform')
     datapath_partition = ctsys.resolve('regression/unittest/partition')
-
-except ImportError:
-    # CASA 5
+else:
     from tasks import partition, flagdata, flagmanager, split, setjy, listpartition, listobs
     from taskinit import msmdtool, mstool, aftool, tbtool
 

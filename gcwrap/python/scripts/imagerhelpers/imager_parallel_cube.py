@@ -1,16 +1,30 @@
+from __future__ import absolute_import
 import os
-import commands
 import math
 import shutil
 import string
 import time
-import re;
-from taskinit import *
+import re
 import copy
 from casac import casac
 
-from imagerhelpers.imager_base import PySynthesisImager
-from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import synthesisutils, synthesisimager
+    from casatools import image as imageanalysis
+    from casatasks import casalog
+
+    from .imager_base import PySynthesisImager
+    from .parallel_imager_helper import PyParallelImagerHelper
+else:
+    from taskinit import *
+
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+
+    synthesisimager = casac.synthesisimager
+    synthesisutils = casac.synthesisutils
+    imageanalysis = casac.image
 
 '''
 An implementation of parallel cube imaging, using synthesisxxxx tools.
@@ -56,7 +70,7 @@ class PyParallelCubeSynthesisImager():
         #self.allimpars = self.PH.partitionCubeDeconvolution(allimagepars)
 
         # to define final image coordinates, run selecdata and definemage
-        self.SItool = casac.synthesisimager()
+        self.SItool = synthesisimager()
         #print "allselpars=",allselpars
         origspw={}
         for mss in sorted( allselpars.keys() ): 
@@ -90,7 +104,7 @@ class PyParallelCubeSynthesisImager():
         #    print "KEY : ", kk , " --->", alldataimpars[kk].keys()
             
         # reorganize allselpars and allimpars for partitioned data        
-        synu = casac.synthesisutils()
+        synu = synthesisutils()
         self.allselpars={}
         self.allimpars={}
         ###print "self.listOfNodes=",self.listOfNodes
@@ -104,12 +118,12 @@ class PyParallelCubeSynthesisImager():
             tnode = str(ipart)
             selparsPerNode= {tnode:{}}
             imparsPerNode= {tnode:{}}
-            for fid in allimagepars.iterkeys():
+            for fid in allimagepars:
                 ###restoring original spw selection just to allow weight density to be the same
                 ###ultimately should be passed by MPI if done this way
                 for mss in origspw.keys():
                     alldataimpars[fid][nodeidx][mss]['spw']=origspw[mss]['spw']
-                for ky in alldataimpars[fid][nodeidx].iterkeys():
+                for ky in alldataimpars[fid][nodeidx]:
 ###                commenting this as it is resetting the selpars when key is not "msxxx" 
 ##                    selparsPerNode[tnode]={}
                     if ky.find('ms')==0:
@@ -144,12 +158,19 @@ class PyParallelCubeSynthesisImager():
             #print "****** SELIMPARS in init **********", self.allimpars
         
         joblist=[]
+        casa6_import_prefix = ''
+        if is_CASA6:
+            casa6_import_prefix = 'casatasks.private.'
+        cmd_import_pars = ('from {0}imagerhelpers.input_parameters import ImagerParameters'.
+                      format(casa6_import_prefix))
+        cmd_import_synth = ('from {0}imagerhelpers.imager_base import PySynthesisImager'.
+                     format(casa6_import_prefix))
         #### MPIInterface related changes
         #for node in range(0,self.NN):
         #for node in self.listOfNodes:
         for node in self.modifiedListOfNodes:
-            joblist.append( self.PH.runcmd("from imagerhelpers.input_parameters import ImagerParameters", node) )
-            joblist.append( self.PH.runcmd("from imagerhelpers.imager_base import PySynthesisImager", node) )
+            joblist.append( self.PH.runcmd(cmd_import_pars, node) )
+            joblist.append( self.PH.runcmd(cmd_import_synth, node) )
         self.PH.checkJobs( joblist )
 
         self.exitflag={}
@@ -344,11 +365,10 @@ class PyParallelCubeSynthesisImager():
                             os.remove(fullconcatimname)
                     # set tempclose = false to avoid a long accessing issue
                     #cmd = 'imageconcat inimages='+subimliststr+' outimage='+"'"+fullconcatimname+"'"+' type='+type+' tempclose=false'      
-                    # run virtual concat
                     #ret=os.system(cmd)
                     #if ret!=0:
                     #    casalog.post("concatenation of "+concatimname+" failed","WARN")
-                    iatool=casac.image()
+                    iatool=imageanalysis()
                     concattool = iatool.imageconcat(outfile=fullconcatimname, mode=type, infiles=subimliststr.strip("'"), axis=-1, tempclose=False, overwrite=True)
                     if(len(concattool.shape())==0):
                         casalog.post("concatenation of "+concatimname+" failed","WARN")

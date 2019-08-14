@@ -26,6 +26,7 @@
 #include <casa/aips.h>
 #include <imageanalysis/Annotations/AnnRotBox.h>
 
+#include <casa/Quanta/MVAngle.h>
 #include <coordinates/Coordinates/CoordinateUtil.h>
 #include <coordinates/Coordinates/DirectionCoordinate.h>
 #include <coordinates/Coordinates/SpectralCoordinate.h>
@@ -622,15 +623,67 @@ int main () {
 				csys, imShape, beginFreq, endFreq, freqRefFrameString,
 				dopplerString, restfreq, stokes, false
 			);
-			cout << box << endl;
+			//cout << box << endl;
 			Vector<MFrequency> freqs = box.getFrequencyLimits();
-			cout << freqs[0].get("Hz").getValue() << endl;
+			//cout << freqs[0].get("Hz").getValue() << endl;
 			AlwaysAssert(
 				near(freqs[0].get("Hz").getValue(), 1410929824.5978253),
 				AipsError
 			);
 			AlwaysAssert(
 				near(freqs[1].get("Hz").getValue(), 1429881678.974175),
+				AipsError
+			);
+		}
+		{
+			log << LogIO::NORMAL
+				<< "test print"
+				<< LogIO::POST;
+
+			Quantity centerx(0.01, "deg");
+			Quantity centery(0.01, "deg");
+			Quantity widthx(30, "arcmin");
+			Quantity widthy(45, "arcmin");
+			Quantity pa(30, "deg");
+			Vector<Stokes::StokesTypes> stokes(0);
+			AnnRotBox box(
+				centerx, centery, widthx, widthy, pa,
+				csys, imShape, stokes
+			);
+			//cout << box << endl;
+
+			// expected results
+			string exp_shape("rotbox");
+			MVAngle x(centerx);
+			MVAngle y(centery);
+			string exp_centerx = x.string(MVAngle::TIME_CLEAN, 11);
+			string exp_centery = y.string(MVAngle::ANGLE, 10);
+			// print uses arcsec, sets precision 4
+			widthx.convert("arcsec");
+			string exp_widthx(String::toString(widthx.getValue()) + ".0000" + "arcsec");
+			widthy.convert("arcsec");
+			string exp_widthy(String::toString(widthy.getValue()) + ".0000" + "arcsec");
+			// print uses deg, sets precision 8
+			string exp_pa(String::toString(pa.getValue()) + ".00000000" + "deg");
+
+			ostringstream oss;
+			box.print(oss);
+			casacore::String rotbox_line(oss.str());
+			// check printed output
+			AlwaysAssert(
+				rotbox_line.startsWith(exp_shape),
+				AipsError
+			);
+			AlwaysAssert(
+				rotbox_line.contains("[" + exp_centerx + ", " + exp_centery + "]"),
+				AipsError
+			);
+			AlwaysAssert(
+				rotbox_line.contains("[" + exp_widthx + ", " + exp_widthy + "]"),
+				AipsError
+			);
+			AlwaysAssert(
+				rotbox_line.contains(exp_pa),
 				AipsError
 			);
 		}

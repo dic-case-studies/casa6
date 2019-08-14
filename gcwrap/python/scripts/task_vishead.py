@@ -14,8 +14,20 @@
 # This is not very effective (in list mode, or when using this task in a loop;
 # however expert users can always use the table tool directly.
 
-from taskinit import *
-from vishead_util import *
+from __future__ import absolute_import
+from __future__ import print_function
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ms
+    from casatasks import casalog
+    from .vishead_util import *
+    _ms = ms( )
+else:
+    from taskinit import *
+    from vishead_util import *
+
+    _ms = mstool()
 
 def vishead(vis, mode=None, listitems=None, hdkey=None, hdindex=None, hdvalue=None):
     """Documentation goes here?"""
@@ -80,10 +92,10 @@ def vishead(vis, mode=None, listitems=None, hdkey=None, hdindex=None, hdvalue=No
 
             values = {}
             if not listitems:
-                listitems = keywords.keys()
+                listitems = list(keywords.keys())
                 listitems.sort()
             for key in listitems:
-                if keywords.has_key(key):
+                if key in keywords:
                     kwtuple = keywords.get(key)
                     if keyword_exists(vis, kwtuple):
                         casalog.post('    ' + str(kwtuple[0]) + \
@@ -103,15 +115,15 @@ def vishead(vis, mode=None, listitems=None, hdkey=None, hdindex=None, hdvalue=No
 
         # In summary mode, just list the MS basic info.
         elif mode == 'summary':
-            ms.open(vis)
-            ms.summary()
-            ms.close()
-            print "Summary information is listed in logger"
+            _ms.open(vis)
+            _ms.summary()
+            _ms.close()
+            print("Summary information is listed in logger")
 
         # In GET/PUT mode, focus on 1 particular bit of MS data
         elif (mode=='get' or mode=='put'):
-            if(not keywords.has_key(hdkey)): 
-                raise Exception, "hdkey " + str(hdkey) +" is not a recognized keyword. Your options are " + str(keywords.keys())
+            if not hdkey in keywords:
+                raise Exception("hdkey " + str(hdkey) +" is not a recognized keyword. Your options are " + str(keywords.keys()))
 
             # get/put the data specified by hdkey
             if mode == 'get':
@@ -122,7 +134,7 @@ def vishead(vis, mode=None, listitems=None, hdkey=None, hdindex=None, hdvalue=No
                 getput_keyw(mode, vis, keywords[hdkey], hdindex, hdvalue)
                 casalog.post(hdkey + ' set to ' + str(hdvalue))
 
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( str('*** Error *** ') + str(instance), 'SEVERE')
 
     return

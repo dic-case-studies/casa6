@@ -1136,9 +1136,6 @@ String AnnotationBase::_printDirection(
 }
 
 String AnnotationBase::_toArcsec(const Quantity& angle) {
-	if (angle.getUnit() == "pix") {
-
-	}
 	ostringstream os;
 	if (angle.getUnit() == "pix") {
 		os << _printPixel(angle.getValue());
