@@ -542,7 +542,7 @@ elseif( CMAKE_SYSTEM_NAME STREQUAL Linux )
             set( dbusxx dbus-cpp )
             add_definitions( -DDBUS_CPP )
 	    set( LIBSAKURA_ROOT_DIR /opt/casa/02 )
-	    set( DEFAULT_CXX_FLAGS "${DEFAULT_CXX_FLAGS} -I/opt/casa/02/lib/dbus-1.0/include" )
+	    set( DEFAULT_CXX_FLAGS "${DEFAULT_CXX_FLAGS} -I/opt/casa/03/include -I/opt/casa/02/lib/dbus-1.0/include" )
             if ( EXISTS /opt/casa/02/bin/qmake )
                 ## RHEL6
                 set( qt4 casa-qt )
