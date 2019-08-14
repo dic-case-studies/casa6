@@ -2192,7 +2192,7 @@ if __name__ == '__main__':
            long_description="\n".join(__doc__.split("\n")[2:]),
            classifiers=filter(None, classifiers.split("\n")),
            package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
-           packages=[ module_name, "%s.util" % module_name ],
+           packages=[ module_name ],
            cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build, 'genmake': create_makefile, 'ia': create_makefile_ia } \
                                    if wheel_build \
                                    else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
