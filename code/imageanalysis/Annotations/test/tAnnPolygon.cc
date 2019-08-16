@@ -130,6 +130,61 @@ int main () {
 			AlwaysAssert(thrown, AipsError);
 
 		}
+
+		{
+			log << LogIO::NORMAL
+				<< "Test region outside image throws exception"
+				<< LogIO::POST;
+			Bool thrown = true;
+			Vector<Quantity> x(3);
+			Vector<Quantity> y(3);
+			x[0] = Quantity(4001, "pix");
+			y[0] = Quantity(2000, "pix");
+			x[1] = Quantity(4100, "pix");
+			y[1] = Quantity(3000, "pix");
+			x[2] = Quantity(4200, "pix");
+			y[2] = Quantity(2500, "pix");
+			Vector<Stokes::StokesTypes> stokes(0);
+			try {
+				AnnPolygon poly(
+					x, y, csys, shape, stokes
+				);
+				thrown = false;
+			} catch (AipsError x) {
+				log << LogIO::NORMAL
+					<< "Exception thrown as expected: "
+					<< x.getMesg() << LogIO::POST;
+			}
+			AlwaysAssert(thrown, AipsError);
+		}
+		{
+			log << LogIO::NORMAL
+				<< "Test region outside image not required"
+				<< LogIO::POST;
+			Bool thrown = true;
+			Vector<Quantity> x(3);
+			Vector<Quantity> y(3);
+			x[0] = Quantity(4001, "pix");
+			y[0] = Quantity(2000, "pix");
+			x[1] = Quantity(4100, "pix");
+			y[1] = Quantity(3000, "pix");
+			x[2] = Quantity(4200, "pix");
+			y[2] = Quantity(2500, "pix");
+			Vector<Stokes::StokesTypes> stokes(0);
+			Bool requireRegion(false);
+			try {
+				AnnPolygon poly(
+					x, y, csys, shape, stokes, requireRegion
+				);
+				thrown = false;
+			} catch (AipsError x) {
+				log << LogIO::NORMAL
+					<< "Unexpected exception thrown: "
+					<< x.getMesg() << LogIO::POST;
+			}
+			AlwaysAssert(!thrown, AipsError);
+		}
+
 		/*
 		{
 			log << LogIO::NORMAL << "Test getBoundingBox and getPixelBox"

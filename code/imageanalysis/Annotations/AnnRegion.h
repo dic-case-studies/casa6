@@ -106,6 +106,8 @@ protected:
 	// <src>freqRefFrame</src>, <src>dopplerString</src>, and
 	// <src>restfreq</src> are ignored. If provided, <src>beginFreq</src>
 	// and <src>endFreq</src> must conform to the same units.
+	// <src>requireImageRegion</src> allows AnnRegion objects to be created
+	// even if the image region fails (usually outside the image)
 	AnnRegion(
 		const Type shape,
 		const casacore::String& dirRefFrameString,
@@ -117,7 +119,8 @@ protected:
 		const casacore::String& dopplerString,
 		const casacore::Quantity& restfreq,
 		const casacore::Vector<casacore::Stokes::StokesTypes> stokes,
-		const casacore::Bool annotationOnly
+		const casacore::Bool annotationOnly,
+		casacore::Bool requireImageRegion=true
 	);
 
 	// use if all coordinate values will be specified in
@@ -129,7 +132,8 @@ protected:
 		const Type shape,
 		const casacore::CoordinateSystem& csys,
 		const casacore::IPosition& imShape,
-		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes
+		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes,
+		casacore::Bool requireImageRegion=true
 	);
 
 	// copy constructor
@@ -140,6 +144,8 @@ protected:
 
 	casacore::Bool operator== (const AnnRegion& other) const;
 
+	// check if image region has a region
+	casacore::Bool hasImageRegion() const;
 
 	// extend the direction plane region over spectral and/or polarization
 	// coordinates
@@ -158,13 +164,15 @@ protected:
 	// defined in the direction plane
 	void _setDirectionRegion(const casacore::ImageRegion& region);
 
+	casacore::Bool _requireImageRegion;
+	casacore::ImageRegion _imageRegion, _directionRegion;
+
 private:
 
 	casacore::Bool _isAnnotationOnly;
 	casacore::Bool _isDifference, _constructing;
-	casacore::ImageRegion _imageRegion, _directionRegion;
 	casacore::IPosition _imShape;
-    std::vector<casacore::Double> _spectralPixelRange;
+	std::vector<casacore::Double> _spectralPixelRange;
 
 	static const casacore::String _class;
 
@@ -175,6 +183,7 @@ private:
 	) const;
 
 	void _init();
+	casacore::Bool hasDirectionRegion();
 
 };
 

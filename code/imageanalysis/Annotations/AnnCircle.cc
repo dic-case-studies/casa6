@@ -37,11 +37,12 @@ AnnCircle::AnnCircle(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnRegion(
 		CIRCLE, dirRefFrameString, csys, imShape, beginFreq,
 		endFreq, freqRefFrameString, dopplerString,
-		restfreq, stokes, annotationOnly
+		restfreq, stokes, annotationOnly, requireImageRegion
 ), _inputCenter(AnnotationBase::Direction(1)), _inputRadius(radius) {
 	_init(xcenter, ycenter);
 }
@@ -52,8 +53,9 @@ AnnCircle::AnnCircle(
 	const Quantity& radius,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
-) : AnnRegion(CIRCLE, csys, imShape, stokes),
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
+) : AnnRegion(CIRCLE, csys, imShape, stokes, requireImageRegion),
 	_inputCenter(AnnotationBase::Direction(1)), _inputRadius(radius) {
 	_init(xcenter, ycenter);
 }
@@ -61,15 +63,15 @@ AnnCircle::AnnCircle(
 AnnCircle& AnnCircle::operator= (
 	const AnnCircle& other
 ) {
-    if (this == &other) {
-    	return *this;
-    }
-    AnnRegion::operator=(other);
-    _inputCenter.resize(other._inputCenter.nelements());
-    _inputCenter = other._inputCenter;
-    _inputRadius = other._inputRadius;
-    _convertedRadius = other._convertedRadius;
-    return *this;
+	if (this == &other) {
+		return *this;
+	}
+	AnnRegion::operator=(other);
+	_inputCenter.resize(other._inputCenter.nelements());
+	_inputCenter = other._inputCenter;
+	_inputRadius = other._inputRadius;
+	_convertedRadius = other._convertedRadius;
+	return *this;
 }
 
 
@@ -110,12 +112,22 @@ void AnnCircle::_init(const Quantity& xcenter, const Quantity& ycenter) {
 	center[0] = Quantity(coords[0], "rad");
 	center[1] = Quantity(coords[1], "rad");
 
-	WCEllipsoid circle(
-		center, _convertedRadius, _getDirectionAxes(),
-		getCsys(), RegionType::Abs
-	);
-	_setDirectionRegion(circle);
-	_extend();
+	try {
+		WCEllipsoid circle(
+			center, _convertedRadius, _getDirectionAxes(),
+			getCsys(), RegionType::Abs
+		);
+		_setDirectionRegion(circle);
+		_extend();
+	} catch (ToLCRegionConversionError& err) {
+		if (_requireImageRegion) {
+			throw(err);
+		} else {
+			ImageRegion defaultRegion;
+			_setDirectionRegion(defaultRegion);
+			_imageRegion = _directionRegion;
+		}
+	}
 }
 
 }

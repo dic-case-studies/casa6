@@ -34,11 +34,12 @@ AnnPolyline::AnnPolyline(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnRegion(
 		POLYLINE, dirRefFrameString, csys, imShape, beginFreq,
 		endFreq, freqRefFrameString, dopplerString,
-		restfreq, stokes, annotationOnly
+		restfreq, stokes, annotationOnly, requireImageRegion
 ), _origXPos(xPositions), _origYPos(yPositions) {
 	_init();
 }
@@ -48,8 +49,9 @@ AnnPolyline::AnnPolyline(
 	const Vector<Quantity>& yPositions,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
-) : AnnRegion(POLYGON, csys, imShape, stokes),
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
+) : AnnRegion(POLYGON, csys, imShape, stokes, requireImageRegion),
 	_origXPos(xPositions), _origYPos(yPositions) {
 	_init();
 }
@@ -57,15 +59,15 @@ AnnPolyline::AnnPolyline(
 AnnPolyline& AnnPolyline::operator= (
 	const AnnPolyline& other
 ) {
-    if (this == &other) {
-    	return *this;
-    }
-    AnnRegion::operator=(other);
-    _origXPos.resize(other._origXPos.nelements());
-    _origXPos = other._origXPos;
-    _origYPos.resize(other._origYPos.nelements());
-    _origYPos = other._origYPos;
-    return *this;
+	if (this == &other) {
+		return *this;
+	}
+	AnnRegion::operator=(other);
+	_origXPos.resize(other._origXPos.nelements());
+	_origXPos = other._origXPos;
+	_origYPos.resize(other._origYPos.nelements());
+	_origYPos = other._origYPos;
+	return *this;
 }
 
 Vector<MDirection> AnnPolyline::getCorners() const {
@@ -144,12 +146,22 @@ void AnnPolyline::_init() {
 	}
 	Quantum<Vector<Double> > x(xv, "rad");
 	Quantum<Vector<Double> > y(yv, "rad");
-	WCPolygon wpoly(
-		x, y, IPosition(_getDirectionAxes()),
-		getCsys(), RegionType::Abs
-	);
-	_setDirectionRegion(wpoly);
-	_extend();
+	try {
+		WCPolygon wpoly(
+			x, y, IPosition(_getDirectionAxes()),
+			getCsys(), RegionType::Abs
+		);
+		_setDirectionRegion(wpoly);
+		_extend();
+	} catch (ToLCRegionConversionError& err) {
+		if (_requireImageRegion) {
+			throw(err);
+		} else {
+			ImageRegion defaultRegion;
+			_setDirectionRegion(defaultRegion);
+			_imageRegion = _directionRegion;
+		}
+	}
 }
 
 

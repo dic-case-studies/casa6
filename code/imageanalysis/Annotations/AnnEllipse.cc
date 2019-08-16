@@ -36,11 +36,12 @@ AnnEllipse::AnnEllipse(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnRegion(
 		ELLIPSE, dirRefFrameString, csys, imShape, beginFreq,
 		endFreq, freqRefFrameString, dopplerString,
-		restfreq, stokes, annotationOnly
+		restfreq, stokes, annotationOnly, requireImageRegion
 ), _inputCenter(AnnotationBase::Direction(1)), _inputSemiMajorAxis(semiMajorAxis),
 	_inputSemiMinorAxis(semiMinorAxis),
 	_inputPositionAngle(positionAngle) {
@@ -53,8 +54,9 @@ AnnEllipse::AnnEllipse(
 	const Quantity& semiMinorAxis, const Quantity& positionAngle,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
-) : AnnRegion(ELLIPSE, csys, imShape, stokes),
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
+) : AnnRegion(ELLIPSE, csys, imShape, stokes, requireImageRegion),
 	_inputCenter(AnnotationBase::Direction(1)), _inputSemiMajorAxis(semiMajorAxis),
 	_inputSemiMinorAxis(semiMinorAxis),
 	_inputPositionAngle(positionAngle) {
@@ -64,19 +66,19 @@ AnnEllipse::AnnEllipse(
 AnnEllipse& AnnEllipse::operator= (
 	const AnnEllipse& other
 ) {
-    if (this == &other) {
-    	return *this;
-    }
-    AnnRegion::operator=(other);
-    _inputCenter.resize(other._inputCenter.nelements());
-    _inputCenter = other._inputCenter;
-    _inputSemiMajorAxis = other._inputSemiMajorAxis;
-    _inputSemiMinorAxis = other._inputSemiMinorAxis;
-    _inputPositionAngle = other._inputPositionAngle;
-    _convertedSemiMajorAxis = other._convertedSemiMajorAxis;
-    _convertedSemiMinorAxis = other._convertedSemiMinorAxis;
-    _convertedPositionAngle = other._convertedPositionAngle;
-    return *this;
+	if (this == &other) {
+		return *this;
+	}
+	AnnRegion::operator=(other);
+	_inputCenter.resize(other._inputCenter.nelements());
+	_inputCenter = other._inputCenter;
+	_inputSemiMajorAxis = other._inputSemiMajorAxis;
+	_inputSemiMinorAxis = other._inputSemiMinorAxis;
+	_inputPositionAngle = other._inputPositionAngle;
+	_convertedSemiMajorAxis = other._convertedSemiMajorAxis;
+	_convertedSemiMinorAxis = other._convertedSemiMinorAxis;
+	_convertedPositionAngle = other._convertedPositionAngle;
+	return *this;
 }
 
 Bool AnnEllipse::operator== (
@@ -150,11 +152,11 @@ void AnnEllipse::_init(
 	) {
 		Quantity angle;
 		csys.directionCoordinate().convert(angle, _getDirectionRefFrame());
-        // add the clockwise angle rather than subtract because the pixel
-        // axes are aligned with the "from" (current) world coordinate system rather
-        // than the "to" world coordinate system
-        _convertedPositionAngle += angle;
-    }
+		// add the clockwise angle rather than subtract because the pixel
+		// axes are aligned with the "from" (current) world coordinate system rather
+		// than the "to" world coordinate system
+		_convertedPositionAngle += angle;
+	}
 	if (_convertedSemiMajorAxis < _convertedSemiMinorAxis) {
 		std::swap(_convertedSemiMajorAxis, _convertedSemiMinorAxis);
 		_convertedPositionAngle = Quantity(
@@ -180,13 +182,23 @@ void AnnEllipse::_init(
 	// axis. Astronomers however measure the position angle relative to north (positive y axis usually).
 	Quantity relToXAxis = _convertedPositionAngle + Quantity(90, "deg");
 
-	WCEllipsoid ellipse(
-		qCenter[0], qCenter[1],
-		_convertedSemiMajorAxis, _convertedSemiMinorAxis, relToXAxis,
-		_getDirectionAxes()[0], _getDirectionAxes()[1], getCsys()
-	);
-	_setDirectionRegion(ellipse);
-	_extend();
+	try {
+		WCEllipsoid ellipse(
+			qCenter[0], qCenter[1],
+			_convertedSemiMajorAxis, _convertedSemiMinorAxis, relToXAxis,
+			_getDirectionAxes()[0], _getDirectionAxes()[1], getCsys()
+		);
+		_setDirectionRegion(ellipse);
+		_extend();
+	} catch (ToLCRegionConversionError& err) {
+		if (_requireImageRegion) {
+			throw(err);
+		} else {
+			ImageRegion defaultRegion;
+			_setDirectionRegion(defaultRegion);
+			_imageRegion = _directionRegion;
+		}
+	}
 }
 
 }

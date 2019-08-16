@@ -36,11 +36,12 @@ AnnPolygon::AnnPolygon(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnRegion(
 		POLYGON, dirRefFrameString, csys, imShape, beginFreq,
 		endFreq, freqRefFrameString, dopplerString,
-		restfreq, stokes, annotationOnly
+		restfreq, stokes, annotationOnly, requireImageRegion
 ), _origXPos(xPositions), _origYPos(yPositions) {
 	_init();
 }
@@ -50,8 +51,9 @@ AnnPolygon::AnnPolygon(
 	const Vector<Quantity>& yPositions,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
-) : AnnRegion(POLYGON, csys, imShape, stokes),
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
+) : AnnRegion(POLYGON, csys, imShape, stokes, requireImageRegion),
 	_origXPos(xPositions), _origYPos(yPositions) {
 	_init();
 }
@@ -71,11 +73,12 @@ AnnPolygon::AnnPolygon(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnRegion(
 		shape, dirRefFrameString, csys, imShape, beginFreq,
 		endFreq, freqRefFrameString, dopplerString,
-		restfreq, stokes, annotationOnly
+		restfreq, stokes, annotationOnly, requireImageRegion
 ), _origXPos(4), _origYPos(4) {
 	_initCorners(blcx, blcy, trcx, trcy);
 	_init();
@@ -95,8 +98,9 @@ AnnPolygon::AnnPolygon(
 	const Quantity& trcy,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
-) : AnnRegion(shape, csys, imShape, stokes),
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
+) : AnnRegion(shape, csys, imShape, stokes, requireImageRegion),
 	_origXPos(4), _origYPos(4) {
 	_initCorners(blcx, blcy, trcx, trcy);
 	_init();
@@ -118,11 +122,12 @@ AnnPolygon::AnnPolygon(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnRegion(
 		shape, dirRefFrameString, csys, imShape, beginFreq,
 		endFreq, freqRefFrameString, dopplerString,
-		restfreq, stokes, annotationOnly
+		restfreq, stokes, annotationOnly, requireImageRegion
 		),
 		_origXPos(4), _origYPos(4) {
 		_initCenterRectCorners(
@@ -141,9 +146,9 @@ AnnPolygon::AnnPolygon(
 	const Quantity& positionAngle,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-
-	const Vector<Stokes::StokesTypes>& stokes
-) : AnnRegion(shape, csys, imShape, stokes),
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
+) : AnnRegion(shape, csys, imShape, stokes, requireImageRegion),
 	_origXPos(4), _origYPos(4) {
 	_initCenterRectCorners(
 		centerx, centery, widthx, widthy,
@@ -155,15 +160,15 @@ AnnPolygon::AnnPolygon(
 AnnPolygon& AnnPolygon::operator= (
 	const AnnPolygon& other
 ) {
-    if (this == &other) {
-    	return *this;
-    }
-    AnnRegion::operator=(other);
-    _origXPos.resize(other._origXPos.nelements());
-    _origXPos = other._origXPos;
-    _origYPos.resize(other._origYPos.nelements());
-    _origYPos = other._origYPos;
-    return *this;
+	if (this == &other) {
+		return *this;
+	}
+	AnnRegion::operator=(other);
+	_origXPos.resize(other._origXPos.nelements());
+	_origXPos = other._origXPos;
+	_origYPos.resize(other._origYPos.nelements());
+	_origYPos = other._origYPos;
+	return *this;
 }
 
 Vector<MDirection> AnnPolygon::getCorners() const {
@@ -308,8 +313,8 @@ void AnnPolygon::_initCenterRectCorners(
 	Quantity wy = _lengthToAngle(widthy, dirAxes[1])/2;
 
 	Vector<MDirection> corners(4);
-    MDirection center = _directionFromQuantities(centerx, centery);
-    for (uInt i=0; i<4; i++) {
+	MDirection center = _directionFromQuantities(centerx, centery);
+	for (uInt i=0; i<4; i++) {
 		corners[i] = MDirection(center);
 		Int xsign = i == 0 || i == 3 ? -1 : 1;
 		Int ysign = i == 0 || i == 1 ? -1 : 1;
@@ -351,12 +356,22 @@ void AnnPolygon::_init() {
 	}
 	Quantum<Vector<Double> > x(xv, "rad");
 	Quantum<Vector<Double> > y(yv, "rad");
-	WCPolygon wpoly(
-		x, y, IPosition(_getDirectionAxes()),
-		getCsys(), RegionType::Abs
-	);
-	_setDirectionRegion(wpoly);
-	_extend();
+	try {
+		WCPolygon wpoly(
+			x, y, IPosition(_getDirectionAxes()),
+			getCsys(), RegionType::Abs
+		);
+		_setDirectionRegion(wpoly);
+		_extend();
+	} catch (ToLCRegionConversionError& err) {
+		if (_requireImageRegion) {
+			throw(err);
+		} else {
+			ImageRegion defaultRegion;
+			_setDirectionRegion(defaultRegion);
+			_imageRegion = _directionRegion;
+		}
+	}
 }
 
 

@@ -88,13 +88,15 @@ public:
     // <src>shape</src> is the image shape and is only used if
     // the first region is a difference; in that case, the all pixels in entire
     // shape are set to good initially.
+    // <src>requireLCRegion</src> is passed to the parser so that file lines are
+    // added only for regions inside the image.
     RegionTextList(
         const casacore::String& filename, const casacore::CoordinateSystem& csys,
         const casacore::IPosition shape, const casacore::String& prependRegion="",
         const casacore::String& globalOverrideChans="",
         const casacore::String& globalOverrrideStokes="",
         const casacore::Int requireAtLeastThisVersion=RegionTextParser::CURRENT_VERSION,
-        casacore::Bool verbose=true
+        casacore::Bool verbose=true, casacore::Bool requireLCRegion=true
     );
 
     // create a list by reading it from a text string.
@@ -104,13 +106,15 @@ public:
     // <src>shape</src> is the image shape and is only used if
     // the first region is a difference; in that case, the all pixels in entire
     // shape are set to good initially.
+    // <src>requireLCRegion</src> is passed to the parser so that file lines are
+    // added only for regions inside the image.
     RegionTextList(
         const casacore::CoordinateSystem& csys, const casacore::String& text,
         const casacore::IPosition shape,
         const casacore::String& prependRegion="",
         const casacore::String& globalOverrideChans="",
         const casacore::String& globalOverrrideStokes="",
-        casacore::Bool verbose=true
+        casacore::Bool verbose=true, casacore::Bool requireLCRegion=true
     );
     //</group>
 
