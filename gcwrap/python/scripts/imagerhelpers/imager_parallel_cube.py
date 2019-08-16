@@ -6,6 +6,7 @@ import string
 import time
 import re
 import copy
+from casac import casac
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -336,7 +337,7 @@ class PyParallelCubeSynthesisImager():
             joblist.append( self.PH.runcmd("imager.makePB()", node) )
         self.PH.checkJobs( joblist )
 
-    def concatImages(self, type='virtualnomove'):
+    def concatImages(self, type='copyvirtual'):
         import subprocess
         imtypes=['image','psf','model','residual','mask','pb', 'image.pbcor', 'weight', 'sumwt']
         for immod in range(0,self.NF):
@@ -362,21 +363,17 @@ class PyParallelCubeSynthesisImager():
                         except:
                             casalog.post("Cleaning up the existing file named "+fullconcatimname,"DEBUG")
                             os.remove(fullconcatimname)
-
-                    # Remember to set tempclose=false to avoid a long accessing issue
-                    if is_CASA6:
-                        iatool = imageanalysis()
-                        concated = iatool.imageconcat(outfile=fullconcatimname,
-                                                      infiles=subimliststr.strip("'"),
-                                                      axis=-1, tempclose=False)
-                        concated.done()
-                    else:
-                        cmd = 'imageconcat inimages='+subimliststr+' outimage='+"'"+fullconcatimname+"'"+' type='+type+' tempclose=false'
-                        # run virtual concat
-                        ret=os.system(cmd)
-                        if ret!=0:
-                            casalog.post("concatenation of "+concatimname+" failed","WARN")
-
+                    # set tempclose = false to avoid a long accessing issue
+                    #cmd = 'imageconcat inimages='+subimliststr+' outimage='+"'"+fullconcatimname+"'"+' type='+type+' tempclose=false'      
+                    #ret=os.system(cmd)
+                    #if ret!=0:
+                    #    casalog.post("concatenation of "+concatimname+" failed","WARN")
+                    iatool=imageanalysis()
+                    concattool = iatool.imageconcat(outfile=fullconcatimname, mode=type, infiles=subimliststr.strip("'"), axis=-1, tempclose=False, overwrite=True)
+                    if(len(concattool.shape())==0):
+                        casalog.post("concatenation of "+concatimname+" failed","WARN")
+                    concattool.done()
+                    
 
     def getSummary(self):
         joblist=[]
