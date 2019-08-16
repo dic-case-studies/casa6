@@ -630,19 +630,19 @@ namespace casa {
 
         bool update = req->update( );
 
-        auto data = ppdata(index);
-        PlotMSTransformations trans(data->transformations( ));
-        trans.setFrame(req->freqframe( ));
-        trans.setVelDef(req->veldef( ));
-        casacore::String err;
-        casacore::QuantumHolder qh;
-        if (qh.fromString(err, req->restfreq( ))) trans.setRestFreq(qh.asQuantity( ));
-        trans.setXpcOffset(req->xshift( ));
-        trans.setYpcOffset(req->yshift( ));
-        data->setTransformations(trans);
-
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  auto data = ppdata(index);
+                  PlotMSTransformations trans(data->transformations( ));
+                  trans.setFrame(req->freqframe( ));
+                  trans.setVelDef(req->veldef( ));
+                  casacore::String err;
+                  casacore::QuantumHolder qh;
+                  if (qh.fromString(err, req->restfreq( ))) trans.setRestFreq(qh.asQuantity( ));
+                  trans.setXpcOffset(req->xshift( ));
+                  trans.setYpcOffset(req->yshift( ));
+                  data->setTransformations(trans);
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -751,23 +751,29 @@ namespace casa {
         bool update = req->update( );
         auto param = ppiter(index);
 
-        PlotMSIterParam iter(param->iterParam( ));
-        iter.setIterAxis(req->iteraxis( ));
-        iter.setGridRow(req->rowindex( ));
-        iter.setGridCol(req->colindex( ) );
-        if (req->iteraxis( ) == "") {
-            iter.setGlobalScaleX(false);
-            iter.setGlobalScaleY(false);
-            iter.setCommonAxisX(false);
-            iter.setCommonAxisY(false);
-        } else {
-            iter.setGlobalScaleX(req->xselfscale( ));
-            iter.setGlobalScaleY(req->yselfscale( ));
-            iter.setCommonAxisX(req->commonaxisx( ));
-            iter.setCommonAxisY(req->commonaxisy( ));
-        }
+        std::promise<bool> prom;
+        qtGO( [&]( ) {
+                  PlotMSIterParam iter(param->iterParam( ));
+                  iter.setIterAxis(req->iteraxis( ));
+                  iter.setGridRow(req->rowindex( ));
+                  iter.setGridCol(req->colindex( ) );
+                  if (req->iteraxis( ) == "") {
+                      iter.setGlobalScaleX(false);
+                      iter.setGlobalScaleY(false);
+                      iter.setCommonAxisX(false);
+                      iter.setCommonAxisY(false);
+                  } else {
+                      iter.setGlobalScaleX(req->xselfscale( ));
+                      iter.setGlobalScaleY(req->yselfscale( ));
+                      iter.setCommonAxisX(req->commonaxisx( ));
+                      iter.setCommonAxisY(req->commonaxisy( ));
+                  }
+                  param->setIterParam(iter);
+                  prom.set_value(true);
+              } );
 
-        param->setIterParam(iter);
+        auto fut = prom.get_future( );
+        fut.get( );
         return grpc::Status::OK;
     }
 
@@ -936,11 +942,11 @@ namespace casa {
         bool update = req->update( );
         string pos = req->position( );
         bool show = req->show( );
-        if ( show && pos == "" ) pos = "upperright";
-		ppcan(index)->showLegend( show, pos, 0);
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  if ( show && pos == "" ) pos = "upperright";
+                  ppcan(index)->showLegend( show, pos, 0);
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -1099,26 +1105,26 @@ namespace casa {
 
         bool update = req->update( );
 
-        auto canvas = ppcan(index);
-        canvas->showGridMajor(req->showmajor( ));
-        canvas->showGridMinor(req->showminor( ));
-        {   PlotLinePtr plp = canvas->gridMajorLine();
-			plp->setColor(req->majorcolor( ));
-			PlotLine::Style style = StyleFromString(req->majorstyle( ));
-			plp->setStyle(style);
-			plp->setWidth(req->majorwidth( ));
-			canvas->setGridMajorLine(plp);
-        }
-        {   PlotLinePtr plp = canvas->gridMinorLine() ;
-			plp->setColor(req->minorcolor( ));
-			PlotLine::Style style = StyleFromString(req->minorstyle( ));
-			plp->setStyle(style);
-			plp->setWidth(req->minorwidth( ));
-			canvas->setGridMinorLine(plp);
-        }
-
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  auto canvas = ppcan(index);
+                  canvas->showGridMajor(req->showmajor( ));
+                  canvas->showGridMinor(req->showminor( ));
+                  {   PlotLinePtr plp = canvas->gridMajorLine();
+                      plp->setColor(req->majorcolor( ));
+                      PlotLine::Style style = StyleFromString(req->majorstyle( ));
+                      plp->setStyle(style);
+                      plp->setWidth(req->majorwidth( ));
+                      canvas->setGridMajorLine(plp);
+                  }
+                  {   PlotLinePtr plp = canvas->gridMinorLine() ;
+                      plp->setColor(req->minorcolor( ));
+                      PlotLine::Style style = StyleFromString(req->minorstyle( ));
+                      plp->setStyle(style);
+                      plp->setWidth(req->minorwidth( ));
+                      canvas->setGridMinorLine(plp);
+                  }
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
