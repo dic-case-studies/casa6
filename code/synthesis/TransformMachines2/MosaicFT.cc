@@ -578,7 +578,8 @@ void MosaicFT::initializeToSky(ImageInterface<Complex>& iimage,
 }
 
 void MosaicFT::reset(){
-
+  //call the base class reset
+  FTMachine::reset();
   doneWeightImage_p=false;
   convWeightImage_p=nullptr;
   pbConvFunc_p->reset();

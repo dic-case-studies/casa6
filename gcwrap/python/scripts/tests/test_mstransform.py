@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
 import unittest
 import os
@@ -7,9 +9,8 @@ import sys
 import filecmp
 import glob
 
-try:
-    # CASA 6
-    ### for testhelper import
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     import testhelper as th
     from casatools import ctsys, ms, table, msmetadata, agentflagger
@@ -27,9 +28,7 @@ try:
     msmd_local = msmetadata()
     ms_local = ms()
     tb_local = table()
-
-except ImportError:
-    # 2nd try, CASA 5
+else:
     from tasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, importasdm, flagcmd
     from taskinit import mstool, tbtool, msmdtool, aftool
     from __main__ import default

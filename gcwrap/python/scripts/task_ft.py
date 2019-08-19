@@ -1,6 +1,21 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-from taskinit import *
-im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import imager, ms, image, quanta
+    from casatasks import casalog
+
+    _im = imager( )
+    _ms = ms( )
+    _ia = image( )
+else:
+    from taskinit import *
+    _im,_ms,_ia=gentools(['im','ms','ia'])
+
+    quanta = qatool
+
 def ft(vis=None,field=None,spw=None,model=None,nterms=None,reffreq=None,complist=None,incremental=None, usescratch=None):
        """ Insert a source model into the MODEL_DATA column of a visibility set:
 
@@ -33,7 +48,7 @@ def ft(vis=None,field=None,spw=None,model=None,nterms=None,reffreq=None,complist
                  default: 1
                  example : nterms=3  represents a 2nd order Taylor-polynomial in frequency
                            and is to be used along with 3 model-image names. 
-		           model=['xxx.image.tt0','xxx.image.tt1', 'xxx.image.tt2']
+                           model=['xxx.image.tt0','xxx.image.tt1', 'xxx.image.tt2']
           reffreq -- Reference-frequency about which this Taylor-expansion is defined.
        complist -- Name of component list
                default: None; ; example: complist='test.cl'
@@ -48,19 +63,19 @@ def ft(vis=None,field=None,spw=None,model=None,nterms=None,reffreq=None,complist
        try:
                # Check if datafile exists and open it
                if ((type(vis)==str) & (os.path.exists(vis))):
-                       im.open(vis, usescratch=usescratch)
+                       _im.open(vis, usescratch=usescratch)
                else:
-                       raise Exception, 'Visibility data set not found - please verify the name'
-	
+                       raise Exception('Visibility data set not found - please verify the name')
+        
                # Select data
-               im.selectvis(field=field,spw=spw)
-	       
+               _im.selectvis(field=field,spw=spw)
+               
                # Define image co-ordinates (all defaults)
-               #im.defineimage()
+               #_im.defineimage()
 
                # Check 'model'. The 'xml' allows a variant => do the checking here.
                if( (not type(model)==str) and (not (type(model)==list) ) ) :
-		       raise Exception, 'The model image must be a string or a list of strings (or \'\' or [])';
+                       raise Exception('The model image must be a string or a list of strings (or \'\' or [])')
 
                # If model is a single string, make it a list
                if( type(model)==str ):
@@ -68,67 +83,67 @@ def ft(vis=None,field=None,spw=None,model=None,nterms=None,reffreq=None,complist
 
                # Check that either a model or a complist has been given.
                if( (model==[] or model==['']) and complist=='' ):
-                       raise Exception, 'Please specify a model image or component list to ft';
+                       raise Exception('Please specify a model image or component list to ft')
 
                #model is a list now. Check that all elements are strings. If so, check file existence too.
                if( type(model)==list ):
                        for onemodel in model:
                               if(not type(onemodel)==str):
-                                    raise Exception, 'Model image names must be strings';
+                                    raise Exception('Model image names must be strings')
                               if( (not onemodel=='') and (not os.path.exists(onemodel)) ):
-                                    raise Exception, 'Model image '+onemodel+' cannot be found';
+                                    raise Exception('Model image '+onemodel+' cannot be found')
 
                # Check complist : one string : name of complist file. Check existance on disk.
                if( (not complist=='') and (not os.path.exists(complist)) ):
-                       raise Exception, 'Componentlist '+complist+' cannot be found';
+                       raise Exception('Componentlist '+complist+' cannot be found')
 
 
                # If nterms>1, then check that len(model)=nterms [ no multifield for now ]
-               # Call im.settaylorterms()
+               # Call _im.settaylorterms()
                #               
                if (nterms > 1) :
-		       if(type(model)==str or (not (type(model)==list and len(model)==nterms)) ):
-			       raise Exception, 'For nterms>1, please provide a list of nterms model-image names';
-		       # parse the reference-frequency field.
-                       qat=qatool();
+                       if(type(model)==str or (not (type(model)==list and len(model)==nterms)) ):
+                               raise Exception('For nterms>1, please provide a list of nterms model-image names')
+                       # parse the reference-frequency field.
+                       qat=quanta();
                        try:
-		          rff=qat.canonical(reffreq);
-		       except Exception, instance:
-                          print '*** Error *** In conversion of reffreq=\'',reffreq,'\' to a numerical value';
-                          raise Exception, instance
+                          rff=qat.canonical(reffreq);
+                       except Exception:
+                          print('*** Error *** In conversion of reffreq=\'',reffreq,'\' to a numerical value')
+                          raise
                        reffreqVal=rff['value'];  # This is the frequency in Hz
-		       if(reffreqVal==0.0):   # if unspecified, set the default from the model image
-			       ia.open(model[0]);
-			       icsys = ia.coordsys();
-			       ia.close();
+                       if(reffreqVal==0.0):   # if unspecified, set the default from the model image
+                               _ia.open(model[0]);
+                               icsys = _ia.coordsys();
+                               _ia.close();
                                reffreqVal=icsys.referencevalue(type='spectral')['numeric'][0];
-			       casalog.post('Using reference frequency from model image : '+str(reffreqVal)+' Hz');
-		       else:
-		               casalog.post('Using reference frequency : '+str(reffreqVal)+' Hz');
-		       # set nterms and ref-freq
-		       im.settaylorterms(ntaylorterms=nterms,reffreq=reffreqVal)
+                               casalog.post('Using reference frequency from model image : '+str(reffreqVal)+' Hz');
+                       else:
+                               casalog.post('Using reference frequency : '+str(reffreqVal)+' Hz');
+                       # set nterms and ref-freq
+                       _im.settaylorterms(ntaylorterms=nterms,reffreq=reffreqVal)
 
                # Just checking...
-	       if (nterms < 1) :
-		       raise Exception, 'nterms must be greater than or equal to 1';
+               if (nterms < 1) :
+                       raise Exception('nterms must be greater than or equal to 1')
 
 
                # Do the forward transform and close.
-               im.ft(model=model,complist=complist,incremental=incremental)
-               im.close()
+               _im.ft(model=model,complist=complist,incremental=incremental)
+               _im.close()
 
 
                #write history
-               ms.open(vis,nomodify=False)
-               ms.writehistory(message='taskname = ft',origin='ft')
-               ms.writehistory(message='vis         = "'+str(vis)+'"',origin='ft')
-               ms.writehistory(message='field       = "'+str(field)+'"',origin='ft')
-               ms.writehistory(message='spw         = "'+str(spw)+'"',origin='ft')
-               ms.writehistory(message='model       = "'+str(model)+'"',origin='ft')
-               ms.writehistory(message='complist    = "'+str(complist)+'"',origin='ft')
-               ms.writehistory(message='incremental = "'+str(incremental)+'"',origin='ft')
-               ms.close()
+               _ms.open(vis,nomodify=False)
+               _ms.writehistory(message='taskname = ft',origin='ft')
+               _ms.writehistory(message='vis         = "'+str(vis)+'"',origin='ft')
+               _ms.writehistory(message='field       = "'+str(field)+'"',origin='ft')
+               _ms.writehistory(message='spw         = "'+str(spw)+'"',origin='ft')
+               _ms.writehistory(message='model       = "'+str(model)+'"',origin='ft')
+               _ms.writehistory(message='complist    = "'+str(complist)+'"',origin='ft')
+               _ms.writehistory(message='incremental = "'+str(incremental)+'"',origin='ft')
+               _ms.close()
 
-       except Exception, instance:
-               print '*** Error ***',instance
-               raise Exception, instance
+       except Exception as instance:
+               print('*** Error *** %s' % instance)
+               raise

@@ -67,10 +67,28 @@
 # <todo>
 # </todo>
 
+from __future__ import absolute_import
 import os
+import sys
 import numpy
-from taskinit import *
-from ialib import write_image_history
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image, regionmanager, quanta
+    from casatasks import casalog
+    from .ialib import write_image_history
+
+    _qa = quanta( )
+else:
+    from taskinit import *
+    from ialib import write_image_history
+
+    image = iatool
+    regionmanager = rgtool
+
+    # not a local tool
+    _qa = qa
 
 def imsmooth(
     imagename, kernel, major, minor, pa, targetres, kimage, scale, region,
@@ -94,7 +112,7 @@ def imsmooth(
             err = "beam cannot be a non-empty string"
             casalog.post(err, "SEVERE")
             raise Exception(err)
-        beam = {}    
+        beam = {}
 
     # First check to see if the output file exists.  If it
     # does then we abort.  CASA doesn't allow files to be
@@ -104,12 +122,12 @@ def imsmooth(
         casalog.post( "The outfile paramter is empty, consequently the" \
                       +" smoothed image will be\nsaved on disk in file, " \
                       + outfile, 'WARN')
-    _myia = iatool()
+    _myia = image()
     _myia.dohistory(False)
-    retia = iatool()
+    retia = image()
     _myia.open(imagename)
     mycsys = _myia.coordsys()
-    myrg = rgtool()
+    myrg = regionmanager()
     reg = myrg.frombcs(
         mycsys.torecord(), _myia.shape(), box, chans,
         stokes, "a", region
@@ -120,35 +138,36 @@ def imsmooth(
     # If the values given are integers we assume they are given in
     # arcsecs and alter appropriately
     if not ikernel:
-        if isinstance(major, (int, long, float)):
+        if isinstance(major, (int, float)):
             major=str(major)+'arcsec'
-        if isinstance(minor, (int, long, float)):
+        if isinstance(minor, (int, float)):
             minor=str(minor)+'arcsec'
-        if isinstance(pa, (int, long, float)):
+        if isinstance(pa, (int, float)):
             pa=str(pa)+'deg'
         
-    try:       
+    try:
+        outia = None
         if ( gkernel or ckernel):
             _myia.open(imagename)
             if ckernel:
                 beam = _myia.commonbeam()
                 # add a small epsilon to avoid convolving with a null beam to reach
                 # a target resolution that already exists
-                beam['major'] = qa.mul(beam['major'], 1 + 1e-10)
-                beam['minor'] = qa.mul(beam['minor'], 1 + 1e-10)
+                beam['major'] = _qa.mul(beam['major'], 1 + 1e-10)
+                beam['minor'] = _qa.mul(beam['minor'], 1 + 1e-10)
                 major = ""
                 minor = ""
                 pa = ""
                 targetres = True
             if (beam and (major or minor or pa)):
-                raise Exception, "You may specify only beam or the set of major/minor/pa"
+                raise Exception("You may specify only beam or the set of major/minor/pa")
             if not beam:
                 if not major:
-                    raise Exception, "Major axis must be specified"
+                    raise Exception("Major axis must be specified")
                 if not minor:
-                    raise Exception, "Minor axis must be specified"
+                    raise Exception("Minor axis must be specified")
                 if not pa:
-                    raise Exception, "Position angle must be specified"
+                    raise Exception("Position angle must be specified")
        
             outia = _myia.convolve2d(
                 axes=[0,1], region=reg, major=major,
@@ -158,7 +177,7 @@ def imsmooth(
             )
         elif (bkernel ):
             if not major or not minor:
-                raise Exception, "Both major and minor must be specified."
+                raise Exception("Both major and minor must be specified.")
             # BOXCAR KERNEL
             #
             # Until convolve2d supports boxcar we will need to
@@ -196,19 +215,22 @@ def imsmooth(
             casalog.post( 'Unrecognized kernel type: ' + kernel, 'SEVERE' )
             return False
         try:
-            param_names = imsmooth.func_code.co_varnames[:imsmooth.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]   
+            param_names = imsmooth.__code__.co_varnames[:imsmooth.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]   
             write_image_history(
                 outia, sys._getframe().f_code.co_name,
                 param_names, param_vals, casalog
             )
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         return True
-    except Exception, instance:
+    except Exception as instance:
         casalog.post("Exception: " + str(instance), 'SEVERE')
         return False
     finally:
         _myia.done()
-        outia.done()
-    
+        if outia: outia.done()

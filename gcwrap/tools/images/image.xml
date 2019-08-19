@@ -1343,7 +1343,7 @@ collapsed.done()
   
      <param type="string"  name="outfile">
      <description>Output image file name.  Default is unset.</description>
-     <value></value>
+     <value/>
      </param>
   
      <param type="any"  name="infiles">
@@ -1377,13 +1377,18 @@ wild cards accepted.  Default is empty string.</description>
         <description>Automatically reorder the images if necessary.</description>
         <value>false</value>
      </param>
+
+     <param type="string" name="mode">
+        <description>Type of output image. "paged", "movevirtual", "nomoveevirtual", "copyvirtual". Minimal match supported.</description>
+        <value>paged</value>
+     </param>
      
 </input>
 <returns type="image"/>
 
 <description> 
 
-This function is used to concatenate two or more input \casa\
+This application is used to concatenate two or more input CASA
 images into one output image.  For example, if you have two image cubes
 which are contiguous along one axis (say a spectral axis) and you would
 like to glue them together along this axis, then this function is the
@@ -1400,13 +1405,13 @@ the concatenated image. Even if it is not wanted, the returned tool should
 be captured and closed as soon as the user is finished with it to free up
 system resources (eg memory).
 
-If {\stfaf outfile} is given, the image is written to the specified
-disk file.  If {\stfaf outfile} is unset, the on-the-fly Image \tool\
-created by the function actually references all of the input files.
+If outfile is given, the image is written to the specified
+disk file.  If outfile is unset, the on-the-fly image tool
+created by the method actually references all of the input files.
 So if you deleted any of the input image disk files, it would render
-this \tool\ useless.  When you destroy this tool (with the <link
-anchor="images:image.done.function">done</link> function) the
-reference connections are broken.
+this tool useless. Note that a blank outfile name may only be given
+in the case where mode='p' (see below).  When you destroy this tool
+done() method, the reference connections are broken.
 
 The input and output images must be of the same dimensionality.  Therefore,
 if you wish to concatenate 2-D images into a 3-D image, the 2-D images
@@ -1426,59 +1431,77 @@ as the coordinate system of the output image. Setting reorder=True can be especi
 useful if the infiles are specified using a wildcard character(s).
 
 If relax=False, the input images are checked to see that they are
-contiguous along the concatenation axis and an error is generated if
+contiguous along the concatenation axis and an exception is thrown if
 they are not.  In addition, the coordinate descriptors (e.g.  reference
 pixel, reference value etc) for the non-concatenation axes must be the
 same or an error will result. 
 
-The input disk image files may be in native \casa, \fits, or Miriad
-formats.
+The input disk image files may be in native (CASA or FITS) formats.
 
 The contiguous criterion and coordinate descriptor equality criteria can
-be relaxed by setting {\stfaf relax=T} whereupon only warnings will be
+be relaxed by setting relax=True whereupon only warnings will be
 issued.  Dimension and shape must still be the same though.  When the
 concatenation axis is not contiguous (but still monotonically increasing
-or decreasing) and {\stfaf relax=T}, a tabular coordinate will be used
+or decreasing) and relax=True, a tabular coordinate will be used
 to correctly describe the axis.  But be aware that it means adjacent
-pixels are not regularly spaced.  However, functions like
-<link anchor="images:image.toworld.function">toworld</link> and
-<link anchor="images:image.topixel.function">topixel</link> will correctly interconvert world
-and pixel coordinates. 
+pixels are not regularly spaced.  However, methods like toworld() and
+topixel() will correctly interconvert world and pixel coordinates. 
 
-In giving the input image names, the {\stfaf infiles} argument can be a
+In giving the input image names, the infiles argument can be a
 single string if you wild card it with standard shell symbols.  For
-example, {\stfaf infiles='cena\_???.*'}, where the ``?'' represents one
+example, infiles='cena\_???.*', where the ``?'' represents one
 character and ``*'' any number of characters. 
 
-Otherwise, you must input a vector of strings such as {\stfaf
-infiles="cena1 cena2 cena3"}.  An input such as {\stfaf
-infiles='files1,file2'} will be interpreted as one string naming one
-file and you will get an error.  The reason for this is that although
-the latter could be parsed to extract two file names by recognizing
-comma delimiters, it is not possible because an expression such as
-{\stfaf infiles='cena.\{a,b\}'} (meaning files of name ``cena.a'' and
-``cena.b'') would confuse such parsing (you would get two files of name
-{\sff cena.\{a} and {\sff b\}}. 
+Otherwise, you must input a vector of strings such as
+infiles="cena1 cena2 cena3".  An input such as infiles='files1,file2'
+will be interpreted as one string naming one file and an exception will
+be thrown.  The reason for this is that although the latter could be
+parsed to extract two file names by recognizing comma delimiters, it
+is not possible because an expression such as infiles='cena.\{a,b\}' 
+(meaning files of name ``cena.a'' and ``cena.b'') would confuse such
+parsing (you would get two files of name cena.\{a} and {\sff b\}. 
 
 You can look at the coordinate system of the output image using the 
-<link anchor="images:image.summary.function">ia.summary()</link> tool method
-to ensure it's correct.
+ia.summary() method to ensure it's correct.
 
-The argument {\stfaf tempclose} is, by default, True.  This means that
-all internal reference copies of the input images are  kept closed until
+The parameter tempclose is, by default, True.  This means that
+all internal reference copies of the input images are kept closed until
 they are needed. Then they are opened temporarily and then closed again.
 This enables you to effectively concatenate as many images as you like
-without encountering any operating system open file number limits.  However, it
-comes at some performance loss, because opening and closing all those
-files takes time.  If you are concatenating a smallish number of files,
-you might use {\stfaf tempclose=F}.  This will leave all internal
+without encountering any operating system open file number limits.
+However, it comes at some performance loss, because opening and closing
+all those files takes time.  If you are concatenating a smallish number
+of files, you might use tempclose=False.  This will leave all internal
 reference copies permanently open, but performance, if you don't hit the
 file limit, will be better.
 
+The mode parameter controls the format of the output image. If mode='p',
+then a "paged" (normal persistent CASA format) image in which all the
+pixel values and metadata are copied to a single image is created. All
+the other modes will create a "virtual concat" image. In this format,
+a directory, named outfile, is created to store metadata about each image.
+The metadata are placed in a file in this directory named imageconcat.json,
+which is a plain text file in JSON format. In the json file are pointers
+to the actual disk images that make up the virtual concat image. In the
+case of mode='c' (copy), alll the disk images are copied to the outfile
+directory and the json file references the images in the outfile directory.
+In the case of mode='m' (move), the disk images are instead moved to the
+outfile directory, and again the json file references the images in the
+outfile directory. These two modes make it simple to deal with the
+virtual concat image as a single unit, for example, if the user needs
+to move the image or tar it up, the resulting moved image or untarred file
+will be accessible by the image tool as a valid image. The final option,
+mode='n' (no copy) means the output directory only contains the json file
+and references the input image paths as given. In this case, moving the
+outfile directory without moving the reference images will normally cause
+problems, especially if the input images were given using relative path
+names. So, one must think carefully if mode='n' will be the correct option
+for their use case in the long run.
+
 This method requires multiple images which are specified with the infiles
 parameter. Therefore calling ia.open() is not necessary, although calling
-imageconcat() using an already open image analysis tool will work and the state
-of that tool (eg the image it references) will not be changed.
+imageconcat() using an already open image analysis tool will work and the
+state of that tool (eg the image it references) will not be changed.
 
 </description>
 <example>
@@ -2878,7 +2901,7 @@ the increment.
 			This application performs boxcar convolution of one axis of an image
 			defined by
 
-			z[i] = (y[i] + y[i+i] + ... + y[i+w])/w
+			z[i] = (y[i] + y[i+i] + ... + y[i+w-1])/w
 
 			where z[i] is the value at pixel i in the box car smoothed image, y[k]
 			is the pixel value of the input image at pixel k, and w is a postivie integer

@@ -17,13 +17,33 @@
 # Input data:                                                               #
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, ms, table
+    from casatasks import importfitsidi
+
+    _ms = ms( )
+    _tb = table( )
+
+    # enhanced later using ctsys.resolve
+    datapath = 'regression/fitsidi_import/input'
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    # not local tools
+    _ms = ms
+    _tb = tb
+
+    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/fitsidi_import/input'
 
 myname = 'importfitsidi-unit-test'
 
@@ -38,12 +58,12 @@ msname = my_dataset_names[0]+'.ms'
 
 def checktable(thename, theexpectation):
     global msname, myname
-    tb.open(msname+"/"+thename)
+    _tb.open(msname+"/"+thename)
     if thename == "":
         thename = "MAIN"
     for mycell in theexpectation:
-        print myname, ": comparing ", mycell
-        value = tb.getcell(mycell[0], mycell[1])
+        print(myname, ": comparing ", mycell)
+        value = _tb.getcell(mycell[0], mycell[1])
         # see if value is array
         try:
             isarray = value.__len__
@@ -55,7 +75,11 @@ def checktable(thename, theexpectation):
             else:
                 in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
         else:
-            if isinstance(value, basestring):
+            if is_CASA6:
+                stype = str
+            else:
+                stype = basestring
+            if isinstance(value, stype):
                 in_agreement = value == mycell[2]
             else:
                 # it's an array
@@ -68,13 +92,13 @@ def checktable(thename, theexpectation):
                     except:
                         in_agreement = False
         if not in_agreement:
-            print myname, ":  Error in MS subtable", thename, ":"
-            print "     column ", mycell[0], " row ", mycell[1], " contains ", value
-            print "     expected value is ", mycell[2]
-            tb.close()
+            print(myname, ":  Error in MS subtable", thename, ":")
+            print("     column ", mycell[0], " row ", mycell[1], " contains ", value)
+            print("     expected value is ", mycell[2])
+            _tb.close()
             return False
-    tb.close()
-    print myname, ": table ", thename, " as expected."
+    _tb.close()
+    print(myname, ": table ", thename, " as expected.")
     return True
 
 
@@ -86,12 +110,16 @@ class test_importfitsidi(unittest.TestCase):
     def setUp(self):
         res = None
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/fitsidi_import/input/'
         for fname in my_dataset_names:
             if(os.path.exists(fname)):
                 os.remove(fname)
-            shutil.copy(datapath + fname, fname)
-        default(importfitsidi)
+            datasetPath = os.path.join(datapath,fname)
+            if is_CASA6:
+                datasetPath = ctsys.resolve(datasetPath)
+            shutil.copy(datasetPath, fname)
+
+        if not is_CASA6:
+            default(importfitsidi)
         
     def tearDown(self):
         for fname in my_dataset_names:
@@ -104,7 +132,7 @@ class test_importfitsidi(unittest.TestCase):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
         self.res = importfitsidi(my_dataset_names[0], msname,  scanreindexgap_s=100., constobsid=True)
-        print myname, ": Success! Now checking output ..."
+        print(myname, ": Success! Now checking output ...")
         mscomponents = set(["table.dat",
 #                            "table.f0",
                             "table.f1",
@@ -142,21 +170,21 @@ class test_importfitsidi(unittest.TestCase):
                             ])
         for name in mscomponents:
             if not os.access(msname+"/"+name, os.F_OK):
-                print myname, ": Error  ", msname+"/"+name, "doesn't exist ..."
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
             else:
-                print myname, ": ", name, "present."
-        print myname, ": MS exists. All tables present. Try opening as MS ..."
+                print(myname, ": ", name, "present.")
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            print myname, ": Error  Cannot open MS table", tablename
+            print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
-            print myname, ": OK. Checking tables in detail ..."
+            _ms.close()
+            print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
     
             # check main table first
@@ -245,7 +273,7 @@ class test_importfitsidi(unittest.TestCase):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
         self.res = importfitsidi([my_dataset_names[1],my_dataset_names[2]], msname)
-        print myname, ": Success! Now checking output ..."
+        print(myname, ": Success! Now checking output ...")
         mscomponents = set(["table.dat",
 #                            "table.f0",
                             "table.f1",
@@ -283,21 +311,21 @@ class test_importfitsidi(unittest.TestCase):
                             ])
         for name in mscomponents:
             if not os.access(msname+"/"+name, os.F_OK):
-                print myname, ": Error  ", msname+"/"+name, "doesn't exist ..."
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
             else:
-                print myname, ": ", name, "present."
-        print myname, ": MS exists. All tables present. Try opening as MS ..."
+                print(myname, ": ", name, "present.")
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            print myname, ": Error  Cannot open MS table", tablename
+            print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
-            print myname, ": OK. Checking tables in detail ..."
+            _ms.close()
+            print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
     
             # check main table first
@@ -386,7 +414,7 @@ class test_importfitsidi(unittest.TestCase):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
         self.res = importfitsidi(my_dataset_names[3], msname)
-        print myname, ": Success! Now checking output ..."
+        print(myname, ": Success! Now checking output ...")
         mscomponents = set(["table.dat",
 #                            "table.f0",
                             "table.f1",
@@ -424,21 +452,21 @@ class test_importfitsidi(unittest.TestCase):
                             ])
         for name in mscomponents:
             if not os.access(msname+"/"+name, os.F_OK):
-                print myname, ": Error  ", msname+"/"+name, "doesn't exist ..."
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
             else:
-                print myname, ": ", name, "present."
-        print myname, ": MS exists. All tables present. Try opening as MS ..."
+                print(myname, ": ", name, "present.")
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            print myname, ": Error  Cannot open MS table", tablename
+            print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
-            print myname, ": OK. Checking tables in detail ..."
+            _ms.close()
+            print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
     
             # check main table first
@@ -677,7 +705,7 @@ class test_importfitsidi(unittest.TestCase):
 
         self.res = importfitsidi([my_dataset_names[1],my_dataset_names[2]], msname, 
                                  constobsid=True, scanreindexgap_s=1.5)
-        print myname, ": Success! Now checking output ..."
+        print(myname, ": Success! Now checking output ...")
         mscomponents = set(["table.dat",
 #                            "table.f0",
                             "table.f1",
@@ -715,21 +743,21 @@ class test_importfitsidi(unittest.TestCase):
                             ])
         for name in mscomponents:
             if not os.access(msname+"/"+name, os.F_OK):
-                print myname, ": Error  ", msname+"/"+name, "doesn't exist ..."
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
             else:
-                print myname, ": ", name, "present."
-        print myname, ": MS exists. All tables present. Try opening as MS ..."
+                print(myname, ": ", name, "present.")
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            print myname, ": Error  Cannot open MS table", tablename
+            print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
-            print myname, ": OK. Checking tables in detail ..."
+            _ms.close()
+            print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
     
             # check main table first
@@ -789,9 +817,9 @@ class test_importfitsidi(unittest.TestCase):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
             
-            tb.open(msname+'/OBSERVATION')
-            nr = tb.nrows()
-            tb.close()
+            _tb.open(msname+'/OBSERVATION')
+            nr = _tb.nrows()
+            _tb.close()
             if not nr==1:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table OBSERVATION failed'
@@ -801,3 +829,7 @@ class test_importfitsidi(unittest.TestCase):
     
 def suite():
     return [test_importfitsidi]
+    
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

@@ -60,21 +60,29 @@
 # </motivation>
 #
 ###########################################################################
-from taskinit import *
+from __future__ import absolute_import
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import spectralline
+    from casatasks import casalog
+else:
+    from taskinit import *
+    from taskinit import sltool as spectralline
 
 def splattotable(filenames=None, table=None):
     casalog.origin('splattotable')
     newsl = None
-    mysl = sltool()
+    mysl = spectralline()
 
     try:
         if (len(table) == 0):
             raise Exception("table must be specified.")
         newsl = mysl.splattotable(filenames=filenames, table=table)
         if (not newsl):
-            raise Exception, "Exception when running sl.splattotable"
+            raise Exception("Exception when running sl.splattotable")
         return True
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
         raise
     finally:

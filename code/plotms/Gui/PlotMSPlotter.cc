@@ -906,7 +906,8 @@ void PlotMSPlotter::grpc_handle_op( ) {
     if ( ! grpc_queue.empty( ) ) {
         std::function<void()> f = grpc_queue.front( );
         grpc_queue.pop( );
-        f( );
+        try { f( ); }
+        catch(...) { fprintf( stderr, "exception encountered (gui sig)\n" ); }
     }
 }
 

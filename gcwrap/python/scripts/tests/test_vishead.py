@@ -1,13 +1,28 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import string
 import numpy
 import os
 import shutil
-from __main__ import default
-from task_vishead import vishead
 import unittest
 
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import vishead
+else:
+    from __main__ import default
+    from task_vishead import vishead
+
+# used in a type comparison
+if is_python3:
+    numpy_str_ = numpy.str_
+else:
+    numpy_str_ = numpy.string_
+    
 '''
 Unit tests for task vishead. It tests the following modes:
     list, summary, get, put
@@ -20,19 +35,22 @@ Unit tests for task vishead. It tests the following modes:
 
 '''
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/vishead/'
+if is_CASA6:
+    datapath=ctsys.resolve('regression/unittest/vishead')
+else:
+    datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/vishead')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):   
+if 'TEST_DATADIR' in os.environ:   
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/vishead/'
     if os.path.isdir(DATADIR):
         testmms = True
         datapath = DATADIR
     else:
-        print 'WARN: directory '+DATADIR+' does not exist'
+        print('WARN: directory '+DATADIR+' does not exist')
 
-print 'vishead tests will use data from '+datapath         
+print('vishead tests will use data from '+datapath)         
 
 input_file = 'n4826_16apr98.ms'  # 128 channels
 #if testmms:
@@ -51,26 +69,26 @@ class tester:
 
     def start(self, msg):
         self.total += 1
-        print
-        print stars + " Test %s (" % self.total + msg + ") start " + stars
+        print()
+        print(stars + " Test %s (" % self.total + msg + ") start " + stars)
         self.current_test = msg
 
     def end(self, condition, error_msg):
         status = "OK"
         if not is_true(condition):
-            print >> sys.stderr, error_msg
+            print(error_msg, file=sys.stderr)
             self.fail += 1
             status = "FAIL"
             if stop_on_first_error:
-                raise Exception, "Halt!"
-        print stars + " Test " + self.current_test + " " + status + " " + stars
+                raise Exception("Halt!")
+        print(stars + " Test " + self.current_test + " " + status + " " + stars)
 
     def done(self):
-        print "%s/%s tests passed" % (self.total-self.fail, self.total)
+        print("%s/%s tests passed" % (self.total-self.fail, self.total))
         if self.fail > 0:
-            raise Exception, "%s/%s failures" % (self.fail, self.total)
+            raise Exception("%s/%s failures" % (self.fail, self.total))
         else:
-            print "All tests passed, congratulations!"
+            print("All tests passed, congratulations!")
 
 
 def is_true(x):
@@ -89,8 +107,9 @@ class vishead_test(unittest.TestCase):
         if(os.path.exists(input_file)):
             os.system('rm -rf ' +input_file)
 
-        os.system('cp -RL ' +datapath + input_file +' ' + input_file)
-        default('vishead')
+        os.system('cp -RL ' +os.path.join(datapath,input_file) +' ' + input_file)
+        if not is_CASA6:
+            default('vishead')
 
     def tearDown(self):
         if os.path.exists(input_file):
@@ -106,8 +125,8 @@ class vishead_test(unittest.TestCase):
         t.start("vishead( '" + input_file + "', 'list', [])")
         orig_hdr = vishead(input_file, 'list', [])  # default listitems seems to work when
                                                     # run manually, but not from here.
-        print "Original header ="
-        print orig_hdr
+        print("Original header =")
+        print(orig_hdr)
         t.end(type(orig_hdr) == type({'key1':'val1', 'key2':'val2'})
               and orig_hdr['source_name'][0][2] == 'NGC4826',
               "... is a bad header")
@@ -126,11 +145,11 @@ class vishead_test(unittest.TestCase):
         
         # Test the set/get value routines.  All of them
         for keyword in orig_hdr:
-            print "List value of %s:" % (keyword), orig_hdr[keyword]
+            print("List value of %s:" % (keyword), orig_hdr[keyword])
             
             # Test getting.
             valref = vishead(input_file, mode='get', hdkey=keyword, hdindex='')
-            print "Read value:     ", valref
+            print("Read value:     ", valref)
             #sys.stdout.flush()
             for j in range(2):
                 t.start("get " + keyword + "[%d]" % j)
@@ -145,7 +164,7 @@ class vishead_test(unittest.TestCase):
                     for k in val.keys():
                         are_equal = (are_equal and is_true(orig_hdr[keyword][j][k] == val[k]))
                         if not is_true(orig_hdr[keyword][j][k] == val[k]):
-                            print orig_hdr[keyword][j][k] == val[k]
+                            print(orig_hdr[keyword][j][k] == val[k])
                 else:
                     are_equal = (val == orig_hdr[keyword][j])
                 if hasattr(are_equal, 'all'):
@@ -157,23 +176,23 @@ class vishead_test(unittest.TestCase):
             # Put does not yet use the ref part of valref.
             val = valref[0]
             if type(val) is dict:
-                print str(keyword) + ' is probably a column ' + \
-                'with variable length arrays, don\'t try to write that'
+                print(str(keyword) + ' is probably a column ' + \
+                'with variable length arrays, don\'t try to write that')
                 # because the task doesn't support it
                 continue
     
             if len(val) == 1:
-                if type(val[0]) == numpy.string_:
+                if type(val[0]) == numpy_str_:
                     myval = 'the_coolest_' + val[0]
                 else:
                     myval = 42.0 + val[0]
                     
                 t.start("put/get " + keyword)
-                print "New value:      ", myval
+                print("New value:      ", myval)
                 vishead(input_file, mode='put', hdkey=keyword, hdindex='', hdvalue=myval)
                 
                 newval = vishead(input_file, mode='get', hdkey=keyword, hdindex='')[0]
-                print "Read new value: ", newval
+                print("Read new value: ", newval)
                 
                 t.end(newval == myval, "Got "+str(newval)+", expected "+str(myval))
             else:
@@ -183,19 +202,19 @@ class vishead_test(unittest.TestCase):
                 
                 i = 0
                 for e in val:
-                    if type(e) == numpy.string_:
+                    if type(e) == numpy_str_:
                         myval = 'the_coolest_' + e
                     else:
                         myval = 42.0 + e
         
                     t.start("put/get " + keyword + '[' + str(i) + ']')
                     
-                    print "New value:      ", myval
+                    print("New value:      ", myval)
                     vishead(input_file, mode='put', hdkey=keyword, hdindex=str(i),
                             hdvalue=myval)
                     
                     newval = vishead(input_file, mode='get', hdkey=keyword, hdindex=str(i))[0]
-                    print "Read new value: ", newval
+                    print("Read new value: ", newval)
                     
                     t.end(newval == myval, "Got "+str(newval)+", expected "+str(myval))
                     
@@ -209,3 +228,6 @@ class vishead_test(unittest.TestCase):
 def suite():
     return [vishead_test]
 
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

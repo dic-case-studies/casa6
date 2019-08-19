@@ -214,6 +214,23 @@ public:
         const casacore::String& filename, casacore::Bool cache=casacore::True
     );
 
+    // for specific types
+    static SPIIF fromFile(
+        const casacore::String& filename, casacore::Float, casacore::Bool cache=casacore::True
+    );
+
+    static SPIID fromFile(
+        const casacore::String& filename, casacore::Double, casacore::Bool cache=casacore::True
+    );
+
+    static SPIIC fromFile(
+        const casacore::String& filename, casacore::Complex, casacore::Bool cache=casacore::True
+    );
+
+    static SPIIDC fromFile(
+        const casacore::String& filename, casacore::DComplex, casacore::Bool cache=casacore::True
+    ); 
+
     static SPIIF fromFITS(
         const casacore::String& outfile, const casacore::String& fitsfile,
         const casacore::Int whichrep, const casacore::Int whichhdu,

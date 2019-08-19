@@ -1,10 +1,22 @@
+from __future__ import absolute_import
 import os
-from taskinit import *
-from odict import odict
 import numpy
 
-_ia = iatool( )
-_rg = rgtool( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image, regionmanager, coordsys
+    from casatasks import casalog
+
+    _ia = image( )
+    _rg = regionmanager( )
+else:
+    from taskinit import *
+
+    image = iatool
+    coordsys = cstool
+
+    _ia = iatool( )
+    _rg = rgtool( )
 
 # AUTHOR: S. Jaeger
 #
@@ -26,69 +38,69 @@ _rg = rgtool( )
 #       list4: ['axis num of stokes axis', 'Stokes' ]
 
 def getimaxes(imagename):
-	"""
-	Open an image file, looking at its coordinate system information
-	to determine which axes are directional, linear, spectral, and
-	the stokes axies.
+        """
+        Open an image file, looking at its coordinate system information
+        to determine which axes are directional, linear, spectral, and
+        the stokes axies.
 
-	The return list or lists contains the axis numbers and names in
-	the following order:
-	     1. Directional or Linear
-	     2. Directional or Linear
-	     3. Spectral
-	     4. Stokes
+        The return list or lists contains the axis numbers and names in
+        the following order:
+             1. Directional or Linear
+             2. Directional or Linear
+             3. Spectral
+             4. Stokes
 
-	Note that if an axis type is not found an empty list is returned
+        Note that if an axis type is not found an empty list is returned
         for that axis.
-	"""
+        """
 
-	# Get the images coord. sys.
-	csys=None
-	_ia.open( imagename )
-	csys=_ia.coordsys()
+        # Get the images coord. sys.
+        csys=None
+        _ia.open( imagename )
+        csys=_ia.coordsys()
 
-	# Find where the directional and channel axies are
-	# Save the internal placement of the axies in a list
-	# (which will be in the following order:
-	#    direction1: RA, Longitude, Linear, el, ..
-	#    direction2: DEC, Lattitude, Linear, az, ..
-	#    spectral:
-	#    stokes: I or V
-	axisTypes=csys.axiscoordinatetypes()
-	axisNames=csys.names()
-	
-	# Note that we make a potentially dangerous assumption here
-	# that the first directional access is always RA, but it
-	# may not be.  The names given to the axies are completely
-	# arbitrary and can not be used to determine one axis from
-	# another.
-	# TODO throw exception??? if we find extra axies or
-	#      unrecognized axies.
-	retValue=[['',''],['',''],['',''],['','']]
-	foundFirstDir=False
-	for i in range( len( axisTypes ) ):
-		if ( axisTypes[i]=='Direction' or axisTypes[i]=='Linear' ):
-			if ( not foundFirstDir ) :
-				retValue[0]=[i,axisNames[i]]
-				foundFirstDir=True
-			else:
-				retValue[1]=[i,axisNames[i]]
-		elif ( axisTypes[i]=='Spectral' ) :
-			retValue[2]=[i,axisNames[i]]
-		elif ( axisTypes[i]=='Stokes' ) :
-			retValue[3]=[i,axisNames[i]]
+        # Find where the directional and channel axies are
+        # Save the internal placement of the axies in a list
+        # (which will be in the following order:
+        #    direction1: RA, Longitude, Linear, el, ..
+        #    direction2: DEC, Lattitude, Linear, az, ..
+        #    spectral:
+        #    stokes: I or V
+        axisTypes=csys.axiscoordinatetypes()
+        axisNames=csys.names()
+        
+        # Note that we make a potentially dangerous assumption here
+        # that the first directional access is always RA, but it
+        # may not be.  The names given to the axies are completely
+        # arbitrary and can not be used to determine one axis from
+        # another.
+        # TODO throw exception??? if we find extra axies or
+        #      unrecognized axies.
+        retValue=[['',''],['',''],['',''],['','']]
+        foundFirstDir=False
+        for i in range( len( axisTypes ) ):
+                if ( axisTypes[i]=='Direction' or axisTypes[i]=='Linear' ):
+                        if ( not foundFirstDir ) :
+                                retValue[0]=[i,axisNames[i]]
+                                foundFirstDir=True
+                        else:
+                                retValue[1]=[i,axisNames[i]]
+                elif ( axisTypes[i]=='Spectral' ) :
+                        retValue[2]=[i,axisNames[i]]
+                elif ( axisTypes[i]=='Stokes' ) :
+                        retValue[3]=[i,axisNames[i]]
 
-	if ( csys != None ):
-	    del csys
-	if ( _ia.isopen() ):
-	    _ia.close()
-	return retValue
+        if ( csys != None ):
+            del csys
+        if ( _ia.isopen() ):
+            _ia.close()
+        return retValue
 
 
 # The function that handles the imval task.
 def imval(imagename, region, box, chans, stokes):
-    myia = iatool()
-    mycsys = cstool()
+    myia = image()
+    mycsys = coordsys()
     try:
         # Blank return value.
         retValue = { 'blc':[], 'trc':[], 'unit': '', 'data': [], 'mask': []}
@@ -97,7 +109,7 @@ def imval(imagename, region, box, chans, stokes):
         try:
             axes=getimaxes(imagename)
         except:
-            raise Exception, "Unable to determine the axes of image: "+imagename
+            raise Exception("Unable to determine the axes of image: "+imagename)
         
     
         # Get rid of any white space in the parameters
@@ -137,8 +149,6 @@ def imval(imagename, region, box, chans, stokes):
                 retValue['axes']=axes
                 casalog.post( 'imval task complete for point'+str(point), 'NORMAL1' )
                 return retValue
-            except Exception, instance:
-                raise Exception, instance
             finally:
                 myia.done()
     
@@ -160,8 +170,6 @@ def imval(imagename, region, box, chans, stokes):
                 retValue['axes']=axes
                 casalog.post( 'imval task complete for point '+str(singlePt), 'NORMAL1' )
                 return retValue
-            except Exception, instance:
-                raise Exception, instance
             finally:
                 myia.done()
             
@@ -200,7 +208,7 @@ def imval(imagename, region, box, chans, stokes):
                         + str(int(round(values[axes[0][0]])))+','\
                         +str(int(round(values[axes[1][0]])))
                 except:
-                    raise Exception, "Unable to find the size of the input image."
+                    raise Exception("Unable to find the size of the input image.")
             
         # Because the help file says -1 is valid, apparently that's supported functionality, good grief
         
@@ -219,7 +227,7 @@ def imval(imagename, region, box, chans, stokes):
         # Now that we know which axes we are using, and have the region
         # selected, lets get that stats!  NOTE: if you have axes size
         # greater then 0 then the maxpos and minpos will not be displayed
-        if ( reg.has_key( 'regions' ) ):
+        if ( 'regions' in reg ):
             casalog.post( "Complex region found, only processing the first"\
                           " SIMPLE region found", "WARN" )
             reg=reg['regions']['*1']
@@ -228,12 +236,12 @@ def imval(imagename, region, box, chans, stokes):
     
         casalog.post( 'imval task complete for region bound by blc='+str(retValue['blc'])+' and trc='+str(retValue['trc']), 'NORMAL1' )
         return retValue
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( '*** Error ***'+str(instance), 'SEVERE' )
         raise
     finally:
-        myia.done()    
-        mycsys.done() 
+        myia.done()
+        mycsys.done()
                 
 #
 # Take the results from the ia.pixelvalue() function and
@@ -249,11 +257,11 @@ def _imval_process_pixel( results, point ):
         casalog.post( "Value returned is: "+str(results), "SEVERE" )
         return retvalue
     
-    if ( not results.has_key('mask') ):
+    if ( 'mask' not in results ):
         casalog.post( "ia.pixelvalue() has returned unexpected results, no mask value present.", "SEVERE" )
         return retvalue
 
-    if ( not results.has_key('value') or not results['value'].has_key('unit') or not results['value'].has_key('value') ):
+    if ( 'value' not in results or 'unit' not in results['value'] or 'value' not in results['value'] ):
         casalog.post( "ia.pixelvalue() has returned unexpected results, data value absent or ill-formed.", "SEVERE" )
         return retvalue
     
@@ -316,7 +324,7 @@ def _imval_get_single( box, chans, stokes, axes ):
 # Use the ia.getregion() function to construct the requested data.
 def _imval_getregion( imagename, region):
     retvalue= {}
-    myia = iatool()
+    myia = image()
     try:
         # Open the image for processing!
         myia.open(imagename)
@@ -328,11 +336,11 @@ def _imval_getregion( imagename, region):
         # the user.
         bbox = myia.boundingbox( region=region )
         
-        if ( not bbox.has_key( 'blc' ) ):
+        if ( 'blc' not in bbox ):
             casalog.post( "ia.boundingbox() has returned unexpected results, blc value absent.", "SEVERE" )
             myia.done()
             return retvalue
-        if ( not bbox.has_key( 'trc' ) ):
+        if ( 'trc' not in bbox ):
             casalog.post( "ia.boundingbox() has returned unexpected results, trc value absent.", "SEVERE" )
             myia.done()
             return retvalue
@@ -344,7 +352,7 @@ def _imval_getregion( imagename, region):
         outcoords = _imval_redo(data_results.shape, mycoords['numeric'])
         
         avalue = myia.pixelvalue( bbox['blc'].tolist() )
-        if ( not avalue.has_key('value') or not avalue['value'].has_key('unit') ):
+        if ( 'value' not in avalue or 'unit' not in avalue['value'] ):
             casalog.post( "ia.pixelvalue() has returned unexpected results, data value absent or ill-formed.", "SEVERE" )
             myia.done()
             return retvalue
@@ -354,8 +362,6 @@ def _imval_getregion( imagename, region):
             'unit':avalue['value']['unit'], 'data':data_results,
             'mask': mask_results, 'coords': outcoords
         }
-    except Exception, instance:
-        raise instance
     finally:
         myia.done()
     return retvalue
@@ -397,4 +403,3 @@ def _imval_redo(shape, arrays):
     newshape = list(shape)
     newshape.append(array_of_arrays.shape[1])
     return array_of_arrays.reshape(newshape)
-

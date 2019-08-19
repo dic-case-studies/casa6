@@ -164,6 +164,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     protected:
         // update parameters
+        void clear_parameters( );
         void update_parameters( );
         void update_parameters(int index);
         void populate_selection( const ::rpc::plotms::SetSelection &req, PlotMSSelection &sel );
@@ -189,6 +190,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         void new_op( );
 
     private:
+        PlotMSPlotParameters *get_sysparams(int index);
+        void hold_notification( PlotMSPlotParameters *sp );
+        void release_notification( PlotMSPlotParameters *sp );
         bool invalid_index( int );
         PlotEngine *itsPlotms_;
         PlotMSPlotter *plotter_;

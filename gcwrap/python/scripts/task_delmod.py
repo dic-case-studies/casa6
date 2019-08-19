@@ -1,11 +1,27 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-from taskinit import casalog, cbtool, mstool
-from mstools import write_history
-from parallel.parallel_task_helper import ParallelTaskHelper
-from parallel.parallel_data_helper import ParallelDataHelper
 
-_ms = mstool( )
-_cb = cbtool( )
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ms as mstool
+    from casatools import calibrater
+    from casatasks import casalog
+    from .mstools import write_history
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from .parallel.parallel_data_helper import ParallelDataHelper
+
+    _ms = mstool( )
+    _cb = calibrater( )
+else:
+    from taskinit import casalog, cbtool, mstool
+    from mstools import write_history
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    from parallel.parallel_data_helper import ParallelDataHelper
+
+    _ms = mstool( )
+    _cb = cbtool( )
 
 def delmod(vis=None,otf=None,field=None,scr=None):
 
@@ -29,17 +45,21 @@ def delmod(vis=None,otf=None,field=None,scr=None):
             _cb.delmod(otf=otf,field=field,scr=scr)
             _cb.close()
         else:
-            raise Exception, 'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
 
         # Write history to MS
         try:
-            param_names = delmod.func_code.co_varnames[:delmod.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            param_names = delmod.__code__.co_varnames[:delmod.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             write_history(mstool(), vis, 'delmod', param_names,
                           param_vals, casalog)
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                          'WARN')
 
-    except Exception, instance:
-        print '*** Error ***',instance
+    except Exception as instance:
+        print('*** Error ***',instance)

@@ -487,6 +487,7 @@ void SynthesisImagerVi2::andChanSelection(const Int msId, const Int spwId, const
     if(imshape(3) < 1) {
       return;
     }
+   
     Double minFreq=SpectralImageUtil::worldFreq(cs, 0.0);
     Double maxFreq=SpectralImageUtil::worldFreq(cs,imshape(3)-1);
    
@@ -508,8 +509,8 @@ void SynthesisImagerVi2::andChanSelection(const Int msId, const Int spwId, const
       return;
     }
       
-    maxFreq+=fabs(spectralCoord.increment()(0))/2.0;
-    minFreq-=fabs(spectralCoord.increment()(0))/2.0;
+    maxFreq+=3.0*fabs(spectralCoord.increment()(0))/2.0;
+    minFreq-=3.0*fabs(spectralCoord.increment()(0))/2.0;
     if(minFreq < 0.0) minFreq=0.0;
     
     auto copyFreqBegs=freqBegs_p;
@@ -1281,6 +1282,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
   void SynthesisImagerVi2::makeSdImage(Bool dopsf)
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","makeSdImage",WHERE) );
+
 //    Bool dopsf=false;
     if(datacol_p==FTMachine::PSF) dopsf=true;
 
@@ -2493,7 +2495,7 @@ void SynthesisImagerVi2::unlockMSs()
     vi_p->originChunks();
     vi_p->origin();
     std::map<Int, std::set<Int>> fieldsDone;
-  
+    VisBufferUtil vbU(*vb);
     ///////if tracking a moving source
     MDirection origMovingDir;
     MDirection newPhaseCenter;
@@ -2515,7 +2517,8 @@ void SynthesisImagerVi2::unlockMSs()
 	      if(trackBeam){
 		MDirection newMovingDir;
 		getMovingDirection(*vb, newMovingDir);
-		newPhaseCenter=vb->phaseCenter();
+		//newPhaseCenter=vb->phaseCenter();
+                newPhaseCenter=vbU.getPhaseCenter(*vb);
 		newPhaseCenter.shift(MVDirection(-newMovingDir.getAngle()+origMovingDir.getAngle()), False);
 	      }
 	      itsMappers.addPB(*vb,pbMath, newPhaseCenter, trackBeam);
@@ -2552,7 +2555,8 @@ void SynthesisImagerVi2::unlockMSs()
 	}
       }
       else if(upcase(movingSource_p)=="TRACKFIELD"){
-	movingDir=VisBufferUtil::getEphemDir(vb, -1.0);
+        VisBufferUtil vbU(vb);
+	movingDir=vbU.getEphemDir(vb, -1.0);
       }
       else{
 	throw(AipsError("Erroneous tracking direction set to make pb"));
