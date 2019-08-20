@@ -149,16 +149,16 @@ namespace casa{
 		  for(unsigned int ii=0; ii < poSize_l; ii++) 
 		    sumResPO_l = sumResPO_l + residualPointingOffsets_l[ii];
 		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poSize_l;
-		  // if(avgResPO_l >= sigmaDev)
-		  //   {
-		  //     needsNewPhaseGrad_p = true;
-		  //     cerr << "avgResPO_l"<<avgResPO_l <<endl;
-		  //   }
+		  if(avgResPO_l >= sigmaDev)
+		    {
+		      needsNewPhaseGrad_p = true;
+		      cerr << "avgResPO_l"<<avgResPO_l <<endl;
+		    }
 		}
 	      else
 		{
 		  baselineType_p->cachedGroups_p = false;
-		  // needsNewPhaseGrad_p = true;
+		  needsNewPhaseGrad_p = true;
 		}
 	      // cerr << "Sum of the Residual Pointing Offsets "<< sumResPO_l << endl; 
 	    }
@@ -243,7 +243,7 @@ namespace casa{
 						 const CountedPtr<CFBuffer>& cfb,
 						 const vi::VisBuffer2& vb,
 						 const int& row,
-						 const double& sigmaDev)
+					      const double& /*sigmaDev*/)
     {
       int myrow=row;
       if(doPointing_p)
@@ -283,15 +283,15 @@ namespace casa{
 	  if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
 	    {
 	      //  cerr<<"vbRow2BLMap_p [row] doP=T "<< vbRow2BLMap_p[row] << " " <<row <<endl;
-	      vectorPhaseGradCalculator_p.resize(vbRow2BLMap_p[row]+1,true);
+	      vectorPhaseGradCalculator_p.resize(vbRow2BLMap_p[row]+1,true); // Revisit this.
 	      for (unsigned int i=0;i<vectorPhaseGradCalculator_p.nelements(); i++)
-		if (vectorPhaseGradCalculator_p[i].null())
-		  vectorPhaseGradCalculator_p[i]=new PhaseGrad();
+		if (vectorPhaseGradCalculator_p[vbRow2BLMap_p[row]].null())
+		  vectorPhaseGradCalculator_p[vbRow2BLMap_p[row]]=new PhaseGrad();
 	    }
-	  if( baselineType_p->cachedGroups_p)
-	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);
-	  else
-	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row);
+	  // if( baselineType_p->cachedGroups_p)
+	  //   vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);
+	  // else
+	    // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row);
 	}
       else
 	{
@@ -305,10 +305,11 @@ namespace casa{
 	      if (vectorPhaseGradCalculator_p[myrow].null())
 		vectorPhaseGradCalculator_p[myrow]=new PhaseGrad();
 	    }
-	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
+	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
 	}
-	
-      
+      if (needsNewPhaseGrad_p)
+	vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
+
       return  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->field_phaseGrad_p;
     
     };
