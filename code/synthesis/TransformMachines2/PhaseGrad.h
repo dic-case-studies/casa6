@@ -50,7 +50,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   class PhaseGrad
   {
   public:
-    PhaseGrad():field_phaseGrad_p(), antenna_phaseGrad_p(), cached_FieldOffset_p(), cachedCFBPtr_p(NULL), maxCFShape_p(2)
+    PhaseGrad():field_phaseGrad_p(), antenna_phaseGrad_p(), cached_FieldOffset_p(), cachedCFBPtr_p(NULL), maxCFShape_p(2), needsNewFieldPG_p(false), needsNewPOPG_p(false)
     {};
 
     ~PhaseGrad() {cerr << "PG good bye" << endl;};
@@ -84,6 +84,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Vector<casacore::RigidVector<double, 2> > cached_FieldOffset_p;
     CFBuffer* cachedCFBPtr_p;
     casacore::Vector<int> maxCFShape_p;
+    bool needsNewFieldPG_p, needsNewPOPG_p;
   };
   //
   //-------------------------------------------------------------------------------------------

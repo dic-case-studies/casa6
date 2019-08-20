@@ -48,7 +48,8 @@ namespace casa{
     VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(), doPointing_p(false), cachedFieldId_p(0), vbRows_p(0), sigmaDev(), timer_p()
     {
       baselineType_p = new BaselineType();
-      needsNewPhaseGrad_p = false;
+      needsNewPOPG_p = false;
+      needsNewFieldPG_p = false;
       totalCost_p=totalVB_p = 0.0;
       vbRow2BLMap_p.resize(0);
       // sigmaDev = SynthesisUtils::getenv("PO_SIGMADEV",3.0);
@@ -111,8 +112,8 @@ namespace casa{
 
       if(cachedFieldId_p != vb.fieldId()[0])
 	{
-	  needsNewPhaseGrad_p = true;
-	  // cachedFieldId_p = vb.fieldId()[0];
+	  needsNewFieldPG_p = true;
+	  cachedFieldId_p = vb.fieldId()[0];
 	}
 
 
@@ -151,14 +152,14 @@ namespace casa{
 		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poSize_l;
 		  if(avgResPO_l >= sigmaDev)
 		    {
-		      needsNewPhaseGrad_p = true;
+		      needsNewPOPG_p = true;
 		      cerr << "avgResPO_l"<<avgResPO_l <<endl;
 		    }
 		}
 	      else
 		{
 		  baselineType_p->cachedGroups_p = false;
-		  needsNewPhaseGrad_p = true;
+		  needsNewPOPG_p = true;
 		}
 	      // cerr << "Sum of the Residual Pointing Offsets "<< sumResPO_l << endl; 
 	    }
@@ -248,37 +249,6 @@ namespace casa{
       int myrow=row;
       if(doPointing_p)
 	{
-	  // Float A2R = 4.848137E-06;
-	  // Vector<Double> poIncrement = pointingOffsets_p->getIncrement();
-	  // Vector<Double> sumResPO_l;
-	  // if( baselineType_p->cachedGroups_p)
-	  //   {
-	  //     unsigned int cachedPOSize_l =  baselineType_p->cachedPointingOffsets_p.size();
-	  //     unsigned int poSize_l = (pointingOffsets_p->pullPointingOffsets()).size();
-	  //     sumResPO_l.resize(2);
-	  //     sumResPO_l[0]=0;
-	  //     sumResPO_l[1]=0;
-	  //     // cerr << "sumResPO_l "<< sumResPO_l << " poSize_l " << poSize_l << " cachedPOSize_l"<< cachedPOSize_l <<endl;
-	  //     if(poSize_l == cachedPOSize_l)
-	  // 	{
-	  // 	  Vector < Vector <Double> > residualPointingOffsets_l =  baselineType_p->cachedPointingOffsets_p - pointingOffsets_p->pullPointingOffsets(); 
-	  // 	  for(unsigned int ii=0; ii < poSize_l; ii++) 
-	  // 	    sumResPO_l = sumResPO_l + residualPointingOffsets_l[ii];
-	  // 	}
-	  //     else
-	  // 	{
-	  // 	   baselineType_p->cachedGroups_p = false;
-	  // 	}
-	  //     // cerr << "Sum of the Residual Pointing Offsets "<< sumResPO_l << endl; 
-	  //   }
-
-	  //  baselineType_p->cachedPointingOffsets_p.assign(pointingOffsets_p->pullPointingOffsets());
-
-	  // // Double offsetDeviation = sigmaDev * A2R / (acos(sin(poIncrement[0])*sin(poIncrement[1])) + cos(poIncrement[0])*cos(poIncrement[1])*cos(poIncrement[0] - poIncrement[1]));
-	  // Double offsetDeviation = sigmaDev * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
-	  // baselineType_p->findAntennaGroups(vb,pointingOffsets_p,sigmaDev);
-
-	  // vbRow2BLMap_p = baselineType_p->makeVBRow2BLGMap(vb);
       
 	  if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
 	    {
@@ -295,6 +265,7 @@ namespace casa{
 	}
       else
 	{
+	  needsNewPOPG_p = false;
 	  myrow=0;
 	  vbRow2BLMap_p.resize(1);
 	  vbRow2BLMap_p[0]=0;
@@ -307,8 +278,14 @@ namespace casa{
 	    }
 	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
 	}
-      if (needsNewPhaseGrad_p)
-	vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
+      // if (needsNewPOPG_p)
+	{
+	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = needsNewPOPG_p;
+	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewFieldPG_p = needsNewFieldPG_p;
+	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
+	  needsNewPOPG_p = false;
+	  needsNewFieldPG_p = false;
+	}
 
       return  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->field_phaseGrad_p;
     

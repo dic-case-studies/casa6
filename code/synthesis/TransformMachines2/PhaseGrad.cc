@@ -61,8 +61,8 @@ namespace casa{
     if (cached_FieldOffset_p.nelements() < nRow) cached_FieldOffset_p.resize(nRow,true);
 
     return (
-	    ((fabs(pointingOffset[row][0]-cached_FieldOffset_p[row](0))) > 1e-12) ||
-	    ((fabs(pointingOffset[row][1]-cached_FieldOffset_p[row](1))) > 1e-12) ||
+	    // ((fabs(pointingOffset[row][0]-cached_FieldOffset_p[row](0))) > 1e-12) ||
+	    // ((fabs(pointingOffset[row][1]-cached_FieldOffset_p[row](1))) > 1e-12) ||
 	    (field_phaseGrad_p.shape()[0] < maxCFShape_p[0])           ||
 	    (field_phaseGrad_p.shape()[1] < maxCFShape_p[1])
 	    );
@@ -100,7 +100,7 @@ namespace casa{
       //
       // If the pointing or the max. CF size changed, recompute the phase gradient.
       //
-      if (needsNewPhaseGrad(pointingOffsets_p, vb, row))
+      if ((needsNewPhaseGrad(pointingOffsets_p, vb, row)) || needsNewFieldPG_p || needsNewPOPG_p )
 	{
 	  Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
 	  LogIO log_l(LogOrigin("PhaseGrad","computeFieldPointingGrad"));
