@@ -133,7 +133,6 @@ namespace casa{
 	  baselineType_p->findAntennaGroups(vb,pointingOffsets_p,offsetDeviation);
 
 	  vbRow2BLMap_p = baselineType_p->makeVBRow2BLGMap(vb);
-
 	  if(baselineType_p->cachedGroups_p)
 	    {
 	      unsigned int cachedPOSize_l = baselineType_p->cachedPointingOffsets_p.size();
@@ -150,10 +149,11 @@ namespace casa{
 		  for(unsigned int ii=0; ii < poSize_l; ii++) 
 		    sumResPO_l = sumResPO_l + residualPointingOffsets_l[ii];
 		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poSize_l;
-		  if(avgResPO_l >= sigmaDev)
+		  // cerr << "avgResPO_l"<< avgResPO_l <<endl;
+		  if(avgResPO_l >= sigmaDev*A2R)
 		    {
 		      needsNewPOPG_p = true;
-		      cerr << "avgResPO_l"<<avgResPO_l <<endl;
+		      
 		    }
 		}
 	      else
