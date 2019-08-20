@@ -94,8 +94,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      casacore::Vector<casacore::Matrix<casacore::Complex> > cfPhaseGrad_p;
      casacore::CountedPtr<BaselineType> baselineType_p;
      casacore::Vector< casacore::CountedPtr<PhaseGrad> >vectorPhaseGradCalculator_p;
-     bool doPointing_p, newPhaseGradComputed_p;
-     casacore::Int PO_DEBUG_P;
+     bool doPointing_p, needsNewPhaseGrad_p;
+     casacore::Int PO_DEBUG_P, cachedFieldId_p;
      /* casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p; */
      /* casacore::Matrix< vector<float> > antennaPO_p, cachedAntennaPO_p; */
      vector<int> vbRow2BLMap_p;

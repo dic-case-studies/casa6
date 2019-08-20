@@ -45,11 +45,12 @@ namespace casa{
   namespace refim{
     Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
 
-    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(),doPointing_p(false),vbRows_p(0),sigmaDev(),timer_p()
+    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(), doPointing_p(false), cachedFieldId_p(0), vbRows_p(0), sigmaDev(), timer_p()
     {
       baselineType_p = new BaselineType();
-      newPhaseGradComputed_p = false;
+      needsNewPhaseGrad_p = false;
       totalCost_p=totalVB_p = 0.0;
+      vbRow2BLMap_p.resize(0);
       // sigmaDev = SynthesisUtils::getenv("PO_SIGMADEV",3.0);
     };
 
@@ -107,6 +108,13 @@ namespace casa{
       //    vbRow2CFMap_p.resize(nPol, nChan, nRow);
       vb2CFBMap_p.resize(nRow);
       cfPhaseGrad_p.resize(nRow);
+
+      if(cachedFieldId_p != vb.fieldId()[0])
+	{
+	  needsNewPhaseGrad_p = true;
+	  // cachedFieldId_p = vb.fieldId()[0];
+	}
+
 
       Quantity pa(getPA(vb),"rad");
       //PolOuterProduct outerProduct;
