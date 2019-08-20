@@ -41,11 +41,11 @@
 #include <synthesis/TransformMachines2/VB2CFBMap.h>
 #include <synthesis/TransformMachines2/Utils.h>
 namespace casa{
-using namespace vi;
+  using namespace vi;
   namespace refim{
-  Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
+    Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
 
-    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(),doPointing_p(false),vbRows_p(0),sigmaDev(),timer_p()
+    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(),doPointing_p(false),vbRows_p(0),sigmaDev(),timer_p()
     {
       baselineType_p = new BaselineType();
       newPhaseGradComputed_p = false;
@@ -60,6 +60,7 @@ using namespace vi;
 	  baselineType_p = other.baselineType_p;
 	  cfPhaseGrad_p.assign(other.cfPhaseGrad_p);
 	  vb2CFBMap_p.assign(other.vb2CFBMap_p);
+	  vectorPhaseGradCalculator_p.resize(0);
 	  doPointing_p = other.doPointing_p;
 	}
       return *this;
@@ -97,7 +98,7 @@ using namespace vi;
 				    const Vector<Int>& /*dataChan2ImChanMap*/,
 				    const Vector<Int>& /*dataPol2ImPolMap*/,
 				    const CountedPtr<PointingOffsets>& po_p)
-				    //const Bool& /*doPointing*/)
+    //const Bool& /*doPointing*/)
     {
       //    VBRow2CFMapType& vbRow2CFMap_p,
       const Int nRow=vb.nRows(); 
@@ -149,30 +150,30 @@ using namespace vi;
 	    {
 	      // Set the phase grad for the CF per VB row
 	      // setPhaseGradPerRow(po_p, cfb_l, vb, irow);
-		  timer_p.mark();
-		  // if (vbRows_p == 0)
-		  //   {
-		  //     vbRows_p = vb.nRows();
-		  //     baselineType_p->cachedGroups_p = false;
-		  //   }
-		  // else if (vbRows_p != vb.nRows())
-		  //   {
-		  //     vbRows_p = vb.nRows();
-		  //     baselineType_p->cachedGroups_p = false;
-		  //   }
-		  // else
-		  //   baselineType_p->cachedGroups_p = true;		  
-		  baselineType_p->setCacheGroups(vbRows_p, vb);
-		  baselineType_p->setDoPointing(doPointing_p);
-		  // if(computeAntennaGroups_p)
-		  // baselineType_p->findAntennaGroups(vb,po_p,sigmaDev);
-		  cfPhaseGrad_p(irow).reference(baselineType_p->setBLPhaseGrad(po_p, cfb_l, vb, irow, sigmaDev));
-		  totalCost_p += timer_p.real();
-		  totalVB_p++;
+	      timer_p.mark();
+	      // if (vbRows_p == 0)
+	      //   {
+	      //     vbRows_p = vb.nRows();
+	      //     baselineType_p->cachedGroups_p = false;
+	      //   }
+	      // else if (vbRows_p != vb.nRows())
+	      //   {
+	      //     vbRows_p = vb.nRows();
+	      //     baselineType_p->cachedGroups_p = false;
+	      //   }
+	      // else
+	      //   baselineType_p->cachedGroups_p = true;		  
+	      baselineType_p->setCacheGroups(vbRows_p, vb);
+	      baselineType_p->setDoPointing(doPointing_p);
+	      // if(computeAntennaGroups_p)
+	      // baselineType_p->findAntennaGroups(vb,po_p,sigmaDev);
+	      cfPhaseGrad_p(irow).reference(setBLPhaseGrad(po_p, cfb_l, vb, irow, sigmaDev));
+	      totalCost_p += timer_p.real();
+	      totalVB_p++;
 	      // Set the CFB per VB row
-		  cfb_l->setPointingOffset(po_p->pullPointingOffsets());
-		  vb2CFBMap_p(irow) = cfb_l;
-		  vbRows_p = vb.nRows();
+	      cfb_l->setPointingOffset(po_p->pullPointingOffsets());
+	      vb2CFBMap_p(irow) = cfb_l;
+	      vbRows_p = vb.nRows();
 	    }
 	}
       // {
@@ -183,5 +184,81 @@ using namespace vi;
       // }
       return statusCode;
     }
-}
+
+    Matrix<Complex> VB2CFBMap::setBLPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p ,
+						 const CountedPtr<CFBuffer>& cfb,
+						 const vi::VisBuffer2& vb,
+						 const int& row,
+						 const double& sigmaDev)
+    {
+      int myrow=row;
+      if(doPointing_p)
+	{
+	  Float A2R = 4.848137E-06;
+	  Vector<Double> poIncrement = pointingOffsets_p->getIncrement();
+	  Vector<Double> sumResPO_l;
+	  if( baselineType_p->cachedGroups_p)
+	    {
+	      unsigned int cachedPOSize_l =  baselineType_p->cachedPointingOffsets_p.size();
+	      unsigned int poSize_l = (pointingOffsets_p->pullPointingOffsets()).size();
+	      sumResPO_l.resize(2);
+	      sumResPO_l[0]=0;
+	      sumResPO_l[1]=0;
+	      // cerr << "sumResPO_l "<< sumResPO_l << " poSize_l " << poSize_l << " cachedPOSize_l"<< cachedPOSize_l <<endl;
+	      if(poSize_l == cachedPOSize_l)
+		{
+		  Vector < Vector <Double> > residualPointingOffsets_l =  baselineType_p->cachedPointingOffsets_p - pointingOffsets_p->pullPointingOffsets(); 
+		  for(unsigned int ii=0; ii < poSize_l; ii++) 
+		    sumResPO_l = sumResPO_l + residualPointingOffsets_l[ii];
+		}
+	      else
+		{
+		   baselineType_p->cachedGroups_p = false;
+		}
+	      // cerr << "Sum of the Residual Pointing Offsets "<< sumResPO_l << endl; 
+	    }
+
+	   baselineType_p->cachedPointingOffsets_p.assign(pointingOffsets_p->pullPointingOffsets());
+
+	  // Double offsetDeviation = sigmaDev * A2R / (acos(sin(poIncrement[0])*sin(poIncrement[1])) + cos(poIncrement[0])*cos(poIncrement[1])*cos(poIncrement[0] - poIncrement[1]));
+	  Double offsetDeviation = sigmaDev * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
+	  baselineType_p->findAntennaGroups(vb,pointingOffsets_p,sigmaDev);
+
+	  vbRow2BLMap_p = baselineType_p->makeVBRow2BLGMap(vb);
+      
+	  if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
+	    {
+	      //  cerr<<"vbRow2BLMap_p [row] doP=T "<< vbRow2BLMap_p[row] << " " <<row <<endl;
+	      vectorPhaseGradCalculator_p.resize(vbRow2BLMap_p[row]+1,true);
+	      for (unsigned int i=0;i<vectorPhaseGradCalculator_p.nelements(); i++)
+		if (vectorPhaseGradCalculator_p[i].null())
+		  vectorPhaseGradCalculator_p[i]=new PhaseGrad();
+	    }
+	  if( baselineType_p->cachedGroups_p)
+	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);
+	  else
+	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row);
+	}
+      else
+	{
+	  myrow=0;
+	  vbRow2BLMap_p.resize(1);
+	  vbRow2BLMap_p[0]=0;
+	  if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[myrow])
+	    {
+	      //	    cerr<<"vbRow2BLMap_p [row] doP=F "<< vbRow2BLMap_p[myrow] << " " <<myrow <<endl;
+	      vectorPhaseGradCalculator_p.resize(1);
+	      if (vectorPhaseGradCalculator_p[myrow].null())
+		vectorPhaseGradCalculator_p[myrow]=new PhaseGrad();
+	    }
+	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
+	}
+	
+      
+      return  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->field_phaseGrad_p;
+    
+    };
+
+
+  }
 }

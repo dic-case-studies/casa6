@@ -67,7 +67,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 						     const double& sigmaDev);
 
      void cacheAntGroups(const casacore::Matrix<vector<int> > antennaGroups_p);
-     void makeVBRow2BLGMap(const vi::VisBuffer2& vb);
+     vector<int> makeVBRow2BLGMap(const vi::VisBuffer2& vb);
      void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
      void setCacheGroups(const int& vbRows, const vi::VisBuffer2& vb);
 
