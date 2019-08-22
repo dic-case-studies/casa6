@@ -1466,7 +1466,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         rem=imagestore->getShape()[3] % chanchunks;
       }
       
-      Bool extra1chan=False;
+      
       if( rem>0 )
 	{
 	  // os << LogIO::WARN << "chanchunks ["+String::toString(chanchunks)+"] is not a divisor of nchan ["+String::toString(imagestore->getShape()[3])+"].";
