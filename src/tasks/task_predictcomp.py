@@ -89,7 +89,7 @@ def predictcomp(objname=None, standard=None, epoch=None,
         minfreqHz = _qa.convert(minfreqq, 'Hz')['value']
         try:
             maxfreqq = _qa.quantity(maxfreq)
-        except Exception(instance):
+        except Exception as instance:
             maxfreqq = minfreqq
         frequnit = maxfreqq['unit']
         maxfreqHz = _qa.convert(maxfreqq, 'Hz')['value']
