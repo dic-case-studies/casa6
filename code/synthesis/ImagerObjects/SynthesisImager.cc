@@ -1458,7 +1458,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Int extrachunks=0;
       Int chunksize=imagestore->getShape()[3]/chanchunks;
       Int rem=imagestore->getShape()[3] % chanchunks;
-
+      ///Avoid an extra chunk with 1 channel as it cause bumps in linear interpolation
+      ///See CAS-12625
+      while(rem==1){
+          chanchunks +=1;
+        chunksize=imagestore->getShape()[3]/chanchunks;
+        rem=imagestore->getShape()[3] % chanchunks;
+      }
+      
+      Bool extra1chan=False;
       if( rem>0 )
 	{
 	  // os << LogIO::WARN << "chanchunks ["+String::toString(chanchunks)+"] is not a divisor of nchan ["+String::toString(imagestore->getShape()[3])+"].";
@@ -1471,6 +1479,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	      if( rem % chunksize > 0 ) extrachunks += 1;
 	    }
 	}
+      
       
       os << "Creating " << chanchunks +extrachunks << " reference subCubes (channel chunks) for gridding " << LogIO::POST;
 
@@ -2711,7 +2720,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     std::ostringstream ss;
     ss.precision(std::numeric_limits<double>::digits10+2);
     ss << df;
-    return ss.str();
+    //return ss.str();
+    return to_string(df);
   }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
