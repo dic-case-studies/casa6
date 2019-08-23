@@ -87,6 +87,13 @@ class predictcomp_test(unittest.TestCase):
             self.res=predictcomp(objname='Titan', epoch='2017/09/01/00:00', minfreq='100',maxfreq='120')
             self.assertIsNone(self.res)
    
+    def test_badmaxfreq(self):
+        '''predictcomp: invalid maxfreq '''
+        # ignore the maxfreq just calculate for minfreq
+        self.res=predictcomp(objname='Titan', epoch='2017/09/01/00:00', minfreq='100GHz', maxfreq='120BadUnit', standard='Butler-JPL-Horizons 2012') 
+        self.assertTrue(type(self.res)==dict)
+        self.assertTrue(os.path.exists(self.res['clist']))
+
     @unittest.skipIf(is_CASA6,"no plotting in casatasks")
     def test_predicted_visplot(self):
         '''predictcomp: generate visibility plot for a given array configuration''' 
