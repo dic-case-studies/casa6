@@ -1460,11 +1460,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Int rem=imagestore->getShape()[3] % chanchunks;
       ///Avoid an extra chunk with 1 channel as it cause bumps in linear interpolation
       ///See CAS-12625
-      while(rem==1){
+      while((rem==1) && (chunksize >1)){
           chanchunks +=1;
-        chunksize=imagestore->getShape()[3]/chanchunks;
-        rem=imagestore->getShape()[3] % chanchunks;
-      }
+          chunksize=imagestore->getShape()[3]/chanchunks;
+          rem=imagestore->getShape()[3] % chanchunks;
+        }
+      
       
       
       if( rem>0 )
