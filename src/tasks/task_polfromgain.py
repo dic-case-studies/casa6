@@ -45,15 +45,16 @@ def polfromgain(vis,tablein,caltable,paoffset):
 
                 casalog.post("New caltable, "+caltable+", corrected for linear polarization, will be generated.")
                 mytb.open(tablein)
-                mytb.copy(newtablename=caltable,deep=True)
+                myout=mytb.copy(newtablename=caltable,deep=True)
                 mytb.close()
+                myout.close()
                 rempol=True
             else:
                 casalog.post("No new caltable will be generated")
                 caltable=tablein
         else:
             raise Exception('input calibration table not found - please verify the name')
-
+            
 
         if paoffset!=0.0:
             casalog.post("NB: default band position angle will be offset by "+str(paoffset)+"deg.")
@@ -96,7 +97,8 @@ def polfromgain(vis,tablein,caltable,paoffset):
                 antok=pylab.zeros(nant,dtype=bool)
 
                 for iant in range(nant):
-                    st=mytb.query('FIELD_ID=='+str(ifld)+' && SPECTRAL_WINDOW_ID=='+str(ispw)+' && ANTENNA1=='+str(iant))
+                    qstring='FIELD_ID=='+str(ifld)+' && SPECTRAL_WINDOW_ID=='+str(ispw)+' && ANTENNA1=='+str(iant)
+                    st=mytb.query(query=qstring)
                     nrows=st.nrows()
                     if nrows > 0:
 
@@ -108,6 +110,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                         # Escape if insufficient data
                         if (nrows-pylab.sum(flags))<3:
                             antok[iant]=False
+                            st.close()
                             continue
 
 
@@ -167,7 +170,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                             else:
                                 st.close()
                                 raise Exception('Spurious fractional polarization!')
-                
+
                     st.close()
 
                 nantok=pylab.sum(antok)
