@@ -39,6 +39,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                 mytb.close()
                 myout.close()
                 rempol=True
+
             else:
                 casalog.post("No new caltable will be generated")
                 caltable=tablein
