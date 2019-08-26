@@ -72,17 +72,19 @@ public:
     return name_;
   }
 
-  virtual casacore::String getDataUnit() const {
-    return "";
-  }
+  // getDataUnit should return a string representing the unit
+  // of the data. If physical unit is not yet set (e.g. before
+  // calibration), please return empty sting.
+  virtual casacore::String getDataUnit() const = 0;
 
-  virtual casacore::Bool isFloatData() const {
-    return false;
-  }
+  // isFloatData should return
+  // *True* if resulting MS should have FLOAT_DATA column, while
+  // *False* if the MS require DATA column instead
+  virtual casacore::Bool isFloatData() const = 0;
 
-  virtual casacore::MDirection::Types getDirectionFrame() const {
-    return casacore::MDirection::DEFAULT;
-  }
+  // getDirectionFrame should return appropriate direction
+  // frame information as a form of MDirection::Types enum
+  virtual casacore::MDirection::Types getDirectionFrame() const = 0;
 
   void initialize() {
     initializeCommon();

@@ -458,9 +458,19 @@ public:
     return storage_.nrow();
   }
 
+  // data unit
+  virtual casacore::String getDataUnit() const override {
+    return "";
+  }
+
   // query for data type
   casacore::Bool isFloatData() const override {
     return true;
+  }
+
+  // direction frame
+  virtual casacore::MDirection::Types getDirectionFrame() const override {
+    return casacore::MDirection::J2000;
   }
 
   // to get OBSERVATION table
