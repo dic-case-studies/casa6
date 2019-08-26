@@ -28,6 +28,9 @@ try:
     from casatasks import polfromgain
     CASA6 = True
     tb = casatools.table()
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 except ImportError:
     from __main__ import default
     from tasks import *
