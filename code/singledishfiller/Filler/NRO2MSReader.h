@@ -19,6 +19,7 @@
 #include <singledishfiller/Filler/NROData.h>
 #include <string>
 #include <memory>
+#include <functional>
 
 using namespace std;
 
@@ -52,7 +53,7 @@ public:
   // to get OBSERVATION table
   casacore::Bool getObservationRow(sdfiller::ObservationRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (this->*get_observation_row_)(record);
+    casacore::Bool return_value = get_observation_row_(record);
     POST_END;
     return return_value;
   }
@@ -60,7 +61,7 @@ public:
   // to get ANTENNA table
   casacore::Bool getAntennaRow(sdfiller::AntennaRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (this->*get_antenna_row_)(record);
+    casacore::Bool return_value = get_antenna_row_(record);
     POST_END;
     return return_value;
   }
@@ -68,7 +69,7 @@ public:
   // to get PROCESSOR table
   casacore::Bool getProcessorRow(sdfiller::ProcessorRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (this->*get_processor_row_)(record);
+    casacore::Bool return_value = get_processor_row_(record);
     POST_END;
     return return_value;
   }
@@ -76,7 +77,7 @@ public:
   // to get SOURCE table
   casacore::Bool getSourceRow(sdfiller::SourceRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (this->*get_source_row_)(record);
+    casacore::Bool return_value = get_source_row_(record);
     POST_END;
     return return_value;
   }
@@ -84,7 +85,7 @@ public:
   // to get FIELD table
   casacore::Bool getFieldRow(sdfiller::FieldRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (this->*get_field_row_)(record);
+    casacore::Bool return_value = get_field_row_(record);
     POST_END;
     return return_value;
   }
@@ -92,7 +93,7 @@ public:
   // to get SOURCE table
   casacore::Bool getSpectralWindowRow(sdfiller::SpectralWindowRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (this->*get_spw_row_)(record);
+    casacore::Bool return_value = get_spw_row_(record);
     POST_END;
     return return_value;
   }
@@ -237,12 +238,12 @@ private:
   std::vector<double> getSpectrum(int const irow, sdfiller::NRODataScanData const &data);
 //  casacore::Int getPolNo(string const &rx);
 
-  casacore::Bool (NRO2MSReader::*get_antenna_row_)(sdfiller::AntennaRecord &);
-  casacore::Bool (NRO2MSReader::*get_field_row_)(sdfiller::FieldRecord &);
-  casacore::Bool (NRO2MSReader::*get_observation_row_)(sdfiller::ObservationRecord &);
-  casacore::Bool (NRO2MSReader::*get_processor_row_)(sdfiller::ProcessorRecord &);
-  casacore::Bool (NRO2MSReader::*get_source_row_)(sdfiller::SourceRecord &);
-  casacore::Bool (NRO2MSReader::*get_spw_row_)(sdfiller::SpectralWindowRecord &);
+  std::function<casacore::Bool(sdfiller::AntennaRecord &)> get_antenna_row_;
+  std::function<casacore::Bool(sdfiller::FieldRecord &)> get_field_row_;
+  std::function<casacore::Bool(sdfiller::ObservationRecord &)> get_observation_row_;
+  std::function<casacore::Bool(sdfiller::ProcessorRecord &)> get_processor_row_;
+  std::function<casacore::Bool(sdfiller::SourceRecord &)> get_source_row_;
+  std::function<casacore::Bool(sdfiller::SpectralWindowRecord &)> get_spw_row_;
 
   casacore::Bool getAntennaRowImpl(sdfiller::AntennaRecord &record);
   casacore::Bool getFieldRowImpl(sdfiller::FieldRecord &record);

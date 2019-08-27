@@ -13,6 +13,7 @@
 #include <memory>
 #include <algorithm>
 #include <numeric>
+#include <functional>
 
 #include <casacore/casa/BasicSL/String.h>
 #include <casacore/casa/Arrays/Vector.h>
@@ -273,7 +274,7 @@ public:
     }
 
     casacore::uInt getNumPol() const {
-        return (this->*get_num_pol_)();
+        return get_num_pol_();
     }
 
     void initialize(size_t num_chan) {
@@ -383,7 +384,7 @@ public:
     }
 
     bool get(MSDataRecord &record) {
-        bool return_value = (this->*get_chunk_)(record);
+        bool return_value = get_chunk_(record);
         return return_value;
     }
 
@@ -419,32 +420,32 @@ private:
 
         poltype_ = poltype;
         if (poltype_ == "linear") {
-            get_chunk_ = &DataChunk::getLinear;
-            get_num_pol_ = &DataChunk::getNumPolLinear;
+            get_chunk_ = [&](MSDataRecord &r) {return DataChunk::getLinear(r);};
+            get_num_pol_ = [&]() {return DataChunk::getNumPolLinear();};
             valid_pcorr_.resize(4);
             valid_pcorr_[0] = casacore::Stokes::XX;
             valid_pcorr_[1] = casacore::Stokes::XY;
             valid_pcorr_[2] = casacore::Stokes::YX;
             valid_pcorr_[3] = casacore::Stokes::YY;
         } else if (poltype_ == "circular") {
-            get_chunk_ = &DataChunk::getCircular;
-            get_num_pol_ = &DataChunk::getNumPolCircular;
+            get_chunk_ = [&](MSDataRecord &r) {return DataChunk::getCircular(r);};
+            get_num_pol_ = [&]() {return DataChunk::getNumPolCircular();};
             valid_pcorr_.resize(4);
             valid_pcorr_[0] = casacore::Stokes::RR;
             valid_pcorr_[1] = casacore::Stokes::RL;
             valid_pcorr_[2] = casacore::Stokes::LR;
             valid_pcorr_[3] = casacore::Stokes::LL;
         } else if (poltype_ == "stokes") {
-            get_chunk_ = &DataChunk::getStokes;
-            get_num_pol_ = &DataChunk::getNumPolStokes;
+            get_chunk_ = [&](MSDataRecord &r) {return DataChunk::getStokes(r);};
+            get_num_pol_ = [&]() {return DataChunk::getNumPolStokes();};
             valid_pcorr_.resize(4);
             valid_pcorr_[0] = casacore::Stokes::I;
             valid_pcorr_[1] = casacore::Stokes::Q;
             valid_pcorr_[2] = casacore::Stokes::U;
             valid_pcorr_[3] = casacore::Stokes::V;
         } else if (poltype_ == "linpol") {
-            get_chunk_ = &DataChunk::getLinpol;
-            get_num_pol_ = &DataChunk::getNumPolLinpol;
+            get_chunk_ = [&](MSDataRecord &r) {return DataChunk::getLinpol(r);};
+            get_num_pol_ = [&]() {return DataChunk::getNumPolLinpol();};
             valid_pcorr_.resize(2);
             valid_pcorr_[0] = casacore::Stokes::Plinear;
             valid_pcorr_[1] = casacore::Stokes::Pangle;
@@ -468,8 +469,8 @@ private:
     casacore::String poltype_;
     casacore::Vector<casacore::Int> valid_pcorr_;
     std::vector<casacore::Stokes::StokesTypes> pcorr_type_;
-    bool (DataChunk::*get_chunk_)(MSDataRecord &record);
-    casacore::uInt (DataChunk::*get_num_pol_)() const;
+    std::function<bool(MSDataRecord &)> get_chunk_;
+    std::function<casacore::uInt()> get_num_pol_;
 
     // Tsys and Tcal assignment for 2 & 4 pols. Auto-correlation components of pol should be used.
     void setTsys2(MSDataRecord &record, std::vector<size_t> order = { }) {
