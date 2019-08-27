@@ -52,7 +52,7 @@ public:
   // to get OBSERVATION table
   casacore::Bool getObservationRow(sdfiller::ObservationRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_observation_row_)(record);
+    casacore::Bool return_value = (this->*get_observation_row_)(record);
     POST_END;
     return return_value;
   }
@@ -60,7 +60,7 @@ public:
   // to get ANTENNA table
   casacore::Bool getAntennaRow(sdfiller::AntennaRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_antenna_row_)(record);
+    casacore::Bool return_value = (this->*get_antenna_row_)(record);
     POST_END;
     return return_value;
   }
@@ -68,7 +68,7 @@ public:
   // to get PROCESSOR table
   casacore::Bool getProcessorRow(sdfiller::ProcessorRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_processor_row_)(record);
+    casacore::Bool return_value = (this->*get_processor_row_)(record);
     POST_END;
     return return_value;
   }
@@ -76,7 +76,7 @@ public:
   // to get SOURCE table
   casacore::Bool getSourceRow(sdfiller::SourceRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_source_row_)(record);
+    casacore::Bool return_value = (this->*get_source_row_)(record);
     POST_END;
     return return_value;
   }
@@ -84,7 +84,7 @@ public:
   // to get FIELD table
   casacore::Bool getFieldRow(sdfiller::FieldRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_field_row_)(record);
+    casacore::Bool return_value = (this->*get_field_row_)(record);
     POST_END;
     return return_value;
   }
@@ -92,7 +92,7 @@ public:
   // to get SOURCE table
   casacore::Bool getSpectralWindowRow(sdfiller::SpectralWindowRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_spw_row_)(record);
+    casacore::Bool return_value = (this->*get_spw_row_)(record);
     POST_END;
     return return_value;
   }

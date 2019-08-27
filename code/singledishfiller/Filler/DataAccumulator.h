@@ -67,7 +67,7 @@ inline void setValueToMatrixColumn(casacore::Vector<T> const &src,
 
 template<class T, class Executor>
 inline void shuffleTransposeMatrix(ssize_t n, size_t offset_src,
-        casacore::Matrix<T> const &src, casacore::Matrix<T> &dst, 
+        casacore::Matrix<T> const &src, casacore::Matrix<T> &dst,
         std::vector<size_t> src_order = { }) {
     if (offset_src > src.ncolumn() - 1)
         throw casacore::AipsError("offset too large");
@@ -273,7 +273,7 @@ public:
     }
 
     casacore::uInt getNumPol() const {
-        return (*this.*get_num_pol_)();
+        return (this->*get_num_pol_)();
     }
 
     void initialize(size_t num_chan) {
@@ -383,7 +383,7 @@ public:
     }
 
     bool get(MSDataRecord &record) {
-        bool return_value = (*this.*get_chunk_)(record);
+        bool return_value = (this->*get_chunk_)(record);
         return return_value;
     }
 
