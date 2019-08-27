@@ -284,8 +284,9 @@ foreach $k ( keys %xml_files ) {                                 ### always usin
 }
 
 @headers = ( 'casa-source/gcwrap/tools/casaswig_types.h',
-             'casa-source/gcwrap/tools/casa_typemaps.i',
-             'casa-source/gcwrap/tools/swigconvert_python.h' );
+             'casa-source/gcwrap/tools/swigconvert_python.h',
+             'src/swig/casa_typemaps.i',
+             'src/swig/swigconvert_python3.h' );
 #@source = ( 'casa-source/gcwrap/tools/StdCasa/conversions.cc',
 #            'casa-source/gcwrap/tools/StdCasa/conversions_python.cc',
 #            'casa-source/gcwrap/tools/StdCasa/interrupt.cc',
@@ -293,7 +294,8 @@ foreach $k ( keys %xml_files ) {                                 ### always usin
 #            'casa-source/gcwrap/tools/StdCasa/type_variant.cc',
 #            'casa-source/gcwrap/tools/StdCasa/value_record.cc',
 #            'casa-source/gcwrap/tools/StdCasa/value_variant.cc' );
-@source = ( 'casa-source/gcwrap/tools/StdCasa/conversions_python.cc' );
+@source = ( 'casa-source/gcwrap/tools/StdCasa/conversions_python.cc',
+            'src/swig/swigconvert_python3.cc' );
 
 unless ( -d "$hdr_dir" ) { make_path("$hdr_dir") }
 foreach ( @headers ) {
