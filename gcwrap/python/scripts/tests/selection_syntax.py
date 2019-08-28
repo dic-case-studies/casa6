@@ -1,9 +1,15 @@
+from __future__ import absolute_import
 import unittest
 import inspect
 import re
 import abc
 
-from taskinit import casalog
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
+else:
+    from taskinit import casalog
 
 def skipUnlessHasParam(param):
     def wrapper(func):
@@ -11,10 +17,16 @@ def skipUnlessHasParam(param):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
             task = args[0].task
-            task_args = inspect.getargs(task.func_code).args
+            if is_python3:
+                task_args = inspect.getargs(task.__call__.__code__).args
+            else:
+                task_args = inspect.getargs(task.__code__).args
             if isinstance(param, str):
                 condition = param in task_args
-                reason = '%s doesn\'t have parameter \'%s\''%(task.__name__, param)
+                if is_python3:
+                    reason = '%s doesn\'t have parameter \'%s\''%(str(task), param)
+                else:
+                    reason = '%s doesn\'t have parameter \'%s\''%(task.__name__, param)
             else:
                 # should be a list
                 condition = all([p in task_args for p in param])

@@ -1,9 +1,20 @@
+from __future__ import absolute_import
 import os
 import re
-from taskinit import *
-from ialib import write_image_history
+import sys
 
-from odict import odict
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image, regionmanager
+    from casatasks import casalog
+    from .ialib import write_image_history
+else:
+    from taskinit import *
+    from ialib import write_image_history
+
+    image = iatool
+    regionmanager = rgtool
 
 def imcontsub(
     imagename, linefile, contfile, fitorder,
@@ -35,7 +46,7 @@ def imcontsub(
     if ( filesExist ):
         return False
     
-    _myia = iatool()
+    _myia = image()
     _myia.dohistory(False)
     _myia.open(imagename)
     mycsys = _myia.coordsys()
@@ -44,7 +55,7 @@ def imcontsub(
 
     # Don't mix chans up with reg!  reg selects a subset for output, and chans
     # selects a subset to define the line-free channels.
-    myrg = rgtool()
+    myrg = regionmanager()
     reg = myrg.frombcs(
         csys=mycsys.torecord(), shape=_myia.shape(),
         box=box, stokes=stokes, stokescontrol="f",
@@ -64,18 +75,22 @@ def imcontsub(
         if not lineim:
             raise Exception("ia.continuumsub did not complete successfully")
         try:
-            param_names = imcontsub.func_code.co_varnames[:imcontsub.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            param_names = imcontsub.__code__.co_varnames[:imcontsub.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             for x in [lineim, contfile]:
                 write_image_history(
                     x, sys._getframe().f_code.co_name,
                     param_names, param_vals, casalog
                 )
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         lineim.done()
         return True
-    except Exception, err:
+    except Exception as err:
         casalog.post( 'Error: Unable to perform continuum subtraction'+str(err), 'SEVERE' )
         raise
     finally:

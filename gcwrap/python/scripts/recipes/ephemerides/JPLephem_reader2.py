@@ -13,16 +13,31 @@ There are various utilities like convert_radec, datestr*, get_num_from_str,
 mean_radius*, and construct_tablepath defined in here as well.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 from glob import glob
 import os
 import re
+import sys
 import scipy.special
 import time                  # We can always use more time.
+import numpy
 
-from taskinit import gentools, qa, casalog
-me = gentools(['me'])[0]
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import quanta, measures
+    from casatools import table as tbtool
+    from casatasks import casalog
 
-from dict_to_table import dict_to_table
+    _qa = quanta( )
+    _me = measures( )
+else:
+    from taskinit import gentools, tbtool, qa, casalog
+
+    _me = gentools(['me'])[0]
+    # not really a local tool
+    _qa = qa
 
 # Possible columns, as announced by their column titles.
 # The data is scooped up by 'pat'.  Either use ONE group named by the column
@@ -163,7 +178,7 @@ def readJPLephem(fmfile,version=''):
     # Try opening fmfile now, because otherwise there's no point continuing.
     try:
         ephem = open(fmfile, 'rb')
-        print "opened the file=",fmfile
+        print("opened the file=%s" % fmfile)
         lines=ephem.readlines()
         # skip this, handle by rstrip later
         #crCount=0
@@ -242,7 +257,11 @@ def readJPLephem(fmfile,version=''):
     # define interpretation of invalid values ('n.a.')
     invalid=-999.
     for origline in ephem:
-        line = origline.rstrip('\r\n')
+        if is_python3:
+            #line = origline.decode("utf-8").rstrip('\r\n')
+            line = origline.decode(sys.getdefaultencoding( ),"strict").rstrip('\r\n')
+        else:
+            line = origline.rstrip('\r\n')
         if in_data:
             if re.match(stoppat, line):
                 break
@@ -259,10 +278,10 @@ def readJPLephem(fmfile,version=''):
                     if not cols[col].get('unwanted'):
                         retdict['data'][col]['data'].append(gdict[col])
                 if len(gdict) < num_cols:
-                    print "Partially mismatching line:"
-                    print line
-                    print "Found:"
-                    print gdict
+                    print("Partially mismatching line:")
+                    print(line)
+                    print("Found:")
+                    print(gdict)
                     print_datapat = True
                     raw_input("pause0")
             else:
@@ -287,7 +306,7 @@ def readJPLephem(fmfile,version=''):
             # Chomp trailing whitespace.
             myline = re.sub(r'\s*$', '', line)
             titleline = myline
-            remaining_cols = cols.keys()
+            remaining_cols = list(cols.keys())
             found_col = True
             # This loop will terminate one way or another.
             while myline and remaining_cols and found_col:
@@ -322,8 +341,8 @@ def readJPLephem(fmfile,version=''):
             #print "looking for", 
             for hk in headers:
                  #print "hk=",hk
-                  
-                 if not retdict.has_key(hk):
+
+                 if not hk in retdict:
                     matchobj = re.search(headers[hk]['pat'], line)
                     if matchobj:
                         if hk=='radii':
@@ -343,37 +362,37 @@ def readJPLephem(fmfile,version=''):
 
     # If there were errors, provide debugging info.
     if comp_mismatches:
-        print "Completely mismatching lines:"
+        print("Completely mismatching lines:")
         #print "\n".join(comp_mismatches)
     if print_datapat:
-        print "The apparent title line is:"
-        print titleline
-        print "datapat = r'%s'" % sdatapat
+        print("The apparent title line is:")
+        print(titleline)
+        print("datapat = r'%s'" % sdatapat)
 
     # Convert numerical strings into actual numbers.
     try:
         retdict['earliest'] = datestr_to_epoch(retdict['data']['MJD']['data'][0])
         retdict['latest'] = datestr_to_epoch(retdict['data']['MJD']['data'][-1])
-    except Exception, e:
-        print "Error!"
-        if retdict.has_key('data'):
-            if retdict['data'].has_key('MJD'):
-                if retdict['data']['MJD'].has_key('data'):
+    except Exception:
+        print("Error!")
+        if 'data' in retdict:
+            if 'MJD' in retdict['data']:
+                if 'data' in retdict['data']['MJD']:
                     #print "retdict['data']['MJD']['data'] =", retdict['data']['MJD']['data']
-                    print "retdict['data'] =", retdict['data']
+                    print("retdict['data'] = %s" % retdict['data'])
                 else:
-                    print "retdict['data']['MJD'] has no 'data' key."
-                    print "retdict['data']['MJD'].keys() =", retdict['data']['MJD'].keys()
+                    print("retdict['data']['MJD'] has no 'data' key.")
+                    print("retdict['data']['MJD'].keys() = %s" % retdict['data']['MJD'].keys())
             else:
-                print "retdict['data'] has no 'MJD' key."
-                print "retdict['data'].keys() =", retdict['data'].keys()
+                print("retdict['data'] has no 'MJD' key.")
+                print("retdict['data'].keys() = %s" % retdict['data'].keys())
         else:
-            print "retdict has no 'data' key."
-        raise e
+            print("retdict has no 'data' key.")
+        raise
 
     for hk in headers:
-        if retdict.has_key(hk):
-            if headers[hk].has_key('unit'):
+        if hk in retdict:
+            if 'unit' in headers[hk]:
                 if hk == 'radii':
                     radii = retdict[hk].split('x')
                     if len(radii)==1:
@@ -393,17 +412,17 @@ def readJPLephem(fmfile,version=''):
                         if type(retdict[hk]) != dict:
                             retdict[hk] = {'unit': headers[hk]['unit'],
                                            'value': float(retdict[hk])}
-                    except Exception, e:
-                        print "Error converting header", hk, "to a Quantity."
-                        print "retdict[hk] =", retdict[hk]
-                        raise e
+                    except Exception:
+                        print("Error converting header %s to a Quantity." % hk)
+                        print("retdict[hk] = %s" % retdict[hk])
+                        raise
             elif hk == 'GeoLong':
                 long_lat_alt = retdict[hk].split(',')
                 retdict['GeoLong'] = float(long_lat_alt[0])
                 retdict['GeoLat']  = float(long_lat_alt[1])
                 retdict['GeoDist'] = float(long_lat_alt[2])
             elif hk == 'dMJD':
-                retdict[hk] = qa.convert(qa.totime(retdict[hk].replace('minutes', 'min')),
+                retdict[hk] = _qa.convert(_qa.totime(retdict[hk].replace('minutes', 'min')),
                                          'd')['value']
             elif hk == 'orb_per':
                 unit = 'h'
@@ -443,21 +462,21 @@ def readJPLephem(fmfile,version=''):
                         retdict['rot_per'] = {'unit': match.group(2),
                                               'value': float(match.group(1))}
                 except:
-                    print "Error parsing the rotation period from"
-                    print rpstr
+                    print("Error parsing the rotation period from")
+                    print(rpstr)
     
-    if retdict['data'].has_key('ang_sep'):
+    if 'ang_sep' in retdict['data']:
         retdict['data']['obs_code'] = {'comment': 'Obscuration code'}
     for dk in retdict['data']:
         if dk == 'obs_code':
             continue
-        if cols[dk].has_key('unit'):
+        if 'unit' in cols[dk]:
             retdict['data'][dk]['data'] = {'unit': cols[dk]['unit'],
                       'value': scipy.array([float(s) for s in retdict['data'][dk]['data']])}
             if dk == 'RadVel':
                 # Convert from km/s to AU/d.  Blame MeasComet, not me.
                 retdict['data'][dk]['data']['unit'] = 'AU/d'
-                kmps_to_AUpd = qa.convert('1km/s', 'AU/d')['value']
+                kmps_to_AUpd = _qa.convert('1km/s', 'AU/d')['value']
                 retdict['data'][dk]['data']['value'] *= kmps_to_AUpd
 
         if re.match(r'.*(RA|DEC)$', dk):
@@ -476,7 +495,7 @@ def readJPLephem(fmfile,version=''):
             retdict['data']['obs_code']['data'] = obscodes
 
     if len(retdict.get('radii', {'value': []})['value']) == 3 \
-           and retdict['data'].has_key('NP_RA') and retdict['data'].has_key('NP_DEC'):
+           and 'NP_RA' in retdict['data'] and 'NP_DEC' in retdict['data']:
         # Do a better mean radius estimate using the actual theta.
         retdict['meanrad']['value'] = mean_radius_with_known_theta(retdict)
 
@@ -486,7 +505,7 @@ def readJPLephem(fmfile,version=''):
         version='0003.0001'
     #retdict['VS_VERSION'] = '0003.0001'
     retdict['VS_VERSION'] = version 
-    if retdict.has_key('VS_CREATE'):
+    if 'VS_CREATE' in retdict:
         dt = time.strptime(retdict['VS_CREATE'], "%b %d %H:%M:%S %Y")
     else:
         casalog.post("The ephemeris creation date was not found.  Using the current time.",
@@ -497,11 +516,11 @@ def readJPLephem(fmfile,version=''):
     # VS_DATE is required by MeasComet, but it doesn't seem to be actually used.
     retdict['VS_DATE'] = time.strftime('%Y/%m/%d/%H:%M', time.gmtime())
 
-    if retdict['data'].has_key('MJD'):
+    if 'MJD' in retdict['data']:
         #casalog.post("retdict.keys=%s" % retdict.keys())
         retdict['MJD0'] = retdict['data']['MJD']['value'][0] - retdict['dMJD']
     else:
-        print "The table will not be usable with me.framecomet because it lacks MJD."
+        print("The table will not be usable with me.framecomet because it lacks MJD.")
 
     # adding posrefsys keyword
     if cols['RA']['comment'].count('J2000'):
@@ -525,24 +544,24 @@ def convert_radec(radec_col):
     if len(angstrlist[0].split()) > 1:
         # Prep angstrlist for qa.toangle()
         if radec_col['comment'][:len("declination")].lower() == 'declination':
-            for i in xrange(nrows):
+            for i in range(nrows):
                 dms = angstrlist[i].replace(' ', 'd', 1)
                 angstrlist[i] = dms.replace(' ', 'm') + 's'
         else:                                                  # R.A.
-            for i in xrange(nrows):
-                angstrlist[i] = angstrlist[i].replace(' ', ':')        
+            for i in range(nrows):
+                angstrlist[i] = angstrlist[i].replace(' ', ':')
 
         # Do first conversion to get unit.
         try:
-            firstang = qa.toangle(angstrlist[0])
-        except Exception, e:
-            print "Error: Could not convert", angstrlist[0], "to an angle."
-            raise e
+            firstang = _qa.toangle(angstrlist[0])
+        except Exception:
+            print("Error: Could not convert %s to an angle." % angstrlist[0])
+            raise
         angq['unit'] = firstang['unit']
         angq['value'] = [firstang['value']]
 
         for angstr in angstrlist[1:]:
-            angq['value'].append(qa.toangle(angstr)['value'])
+            angq['value'].append(_qa.toangle(angstr)['value'])
     else:
         angq['unit'] = 'deg'                    # This is an assumption!
         angq['value'] = [float(a) for a in angstrlist]
@@ -573,7 +592,7 @@ def get_num_from_str(fstr, wanted="float"):
     if match:
         value = float(match.group(1))
     else:
-        print "Could not convert \"%s\" to a %s." % (fstr, wanted)
+        print("Could not convert \"%s\" to a %s." % (fstr, wanted))
         value = False
     return value
 
@@ -605,7 +624,7 @@ def mean_radius(a, b, c):
         Rterm = 1.0               # 0th order
         onemR = 1.0 - R
         onemRtothei = 1.0
-        for i in xrange(1, 5):    # Start series at 1st order.
+        for i in range(1, 5):    # Start series at 1st order.
             onemRtothei *= onemR
             Rterm -= onemRtothei / (0.5 + 2.0 * i**2)
     avalfabeta = 0.5 * a * b * (1.0 + Rterm)
@@ -629,12 +648,12 @@ def mean_radius_with_known_theta(retdict):
         values[c] = retdict['data'][c]['data']['value']
     av = 0.0
     nrows = len(retdict['data']['RA']['data']['value'])
-    for i in xrange(nrows):
-        radec = me.direction('app', {'unit': units['RA'], 'value': values['RA'][i]},
+    for i in range(nrows):
+        radec = _me.direction('app', {'unit': units['RA'], 'value': values['RA'][i]},
                              {'unit': units['DEC'], 'value': values['DEC'][i]})
-        np = me.direction('j2000', {'unit': units['NP_RA'], 'value': values['NP_RA'][i]},
+        np = _me.direction('j2000', {'unit': units['NP_RA'], 'value': values['NP_RA'][i]},
                           {'unit': units['NP_DEC'], 'value': values['NP_DEC'][i]})
-        szeta2 = scipy.sin(qa.convert(me.separation(radec, np), 'rad')['value'])**2
+        szeta2 = scipy.sin(_qa.convert(_me.separation(radec, np), 'rad')['value'])**2
         csinz2 = c2 * szeta2
         bcosz2 = b2 * (1.0 - szeta2)
         bcz2pcsz2 = bcosz2 + csinz2
@@ -646,7 +665,7 @@ def datestr_to_epoch(datestr):
     """
     Given a UT date like "2010-May-01 00:00", returns an epoch measure.
     """
-    return me.epoch(rf='UTC', v0=qa.totime(datestr))
+    return _me.epoch(rf='UTC', v0=_qa.totime(datestr))
 
 def datestrs_to_MJDs(cdsdict):
     """
@@ -659,12 +678,12 @@ def datestrs_to_MJDs(cdsdict):
     
     timeq = {}
     # Do first conversion to get unit.
-    firsttime = qa.totime(datestrlist[0])
+    firsttime = _qa.totime(datestrlist[0])
     timeq['unit'] = firsttime['unit']
     timeq['value'] = [firsttime['value']]
     
     for datestr in datestrlist[1:]:
-        timeq['value'].append(qa.totime(datestr)['value'])
+        timeq['value'].append(_qa.totime(datestr)['value'])
 
     return {'unit': timeq['unit'],
             'value': scipy.array(timeq['value'])}
@@ -684,6 +703,236 @@ def construct_tablepath(fmdict, prefix=''):
                                             fmdict['latest']['m0']['unit'],
                                             fmdict['latest']['refer'])
 
+def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolorder=False):
+    """
+    Converts a dictionary to a CASA table, and attempts to
+    save it to tablepath.  Returns whether or not it was successful.
+
+    kwkeys is a list of keys in dict that should be treated as table keywords,
+    and colkeys is a list of keys to be treated as table columns.  If a key in
+    indict is not in either kwkeys or colkeys, it will be appended to colkeys
+    if it refers to a list, array, or specially formed dict with the right
+    number of rows, or kwkeys otherwise.
+
+    "Specially formed dict" means a python dictionary with the right keys to
+    provide a comment and/or keywords to specify a (measure) frame or
+    (quantity) unit for the column.
+
+    The number of rows is set by the first column.  The order of the columns is
+    the order of colkeys, followed by the remaining columns in alphabetical
+    order.
+
+    Example:
+    mydict = {'delta': [1.2866, 1.2957, 1.3047],
+              'obs_code': ['*', 'U', 't'],
+              'date': {'m0': {'unit': 'd',
+                              'value': [55317.0, 55318.0, 55319.0]},
+                       'refer': 'UT1',
+                       'type': 'epoch'},
+              'phang': {'comment': 'phase angle',
+                        'data': {'unit': 'deg',
+                                 'value': array([37.30, 37.33, 37.36])}}}
+                                 
+    # Produces a table with, in order, a measure column (date), two bare
+    # columns (delta and obs_code), and a commented quantity column (phang).
+    # The comment goes in the 'comment' field of the column description.
+    # Measure and straight array columns can also be described by using a
+    # {'comment': (description), 'data': (measure, quantity, numpy.array or
+    # list)} dict.
+    dict_to_table(mydict, 'd_vs_phang.tab')
+
+    TODO: detect non-float data types, including array cells.
+    """
+    nrows = 0
+    dkeys = list(indict.keys())
+    keywords = []
+    cols = []
+
+    def get_bare_col(col):
+        """
+        Given a col that could be a bare column (list or array), or measure or
+        quantity containing a bare column, return the bare column.
+        """
+        barecol = col
+        if isinstance(barecol,dict):
+            if 'comment' in barecol:
+                barecol = barecol.get('data')
+            if type(barecol)==dict and _me.ismeasure(barecol):
+                barecol = barecol['m0']
+            # if qa.isquantity(data) can't be trusted.
+            if isinstance(barecol,dict) and 'unit' in barecol and 'value' in barecol:
+                barecol = barecol['value']
+        return barecol
+        
+    # Divvy up the known keywords and columns, if present, preserving the
+    # requested order.
+    for kw in kwkeys:
+        if kw in dkeys:
+            # Take kw out of dkeys and put it in keywords.
+            keywords.append(dkeys.pop(dkeys.index(kw)))
+    for c in colkeys:
+        if c in dkeys:
+            cols.append(dkeys.pop(dkeys.index(c)))
+            if nrows == 0:
+                nrows = len(get_bare_col(indict[c]))
+                print("Got nrows = %s from %s" % (nrows,c))
+
+    # Go through what's left of dkeys and assign them to either keywords or
+    # cols.
+    dkeys.sort()
+    for d in dkeys:
+        used_as_col = False
+        colcand = get_bare_col(indict[d])
+        # Treat it as a column if it has the right number of rows.
+        if type(colcand) in (list, numpy.ndarray):
+            if nrows == 0:
+                nrows = len(colcand)
+            if len(colcand) == nrows:
+                cols.append(d)
+                used_as_col = True
+        if not used_as_col:
+            keywords.append(d)
+
+    # Make the table's description.
+    tabdesc = {}
+    # Initialize the column descriptor with defaults (these come from
+    # data/ephemerides/DE200, but I replaced IncrementalStMan with StandardStMan).
+    coldesc = {'comment': '',
+               'dataManagerGroup': '',
+               'dataManagerType': 'StandardStMan',
+               'maxlen': 0,
+               'option': 0,
+               'valueType': 'double'} # Use double (not float!) for columns
+                                      # that will be read by MeasIERS.
+    for c in cols:
+        #print "Setting coldesc for", c
+        data = indict[c]  # Place to find the valueType.
+
+        if isinstance(data,dict):
+            #print "comment =", data.get('comment', '')
+            coldesc['comment'] = data.get('comment', '')
+            
+        data = get_bare_col(data)
+        datatype = type(data[0])
+        if datatype == float or datatype == numpy.float:
+            valtype = "float"
+        elif datatype == numpy.float64:
+            valtype = "double"
+        elif datatype == int or datatype == numpy.int32 or datatype == numpy.int16 or datatype == numpy.int:
+            valtype = integer
+        elif datatype == str:
+            valtype = 'string'
+
+        # Use double (not float!) for columns that will be read by MeasIERS.
+        if valtype == 'float':
+            valtype = 'double'
+            
+        coldesc['valueType'] = valtype
+
+        tabdesc[c] = coldesc.copy()
+
+    # Since tables are directories, it saves a lot of grief if we first check
+    # whether the table exists and is under svn control.
+    svndir = None
+    if os.path.isdir(tablepath):
+        if os.path.isdir(tablepath + '/.svn'):
+            # tempfile is liable to use /tmp, which can be too small and/or slow.
+            # Use the directory that tablepath is in, since we know the user
+            # approves of writing to it.
+            workingdir = os.path.abspath(os.path.dirname(tablepath.rstrip('/')))
+
+            svndir = tempfile.mkdtemp(dir=workingdir)
+            shutil.move(tablepath + '/.svn', svndir)
+        print("Removing %s directory %s" % tablepath)
+        shutil.rmtree(tablepath)
+
+    # Create and fill the table.
+    retval = True
+    try:
+        mytb = tbtool()
+        tmpfname='_tmp_fake.dat'
+        if keepcolorder:
+            # try to keep order of cols 
+            # Ugly, but since tb.create() cannot accept odered dictionary
+            # for tabledesc, I cannot find any other way to keep column order.
+            # * comment for each column will not be filled
+            f = open(tmpfname,'w')
+            zarr=numpy.zeros(len(cols))
+            szarr=str(zarr.tolist())
+            szarr=szarr.replace('[','')
+            szarr=szarr.replace(']','')
+            szarr=szarr.replace(',','')
+            scollist=''
+            sdtypes='' 
+            for c in cols:
+                scollist+=c+' '   
+                vt=tabdesc[c]['valueType']
+                if vt=='string':
+                   sdtypes+='A '    
+                elif vt=='integer':
+                   sdtypes+='I '
+                elif vt=='double':
+                   sdtypes+='D '
+                elif vt=='float':
+                   sdtypes+='R '
+
+            f.write(scollist+'\n')
+            f.write(sdtypes+'\n')
+            f.write(szarr)
+
+            f.close()
+            mytb.fromascii(tablepath,tmpfname,sep=' ')     
+            # close and re-open since tb.fromascii(nomodify=False) has not
+            # implemented yet
+            mytb.close() 
+            os.remove(tmpfname) 
+            mytb.open(tablepath, nomodify=False)
+            mytb.removerows(0)
+        else: 
+            mytb.create(tablepath, tabdesc)
+        if type(info) == dict:
+            mytb.putinfo(info)
+        mytb.addrows(nrows)     # Must be done before putting the columns.
+
+    except Exception as e:
+        print("Error %s trying to create %s" % (e,tablepath))
+        retval = False
+
+    for c in cols:
+        try:
+            #print "tabdesc[%s] =" % c, tabdesc[c]
+            data = indict[c]  # Note the trickle-down nature below.
+            if isinstance(indict[c],dict) and 'comment' in indict[c]:
+                data = data['data']
+            if type(data)==dict and _me.ismeasure(data):
+                mytb.putcolkeyword(c, 'MEASINFO', {'Ref': data['refer'],
+                                                   'type': data['type']})
+                data = data['m0']   # = quantity         
+            # if qa.isquantity(data) can't be trusted.
+            if isinstance(data,dict) and 'unit' in data and 'value' in data:
+                mytb.putcolkeyword(c, 'QuantumUnits',
+                                 numpy.array([data['unit']]))
+                data = data['value']
+            mytb.putcol(c, data)
+        except Exception as e:
+            print("Error %s trying to put column %s in %s" % (e,c,tablepath))
+            print("data[0] = %s" % data[0])
+            print("tabdesc[c] = %s" % tabdesc[c])
+            retval = False
+
+    for k in keywords:
+        try:
+            mytb.putkeyword(k, indict[k])
+        except Exception as e:
+            print("Error %s trying to put keyword %s in %s" % (e,k,tablepath))
+            retval = False
+    mytb.close()
+
+    if svndir:
+        shutil.move(svndir, tablepath + '/.svn')
+
+    return retval
+
 def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
     """
     Converts a dictionary from readJPLephem() to a CASA table, and attempts to
@@ -698,11 +947,11 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
     """
     if not tablepath:
         tablepath = construct_tablepath(fmdict, prefix)
-        print "Writing to", tablepath
-       
+        print("Writing to %s" % tablepath)
+
     # safe gaurd from zapping current directory by dict_to_table()
     if tablepath=='.' or tablepath=='./' or tablepath.isspace():
-        raise Exception, "Invalid tablepath: "+tablepath
+        raise Exception("Invalid tablepath: %s" % tablepath)
     retval = True
     # keepcolorder=T preserves column ordering in collist below
     #keepcolorder=False
@@ -714,7 +963,7 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
         okws=['VS_CREATE','VS_DATE','VS_TYPE', 'VS_VERSION', 'NAME', 'MJD0', 'dMJD', 
               'GeoDist', 'GeoLat', 'GeoLong', 'obsloc', 'posrefsys','earliest','latest',
               'radii','meanrad','orb_per','data']
-        oldkws = fmdict.keys()
+        oldkws = list(fmdict.keys())
         kws=[]
         for ik in okws:
             if oldkws.count(ik):
@@ -722,7 +971,7 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
               oldkws.remove(ik)
         kws+=oldkws 
         kws.remove('data')
-        collist = outdict['data'].keys()
+        collist = list(outdict['data'].keys())
 
         # For cosmetic reasons, encourage a certain order to the columns, i.e.
         # start with alphabetical order,
@@ -744,7 +993,7 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
         
         clashing_cols = [c for c in collist if c in kws]
         if clashing_cols:
-            raise ValueError, 'The input dictionary lists ' + ', '.join(clashing_cols) + ' as both keyword(s) and column(s)'
+            raise ValueError('The input dictionary lists %s as both keyword(s) and column(s)' % ', '.join(clashing_cols))
 
         # This promotes the keys in outdict['data'] up one level, and removes
         # 'data' as a key of outdict.
@@ -757,8 +1006,8 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
                 'subType': 'Comet', 'type': 'IERS'}
 
         retval = dict_to_table(outdict, tablepath, kws, collist, info, keepcolorder)
-    except Exception, e:
-        print 'Error', e, 'trying to export an ephemeris dict to', tablepath
+    except Exception as e:
+        print('Error %s trying to export an ephemeris dict to %s' % (e,tablepath))
         retval = False
 
     return retval
@@ -789,16 +1038,16 @@ def jplfiles_to_repository(objs, jpldir='.', jplext='.ephem',
     neph = 0
     casapath = os.getenv('CASAPATH')
     if not casapath:
-        print "CASAPATH is not set."
+        print("CASAPATH is not set.")
         return 0
     datadir = casapath.split()[0] + '/data/ephemerides/JPL-Horizons'
     if not os.path.isdir(datadir):
         try:
             os.mkdir(datadir)
-            print "Created", datadir
-            print "You should probably svn add it."
-        except Exception, e:
-            "Error", e, "creating", datadir
+            print("Created %s" % datadir)
+            print("You should probably svn add it.")
+        except Exception as e:
+            print("Error %s creating %s" % (e,datadir))
             return 0
     datadir += '/'
 
@@ -824,8 +1073,8 @@ def jplfiles_to_repository(objs, jpldir='.', jplext='.ephem',
             epoch = fmdict['earliest']
             epoch['m0']['value'] += 0.5 * (fmdict['latest']['m0']['value'] -
                                            epoch['m0']['value'])
-            me.doframe(epoch)
-            if me.framecomet(tabpath):
+            _me.doframe(epoch)
+            if _me.framecomet(tabpath):
                 neph += 1
             else:
                 casalog.post(tabpath + " was not readable by me.framecomet.",

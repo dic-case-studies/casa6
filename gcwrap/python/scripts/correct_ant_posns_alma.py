@@ -1,11 +1,20 @@
+from __future__ import absolute_import
+import time
 import numpy as np
+import sys
 
-from taskinit import *
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table
+    from casatasks import casalog
 
-(tb_tool,) = gentools(['tb'])
+    tb_tool = table( )
+else:
+    from taskinit import *
 
-
-def fetch_tmcdb_info(ant_names, obs_time):
+    (tb_tool,) = gentools(['tb'])
+    
+def _fetch_tmcdb_info(ant_names, obs_time):
     use_soap = False
     if use_soap:
         response = query_tmcdb_antennas_soap(ant_names, obs_time)
@@ -360,7 +369,6 @@ def correct_ant_posns_alma(vis_name, print_offsets=False):
         :returns: time specification string formatted as for example
         2011-11-13T04:10:12
         """
-        import time
         obs_time = (time_range[0] + time_range[1]) / 2.0
         obs_time = ((obs_time / 86400.0) + 2400000.5 - 2440587.5) * 86400.0
         obs_time = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(obs_time))
@@ -565,7 +573,7 @@ def correct_ant_posns_alma(vis_name, print_offsets=False):
     # AntennaPad service
     try:
         import urllib2
-        (ant_names_db, ant_corr_posns, pad_posns) = fetch_tmcdb_info(ant_names, obs_time)
+        (ant_names_db, ant_corr_posns, pad_posns) = _fetch_tmcdb_info(ant_names, obs_time)
         if (ant_names_db != ant_names).any():
             raise RuntimeError('The antenna names found in the MS (which were '
                                'used to query the TMC DB) do not match the '

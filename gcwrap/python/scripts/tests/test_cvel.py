@@ -1,12 +1,35 @@
 # unit test for the cvel task
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import numpy
 import shutil
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import cvel, split, importuvfits
+    from casatools import ctsys, table, quanta, ms
+
+    _tb = table( )
+    _qa = quanta( )
+    _ms = ms( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    # these aren't local tools in the CASA5 version
+    _tb = tb
+    _qa = qa
+    _ms = ms
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 myname = 'test_cvel'
 vis_a = 'ngc4826.ms'
@@ -20,14 +43,14 @@ outfile = 'cvel-output.ms'
 
 def verify_ms(msname, expnumspws, expnumchan, inspw, expchanfreqs=[]):
     msg = ''
-    tb.open(msname+'/SPECTRAL_WINDOW')
-    nc = tb.getcell("NUM_CHAN", inspw)
-    nr = tb.nrows()
-    cf = tb.getcell("CHAN_FREQ", inspw)
-    tb.close()
-    tb.open(msname)
-    dimdata = tb.getcell("FLAG", 0)[0].size
-    tb.close()
+    _tb.open(msname+'/SPECTRAL_WINDOW')
+    nc = _tb.getcell("NUM_CHAN", inspw)
+    nr = _tb.nrows()
+    cf = _tb.getcell("CHAN_FREQ", inspw)
+    _tb.close()
+    _tb.open(msname)
+    dimdata = _tb.getcell("FLAG", 0)[0].size
+    _tb.close()
     if not (nr==expnumspws):
         msg =  "Found "+str(nr)+", expected "+str(expnumspws)+" spectral windows in "+msname
         return [False,msg]
@@ -39,9 +62,9 @@ def verify_ms(msname, expnumspws, expnumchan, inspw, expchanfreqs=[]):
         return [False,msg]
 
     if not (expchanfreqs==[]):
-        print "Testing channel frequencies ..."
-        print cf
-        print expchanfreqs
+        print("Testing channel frequencies ...")
+        print(cf)
+        print(expchanfreqs)
         if not (expchanfreqs.size == expnumchan):
             msg =  "Internal error: array of expected channel freqs should have dimension ", expnumchan
             return [False,msg]
@@ -55,59 +78,60 @@ def verify_ms(msname, expnumspws, expnumchan, inspw, expchanfreqs=[]):
 
 class cvel_test(unittest.TestCase):
 
-    def setUp(self):    
-        default('cvel')
+    def setUp(self):
+        if not is_CASA6:
+            default('cvel')
         forcereload=False
         
         if(forcereload or not os.path.exists(vis_a)):
             shutil.rmtree(vis_a, ignore_errors=True)
-            importuvfits(fitsfile=os.environ['CASAPATH'].split()[0]+'/data/regression/ngc4826/fitsfiles/ngc4826.ll.fits5', # 10 MB
+            importuvfits(fitsfile=ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5'), # 10 MB
                          vis=vis_a)
         if(forcereload or not os.path.exists(vis_b)):
             shutil.rmtree(vis_b, ignore_errors=True)
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/fits-import-export/input/test.ms .') # 27 MB
+            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .') # 27 MB
         if(forcereload or not os.path.exists(vis_c)):
             shutil.rmtree(vis_c, ignore_errors=True)
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/cvel/input/jupiter6cm.demo-thinned.ms .') # 124 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') # 124 MB
         if(forcereload or not os.path.exists(vis_d)):
             shutil.rmtree(vis_d, ignore_errors=True)
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms .') # 48 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
         if(forcereload or not os.path.exists(vis_e)):
             shutil.rmtree(vis_e, ignore_errors=True)
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/cvel/input/evla-highres-sample-thinned.ms .') # 74 MB
+            os.system('cp -R '+ctsys_resolve('regression/cvel/input/evla-highres-sample-thinned.ms')+' .') # 74 MB
         if(forcereload or not os.path.exists(vis_f)):
             shutil.rmtree(vis_f, ignore_errors=True)
-            os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/unittest/cvel/test_cvel1.ms .') # 39 MB
+            os.system('cp -R '+ctsys_resolve('regression/unittest/cvel/test_cvel1.ms')+' .') # 39 MB
         if(forcereload or not os.path.exists(vis_g)):
             # construct an MS with attached Jupiter ephemeris from vis_c
             shutil.rmtree(vis_g, ignore_errors=True)
             split(vis=vis_c, outputvis=vis_g, field='JUPITER', datacolumn='data')
-            tb.open(vis_g, nomodify=False)
-            a = tb.getcol('TIME')
+            _tb.open(vis_g, nomodify=False)
+            a = _tb.getcol('TIME')
             delta = (54709.*86400-a[0])
             a = a + delta
             strt = a[0]
-            tb.putcol('TIME', a)
-            a = tb.getcol('TIME_CENTROID')
+            _tb.putcol('TIME', a)
+            a = _tb.getcol('TIME_CENTROID')
             a = a + delta
-            tb.putcol('TIME_CENTROID', a)
-            tb.close()
-            tb.open(vis_g+'/OBSERVATION', nomodify=False)
-            a = tb.getcol('TIME_RANGE')
+            _tb.putcol('TIME_CENTROID', a)
+            _tb.close()
+            _tb.open(vis_g+'/OBSERVATION', nomodify=False)
+            a = _tb.getcol('TIME_RANGE')
             delta = strt - a[0][0]
             a = a + delta
-            tb.putcol('TIME_RANGE', a)
-            tb.close()
-            tb.open(vis_g+'/FIELD', nomodify=False)
-            a = tb.getcol('TIME')
+            _tb.putcol('TIME_RANGE', a)
+            _tb.close()
+            _tb.open(vis_g+'/FIELD', nomodify=False)
+            a = _tb.getcol('TIME')
             delta = strt - a[0]
             a = a + delta
-            tb.putcol('TIME', a)
-            tb.close()
-            ms.open(vis_g, nomodify=False)
-            ms.addephemeris(0,os.environ.get('CASAPATH').split()[0]+'/data/ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab',
-                            'Jupiter_54708-55437dUTC', 0)
-            ms.close()
+            _tb.putcol('TIME', a)
+            _tb.close()
+            _ms.open(vis_g, nomodify=False)
+            _ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+                             'Jupiter_54708-55437dUTC', 0 )
+            _ms.close()
 
             
         self.assertTrue(os.path.exists(vis_a))
@@ -127,15 +151,29 @@ class cvel_test(unittest.TestCase):
         '''Cvel 1: Testing default - expected error'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        rval = cvel()
-        self.assertFalse(rval)
-    
+        passes = False
+        try:
+            rval = cvel()
+            # CASA5 returns False for this expected error
+            passes = not rval
+        except AssertionError:
+            passes = True
+            print("*** Expected error ***")
+        self.assertTrue(passes)
+
     def test2(self):
         '''Cvel 2: Only input vis set - expected error'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        rval = cvel(vis = 'myinput.ms')
-        self.assertEqual(rval,None)
+        passes = False
+        try:
+            rval = cvel(vis = 'myinput.ms')
+            # CASA5 returns False for this expected error
+            passes = not rval
+        except AssertionError:
+            passes = True
+            print("*** Expected error ***")
+        self.assertTrue(passes)
             
     def test3(self):
         '''Cvel 3: Input and output vis set'''
@@ -348,7 +386,7 @@ class cvel_test(unittest.TestCase):
             ret = verify_ms(outfile, 1, 2, 0)
             self.assertTrue(ret[0],ret[1])
         except:
-            print "*** Expected error ***"
+            print("*** Expected error ***")
     
     def test15(self):
         '''Cvel 15: I/O vis set, input vis with two spws, one field selected, 2 spws selected, passall = False, regridding 8...'''
@@ -437,18 +475,24 @@ class cvel_test(unittest.TestCase):
         myvis = vis_d
         os.system('ln -sf ' + myvis + ' myinput.ms')
         # This will require pre-averaging
-        rval = cvel(
-            vis = 'myinput.ms',
-            outputvis = outfile,
-            mode='channel',
-            nchan = 10,
-            start = 100,
-            width = 2,
-            phasecenter = "J2000 18h25m56.09 -12d04m28.20"
-        )
-        self.assertFalse(rval)
-        with self.assertRaises(RuntimeError):
-            ret = verify_ms(outfile, 1, 10, 0)
+        passes = False
+        try:
+            rval = cvel(
+                vis = 'myinput.ms',
+                outputvis = outfile,
+                mode='channel',
+                nchan = 10,
+                start = 100,
+                width = 2,
+                phasecenter = "J2000 18h25m56.09 -12d04m28.20"
+            )
+            # CASA5 returns False
+            passes = not rval
+        except RuntimeError:
+            passes = True
+            print("*** Expected error ***")
+
+        self.assertTrue(passes)
         
     @unittest.skip('Skip, this produces an exception since release 4.7.2 as per CAS-9798')
     def test19(self):
@@ -743,10 +787,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 35: test effect of sign of width parameter: channel mode, width positive'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
         b = numpy.array([a[1], a[2], a[3]])
-        tb.close()
+        _tb.close()
 
         rval = cvel(
             vis = 'myinput.ms',
@@ -763,10 +807,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 36: test effect of sign of width parameter: channel mode, width negative'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
         b = numpy.array([a[1], a[2], a[3]])
-        tb.close()
+        _tb.close()
 
         rval = cvel(
             vis = 'myinput.ms',
@@ -783,10 +827,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 37: test effect of sign of width parameter: freq mode, width positive'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
         b = numpy.array([a[1], a[2], a[3]])
-        tb.close()
+        _tb.close()
 
         rval = cvel(
             vis = 'myinput.ms',
@@ -804,10 +848,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 38: test effect of sign of width parameter: freq mode, width negative'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
         b = numpy.array([a[1], a[2], a[3]])
-        tb.close()
+        _tb.close()
 
         rval = cvel(
             vis = 'myinput.ms',
@@ -825,10 +869,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 39: test effect of sign of width parameter: radio velocity mode, width positive'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
-        c =  qa.constants('c')['value']
-        tb.close()
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
+        c =  _qa.constants('c')['value']
+        _tb.close()
         
         restf = a[0] 
         bv1 = c * (restf-a[5])/restf 
@@ -853,10 +897,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 40: test effect of sign of width parameter: radio velocity mode, width negative'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
-        c =  qa.constants('c')['value']
-        tb.close()
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
+        c =  _qa.constants('c')['value']
+        _tb.close()
 
         restf = a[0] 
         bv1 = c * (restf-a[3])/restf 
@@ -881,10 +925,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 41: test effect of sign of width parameter: optical velocity mode, width positive'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
-        c =  qa.constants('c')['value']
-        tb.close()
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
+        c =  _qa.constants('c')['value']
+        _tb.close()
         
         restf = a[0] 
         bv1 = c * (restf-a[5])/a[5] 
@@ -913,10 +957,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 42: test effect of sign of width parameter: optical velocity mode, width negative'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
-        c =  qa.constants('c')['value']
-        tb.close()
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
+        c =  _qa.constants('c')['value']
+        _tb.close()
         
         restf = a[0] 
         bv1 = c * (restf-a[5])/a[5] 
@@ -1032,10 +1076,10 @@ class cvel_test(unittest.TestCase):
         '''Cvel 48: test fftshift regridding: channel mode, width positive'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        tb.open('myinput.ms/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
         b = numpy.array([a[1], a[2], a[3]])
-        tb.close()
+        _tb.close()
 
         rval = cvel(
             vis = 'myinput.ms',
@@ -1067,7 +1111,7 @@ class cvel_test(unittest.TestCase):
             ret = verify_ms(outfile, 1, 2, 0)
             self.assertTrue(ret[0],ret[1])
         except:
-            print "*** Expected error ***"
+            print("*** Expected error ***")
 
     def test50(self):
         '''Cvel 50: test fftshift regridding: channel mode, width positive'''
@@ -1086,10 +1130,10 @@ class cvel_test(unittest.TestCase):
             outframe = 'CMB'
             )
         
-        tb.open(outfile+'/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
+        _tb.open(outfile+'/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
         b = numpy.array(a)
-        tb.close()
+        _tb.close()
 
         shutil.rmtree(outfile, ignore_errors=True)
 
@@ -1125,10 +1169,10 @@ class cvel_test(unittest.TestCase):
             outframe = 'BARY'
             )
         
-        tb.open(outfile+'/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
+        _tb.open(outfile+'/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
         b = numpy.array(a)
-        tb.close()
+        _tb.close()
 
         shutil.rmtree(outfile, ignore_errors=True)
 
@@ -1164,10 +1208,10 @@ class cvel_test(unittest.TestCase):
             outframe = 'CMB'
             )
         
-        tb.open(outfile+'/SPECTRAL_WINDOW')
-        a = tb.getcell('CHAN_FREQ')
+        _tb.open(outfile+'/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
         b = numpy.array(a)
-        tb.close()
+        _tb.close()
 
         shutil.rmtree(outfile, ignore_errors=True)
 
@@ -1222,4 +1266,7 @@ class cleanup(unittest.TestCase):
 
 def suite():
     return [cvel_test,cleanup]
-
+    
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

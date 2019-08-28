@@ -280,34 +280,10 @@ template <class T> void ImageTask<T>::addHistory(
     const casacore::LogOrigin& origin, const casacore::String& taskname,
     const vector<casacore::String>& paramNames, const vector<casac::variant>& paramValues
 ) const {
-    ThrowIf(
-        paramNames.size() != paramValues.size(),
-        "paramNames and paramValues must have the same number of elements"
+    auto appHistory = ImageHistory<T>::getApplicationHistory(
+        origin, taskname, paramNames, paramValues, _image->name()
     );
-    std::pair<casacore::String, casacore::String> x;
-    x.first = origin.fullName();
-    x.second = "Ran " + taskname + " on " + _image->name();
-    _newHistory.push_back(x);
-    vector<std::pair<casacore::String, casac::variant> > inputs;
-    vector<casacore::String>::const_iterator begin = paramNames.begin();
-    vector<casacore::String>::const_iterator name = begin;
-    vector<casac::variant>::const_iterator value = paramValues.begin();
-    vector<casacore::String>::const_iterator end = paramNames.end();
-    casacore::String out = taskname + "(";
-    casacore::String quote;
-    while (name != end) {
-        if (name != begin) {
-            out += ", ";
-        }
-        quote = value->type() == casac::variant::STRING ? "'" : "";
-        out += *name + "=" + quote;
-        out += value->toString();
-        out += quote;
-        name++;
-        value++;
-    }
-    x.second = out + ")";
-    _newHistory.push_back(x);
+    _newHistory.insert(_newHistory.end(), appHistory.begin(), appHistory.end());
 }
 
 template <class T> void ImageTask<T>::_copyMask(
@@ -478,9 +454,12 @@ template <class U> void ImageTask<T>::_doHistory(std::shared_ptr<casacore::Image
         if (history.get(false).empty()) {
             history.append(_image);
         }
+        history.addHistory(_newHistory);
+        /*
         for (const auto& line: _newHistory) {
             history.addHistory(line.first, line.second);
         }
+        */
     }
 }
 

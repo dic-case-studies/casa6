@@ -1,4 +1,11 @@
-from taskinit import mstool, casalog
+from __future__ import absolute_import
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ms as mstool
+    from casatasks import casalog
+else:
+    from taskinit import mstool, casalog
 
 def visstat(vis=None,
             axis=None,
@@ -94,4 +101,3 @@ def visstat(vis=None,
             casalog.post(stats + " -- No valid points found", "WARN")
 
     return s
-

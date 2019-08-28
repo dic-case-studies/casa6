@@ -5,25 +5,31 @@
 #
 ################################################
 
-from taskinit import *
+from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import shutil
 import numpy
-from taskinit import *
 import copy
-import time;
-import pdb
-#from refimagerhelper import PySynthesisImager
-#from refimagerhelper import PyParallelContSynthesisImager,PyParallelCubeSynthesisImager
-#from refimagerhelper import ImagerParameters
+import time
 
-from imagerhelpers.imager_base import PySynthesisImager
-from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
-from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
-from imagerhelpers.input_parameters import ImagerParameters
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
 
+    from casatasks.private.imagerhelpers.imager_base import PySynthesisImager
+    from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
+    from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
+else:
+    from taskinit import *
 
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
+    from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from imagerhelpers.input_parameters import ImagerParameters
 
 def tclean(
     ####### Data Selection
@@ -65,7 +71,7 @@ def tclean(
     ####### Gridding parameters
     gridder,#='ft',
     facets,#=1,
-    psfphasecenter, #=''
+    psfphasecenter,#='',
     chanchunks,#=1,
 
     wprojplanes,#=1,
@@ -169,6 +175,7 @@ def tclean(
     inpparams['state']= inpparams.pop('intent')
     inpparams['loopgain']=inpparams.pop('gain')
     inpparams['scalebias']=inpparams.pop('smallscalebias')
+
     if specmode=='cont':
         specmode='mfs'
         inpparams['specmode']='mfs'
@@ -190,12 +197,19 @@ def tclean(
 
     imager = None
     paramList = None
+
     # Put all parameters into dictionaries and check them.
     ##make a dictionary of parameters that ImagerParameters take
-    defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.func_defaults))
+
+    if is_python3:
+        defparm=dict(list(zip(ImagerParameters.__init__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__)))
+    else:
+        defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.func_defaults))
+        
     ###assign values to the ones passed to tclean and if not defined yet in tclean...
     ###assign them the default value of the constructor
-    bparm={k:  inpparams[k] if inpparams.has_key(k) else defparm[k]  for k in defparm.keys()}
+    bparm={k:  inpparams[k] if k in inpparams else defparm[k]  for k in defparm.keys()}
+
     ###default mosweight=True is tripping other gridders as they are not
     ###expecting it to be true
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
@@ -234,9 +248,10 @@ def tclean(
          imager = PyParallelCubeSynthesisImager(params=paramList)
          imagerInst=PyParallelCubeSynthesisImager
          # virtualconcat type - changed from virtualmove to virtualcopy 2016-07-20
-         concattype='virtualcopy'
+         #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
+         concattype='copyvirtual'
     else:
-         print 'Invalid parallel combination in doClean.'
+         print('Invalid parallel combination in doClean.')
          return False
     
     retrec={}
@@ -280,7 +295,7 @@ def tclean(
              
             imager.makePSF()
             if((psfphasecenter != '') and (gridder=='mosaic')):
-                print "doing with different phasecenter psf"
+                print("doing with different phasecenter psf")
                 imager.unlockimages(0)
                 psfParameters=paramList.getAllPars()
                 psfParameters['phasecenter']=psfphasecenter
@@ -351,17 +366,15 @@ def tclean(
                     t1=time.time();
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
                     
-
-
-        if (pcube):
-            print "running concatImages ..."
-            casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
-            # fixed to move subcubes
-            imager.concatImages(type=concattype)
-
-        ## Close tools.
+        ##close tools
+        # needs to deletools before concat or lock waits for ever
         imager.deleteTools()
-
+   
+        if (pcube):
+            print("running concatImages ...")
+            casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
+            imager.concatImages(type=concattype)
+        
         # CAS-10721 
         if niter>0 and savemodel != "none":
             casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_tclean")
