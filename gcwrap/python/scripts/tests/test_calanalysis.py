@@ -1,16 +1,24 @@
 import os
-import sys
-import casac
 import unittest
 
 import numpy
+
+try:
+    # CASA 6
+    from casatools import calanalysis, ctsys
+    ca = calanalysis()
+    ca_datapath = ctsys.resolve('regression/unittest/calanalysis')
+except ImportError:
+    # CASA 5
+    import casac
+    ca = casac.casac.calanalysis()
+    ca_datapath = os.environ.get('CASAPATH').split()[0]
+    ca_datapath = os.path.join(ca_datapath, 'data/regression/unittest/calanalysis/')
 
 
 class calanalysis_tsys1_base(unittest.TestCase):
 
     """A Tsys calibration table is used in these tests."""
-
-    ca = casac.casac.calanalysis()
 
     calName = 'uid___A002_X30a93d_X43e.ms.tsys.s3.tbl'
     msName = 'uid___A002_X30a93d_X43e.ms'
@@ -59,17 +67,14 @@ class calanalysis_tsys1_base(unittest.TestCase):
     numTime = len(time)
 
     def setUp(self):
-        datapath = os.environ.get('CASAPATH').split()[0]
-        datapath += '/data/regression/unittest/calanalysis/'
-
-        os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.calName),
+        os.system('cp -RL {0} {1}'.format(os.path.join(ca_datapath, self.calName),
                                           self.calName))
 
-        return self.ca.open(self.calName)
+        return ca.open(self.calName)
 
     def tearDown(self):
-            os.system('rm -rf {0}'.format(self.calName))
-            return self.ca.close()
+        os.system('rm -rf {0}'.format(self.calName))
+        return ca.close()
 
 
 class calanalysis_tsys1_introspective(calanalysis_tsys1_base):
@@ -79,45 +84,45 @@ class calanalysis_tsys1_introspective(calanalysis_tsys1_base):
 
         """Test of introspective member functions"""
 
-        self.assertEqual(os.path.split(self.ca.calname())[1],
+        self.assertEqual(os.path.split(ca.calname())[1],
                          self.calName)
-        self.assertEqual(os.path.split(self.ca.msname())[1],
+        self.assertEqual(os.path.split(ca.msname())[1],
                          self.msName)
-        self.assertEqual(self.ca.partype(), self.parType)
-        self.assertEqual(self.ca.polbasis(), self.polBasis)
-        self.assertEqual(self.ca.viscal(), self.visCal)
+        self.assertEqual(ca.partype(), self.parType)
+        self.assertEqual(ca.polbasis(), self.polBasis)
+        self.assertEqual(ca.viscal(), self.visCal)
 
-        self.assertEqual(self.ca.numfield(), self.numField)
-        self.assertEqual(self.ca.field(name=True), self.fieldName)
-        self.assertEqual(self.ca.field(name=False), self.fieldNumber)
+        self.assertEqual(ca.numfield(), self.numField)
+        self.assertEqual(ca.field(name=True), self.fieldName)
+        self.assertEqual(ca.field(name=False), self.fieldNumber)
 
-        self.assertEqual(self.ca.numantenna(), self.numAntenna)
-        self.assertEqual(self.ca.antenna(name=True), self.antennaName)
-        self.assertEqual(self.ca.antenna(name=False),
+        self.assertEqual(ca.numantenna(), self.numAntenna)
+        self.assertEqual(ca.antenna(name=True), self.antennaName)
+        self.assertEqual(ca.antenna(name=False),
                          self.antennaNumber)
 
-        self.assertEqual(self.ca.numantenna1(), self.numAntenna1)
-        self.assertEqual(self.ca.antenna1(name=True),
+        self.assertEqual(ca.numantenna1(), self.numAntenna1)
+        self.assertEqual(ca.antenna1(name=True),
                          self.antenna1Name)
-        self.assertEqual(self.ca.antenna1(name=False),
+        self.assertEqual(ca.antenna1(name=False),
                          self.antenna1Number)
 
-        self.assertEqual(self.ca.numantenna2(), self.numAntenna2)
-        self.assertEqual(self.ca.antenna2(name=True),
+        self.assertEqual(ca.numantenna2(), self.numAntenna2)
+        self.assertEqual(ca.antenna2(name=True),
                          self.antenna2Name)
-        self.assertEqual(self.ca.antenna2(name=False),
+        self.assertEqual(ca.antenna2(name=False),
                          self.antenna2Number)
 
-        self.assertEqual(self.ca.numfeed(), self.numFeed)
-        self.assertEqual(self.ca.feed(), self.feed)
+        self.assertEqual(ca.numfeed(), self.numFeed)
+        self.assertEqual(ca.feed(), self.feed)
 
-        self.assertEqual(self.ca.numspw(), self.numSPW)
-        self.assertEqual(self.ca.spw(name=True), self.spwName)
-        self.assertEqual(self.ca.spw(name=False), self.spwNumber)
+        self.assertEqual(ca.numspw(), self.numSPW)
+        self.assertEqual(ca.spw(name=True), self.spwName)
+        self.assertEqual(ca.spw(name=False), self.spwNumber)
 
-        self.assertTrue(numpy.array_equal(self.ca.numchannel(), self.numChannel))
-        self.assertEqual(self.ca.numtime(), self.numTime)
-        self.assertTrue(numpy.allclose(self.ca.time(), self.time))
+        self.assertTrue(numpy.array_equal(ca.numchannel(), self.numChannel))
+        self.assertEqual(ca.numtime(), self.numTime)
+        self.assertTrue(numpy.allclose(ca.time(), self.time))
 
 
 class calanalysis_tsys1_get(calanalysis_tsys1_base):
@@ -153,31 +158,31 @@ class calanalysis_tsys1_get(calanalysis_tsys1_base):
     def test_get_empty(self):
         """ Test tool get function with wrong selections """
 
-        # This uses parameters in similar wasy as the pipeline does in tsyscal/renderer
+        # This uses parameters in similar way as the pipeline does in tsyscal/renderer
         # SPW 10 is missing
-        stats10 = self.ca.get(spw='10', antenna=self.antennaName, axis='TIME',
-                              ap='AMPLITUDE')
+        stats10 = ca.get(spw='10', antenna=self.antennaName, axis='TIME',
+                         ap='AMPLITUDE')
         self.assertEquals(stats10, {})
 
         # SPW 12 also missing
-        stats12 = self.ca.get(spw='12', antenna=self.antennaName, axis='TIME',
-                              ap='AMPLITUDE')
+        stats12 = ca.get(spw='12', antenna=self.antennaName, axis='TIME',
+                         ap='AMPLITUDE')
         self.assertEquals(stats12, {})
 
     def test_get_one_spw(self):
         """ Test tool get function. Uses the main stuff in CalAnalysys/CalStats::stats """
 
         # SPW 13 should be there
-        # This uses parameters in similar wasy as the pipeline does in tsyscal/renderer
-        stats13 = self.ca.get(spw='13', antenna=self.antennaName, axis='TIME',
-                              ap='AMPLITUDE')
+        # This uses parameters in similar way as the pipeline does in tsyscal/renderer
+        stats13 = ca.get(spw='13', antenna=self.antennaName, axis='TIME',
+                         ap='AMPLITUDE')
         self._check_stats_items_values(stats13)
 
     def test_get_noparams(self):
         """ Test tool get function, no selection, no other params.
              Uses stuff in CalAnalysys/CalStats::stats """
 
-        stats_all = self.ca.get()
+        stats_all = ca.get()
         self._check_stats_items_values(stats_all)
 
 
@@ -211,8 +216,8 @@ class calanalysis_tsys1_fit(calanalysis_tsys1_base):
         """ Test tool fit function (amp). Exercises stuff in CalAnalysys/CalStatsFitter """
 
         # An amp fit inspired by pipeline/qa/bpcal.py
-        fit_amp = self.ca.fit(spw='13', axis='TIME', ap='AMPLITUDE', norm=True,
-                              order='LINEAR', type='LSQ', weight=False)
+        fit_amp = ca.fit(spw='13', axis='TIME', ap='AMPLITUDE', norm=True,
+                         order='LINEAR', type='LSQ', weight=False)
         fit_len = 392
         self.assertEquals(len(fit_amp), fit_len)
         self._check_ca_fit(fit_amp)
@@ -221,8 +226,8 @@ class calanalysis_tsys1_fit(calanalysis_tsys1_base):
         """ Test tool fit function (phase). Exercises stuff in CalAnalysys/CalStatsFitter """
 
         # A phase fit inspired by pipeline/qa/bpcal.py
-        fit_phase = self.ca.fit(spw='13', axis='TIME', ap='PHASE', unwrap=True,
-                                jumpmax=0.1, order='LINEAR', type='LSQ', weight=False)
+        fit_phase = ca.fit(spw='13', axis='TIME', ap='PHASE', unwrap=True,
+                           jumpmax=0.1, order='LINEAR', type='LSQ', weight=False)
         fit_len = 392
         self.assertEquals(len(fit_phase), fit_len)
         self._check_ca_fit(fit_phase)
@@ -232,12 +237,17 @@ class calanalysis_tsys1_fit(calanalysis_tsys1_base):
             Exercises stuff in CalAnalysys/CalStatsFitter """
 
         # A fit with additional field selection / less outputs
-        fit_amp_field = self.ca.fit(field='Callisto', spw='13', axis='TIME', ap='AMPLITUDE',
-                                    norm=True, order='LINEAR', type='LSQ', weight=False)
+        fit_amp_field = ca.fit(field='Callisto', spw='13', axis='TIME', ap='AMPLITUDE',
+                               norm=True, order='LINEAR', type='LSQ', weight=False)
         fit_len_field = 28
         self.assertEquals(len(fit_amp_field), fit_len_field)
         self._check_ca_fit(fit_amp_field)
 
 
 def suite():
-    return [calanalysis_tsys1_introspective, calanalysis_tsys1_get, calanalysis_tsys1_fit]
+    return [calanalysis_tsys1_introspective,
+            calanalysis_tsys1_get,
+            calanalysis_tsys1_fit]
+
+if __name__ == '__main__':
+    unittest.main()
