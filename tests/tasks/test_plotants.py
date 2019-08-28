@@ -44,18 +44,22 @@ class plotants_test(unittest.TestCase):
 
         os.system('rm -rf ' + self.fig)
 
-    @unittest.skipIf(is_CASA6,"failure, data not found")
     def test1(self):
        '''Test 1: Default parameters'''
-       self.res = plotants()
-       self.assertFalse(self.res)
+       if is_CASA6:
+           self.assertRaises(Exception,plotants)
+       else:
+           self.res = plotants()
+           self.assertFalse(self.res)
 
-    @unittest.skipIf(is_CASA6,"failure, data not found")
     def test2(self):
         '''Test 2: Bad input file'''
         msfile = 'badfile'
-        self.res = plotants(vis=msfile)
-        self.assertFalse(self.res)
+        if is_CASA6:
+            self.assertRaises(Exception,plotants,vis=msfile)
+        else:
+            self.res = plotants(vis=msfile)
+            self.assertFalse(self.res)
 
     def test3(self):
         '''Test 3: Good input file and output exists'''
