@@ -52,6 +52,8 @@ namespace casa{
       needsNewFieldPG_p = false;
       totalCost_p=totalVB_p = 0.0;
       vbRow2BLMap_p.resize(0);
+      blNeedsNewPOPG_p.resize(0);
+      blType_p=0;
       // sigmaDev = SynthesisUtils::getenv("PO_SIGMADEV",3.0);
     };
 
@@ -127,12 +129,19 @@ namespace casa{
 
       if(doPointing_p)
 	{
+	  // cerr<<"VB2CFBMap::makeVBRow2CFBMap DoP = T"<<endl;
 	  Float A2R = 4.848137E-06;
 	  Vector<Double> poIncrement = pointingOffsets_p->getIncrement();
 	  Double offsetDeviation = sigmaDev * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
-	  baselineType_p->findAntennaGroups(vb,pointingOffsets_p,offsetDeviation);
+	  baselineType_p->findAntennaGroupsM(vb,pointingOffsets_p, sigmaDev);
 
 	  vbRow2BLMap_p = baselineType_p->makeVBRow2BLGMap(vb);
+	  blNeedsNewPOPG_p = baselineType_p->getPOPG();
+	  // cerr << "vbRow2BLMap_p" ;
+	  // for(int i=0; i <= vbRow2BLMap_p.size(); i++)
+	  //   cerr << vbRow2BLMap_p[i]<<" ";
+	  // cerr <<endl;
+
 	  if(baselineType_p->cachedGroups_p)
 	    {
 	      unsigned int cachedPOSize_l = baselineType_p->cachedPointingOffsets_p.size();
@@ -247,21 +256,48 @@ namespace casa{
 					      const double& /*sigmaDev*/)
     {
       int myrow=row;
+      int idx;
       if(doPointing_p)
 	{
-      
-	  if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
+	  vector<int> uniqueVbRow2BLMap_p = vbRow2BLMap_p;
+	  sort(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
+	  auto itrBLMap = unique(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
+	  uniqueVbRow2BLMap_p.erase(itrBLMap,uniqueVbRow2BLMap_p.end());
+	  int maxVB2BLMap = *max_element(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
+	  if (myrow==0)
 	    {
-	      //  cerr<<"vbRow2BLMap_p [row] doP=T "<< vbRow2BLMap_p[row] << " " <<row <<endl;
-	      vectorPhaseGradCalculator_p.resize(vbRow2BLMap_p[row]+1,true); // Revisit this.
+	      blType_p = vbRow2BLMap_p[myrow];
+	      needsNewPOPG_p = true;
+	    }
+	  else if (blType_p != vbRow2BLMap_p[myrow])
+	    needsNewPOPG_p=true;
+	  else
+	    needsNewPOPG_p=false;
+	    
+	  // if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
+	  auto itrBLMap_p = find(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end(), vbRow2BLMap_p[row]);
+	  idx = distance(uniqueVbRow2BLMap_p.begin(), itrBLMap_p);
+	  // if (vectorPhaseGradCalculator_p.nelements() <= maxVB2BLMap + 1)
+	  vectorPhaseGradCalculator_p.resize(uniqueVbRow2BLMap_p.size()+1,true);
+	    {
+	       // cerr<<"vbRow2BLMap_p [row] doP=T "<< vbRow2BLMap_p[row] << " " <<row <<endl;
+	      // vectorPhaseGradCalculator_p.resize(vbRow2BLMap_p[myrow]+1,true); // Revisit this.
 	      for (unsigned int i=0;i<vectorPhaseGradCalculator_p.nelements(); i++)
-		if (vectorPhaseGradCalculator_p[vbRow2BLMap_p[row]].null())
-		  vectorPhaseGradCalculator_p[vbRow2BLMap_p[row]]=new PhaseGrad();
+		if (vectorPhaseGradCalculator_p[idx].null())
+		  {
+		    vectorPhaseGradCalculator_p[idx]=new PhaseGrad();
+		    needsNewPOPG_p = true;
+		  }
 	    }
 	  // if( baselineType_p->cachedGroups_p)
 	  //   vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);
 	  // else
 	    // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row);
+	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = blNeedsNewPOPG_p[myrow];
+	  vectorPhaseGradCalculator_p[idx]->needsNewPOPG_p = needsNewPOPG_p;
+	  vectorPhaseGradCalculator_p[idx]->needsNewFieldPG_p = needsNewFieldPG_p;
+	  vectorPhaseGradCalculator_p[idx]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
+	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = true;
 	}
       else
 	{
@@ -277,17 +313,21 @@ namespace casa{
 		vectorPhaseGradCalculator_p[myrow]=new PhaseGrad();
 	    }
 	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
-	}
-      // if (needsNewPOPG_p)
-	{
 	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = needsNewPOPG_p;
 	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewFieldPG_p = needsNewFieldPG_p;
 	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
+	  idx =0;
+	}
+      // if (needsNewPOPG_p)
+	{
+	  
+	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewFieldPG_p = needsNewFieldPG_p;
+	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
 	  needsNewPOPG_p = false;
 	  needsNewFieldPG_p = false;
 	}
 
-      return  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->field_phaseGrad_p;
+      return  vectorPhaseGradCalculator_p[idx]->field_phaseGrad_p;
     
     };
 

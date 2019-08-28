@@ -99,6 +99,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      /* casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p; */
      /* casacore::Matrix< vector<float> > antennaPO_p, cachedAntennaPO_p; */
      vector<int> vbRow2BLMap_p;
+     vector<bool> blNeedsNewPOPG_p;
+     int blType_p;
      int vbRows_p;
      /* casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p; */
      double sigmaDev ;

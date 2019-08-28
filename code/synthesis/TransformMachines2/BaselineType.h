@@ -65,12 +65,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Matrix<vector<int> > findAntennaGroups(const vi::VisBuffer2& vb, 
 						     const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						     const double& sigmaDev);
+    vector<double> pairSort(const vector<int>& antArray, const vector<double>& poArray);
+
+    casacore::Matrix<vector<int> > findAntennaGroupsM(const vi::VisBuffer2& vb, 
+						     const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
+						     const double& sigmaDev);
 
      void cacheAntGroups(const casacore::Matrix<vector<int> > antennaGroups_p);
      vector<int> makeVBRow2BLGMap(const vi::VisBuffer2& vb);
+     vector<bool> getPOPG(){return blNeedsNewPOPG_p;};
      void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
      void setCacheGroups(const int& vbRows, const vi::VisBuffer2& vb);
-
+     
 
      
      
@@ -78,10 +84,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      bool doPointing_p, newPhaseGradComputed_p, cachedGroups_p;
      casacore::Vector< casacore::CountedPtr<PhaseGrad> >vectorPhaseGradCalculator_p;
      int vbRows_p;
-     casacore::Int PO_DEBUG_P;
+     casacore::Int PO_DEBUG_P, totalGroups_p;
      casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p;
      casacore::Matrix< vector < vector <double> > > antennaPO_p, cachedAntennaPO_p;
      vector<int> vbRow2BLMap_p;
+     vector<bool> blNeedsNewPOPG_p;
      casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p;
      casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets_p;
    };
