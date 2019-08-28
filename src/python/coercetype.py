@@ -52,6 +52,11 @@ class CasaCoerce:
                 return [float(v) for v in value]
         return value
 
+    def to_boolvec(self,value):
+        if isinstance(value,bool):
+            return [value]
+        return value
+
     def to_strvec(self,value):
         if isinstance(value,str):
             return [value]
