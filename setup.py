@@ -252,6 +252,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_visstat.py',
                     'src/tasks/task_widebandpbcor.py',
                     'src/tasks/task_importmiriad.py',
+                    'src/tasks/task_plotweather.py',
                     'src/scripts/predictcomp_helper.py',
 ]
 
@@ -358,6 +359,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/visstat.xml': 'xml/visstat.xml',
               'casa-source/gcwrap/tasks/widebandpbcor.xml': 'xml/widebandpbcor.xml',
               'casa-source/gcwrap/tasks/importmiriad.xml': 'xml/importmiriad.xml',
+              'casa-source/gcwrap/tasks/plotweather.xml': 'xml/plotweather.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -461,6 +463,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/visstat.xml',
               'xml/widebandpbcor.xml',
               'xml/importmiriad.xml',
+              'xml/plotweather.xml',
 ]
 
 if pyversion < 3:
