@@ -1286,7 +1286,7 @@ class simobserve_noise(simobserve_unittest_base):
 
     #-----------------------------------------------------------------#
     # thermalnoise = "tsys-atm"
-    @unittest.skipIf(is_CASA6,"noise level differs by my nore than 10% error shown - needs to be fixed")
+    @unittest.skip("disabled pending change in CAS-12496")
     def testNZ_intAtm(self):
         """Test INT thermal noise (tsys-atm): standard parameter set"""
         project = self.project_int
@@ -1695,8 +1695,7 @@ class simobserve_badinputs(simobserve_unittest_base):
                              skymodel=skymodel)
             self.fail(self.failmsg)
         except Exception as e:
-            #pos=str(e).find("Image %s cannot be opened; its type is unknown" % skymodel)
-            pos=str(e).find("Unable to open image.")
+            pos=str(e).find("Unable to open image %s." % skymodel)
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
         
