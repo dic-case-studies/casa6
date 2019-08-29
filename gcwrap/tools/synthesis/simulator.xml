@@ -432,7 +432,7 @@
     
     <param type="stringArray" name="directions">
       <description></description>
-      <value></value>
+      <value><value/></value>
     </param>
 
 
