@@ -100,6 +100,9 @@ class CasaCoerce:
             return value
         if len(value) == 0 or value.startswith("/") or value.startswith("./") or value.startswith("../"):
             return value
+
+        value = os.path.expanduser(value)
+
         if os.path.exists(value):
             return value
 
@@ -117,14 +120,21 @@ class CasaCoerce:
         if any([not isinstance(v,str) for v in value]):
             return value
 
+        if all([len(v) == 0 or v.startswith("/") or v.startswith("./") or v.startswith("../") for v in value]):
+            return value
+
+        value = [ os.path.expanduser(v) for v in value ]
+
+        if all([ os.path.exists(v) for v in value ]):
+            return value
+
         if self.ctsys is None:
             sys.exit("configuration error in CasaCoerce.expand_pathvec( )...")
 
         ###
         ### cerberus validation is not reentrant...
         ###
-        new_value = [v if len(v) == 0 or v.startswith("/") or v.startswith("./") or v.startswith("../") else self.ctsys._swigobj.resolve(str_encode(v)) for v in value]
-        return list(new_value)
+        return [ self.ctsys._swigobj.resolve(str_encode(v)) for v in value ]
 
 coerce = CasaCoerce( )
 
