@@ -158,7 +158,21 @@ class ia_modify_test(unittest.TestCase):
         myia.done()
         self.assertTrue("ia.modify" in msgs[-2], "History not written")
         self.assertTrue("ia.modify" in msgs[-1], "History not written")
- 
+
+    def test_disk(self):
+        """test disk gives the right flux, CAS-10887"""
+        mycl = cltool()
+        mycl.addcomponent(
+            dir="J2000 0:00:00 0.00.00", flux=1.0, shape="disk", majoraxis="100arcmin",
+            minoraxis="100arcmin", positionangle="0deg"
+        )
+        myia = iatool()
+        myia.fromshape("", [101,101])
+        myia.modify(mycl.torecord(), subtract=False)
+        mycl.done()
+        self.assertTrue(numpy.isclose(myia.statistics()['sum'][0], 1, 1e-2))
+        myia.done()
+
 def suite():
     return [ia_modify_test]
 
