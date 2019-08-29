@@ -363,7 +363,7 @@ void AnnPolygon::_init() {
 		);
 		_setDirectionRegion(wpoly);
 		_extend();
-	} catch (ToLCRegionConversionError& err) {
+	} catch (const ToLCRegionConversionError& err) {
 		if (_requireImageRegion) {
 			throw(err);
 		} else {

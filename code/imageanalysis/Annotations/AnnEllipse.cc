@@ -190,7 +190,7 @@ void AnnEllipse::_init(
 		);
 		_setDirectionRegion(ellipse);
 		_extend();
-	} catch (ToLCRegionConversionError& err) {
+	} catch (const ToLCRegionConversionError& err) {
 		if (_requireImageRegion) {
 			throw(err);
 		} else {

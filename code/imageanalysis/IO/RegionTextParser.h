@@ -88,8 +88,11 @@ public:
     // or text by using this polarization selection<src>
     // <src>prependRegion</src> allows one to specify region(s) that will be prepended to
     // any text in <src>filename</src> or <src>text</src>
-    // <src>requireImageRegion</src> forces the parser to create AsciiAnnotationFileLines
-	// only from AnnRegions whose region is not outside the image
+	// <src>requireImageRegion</src> is passed to the AnnRegion constructors
+	// to indicate whether to rethrow ToLCRegionConversionError exception when
+	// the region is outside the image lattice, or create the object even if
+	// the ImageRegion has no lattice region. The default (true) rethrows the exception.
+	// CAS-12631: added for CARTA, which can import regions outside an image.
     RegionTextParser(
         const casacore::String& filename, const casacore::CoordinateSystem& csys,
         const casacore::IPosition& imShape, const casacore::Int requireAtLeastThisVersion,

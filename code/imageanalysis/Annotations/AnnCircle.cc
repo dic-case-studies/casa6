@@ -119,7 +119,7 @@ void AnnCircle::_init(const Quantity& xcenter, const Quantity& ycenter) {
 		);
 		_setDirectionRegion(circle);
 		_extend();
-	} catch (ToLCRegionConversionError& err) {
+	} catch (const ToLCRegionConversionError& err) {
 		if (_requireImageRegion) {
 			throw(err);
 		} else {

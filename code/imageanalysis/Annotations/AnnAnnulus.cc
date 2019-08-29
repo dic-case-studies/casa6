@@ -152,7 +152,7 @@ void AnnAnnulus::_init() {
 		WCDifference annulus(outer, inner);
 		_setDirectionRegion(annulus);
 		_extend();
-	} catch (ToLCRegionConversionError& err) {
+	} catch (const ToLCRegionConversionError& err) {
 		if (_requireImageRegion) {
 			throw(err);
 		} else {

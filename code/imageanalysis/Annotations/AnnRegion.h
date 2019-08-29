@@ -106,8 +106,12 @@ protected:
 	// <src>freqRefFrame</src>, <src>dopplerString</src>, and
 	// <src>restfreq</src> are ignored. If provided, <src>beginFreq</src>
 	// and <src>endFreq</src> must conform to the same units.
-	// <src>requireImageRegion</src> allows AnnRegion objects to be created
-	// even if the image region fails (usually outside the image)
+	// <src>requireImageRegion</src> indicates whether to rethrow the
+	// ToLCRegionConversionError exception when the region is outside the
+	// image, or to create the AnnRegion object even if the ImageRegion has no
+	// lattice region. The default (true) rethrows the exception to maintain
+	// the previous behavior.
+	// CAS-12631: added for CARTA, which can import regions outside an image.
 	AnnRegion(
 		const Type shape,
 		const casacore::String& dirRefFrameString,
@@ -183,7 +187,8 @@ private:
 	) const;
 
 	void _init();
-	casacore::Bool hasDirectionRegion();
+
+	casacore::Bool _hasDirectionRegion();
 
 };
 

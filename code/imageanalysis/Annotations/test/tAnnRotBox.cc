@@ -143,7 +143,7 @@ int main () {
 				);
 
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
@@ -183,7 +183,7 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
@@ -222,7 +222,7 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
@@ -247,7 +247,7 @@ int main () {
 					csys, imShape, stokes
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
@@ -272,7 +272,7 @@ int main () {
 					csys, imShape, stokes, requireRegion
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Unexpected exception thrown: "
 					<< x.getMesg() << LogIO::POST;
@@ -739,7 +739,7 @@ int main () {
 			);
 		}
 
-	} catch (AipsError x) {
+	} catch (const AipsError& x) {
 		cerr << "Caught exception: " << x.getMesg() << endl;
 		return 1;
 	}

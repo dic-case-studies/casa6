@@ -109,7 +109,7 @@ Bool AnnRegion::isAnnotationOnly() const {
 	return _isAnnotationOnly;
 }
 
-Bool AnnRegion::hasDirectionRegion() {
+Bool AnnRegion::_hasDirectionRegion() {
 	return (_directionRegion.isWCRegion() || _directionRegion.isLCRegion() || _directionRegion.isLCSlicer());
 }
 
@@ -199,9 +199,8 @@ vector<Double> AnnRegion::getSpectralPixelRange() const {
 
 
 void AnnRegion::_extend() {
-	// determine if direction region is set, else nothing to extend
-	if (!hasDirectionRegion()) {
-		return;
+	if (!_hasDirectionRegion()) {
+		return; // nothing to extend
 	}
 	Int stokesAxis = -1;
 	Int spectralAxis = -1;

@@ -80,7 +80,7 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
@@ -122,7 +122,7 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
@@ -150,7 +150,7 @@ int main () {
 					x, y, csys, shape, stokes
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
@@ -177,7 +177,7 @@ int main () {
 					x, y, csys, shape, stokes, requireRegion
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Unexpected exception thrown: "
 					<< x.getMesg() << LogIO::POST;
@@ -631,14 +631,14 @@ int main () {
 					csys, shape1, stokes
 				);
 			}
-			catch (AipsError) {
+			catch (const AipsError&) {
 				// this will throw an exception but we don't care
 				// we just don't want it to segfault
 			}
 
 		}
 
-	} catch (AipsError x) {
+	} catch (const AipsError& x) {
 		cerr << "Caught exception: " << x.getMesg() << endl;
 		return 1;
 	}
