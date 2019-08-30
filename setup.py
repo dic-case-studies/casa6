@@ -255,6 +255,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_plotweather.py',
                     'src/tasks/task_plotants.py',
                     'src/scripts/predictcomp_helper.py',
+                    'src/scripts/task_logging.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
