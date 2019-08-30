@@ -26,9 +26,16 @@ myqa = quanta( )
 myme = measures( )
 
 import pylab as pl
+import numpy as np
 from math import pi,floor
 import os.path as osp
 
+def _find(condition):
+    """Returns indices where ravel(a) is true.
+    Private implementation of deprecated matplotlib.mlab.find
+    Thanks to: https://github.com/python-control/python-control/pull/262/files
+    """
+    return np.nonzero(np.ravel(condition))[0]
 
 ###############
 ## hides the extreme Y-axis ticks, helps stack plots close together without labels overlaping
@@ -255,7 +262,7 @@ def plotweather(vis='', seasonal_weight=0.5, doPlot=True, plotName = ''):
 
     for i in range(len(spwFreqs)):
         mysearch=(pl.array(freqs)-spwFreqs[i])**2
-        hits=pl.find(mysearch == min(mysearch))
+        hits=_find(mysearch == min(mysearch))
         # Fix deprecation warning: could be array of 1
         #if len(hits) > 1: hits=hits[0]
         if not isinstance(hits, int):
