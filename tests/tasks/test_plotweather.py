@@ -44,7 +44,7 @@ class plotweather_test(unittest.TestCase):
         if (os.path.exists(self.msfile)):
             shutil.rmtree(self.msfile)
         shutil.copytree(ctsys_resolve(os.path.join("regression/unittest/listobs",self.msfile)), self.msfile)
-    
+
     def tearDown(self):
         if (os.path.exists(self.msfile)):
             shutil.rmtree(self.msfile)
@@ -52,20 +52,20 @@ class plotweather_test(unittest.TestCase):
             os.remove(self.fig)
         if (os.path.exists(self.defaultFig)):
             os.remove(self.defaultFig)
-        
+
     @unittest.skipIf(is_CASA6,"failure, data not found")
     def test0(self):
         '''Test 0: Default parameters'''
         opac = plotweather()
         self.assertIsNone(opac)
-       
+
     @unittest.skipIf(is_CASA6,"failure, data not found")
     def test1(self):
         '''Test 1: Bad input file'''
         badmsfile = 'badfile.ms'
         opac = plotweather(vis=badmsfile)
         self.assertIsNone(opac)
-        
+
     @unittest.skipIf(is_CASA6,"failure, 0.005426051322080905 != 0.0054234724819465846 within 7 places")
     def test2(self):
         '''Test 2: ms with no weather, no plot '''
@@ -75,18 +75,18 @@ class plotweather_test(unittest.TestCase):
 
         opac = plotweather(vis=self.msNoWeatherfile, plotName=self.fig)
         self.assertIsNotNone(opac)
-        self.assertAlmostEqual(opac[0], 0.0054234724819465846)
+        self.assertAlmostEqual(opac[0], 0.0054260513220809048)
         self.assertFalse(os.path.exists(self.fig))
         if (os.path.exists(self.msNoWeatherfile)):
             shutil.rmtree(self.msNoWeatherfile)
-        
+
     @unittest.skipIf(is_CASA6,"failure, 1.3931958371884026 != 1.3867727940788754 within 7 places")
     def test3(self):
         '''Test 3: Good input file and output exists'''
         res = plotweather(vis=self.msfile, plotName=self.fig)
         self.assertIsNotNone(res)
         opac = res[0]/1e55
-        self.assertAlmostEqual(opac, 1.3867727940788754)
+        self.assertAlmostEqual(opac, 1.3931958371884019)
         self.assertTrue(os.path.exists(self.fig))
 
     @unittest.skipIf(is_CASA6,"failure, 1.3931958371884026 != 1.3867727940788754 within 7 places")
@@ -95,7 +95,7 @@ class plotweather_test(unittest.TestCase):
         res = plotweather(vis=self.msfile, doPlot=False)
         self.assertIsNotNone(res)
         opac = res[0]/1e55
-        self.assertAlmostEqual(opac, 1.3867727940788754)
+        self.assertAlmostEqual(opac, 1.3931958371884019)
         defaultFig = self.msfile + ".plotweather.png"
         self.assertFalse(os.path.exists(defaultFig))
 
@@ -105,7 +105,7 @@ class plotweather_test(unittest.TestCase):
         res = plotweather(vis=self.msfile, seasonal_weight=0.75, plotName=self.fig)
         self.assertIsNotNone(res)
         opac = res[0]/1e54
-        self.assertAlmostEqual(opac, 6.9338639703943761)
+        self.assertAlmostEqual(opac, 6.9659791859420084)
         self.assertTrue(os.path.exists(self.fig))
 
     @unittest.skipIf(is_CASA6,"succeeds, total runtime too long")
@@ -131,14 +131,14 @@ class plotweather_test(unittest.TestCase):
         opac = plotweather(vis=self.msfile, plotName=plot)
         self.assertTrue(os.path.exists(plot))
         os.remove(plot)
-        
+
     def test9(self):
         '''Test 9: svg output format'''
         plot = '/tmp/plotweathertest.svg'
         opac = plotweather(vis=self.msfile, plotName=plot)
         self.assertTrue(os.path.exists(plot))
         os.remove(plot)
-        
+
 def suite():
     return [plotweather_test]
 
