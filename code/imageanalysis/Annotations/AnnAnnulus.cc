@@ -48,11 +48,12 @@ AnnAnnulus::AnnAnnulus(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnRegion(
 		ANNULUS, dirRefFrameString, csys, imShape, beginFreq,
 		endFreq, freqRefFrameString, dopplerString,
-		restfreq, stokes, annotationOnly
+		restfreq, stokes, annotationOnly, requireImageRegion
 	), _convertedRadii(Vector<Quantity>(2)),
 	_xcenter(xcenter), _ycenter(ycenter),
 	_innerRadius(innerRadius), _outerRadius(outerRadius) {
@@ -66,8 +67,9 @@ AnnAnnulus::AnnAnnulus(
 	const Quantity& outerRadius,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
-) : AnnRegion(ANNULUS, csys, imShape, stokes),
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
+) : AnnRegion(ANNULUS, csys, imShape, stokes, requireImageRegion),
 _convertedRadii(Vector<Quantity>(2)),
 	_xcenter(xcenter), _ycenter(ycenter),
 	_innerRadius(innerRadius), _outerRadius(outerRadius) {
@@ -144,11 +146,21 @@ void AnnAnnulus::_init() {
 	Vector<Quantity> qCenter(2);
 	qCenter[0] = Quantity(coords[0], "rad");
 	qCenter[1] = Quantity(coords[1], "rad");
-	WCEllipsoid inner(qCenter, _innerRadius, _getDirectionAxes(), getCsys(), RegionType::Abs);
-	WCEllipsoid outer(qCenter, _outerRadius, _getDirectionAxes(), getCsys(), RegionType::Abs);
-	WCDifference annulus(outer, inner);
-	_setDirectionRegion(annulus);
-	_extend();
+	try {
+		WCEllipsoid inner(qCenter, _innerRadius, _getDirectionAxes(), getCsys(), RegionType::Abs);
+		WCEllipsoid outer(qCenter, _outerRadius, _getDirectionAxes(), getCsys(), RegionType::Abs);
+		WCDifference annulus(outer, inner);
+		_setDirectionRegion(annulus);
+		_extend();
+	} catch (const ToLCRegionConversionError& err) {
+		if (_requireImageRegion) {
+			throw(err);
+		} else {
+			ImageRegion defaultRegion;
+			_setDirectionRegion(defaultRegion);
+			_imageRegion = _directionRegion;
+		}
+	}
 }
 
 }

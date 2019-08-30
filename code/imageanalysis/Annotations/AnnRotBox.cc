@@ -30,12 +30,14 @@ AnnRotBox::AnnRotBox(
 	const Quantity& endFreq, const String& freqRefFrameString,
 	const String& dopplerString, const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnPolygon(
 		ROTATED_BOX, xcenter, ycenter, xwidth, ywidth,
 		positionAngle, dirRefFrameString, csys, imShape,
 		beginFreq, endFreq, freqRefFrameString,
-		dopplerString, restfreq, stokes, annotationOnly
+		dopplerString, restfreq, stokes, annotationOnly,
+		requireImageRegion
 	), _inputCenter(AnnotationBase::Direction(1, std::make_pair(xcenter, ycenter))),
 	_inputWidths(Vector<Quantity>(2)),
 	_positionAngle(positionAngle) {
@@ -49,10 +51,11 @@ AnnRotBox::AnnRotBox(
 	const Quantity& xwidth,
 	const Quantity& ywidth, const Quantity& positionAngle,
 	const CoordinateSystem& csys, const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
 ) : AnnPolygon(
 		ROTATED_BOX, xcenter, ycenter, xwidth, ywidth,
-		positionAngle, csys, imShape, stokes
+		positionAngle, csys, imShape, stokes, requireImageRegion
 	),
 	_inputCenter(AnnotationBase::Direction(1, std::make_pair(xcenter, ycenter))),
 	_inputWidths(Vector<Quantity>(2)),
@@ -64,20 +67,20 @@ AnnRotBox::AnnRotBox(
 AnnRotBox& AnnRotBox::operator= (
 	const AnnRotBox& other
 ) {
-    if (this == &other) {
-    	return *this;
-    }
-    AnnPolygon::operator=(other);
-    _inputCenter.resize(other._inputCenter.nelements());
-    _inputCenter = other._inputCenter;
-    _inputWidths.resize(other._inputWidths.nelements());
-    _inputWidths = other._inputWidths;
-    //_widths.resize(other._widths.nelements());
-    //_widths = other._widths;
-    _positionAngle = other._positionAngle;
-    //_corners.resize(other._corners.nelements());
-    //_corners = other._corners;
-    return *this;
+	if (this == &other) {
+		return *this;
+	}
+	AnnPolygon::operator=(other);
+	_inputCenter.resize(other._inputCenter.nelements());
+	_inputCenter = other._inputCenter;
+	_inputWidths.resize(other._inputWidths.nelements());
+	_inputWidths = other._inputWidths;
+	//_widths.resize(other._widths.nelements());
+	//_widths = other._widths;
+	_positionAngle = other._positionAngle;
+	//_corners.resize(other._corners.nelements());
+	//_corners = other._corners;
+	return *this;
 }
 
 ostream& AnnRotBox::print(ostream &os) const {
