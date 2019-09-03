@@ -81,7 +81,7 @@ class simobserve_unittest_base(unittest.TestCase):
         _ms.open(name)
         stats = _ms.statistics(column, compval)
         _ms.close()
-        return stats[stats.keys()[0]]
+        return stats[list(stats.keys())[0]]
 
     def _check_imstats(self, name, ref, rtol=None, atol=None):
         # ref: a dictionary of reference statistics or reference image name
@@ -277,7 +277,6 @@ class simobserve_sky(simobserve_unittest_base):
         #pass
 
     # Tests of skymodel simulations
-    @unittest.skipIf(is_CASA6,"'int' object is not subscriptable. In task_simobserve. - needs to be fixed")
     def testSky_skymodel(self):
         """Test skymodel simulation: only modify model"""
         skymodel = self.inmodel
@@ -304,7 +303,6 @@ class simobserve_sky(simobserve_unittest_base):
                     self._get_data_prefix(antennalist,self.project)+".skymodel"
         self._check_imstats(currmodel, self.refmodel)
 
-    @unittest.skipIf(is_CASA6,"'int' object is not subscriptable. In task_simobserve. - needs to be fixed")
     def testSky_almaptg(self):
         """Test skymodel simulation: only setpointing (maptype='ALMA')"""
         skymodel = self.refmodel
@@ -325,7 +323,6 @@ class simobserve_sky(simobserve_unittest_base):
         refptg = self.refpref + "alma.alma.out01.ptg.txt"
         self._check_ptgfile(currptg, refptg)
 
-    @unittest.skipIf(is_CASA6,"'int' object is not subscriptable. In task_simobserve. - needs to be fixed")
     def testSky_hexptg(self):
         """Test skymodel simulation: only setpointing (maptype='hexagonal')"""
         skymodel = self.refmodel
@@ -346,7 +343,6 @@ class simobserve_sky(simobserve_unittest_base):
         refptg = self.refpref + "hex.aca.i.ptg.txt"
         self._check_ptgfile(currptg, refptg)
 
-    @unittest.skipIf(is_CASA6,"Both antennnalist and sdantlist are defined. - needs to be fixed")
     def testSky_sqptg(self):
         """Test skymodel simulation: only setpointing (maptype='square')"""
         skymodel = self.refmodel
@@ -367,7 +363,6 @@ class simobserve_sky(simobserve_unittest_base):
         refptg = self.refpref + "square.aca.tp.ptg.txt"
         self._check_ptgfile(currptg, refptg)
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testSky_sdObs(self):
         """Test skymodel simulation: only observation (SD)"""
         skymodel = self.refmodel
@@ -389,7 +384,6 @@ class simobserve_sky(simobserve_unittest_base):
         self._check_msstats(currms,self.refms_sd)
         
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testSky_intObs(self):
         """Test skymodel simulation: only observation (INT)"""
         skymodel = self.refmodel
@@ -403,7 +397,8 @@ class simobserve_sky(simobserve_unittest_base):
                          setpointings=setpointings,ptgfile=ptgfile,
                          integration=integration,obsmode=obsmode,
                          antennalist=antennalist,totaltime=totaltime,
-                         thermalnoise="",graphics=self.graphics)
+                         thermalnoise="",graphics=self.graphics,
+                         refdate="2014/05/21",t_ground=269.)
         self.assertTrue(res)
         # compare output MS
         currms = self.project + "/" + \
@@ -422,7 +417,6 @@ class simobserve_sky(simobserve_unittest_base):
                          obsmode=obsmode,thermalnoise="",
                          leakage=leakage,graphics=self.graphics)
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testSky_sdAll(self):
         """Test skymodel simulation: single dish"""
         skymodel = self.inmodel
@@ -453,7 +447,6 @@ class simobserve_sky(simobserve_unittest_base):
         self._check_ptgfile(currpref+".ptg.txt", self.refpref_sd+".ptg.txt")
         self._check_msstats(currpref+".sd.ms",self.refms_sd)
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testSky_intAll(self):
         """Test skymodel simulation: interferometer"""
         skymodel = self.inmodel
@@ -475,7 +468,8 @@ class simobserve_sky(simobserve_unittest_base):
                          setpointings=True,integration=integration,
                          mapsize=mapsize,maptype=maptype,obsmode=obsmode,
                          totaltime=totaltime,antennalist=antennalist,
-                         thermalnoise="",graphics=self.graphics)
+                         thermalnoise="",graphics=self.graphics,
+                         refdate="2014/05/21",t_ground=269.)
         self.assertTrue(res)
         # compare outputs
         currpref = self.project + "/" + \
@@ -652,7 +646,6 @@ class simobserve_comp(simobserve_unittest_base):
                  self._get_data_prefix(sdantlist,self.project)+".sd.ms"
         self._check_msstats(currms,self.refms_sd)
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testComp_intObs(self):
         """Test complist simulation: only observation (INT)"""
         complist = self.incomp
@@ -669,7 +662,8 @@ class simobserve_comp(simobserve_unittest_base):
                          setpointings=setpointings,ptgfile=ptgfile,
                          integration=integration,obsmode=obsmode,
                          antennalist=antennalist,totaltime=totaltime,
-                         thermalnoise="",graphics=self.graphics)
+                         thermalnoise="",graphics=self.graphics,
+                         refdate="2014/05/21",t_ground=269.)
         self.assertTrue(res)
         # compare output MS
         currms = self.project + "/" + \
@@ -719,7 +713,6 @@ class simobserve_comp(simobserve_unittest_base):
         self._check_ptgfile(currpref+".ptg.txt", self.refpref_sd+".ptg.txt")
         self._check_msstats(currpref+".sd.ms",self.refms_sd)
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testComp_intAll(self):
         """Test complist simulation: interferometer"""
         complist = self.incomp
@@ -738,7 +731,8 @@ class simobserve_comp(simobserve_unittest_base):
                          direction=direction,mapsize=mapsize,maptype=maptype,
                          obsmode=obsmode,totaltime=totaltime,
                          antennalist=antennalist,thermalnoise="",
-                         graphics=self.graphics)
+                         graphics=self.graphics,
+                         refdate="2014/05/21",t_ground=269.)
         self.assertTrue(res)
         # compare outputs
         currpref = self.project + "/" + \
@@ -747,7 +741,6 @@ class simobserve_comp(simobserve_unittest_base):
         self._check_ptgfile(currpref+".ptg.txt", self.refpref_int+".ptg.txt")
         self._check_msstats(currpref+".ms",self.refms_int)
 
-    @unittest.skipIf(is_CASA6,"Failed AlwaysAssert sdirections.nelements() == nptg - needs to be fixed.")
     def testComp_intNchan(self):
         """Test complist simulation: interferometer, but with comp_nchan > 1"""
         complist = self.incomp
@@ -766,7 +759,8 @@ class simobserve_comp(simobserve_unittest_base):
                          integration=integration,direction=direction,
                          mapsize=mapsize,maptype=maptype,obsmode=obsmode,
                          totaltime=totaltime,antennalist=antennalist,
-                         thermalnoise="",graphics=self.graphics)
+                         thermalnoise="",graphics=self.graphics,
+                         refdate="2014/05/21",t_ground=269.)
         self.assertTrue(res)
         # compare outputs
         currpref = self.project + "/" + \
@@ -957,7 +951,6 @@ class simobserve_skycomp(simobserve_unittest_base):
                  self._get_data_prefix(sdantlist,self.project)+".sd.ms"
         self._check_msstats(currms,self.refms_sd,rtol=self.rtol_sdms)
         
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testSC_intObs(self):
         """Test skymodel + complist simulation: only observation (INT)"""
         skymodel = self.inmodel
@@ -1028,7 +1021,6 @@ class simobserve_skycomp(simobserve_unittest_base):
         self._check_ptgfile(currpref+".ptg.txt", self.refpref_sd+".ptg.txt")
         self._check_msstats(currpref+".sd.ms",self.refms_sd,rtol=self.rtol_sdms)
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testSC_intAll(self):
         """Test skymodel + complist simulation: interferometer"""
         skymodel = self.inmodel
@@ -1109,7 +1101,6 @@ class simobserve_noise(simobserve_unittest_base):
 
     #-----------------------------------------------------------------#
     # thermalnoise = "tsys-manual"
-    @unittest.skipIf(is_CASA6,"int object is not subscriptable' in task_simobserve - needs to be fixed")
     def testNZ_intMan(self):
         """Test INT thermal noise (tsys-manual)"""
         project = self.project_int
@@ -1140,7 +1131,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
 
-    @unittest.skipIf(is_CASA6,"Both antennalist and sdantlist are defined. Define one of them. - needs to be fixed")
     def testNZ_sdMan(self):
         """Test SD thermal noise (tsys-manual): standard parameter set"""
         thermalnoise="tsys-manual"
@@ -1166,7 +1156,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
 
-    @unittest.skipIf(is_CASA6,"Both antennalist and sdantlist are defined. Define one of them. - needs to be fixed")
     def testNZ_sdMan_tau(self):
         """Test SD thermal noise (tsys-manual): tau0=1.5"""
         thermalnoise="tsys-manual"
@@ -1193,7 +1182,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
         
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testNZ_sdMan_dnu(self):
         """Test SD thermal noise (tsys-manual): inwidth='1MHz'"""
         thermalnoise="tsys-manual"
@@ -1222,7 +1210,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testNZ_sdMan_tint(self):
         """Test SD thermal noise (tsys-manual): integration='2s'"""
         thermalnoise="tsys-manual"
@@ -1252,7 +1239,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
         
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testNZ_sdMan_el(self):
         """Test SD thermal noise (tsys-manual): elevation = 60 deg"""
         thermalnoise="tsys-manual"
@@ -1286,7 +1272,7 @@ class simobserve_noise(simobserve_unittest_base):
 
     #-----------------------------------------------------------------#
     # thermalnoise = "tsys-atm"
-    @unittest.skipIf(is_CASA6,"noise level differs by my nore than 10% error shown - needs to be fixed")
+    @unittest.skip("disabled pending change in CAS-12496")
     def testNZ_intAtm(self):
         """Test INT thermal noise (tsys-atm): standard parameter set"""
         project = self.project_int
@@ -1315,7 +1301,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
 
-    @unittest.skipIf(is_CASA6,"noise level differs by my nore than 10% error shown - needs to be fixed")
     def testNZ_sdAtm(self):
         """Test SD thermal noise (tsys-atm): standard parameter set"""
         thermalnoise="tsys-atm"
@@ -1341,7 +1326,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
 
-    @unittest.skipIf(is_CASA6,"noise level differs by my nore than 10% error shown - needs to be fixed")
     def testNZ_sdAtm_pwv(self):
         """Test SD thermal noise (tsys-atm): pwv = 2.0"""
         thermalnoise="tsys-atm"
@@ -1368,7 +1352,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testNZ_sdAtm_dnu(self):
         """Test SD thermal noise (tsys-atm): inwidth='1MHz'"""
         thermalnoise="tsys-atm"
@@ -1380,7 +1363,8 @@ class simobserve_noise(simobserve_unittest_base):
                          obsmode='sd',sdantlist=self.sdantlist,
                          antennalist=self.antennalist,totaltime=self.tottime,
                          thermalnoise=thermalnoise,user_pwv=self.pwv,
-                         graphics=self.graphics)
+                         graphics=self.graphics,
+                         refdate="2014/05/21",t_ground=269.)
         self.assertTrue(res)
         # check for output file
         msdict = self._get_ms_names(self.project,self.sdantlist)
@@ -1397,7 +1381,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testNZ_sdAtm_tint(self):
         """Test SD thermal noise (tsys-atm): integration = '2s'"""
         thermalnoise="tsys-atm"
@@ -1427,7 +1410,6 @@ class simobserve_noise(simobserve_unittest_base):
         self.assertTrue(abs((msnoise-ananoise)/ananoise) < 1.e-1, \
                         msg=self.anamsg % (msnoise, ananoise))
 
-    @unittest.skipIf(is_CASA6,"simulator tool assertion error here - needs to be fixed")
     def testNZ_sdAtm_el(self):
         """Test SD thermal noise (tsys-atm): elevation = 60 deg"""
         thermalnoise="tsys-atm"
@@ -1617,6 +1599,11 @@ class simobserve_badinputs(simobserve_unittest_base):
 
     failmsg = "The task must throw exception"
     errmsg = "Unexpected exception was thrown: %s"
+
+    # NOTE: antennalist argument added to make this work in casataks where
+    # the constraints in the xml arguments are not applied (that happens 
+    # in casalith). The value used is what that constraint value is for
+    # these cases (obsmode="int", the default obsmode value)
     
     # Reserved methods of unit tests
     def setUp(self):
@@ -1648,11 +1635,10 @@ class simobserve_badinputs(simobserve_unittest_base):
                     shutil.rmtree(self.project)
 
     # Tests on invalid parameter sets
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def test_default(self):
         """Test Default parameter set. Neigher skymodel nor complist"""
         try:
-            res = simobserve()
+            res = simobserve(antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("At least one of skymodel or complist must be set.")
@@ -1660,12 +1646,11 @@ class simobserve_badinputs(simobserve_unittest_base):
             self.assertNotEqual(pos,-1,msg=msg)
 
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def test_noProject(self):
         """Test no project name"""
         project = ''
         try:
-            res = simobserve(project=project)
+            res = simobserve(project=project,antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("No such file or directory: ''")
@@ -1673,72 +1658,70 @@ class simobserve_badinputs(simobserve_unittest_base):
             self.assertNotEqual(pos,-1,msg=msg)
         
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_skymodel(self):
         """Test bad skymodel name"""
         skymodel=self.badname
         try:
-            res = simobserve(project=self.project,skymodel=skymodel)
+            res = simobserve(project=self.project,skymodel=skymodel,antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("No sky input found")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def test_notImage(self):
         """Test non-image skymodel"""
         skymodel=self.incomp
         try:
-            res = simobserve(project=self.project,
+            res = simobserve(project=self.project,antennalist="alma.out10.cfg",
                              totaltime=self.tottime,mapsize=self.mapsize,
                              skymodel=skymodel)
             self.fail(self.failmsg)
         except Exception as e:
-            #pos=str(e).find("Image %s cannot be opened; its type is unknown" % skymodel)
-            pos=str(e).find("Unable to open image.")
+            pos=str(e).find("Unable to open image %s." % skymodel)
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
         
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_inbright(self):
         """Test bad inbright"""
         inbright=self.badquant
         try:
             res = simobserve(project=self.project,skymodel=self.inimage,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             inbright=inbright)
+                             inbright=inbright,antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
-            pos=str(e).find("invalid literal for float(): %s" % inbright)
+            if is_CASA6:
+                pos=str(e).find("could not convert string to float: '%s'" % inbright)
+            else:
+                pos=str(e).find("invalid literal for float(): %s" % inbright)
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_indirection(self):
         """Test bad indirection ('J3000' is defaulted to 'J2000')"""
         indirection=self.baddir
         res = simobserve(project=self.project,skymodel=self.inimage,
                          totaltime=self.tottime,mapsize=self.mapsize,
-                         indirection=indirection,graphics=self.graphics)
+                         indirection=indirection,graphics=self.graphics,
+                         antennalist="alma.out10.cfg")
         self.assertTrue(res)
         # Need to compare MS with one generated with J2000
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_incell(self):
         """Test bad incell"""
         incell=self.badquant
         try:
             res = simobserve(project=self.project,skymodel=self.inimage,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             incell=incell)
+                             incell=incell,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find('Error in QuantumHolder::fromString with input string "%s": Illegal input units or format' % incell)
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_incenter(self):
         """Test bad incenter"""
         # Negaitve and non-frequency quantity are ignored
@@ -1746,11 +1729,11 @@ class simobserve_badinputs(simobserve_unittest_base):
 
         res = simobserve(project=self.project,skymodel=self.inimage,
                          totaltime=self.tottime,mapsize=self.mapsize,
-                         incenter=incenter,graphics=self.graphics)
+                         incenter=incenter,graphics=self.graphics,
+                         antennalist="alma.out10.cfg")
         self.assertTrue(res)
         # Need to compare MS with one generated with J2000
         
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_inwidth(self):
         """Test bad inwidth"""
         # Negaitve and non-frequency quantity are ignored
@@ -1758,37 +1741,37 @@ class simobserve_badinputs(simobserve_unittest_base):
 
         res = simobserve(project=self.project,skymodel=self.inimage,
                          totaltime=self.tottime,mapsize=self.mapsize,
-                         inwidth=inwidth,graphics=self.graphics)
+                         inwidth=inwidth,graphics=self.graphics,
+                         antennalist="alma.out10.cfg")
         self.assertTrue(res)
         # Need to compare MS with one generated with J2000
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_complist(self):
         """Test bad complist name"""
         complist=self.badname
         try:
             res = simobserve(project=self.project,complist=complist,
-                             totaltime=self.tottime,mapsize=self.mapsize)
+                             totaltime=self.tottime,mapsize=self.mapsize,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("No sky input found")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
         
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def test_notComp(self):
         """Test non-components list complist"""
         complist=self.inimage
         try:
             res = simobserve(project=self.project,complist=complist,
-                             totaltime=self.tottime,mapsize=self.mapsize)
+                             totaltime=self.tottime,mapsize=self.mapsize,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("%s is non existant or is not a componentlist table" % complist)
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_compwidth(self):
         """Test bad compwidth"""
         # not frequency
@@ -1797,14 +1780,14 @@ class simobserve_badinputs(simobserve_unittest_base):
         try:
             res = simobserve(project=self.project,complist=self.incomp,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             compwidth=compwidth,comp_nchan=comp_nchan)
+                             compwidth=compwidth,comp_nchan=comp_nchan,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("Quantum::operator- unequal units 'GHz, 'arcsec'")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - unexpected comp_nchan keyword - fix this")
     def testBad_comp_nchan(self):
         """Test bad comp_nchan"""
         compwidth="2arcsec"
@@ -1812,14 +1795,17 @@ class simobserve_badinputs(simobserve_unittest_base):
         try:
             res = simobserve(project=self.project,complist=self.incomp,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             compwidth=compwidth,comp_nchan=comp_nchan)
+                             compwidth=compwidth,comp_nchan=comp_nchan,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
-            pos=str(e).find("Parameter verification failed")
+            if is_CASA6:
+                pos=str(e).find("must be of cInt type")
+            else:
+                pos=str(e).find("Parameter verification failed")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
         
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_ptgfile(self):
         """Test bad ptgfile name"""
         setpointings=False
@@ -1827,14 +1813,14 @@ class simobserve_badinputs(simobserve_unittest_base):
         try:
             res = simobserve(project=self.project,skymodel=self.inimage,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             setpointings=setpointings,ptgfile=ptgfile)
+                             setpointings=setpointings,ptgfile=ptgfile,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("Can't find pointing file")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def test_notPtgfile(self):
         """Test nonconforming ptgfile"""
         # Generate bad file
@@ -1849,39 +1835,39 @@ class simobserve_badinputs(simobserve_unittest_base):
         try:
             res = simobserve(project=self.project,skymodel=self.inimage,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             setpointings=setpointings,ptgfile=ptgfile)
+                             setpointings=setpointings,ptgfile=ptgfile,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("No valid lines found in pointing file")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_integration(self):
         """Test bad integration"""
         integration = self.badtime
         try:
             res = simobserve(project=self.project,skymodel=self.inimage,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             integration=integration)
+                             integration=integration,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find('Failed AlwaysAssert qIntTime.getValue("s")>=0')
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_direction(self):
         """Test bad direction ('J3000' is defaulted to 'J2000')"""
         direction = self.baddir
 
         res = simobserve(project=self.project,skymodel=self.inimage,
                          totaltime=self.tottime,mapsize=self.mapsize,
-                         direction=direction,graphics=self.graphics)
+                         direction=direction,graphics=self.graphics,
+                         antennalist="alma.out10.cfg")
         self.assertTrue(res)
         # Need to compare MS with one generated with J2000
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_mapsize(self):
         """Test bad mapsize"""
         setpointings=True
@@ -1889,14 +1875,15 @@ class simobserve_badinputs(simobserve_unittest_base):
         try:
             res = simobserve(project=self.project,skymodel=self.inimage,
                              totaltime=self.tottime,
-                             setpointings=setpointings,mapsize=mapsize)
+                             setpointings=setpointings,mapsize=mapsize,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("can't interpret '%s' as a CASA quantity" % self.badquant)
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
+    @unittest.skipIf(is_CASA6,"Allowed maptype values are not checked in casatasks.")
     def testBad_maptype(self):
         """Test bad maptype"""
         maptype = self.badname
@@ -1911,14 +1898,14 @@ class simobserve_badinputs(simobserve_unittest_base):
             self.assertNotEqual(pos,-1,msg=msg)        
 
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_spacing(self):
         """Test bad pointingspacing"""
         pointingspacing = self.badquant
         try:
             res = simobserve(project=self.project,skymodel=self.inimage,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             pointingspacing=pointingspacing)
+                             pointingspacing=pointingspacing,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("can't interpret '%s' as a CASA quantity" % pointingspacing)
@@ -1926,7 +1913,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             self.assertNotEqual(pos,-1,msg=msg)        
 
 
-    @unittest.skipIf(is_CASA6,"Couldn't find simobserve_bad/simobserve_bad.aca.tp.sd.ms")
+    @unittest.skipIf(is_CASA6,"Allowed obsmode types are not checked in casatasks")
     def testBad_obsmode(self):
         """Test bad obsmode"""
         obsmode = self.badname
@@ -1940,7 +1927,6 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_antennalist(self):
         """Test bad antennalist name"""
         antennalist = self.badname
@@ -1954,20 +1940,18 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_caldirection(self):
         """Test bad caldirection ('J3000' is defaulted to 'J2000')"""
         caldirection = self.baddir
 
         res = simobserve(project=self.project,skymodel=self.inimage,
                          totaltime=self.tottime,mapsize=self.mapsize,
-                         caldirection=caldirection,graphics=self.graphics)
+                         caldirection=caldirection,graphics=self.graphics,
+                         antennalist="alma.out10.cfg")
         self.assertTrue(res)
         # Need to compare MS with one generated with J2000
 
 
-        # simobserve so far does not catches this
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_calflux(self):
         """Test bad calflux"""
         caldirection = "J2000 19h00m00 -23d00m50"
@@ -1975,14 +1959,14 @@ class simobserve_badinputs(simobserve_unittest_base):
         try:
             res = simobserve(project=self.project,skymodel=self.inimage,
                              totaltime=self.tottime,mapsize=self.mapsize,
-                             caldirection=caldirection,calflux=calflux)
+                             caldirection=caldirection,calflux=calflux,
+                             antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
             pos=str(e).find("can't interpret '%s' as a CASA quantity" % calflux)
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_sdantlist(self):
         """Test bad sdantlist name"""
         obsmode = "sd"
@@ -2000,7 +1984,6 @@ class simobserve_badinputs(simobserve_unittest_base):
 
     # simobserve automatically defaults a bad ID number to 0.
     # therefore testing non-numeric 'sdant' here
-    @unittest.skipIf(is_CASA6,"parameter verification looks different here - fix this")
     def testBad_sdant(self):
         """Test bad sdant (non-numeric sdant)"""
         obsmode = "sd"
@@ -2014,11 +1997,13 @@ class simobserve_badinputs(simobserve_unittest_base):
                              sdant=sdant)
             self.fail(self.failmsg)
         except Exception as e:
-            pos=str(e).find("Parameter verification failed")
+            if is_CASA6:
+                pos=str(e).find("must be of cInt type")
+            else:
+                pos=str(e).find("Parameter verification failed")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_refdate(self):
         """Test bad refdate"""
         obsmode = "sd"
@@ -2036,7 +2021,6 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_hourangle(self):
         """Test bad hourangle"""
         obsmode = "sd"
@@ -2055,7 +2039,6 @@ class simobserve_badinputs(simobserve_unittest_base):
             self.assertNotEqual(pos,-1,msg=msg)        
 
     # casapy crashes for totaltime < 0
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
     def testBad_totaltime(self):
         """Test bad totaltime"""
         obsmode = "sd"
@@ -2073,7 +2056,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
+    @unittest.skipIf(is_CASA6,"Allowed noisetype values are not checked in casatasks.")
     def testBad_noisetype(self):
         """Test bad thermalnoise type"""
         thermalnoise = self.badname
@@ -2087,7 +2070,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
+    @unittest.skipIf(is_CASA6,"Allowed user_pwv values are not checked in casatasks")
     def testBad_pwv(self):
         """Test bad user_pwv"""
         thermalnoise = 'tsys-atm'
@@ -2102,7 +2085,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
+    @unittest.skipIf(is_CASA6,"Allowed t_ground values are not checked in casatasks")
     def testBad_Tground(self):
         """Test bad t_ground"""
         thermalnoise = 'tsys-atm'
@@ -2117,7 +2100,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
+    @unittest.skipIf(is_CASA6,"Allowed t_sky values are not checked in casatasks")
     def testBad_Tsky(self):
         """Test bad t_sky"""
         thermalnoise = 'tsys-manual'
@@ -2132,7 +2115,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
+    @unittest.skipIf(is_CASA6,"Allowed tau0 values are not checked in casatasks")
     def testBad_tau0(self):
         """Test bad tau0"""
         thermalnoise = 'tsys-manual'
@@ -2147,7 +2130,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
+    @unittest.skipIf(is_CASA6,"Allowed leakage values are not checked in casatasks")
     def testBad_leakage(self):
         """Test bad leakage"""
         leakage = self.badnum
@@ -2161,7 +2144,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
     
-    @unittest.skipIf(is_CASA6,"Exception message thrown is different - antennnalist/sdantennnalist - fix this")
+    @unittest.skipIf(is_CASA6,"Allowed graphics values are not checked in casatasks")
     def testBad_graphics(self):
         """Test bad graphics selection"""
         graphics = self.badname
