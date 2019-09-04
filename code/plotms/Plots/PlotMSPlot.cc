@@ -2145,17 +2145,17 @@ void PlotMSPlot::setXAxisRange(
 	// else autoscale
 
 	// Must set scale before range; NORMAL, TIME, or ANGLE scale
-	canvas->setAxisScale(xPlotAxis, PMS::axisScale(xAxis));
+	canvas->setAxisScale(xPlotAxis, PMS::axisScale(xAxis), PMS::axisScaleBase(xAxis));
 
 	// x range min/max for all plots
 	double xming(DBL_MAX), xmaxg(-DBL_MAX);  // global xmin/xmax
 	for (size_t plotindex=0; plotindex<axesParams.size(); ++plotindex) {
 		for (unsigned int xindex=0; xindex < axesParams[plotindex]->numXAxes(); ++xindex) {
 			// Set axis scale, direction for Ra/Dec
-	        canvas->setAxisScaleAngleFormat(xPlotAxis, PMS::angleFormat(xAxis, cacheParams[plotindex]->xFrame()));
+			auto xFrame = cacheParams[plotindex]->xFrame();
+			canvas->setAxisScaleAngleFormat(xPlotAxis, PMS::angleFormat(xAxis, xFrame));
 			if (xAxis == PMS::RA) {
 				if (cacheParams[plotindex]->yAxis(xindex) == PMS::DEC) {
-					auto xFrame = cacheParams[plotindex]->xFrame();
 					SortDirection sortDir;
 					switch(xFrame){
 						case PMS::CoordSystem::AZELGEO:
@@ -2386,7 +2386,9 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 	// set axis scales based on axes
 	PlotAxisScale axisScaleLeft(NORMAL), axisScaleRight(NORMAL);
 	AngleFormat angleFormatLeft(AngleFormat::DECIMAL), angleFormatRight(AngleFormat::DECIMAL);
+	unsigned int scaleBaseLeft(10), scaleBaseRight(10);
 	bool scaleLeftSet(false), scaleRightSet(false);
+
 	// determine which axes need range set
 	double ymingLeft(DBL_MAX), ymaxgLeft(-DBL_MAX);   // global ymin/ymax for left axis
 	double ymingRight(DBL_MAX), ymaxgRight(-DBL_MAX); // global ymin/ymax for right axis
@@ -2398,12 +2400,14 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 			PlotAxis yPlotAxis = axesParams[plotindex]->yAxis(yindex);
 			PlotAxisScale yAxisScale = PMS::axisScale(yaxis);
 			AngleFormat yAngleFormat = PMS::angleFormat(yaxis, cacheParams[plotindex]->yFrame(yindex));
+			unsigned int yScaleBase = PMS::axisScaleBase(yaxis);
 
 			// scale
 			if (yPlotAxis == Y_LEFT) {
 				if (!scaleLeftSet) { // use first settings
 					axisScaleLeft = yAxisScale;
 					angleFormatLeft = yAngleFormat;
+					scaleBaseLeft = yScaleBase;
 					scaleLeftSet = true;
 				} else {
 					if (yAxisScale != axisScaleLeft) {
@@ -2412,11 +2416,15 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 					if (yAngleFormat != angleFormatLeft) {
 						angleFormatLeft = DECIMAL;  // use DECIMAL if scales differ
 					}
+					if (yScaleBase != scaleBaseLeft) {
+						scaleBaseLeft = 10; // use default if scales differ
+					}
 				}
 			} else {
 				if (!scaleRightSet) { // use first setting
 					axisScaleRight = yAxisScale;
 					angleFormatRight = yAngleFormat;
+					scaleBaseRight = yScaleBase;
 					scaleRightSet = true;
 				} else {
 					if (yAxisScale != axisScaleRight) {
@@ -2424,6 +2432,9 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 					}
 					if (yAngleFormat != angleFormatRight) {
 						angleFormatRight = DECIMAL;  // use DECIMAL if scales differ
+					}
+					if (yScaleBase != scaleBaseRight) {
+						scaleBaseRight = 10; // use default if scales differ
 					}
 				}
 			}
@@ -2477,8 +2488,8 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 	}
 
 	// Must set scale before range; NORMAL, TIME, or ANGLE scale
-	canvas->setAxisScale(Y_LEFT, axisScaleLeft);
-	canvas->setAxisScale(Y_RIGHT, axisScaleRight);
+	canvas->setAxisScale(Y_LEFT, axisScaleLeft, scaleBaseLeft);
+	canvas->setAxisScale(Y_RIGHT, axisScaleRight, scaleBaseRight);
 	canvas->setAxisScaleAngleFormat(Y_LEFT, angleFormatLeft);
 	canvas->setAxisScaleAngleFormat(Y_RIGHT, angleFormatRight);
 
