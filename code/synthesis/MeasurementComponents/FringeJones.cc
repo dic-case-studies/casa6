@@ -69,7 +69,7 @@
 
 // DEVDEBUG gates the development debugging information to standard
 // error; it should be set to 0 for production.
-#define DEVDEBUG false
+#define DEVDEBUG true
 
 using namespace casa::vi;
 using namespace casacore;
@@ -763,6 +763,13 @@ public:
         if (iant > refant) ipar -= 1;
         return 3*ipar;        
     }
+    Int
+    get_param_corr_param_index(size_t iant, size_t ipar) {
+        if (iant == refant) return -1;
+        int i = antennaIndexMap[iant];
+        if (iant > refant) i -= 1;
+        return 3*i+ipar;        
+    }
     size_t
     get_active_corr() {
         return activeCorr;
@@ -836,32 +843,26 @@ expb_f(const gsl_vector *param, void *d, gsl_vector *f)
             // We also need to get the right parameters for this,
             // polarization (icorr is an encoding of the
             // polarization of the correlation products).
-            Int iparam1 = bundle->get_param_corr_index(ant1);
-            Double phi0_1, tau1, r1;
-            if (iparam1 >= 0) {
-                phi0_1 = gsl_vector_get(param, iparam1+0);
-                tau1 =   gsl_vector_get(param, iparam1+1);
-                r1 =     gsl_vector_get(param, iparam1+2);
-            } else {
-                phi0_1 = 0.0;
-                tau1 = 0.0;
-                r1 = 0.0;
-            }
-            Int iparam2 = bundle->get_param_corr_index(ant2);
-            Double phi0_2, tau2, r2;
-            if (iparam2 >= 0) {
-                phi0_2 = gsl_vector_get(param, iparam2+0);
-                tau2 =   gsl_vector_get(param, iparam2+1);
-                r2 =     gsl_vector_get(param, iparam2+2);
-            } else {
-                phi0_2 = 0.0;
-                tau2 = 0.0;
-                r2 = 0.0;
+            
+            Double phi0, tau, r;
+            {
+                Int i;
+                Double phi0_1, tau1, r1;
+                Double phi0_2, tau2, r2;
+                
+                phi0_1 = ((i = bundle->get_param_corr_param_index(ant1, 0))>=0) ? gsl_vector_get(param, i) : 0.0;
+                tau1   = ((i = bundle->get_param_corr_param_index(ant1, 1))>=0) ? gsl_vector_get(param, i) : 0.0;
+                r1     = ((i = bundle->get_param_corr_param_index(ant1, 2))>=0) ? gsl_vector_get(param, i) : 0.0;
+                
+                phi0_2 = ((i = bundle->get_param_corr_param_index(ant2, 0))>=0) ? gsl_vector_get(param, i) : 0.0;
+                tau2   = ((i = bundle->get_param_corr_param_index(ant2, 1))>=0) ? gsl_vector_get(param, i) : 0.0;
+                r2     = ((i = bundle->get_param_corr_param_index(ant2, 2))>=0) ? gsl_vector_get(param, i) : 0.0;
+                
+                phi0 = phi0_2 - phi0_1;
+                tau = tau2 - tau1;
+                r = r2-r1;
             }
             
-            Float phi0 = phi0_2 - phi0_1;
-            Float tau  = tau2 - tau1;
-            Float r    = r2 - r1;
             for (size_t ichan = 0; ichan != v.ncolumn(); ichan++) {
                 if (fl(dcorr, ichan, irow)) continue;
                 Complex vis = v(dcorr, ichan, irow);
@@ -910,10 +911,10 @@ expb_f(const gsl_vector *param, void *d, gsl_vector *f)
 
     
 int
-expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void *bundle_, gsl_vector *v, gsl_matrix *JTJ)
+expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, void *bundle_, gsl_vector *v, gsl_matrix *JTJ)
 {
 
-    // x is the current vector for which we're finding the jacobian.
+    // param is the current vector for which we're finding the jacobian.
     // if TransJ is true, evaluate J^T u and store in v.
     // Also store J^T . J in lower half of JTJ.
     std::set <std::pair < Int, Int> > baselines;
@@ -930,9 +931,10 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
     gsl_matrix_set_zero(JTJ);
     
     Double refTime = bundle->get_t0();
-    std::set< Int > params;
+
+    std::cerr << "Starting jacobian" << std::endl;
+
     for (Int ibuf=0; ibuf < sdbs.nSDB(); ibuf++) {
-        // cerr << "OK so count = " << count << endl;
         SolveDataBuffer& s (sdbs(ibuf));
         if (!s.Ok()) continue;
 
@@ -949,7 +951,7 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
 
             Int ant1(s.antenna1()(irow));
             Int ant2(s.antenna2()(irow));
-
+            
             if (ant1==ant2) continue;
             if (!bundle->isActive(ant1) || !bundle->isActive(ant2)) {
                 // cerr << "Skipping " << ant1 << ", " << ant2 << endl;                   
@@ -964,33 +966,32 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
             // We also need to get the right parameters for this
             // polarization (icorr is an encoding of the
             // polarization of the correlation products).
-
-            Int iparam1 = bundle->get_param_corr_index(ant1);
-            Double phi0_1, tau1, r1;
-            if (iparam1 >= 0) {
-                phi0_1 = gsl_vector_get(x, iparam1+0);
-                tau1 =   gsl_vector_get(x, iparam1+1);
-                r1 =     gsl_vector_get(x, iparam1+2);
-            } else {
-                phi0_1 = 0.0;
-                tau1 = 0.0;
-                r1 = 0.0;
+            
+            Double phi0, tau, r;
+            {
+                Int i;
+                Double phi0_1, tau1, r1;
+                Double phi0_2, tau2, r2;
+                
+                phi0_1 = ((i = bundle->get_param_corr_param_index(ant1, 0))>=0) ? gsl_vector_get(param, i) : 0.0;
+                tau1   = ((i = bundle->get_param_corr_param_index(ant1, 1))>=0) ? gsl_vector_get(param, i) : 0.0;
+                r1     = ((i = bundle->get_param_corr_param_index(ant1, 2))>=0) ? gsl_vector_get(param, i) : 0.0;
+                
+                phi0_2 = ((i = bundle->get_param_corr_param_index(ant2, 0))>=0) ? gsl_vector_get(param, i) : 0.0;
+                tau2   = ((i = bundle->get_param_corr_param_index(ant2, 1))>=0) ? gsl_vector_get(param, i) : 0.0;
+                r2     = ((i = bundle->get_param_corr_param_index(ant2, 2))>=0) ? gsl_vector_get(param, i) : 0.0;
+                
+                phi0 = phi0_2 - phi0_1;
+                tau = tau2 - tau1;
+                r = r2-r1;
             }
-            Int iparam2 = bundle->get_param_corr_index(ant2);
-            Double phi0_2, tau2, r2;
-            if (iparam2 >= 0) {
-                phi0_2 = gsl_vector_get(x, iparam2+0);
-                tau2 =   gsl_vector_get(x, iparam2+1);
-                r2 =     gsl_vector_get(x, iparam2+2);
-            } else {
-                phi0_2 = 0.0;
-                tau2 = 0.0;
-                r2 = 0.0;
-            }
-            Double phi0 = phi0_2 - phi0_1;
-            Double tau = tau2 - tau1;
-            Double r = r2-r1;
 
+            // cerr << "ant1 " << ant1
+            //     << " i1_0 " << bundle->get_param_corr_param_index(ant1, 0)
+            //     << " ant2 " << ant2
+            //     << " i2_0 " << bundle->get_param_corr_param_index(ant2, 0)
+            //     << " phi0 " << phi0 << " tau " << tau << " r " << endl;                
+                
             //Double ref_freq = freqs(0); 
             //Double wDt = C::_2pi*(t1 - refTime) * ref_freq; 
             Double wDt = C::_2pi*(t1 - refTime) * reffreq0; 
@@ -1011,128 +1012,104 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
                 Double ws = sin(mtheta);
                 Double wc = cos(mtheta);
 
-                if (iparam2 >= 0) {
-                    params.insert(iparam2);
-                    /* 
-                       What we want to express is just:
-                       J[count + 0, iparam2 + 0] = w*-ws*-1.0; 
-                       J[count + 1, iparam2 + 0] = w*+wc*-1.0;
-                       J[count + 0, iparam2 + 1] = w*-ws*-wDf;
-                       J[count + 1, iparam2 + 1] = w*+wc*-wDf;
-                       J[count + 0, iparam2 + 2] = w*-ws*-wDt;
-                       J[count + 1, iparam2 + 2] = w*+wc*-wDt;
+                Double p0 = 1.0;
+                Double p1 = wDf;
+                Double p2 = wDt;
 
-                       But in the GSL multilarge framework we have to
-                       be ready to calculate either J*u for a given u
-                       or J^T*u, depending on the flag TransJ, and we also have to fill in the 
-                       
-                       v[iparam + ...] = J[count + ..., iparam + ...] * u[iparam + ...]
+                Vector<Double> dterm2(3);
+                dterm2(0) = -p0;
+                dterm2(1) = -p1;
+                dterm2(2) = -p2;
 
-                       or
-                       
-                       v[iparam + ...] = J^T[iparam + ..., count + ...] * u[count + ...]
-
-                       <https://www.gnu.org/software/gsl/doc/html/nls.html#c.gsl_multifit_nlinear_default_parameters>
-
-                       "Additionally, the normal equations matrix J^T J should be stored in the lower half of JTJ."
-
-                       So we should also use
-                       JTJ[iparam + ..., iparam + ...] += J^T[iparam + ..., count + ...] J[count + ..., iparam + ...] 
-
-                    */
-                    if (TransJ==CblasNoTrans) {
-                        // v = J u expressed here as v[count + 0] += J[count + 0, iparam2+0] *u[iparam2 + 0] etc.
-                        // where we have to use gsl syntax and 
-                        // Jacobians listed here 
-                        // J[count + 0, iparam2 + 0]:
-                        (*gsl_vector_ptr(v, count + 0)) += (w*-ws*-1.0) * gsl_vector_get(u, iparam2 + 0);
-                        // J[count + 0, iparam2 + 1]:
-                        (*gsl_vector_ptr(v, count + 0)) += (w*-ws*-wDf) * gsl_vector_get(u, iparam2 + 1);
-                        // J[count + 0, iparam2 + 2]:
-                        (*gsl_vector_ptr(v, count + 0)) += (w*-ws*-wDt) * gsl_vector_get(u, iparam2 + 2);
-                        
-                        // J[count + 1, iparam2 + 0]:
-                        (*gsl_vector_ptr(v, count + 1)) += (w*+wc*-1.0) * gsl_vector_get(u, iparam2 + 0);
-                        // J[count + 1, iparam2 + 1]:
-                        (*gsl_vector_ptr(v, count + 1)) += (w*+wc*-wDf) * gsl_vector_get(u, iparam2 + 1);
-                        // J[count + 1, iparam2 + 2]:
-                        (*gsl_vector_ptr(v, count + 1)) += (w*+wc*-wDt) * gsl_vector_get(u, iparam2 + 2);
-                    } else {
-                        (*gsl_vector_ptr(v, iparam2 + 0)) += (w*-ws*-1.0) * gsl_vector_get(u, count + 0);
-                        (*gsl_vector_ptr(v, iparam2 + 0)) += (w*+wc*-1.0) * gsl_vector_get(u, count + 1);
-                        (*gsl_vector_ptr(v, iparam2 + 1)) += (w*-ws*-wDf) * gsl_vector_get(u, count + 0);
-                        (*gsl_vector_ptr(v, iparam2 + 1)) += (w*+wc*-wDf) * gsl_vector_get(u, count + 1);
-                        (*gsl_vector_ptr(v, iparam2 + 2)) += (w*-ws*-wDt) * gsl_vector_get(u, count + 0);
-                        (*gsl_vector_ptr(v, iparam2 + 2)) += (w*+wc*-wDt) * gsl_vector_get(u, count + 1);
+                Vector<Double> dterm1(3);
+                dterm1(0) = p0;
+                dterm1(1) = p1;
+                dterm1(2) = p2;
+                    
+                /* 
+                   What we want to express is just:
+                   J[count + 0, iparam2 + 0] = w*-ws*-1.0; 
+                   J[count + 1, iparam2 + 0] = w*+wc*-1.0;
+                   J[count + 0, iparam2 + 1] = w*-ws*-wDf;
+                   J[count + 1, iparam2 + 1] = w*+wc*-wDf;
+                   J[count + 0, iparam2 + 2] = w*-ws*-wDt;
+                   J[count + 1, iparam2 + 2] = w*+wc*-wDt;
+                   
+                   But in the GSL multilarge framework we have to
+                   be ready to calculate either J*u for a given u
+                   or J^T*u, depending on the flag TransJ, and we also have to fill in the 
+                   
+                   v[iparam + ...] = J[count + ..., iparam + ...] * u[iparam + ...]
+                   
+                   or
+                   
+                   v[iparam + ...] = J^T[iparam + ..., count + ...] * u[count + ...]
+                   
+                   <https://www.gnu.org/software/gsl/doc/html/nls.html#c.gsl_multifit_nlinear_default_parameters>
+                   
+                   "Additionally, the normal equations matrix J^T J should be stored in the lower half of JTJ."
+                   
+                   So we should also use
+                   JTJ[iparam + ..., iparam + ...] += J^T[iparam + ..., count + ...] J[count + ..., iparam + ...] 
+                   
+                */
+                if (TransJ==CblasNoTrans) {
+                    for (Int di=0; di<3; di++) {
+                        Int i;
+                        if ((i = bundle->get_param_corr_param_index(ant2, di))>=0) {
+                            (*gsl_vector_ptr(v, count + 0)) += (w*-ws*dterm2(di)) * gsl_vector_get(u, i);
+                            (*gsl_vector_ptr(v, count + 1)) += (w*+wc*dterm2(di)) * gsl_vector_get(u, i);
+                        }
+                        if ((i = bundle->get_param_corr_param_index(ant1, di))>=0) {
+                            (*gsl_vector_ptr(v, count + 0)) += gsl_vector_get(u, i) * (w*-ws*dterm1(di));
+                            (*gsl_vector_ptr(v, count + 1)) += gsl_vector_get(u, i) * (w*+wc*dterm1(di));
+                        }
                     }
-
-                }
-                if (iparam1 >= 0) {
-                    params.insert(iparam1);
-                    if (TransJ==CblasNoTrans) {
-                        (*gsl_vector_ptr(v, count + 0)) += gsl_vector_get(u, iparam1 + 0) * (w*-ws*+1.0);
-                        (*gsl_vector_ptr(v, count + 0)) += gsl_vector_get(u, iparam1 + 1) * (w*-ws*+wDf); 
-                        (*gsl_vector_ptr(v, count + 0)) += gsl_vector_get(u, iparam1 + 2) * (w*-ws*+wDt);
-                        // 
-                        (*gsl_vector_ptr(v, count + 1)) += gsl_vector_get(u, iparam1 + 0) * (w*+wc*+1.0);
-                        (*gsl_vector_ptr(v, count + 1)) += gsl_vector_get(u, iparam1 + 1) * (w*+wc*+wDf);
-                        (*gsl_vector_ptr(v, count + 1)) += gsl_vector_get(u, iparam1 + 2) * (w*+wc*+wDt);
-                    } else {
-                        // Transpose
-                        (*gsl_vector_ptr(v, iparam1 + 0)) += gsl_vector_get(u, count + 0) * (w*-ws*+1.0);
-                        (*gsl_vector_ptr(v, iparam1 + 0)) += gsl_vector_get(u, count + 1) * (w*+wc*+1.0);
-                        (*gsl_vector_ptr(v, iparam1 + 1)) += gsl_vector_get(u, count + 0) * (w*-ws*+wDf);
-                        (*gsl_vector_ptr(v, iparam1 + 1)) += gsl_vector_get(u, count + 1) * (w*+wc*+wDf);
-                        (*gsl_vector_ptr(v, iparam1 + 2)) += gsl_vector_get(u, count + 0) * (w*-ws*+wDt);
-                        (*gsl_vector_ptr(v, iparam1 + 2)) += gsl_vector_get(u, count + 1) * (w*+wc*+wDt);
-                    } 
+                } else {
+                    for (Int di=0; di<3; di++) {
+                        Int i;
+                        if ((i = bundle->get_param_corr_param_index(ant2, di))>=0) {
+                            (*gsl_vector_ptr(v, i)) += (w*-ws*dterm2(di)) * gsl_vector_get(u, count + 0);
+                            (*gsl_vector_ptr(v, i)) += (w*+wc*dterm2(di)) * gsl_vector_get(u, count + 1);
+                        }
+                        if ((i = bundle->get_param_corr_param_index(ant1, di))>=0) {
+                            (*gsl_vector_ptr(v, i)) += gsl_vector_get(u, count + 0) * (w*-ws*dterm1(di));
+                            (*gsl_vector_ptr(v, i)) += gsl_vector_get(u, count + 1) * (w*+wc*dterm1(di));
+                        }
+                    }
                 }
                 if (JTJ) {
-                    Double p0 = 1.0;
-                    Double p1 = wDf;
-                    Double p2 = wDt;
+                    Int i, j;
                     Double wterm = (-ws) * (-ws) + (+wc) * (+wc);
                     if (fabs(1-wterm) > 1e-15)
                         throw AipsError("Insufficiently at one");
-                    if (iparam2 >= 0) {
-                        (*gsl_matrix_ptr(JTJ, iparam2 + 0, iparam2 + 0)) += w0*-p0*-p0;
-                        //
-                        (*gsl_matrix_ptr(JTJ, iparam2 + 1, iparam2 + 0)) += w0*-p1*-p0;  
-                        (*gsl_matrix_ptr(JTJ, iparam2 + 1, iparam2 + 1)) += w0*-p1*-p1;
-                        //
-                        (*gsl_matrix_ptr(JTJ, iparam2 + 2, iparam2 + 0)) += w0*-p2*-p0;
-                        (*gsl_matrix_ptr(JTJ, iparam2 + 2, iparam2 + 1)) += w0*-p2*-p1;
-                        (*gsl_matrix_ptr(JTJ, iparam2 + 2, iparam2 + 2)) += w0*-p2*-p2;  
+                    for (Int di=0; di<3; di++) {
+                        for (Int dj=0; dj<=di; dj++) {
+                            if (((i = bundle->get_param_corr_param_index(ant2, di))>=0) &&
+                                ((j = bundle->get_param_corr_param_index(ant2, dj))>=0)) {
+                                (*gsl_matrix_ptr(JTJ, i, j)) += w0*dterm2(di)*dterm2(dj);
+                            }
+                            if (((i = bundle->get_param_corr_param_index(ant1, di))>=0) &&
+                                ((j = bundle->get_param_corr_param_index(ant1, dj))>=0)) {
+                                (*gsl_matrix_ptr(JTJ, i, j)) += w0*dterm1(di)*dterm1(dj);
+                            }
+                        }
                     }
-                    if (iparam1 >= 0) {
-                        (*gsl_matrix_ptr(JTJ, iparam1 + 0, iparam1 + 0)) += w0*p0*p0;
-                        //
-                        (*gsl_matrix_ptr(JTJ, iparam1 + 1, iparam1 + 0)) += w0*p1*p0;
-                        (*gsl_matrix_ptr(JTJ, iparam1 + 1, iparam1 + 1)) += w0*p1*p1;
-                        //
-                        (*gsl_matrix_ptr(JTJ, iparam1 + 2, iparam1 + 0)) += w0*p2*p0;
-                        (*gsl_matrix_ptr(JTJ, iparam1 + 2, iparam1 + 1)) += w0*p2*p1;
-                        (*gsl_matrix_ptr(JTJ, iparam1 + 2, iparam1 + 2)) += w0*p2*p2;  
+                    // iant1 != iant2, so we don't have to worry about collisions
+                    for (Int di=0; di<3; di++) {
+                        for (Int dj=0; dj<3; dj++) {
+                            Int i0, j0;
+                            if (((i0 = bundle->get_param_corr_param_index(ant1, di))>=0) &&
+                                ((j0 = bundle->get_param_corr_param_index(ant2, dj))>=0)) {
+                                Int i1 = max(i0, j0);
+                                Int j1 = min(i0, j0);
+                                (*gsl_matrix_ptr(JTJ, i1, j1)) += w0*dterm2(di)*dterm1(dj);
+                            }
+                        }
                     }
-                    if ((iparam1>=0) && (iparam2>=0) && (iparam1 != iparam2)) {
-                        Int jparam2 = max(iparam2, iparam1);
-                        Int jparam1 = min(iparam2, iparam1);
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 0, jparam1 + 0)) += w0*-p0*p0;
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 0, jparam1 + 1)) += w0*-p0*p1;
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 0, jparam1 + 2)) += w0*-p0*p2;
-                        //
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 1, jparam1 + 0)) += w0*-p1*p0;
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 1, jparam1 + 1)) += w0*-p1*p1;
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 1, jparam1 + 2)) += w0*-p1*p2;
-                        //
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 2, jparam1 + 0)) += w0*-p2*p0;
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 2, jparam1 + 1)) += w0*-p2*p1;
-                        (*gsl_matrix_ptr(JTJ, jparam2 + 2, jparam1 + 2)) += w0*-p2*p2;
-
-                    }
-                }
-                count += 2;
-            } // loop over rows
+                    count += 2;
+                } // if JTJ
+            } // loop over channels
             if (found_data) {
                 std::pair<Int, Int> antpair = std::make_pair(ant1, ant2);
                 bool newBaseline = (baselines.find(antpair) == baselines.end());
@@ -1140,33 +1117,30 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* x, const gsl_vector *u, void
                     // print_baselines(baselines);
                     // cerr << "Adding (" << ant1 << ", " << ant2 << ")" << endl;
                     baselines.insert(antpair);
-                }
-                // only print weights to ref ant.
-                if (0 && newBaseline && ((iparam1 == -1) || (iparam2 == -1))) {
-                    cerr << "baseline (" << ant1 << ", " << ant2 << ") "
-                         << "weight " << weights(dcorr, vis.ncolumn()/2, irow) << endl;
+                    cerr << "phi0 " << phi0 << " tau " << tau << " r " << r << endl;
                 }
             }
-        }
-    }
-    if (DEVDEBUG && 0) {
-        cerr << "Param indices ";
-        std::copy(
-            params.begin(),
-            params.end(),
-            std::ostream_iterator<Int>(std::cerr, " ")
-);
-        cerr << endl;
+        } // loop over rows
+    } // loop over SDBs
+    std::cerr << "Ending jacobian" << std::endl;
+    if (DEVDEBUG) {
         print_baselines(baselines);
         cerr << "count " << count << endl;
-        cerr <<"JTJ " << std::scientific << endl;
-        for (size_t i=0; i!=JTJ->size1; i++) {
-            for (size_t j=0; j!=JTJ->size2; j++) {
-                cerr << gsl_matrix_get(JTJ, i, j) << " ";
+        cerr << "v = ";
+        for (size_t i=0; i!=v->size; i++) {
+            cerr << gsl_vector_get(v, i) << " ";
+        }
+        cerr << endl;
+        if (JTJ) {
+            cerr <<"JTJ " << std::scientific << endl;
+            for (size_t i=0; i!=JTJ->size1; i++) {
+                for (size_t j=0; j!=JTJ->size2; j++) {
+                    cerr << gsl_matrix_get(JTJ, i, j) << " ";
+                }
+                cerr << endl;
             }
             cerr << endl;
         }
-        cerr << endl;
     }
     return GSL_SUCCESS;
 }
@@ -1206,8 +1180,11 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
     size_t nobs = 0;
     Double sumwt = 0;
     size_t numant3 = param->size;
+
+    std::cerr << "Starting hessian" << std::endl;
     
-    for (Int ibuf=0; ibuf < sdbs.nSDB(); ibuf++) {
+    for (Int ibuf=0; ibuf < sdbs.nSDB(); ibuf++)
+    {
         SolveDataBuffer& s (sdbs(ibuf));
         if (!s.Ok()) continue;
 
@@ -1233,33 +1210,26 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
             // We also need to get the right parameters for this,
             // polarization (icorr is an encoding of the
             // polarization of the correlation products).
-            Int iparam1 = bundle->get_param_corr_index(ant1);
-            Double phi0_1, tau1, r1;
-            if (iparam1 >= 0) {
-                phi0_1 = gsl_vector_get(param, iparam1+0);
-                tau1 =   gsl_vector_get(param, iparam1+1);
-                r1 =     gsl_vector_get(param, iparam1+2);
-            } else {
-                phi0_1 = 0.0;
-                tau1 = 0.0;
-                r1 = 0.0;
-            }
-            Int iparam2 = bundle->get_param_corr_index(ant2);
-            Double phi0_2, tau2, r2;
-            if (iparam2 >= 0) {
-                phi0_2 = gsl_vector_get(param, iparam2+0);
-                tau2 =   gsl_vector_get(param, iparam2+1);
-                r2 =     gsl_vector_get(param, iparam2+2);
-                // cerr << "phi0_2 " << phi0_2 << " tau2 " << tau2 << " r2 " << r2 << endl;
-            } else {
-                phi0_2 = 0.0;
-                tau2 = 0.0;
-                r2 = 0.0;
+            
+            Double phi0, tau, r;
+            {
+                Int i;
+                Double phi0_1, tau1, r1;
+                Double phi0_2, tau2, r2;
+                
+                phi0_1 = ((i = bundle->get_param_corr_param_index(ant1, 0))>=0) ? gsl_vector_get(param, i) : 0.0;
+                tau1   = ((i = bundle->get_param_corr_param_index(ant1, 1))>=0) ? gsl_vector_get(param, i) : 0.0;
+                r1     = ((i = bundle->get_param_corr_param_index(ant1, 2))>=0) ? gsl_vector_get(param, i) : 0.0;
+                
+                phi0_2 = ((i = bundle->get_param_corr_param_index(ant2, 0))>=0) ? gsl_vector_get(param, i) : 0.0;
+                tau2   = ((i = bundle->get_param_corr_param_index(ant2, 1))>=0) ? gsl_vector_get(param, i) : 0.0;
+                r2     = ((i = bundle->get_param_corr_param_index(ant2, 2))>=0) ? gsl_vector_get(param, i) : 0.0;
+                
+                phi0 = phi0_2 - phi0_1;
+                tau = tau2 - tau1;
+                r = r2-r1;
             }
 
-            Float phi0 = phi0_2 - phi0_1;
-            Float tau  = tau2 - tau1;
-            Float r    = r2 - r1;
             for (size_t ichan = 0; ichan != v.ncolumn(); ichan++) {
                 if (fl(dcorr, ichan, irow)) continue;
                 Complex vis = v(dcorr, ichan, irow);
@@ -1280,80 +1250,58 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
                 //Double ref_freq = freqs(0);
                 //Double wDt = C::_2pi*(t1 - refTime) * ref_freq; 
                 Double wDt = C::_2pi*(t1 - refTime) * reffreq0; 
-
+                
                 Double mtheta = -(phi0 + tau*wDf + r*wDt); 
                 Double vtheta = arg(vis);
 
                 // Hold on a minute though! 
                 Double cx = w*cos(vtheta - mtheta);
-                Double d00 = cx;
-                Double d01 = wDf*cx;
-                Double d02 = wDt*cx;
-                Double d11 = wDf*d01;
-                Double d12 = wDt*d01;
-                Double d22 = wDt*d12;
-                
-                if (iparam1 >= 0) {
-                    // Diagonal terms.
-                    *gsl_matrix_ptr(hess, iparam1 + 0, iparam1 + 0) += d00;
-                    *gsl_matrix_ptr(hess, iparam1 + 1, iparam1 + 1) += d11;
-                    *gsl_matrix_ptr(hess, iparam1 + 2, iparam1 + 2) += d22;
-                    // Off-diagonals
-                    *gsl_matrix_ptr(hess, iparam1 + 0, iparam1 + 1) += d01;
-                    *gsl_matrix_ptr(hess, iparam1 + 0, iparam1 + 2) += d02;
-                    *gsl_matrix_ptr(hess, iparam1 + 1, iparam1 + 2) += d12;
-                    // FIXME: Let's don't forget to symmetrize this stuff somewhere!
-                    // FIXME: Also, is this right?
-                    *gsl_matrix_ptr(hess, iparam1 + 1, iparam1 + 0) += d01;
-                    *gsl_matrix_ptr(hess, iparam1 + 2, iparam1 + 0) += d02;
-                    *gsl_matrix_ptr(hess, iparam1 + 2, iparam1 + 1) += d12;
-                }
-                if (iparam2 >= 0) {
-                    // Diagonals
-                    *gsl_matrix_ptr(hess, iparam2 + 0, iparam2 + 0) += d00;
-                    *gsl_matrix_ptr(hess, iparam2 + 1, iparam2 + 1) += d11;
-                    *gsl_matrix_ptr(hess, iparam2 + 2, iparam2 + 2) += d22;
-                    // Off diagonals
-                    *gsl_matrix_ptr(hess, iparam2 + 0, iparam2 + 1) += d01;
-                    *gsl_matrix_ptr(hess, iparam2 + 0, iparam2 + 2) += d02;
-                    *gsl_matrix_ptr(hess, iparam2 + 1, iparam2 + 2) += d12;
-                    // Symmetry:
-                    *gsl_matrix_ptr(hess, iparam2 + 1, iparam2 + 0) += d01;
-                    *gsl_matrix_ptr(hess, iparam2 + 2, iparam2 + 0) += d02;
-                    *gsl_matrix_ptr(hess, iparam2 + 2, iparam2 + 1) += d12;
+
+                Matrix<Double> dterm(3,3);
+                dterm(0, 0) = cx;
+                dterm(0, 1) = wDf*cx;
+                dterm(0, 2) = wDt*cx;
+                dterm(1, 1) = wDf*dterm(0, 1);
+                dterm(1, 2) = wDt*dterm(0, 1);
+                dterm(2, 2) = wDt*dterm(1, 2);
+                // Symmetry terms:
+                dterm(2, 0) = dterm(0, 2);
+                dterm(2, 1) = dterm(1, 2);
+                dterm(1, 0) = dterm(0, 1);
+
+                for (Int di=0; di<3; di++) {
+                    for (Int dj=0; dj<3; dj++) {
+                        Int i, j;
+                        if (((i = bundle->get_param_corr_param_index(ant1, di))>=0) &&
+                            ((j = bundle->get_param_corr_param_index(ant1, dj))>=0)) {
+                            *gsl_matrix_ptr(hess, i, j) += dterm(di, dj);
+                        }
+                        // Exactly the same logic, but with antenna2
+                        if (((i = bundle->get_param_corr_param_index(ant2, di))>=0) &&
+                            ((j = bundle->get_param_corr_param_index(ant2, dj))>=0)) {
+                            *gsl_matrix_ptr(hess, i, j) += dterm(di, dj);
+                        }
+                    }
                 }
                 // FIXME: Not just diagonal terms any more!
-                if ((iparam1 >= 0) && (iparam2 >= 0)) {
-                    // Note that some of these are not in the lower
-                   // triangular part, even though they are copied
-                    // faithfully from AIPS which thinks it is filling
-                    // a triangular matrix and handles symmetry
-                    // later. Unless I've missed something (again).
-                    // 
-                    *gsl_matrix_ptr(hess, iparam1 + 0, iparam2 + 0) -= d00;
-                    *gsl_matrix_ptr(hess, iparam1 + 0, iparam2 + 1) -= d01;
-                    *gsl_matrix_ptr(hess, iparam1 + 0, iparam2 + 2) -= d02;
-                    *gsl_matrix_ptr(hess, iparam2 + 0, iparam1 + 1) -= d01;
-                    *gsl_matrix_ptr(hess, iparam2 + 0, iparam1 + 2) -= d02;
-                    *gsl_matrix_ptr(hess, iparam1 + 1, iparam2 + 1) -= d11;
-                    *gsl_matrix_ptr(hess, iparam1 + 1, iparam2 + 2) -= d12;
-                    *gsl_matrix_ptr(hess, iparam2 + 1, iparam1 + 2) -= d12;
-                    *gsl_matrix_ptr(hess, iparam1 + 2, iparam2 + 2) -= d22;
-                    // And symmetry:
-                    *gsl_matrix_ptr(hess, iparam2 + 0, iparam1 + 0) -= d00;
-                    *gsl_matrix_ptr(hess, iparam2 + 1, iparam1 + 0) -= d01;
-                    *gsl_matrix_ptr(hess, iparam2 + 2, iparam1 + 0) -= d02;
-                    *gsl_matrix_ptr(hess, iparam1 + 1, iparam2 + 0) -= d01;
-                    *gsl_matrix_ptr(hess, iparam1 + 2, iparam2 + 0) -= d02;
-                    *gsl_matrix_ptr(hess, iparam2 + 1, iparam1 + 1) -= d11;
-                    *gsl_matrix_ptr(hess, iparam2 + 2, iparam1 + 1) -= d12;
-                    *gsl_matrix_ptr(hess, iparam1 + 2, iparam2 + 1) -= d12;
-                    *gsl_matrix_ptr(hess, iparam2 + 2, iparam1 + 2) -= d22;
-
-                }
-            }
-        }
-    }
+                // Note that some of these are not in the lower
+                // triangular part, even though they are copied
+                // faithfully from AIPS which thinks it is filling
+                // a triangular matrix and handles symmetry
+                // later. Unless I've missed something (again).
+                for (Int di=0;  di<3; di++) {
+                    for (Int dj=0; dj<3; dj++) {
+                        Int i, j;
+                        if (((i = bundle->get_param_corr_param_index(ant1, di))>=0) &&
+                            ((j = bundle->get_param_corr_param_index(ant2, dj))>=0)) {
+                            *gsl_matrix_ptr(hess, i, j) -= dterm(di, dj);
+                            *gsl_matrix_ptr(hess, j, i) -= dterm(dj, di);
+                        } // if
+                    } // dj
+                } // di
+            } // ichan
+        } // irow
+    } // ibuff
     // s is more tricky: it is the xi^2 term from exp_f
     
     xi_squared = max(xi_squared, 1e-25);
@@ -1727,7 +1675,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             if (!bundle.isActive(iant)) continue;
             Int iparam = bundle.get_param_corr_index(iant);
             if (iparam<0) continue;
-            if (0) {
+            if (1) {
                 // flag unused
                 // bool flag = false;
                 // if (fabs(gsl_vector_get(diff, iparam + 0) > FLT_EPSILON)) {
@@ -1930,7 +1878,7 @@ void FringeJones::setApply(const Record& apply) {
     if (calWt()) 
         logSink() << " (" << this->typeName() << ": Enforcing calWt()=false for phase/delay-like terms)" << LogIO::POST;
 
-    // Enforce calWt() = false for delays
+   // Enforce calWt() = false for delays
     calWt()=false;
 
     /*
