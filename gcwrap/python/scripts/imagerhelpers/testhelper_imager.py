@@ -700,7 +700,10 @@ class TestHelpers():
           return modsum
 
      def checkMPI(self):
-          from mpi4casa.MPIInterface import MPIInterface as mpi_clustermanager
+          if is_CASA6:
+              from casampi.MPIInterface import MPIInterface as mpi_clustermanager
+          else:
+              from mpi4casa.MPIInterface import MPIInterface as mpi_clustermanager
           try:
                self.nproc = len(mpi_clustermanager.getCluster()._cluster.get_engines())
                return True
@@ -710,8 +713,10 @@ class TestHelpers():
           
 
      def getNParts(self,imprefix='', imexts=[]):
-          
-          from mpi4casa.MPIInterface import MPIInterface as mpi_clustermanager
+          if is_CASA6:
+              from casampi.MPIInterface import MPIInterface as mpi_clustermanager
+          else:
+              from mpi4casa.MPIInterface import MPIInterface as mpi_clustermanager
           try:
                self.nproc = len(mpi_clustermanager.getCluster()._cluster.get_engines())
           except Exception:
