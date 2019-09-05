@@ -61,7 +61,15 @@
 # </motivation>
 #
 ###########################################################################
-from taskinit import *
+from __future__ import absolute_import
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import spectralline
+    from casatasks import casalog
+else:
+    from taskinit import *
+    from taskinit import sltool as spectralline
 
 def slsearch(
     table=None, outfile=None, freqrange=None,
@@ -73,24 +81,25 @@ def slsearch(
 ):
     casalog.origin('slsearch')
     newsl = None
-    mysl = sltool()
+    mysl = spectralline()
     try:
-        mysl.open(table)
-        newsl = mysl.search(
-            outfile=outfile, freqrange=freqrange,
-            species=species, reconly=reconly,
-            chemnames=chemnames, qns=qns,
-            intensity=intensity, smu2=smu2,
-            loga=loga, el=el, eu=eu,
-            rrlinclude=rrlinclude, rrlonly=rrlonly,
-            verbose=verbose, logfile=logfile,
-            append=append
-        )
+        newsl = False
+        if (mysl.open(table)):
+            newsl = mysl.search(
+                outfile=outfile, freqrange=freqrange,
+                species=species, reconly=reconly,
+                chemnames=chemnames, qns=qns,
+                intensity=intensity, smu2=smu2,
+                loga=loga, el=el, eu=eu,
+                rrlinclude=rrlinclude, rrlonly=rrlonly,
+                verbose=verbose, logfile=logfile,
+                append=append
+            )
             
         if (not newsl):
-            raise Exception, "Exception when running sl.search()"
+            raise Exception("Exception when running sl.search()")
         return True
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
         raise
     finally:

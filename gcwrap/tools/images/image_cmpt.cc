@@ -2283,48 +2283,6 @@ ITUPLE image::_fromarray(
     return ::casa::ITUPLE(f, c, d, dc);
 }
 
-bool image::fromascii(
-    const string& outfile, const string& infile,
-    const vector<int>& shape, const string& sep, const record& csys,
-    bool linear, bool overwrite
-) {
-    try {
-        _log << _ORIGIN;
-        _log << LogIO::WARN << __func__ << "() IS DEPRECATED AND WILL BE "
-            << "REMOVED IN A NEAR-FUTURE VERSION OF CASA. YOU SHOULD USE "
-            << "ANOTHER SET OF IMAGE EXPORT AND IMPORT METHODS SUCH AS "
-            << "tofits()/fromfits() TO EXPORT AND IMPORT CASA IMAGES. IF YOU "
-            << "SIMPLY WISH TO MODIFY PIXEL VALUES, USE getchunk()/putchunk() "
-            << "OR getregion()/putregion() FOR THAT" << LogIO::POST;
-        ThrowIf(infile.empty(), "infile must be specified");
-        ThrowIf(
-            shape.size() == 1 && shape[0] == -1,
-            "Image shape must be specified"
-        );
-        std::unique_ptr<Record> coordsys(toRecord(csys));
-        _reset();
-        _imageF = ImageFactory::fromASCII(
-            outfile, infile, IPosition(Vector<Int>(shape)),
-            sep, *coordsys, linear, overwrite
-        );
-        vector<String> names {
-            "outfile", "infile", "shape", "sep",
-            "csys", "linear",  "overwrite"
-        };
-        vector<variant> values {
-            outfile, infile, shape, sep,
-            csys, linear,  overwrite
-        };
-        this->_addHistory(__func__, names, values);
-    }
-    catch (const AipsError& x) {
-        _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
-                << LogIO::POST;
-        RETHROW(x);
-    }
-    return true;
-}
-
 bool image::fromcomplist(
     const string& outfile, const vector<int>& shape, const variant& cl,
     const record& csys, bool overwrite, bool log, bool cache
@@ -3212,7 +3170,8 @@ template<class T> SPIIT image::_imagecalc(
 
 image* image::imageconcat(
     const string& outfile, const variant& infiles, int axis,
-    bool relax, bool tempclose, bool overwrite, bool reorder
+    bool relax, bool tempclose, bool overwrite, bool reorder,
+    const string& mode
 ) {
     try {
         Vector<String> inFiles;
@@ -3234,39 +3193,38 @@ image* image::imageconcat(
             "You must provide at least two images to concatentate"
         );
         auto first = imageNames[0];
-        imageNames.erase(imageNames.begin());
         std::shared_ptr<LatticeBase> latt(ImageOpener::openImage(first));
         ThrowIf (! latt, "Unable to open image " + first);
         auto dataType = latt->dataType();
         if (dataType == TpFloat) {
             return new image(
                 _concat<Float>(
-                    latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    outfile, infiles, axis, relax, tempclose,
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
         else if (dataType == TpComplex) {
             return new image(
                 _concat<Complex>(
-                    latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    outfile, infiles, axis, relax, tempclose,
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
         else if (dataType == TpDouble) {
             return new image(
                 _concat<Double>(
-                    latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    outfile, infiles, axis, relax, tempclose,
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
         else if (dataType == TpDComplex) {
             return new image(
                 _concat<DComplex>(
-                    latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    outfile, infiles, axis, relax, tempclose,
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
@@ -3285,28 +3243,36 @@ image* image::imageconcat(
 }
 
 template<class T> SPIIT image::_concat(
-    std::shared_ptr<LatticeBase> latt, const string& outfile,
+    const string& outfile,
     const variant& infiles, int axis, bool relax, bool tempclose,
-    bool overwrite, bool reorder, const vector<String>& imageNames
+    bool overwrite, bool reorder, vector<String>& imageNames,
+    const string& mode
 ) {
-    SPIIT im = std::dynamic_pointer_cast<ImageInterface<T>>(latt);
-    ThrowIf(! im, "dynamic cast failed");
-    ImageConcatenator<T> concat(im, outfile, overwrite);
+    ImageConcatenator<T> concat(imageNames, outfile, overwrite);
     concat.setAxis(axis);
     concat.setRelax(relax);
     concat.setReorder(reorder);
     concat.setTempClose(tempclose);
+    concat.setMode(mode);
+    auto finalImage = concat.concatenate();
     if (_doHistory) {
         vector<String> names {
             "outfile", "infiles", "axis", "relax", "tempclose",
-            "overwrite", "reorder"
+            "overwrite", "reorder", "mode"
         };
         vector<variant> values {
-            outfile, infiles, axis,  relax, tempclose, overwrite, reorder
+            outfile, infiles, axis,  relax, tempclose,
+            overwrite, reorder, mode
         };
-        concat.addHistory(_ORIGIN, "ia.imageconcat", names, values);
+        ImageHistory<T> history(finalImage);
+        history.addHistory(
+            history.getApplicationHistory(
+                _ORIGIN, "ia.imageconcat", names,
+                values, finalImage->name()
+            )
+        );
     }
-    return concat.concatenate(imageNames);
+    return finalImage;
 }
 
 bool image::insert(
@@ -6154,49 +6120,6 @@ template <class T> record* image::_summary(
     return fromRecord(
         md.summary(doppler, list, pixelorder, verbose)
     );
-}
-
-bool image::toASCII(
-    const string& outfile, const variant& region,
-    const variant& mask, const string& sep,
-    const string& format, double maskvalue, bool overwrite,
-    bool stretch
-) {
-    // sep is hard-wired as ' ' which is what imagefromascii expects
-    _log << _ORIGIN;
-    _log << LogIO::WARN << __func__ << "() IS DEPRECATED AND WILL BE REMOVED "
-        << "IN A NEAR-FUTURE VERSION OF CASA. YOU SHOULD USE ANOTHER IMAGE "
-        << "EXPORT METHOD SUCH AS tofits() TO EXPORT CASA IMAGES. IF YOU "
-        << "SIMPLY WISH TO MODIFY PIXEL VALUES, USE getchunk()/putchunk() OR "
-        << "getregion()/putregion() FOR THAT" << LogIO::POST;
-    if (_detached()) {
-        return false;
-    }
-    try {
-        _notSupported(__func__);
-        String Mask;
-        if (mask.type() == variant::BOOLVEC) {
-            Mask = "";
-        }
-        else if (
-            mask.type() == variant::STRING
-            || mask.type() == variant::STRINGVEC
-        ) {
-            Mask = mask.toString();
-        }
-        std::shared_ptr<Record> pRegion(_getRegion(region, false));
-        ImageFactory::toASCII(
-            _imageF, outfile, *pRegion, Mask,
-            sep, format, maskvalue, overwrite, stretch
-        );
-        return true;
-    }
-    catch (const AipsError& x) {
-        _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
-                << LogIO::POST;
-        RETHROW(x);
-    }
-    return false;
 }
 
 bool image::tofits(

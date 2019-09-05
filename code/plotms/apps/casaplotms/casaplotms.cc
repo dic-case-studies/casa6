@@ -208,7 +208,8 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
 		}
 
 	} else if ( begins_with(exepath,"/tmp/.mount") && ends_with(exepath,"/usr/bin/casaplotms") ||
-                ends_with(exepath,"/casaplotms.app/usr/bin/casaplotms") ) {
+		    ends_with(exepath,"/casaplotms.app/usr/bin/casaplotms") ||
+		    ends_with(exepath,"/squashfs-root/usr/bin/casaplotms") ) {
 
 		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 		// linux  --  path is specific to package format

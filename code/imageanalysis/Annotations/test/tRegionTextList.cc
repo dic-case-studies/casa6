@@ -137,6 +137,54 @@ int main () {
 
 			}
 		}
+		{
+			log << LogIO::NORMAL
+				<< "Test RegionTextList ignores annotation regions outside image" 
+				<< LogIO::POST;
+			ImageInterface<Float> *image;
+			ImageUtilities::openImage(image, imageName);
+			csys = image->coordinates();
+			RegionTextList list3(
+				circleFile, csys,
+				IPosition(csys.nPixelAxes(), 10, 10, 2000)
+			);
+			AlwaysAssert(list3.nLines() == 3, AipsError);
+			AlwaysAssert(
+				list3.lineAt(0).getType() == AsciiAnnotationFileLine::COMMENT, AipsError
+			); // header
+			AlwaysAssert(
+				list3.lineAt(1).getType() == AsciiAnnotationFileLine::COMMENT, AipsError
+			); // blank line
+			AlwaysAssert(
+				list3.lineAt(2).getType() == AsciiAnnotationFileLine::COMMENT, AipsError
+			); // blank line
+
+			log << LogIO::NORMAL
+				<< "Test RegionTextList created regions outside image" 
+				<< LogIO::POST;
+			Bool requireRegion = false;
+			RegionTextList list4(
+				circleFile, csys,
+				IPosition(csys.nPixelAxes(), 10, 10, 2000),
+				"", "", "", RegionTextParser::CURRENT_VERSION, true, requireRegion
+			);
+			AlwaysAssert(list4.nLines() == 5, AipsError);
+			AlwaysAssert(
+				list4.lineAt(0).getType() == AsciiAnnotationFileLine::COMMENT, AipsError
+			); // header
+			AlwaysAssert(
+				list4.lineAt(1).getType() == AsciiAnnotationFileLine::ANNOTATION, AipsError
+			); // circle
+			AlwaysAssert(
+				list4.lineAt(1).getAnnotationBase()->getType() == AnnotationBase::CIRCLE, AipsError
+			); // circle
+			AlwaysAssert(
+				list4.lineAt(2).getType() == AsciiAnnotationFileLine::ANNOTATION, AipsError
+			); // ellipse
+			AlwaysAssert(
+				list4.lineAt(2).getAnnotationBase()->getType() == AnnotationBase::ELLIPSE, AipsError
+			); // ellipse
+		}
 	}
 	catch (const AipsError& x) {
 		log << LogIO::SEVERE
@@ -144,6 +192,7 @@ int main () {
 			<< LogIO::POST;
 		return 1;
 	}
+
 	cout << "OK" << endl;
 	return 0;
 }

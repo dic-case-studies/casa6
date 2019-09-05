@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import re
 import shutil
@@ -9,15 +10,33 @@ import numpy as np
 # (or any directories that already exist).
 from distutils.dir_util import copy_tree
 
-from taskinit import *
-from mstools import write_history
-from update_spw import *
+# get is_python3 and is_CASA6
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import calibrater, ms, table
+    from casatasks import casalog, virtualconcat
 
-from parallel.parallel_data_helper import ParallelDataHelper
-from parallel.parallel_task_helper import ParallelTaskHelper
-from virtualconcat_cli import virtualconcat_cli as virtualconcat
+    from .mstools import write_history
+    from .update_spw import *
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from .parallel.parallel_task_helper import ParallelTaskHelper
 
-mycb, myms, mytb = gentools(['cb', 'ms', 'tb'])
+    mytb = table( )
+    mycb = calibrater( )
+    myms = ms()
+    _ms = ms()       # task also referenced the old global ms object
+else:
+    from taskinit import *
+    from mstools import write_history
+    from update_spw import *
+
+    from parallel.parallel_data_helper import ParallelDataHelper
+    from parallel.parallel_task_helper import ParallelTaskHelper
+    from virtualconcat_cli import virtualconcat_cli as virtualconcat
+
+    mycb, myms, mytb = gentools(['cb', 'ms', 'tb'])
+    # this also uses the global ms object
+    _ms = ms
 
 def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, want_cont):
     
@@ -52,7 +71,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
             mytb.close()
             if(pnrows>0): 
                 shutil.copytree(os.path.realpath(vis+'/POINTING'), auxfile)
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("Error handling POINTING table %s: %s" %
                          (vis+'/POINTING',str(instance)),'SEVERE')
 
@@ -60,13 +79,13 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
             try:
                 virtualconcat(concatvis=helper._arg['vis'] + ".cont",vis=cont_subMS_list,
                               copypointing=False)
-            except Exception, instance:
+            except Exception as instance:
                 casalog.post("Error concatenating continuum sub-MSs %s: %s" % 
                              (str(cont_subMS_list),str(instance)),'SEVERE')     
         try:
             virtualconcat(concatvis=helper._arg['vis'] + ".contsub",vis=contsub_subMS_list,
                           copypointing=False)
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("Error concatenating continuum-subtracted sub-MSs %s: %s" %
                          (str(contsub_subMS_list),str(instance)),'SEVERE')
 
@@ -89,7 +108,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
                 theptab = os.path.realpath(helper._arg['vis'] + ".contsub/POINTING")
                 os.system('rm -rf '+theptab)
                 os.system('mv '+auxfile+' '+theptab)
-            except Exception, instance:
+            except Exception as instance:
                 casalog.post("Error restoring pointing table from %s: %s" % 
                              (auxfile,str(instance)),'SEVERE')
         
@@ -105,7 +124,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
         # Get these checks done and out of the way.
         # This one is redundant - it is already checked at the XML level.
         if not os.path.isdir(vis):
-            raise Exception, 'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
         
         #
         if excludechans:
@@ -127,14 +146,14 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
                 badfitspw=''
                 for ispw in range(len(fitspwerr)):
                     badfitspw+=str(fitspwerr.pop())
-                raise Exception, "fitspw contains non-existent spw(s): "+badfitspw
+                raise Exception("fitspw contains non-existent spw(s): "+badfitspw)
         if len(spw)>0:
             spwerr=subtract_spws(spw,allspw)
             if spwerr:
                 badspw=''
                 for ispw in range(len(spwerr)):
                     badspw+=str(spwerr.pop())
-                raise Exception, "spw contains non-existent spw(s): "+badspw
+                raise Exception("spw contains non-existent spw(s): "+badspw)
 
         if 'spw' not in combine:
             #spwmfitspw = subtract_spws(spw, fitspw)
@@ -143,7 +162,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
                 #spwmfitspw = subtract_spws(allspw, fitspw)
                 spwmfitspw = subtract_spws(allspw, locfitspw)
             if spwmfitspw:
-                raise Exception, "combine must include 'spw' when the fit is being applied to spws outside fitspw."
+                raise Exception("combine must include 'spw' when the fit is being applied to spws outside fitspw.")
         
         # cb will put the continuum-subtracted data in CORRECTED_DATA, so
         # protect vis by splitting out its relevant parts to a working copy.
@@ -193,8 +212,8 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
         myfield = field
         if field == '':
             myfield = '*'
-        if myfield != '*' and set(ms.msseltoindex(vis,
-                               field=myfield)['field']) == set(ms.msseltoindex(vis,
+        if myfield != '*' and set(_ms.msseltoindex(vis,
+                               field=myfield)['field']) == set(_ms.msseltoindex(vis,
                                                                  field='*')['field']):
             myfield = '*'
         if whichcol != 'DATA' or tempspw != '' or myfield != '*':
@@ -216,9 +235,12 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
         # It is less confusing if we write the history now that the "root" MS
         # is made, but before cb adds its messages.
         #
-        # Not a dict, because we want to maintain the order.
-        param_names = uvcontsub.func_code.co_varnames[:uvcontsub.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        param_names = uvcontsub.__code__.co_varnames[:uvcontsub.__code__.co_argcount]
+        if is_python3:
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
             
         write_history(myms, csvis, 'uvcontsub', param_names, param_vals,
                       casalog)
@@ -227,7 +249,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
             mycb.setvi(old=True,quiet=False);   # old VI, for now
             mycb.open(csvis)
         else:
-            raise Exception, 'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
 
         # select the data for continuum subtraction
         mycb.reset()
@@ -289,10 +311,10 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
         # the sub-MS that produce a continuum sub-MS to concatenate at the MMS level
         return True
 
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('Error in uvcontsub: ' + str(instance), 'SEVERE')
         mycb.close()                        # Harmless if cb is closed.
-        raise Exception, 'Error in uvcontsub: ' + str(instance)
+        raise Exception('Error in uvcontsub: ' + str(instance))
 
 
 def _quantityRangesToChannels(vis,field,infitspw,excludechans):
@@ -306,7 +328,7 @@ def _quantityRangesToChannels(vis,field,infitspw,excludechans):
     nspw=mytb.nrows()
     mytb.close()
    
-    fullspwids=str(range(nspw)).strip('[,]')
+    fullspwids=str(list(range(nspw))).strip('[,]')
     tql={'field':field,'spw':fullspwids}
     myms.open(vis)
     myms.msselect(tql,True)
@@ -327,62 +349,62 @@ def _quantityRangesToChannels(vis,field,infitspw,excludechans):
     nsels=len(usersels)
     #print "Usersels=",usersels
     if excludechans:
-	for isel in range(nsels):
-	    prevspwid = spwid
-	    spwid=usersels[isel][0] 
-	    lochan=usersels[isel][1]
-	    hichan=usersels[isel][2]
-	    stp=usersels[isel][3]
-	    maxchanid=allsels['channel'][spwid][2]
-	    # find left and right side ranges of the selected range
-	    if spwid != prevspwid:
-		# first line in the selected spw
-		if lochan > 0:
-		    outloL=0
-		    outhiL=lochan-1
-		    outloR= (0 if hichan+1>=maxchanid else hichan+1)
-		    if outloR:
-			if isel<nsels-1 and usersels[isel+1][0]==spwid:
-			    outhiR=usersels[isel+1][1]-1
-			else:
-			    outhiR=maxchanid
-		    else:
-			outhiR=0 # higher end of the user selected range reaches maxchanid
-				 # so no right hand side range
-		    #print "outloL,outhiL,outloR,outhiR==", outloL,outhiL,outloR,outhiR
-		else:
-		    # no left hand side range
-		    outloL=0
-		    outhiL=0
-		    outloR=hichan+1
-		    if isel<nsels-1 and usersels[isel+1][0]==spwid:
-			outhiR=usersels[isel+1][1]-1
-		    else:
-			outhiR=maxchanid
-	    else:
-		#expect the left side range is already taken care of
-		outloL=0
-		outhiL=0
-		outloR=hichan+1
-		if outloR>=maxchanid:
-		    #No more boundaries to consider
-		    outloR=0
-		    outhiR=0
-		else:
-		    if isel<nsels-1 and usersels[isel+1][0]==spwid:
-			outhiR=min(usersels[isel+1][1]-1,maxchanid)
-		    else:
-			outhiR=maxchanid
-		    if outloR > outhiR:
-			outloR = 0
-			outhiR = 0
+        for isel in range(nsels):
+            prevspwid = spwid
+            spwid=usersels[isel][0] 
+            lochan=usersels[isel][1]
+            hichan=usersels[isel][2]
+            stp=usersels[isel][3]
+            maxchanid=allsels['channel'][spwid][2]
+            # find left and right side ranges of the selected range
+            if spwid != prevspwid:
+                # first line in the selected spw
+                if lochan > 0:
+                    outloL=0
+                    outhiL=lochan-1
+                    outloR= (0 if hichan+1>=maxchanid else hichan+1)
+                    if outloR:
+                        if isel<nsels-1 and usersels[isel+1][0]==spwid:
+                            outhiR=usersels[isel+1][1]-1
+                        else:
+                            outhiR=maxchanid
+                    else:
+                        outhiR=0 # higher end of the user selected range reaches maxchanid
+                                 # so no right hand side range
+                    #print "outloL,outhiL,outloR,outhiR==", outloL,outhiL,outloR,outhiR
+                else:
+                    # no left hand side range
+                    outloL=0
+                    outhiL=0
+                    outloR=hichan+1
+                    if isel<nsels-1 and usersels[isel+1][0]==spwid:
+                        outhiR=usersels[isel+1][1]-1
+                    else:
+                        outhiR=maxchanid
+            else:
+                #expect the left side range is already taken care of
+                outloL=0
+                outhiL=0
+                outloR=hichan+1
+                if outloR>=maxchanid:
+                    #No more boundaries to consider
+                    outloR=0
+                    outhiR=0
+                else:
+                    if isel<nsels-1 and usersels[isel+1][0]==spwid:
+                        outhiR=min(usersels[isel+1][1]-1,maxchanid)
+                    else:
+                        outhiR=maxchanid
+                    if outloR > outhiR:
+                        outloR = 0
+                        outhiR = 0
 
-	#
-	    if (not(outloL == 0 and outhiL == 0)) and outloL <= outhiL:
-		newchanlist.append([spwid,outloL,outhiL,stp])
-	    if (not(outloR == 0 and outhiR == 0)) and outloR <= outhiR:
-		newchanlist.append([spwid,outloR,outhiR,stp])
-	#print "newchanlist=",newchanlist
+        #
+            if (not(outloL == 0 and outhiL == 0)) and outloL <= outhiL:
+                newchanlist.append([spwid,outloL,outhiL,stp])
+            if (not(outloR == 0 and outhiR == 0)) and outloR <= outhiR:
+                newchanlist.append([spwid,outloR,outhiR,stp])
+        #print "newchanlist=",newchanlist
     else:
         # excludechans=False
         newchanlist=usersels

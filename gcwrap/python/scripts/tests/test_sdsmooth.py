@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -5,22 +7,30 @@ import re
 import numpy
 import math
 from scipy import signal
-
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
-#
-import listing
-import sdutil
 
-from sdsmooth import sdsmooth
-#from test.test_funcattrs import StaticMethodAttrsTest
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms
+    from casatasks import sdsmooth
+    from casatasks.private import sdutil
+    from testhelper import copytree_ignore_subversion
 
-try:
-    from testutils import copytree_ignore_subversion
-except:
-    from tests.testutils import copytree_ignore_subversion
+    tb = table( )
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    import sdutil
+    from sdsmooth import sdsmooth
+    from taskinit import mstool as ms
+
+    try:
+        from .testutils import copytree_ignore_subversion
+    except:
+        from tests.testutils import copytree_ignore_subversion
+
+    # the global tb tool is used here
 
 def gaussian_kernel(nchan, kwidth):
     sigma = kwidth / (2.0 * math.sqrt(2.0 * math.log(2.0)))
@@ -40,7 +50,10 @@ class sdsmooth_test_base(unittest.TestCase):
         decorators (invalid_argument_case, exception_case)
     """
     # Data path of input
-    datapath=os.environ.get('CASAPATH').split()[0]+ '/data/regression/unittest/tsdsmooth/'
+    if is_CASA6:
+        datapath=ctsys.resolve('regression/unittest/tsdsmooth')
+    else:
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/tsdsmooth')
 
     # Input
     infile_data = 'tsdsmooth_test.ms'
@@ -86,7 +99,7 @@ class sdsmooth_test_base(unittest.TestCase):
                     func(self)
                     self.fail(msg='The task must throw exception')
                 the_exception = ctx.exception
-                message = the_exception.message
+                message = str(the_exception)
                 self.assertIsNotNone(re.search(exception_pattern, message), msg='error message \'%s\' is not expected.'%(message))
             return _wrapper
         return wrapper
@@ -97,7 +110,7 @@ class sdsmooth_test_base(unittest.TestCase):
         @functools.wraps(func)
         def wrapper(self):
             with sdutil.tbmanager(self.infile) as tb:
-                for irow in xrange(tb.nrows()):
+                for irow in range(tb.nrows()):
                     self.assertTrue(tb.iscelldefined('WEIGHT_SPECTRUM', irow))
             
             # weight mode flag
@@ -111,7 +124,7 @@ class sdsmooth_test_base(unittest.TestCase):
         datacol_name = self.datacolumn.upper()
         weight_mode = hasattr(self, 'weight_propagation') and getattr(self, 'weight_propagation') is True
         
-        if kwargs.has_key('kwidth'):
+        if 'kwidth' in kwargs:
             kwidth = kwargs['kwidth']
         else:
             kwidth = 5
@@ -122,7 +135,7 @@ class sdsmooth_test_base(unittest.TestCase):
         self.assertIsNone(self.result, msg='The task must complete without error')
         self.assertTrue(os.path.exists(self.outfile), msg='Output file is not properly created.')
 
-        if kwargs.has_key('spw'):
+        if 'spw' in kwargs:
             spw = kwargs['spw']
         else:
             spw = ''
@@ -135,7 +148,7 @@ class sdsmooth_test_base(unittest.TestCase):
                 if weight_mode is True:
                     weight_in = tb.getvarcol('WEIGHT_SPECTRUM')
         else:
-            myms = gentools(['ms'])[0]
+            myms = ms()
             a = myms.msseltoindex(self.infile, spw=spw)
             spw_selection = a['spw']
             dd_selection = a['dd']
@@ -193,15 +206,15 @@ class sdsmooth_test_base(unittest.TestCase):
                 wgt_out = weight_out[key]
                 wkwidth = int(kwidth + 0.5)
                 wkwidth += (1 if wkwidth % 2 == 0 else 0)
-                half_width = wkwidth / 2
+                half_width = wkwidth // 2
                 peak_chan = kernel_array.argmax()
                 start_chan = peak_chan - half_width
                 wkernel = kernel_array[start_chan:start_chan+wkwidth].copy()
                 wkernel /= sum(wkernel)
                 weight_expected = wgt_in.copy()
-                for ichan in xrange(half_width, nchan-half_width):
+                for ichan in range(half_width, nchan-half_width):
                     s = numpy.zeros(npol, dtype=float)
-                    for jchan in xrange(wkwidth):
+                    for jchan in range(wkwidth):
                         s += wkernel[jchan] * wkernel[jchan] / wgt_in[:,ichan-half_width+jchan,0]
                     weight_expected[:,ichan,0] = 1.0 / s
                 #print weight_expected[:,:10]
@@ -214,7 +227,8 @@ class sdsmooth_test_base(unittest.TestCase):
                 shutil.rmtree(f)
             copytree_ignore_subversion(self.datapath, f)
 
-        default(task)
+        if not is_CASA6:
+            default(task)
 
     def _tearDown(self, files):
         for f in files:
@@ -247,12 +261,20 @@ class sdsmooth_test_fail(sdsmooth_test_base):
     @invalid_argument_case
     def test_sdsmooth_fail01(self):
         """test_sdsmooth_fail01 --- default parameters (raises an error)"""
-        self.result = sdsmooth()
+        # casatasks throw exceptions, CASA5 tasks return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdsmooth)
+        else:
+            self.result = sdsmooth()
         
     @invalid_argument_case
     def test_sdsmooth_fail02(self):
         """test_sdsmooth_fail02 --- invalid kernel type"""
-        self.result = sdsmooth(infile=self.infile, kernel='normal', outfile=self.outfile)
+        # casatasks throw exceptions, CASA5 tasks return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdsmooth, infile=self.infile, kernel='normal', outfile=self.outfile)
+        else:
+            self.result = sdsmooth(infile=self.infile, kernel='normal', outfile=self.outfile)
         
     @exception_case(RuntimeError, 'Spw Expression: No match found for 3')
     def test_sdsmooth_fail03(self):
@@ -273,7 +295,11 @@ class sdsmooth_test_fail(sdsmooth_test_base):
     @invalid_argument_case
     def test_sdsmooth_fail06(self):
         """test_sdsmooth_fail06 --- invalid data column name"""
-        self.result = sdsmooth(infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
+        # casatasks throw exceptions, CASA5 tasks return False
+        if is_CASA6:
+            self.assertRaises(Exception, sdsmooth, infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
+        else:
+            self.result = sdsmooth(infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
 
 
 class sdsmooth_test_complex(sdsmooth_test_base):   
@@ -405,11 +431,11 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
 
     def _getLeftWidth(self, kwidth):
         assert(0 < kwidth)
-        return (2-kwidth)/2
+        return (2-kwidth)//2
 
     def _getRightWidth(self, kwidth):
         assert(0 < kwidth)
-        return kwidth/2
+        return kwidth//2
     
     def _checkResult(self, spec, kwidth, centers, tol=5.0e-06):
         sys.stdout.write('testing kernel_width = '+str(kwidth)+'...')
@@ -456,12 +482,12 @@ class sdsmooth_selection(sdsmooth_test_base, unittest.TestCase):
  
     def _get_selection_string(self, key):
         if key not in self.selections.keys():
-            raise ValueError, "Invalid selection parameter %s" % key
+            raise ValueError("Invalid selection parameter %s" % key)
         return {key: self.selections[key][0]}
 
     def _get_selected_row_and_pol(self, key):
         if key not in self.selections.keys():
-            raise ValueError, "Invalid selection parameter %s" % key
+            raise ValueError("Invalid selection parameter %s" % key)
         pols = [0,1]
         rows = [0,1]
         if key == 'pol':  #self.selection stores pol ids
@@ -476,7 +502,7 @@ class sdsmooth_selection(sdsmooth_test_base, unittest.TestCase):
         elif datacol.startswith("corr"):
             col_offset = 50
         else:
-            raise ValueError, "Got unexpected datacolumn."
+            raise ValueError("Got unexpected datacolumn.")
         spike_chan = col_offset + 20*row_offset + 10*pol_offset
         reference = numpy.zeros(nchan)
         reference[spike_chan-2:spike_chan+3] = 0.2
@@ -613,4 +639,6 @@ def suite():
             sdsmooth_test_float, sdsmooth_test_weight,
             sdsmooth_test_boxcar, sdsmooth_selection]
 
-
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

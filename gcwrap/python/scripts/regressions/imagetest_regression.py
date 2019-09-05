@@ -17,7 +17,7 @@
 #    convolve2d, deconvolvecomponentlist, findsources, maxfit, adddegaxes,   #
 #    addnoise, {set}miscinfo, {set}history, {set}brightnessunit              #
 #    {set}restoringbeam, convertflux
-#    fromascii, toascii, fitpolynomial, twopointcorrelation, continuumsub,   #
+#    fitpolynomial, twopointcorrelation, continuumsub,   #
 #    rebin, fitprofile                                                       #
 # Success/failure criteria:                                                  #
 #    Internally tests each method for pass/fail.  Throws an uncaught         #
@@ -4872,59 +4872,6 @@ def imagetest(which=None, size=[32,32,8]):
         #
         return cleanup(testdir)
            
-    def test34():
-        info('')
-        info('')
-        info('')
-        info('Test 34 - ia.fromascii constructor and toascii')
-        # Make the directory
-        testdir = 'imagetest_temp'
-        if not cleanup(testdir):
-            return False
-        try:
-            os.mkdir(testdir)
-        except IOError, e:
-            note(e, "SEVERE")
-            raise RuntimeError, "mkdir " + testdir + " fails!"
-        #
-        info('Testing toascii')
-        info('')
-        shape = [2,4,6]
-        pixels = ia.makearray(0,shape)
-        num = 0
-        for i in range(shape[0]):
-            for j in range(shape[1]):
-                for k in range(shape[2]):
-                    num = num+1
-                    pixels[i][j][k]=num
-        #
-        imname = testdir+'/'+'ia.fromarray.image'
-        myim = ia.newimagefromarray(pixels=pixels)
-        if not myim: fail()
-        #
-        filename = testdir+'/'+'ia.fromarray.ascii'
-        ok = myim.toASCII(outfile=filename)
-        if not ok: fail()
-        #
-        info('Testing ia.fromascii')
-        info('')
-        #myim2 = ia.fromascii(infile=filename, shape=shape)
-        #if not myim2: fail()
-        ok = ia.fromascii(infile=filename, shape=shape)
-        if not ok: fail()
-        #pixels2 = myim2.getchunk()
-        pixels2 = ia.getchunk()
-        if len(pixels2)==0: fail()
-        #
-        if not alleq(pixels,pixels2,tolerance=0.0001):
-            stop('ia.fromascii reflection failed')
-        #
-        if not myim.done(): fail()
-        #if not myim2.done(): fail()
-        if not ia.close(): fail()
-        ###
-        return cleanup(testdir)
-
     def test36():
         #
         # Test methods
@@ -5238,7 +5185,6 @@ def imagetest(which=None, size=[32,32,8]):
     test30()  # are abs/rel/world/pixel output values correct?
     test32()  # original has commented out bits. Why?
     test33()
-    test34()
     test36()
     test37()
     test39()  # update once functionals is available

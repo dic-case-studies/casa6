@@ -474,10 +474,12 @@ if( APPLE )
         endif()
     endif()
 
-    find_program( DBUS_FLAVOR_dbuspp-xml2cpp_EXECUTABLE dbuspp-xml2cpp PATHS ${casa_packages}/bin /opt/local/bin /usr/local/bin )
+    find_program( DBUS_FLAVOR_dbuspp-xml2cpp_EXECUTABLE dbuspp-xml2cpp PATHS ${casa_packages}/bin /opt/local/bin /usr/local/bin)
     if ( ${DBUS_FLAVOR_dbuspp-xml2cpp_EXECUTABLE} MATCHES "NOTFOUND$" )
+        message(STATUS "Defaulting to dbus-c++...")
         set( dbusxx dbus-c++ )
     else( )
+        message(STATUS "Found dbus-cpp...")
         set( dbusxx dbus-cpp )
         add_definitions( -DDBUS_CPP )
         STRING( REGEX REPLACE "(^.*)/bin.*" "\\1" dbus-root-path  ${DBUS_FLAVOR_dbuspp-xml2cpp_EXECUTABLE} )
@@ -535,6 +537,25 @@ elseif( CMAKE_SYSTEM_NAME STREQUAL Linux )
             # we continue to use libcasa-dbus in preference to
             # the system libdbus...
             set( dbus-cpp-library-name casa-dbus-cpp )
+        elseif( EXISTS /opt/casa/03 )
+            set( casa_packages /opt/casa/03 )
+            set( dbusxx dbus-cpp )
+            add_definitions( -DDBUS_CPP )
+	    set( LIBSAKURA_ROOT_DIR /opt/casa/02 )
+	    set( DEFAULT_CXX_FLAGS "${DEFAULT_CXX_FLAGS} -I/opt/casa/03/include -I/opt/casa/02/lib/dbus-1.0/include" )
+            if ( EXISTS /opt/casa/02/bin/qmake )
+                ## RHEL6
+                set( qt4 casa-qt )
+            else( )
+                ## RHEL7
+                set( qt4 system-qt )
+                # on RHEL7 we use the system libdbus*, here we assume
+                # that on RHEL6 the third party packages will continue
+                # to be installed in /usr/lib64/casa/02... (on RHEL6
+                # we continue to use libcasa-dbus in preference to
+                # the system libdbus...
+                set( dbus-cpp-library-name casa-dbus-cpp )
+            endif( )
         else( )
             set( dbusxx dbus-c++ )
             set( casa_packages /usr/lib64/casapy )
@@ -1106,12 +1127,13 @@ if( USE_ALMAWVR )
 endif()
 
 casa_find( GSLCBLAS
-              LIBS gslcblas )
+              LIBS gslcblas
+	      PREFIX_HINTS /opt/casa/03 /opt/casa/02 )
 
 casa_find( GSL
 	      LIBS gsl
    	      DEPENDS GSLCBLAS
-            )
+	      PREFIX_HINTS /opt/casa/03 /opt/casa/02 )
 
 #
 # gsl drags in dependencencies on atlas libraries, if they are not explicitly

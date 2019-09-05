@@ -65,16 +65,27 @@
 #
 
 ###########################################################################
+from __future__ import absolute_import
+import os
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/specflux/'
-im1 = datapath + "specflux1.im"
-im2 = datapath + "specflux2.im"
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys
+    from casatasks import specflux
+
+    datapath = ctsys.resolve('regression/unittest/specflux')
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
+    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/specflux')
+
+im1 = os.path.join(datapath,"specflux1.im")
+im2 = os.path.join(datapath,"specflux2.im")
 
 class specflux_test(unittest.TestCase):
     
@@ -143,7 +154,7 @@ class specflux_test(unittest.TestCase):
             efile = gfile
         with open (gfile) as f:
             got = f.readlines()
-        with open (datapath + efile) as f:
+        with open (os.path.join(datapath,efile)) as f:
             expec = f.readlines()
         self.assertTrue(len(got) == len(expec))
         # skip first element because paths will in general be different
@@ -155,3 +166,7 @@ class specflux_test(unittest.TestCase):
  
 def suite():
     return [specflux_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

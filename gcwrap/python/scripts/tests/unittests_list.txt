@@ -69,7 +69,6 @@ test_ia_rotate                  dmehring@nrao.edu
 test_ia_sepconvolve             dmehring@nrao.edu
 test_ia_subimage                jjacobs@nrao.edu
 test_ia_summary                 dmehring@nrao.edu
-test_ia_toascii                 dmehring@nrao.edu
 test_ia_tofits                  dmehring@nrao.edu
 test_ia_twopointcorrelation     dmehring@nrao.edu
 test_imcollapse                 dmehring@nrao.edu

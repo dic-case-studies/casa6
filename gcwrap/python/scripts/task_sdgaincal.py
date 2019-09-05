@@ -1,13 +1,18 @@
+from __future__ import absolute_import
 import sys
 import os
 import numpy
 import numpy.random as random
 import shutil
 
-from taskinit import gentools, casalog
-from applycal import applycal
-import types
-import sdutil
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import calibrater
+    from casatasks import casalog, applycal
+else:
+    from taskinit import casalog
+    from taskinit import cbtool as calibrater
+    from applycal import applycal
 
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}
@@ -65,13 +70,13 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
     
     casalog.origin('sdgaincal')
     
-    # Calibrator tool
-    (mycb,) = gentools(['cb'])
+    # Calibrater tool
+    mycb = calibrater()
 
     try:
         # outfile must be specified
         if (outfile == '') or not isinstance(outfile, str):
-            raise ValueError, "outfile is empty."
+            raise ValueError("outfile is empty.")
         
         # overwrite check
         if os.path.exists(outfile) and not overwrite:
@@ -82,7 +87,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
             #mycb.setvi(old=True)
             mycb.open(filename=infile, compress=False, addcorr=False, addmodel=False)
         else:
-            raise RuntimeError, 'infile not found - please verify the name'
+            raise RuntimeError('infile not found - please verify the name')
         
         # select data
         if isinstance(antenna, str) and len(antenna) > 0:
@@ -101,7 +106,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
                 mycb.setapply(table=applytable, interp=thisinterp, spwmap=thisspwmap)
         elif hasattr(applytable, '__iter__'):
             # list type 
-            for i in xrange(len(applytable)):
+            for i in range(len(applytable)):
                 table = applytable[i]
                 if isinstance(table, str) and len(table) > 0:
                     thisinterp = parse_interp(interp, i)
@@ -109,9 +114,9 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
                     casalog.post('thisinterp="{0}" thisspwmap={1}'.format(thisinterp, thisspwmap))
                     mycb.setapply(table=table, interp=thisinterp, spwmap=thisspwmap)
                 else:
-                    RuntimeError, 'wrong type of applytable item ({0}). it should be string'.format(type(table))
+                    raise RuntimeError('wrong type of applytable item ({0}). it should be string'.format(type(table)))
         else:
-            raise RuntimeError, 'wrong type of applytable ({0}). it should be string or list'.format(type(applytable))
+            raise RuntimeError('wrong type of applytable ({0}). it should be string or list'.format(type(applytable)))
         
         # set solve
         if calmode == 'doublecircle':
@@ -137,14 +142,14 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
         ## reporting calibration solution
         #reportsolvestats(mycb.activityrec());
 
-    except Exception, e:
+    except Exception as e:
         import traceback
         casalog.post(traceback.format_exc(), priority='DEBUG')
         casalog.post(errmsg(e), priority='SEVERE')
-        raise e
+        raise
     
     finally:
         mycb.close()
 
 def errmsg(e):
-    return '{type}: {msg}'.format(type=e.__class__.__name__, msg=e.message)
+    return '{type}: {msg}'.format(type=e.__class__.__name__, msg=str(e))
