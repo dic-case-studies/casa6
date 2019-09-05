@@ -3,15 +3,14 @@ import os
 from math import pi,floor,atan2,sin,cos,sqrt
 import pylab
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
+try:
     import casatools
     from casatasks import casalog
     
     mytb=casatools.table()
     myme=casatools.measures()
     mymd=casatools.msmetadata()
-else:
+except ImportError:
     from taskinit import *
 
     mytb=tbtool()
