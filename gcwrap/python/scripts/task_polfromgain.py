@@ -1,12 +1,21 @@
 # enable local tools
-from taskinit import *
 import os
 from math import pi,floor,atan2,sin,cos,sqrt
-import pylab as mypl
+import pylab
 
-mytb=tbtool()
-myme=metool()
-mymd=msmdtool()
+try:
+    import casatools
+    from casatasks import casalog
+    
+    mytb=casatools.table()
+    myme=casatools.measures()
+    mymd=casatools.msmetadata()
+except ImportError:
+    from taskinit import *
+
+    mytb=tbtool()
+    myme=metool()
+    mymd=msmdtool()
 
 def polfromgain(vis,tablein,caltable,paoffset):
 
@@ -19,7 +28,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
         if ((type(vis)==str) & (os.path.exists(vis))):
             mymd.open(vis)
         else:
-            raise Exception, 'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
 
         nant=mymd.nantennas()
         nfld=mymd.nfields()
@@ -31,7 +40,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
             if type(caltable)==str and len(caltable)>0:
 
                 if os.path.exists(caltable):
-                    raise Exception, 'Output caltable='+caltable+' exists.  Choose another name or delete it.'
+                    raise Exception('Output caltable='+caltable+' exists.  Choose another name or delete it.')
 
                 casalog.post("New caltable, "+caltable+", corrected for linear polarization, will be generated.")
                 mytb.open(tablein)
@@ -39,12 +48,11 @@ def polfromgain(vis,tablein,caltable,paoffset):
                 mytb.close()
                 myout.close()
                 rempol=True
-
             else:
                 casalog.post("No new caltable will be generated")
                 caltable=tablein
         else:
-            raise Exception, 'input calibration table not found - please verify the name'
+            raise Exception('input calibration table not found - please verify the name')
             
 
         if paoffset!=0.0:
@@ -61,31 +69,31 @@ def polfromgain(vis,tablein,caltable,paoffset):
         fang=mytb.getcol('RECEPTOR_ANGLE')
         fspw=mytb.getcol('SPECTRAL_WINDOW_ID')
         fant=mytb.getcol('ANTENNA_ID')
-        rang=mypl.zeros((nant,nspw));
+        rang=pylab.zeros((nant,nspw));
         for ifeed in range(nfeed):
             rang[fant[ifeed],fspw[ifeed]]=fang[0,ifeed]
         mytb.close()
 
-        R=mypl.zeros((nspw,nfld))
-        Q=mypl.zeros((nspw,nfld))
-        U=mypl.zeros((nspw,nfld))
-        mask=mypl.zeros((nspw,nfld),dtype=bool)
+        R=pylab.zeros((nspw,nfld))
+        Q=pylab.zeros((nspw,nfld))
+        U=pylab.zeros((nspw,nfld))
+        mask=pylab.zeros((nspw,nfld),dtype=bool)
 
         IQUV={}
         nomod=not rempol
         mytb.open(caltable,nomodify=nomod)
-        uflds=mypl.unique(mytb.getcol('FIELD_ID'))
-        uspws=mypl.unique(mytb.getcol('SPECTRAL_WINDOW_ID'))
+        uflds=pylab.unique(mytb.getcol('FIELD_ID'))
+        uspws=pylab.unique(mytb.getcol('SPECTRAL_WINDOW_ID'))
         for ifld in uflds:
             rah=dirs[0,ifld]*12.0/pi
             decr=dirs[1,ifld]
             IQUV[fldnames[ifld]]={}
             for ispw in uspws:
 
-                r=mypl.zeros(nant)
-                q=mypl.zeros(nant)
-                u=mypl.zeros(nant)
-                antok=mypl.zeros(nant,dtype=bool)
+                r=pylab.zeros(nant)
+                q=pylab.zeros(nant)
+                u=pylab.zeros(nant)
+                antok=pylab.zeros(nant,dtype=bool)
 
                 for iant in range(nant):
                     qstring='FIELD_ID=='+str(ifld)+' && SPECTRAL_WINDOW_ID=='+str(ispw)+' && ANTENNA1=='+str(iant)
@@ -96,22 +104,22 @@ def polfromgain(vis,tablein,caltable,paoffset):
                         times=st.getcol('TIME')
                         gains=st.getcol('CPARAM')
                         flags=st.getcol('FLAG')
-                        flags=mypl.logical_or(flags[0,0,:],flags[1,0,:])  # 1D
+                        flags=pylab.logical_or(flags[0,0,:],flags[1,0,:])  # 1D
 
                         # Escape if insufficient data
-                        if (nrows-mypl.sum(flags))<3:
+                        if (nrows-pylab.sum(flags))<3:
                             antok[iant]=False
                             st.close()
                             continue
 
 
                         # parang
-                        parang=mypl.zeros(len(times))
+                        parang=pylab.zeros(len(times))
                 
                         apos=mymd.antennaposition(iant)
                         latr=myme.measure(apos,'WGS84')['m1']['value']
                         myme.doframe(apos)
-                        har=mypl.zeros(nrows)
+                        har=pylab.zeros(nrows)
                         for itim in range(len(times)):
                             tm=myme.epoch('UTC',str(times[itim])+'s')
                             last=myme.measure(tm,'LAST')['m0']['value']
@@ -120,25 +128,25 @@ def polfromgain(vis,tablein,caltable,paoffset):
                             ha=last-rah  # hours
                             har[itim]=ha*2.0*pi/24.0  # radians
                     
-                        parang=mypl.arctan2( (cos(latr)*mypl.sin(har)),
-                                             (sin(latr)*cos(decr)-cos(latr)*sin(decr)*mypl.cos(har)) )
+                        parang=pylab.arctan2( (cos(latr)*pylab.sin(har)),
+                                             (sin(latr)*cos(decr)-cos(latr)*sin(decr)*pylab.cos(har)) )
 
                         parang+=rang[iant,ispw]
                         parang+=(paoffset*pi/180.)       # manual feed pa offset
                     
                         # indep var matrix
-                        A=mypl.ones((nrows,3))
-                        A[:,1]=mypl.cos(2*parang)
-                        A[:,2]=mypl.sin(2*parang)
+                        A=pylab.ones((nrows,3))
+                        A[:,1]=pylab.cos(2*parang)
+                        A[:,2]=pylab.sin(2*parang)
                         A[flags,:]=0.0  # zero flagged rows
                     
                         # squared gain amplitude ratio
-                        amps=mypl.absolute(gains)
+                        amps=pylab.absolute(gains)
                         amps[amps==0.0]=1.0
-                        gratio2=mypl.square(amps[0,0,:]/amps[1,0,:])
+                        gratio2=pylab.square(amps[0,0,:]/amps[1,0,:])
                         gratio2[flags]=0.0  # zero flagged samples
                 
-                        fit=mypl.lstsq(A,gratio2)
+                        fit=pylab.lstsq(A,gratio2)
 
                         r[iant]=fit[0][0]
                         q[iant]=fit[0][1]/r[iant]/2.0
@@ -154,21 +162,21 @@ def polfromgain(vis,tablein,caltable,paoffset):
 
                         if rempol:
                             if p<1.0:
-                                Qpsi=q[iant]*mypl.cos(2*parang) + u[iant]*mypl.sin(2*parang)
-                                gains[0,0,:]/=mypl.sqrt(1.0+Qpsi)
-                                gains[1,0,:]/=mypl.sqrt(1.0-Qpsi)
+                                Qpsi=q[iant]*pylab.cos(2*parang) + u[iant]*pylab.sin(2*parang)
+                                gains[0,0,:]/=pylab.sqrt(1.0+Qpsi)
+                                gains[1,0,:]/=pylab.sqrt(1.0-Qpsi)
                                 st.putcol('CPARAM',gains)
                             else:
                                 st.close()
-                                raise Exception, 'Spurious fractional polarization!'
+                                raise Exception('Spurious fractional polarization!')
 
                     st.close()
 
-                nantok=mypl.sum(antok)
+                nantok=pylab.sum(antok)
                 if nantok>0:
-                    Q[ispw,ifld]=mypl.sum(q)/nantok
-                    U[ispw,ifld]=mypl.sum(u)/nantok
-                    R[ispw,ifld]=mypl.sum(r)/nantok
+                    Q[ispw,ifld]=pylab.sum(q)/nantok
+                    U[ispw,ifld]=pylab.sum(u)/nantok
+                    R[ispw,ifld]=pylab.sum(r)/nantok
                     mask[ispw,ifld]=True
                 
                     P=sqrt(Q[ispw,ifld]**2+U[ispw,ifld]**2)
@@ -185,11 +193,11 @@ def polfromgain(vis,tablein,caltable,paoffset):
 
             if sum(mask[:,ifld])>0:
                 casalog.post('For field='+fldnames[ifld]+' there are '+str(sum(mask[:,ifld]))+' good spws.')
-                Qm=mypl.mean(Q[mask[:,ifld],ifld])
-                Um=mypl.mean(U[mask[:,ifld],ifld])
+                Qm=pylab.mean(Q[mask[:,ifld],ifld])
+                Um=pylab.mean(U[mask[:,ifld],ifld])
                 IQUV[fldnames[ifld]]['SpwAve']=[1.0,Qm,Um,0.0]
-                Qe=mypl.std(Q[mask[:,ifld],ifld])
-                Ue=mypl.std(U[mask[:,ifld],ifld])
+                Qe=pylab.std(Q[mask[:,ifld],ifld])
+                Ue=pylab.std(U[mask[:,ifld],ifld])
                 Pm=sqrt(Qm**2+Um**2)
                 Xm=0.5*atan2(Um,Qm)*180/pi
                 casalog.post('Spw mean: Fld='+fldnames[ifld]+' Q='+str(Qm)+' U='+str(Um)+' P='+str(Pm)+' X='+str(Xm))
@@ -200,9 +208,9 @@ def polfromgain(vis,tablein,caltable,paoffset):
         casalog.post("NB: Returning dictionary containing fractional Stokes results.")
         return IQUV
 
-    except Exception, instance:
-        print '*** Error ***',instance
+    except Exception as instance:
+        print('*** Error ***',instance)
         mytb.close()
         mymd.close()
-        raise Exception, instance
+        raise
 
