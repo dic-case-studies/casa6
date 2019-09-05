@@ -1621,7 +1621,7 @@ void ATCAFiller::checkField() {
         msc_p->field().phaseDir().put(nf,dir);
         msc_p->field().delayDir().put(nf,dir);
         msc_p->field().referenceDir().put(nf, dir);
-        msc_p->field().numPoly().put(nf, 1);
+        msc_p->field().numPoly().put(nf, 0);
         msc_p->field().time().put(nf,epoch);
         msc_p->field().code().put(nf,String(&names_.su_cal[sourceno*16],
                                       16).before(trailing));
@@ -1697,7 +1697,7 @@ void ATCAFiller::checkField() {
         if (i==0) { // ISM storage
           msc_p->pointing().time().put(np,epoch);
           msc_p->pointing().interval().put(np,DBL_MAX);
-          msc_p->pointing().numPoly().put(np, 1);
+          msc_p->pointing().numPoly().put(np, 0);
           msc_p->pointing().direction().put(np,pointingDir);
           msc_p->pointing().pointingOffset().put(np,pointingOffset);
           msc_p->pointing().tracking().put(np,True);
