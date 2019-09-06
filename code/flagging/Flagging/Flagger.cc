@@ -228,7 +228,7 @@ bool Flagger::attach( MeasurementSet &mset, Bool setAgentDefaults )
 
 	// extract various interesting info from the MS
 	// obtain number of distinct time slots
-	ROMSColumns msc(ms);
+	MSColumns msc(ms);
 	Vector<Double> time( msc.time().getColumn() );
 
 	uInt nrows = time.nelements();

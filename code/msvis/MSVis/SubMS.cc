@@ -298,7 +298,7 @@ std::set<Int> SubMS::findBadSpws(MeasurementSet& ms, Vector<Int> spwv)
       }
     }
     else{                            // select everything and rely on widths.
-      ROMSSpWindowColumns mySpwTab(ms_p.spectralWindow());
+      MSSpWindowColumns mySpwTab(ms_p.spectralWindow());
       uInt nspw = mySpwTab.nrow();
 
       nchan_p = mySpwTab.numChan().getColumn();
@@ -437,7 +437,7 @@ std::set<Int> SubMS::findBadSpws(MeasurementSet& ms, Vector<Int> spwv)
     // check for defaults
     if(nchan_p[0]<=0 || (nchan_p.nelements() != spw_p.nelements())){
       nchan_p.resize(spw_p.nelements());
-      ROMSSpWindowColumns mySpwTab(ms_p.spectralWindow());
+      MSSpWindowColumns mySpwTab(ms_p.spectralWindow());
       for (uInt k =0; k < spw_p.nelements(); ++k){
 	if(nchan[0]<=0)
 	  nchan_p[k]=mySpwTab.numChan()(spw_p[k]);
@@ -739,7 +739,7 @@ Bool SubMS::pickAntennas(Vector<Int>& selected_antennaids,
         ms_p=MeasurementSet();
         return false;
       }
-      mscIn_p=new ROMSColumns(mssel_p);
+      mscIn_p=new MSColumns(mssel_p);
       // Note again the parseColumnNames() a few lines back that stops setupMS()
       // from being called if the MS doesn't have the requested columns.
       MeasurementSet* outpointer=0;
@@ -922,7 +922,7 @@ Bool SubMS::pickAntennas(Vector<Int>& selected_antennaids,
       ms_p=MeasurementSet();
       return 0;
     }
-    mscIn_p=new ROMSColumns(mssel_p);
+    mscIn_p=new MSColumns(mssel_p);
     Double sizeInMB= 1.5 * n_bytes() / (1024.0 * 1024.0);
     String msname=AppInfo::workFileName(uInt(sizeInMB), "TempSubMS");
     
@@ -1520,7 +1520,7 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
   {  
     LogIO os(LogOrigin("SubMS", "fillDDTables()"));
     
-    ROMSSpWindowColumns inSpWCols(mssel_p.spectralWindow());
+    MSSpWindowColumns inSpWCols(mssel_p.spectralWindow());
     MSSpWindowColumns& msSpW(msc_p->spectralWindow());
     // Detect which optional columns of SPECTRAL_WINDOW are present.
     // inSpWCols and msSpW should agree because addOptionalColumns() was done
@@ -1542,7 +1542,7 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
     
     //Fill in matching spw to datadesc in old ms 
     {
-      ROMSDataDescColumns msOldDD(ddtable);
+      MSDataDescColumns msOldDD(ddtable);
       oldDDSpwMatch_p=msOldDD.spectralWindowId().getColumn();
     }
 
@@ -1849,7 +1849,7 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
 
     MSFieldColumns msField(msOut_p.field());
 
-    const ROMSFieldColumns& fieldIn = mscIn_p->field(); 
+    const MSFieldColumns& fieldIn = mscIn_p->field(); 
     ScalarColumn<String> code(fieldIn.code());
     ArrayColumn<Double>  delayDir(fieldIn.delayDir());
     ScalarColumn<Bool>   flagRow(fieldIn.flagRow());
@@ -2264,11 +2264,11 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
       // create the "partner" columns, i.e. rename the old array columns to old...
       // and create new empty columns with the original names to hold the regridded values
 
-      ROMSMainColumns mCols(ms_p);
+      MSMainColumns mCols(ms_p);
       Int nCorr = mCols.data().shape(0)(0); // the first dimension of DATA
       IPosition dataShape(2, nCorr, xout[0].size());
       Int obstype = 0; // default
-      ROMSObservationColumns obsCols(ms_p.observation());
+      MSObservationColumns obsCols(ms_p.observation());
       String telescop = obsCols.telescopeName()(mCols.observationId()(0));
       IPosition tileShape = MSTileLayout::tileShape(dataShape, obstype, telescop);
 
@@ -4683,7 +4683,7 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
 
     // calculate mean antenna position for TOPO transformation
     MSAntenna anttable = ms_p.antenna();
-    ROMSAntennaColumns ANTCols(anttable);
+    MSAntennaColumns ANTCols(anttable);
     ROScalarMeasColumn<MPosition> ANTPositionMeasCol = ANTCols.positionMeas(); 
     ScalarColumn<Bool> ANTflagRowCol = ANTCols.flagRow();
     Int nAnt = 0;
@@ -4710,7 +4710,7 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
     {
       MPosition Xpos;
       String Xobservatory;
-      ROMSObservationColumns XObsCols(ms_p.observation());
+      MSObservationColumns XObsCols(ms_p.observation());
       if (ms_p.observation().nrow() > 0) {
 	Xobservatory = XObsCols.telescopeName()(mainCols.observationId()(0));
       }
@@ -5504,7 +5504,7 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
       uInt nSpwsToCombine = spwsToCombine.size();
 
       // prepare access to the SPW table
-      ROMSSpWindowColumns SPWColrs(spwtable);
+      MSSpWindowColumns SPWColrs(spwtable);
       ScalarColumn<Int> numChanColr = SPWColrs.numChan(); 
       ArrayColumn<Double> chanFreqColr = SPWColrs.chanFreq(); 
       ArrayColumn<Double> chanWidthColr = SPWColrs.chanWidth(); 
@@ -7839,7 +7839,7 @@ Bool SubMS::copyCols(Table& out, const Table& in, const Bool flush)
   Bool SubMS::copyAntenna(){
     const MSAntenna& oldAnt = mssel_p.antenna();
     MSAntenna& newAnt = msOut_p.antenna();
-    const ROMSAntennaColumns incols(oldAnt);
+    const MSAntennaColumns incols(oldAnt);
     MSAntennaColumns         outcols(newAnt);
     Bool 		     retval = false;
     
@@ -7872,7 +7872,7 @@ Bool SubMS::copyCols(Table& out, const Table& in, const Bool flush)
     // if(oldFeed.nrow() < 1)     Useless, because it ignores spw selection
     
     MSFeed& newFeed = msOut_p.feed();
-    const ROMSFeedColumns incols(oldFeed);
+    const MSFeedColumns incols(oldFeed);
     MSFeedColumns         outcols(newFeed);
     
     outcols.setDirectionRef(MDirection::castType(incols.beamOffsetMeas().getMeasRef().getType()));
@@ -7948,7 +7948,7 @@ Bool SubMS::copyCols(Table& out, const Table& in, const Bool flush)
         os << LogIO::DEBUG1 << "FLAG_CMD has " << nAddedCols
            << " optional columns." << LogIO::POST;
 	
-        const ROMSFlagCmdColumns oldFCs(oldFlag_Cmd);
+        const MSFlagCmdColumns oldFCs(oldFlag_Cmd);
         MSFlagCmdColumns newFCs(newFlag_Cmd);
         newFCs.setEpochRef(MEpoch::castType(oldFCs.timeMeas().getMeasRef().getType()));
 	
@@ -8001,7 +8001,7 @@ Bool SubMS::copyCols(Table& out, const Table& in, const Bool flush)
     os << LogIO::DEBUG1 << "HISTORY has " << nAddedCols
        << " optional columns." << LogIO::POST;
 	
-    const ROMSHistoryColumns oldHCs(oldHistory);
+    const MSHistoryColumns oldHCs(oldHistory);
     MSHistoryColumns newHCs(newHistory);
     newHCs.setEpochRef(MEpoch::castType(oldHCs.timeMeas().getMeasRef().getType()));
 	
@@ -8022,7 +8022,7 @@ Bool SubMS::copyCols(Table& out, const Table& in, const Bool flush)
       os << LogIO::DEBUG1 << "SOURCE has " << nAddedCols
          << " optional columns." << LogIO::POST;
       
-      const ROMSSourceColumns incols(oldSource);
+      const MSSourceColumns incols(oldSource);
       MSSourceColumns         outcols(newSource);
 
       // Copy the Measures frame info.  This has to be done before filling the
@@ -8137,7 +8137,7 @@ Bool SubMS::copyGenericSubtables(){
   {
     const MSObservation& oldObs = mssel_p.observation();
     MSObservation& newObs = msOut_p.observation();
-    const ROMSObservationColumns oldObsCols(oldObs);
+    const MSObservationColumns oldObsCols(oldObs);
     MSObservationColumns newObsCols(newObs);
     newObsCols.setEpochRef(MEpoch::castType(oldObsCols.releaseDateMeas().getMeasRef().getType()));
 
@@ -8175,7 +8175,7 @@ Bool SubMS::copyState()
 
     if(oldState.nrow() > 0){
       MSState& newState = msOut_p.state();
-      const ROMSStateColumns oldStateCols(oldState);
+      const MSStateColumns oldStateCols(oldState);
       MSStateColumns newStateCols(newState);
 
       // Initialize stateRemapper_p if necessary.
@@ -8299,7 +8299,7 @@ void SubMS::createSubtables(MeasurementSet& ms, Table::TableOption option)
           //W  	const TableColumn oldTC(oldPoint, "DIRECTION");
           //W  	newTC.rwKeywordSet() = oldTC.keywordSet();
 
-          const ROMSPointingColumns oldPCs(oldPoint);
+          const MSPointingColumns oldPCs(oldPoint);
           MSPointingColumns newPCs(newPoint);
           newPCs.setEpochRef(MEpoch::castType(oldPCs.timeMeas().getMeasRef().getType()));
           newPCs.setDirectionRef(MDirection::castType(oldPCs.directionMeasCol().getMeasRef().getType()));
@@ -8389,7 +8389,7 @@ void SubMS::setupNewPointing()
 	os << LogIO::DEBUG1 << "WEATHER has " << nAddedCols
 	   << " optional columns." << LogIO::POST;
 	
-  	const ROMSWeatherColumns oldWCs(oldWeath);
+  	const MSWeatherColumns oldWCs(oldWeath);
 	MSWeatherColumns newWCs(newWeath);
 	newWCs.setEpochRef(MEpoch::castType(oldWCs.timeMeas().getMeasRef().getType()));
 	
@@ -8453,7 +8453,7 @@ Bool SubMS::copySyscal()
       os << LogIO::DEBUG1 << "SYSCAL has " << nAddedCols
          << " optional columns." << LogIO::POST;
 	
-      const ROMSSysCalColumns incols(oldSysc);
+      const MSSysCalColumns incols(oldSysc);
       MSSysCalColumns outcols(newSysc);
       outcols.setEpochRef(MEpoch::castType(incols.timeMeas().getMeasRef().getType()));
 	
@@ -8923,7 +8923,7 @@ uInt SubMS::remapped(const Int ov, const Vector<Int>& mapper, uInt i=0)
   return i;  
 }
 
-uInt SubMS::fillAntIndexer(std::map<Int, Int>& antIndexer, const ROMSColumns *msc)
+uInt SubMS::fillAntIndexer(std::map<Int, Int>& antIndexer, const MSColumns *msc)
 {
   const Vector<Int>& ant1 = msc->antenna1().getColumn();
   const Vector<Int>& ant2 = msc->antenna2().getColumn();
@@ -8948,7 +8948,7 @@ uInt SubMS::fillAntIndexer(std::map<Int, Int>& antIndexer, const ROMSColumns *ms
   return nant;
 }
 
-const ArrayColumn<Complex>& SubMS::right_column(const ROMSColumns *msclala,
+const ArrayColumn<Complex>& SubMS::right_column(const MSColumns *msclala,
                                                 const MS::PredefinedColumns col)
 {
   if(col == MS::DATA)

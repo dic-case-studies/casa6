@@ -166,14 +166,14 @@ void EGainCurve::setSpecify(const Record& specify) {
   //  the right gain curves
 
   MeasurementSet ms(msName());
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
 
   // The antenna names
-  const ROMSAntennaColumns& antcol(mscol.antenna());
+  const MSAntennaColumns& antcol(mscol.antenna());
   antnames_ = antcol.name().getColumn();
 
   // Observation info
-  const ROMSObservationColumns& obscol(mscol.observation());
+  const MSObservationColumns& obscol(mscol.observation());
 
   String telescope(obscol.telescopeName()(0));
 
@@ -219,7 +219,7 @@ void EGainCurve::setSpecify(const Record& specify) {
   Vector<Double> timerange(obscol.timeRange()(0));
   obstime_ = timerange(0);
 
-  const ROMSSpWindowColumns& spwcol(mscol.spectralWindow());
+  const MSSpWindowColumns& spwcol(mscol.spectralWindow());
   spwfreqs_.resize(nSpw());
   spwfreqs_.set(0.0);
   spwbands_.resize(nSpw());

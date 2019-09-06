@@ -1315,19 +1315,6 @@
              "comment":""
         },
         {
-             "testNumber":"6029",
-             "testName":"Ia fromascii",
-             "testScript":"test_ia_fromascii",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"David Mehringer",
-             "MaintainerEmail":"dmehring@nrao.edu",
-             "priority":"3",
-             "tag":"ia",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"6031",
              "testName":"Ia fromfits",
              "testScript":"test_ia_fromfits",
@@ -1682,19 +1669,6 @@
              "testNumber":"6085",
              "testName":"Ia summary",
              "testScript":"test_ia_summary",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"David Mehringer",
-             "MaintainerEmail":"dmehring@nrao.edu",
-             "priority":"3",
-             "tag":"ia",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"6087",
-             "testName":"Ia toascii",
-             "testScript":"test_ia_toascii",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",

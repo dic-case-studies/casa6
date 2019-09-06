@@ -327,7 +327,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    throw(err);
 	  }
       }
-    //    ROMSSpWindowColumns mssp(vb.msColumns().spectralWindow());
+    //    MSSpWindowColumns mssp(vb.msColumns().spectralWindow());
     Freq = vb.msColumns().spectralWindow().refFrequency()(0);
     Diameter_p=0;
     Nant_p     = vb.msColumns().antenna().nrow();

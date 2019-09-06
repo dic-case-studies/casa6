@@ -106,7 +106,7 @@ FlagMSHandler::open()
 	originalMeasurementSet_p->setMemoryResidentSubtables (MrsEligibility::defaultEligible());
 
 	// Read antenna names and diameters from Antenna table
-	ROMSAntennaColumns antennaSubTable(originalMeasurementSet_p->antenna());
+	MSAntennaColumns antennaSubTable(originalMeasurementSet_p->antenna());
 	antennaNames_p = new Vector<String>(antennaSubTable.name().getColumn());
 	antennaDiameters_p = new Vector<Double>(antennaSubTable.dishDiameter().getColumn());
 	antennaPositions_p = new ScalarMeasColumn<MPosition>(antennaSubTable.positionMeas());
@@ -128,13 +128,13 @@ FlagMSHandler::open()
 
 	// Read field names
 	{
-	  ROMSFieldColumns *fieldSubTable = new ROMSFieldColumns(originalMeasurementSet_p->field());
+	  MSFieldColumns *fieldSubTable = new MSFieldColumns(originalMeasurementSet_p->field());
 	  fieldNames_p = new Vector<String>(fieldSubTable->name().getColumn());
 	  delete fieldSubTable;
 	}
 
 	// Read polarizations
-	ROMSPolarizationColumns polarizationSubTable(originalMeasurementSet_p->polarization());
+	MSPolarizationColumns polarizationSubTable(originalMeasurementSet_p->polarization());
 	ArrayColumn<Int> corrTypeColum = polarizationSubTable.corrType();
 	corrProducts_p = new std::vector<String>();
 	for (uInt polRow_idx=0;polRow_idx<corrTypeColum.nrow();polRow_idx++)
@@ -227,7 +227,7 @@ FlagMSHandler::open()
 	}
 
 	// Read reference frequencies per SPW
-	ROMSSpWindowColumns spwSubTable(originalMeasurementSet_p->spectralWindow());
+	MSSpWindowColumns spwSubTable(originalMeasurementSet_p->spectralWindow());
 	ScalarColumn<Double> refFrequencies = spwSubTable.refFrequency();
 	lambdaMap_p = new lambdaMap();
 	for (uInt spwidx=0;spwidx<refFrequencies.nrow();spwidx++)

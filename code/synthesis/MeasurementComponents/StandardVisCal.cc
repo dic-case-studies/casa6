@@ -592,7 +592,7 @@ void TJones::createCorruptor(const VisIter& vi, const Record& simpar, const Int 
       if (simpar.asString("mode") == "individual") 
 	tcorruptor_p->initialize(Seed,Beta,Scale,rxType);
       else if (simpar.asString("mode") == "screen") {
-	const ROMSAntennaColumns& antcols(vi.msColumns().antenna());
+	const MSAntennaColumns& antcols(vi.msColumns().antenna());
 	if (simpar.isDefined("windspeed")) {
 	  tcorruptor_p->windspeed()=simpar.asFloat("windspeed");
 	  tcorruptor_p->initialize(Seed,Beta,Scale,rxType,antcols);

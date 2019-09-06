@@ -553,7 +553,7 @@ void NewCalTable::handleEphObj(const MSField& msfldtab,const String& msName) {
   //   may have some Eph Objects to get directions for.
   const String ephColName = MSField::columnName(MSField::EPHEMERIS_ID);
   if (msfldtab.actualTableDesc().isColumn(ephColName)) {
-    ROMSFieldColumns msfcol(msfldtab);
+    MSFieldColumns msfcol(msfldtab);
     Vector<Int> ephid=msfcol.ephemerisId().getColumn();
 
     // Do nothing if no eph objects

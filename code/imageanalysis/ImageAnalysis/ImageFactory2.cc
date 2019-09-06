@@ -127,7 +127,7 @@ SPIIDC ImageFactory::complexDoubleImageFromShape(
         outfile, shape, csys, linear, overwrite, verbose, msgs
     );
 }
-
+/*
 SPIIF ImageFactory::fromASCII(
     const String& outfile, const String& infile,
     const IPosition& shape, const String& sep, const Record& csys,
@@ -170,7 +170,7 @@ SPIIF ImageFactory::fromASCII(
     Array<Float> pixels(vec.reform(IPosition(shape)));
     return imageFromArray(outfile, pixels, csys, linear, overwrite);
 }
-
+*/
 ITUPLE ImageFactory::fromImage(
     const String& outfile, const String& infile,
     const Record& region, const String& mask, Bool dropdeg,
@@ -410,7 +410,7 @@ void ImageFactory::rename(
 ) {
 	image = std::get<1>(_rename(image, name, overwrite));
 }
-
+/*
 void ImageFactory::toASCII(
 	SPCIIF image, const String& outfile, Record& region,
 	const String& mask, const String& sep,
@@ -479,7 +479,7 @@ void ImageFactory::toASCII(
 		nline += 1;
 	}
 }
-
+*/
 void ImageFactory::toFITS(
 	SPCIIF image, const String& outfile, Bool velocity, Bool optical,
 	Int bitpix, Double minpix, Double maxpix,

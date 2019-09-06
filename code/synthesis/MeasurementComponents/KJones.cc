@@ -588,7 +588,7 @@ KJones::KJones(VisSet& vs) :
   // Extract per-spw ref Freq for phase(delay) calculation                                                                                                      
   //  TBD: these should be in the caltable!!                                                                                                                    
   MSSpectralWindow msSpw(vs.spectralWindowTableName());
-  ROMSSpWindowColumns msCol(msSpw);
+  MSSpWindowColumns msCol(msSpw);
   msCol.refFrequency().getColumn(KrefFreqs_,true);
   KrefFreqs_/=1.0e9;  // in GHz
 
@@ -609,7 +609,7 @@ KJones::KJones(String msname,Int MSnAnt,Int MSnSpw) :
   NEEDED IN SOLVE CONTEXT?
 
   MSSpectralWindow msSpw(vs.spectralWindowTableName());
-  ROMSSpWindowColumns msCol(msSpw);
+  MSSpWindowColumns msCol(msSpw);
   msCol.refFrequency().getColumn(KrefFreqs_,true);
   KrefFreqs_/=1.0e9;  // in GHz
   */
@@ -651,7 +651,7 @@ void KJones::setApply(const Record& apply) {
   // Extract per-spw ref Freq for phase(delay) calculation
   //  from the CalTable
   MSSpectralWindow msSpw(ct_->spectralWindow());
-  ROMSSpWindowColumns msCol(msSpw);
+  MSSpWindowColumns msCol(msSpw);
 
   String ctvers=ct_->CASAvers();
   if (ctvers==String("Unknown") ||    // pre-5.3.0-80 (no version recorded in table)
@@ -1332,7 +1332,7 @@ KcrossJones::KcrossJones(VisSet& vs) :
   // Extract per-spw ref Freq for phase(delay) calculation
   //  TBD: these should be in the caltable!!
   MSSpectralWindow msSpw(vs.spectralWindowTableName());
-  ROMSSpWindowColumns msCol(msSpw);
+  MSSpWindowColumns msCol(msSpw);
   msCol.refFrequency().getColumn(KrefFreqs_,true);
   KrefFreqs_/=1.0e9;  // in GHz
 
@@ -1349,7 +1349,7 @@ KcrossJones::KcrossJones(String msname,Int MSnAnt,Int MSnSpw) :
   //  TBD: these should be in the caltable!!
   /*  DEPRECATED, because we get it from ct_?
   MSSpectralWindow msSpw(vs.spectralWindowTableName());
-  ROMSSpWindowColumns msCol(msSpw);
+  MSSpWindowColumns msCol(msSpw);
   msCol.refFrequency().getColumn(KrefFreqs_,true);
   KrefFreqs_/=1.0e9;  // in GHz
   */
@@ -1366,7 +1366,7 @@ KcrossJones::KcrossJones(const MSMetaInfoForCal& msmc) :
   //  TBD: these should be in the caltable!!
   /*  DEPRECATED, because we get it from ct_?
   MSSpectralWindow msSpw(vs.spectralWindowTableName());
-  ROMSSpWindowColumns msCol(msSpw);
+  MSSpWindowColumns msCol(msSpw);
   msCol.refFrequency().getColumn(KrefFreqs_,True);
   KrefFreqs_/=1.0e9;  // in GHz
   */

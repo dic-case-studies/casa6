@@ -222,7 +222,7 @@ String Imager::imageName()
   try {
     lock();
     String name(msname_p);
-    ROMSColumns msc(*ms_p);
+    MSColumns msc(*ms_p);
     if(datafieldids_p.shape() !=0) {
       name=msc.field().name()(datafieldids_p(0));
     }
@@ -276,8 +276,8 @@ Bool Imager::imagecoordinates2(CoordinateSystem& coordInfo, const Bool verbose)
   deltas(0)=-mcellx_p.get("rad").getValue();
   deltas(1)=mcelly_p.get("rad").getValue();
   
-  //ROMSColumns msc(*ms_p);
-  ROMSColumns msc(*mssel_p); // CAS-11503
+  //MSColumns msc(*ms_p);
+  MSColumns msc(*mssel_p); // CAS-11503
   MFrequency::Types obsFreqRef=MFrequency::DEFAULT;
   ScalarColumn<Int> measFreqRef(ms_p->spectralWindow(),
 				  MSSpectralWindow::columnName(MSSpectralWindow::MEAS_FREQ_REF));
@@ -855,7 +855,7 @@ Bool Imager::imagecoordinates(CoordinateSystem& coordInfo, const Bool verbose)
   deltas(0)=-mcellx_p.get("rad").getValue();
   deltas(1)=mcelly_p.get("rad").getValue();
   
-  ROMSColumns msc(*ms_p);
+  MSColumns msc(*ms_p);
   MFrequency::Types obsFreqRef=MFrequency::DEFAULT;
   ScalarColumn<Int> measFreqRef(ms_p->spectralWindow(),
 				  MSSpectralWindow::columnName(MSSpectralWindow::MEAS_FREQ_REF));
@@ -1532,7 +1532,7 @@ String Imager::state()
       os << "  Beam fit is not valid" << endl;
     }
     
-    ROMSColumns msc(*ms_p);
+    MSColumns msc(*ms_p);
     MDirection mDesiredCenter;
     if(setimaged_p) {
       os << "Image definition settings: "
@@ -1911,7 +1911,7 @@ Bool Imager::pbguts(ImageInterface<Float>& inImage,
 	myPBp = new PBMath(whichPB);
       }
       else{
-	ROMSAntennaColumns ac(ms_p->antenna());
+	MSAntennaColumns ac(ms_p->antenna());
 	Double dishDiam=ac.dishDiameter()(0);
 	myPBp= new PBMath(dishDiam, true, qFreq);
 
@@ -1980,7 +1980,7 @@ Bool Imager::pixon(const String& algorithm,
       os << LogIO::NORMAL << "Single dish pixon processing" << LogIO::POST; // Loglevel PROGRESS
       os << LogIO::NORMAL // Loglevel INFO
          << "Using defaults for primary beams in pixon processing" << LogIO::POST;
-      ROMSColumns msc(*mssel_p);
+      MSColumns msc(*mssel_p);
       gvp_p=new VPSkyJones(msc, true, parAngleInc_p, squintType_p,
                            skyPosThreshold_p);
       os << LogIO::NORMAL << "Calculating data sampling, etc." << LogIO::POST; // Loglevel PROGRESS
@@ -2529,7 +2529,7 @@ Bool Imager::createFTMachine()
     os << LogIO::NORMAL << tangentPoint() << LogIO::POST; // Loglevel INFO
     if(gridfunction_p=="pb") {
       if(!gvp_p) {
-	ROMSColumns msc(*ms_p);
+	MSColumns msc(*ms_p);
 	if (doDefaultVP_p) {
 	  os << LogIO::NORMAL // Loglevel INFO
              << "Using defaults for primary beams used in gridding" << LogIO::POST;
@@ -2650,7 +2650,7 @@ Bool Imager::createFTMachine()
       {
 	os << LogIO::NORMAL // Loglevel INFO
            << "Using defaults for primary beams used in gridding" << LogIO::POST;
-	ROMSColumns msc(*ms_p);
+	MSColumns msc(*ms_p);
 	gvp_p = new VPSkyJones(msc, true, parAngleInc_p, squintType_p,
                                skyPosThreshold_p);
       }
@@ -2720,7 +2720,7 @@ Bool Imager::createFTMachine()
       {
 	os << LogIO::NORMAL // Loglevel INFO
            << "Using defaults for primary beams used in gridding" << LogIO::POST;
-	ROMSColumns msc(*ms_p);
+	MSColumns msc(*ms_p);
 	gvp_p = new VPSkyJones(msc, true, parAngleInc_p, squintType_p,
                                skyPosThreshold_p);
       }
@@ -2789,7 +2789,7 @@ Bool Imager::createFTMachine()
     if(!gvp_p) {
       os << LogIO::NORMAL // Loglevel INFO
          << "Using defaults for primary beams used in gridding" << LogIO::POST;
-      ROMSColumns msc(*ms_p);
+      MSColumns msc(*ms_p);
       gvp_p = new VPSkyJones(msc, true, parAngleInc_p, squintType_p,
                              skyPosThreshold_p);
     }
@@ -3176,7 +3176,7 @@ Bool Imager::createSkyEquation(const Vector<String>& image,
   // is not always called before SkyModel is made (im.ft).
   // Note : This should go into a function.
   {
-    ROMSColumns msc(*ms_p);
+    MSColumns msc(*ms_p);
     Vector<String> polType=msc.feed().polarizationType()(0);
     if (polType(0)!="X" && polType(0)!="Y" &&
         polType(0)!="R" && polType(0)!="L") {
@@ -3389,7 +3389,7 @@ Bool Imager::createSkyEquation(const Vector<String>& image,
 
   // Now add any SkyJones that are needed
   if(doVP_p && (ft_p->name()!="MosaicFT")) {
-    ROMSColumns msc(*ms_p);
+    MSColumns msc(*ms_p);
     if (doDefaultVP_p) {
       vp_p=new VPSkyJones(msc, true, parAngleInc_p, squintType_p, skyPosThreshold_p);
     } else { 
@@ -4170,7 +4170,7 @@ Bool Imager::makePBImage(PBMath& pbMath, ImageInterface<Float>& pbImage){
 
   return true;
 }
-void Imager::transferHistory(LoggerHolder& imagelog, ROMSHistoryColumns& msHis){
+void Imager::transferHistory(LoggerHolder& imagelog, MSHistoryColumns& msHis){
   LogIO os(LogOrigin("imager", "transferHistory"));
   LogSink& sink = imagelog.sink();
   const ScalarColumn<Double> &time_col = msHis.time();
@@ -4241,7 +4241,7 @@ Bool Imager::makeEmptyImage(CoordinateSystem& coords, String& name, Int fieldID)
   modelImage.table().markForDelete();
     
   // Fill in miscellaneous information needed by FITS
-  ROMSColumns msc(*ms_p);
+  MSColumns msc(*ms_p);
   Record info;
   String object=msc.field().name()(fieldID)
 ;  //defining object name
@@ -4374,7 +4374,7 @@ void Imager::savePSF(const Vector<String>& psf){
 
 void Imager::setMosaicFTMachine(Bool useDoublePrec){
   LogIO os(LogOrigin("Imager", "setmosaicftmachine", WHERE));
-  ROMSColumns msc(*ms_p);
+  MSColumns msc(*ms_p);
   String telescop=msc.observation().telescopeName()(0);
   PBMath::CommonPB kpb;
   PBMath::enumerateCommonPB(telescop, kpb);
@@ -4382,7 +4382,7 @@ void Imager::setMosaicFTMachine(Bool useDoublePrec){
        (kpb==PBMath::OVRO) || (kpb==PBMath::ALMA) || (kpb==PBMath::ACA) || (kpb==PBMath::EVLA) || !doDefaultVP_p)){
     
     if(!gvp_p) {
-      ROMSColumns msc(*ms_p);
+      MSColumns msc(*ms_p);
       if (doDefaultVP_p) {
 	os << LogIO::NORMAL // Loglevel INFO
            << "Using defaults for primary beams used in gridding" << LogIO::POST;
@@ -4439,7 +4439,7 @@ ATerm* Imager::createTelescopeATerm(MeasurementSet& ms, const Bool& isATermOn)
 
   if (!isATermOn) return new NoOpATerm();
 
-  ROMSObservationColumns msoc(ms.observation());
+  MSObservationColumns msoc(ms.observation());
   String ObsName=msoc.telescopeName()(0);
   if ((ObsName == "EVLA") || (ObsName == "VLA"))
     return new EVLAAperture();
@@ -4467,7 +4467,7 @@ Bool Imager::calcImFreqs(Vector<Double>& imgridfreqs,
   logSink_p.clearLocally();
   LogIO os(LogOrigin("imager", "setGridFreqs()"), logSink_p);
 
-  ROMSColumns msc(*ms_p);
+  MSColumns msc(*ms_p);
   Vector<Double> oldChanFreqs;
   Vector<Double> oldFreqResolution;
   String veltype;

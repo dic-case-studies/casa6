@@ -248,7 +248,7 @@ namespace LibAIR2 {
 		    std::vector<double> &el)
   {
     const casacore::MSPointing &ptable=ms.pointing();
-    const casacore::ROMSPointingColumns ptablecols(ptable);
+    const casacore::MSPointingColumns ptablecols(ptable);
     const casacore::ArrayColumn<casacore::Double> &dir=ptablecols.direction();
     const casacore::ScalarColumn<casacore::Double> &ptime=ptablecols.time();
 

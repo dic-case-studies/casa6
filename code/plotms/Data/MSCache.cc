@@ -433,7 +433,7 @@ String MSCache::normalizeColumnName(String plotmscol)
 
 void MSCache::getNamesFromMS(MeasurementSet& ms)
 {
-	ROMSColumns msCol(ms);
+	MSColumns msCol(ms);
 	antnames_.resize();
 	stanames_.resize();
 	antstanames_.resize();
@@ -1940,14 +1940,14 @@ void MSCache::loadAxis(vi::VisBuffer2* vb, Int vbnum, PMS::Axis axis,
 	}
 	case PMS::RADIAL_VELOCITY: {
 		Int fieldId = vb->fieldId()(0);
-		const ROMSFieldColumns& fieldColumns = vi_p->subtableColumns().field();
+		const MSFieldColumns& fieldColumns = vi_p->subtableColumns().field();
 		MRadialVelocity radVelocity = fieldColumns.radVelMeas(fieldId, vb->time()(0));
 		radialVelocity_(vbnum) = radVelocity.get("AU/d").getValue( "km/s");
 		break;
 	}
 	case PMS::RHO:{
 		Int fieldId = vb->fieldId()(0);
-		const ROMSFieldColumns& fieldColumns = vi_p->subtableColumns().field();
+		const MSFieldColumns& fieldColumns = vi_p->subtableColumns().field();
 		Quantity rhoQuantity = fieldColumns.rho(fieldId, vb->time()(0));
 		rho_(vbnum ) = rhoQuantity.getValue( "km");
 		break;
@@ -2021,8 +2021,8 @@ bool MSCache::isEphemeris(){
 		}
 
 		// Check the field subtable for ephemeris fields
-		ROMSColumns msc(ms);
-		const ROMSFieldColumns& fieldColumns = msc.field();
+		MSColumns msc(ms);
+		const MSFieldColumns& fieldColumns = msc.field();
 		uInt nrow = fieldColumns.nrow();
 
 		ephemerisAvailable = false;
@@ -2333,7 +2333,7 @@ void MSCache::loadPageHeaderCache(const casacore::MeasurementSet& selectedMS){
 
 	const uInt firstSelectedRow = 0;
 
-	ROMSColumns selMSColumns(selectedMS);
+	MSColumns selMSColumns(selectedMS);
 
 	// ---- Queries on Observation table
 	auto firstObservationId = selMSColumns.observationId().get(firstSelectedRow);

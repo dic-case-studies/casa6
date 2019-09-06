@@ -35,7 +35,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 namespace vi {  //# NAMESPACE VI - BEGIN
 
 //# forward decl
-//class ROMSColumns;
+//class MSColumns;
 //class TableIterator;
 
 // <summary>
