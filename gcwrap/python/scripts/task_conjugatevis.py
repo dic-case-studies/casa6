@@ -59,8 +59,8 @@ def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
             except:
                 raise Exception('Error reading DATA_DESCRIPTION table')
         #endif
-        outname = 'conjugatedvis_'+vis
-        if not outputvis=="":
+        outname = 'conjugated_'+vis
+        if not (outputvis==""):
             if((type(outputvis)!=str) or (len(outputvis.split()) < 1)):
                 raise Exception('parameter outputvis is invalid')
             outname = outputvis
@@ -70,7 +70,7 @@ def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
         os.system('cp -R '+vis+' '+outname)
         _tb.open(outname, nomodify=False)
         if _tb.iswritable():
-            if(spwlist==None):
+            if(spwlist==[]):
                 for colname in [ 'DATA', 'CORRECTED_DATA', 'FLOAT_DATA' ]:
                     if colname in _tb.colnames():
                         casalog.post('Conjugating '+str(colname), 'INFO')
@@ -103,7 +103,7 @@ def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
                 param_vals = [vars[p] for p in param_names]
             else:
                 param_vals = [eval(p) for p in param_names]
-            write_history(mstool(), outputvis, 'conjugatevis', param_names,
+            write_history(mstool(), outname, 'conjugatevis', param_names,
                           param_vals, casalog)
 
         except Exception as instance:
