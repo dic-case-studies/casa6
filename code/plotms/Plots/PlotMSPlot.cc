@@ -2146,6 +2146,8 @@ void PlotMSPlot::setXAxisRange(
 
 	// Must set scale before range; NORMAL, TIME, or ANGLE scale
 	canvas->setAxisScale(xPlotAxis, PMS::axisScale(xAxis), PMS::axisScaleBase(xAxis));
+	SortDirection sortDir;
+	bool setSortDirection(false);
 
 	// x range min/max for all plots
 	double xming(DBL_MAX), xmaxg(-DBL_MAX);  // global xmin/xmax
@@ -2154,18 +2156,15 @@ void PlotMSPlot::setXAxisRange(
 			// Set axis scale, direction for Ra/Dec
 			auto xFrame = cacheParams[plotindex]->xFrame();
 			canvas->setAxisScaleAngleFormat(xPlotAxis, PMS::angleFormat(xAxis, xFrame));
-			if (xAxis == PMS::RA) {
-				if (cacheParams[plotindex]->yAxis(xindex) == PMS::DEC) {
-					SortDirection sortDir;
-					switch(xFrame){
-						case PMS::CoordSystem::AZELGEO:
-							sortDir = SortDirection::ASCENDING;
-							break;
-						default:
-							sortDir = SortDirection::DESCENDING;
-					}
-					canvas->setAxisScaleSortDirection(xPlotAxis, sortDir);
+			if ((xAxis == PMS::RA) && (cacheParams[plotindex]->yAxis(xindex) == PMS::DEC)) {
+				switch(xFrame){
+					case PMS::CoordSystem::AZELGEO:
+						sortDir = SortDirection::ASCENDING;
+						break;
+					default:
+						sortDir = SortDirection::DESCENDING;
 				}
+				setSortDirection = true;
 			}
 
 			// get min/max from each plot to manually scale
@@ -2215,6 +2214,10 @@ void PlotMSPlot::setXAxisRange(
 			pair<double, double> xbounds = make_pair(xming, xmaxg);
 			canvas->setAxisRange(xPlotAxis, xbounds);
 		}
+	}
+
+	if (setSortDirection) {
+		canvas->setAxisScaleSortDirection(xPlotAxis, sortDir);
 	}
 }
 
