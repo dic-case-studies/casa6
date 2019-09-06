@@ -139,7 +139,7 @@ VisibilityIteratorReadImpl::initialize (const Block<MeasurementSet> &mss)
 
     for (Int k = 0; k < numMS; ++k) {
 
-        ROMSSpWindowColumns msSpW (mss[k].spectralWindow ());
+        MSSpWindowColumns msSpW (mss[k].spectralWindow ());
 
         Int nspw = msSpW.nrow ();
 
@@ -2508,9 +2508,9 @@ VisibilityIteratorReadImpl::getSpwInFreqRange (Block<Vector<Int> > & spw,
         Vector<Int> fldId;
         ScalarColumn<Int> (msIter_p.ms (k), MS::columnName (MS::DATA_DESC_ID)).getColumn (ddId);
         ScalarColumn<Int> (msIter_p.ms (k), MS::columnName (MS::FIELD_ID)).getColumn (fldId);
-        ROMSFieldColumns fieldCol (msIter_p.ms (k).field ());
-        ROMSDataDescColumns ddCol (msIter_p.ms (k).dataDescription ());
-        ROMSSpWindowColumns spwCol (msIter_p.ms (k).spectralWindow ());
+        MSFieldColumns fieldCol (msIter_p.ms (k).field ());
+        MSDataDescColumns ddCol (msIter_p.ms (k).dataDescription ());
+        MSSpWindowColumns spwCol (msIter_p.ms (k).spectralWindow ());
         ROScalarMeasColumn<MEpoch> timeCol (msIter_p.ms (k), MS::columnName (MS::TIME));
         Vector<uInt>  uniqIndx;
         uInt nTimes = GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort | Sort::NoDuplicates);

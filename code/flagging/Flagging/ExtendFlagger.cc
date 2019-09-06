@@ -414,7 +414,7 @@ Bool ExtendFlagger::extend(const Vector<FlagID>& flagids) {
       //                String("&") +
       //                String::toString(flagids(i).ant2);
 
-      //const ROMSAntennaColumns & antColumn  = ms.antenna();
+      //const MSAntennaColumns & antColumn  = ms.antenna();
       //const ScalarColumn<String> antNames = antColumn.name();
       //String blstr = (antColumn.name())(flagids(i).ant1) +
       //                 String("&") +

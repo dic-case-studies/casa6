@@ -72,7 +72,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // These should ideally be just referenced, but I (SB) could not
     // figure out how to do it.
     //
-    Vector<Bool> spwFlagRow=ROMSSpWindowColumns(spectralWindow()).flagRow().getColumn();
+    Vector<Bool> spwFlagRow=MSSpWindowColumns(spectralWindow()).flagRow().getColumn();
     MSDataDescColumns(fakeDDSubTable).flagRow().putColumn(spwFlagRow);
 
     Vector<Int> spwId(fakeDDSubTable.nrow()); indgen(spwId);

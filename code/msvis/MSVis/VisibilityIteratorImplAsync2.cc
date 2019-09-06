@@ -1172,7 +1172,7 @@ VisibilityIteratorImplAsync2::getSpectralWindowChannels (Int msId, Int spectralW
     // frequency and width columns.  Use those columns to extract the frequency
     // and width lists for the specified spectral window.
 
-    const ROMSSpWindowColumns& spectralWindow = subtableColumns_p->spectralWindow();
+    const MSSpWindowColumns& spectralWindow = subtableColumns_p->spectralWindow();
 
     const ArrayColumn<Double>& frequenciesColumn = spectralWindow.chanFreq();
     Vector<Double> frequencies;

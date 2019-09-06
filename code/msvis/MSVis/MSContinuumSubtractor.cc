@@ -514,7 +514,7 @@ void MSContinuumSubtractor::subtract2()
 
     casacore::Float chunkInt(itsSolInt);
     if (chunkInt < 0.0) {
-        ROMSMainColumns msmain(spwSelMS);
+        MSMainColumns msmain(spwSelMS);
         chunkInt = msmain.interval().getColumn()(0);
     }
 

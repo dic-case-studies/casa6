@@ -84,7 +84,7 @@ namespace casa {
   using casacore::Float;
   
   MS2ASDM::MS2ASDM(MeasurementSet& ms) :
-    ROMSColumns(ms),
+    MSColumns(ms),
     ms_p(ms),
     baseUid_p("uid://X0/X0/X"),
     runningId_p(0),

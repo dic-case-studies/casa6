@@ -231,7 +231,7 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 	  if(col==refim::FTMachine::CORRECTED){
 	//Dang i thought the new vb will return Data or FloatData if correctedData was
 	//not there
-	    if(ROMSMainColumns(vb.ms()).correctedData().isNull()){
+	    if(MSMainColumns(vb.ms()).correctedData().isNull()){
 	      col=refim::FTMachine::OBSERVED;
 	      //			  cerr << "Max of visCube" << max(vb.visCube()) << " model " << max(vb.modelVisCube())<< endl;
 	      vb.setVisCube(vb.visCube()-vb.visCubeModel());
@@ -246,7 +246,7 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 	}// if non zero model
 
     if(col==refim::FTMachine::CORRECTED &&
-       ROMSMainColumns(vb.ms()).correctedData().isNull()){
+       MSMainColumns(vb.ms()).correctedData().isNull()){
       //cout << "Corrected column isn't there, using data instead" << endl;
       col=refim::FTMachine::OBSERVED;
     }

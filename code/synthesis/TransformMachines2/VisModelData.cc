@@ -97,7 +97,7 @@ VisModelData::clone ()
   Bool VisModelData::hasAnyModel(const MeasurementSet& thems, Vector<Int>& fieldids){
     Bool retval=False;
     fieldids.resize();
-    ROMSColumns msc(thems);
+    MSColumns msc(thems);
     Vector<Int> fields=msc.fieldId().getColumn();
     const Sort::Order order=Sort::Ascending;
     const Int option=Sort::HeapSort | Sort::NoDuplicates;
@@ -129,7 +129,7 @@ void VisModelData::listModel(const MeasurementSet& thems){
  
   //Table newTab(thems);
 
-  ROMSColumns msc(thems);
+  MSColumns msc(thems);
   Vector<String> fldnames=msc.field().name().getColumn();
   Vector<Int> fieldids;
   LogIO logio;
@@ -204,7 +204,7 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   logio << "Clearing all model records in MS header."
 	  << LogIO::POST;
 
-  ROMSColumns msc(thems);
+  MSColumns msc(thems);
   Vector<Int> fields=msc.fieldId().getColumn();
   Vector<String> fldnames=msc.field().name().getColumn();
   const Sort::Order order=Sort::Ascending;
@@ -268,7 +268,7 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   if(!newTab.isWritable())
     return;
 
-  ROMSColumns msc(thems);
+  MSColumns msc(thems);
   Vector<String> fldnames=msc.field().name().getColumn();
   Int nfields=0;
   Vector<Int> fields(0);
@@ -696,7 +696,7 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
 	{
 	//Get the row for the model 
         Int row=theMs.source().keywordSet().asInt(theKey);
-	//ROMSSourceColumns srcCol(theMs.source());
+	//MSSourceColumns srcCol(theMs.source());
      
 	ScalarColumn<TableRecord> scol(theMs.source(), "SOURCE_MODEL");
 	scol.get(row, theRec);
@@ -752,7 +752,7 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
       theMS.rwKeywordSet().removeField(elkey);
     Int row=-1;
     //Prefer the Source table first    
-    ROMSFieldColumns fCol(theMS.field());
+    MSFieldColumns fCol(theMS.field());
     if(Table::isReadable(theMS.sourceTableName()) && (theMS.source().nrow() > 0) &&  (!fCol.sourceId().isNull()) && (fCol.sourceId().get(fieldIds[0]) != -1) ){
       //
       row=0;
@@ -1492,7 +1492,7 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
     Int row=-1;
     
     //Prefer the Source table first    
-    ROMSFieldColumns fCol(theMS.field());
+    MSFieldColumns fCol(theMS.field());
     if(Table::isReadable(theMS.sourceTableName()) && (theMS.source().nrow() > 0) &&  (!fCol.sourceId().isNull()) && (fCol.sourceId().get(field) != -1) ){
     
       const MSSource& mss=theMS.source();

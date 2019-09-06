@@ -1410,7 +1410,7 @@ Bool MSTransformManager::shouldCreateOutputWtSpectrum(Bool usewtspectrum)
                         "in the output MS: the input MS has not been initialized.");
     }
 
-    auto wtSpec = ROMSColumns(*inputMs_p).weightSpectrum();
+    auto wtSpec = MSColumns(*inputMs_p).weightSpectrum();
     auto inputWeightSpectrumAvailable = !wtSpec.isNull() and wtSpec.isDefined(0);
     return inputWeightSpectrumAvailable or usewtspectrum;
 }
@@ -4933,7 +4933,7 @@ void MSTransformManager::checkCorrelatorPreaveraging()
   if (hanningSmooth_p || channelAverage_p)
   {
     auto spwTable = inputMs_p->spectralWindow();
-    ROMSSpWindowColumns spwColumns(spwTable);
+    MSSpWindowColumns spwColumns(spwTable);
     if (spwTable.tableDesc().isColumn("SDM_WINDOW_FUNCTION") &&
         spwTable.tableDesc().columnDescSet().isDefined("SDM_WINDOW_FUNCTION") &&
         spwTable.tableDesc().isColumn("SDM_NUM_BIN") &&

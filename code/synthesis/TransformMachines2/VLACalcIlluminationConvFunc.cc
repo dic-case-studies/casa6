@@ -430,7 +430,7 @@ namespace casa{
     AlwaysAssert(ap.band>=-1, AipsError);
     Vector<Double> chanFreq = vb.getFrequencies(0);
     
-    const ROMSSpWindowColumns& spwCol = 
+    const MSSpWindowColumns& spwCol = 
       vb.subtableColumns().spectralWindow();
     ArrayColumn<Double> chanfreq = spwCol.chanFreq();
     ScalarColumn<Double> reffreq = spwCol.refFrequency();

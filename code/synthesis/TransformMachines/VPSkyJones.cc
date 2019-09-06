@@ -59,7 +59,7 @@
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-VPSkyJones::VPSkyJones(const ROMSColumns& msc, Table& tab,
+VPSkyJones::VPSkyJones(const MSColumns& msc, Table& tab,
 		       const Quantity &parAngleInc,
 		       BeamSquint::SquintType doSquint,
 		       const Quantity &skyPositionThreshold) 
@@ -125,7 +125,7 @@ VPSkyJones::VPSkyJones(const ROMSColumns& msc, Table& tab,
 };
 
 
-VPSkyJones::VPSkyJones(const ROMSColumns& msc,
+VPSkyJones::VPSkyJones(const MSColumns& msc,
 		       Bool makePBs,
 		       const Quantity &parAngleInc,
 		       BeamSquint::SquintType doSquint,

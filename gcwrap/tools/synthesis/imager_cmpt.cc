@@ -1538,7 +1538,7 @@ imager::defineimage(const int nx, const int ny, const ::casac::variant& cellx,
 
       casacore::String baseframe("LSRK");
       if(itsMS && !(itsMS->isNull())){
-	ROMSSpWindowColumns spwc(itsMS->spectralWindow());
+	MSSpWindowColumns spwc(itsMS->spectralWindow());
 	int spw0 = 0;
 	if (spwid.size() > 0 && spwid[0] > 0 && spwid[0] < (int) spwc.nrow())
 	  spw0 = spwid[0];

@@ -118,7 +118,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if(msId_p != vb.msId()){
       msId_p=vb.msId();
       
-      const ROMSAntennaColumns& ac=vb.msColumns().antenna();
+      const MSAntennaColumns& ac=vb.msColumns().antenna();
       antIndexToDiamIndex_p.resize(ac.nrow());
       antIndexToDiamIndex_p.set(-1);
       Int diamIndex=antDiam2IndexMap_p.size( );

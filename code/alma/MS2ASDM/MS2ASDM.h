@@ -77,7 +77,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 // <synopsis>
 // </synopsis>
 
-  class MS2ASDM : public casacore::ROMSColumns
+  class MS2ASDM : public casacore::MSColumns
 {
 
  public:

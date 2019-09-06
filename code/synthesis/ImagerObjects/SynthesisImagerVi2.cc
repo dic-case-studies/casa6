@@ -253,7 +253,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       ///temporary variable as we carry that for tunechunk...till we get rid of it
       selFreqFrame_p=selpars.freqframe;
       Bool ignoreframe=False;
-      MFrequency::Types freqFrame=MFrequency::castType(ROMSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().measFreqRef()(Int(chanlist(0,0))));
+      MFrequency::Types freqFrame=MFrequency::castType(MSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().measFreqRef()(Int(chanlist(0,0))));
   
       if(selpars.freqframe == MFrequency::REST ||selpars.freqframe == MFrequency::Undefined){	
 	selFreqFrame_p=freqFrame;
@@ -281,8 +281,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     	  for(uInt k=0; k < nSelections; ++k){
 	    Bool thisSpwSelValid=False;
 	    //The getChanfreqList is wrong for beg and end..going round that too.
-	    Vector<Double> freqies=ROMSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().chanFreq()(Int(chanlist(k,0)));
-	    Vector<Double> chanwidth=ROMSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().chanWidth()(Int(chanlist(k,0)));
+	    Vector<Double> freqies=MSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().chanFreq()(Int(chanlist(k,0)));
+	    Vector<Double> chanwidth=MSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().chanWidth()(Int(chanlist(k,0)));
             
 	    if(freqList(k,3) < 0.0){
 	      topfreq=freqies(chanlist(k,1));//-chanwidth(chanlist(k,1))/2.0;
@@ -332,7 +332,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       else{
 
 	//////More workaroung CAS-8829
-	//MFrequency::Types freqFrame=MFrequency::castType(ROMSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().measFreqRef()(Int(freqList(0,0))));
+	//MFrequency::Types freqFrame=MFrequency::castType(MSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().measFreqRef()(Int(freqList(0,0))));
     	  Quantity freq;
     	  Quantity::read(freq, selpars.freqbeg);
     	  Double lowfreq=freq.getValue("Hz");
@@ -591,12 +591,12 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
         } else if (impars.phaseCenterFieldId >= 0) {
           // FIELD_ID
           auto const msobj = mss_p[0];
-          ROMSFieldColumns msfield(msobj->field());
+          MSFieldColumns msfield(msobj->field());
           phaseCenter_p=msfield.phaseDirMeas(impars.phaseCenterFieldId);
         } else {
           // use default FIELD_ID (0)
           auto const msobj = mss_p[0];
-          ROMSFieldColumns msfield(msobj->field());
+          MSFieldColumns msfield(msobj->field());
           phaseCenter_p=msfield.phaseDirMeas(0);
         }
 
@@ -926,7 +926,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
       // Create the ImageStore object
       CountedPtr<SIImageStore> imstor;
-      ROMSColumns msc(*(mss_p[0]));
+      MSColumns msc(*(mss_p[0]));
       imstor = createIMStore(imagename, csys, imshape, overwrite,msc, mappertype, ntaylorterms, distance,facets, iftm->useWeightImage(), startmodel );
 
       // Create the Mappers
@@ -1646,7 +1646,7 @@ void SynthesisImagerVi2::unlockMSs()
 	(ftname != "awprojectft" && ftname != "mawprojectft" && ftname != "proroft") )
       {
 	CountedPtr<refim::SkyJones> vp;
-	ROMSColumns msc(*(mss_p[0]));
+	MSColumns msc(*(mss_p[0]));
 	Quantity parang(0.0,"deg");
 	Quantity skyposthreshold(0.0,"deg");
 	vp = new refim::VPSkyJones(msc, true,  parang, BeamSquint::NONE,skyposthreshold);
@@ -1757,7 +1757,7 @@ void SynthesisImagerVi2::unlockMSs()
     // else
     //   awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP);
 
-    ROMSObservationColumns msoc((mss_p[0])->observation());
+    MSObservationColumns msoc((mss_p[0])->observation());
     String telescopeName=msoc.telescopeName()(0);
     CountedPtr<refim::ConvolutionFunction> awConvFunc = refim::AWProjectFT::makeCFObject(telescopeName, 
 									   aTermOn,
@@ -1852,12 +1852,12 @@ void SynthesisImagerVi2::unlockMSs()
     
     LogIO os(LogOrigin("SynthesisImagerVi2", "createMosFTMachine",WHERE));
    
-    ROMSColumns msc(vi_p->ms());
+    MSColumns msc(vi_p->ms());
     String telescop=msc.observation().telescopeName()(0);
     Bool multiTel=False;
     Int msid=0;
      for(vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk()){
-       if(((vi_p->getVisBuffer())->msId() != msid) && telescop !=  ROMSColumns(vi_p->ms()).observation().telescopeName()(0)){
+       if(((vi_p->getVisBuffer())->msId() != msid) && telescop !=  MSColumns(vi_p->ms()).observation().telescopeName()(0)){
 	 msid=(vi_p->getVisBuffer())->msId();
 	 multiTel=True;
        }
@@ -1949,7 +1949,7 @@ void SynthesisImagerVi2::unlockMSs()
     String const gridfunclower = downcase(gridFunction);
     if(gridfunclower=="pb") {
       refim::SkyJones *vp = nullptr;
-      ROMSColumns msc(*mss_p[0]);
+      MSColumns msc(*mss_p[0]);
       // todo: NONE is OK?
       BeamSquint::SquintType squintType = BeamSquint::NONE;
       Quantity skyPosThresholdQuant((Double)skyPosThreshold+180.0, "deg");
@@ -2464,7 +2464,7 @@ void SynthesisImagerVi2::unlockMSs()
 	  
 	  if (doDefaultVP) {
 	    
-	    ROMSAntennaColumns ac(mss_p[0]->antenna());
+	    MSAntennaColumns ac(mss_p[0]->antenna());
 	    Double dishDiam=ac.dishDiameter()(0);
 	    if(!allEQ(ac.dishDiameter().getColumn(), dishDiam))
 	      os << LogIO::WARN
@@ -2535,7 +2535,7 @@ void SynthesisImagerVi2::unlockMSs()
   Bool SynthesisImagerVi2::getMovingDirection(const vi::VisBuffer2& vb,  MDirection& outDir){
     MDirection movingDir;
     Bool trackBeam=False;
-    MeasFrame mFrame(MEpoch(Quantity(vb.time()(0), "s"), ROMSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
+    MeasFrame mFrame(MEpoch(Quantity(vb.time()(0), "s"), MSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
     if(movingSource_p != ""){
       MDirection::Types refType;
       trackBeam=True;

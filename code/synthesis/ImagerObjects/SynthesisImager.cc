@@ -322,7 +322,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       ////Channel selection 'flags' need for when using old VI/VB
       //set up Cube for storing the 'flags' for all MSes
       //find max no. channels from the current ms 
-      const ROMSSpWindowColumns spwc(thisms.spectralWindow());
+      const MSSpWindowColumns spwc(thisms.spectralWindow());
       uInt nspw = spwc.nrow();
       const ScalarColumn<Int> spwNchans(spwc.numChan());
       Vector<Int> nchanvec = spwNchans.getColumn();
@@ -438,7 +438,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           // Intent can be used to select a field id so check
           // field ids actually present in the selection-applied MS
     	  Vector<Int>fields=thisSelection.getFieldList( & mss4vi_p[msin]);
-          ROMSColumns tmpmsc(mss4vi_p[msin]);
+          MSColumns tmpmsc(mss4vi_p[msin]);
           Vector<Int> fldidv=tmpmsc.fieldId().getColumn();
           std::set<Int> ufldids(fldidv.begin(),fldidv.end());
           std::vector<Int> tmpv(ufldids.begin(), ufldids.end());
@@ -1263,7 +1263,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 							  CoordinateSystem& cSys,
 							  IPosition imShape, 
 							  const Bool overwrite,
-							  ROMSColumns& msc,
+							  MSColumns& msc,
 							  String mappertype,
 							  uInt ntaylorterms,
 							  Quantity distance,
@@ -1608,7 +1608,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       // Create the ImageStore object
       CountedPtr<SIImageStore> imstor;
-      ROMSColumns msc(mss4vi_p[0]);
+      MSColumns msc(mss4vi_p[0]);
       imstor = createIMStore(imagename, csys, imshape, overwrite, msc, mappertype, ntaylorterms, distance,facets, iftm->useWeightImage(), startmodel );
 
       // Create the Mappers
@@ -1772,7 +1772,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	(ftname != "awprojectft" && ftname != "mawprojectft" && ftname != "proroft") )
       {
 	CountedPtr<SkyJones> vp;
-	ROMSColumns msc(mss4vi_p[0]);
+	MSColumns msc(mss4vi_p[0]);
 	Quantity parang(0.0,"deg");
 	Quantity skyposthreshold(0.0,"deg");
 	vp = new VPSkyJones(msc, true,  parang, BeamSquint::NONE,skyposthreshold);
@@ -1869,7 +1869,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // else
     //   awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP);
 
-    ROMSObservationColumns msoc(mss4vi_p[0].observation());
+    MSObservationColumns msoc(mss4vi_p[0].observation());
     String telescopeName=msoc.telescopeName()(0);
     CountedPtr<ConvolutionFunction> awConvFunc = AWProjectFT::makeCFObject(telescopeName, 
 									   aTermOn,
@@ -1959,7 +1959,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     if (!isATermOn) return new NoOpATerm();
     
-    ROMSObservationColumns msoc(ms.observation());
+    MSObservationColumns msoc(ms.observation());
     String ObsName=msoc.telescopeName()(0);
     if ((ObsName == "EVLA") || (ObsName == "VLA"))
       return new EVLAAperture();
@@ -2023,12 +2023,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os(LogOrigin("SynthesisImager", "createMosFTMachine",WHERE));
    
     rvi_p->originChunks();
-    ROMSColumns msc(rvi_p->ms());
+    MSColumns msc(rvi_p->ms());
     String telescop=msc.observation().telescopeName()(0);
     ///Multi ms with different telescop
     Bool multiTel=False;
     for(rvi_p->originChunks(); rvi_p->moreChunks(); rvi_p->nextChunk()){
-      if(rvi_p->newMS() && telescop !=  ROMSColumns(rvi_p->ms()).observation().telescopeName()(0))
+      if(rvi_p->newMS() && telescop !=  MSColumns(rvi_p->ms()).observation().telescopeName()(0))
 	multiTel=True;
     }
     rvi_p->originChunks();
@@ -2747,7 +2747,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  
 	  if (doDefaultVP) {
 	    
-	    ROMSAntennaColumns ac(mss4vi_p[0].antenna());
+	    MSAntennaColumns ac(mss4vi_p[0].antenna());
 	    Double dishDiam=ac.dishDiameter()(0);
 	    if(!allEQ(ac.dishDiameter().getColumn(), dishDiam))
 	      os << LogIO::WARN

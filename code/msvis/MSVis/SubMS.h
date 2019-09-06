@@ -615,7 +615,7 @@ class SubMS
 
   // Picks a reference to DATA, MODEL_DATA, CORRECTED_DATA, or LAG_DATA out
   // of ms_p.  FLOAT_DATA is not included because it is not natively complex. 
-  const casacore::ArrayColumn<casacore::Complex>& right_column(const casacore::ROMSColumns *ms_p,
+  const casacore::ArrayColumn<casacore::Complex>& right_column(const casacore::MSColumns *ms_p,
                                              const casacore::MS::PredefinedColumns datacol);
 
   // The writable version of the above.
@@ -624,7 +624,7 @@ class SubMS
 				     const casacore::Bool writeToDataCol);
 
   // Figures out the number, maximum, and index of the selected antennas.
-  casacore::uInt fillAntIndexer(std::map<casacore::Int, casacore::Int>& antIndexer, const casacore::ROMSColumns *msc);
+  casacore::uInt fillAntIndexer(std::map<casacore::Int, casacore::Int>& antIndexer, const casacore::MSColumns *msc);
 
   // Read the input, time average it to timeBin_p, and write the output.
   // The first version uses VisibilityIterator (much faster), but the second
@@ -717,7 +717,7 @@ class SubMS
   //  * not necessarily to anything useful.
   casacore::MeasurementSet ms_p, mssel_p;
   casacore::MSColumns * msc_p;		// columns of msOut_p
-  casacore::ROMSColumns * mscIn_p;
+  casacore::MSColumns * mscIn_p;
   casacore::Bool keepShape_p,      	// Iff true, each output array has the
 				// same shape as the corresponding input one.
        // sameShape_p,             // Iff true, the shapes of the arrays do not

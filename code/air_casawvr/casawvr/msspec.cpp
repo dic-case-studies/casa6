@@ -135,7 +135,7 @@ namespace LibAIR2 {
 		const std::vector<size_t> &sortedI)
   {
     std::map<size_t, size_t> map=DataDescSPWMap(ms);
-    const casacore::ROMSMainColumns cols(ms);
+    const casacore::MSMainColumns cols(ms);
     const casacore::ScalarColumn<casacore::Int> &dd=cols.dataDescId();
     const size_t nrows=dd.nrow();          
     spw.resize(nrows);

@@ -95,9 +95,9 @@ protected:
   }
 private:
   casacore::String rootName, antTableName, fieldTableName, spwTableName;
-  casacore::ROMSAntennaColumns *calTableMSAC;
-  casacore::ROMSFieldColumns *calTableMSFC;
-  casacore::ROMSSpWindowColumns *calTableMSSpC;
+  casacore::MSAntennaColumns *calTableMSAC;
+  casacore::MSFieldColumns *calTableMSFC;
+  casacore::MSSpWindowColumns *calTableMSSpC;
   casacore::MSAntenna *calAntTable;
   casacore::MSField *calFieldTable;
   casacore::MSSpectralWindow *calSpwTable;

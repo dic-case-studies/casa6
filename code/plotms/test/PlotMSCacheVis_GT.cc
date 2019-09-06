@@ -99,7 +99,7 @@ TEST_F( PlotMSCacheTest, testVisibilities) {
 		""/*field*/, ""/*spw*/, ""/*uvdist*/, ""/*taql*/, ""/*poln*/,
 		scanExpr, ""/*array*/, ""/*state*/, ""/*obs*/, ""/*feed*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> visData(msmc.data().getColumn()),
 		modelData(msmc.modelData().getColumn()),
 		corrData(msmc.correctedData().getColumn());

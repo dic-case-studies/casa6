@@ -142,7 +142,7 @@ Bool MSTransformRegridder::combineSpwsCore(	LogIO& os,
 	uInt nSpwsToCombine = spwsToCombine.size();
 
 	// Prepare access to the SPW table
-	ROMSSpWindowColumns SPWColrs(spwtable);
+	MSSpWindowColumns SPWColrs(spwtable);
 	ScalarColumn<Int> numChanColr = SPWColrs.numChan();
 	ArrayColumn<Double> chanFreqColr = SPWColrs.chanFreq();
 	ArrayColumn<Double> chanWidthColr = SPWColrs.chanWidth();

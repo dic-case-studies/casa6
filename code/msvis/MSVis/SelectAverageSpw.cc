@@ -87,8 +87,8 @@ Int SelectAverageSpw::selectAverageChan(MS* pMS, const Matrix<Int>& cList,
    Int nWin = chanList.nrow();
    //cout << "number of selected spw:chan =" << nWin << endl;
 
-   ROMSSpWindowColumns spwColumn(pMS->spectralWindow());
-   ROMSDataDescColumns descColumn(pMS->dataDescription());
+   MSSpWindowColumns spwColumn(pMS->spectralWindow());
+   MSDataDescColumns descColumn(pMS->dataDescription());
 
    //when spw='', the chanList is empty, nWin=0, 
    //so make up chanList here
@@ -417,7 +417,7 @@ void SelectAverageSpw::averageVelocity(Bool &sorryVel,
 
        msdv.setFieldCenter(field);
 
-       ROMSSpWindowColumns spwColumn(pMS->spectralWindow());
+       MSSpWindowColumns spwColumn(pMS->spectralWindow());
        //Int freqRef = spwColumn.measFreqRef()(spw(spwidx).spwid);
        Int cCnt = spw(spwidx).aveFreqs.size();
        for (Int k = 0; k < cCnt; k++) {
@@ -434,7 +434,7 @@ void SelectAverageSpw::averageVelocity(Bool &sorryVel,
        //cout << "spwidx=" << spwidx << " cCnt=" << cCnt << endl;
        velo = 0.;
     
-       ROMSSpWindowColumns spwColumn(pMS->spectralWindow());
+       MSSpWindowColumns spwColumn(pMS->spectralWindow());
        Int freqRef = spwColumn.measFreqRef()(spw(spwidx).spwid);
     
        hasRestFreq = msdv.setRestFrequency(field, spw(spwidx).spwid);

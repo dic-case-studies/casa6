@@ -716,7 +716,7 @@ RFASelector::RFASelector ( RFChunkStats &ch,const RecordInterface &parm) :
   unflag =  (fieldType(parm, RF_UNFLAG,TpBool) && parm.asBool(RF_UNFLAG));
   //addString(desc_str,unflag?RF_UNFLAG:"flag");
 
-  ac = new ROMSAntennaColumns(chunk.measSet().antenna());
+  ac = new MSAntennaColumns(chunk.measSet().antenna());
   diameters = ac->dishDiameter().getColumn();
   
   shadow = fieldType(parm, RF_SHADOW, TpBool) && parm.asBool(RF_SHADOW);
