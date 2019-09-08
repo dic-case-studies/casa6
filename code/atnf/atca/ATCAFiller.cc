@@ -1600,17 +1600,24 @@ void ATCAFiller::checkField() {
       sources_p = src;
 
       Double epoch=mjd0_p+Double(proper_.pm_epoch);
-      IPosition shape(2, 2, 2);
+      Int numPol = 0;
+      if (abs(proper_.pm_ra)+abs(proper_.pm_dec) > 0) {
+        numPol = 1;
+      }
+      IPosition shape(2, 2, numPol+1);
       Matrix<Double> dir(shape);
       // convert proper motions from s & " per year to rad/s
       const Double arcsecPerYear=C::arcsec/(365.25*C::day);
       dir(0, 0)=doubles_.su_ra[sourceno]; 
       dir(1, 0)=doubles_.su_dec[sourceno];
-      dir(0, 1)=proper_.pm_ra*15.*arcsecPerYear; // (15"/s)
-      dir(1, 1)=proper_.pm_dec*arcsecPerYear;
- 
+      if (numPol>0) {
+        dir(0, 1)=proper_.pm_ra*15.*arcsecPerYear; // (15"/s)
+        dir(1, 1)=proper_.pm_dec*arcsecPerYear;
+      } 
+
       if (fieldId_p<0) {
         os_p << LogIO::DEBUGGING << "Found field:" << src << LogIO::POST;
+        if (numPol>0) os_p << LogIO::DEBUGGING << "Field:" << src << " has proper motion parameters"<<LogIO::POST;
         fieldId_p=nField_p++;
         atms_p.field().addRow();
         Int nf=atms_p.field().nrow()-1;
@@ -1621,7 +1628,7 @@ void ATCAFiller::checkField() {
         msc_p->field().phaseDir().put(nf,dir);
         msc_p->field().delayDir().put(nf,dir);
         msc_p->field().referenceDir().put(nf, dir);
-        msc_p->field().numPoly().put(nf, 0);
+        msc_p->field().numPoly().put(nf, numPol);
         msc_p->field().time().put(nf,epoch);
         msc_p->field().code().put(nf,String(&names_.su_cal[sourceno*16],
                                       16).before(trailing));
@@ -1682,7 +1689,7 @@ void ATCAFiller::checkField() {
       prev_fieldId_p = fieldId_p;
       Double epoch=mjd0_p+Double(proper_.pm_epoch);
       Int np=atms_p.pointing().nrow();
-      IPosition shape(2, 2, 2);
+      IPosition shape(2, 2, 1);
       Matrix<Double> pointingDir(shape,0.0);
       pointingDir(0, 0)=doubles_.su_pra[sourceno]; 
       pointingDir(1, 0)=doubles_.su_pdec[sourceno];
