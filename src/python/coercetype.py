@@ -63,11 +63,24 @@ class CasaCoerce:
         return value
 
     def to_intarray(self,value):
+        if isinstance(value,numpy.ndarray) and value.size == 0:
+            return value.astype(numpy.integer)
         if isinstance(value,int) or isinstance(value,numpy.int32):
             return numpy.array([int(value)])
+        result = numpy.array(value)
+        if issubclass(result.dtype.type,numpy.integer):
+            return result
+        ##
+        ## this is a hack because some tasks depend upon intArray, doubleArray etc.
+        ## permitting a list of random length lists... e.g. swpmap in calibration tasks
+        ##
+        if all([isinstance(v,list) for v in value]):
+            return result
         return value
 
     def to_floatarray(self,value):
+        if isinstance(value,numpy.ndarray) and (value.size == 0 or issubclass(value.dtype.type,numpy.integer)):
+            return value.astype(numpy.float)
         if type(value) in [float,int,numpy.int32,numpy.int64]:
             return numpy.array([float(value)])
         if isinstance(value,list):
@@ -76,6 +89,17 @@ class CasaCoerce:
         if isinstance(value,numpy.ndarray):
             if value.dtype.type in [ numpy.float32, numpy.float64, numpy.int32, numpy.int64, int ]:
                 return value.astype(numpy.float64)
+        result = numpy.array(value)
+        if issubclass(result.dtype.type,numpy.float):
+            return result
+        if issubclass(result.dtype.type,numpy.integer):
+            return result.astype(numpy.float)
+        ##
+        ## this is a hack because some tasks depend upon intArray, doubleArray etc.
+        ## permitting a list of random length lists... e.g. swpmap in calibration tasks
+        ##
+        if all([isinstance(v,list) for v in value]):
+            return result
         return value
 
     def to_strarray(self,value):
