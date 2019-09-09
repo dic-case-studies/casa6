@@ -1434,6 +1434,8 @@ using namespace casa::vi;
     //
     outRecord.define("name", this->name());
     if(withImage){
+      if(image==nullptr)
+        throw(AipsError("Programmer error: saving to record without proper initialization"));
       CoordinateSystem cs=image->coordinates();
       DirectionCoordinate dircoord=cs.directionCoordinate(cs.findCoordinate(Coordinate::DIRECTION));
       dircoord.setReferenceValue(mImage_p.getAngle().getValue());
