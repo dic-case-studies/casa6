@@ -1,12 +1,21 @@
 # enable local tools
-from taskinit import *
 import os
 from math import pi,floor,atan2,sin,cos,sqrt
 import pylab as mypl
 
-mytb=tbtool()
-myme=metool()
-mymd=msmdtool()
+try:
+    import casatools
+    from casatasks import casalog
+    
+    mytb=casatools.table()
+    myme=casatools.measures()
+    mymd=casatools.msmetadata()
+except ImportError:
+    from taskinit import *
+
+    mytb=tbtool()
+    myme=metool()
+    mymd=msmdtool()
 
 def polfromgain(vis,tablein,caltable,paoffset):
 
@@ -19,7 +28,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
         if ((type(vis)==str) & (os.path.exists(vis))):
             mymd.open(vis)
         else:
-            raise Exception, 'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
 
         nant=mymd.nantennas()
         nfld=mymd.nfields()
@@ -31,7 +40,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
             if type(caltable)==str and len(caltable)>0:
 
                 if os.path.exists(caltable):
-                    raise Exception, 'Output caltable='+caltable+' exists.  Choose another name or delete it.'
+                    raise Exception('Output caltable='+caltable+' exists.  Choose another name or delete it.')
 
                 casalog.post("New caltable, "+caltable+", corrected for linear polarization, will be generated.")
                 mytb.open(tablein)
@@ -39,12 +48,11 @@ def polfromgain(vis,tablein,caltable,paoffset):
                 mytb.close()
                 myout.close()
                 rempol=True
-
             else:
                 casalog.post("No new caltable will be generated")
                 caltable=tablein
         else:
-            raise Exception, 'input calibration table not found - please verify the name'
+            raise Exception('input calibration table not found - please verify the name')
             
 
         if paoffset!=0.0:
@@ -160,7 +168,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                                 st.putcol('CPARAM',gains)
                             else:
                                 st.close()
-                                raise Exception, 'Spurious fractional polarization!'
+                                raise Exception('Spurious fractional polarization!')
 
                     st.close()
 
@@ -200,9 +208,9 @@ def polfromgain(vis,tablein,caltable,paoffset):
         casalog.post("NB: Returning dictionary containing fractional Stokes results.")
         return IQUV
 
-    except Exception, instance:
-        print '*** Error ***',instance
+    except Exception as instance:
+        print('*** Error ***',instance)
         mytb.close()
         mymd.close()
-        raise Exception, instance
+        raise
 
