@@ -355,6 +355,7 @@ with closure errors, use blcal.
                         spwmap=[[0,0,1,1],[0,1,0,1]] (for multiple
                         gaintables)
 </description>
+                <type>any</type>
                 <value></value>
         </param>
 
