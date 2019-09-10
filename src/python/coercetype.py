@@ -70,12 +70,6 @@ class CasaCoerce:
         result = numpy.array(value)
         if issubclass(result.dtype.type,numpy.integer):
             return result
-        ##
-        ## this is a hack because some tasks depend upon intArray, doubleArray etc.
-        ## permitting a list of random length lists... e.g. swpmap in calibration tasks
-        ##
-        if all([isinstance(v,list) for v in value]):
-            return result
         return value
 
     def to_floatarray(self,value):
@@ -94,12 +88,6 @@ class CasaCoerce:
             return result
         if issubclass(result.dtype.type,numpy.integer):
             return result.astype(numpy.float)
-        ##
-        ## this is a hack because some tasks depend upon intArray, doubleArray etc.
-        ## permitting a list of random length lists... e.g. swpmap in calibration tasks
-        ##
-        if all([isinstance(v,list) for v in value]):
-            return result
         return value
 
     def to_strarray(self,value):
