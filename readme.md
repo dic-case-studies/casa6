@@ -1,7 +1,7 @@
 
 ## CASAtools
 
-If you are looking for the place to check out [CASA](http://casa.nrao.edu/) with [Git](https://en.wikipedia.org/wiki/Git), this is not the right place. The repository to check out [CASA](http://casa.nrao.edu/) can be found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse). At some point in the future, this may form the underlying kernel for a future version of [CASA](http://casa.nrao.edu/), but at this point, this package is still in gestation. 
+If you are looking for the place to check out [CASA](http://casa.nrao.edu/) with [Git](https://en.wikipedia.org/wiki/Git), this is not the right place. The repository to check out [CASA](http://casa.nrao.edu/) can be found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse). At some point in the future, this may form the underlying kernel for a future version of [CASA](http://casa.nrao.edu/), but at this point, this package is still in gestation.
 
 CASAtools is a self-contained python module that provides the tools from the [CASA](http://casa.nrao.edu/) project. This module only contains the non-GUI tools which are the [SWIG](http://swig.org) bound C++ functionality from CASA.
 
@@ -13,7 +13,7 @@ This is alpha software in every sense of the word. Currently it builds on [RedHa
 
 ## Building CASAtools
 
-#### Install Dependencies
+#### Install Dependencies on Red Hat
 
 Those already working on CASA 5 can install all of the CASAtools dependencies with [YUM](https://en.wikipedia.org/wiki/Yum_(.rpm)):
 
@@ -33,11 +33,34 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
 -bash-4.2$
 ```
 
+
 ##### Notable Dependencies
 1. [GNU Scientific Library](https://www.gnu.org/software/gsl/) version **2.2** or greater
 1. [SWIG](http://www.swig.org) version **3.0** or greater
 1. [OpenMPI](https://www.open-mpi.org) version 1.10 *required when parallelization is enabled*
 
+
+### Install Dependencies on Macos
+
+Install Casa 5 dependencies as described here: https://casa.nrao.edu/casadocs-devel/stable/casa-development-team/development-resources/build-configuration
+
+Install Python 3
+```
+sudo port install python36
+sudo port select --set python python36
+sudo port select --set python3 python36
+# Pip is not technically required but you will probably want it eventually
+sudo port install py36-pip
+sudo port select --set pip pip36
+sudo port select --set pip3 pip36
+sudo port select --set python python36
+```
+
+You can then build casatools using the same steps as described in the Linux section. Note that the casatools build path will differ on Macos. f.e.:
+
+```
+PYTHON_VERSION=3.6 PYTHONPATH=`pwd`/../casatools/build/lib.macosx-10.14-x86_64-3.6/:$PYTHON_PATH python setup.py build
+```
 
 #### Checkout
 
