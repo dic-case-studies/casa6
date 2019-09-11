@@ -248,7 +248,8 @@ def tclean(
          imager = PyParallelCubeSynthesisImager(params=paramList)
          imagerInst=PyParallelCubeSynthesisImager
          # virtualconcat type - changed from virtualmove to virtualcopy 2016-07-20
-         concattype='virtualcopy'
+         #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
+         concattype='copyvirtual'
     else:
          print('Invalid parallel combination in doClean.')
          return False
@@ -366,6 +367,9 @@ def tclean(
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
                     
 
+        ## Close tools.
+        # needs to deletools before concat or lock waits for ever
+        imager.deleteTools()
 
         if (pcube):
             print("running concatImages ...")
@@ -373,8 +377,7 @@ def tclean(
             # fixed to move subcubes
             imager.concatImages(type=concattype)
 
-        ## Close tools.
-        imager.deleteTools()
+        
 
         # CAS-10721 
         if niter>0 and savemodel != "none":
