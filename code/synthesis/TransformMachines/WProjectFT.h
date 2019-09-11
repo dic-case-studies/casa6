@@ -312,7 +312,7 @@ protected:
 
   casacore::Int lastIndex_p;
 
-  casacore::Int getIndex(const casacore::ROMSPointingColumns& mspc, const casacore::Double& time,
+  casacore::Int getIndex(const casacore::MSPointingColumns& mspc, const casacore::Double& time,
 	       const casacore::Double& interval);
 
   casacore::String machineName_p;

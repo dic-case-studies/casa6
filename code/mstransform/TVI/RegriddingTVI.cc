@@ -265,7 +265,7 @@ void RegriddingTVI::initialize()
     // observatoryPosition_p=MPosition::Convert(observatoryPosition_p, MPosition::ITRF)();
 
     // Determine observation time from the first row in the selected MS
-    selectedInputMsCols_p = new ROMSColumns(getVii()->ms());
+    selectedInputMsCols_p = new MSColumns(getVii()->ms());
     referenceTime_p = selectedInputMsCols_p->timeMeas()(0);
 
     // Access FIELD cols to get phase center and radial velocity

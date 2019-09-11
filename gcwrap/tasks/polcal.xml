@@ -171,6 +171,7 @@ calibrations can be applied on the fly.
 
         <param type="intArray" name="spwmap" subparam="true">
                 <description>Spectral windows combinations to form for gaintables(s)</description>
+                <type>any</type>
                 <value></value>
         </param>
 

@@ -1640,8 +1640,8 @@ Bool Calibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 		vi::VisibilityIterator2 vi2(*ms_p, sc, true);
 		vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-		ROMSColumns mscol(*ms_p);
-		const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
+		MSColumns mscol(*ms_p);
+		const MSSpWindowColumns& msspw(mscol.spectralWindow());
 		uInt nSpw = msspw.nrow();
 		Vector<Double> effChBw(nSpw, 0.0);
 		for (uInt ispw = 0; ispw < nSpw; ++ispw) {
@@ -1957,8 +1957,8 @@ Bool Calibrater::initWeights(String wtmode, Bool dowtsp) {
     vi::VisibilityIterator2 vi2(*ms_p,sc,true);
     vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-    ROMSColumns mscol(*ms_p);
-    const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
+    MSColumns mscol(*ms_p);
+    const MSSpWindowColumns& msspw(mscol.spectralWindow());
     uInt nSpw=msspw.nrow();
     Vector<Double> effChBw(nSpw,0.0);
     for (uInt ispw=0;ispw<nSpw;++ispw) {
@@ -2178,8 +2178,8 @@ Bool Calibrater::initWeights(Bool doBT, Bool dowtsp) {
     vi::VisibilityIterator2 vi2(*ms_p,sc,true);
     vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-    ROMSColumns mscol(*ms_p);
-    const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
+    MSColumns mscol(*ms_p);
+    const MSSpWindowColumns& msspw(mscol.spectralWindow());
     uInt nSpw=msspw.nrow();
     Vector<Double> effChBw(nSpw,0.0);
     for (uInt ispw=0;ispw<nSpw;++ispw) {
@@ -2504,7 +2504,7 @@ void Calibrater::fluxscale(const String& infile,
 
       //Bool incremental=false;
       // Make fluxscale calculation
-      Vector<String> fldnames(ROMSFieldColumns(ms_p->field()).name().getColumn());
+      Vector<String> fldnames(MSFieldColumns(ms_p->field()).name().getColumn());
       //fsvj_->fluxscale(refField,tranField,refSpwMap,fldnames,oFluxScaleFactor,
       fsvj_->fluxscale(outfile,refField,tranField,refSpwMap,fldnames,inGainThres,antSel,
         timerangeSel,scanSel,oFluxScaleFactor, oListFile,incremental,fitorder,display);
@@ -4458,8 +4458,8 @@ Bool OldCalibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 		vi::VisibilityIterator2 vi2(*ms_p, sc, true);
 		vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-		ROMSColumns mscol(*ms_p);
-		const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
+		MSColumns mscol(*ms_p);
+		const MSSpWindowColumns& msspw(mscol.spectralWindow());
 		uInt nSpw = msspw.nrow();
 		Vector<Double> effChBw(nSpw, 0.0);
 		for (uInt ispw = 0; ispw < nSpw; ++ispw) {
@@ -4812,7 +4812,7 @@ void OldCalibrater::fluxscale(const String& infile,
 
       //Bool incremental=false;
       // Make fluxscale calculation
-      Vector<String> fldnames(ROMSFieldColumns(ms_p->field()).name().getColumn());
+      Vector<String> fldnames(MSFieldColumns(ms_p->field()).name().getColumn());
       //fsvj_->fluxscale(refField,tranField,refSpwMap,fldnames,oFluxScaleFactor,
       fsvj_->fluxscale(outfile,refField,tranField,refSpwMap,fldnames,inGainThres,antSel,
         timerangeSel,scanSel,oFluxScaleFactor, oListFile,incremental,fitorder,display);
@@ -5653,7 +5653,7 @@ void OldCalibrater::selectChannel(const String& mode,
   if(dataMode_p=="channel") {
     // *** this bit here is temporary till we unifomize data selection
     //Getting the selected SPWs
-    ROMSMainColumns msc(*mssel_p);
+    MSMainColumns msc(*mssel_p);
     Vector<Int> dataDescID = msc.dataDescId().getColumn();
     Bool dum;
     Sort sort( dataDescID.getStorage(dum),sizeof(Int) );

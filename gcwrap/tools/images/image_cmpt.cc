@@ -2283,48 +2283,6 @@ ITUPLE image::_fromarray(
     return ::casa::ITUPLE(f, c, d, dc);
 }
 
-bool image::fromascii(
-    const string& outfile, const string& infile,
-    const vector<int>& shape, const string& sep, const record& csys,
-    bool linear, bool overwrite
-) {
-    try {
-        _log << _ORIGIN;
-        _log << LogIO::WARN << __func__ << "() IS DEPRECATED AND WILL BE "
-            << "REMOVED IN A NEAR-FUTURE VERSION OF CASA. YOU SHOULD USE "
-            << "ANOTHER SET OF IMAGE EXPORT AND IMPORT METHODS SUCH AS "
-            << "tofits()/fromfits() TO EXPORT AND IMPORT CASA IMAGES. IF YOU "
-            << "SIMPLY WISH TO MODIFY PIXEL VALUES, USE getchunk()/putchunk() "
-            << "OR getregion()/putregion() FOR THAT" << LogIO::POST;
-        ThrowIf(infile.empty(), "infile must be specified");
-        ThrowIf(
-            shape.size() == 1 && shape[0] == -1,
-            "Image shape must be specified"
-        );
-        std::unique_ptr<Record> coordsys(toRecord(csys));
-        _reset();
-        _imageF = ImageFactory::fromASCII(
-            outfile, infile, IPosition(Vector<Int>(shape)),
-            sep, *coordsys, linear, overwrite
-        );
-        vector<String> names {
-            "outfile", "infile", "shape", "sep",
-            "csys", "linear",  "overwrite"
-        };
-        vector<variant> values {
-            outfile, infile, shape, sep,
-            csys, linear,  overwrite
-        };
-        this->_addHistory(__func__, names, values);
-    }
-    catch (const AipsError& x) {
-        _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
-                << LogIO::POST;
-        RETHROW(x);
-    }
-    return true;
-}
-
 bool image::fromcomplist(
     const string& outfile, const vector<int>& shape, const variant& cl,
     const record& csys, bool overwrite, bool log, bool cache
@@ -6162,49 +6120,6 @@ template <class T> record* image::_summary(
     return fromRecord(
         md.summary(doppler, list, pixelorder, verbose)
     );
-}
-
-bool image::toASCII(
-    const string& outfile, const variant& region,
-    const variant& mask, const string& sep,
-    const string& format, double maskvalue, bool overwrite,
-    bool stretch
-) {
-    // sep is hard-wired as ' ' which is what imagefromascii expects
-    _log << _ORIGIN;
-    _log << LogIO::WARN << __func__ << "() IS DEPRECATED AND WILL BE REMOVED "
-        << "IN A NEAR-FUTURE VERSION OF CASA. YOU SHOULD USE ANOTHER IMAGE "
-        << "EXPORT METHOD SUCH AS tofits() TO EXPORT CASA IMAGES. IF YOU "
-        << "SIMPLY WISH TO MODIFY PIXEL VALUES, USE getchunk()/putchunk() OR "
-        << "getregion()/putregion() FOR THAT" << LogIO::POST;
-    if (_detached()) {
-        return false;
-    }
-    try {
-        _notSupported(__func__);
-        String Mask;
-        if (mask.type() == variant::BOOLVEC) {
-            Mask = "";
-        }
-        else if (
-            mask.type() == variant::STRING
-            || mask.type() == variant::STRINGVEC
-        ) {
-            Mask = mask.toString();
-        }
-        std::shared_ptr<Record> pRegion(_getRegion(region, false));
-        ImageFactory::toASCII(
-            _imageF, outfile, *pRegion, Mask,
-            sep, format, maskvalue, overwrite, stretch
-        );
-        return true;
-    }
-    catch (const AipsError& x) {
-        _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
-                << LogIO::POST;
-        RETHROW(x);
-    }
-    return false;
 }
 
 bool image::tofits(

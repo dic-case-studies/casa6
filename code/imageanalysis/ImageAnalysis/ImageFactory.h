@@ -164,14 +164,14 @@ public:
     	    std::pair<casacore::LogOrigin, casacore::String>
         > *const &msgs=nullptr
     );
-
+/*
     static SPIIF fromASCII(
         const casacore::String& outfile, const casacore::String& infile,
         const casacore::IPosition& shape, const casacore::String& sep,
         const casacore::Record& csys, const casacore::Bool linear,
         const casacore::Bool overwrite
     );
-
+*/
     template <class T> static SPIIT fromShape(
         const casacore::String& outfile,
         const casacore::Vector<casacore::Int>& shape,
@@ -257,7 +257,7 @@ public:
         const casacore::String& outfile, const casacore::Bool overwrite,
         const casacore::String& imagetype="2d"
     );
-
+/*
     static void toASCII(
     	SPCIIF image,
     	const casacore::String& outfile, casacore::Record& region, const casacore::String& mask,
@@ -265,7 +265,7 @@ public:
         casacore::Double maskvalue=-999, casacore::Bool overwrite=false,
         casacore::Bool extendMask=false
     );
-
+*/
     static void toFITS(
     	SPCIIF image, const casacore::String& outfile, casacore::Bool velocity,
 		casacore::Bool optical, casacore::Int bitpix, casacore::Double minpix, casacore::Double maxpix,

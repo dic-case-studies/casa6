@@ -120,7 +120,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   VisBufferUtil::VisBufferUtil(const vi::VisBuffer2& vb): oldMSId_p(-1), oldPCMSId_p(-1),  timeAntIndex_p(0), cachedPointingDir_p(0), cachedPhaseCenter_p(0) {
 	if(!vb.isAttached())
 		ThrowCc("Programmer Error: used a detached Visbuffer when it should not have been so");
-	ROMSColumns msc(vb.ms());
+	MSColumns msc(vb.ms());
   // The nominal epoch
   MEpoch ep=msc.timeMeas()(0);
 
@@ -146,7 +146,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 }
 VisBufferUtil::VisBufferUtil(const vi::VisibilityIterator2& iter): oldMSId_p(-1) {
 
-	ROMSColumns msc(iter.ms());
+	MSColumns msc(iter.ms());
   // The nominal epoch
   MEpoch ep=msc.timeMeas()(0);
 
@@ -312,7 +312,7 @@ Bool VisBufferUtil::interpolateFrequency(Cube<Complex>& data,
       outfreqMin=C::dbl_max;
       outfreqMax=0;
       vi::VisBuffer2* vb=vi.getVisBuffer();
-      ROMSColumns msc(vi.ms());
+      MSColumns msc(vi.ms());
       // The nominal epoch
       MEpoch ep=msc.timeMeas()(0);
       
@@ -418,7 +418,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 				     const vi::VisBuffer2& vb, 
 				     const MFrequency::Types freqFrame){
   Int spw=vb.spectralWindows()(0);
-  MFrequency::Types obsMFreqType=(MFrequency::Types)(ROMSColumns(vb.ms()).spectralWindow().measFreqRef()(spw));
+  MFrequency::Types obsMFreqType=(MFrequency::Types)(MSColumns(vb.ms()).spectralWindow().measFreqRef()(spw));
 
   
 
@@ -426,7 +426,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
   Vector<Int> chanNums=vb.getChannelNumbers(0);
   
   Vector<Double> inFreq(chanNums.nelements());
-  Vector<Double> spwfreqs=ROMSColumns(vb.ms()).spectralWindow().chanFreq().get(spw);
+  Vector<Double> spwfreqs=MSColumns(vb.ms()).spectralWindow().chanFreq().get(spw);
   for (uInt k=0; k < chanNums.nelements(); ++k){
 
     inFreq[k]=spwfreqs[chanNums[k]];
@@ -565,7 +565,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 
  	 // The input frequencies (a reference)
  	 Vector<Double> inFreq(vb.getFrequencies(row));
- 	 ROMSColumns msc(iter.ms());
+ 	 MSColumns msc(iter.ms());
 
      MEpoch ep(Quantity(vb.time()(row)/86400.0, "d"), msc.timeMeas()(0).getRef());
  	 MDirection dir(msc.field().phaseDirMeasCol()(vb.fieldId()(row))(IPosition(1,0)));
@@ -629,7 +629,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 	
    Timer tim;
    tim.mark();
-   const ROMSColumns& msc=vb.msColumns();
+   const MSColumns& msc=vb.msColumns();
    //cerr << "oldMSId_p " << oldMSId_p << " vb " <<  vb.msId() << endl;
    if(vb.msId() < 0)
      throw(AipsError("VisBuffer is not attached to an ms so cannot get pointing "));
@@ -647,7 +647,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
        Vector<uInt>  uniqIndx;
        uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
        uInt nAnt=msc.antenna().nrow();
-       const ROMSPointingColumns& mspc=msc.pointing();
+       const MSPointingColumns& mspc=msc.pointing();
        Vector<Double> tUniq(nTimes);
        for (uInt k=0; k <nTimes; ++k){
 	 tUniq[k]= t[uniqIndx[k]];
@@ -737,10 +737,8 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
     //Double wtime0=omp_get_wtime();
 	 Int rowincache=-1;
 	 if(usePointing){
-	   
-	   
 	   if(oldMSId_p != vb.msId()){
-	     ROMSColumns msc(vb.ms());
+	     MSColumns msc(vb.ms());
 	     oldMSId_p=vb.msId();
 	     if(timeAntIndex_p.shape()(0) < (oldMSId_p+1)){
 	       timeAntIndex_p.resize(oldMSId_p+1, true);
@@ -767,7 +765,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 	       Vector<uInt>  uniqIndx;
 	       uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 	       uInt nAnt=msc.antenna().nrow();
-			 const ROMSPointingColumns& mspc=msc.pointing();
+			 const MSPointingColumns& mspc=msc.pointing();
 			 Vector<Double> tUniq(nTimes);
 			 for (uInt k=0; k <nTimes; ++k){
 			   tUniq[k]= t[uniqIndx[k]];
@@ -963,7 +961,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
      Double timeph = timeo > 0.0 ? timeo : vb.time()(0); 
 	 //MDirection outdir;
 	 if(oldPCMSId_p != vb.msId()){
-	   ROMSColumns msc(vb.ms());
+	   MSColumns msc(vb.ms());
 	   //tim.mark();
 	   //cerr << "MSID: "<< oldPCMSId_p <<  "    " << vb.msId() << endl;
 	   oldPCMSId_p=vb.msId();
@@ -983,7 +981,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 		   
 		   uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 		   //cerr << "ntimes " << nTimes << "  " << uniqIndx  << "\n  origInx " << origindx << endl;
-		   const ROMSFieldColumns& msfc=msc.field();
+		   const MSFieldColumns& msfc=msc.field();
 		   for (uInt k=0; k <nTimes; ++k){
 		     //cerr << t[uniqIndx[k]] << "   " <<  fieldId[origindx[uniqIndx[k]]] << endl;
 		     //cerr << msfc.phaseDirMeas(fieldId[origindx[uniqIndx[k]]], t[uniqIndx[k]]) << endl;
@@ -1061,8 +1059,8 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 					 const Double timeo){
 
      Double timeEphem = timeo > 0.0 ? timeo : vb.time()(0); 
-     ROMSColumns msc(vb.ms());
-     const ROMSFieldColumns& msfc=msc.field();
+     MSColumns msc(vb.ms());
+     const MSFieldColumns& msfc=msc.field();
      Int fieldId=vb.fieldId()(0);
      MDirection refDir(Quantity(0, "deg"), Quantity(0, "deg"),(MDirection::Types)msfc.ephemerisDirMeas(fieldId, timeEphem).getRef().getType());
      //Now do the parallax correction

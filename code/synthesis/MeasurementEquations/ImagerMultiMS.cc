@@ -343,7 +343,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       uInt nms = numMS_p;
       uInt nrow = chansels.nrow(); 
       dataspectralwindowids_p.resize();
-      const ROMSSpWindowColumns spwc(thisms.spectralWindow());
+      const MSSpWindowColumns spwc(thisms.spectralWindow());
       uInt nspw = spwc.nrow();
       const ScalarColumn<Int> spwNchans(spwc.numChan());
       Vector<Int> nchanvec = spwNchans.getColumn();
@@ -670,7 +670,7 @@ Bool ImagerMultiMS::setimage(const Int nx, const Int ny,
     {
       //Fill default numChan for now
       
-      ROMSSpWindowColumns msSpW(ms_p->spectralWindow());
+      MSSpWindowColumns msSpW(ms_p->spectralWindow());
       Vector<Int> numChan=msSpW.numChan().getColumn(); 
       for (uInt k=0; k < dataspectralwindowids_p.nelements(); ++k){
 	blockNChan_p[numMS_p-1][k]=numChan[dataspectralwindowids_p[k]];

@@ -277,7 +277,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if(useAltDir)
       wcenter=altDir;
     else{
-      ROMSColumns mscol(vb.ms());
+      MSColumns mscol(vb.ms());
       wcenter=mscol.field().phaseDirMeas(vb.fieldId()(0), vb.time()(0));
     }
     TempImage<Float> pbTemp(imShape, imageCoord);

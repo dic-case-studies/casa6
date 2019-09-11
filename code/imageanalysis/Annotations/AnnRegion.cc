@@ -27,11 +27,14 @@ AnnRegion::AnnRegion(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnotationBase(
 		shape, dirRefFrameString, csys, beginFreq, endFreq,
 		freqRefFrame, dopplerString, restfreq, stokes
-	), _isAnnotationOnly(annotationOnly),
+	),
+	_requireImageRegion(requireImageRegion),
+	_isAnnotationOnly(annotationOnly),
 	_isDifference(false), _constructing(true), _imShape(imShape),
 	_spectralPixelRange(vector<Double>(0)) {
 	_init();
@@ -43,8 +46,10 @@ AnnRegion::AnnRegion(
 	const Type shape,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
 ) :	AnnotationBase(shape, csys, stokes),
+	_requireImageRegion(requireImageRegion),
 	_isDifference(false), _constructing(true), _imShape(imShape),
 	_spectralPixelRange(vector<Double>(0)) {
 	_init();
@@ -53,37 +58,42 @@ AnnRegion::AnnRegion(
 }
 
 AnnRegion::AnnRegion(const AnnRegion& other)
-	: AnnotationBase(other), _isAnnotationOnly(other._isAnnotationOnly),
-	   _isDifference(other._isDifference),
-	   _constructing(other._constructing),
-	   _imageRegion(other._imageRegion),
-	   _directionRegion(other._directionRegion), _imShape(other._imShape),
+	: AnnotationBase(other), 
+	  _requireImageRegion(other._requireImageRegion),
+	  _imageRegion(other._imageRegion),
+	  _directionRegion(other._directionRegion),
+	  _isAnnotationOnly(other._isAnnotationOnly),
+	  _isDifference(other._isDifference),
+	  _constructing(other._constructing),
+	  _imShape(other._imShape),
 	  _spectralPixelRange(other._spectralPixelRange) {}
 
 
 AnnRegion::~AnnRegion() {}
 
 AnnRegion& AnnRegion::operator= (const AnnRegion& other) {
-    if (&other != this) {
-    	AnnotationBase::operator= (other);
-    	_isAnnotationOnly = other._isAnnotationOnly;
-    	_imageRegion = other._imageRegion;
-    	_isDifference = other._isDifference;
-    	_directionRegion = other._directionRegion;
-    	_constructing = other._constructing;
-    	_imShape.resize(other._imShape.size());
-    	_imShape = other._imShape;
-    	_spectralPixelRange = other._spectralPixelRange;
-    }
-    return *this;
+	if (&other != this) {
+		AnnotationBase::operator= (other);
+		_isAnnotationOnly = other._isAnnotationOnly;
+		_requireImageRegion = other._requireImageRegion;
+		_imageRegion = other._imageRegion;
+		_directionRegion = other._directionRegion;
+		_isDifference = other._isDifference;
+		_constructing = other._constructing;
+		_imShape.resize(other._imShape.size());
+		_imShape = other._imShape;
+		_spectralPixelRange = other._spectralPixelRange;
+	}
+	return *this;
 }
 
 Bool AnnRegion::operator== (const AnnRegion& other) const {
 	return &other == this || (
 		_isAnnotationOnly == other._isAnnotationOnly
+		&& _requireImageRegion == other._requireImageRegion
 		&& _imageRegion == other._imageRegion
-		&& _isDifference == other._isDifference
 		&& _directionRegion == other._directionRegion
+		&& _isDifference == other._isDifference
 		&& _constructing == other._constructing
 		&& _imShape == other._imShape
 		&& _spectralPixelRange == other._spectralPixelRange
@@ -97,6 +107,14 @@ void AnnRegion::setAnnotationOnly(const Bool isAnnotationOnly) {
 
 Bool AnnRegion::isAnnotationOnly() const {
 	return _isAnnotationOnly;
+}
+
+Bool AnnRegion::_hasDirectionRegion() {
+	return (_directionRegion.isWCRegion() || _directionRegion.isLCRegion() || _directionRegion.isLCSlicer());
+}
+
+Bool AnnRegion::hasImageRegion() const {
+	return (_imageRegion.isWCRegion() || _imageRegion.isLCRegion() || _imageRegion.isLCSlicer());
 }
 
 void AnnRegion::setDifference(const Bool difference) {
@@ -116,11 +134,19 @@ ImageRegion AnnRegion::asImageRegion() const {
 }
 
 CountedPtr<const WCRegion>  AnnRegion::getRegion() const {
-	return _imageRegion.asWCRegionPtr()->cloneRegion();
+	if (hasImageRegion()) {
+		return _imageRegion.asWCRegionPtr()->cloneRegion();
+	} else {
+		return CountedPtr<const WCRegion>(nullptr);
+	}
 }
 
 std::shared_ptr<const WCRegion>  AnnRegion::getRegion2() const {
-	return std::shared_ptr<const WCRegion>(_imageRegion.asWCRegionPtr()->cloneRegion());
+	if (hasImageRegion()) {
+		return std::shared_ptr<const WCRegion>(_imageRegion.asWCRegionPtr()->cloneRegion());
+	} else {
+		return std::shared_ptr<const WCRegion>(nullptr);
+	}
 }
 
 Bool AnnRegion::isRegion() const {
@@ -173,13 +199,16 @@ vector<Double> AnnRegion::getSpectralPixelRange() const {
 
 
 void AnnRegion::_extend() {
+	if (!_hasDirectionRegion()) {
+		return; // nothing to extend
+	}
 	Int stokesAxis = -1;
 	Int spectralAxis = -1;
 	Vector<Quantity> freqRange;
 	uInt nBoxes = 0;
 	Vector<MFrequency> freqLimits = getFrequencyLimits();
 	const CoordinateSystem& csys = getCsys();
-    if (csys.hasSpectralAxis() && freqLimits.size() == 2) {
+	if (csys.hasSpectralAxis() && freqLimits.size() == 2) {
 		SpectralCoordinate spcoord = csys.spectralCoordinate();
 		spectralAxis = csys.spectralAxisNumber();
 
@@ -195,9 +224,9 @@ void AnnRegion::_extend() {
 		_spectralPixelRange.resize(2);
 		spcoord.toPixel(_spectralPixelRange[0], freqLimits[0]);
 		spcoord.toPixel(_spectralPixelRange[1], freqLimits[1]);
-        freqRange.resize(2);
-        freqRange[0] = freqLimits[0].get(unit);
-        freqRange[1] = freqLimits[1].get(unit);
+		freqRange.resize(2);
+		freqRange[0] = freqLimits[0].get(unit);
+		freqRange[1] = freqLimits[1].get(unit);
 		if (_spectralPixelRange[1] <= _spectralPixelRange[0]) {
 			std::swap(_spectralPixelRange[0], _spectralPixelRange[1]);
 			std::swap(freqRange[0], freqRange[1]);

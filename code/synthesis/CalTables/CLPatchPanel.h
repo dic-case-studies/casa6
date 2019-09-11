@@ -144,7 +144,7 @@ private:
   // Calculate the simple nearest field map
   void setNearestFieldMap(const casacore::MeasurementSet& ms, const NewCalTable& ct);
   void setNearestFieldMap(const NewCalTable& ctasms, const NewCalTable& ct);
-  void setNearestFieldMap(const casacore::ROMSFieldColumns& msfc, const ROCTColumns& ctc);
+  void setNearestFieldMap(const casacore::MSFieldColumns& msfc, const ROCTColumns& ctc);
 
   // Parse field selection map
   void setSelectedFieldMap(const casacore::String& fieldsel,

@@ -180,7 +180,7 @@ private:
     casacore::Vector<casacore::Double>                 lsrFrequency_p; // calculated by getTopoFreqs if velSelection_p
     casacore::MEpoch                         mEpoch_p;
     const casacore::MeasurementSet *         measurementSet_p;  // [use]
-    mutable casacore::ROMSColumns *          msColumns_p; // [own]
+    mutable casacore::MSColumns *          msColumns_p; // [own]
     casacore::MSDerivedValues *              msd_p; // [own]
     casacore::Int                            nAntennas_p;
     casacore::Int                            nCoh_p;

@@ -183,7 +183,7 @@ Bool Partition::selectSpw(const String& spwstr)
 		spw_p   = chansel.column(0);
 	}
 	else{                            // select everything
-		ROMSSpWindowColumns mySpwTab(ms_p.spectralWindow());
+		MSSpWindowColumns mySpwTab(ms_p.spectralWindow());
 
 		spw_p.resize(mySpwTab.nrow());
 		indgen(spw_p);
@@ -336,7 +336,7 @@ Bool Partition::makePartition(String& msname, String& colname,
 			ms_p = MeasurementSet();
 			return false;
 		}
-		mscIn_p = new ROMSColumns(mssel_p);
+		mscIn_p = new MSColumns(mssel_p);
 		// Note again the parseColumnNames() a few lines back that stops setupMS()
 		// from being called if the MS doesn't have the requested columns.
 		MeasurementSet* outpointer=0;
@@ -458,7 +458,7 @@ Bool Partition::makePartition(String& msname, String& colname,
 		{
 			// SMC: use the read-only Table Column class to
 			// avoid an exception from the CHAN_FREQ column
-			ROMSSpWindowColumns msSpW(msOut_p.spectralWindow());
+			MSSpWindowColumns msSpW(msOut_p.spectralWindow());
 //			MSSpWindowColumns msSpW(msOut_p.spectralWindow());
 			Int nSpw=msOut_p.spectralWindow().nrow();
 			if(nSpw==0) nSpw=1;
@@ -521,7 +521,7 @@ MeasurementSet* Partition::makeScratchPartition(const Vector<MS::PredefinedColum
 		ms_p=MeasurementSet();
 		return 0;
 	}
-	mscIn_p=new ROMSColumns(mssel_p);
+	mscIn_p=new MSColumns(mssel_p);
 	Double sizeInMB= 1.5 * n_bytes() / (1024.0 * 1024.0);
 	String msname=AppInfo::workFileName(uInt(sizeInMB), "TempPartition");
 

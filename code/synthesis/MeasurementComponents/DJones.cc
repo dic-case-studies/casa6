@@ -482,7 +482,7 @@ void DJones::logResults() {
   rl(0)="R: ";
   rl(1)="L: ";
 
-  ROMSAntennaColumns antcol(ct_->antenna());
+  MSAntennaColumns antcol(ct_->antenna());
   Vector<String> antNames(antcol.name().getColumn());
 
   logSink() << "The instrumental polarization solutions are: " << LogIO::POST;

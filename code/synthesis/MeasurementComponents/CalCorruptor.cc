@@ -835,7 +835,7 @@ void AtmosCorruptor::initialize(const Int Seed, const Float Beta, const Float sc
 
 
   
-  void AtmosCorruptor::initialize(const Int Seed, const Float Beta, const Float scale, const Int rxtype, const ROMSAntennaColumns& antcols) {
+  void AtmosCorruptor::initialize(const Int Seed, const Float Beta, const Float scale, const Int rxtype, const MSAntennaColumns& antcols) {
   // 2d delay screen
   LogIO os(LogOrigin("AtmCorr", "init(Seed,Beta,Scale,AntCols)", WHERE));
   mean_pwv() = simpar().asFloat("mean_pwv");

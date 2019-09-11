@@ -918,87 +918,87 @@ void TransformingVi2::calculateFlagRowFromFlagCube (const Cube<Bool> &flagCube, 
 // Methods to access the subtables.
 //**********************************************************************
 
-const casacore::ROMSAntennaColumns& TransformingVi2::antennaSubtablecols() const
+const casacore::MSAntennaColumns& TransformingVi2::antennaSubtablecols() const
 {
     return getVii()->antennaSubtablecols();
 }
 
-const casacore::ROMSDataDescColumns& TransformingVi2::dataDescriptionSubtablecols() const
+const casacore::MSDataDescColumns& TransformingVi2::dataDescriptionSubtablecols() const
 {
     return getVii()->dataDescriptionSubtablecols();
 }
 
-const casacore::ROMSFeedColumns& TransformingVi2::feedSubtablecols() const
+const casacore::MSFeedColumns& TransformingVi2::feedSubtablecols() const
 {
     return getVii()->feedSubtablecols();
 }
 
-const casacore::ROMSFieldColumns& TransformingVi2::fieldSubtablecols() const
+const casacore::MSFieldColumns& TransformingVi2::fieldSubtablecols() const
 {
     return getVii()->fieldSubtablecols();
 }
 
-const casacore::ROMSFlagCmdColumns& TransformingVi2::flagCmdSubtablecols() const
+const casacore::MSFlagCmdColumns& TransformingVi2::flagCmdSubtablecols() const
 {
     return getVii()->flagCmdSubtablecols();
 }
 
-const casacore::ROMSHistoryColumns& TransformingVi2::historySubtablecols() const
+const casacore::MSHistoryColumns& TransformingVi2::historySubtablecols() const
 {
     return getVii()->historySubtablecols();
 }
 
-const casacore::ROMSObservationColumns& TransformingVi2::observationSubtablecols() const
+const casacore::MSObservationColumns& TransformingVi2::observationSubtablecols() const
 {
     return getVii()->observationSubtablecols();
 }
 
-const casacore::ROMSPointingColumns& TransformingVi2::pointingSubtablecols() const
+const casacore::MSPointingColumns& TransformingVi2::pointingSubtablecols() const
 {
     return getVii()->pointingSubtablecols();
 }
 
-const casacore::ROMSPolarizationColumns& TransformingVi2::polarizationSubtablecols() const
+const casacore::MSPolarizationColumns& TransformingVi2::polarizationSubtablecols() const
 {
     return getVii()->polarizationSubtablecols();
 }
 
-const casacore::ROMSProcessorColumns& TransformingVi2::processorSubtablecols() const
+const casacore::MSProcessorColumns& TransformingVi2::processorSubtablecols() const
 {
     return getVii()->processorSubtablecols();
 }
 
-const casacore::ROMSSpWindowColumns& TransformingVi2::spectralWindowSubtablecols() const
+const casacore::MSSpWindowColumns& TransformingVi2::spectralWindowSubtablecols() const
 {
     return getVii()->spectralWindowSubtablecols();
 }
 
-const casacore::ROMSStateColumns& TransformingVi2::stateSubtablecols() const
+const casacore::MSStateColumns& TransformingVi2::stateSubtablecols() const
 {
     return getVii()->stateSubtablecols();
 }
 
-const casacore::ROMSDopplerColumns& TransformingVi2::dopplerSubtablecols() const
+const casacore::MSDopplerColumns& TransformingVi2::dopplerSubtablecols() const
 {
     return getVii()->dopplerSubtablecols();
 }
 
-const casacore::ROMSFreqOffsetColumns& TransformingVi2::freqOffsetSubtablecols() const
+const casacore::MSFreqOffsetColumns& TransformingVi2::freqOffsetSubtablecols() const
 {
     return getVii()->freqOffsetSubtablecols();
 }
 
-const casacore::ROMSSourceColumns& TransformingVi2::sourceSubtablecols() const
+const casacore::MSSourceColumns& TransformingVi2::sourceSubtablecols() const
 {
     return getVii()->sourceSubtablecols();
 }
 
-const casacore::ROMSSysCalColumns& TransformingVi2::sysCalSubtablecols() const
+const casacore::MSSysCalColumns& TransformingVi2::sysCalSubtablecols() const
 {
     return getVii()->sysCalSubtablecols();
 }
 
-const casacore::ROMSWeatherColumns& TransformingVi2::weatherSubtablecols() const
+const casacore::MSWeatherColumns& TransformingVi2::weatherSubtablecols() const
 {
     return getVii()->weatherSubtablecols();
 }

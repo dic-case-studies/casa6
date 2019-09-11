@@ -66,7 +66,8 @@ public:
 		const casacore::String& dopplerString,
 		const casacore::Quantity& restfreq,
 		const casacore::Vector<casacore::Stokes::StokesTypes> stokes,
-		const casacore::Bool annotationOnly
+		const casacore::Bool annotationOnly,
+		const casacore::Bool requireImageRegion=true
 	);
 
 	// Simplified constructor.
@@ -82,7 +83,8 @@ public:
 		const casacore::Quantity& ywidth,
 		const casacore::CoordinateSystem& csys,
 		const casacore::IPosition& imShape,
-		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes
+		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes,
+		const casacore::Bool requireImageRegion=true
 	);
 
 	// implicit copy constructor and destructor are fine

@@ -232,7 +232,7 @@ protected:
       std::cout << "Verify OBSERVATION table" << std::endl;
       auto const mytable = myms.observation();
       ASSERT_EQ(uInt(1), mytable.nrow());
-      ROMSObservationColumns mycolumns(mytable);
+      MSObservationColumns mycolumns(mytable);
       CASA_EXPECT_STREQ(scantable_header.asString("Observer"),
           mycolumns.observer()(0));
       CASA_EXPECT_STREQ(scantable_header.asString("Project"),
@@ -268,7 +268,7 @@ protected:
       std::cout << "Verify ANTENNA table" << std::endl;
       auto const mytable = myms.antenna();
       ASSERT_EQ(uInt(1), mytable.nrow());
-      ROMSAntennaColumns mycolumns(mytable);
+      MSAntennaColumns mycolumns(mytable);
       String header_antenna_name = scantable_header.asString("AntennaName");
       String antenna_name;
       String expected_name;
@@ -315,7 +315,7 @@ protected:
       uInt expected_nrow = sorter.sort(index_vector, weather_id_list.size(),
           Sort::QuickSort | Sort::NoDuplicates);
       ASSERT_EQ(expected_nrow, mytable.nrow());
-      ROMSWeatherColumns mycolumns(mytable);
+      MSWeatherColumns mycolumns(mytable);
       ROTableRow row(weather_table);
       std::map<uInt, uInt> weather_id_map;
       weather_id_column.attach(weather_table, "ID");
@@ -415,7 +415,7 @@ protected:
       uInt expected_nrow = sorter.sort(index_vector, myscantable.nrow(),
           Sort::QuickSort | Sort::NoDuplicates);
       ASSERT_EQ(expected_nrow, mytable.nrow());
-      ROMSSourceColumns mycolumns(mytable);
+      MSSourceColumns mycolumns(mytable);
       for (uInt i = 0; i < expected_nrow; ++i) {
         std::cout << "Verifying row " << i << std::endl;
         uInt j = index_vector[i];
@@ -491,7 +491,7 @@ protected:
       Vector<uInt> index_vector;
       uInt num_records = sorter.sort(index_vector, myscantable.nrow(),
           Sort::QuickSort | Sort::NoDuplicates);
-      ROMSFieldColumns mycolumns(mytable);
+      MSFieldColumns mycolumns(mytable);
       std::vector<uInt> processed_rows;
       for (uInt i = 0; i < num_records; ++i) {
         std::cout << "Verifying row " << i << std::endl;
@@ -540,12 +540,12 @@ protected:
     {
       std::cout << "Verifying MAIN and STATE" << std::endl;
       ASSERT_TRUE(myms.tableDesc().isColumn("FLOAT_DATA"));
-      ROMSMainColumns mycolumns(myms);
-      ROMSDataDescColumns data_desc_columns(myms.dataDescription());
-      ROMSFieldColumns field_columns(myms.field());
-      ROMSStateColumns state_columns(myms.state());
-      ROMSPolarizationColumns pol_columns(myms.polarization());
-      ROMSSpWindowColumns spw_columns(myms.spectralWindow());
+      MSMainColumns mycolumns(myms);
+      MSDataDescColumns data_desc_columns(myms.dataDescription());
+      MSFieldColumns field_columns(myms.field());
+      MSStateColumns state_columns(myms.state());
+      MSPolarizationColumns pol_columns(myms.polarization());
+      MSSpWindowColumns spw_columns(myms.spectralWindow());
       uInt const nrow = myms.nrow();
       Table t = myscantable(myscantable.col("IFNO") == (uInt) 0);
       uInt expected_nrow = t.nrow() + (myscantable.nrow() - t.nrow()) / 2;
@@ -633,7 +633,7 @@ protected:
           const_cast<Int *>(valid_spw_list), SHARE);
       std::cout << "verify SPECTRAL_WINDOW table" << std::endl;
       auto const mytable = myms.spectralWindow();
-      ROMSSpWindowColumns mycolumns(mytable);
+      MSSpWindowColumns mycolumns(mytable);
       Table frequencies_table = myscantable.keywordSet().asTable("FREQUENCIES");
       ASSERT_EQ((uInt )kExpectedNumRow, mytable.nrow());
       for (Int irow = 0; irow < kExpectedNumRow; ++irow) {
@@ -699,7 +699,7 @@ protected:
     {
       std::cout << "Verify POLARIZATION table" << std::endl;
       auto const mytable = myms.polarization();
-      ROMSPolarizationColumns const mycolumns(mytable);
+      MSPolarizationColumns const mycolumns(mytable);
       ASSERT_EQ(2u, mycolumns.nrow());
       Vector<Int> expected_corr_type(2);
       String poltype = myscantable.keywordSet().asString("POLTYPE");
@@ -732,7 +732,7 @@ protected:
     {
       std::cout << "Verify DATA_DESCRIPTION table" << std::endl;
       auto const mytable = myms.dataDescription();
-      ROMSDataDescColumns const mycolumns(mytable);
+      MSDataDescColumns const mycolumns(mytable);
       ASSERT_EQ(5u, mytable.nrow());
       EXPECT_EQ(0, mycolumns.polarizationId()(0));
       EXPECT_EQ(0, mycolumns.spectralWindowId()(0));
@@ -750,7 +750,7 @@ protected:
     {
       std::cout << "Verify POINTING table" << std::endl;
       auto const mytable = myms.pointing();
-      ROMSPointingColumns const mycolumns(mytable);
+      MSPointingColumns const mycolumns(mytable);
       uInt nrow = mytable.nrow();
       Table t = myscantable;
       ScalarColumn<Double> time_column(t, "TIME");
@@ -800,7 +800,7 @@ protected:
     {
       std::cout << "Verify FEED table" << std::endl;
       auto const mytable = myms.feed();
-      ROMSFeedColumns const mycolumns(mytable);
+      MSFeedColumns const mycolumns(mytable);
       ASSERT_EQ(5u, mytable.nrow());
       EXPECT_EQ(0, mycolumns.feedId()(0));
       EXPECT_EQ(0, mycolumns.spectralWindowId()(0));
@@ -915,7 +915,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
     auto const mytable = myms.observation();
     ASSERT_EQ(uInt(1), mytable.nrow());
     TableRecord const &expected_record = reader.observation_record_;
-    ROMSObservationColumns mycolumns(mytable);
+    MSObservationColumns mycolumns(mytable);
     CASA_EXPECT_STREQ(expected_record.asString("OBSERVER"),
         mycolumns.observer()(0));
     CASA_EXPECT_STREQ(expected_record.asString("PROJECT"),
@@ -948,7 +948,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
     auto const mytable = myms.processor();
     ASSERT_EQ(uInt(1), mytable.nrow());
     TableRecord const &expected_record = reader.processor_record_;
-    ROMSProcessorColumns mycolumns(mytable);
+    MSProcessorColumns mycolumns(mytable);
     CASA_EXPECT_STREQ(expected_record.asString("TYPE"), mycolumns.type()(0));
     CASA_EXPECT_STREQ(expected_record.asString("SUB_TYPE"),
         mycolumns.subType()(0));
@@ -963,7 +963,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
     constexpr size_t kNumAntennaExpected = 2;
     ASSERT_EQ(kNumAntennaExpected, mytable.nrow());
     TableRecord const &expected_record = reader.antenna_record_;
-    ROMSAntennaColumns mycolumns(mytable);
+    MSAntennaColumns mycolumns(mytable);
     for (size_t i = 0; i < kNumAntennaExpected; ++i) {
       CASA_EXPECT_STREQ(expected_record.asString("NAME"), mycolumns.name()(i));
       CASA_EXPECT_STREQ(expected_record.asString("STATION"),
@@ -998,7 +998,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
     std::map<uInt, SourceRecord> expected_record = reader.source_record_;
     uInt expected_nrow = expected_record.size();
     ASSERT_EQ(expected_nrow, mytable.nrow());
-    ROMSSourceColumns mycolumns(mytable);
+    MSSourceColumns mycolumns(mytable);
     for (uInt i = 0; i < expected_nrow; ++i) {
       std::cout << "Verifying row " << i << std::endl;
       SourceRecord const row_record = expected_record[i];
@@ -1059,7 +1059,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
     auto const mytable = myms.field();
     std::map<uInt, FieldRecord> expected_record = reader.field_record_;
     uInt num_records = expected_record.size();
-    ROMSFieldColumns mycolumns(mytable);
+    MSFieldColumns mycolumns(mytable);
     uInt expected_nrow = 0;
     std::vector<uInt> processed_rows;
     for (uInt i = 0; i < num_records; ++i) {
@@ -1110,7 +1110,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
     auto const mytable = myms.spectralWindow();
     map<uInt, SpectralWindowRecord> expected_record = reader.spw_record_;
     uInt num_records = expected_record.size();
-    ROMSSpWindowColumns mycolumns(mytable);
+    MSSpWindowColumns mycolumns(mytable);
     uInt expected_nrow = 0;
     std::vector<uInt> processed_rows;
     for (uInt i = 0; i < num_records; ++i) {
@@ -1196,7 +1196,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
   Vector<Int> dd_spw_id;
   {
     auto const mytable = myms.dataDescription();
-    ROMSDataDescColumns const mycolumns(mytable);
+    MSDataDescColumns const mycolumns(mytable);
     dd_polarization_id = mycolumns.polarizationId().getColumn();
     dd_spw_id = mycolumns.spectralWindowId().getColumn();
   }
@@ -1205,7 +1205,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
   Vector<Int> num_pol_map;
   {
     auto const mytable = myms.polarization();
-    ROMSPolarizationColumns const mycolumns(mytable);
+    MSPolarizationColumns const mycolumns(mytable);
     num_pol_map = mycolumns.numCorr().getColumn();
   }
 
@@ -1213,7 +1213,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
   Matrix<Int> feed_id_matrix;
   {
     auto const mytable = myms.feed();
-    ROMSFeedColumns const mycolumns(mytable);
+    MSFeedColumns const mycolumns(mytable);
     uInt nrow = mycolumns.nrow();
     feed_id_matrix.resize(nrow, 2);
     feed_id_matrix.column(0) = mycolumns.feedId().getColumn();
@@ -1225,7 +1225,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
   Vector<String> obs_mode_map;
   {
     auto const mytable = myms.state();
-    ROMSStateColumns const mycolumns(mytable);
+    MSStateColumns const mycolumns(mytable);
     subscan_map = mycolumns.subScan().getColumn();
     obs_mode_map = mycolumns.obsMode().getColumn();
   }
@@ -1240,7 +1240,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
   {
     std::cout << "Verify MAIN table" << std::endl;
     auto const mytable = myms;
-    ROMSMainColumns const mycolumns(mytable);
+    MSMainColumns const mycolumns(mytable);
     // expected record stores each spectrum with associating meta data
     // its order is as follows (See FloatDataStorage or ComplexDataStorage):
     // Time0 Intent0 Field0 Antenna0 Beam0 Spw0 Pol0 |
@@ -1462,7 +1462,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
   {
     std::cout << "Verify POINTING table" << std::endl;
     auto const mytable = myms.pointing();
-    ROMSPointingColumns const mycolumns(mytable);
+    MSPointingColumns const mycolumns(mytable);
     uInt nrow = mytable.nrow();
     ASSERT_EQ(pointing_count, kNumPointing);
     ASSERT_EQ(pointing_count, nrow);
@@ -1504,7 +1504,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
       //map<uInt, SysCalRecord> expected_record = reader.syscal_record_;
       uInt expected_nrow = 8;
       ASSERT_EQ(expected_nrow, mytable.nrow());
-      ROMSSysCalColumns mycolumns(mytable);
+      MSSysCalColumns mycolumns(mytable);
       auto const &main_record = reader.main_record_;
       uInt n = main_record.size();
       Double time0 = main_record.at(0).time;
@@ -1613,7 +1613,7 @@ TEST_F(SingleDishMSFillerTestWithStub, FillerTest) {
       auto const mytable = myms.weather();
       constexpr uInt expected_nrow = 2;
       ASSERT_EQ(expected_nrow, mytable.nrow());
-      ROMSWeatherColumns mycolumns(mytable);
+      MSWeatherColumns mycolumns(mytable);
       Float const expected_temperature[expected_nrow] = { 100.0f, 150.0f };
       Double const expected_time = 0.5 * (4.0e9 - 5.0 + 4.1e9 + 5.0);
       Double const expected_interval = 4.1e9 - 4.0e9 + 10.0;

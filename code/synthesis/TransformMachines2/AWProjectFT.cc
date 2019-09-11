@@ -116,7 +116,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     if (!isATermOn) return new NoOpATerm();
     
-    // ROMSObservationColumns msoc(ms.observation());
+    // MSObservationColumns msoc(ms.observation());
     // String ObsName=msoc.telescopeName()(0);
     if ((telescopeName == "EVLA") || (telescopeName == "VLA"))
       return new EVLAAperture();

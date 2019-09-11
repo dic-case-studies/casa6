@@ -95,7 +95,7 @@ TEST_F( PlotMSCacheTest, testCallib ) {
 	ASSERT_NE(nullptr, cache);  // make sure we have a cache
 
 	// main table columns : DATA
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Array<Complex> visdata(msmc.data().getColumn());
 	IPosition visshape = visdata.shape();
 	visshape.setLast(IPosition(1,expNRow));

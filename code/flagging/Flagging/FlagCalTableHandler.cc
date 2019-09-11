@@ -74,12 +74,12 @@ FlagCalTableHandler::open()
 	originalCalTable_p = new NewCalTable(tablename_p,Table::Update,Table::Plain);
 
 	// Read field names
-	ROMSFieldColumns fieldSubTable(originalCalTable_p->field());
+	MSFieldColumns fieldSubTable(originalCalTable_p->field());
 	fieldNames_p = new Vector<String>(fieldSubTable.name().getColumn());
 	*logger_p << LogIO::DEBUG1 << "Field names are " << *fieldNames_p << LogIO::POST;
 
 	// Read antenna names and diameters from Antenna table
-	ROMSAntennaColumns antennaSubTable(originalCalTable_p->antenna());
+	MSAntennaColumns antennaSubTable(originalCalTable_p->antenna());
 	antennaNames_p = new Vector<String>(antennaSubTable.name().getColumn());
 	antennaDiameters_p = new Vector<Double>(antennaSubTable.dishDiameter().getColumn());
 	antennaPositions_p = new ROScalarMeasColumn<MPosition>(antennaSubTable.positionMeas());

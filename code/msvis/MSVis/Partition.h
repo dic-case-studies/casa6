@@ -210,7 +210,7 @@ private:
   //  * not necessarily to anything useful.
   casacore::MeasurementSet ms_p, mssel_p;
   casacore::MSMainColumns * msc_p;		// columns of msOut_p
-  casacore::ROMSColumns * mscIn_p;
+  casacore::MSColumns * mscIn_p;
   casacore::Bool   antennaSel_p;		// Selecting by antenna?
   casacore::Double timeBin_p;
   casacore::String scanString_p,          // Selects scans by #number#.  Historically named.

@@ -54,7 +54,7 @@ public:
 		    const casacore::Vector<casacore::Vector<casacore::Vector<casacore::Double> > >& dir);
   ~SDPosInterpolator();
   casacore::Vector<casacore::Bool> doSplineInterpolation;   //(antid)
-  casacore::MDirection interpolateDirectionMeasSpline(const casacore::ROMSPointingColumns& mspc,
+  casacore::MDirection interpolateDirectionMeasSpline(const casacore::MSPointingColumns& mspc,
 					    const casacore::Double& time,
 					    const casacore::Int& index,
 					    const casacore::Int& antid);

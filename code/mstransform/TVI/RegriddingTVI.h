@@ -137,7 +137,7 @@ protected:
 	mutable casacore::Double fftShift_p;
     casacore::FFTServer<casacore::Float, casacore::Complex> fFFTServer_p;
 
-	casacore::ROMSColumns *selectedInputMsCols_p;
+	casacore::MSColumns *selectedInputMsCols_p;
 	casacore::MSFieldColumns *inputMSFieldCols_p;
 
 	mutable map<casacore::Int,casacore::Float> weightFactorMap_p;

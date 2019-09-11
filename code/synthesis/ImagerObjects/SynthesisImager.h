@@ -267,7 +267,7 @@ protected:
 					 casacore::CoordinateSystem& cSys,
 					 casacore::IPosition imShape, 
 					 const casacore::Bool overwrite,
-					 casacore::ROMSColumns& msc, 
+					 casacore::MSColumns& msc, 
 					 casacore::String mappertype="default", 
 					 casacore::uInt ntaylorterms=1,
 					 casacore::Quantity distance=casacore::Quantity(0.0, "m"),

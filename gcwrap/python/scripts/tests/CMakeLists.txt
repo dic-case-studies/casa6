@@ -73,7 +73,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_fft.py
   test_ia_findsources.py
   test_ia_fromarray.py
-  test_ia_fromascii.py
   test_ia_fromfits.py
   test_ia_fromimage.py
   test_ia_fromrecord.py
@@ -105,7 +104,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_setmiscinfo.py
   test_ia_subimage.py
   test_ia_summary.py
-  test_ia_toascii.py
   test_ia_tofits.py
   test_ia_twopointcorrelation.py
   test_imcollapse.py
