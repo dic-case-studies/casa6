@@ -14,7 +14,7 @@ target/
 autom4te.cache
 casatools.egg-info
 setup.py
-tests/tools/__pycache__
+**/__pycache__/
 scripts/java
 sakura-source
 include/casacore/casa/version.h
