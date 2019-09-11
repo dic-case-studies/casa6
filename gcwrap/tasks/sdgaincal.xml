@@ -82,6 +82,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
   <param type="intArray" name="spwmap" subparam="true">
     <description>Spectral windows combinations to form for gaintables(s)</description>
+    <type>any</type>
     <value></value>
   </param>
 
