@@ -94,7 +94,7 @@ Again, **substitute** the path to your build of [CASAtools](https://open-bitbuck
 | flagdata      | All-purpose flagging task based on data-selections and flagging modes/algorithms.                                               |
 | flagmanager   | Enable list, save, restore, delete and rename flag version files.                                                               |
 | fluxscale     | Bootstrap the flux density scale from standard calibrators                                                                      |
-| ft            | Insert a source model  a visibility set:                                                                                        |
+| ft            | Insert a source model as a visibility set                                                                                       |
 | gaincal       | Determine temporal gains from calibrator observations                                                                           |
 | gencal        | Specify Calibration Values of Various Types                                                                                     |
 | hanningsmooth | Hanning smooth frequency channel data to remove Gibbs ringing                                                                   |
@@ -110,8 +110,8 @@ Again, **substitute** the path to your build of [CASAtools](https://open-bitbuck
 | importasap    | Convert ASAP Scantable data  into a CASA visibility file (MS)                                                                   |
 | importasdm    | Convert an ALMA Science Data Model observation into a CASA visibility file (MS)                                                 |
 | importatca    | Import ATCA RPFITS file(s) to a measurement set                                                                                 |
-| importfitsidi | Convert a FITS-IDI file to a CASA visibility data set                                                                           |
 | importfits    | Convert an image FITS file into a CASA image                                                                                    |
+| importfitsidi | Convert a FITS-IDI file to a CASA visibility data set                                                                           |
 | importgmrt    | Convert a UVFITS file to a CASA visibility data set                                                                             |
 | importmiriad  | Convert a Miriad visibility file into a CASA MeasurementSet                                                                     |
 | importnro     | Convert NOSTAR data into a CASA visibility file (MS)                                                                            |
@@ -137,7 +137,10 @@ Again, **substitute** the path to your build of [CASAtools](https://open-bitbuck
 | makemask      | Makes and manipulates image masks                                                                                               |
 | mstransform   | Split the MS, combine/separate/regrid spws and do channel and time averaging                                                    |
 | partition     | Task to produce Multi-MSs using parallelism                                                                                     |
+| plotants      | Plot the antenna distribution in the local reference frame:                                                                     |
+| plotweather   | Plot elements of the weather table; estimate opacity.                                                                           |
 | polcal        | Determine instrumental polarization calibrations                                                                                |
+| polfromgain   | Derive linear polarization from gain ratio                                                                                      |
 | predictcomp   | Make a component list for a known calibrator                                                                                    |
 | rerefant      | Re-apply refant to a caltable                                                                                                   |
 | rmfit         | Calculate rotation measure.                                                                                                     |
@@ -169,4 +172,4 @@ Again, **substitute** the path to your build of [CASAtools](https://open-bitbuck
 | virtualconcat | Concatenate several visibility data sets into a multi-MS                                                                        |
 | vishead       | List, summary, get, and put metadata in a measurement set                                                                       |
 | visstat       | Displays statistical information from a MeasurementSet, or from a Multi-MS                                                      |
-| widebandpbcor | Wideband PB-correction on the output of the MS-MFS algorithm                                                                    |
+| widebandpbcor | Wideband PB-correction on the output of the MS-MFS algorithm             
