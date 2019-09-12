@@ -192,16 +192,16 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | coordsys             | Operations on CoordinateSystems                                 |
 | functional           | Functionals handling                                            |
 | imagemetadata        | Operations on imagemetadata                                     |
+| image                | Operations on images                                            |
 | imagepol             | Polarimetric analysis of images                                 |
 | imager               | tool for synthesis imaging                                      |
-| image                | Operations on images                                            |
 | iterbotsink          | tool for synthesis imaging                                      |
 | logsink              | tool for logsink                                                |
 | measures             | measures tool                                                   |
 | miriadfiller         | Tool for the importmiriad task                                  |
 | msmetadata           | Operations to retrieve metadata from a measurment set           |
-| mstransformer        | Tool to apply spw and frame transformations in MS               |
 | ms                   | Operations on measurement sets                                  |
+| mstransformer        | Tool to apply spw and frame transformations in MS               |
 | quanta               | quanta tool handles units and quantities                        |
 | regionmanager        | Create and manipulate regions of interest                       |
 | sakura               | New single dish tool interface using sakura                     |
