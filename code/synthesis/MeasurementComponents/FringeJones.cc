@@ -687,8 +687,11 @@ private:
     Double reftime;
     std::map< Int, std::set< Int > > activeAntennas;
     std::map< Int, Int > antennaIndexMap;
+    // Can't I just have a vector, which maps indices to values anyway?
+    std::vector<bool> parameterFlags;
+    Int nParams;
+    std::map< Int, Int > parameterMap;
     Int activeCorr;
-    std::vector<bool> activeParameters;
 public:
     AuxParamBundle(SDBList& sdbs_, size_t refant, const std::map< Int, std::set<Int> >& activeAntennas_, Vector<Bool> paramActive) :
         sdbs(sdbs_),
@@ -698,7 +701,8 @@ public:
         corrStep(sdbs.nCorrelations() > 2 ? 3 : 1),
         activeAntennas(activeAntennas_),
         activeCorr(-1),
-        activeParameters()
+        parameterFlags(),
+        parameterMap()
         // corrStep(3)
         {
             Int last_index = sdbs.nSDB() - 1 ;
@@ -706,16 +710,26 @@ public:
             Double tlast = sdbs(last_index).time()(0);
             reftime = 0.5*(t0 + tlast);
 
-            // Plagiarised from the documentation:
-            // https://casa.nrao.edu/doxygen/classcasacore_1_1VectorIterator.html
-            VectorIterator<Bool> vi(paramActive);
             uInt n = paramActive.nelements();
             for (Int i=0; i < n; i++) {   
-                activeParameters.push_back(paramActive(i));
+                parameterFlags.push_back(paramActive(i));
             }
+            Int j = 0; // The CASA parameter index (0=peculiar phase, 1=delay, 2=rate, 3=dispersive)
+            Int i = 0; // the Least Squares parameter vector index, depending on what's being solved for
+            for (auto p=parameterFlags.begin(); p!=parameterFlags.end(); p++) {
+                if (*p) {
+                    parameterMap.insert(std::pair<Int, Int>(j, i));
+                    i++;
+                }
+                j++;
+            }
+            nParams = i;
             // cerr << "AuxParamBundle reftime " << reftime << " t0 " << t0 <<" dt " << tlast - t0 << endl;
         }
 
+    Int nParameters() {
+        return nParams;
+    }
     Double get_t0() {
         return t0;
     }
@@ -767,18 +781,19 @@ public:
         else return (ants.find(iant) != ants.end());
     }
     Int
-    get_param_corr_index(size_t iant) {
-        if (iant == refant) return -1;
-        int ipar = antennaIndexMap[iant];
-        if (iant > refant) ipar -= 1;
-        return 3*ipar;        
-    }
-    Int
-    get_param_corr_param_index(size_t iant, size_t ipar) {
-        if (iant == refant) return -1;
-        int i = antennaIndexMap[iant];
-        if (iant > refant) i -= 1;
-        return 3*i+ipar;        
+    get_param_corr_param_index(size_t iant0, size_t ipar) {
+        if (iant0 == refant) return -1;
+        int iant1 = antennaIndexMap[iant0];
+        if (iant1 > refant) iant1 -= 1;
+        int ipar1;
+        auto p = parameterMap.find(ipar);
+        if (p==parameterMap.end()) {
+            ipar1 = -1;
+        }
+        else {
+            ipar1 = (iant1 * nParameters()) + p->second;
+        }
+        return ipar1;
     }
     size_t
     get_active_corr() {
@@ -996,11 +1011,6 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
                 r = r2-r1;
             }
 
-            // cerr << "ant1 " << ant1
-            //     << " i1_0 " << bundle->get_param_corr_param_index(ant1, 0)
-            //     << " ant2 " << ant2
-            //     << " i2_0 " << bundle->get_param_corr_param_index(ant2, 0)
-            //     << " phi0 " << phi0 << " tau " << tau << " r " << endl;                
                 
             //Double ref_freq = freqs(0); 
             //Double wDt = C::_2pi*(t1 - refTime) * ref_freq; 
@@ -1124,10 +1134,20 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
                 std::pair<Int, Int> antpair = std::make_pair(ant1, ant2);
                 bool newBaseline = (baselines.find(antpair) == baselines.end());
                 if (newBaseline) {
-                    // print_baselines(baselines);
-                    // cerr << "Adding (" << ant1 << ", " << ant2 << ")" << endl;
                     baselines.insert(antpair);
-                    cerr << "phi0 " << phi0 << " tau " << tau << " r " << r << endl;
+                    // cerr << "paramFlagging for antenna "<< ant1 << ": ";
+                    // for (size_t di=0; di<4; di++) {
+                    //     cerr << (bundle->get_param_corr_param_index(ant1, di)>=0) << " ";
+                    // }
+                    // cerr << endl;
+                    // cerr << "indices for antenna "<< ant1 << ": ";
+                    // if (bundle->get_param_corr_param_index(ant1, 0) >= 0) { 
+                    //     for (size_t di=0; di<4; di++) {
+                    //         cerr << bundle->get_param_corr_param_index(ant1, di) << " ";
+                    //     }                    
+                    //     cerr << endl;
+                    // }
+                    // cerr << "phi0 " << phi0 << " tau " << tau << " r " << r << endl;
                 }
             }
         } // loop over rows
@@ -1141,16 +1161,16 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
             cerr << gsl_vector_get(v, i) << " ";
         }
         cerr << endl;
-        if (JTJ) {
-            cerr <<"JTJ " << std::scientific << endl;
-            for (size_t i=0; i!=JTJ->size1; i++) {
-                for (size_t j=0; j!=JTJ->size2; j++) {
-                    cerr << gsl_matrix_get(JTJ, i, j) << " ";
-                }
-                cerr << endl;
-            }
-            cerr << endl;
-        }
+        // if (JTJ) {
+        //     cerr <<"JTJ " << std::scientific << endl;
+        //     for (size_t i=0; i!=JTJ->size1; i++) {
+        //         for (size_t j=0; j!=JTJ->size2; j++) {
+        //             cerr << gsl_matrix_get(JTJ, i, j) << " ";
+        //         }
+        //         cerr << endl;
+        //     }
+        //     cerr << endl;
+        // }
     }
     return GSL_SUCCESS;
 }
@@ -1363,6 +1383,7 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
     }
     gsl_matrix_free(lu);
     gsl_matrix_free(inv_hess);
+    gsl_permutation_free(perm);
     // SNR[i], according to aips, is 1/sqrt(sigma2*hess(i1,i1)*0.5);
     // Note that in AIPS i1 ranges over 1..NANT
     // We use 1 as a success code.
@@ -1561,8 +1582,7 @@ least_squares_inner_driver (const size_t maxiter,
   }
   /* check if max iterations reached */
   if (iter >= maxiter && status != GSL_SUCCESS)
-      status = GSL_EMAXITER;
-  return status;
+      status = GSL_EMAXITER;  return status;
 } /* gsl_multilarge_nlinear_driver() */
 
 
@@ -1588,7 +1608,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             continue;
         }
         // Three parameters for every antenna.
-        size_t p = 3 * (bundle.get_num_antennas() - 1);
+        size_t p = bundle.nParameters() * (bundle.get_num_antennas() - 1);
         // We need to store complex visibilities in a real matrix so we
         // just store real and imaginary components separately.
         size_t n = 2 * bundle.get_num_data_points();
@@ -1635,11 +1655,11 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
                 // logSink << "Skipping antenna " << iant << " for correlation " << icor << "." << LogIO::POST;
                 continue;
             }
-            Int ind = bundle.get_param_corr_index(iant);
-            if (ind < 0) continue;
-            gsl_vector_set(gp, ind+0, casa_param(4*icor + 0, iant));
-            gsl_vector_set(gp, ind+1, casa_param(4*icor + 1, iant));
-            gsl_vector_set(gp, ind+2, casa_param(4*icor + 2, iant));
+            for (int di=0; di<4; di++) {
+                Int param_ind = bundle.get_param_corr_param_index(iant, di);
+                if (param_ind < 0) continue;
+                gsl_vector_set(gp, param_ind, casa_param(4*icor + di, iant));
+            }
         }
         gsl_vector *gp_orig = gsl_vector_alloc(p);
         // Keep a copy of original parameters
@@ -1684,7 +1704,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
         // Transcribe parameters back into CASA arrays
         for (size_t iant=0; iant != bundle.get_max_antenna_index()+1; iant++) {
             if (!bundle.isActive(iant)) continue;
-            Int iparam = bundle.get_param_corr_index(iant);
+            Int iparam = bundle.get_param_corr_param_index(iant, 0);
             if (iparam<0) continue;
             if (1) {
                 // flag unused
@@ -1698,17 +1718,25 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
                 // if (fabs(gsl_vector_get(diff, iparam + 2) > 1e-30)) {
                 //     flag = true;
                 // }
+                
                 if (DEVDEBUG) {
+                    int i;
                     logSink << "Old values for ant " << iant << " correlation " << icor 
                             << ": Angle " << casa_param(4*icor + 0, iant)
                             << " delay " << casa_param(4*icor + 1, iant) << " ns "
                             << " rate " << casa_param(4*icor + 2, iant) << "."
-                            << endl
-                            << "New values for ant " << iant << " correlation " << icor 
-                            << ": Angle " << gsl_vector_get(res, iparam+0)
-                            << " delay " << gsl_vector_get(res, iparam+1) << " ns "
-                            << " rate " << gsl_vector_get(res, iparam+2) << "."
-                            << LogIO::POST;
+                            << endl;
+                    logSink << "New values for ant " << iant << " correlation " << icor << ":";
+                    if ((i=bundle.get_param_corr_param_index(iant, 0))>=0) {
+                        logSink << " Angle " << gsl_vector_get(res, i);
+                    }
+                    if ((i=bundle.get_param_corr_param_index(iant, 1))>=0) {
+                        logSink << " delay " << gsl_vector_get(res, i) << " ns ";
+                    }
+                    if ((i=bundle.get_param_corr_param_index(iant, 2))>=0) {
+                        logSink << " rate " << gsl_vector_get(res, i);
+                    }
+                    logSink << "." << LogIO::POST;
                 }
             }
             if (status==GSL_SUCCESS || status==GSL_EMAXITER) {
@@ -1716,19 +1744,18 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
                 // number of iterations is not a deal-breaker, leave it
                 // to SNR calculation to decide if the results are
                 // useful.
-                casa_param(4*icor + 0, iant) = gsl_vector_get(res, iparam+0);
-                casa_param(4*icor + 1, iant) = gsl_vector_get(res, iparam+1);
-                casa_param(4*icor + 2, iant) = gsl_vector_get(res, iparam+2);
-                casa_param(4*icor + 3, iant) = 0.0;
-                for (size_t i=0; i!=3; i++) {
-                    casa_snr(4*icor + i, iant) = gsl_vector_get(snr_vector, iparam+0);
+                for (size_t di=0; di<4; di++) {
+                    int i;
+                    if ((i=bundle.get_param_corr_param_index(iant, 0))>=0) {
+                        casa_param(4*icor + di, iant) = gsl_vector_get(res, i);
+                        casa_snr(4*icor + di, iant) = gsl_vector_get(snr_vector, i);
+                    }
                 }
             } else { // gsl solver failed; flag data
                 logSink << "Least-squares solver failed to converge; flagging" << endl;
-                casa_flags(4*icor + 0, iant) = false;
-                casa_flags(4*icor + 1, iant) = false;
-                casa_flags(4*icor + 2, iant) = false;
-                casa_flags(4*icor + 3, iant) = false;
+                for (size_t di=0; di<4; di++) {
+                    casa_flags(4*icor + di, iant) = false;
+                }
             }
         }
 
@@ -1751,9 +1778,11 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             logSink << LogIO::POST;
         }
         gsl_vector_free(gp);
+        gsl_vector_free(gp_orig);
+        gsl_vector_free(snr_vector);
         gsl_matrix_free(hess);
         gsl_multilarge_nlinear_free(w);
-    }    
+    }
 }
 
     
