@@ -688,21 +688,31 @@ private:
     std::map< Int, std::set< Int > > activeAntennas;
     std::map< Int, Int > antennaIndexMap;
     Int activeCorr;
+    std::vector<bool> activeParameters;
 public:
-    AuxParamBundle(SDBList& sdbs_, size_t refant, const std::map< Int, std::set<Int> >& activeAntennas_) :
+    AuxParamBundle(SDBList& sdbs_, size_t refant, const std::map< Int, std::set<Int> >& activeAntennas_, Vector<Bool> paramActive) :
         sdbs(sdbs_),
         nCalls(0),
         refant(refant),
         nCorrelations(sdbs.nCorrelations() > 1 ? 2 : 1),
         corrStep(sdbs.nCorrelations() > 2 ? 3 : 1),
         activeAntennas(activeAntennas_),
-        activeCorr(-1)
+        activeCorr(-1),
+        activeParameters()
         // corrStep(3)
         {
             Int last_index = sdbs.nSDB() - 1 ;
             t0 = sdbs(0).time()(0);
             Double tlast = sdbs(last_index).time()(0);
             reftime = 0.5*(t0 + tlast);
+
+            // Plagiarised from the documentation:
+            // https://casa.nrao.edu/doxygen/classcasacore_1_1VectorIterator.html
+            VectorIterator<Bool> vi(paramActive);
+            uInt n = paramActive.nelements();
+            for (Int i=0; i < n; i++) {   
+                activeParameters.push_back(paramActive(i));
+            }
             // cerr << "AuxParamBundle reftime " << reftime << " t0 " << t0 <<" dt " << tlast - t0 << endl;
         }
 
@@ -1560,12 +1570,13 @@ least_squares_inner_driver (const size_t maxiter,
 
 void
 least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& casa_flags, Matrix<Float>& casa_snr, Int refant,
-                     const std::map< Int, std::set<Int> >& activeAntennas, Int maxits, LogIO& logSink) {
+                     const std::map< Int, std::set<Int> >& activeAntennas, Int maxits, Vector<Bool> paramActive, LogIO& logSink) {
     // The variable casa_param is the Casa calibration framework's RParam matrix; we transcribe our results into it only at the end.
     // n below is number of variables,
     // p is number of parameters
 
-    AuxParamBundle bundle(sdbs, refant, activeAntennas);
+    // We could pass in an AuxParamBundle instead I guess?
+    AuxParamBundle bundle(sdbs, refant, activeAntennas, paramActive);
     for (size_t icor=0; icor != bundle.get_num_corrs(); icor++) {
         bundle.set_active_corr(icor);
         if (bundle.get_num_antennas() == 0) {
@@ -2021,6 +2032,11 @@ void FringeJones::setSolve(const Record& solve) {
     if (solve.isDefined("niter")) {
         maxits() = solve.asInt("niter");
     }
+    if (solve.isDefined("paramactive")) {
+        paramActive() = solve.asArrayBool("paramactive");
+        cerr << "paramActive: " << paramActive() << endl;
+    }
+    
 }
 
 // Note: this was previously omitted
@@ -2227,7 +2243,8 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
         // FringeJones so we pass everything in, including the logSink
         // reference.  Note also that sRP is passed by reference and
         // altered in place.
-        least_squares_driver(sdbs, sRP, sPok, sSNR, refant(), drf.getActiveAntennas(), maxits(), logSink());
+        least_squares_driver(sdbs, sRP, sPok, sSNR, refant(), drf.getActiveAntennas(), maxits(),
+                             paramActive(), logSink());
     }
     else {
         logSink() << "Skipping least squares optimisation." << LogIO::POST;
