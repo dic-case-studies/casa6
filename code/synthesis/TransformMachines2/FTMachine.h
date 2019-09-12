@@ -323,7 +323,7 @@ public:
   virtual void setMovingSource(const casacore::MDirection& mdir);
 
   //reset stuff in an FTMachine
-  virtual void reset(){};
+  virtual void reset();
 
   //set frequency interpolation type
   virtual void setFreqInterpolation(const casacore::String& method);
@@ -380,6 +380,8 @@ public:
   ///Functions associated with Briggs weighting for cubes
   void setBriggsCubeWeight(casacore::CountedPtr<refim::BriggsCubeWeightor> bwght){briggsWeightor_p=bwght;};
   void getImagingWeight(casacore::Matrix<casacore::Float>& imwght, const vi::VisBuffer2& vb);
+  ///utility function that returns a rough estimate of memory needed.
+  virtual casacore::Long estimateRAM(const casacore::CountedPtr<SIImageStore>& imstore);
 protected:
 
   friend class VisModelData;

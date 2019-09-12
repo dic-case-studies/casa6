@@ -100,28 +100,30 @@ namespace casa{
       //
       // If the pointing or the max. CF size changed, recompute the phase gradient.
       //
-      if ((needsNewPhaseGrad(pointingOffsets_p, vb, row)) || needsNewFieldPG_p || needsNewPOPG_p )
+      LogIO log_l(LogOrigin("PhaseGrad","computeAntennaPointingGrad"));
+      Bool needsCFShape_l = (needsNewPhaseGrad(pointingOffsets_p, vb, row));
+      if (needsCFShape_l || needsNewFieldPG_p || needsNewPOPG_p )
 	{
 
 	  Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
 	  if(needsNewFieldPG_p)
 	    {
-	       LogIO log_l(LogOrigin("PhaseGrad","computeFieldPointingGrad"));
-	       log_l << "Computing Phase Grad for Field offset: " << row << " " << cached_FieldOffset_p[row](0) << cached_FieldOffset_p[row](1) 
+	       log_l << "Computing Phase Grad for Field offset: " << row << " " << cached_FieldOffset_p[row](0) << cached_FieldOffset_p[row](1) << "  spw :" 
+		     << vb.spectralWindows()(0) << " and field " << vb.fieldId()(0) 
 		     << LogIO::POST;
 	    }
-	  else if(needsNewPOPG_p)
+	  else if(needsCFShape_l)
 	    {
-	      LogIO log_l(LogOrigin("PhaseGrad","computeAntennaPointingGrad"));
-	      log_l << "Computing Phase Grad for Antenna Pointing Offset for row : " << row << " " << pointingOffset[row][0] << " " << pointingOffset[row][1] 
+	      log_l << "Computing Phase Grad for change of max CF size : " << maxCFShape_p[0]
 		    << LogIO::POST;
 	    }
 	  else
 	    {
-	      LogIO log_l(LogOrigin("PhaseGrad","computeCFShapePointingGrad"));
-	      log_l << "Computing Phase Grad for change of max CF size : " << maxCFShape_p[0]
-		    << LogIO::POST;
+	      log_l << "Computing Phase Grad for Antenna Pointing Offset for row : " << row << " " << pointingOffset[row][0] << " " << pointingOffset[row][1] << " spw :"
+		    << vb.spectralWindows()(0) << " and field " << vb.fieldId()(0)
+	      	    << LogIO::POST;
 	    }
+	    
 	  int nx=maxCFShape_p(0), ny=maxCFShape_p(1);
 	  double grad;
 	  Complex phx,phy;

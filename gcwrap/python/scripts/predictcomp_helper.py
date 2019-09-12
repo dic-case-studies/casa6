@@ -1,7 +1,23 @@
-import pylab as pl
-from taskinit import *
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
-from setjy_helper import *
+import os
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import componentlist, measures, quanta, ms, table
+    from casatasks import casalog
+    from .setjy_helper import testerrs
+    from . import solar_system_setjy as SSSetjy
+
+    _qa = quanta()
+else:
+    from taskinit import *
+    from setjy_helper import *
+    import solar_system_setjy as SSSetjy
+
+    # not a local tool
+    _qa = qa
 
 def predictSolarObjectCompList(objname, epoch, freqs, prefix):
     """
@@ -13,7 +29,14 @@ def predictSolarObjectCompList(objname, epoch, freqs, prefix):
     cleanupcomps = False # leave genenerated cl files
     nfreqs=-1
 
-    (myms, mytb, mycl,myme) = gentools(['ms','tb','cl','me'])
+    if is_CASA6:
+        myms = ms( )
+        mytb = table( )
+        mycl = componentlist( )
+        myme = measures( )
+    else:
+        (myms, mytb, mycl, myme) = gentools(['ms','tb','cl','me'])
+
     #freqinc=freqs[0]*1e-6
     if len(freqs) == 1:
       freqinc=freqs[0]*1e-4
@@ -27,14 +50,12 @@ def predictSolarObjectCompList(objname, epoch, freqs, prefix):
     #mepoch = myme.epoch('UTC', epoch)
     if epoch['m0']['value']==0.0:
         casalog.post('Invalid epoch, '+str(epoch['m0']['value'])+str(epoch['m0']['unit']),'SEVERE');
-        raise Exception, "Error"
+        raise Exception("Error")
     epochv = epoch['m0']['value'] 
 
 
     # turn user input epoch to mjd
 
-    #import solar_system_setjy as ss_setjy
-    import solar_system_setjy as SSSetjy
     #print "sending objname=",objname, " epochv=",epochv, " freqlist=",freqlist
     observatory='ALMA'
     ss_setjy=SSSetjy.solar_system_setjy()
@@ -51,7 +72,7 @@ def predictSolarObjectCompList(objname, epoch, freqs, prefix):
         casalog.post("Flux densities cannot be determined","SEVERE")
         raise Exception
 
-    dirstring = [dirs[0]['refer'],qa.tos(dirs[0]['m0']),qa.tos(dirs[0]['m1'])]
+    dirstring = [dirs[0]['refer'],_qa.tos(dirs[0]['m0']),_qa.tos(dirs[0]['m1'])]
     # setup componentlists
     # need to set per dir
     # if scalebychan=F, len(freqs) corresponds to nspw selected
@@ -66,11 +87,11 @@ def predictSolarObjectCompList(objname, epoch, freqs, prefix):
     if prefix: clname=prefix+clname
 
     if(os.path.exists(clname)):
-        print "Removing previous cl file,", clname
+        print("Removing previous cl file,", clname)
         try:
             shutil.rmtree(clname)
         except:
-            print "shutil.rmtree failed" 
+            print("shutil.rmtree failed") 
     index= 2.0
     sptype = 'spectral index'
     #index= 0.0

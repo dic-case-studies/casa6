@@ -66,6 +66,7 @@
 #include <synthesis/TransformMachines2/SkyJones.h>
 
 #include <casa/Utilities/CompositeNumber.h>
+#include <iomanip>
 #include <math.h>
 
 using namespace casacore;
@@ -234,7 +235,8 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
     convSizes_p.resize(0, true);
     convSupportBlock_p.resize(0, true);
     convFunctionMap_p.clear();
-   vbConvIndex_p.clear(); 
+   vbConvIndex_p.clear();
+   ft_p=FFT2D(true);
   }
 
 
@@ -873,24 +875,32 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     for (Int k=0; k < nchan; ++k)
       chanFreqs[k]=minfreq-origwidth+tol/2.0+tol*Double(k);
     Int activechan=0;
-    chanMap.set(-1);
+    chanMap.set(0);
     for (uInt k=0; k < chanMap.nelements(); ++k){
-     
-      while((activechan< nchan) && Float(fabs(freq[k]-chanFreqs[activechan])) > Float(tol/2.0)){
-	//		cerr << "k " << k << " atcivechan " << activechan << " comparison " 
+      Double mindiff=DBL_MAX;
+      Int nearestchan=0;
+      while((activechan< nchan) && Double(abs(freq[k]-chanFreqs[activechan])) > Double(tol/Double(2.0))){
+        if(mindiff > Double(abs(freq[k]-chanFreqs[activechan]))){
+          mindiff=Double(abs(freq[k]-chanFreqs[activechan]));
+          nearestchan=activechan;
+        }
+          
+        //	cerr << "k " << k << " atcivechan " << activechan << " comparison " 
 	//     << freq[k] << "    " << chanFreqs[activechan]  << endl;	
 	++activechan;
       }
-      if(activechan != nchan)
+      if(activechan != nchan){
 	chanMap[k]=activechan;
+      }
       //////////////////
-      //if(chanMap[k] < 0)
-      //cerr << "freq diffs " << freq[k]-chanFreqs << "  TOL " << tol/2.0 << endl;
-
+      else{
+        //cerr << std::setprecision(10) << "freq diffs " << freq[k]-chanFreqs << "  TOL " << tol/2.0 << endl;
+        chanMap[k]=nearestchan;
+      }
       ///////////////////////////
       activechan=0;
     }
-
+    //cerr << chanMap << endl;
     return;
   }
 

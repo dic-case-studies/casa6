@@ -46,6 +46,10 @@ PlotAxisScale PMS::axisScale(Axis axis) {
     
     case TIME: return DATE_MJ_SEC;
     
+    case PMS::Axis::RA:
+    case PMS::Axis::DEC:
+    	return PlotAxisScale::ANGLE;
+
     default: return NORMAL;
     }
 }
@@ -53,7 +57,18 @@ PlotAxisScale PMS::axisScale(Axis axis) {
 bool PMS::axisIsData(Axis axis) {
     switch(axis) {
     case AMP: case PHASE: case REAL: case IMAG: case WTxAMP: 
-    case GAMP: case GPHASE: case GREAL: case GIMAG: return true;
+    case GAMP: case GPHASE: case GREAL: case GIMAG:
+    case DELAY: case SWP: case TSYS: case OPAC:
+    case TEC: case ANTPOS: return true;
+    default: return false;
+    }
+}
+
+bool PMS::axisIsCalData(Axis axis) {
+    switch(axis) {
+    case GAMP: case GPHASE: case GREAL: case GIMAG:
+    case DELAY: case SWP: case TSYS: case OPAC:
+    case TEC: case ANTPOS: return true;
     default: return false;
     }
 }
@@ -83,6 +98,13 @@ bool PMS::axisIsUV(Axis axis) {
     }
 }
 
+bool PMS::axisIsUVWave(Axis axis) {
+    switch(axis) {
+    case UWAVE: case VWAVE: return true;
+    default: return false;
+    }
+}
+
 bool PMS::axisIsOverlay(Axis axis) {
     switch(axis) {
     case ATM: case TSKY: case IMAGESB: return true;
@@ -95,6 +117,87 @@ bool PMS::axisIsRaDec(Axis axis) {
     case RA: case DEC: return true;
     default: return false;
     }
+}
+
+uInt PMS::axisScaleBase(Axis axis) {
+    switch(axis) {
+    case RA:
+    case DEC:
+        // This is on order to get axis ticks values of
+        // minutes/seconds as multiple of 5 when possible
+        return 12;
+    default: return 10;
+    }
+}
+
+const casacore::String & PMS::longitudeName(CoordSystem r) {
+    static const casacore::String longitude { "Longitude" };
+    static const casacore::String rightAscension { "Right Ascension" };
+    static const casacore::String azimuth { "Azimuth" };
+    switch (r) {
+    case CoordSystem::ICRS:
+    case CoordSystem::B1950:
+    case CoordSystem::J2000:
+        return rightAscension;
+    case CoordSystem::GALACTIC:
+        return longitude;
+    case CoordSystem::AZELGEO:
+        return azimuth;
+    default:
+        return longitude;
+    }
+}
+
+const casacore::String & PMS::latitudeName(CoordSystem r) {
+    static const casacore::String latitude { "Latitude" };
+    static const casacore::String declination { "Declination" };
+    static const casacore::String elevation { "Elevation" };
+    switch (r) {
+    case CoordSystem::ICRS:
+    case CoordSystem::B1950:
+    case CoordSystem::J2000:
+        return declination;
+    case CoordSystem::GALACTIC:
+        return latitude;
+    case CoordSystem::AZELGEO:
+        return elevation;
+    default:
+        return latitude;
+    }
+}
+
+bool PMS::isDirectionComponent(Axis axis, DirectionComponent &dc){
+	switch (axis){
+	case PMS::RA :
+		dc = DirectionComponent::LONGITUDE;
+		return true;
+	case PMS::DEC :
+		dc = DirectionComponent::LATITUDE;
+		return true;
+	default:
+		return false;
+	}
+}
+AngleFormat PMS::angleFormat(CoordSystem ref, DirectionComponent dc){
+	AngleFormat angleFmt { AngleFormat::DECIMAL };
+	switch(ref){
+	case CoordSystem::ICRS:
+	case CoordSystem::J2000:
+	case CoordSystem::B1950:
+		angleFmt = ( dc == DirectionComponent::LONGITUDE ) ?
+				AngleFormat::HMS : AngleFormat::DMS;
+		break;
+	case CoordSystem::GALACTIC:
+	case CoordSystem::AZELGEO:
+		angleFmt=AngleFormat::DMS;
+	}
+	return angleFmt;
+}
+
+AngleFormat PMS::angleFormat(Axis axis, CoordSystem ref){
+	DirectionComponent dc;
+	if (isDirectionComponent(axis,dc)) return angleFormat(ref,dc);
+	return AngleFormat::DECIMAL;
 }
 
 PMS::AxisType PMS::axisType(Axis axis) {
@@ -167,7 +270,9 @@ PMS::AxisUnit PMS::axisUnit(Axis axis) {
         return KILOMETERS;
    case ATM:
         return PERCENT;
-   default: return UNONE;
+    default:
+        return UNONE;
+
     //The following axis have units which are proportion to Jansky, but are
     //time varying so Jansky is not accurate.  For now, we are not including
     //units with them.
@@ -303,10 +408,11 @@ const int PMS::DEFAULT_GRID_COLS = 1;
 
 const PMS::Axis PMS::DEFAULT_XAXIS = TIME;
 const PMS::Axis PMS::DEFAULT_YAXIS = AMP;
+const PMS::Axis PMS::DEFAULT_CAL_YAXIS = GAMP;
 const PMS::DataColumn PMS::DEFAULT_DATACOLUMN = DATA;
 const PMS::DataColumn PMS::DEFAULT_DATACOLUMN_WT = CORRECTED;
 const PMS::CoordSystem PMS::DEFAULT_COORDSYSTEM = ICRS;
-const PMS::InterpMethod PMS::DEFAULT_INTERPMETHOD = CUBIC;
+const PMS::InterpMethod PMS::DEFAULT_INTERPMETHOD = CUBIC_SPLINE;
 const PMS::Axis PMS::DEFAULT_COLOR_AXIS = SPW;
 
 const PlotAxis PMS::DEFAULT_CANVAS_XAXIS = X_BOTTOM;
@@ -321,7 +427,7 @@ const String PMS::DEFAULT_CANVAS_AXIS_LABEL_FORMAT =
     PlotMSLabelFormat::TAG(PlotMSLabelFormat::TAG_ENDIF_UNIT());
 const bool PMS::DEFAULT_FONTSET = false;
 const int PMS::DEFAULT_FONT = 0;
-const bool PMS::DEFAULT_SHOWAXIS = true;
+const bool PMS::DEFAULT_SHOWAXISLABEL = true;
 const bool PMS::DEFAULT_SHOWLEGEND = false;
 const PlotCanvas::LegendPosition PMS::DEFAULT_LEGENDPOSITION =
     PlotCanvas::INT_URIGHT;

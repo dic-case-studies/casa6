@@ -65,20 +65,24 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Matrix<vector<int> > findAntennaGroups(const vi::VisBuffer2& vb, 
 						     const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						     const double& sigmaDev);
-    vector<double> pairSort(const vector<int>& antArray, const vector<double>& poArray);
+    vector<vector<double> >pairSort(const vector<int>& antArray, const vector< vector<double> >& poArray);
 
     casacore::Matrix<vector<int> > findAntennaGroupsM(const vi::VisBuffer2& vb, 
 						     const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						     const double& sigmaDev);
 
      void cacheAntGroups(const casacore::Matrix<vector<int> > antennaGroups_p);
-     vector<int> makeVBRow2BLGMap(const vi::VisBuffer2& vb);
+     void makeVBRow2BLGMap(const vi::VisBuffer2& vb);
      vector<bool> getPOPG(){return blNeedsNewPOPG_p;};
+     vector<int> getVBRow2BLMap() {return vbRow2BLMap_p;}
      void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
-     void setCacheGroups(const int& vbRows, const vi::VisBuffer2& vb);
-     
+     void setCachedGroups(const bool& cachedGrps){cachedGroups_p = cachedGrps;};
+     bool getCachedGroups(){return cachedGroups_p;};
+     void setCachedAntennaPO(const casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets){cachedPointingOffsets_p = cachedPointingOffsets;};
+     casacore::Vector<casacore::Vector<casacore::Double> > getCachedAntennaPO(){return cachedPointingOffsets_p;};
 
-     
+
+  private:  
      
 
      bool doPointing_p, newPhaseGradComputed_p, cachedGroups_p;
@@ -87,8 +91,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      casacore::Int PO_DEBUG_P, totalGroups_p;
      casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p;
      casacore::Matrix< vector < vector <double> > > antennaPO_p, cachedAntennaPO_p;
-     vector<int> vbRow2BLMap_p;
      vector<bool> blNeedsNewPOPG_p;
+     vector<int> vbRow2BLMap_p;
      casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p;
      casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets_p;
    };

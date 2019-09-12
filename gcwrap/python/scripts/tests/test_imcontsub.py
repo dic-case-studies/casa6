@@ -97,14 +97,27 @@
 # </todo>
 
 #import random
+from __future__ import absolute_import
 import os
 import shutil
-import casac
-from tasks import *
-from taskinit import *
 import unittest
 
-_ia = iatool( )
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image
+    from casatasks import casalog, imcontsub, immath
+
+    _ia = image( )
+
+    datapath = ctsys.resolve('regression/g192redux/reference')
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+
+    _ia = iatool( )
+    
+    datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/g192redux/reference/'
 
 # Input files
 list = ['g192_a2.image', 'g192_a2.image-2.rgn', 
@@ -130,14 +143,25 @@ list = ['g192_a2.image', 'g192_a2.image-2.rgn',
 
 class imcontsub_test(unittest.TestCase):
 
+    def try_imcs(self, *args, **kwargs):
+        passes = False
+        # CASA6 tasks throw exceptions, CASA5 tasks return False
+        # this test is used for expected errors
+        try:
+            results = imcontsub(*args, **kwargs)
+            if not results:
+                passes = True
+        except:
+            passes = True
+        self.assertTrue(passes)
+
     def setUp(self):
         if(os.path.exists(list[0])):
             for file in list:
                 os.system('rm -rf ' +file)
         
-        datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/g192redux/reference/'
         for file in list:
-            os.system('cp -r ' +datapath + file +' ' + file)
+            os.system('cp -r '+os.path.join(datapath,file)+' '+file)
 
 
     def tearDown(self):
@@ -168,13 +192,7 @@ class imcontsub_test(unittest.TestCase):
     def test_bad_imagename(self):
         """Test bad image name throws exception"""
         
-        exception = False
-        try:
-            imcontsub( 'g192', contfile='input_test_cont1', linefile='input_test_line1' )
-            exception = True
-        except:
-            exception = False
-        self.assertTrue(exception)
+        self.try_imcs( 'g192', contfile='input_test_cont1', linefile='input_test_line1' )
         
     def test_bad_linefile(self):
         """ Test bad line file name fails"""
@@ -201,84 +219,49 @@ class imcontsub_test(unittest.TestCase):
     def test_bad_fitorder(self):
         """Test bad fitorder fails"""
             
-        results=imcontsub( 'g192_a2.image', fitorder=-1, contfile='moment_test' )
-        self.assertTrue(not results)
-        
-        results=imcontsub( 'g192_a2.image', fitorder=-2.3, contfile='moment_test' )
-        self.assertTrue(not results)
+        self.try_imcs( 'g192_a2.image', fitorder=-1, contfile='moment_test' )
+        self.try_imcs( 'g192_a2.image', fitorder=-2.3, contfile='moment_test' )
         
     def test_bad_region(self):
         """ Test bad region parameter fails"""
         
-        results = imcontsub( 'g192_a2.image', region=7 )
-        self.assertTrue(not results)
-        
-        filename = os.getcwd()+'/garbage.rgn'
+        self.try_imcs( 'g192_a2.image', region=7 )
 
-        results = imcontsub( 'g192_a2.image', region=filename)
-        self.assertTrue(not results)
-        
+        filename = os.getcwd()+'/garbage.rgn'
+        self.try_imcs( 'g192_a2.image', region=filename)
+
         fp=open( filename, 'w' )
         fp.writelines('This file does NOT contain a valid CASA region specification\n')
         fp.close()
-        results = imcontsub( 'g192_a2.image', region=filename)
-        self.assertTrue(not results)
+        self.try_imcs( 'g192_a2.image', region=filename)
 
 
     def test_bad_chans(self):
         """Test bad chans parameter causes failure"""
         
-        results = imcontsub( 'g192_a2.image', chans='-5' )
-        self.assertTrue(not results)
-
-        results = imcontsub( 'g192_a2.image', chans='-2' )
-        self.assertTrue(not results)
-
-        results = imcontsub( 'g192_a2.image', chans='-18' )
-        self.assertTrue(not results)
-
-        results = imcontsub( 'g192_a2.image', chans='45' )
-        self.assertTrue(not results)
-
-        results = imcontsub( 'g192_a2.image', chans='40' )
-        self.assertTrue(not results)
-
+        self.try_imcs( 'g192_a2.image', chans='-5' )
+        self.try_imcs( 'g192_a2.image', chans='-2' )
+        self.try_imcs( 'g192_a2.image', chans='-18' )
+        self.try_imcs( 'g192_a2.image', chans='45' )
+        self.try_imcs( 'g192_a2.image', chans='40' )
 
     def test_bad_box(self):
         """Test bad box parameter causes failure"""
-        
-        results = imcontsub( 'g192_a2.image', box='-3,0,511,511' )
-        self.assertTrue(not results)
 
-        results = imcontsub( 'g192_a2.image', box='0,-3,511,511' )
-        self.assertTrue(not results)
+        self.try_imcs( 'g192_a2.image', box='-3,0,511,511' )
+        self.try_imcs( 'g192_a2.image', box='0,-3,511,511' )
+        self.try_imcs( 'g192_a2.image', box='-2,0,511,511' )
+        self.try_imcs( 'g192_a2.image', box='0,-2,511,511' )
+        self.try_imcs( 'g192_a2.image', box='0,0,512,511' )
+        self.try_imcs( 'g192_a2.image', box='0,0,511,512' )
+        self.try_imcs( 'g192_a2.image', box='0, 0,525,511' )
+        self.try_imcs( 'g192_a2.image', box='0,0,511,525' )
 
-        results = imcontsub( 'g192_a2.image', box='-2,0,511,511' )
-        self.assertTrue(not results)
-        
-        results = imcontsub( 'g192_a2.image', box='0,-2,511,511' )
-        self.assertTrue(not results)
-
-        results = imcontsub( 'g192_a2.image', box='0,0,512,511' )
-        self.assertTrue(not results)
-        
-        results = imcontsub( 'g192_a2.image', box='0,0,511,512' )
-        self.assertTrue(not results)
-        
-        results = imcontsub( 'g192_a2.image', box='0, 0,525,511' )
-        self.assertTrue(not results)
-        
-        results = imcontsub( 'g192_a2.image', box='0,0,511,525' )
-        self.assertTrue(not results)
 
     def test_bad_stokes(self):
         """Test bad stokes parameter causes failure"""
-        results = imcontsub( 'g192_a2.image', stokes='Q' )
-        self.assertTrue(not results)
-
-        results = imcontsub( 'g192_a2.image', stokes='yellow' )
-        self.assertTrue(not results)
-
+        self.try_imcs( 'g192_a2.image', stokes='Q' )
+        self.try_imcs( 'g192_a2.image', stokes='yellow' )
 
     
     ## ####################################################################
@@ -419,7 +402,7 @@ class imcontsub_test(unittest.TestCase):
         # edits). This whole test file probably needs to be reviewed but of course time is tight so
         # I cannot do that now.
     
-        for order in xrange(2):
+        for order in range(2):
             contfile='fit_test_cont'+str(order)
             linefile='fit_test_line'+str(order)
 
@@ -432,7 +415,7 @@ class imcontsub_test(unittest.TestCase):
                 
             try:
                 results = imcontsub('g192_a2.image', fitorder=order, contfile=contfile, linefile=linefile)
-            except Exception, err:
+            except Exception:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: Unable to subtract continuum with a fit order="+str(order)\
@@ -472,7 +455,7 @@ class imcontsub_test(unittest.TestCase):
             if (absmax > tol):
                 retval['success'] = False
                 retval['error_msgs'] += errmsg + ' error: Max residual is ' + str(absmax)
-        except Exception, err:
+        except Exception as err:
             retval['success'] = False
             retval['error_msgs'] += errmsg + " error: Exception thrown: " + str(err)
         return retval
@@ -493,7 +476,7 @@ class imcontsub_test(unittest.TestCase):
             results = imcontsub('g192_a2.image', fitorder=0, contfile=cfil,
                                 linefile=lfil, box=bx,
                                 chans='32~37')  # Purposely one-sided.  
-        except Exception, err:
+        except Exception:
             retValue['success']=False
             retValue['error_msgs'] += "\nError: Unable to subtract continuum with box and chans "\
                                       +"\n\t RESULTS: "+str(results)
@@ -513,3 +496,6 @@ class imcontsub_test(unittest.TestCase):
 def suite():
     return [imcontsub_test]
 
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

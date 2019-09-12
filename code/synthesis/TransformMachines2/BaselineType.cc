@@ -67,10 +67,11 @@ namespace casa{
   
   // -----------------------------------------------------------------
 
-  BaselineType::BaselineType(): doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), vbRows_p(), totalGroups_p(0)
+  BaselineType::BaselineType(): doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), vbRow2BLMap_p(),vbRows_p(), totalGroups_p(0),cachedPointingOffsets_p()
   {
     newPhaseGradComputed_p = false;
     vectorPhaseGradCalculator_p.resize(0);
+    mapBLGroup_p.resize(0,0);
   };
 
   BaselineType& BaselineType::operator=(const BaselineType& other)
@@ -158,24 +159,7 @@ namespace casa{
     
   // };
 
-  void BaselineType::setCacheGroups(const int& vbRows, const vi::VisBuffer2& vb)
-  {
-    vbRows_p = vbRows;
-    if (vbRows_p == 0)
-      {
-	vbRows_p = vb.nRows();
-	cachedGroups_p = false;
-      }
-    else if (vbRows_p != vb.nRows())
-      {
-	vbRows_p = vb.nRows();
-	cachedGroups_p = false;
-      }
-    else
-      cachedGroups_p = true;
-
-  }
-  Matrix<vector<int> > BaselineType::findAntennaGroups(const vi::VisBuffer2& vb, 
+   Matrix<vector<int> > BaselineType::findAntennaGroups(const vi::VisBuffer2& vb, 
 						      const CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						      const double& sigmaDev)
     {
@@ -333,7 +317,7 @@ namespace casa{
 	    
 	    
 	      }
-	  
+	  totalGroups_p = 0;
 	  for(int ii=0; ii<5; ii++)
 	    for(int jj=0; jj<5; jj++)
 	      if(antennaGroups_p(ii,jj).size() >= 1)
@@ -358,26 +342,33 @@ namespace casa{
 
     }
 
-  vector<double> BaselineType::pairSort(const vector<int>& antArray, const vector<double>& poArray) 
+  vector< vector<double> > BaselineType::pairSort(const vector<int>& antArray, const vector<vector<double> >& poArray) 
   { 
     int n = antArray.size();
-    pair<int, double> pairt[antArray.size()]; 
+    pair<int, vector<double> > pairt[antArray.size()]; 
   
     // Storing the respective array 
     // elements in pairs. 
     for (int i = 0; i < n; i++)  
       { 
         pairt[i].first = antArray[i]; 
-        pairt[i].second = poArray[i]; 
+        pairt[i].second = {poArray[0][i],poArray[1][i]}; 
       } 
   
     // Sorting the pair array. 
     sort(pairt, pairt + n); 
 
-    vector<double> tempPOArray (poArray.size(),0);
-    
+    vector <vector<double> > tempPOArray;
+    tempPOArray.resize(poArray.size());
+    tempPOArray[0].resize(poArray[0].size());
+    tempPOArray[1].resize(poArray[1].size());
+    vector<double> tempvec;
     for (int i = 0; i < n; i++)  
-      tempPOArray[i] = pairt[i].second;
+      {
+	tempvec = pairt[i].second;
+	tempPOArray[0][i] = tempvec[0];
+	tempPOArray[1][i] = tempvec[1];	
+      }
 
     return tempPOArray;
     
@@ -391,10 +382,11 @@ namespace casa{
       else if(!cachedGroups_p)
 	{
 	  const Int nRows = vb.nRows();
+	  cachedPointingOffsets_p.assign(pointingOffsets_p->pullPointingOffsets());
 	  vector< vector <double> > antDirPix_l = pointingOffsets_p->fetchAntOffsetToPix(vb, doPointing_p);
 	  MVDirection vbdir=vb.direction1()(0).getValue();	
 	  vector<double> phaseDirPix_l = (pointingOffsets_p->toPix(vb,vbdir,vbdir)).tovector();
-	  
+
 	  // Step 1 the problem scale is smaller than what we want to solve.
 	  // so we find the unique antennas per VB for the join of antenna1 and antenna2.
 	  
@@ -402,7 +394,7 @@ namespace casa{
 	  uniqueAnt1 = (vb.antenna1()).tovector();
 	  uniqueAnt2 = (vb.antenna2()).tovector();
 
-	  uniqueAnt1.insert(uniqueAnt1.begin(),uniqueAnt2.begin(),uniqueAnt2.end());
+	 
 
 	  vector< vector <double> > poAnt1(2), poAnt2(2);
 	  for(int ii=0; ii<poAnt1.size();ii++)
@@ -416,11 +408,30 @@ namespace casa{
 	  poAnt2[0] = antDirPix_l[2];
 	  poAnt2[1] = antDirPix_l[3];
 
+
+	  // for(int ii=0; ii<uniqueAnt1.size();ii++)
+	  //   {
+	  //     cerr << "Antenna1 id : "<<uniqueAnt1[ii] << "  PO [0] "<<poAnt1[0][ii] << " PO[1]"<<poAnt1[1][ii]<<endl;
+	  //   }
+
+	  // for(int ii=0; ii<uniqueAnt2.size();ii++)
+	  //   {
+	  //     cerr << "Antenna2 id : "<<uniqueAnt2[ii] << "  PO [0] "<<poAnt2[0][ii] << " PO[1]"<<poAnt2[1][ii]<<endl;
+	  //   }
+
+	  poAnt1 = pairSort(uniqueAnt1, poAnt1);
+	  poAnt2 = pairSort(uniqueAnt2, poAnt2);
+
+	  sort(uniqueAnt1.begin(),uniqueAnt1.end());
+	  sort(uniqueAnt2.begin(),uniqueAnt2.end());
+
+	  uniqueAnt1.insert(uniqueAnt1.begin(),uniqueAnt2.begin(),uniqueAnt2.end());
+
 	  poAnt1[0].insert(poAnt1[0].end(),poAnt2[0].begin(),poAnt2[0].end());
 	  poAnt1[1].insert(poAnt1[1].end(),poAnt2[1].begin(),poAnt2[1].end());
 
-	  poAnt1[0] = pairSort(uniqueAnt1, poAnt1[0]);
-	  poAnt1[1] = pairSort(uniqueAnt1, poAnt1[1]);
+	  poAnt1 = pairSort(uniqueAnt1, poAnt1);
+	  // poAnt1[1] = pairSort(uniqueAnt1, poAnt1[1]);
 
 	  sort(uniqueAnt1.begin(),uniqueAnt1.end());
 
@@ -432,7 +443,8 @@ namespace casa{
 	  poAnt1[1].resize(distance(uniqueAnt1.begin(),ant1Itr));
 	  uniqueAnt1.resize(distance(uniqueAnt1.begin(),ant1Itr));
 
-	  cerr<< "Sizeof poAnt1[0] : "<< poAnt1[0].size() << " poAnt2 : "<< poAnt1[1].size() <<" uniqAnt1 : "<<uniqueAnt1.size() << endl;
+
+	  // cerr<< "Sizeof poAnt1[0] : "<< poAnt1[0].size() << " poAnt2 : "<< poAnt1[1].size() <<" uniqAnt1 : "<<uniqueAnt1.size() << endl;
 
 	  // We now have an entirely unique array for both the poAnt1 and uniqueAnt1.
 	  // we can then compute the statistics required for our binning.
@@ -542,7 +554,7 @@ namespace casa{
   }
 
 
-  vector<int> BaselineType::makeVBRow2BLGMap(const vi::VisBuffer2& vb) 
+  void BaselineType::makeVBRow2BLGMap(const vi::VisBuffer2& vb) 
   // const Matrix<vector<int> >& antennaGroups_p)
   {
 
@@ -560,6 +572,7 @@ namespace casa{
     mapAntType1.resize(nRows);
     mapAntType2.resize(nRows);
     vbRow2BLMap_p.resize(nRows);
+
     blNeedsNewPOPG_p.resize(nRows);
     vector<int> uniqueBLType_p(nRows,0);
     for(int ii=0; ii<nRows;ii++)
@@ -577,13 +590,20 @@ namespace casa{
 	}
 
     // cout<<"mapAntGrp "<<mapAntGrp_p<<endl;
+    if(numAntGroups > 0) // If any cell is populated...
+      {
+	mapBLGroup_p.resize(numAntGroups,numAntGroups);
+	for (int ii=0; ii < numAntGroups; ii++)
+	  for (int jj=0; jj < numAntGroups; jj++)
+	    mapBLGroup_p(ii,jj) = ii*numAntGroups+jj+1;
+      }
+    else 
+      {
+	mapBLGroup_p.resize(1,1);
+	mapBLGroup_p(0,0) = 0;
+      }
 
-    mapBLGroup_p.resize(numAntGroups,numAntGroups);
-    for (int ii=0; ii < numAntGroups; ii++)
-      for (int jj=0; jj < numAntGroups; jj++)
-	mapBLGroup_p(ii,jj) = ii*numAntGroups+jj;
-
-    // cout<<"mapBLGrp "<<mapBLGroup_p<<endl;
+    // cerr<<"mapBLGrp "<<mapBLGroup_p<< endl  <<" numAntGroups " << numAntGroups << " nx,ny " << nx <<" " << ny <<endl;
 
       
     // LogIO log_l(LogOrigin("VB2CFBMap", "makeVBRow2BLGMap[R&D]"));
@@ -602,10 +622,10 @@ namespace casa{
 		    if(antenna1[kk] == (cachedAntennaGroups_p(ii,jj))[tt])
 		      mapAntType1[kk] = mapAntGrp_p(ii,jj);
 		    // else
-		    // 	mapAntType2[kk] = -1;
+		    // 	mapAntType1[kk] = -1;
 			
 		    if(antenna2[kk] == (cachedAntennaGroups_p(ii,jj))[tt])
-		      mapAntType1[kk] = mapAntGrp_p(ii,jj);
+		      mapAntType2[kk] = mapAntGrp_p(ii,jj);
 		    // else
 		    // 	mapAntType2[kk] = -1;
 		  }
@@ -614,37 +634,46 @@ namespace casa{
 
       }
 
-    // cout << "Baseline Groups for vb Row are as follows : ";
+    // cerr << "Baseline Groups for vb Row are as follows : ";
     // for(int ii = 0; ii < mapAntType1.size(); ii++)
-    // 	cout<<mapAntType1[ii]<<"  "<<mapAntType2[ii]<<" " <<ii <<endl;
-    // cout<<endl<<"#############################################"<<endl;
+    // 	cerr<<mapAntType1[ii]<<"  "<<mapAntType2[ii]<<" " <<ii <<endl;
+    // cerr<<endl<<"#############################################"<<endl;
+
 
      
       
     for (int kk=0; kk<nRows;kk++)
-      if ((mapAntType1[kk]>=0) && (mapAntType2[kk]>=0)) vbRow2BLMap_p[kk] = mapBLGroup_p(mapAntType1[kk],mapAntType2[kk]);
-      else vbRow2BLMap_p[kk] = -1;
+      {
+	int ix,iy;
+	ix=mapAntType1[kk]-1;
+	iy=mapAntType2[kk]-1;
+
+	if ((ix>=0) && (iy>=0)) vbRow2BLMap_p[kk] = mapBLGroup_p(ix,iy);
+	else vbRow2BLMap_p[kk] = -1;
+	// cerr << "kk : " << kk << " " << ix << " " << iy << " " << vbRow2BLMap_p[kk] << " " << mapBLGroup_p(ix,iy) << endl;
+
+      }
 
     // for (int kk=0; kk<nRows();kk++)
     // 	for (int ii=0; ii < numAntGroups; ii++)
     // 	  for (int jj=ii; jj < numAntGroups; jj++)      
     // 	    {
     // 	      mapBLType.push_back(mapBLGroup(mapAntType1(kk),jj))
-    uniqueBLType_p = vbRow2BLMap_p;
-    sort(uniqueBLType_p.begin(),uniqueBLType_p.end());
-    vector<int>::iterator uBLitr;
-    uBLitr = unique(uniqueBLType_p.begin(),uniqueBLType_p.end());
-    uniqueBLType_p.resize(distance(uniqueBLType_p.begin(),uBLitr));
-    for(int ii=0; ii<nRows; ii++)
-      for(int jj=0;jj<uniqueBLType_p.size();jj++)
-	if(vbRow2BLMap_p[ii] == uniqueBLType_p[jj])
-	  {
-	    blNeedsNewPOPG_p[ii]=true;
-	    remove(uniqueBLType_p.begin(),uniqueBLType_p.end(),uniqueBLType_p[jj]);
-	    break;
-	  }
+    // uniqueBLType_p = vbRow2BLMap_p;
+    // sort(uniqueBLType_p.begin(),uniqueBLType_p.end());
+    // vector<int>::iterator uBLitr;
+    // uBLitr = unique(uniqueBLType_p.begin(),uniqueBLType_p.end());
+    // uniqueBLType_p.resize(distance(uniqueBLType_p.begin(),uBLitr));
+    // for(int ii=0; ii<nRows; ii++)
+    //   for(int jj=0;jj<uniqueBLType_p.size();jj++)
+    // 	if(vbRow2BLMap_p[ii] == uniqueBLType_p[jj])
+    // 	  {
+    // 	    blNeedsNewPOPG_p[ii]=true;
+    // 	    remove(uniqueBLType_p.begin(),uniqueBLType_p.end(),uniqueBLType_p[jj]);
+    // 	    break;
+    // 	  }
 	      
-    return vbRow2BLMap_p;
+    // return vbRow2BLMap_p;
       
 
   }

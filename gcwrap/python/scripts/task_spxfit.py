@@ -62,55 +62,63 @@
 #
 
 ###########################################################################
-from taskinit import *
+from __future__ import absolute_import
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image
+    from casatasks import casalog
+else:
+    from taskinit import *
+    from taskinit import iatool as image
 
 def spxfit(
-	imagename, box, region, chans,
-	stokes, axis, mask, minpts, multifit, spxtype, spxest,
-	spxfix, div, spxsol, spxerr,
-	model, residual, wantreturn,
-	stretch, logresults, logfile, append,
-    sigma, outsigma
+        imagename, box, region, chans,
+        stokes, axis, mask, minpts, multifit, spxtype, spxest,
+        spxfix, div, spxsol, spxerr,
+        model, residual, wantreturn,
+        stretch, logresults, logfile, append,
+        sigma, outsigma
 ):
     casalog.origin('spxfit')
-    myia = iatool()
+    myia = image()
     retval = None
     try:
-		if type(imagename) == list and len(imagename) > 1:
-			myia = myia.imageconcat(outfile="", infiles=imagename, axis=axis, relax=True)
-		else:
-			if type(imagename) == list and len(imagename) == 1:
-				imagename = imagename[0]
-			if (not myia.open(imagename)):
-				raise Exception("Cannot create image analysis tool using " + str(imagename))
-		sigmacopy = sigma
-		if type(sigma) == list and type(sigma) == str:
-			if len(sigma) == 1:
-				sigmacopy = sigma[0]
-			else:
-				sigia = myia.imageconcat(outfile="", infiles=sigma, axis=axis, relax=True)
-				sigmacopy = sigia.getchunk()
-		retval = myia.fitprofile(
-			box=box, region=region, chans=chans,
-			stokes=stokes, axis=axis, mask=mask,
-			minpts=minpts, ngauss=0, multifit=multifit,
-			spxtype=spxtype, spxest=spxest, spxfix=spxfix,
-			div=div,  model=model, residual=residual, 
-			stretch=stretch, logresults=logresults,
-			spxsol=spxsol, spxerr=spxerr, logfile=logfile,
-			append=append, 
-			sigma=sigmacopy, outsigma=outsigma
-		)
-    except Exception, instance:
+                if type(imagename) == list and len(imagename) > 1:
+                        myia = myia.imageconcat(outfile="", infiles=imagename, axis=axis, relax=True)
+                else:
+                        if type(imagename) == list and len(imagename) == 1:
+                                imagename = imagename[0]
+                        if (not myia.open(imagename)):
+                                raise Exception("Cannot create image analysis tool using " + str(imagename))
+                sigmacopy = sigma
+                if type(sigma) == list and type(sigma) == str:
+                        if len(sigma) == 1:
+                                sigmacopy = sigma[0]
+                        else:
+                                sigia = myia.imageconcat(outfile="", infiles=sigma, axis=axis, relax=True)
+                                sigmacopy = sigia.getchunk()
+                retval = myia.fitprofile(
+                        box=box, region=region, chans=chans,
+                        stokes=stokes, axis=axis, mask=mask,
+                        minpts=minpts, ngauss=0, multifit=multifit,
+                        spxtype=spxtype, spxest=spxest, spxfix=spxfix,
+                        div=div,  model=model, residual=residual,
+                        stretch=stretch, logresults=logresults,
+                        spxsol=spxsol, spxerr=spxerr, logfile=logfile,
+                        append=append,
+                        sigma=sigmacopy, outsigma=outsigma
+                )
+    except Exception as instance:
         casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
         retval = None
     myia.done()
     if (wantreturn):
-    	return retval
+        return retval
     else:
-    	if (retval):
-    	   del retval
-    	return None
+        if (retval):
+           del retval
+        return None
 
 
 

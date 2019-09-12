@@ -51,8 +51,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 // statics
 	String ColormapDefinition::ourDefaultColormap("");
 	String ColormapDefinition::ourTableVersion("1.0");
-	Table ColormapDefinition::ourDefaultColormapTable = Table();
-	Table ColormapDefinition::ourUserColormapTable = Table();
+	std::shared_ptr<Table> ColormapDefinition::ourDefaultColormapTable;
+	std::shared_ptr<Table> ColormapDefinition::ourUserColormapTable;
 
 	ColormapDefinition::ColormapDefinition() :
 		itsReds(1u,0.0),
@@ -77,7 +77,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		}
 		Bool ok = loadBuiltinColormap(itsName);
 		// if colormap tables haven't been read yet, do this
-		if (ourDefaultColormapTable.isNull() && ourUserColormapTable.isNull()) {
+		if ( ! ourDefaultColormapTable && ! ourUserColormapTable ) {
 			loadColormapTable();
 		}
 
@@ -170,15 +170,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		try {
 			if (!useSystemCmap.matches(Regex("[ \t]*(([nN]o)|([fF]alse))[ \t\n]*"))) {
 				// default cmaps
-				ourDefaultColormapTable = Table(defaultpath);
+				ourDefaultColormapTable.reset(new Table(defaultpath));
 				if (!userpath.empty()) {
 					// default and user cmaps
-					ourUserColormapTable = Table(userpath);
+					ourUserColormapTable.reset(new Table(userpath));
 				}
 			} else {
 				if (!userpath.empty()) {
 					// user cmaps only
-					ourUserColormapTable = Table(userpath);
+					ourUserColormapTable.reset(new Table(userpath));
 				}
 			}
 		} catch (const AipsError &x) {
@@ -262,11 +262,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	Bool ColormapDefinition::loadColormap(const String& name) {
 		Bool foundName = false;
-		if (!ourDefaultColormapTable.isNull()) {
-			foundName = queryColormapTable(ourDefaultColormapTable, name);
+		if ( ourDefaultColormapTable ) {
+			foundName = queryColormapTable(*ourDefaultColormapTable, name);
 		}
-		if (!foundName && !ourUserColormapTable.isNull()) {
-			foundName = queryColormapTable(ourUserColormapTable, name);
+		if ( ! foundName && ourUserColormapTable ) {
+			foundName = queryColormapTable(*ourUserColormapTable, name);
 		}
 		return foundName;
 	}
@@ -351,7 +351,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			Aipsrc::find(ColormapDefinition::ourDefaultColormap,
 			             "display.colormaps.defaultcolormap","Greyscale 1");
 		}
-		if (ourDefaultColormapTable.isNull() && ourUserColormapTable.isNull()) {
+		if ( ! ourDefaultColormapTable && ! ourUserColormapTable ) {
 			loadColormapTable();
 		}
 		//
@@ -361,13 +361,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		colormapnamemap vec;
 		ScalarColumn<String>* name1Col(0);
 		ScalarColumn<String>* name2Col(0);
-		if (!ourDefaultColormapTable.isNull()) {
-			name1Col = new ScalarColumn<String>(ourDefaultColormapTable, "CMAP_NAME");
-			defaultLength = ourDefaultColormapTable.nrow();
+		if ( ourDefaultColormapTable ) {
+			name1Col = new ScalarColumn<String>(*ourDefaultColormapTable, "CMAP_NAME");
+			defaultLength = ourDefaultColormapTable->nrow();
 		}
-		if (!ourUserColormapTable.isNull()) {
-			name2Col = new ScalarColumn<String>(ourUserColormapTable, "CMAP_NAME");
-			userLength = ourUserColormapTable.nrow();
+		if ( ourUserColormapTable ) {
+			name2Col = new ScalarColumn<String>(*ourUserColormapTable, "CMAP_NAME");
+			userLength = ourUserColormapTable->nrow();
 		}
 
 		vec.insert(colormapnamemap::value_type("Greyscale 1",true));

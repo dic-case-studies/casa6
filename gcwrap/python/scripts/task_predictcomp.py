@@ -1,8 +1,27 @@
-from taskinit import casalog, cltool, imtool, metool, qa
-from plotcomp import plotcomp
-from predictcomp_helper import *
-import pylab as pl
+from __future__ import absolute_import
 import os
+import numpy
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import componentlist, imager, measures, quanta
+    from casatasks import casalog
+    from .setjy_helper import testerrs
+    from . import solar_system_setjy as SSSetjy
+    from casatasks.private.predictcomp_helper import *
+
+    _qa = quanta( )
+else:
+    from taskinit import casalog, cltool, imtool, metool, qa
+    from plotcomp import plotcomp
+    from predictcomp_helper import *
+
+    componentlist = cltool
+    imager = imtool
+    measures = metool
+
+    # not a local tool
+    _qa = qa
 
 def predictcomp(objname=None, standard=None, epoch=None,
                 minfreq=None, maxfreq=None, nfreqs=None, prefix=None,
@@ -15,9 +34,9 @@ def predictcomp(objname=None, standard=None, epoch=None,
      'angdiam': angular diameter in radians (if used in clist),
      'standard': standard,
      'epoch': epoch,
-     'freqs': pl.array of frequencies, in GHz,
-     'uvrange': pl.array of baseline lengths, in m,
-     'amps':  pl.array of predicted visibility amplitudes, in Jy,
+     'freqs': numpy.array of frequencies, in GHz,
+     'uvrange': numpy.array of baseline lengths, in m,
+     'amps':  numpy.array of predicted visibility amplitudes, in Jy,
      'savedfig': False or, if made, the filename of a plot.}
     or False on error.
 
@@ -63,17 +82,17 @@ def predictcomp(objname=None, standard=None, epoch=None,
         casalog.origin('predictcomp')
         # some parameter minimally required
         if objname=='':
-          raise Exception, "Error, objname is undefined"
+          raise Exception("Error, objname is undefined")
         if minfreq=='':
-          raise Exception, "Error, minfreq is undefined" 
-        minfreqq = qa.quantity(minfreq)
-        minfreqHz = qa.convert(minfreqq, 'Hz')['value']
+          raise Exception("Error, minfreq is undefined")
+        minfreqq = _qa.quantity(minfreq)
+        minfreqHz = _qa.convert(minfreqq, 'Hz')['value']
         try:
-            maxfreqq = qa.quantity(maxfreq)
-        except Exception, instance:
+            maxfreqq = _qa.quantity(maxfreq)
+        except Exception(instance):
             maxfreqq = minfreqq
         frequnit = maxfreqq['unit']
-        maxfreqHz = qa.convert(maxfreqq, 'Hz')['value']
+        maxfreqHz = _qa.convert(maxfreqq, 'Hz')['value']
         if maxfreqHz <= 0.0:
             maxfreqq = minfreqq
             maxfreqHz = minfreqHz
@@ -82,9 +101,9 @@ def predictcomp(objname=None, standard=None, epoch=None,
                 nfreqs = 2
         else:
             nfreqs = 1
-        freqs = pl.linspace(minfreqHz, maxfreqHz, nfreqs)
+        freqs = numpy.linspace(minfreqHz, maxfreqHz, nfreqs)
         
-        myme = metool()
+        myme = measures()
         mepoch = myme.epoch('UTC', epoch)
         #if not prefix:
             ## meanfreq = {'value': 0.5 * (minfreqHz + maxfreqHz),
@@ -125,7 +144,7 @@ def predictcomp(objname=None, standard=None, epoch=None,
               return False
        
         # Get clist
-        myim = imtool()
+        myim = imager()
         if hasattr(myim, 'predictcomp'):
             casalog.post('local im instance created', 'DEBUG1')
         else:
@@ -133,7 +152,7 @@ def predictcomp(objname=None, standard=None, epoch=None,
             return False
         #print "FREQS=",freqs
          # output CL file name is fixed : prefix+"spw0_"+minfreq+mepoch.cl
-        minfreqGHz = qa.convert(qa.quantity(minfreq), 'GHz')['value']
+        minfreqGHz = _qa.convert(_qa.quantity(minfreq), 'GHz')['value']
         decimalfreq = minfreqGHz - int(minfreqGHz)
         decimalepoch =  mepoch['m0']['value'] - int(mepoch['m0']['value'])
         if decimalfreq == 0.0:
@@ -167,7 +186,7 @@ def predictcomp(objname=None, standard=None, epoch=None,
                       'epoch': mepoch,
                       'freqs (GHz)': 1.0e-9 * freqs,
                       'antennalist': antennalist}
-            mycl = cltool()
+            mycl = componentlist()
             mycl.open(clist)
             comp = mycl.getcomponent(0)
             zeroblf=comp['flux']['value']
@@ -183,18 +202,24 @@ def predictcomp(objname=None, standard=None, epoch=None,
                 retval['spectrum']['bl0flux']={}
                 retval['spectrum']['bl0flux']['value']=zeroblf[0]
                 retval['spectrum']['bl0flux']['unit']='Jy'
-                retval['savedfig'] = savefig
+                # casatasks does not have any GUIs in it, this differs from CASA5
+                if is_CASA6:
+                    retval['savedfig'] = None
+                else:
+                    retval['savedfig'] = savefig
                 if not bl0flux:
-                  zeroblf=[0.0]
-                retval.update(plotcomp(retval, showplot, wantdict=True, symb=symb,
-                                       include0amp=include0amp, include0bl=include0bl, blunit=blunit, bl0flux=zeroblf[0]))
+                    zeroblf=[0.0]
+                if not is_CASA6:
+                    # GUIs only in CASA5, not CASA6 in this part
+                    retval.update(plotcomp(retval, showplot, wantdict=True, symb=symb,
+                                           include0amp=include0amp, include0bl=include0bl, blunit=blunit, bl0flux=zeroblf[0]))
             else:
                 retval['savedfig'] = None
         else:
             casalog.post("There was an error in making the component list.",
                          'SEVERE')
 
-    except Exception, instance:
+    except Exception as instance:
         casalog.post(str(instance), 'SEVERE')
-        raise Exception, instance
+        raise
     return retval
