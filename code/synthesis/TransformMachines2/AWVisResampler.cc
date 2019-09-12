@@ -445,7 +445,7 @@ namespace casa{
     Vector<Double> pos(3), off(3);
     Vector<Int> igrdpos(4);
 
-    Complex phasor, nvalue, wt;
+    Complex phasor, nvalue /*, wt */;
     Complex norm;
     Vector<Int> cfShape;
     // cfShape=(*vb2CFBMap_p)[0]->getStorage()(0,0,0)->getStorage()->shape().asVector();
