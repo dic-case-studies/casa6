@@ -86,7 +86,7 @@ import io
 from os import listdir
 from os.path import isfile, join, islink
 from itertools import chain
-import argparse, sys
+import argparse
 
 parser=argparse.ArgumentParser()
 
