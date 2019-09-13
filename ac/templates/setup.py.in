@@ -155,8 +155,8 @@ def compute_version( ):
 
     master_tags = [t for t in out.split('\n') if '-mas-' in t]
     if (args.version != None ):
-        print (str.split(args.version,"."))
-        (major, minor) = str.split(args.version,".")
+        print (args.version.split("."))
+        (major, minor) = args.version.split(".")
         return(int(major), int(minor))
     else:
         return (year,len(master_tags))
