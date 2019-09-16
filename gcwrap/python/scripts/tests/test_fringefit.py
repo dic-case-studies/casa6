@@ -1,14 +1,35 @@
-from tasks import fringefit
+from __future__ import absolute_import
+from __future__ import print_function
 import os
+import sys
 import shutil
 import unittest
 
-import sys
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-import testhelper as th
+# is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ms, ctsys
+    from casatasks import fringefit
 
-datapath = os.environ.get('CASAPATH').split()[0] +\
-                            '/data/regression/evn/'
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+        
+if is_python3:
+    ### for testhelper import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import testhelper as th
+else:
+    import testhelper as th
+
+datapath = ctsys_resolve('regression/evn')
 
 class Fringefit_tests(unittest.TestCase):
     prefix = 'n08c1'
