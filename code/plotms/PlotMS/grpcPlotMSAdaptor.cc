@@ -406,7 +406,7 @@ namespace casa {
         }
         if (y.size( ) > 0) {
             bool ok = false;
-            auto a = PMS::axis(x, &ok);
+            auto a = PMS::axis(y, &ok);
             if (ok) cache->setYAxis(a,dataindex);
         }
         if (xdata.size( ) > 0) {
