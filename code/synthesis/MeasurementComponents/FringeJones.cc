@@ -1762,9 +1762,12 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
                 // useful.
                 for (size_t di=0; di<4; di++) {
                     int i;
-                    if ((i=bundle.get_param_corr_param_index(iant, 0))>=0) {
+                    if ((i=bundle.get_param_corr_param_index(iant, di))>=0) {
                         casa_param(4*icor + di, iant) = gsl_vector_get(res, i);
                         casa_snr(4*icor + di, iant) = gsl_vector_get(snr_vector, i);
+                    } else {
+                        casa_param(4*icor + di, iant) = 0.0;
+                        casa_snr(4*icor + di, iant) = 0.0;
                     }
                 }
             } else { // gsl solver failed; flag data
@@ -1784,6 +1787,8 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             // << "final step taken = " << diffsize 
 
         if (DEVDEBUG) {
+            cerr << "casa_param " << casa_param << endl;
+
             switch (info) {
             case 1:
                 logSink << "Small step size." << endl;
@@ -2233,9 +2238,9 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
     // transcribe fft results to sRP
     Int ncol = drf.param().ncolumn();
     Int nrow = drf.param().nrow();
-    
-    for (Int i=0; i!=ncol; i++) {
-        for (Int j=0; j!=nrow; j++) {
+
+    for (Int i=0; i!=ncol; i++) { // i==iant
+        for (Int j=0; j!=nrow; j++) { // j is parameter number
             Int oj = (j>=3) ? j+1 : j;
             sRP(IPosition(2, oj, i)) = drf.param()(IPosition(2, j, i));
             sPok(IPosition(2, oj, i)) = !(drf.flag()(IPosition(2, j, i)));
@@ -2303,6 +2308,7 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
         cerr << "centroidFreq " << centroidFreq << endl;
         //cerr << "df0 " << df0 << " dt0 " << dt0 << " ref_freq*dt0 " << ref_freq*dt0 << endl;
         cerr << "df0 " << df0 << " dt0 " << dt0 << " centroidFreq*dt0 " << centroidFreq*dt0 << endl;
+        cerr << "sRP " << sRP << endl; 
     }
 
     for (Int iant=0; iant != nAnt(); iant++) {
