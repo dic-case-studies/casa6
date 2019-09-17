@@ -86,6 +86,16 @@ import io
 from os import listdir
 from os.path import isfile, join, islink
 from itertools import chain
+import argparse
+
+parser=argparse.ArgumentParser()
+
+parser.add_argument('--version', help='version')
+parser.add_argument('bdist_wheel', help='bdist_wheel')
+
+args=parser.parse_args()
+
+print (args.version)
 
 module_name = 'casatools'
 
@@ -144,7 +154,12 @@ def compute_version( ):
         sys.exit("couldn't determine version number")
 
     master_tags = [t for t in out.split('\n') if '-mas-' in t]
-    return (year,len(master_tags))
+    if (args.version != None ):
+        print (args.version.split("."))
+        (major, minor) = args.version.split(".")
+        return(int(major), int(minor))
+    else:
+        return (year,len(master_tags))
 
 (casatools_major,casatools_minor) = compute_version( )
 casatools_version = '%d.%d' % (casatools_major,casatools_minor)
@@ -996,9 +1011,11 @@ try:
         user_options = bdist_wheel.user_options + [
             # The format is (long option, short option, description).
             ('debug', None, 'build a debugging version'),
+            ('version=', None, 'Silence distutils when passing version for bdist_wheel from the command line'),
         ]
 
         def initialize_options(self):
+            self.version = None
             bdist_wheel.initialize_options(self)
             if '--debug' in sys.argv:
                 global _debug_build_
@@ -1049,9 +1066,11 @@ class casa_build_ext(build_ext):
     user_options = build_ext.user_options + [
         # The format is (long option, short option, description).
         ('debug', None, 'build a debugging version'),
+        ('version=', None, 'Silence distutils when passing version for bdist_wheel from the command line'),
     ]
 
     def initialize_options(self):
+        self.version = None
         build_ext.initialize_options(self)
         if '--debug' in sys.argv:
             global _debug_build_
@@ -1491,7 +1510,7 @@ def write_yacc(additional_casacore_filtered_dirs=[], additional_casacode_filtere
         subdir_filter=additional_casacore_filtered_dirs
     ) if additional_casacore_filtered_dirs else source_files(
         "casa-source/casacore", file_suffix_filter=".yy"
-    ) 
+    )
     CODE_YACC = source_files(
         "casa-source/code", file_suffix_filter=".yy",
         subdir_filter=[
