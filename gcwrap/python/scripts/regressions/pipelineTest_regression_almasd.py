@@ -15,6 +15,7 @@ rootdatapath = pathname+'/data/regression/pipeline/almasd/'
 # 2019-Mar-07 H. Ezawa
 # 2019-Mar-08 H. Ezawa : Updated the goal values for CASA 5.5
 # 2019-Mar-18 H. Ezawa : minor bug(s) fixed
+# 2019-Sep-07 H. Ezawa : Updated the goal values due to CAS-12664
 
 '''Initial VLA pipeline regression
    B. Kent, May 2015
