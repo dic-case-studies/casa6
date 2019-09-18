@@ -254,6 +254,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_importmiriad.py',
                     'src/tasks/task_plotweather.py',
                     'src/tasks/task_plotants.py',
+                    'src/tasks/task_fringefit.py',
                     'src/tasks/task_plotbandpass.py',
                     'src/scripts/predictcomp_helper.py',
                     'src/scripts/task_logging.py',
@@ -364,6 +365,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/importmiriad.xml': 'xml/importmiriad.xml',
               'casa-source/gcwrap/tasks/plotweather.xml': 'xml/plotweather.xml',
               'casa-source/gcwrap/tasks/plotants.xml': 'xml/plotants.xml',
+              'casa-source/gcwrap/tasks/fringefit.xml': 'xml/fringefit.xml',
               'casa-source/gcwrap/tasks/plotbandpass.xml': 'xml/plotbandpass.xml',
 }
 
@@ -470,6 +472,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/importmiriad.xml',
               'xml/plotweather.xml',
               'xml/plotants.xml',
+              'xml/fringefit.xml',
               'xml/plotbandpass.xml',
 ]
 
