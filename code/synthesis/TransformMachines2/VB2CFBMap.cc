@@ -45,7 +45,7 @@ namespace casa{
   namespace refim{
     Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
 
-    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(), doPointing_p(false), cachedFieldId_p(0), vbRow2BLMap_p(), vbRows_p(0), sigmaDev(), timer_p()
+    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(), doPointing_p(false), cachedFieldId_p(-1), vbRow2BLMap_p(), vbRows_p(0), sigmaDev(), timer_p()
     {
       baselineType_p = new BaselineType();
       needsNewPOPG_p = false;
@@ -94,6 +94,25 @@ namespace casa{
     // 	}
     // }
 
+    void VB2CFBMap::setBLNeedsNewPOPG(vector<int>& vbRow2BLMap_p)
+    {
+      blNeedsNewPOPG_p.resize(vbRow2BLMap_p.size(),false);
+      vector<int> uniqueVbRow2BLMap_p = vbRow2BLMap_p;
+      sort(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
+      auto itrBLMap = unique(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
+      uniqueVbRow2BLMap_p.erase(itrBLMap,uniqueVbRow2BLMap_p.end());
+      
+      for(int ii=0; ii < uniqueVbRow2BLMap_p.size(); ii++)
+	{
+	  // cerr << "unqVb2BL: "<< uniqueVbRow2BLMap_p[ii] << " ii " << ii << endl;
+	  int idx = baselineType_p->returnIdx(vbRow2BLMap_p, uniqueVbRow2BLMap_p[ii]);
+	  blNeedsNewPOPG_p[idx] = true;
+	}
+
+      
+    }
+
+
 
     //______________________________________________________
     
@@ -119,21 +138,26 @@ namespace casa{
 	  needsNewPOPG_p = true;
 	  baselineType_p->setCachedGroups(false);
 	  cachedFieldId_p = vb.fieldId()[0];
+	  vectorPhaseGradCalculator_p.resize(0);
 	}
-
-      if (vbRows_p == 0)
+      else if (vbRows_p == 0)
 	{
 	  vbRows_p = vb.nRows();
 	  baselineType_p->setCachedGroups(false);
+	  needsNewPOPG_p = true;
 	}
       else if (vbRows_p != vb.nRows())
 	{
 	  vbRows_p = vb.nRows();
 	  baselineType_p->setCachedGroups(false);
+	  needsNewPOPG_p = true;
 	}
       else
-	baselineType_p->setCachedGroups(true);
-
+	{
+	  baselineType_p->setCachedGroups(true);
+	   needsNewPOPG_p = false;
+	}
+      
 
       Quantity pa(getPA(vb),"rad");
       //PolOuterProduct outerProduct;
@@ -154,7 +178,10 @@ namespace casa{
 
 	  baselineType_p->makeVBRow2BLGMap(vb);
 	  vbRow2BLMap_p = baselineType_p->getVBRow2BLMap();
-	  blNeedsNewPOPG_p = baselineType_p->getPOPG();
+	  setBLNeedsNewPOPG(vbRow2BLMap_p);
+
+
+
 	  // cerr << "vbRow2BLMap_p" ;
 	  // for(int i=0; i <= vbRow2BLMap_p.size(); i++)
 	  //   cerr << vbRow2BLMap_p[i]<<" ";
@@ -179,12 +206,12 @@ namespace casa{
 		  // cerr << "avgResPO_l"<< avgResPO_l <<endl;
 		  if(avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]) >= sigmaDev*A2R)
 		    {
-		      needsNewPOPG_p = true;
 		      baselineType_p->setCachedGroups(false);
 		      baselineType_p->findAntennaGroupsM(vb,pointingOffsets_p, sigmaDev);
 		      baselineType_p->setCachedAntennaPO(pointingOffsets_p->pullPointingOffsets());
 		      baselineType_p->makeVBRow2BLGMap(vb);
 		      vbRow2BLMap_p = baselineType_p->getVBRow2BLMap();
+		      setBLNeedsNewPOPG(vbRow2BLMap_p);
 		      if (!needsNewFieldPG_p)
 			{
 			  LogIO log_l(LogOrigin("VB2CFBMap", "makeVBRow2CFBMap[R&D]"));
@@ -204,7 +231,6 @@ namespace casa{
 		}
 	      
 	    }
-
 	  baselineType_p->setCachedAntennaPO(pointingOffsets_p->pullPointingOffsets());
 	}
 
@@ -270,6 +296,9 @@ namespace casa{
 	      cfb_l->setPointingOffset(pointingOffsets_p->pullPointingOffsets());
 	      vb2CFBMap_p(irow) = cfb_l;
 	      vbRows_p = vb.nRows();
+	      // if( needsNewPOPG_p ||  needsNewFieldPG_p)
+	      // 	cerr << "NeedsNewPOPG_p " << needsNewPOPG_p << " NeedsNewFieldPG_p "<< needsNewFieldPG_p << " row " << myrow << endl;
+		  
 	    }
 	}
       // {
@@ -296,24 +325,29 @@ namespace casa{
 	  auto itrBLMap = unique(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
 	  uniqueVbRow2BLMap_p.erase(itrBLMap,uniqueVbRow2BLMap_p.end());
 	  int maxVB2BLMap = *max_element(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
-	  if (myrow==0 || myrow == 1)
+	  if (myrow==0 )
 	    {
 	      blType_p = vbRow2BLMap_p[myrow];
-	      needsNewPOPG_p = true;
+	      blNeedsNewPOPG_p[myrow] = true;
 	      // cerr <<"New POPG_p required for vb row : "<< myrow << " vbRow2BLMap_p[row] " << vbRow2BLMap_p[myrow] << endl;
 	    }
-	  else if (blType_p != vbRow2BLMap_p[myrow])
-	    {
-	      needsNewPOPG_p=true;
-	      blType_p = vbRow2BLMap_p[myrow];
-	      // cerr <<"New POPG_p required for vb row : "<< myrow << " vbRow2BLMap_p[row] " << vbRow2BLMap_p[myrow] << endl;
-	    }
+	  // else if (blType_p != vbRow2BLMap_p[myrow])
+	  //   {
+	  //     needsNewPOPG_p=true;
+	  //     blType_p = vbRow2BLMap_p[myrow];
+	  //     // cerr <<"New POPG_p required for vb row : "<< myrow << " vbRow2BLMap_p[row] " << vbRow2BLMap_p[myrow] << endl;
+	  //   }
 	  // else
-	  //   needsNewPOPG_p=false;
+	  //   blNeedsNewPOPG_p[myrow]=false;
 	    
 	  // if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
-	  auto itrBLMap_p = find(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end(), vbRow2BLMap_p[row]);
-	  idx = distance(uniqueVbRow2BLMap_p.begin(), itrBLMap_p);
+	  // auto itrBLMap_p = find(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end(), vbRow2BLMap_p[row]);
+	  // idx = distance(uniqueVbRow2BLMap_p.begin(), itrBLMap_p);
+	  
+	  // cerr<<"#######################" <<endl << "unqVBRow: ";
+	  // for(int ii=0; ii<uniqueVbRow2BLMap_p.size();idx++)
+	  //   cerr << uniqueVbRow2BLMap_p[ii] << " " ;
+	  // cerr<<"#######################"<<endl;
 	  // if (vectorPhaseGradCalculator_p.nelements() <= maxVB2BLMap + 1)
 	  // vectorPhaseGradCalculator_p.resize(uniqueVbRow2BLMap_p.size()+1,true);
 
@@ -326,7 +360,7 @@ namespace casa{
 		if (vectorPhaseGradCalculator_p[i].null())
 		  {
 		    vectorPhaseGradCalculator_p[i]=new PhaseGrad();
-		    needsNewPOPG_p = true;
+		    blNeedsNewPOPG_p[myrow] = true;
 		  }
 	    }
 
@@ -342,17 +376,19 @@ namespace casa{
 	    // vectorPhaseGradCalculator_p[idx]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
 	    // cerr << "maxVB2BLMap "<< maxVB2BLMap << " vbRow2BLMap_p[myrow]" << vbRow2BLMap_p[myrow] << " "  << myrow << " " << needsNewPOPG_p << endl;
 
-	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = needsNewPOPG_p;
+	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = blNeedsNewPOPG_p[myrow];
 	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewFieldPG_p = needsNewFieldPG_p;
 	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
 
 	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = true;
+	 
 	}
       else
 	{
 	  needsNewPOPG_p = false;
 	  myrow=0;
 	  vbRow2BLMap_p.resize(vb.nRows(),0);
+	  blNeedsNewPOPG_p.resize(vb.nRows(),false);
 	  // vbRow2BLMap_p[0]=0;
 	  if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[myrow])
 	    {
@@ -369,7 +405,7 @@ namespace casa{
 	}
       // if (needsNewPOPG_p)
 	{
-	  
+
 	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewFieldPG_p = needsNewFieldPG_p;
 	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
 	  needsNewPOPG_p = false;

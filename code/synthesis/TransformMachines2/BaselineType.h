@@ -67,6 +67,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 						     const double& sigmaDev);
     vector<vector<double> >pairSort(const vector<int>& antArray, const vector< vector<double> >& poArray);
 
+    int returnIdx(const vector<int>& inpArray, const int& searchVal);
+
     casacore::Matrix<vector<int> > findAntennaGroupsM(const vi::VisBuffer2& vb, 
 						     const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						     const double& sigmaDev);

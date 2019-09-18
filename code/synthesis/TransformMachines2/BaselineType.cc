@@ -374,6 +374,32 @@ namespace casa{
     
   } 
 
+  int BaselineType::returnIdx(const vector<int>& inpArray, const int& searchVal)
+  {
+
+    // cerr << "============================================" << endl;
+    // for(unsigned int idx=0;idx < inpArray.size(); idx++)
+    // 	cerr << "inpArray[idx] " << inpArray[idx] << "   " << searchVal << endl;
+    // cerr << "============================================" << endl;
+    
+    auto itrBLMap_p = find(inpArray.begin(),inpArray.end(), searchVal);
+    int idx = distance(inpArray.begin(), itrBLMap_p);
+    return idx;
+	  
+
+    // for(unsigned int idx=0;idx < inpArray.size(); idx++)
+    //   {
+    // 	if(inpArray[idx] == searchVal)
+    // 	  {
+    // 	    return idx;
+    // 	  }
+    // 	else
+    // 	  {
+    // 	    return -1;
+    // 	  }
+    //   }
+  }
+
   Matrix<vector<int> > BaselineType::findAntennaGroupsM(const vi::VisBuffer2& vb, 
 						      const CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						      const double& sigmaDev)
@@ -391,10 +417,16 @@ namespace casa{
 	  // so we find the unique antennas per VB for the join of antenna1 and antenna2.
 	  
 	  vector<int> uniqueAnt1, uniqueAnt2;
+	  vector<int>::iterator ant1Itr, ant2Itr;
 	  uniqueAnt1 = (vb.antenna1()).tovector();
 	  uniqueAnt2 = (vb.antenna2()).tovector();
 
-	 
+	  uniqueAnt1.insert(uniqueAnt1.begin(),uniqueAnt2.begin(),uniqueAnt2.end());
+	  sort(uniqueAnt1.begin(),uniqueAnt1.end());
+	  ant1Itr = unique(uniqueAnt1.begin(),uniqueAnt1.end());
+	  uniqueAnt1.resize(distance(uniqueAnt1.begin(),ant1Itr));
+	  
+	  
 
 	  vector< vector <double> > poAnt1(2), poAnt2(2);
 	  for(int ii=0; ii<poAnt1.size();ii++)
@@ -405,8 +437,52 @@ namespace casa{
 
 	  poAnt1[0] = antDirPix_l[0];
 	  poAnt1[1] = antDirPix_l[1];
-	  poAnt2[0] = antDirPix_l[2];
-	  poAnt2[1] = antDirPix_l[3];
+	  // poAnt2[0] = antDirPix_l[2];
+	  // poAnt2[1] = antDirPix_l[3];
+
+
+
+	  
+
+	  // poAnt1[0].insert(poAnt1[0].end(),poAnt2[0].begin(),poAnt2[0].end());
+	  // poAnt1[1].insert(poAnt1[1].end(),poAnt2[1].begin(),poAnt2[1].end());
+
+	  // cerr << "#################################"<<endl;
+	  // for (int i=0; i<=uniqueAnt1.size();i++)
+	  //   cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;//<<" Ant "  << uniqueAnt2[i] << " " << poAnt2[0][i] - phaseDirPix_l[0]  << " " << poAnt2[1][i] - phaseDirPix_l[1]<< endl;
+
+	  // cerr << "#################################"<<endl;
+
+
+	  // poAnt1 = pairSort(uniqueAnt1, poAnt1);
+
+	  // cerr << "#################################"<<endl;
+	  // for (int i=0; i<uniqueAnt1.size();i++)
+	  //   cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;//<<" Ant "  << uniqueAnt2[i] << " " << poAnt2[0][i] - phaseDirPix_l[0]  << " " << poAnt2[1][i] - phaseDirPix_l[1]<< endl;
+
+	  // cerr << "#################################"<<endl;
+
+	  //sort(uniqueAnt1.begin(),uniqueAnt1.end());
+	  // sortedAntArray = uniqueAnt1;
+	  // sort(sortedAntArray.begin(),sortedAntArray.end());
+	  // ant1Itr = unique(sortedAntArray.begin(),sortedAntArray.end());
+	  // sortedAntArray.resize(distance(sortedAntArray.begin(),ant1Itr));
+
+	  // cerr << "uniqueAnt1.size() : "<< uniqueAnt1.size() << " " << " sortedAntArray.size() : " << sortedAntArray.size() <<endl;
+	  
+ 	  // sortedPOArray[0].resize(sortedAntArray.size(),0);
+	  // sortedPOArray[1].resize(sortedAntArray.size(),0);
+	  // for(int ii=0; ii<sortedAntArray.size();ii++)
+	  //   {
+	  //     int index = returnIdx(uniqueAnt1,ii);
+	  //     cerr << "Index : "<< index << " ";
+	  //     sortedPOArray[0][ii] = poAnt1[0][index];
+	  //     sortedPOArray[1][ii] = poAnt1[1][index];
+	  //   }
+
+	  // cerr << endl;
+	  // for (int i=0; i<sortedAntArray.size();i++)
+	  //   cerr << "Ant "<< sortedAntArray[i] << " PO: "<< sortedPOArray[0][i] - phaseDirPix_l[0]  << " " << sortedPOArray[1][i] - phaseDirPix_l[1] <<endl;
 
 
 	  // for(int ii=0; ii<uniqueAnt1.size();ii++)
@@ -419,29 +495,37 @@ namespace casa{
 	  //     cerr << "Antenna2 id : "<<uniqueAnt2[ii] << "  PO [0] "<<poAnt2[0][ii] << " PO[1]"<<poAnt2[1][ii]<<endl;
 	  //   }
 
-	  poAnt1 = pairSort(uniqueAnt1, poAnt1);
-	  poAnt2 = pairSort(uniqueAnt2, poAnt2);
+	  // poAnt2 = pairSort(uniqueAnt2, poAnt2);
+	  // poAnt1 = pairSort(uniqueAnt1, poAnt1);
+	  
 
-	  sort(uniqueAnt1.begin(),uniqueAnt1.end());
-	  sort(uniqueAnt2.begin(),uniqueAnt2.end());
+	  // cerr << "#################################"<<endl;
+	  // for (int i=0; i<uniqueAnt2.size();i++)
+	  //   cerr << "Ant "<< uniqueAnt2[i] << " PO: "<< poAnt2[0][i] - phaseDirPix_l[0]  << " " << poAnt2[1][i] - phaseDirPix_l[1] <<endl;
 
-	  uniqueAnt1.insert(uniqueAnt1.begin(),uniqueAnt2.begin(),uniqueAnt2.end());
+	  // cerr << "#################################"<<endl;
 
-	  poAnt1[0].insert(poAnt1[0].end(),poAnt2[0].begin(),poAnt2[0].end());
-	  poAnt1[1].insert(poAnt1[1].end(),poAnt2[1].begin(),poAnt2[1].end());
+	  // sort(uniqueAnt1.begin(),uniqueAnt1.end());
+	  // sort(uniqueAnt2.begin(),uniqueAnt2.end());
 
-	  poAnt1 = pairSort(uniqueAnt1, poAnt1);
+
+
+
+
+
+	  // poAnt1 = pairSort(uniqueAnt1, poAnt1);
 	  // poAnt1[1] = pairSort(uniqueAnt1, poAnt1[1]);
 
-	  sort(uniqueAnt1.begin(),uniqueAnt1.end());
+	  // sort(uniqueAnt1.begin(),uniqueAnt1.end());
 
-	  vector<int>::iterator ant1Itr, ant2Itr;
 
-	  ant1Itr = unique(uniqueAnt1.begin(),uniqueAnt1.end());
+
+	  // ant1Itr = unique(uniqueAnt1.begin(),uniqueAnt1.end());
 	  
-	  poAnt1[0].resize(distance(uniqueAnt1.begin(),ant1Itr));
-	  poAnt1[1].resize(distance(uniqueAnt1.begin(),ant1Itr));
-	  uniqueAnt1.resize(distance(uniqueAnt1.begin(),ant1Itr));
+	  // poAnt1[0].resize(distance(uniqueAnt1.begin(),ant1Itr));
+	  // poAnt1[1].resize(distance(uniqueAnt1.begin(),ant1Itr));
+	  // uniqueAnt1.resize(distance(uniqueAnt1.begin(),ant1Itr));
+
 
 
 	  // cerr<< "Sizeof poAnt1[0] : "<< poAnt1[0].size() << " poAnt2 : "<< poAnt1[1].size() <<" uniqAnt1 : "<<uniqueAnt1.size() << endl;
@@ -449,7 +533,17 @@ namespace casa{
 	  // We now have an entirely unique array for both the poAnt1 and uniqueAnt1.
 	  // we can then compute the statistics required for our binning.
 
+	  // poAnt1 = sortedPOArray;
+	  // uniqueAnt1 = sortedAntArray;
+
 	  vector<double> pixSum(2,0), pixMean(2,0), pixVar(2,0), pixSigma(2,0), minPO(2,0), maxPO(2,0);
+
+	  cerr << "#################################"<<endl;
+	  for (int i=0; i<uniqueAnt1.size();i++)
+	    cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;
+
+	  cerr << "#################################"<<endl;
+
 	  
 	  for(int ii=0; ii < pixSum.size();ii++)
 	    {

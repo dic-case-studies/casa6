@@ -780,7 +780,8 @@ namespace casa{
     for(Int irow=rbeg; irow<rend; irow++) {
       if(!rowFlag[irow]) {
 	//setFieldPhaseGrad(vb2CFBMap_p->phaseGradCalculator_p->getFieldPointingGrad());
-	setFieldPhaseGrad(vb2CFBMap_p->getCFPhaseGrad(irow));
+	// setFieldPhaseGrad(vb2CFBMap_p->getCFPhaseGrad(irow));
+	setFieldPhaseGrad((vb2CFBMap_p->vectorPhaseGradCalculator_p[vb2CFBMap_p->vbRow2BLMap_p[irow]])->field_phaseGrad_p);
 	cfb = (*vb2CFBMap_p)[irow];
 	
 	for (Int ichan=0; ichan < nDataChan; ichan++) {

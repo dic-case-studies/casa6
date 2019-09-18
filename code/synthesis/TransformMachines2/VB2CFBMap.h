@@ -66,6 +66,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      
      inline casacore::Vector<casacore::CountedPtr<CFBuffer>>& getVBRow2CFBMap() {return vb2CFBMap_p;};	
      inline int nelements() {return vb2CFBMap_p.nelements();}
+     
+     virtual void setBLNeedsNewPOPG(vector<int>& vbRow2BLMap_p);
 
      virtual casacore::Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
      virtual casacore::Int makeVBRow2CFBMap(CFStore2& cfs,
