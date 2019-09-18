@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_imdev.py
+# test_req_task_fixplanets.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
