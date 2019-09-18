@@ -144,22 +144,16 @@ else:
     sys.exit("oops, had not planned on building on %s" % sys.platform)
 
 def compute_version( ):
-    year = datetime.now().year
-
-    proc = Popen([ "git", "log", "--tags", "--simplify-by-decoration", '--pretty="format:%ci %d"', '--since="01/01/%d"' % year ], cwd="casa-source", stdout=PIPE, stderr=PIPE)
-    out,err = pipe_decode(proc.communicate( ))
-
-    if proc.returncode != 0:
-        print(err)
-        sys.exit("couldn't determine version number")
-
-    master_tags = [t for t in out.split('\n') if '-mas-' in t]
     if (args.version != None ):
         print (args.version.split("."))
         (major, minor) = args.version.split(".")
         return(int(major), int(minor))
     else:
-        return (year,len(master_tags))
+        proc = Popen( [ "scripts/version" ], stdout=PIPE, stderr=PIPE )
+        out,err = pipe_decode(proc.communicate( ))
+        (major, minor) = out.split( )[0].split(".")
+        print((major,minor))
+        return(int(major), int(minor))
 
 (casatools_major,casatools_minor) = compute_version( )
 casatools_version = '%d.%d' % (casatools_major,casatools_minor)

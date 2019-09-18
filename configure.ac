@@ -230,13 +230,14 @@ AX_GSL(2.0)
 AX_SWIG(3.0.0)
 
 AC_MSG_CHECKING([for casa version number])
-read -a full_version <<< "`(cd casa-source && code/install/resolvegitrevision.sh --pretty-print) | perl -pe 's|^(\d+)\.(\d+)\.(\d+).*?(\d+).?$|$1 $2 $3 $4|'`"
+read -a full_version <<< "`scripts/version | perl -pe 's|^(\d+).(\d+).*?$|$1 $2 0 0|'`"
 CASA_VERSION_MAJOR=${full_version[[0]]}
 CASA_VERSION_MINOR=${full_version[[1]]}
 CASA_VERSION_PATCH=${full_version[[2]]}
 CASA_VERSION_FEATURE=${full_version[[3]]}
 CASA_VERSION_DESC="CASAtools:v1.0.0"
 CASA_VERSION="${CASA_VERSION_MAJOR}.${CASA_VERSION_MINOR}.${CASA_VERSION_PATCH}-${CASA_VERSION_FEATURE}"
+CASA_VARIANT="none"
 AC_MSG_RESULT($CASA_VERSION)
 
 
@@ -245,6 +246,7 @@ AC_SUBST(CASA_VERSION_MINOR)
 AC_SUBST(CASA_VERSION_PATCH)
 AC_SUBST(CASA_VERSION_FEATURE)
 AC_SUBST(CASA_VERSION_DESC)
+AC_SUBST(CASA_VARIANT)
 AC_SUBST(CASA_VERSION)
 
 AX_LIBXML
