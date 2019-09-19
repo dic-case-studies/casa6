@@ -85,6 +85,14 @@ import re
 from os import listdir
 from os.path import isfile, join, islink
 from itertools import chain
+import argparse
+
+parser=argparse.ArgumentParser()
+parser.add_argument('--version', help='version')
+parser.add_argument('bdist_wheel', help='bdist_wheel')
+args=parser.parse_args()
+
+print (args.version)
 
 module_name = 'casatasks'
 
@@ -119,7 +127,12 @@ def compute_version( ):
         sys.exit("couldn't determine version number")
 
     master_tags = [t for t in out.split('\n') if '-mas-' in t]
-    return (year,len(master_tags))
+    if (args.version != None ):
+        print (args.version.split("."))
+        (major, minor) = args.version.split(".")
+        return(int(major), int(minor))
+    else:
+        return (year,len(master_tags))
 
 
 (casatasks_major,casatasks_minor) = compute_version( )
@@ -638,9 +651,9 @@ class BuildCasa(build):
         print("generating task python files...")
         proc = Popen( [tools_config['build.compiler.xml-casa'], "output-task=%s" % moduledir, "-task"] + xml_files,
                       stdout=subprocess.PIPE )
-    
+
         (output, error) = pipe_decode(proc.communicate( ))
-    
+
         exit_code = proc.wait( )
 
         if exit_code != 0:
@@ -797,7 +810,32 @@ class TestCasa(Command):
 cmd_setup = { 'build': BuildCasa, 'test': TestCasa }
 try:
     from wheel.bdist_wheel import bdist_wheel
-    cmd_setup['bdist_wheel'] = bdist_wheel
+    class casa_binary_wheel(bdist_wheel):
+        user_options = bdist_wheel.user_options + [
+            # The format is (long option, short option, description).
+            ('debug', None, 'build a debugging version'),
+            ('version=', None, 'Silence distutils when passing version for bdist_wheel from the command line'),
+        ]
+
+        def initialize_options(self):
+            self.version = None
+            bdist_wheel.initialize_options(self)
+            if '--debug' in sys.argv:
+                global _debug_build_
+                _debug_build_ = True
+                self.debug = 1
+            else:
+                self.debug = 0
+
+        def run(self):
+            global doing_wheel_build
+            doing_wheel_build = True
+            bdist_wheel.run(self)
+            doing_wheel_build = False
+
+    wheel_build = casa_binary_wheel
+    
+    cmd_setup['bdist_wheel'] = casa_binary_wheel
 except ImportError:
     pass  # custom command not needed if wheel is not installed
 
@@ -812,7 +850,7 @@ setup( name=module_name,version=casatasks_version,
        packages=[ module_name,
                   "%s.__xml__" % module_name,
                   "%s.private" % module_name,
-                  "%s.private.parallel" % module_name, 
+                  "%s.private.parallel" % module_name,
                   "%s.private.imagerhelpers" % module_name ],
        classifiers=[ 'Programming Language :: Python :: %s' % pyversion ],
        description="the CASA tasks",
