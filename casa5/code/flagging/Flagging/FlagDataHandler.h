@@ -904,8 +904,8 @@ public:
 	VisBufferComponents2 *prefetchColumns_p;
 	// Iteration counters
 	casacore::uLong processedRows;
-	casacore::uShort chunkNo;
-	casacore::uShort bufferNo;
+	size_t chunkNo;
+	size_t bufferNo;
 
 	// FlagDataHanler-FlagAgents interaction
 	bool flushFlags_p;
