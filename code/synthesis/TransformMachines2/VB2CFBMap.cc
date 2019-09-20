@@ -102,7 +102,7 @@ namespace casa{
       auto itrBLMap = unique(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
       uniqueVbRow2BLMap_p.erase(itrBLMap,uniqueVbRow2BLMap_p.end());
       
-      for(int ii=0; ii < uniqueVbRow2BLMap_p.size(); ii++)
+      for(unsigned int ii=0; ii < uniqueVbRow2BLMap_p.size(); ii++)
 	{
 	  // cerr << "unqVb2BL: "<< uniqueVbRow2BLMap_p[ii] << " ii " << ii << endl;
 	  int idx = baselineType_p->returnIdx(vbRow2BLMap_p, uniqueVbRow2BLMap_p[ii]);
@@ -174,7 +174,7 @@ namespace casa{
 	  Float A2R = 4.848137E-06;
 	  Vector<Double> poIncrement = pointingOffsets_p->getIncrement();
 	  // Double offsetDeviation = sigmaDev * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
-	  baselineType_p->findAntennaGroupsM(vb,pointingOffsets_p, sigmaDev);
+	  baselineType_p->findAntennaGroups(vb,pointingOffsets_p, sigmaDev);
 
 	  baselineType_p->makeVBRow2BLGMap(vb);
 	  vbRow2BLMap_p = baselineType_p->getVBRow2BLMap();
@@ -207,7 +207,7 @@ namespace casa{
 		  if(avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]) >= sigmaDev*A2R)
 		    {
 		      baselineType_p->setCachedGroups(false);
-		      baselineType_p->findAntennaGroupsM(vb,pointingOffsets_p, sigmaDev);
+		      baselineType_p->findAntennaGroups(vb,pointingOffsets_p, sigmaDev);
 		      baselineType_p->setCachedAntennaPO(pointingOffsets_p->pullPointingOffsets());
 		      baselineType_p->makeVBRow2BLGMap(vb);
 		      vbRow2BLMap_p = baselineType_p->getVBRow2BLMap();

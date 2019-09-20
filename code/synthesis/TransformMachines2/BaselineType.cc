@@ -67,7 +67,7 @@ namespace casa{
   
   // -----------------------------------------------------------------
 
-  BaselineType::BaselineType(): doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), vbRow2BLMap_p(),vbRows_p(), totalGroups_p(0),cachedPointingOffsets_p(), antennaGroups_p(), cachedAntennaGroups_p()
+  BaselineType::BaselineType(): vbRows_p(), doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), totalGroups_p(0), antennaGroups_p(), cachedAntennaGroups_p() , vbRow2BLMap_p(), cachedPointingOffsets_p()
   {
     newPhaseGradComputed_p = false;
     vectorPhaseGradCalculator_p.resize(0);
@@ -84,263 +84,6 @@ namespace casa{
     return *this;
   
   };
-  
-  // Matrix<Complex> BaselineType::setBLPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p ,
-  // 					       const CountedPtr<CFBuffer>& cfb,
-  // 					       const vi::VisBuffer2& vb,
-  // 					       const int& row,
-  // 					       const double& sigmaDev)
-  // {
-  //   int myrow=row;
-  //   if(doPointing_p)
-  //     {
-  // 	Float A2R = 4.848137E-06;
-  // 	Vector<Double> poIncrement = pointingOffsets_p->getIncrement();
-  // 	Vector<Double> sumResPO_l;
-  // 	if(cachedGroups_p)
-  // 	  {
-  // 	    unsigned int cachedPOSize_l = cachedPointingOffsets_p.size();
-  // 	    unsigned int poSize_l = (pointingOffsets_p->pullPointingOffsets()).size();
-  // 	    sumResPO_l.resize(2);
-  // 	    sumResPO_l[0]=0;
-  // 	    sumResPO_l[1]=0;
-  // 	    // cerr << "sumResPO_l "<< sumResPO_l << " poSize_l " << poSize_l << " cachedPOSize_l"<< cachedPOSize_l <<endl;
-  // 	    if(poSize_l == cachedPOSize_l)
-  // 	      {
-  // 		Vector < Vector <Double> > residualPointingOffsets_l = cachedPointingOffsets_p - pointingOffsets_p->pullPointingOffsets(); 
-  // 	    	for(unsigned int ii=0; ii < poSize_l; ii++) 
-  // 	    	  sumResPO_l = sumResPO_l + residualPointingOffsets_l[ii];
-  // 	      }
-  // 	    else
-  // 	      {
-  // 	    	cachedGroups_p = false;
-  // 	      }
-  // 	    // cerr << "Sum of the Residual Pointing Offsets "<< sumResPO_l << endl; 
-  // 	  }
-
-  // 	cachedPointingOffsets_p.assign(pointingOffsets_p->pullPointingOffsets());
-
-  // 	// Double offsetDeviation = sigmaDev * A2R / (acos(sin(poIncrement[0])*sin(poIncrement[1])) + cos(poIncrement[0])*cos(poIncrement[1])*cos(poIncrement[0] - poIncrement[1]));
-  // 	Double offsetDeviation = sigmaDev * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
-  // 	findAntennaGroups(vb,pointingOffsets_p,sigmaDev);
-
-  // 	makeVBRow2BLGMap(vb);
-      
-  // 	if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[row])
-  // 	  {
-  // 	    //  cerr<<"vbRow2BLMap_p [row] doP=T "<< vbRow2BLMap_p[row] << " " <<row <<endl;
-  // 	    vectorPhaseGradCalculator_p.resize(vbRow2BLMap_p[row]+1,true);
-  // 	    for (unsigned int i=0;i<vectorPhaseGradCalculator_p.nelements(); i++)
-  // 	      if (vectorPhaseGradCalculator_p[i].null())
-  // 		vectorPhaseGradCalculator_p[i]=new PhaseGrad();
-  // 	  }
-  // 	if(cachedGroups_p)
-  // 	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);
-  // 	else
-  // 	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row);
-  //     }
-  //   else
-  //     {
-  // 	myrow=0;
-  // 	vbRow2BLMap_p.resize(1);
-  // 	vbRow2BLMap_p[0]=0;
-  // 	if (vectorPhaseGradCalculator_p.nelements() <= (unsigned int) vbRow2BLMap_p[myrow])
-  // 	  {
-  // 	    //	    cerr<<"vbRow2BLMap_p [row] doP=F "<< vbRow2BLMap_p[myrow] << " " <<myrow <<endl;
-  // 	    vectorPhaseGradCalculator_p.resize(1);
-  // 	    if (vectorPhaseGradCalculator_p[myrow].null())
-  // 	      vectorPhaseGradCalculator_p[myrow]=new PhaseGrad();
-  // 	  }
-  // 	vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
-  //     }
-	
-      
-  //    return  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->field_phaseGrad_p;
-    
-  // };
-
-   Matrix<vector<int> > BaselineType::findAntennaGroups(const vi::VisBuffer2& vb, 
-						      const CountedPtr<PointingOffsets>& pointingOffsets_p, 
-						      const double& sigmaDev)
-    {
-      if (doPointing_p==false) return antennaGroups_p;
-      else if(!cachedGroups_p)
-	{
-	  const Int nRows = vb.nRows();
-	  vector< vector <double> > antDirPix_l = pointingOffsets_p->fetchAntOffsetToPix(vb, doPointing_p);
-	  MVDirection vbdir=vb.direction1()(0).getValue();	
-	  Vector<double> phaseDirPix_l = pointingOffsets_p->toPix(vb,vbdir,vbdir);
-	  int binsx = 5, binsy = 5;
-	  antennaGroups_p.resize(binsx,binsy);
-	  antennaPO_p.resize(binsx,binsy);
-	  for (int ii=0; ii<binsx; ii++)
-	    for (int jj=0; jj<binsy;jj++)
-	      {
-		antennaGroups_p(ii,jj).resize(0);
-		antennaPO_p(ii,jj).resize(4);
-		for (int kk=0; kk<4; kk++)
-		  antennaPO_p(ii,jj)[kk].resize(0);
-	      }
-	  
-	  Vector<double> pixSum, pixMean, pixAbsDev, pixMinDev, pixMaxDev, pixMedAbsDev;
-	  PO_DEBUG_P = SynthesisUtils::getenv("PO_DEBUG",0);
-	  // pixSum.resize(4);
-	  // pixMean.resize(4);
-	  pixAbsDev.resize(4);
-	  pixMinDev.resize(4);
-	  pixMaxDev.resize(4);
-	  pixMedAbsDev.resize(4);
-	  /* In order to compute the pointing deviation of the antennas to identify groups,
-	     the following is done. We compute the absolute pointing deviation and the median
-	     absolute deviation in pointing for the antenna given a visbuffer. once the groups
-	     are identified we then put them on a matrix of vector ints containing the antenna
-	     index so be used to figure out the baseline groups- PJ */
-	  for (int irow=0; irow<4; irow++) 
-	    {
-	      pixAbsDev[irow] = 0;
-	      pixMinDev[irow] = 0;
-	      pixMaxDev[irow] = 0;
-	    }
-
-	  for (int irow=0; irow<nRows; irow++) 
-	    {
-	      for (unsigned int ii=0; ii<phaseDirPix_l.size();ii++)
-		for (unsigned int jj=0; jj<phaseDirPix_l.size();jj++)
-		  {
-		    pixAbsDev[ii+2*jj] += abs(antDirPix_l[ii+2*jj][irow] - phaseDirPix_l[ii]); 
-
-		    if(pixMinDev[ii+2*jj] >= abs(antDirPix_l[ii+2*jj][irow] - phaseDirPix_l[ii]))
-		      pixMinDev[ii+2*jj]  = abs(antDirPix_l[ii+2*jj][irow] - phaseDirPix_l[ii]);
-		    else if (pixMaxDev[ii+2*jj] <= abs(antDirPix_l[ii+2*jj][irow] - phaseDirPix_l[jj]))
-		      pixMaxDev[ii+2*jj]  = abs(antDirPix_l[ii+2*jj][irow] - phaseDirPix_l[ii]);
-		  }
-	    }
-	  for (unsigned int ii=0; ii<pixAbsDev.size();ii++)
-	    {
-	      pixAbsDev[ii] = pixAbsDev[ii]/nRows;
-	      pixMedAbsDev[ii] = (pixMaxDev[ii]+pixMinDev[ii])/2 ;
-	    }
-	  // if (PO_DEBUG_P==1)
-	  // 	{
-	  // 	  for (int irow=0; irow<nRows; irow++)
-	  // 	    {
-
-	  // 	      cerr << "pixSigma : " << pixAbsDev << " medABSDev " << pixMedAbsDev << " pixMinDev " << pixMinDev << " pixMaxDev " << pixMaxDev << endl; 
-	  // 	    }
-	  // 	}
-      
-	  for (int irow=0; irow<nRows; irow++) 
-	    {
-	      int ii,jj,kk,ll;
-	      if(pixMedAbsDev[0] == 0 )
-		ii = (antDirPix_l[0][irow] - phaseDirPix_l[0])/(sigmaDev);
-	      else 
-		ii = (antDirPix_l[0][irow] - phaseDirPix_l[0])/(pixMedAbsDev[0]*sigmaDev);
-	      if(pixMedAbsDev[1] == 0 )
-		jj = (antDirPix_l[1][irow] - phaseDirPix_l[1])/(sigmaDev);
-	      else
-		jj = (antDirPix_l[1][irow] - phaseDirPix_l[1])/(pixMedAbsDev[0]*sigmaDev);
-	      // if (PO_DEBUG_P==1)
-	      //   {
-	      //     cerr << " ii " << ii << " jj " << jj << " " << antennaGroups_p.shape() << " " << antennaGroups_p(ii,jj).shape()+1 << endl;
-	      //     if( ii < -1*int(phaseDirPix_l.size()))
-	      // 	ii = -1*(phaseDirPix_l.size());
-	      //     else if (ii > int(phaseDirPix_l.size()))
-	      // 	ii = phaseDirPix_l.size();
-	      
-	      //     if( jj < -1*int(phaseDirPix_l.size()))
-	      // 	jj = -1*(phaseDirPix_l.size());
-	      //     else if (jj > int(phaseDirPix_l.size()))
-	      // 	jj = phaseDirPix_l.size();
-	      //   }
-		       
-	       
-	      antennaGroups_p(ii+int(binsx/2),jj+int(binsy/2)).push_back(vb.antenna1()[irow]);
-	      // antennaPO_p(ii+int(binsx/2),jj+int(binsy/2))[0].push_back(antDirPix_l[0][irow]);
-	      // antennaPO_p(ii+int(binsx/2),jj+int(binsy/2))[1].push_back(antDirPix_l[1][irow]);
-
-	      if(pixMedAbsDev[2] == 0 )
-		kk = (antDirPix_l[2][irow] - phaseDirPix_l[0])/(sigmaDev);
-	      else
-		kk = (antDirPix_l[2][irow] - phaseDirPix_l[0])/(pixMedAbsDev[2]*sigmaDev);
-
-	      if(pixMedAbsDev[3] == 0 )
-		ll = (antDirPix_l[3][irow] - phaseDirPix_l[1])/(sigmaDev);
-	      else
-		ll = (antDirPix_l[3][irow] - phaseDirPix_l[1])/(pixMedAbsDev[3]*sigmaDev);
-
-	      // if (PO_DEBUG_P==1)
-	      //   {
-	      //     if( kk < -1*int(phaseDirPix_l.size()))
-	      // 	kk = -1*(phaseDirPix_l.size());
-	      //     else if (kk > int(phaseDirPix_l.size()))
-	      // 	kk = phaseDirPix_l.size();
-	      //     if( ll < -1*int(phaseDirPix_l.size()))
-	      // 	ll = -1*(phaseDirPix_l.size());
-	      //     else if (ll > int(phaseDirPix_l.size()))
-	      // 	ll = phaseDirPix_l.size();
-	      //   }
-
-	      antennaGroups_p(kk+int(binsx/2),ll+int(binsy/2)).push_back(vb.antenna2()[irow]);
-	      // antennaPO_p(kk+int(binsx/2),ll+int(binsy/2))[2].push_back(antDirPix_l[2][irow]);
-	      // antennaPO_p(kk+int(binsx/2),ll+int(binsy/2))[3].push_back(antDirPix_l[3][irow]);
-	    }
-
-	  //LogIO log_l(LogOrigin("VB2CFBMap", "VB2CFMap::findAntennaGroups[R&D]"));
-	  for (int ii=0; ii<2; ii++) // This binning is a bit arbitrary and it looks like its time for some negative indices.
-	    for (int jj=0; jj<2;jj++)
-	      {
-	 
-		std::sort(antennaGroups_p(ii,jj).begin(), antennaGroups_p(ii,jj).end());
-		auto last = std::unique(antennaGroups_p(ii,jj).begin(), antennaGroups_p(ii,jj).end());
-		antennaGroups_p(ii,jj).erase(last, antennaGroups_p(ii,jj).end());
-
-		std::sort(antennaPO_p(ii,jj)[0].begin(), antennaPO_p(ii,jj)[0].end());
-		auto last0 = std::unique(antennaPO_p(ii,jj)[0].begin(), antennaPO_p(ii,jj)[0].end());
-		antennaPO_p(ii,jj)[0].erase(last0, antennaPO_p(ii,jj)[0].end());
-
-		std::sort(antennaPO_p(ii,jj)[1].begin(), antennaPO_p(ii,jj)[1].end());
-		auto last1 = std::unique(antennaPO_p(ii,jj)[1].begin(), antennaPO_p(ii,jj)[1].end());
-		antennaPO_p(ii,jj)[1].erase(last1, antennaPO_p(ii,jj)[1].end());
-
-		std::sort(antennaPO_p(ii,jj)[2].begin(), antennaPO_p(ii,jj)[2].end());
-		auto last2 = std::unique(antennaPO_p(ii,jj)[2].begin(), antennaPO_p(ii,jj)[2].end());
-		antennaPO_p(ii,jj)[2].erase(last2, antennaPO_p(ii,jj)[2].end());
-
-		std::sort(antennaPO_p(ii,jj)[3].begin(), antennaPO_p(ii,jj)[3].end());
-		auto last3 = std::unique(antennaPO_p(ii,jj)[3].begin(), antennaPO_p(ii,jj)[3].end());
-		antennaPO_p(ii,jj)[3].erase(last3, antennaPO_p(ii,jj)[3].end());
-
-		// for (unsigned int kk=0; kk<antennaGroups_p(ii,jj).size();kk++)
-	
-		// log_l << "Antenna " << std::to_string(antennaGroups_p(ii,jj)[kk]) << " is present in bin " << std::to_string(ii*2+jj) << LogIO::NORMAL<<LogIO::POST;
-	    
-	    
-	      }
-	  totalGroups_p = 0;
-	  for(int ii=0; ii<5; ii++)
-	    for(int jj=0; jj<5; jj++)
-	      if(antennaGroups_p(ii,jj).size() >= 1)
-		{
-		  totalGroups_p += 1;
-		  // for(int kk = 0; kk < antennaGroups_p(ii,jj).size();kk++)
-		  //   cerr << "Groups no : "<< ii*5+jj <<" "<< antennaGroups_p(ii,jj)[kk] << endl;
-		}
-	  // 	// <<" Antenna PO Groups shape "<< antennaPO_p.size();
-
-	  LogIO log_l(LogOrigin("BaselineType","findAntennaGroups"));
-	  log_l << "Number of antenna groups found : " << totalGroups_p << LogIO::NORMAL<<LogIO::POST;
-
-	  cacheAntGroups(antennaGroups_p);
-	  return antennaGroups_p;
-	}
-      else
-	{ 
-	  // cerr<<"Utilizing cachedAntennaGroups_p"<<endl;
-	  return cachedAntennaGroups_p;
-	}
-
-    }
 
   vector< vector<double> > BaselineType::pairSort(const vector<int>& antArray, const vector<vector<double> >& poArray) 
   { 
@@ -400,7 +143,7 @@ namespace casa{
     //   }
   }
 
-  Matrix<vector<int> > BaselineType::findAntennaGroupsM(const vi::VisBuffer2& vb, 
+  Matrix<vector<int> > BaselineType::findAntennaGroups(const vi::VisBuffer2& vb, 
 						      const CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						      const double& sigmaDev)
     {
@@ -408,7 +151,7 @@ namespace casa{
       else if(!cachedGroups_p)
 	{
 	  totalGroups_p = 0;
-	  const Int nRows = vb.nRows();
+	  // const Int nRows = vb.nRows();
 	  cachedPointingOffsets_p.assign(pointingOffsets_p->pullPointingOffsets());
 	  vector< vector <double> > antDirPix_l = pointingOffsets_p->fetchAntOffsetToPix(vb, doPointing_p);
 	  MVDirection vbdir=vb.direction1()(0).getValue();	
@@ -430,7 +173,7 @@ namespace casa{
 	  
 
 	  vector< vector <double> > poAnt1(2), poAnt2(2);
-	  for(int ii=0; ii<poAnt1.size();ii++)
+	  for(unsigned int ii=0; ii<poAnt1.size();ii++)
 	    {
 	      poAnt1[ii].resize(poAnt1[ii].size(),0);
 	      poAnt2[ii].resize(poAnt2[ii].size(),0);
@@ -443,100 +186,6 @@ namespace casa{
 
 
 
-	  
-
-	  // poAnt1[0].insert(poAnt1[0].end(),poAnt2[0].begin(),poAnt2[0].end());
-	  // poAnt1[1].insert(poAnt1[1].end(),poAnt2[1].begin(),poAnt2[1].end());
-
-	  // cerr << "#################################"<<endl;
-	  // for (int i=0; i<=uniqueAnt1.size();i++)
-	  //   cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;//<<" Ant "  << uniqueAnt2[i] << " " << poAnt2[0][i] - phaseDirPix_l[0]  << " " << poAnt2[1][i] - phaseDirPix_l[1]<< endl;
-
-	  // cerr << "#################################"<<endl;
-
-
-	  // poAnt1 = pairSort(uniqueAnt1, poAnt1);
-
-	  // cerr << "#################################"<<endl;
-	  // for (int i=0; i<uniqueAnt1.size();i++)
-	  //   cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;//<<" Ant "  << uniqueAnt2[i] << " " << poAnt2[0][i] - phaseDirPix_l[0]  << " " << poAnt2[1][i] - phaseDirPix_l[1]<< endl;
-
-	  // cerr << "#################################"<<endl;
-
-	  //sort(uniqueAnt1.begin(),uniqueAnt1.end());
-	  // sortedAntArray = uniqueAnt1;
-	  // sort(sortedAntArray.begin(),sortedAntArray.end());
-	  // ant1Itr = unique(sortedAntArray.begin(),sortedAntArray.end());
-	  // sortedAntArray.resize(distance(sortedAntArray.begin(),ant1Itr));
-
-	  // cerr << "uniqueAnt1.size() : "<< uniqueAnt1.size() << " " << " sortedAntArray.size() : " << sortedAntArray.size() <<endl;
-	  
- 	  // sortedPOArray[0].resize(sortedAntArray.size(),0);
-	  // sortedPOArray[1].resize(sortedAntArray.size(),0);
-	  // for(int ii=0; ii<sortedAntArray.size();ii++)
-	  //   {
-	  //     int index = returnIdx(uniqueAnt1,ii);
-	  //     cerr << "Index : "<< index << " ";
-	  //     sortedPOArray[0][ii] = poAnt1[0][index];
-	  //     sortedPOArray[1][ii] = poAnt1[1][index];
-	  //   }
-
-	  // cerr << endl;
-	  // for (int i=0; i<sortedAntArray.size();i++)
-	  //   cerr << "Ant "<< sortedAntArray[i] << " PO: "<< sortedPOArray[0][i] - phaseDirPix_l[0]  << " " << sortedPOArray[1][i] - phaseDirPix_l[1] <<endl;
-
-
-	  // for(int ii=0; ii<uniqueAnt1.size();ii++)
-	  //   {
-	  //     cerr << "Antenna1 id : "<<uniqueAnt1[ii] << "  PO [0] "<<poAnt1[0][ii] << " PO[1]"<<poAnt1[1][ii]<<endl;
-	  //   }
-
-	  // for(int ii=0; ii<uniqueAnt2.size();ii++)
-	  //   {
-	  //     cerr << "Antenna2 id : "<<uniqueAnt2[ii] << "  PO [0] "<<poAnt2[0][ii] << " PO[1]"<<poAnt2[1][ii]<<endl;
-	  //   }
-
-	  // poAnt2 = pairSort(uniqueAnt2, poAnt2);
-	  // poAnt1 = pairSort(uniqueAnt1, poAnt1);
-	  
-
-	  // cerr << "#################################"<<endl;
-	  // for (int i=0; i<uniqueAnt2.size();i++)
-	  //   cerr << "Ant "<< uniqueAnt2[i] << " PO: "<< poAnt2[0][i] - phaseDirPix_l[0]  << " " << poAnt2[1][i] - phaseDirPix_l[1] <<endl;
-
-	  // cerr << "#################################"<<endl;
-
-	  // sort(uniqueAnt1.begin(),uniqueAnt1.end());
-	  // sort(uniqueAnt2.begin(),uniqueAnt2.end());
-
-
-
-
-
-
-	  // poAnt1 = pairSort(uniqueAnt1, poAnt1);
-	  // poAnt1[1] = pairSort(uniqueAnt1, poAnt1[1]);
-
-	  // sort(uniqueAnt1.begin(),uniqueAnt1.end());
-
-
-
-	  // ant1Itr = unique(uniqueAnt1.begin(),uniqueAnt1.end());
-	  
-	  // poAnt1[0].resize(distance(uniqueAnt1.begin(),ant1Itr));
-	  // poAnt1[1].resize(distance(uniqueAnt1.begin(),ant1Itr));
-	  // uniqueAnt1.resize(distance(uniqueAnt1.begin(),ant1Itr));
-
-
-
-	  // cerr<< "Sizeof poAnt1[0] : "<< poAnt1[0].size() << " poAnt2 : "<< poAnt1[1].size() <<" uniqAnt1 : "<<uniqueAnt1.size() << endl;
-
-	  // We now have an entirely unique array for both the poAnt1 and uniqueAnt1.
-	  // we can then compute the statistics required for our binning.
-
-	  // poAnt1 = sortedPOArray;
-	  // uniqueAnt1 = sortedAntArray;
-
 	  vector<double> pixSum(2,0), pixMean(2,0), pixVar(2,0), pixSigma(2,0), minPO(2,0), maxPO(2,0);
 	  vector<vector<double> > diffAntPointing_l(2);
 
@@ -544,7 +193,7 @@ namespace casa{
 	  diffAntPointing_l[1].resize(poAnt1[1].size());
 
 	  cerr << "#################################"<<endl;
-	  for (int i=0; i<uniqueAnt1.size();i++)
+	  for (unsigned int i=0; i<uniqueAnt1.size();i++)
 	    {
 	      diffAntPointing_l[0][i] = poAnt1[0][i] - phaseDirPix_l[0];
 	      diffAntPointing_l[1][i] = poAnt1[1][i] - phaseDirPix_l[1];
@@ -553,13 +202,13 @@ namespace casa{
 	  cerr << "#################################"<<endl;
 
 	  
-	  for(int ii=0; ii < pixSum.size();ii++)
+	  for(unsigned int ii=0; ii < pixSum.size();ii++)
 	    {
 
 	      pixSum[ii]  = accumulate(poAnt1[ii].begin(),poAnt1[ii].end(),0.0);
 	      pixMean[ii] = pixSum[ii]/poAnt1[ii].size();
 
-	      for(int jj=0; jj < poAnt1[ii].size(); jj++)
+	      for(unsigned int jj=0; jj < poAnt1[ii].size(); jj++)
 		{
 		  pixVar[ii] += (poAnt1[ii][jj] - pixMean[ii])*(poAnt1[ii][jj] - pixMean[ii]);
 		}
@@ -603,7 +252,7 @@ namespace casa{
 
 
 	  int ii,jj, xOrigin=(binsx/2.0), yOrigin=(binsy/2.0);
-	  for(int kk=0; kk < poAnt1[0].size(); kk++)
+	  for(unsigned int kk=0; kk < poAnt1[0].size(); kk++)
 	    {
 	      ii = max(0,min((int)(diffAntPointing_l[0][kk]/sigmaDev + xOrigin), binsx-1));
 	      jj = max(0,min((int)(diffAntPointing_l[1][kk]/sigmaDev + yOrigin), binsy-1));
@@ -626,7 +275,7 @@ namespace casa{
 		{
 		  totalGroups_p += 1;
 		  cerr<<"Antenna in bin ii "<<ii <<" jj  "<<jj << " is : ";
-		  for (int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
+		  for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
 		    cerr<<antennaGroups_p(ii,jj).at(kk)<<" ";
 		  cerr<<endl;
 		}
@@ -655,19 +304,10 @@ namespace casa{
 	{
 	  int vecLen = antennaGroups_p(ii,jj).size();
 	  cachedAntennaGroups_p(ii,jj).resize(vecLen);
-	  // cachedAntennaPO_p(ii,jj).resize(4);
-	  // cachedAntennaPO_p(ii,jj)[0].resize(vecLen);
-	  // cachedAntennaPO_p(ii,jj)[1].resize(vecLen);
-	  // cachedAntennaPO_p(ii,jj)[2].resize(vecLen);
-	  // cachedAntennaPO_p(ii,jj)[3].resize(vecLen);
 
 	  for (int kk=0; kk<vecLen; kk++)
 	    {
 	      cachedAntennaGroups_p(ii,jj)[kk] = antennaGroups_p(ii,jj)[kk];
-	      // cachedAntennaPO_p(ii,jj)[0][kk] = antennaPO_p(ii,jj)[0][kk];
-	      // cachedAntennaPO_p(ii,jj)[1][kk] = antennaPO_p(ii,jj)[1][kk];
-	      // cachedAntennaPO_p(ii,jj)[2][kk] = antennaPO_p(ii,jj)[2][kk];
-	      // cachedAntennaPO_p(ii,jj)[3][kk] = antennaPO_p(ii,jj)[3][kk];
 	    }
 	}
     cachedGroups_p=true;
@@ -774,27 +414,6 @@ namespace casa{
 	// cerr << "kk : " << kk << " " << ix << " " << iy << " " << vbRow2BLMap_p[kk] << " " << mapBLGroup_p(ix,iy) << endl;
 
       }
-
-    // for (int kk=0; kk<nRows();kk++)
-    // 	for (int ii=0; ii < numAntGroups; ii++)
-    // 	  for (int jj=ii; jj < numAntGroups; jj++)      
-    // 	    {
-    // 	      mapBLType.push_back(mapBLGroup(mapAntType1(kk),jj))
-    // uniqueBLType_p = vbRow2BLMap_p;
-    // sort(uniqueBLType_p.begin(),uniqueBLType_p.end());
-    // vector<int>::iterator uBLitr;
-    // uBLitr = unique(uniqueBLType_p.begin(),uniqueBLType_p.end());
-    // uniqueBLType_p.resize(distance(uniqueBLType_p.begin(),uBLitr));
-    // for(int ii=0; ii<nRows; ii++)
-    //   for(int jj=0;jj<uniqueBLType_p.size();jj++)
-    // 	if(vbRow2BLMap_p[ii] == uniqueBLType_p[jj])
-    // 	  {
-    // 	    blNeedsNewPOPG_p[ii]=true;
-    // 	    remove(uniqueBLType_p.begin(),uniqueBLType_p.end(),uniqueBLType_p[jj]);
-    // 	    break;
-    // 	  }
-	      
-    // return vbRow2BLMap_p;
       
 
   }

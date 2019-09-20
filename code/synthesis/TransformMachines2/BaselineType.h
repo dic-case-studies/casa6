@@ -69,9 +69,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     int returnIdx(const vector<int>& inpArray, const int& searchVal);
 
-    casacore::Matrix<vector<int> > findAntennaGroupsM(const vi::VisBuffer2& vb, 
-						     const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p, 
-						     const double& sigmaDev);
 
      void cacheAntGroups(const casacore::Matrix<vector<int> > antennaGroups_p);
      void makeVBRow2BLGMap(const vi::VisBuffer2& vb);
@@ -86,10 +83,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   private:  
      
-
+     int vbRows_p;
      bool doPointing_p, newPhaseGradComputed_p, cachedGroups_p;
      casacore::Vector< casacore::CountedPtr<PhaseGrad> >vectorPhaseGradCalculator_p;
-     int vbRows_p;
      casacore::Int PO_DEBUG_P, totalGroups_p;
      casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p;
      casacore::Matrix< vector < vector <double> > > antennaPO_p, cachedAntennaPO_p;
