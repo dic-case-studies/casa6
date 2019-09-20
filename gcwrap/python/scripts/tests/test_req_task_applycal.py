@@ -207,7 +207,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], field='1')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.33317375198725724+0.028998389148771512j)
+        self.assertTrue(np.isclose(datamean, 0.33317375198725724+0.028998389148771512j))
         
     def test_spwSelect(self):
         '''
@@ -220,7 +220,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], spw='1')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.28994172236678006+0.03374482270467842j)
+        self.assertTrue(np.isclose(datamean, 0.28994172236678006+0.03374482270467842j))
         
     def test_intentSelect(self):
         '''
@@ -233,7 +233,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], intent='*AMPLI*')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.40933912826626284+0.010524099430369143j)
+        self.assertTrue(np.isclose(datamean, 0.40933912826626284+0.010524099430369143j))
         
     def test_timerangeSelect(self):
         '''
@@ -246,7 +246,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], timerange='04:33:23~04:38:23')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.26859135173414944+0.043249139614812186j)
+        self.assertTrue(np.isclose(datamean, 0.26859135173414944+0.043249139614812186j))
         
     def test_uvrangeSelect(self):
         '''
@@ -259,7 +259,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], uvrange='>100klambda')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.40898735923515789+0.010907960569579565j)
+        self.assertTrue(np.isclose(datamean, 0.40898735923515789+0.010907960569579565j))
         
     def test_antennaSelect(self):
         '''
@@ -272,7 +272,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], antenna='0~5&')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.28547721979290314+0.024605255460554348j)
+        self.assertTrue(np.isclose(datamean, 0.28547721979290314+0.024605255460554348j))
         
     def test_scanSelect(self):
         '''
@@ -285,7 +285,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], scan='10')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.26857740451349088+0.04325810174871688j)
+        self.assertTrue(np.isclose(datamean, 0.26857740451349088+0.04325810174871688j))
         
     def test_callib(self):
         '''
@@ -302,7 +302,7 @@ class applycal_test(unittest.TestCase):
         #noSelect = getparam(dataref, 'CORRECTED_DATA')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.31622877260041754+0.049053979716640904j)
+        self.assertTrue(np.isclose(datamean, 0.31622877260041754+0.049053979716640904j))
         
     def test_gaintable(self):
         '''
@@ -315,7 +315,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal,tCal])
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.50000433754678164+3.7223202622521605e-05j)
+        self.assertTrue(np.isclose(datamean, 0.50000433754678164+3.7223202622521605e-05j))
         
     def test_gainfield(self):
         '''
@@ -328,7 +328,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[tCal], gainfield='1')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.31430447832422664+0.048264338579282674j)
+        self.assertTrue(np.isclose(datamean, 0.31430447832422664+0.048264338579282674j))
         
     def test_interp(self):
         '''
@@ -341,7 +341,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[tCal], interp='cubicflag')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.31622877260293381+0.049053979715317733j)
+        self.assertTrue(np.isclose(datamean, 0.31622877260293381+0.049053979715317733j))
         
     def test_spwmap(self):
         '''
@@ -354,7 +354,20 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], spwmap=[0,0,1,1])
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.39223749429011501+0.033263095996865069j)
+        self.assertTrue(np.isclose(datamean, 0.39223749429011501+0.033263095996865069j))
+        
+    def test_spwmapMulti(self):
+        '''
+            test_spwmapMulti
+            -------------------
+            
+            Check the function of spwmap when provided a list of lists
+        '''
+        
+        applycal(vis=datacopy, gaintable=[gCal,tCal], spwmap=[[0,0,1,1],[0,0,1,1]])
+        datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
+        
+        self.assertTrue(np.isclose(datamean, 0.47988006537755368+0.028796507242145018j))
         
     def test_calwt(self):
         '''
@@ -477,12 +490,12 @@ class applycal_test(unittest.TestCase):
             Check to see that a backup for the flags was made
         '''
         
-        applycal(vis=datacopy, gaintable=[gCal], flagbackup=False)
+        applycal(vis=datacopy, gaintable=[gCal], flagbackup=True)
         flagpath = datacopy + '.flagversions'
+        files = os.listdir(flagpath)
+        result = any('flags.applycal' in i for i in files)
         
-        self.assertFalse(os.path.exists(flagpath))
-        
-    
+        self.assertTrue(result)
     
 def suite():
     return[applycal_test]
