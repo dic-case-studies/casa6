@@ -531,7 +531,7 @@ FlagMSHandler::generateIterator()
   chunksInitialized_p = false;
   buffersInitialized_p = false;
   stopIteration_p = false;
-  processedRows = 0;
+  processedRows_p = 0;
 
   return true;
 }
@@ -595,20 +595,19 @@ FlagMSHandler::nextChunk()
 			visibilityIterator_p->originChunks();
 			chunksInitialized_p = true;
 			buffersInitialized_p = false;
-			chunkNo++;
-			bufferNo = 0;
+			chunkNo_p++;
+			bufferNo_p = 0;
 			moreChunks = true;
 }
 		else
 		{
 			visibilityIterator_p->nextChunk();
-
 			if (visibilityIterator_p->moreChunks())
 			{
 				buffersInitialized_p = false;
 				moreChunks = true;
-				chunkNo++;
-				bufferNo = 0;
+				chunkNo_p++;
+				bufferNo_p = 0;
 			}
 		}
 	}
@@ -648,7 +647,7 @@ FlagMSHandler::nextBuffer()
 			moreBuffers = true;
 			flushFlags_p = false;
 			flushFlagRow_p = false;
-			bufferNo++;
+			bufferNo_p++;
 		}
 		else
 		{
@@ -668,7 +667,7 @@ FlagMSHandler::nextBuffer()
 				moreBuffers = true;
 				flushFlags_p = false;
 				flushFlagRow_p = false;
-				bufferNo++;
+				bufferNo_p++;
 			}
 		}
 	}
@@ -697,9 +696,9 @@ FlagMSHandler::nextBuffer()
 		msCounts_p += currentBufferCounts;
 
 		// Print chunk characteristics
-		if (bufferNo == 1)
+		if (bufferNo_p == 1)
 		{
-			processedRows += visibilityIterator_p->nRowsInChunk();
+			processedRows_p += visibilityIterator_p->nRowsInChunk();
 			if (printChunkSummary_p)
 			{
 				logger_p->origin(LogOrigin("FlagMSHandler",""));
@@ -710,12 +709,12 @@ FlagMSHandler::nextBuffer()
 				}
 				corrs += "]";
 
-				Double progress  = 100.0* ((Double) processedRows / (Double) selectedMeasurementSet_p->nrow());
+				Double progress  = 100.0* ((Double) processedRows_p / (Double) selectedMeasurementSet_p->nrow());
 
 				*logger_p << LogIO::NORMAL <<
 				  "------------------------------------------------------------------------------------ " << LogIO::POST;
 				*logger_p << LogIO::NORMAL <<
-						"Chunk = " << chunkNo << " [progress: " << (Int)progress << "%]"
+						"Chunk = " << chunkNo_p << " [progress: " << (Int)progress << "%]"
 						", Observation = " << visibilityBuffer_p->observationId()[0] <<
 						", Array = " << visibilityBuffer_p->arrayId()[0] <<
 						", Scan = " << visibilityBuffer_p->scan()[0] <<
@@ -891,7 +890,7 @@ FlagMSHandler::checkIfColumnExists(String column)
 bool
 FlagMSHandler::summarySignal()
 {
-	Double progress = 100.0* ((Double) processedRows / (Double) selectedMeasurementSet_p->nrow());
+	Double progress = 100.0* ((Double) processedRows_p / (Double) selectedMeasurementSet_p->nrow());
 	if ((progress >= summaryThreshold_p) || (logger_p->priority() >= LogMessage::DEBUG1))
 	{
 		summaryThreshold_p += 10;
