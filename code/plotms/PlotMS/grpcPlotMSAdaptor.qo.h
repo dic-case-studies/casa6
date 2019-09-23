@@ -89,6 +89,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         ::grpc::Status setShowTsky( ::grpc::ServerContext *context,
                                     const ::rpc::plotms::SetToggle *req,
                                     ::google::protobuf::Empty* );
+        ::grpc::Status setShowImage( ::grpc::ServerContext *context,
+                                     const ::rpc::plotms::SetToggle *req,
+                                     ::google::protobuf::Empty* );
         ::grpc::Status setPlotMSSelection( ::grpc::ServerContext *context,
                                            const ::rpc::plotms::SetSelection *req,
                                            ::google::protobuf::Empty* );
