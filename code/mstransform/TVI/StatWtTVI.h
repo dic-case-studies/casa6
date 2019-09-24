@@ -202,8 +202,9 @@ private:
         casacore::StatisticsAlgorithm<
             casacore::Double,
             casacore::Array<casacore::Float>::const_iterator,
-            casacore::Array<casacore::Bool>::const_iterator,
-            casacore::Array<casacore::Double>::const_iterator>
+            casacore::Array<casacore::Bool>::const_iterator /*,
+            casacore::Array<casacore::Double>::const_iterator> */
+        >
     > _statAlg {} ;
     std::unique_ptr<std::pair<casacore::Double, casacore::Double>> _wtrange {};
     // The _chanSelFlags key is the spw. The value is a Cube for convenience

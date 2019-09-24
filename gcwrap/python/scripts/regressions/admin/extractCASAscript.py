@@ -70,7 +70,7 @@ interactive=re.compile("[\s;]*(plotxy|plotcal|plotms|viewer|plotants|imview)")
 # for CASA 4.5...
 
 casa_tasks = [
-    'accum', 'applycal', 'asdmsummary', 'bandpass',
+    'accor','accum', 'applycal', 'asdmsummary', 'bandpass',
     'blcal', 'boxit', 'browsetable', 'calstat', 'caltabconvert', 'clean',
     'clearcal', 'clearplot', 'clearstat', 'concat', 'conjugatevis', 'csvclean',
     'cvel', 'deconvolve', 'delmod', 'exportasdm', 'exportfits', 'exportuvfits',
@@ -141,9 +141,17 @@ tasks_to_suppress = ["plotms", "plotants"]
 # =====================
 # FUNCTIONS
 # =====================
+def convert_execfile(line):
+    if "execfile" in line:
+        line = line.replace("execfile",'exec(open')
+        line = line + ".read())"
+    return line
+
 def comment_out_casa_builtins(line):
     patterns = [ r''' *(inp)''',r''' *(go)''',r''' *(help)''']
     for pattern in patterns:
+        if extract_task(line) in casa_tasks:
+            return line
         if re.search( pattern, line ):
             new_line = ' ' * indentation(line) + line
             line = "#" + new_line
@@ -170,6 +178,13 @@ def extract_task(line):
     """
     Tries to return the task name being called in the line.
     """
+    # Fix for a taskcall with plotms in VLA_high_frequency_Spectral_Line_tutorial_-_IRC%2B10216 Guide
+    if "plotweather" in line:
+        stripped = line.lstrip()
+        temp = stripped.find("(")
+        if "=" in stripped[0:temp]:
+            return stripped[0:temp].split("=")[-1].strip()
+
     stripped = line.lstrip()
     temp = stripped.find("(")
     if temp == -1:
@@ -177,13 +192,13 @@ def extract_task(line):
     return stripped[0:temp]
 
 # Uncomment if we swtich from import casatasks; casatasks.<taskname> to from casatasks import <taskname>
-#def is_task_call_casa6(line,array):
-#    """
-#    Tests if the line is a task call and adds to list.
-#    """
-#    if extract_task(line) in casa_tasks:
-#        array.append(extract_task(line))
-#    return array
+def is_task_call_casa6(line,array):
+    """
+    Tests if the line is a task call and adds to list.
+    """
+    if extract_task(line) in casa_tasks:
+        array.append(extract_task(line))
+    return array
 
 def is_task_call(line):
     """
@@ -369,7 +384,9 @@ def addNonInteractivePause(outline):
     newoutline = outline
     newoutline += "\ninp()\nprint('Pausing for 30 seconds...')\n"
     newoutline += "time.sleep(30)\n"
-    newoutline = string.replace(newoutline, '\n', '\n'+' '*indentation(outline))
+    #newoutline = string.replace(newoutline, '\n', '\n'+' '*indentation(outline))
+
+    newoutline = ' '*indentation(outline) + newoutline
     return newoutline
 
 # Return the pre-material needed to set up benchmarking
@@ -754,17 +771,48 @@ def main(URL, benchmark=False , diagplotoff=False , plotmsoff=False, noninteract
         #    print("from __future__ import print_function", file=f)
         if casa6:
             # Uncomment if we swtich from import casatasks; casatasks.<taskname> to from casatasks import <taskname>
-            #task_list = []
-            #for line in compressedList:
-            #    task_list = is_task_call_casa6(line,task_list)
-            #task_list = set(task_list)
-            #tasks = ', '.join(map(str, task_list))
+            task_list = []
+            for line in compressedList:
+                task_list = is_task_call_casa6(line,task_list)
+            task_list = sorted(set(task_list))
+
+            # Fix to remove plotms from casatasks and use casaplotms
+            use_casaplotms = False
+            if "plotms" in task_list:
+                use_casaplotms = True
+                task_list.remove("plotms")
+
+
+            use_casaviewer = False
+            if "viewer" in task_list:
+                use_casaviewer = True
+                task_list.remove("viewer")
+
+            tasks = ', '.join(map(str, task_list))
+
             print("import os, sys, numpy", file=f)
             print("import casatools", file=f)
             print("import casatasks", file=f)
-            #print("from casatasks import ", tasks ,file=f)
+
+            if not plotmsoff:
+                if use_casaplotms:
+                    print("import casaplotms", file=f)
+                    print("from casaplotms import plotms" ,file=f)
+
+            if not diagplotoff:
+                if use_casaviewer:
+                    print("import casaviewer", file=f)
+                    print("from casaviewer import viewer" ,file=f)
+
+            print("from casatasks import ", tasks ,file=f)
 
         for line in compressedList:
+
+            if line == 'viewer':
+                line = 'viewer()\n'
+
+            if line.startswith("!") or line.startswith("%"):
+                line = "#" + line
 
             line = turnTaskOff('taskname', line)
             if diagplotoff:
@@ -796,7 +844,8 @@ def main(URL, benchmark=False , diagplotoff=False , plotmsoff=False, noninteract
             if casa6:
                 line = correct_casa_builtins_go(line)
                 line = comment_out_casa_builtins(line)
-                line = casa6_line(line)
+                line = convert_execfile(line)
+                #line = casa6_line(line)
 
             if py3:
                 print(line, file=f)
@@ -811,6 +860,7 @@ def main(URL, benchmark=False , diagplotoff=False , plotmsoff=False, noninteract
         print('exec(open("' + outFile + '").read())')
     else:
         print('execfile("' + outFile + '")')
+    sys.exit(0)
 
 if __name__ == "__main__":
     usage = \
@@ -831,3 +881,5 @@ a local file system path."""
         sys.exit(1)
     main(args[0], benchmark=options.benchmark, diagplotoff=options.diagplotoff, plotmsoff=options.plotmsoff, noninteractive=options.noninteractive, casa6=options.casa6, py2to3=options.py2to3)
     #main(args[0], options)
+
+

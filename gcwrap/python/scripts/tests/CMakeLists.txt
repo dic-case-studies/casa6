@@ -220,6 +220,12 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_imrebin.py
   test_req_task_uvmodelfit.py
   test_req_task_imreframe.py
+  test_req_task_accor.py
+  test_req_task_applycal.py
+  test_req_task_fixplanets.py
+  test_req_task_fluxscale.py
+  test_req_task_listsdm.py
+  test_req_task_rmfit.py
 
   ###
   test_setjy.py
