@@ -214,7 +214,8 @@ vector<int> msmetadata::antennaids(
         }
         vector<Int> foundIDs;
         variant::TYPE type = names.type();
-        if (type == variant::BOOLVEC) {
+        // empty names argument arrives as BOOLVEC for CASA 5 and as an empty STRING for CASA 6
+        if (((type == variant::STRING) && names.empty()) || (type == variant::BOOLVEC)) {
             if (filterObsID) {
                 foundIDs = _setUIntToVectorInt(filteredAnts);
                 if (foundIDs.empty()) {
@@ -324,8 +325,8 @@ vector<string> msmetadata::antennanames(const variant& antennaids) {
     _FUNC(
         vector<uInt> myIDs;
         variant::TYPE type = antennaids.type();
-        if (type == variant::BOOLVEC) {
-            // do nothing, all names will be returned.
+        if (((type == variant::INT) && (antennaids.toInt()<0)) || (type == variant::BOOLVEC)) {
+            // do nothing, all names will be returned. - BOOLVEC = CASA 5, negative INT is CASA 6
         }
         else if (type == variant::INT) {
             Int id = antennaids.toInt();
@@ -1110,7 +1111,9 @@ vector<string> msmetadata::namesforfields(const variant& fieldids) {
             }
             fieldIDs = _vectorIntToVectorUInt(kk);
         }
-        else if (fieldids.size() != 0) {
+        // empty fieldids have type BOOLVEC (of size 0) in CASA 5 or an empty STRING in CASA 6
+        // Anything that's not empty here is an error, everything else triggers returning everything
+        else if (!fieldids.empty()) {
             throw AipsError(
                 "Unsupported type for fieldids. It must be a nonnegative integer or nonnegative integer array"
             );
@@ -2075,7 +2078,10 @@ variant* msmetadata::timesforspws(const variant& spws) {
         auto type = spws.type();
         std::vector<Int> myspws;
         Int nspw = _msmd->nSpw(True);
-        if (type == variant::BOOLVEC) {
+        // in CASA 6, an empty spws is turned into an int = -1 (as specified in the xml)
+        // in CASA 5, an empty spws is left empty and ends up here as a BOOLVEC
+        // the xml says that all negative ints means all spws to be returned
+        if (((type == variant::INT) && (spws.toInt()<0)) || (type == variant::BOOLVEC)) {
             myspws.resize(nspw);
             std::iota(myspws.begin(), myspws.end(), 0);
         }
