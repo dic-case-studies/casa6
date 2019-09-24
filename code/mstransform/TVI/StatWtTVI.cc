@@ -45,6 +45,7 @@ StatWtTVI::StatWtTVI(ViImplementation2 * inputVii, const Record &configuration)
 	// Parse and check configuration parameters
 	// Note: if a constructor finishes by throwing an exception, the memory
 	// associated with the object itself is cleaned up there is no memory leak.
+    cout << __func__ << endl;
     ThrowIf(
         ! _parseConfiguration(configuration),
         "Error parsing StatWtTVI configuration"
@@ -79,6 +80,7 @@ StatWtTVI::~StatWtTVI() {}
 Bool StatWtTVI::_parseConfiguration(const Record& config) {
     String field = CHANBIN;
     if (config.isDefined(field)) {
+    cout << __func__ << endl;
         // channel binning
         auto fieldNum = config.fieldNumber(field);
         switch (config.type(fieldNum)) {
@@ -274,6 +276,7 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
 }
 
 void StatWtTVI::_configureStatAlg(const Record& config) {
+    cout << __func__ << endl;
     String field = "statalg";
     if (config.isDefined(field)) {
         ThrowIf(
@@ -285,14 +288,14 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
         if (alg.startsWith("cl")) {
             _statAlg = new ClassicalStatistics<
                 Double, Array<Float>::const_iterator,
-                Array<Bool>::const_iterator,
-                Array<Double>::const_iterator
+                Array<Bool>::const_iterator/* ,
+                Array<Double>::const_iterator */
             >();
         }
         else {
             casacore::StatisticsAlgorithmFactory<
                 Double, Array<casacore::Float>::const_iterator,
-                Array<Bool>::const_iterator, Array<Double>::const_iterator
+                Array<Bool>::const_iterator/*, Array<Double>::const_iterator */
             > saf;
             if (alg.startsWith("ch")) {
                 Int maxiter = -1;
@@ -372,7 +375,7 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
     else {
         _statAlg = new ClassicalStatistics<
             Double, Array<Float>::const_iterator,
-            Array<Bool>::const_iterator, Array<Double>::const_iterator
+            Array<Bool>::const_iterator /* , Array<Double>::const_iterator */
         >();
     }
     std::set<StatisticsData::STATS> stats {StatisticsData::VARIANCE};
@@ -391,6 +394,7 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
 }
 
 void StatWtTVI::_logUsedChannels() const {
+    cout << __func__ << endl;
     // FIXME uses underlying MS
     MSMetaData msmd(&ms(), 100.0);
     const auto nchan = msmd.nChans();
@@ -459,6 +463,7 @@ void StatWtTVI::_logUsedChannels() const {
 }
 
 void StatWtTVI::_setChanBinMap(const casacore::Quantity& binWidth) {
+    cout << __func__ << endl;
     if (! binWidth.isConform(Unit("Hz"))) {
         ostringstream oss;
         oss << "If specified as a quantity, channel bin width must have "
@@ -502,6 +507,7 @@ void StatWtTVI::_setChanBinMap(const casacore::Quantity& binWidth) {
 }
 
 void StatWtTVI::_setChanBinMap(Int binWidth) {
+    cout << __func__ << endl;
     ThrowIf(binWidth < 1, "Channel bin width must be positive");
     MSMetaData msmd(&ms(), 100.0);
     auto nchans = msmd.nChans();
@@ -520,6 +526,7 @@ void StatWtTVI::_setChanBinMap(Int binWidth) {
 }
 
 void StatWtTVI::_setDefaultChanBinMap() {
+    cout << __func__ << endl;
     MSMetaData msmd(&ms(), 0.0);
     auto nchans = msmd.nChans();
     auto niter = nchans.begin();
@@ -534,6 +541,7 @@ void StatWtTVI::_setDefaultChanBinMap() {
 }
 
 Double StatWtTVI::getTimeBinWidthInSec(const casacore::Quantity& binWidth) {
+    cout << __func__ << endl;
     ThrowIf(
         ! binWidth.isConform(Unit("s")),
         "Time bin width unit must be a unit of time"
@@ -544,12 +552,14 @@ Double StatWtTVI::getTimeBinWidthInSec(const casacore::Quantity& binWidth) {
 }
 
 void StatWtTVI::checkTimeBinWidth(Double binWidth) {
+    cout << __func__ << endl;
     ThrowIf(binWidth <= 0, "time bin width must be positive");
 }
 
 Double StatWtTVI::getTimeBinWidthUsingInterval(
     const MeasurementSet *const ms, Int n
 ) {
+    cout << __func__ << endl;
     ThrowIf(n <= 0, "number of time intervals must be positive");
     MSMetaData msmd(ms, 0.0);
     auto stats = msmd.getIntervalStatistics();
@@ -566,6 +576,7 @@ Double StatWtTVI::getTimeBinWidthUsingInterval(
 }
 
 void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
+    cout << __func__ << endl;
     if (_mustComputeSigma) {
         {
             Cube<Float> wtsp;
@@ -590,6 +601,7 @@ void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
 }
 
 void StatWtTVI::weightSpectrum(Cube<Float>& newWtsp) const {
+    cout << __func__ << endl;
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
     if (! *_mustComputeWtSp) {
         newWtsp.resize(IPosition(3, 0));
@@ -615,6 +627,7 @@ void StatWtTVI::weightSpectrum(Cube<Float>& newWtsp) const {
 }
 
 void StatWtTVI::_computeWeightSpectrumAndFlags() const {
+    cout << __func__ << endl;
     size_t nOrigFlagged;
     auto mypair = _getLowerLayerWtSpFlags(nOrigFlagged);
     auto& wtsp = mypair.first;
@@ -734,6 +747,7 @@ void StatWtTVI::_updateWtSpFlags(
     Cube<Float>& wtsp, Cube<Bool>& flags, Bool& checkFlags,
     const Slicer& slice, Float wt
 ) const {
+    cout << __func__ << endl;
     // writable array reference
     auto flagSlice = flags(slice);
     if (*_mustComputeWtSp) {
@@ -761,6 +775,7 @@ void StatWtTVI::_updateWtSpFlags(
 std::pair<Cube<Float>, Cube<Bool>> StatWtTVI::_getLowerLayerWtSpFlags(
     size_t& nOrigFlagged
 ) const {
+    cout << __func__ << endl;
     auto mypair = std::make_pair(Cube<Float>(), Cube<Bool>());
     if (*_mustComputeWtSp) {
         getVii()->weightSpectrum(mypair.first);
@@ -773,6 +788,7 @@ std::pair<Cube<Float>, Cube<Bool>> StatWtTVI::_getLowerLayerWtSpFlags(
 }
 
 void StatWtTVI::sigma(Matrix<Float>& sigmaMat) const {
+    cout << __func__ << endl;
     if (_mustComputeSigma) {
         if (_newWt.empty()) {
             Matrix<Float> wtmat;
@@ -908,6 +924,7 @@ void StatWtTVI::_weightSingleChanBinBlockTimeProcessing(
 void StatWtTVI::_weightSingleChanBinSlidingTimeWindow(
     Matrix<Float>& wtmat, Int nrows
 ) const {
+    cout << __func__ << endl;
     Vector<uInt> rowIDs;
     getRowIds(rowIDs);
     auto start = _rowIDInMSTorowIndexInChunk.find(*rowIDs.begin());
@@ -933,6 +950,7 @@ void StatWtTVI::_weightSingleChanBinSlidingTimeWindow(
 }
 
 void StatWtTVI::flag(Cube<Bool>& flagCube) const {
+    cout << __func__ << endl;
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
     if (! _newFlag.empty()) {
         flagCube = _newFlag.copy();
@@ -943,6 +961,7 @@ void StatWtTVI::flag(Cube<Bool>& flagCube) const {
 }
 
 void StatWtTVI::flagRow(Vector<Bool>& flagRow) const {
+    cout << __func__ << endl;
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
     if (! _newFlagRow.empty()) {
         flagRow = _newFlagRow.copy();
@@ -959,6 +978,7 @@ void StatWtTVI::flagRow(Vector<Bool>& flagRow) const {
 }
 
 void StatWtTVI::originChunks(Bool forceRewind) {
+    cout << __func__ << endl;
     // Drive next lower layer
     getVii()->originChunks(forceRewind);
     _weightsComputed = False;
@@ -971,6 +991,7 @@ void StatWtTVI::originChunks(Bool forceRewind) {
 }
 
 void StatWtTVI::nextChunk() {
+    cout << __func__ << endl;
     // Drive next lower layer
     getVii()->nextChunk();
     _weightsComputed = False;
@@ -983,6 +1004,7 @@ void StatWtTVI::nextChunk() {
 }
 
 void StatWtTVI::_clearCache() {
+    cout << __func__ << endl;
     _newWtSp.resize(0, 0, 0);
     _newWt.resize(0, 0);
     _newFlag.resize(0, 0, 0);
@@ -1154,6 +1176,7 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindow() const {
 }
 
 const Cube<Complex> StatWtTVI::_dataCube(const VisBuffer2 *const vb) const {
+    cout << __func__ << endl;
     switch (_column) {
     case CORRECTED:
         return vb->visCubeCorrected();
@@ -1183,7 +1206,7 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
     const Cube<Double>& exposures, const std::vector<std::set<uInt>>& rowMap,
     uInt spw
 ) const {
-    // cout << __func__ << endl;
+    cout << __func__ << endl;
 
     auto chunkShape = data.shape();
     const auto nActCorr = chunkShape[0];
@@ -1263,6 +1286,7 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
 }
 
 void StatWtTVI::_gatherAndComputeWeights() const {
+    cout << __func__ << endl;
     if (_timeBlockProcessing) {
         _gatherAndComputeWeightsTimeBlockProcessing();
     }
@@ -1277,7 +1301,7 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
     //   for the variance calculation
     //  Essentially, we are sorting the incoming data into
     //   allvis, to enable a convenient variance calculation
-    //cout << __func__ << endl;
+    cout << __func__ << endl;
 
     _weights.clear();
     auto* vii = getVii();
@@ -1418,8 +1442,7 @@ Cube<Bool> StatWtTVI::_getResultantFlags(
     Cube<Bool>& chanSelFlagTemplate, Cube<Bool>& chanSelFlags,
     Bool& initTemplate, Int spw, const Cube<Bool>& flagCube
 ) const {
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
+    cout << __func__ << endl;
     if (_chanSelFlags.find(spw) == _chanSelFlags.cend()) {
         // no selection of channels to ignore
         // cout << __FILE__ << " " << __LINE__ << endl;
@@ -1464,6 +1487,7 @@ Cube<Bool> StatWtTVI::_getResultantFlags(
 Bool StatWtTVI::_checkFirsSubChunk(
     Int& spw, Bool& firstTime, const VisBuffer2 * const vb
 ) const {
+    cout << __func__ << endl;
     if (! firstTime) {
         // this chunk has already been checked, it has not
         // been processed previously
@@ -1492,22 +1516,26 @@ Bool StatWtTVI::_checkFirsSubChunk(
 }
 
 void StatWtTVI::initWeightSpectrum (const Cube<Float>& wtspec) {
+    cout << __func__ << endl;
     // Pass to next layer down
     getVii()->initWeightSpectrum(wtspec);
 }
 
 void StatWtTVI::initSigmaSpectrum (const Cube<Float>& sigspec) {
+    cout << __func__ << endl;
     // Pass to next layer down
     getVii()->initSigmaSpectrum(sigspec);
 }
 
 
 void StatWtTVI::writeBackChanges(VisBuffer2 *vb) {
+    cout << __func__ << endl;
     // Pass to next layer down
     getVii()->writeBackChanges(vb);
 }
 
 StatWtTVI::Baseline StatWtTVI::_baseline(uInt ant1, uInt ant2) {
+    cout << __func__ << endl;
     Baseline baseline;
     if (ant1 < ant2) {
         // this may always be the case, but I'm not certain,
@@ -1526,6 +1554,7 @@ void StatWtTVI::_computeWeightsTimeBlockProcessing(
     const map<BaselineChanBin, Cube<Bool>>& flags,
     const map<BaselineChanBin, Cube<Double>>& exposures
 ) const {
+    cout << __func__ << endl;
     // cout << __func__ << endl;
 
     auto diter = data.cbegin();
@@ -1570,36 +1599,49 @@ casacore::Double StatWtTVI::_computeWeight(
     const Cube<Complex>& data, const Cube<Bool>& flags,
     const Cube<Double>& exposures, uInt spw
 ) const {
-    // cout << __func__ << endl;
+    cout << __func__ << endl;
     const auto npts = data.size();
+    // cout << __FILE__ << " " << __LINE__ << endl;
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
         // not enough points, trivial
         return 0;
     }
     // called in multi-threaded mode
+    // FIXME uncomment and use when exposures are correctly used for weighting
     std::unique_ptr<
         StatisticsAlgorithm<
             Double, Array<Float>::const_iterator,
-            Array<Bool>::const_iterator, Array<Double>::const_iterator
+            Array<Bool>::const_iterator/*, Array<Double>::const_iterator*/
         >
     > statAlg(_statAlg->clone());
+    // cout << __FILE__ << " " << __LINE__ << endl;
     // some data not flagged
     const auto realPart = real(data);
+    // cout << __FILE__ << " " << __LINE__ << endl;
     const auto imagPart = imag(data);
+    // cout << __FILE__ << " " << __LINE__ << endl;
     const auto mask = ! flags;
+    // cout << __FILE__ << " " << __LINE__ << endl;
     const auto riter = realPart.begin();
+    // cout << __FILE__ << " " << __LINE__ << endl;
     const auto iiter = imagPart.begin();
+    // cout << __FILE__ << " " << __LINE__ << endl;
     const auto miter = mask.begin();
+    // cout << __FILE__ << " " << __LINE__ << endl;
     const auto eiter = exposures.begin();
-    statAlg->setData(riter, eiter, miter, npts);
-    auto realVar = statAlg->getStatistic(StatisticsData::NVARIANCE);
+    // cout << __FILE__ << " " << __LINE__ << endl;
+    statAlg->setData(riter, /*eiter, */ miter, npts);
+    // cout << __FILE__ << " " << __LINE__ << endl;
+    // FIXME maybe need to get NVARIANCE for exposure time waiting
+    auto realVar = statAlg->getStatistic(StatisticsData::VARIANCE);
     // reset data to imaginary parts
-    statAlg->setData(iiter, eiter, miter, npts);
-    auto imagVar = statAlg->getStatistic(StatisticsData::NVARIANCE);
+    statAlg->setData(iiter, /*eiter,*/ miter, npts);
+    auto imagVar = statAlg->getStatistic(StatisticsData::VARIANCE);
     auto varSum = realVar + imagVar;
     // _samples.second can be updated in two different places, so use
     // a local (per thread) variable and update the object's private field in one
     // place
+    // cout << __FILE__ << " " << __LINE__ << endl;
     uInt updateSecond = False;
     if (varSum > 0) {
 #ifdef _OPENMP
@@ -1621,10 +1663,12 @@ casacore::Double StatWtTVI::_computeWeight(
             ++_samples[spw].second;
         }
     }
+    // cout << __FILE__ << " " << __LINE__ << endl;
     return varSum == 0 ? 0 : 2/varSum;
 }
 
 void StatWtTVI::summarizeFlagging() const {
+    cout << __func__ << endl;
     auto orig = (Double)_nOrigFlaggedPts/(Double)_nTotalPts*100;
     auto stwt = (Double)_nNewFlaggedPts/(Double)_nTotalPts*100;
     auto total = orig + stwt;
@@ -1665,6 +1709,7 @@ void StatWtTVI::summarizeFlagging() const {
 }
 
 void StatWtTVI::summarizeStats(Double& mean, Double& variance) const {
+    cout << __func__ << endl;
     LogIO log(LogOrigin("StatWtTVI", __func__));
     _logUsedChannels();
     try {
@@ -1691,6 +1736,7 @@ void StatWtTVI::summarizeStats(Double& mean, Double& variance) const {
 }
 
 void StatWtTVI::origin() {
+    cout << __func__ << endl;
     // Drive underlying ViImplementation2
     getVii()->origin();
     // Synchronize own VisBuffer
@@ -1699,6 +1745,7 @@ void StatWtTVI::origin() {
 }
 
 void StatWtTVI::next() {
+    cout << __func__ << endl;
     // Drive underlying ViImplementation2
     getVii()->next();
     // Synchronize own VisBuffer
