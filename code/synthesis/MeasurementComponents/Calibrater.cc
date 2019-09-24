@@ -46,6 +46,7 @@
 #include <casa/Exceptions/Error.h>
 #include <casa/iostream.h>
 #include <casa/sstream.h>
+#include <casa/OS/File.h>
 #include <synthesis/MeasurementComponents/Calibrater.h>
 #include <synthesis/CalTables/CLPatchPanel.h>
 #include <synthesis/MeasurementComponents/CalSolVi2Organizer.h>
@@ -89,7 +90,7 @@ Calibrater::Calibrater():
   ms_p(0), 
   mssel_p(0), 
   mss_p(0),
-  frequencySelections_p(0),
+  frequencySelections_p(nullptr),
   msmc_p(0),
   ve_p(0),
   vc_p(),
@@ -109,7 +110,7 @@ Calibrater::Calibrater(String msname):
   ms_p(0), 
   mssel_p(0), 
   mss_p(0),
-  frequencySelections_p(0),
+  frequencySelections_p(nullptr),
   msmc_p(0),
   ve_p(0),
   vc_p(),
@@ -148,7 +149,7 @@ Calibrater::Calibrater(const vi::SimpleSimVi2Parameters& ssvp):
   ms_p(0), 
   mssel_p(0), 
   mss_p(0),
-  frequencySelections_p(0),
+  frequencySelections_p(nullptr),
   msmc_p(0),
   ve_p(0),
   vc_p(),
@@ -789,8 +790,11 @@ Bool Calibrater::setsolve (const String& type,
                            const Bool smooth,
                            const Bool zerorates,
                            const Bool globalsolve,
+                           const Int niter,
                            const Vector<Double>& delaywindow, 
-                           const Vector<Double>& ratewindow
+                           const Vector<Double>& ratewindow,
+			   const String& solmode,
+			   const Vector<Double>& rmsthresh
     )
 {
   
@@ -814,6 +818,8 @@ Bool Calibrater::setsolve (const String& type,
   solveparDesc.addField ("cfcache", TpString);
   solveparDesc.addField ("painc", TpDouble);
   solveparDesc.addField ("fitorder", TpInt);
+  solveparDesc.addField ("solmode", TpString);
+  solveparDesc.addField ("rmsthresh", TpArrayDouble);
 
   // fringe-fit specific fields
   solveparDesc.addField ("zerorates", TpBool);
@@ -821,6 +827,7 @@ Bool Calibrater::setsolve (const String& type,
   solveparDesc.addField ("globalsolve", TpBool);
   solveparDesc.addField ("delaywindow", TpArrayDouble);
   solveparDesc.addField ("ratewindow", TpArrayDouble);
+  solveparDesc.addField ("niter", TpInt);
 
   // single dish specific fields
   solveparDesc.addField ("fraction", TpFloat);
@@ -847,8 +854,11 @@ Bool Calibrater::setsolve (const String& type,
   solvepar.define ("minsnr", minsnr);
   solvepar.define ("zerorates", zerorates);
   solvepar.define ("globalsolve", globalsolve);
+  solvepar.define ("niter", niter);
   solvepar.define ("delaywindow", delaywindow);
   solvepar.define ("ratewindow", ratewindow);
+  solvepar.define ("solmode", solmode);
+  solvepar.define ("rmsthresh", rmsthresh);
   
   
   String uptype=type;
@@ -1154,6 +1164,13 @@ Calibrater::correct2(String mode)
       // Ensure apply list non-zero and properly sorted
       ve_p->setapply(vc_p);
 
+      bool forceOldVIByEnv(false);
+      forceOldVIByEnv = (getenv("VI1CAL")!=NULL);
+      if (forceOldVIByEnv && anyEQ(ve_p->listTypes(),VisCal::A)) {
+	logSink() << LogIO::WARN << "Using VI2 calibration apply.  AMueller (uvcontsub) no longer requires VI1 for apply." << LogIO::POST;
+      }
+
+      /*   CAS-12434 (2019Jun07, gmoellen): AMueller works with VB2 in _apply_ (only) context now
       // Trap uvcontsub case, since it does not yet handlg VB2
       if (anyEQ(ve_p->listTypes(),VisCal::A)) {
 
@@ -1165,7 +1182,7 @@ Calibrater::correct2(String mode)
 	else
 	  throw(AipsError("Cannot handle AMueller (uvcontsub) and other types simultaneously."));
       }
-
+      */
       
       // Report the types that will be applied
       applystate();
@@ -1623,8 +1640,8 @@ Bool Calibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 		vi::VisibilityIterator2 vi2(*ms_p, sc, true);
 		vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-		ROMSColumns mscol(*ms_p);
-		const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
+		MSColumns mscol(*ms_p);
+		const MSSpWindowColumns& msspw(mscol.spectralWindow());
 		uInt nSpw = msspw.nrow();
 		Vector<Double> effChBw(nSpw, 0.0);
 		for (uInt ispw = 0; ispw < nSpw; ++ispw) {
@@ -1940,8 +1957,8 @@ Bool Calibrater::initWeights(String wtmode, Bool dowtsp) {
     vi::VisibilityIterator2 vi2(*ms_p,sc,true);
     vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-    ROMSColumns mscol(*ms_p);
-    const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
+    MSColumns mscol(*ms_p);
+    const MSSpWindowColumns& msspw(mscol.spectralWindow());
     uInt nSpw=msspw.nrow();
     Vector<Double> effChBw(nSpw,0.0);
     for (uInt ispw=0;ispw<nSpw;++ispw) {
@@ -2161,8 +2178,8 @@ Bool Calibrater::initWeights(Bool doBT, Bool dowtsp) {
     vi::VisibilityIterator2 vi2(*ms_p,sc,true);
     vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-    ROMSColumns mscol(*ms_p);
-    const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
+    MSColumns mscol(*ms_p);
+    const MSSpWindowColumns& msspw(mscol.spectralWindow());
     uInt nSpw=msspw.nrow();
     Vector<Double> effChBw(nSpw,0.0);
     for (uInt ispw=0;ispw<nSpw;++ispw) {
@@ -2382,6 +2399,14 @@ void Calibrater::fluxscale(const String& infile,
 
   logSink() << LogOrigin("Calibrater","fluxscale") << LogIO::NORMAL3;
 
+  //outfile check
+  if (outfile=="") 
+    throw(AipsError("output fluxscaled caltable name must be specified!"));
+  else {
+    if (File(outfile).exists() && !append) 
+      throw(AipsError("output caltable name, "+outfile+" exists. Please specify a different caltable name"));
+  }
+
   // Convert refFields/transFields to index lists
   Vector<Int> refidx(0);
 
@@ -2479,7 +2504,7 @@ void Calibrater::fluxscale(const String& infile,
 
       //Bool incremental=false;
       // Make fluxscale calculation
-      Vector<String> fldnames(ROMSFieldColumns(ms_p->field()).name().getColumn());
+      Vector<String> fldnames(MSFieldColumns(ms_p->field()).name().getColumn());
       //fsvj_->fluxscale(refField,tranField,refSpwMap,fldnames,oFluxScaleFactor,
       fsvj_->fluxscale(outfile,refField,tranField,refSpwMap,fldnames,inGainThres,antSel,
         timerangeSel,scanSel,oFluxScaleFactor, oListFile,incremental,fitorder,display);
@@ -2915,11 +2940,7 @@ void Calibrater::selectChannel(const String& spw) {
   if (mss_p && mssel_p) {
 
     // Refresh the frequencySelections object to feed to VI2, if relevant
-    if (frequencySelections_p) {
-      delete frequencySelections_p;
-      frequencySelections_p=NULL;
-    }
-    frequencySelections_p = new vi::FrequencySelections();
+    frequencySelections_p.reset(new vi::FrequencySelections());
 
     vi::FrequencySelectionUsingChannels usingChannels;
     usingChannels.add(*mss_p,mssel_p);
@@ -2983,7 +3004,7 @@ Bool Calibrater::cleanup() {
   // Delete derived dataset stuff
   if(mssel_p) delete mssel_p; mssel_p=0;
   if(mss_p) delete mss_p; mss_p=0;
-  if (frequencySelections_p)  delete frequencySelections_p;  frequencySelections_p=0;
+  frequencySelections_p.reset();
 
   // Delete the current VisEquation
   if(ve_p) delete ve_p; ve_p=0;
@@ -3126,12 +3147,15 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     // Simulated data (used for testing)
     vi2org.addSimIO(ssvp_p);
   else
-    // Real (selected) data in an MS (channel selection handled later...)
+  {
+    // Real (selected) data in an MS (channel selection handled by addDiskIO method)
     //   The iteration time-interval is the solution interval
     vi2org.addDiskIO(mssel_p,svc_p->solTimeInterval(),
 		     svc_p->combobs(),svc_p->combscan(),
 		     svc_p->combfld(),svc_p->combspw(),
-		     true);   // use MSIter2
+		     true,     // use MSIter2
+                     frequencySelections_p);  // Tell VI2 factory about the freq selection!
+  }
 
   // Add ad hoc SD section layer (e.g., OTF select of raster boundaries, etc.)
   // only double circle gain calibration is implemented
@@ -3189,10 +3213,6 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   // Form the VI2 to drive data iteration below
   vi::VisibilityIterator2& vi(vi2org.makeFullVI());
   //cout << "VI Layers: " << vi.ViiType() << endl;
-
-  // Tell VI2 about the freq selection!
-  if (frequencySelections_p) 
-    vi.setFrequencySelection(*frequencySelections_p);
 
   // Access to the net VB2 for forming SolveDataBuffers in the SDBList below
   //  NB: this assumes that the internal address of the VI2's VB2 will never change!
@@ -3380,12 +3400,13 @@ casacore::Bool Calibrater::genericGatherAndSolve()
       // Size the solvePar arrays inside SVC                                                                                
       //  (smart:  if freqDepPar()=F, uses 1)                                                                               
       //  returns the number of channel solutions to iterate over                                                           
-      Int nChanSol=svc_p->sizeSolveParCurrSpw(sdbs.nChannels());
+      //Int nChanSol=svc_p->sizeSolveParCurrSpw(sdbs.nChannels());
+      Int nChanSol=svc_p->sizeSolveParCurrSpw((svc_p->freqDepPar() ? sdbs.nChannels() : 1));
 
       if (svc_p->useGenericSolveOne()) {
 
         // We'll use the generic solver                                                                                     
-        VisCalSolver2 vcs;
+        VisCalSolver2 vcs(svc_p->solmode(),svc_p->rmsthresh());
 
         // Guess from the data                                                                                              
         svc_p->guessPar(sdbs);
@@ -3476,15 +3497,6 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   Vector<Bool> unsolspw=(spwwts==0.0f); 
   summarize_uncalspws(unsolspw, "solv");                                                                                  
 
-  // Fill activity record
-  //  cout << "  Expected, Attempted, Succeeded (by spw) = " << nexp << ", " << natt << ", " << nsuc << endl;                 
-  //  cout << " Expected, Attempted, Succeeded = " << sum(nexp) << ", " << sum(natt) << ", " << sum(nsuc) << endl;
-  actRec_=Record();
-  actRec_.define("origin","Calibrater::genericGatherAndSolve");
-  actRec_.define("nExpected",nexp);
-  actRec_.define("nAttempt",natt);
-  actRec_.define("nSucceed",nsuc);
-
   //  throw(AipsError("EARLY ESCAPE!!"));
 
   if (nGood>0) {
@@ -3499,6 +3511,21 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   else {
     logSink() << "No output calibration table written."
 	      << LogIO::POST;
+  }
+
+  // Fill activity record
+  //  cout << "  Expected, Attempted, Succeeded (by spw) = " << nexp << ", " << natt << ", " << nsuc << endl;                 
+  //  cout << " Expected, Attempted, Succeeded = " << sum(nexp) << ", " << sum(natt) << ", " << sum(nsuc) << endl;
+  actRec_=Record();
+  actRec_.define("origin","Calibrater::genericGatherAndSolve");
+  actRec_.define("nExpected",nexp);
+  actRec_.define("nAttempt",natt);
+  actRec_.define("nSucceed",nsuc);
+
+  { 
+    Record solveRec=svc_p->solveActionRec();
+    if (solveRec.nfields()>0)
+      actRec_.merge(solveRec);
   }
 
   // Reach here, all is good
@@ -4431,8 +4458,8 @@ Bool OldCalibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 		vi::VisibilityIterator2 vi2(*ms_p, sc, true);
 		vi::VisBuffer2 *vb = vi2.getVisBuffer();
 
-		ROMSColumns mscol(*ms_p);
-		const ROMSSpWindowColumns& msspw(mscol.spectralWindow());
+		MSColumns mscol(*ms_p);
+		const MSSpWindowColumns& msspw(mscol.spectralWindow());
 		uInt nSpw = msspw.nrow();
 		Vector<Double> effChBw(nSpw, 0.0);
 		for (uInt ispw = 0; ispw < nSpw; ++ispw) {
@@ -4785,7 +4812,7 @@ void OldCalibrater::fluxscale(const String& infile,
 
       //Bool incremental=false;
       // Make fluxscale calculation
-      Vector<String> fldnames(ROMSFieldColumns(ms_p->field()).name().getColumn());
+      Vector<String> fldnames(MSFieldColumns(ms_p->field()).name().getColumn());
       //fsvj_->fluxscale(refField,tranField,refSpwMap,fldnames,oFluxScaleFactor,
       fsvj_->fluxscale(outfile,refField,tranField,refSpwMap,fldnames,inGainThres,antSel,
         timerangeSel,scanSel,oFluxScaleFactor, oListFile,incremental,fitorder,display);
@@ -5481,11 +5508,7 @@ void OldCalibrater::selectChannel(const String& spw) {
   if (mss_p && mssel_p) {
 
     // Refresh the frequencySelections object to feed to VI2, if relevant
-    if (frequencySelections_p) {
-      delete frequencySelections_p;
-      frequencySelections_p=NULL;
-    }
-    frequencySelections_p = new vi::FrequencySelections();
+    frequencySelections_p.reset(new vi::FrequencySelections());
 
     vi::FrequencySelectionUsingChannels usingChannels;
     usingChannels.add(*mss_p,mssel_p);
@@ -5630,7 +5653,7 @@ void OldCalibrater::selectChannel(const String& mode,
   if(dataMode_p=="channel") {
     // *** this bit here is temporary till we unifomize data selection
     //Getting the selected SPWs
-    ROMSMainColumns msc(*mssel_p);
+    MSMainColumns msc(*mssel_p);
     Vector<Int> dataDescID = msc.dataDescId().getColumn();
     Bool dum;
     Sort sort( dataDescID.getStorage(dum),sizeof(Int) );
@@ -5979,13 +6002,6 @@ Bool OldCalibrater::genericGatherAndSolve() {
 
   summarize_uncalspws(unsolspw, "solv");
   
-  // Fill activity record
-  actRec_=Record();
-  actRec_.define("origin","Calibrater::genericGatherAndSolve");
-  actRec_.define("nExpected",nexp);
-  actRec_.define("nAttempt",natt);
-  actRec_.define("nSucceed",nsuc);
-
   // Store whole of result in a caltable
   if (nGood==0) {
     logSink() << "No output calibration table written."
@@ -6003,6 +6019,21 @@ Bool OldCalibrater::genericGatherAndSolve() {
 
     }
   }
+
+  // Fill activity record
+  actRec_=Record();
+  actRec_.define("origin","Calibrater::genericGatherAndSolve");
+  actRec_.define("nExpected",nexp);
+  actRec_.define("nAttempt",natt);
+  actRec_.define("nSucceed",nsuc);
+
+  { 
+    Record solveRec=svc_p->solveActionRec();
+    if (solveRec.nfields()>0)
+      actRec_.merge(solveRec);
+  }
+
+
 
   return true;
 

@@ -73,13 +73,13 @@ int main(int argc, char** argv) {
 TEST_F( PlotMSCacheTest, testFreqFrame) {
 	// Test frequency conversion transformations
 	// Load values from MeasurementSet main table
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	Int fieldID(msmc.fieldId().get(0)); // for phasedir
 	Int obsID(msmc.observationId().get(0)); // for phasedir
 	MEpoch epoch(msmc.timeMeas()(0));
 	// values from subtables for freq conversion
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> inputFreq(mscol.spectralWindow().chanFreq()(spw));
 	Int refFrame(mscol.spectralWindow().measFreqRef()(spw));
@@ -130,10 +130,10 @@ TEST_F( PlotMSCacheTest, testFreqFrame) {
 TEST_F( PlotMSCacheTest, testRestFreq) {
 	// Test velocity rest frequency options
 	// Load values from MeasurementSet main table
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	// values from subtables for freq conversion
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> inputFreq(mscol.spectralWindow().chanFreq()(spw));
 	Vector<MFrequency> inputFreqMeas(mscol.spectralWindow().chanFreqMeas()(spw));
@@ -173,10 +173,10 @@ TEST_F( PlotMSCacheTest, testRestFreq) {
 TEST_F( PlotMSCacheTest, testVelDef) {
 	// Test velocity definition options
 	// Load values from MeasurementSet main table
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	// values from subtables for freq conversion
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> inputFreq(mscol.spectralWindow().chanFreq()(spw));
 	Vector<MFrequency> inputFreqMeas(mscol.spectralWindow().chanFreqMeas()(spw));
@@ -223,12 +223,12 @@ TEST_F( PlotMSCacheTest, testPhaseShift) {
 	mssSetData2(sortedMS, selMS, "", "", "",
 		"", "", "", "", "", scanExpr, "", "", "", "");
 	// Load values from MeasurementSet main table
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Matrix<Double> uvw(msmc.uvw().getColumn());
 	Cube<Complex> visData(msmc.data().getColumn());
 	Int ddID(msmc.dataDescId().get(0)); // for spw / freq
 	// values from subtables for freq conversion
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> inputFreq(mscol.spectralWindow().chanFreq()(spw));
 

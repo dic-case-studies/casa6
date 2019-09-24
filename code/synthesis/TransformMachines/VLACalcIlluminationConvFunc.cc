@@ -366,7 +366,7 @@ namespace casa{
 		{
 		  PolnRIndex(0)=PolnLIndex(0)=tndx(0);
 		  PolnRIndex(1)=PolnLIndex(1)=tndx(1);
-		  Complex val, Rval, Lval;
+		  Complex val, Rval /*, Lval*/;
 		  Float phase;
 		  val = ap.aperture->getAt(tndx);
 		  Rval = ap.aperture->getAt(PolnRIndex);
@@ -428,9 +428,9 @@ namespace casa{
     AlwaysAssert(ap.band>=-1, AipsError);
     Vector<Double> chanFreq = vb.frequency();
     
-    const ROMSSpWindowColumns& spwCol = vb.msColumns().spectralWindow();
-    ROArrayColumn<Double> chanfreq = spwCol.chanFreq();
-    ROScalarColumn<Double> reffreq = spwCol.refFrequency();
+    const MSSpWindowColumns& spwCol = vb.msColumns().spectralWindow();
+    ArrayColumn<Double> chanfreq = spwCol.chanFreq();
+    ScalarColumn<Double> reffreq = spwCol.refFrequency();
     //    Freq = sum(chanFreq)/chanFreq.nelements();
     
     Freq = max(chanfreq.getColumn());

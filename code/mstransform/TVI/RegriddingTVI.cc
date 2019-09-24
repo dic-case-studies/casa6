@@ -36,7 +36,7 @@ namespace vi { //# NAMESPACE VI - BEGIN
 // -----------------------------------------------------------------------
 RegriddingTVI::RegriddingTVI(	ViImplementation2 * inputVii,
 								const Record &configuration):
-								FreqAxisTVI (inputVii,configuration)
+								FreqAxisTVI (inputVii)
 {
 	// Frequency specification parameters
 	nChan_p = -1;
@@ -265,7 +265,7 @@ void RegriddingTVI::initialize()
     // observatoryPosition_p=MPosition::Convert(observatoryPosition_p, MPosition::ITRF)();
 
     // Determine observation time from the first row in the selected MS
-    selectedInputMsCols_p = new ROMSColumns(getVii()->ms());
+    selectedInputMsCols_p = new MSColumns(getVii()->ms());
     referenceTime_p = selectedInputMsCols_p->timeMeas()(0);
 
     // Access FIELD cols to get phase center and radial velocity
@@ -776,6 +776,23 @@ vi::ViImplementation2 * RegriddingTVIFactory::createVi(VisibilityIterator2 *) co
 vi::ViImplementation2 * RegriddingTVIFactory::createVi() const
 {
 	return new RegriddingTVI(inputVii_p,configuration_p);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// RegriddingTVILayerFactory class
+//////////////////////////////////////////////////////////////////////////
+
+RegriddingTVILayerFactory::RegriddingTVILayerFactory(Record &configuration) :
+  ViiLayerFactory(),
+  configuration_p(configuration)
+{}
+
+ViImplementation2*
+RegriddingTVILayerFactory::createInstance(ViImplementation2* vii0) const
+{
+  // Make the RegriddingTVi2, using supplied ViImplementation2, and return it
+  ViImplementation2 *vii = new RegriddingTVI(vii0,configuration_p);
+  return vii;
 }
 
 //////////////////////////////////////////////////////////////////////////

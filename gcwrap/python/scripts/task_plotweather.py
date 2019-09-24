@@ -80,7 +80,11 @@ def jm_sunEL(mytime):
 ## gets and plots data from the weather table of the given MS
 def plotweather(vis='', seasonal_weight=0.5, doPlot=True, plotName = ''):
     myMS=vis
-    if plotName == '': plotName = myMS+'.plotweather.png'
+    if plotName == '':
+        if myMS.endswith("/"):
+            plotName = myMS + myMS.rstrip("/") + '.plotweather.png'
+        else:
+            plotName = myMS + '.plotweather.png'
 
     # check for weather table
 
@@ -191,7 +195,7 @@ def plotweather(vis='', seasonal_weight=0.5, doPlot=True, plotName = ''):
 
     fC=qa.quantity(25.0,'GHz')
     fW=qa.quantity(50.,'GHz')
-    fR=qa.quantity(0.25,'GHz')
+    fR=qa.quantity(0.025,'GHz')
 
     at=casac.atmosphere()
     hum=20.0

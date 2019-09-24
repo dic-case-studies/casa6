@@ -468,8 +468,8 @@ class MSPlotMainMSCallBack : public TPGuiCallBackHooks
           //cout << "infomat=" << infomat << std::endl;
           //cout << "cpol=" << cpol << std::endl;
 //--------------------------------------------------------------
-          casacore::ROMSDataDescColumns dataDescCol(aveMS->dataDescription());
-          casacore::ROMSSpWindowColumns spwColumn(aveMS->spectralWindow());
+          casacore::MSDataDescColumns dataDescCol(aveMS->dataDescription());
+          casacore::MSSpWindowColumns spwColumn(aveMS->spectralWindow());
 
           //casacore::Int maxrows = ms.nrow();
           casacore::Int maxrows = 0;
@@ -636,13 +636,13 @@ class MSPlotMainMSCallBack : public TPGuiCallBackHooks
           //   return flagdisplay(direction, collist, infomat, cpol);
           //}
 //--------------------------------------------------------------
-          casacore::ROMSDataDescColumns dataDescCol(localMS->dataDescription());
+          casacore::MSDataDescColumns dataDescCol(localMS->dataDescription());
 
 
           //cout << "flagms=" << flagms << std::endl; 
           casacore::MS ms(flagms, casacore::Table::Update);
 
-          casacore::ROMSSpWindowColumns spwColumn(ms.spectralWindow());
+          casacore::MSSpWindowColumns spwColumn(ms.spectralWindow());
 
           //casacore::Int maxrows = ms.nrow();
           casacore::Int maxrows = 0;
@@ -933,7 +933,7 @@ class MSPlotMainMSCallBack : public TPGuiCallBackHooks
 
           //# get the DATA_DESC_ID column so we can extract polarization
           //# and spectral window information.
-          casacore::ROMSDataDescColumns dataDescCol( localMS->dataDescription());
+          casacore::MSDataDescColumns dataDescCol( localMS->dataDescription());
 
           casacore::IPosition mshape = infomat.shape();
           casacore::String warnings;
@@ -1840,7 +1840,7 @@ class MSPlotUVWCallBack : public TPGuiCallBackHooks
 
          //# get the DATA_DESC_ID column so we can extract polarization
          //# and spectral window information.
-         casacore::ROMSDataDescColumns dataDescCol( localMS->dataDescription() );
+         casacore::MSDataDescColumns dataDescCol( localMS->dataDescription() );
          
          casacore::IPosition mshape = infomat.shape();
          casacore::String warnings;

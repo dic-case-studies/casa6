@@ -64,7 +64,7 @@ using namespace casacore;
  using namespace casa;
 using namespace casacore;
  using namespace casa::refim;
-VPSkyJones::VPSkyJones(const ROMSColumns& msc, Table& tab,
+VPSkyJones::VPSkyJones(const MSColumns& msc, Table& tab,
 		       const Quantity &parAngleInc,
 		       BeamSquint::SquintType doSquint,
 		       const Quantity &skyPositionThreshold) 
@@ -74,9 +74,9 @@ VPSkyJones::VPSkyJones(const ROMSColumns& msc, Table& tab,
 
   const uInt nrow = tab.nrow();
 
-  ROScalarColumn<String> telCol(tab, "telescope");
-  ROScalarColumn<Int> antCol(tab, "antenna");
-  ROScalarColumn<TableRecord> recCol(tab, "pbdescription");
+  ScalarColumn<String> telCol(tab, "telescope");
+  ScalarColumn<Int> antCol(tab, "antenna");
+  ScalarColumn<TableRecord> recCol(tab, "pbdescription");
 
     
   for (uInt i=0; i < nrow; ++i) {
@@ -104,7 +104,7 @@ VPSkyJones::VPSkyJones(const ROMSColumns& msc, Table& tab,
 	  String band;
 	  PBMath::CommonPB whichPB;
 	  String commonPBName;
-	  ROScalarColumn<String> telescopesCol(msc.observation().telescopeName());
+	  ScalarColumn<String> telescopesCol(msc.observation().telescopeName());
 	  Quantity freq( msc.spectralWindow().refFrequency()(0), "Hz");	
 	  String tele =  telCol(i);
 	  if(tele=="") {
@@ -130,7 +130,7 @@ VPSkyJones::VPSkyJones(const ROMSColumns& msc, Table& tab,
 };
 
 
-VPSkyJones::VPSkyJones(const ROMSColumns& msc,
+VPSkyJones::VPSkyJones(const MSColumns& msc,
 		       Bool makePBs,
 		       const Quantity &parAngleInc,
 		       BeamSquint::SquintType doSquint,
@@ -140,7 +140,7 @@ VPSkyJones::VPSkyJones(const ROMSColumns& msc,
   LogIO os(LogOrigin("VPSkyJones", "VPSkyJones"));
 
   if (makePBs) {
-    ROScalarColumn<String> telescopesCol(msc.observation().telescopeName());
+    ScalarColumn<String> telescopesCol(msc.observation().telescopeName());
     
 
     for (uInt i=0; i < telescopesCol.nrow(); ++i) {

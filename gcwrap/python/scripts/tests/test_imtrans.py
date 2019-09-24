@@ -64,22 +64,45 @@
 # coding changes do not break the associated bits 
 # </motivation>
 #
-
 ###########################################################################
+from __future__ import absolute_import
+from __future__ import print_function
+import os
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image, table
+    from casatasks import imtrans
+    
+    _tb = table( )
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from tasks import *
+    from taskinit import *
+    import casac
+    from __main__ import *
+
+    image = iatool
+
+    # not a local tool
+    _tb = tb
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot, apath)
+
+datapath = 'regression/unittest/imtrans'
 good_image = "reorder_in.fits"
 cas_2364im = "CAS-2364.im"
 
 def run_transpose(imagename, outfile, order):
-    myia = iatool()
+    myia = image()
     myia.open(imagename)
-    print "*** order " + str(order)
+    print("*** order " + str(order))
     res = myia.transpose(outfile=outfile, order=order)
     myia.done()
     return res
@@ -91,12 +114,11 @@ def run_imtrans(imagename, outfile, order):
 class imtrans_test(unittest.TestCase):
     
     def setUp(self):
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imtrans/'
-        shutil.copy(datapath + good_image, good_image)
+        shutil.copy(ctsys_resolve(os.path.join(datapath,good_image)), good_image)
     
     def tearDown(self):
         os.remove(good_image)
-        self.assertTrue(len(tb.showcache()) == 0)
+        self.assertTrue(len(_tb.showcache()) == 0)
 
     def test_exceptions(self):
         """imtrans: Test various exception cases"""
@@ -106,31 +128,35 @@ class imtrans_test(unittest.TestCase):
                 if (i==0):
                     self.assertRaises(Exception, run_transpose, imagename, outfile, order)
                 else:
-                    self.assertFalse(run_imtrans(imagename, outfile, order))
+                    # CASA6 tasks always throw exceptions, CASA5 tasks return False
+                    result = run_imtrans(imagename, outfile, order)
+                    if not is_CASA6:
+                        # the tests expect this to throw an exception, result should be False
+                        self.assertTrue(result)
 
         # blank imagename
-        testit("", "blah", "012")
+        self.assertRaises(Exception, testit, "", "blah", "012")
         
         # not enough specified axes
-        testit(good_image, "blah", "01")
-        testit(good_image, "blah", 10)
-        testit(good_image, "blah", ["r", "d"])
+        self.assertRaises(Exception, testit, good_image, "blah", "01")
+        self.assertRaises(Exception, testit, good_image, "blah", 10)
+        self.assertRaises(Exception, testit, good_image, "blah", ["r", "d"])
         
         # too many specified axes
-        testit(good_image, "blah", "0123")
-        testit(good_image, "blah", 1230)
-        testit(good_image, "blah", ["r", "d", "f", "s"])
+        self.assertRaises(Exception, testit, good_image, "blah", "0123")
+        self.assertRaises(Exception, testit, good_image, "blah", 1230)
+        self.assertRaises(Exception, testit, good_image, "blah", ["r", "d", "f", "s"])
 
         # Bogus axes specification
-        testit(good_image, "blah", "123")
-        testit(good_image, "blah", ["r", "d", "s"])
-        testit(good_image, "blah", ["r", "d", "r"])
-        testit(good_image, "blah", 103)
+        self.assertRaises(Exception, testit, good_image, "blah", "123")
+        self.assertRaises(Exception, testit, good_image, "blah", ["r", "d", "s"])
+        self.assertRaises(Exception, testit, good_image, "blah", ["r", "d", "r"])
+        self.assertRaises(Exception, testit, good_image, "blah", 103)
         
     def test_straight_copy(self):
         """No actual transposing"""
         imagename = good_image
-        myia = iatool()
+        myia = image()
         myia.open(imagename)
         expecteddata = myia.getchunk()
         expectednames = myia.coordsys().names()
@@ -142,7 +168,7 @@ class imtrans_test(unittest.TestCase):
                 newim = code(imagename, outfile, order)
                 if (type(newim) == bool):
                     self.assertTrue(newim)
-                    newim = iatool()
+                    newim = image()
                     newim.open(outfile)
                 gotdata = newim.getchunk()
                 gotnames = newim.coordsys().names()
@@ -154,7 +180,7 @@ class imtrans_test(unittest.TestCase):
     def test_transpose(self):
         """Test transposing"""
         imagename = good_image
-        myia = iatool()
+        myia = image()
         myia.open(imagename)
         expecteddata = myia.getchunk()
         expectednames = myia.coordsys().names()
@@ -163,13 +189,17 @@ class imtrans_test(unittest.TestCase):
         for order in ["120", 120, ['d', 'f', 'r'], ["declin", "freq", "righ"]]:
             for code in [run_transpose, run_imtrans]:
                 for outname in ["transpose_" + str(count), ""]:
-                    newim = code(imagename, outname, order)
                     if code == run_imtrans and len(outname) == 0:
-                        self.assertFalse(newim)
+                        if is_CASA6:
+                            self.assertRaises(Exception, code, imagename, outname, order)
+                        else:
+                            newim = code(imagename, outname, order)
+                            self.assertFalse(newim)
                     else:
+                        newim = code(imagename, outname, order)
                         if (type(newim) == bool):
                             self.assertTrue(newim)
-                            newim = iatool()
+                            newim = image()
                             newim.open(outname)
                         gotdata = newim.getchunk()
                         inshape = expecteddata.shape
@@ -186,16 +216,15 @@ class imtrans_test(unittest.TestCase):
 
     def test_cas_2364(self):
         "test CAS-2364 fix"
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imtrans/'
-        shutil.copytree(datapath + cas_2364im, cas_2364im)
+        shutil.copytree(ctsys_resolve(os.path.join(datapath,cas_2364im)), cas_2364im)
         order="0132"
         out1 = "blahxx.im"
-        myia = iatool()
+        myia = image()
         myia.open(cas_2364im)
         trans = myia.transpose(out1, order)
         myia.done()
         trans.done()
-        self.assertTrue(len(tb.showcache()) == 0)
+        self.assertTrue(len(_tb.showcache()) == 0)
 
         # to verify fix, just open the image. bug was that exception was thrown when opening output from reorder
         myia.open(out1)
@@ -210,7 +239,7 @@ class imtrans_test(unittest.TestCase):
 
     def test_history(self):
         """Test history records are written"""
-        myia = iatool()
+        myia = image()
         imagename = "zz.im"
         myia.fromshape(imagename, [10,10,4,10])
         order = "3210"
@@ -236,7 +265,7 @@ class imtrans_test(unittest.TestCase):
 
     def test_imageinfo(self):
         """Verify image info is copied"""
-        myia = iatool()
+        myia = image()
         myia.fromshape("",[10,20,30])
         myia.setbrightnessunit("Jy/beam")
         myia.setrestoringbeam("4arcmin", "3arcmin", "0deg")
@@ -251,3 +280,7 @@ class imtrans_test(unittest.TestCase):
 
 def suite():
     return [imtrans_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

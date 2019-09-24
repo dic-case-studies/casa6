@@ -213,9 +213,8 @@ bool PlotMSPage::disown( int row, int col ){
 	if ( row < rowCount ){
 		int colCount = itsCanvasOwners_[row].size();
 		if ( col < colCount ){
-			int ownerCount = itsCanvasOwners_[row][col].size();
-			for ( int k = 0; k < ownerCount; k++ ){
-				disown( row, col, itsCanvasOwners_[row][col][k]);
+			for ( auto iter = itsCanvasOwners_[row][col].begin( ); iter != itsCanvasOwners_[row][col].end( ); ++iter ) {
+				disown( row, col, *iter);
 			}
 		}
 		disowned = true;

@@ -73,6 +73,22 @@ import unittest
 
 class ia_imageconcat_test(unittest.TestCase):
     
+    def make_images(self):
+        myia = self._myia
+        myia.fromshape("", [1, 1, 5])
+        names = []
+        for i in range(5):
+            name = "chan_" + str(i)
+            names.append(name) 
+            subi = myia.subimage(
+                name, region=rg.box([0, 0, i], [0, 0,i]), overwrite=True
+            )
+            got = subi.toworld([0 ,0, 0])['numeric'][2]
+            expec = myia.toworld([0 ,0, i])['numeric'][2]
+            self.assertTrue(got == expec)
+            subi.done()
+        return (names, myia)
+
     def setUp(self):
         self._myia = iatool()
 
@@ -216,17 +232,7 @@ class ia_imageconcat_test(unittest.TestCase):
         
     def test_basic(self):
         """Test basic functionality"""
-        myia = self._myia
-        myia.fromshape("", [1, 1, 5])
-        names = []
-        for i in range(5):
-            name = "chan_" + str(i)
-            names.append(name) 
-            subi = myia.subimage(name, region=rg.box([0, 0, i], [0, 0,i]))
-            got = subi.toworld([0 ,0, 0])['numeric'][2]
-            expec = myia.toworld([0 ,0, i])['numeric'][2]
-            self.assertTrue(got == expec)
-            subi.done()
+        (names, myia) = self.make_images() 
         concat = myia.imageconcat(infiles=[names[0], names[1], names[2]])
         for i in range(3):
             got = concat.toworld([0 ,0, i])['numeric'][2]
@@ -324,6 +330,46 @@ class ia_imageconcat_test(unittest.TestCase):
                 concat.pixeltype() == expec[mytype], "wrong type for " + mytype
             )
             concat.done()
+
+    def test_mode(self):
+        """Test various output formats CAS-12600"""
+        # 'm' has to be the last one...
+        modes = ['c', 'n', 'p', 'm']
+        (names, myia) = self.make_images()
+        for mode in modes:
+            outname = "loop1_" + mode + ".im"
+            concat = myia.imageconcat(outname, infiles=names, mode=mode)
+            for i in range(3):
+                got = concat.toworld([0 ,0, i])['numeric'][2]
+                expec = myia.toworld([0 ,0, i])['numeric'][2]
+                self.assertTrue(got == expec)
+        (names, myia) = self.make_images()
+        for mode in modes:
+            outname = "loop2_" + mode + ".im"
+            concat = myia.imageconcat(
+                outname, infiles=[names[0], names[1], names[3]], relax=True, mode=mode
+            )
+            for i in range(3):
+                k = i
+                if i == 2: k = 3
+                got = concat.toworld([0 ,0, i])['numeric'][2]
+                expec = myia.toworld([0 ,0, k])['numeric'][2]
+                self.assertTrue(got == expec)
+        (names, myia) = self.make_images()
+        for mode in modes:
+            outname = "loop3_" + mode + ".im"
+            concat = myia.imageconcat(
+                outname, infiles=[names[0], names[1], names[3],
+                names[4]], relax=True, mode=mode
+            )
+            for i in range(4):
+                k = i
+                if i >= 2: k = i+1
+                got = concat.toworld([0 ,0, i])['numeric'][2]
+                expec = myia.toworld([0 ,0, k])['numeric'][2]
+                self.assertTrue(got == expec)
+        concat.done()
+        myia.done() 
 
 def suite():
     return [ia_imageconcat_test]

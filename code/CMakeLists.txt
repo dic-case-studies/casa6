@@ -1,4 +1,4 @@
-# CASA - Common Astronomy Software Applications
+# CASA - Common Astronomy Software Applications 
 # Copyright (C) 2010 by ESO (in the framework of the ALMA collaboration)
 # Copyright (C) 2010-2013 Associated Universities, Inc. Washington DC, USA.
 #
@@ -72,10 +72,12 @@ include( target )
 include( CASA )
 
 set( CASA_VERSION_MAJOR   5   )
-set( CASA_VERSION_MINOR   5   )
+set( CASA_VERSION_MINOR   7   )
 set( CASA_VERSION_PATCH   0   )
 set( CASA_VERSION_FEATURE 0 CACHE STRING "feature version" )
 set( CASA_VERSION_DESC    "" )
+# CASA/ALMA/VLA etc...
+set( CASA_VARIANT  "" )
 
 if( CASA_VERSION_FEATURE STREQUAL "0" )
     execute_process( COMMAND svn info
@@ -95,7 +97,7 @@ if( CASA_VERSION_FEATURE STREQUAL "0" )
                             OUTPUT_STRIP_TRAILING_WHITESPACE )
 
     else( )
-        execute_process( COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install/resolvegitrevision.sh
+        execute_process( COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install/resolvegitrevision.pl
                          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                          OUTPUT_VARIABLE CASA_VERSION_FEATURE_AND_BRANCH_TAG # Getting a list
                          OUTPUT_STRIP_TRAILING_WHITESPACE )
@@ -104,8 +106,10 @@ if( CASA_VERSION_FEATURE STREQUAL "0" )
         message(STATUS "len = ${len}")
         list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 0 CASA_VERSION_FEATURE)
         list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 1 BRANCH_TAG)
+        list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 2 CASA_VARIANT)
         message("CASA_VERSION_FEATURE: ${CASA_VERSION_FEATURE}")
         message("CASA_VERSION_DESC: ${BRANCH_TAG}")
+        message("CASA_VARIANT: ${CASA_VARIANT}")
         set(CASA_VERSION_DESC " ${BRANCH_TAG}")
     endif( )
 endif( )
@@ -470,10 +474,12 @@ if( APPLE )
         endif()
     endif()
 
-    find_program( DBUS_FLAVOR_dbuspp-xml2cpp_EXECUTABLE dbuspp-xml2cpp PATHS ${casa_packages}/bin /opt/local/bin /usr/local/bin )
+    find_program( DBUS_FLAVOR_dbuspp-xml2cpp_EXECUTABLE dbuspp-xml2cpp PATHS ${casa_packages}/bin /opt/local/bin /usr/local/bin)
     if ( ${DBUS_FLAVOR_dbuspp-xml2cpp_EXECUTABLE} MATCHES "NOTFOUND$" )
+        message(STATUS "Defaulting to dbus-c++...")
         set( dbusxx dbus-c++ )
     else( )
+        message(STATUS "Found dbus-cpp...")
         set( dbusxx dbus-cpp )
         add_definitions( -DDBUS_CPP )
         STRING( REGEX REPLACE "(^.*)/bin.*" "\\1" dbus-root-path  ${DBUS_FLAVOR_dbuspp-xml2cpp_EXECUTABLE} )
@@ -531,6 +537,25 @@ elseif( CMAKE_SYSTEM_NAME STREQUAL Linux )
             # we continue to use libcasa-dbus in preference to
             # the system libdbus...
             set( dbus-cpp-library-name casa-dbus-cpp )
+        elseif( EXISTS /opt/casa/03 )
+            set( casa_packages /opt/casa/03 )
+            set( dbusxx dbus-cpp )
+            add_definitions( -DDBUS_CPP )
+	    set( LIBSAKURA_ROOT_DIR /opt/casa/02 )
+	    set( DEFAULT_CXX_FLAGS "${DEFAULT_CXX_FLAGS} -I/opt/casa/03/include -I/opt/casa/02/lib/dbus-1.0/include" )
+            if ( EXISTS /opt/casa/02/bin/qmake )
+                ## RHEL6
+                set( qt4 casa-qt )
+            else( )
+                ## RHEL7
+                set( qt4 system-qt )
+                # on RHEL7 we use the system libdbus*, here we assume
+                # that on RHEL6 the third party packages will continue
+                # to be installed in /usr/lib64/casa/02... (on RHEL6
+                # we continue to use libcasa-dbus in preference to
+                # the system libdbus...
+                set( dbus-cpp-library-name casa-dbus-cpp )
+            endif( )
         else( )
             set( dbusxx dbus-c++ )
             set( casa_packages /usr/lib64/casapy )
@@ -1102,12 +1127,13 @@ if( USE_ALMAWVR )
 endif()
 
 casa_find( GSLCBLAS
-              LIBS gslcblas )
+              LIBS gslcblas
+	      PREFIX_HINTS /opt/casa/03 /opt/casa/02 )
 
 casa_find( GSL
 	      LIBS gsl
    	      DEPENDS GSLCBLAS
-            )
+	      PREFIX_HINTS /opt/casa/03 /opt/casa/02 )
 
 #
 # gsl drags in dependencencies on atlas libraries, if they are not explicitly
@@ -1415,7 +1441,6 @@ casa_add_module( stdcasa CASACORE )
 casa_add_module( parallel CASACORE )
 casa_add_module( casadbus CASACORE DBUS )
 casa_add_module( casaqt CASACORE QT4 QWT XERCES graphics stdcasa )
-###casa_add_module ( CasaDataObjects CASACORE)
 casa_add_module( components stdcasa casatools CASACORE GSL )
 casa_add_module( imageanalysis CASACORE components)
 casa_add_module( asdmstman CASACORE )

@@ -182,7 +182,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
   }
 
+void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf, const Int mapperid)
+  {
 
+    vi::VisBuffer2 *vb=vi.getVisBuffer();
+    initializeGrid(*vb, dopsf, mapperid);
+    if(mapperid<0)
+      {
+	for (uInt k=0; k < itsMappers.nelements(); ++k)
+	  {
+	    ((itsMappers[k])->getFTM2())->initBriggsWeightor(vi);
+  	  }
+      }
+    else 
+      {
+	if (mapperid > (Int)itsMappers.nelements())
+	  throw ( AipsError("Internal Error : SIMapperCollection::initializeGrid(): mapperid out of range") );
+	else (itsMappers[mapperid]->getFTM2())->initBriggsWeightor(vi);
+      }
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////OLD vi/vb //////////////////////////////////////////////
@@ -213,7 +231,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  if(col==refim::FTMachine::CORRECTED){
 	//Dang i thought the new vb will return Data or FloatData if correctedData was
 	//not there
-	    if(ROMSMainColumns(vb.ms()).correctedData().isNull()){
+	    if(MSMainColumns(vb.ms()).correctedData().isNull()){
 	      col=refim::FTMachine::OBSERVED;
 	      //			  cerr << "Max of visCube" << max(vb.visCube()) << " model " << max(vb.modelVisCube())<< endl;
 	      vb.setVisCube(vb.visCube()-vb.visCubeModel());
@@ -224,12 +242,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  } 
 	  else if (col==refim::FTMachine::OBSERVED) {
 	    vb.setVisCube(vb.visCube()-vb.visCubeModel());
-	    
 	  }
 	}// if non zero model
 
     if(col==refim::FTMachine::CORRECTED &&
-       ROMSMainColumns(vb.ms()).correctedData().isNull()){
+       MSMainColumns(vb.ms()).correctedData().isNull()){
       //cout << "Corrected column isn't there, using data instead" << endl;
       col=refim::FTMachine::OBSERVED;
     }
@@ -237,11 +254,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if (mapperid < 0)
       {
 	//cout << "Using column : " << col << endl;
-
 	for (uInt k=0; k < itsMappers.nelements(); ++k)
 	  {
 	    (itsMappers[k])->grid(vb, dopsf, col);
-	    
 	  }
       }
     else 
@@ -724,6 +739,30 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
   }
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  Long SIMapperCollection::estimateRAM(){
+    Long mem=0;
+    	for (uInt k=0; k < itsMappers.nelements(); ++k)
+	  {
+            if(! ((itsMappers[k])->getFTM2()))
+              throw(AipsError("No VI/VB2 FTMachine set"));
+            ///IFT
+            if(((itsMappers[k])->getFTM2())->estimateRAM(((itsMappers[k])->imageStore()))> 0){
+              mem+=((itsMappers[k])->getFTM2())->estimateRAM(((itsMappers[k])->imageStore()));
+            //FT
+              mem+=((itsMappers[k])->getFTM2(False))->estimateRAM(((itsMappers[k])->imageStore()));
+            }
+            else{
+              //Assuming double precision...ignoring padding etc.
+              mem+=6*sizeof(float)*(((itsMappers[k])->imageStore())->getShape().product());
+            }
+            //Imagestorages
+            mem+=((itsMappers[k])->imageStore())->estimateRAM();
+  	  }
+        return mem;
+  }
+  
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////
 

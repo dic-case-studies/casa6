@@ -32,7 +32,6 @@
 #include <synthesis/MeasurementComponents/SolvableVisCal.h>
 #include <synthesis/MeasurementComponents/StandardVisCal.h>
 #include <synthesis/CalTables/GJonesMBuf.h>
-#include <casa/Containers/SimOrdMap.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -139,7 +138,7 @@ public:
   casacore::Double splinetime_p;
 
   // casacore::Time for which the current calibration cache is valid
-  casacore::Double cacheTimeValid_p;
+  //casacore::Double cacheTimeValid_p;
 
   // Ptr to a calibration buffer associated with the calibration
   // solutions which are to be interpolated and applied to the data
@@ -147,9 +146,9 @@ public:
 
 
   // Parameters for raw phase removal from another spw
-  VisSet* rawvs_p;
-  casacore::Bool rawPhaseRemoval_p;
-  casacore::SimpleOrderedMap<casacore::String, casacore::Int> timeValueMap_p;
+  //VisSet* rawvs_p;
+  //casacore::Bool rawPhaseRemoval_p;
+  std::map<casacore::String, casacore::Int> timeValueMap_p;
   casacore::Matrix<casacore::Double> rawPhase_p;
 
   // Solution timestamp

@@ -75,7 +75,7 @@ def tclean2(
     deconvolver,#='hogbom',
     scales,#=[],
     nterms,#=1,
-    scalebias,#=0.6
+    scalebias,#=0.0
     restoringbeam,#=[],
 
     ##### Outliers
@@ -135,7 +135,7 @@ def tclean2(
     #####################################################
 
     # mterm = True
-    # dopointing = False
+    # usepointing = False
     # dopbcorr = True
     # workdir = ''
     # cflist = []
@@ -191,7 +191,7 @@ def tclean2(
             #mterm=mterm,
         wbawp = wbawp,
             cfcache = cfcache,
-            #dopointing = dopointing,
+            #usepointing = usepointing,
             #dopbcorr = dopbcorr,
         conjbeams = conjbeams,
             computepastep =computepastep,

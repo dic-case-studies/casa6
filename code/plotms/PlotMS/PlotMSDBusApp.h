@@ -71,11 +71,17 @@ public:
     static const casacore::String PARAM_AXIS_Y_LOCATION;
     static const casacore::String PARAM_SHOWATM; // bool
     static const casacore::String PARAM_SHOWTSKY; // bool
+    static const casacore::String PARAM_SHOWIMAGE; // bool
     static const casacore::String PARAM_GRIDROWS; //int
     static const casacore::String PARAM_GRIDCOLS; //int
     static const casacore::String PARAM_CLEARSELECTIONS; // bool
     static const casacore::String PARAM_DATACOLUMN_X; // String
     static const casacore::String PARAM_DATACOLUMN_Y; // String
+    static const casacore::String PARAM_FRAME_X; // String
+    static const casacore::String PARAM_FRAME_Y; // String
+    static const casacore::String PARAM_INTERP_X; // String
+    static const casacore::String PARAM_INTERP_Y; // String
+    static const casacore::String PARAM_DATA_INDEX;    //int
     static const casacore::String PARAM_FILENAME; // String
     static const casacore::String PARAM_FLAGGING; // Record
     static const casacore::String PARAM_HEIGHT; // int or uInt
@@ -102,7 +108,8 @@ public:
     static const casacore::String PARAM_COLORAXIS;     // string
     static const casacore::String PARAM_CANVASTITLE;    // string
     static const casacore::String PARAM_CANVASTITLEFONT;  // int
-    static const casacore::String PARAM_DATA_INDEX;    //int
+    static const casacore::String PARAM_SHOWXLABEL;    // bool
+    static const casacore::String PARAM_SHOWYLABEL;    // bool
     static const casacore::String PARAM_XAXISLABEL;    // string
     static const casacore::String PARAM_YAXISLABEL;    // string
     static const casacore::String PARAM_XAXISFONT;    // int
@@ -135,6 +142,8 @@ public:
     static const casacore::String PARAM_FLAGGEDSYMBOLCOLOR;   // string
     static const casacore::String PARAM_FLAGGEDSYMBOLFILL;    // string
     static const casacore::String PARAM_FLAGGEDSYMBOLOUTLINE; // bool
+    static const casacore::String PARAM_XCONNECTOR;    // string
+    static const casacore::String PARAM_TIMECONNECTOR; // bool
     
     
     // </group>

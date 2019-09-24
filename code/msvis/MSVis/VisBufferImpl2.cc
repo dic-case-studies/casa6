@@ -2286,7 +2286,7 @@ VisBufferImpl2::fillDirectionAux (Vector<MDirection>& value,
 {
     value.resize (antenna.nelements()); // could also use nRow()
 
-//    const ROMSPointingColumns & mspc = getViiP()->subtableColumns ().pointing();
+//    const MSPointingColumns & mspc = getViiP()->subtableColumns ().pointing();
 //    state_p->pointingTableLastRow_p = mspc.pointingIndex (antenna (0),
 //                                                          time()(0), state_p->pointingTableLastRow_p);
 
@@ -2298,6 +2298,7 @@ VisBufferImpl2::fillDirectionAux (Vector<MDirection>& value,
         state_p->pointingTableLastRow_p = 0;
         return;
     }
+
 
     for (uInt row = 0; row < antenna.nelements(); ++row) {
 

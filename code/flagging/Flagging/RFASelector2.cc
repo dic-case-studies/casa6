@@ -716,7 +716,7 @@ RFASelector::RFASelector ( RFChunkStats &ch,const RecordInterface &parm) :
   unflag =  (fieldType(parm, RF_UNFLAG,TpBool) && parm.asBool(RF_UNFLAG));
   //addString(desc_str,unflag?RF_UNFLAG:"flag");
 
-  ac = new ROMSAntennaColumns(chunk.measSet().antenna());
+  ac = new MSAntennaColumns(chunk.measSet().antenna());
   diameters = ac->dishDiameter().getColumn();
   
   shadow = fieldType(parm, RF_SHADOW, TpBool) && parm.asBool(RF_SHADOW);
@@ -1324,10 +1324,10 @@ RFA::IterMode RFASelector::iterTime (uInt it)
 
           const MSSysCal syscal(chunk.measSet().sysCal());
 
-          ROScalarColumn<uInt> sc_antenna_id(syscal, "ANTENNA_ID");
-          ROScalarColumn<uInt> sc_spwid     (syscal, "SPECTRAL_WINDOW_ID");
-          ROScalarColumn<Double> sc_time   (syscal, "TIME");
-          ROArrayColumn<Float> sc_tsys     (syscal, "TSYS");
+          ScalarColumn<uInt> sc_antenna_id(syscal, "ANTENNA_ID");
+          ScalarColumn<uInt> sc_spwid     (syscal, "SPECTRAL_WINDOW_ID");
+          ScalarColumn<Double> sc_time   (syscal, "TIME");
+          ArrayColumn<Float> sc_tsys     (syscal, "TSYS");
                     
           unsigned spwid = chunk.visBuf().spectralWindow();
           
@@ -1481,7 +1481,7 @@ RFA::IterMode RFASelector::iterRow (uInt ir)
                 Float val  = sel_clip[j].mapper->mapValue(ich,ir);
 
                 // jagonzal: Added ISO isnan check to catch extremely large values (CAS-3355)
-                if( ( sel_clip[j].clip && (val<vmin || val>vmax || isnan(val)) ) ||
+                if( ( sel_clip[j].clip && (val<vmin || val>vmax || std::isnan(val)) ) ||
                     (!sel_clip[j].clip && val>=vmin && val<=vmax   ) )
                   unflag ? flag.clearFlag(ich,ifr) : flag.setFlag(ich,ifr);
               }

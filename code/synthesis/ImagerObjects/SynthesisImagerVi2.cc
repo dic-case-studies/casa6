@@ -1,29 +1,35 @@
 //# SynthesisImagerVi2.cc: Implementation of SynthesisImager.h
-//# Copyright (C) 1997-2016
+//# Copyright (C) 1997-2019
 //# Associated Universities, Inc. Washington DC, USA.
+//# This library is free software; you can redistribute it and/or modify it
+//# under the terms of the GNU General Public License as published by
+//# the Free Software Foundation; either version 3 of the License, or (at your
+//# option) any later version.
 //#
-//# This program is free software; you can redistribute it and/or modify it
-//# under the terms of the GNU General Public License as published by the Free
-//# Software Foundation; either version 2 of the License, or (at your option)
-//# any later version.
-//#
-//# This program is distributed in the hope that it will be useful, but WITHOUT
+//# This library is distributed in the hope that it will be useful, but WITHOUT
 //# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-//# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-//# more details.
+//# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+//# License for more details.
 //#
-//# You should have received a copy of the GNU General Public License along
-//# with this program; if not, write to the Free Software Foundation, Inc.,
-//# 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+//# https://www.gnu.org/licenses/
 //#
-//# Correspondence concerning AIPS++ should be addressed as follows:
-//#        Internet email: aips2-request@nrao.edu.
-//#        Postal address: AIPS++ Project Office
+//# You should have received a copy of the GNU  General Public License
+//# along with this library; if not, write to the Free Software Foundation,
+//# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+//#
+//# Queries concerning CASA should be submitted at
+//#        https://help.nrao.edu
+//#
+//#        Postal address: CASA Project Manager 
 //#                        National Radio Astronomy Observatory
 //#                        520 Edgemont Road
 //#                        Charlottesville, VA 22903-2475 USA
 //#
+//#
 //# $Id$
+
+#define CFC_VERBOSE false /* Control the verbosity when building CFCache. */
+
 #include <casa/Exceptions/Error.h>
 #include <casa/iostream.h>
 #include <casa/sstream.h>
@@ -80,10 +86,11 @@
 #include <synthesis/TransformMachines2/MultiTermFTNew.h>
 #include <synthesis/TransformMachines2/AWProjectWBFTNew.h>
 #include <synthesis/TransformMachines2/AWConvFunc.h>
-#include <synthesis/TransformMachines2/AWConvFuncEPJones.h>
+//#include <synthesis/TransformMachines2/AWConvFuncEPJones.h>
 #include <synthesis/TransformMachines2/NoOpATerm.h>
 #include <synthesis/TransformMachines2/SDGrid.h>
 #include <synthesis/TransformMachines/WProjectFT.h>
+#include <synthesis/TransformMachines2/BriggsCubeWeightor.h>
 #if ! defined(WITHOUT_DBUS)
 #include <casadbus/viewer/ViewerProxy.h>
 #include <casadbus/plotserver/PlotServerProxy.h>
@@ -246,7 +253,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       ///temporary variable as we carry that for tunechunk...till we get rid of it
       selFreqFrame_p=selpars.freqframe;
       Bool ignoreframe=False;
-      MFrequency::Types freqFrame=MFrequency::castType(ROMSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().measFreqRef()(Int(chanlist(0,0))));
+      MFrequency::Types freqFrame=MFrequency::castType(MSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().measFreqRef()(Int(chanlist(0,0))));
   
       if(selpars.freqframe == MFrequency::REST ||selpars.freqframe == MFrequency::Undefined){	
 	selFreqFrame_p=freqFrame;
@@ -274,8 +281,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     	  for(uInt k=0; k < nSelections; ++k){
 	    Bool thisSpwSelValid=False;
 	    //The getChanfreqList is wrong for beg and end..going round that too.
-	    Vector<Double> freqies=ROMSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().chanFreq()(Int(chanlist(k,0)));
-	    Vector<Double> chanwidth=ROMSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().chanWidth()(Int(chanlist(k,0)));
+	    Vector<Double> freqies=MSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().chanFreq()(Int(chanlist(k,0)));
+	    Vector<Double> chanwidth=MSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().chanWidth()(Int(chanlist(k,0)));
             
 	    if(freqList(k,3) < 0.0){
 	      topfreq=freqies(chanlist(k,1));//-chanwidth(chanlist(k,1))/2.0;
@@ -325,7 +332,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       else{
 
 	//////More workaroung CAS-8829
-	//MFrequency::Types freqFrame=MFrequency::castType(ROMSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().measFreqRef()(Int(freqList(0,0))));
+	//MFrequency::Types freqFrame=MFrequency::castType(MSColumns(*mss_p[mss_p.nelements()-1]).spectralWindow().measFreqRef()(Int(freqList(0,0))));
     	  Quantity freq;
     	  Quantity::read(freq, selpars.freqbeg);
     	  Double lowfreq=freq.getValue("Hz");
@@ -384,6 +391,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   }
 void SynthesisImagerVi2::andChanSelection(const Int msId, const Int spwId, const Int startchan, const Int endchan){
+
 	map<Int, Vector<Int> > spwsel;
 	auto it=channelSelections_p.find(msId);
 	if(it !=channelSelections_p.end())
@@ -418,7 +426,7 @@ void SynthesisImagerVi2::andChanSelection(const Int msId, const Int spwId, const
 }
   void SynthesisImagerVi2::andFreqSelection(const Int msId, const Int spwId,  const Double freqBeg, const Double freqEnd, const MFrequency::Types frame){
     
-   
+    
     Int key=msId;
    
     Bool isDefined=False;
@@ -455,7 +463,7 @@ void SynthesisImagerVi2::andChanSelection(const Int msId, const Int spwId, const
     for (uInt k=0;  k < nMSs ; ++k){
       if(k==uInt(key)){
 	fselections_p->add(frameSel);
-	//cerr <<"framesel " << frameSel.toString() << endl;
+	//cerr <<"adding framesel " << frameSel.toString() << endl;
       }
       else{
 	const FrequencySelectionUsingFrame& thissel= static_cast<const FrequencySelectionUsingFrame &> (copyFsels->get(k));
@@ -476,8 +484,10 @@ void SynthesisImagerVi2::andChanSelection(const Int msId, const Int spwId, const
     IPosition imshape=itsMappers.imageStore(gmap)->getShape();
     /////For some reason imagestore returns 0 channel image sometimes
     ////
-    if(imshape(3) < 1) 
+    if(imshape(3) < 1) {
       return;
+    }
+   
     Double minFreq=SpectralImageUtil::worldFreq(cs, 0.0);
     Double maxFreq=SpectralImageUtil::worldFreq(cs,imshape(3)-1);
    
@@ -486,22 +496,34 @@ void SynthesisImagerVi2::andChanSelection(const Int msId, const Int spwId, const
       minFreq=maxFreq;
       maxFreq=tmp;
     }
+    
     Int spectralIndex=cs.findCoordinate(Coordinate::SPECTRAL);
     SpectralCoordinate spectralCoord=cs.spectralCoordinate(spectralIndex);
+    maxFreq+=fabs(spectralCoord.increment()(0))/2.0;
+    minFreq-=fabs(spectralCoord.increment()(0))/2.0;
+    if(minFreq < 0.0) minFreq=0.0;
     MFrequency::Types intype=spectralCoord.frequencySystem(True);
+    
     if(!VisBufferUtil::getFreqRangeFromRange(minFreq, maxFreq,  intype, minFreq,  maxFreq, *vi_p, selFreqFrame_p)){
       //Do not retune if conversion did not happen
       return;
     }
       
-    maxFreq+=fabs(spectralCoord.increment()(0))/2.0;
-    minFreq-=fabs(spectralCoord.increment()(0))/2.0;
+    maxFreq+=3.0*fabs(spectralCoord.increment()(0))/2.0;
+    minFreq-=3.0*fabs(spectralCoord.increment()(0))/2.0;
     if(minFreq < 0.0) minFreq=0.0;
     
     auto copyFreqBegs=freqBegs_p;
     auto copyFreqEnds=freqEnds_p;
     auto copyFreqSpws=  freqSpws_p;
-    
+    ///////////////TESTOO
+    //cerr << std::setprecision(12) << "AFTER maxFreq " << maxFreq << "  minFreq " << minFreq << endl;
+    //for (Int k =0 ; k < (fselections_p->size()) ; ++k){
+    //  cerr << k << (fselections_p->get(k)).toString() << endl;
+    // }
+    ///////////////////////////////////////	   
+    ///TESTOO
+    // andFreqSelection(-1, -1, minFreq, maxFreq, MFrequency::TOPO); 
     andFreqSelection(-1, -1, minFreq, maxFreq, selFreqFrame_p);
     
     vi_p->setFrequencySelection (*fselections_p);
@@ -569,12 +591,12 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
         } else if (impars.phaseCenterFieldId >= 0) {
           // FIELD_ID
           auto const msobj = mss_p[0];
-          ROMSFieldColumns msfield(msobj->field());
+          MSFieldColumns msfield(msobj->field());
           phaseCenter_p=msfield.phaseDirMeas(impars.phaseCenterFieldId);
         } else {
           // use default FIELD_ID (0)
           auto const msobj = mss_p[0];
-          ROMSFieldColumns msfield(msobj->field());
+          MSFieldColumns msfield(msobj->field());
           phaseCenter_p=msfield.phaseDirMeas(0);
         }
 
@@ -598,7 +620,7 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
 			gridpars.convFunc,
 			gridpars.aTermOn,gridpars.psTermOn, gridpars.mTermOn,
-			gridpars.wbAWP,gridpars.cfCache,gridpars.doPointing,
+			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,
 			gridpars.doPBCorr,gridpars.conjBeams,
 			gridpars.computePAStep,gridpars.rotatePAStep,
 			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
@@ -615,7 +637,6 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
     try
       {
 
-	
 		appendToMapperList(impars.imageName,  csys,  impars.shp(),
 			   ftm, iftm,
 			   gridpars.distance, gridpars.facets, gridpars.chanchunks,impars.overwrite,
@@ -635,7 +656,7 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
  Bool SynthesisImagerVi2::weight(const String& type, const String& rmode,
 			       const Quantity& noise, const Double robust,
 			       const Quantity& fieldofview,
-			       const Int npixels, const Bool multiField,
+				 const Int npixels, const Bool multiField, const Bool useCubeBriggs,
 			       const String& filtertype, const Quantity& filterbmaj,
 			       const Quantity& filterbmin, const Quantity& filterbpa   )
   {
@@ -735,12 +756,27 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 		  //		  cerr << "rmode " << rmode << " noise " << noise << " robust " << robust << " npixels " << actualNPixels << " cellsize " << actualCellSize << " multifield " << multiField << endl;
 		  //		  Timer timer;
 		  //timer.mark();
-		  //Construct imwgt_p with old vi for now if old vi is in use as constructing with vi2 is slower 
+		  //Construct imwgt_p with old vi for now if old vi is in use as constructing with vi2 is slower
+		  //Determine if any image is cube
+		  if(isSpectralCube() && useCubeBriggs){
+		    String outstr=String("Doing spectral cube Briggs weighting formula --  " + rmode + (rmode=="abs" ? " with estimated noise "+ String::toString(noise.getValue())+noise.getUnit()  : "")); 
+		    os << outstr << LogIO::POST;
+		    //VisImagingWeight nat("natural");
+		    //vi_p->useImagingWeight(nat);
+		    if(rmode=="abs" && robust==0.0 && noise.getValue()==0.0)
+		      throw(AipsError("Absolute Briggs formula does not allow for robust 0 and estimated noise per visibility 0"));
+		    CountedPtr<refim::BriggsCubeWeightor> bwgt=new refim::BriggsCubeWeightor(wtype=="Uniform" ? "none" : rmode, noise, robust, npixels, multiField);
+		    for (Int k=0; k < itsMappers.nMappers(); ++k){
+		      itsMappers.getFTM2(k)->setBriggsCubeWeight(bwgt);
 
-
-		  imwgt_p=VisImagingWeight(*vi_p, wtype=="Uniform" ? "none" : rmode, noise, robust,
-                                 actualNPixels_x, actualNPixels_y, actualCellSize_x,
-                                 actualCellSize_y, 0, 0, multiField);
+		    }
+		  }
+		  else
+		  {
+		    imwgt_p=VisImagingWeight(*vi_p, wtype=="Uniform" ? "none" : rmode, noise, robust,
+					     actualNPixels_x, actualNPixels_y, actualCellSize_x,
+					     actualCellSize_y, 0, 0, multiField);
+		  }
 
 		  /*
 		  if(rvi_p !=NULL){
@@ -890,7 +926,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
       // Create the ImageStore object
       CountedPtr<SIImageStore> imstor;
-      ROMSColumns msc(*(mss_p[0]));
+      MSColumns msc(*(mss_p[0]));
       imstor = createIMStore(imagename, csys, imshape, overwrite,msc, mappertype, ntaylorterms, distance,facets, iftm->useWeightImage(), startmodel );
 
       // Create the Mappers
@@ -971,7 +1007,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
 
     	if(!dopsf)itsMappers.initializeDegrid(*vb);
-    	itsMappers.initializeGrid(*vb,dopsf);
+    	itsMappers.initializeGrid(*vi_p,dopsf);
 	SynthesisUtilMethods::getResource("After initGrid for all mappers");
 
     	for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
@@ -1086,10 +1122,16 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
 	 SynthesisUtilMethods::getResource("Start Major Cycle for mapper"+String::toString(gmap));
 	 CountedPtr<vi::FrequencySelections> copyFsels=fselections_p->clone();
+	 ///CAS-12132  create a new visiter for each chunk
+	 createVisSet(writeAccess_p);
+	 ////////////////////////
 	 vi::VisBuffer2* vb=vi_p->getVisBuffer();
+	 /// Careful where tunechunk 
+	 tuneChunk(gmap);
+
 	 vi_p->originChunks();
 	 vi_p->origin();
-	 tuneChunk(gmap);
+
 	 Double numcoh=0;
 	 for (uInt k=0; k< mss_p.nelements(); ++k)
 	   numcoh+=Double(mss_p[k]->nrow());
@@ -1107,11 +1149,13 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  itsMappers.initializeDegrid(*vb, gmap);
 		  //itsMappers.getMapper(gmap)->initializeDegrid(*vb);
 	}
-	itsMappers.initializeGrid(*vb,dopsf, gmap);
+	itsMappers.initializeGrid(*vi_p,dopsf, gmap);
 		//itsMappers.getMapper(gmap)->initializeGrid(*vb,dopsf);
 
 	SynthesisUtilMethods::getResource("After initialize for mapper"+String::toString(gmap));
+	Int iterNum=0;
 
+	
     	for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
     	{
 
@@ -1121,6 +1165,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	      //		  cerr << "nRows "<< vb->nRow() << "   " << max(vb->visCube()) <<  endl;
 	      if (SynthesisUtilMethods::validate(*vb)!=SynthesisUtilMethods::NOVALIDROWS)
 		{
+		  
 		  if(!dopsf) {
 		    if(resetModel==False) 
 		      { 
@@ -1139,6 +1184,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		  itsMappers.grid(*vb, dopsf, (refim::FTMachine::Type)(datacol_p), gmap);
 		  //itsMappers.getMapper(gmap)->grid(*vb, dopsf, datacol_p);
 		  cohDone += vb->nRows();
+		  ++iterNum;
 		  pm.update(Double(cohDone));
 		}
 	    }
@@ -1162,7 +1208,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	SynthesisUtilMethods::getResource("End Major Cycle for mapper"+String::toString(gmap));
 	fselections_p=copyFsels;
        }// end of mapper loop
-    vi_p->setFrequencySelection(*fselections_p);
+    ///CAS-12132  create a new visiter for each chunk
+    createVisSet(writeAccess_p);
+    ////////////////////////
+    //////vi_p->setFrequencySelection(*fselections_p);
 
     itsMappers.checkOverlappingModels("restore");
 
@@ -1224,6 +1273,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     }
 
     itsMappers.checkOverlappingModels("restore");
+    itsMappers.releaseImageLocks();
     unlockMSs();
    
   }// end of predictModel
@@ -1248,7 +1298,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
       ProgressMeter pm(1.0, numberCoh, "Predict Model", "","","",true);
       Int cohDone=0;
 
-      itsMappers.initializeGrid(*vb,dopsf);
+      itsMappers.initializeGrid(*vi_p,dopsf);
       for (vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk())
       {
 
@@ -1492,7 +1542,7 @@ void SynthesisImagerVi2::unlockMSs()
 					   const Bool mTermOn,          //= false,
 					const Bool wbAWP,            //= true,
 					   const String cfCache,        //= "",
-					   const Bool doPointing,       //= false,
+					   const Bool usePointing,       //= false,
 					   const Bool doPBCorr,         //= true,
 					   const Bool conjBeams,        //= true,
 					const Float computePAStep,         //=360.0
@@ -1555,7 +1605,7 @@ void SynthesisImagerVi2::unlockMSs()
       createAWPFTMachine(theFT, theIFT, ftname, facets, wprojplane, 
 			 padding, useAutocorr, useDoublePrec, gridFunction,
 			 aTermOn, psTermOn, mTermOn, wbAWP, cfCache, 
-			 doPointing, doPBCorr, conjBeams, computePAStep,
+			 usePointing, doPBCorr, conjBeams, computePAStep,
 			 rotatePAStep, cache,tile,imageNamePrefix);
     }
     else if ( ftname == "mosaic" || ftname== "mosft" || ftname == "mosaicft" || ftname== "MosaicFT"){
@@ -1596,7 +1646,7 @@ void SynthesisImagerVi2::unlockMSs()
 	(ftname != "awprojectft" && ftname != "mawprojectft" && ftname != "proroft") )
       {
 	CountedPtr<refim::SkyJones> vp;
-	ROMSColumns msc(*(mss_p[0]));
+	MSColumns msc(*(mss_p[0]));
 	Quantity parang(0.0,"deg");
 	Quantity skyposthreshold(0.0,"deg");
 	vp = new refim::VPSkyJones(msc, true,  parang, BeamSquint::NONE,skyposthreshold);
@@ -1657,7 +1707,7 @@ void SynthesisImagerVi2::unlockMSs()
 					   const Bool mTermOn,          //= false,
 					   const Bool wbAWP,            //= true,
 					   const String cfCache,        //= "",
-					   const Bool doPointing,       //= false,
+					   const Bool usePointing,       //= false,
 					   const Bool doPBCorr,         //= true,
 					   const Bool conjBeams,        //= true,
 					   const Float computePAStep,   //=360.0
@@ -1707,12 +1757,15 @@ void SynthesisImagerVi2::unlockMSs()
     // else
     //   awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP);
 
-    ROMSObservationColumns msoc((mss_p[0])->observation());
+    MSObservationColumns msoc((mss_p[0])->observation());
     String telescopeName=msoc.telescopeName()(0);
     CountedPtr<refim::ConvolutionFunction> awConvFunc = refim::AWProjectFT::makeCFObject(telescopeName, 
 									   aTermOn,
 									   psTermOn, (wprojPlane > 1),
 									   mTermOn, wbAWP, conjBeams);
+
+    CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets(awConvFunc->getOversampling());
+    awConvFunc->setPointingOffsets(po);
     //
     // Construct the appropriate re-sampler.
     //
@@ -1741,18 +1794,26 @@ void SynthesisImagerVi2::unlockMSs()
     // Re-sampler objects.  
     //
     Float pbLimit_l=1e-3;
+
     theFT = new refim::AWProjectWBFTNew(wprojPlane, cache/2, 
 			      cfCacheObj, awConvFunc, 
 			      visResampler,
-			      /*true */doPointing, doPBCorr, 
+			      /*true */usePointing, doPBCorr, 
 			      tile, computePAStep, pbLimit_l, true,conjBeams,
 			      useDoublePrec);
 
     cfCacheObj = new refim::CFCache();
     cfCacheObj->setCacheDir(cfCache.data());
+    // Get the LAZYFILL setting from the user configuration.  If not
+    // found, default to False.
+    //
+    // With lazy fill ON, CFCache loads the required CFs on-demand
+    // from the disk.  And periodically triggers garbage collection to
+    // release CFs that aren't required immediately.
+    cfCacheObj->setLazyFill(refim::SynthesisUtils::getenv("CFCache.LAZYFILL",1)==1);
     //    cerr << "Setting wtImagePrefix to " << imageNamePrefix.c_str() << endl;
     cfCacheObj->setWtImagePrefix(imageNamePrefix.c_str());
-    cfCacheObj->initCache2();
+    cfCacheObj->initCache2(CFC_VERBOSE);
 
     theFT->setCFCache(cfCacheObj);
     
@@ -1764,7 +1825,7 @@ void SynthesisImagerVi2::unlockMSs()
     // theIFT = new AWProjectWBFT(wprojPlane, cache/2, 
     // 			       cfCacheObj, awConvFunc, 
     // 			       visResampler,
-    // 			       /*true */doPointing, doPBCorr, 
+    // 			       /*true */usePointing, doPBCorr, 
     // 			       tile, computePAStep, pbLimit_l, true,conjBeams,
     // 			       useDoublePrec);
 
@@ -1791,12 +1852,12 @@ void SynthesisImagerVi2::unlockMSs()
     
     LogIO os(LogOrigin("SynthesisImagerVi2", "createMosFTMachine",WHERE));
    
-    ROMSColumns msc(vi_p->ms());
+    MSColumns msc(vi_p->ms());
     String telescop=msc.observation().telescopeName()(0);
     Bool multiTel=False;
     Int msid=0;
      for(vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk()){
-       if(((vi_p->getVisBuffer())->msId() != msid) && telescop !=  ROMSColumns(vi_p->ms()).observation().telescopeName()(0)){
+       if(((vi_p->getVisBuffer())->msId() != msid) && telescop !=  MSColumns(vi_p->ms()).observation().telescopeName()(0)){
 	 msid=(vi_p->getVisBuffer())->msId();
 	 multiTel=True;
        }
@@ -1838,7 +1899,6 @@ void SynthesisImagerVi2::unlockMSs()
       //kpb=PBMath::DEFAULT;
     }
    
-    
     theFT = new refim::MosaicFTNew(vps, mLocation_p, stokes, 1000000000, 16, useAutoCorr, 
 				   useDoublePrec, doConjBeams, gridpars_p.usePointing);
     PBMathInterface::PBClass pbtype=((kpb==PBMath::EVLA) || multiTel)? PBMathInterface::COMMONPB: PBMathInterface::AIRY;
@@ -1889,7 +1949,7 @@ void SynthesisImagerVi2::unlockMSs()
     String const gridfunclower = downcase(gridFunction);
     if(gridfunclower=="pb") {
       refim::SkyJones *vp = nullptr;
-      ROMSColumns msc(*mss_p[0]);
+      MSColumns msc(*mss_p[0]);
       // todo: NONE is OK?
       BeamSquint::SquintType squintType = BeamSquint::NONE;
       Quantity skyPosThresholdQuant((Double)skyPosThreshold+180.0, "deg");
@@ -1963,24 +2023,43 @@ void SynthesisImagerVi2::unlockMSs()
 
   /// todo : do for full mapper list, and taylor terms.
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  /// todo : do for full mapper list, and taylor terms.
-  
-  Bool SynthesisImagerVi2::setWeightDensity( )
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  Bool SynthesisImagerVi2::setWeightDensity( const String& weightimagename)
   {
     LogIO os(LogOrigin("SynthesisImagerVi2", "setWeightDensity()", WHERE));
     try
       {
-	Block<Matrix<Float> > densitymatrices(itsMappers.nMappers());
-	for (uInt fid=0;fid<densitymatrices.nelements();fid++)
-	  {
-	    Array<Float> arr;
-	    itsMappers.imageStore(fid)->gridwt(0)->get(arr,true);
-	    densitymatrices[fid].reference( arr );
-	    //cout << "Density shape (set) for f " << fid << " : " << arr.shape() << " : " << densitymatrices[fid].shape() << endl;
+	if(weightimagename.size() !=0){
+	  Table::isReadable(weightimagename, True);
+	  PagedImage<Float> im(weightimagename);
+	  imwgt_p=VisImagingWeight(im);
+	}
+	else{
+	  Int ndensities=1;
+	  if((itsMappers.imageStore(0)->gridwt()->nelements())==5)
+	    ndensities=(itsMappers.imageStore(0)->gridwt())->shape()[4];
+	  Int nx=(itsMappers.imageStore(0)->gridwt())->shape()[0];
+	  Int ny=(itsMappers.imageStore(0)->gridwt())->shape()[1];
+	  Block<Matrix<Float> > densitymatrices(ndensities);
+	  if(((itsMappers.imageStore(0)->gridwt())->shape().nelements())==5){
+	    IPosition blc(Vector<Int>(5,0));
+	    for (uInt fid=0;fid<densitymatrices.nelements();fid++)
+	      {
+		densitymatrices[fid].resize();
+		Array<Float> lala;
+		blc[4]=fid;
+		itsMappers.imageStore(0)->gridwt()->getSlice(lala, blc, IPosition(5, nx, ny,1,1,1), True);
+		densitymatrices[fid].reference( lala.reform(IPosition(2, nx, ny)));
+	      }
 	  }
+	  else{
+	    Array<Float> lala;
+	    itsMappers.imageStore(0)->gridwt()->get(lala, True);
+	    densitymatrices[0].reference( lala.reform(IPosition(2, nx, ny)));
+	  }
+	  imwgt_p.setWeightDensity( densitymatrices );
+	}
 
-
-	imwgt_p.setWeightDensity( densitymatrices );
 	vi_p->useImagingWeight(imwgt_p);
 	itsMappers.releaseImageLocks();
 
@@ -2068,7 +2147,7 @@ void SynthesisImagerVi2::unlockMSs()
 
       ProgressMeter pm(1.0, numberCoh, "dryGridding", "","","",true);
 
-      itsMappers.initializeGrid(*vb);
+      itsMappers.initializeGrid(*vi_p);
     
       // Set the gridder (iFTM) to run in dry-gridding mode
       (itsMappers.getFTM2(whichFTM,true))->setDryRun(true);
@@ -2145,8 +2224,8 @@ void SynthesisImagerVi2::unlockMSs()
 
       Float dPA=360.0,selectedPA=2*360.0;
       if (cfList.nelements() > 0)
-      {
-	CountedPtr<refim::CFCache> cfCacheObj = new refim::CFCache();
+	{
+	  CountedPtr<refim::CFCache> cfCacheObj = new refim::CFCache();
 	  //Vector<String> wtCFList; wtCFList.resize(cfList.nelements());
 	  //for (Int i=0; i<wtCFList.nelements(); i++) wtCFList[i] = "WT"+cfList[i];
 	  //Directory dir(path);
@@ -2161,7 +2240,8 @@ void SynthesisImagerVi2::unlockMSs()
 	  os << "Re-loading the \"blank\" CFCache for filling" << LogIO::WARN << LogIO::POST;
 
       	  cfCacheObj->initCacheFromList2(cfcPath, cfList_p, wtCFList_p,
-      					 selectedPA, dPA,1);
+      					 selectedPA, dPA,CFC_VERBOSE);
+
 	  // tmpFT->setCFCache(cfCacheObj);
 	  Vector<Double> uvScale, uvOffset;
 	  Matrix<Double> vbFreqSelection;
@@ -2193,25 +2273,174 @@ void SynthesisImagerVi2::unlockMSs()
   void SynthesisImagerVi2::reloadCFCache()
   {
       LogIO os( LogOrigin("SynthesisImagerVi2","reloadCFCache",WHERE) );
-      Int whichFTM=0;
-      String ftmName = ((*(itsMappers.getFTM2(whichFTM)))).name();
-      if (!ftmName.contains("AWProject")) return;
+      Int whichFTM=0; 
+      CountedPtr<refim::FTMachine> ftm=itsMappers.getFTM2(whichFTM,true);
 
-      os << "-------------------------------------------- reloadCFCache ---------------------------------------------" << LogIO::POST;
-      String path = itsMappers.getFTM2(whichFTM)->getCacheDir();
-      String imageNamePrefix=itsMappers.getFTM2(whichFTM)->getCFCache()->getWtImagePrefix();
-
-      CountedPtr<refim::CFCache> cfCacheObj = new refim::CFCache();
-      cfCacheObj->setCacheDir(path.data());
-      cfCacheObj->setWtImagePrefix(imageNamePrefix.c_str());
-      cfCacheObj->initCache2();
+      // Proceed only if FMTs uses the CFCache mechanism. The first FTM
+      // in the Mapper is used to make this decision.  Not sure if the
+      // framework pipes allow other FTMs in SIMapper to be
+      // fundamentally different. If it does, and if that is
+      // triggered, the current decision may be insufficient.
+      if (!(ftm->isUsingCFCache())) return; // Better check than checking against FTM name
       
-      // This assumes the itsMappers is always SIMapperCollection.
-      for (whichFTM = 0; whichFTM < itsMappers.nMappers(); whichFTM++)
+      os << "-------------------------------------------- Re-load CFCache ---------------------------------------------" << LogIO::POST;
+
+      // Following code that distinguishes between MultiTermFTM and
+      // all others should ideally be replaced with a polymorphic
+      // solution.  I.e. all FTMs should have a working getFTM2(bool)
+      // method.  This is required since MultiTermFTM is a container
+      // FTM and it's getFTM2() returns the internal (per-MTMFS term)
+      // FTMs.  Non-container FTMs must return a pointer to
+      // themselves.  The if-else below is because attempts to make
+      // AWProjectFT::getFTM2() work have failed.
+      //
+      // Control reaches this stage only if the isUsingCFCache() test
+      // above return True.  The only FTMs what will pass that test
+      // for now are AWProjectFT (and its derivatives) and
+      // MultiTermFTM if it is constructed with AWP.
+      //
+      CountedPtr<refim::CFCache> cfc;
+      if (ftm->name().contains("MultiTerm")) cfc = ftm->getFTM2(true)->getCFCache();
+      else                                   cfc = ftm->getCFCache();
+      cfc->setLazyFill((refim::SynthesisUtils::getenv("CFCache.LAZYFILL",1)==1));
+      cfc->initCache2();
+
+
+      // String path,imageNamePrefix;
+      // if (ftm->name().contains("MultiTerm"))
+      // 	{
+      // 	  path = ftm->getFTM2(true)->getCacheDir();
+      // 	  imageNamePrefix = ftm->getFTM2(true)->getCFCache()->getWtImagePrefix();
+      // 	}
+      // else
+      // 	{
+      // 	  path = ftm->getCacheDir();
+      // 	  imageNamePrefix = ftm->getCFCache()->getWtImagePrefix();
+      // 	}
+	
+
+      // CountedPtr<refim::CFCache> cfCacheObj = new refim::CFCache();
+      // cfCacheObj->setCacheDir(path.c_str());
+      // cfCacheObj->setWtImagePrefix(imageNamePrefix.c_str());
+      // cfCacheObj->setLazyFill((refim::SynthesisUtils::getenv("CFCache.LAZYFILL",1)==1));
+      // cfCacheObj->initCache2();
+
+      // // This assumes the itsMappers is always SIMapperCollection.
+      // for (whichFTM = 0; whichFTM < itsMappers.nMappers(); whichFTM++)
+      // 	{
+      // 	  CountedPtr<refim::FTMachine> ifftm=itsMappers.getFTM2(whichFTM,true),
+      // 	    fftm=itsMappers.getFTM2(whichFTM,false);
+	
+      // 	  ifftm->setCFCache(cfCacheObj,true);
+      // 	  fftm->setCFCache(cfCacheObj,true);
+      // 	}
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  Record SynthesisImagerVi2::apparentSensitivity() 
+  {
+    LogIO os(LogOrigin("SynthesisImagerVi2", "apparentSensitivity()", WHERE));
+    
+    Record outrec;
+    try {
+
+      os << LogIO::NORMAL // Loglevel INFO
+	 << "Calculating apparent sensitivity from MS weights, as modified by gridding weight function"
+	 << LogIO::POST;
+      os << LogIO::NORMAL // Loglevel INFO
+	 << "(assuming that MS weights have correct scale and units)"
+	 << LogIO::POST;
+      
+      Double sumNatWt=0.0;
+      Double sumGridWt=0.0;
+      Double sumGridWt2OverNatWt=0.0;
+    
+      Float iNatWt(0.0),iGridWt(0.0);
+      
+      vi::VisBuffer2* vb = vi_p->getVisBuffer();
+      vi_p->originChunks();
+      vi_p->origin();
+      
+      // Discover if weightSpectrum non-trivially available
+      Bool doWtSp=vi_p->weightSpectrumExists();
+
+      //////
+      for(vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk())
 	{
-	  (static_cast<refim::AWProjectWBFTNew &> (*(itsMappers.getFTM2(whichFTM)))).setCFCache(cfCacheObj,true); // Setup iFTM
-	  (static_cast<refim::AWProjectWBFTNew &> (*(itsMappers.getFTM2(whichFTM,false)))).setCFCache(cfCacheObj,true); // Set FTM
-	}
+	  for (vi_p->origin(); vi_p->more(); vi_p->next())
+	    {
+	      Int nRow=vb->nRows();
+	      const Vector<Bool>& rowFlags(vb->flagRow());
+
+	      const Vector<Int>& a1(vb->antenna1()), a2(vb->antenna2());
+
+              // Extract weights correctly (use WEIGHT_SPECTRUM, if available)
+	      Int nCorr=vb->nCorrelations();
+              Matrix<Float> wtm;
+              Cube<Float> wtc;
+              if (doWtSp)
+                // WS available [nCorr,nChan,nRow]
+                wtc.reference(vb->weightSpectrum());       
+              else {
+                // WS UNavailable weight()[nCorr,nRow] --> [nCorr,nChan,nRow]
+                wtc.reference(vb->weight().reform(IPosition(3,nCorr,1,nRow)));  // unchan'd weight as single-chan
+              }
+	      Int nChanWt=wtc.shape()(1);  // Might be 1 (no WtSp)
+
+	      Cube<Bool> flagCube(vb->flagCube());
+	      for (Int row=0; row<nRow; row++) {
+		if (!rowFlags(row) && a1(row)!=a2(row)) {  // exclude ACs
+
+		  for (Int ich=0;ich<vb->nChannels();++ich) {
+		    if( !flagCube(0,ich,row) && !flagCube(nCorr-1,ich,row)) {  // p-hands unflagged
+
+		      // Accumulate relevant info
+
+		      // Simple sum of p-hand for now
+		      iNatWt=wtc(0,ich%nChanWt,row)+wtc(nCorr-1,ich%nChanWt,row);
+
+		      iGridWt=2.0f*vb->imagingWeight()(ich,row);
+
+		      if (iGridWt>0.0 && iNatWt>0.0) {
+			sumNatWt+=(iNatWt);
+			sumGridWt+=(iGridWt);
+			sumGridWt2OverNatWt+=(iGridWt*iGridWt/iNatWt);
+		      }
+		    }
+		  }
+		}
+	      } // row
+	    } // vb
+	} // chunks
+      
+      if (sumNatWt==0.0) {
+	os << "Cannot calculate sensitivity: sum of selected natural weights is zero" << LogIO::EXCEPTION;
+      }
+      if (sumGridWt==0.0) {
+	os << "Cannot calculate sensitivity: sum of gridded weights is zero" << LogIO::EXCEPTION;
+      }
+
+      Double effSensitivity = sqrt(sumGridWt2OverNatWt)/sumGridWt;
+
+      Double natSensitivity = 1.0/sqrt(sumNatWt);
+      Double relToNat=effSensitivity/natSensitivity;
+
+      os << LogIO::NORMAL << "RMS Point source sensitivity  : " // Loglevel INFO
+	 << effSensitivity      //  << " Jy/beam"       // actually, units are arbitrary
+	 << LogIO::POST;
+      os << LogIO::NORMAL // Loglevel INFO
+	 << "Relative to natural weighting : " << relToNat << LogIO::POST;
+
+      // Fill output Record
+      outrec.define("relToNat",relToNat);
+      outrec.define("effSens",effSensitivity);
+
+    } catch (AipsError x) {
+      throw(x);
+      return outrec;
+    } 
+    return outrec;
+
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2235,7 +2464,7 @@ void SynthesisImagerVi2::unlockMSs()
 	  
 	  if (doDefaultVP) {
 	    
-	    ROMSAntennaColumns ac(mss_p[0]->antenna());
+	    MSAntennaColumns ac(mss_p[0]->antenna());
 	    Double dishDiam=ac.dishDiameter()(0);
 	    if(!allEQ(ac.dishDiameter().getColumn(), dishDiam))
 	      os << LogIO::WARN
@@ -2266,7 +2495,7 @@ void SynthesisImagerVi2::unlockMSs()
     vi_p->originChunks();
     vi_p->origin();
     std::map<Int, std::set<Int>> fieldsDone;
-  
+    VisBufferUtil vbU(*vb);
     ///////if tracking a moving source
     MDirection origMovingDir;
     MDirection newPhaseCenter;
@@ -2288,7 +2517,8 @@ void SynthesisImagerVi2::unlockMSs()
 	      if(trackBeam){
 		MDirection newMovingDir;
 		getMovingDirection(*vb, newMovingDir);
-		newPhaseCenter=vb->phaseCenter();
+		//newPhaseCenter=vb->phaseCenter();
+                newPhaseCenter=vbU.getPhaseCenter(*vb);
 		newPhaseCenter.shift(MVDirection(-newMovingDir.getAngle()+origMovingDir.getAngle()), False);
 	      }
 	      itsMappers.addPB(*vb,pbMath, newPhaseCenter, trackBeam);
@@ -2305,7 +2535,7 @@ void SynthesisImagerVi2::unlockMSs()
   Bool SynthesisImagerVi2::getMovingDirection(const vi::VisBuffer2& vb,  MDirection& outDir){
     MDirection movingDir;
     Bool trackBeam=False;
-    MeasFrame mFrame(MEpoch(Quantity(vb.time()(0), "s"), ROMSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
+    MeasFrame mFrame(MEpoch(Quantity(vb.time()(0), "s"), MSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
     if(movingSource_p != ""){
       MDirection::Types refType;
       trackBeam=True;
@@ -2325,7 +2555,8 @@ void SynthesisImagerVi2::unlockMSs()
 	}
       }
       else if(upcase(movingSource_p)=="TRACKFIELD"){
-	movingDir=VisBufferUtil::getEphemDir(vb, -1.0);
+        VisBufferUtil vbU(vb);
+	movingDir=vbU.getEphemDir(vb, -1.0);
       }
       else{
 	throw(AipsError("Erroneous tracking direction set to make pb"));

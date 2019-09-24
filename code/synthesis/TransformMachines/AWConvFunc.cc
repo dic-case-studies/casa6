@@ -250,7 +250,7 @@ namespace casa{
 		// }
 
 
-		Bool doSquint=true; Complex tt;
+		Bool doSquint=true;
 		//		Bool doSquint=false; Complex tt;
 		ftATerm_l.set(Complex(1.0,0.0));   ftATermSq_l.set(Complex(1.0,0.0));
 
@@ -640,7 +640,7 @@ namespace casa{
     //
     Cube<Double> fminmax;
     Double fMax=0, fMin=MAX_FREQ;
-    ROArrayColumn<Double> spwCol=vb.msColumns().spectralWindow().chanFreq();
+    ArrayColumn<Double> spwCol=vb.msColumns().spectralWindow().chanFreq();
     fminmax.resize(spwChanSelFlag_p.shape()(0),spwChanSelFlag_p.shape()(1),2);
     fminmax=0;
     for (uInt ims=0; ims<spwChanSelFlag_p.shape()(0); ims++)
@@ -721,7 +721,7 @@ namespace casa{
 	fValues.resize(nSpw);
 	bandNames.resize(nSpw);
 	//	dNU = (spwFreqSelection_p(0,1) - spwFreqSelection_p(0,2));
-	ROScalarColumn<String> spwNames=vb.msColumns().spectralWindow().name();
+	ScalarColumn<String> spwNames=vb.msColumns().spectralWindow().name();
 	for(Int i=0;i<nSpw;i++) 
 	  {
 	    int s=spwFreqSelection_p(i,0);
@@ -1581,7 +1581,7 @@ namespace casa{
   {
     LogIO log_l(LogOrigin("AWConvFunc", "fillConvFuncBuffer2[R&D]"));
     Complex cfNorm, cfWtNorm;
-    Complex cpeak,wtcpeak;
+    Complex cpeak;
     {
       Float sampling, samplingWt;
       Int xSupport, ySupport, xSupportWt, ySupportWt;
@@ -1606,7 +1606,7 @@ namespace casa{
       CoordinateSystem conjPolCS_l=cs_l;  AWConvFunc::makeConjPolAxis(conjPolCS_l, thisCell->conjPoln_p);
       IPosition pbshp(4,nx,ny,1,1);
       TempImage<Complex> ftATerm_l(pbshp, cs_l), ftATermSq_l(pbshp,conjPolCS_l);
-      Bool doSquint=true; Complex tt;
+      Bool doSquint=true;
       ftATerm_l.set(Complex(1.0,0.0));   ftATermSq_l.set(Complex(1.0,0.0));
       Double freq_l=miscInfo.freqValue;
 

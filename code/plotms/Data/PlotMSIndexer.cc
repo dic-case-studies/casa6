@@ -26,12 +26,16 @@
 //# $Id: $
 #include <plotms/Data/PlotMSIndexer.h>
 
+#include <casacore/casa/Exceptions/Error.h>
 #include <casa/Quanta/MVTime.h>
 #include <casa/Utilities/Sort.h>
 #include <casa/OS/Timer.h>
 #include <plotms/PlotMS/PlotMS.h>
 #include <tables/Tables/Table.h>
 #include <measures/Measures/Stokes.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/casa/Arrays/Vector.h>
+
 //#include <QtCore/qmath.h>
 #include <QDebug>
 
@@ -50,6 +54,7 @@ PlotMSIndexer::PlotMSIndexer():
 		  currentX_(PMS::SCAN),
 		  currentY_(PMS::SCAN),
 		  indexerReady_(false),
+		  connectReady_(false),
 		  icorrmax_(),
 		  ichanmax_(),
 		  ibslnmax_(),
@@ -76,14 +81,18 @@ PlotMSIndexer::PlotMSIndexer():
 		  iterValue_(-999),
 		  itsColorize_(false),
 		  itsColorizeAxis_(PMS::DEFAULT_COLOR_AXIS),
+		  itsXConnect_("none"),
+		  itsTimeConnect_(false),
+		  freqsDecrease_(),
 		  self(const_cast<PlotMSIndexer*>(this))
 {
 	dataIndex_ = 0;
-	}
+}
 
-PlotMSIndexer::PlotMSIndexer(PlotMSCacheBase* parent, PMS::Axis xAxis,
-        PMS::DataColumn xData, PMS::Axis yAxis, PMS::DataColumn yData,
-        int index ):
+PlotMSIndexer::PlotMSIndexer(PlotMSCacheBase* parent,
+		PMS::Axis xAxis, PMS::DataColumn xData,
+		PMS::Axis yAxis, PMS::DataColumn yData,
+		String xconnect, bool timeconnect, int index ):
 		  plotmscache_(parent),
 		  currChunk_(0),
 		  irel_(0),
@@ -97,6 +106,7 @@ PlotMSIndexer::PlotMSIndexer(PlotMSCacheBase* parent, PMS::Axis xAxis,
 		  currentXdata_(xData),
 		  currentYdata_(yData),
 		  indexerReady_(false),
+		  connectReady_(false),
 		  icorrmax_(),
 		  ichanmax_(),
 		  ibslnmax_(),
@@ -123,6 +133,9 @@ PlotMSIndexer::PlotMSIndexer(PlotMSCacheBase* parent, PMS::Axis xAxis,
 		  iterValue_(-999),
 		  itsColorize_(false),
 		  itsColorizeAxis_(PMS::DEFAULT_COLOR_AXIS),
+		  itsXConnect_(xconnect),
+		  itsTimeConnect_(timeconnect),
+		  freqsDecrease_(),
 		  self(const_cast<PlotMSIndexer*>(this))
 {
 	dataIndex_ = index;
@@ -132,7 +145,8 @@ PlotMSIndexer::PlotMSIndexer(PlotMSCacheBase* parent, PMS::Axis xAxis,
 PlotMSIndexer::PlotMSIndexer(PlotMSCacheBase* parent,
         PMS::Axis xAxis, PMS::DataColumn xDataColumn, 
         PMS::Axis yAxis, PMS::DataColumn yDataColumn, 
-        PMS::Axis iterAxis, Int iterValue, int index ):
+        PMS::Axis iterAxis, Int iterValue,
+		String xconnect, bool timeconnect, int index ):
 		plotmscache_(parent),
 		currChunk_(0),
 		irel_(0),
@@ -143,9 +157,10 @@ PlotMSIndexer::PlotMSIndexer(PlotMSCacheBase* parent,
 		nSegPoints_(),nCumulPoints_(),cacheChunk_(),cacheOffset_(),
 		currentX_(xAxis),
 		currentY_(yAxis),
-        currentXdata_(xDataColumn),
-        currentYdata_(yDataColumn),
+		currentXdata_(xDataColumn),
+		currentYdata_(yDataColumn),
 		indexerReady_(false),
+		connectReady_(false),
 		icorrmax_(),
 		ichanmax_(),
 		ibslnmax_(),
@@ -172,6 +187,9 @@ PlotMSIndexer::PlotMSIndexer(PlotMSCacheBase* parent,
 		iterValue_(iterValue),
 		itsColorize_(false),
 		itsColorizeAxis_(PMS::DEFAULT_COLOR_AXIS),
+		itsXConnect_(xconnect),
+		itsTimeConnect_(timeconnect),
+		freqsDecrease_(),
 		self(const_cast<PlotMSIndexer*>(this))
 { 
 	dataIndex_ = index;
@@ -188,28 +206,23 @@ unsigned int PlotMSIndexer::size() const {
 double PlotMSIndexer::xAt(unsigned int i) const {
 	setChunk(i);  // sets chunk and relative index in chunk
 
-	double x= (plotmscache_->*getXFromCache_)(currChunk_,
-			(self->*XIndexer_)(currChunk_,irel_));
+	double x= (plotmscache_->*getXFromCache_)(currChunk_, (self->*XIndexer_)(currChunk_,irel_));
 	return x;
 }
 double PlotMSIndexer::yAt(unsigned int i) const {
 	setChunk(i);  // sets chunk and relative index in chunk
-	return (plotmscache_->*getYFromCache_)(currChunk_,
-			(self->*YIndexer_)(currChunk_,irel_));
+	return (plotmscache_->*getYFromCache_)(currChunk_, (self->*YIndexer_)(currChunk_,irel_));
 }
-void PlotMSIndexer::xAndYAt(unsigned int index, 
-		double& x, double& y) const {
+void PlotMSIndexer::xAndYAt(unsigned int index, double& x, double& y) const {
 	setChunk(index);  // sets chunk and relative index in chunk
-	x=(plotmscache_->*getXFromCache_)(currChunk_,
-			(self->*XIndexer_)(currChunk_,irel_));
-	y=(plotmscache_->*getYFromCache_)(currChunk_,
-			(self->*YIndexer_)(currChunk_,irel_));
+	x=(plotmscache_->*getXFromCache_)(currChunk_, (self->*XIndexer_)(currChunk_,irel_));
+	y=(plotmscache_->*getYFromCache_)(currChunk_, (self->*YIndexer_)(currChunk_,irel_));
 }
 
-bool PlotMSIndexer::minsMaxes(double& xMin, double& xMax, 
-		double& yMin, double& yMax) {
+bool PlotMSIndexer::minsMaxes(double& xMin, double& xMax, double& yMin, double& yMax) {
 
-	if (this->size()<1) return false;
+	if (this->size()<1)
+		return false;
 
 	// return the collective (flagged/unflagged) min/max
 	// X:
@@ -233,8 +246,9 @@ bool PlotMSIndexer::minsMaxes(double& xMin, double& xMax,
 		yMin = min(ymin_, yflmin_);
 		yMax = max(ymax_, yflmax_);
 	}
-	if (plotmscache_->hasOverlay())
-		adjustYRange(yMin, yMax);
+	if (plotmscache_->hasOverlay()) {
+		adjustYRangeForOverlay(yMin, yMax);
+	}
 
 	return true;
 }
@@ -244,21 +258,17 @@ bool PlotMSIndexer::maskedAt( unsigned int index) const {
 	return !(*(plotmscache_->plmask_[dataIndex_][currChunk_]->data()+irel_));
 }
 
-void PlotMSIndexer::xyAndMaskAt(unsigned int index,
-		double& x, double& y,
-		bool& mask) const {
+void PlotMSIndexer::xyAndMaskAt(unsigned int index, double& x, double& y, bool& mask) const {
 	setChunk(index);
-	x=(plotmscache_->*getXFromCache_)(currChunk_,
-			(self->*XIndexer_)(currChunk_,irel_));
-	y=(plotmscache_->*getYFromCache_)(currChunk_,
-			(self->*YIndexer_)(currChunk_,irel_));
+	x=(plotmscache_->*getXFromCache_)(currChunk_, (self->*XIndexer_)(currChunk_,irel_));
+	y=(plotmscache_->*getYFromCache_)(currChunk_, (self->*YIndexer_)(currChunk_,irel_));
 	mask=!(*(plotmscache_->plmask_[dataIndex_][currChunk_]->data()+irel_));
 }
 
-bool PlotMSIndexer::maskedMinsMaxes(double& xMin, double& xMax, 
-		double& yMin, double& yMax) {
+bool PlotMSIndexer::maskedMinsMaxes(double& xMin, double& xMax, double& yMin, double& yMax) {
 
-	if (this->size()<1) return false;
+	if (this->size()<1)
+		return false;
 
 	// return the collective (flagged) min/max
 	// X:
@@ -266,8 +276,7 @@ bool PlotMSIndexer::maskedMinsMaxes(double& xMin, double& xMax,
 		// Use globals from the cache
 		xMin = plotmscache_->xflminG_[dataIndex_];
 		xMax = plotmscache_->xflmaxG_[dataIndex_];
-	}
-	else {
+	} else {
 		// get local ones
 		xMin = xflmin_;
 		xMax = xflmax_;
@@ -277,14 +286,13 @@ bool PlotMSIndexer::maskedMinsMaxes(double& xMin, double& xMax,
 		// Use globals from the cache
 		yMin = plotmscache_->yflminG_[dataIndex_];
 		yMax = plotmscache_->yflmaxG_[dataIndex_];
-	}
-	else {
+	} else {
 		// use local ones
 		yMin = yflmin_;
 		yMax = yflmax_;
 	}
 	if (plotmscache_->hasOverlay())
-		adjustYRange(yMin, yMax);
+		adjustYRangeForOverlay(yMin, yMax);
 
 	return true;
 }
@@ -293,20 +301,25 @@ bool PlotMSIndexer::maskedMinsMaxes(double& xMin, double& xMax,
 
 bool PlotMSIndexer::maskedMinsMaxesRaw(double& xMin, double& xMax, 
 		double& yMin, double& yMax) {
-
-	if (this->size()<1) return false;
+	if (this->size()<1)
+		return false;
 
 	xMin=xflmin_;
 	xMax=xflmax_;
 	yMin=yflmin_;
 	yMax=yflmax_;
+
+	if (plotmscache_->hasOverlay()) {
+		adjustYRangeForOverlay(yMin, yMax);
+	}
+
 	return true;
 }
 
 bool PlotMSIndexer::unmaskedMinsMaxes(double& xMin, double& xMax, 
 		double& yMin, double& yMax) {
-
-	if (this->size()<1) return false;
+	if (this->size()<1)
+		return false;
 
 	// return the collective (unflagged) min/max
 	// X:
@@ -314,8 +327,7 @@ bool PlotMSIndexer::unmaskedMinsMaxes(double& xMin, double& xMax,
 		// Use globals from the cache
 		xMin = plotmscache_->xminG_[dataIndex_];
 		xMax = plotmscache_->xmaxG_[dataIndex_];
-	}
-	else {
+	} else {
 		// get local ones
 		xMin = xmin_;
 		xMax = xmax_;
@@ -326,79 +338,90 @@ bool PlotMSIndexer::unmaskedMinsMaxes(double& xMin, double& xMax,
 		// Use globals from the cache
 		yMin = plotmscache_->yminG_[dataIndex_];
 		yMax = plotmscache_->ymaxG_[dataIndex_];
-	}
-	else {
+	} else {
 		// get local ones
 		yMin = ymin_;
 		yMax = ymax_;
 	}
-	if (plotmscache_->hasOverlay())
-		adjustYRange(yMin, yMax);
+
+	if (plotmscache_->hasOverlay()) {
+		adjustYRangeForOverlay(yMin, yMax);
+	}
 
 	return true;
 }
 
-void PlotMSIndexer::adjustYRange(double& yMin, double& yMax) {
-	double range = yMax-yMin;
+void PlotMSIndexer::adjustYRangeForOverlay(double& yMin, double& yMax) {
+	// add margin to top of non-overlay axis
 	if (!PMS::axisIsOverlay(currentY_)) {
-		// add margin to top of non-overlay axis
-		yMax += range * 0.25;
-	} else {
-		// add margin to bottom of overlay axis
-		if (range < 5.0) range = 5.0;
-		yMin -= range*2.0;
-		if (yMin < 0.0) yMin = 0.0;
+	    double yrange = yMax - yMin;
+		yMax += yrange * 0.25;
 	}
 }
 
 bool PlotMSIndexer::unmaskedMinsMaxesRaw(double& xMin, double& xMax, 
-		double& yMin, double& yMax) {
-
-	if (this->size()<1) return false;
+	double& yMin, double& yMax) {
+	if (this->size()<1)
+		return false;
 
 	xMin=xmin_;
 	xMax=xmax_;
 	yMin=ymin_;
 	yMax=ymax_;
+
+	if (plotmscache_->hasOverlay()) {
+		adjustYRangeForOverlay(yMin, yMax);
+	}
+
 	return true;
 }
 
 
-
 unsigned int PlotMSIndexer::numBins() const {
-	// TODO
 	return PMS::COLORS_LIST().size();
 }
 
 unsigned int PlotMSIndexer::binAt(unsigned int i) const {
-	unsigned int binValue = 0;
-	if(itsColorize_) {
+	unsigned int binValue(0);
+	if (itsColorize_) { 
 		setChunk(i);
 		unsigned int val = (unsigned int)(plotmscache_->*getColFromCache_)(currChunk_,
 				(self->*ColIndexer_)(currChunk_,irel_));
 
 		if ( itsColorizeAxis_ != PMS::TIME ){
-			binValue = val % numBins();
-		}
-		else {
+			binValue = val;
+		} else {
 			if ( plotmscache_->averaging_.time() ){
 				double timeInterval= plotmscache_->averaging_.timeValue();
 				double baseTime = plotmscache_->getTime( 0, 0 );
 				Double time = plotmscache_->getTime(currChunk_, 0);
 				Double timeDiff = time - baseTime;
 				int timeIndex = static_cast<int>( timeDiff / timeInterval );
-				binValue = timeIndex % numBins();
-			}
-			else {
+				binValue = timeIndex;
+			} else {
 				int timeIndex = 0;
 				if ( currChunk_ == 0 ){
 					timeIndex = plotmscache_->findColorIndex( currChunk_, false );
-				}
-				else {
+				} else {
 					timeIndex = plotmscache_->findColorIndex( currChunk_, false );
 				}
-				binValue = timeIndex % numBins();
+				binValue = timeIndex;
 
+			}
+		}
+	} else {
+		binValue = connectBinAt(i);
+	}
+	return binValue;
+}
+
+unsigned int PlotMSIndexer::connectBinAt(unsigned int i) const {
+	unsigned int binValue(0);
+	if (itsXConnect_ != "none") {
+		for (casacore::Int bin=0; bin<nSegment_; ++bin) {
+			if (i < nCumulPoints_(bin)) {
+				binValue = bin;
+				break;
 			}
 		}
 	}
@@ -406,14 +429,12 @@ unsigned int PlotMSIndexer::binAt(unsigned int i) const {
 }
 
 bool PlotMSIndexer::isBinned() const {
-	// TODO
-	return itsColorize_;
+	return itsColorize_ || (itsXConnect_ != "none");
 }
 
 bool PlotMSIndexer::colorize(bool doColorize, PMS::Axis colorizeAxis) {
-	// TODO
 	bool changed = (doColorize != itsColorize_) ||
-			(doColorize && colorizeAxis != itsColorizeAxis_);
+			(doColorize && (colorizeAxis != itsColorizeAxis_));
 	itsColorize_ = doColorize;
 	itsColorizeAxis_ = colorizeAxis;
 
@@ -423,11 +444,19 @@ bool PlotMSIndexer::colorize(bool doColorize, PMS::Axis colorizeAxis) {
 		setIndexer(ColIndexer_,itsColorizeAxis_);
 	}
 
-	//cout << "COLORIZE!! " << boolalpha << itsColorize_ << " " << PMS::axis(itsColorizeAxis_) << endl;
-
 	return changed;
 }
 
+bool PlotMSIndexer::setConnect(String xconnect, bool timeconnect) {
+	bool changed = (xconnect != itsXConnect_ || timeconnect != itsTimeConnect_);
+	itsXConnect_ = xconnect;
+	itsTimeConnect_ = timeconnect;
+	if (changed) {
+		plotmscache_->logmesg("load_cache", "Updating indexing for new connect points setting.");
+		setUpIndexing();
+	}
+	return changed;
+}
 
 void PlotMSIndexer::setUpIndexing() {
 
@@ -455,23 +484,17 @@ void PlotMSIndexer::setUpIndexing() {
 
 	nperchan_.resize(nChunk());
 	nperchan_.set(1);
-	if (plotmscache_->netAxesMask_[dataIndex_](0)) nperchan_ *= chsh.row(0);
+	if (plotmscache_->netAxesMask_[dataIndex_](0))
+		nperchan_ *= chsh.row(0);
 
 	nperbsln_.resize(nChunk());
 	nperbsln_.set(1);
-	if (plotmscache_->netAxesMask_[dataIndex_](0)) nperbsln_ *= chsh.row(0);
-	if (plotmscache_->netAxesMask_[dataIndex_](1)) nperbsln_ *= chsh.row(1);
+	if (plotmscache_->netAxesMask_[dataIndex_](0))
+		nperbsln_ *= chsh.row(0);
+	if (plotmscache_->netAxesMask_[dataIndex_](1))
+		nperbsln_ *= chsh.row(1);
 
 	nperant_.reference(nperbsln_);
-
-
-  /*cout << "ichanbslnmax_ = " << ichanbslnmax_ << endl;
-  cout << "nperchan_     = " << nperchan_ << endl;
-  cout << "nperbsln_     = " << nperbsln_ << endl;
-  cout << "nperant_      = " << nperant_ << endl;
-
-  cout << "...done." << endl << "Set methods..." << flush;
-*/
 
 	// Set up method pointers for the chosen axes
 	setMethod(getXFromCache_, currentX_, currentXdata_);
@@ -480,19 +503,6 @@ void PlotMSIndexer::setUpIndexing() {
 	// And the indexers
 	setIndexer(XIndexer_, currentX_);
 	setIndexer(YIndexer_, currentY_);
-
-	//  cout << "done." << endl;
-
-	// And the mask collapsers
-	//  setCollapser(collapseXMask_,currentX_);
-	//  setCollapser(collapseYMask_,currentY_);
-
-	// Count up the total number of points we will plot
-	//   (keep a cumualtive running total)
-
-	//  cout << "*>*>*>*>*>*> iterate_=" << boolalpha << iterate_ << " Axis: " << PMS::axis(iterAxis_) << " iterValue_ = " << iterValue_ << endl;
-
-	//  cout << "Count points..." << flush;
 
 	// Count data segments in this iteration
 	switch (iterAxis_) {
@@ -580,7 +590,6 @@ void PlotMSIndexer::setUpIndexing() {
 	double iterTime = plotmscache_->time_[iterValue_];
 
 	for (Int ic=0; ic<nChunk(); ++ic) {
-
 		// skip this chunk if empty
 		if (!plotmscache_->goodChunk(ic)){
 			continue;
@@ -667,21 +676,21 @@ void PlotMSIndexer::setUpIndexing() {
 			}
 			break;
 		}
-        case PMS::CORR: {
-            Int nCorr = chsh(0,ic);
-            for (Int icorr=0; icorr<nCorr; ++icorr) {
-                if (*(plotmscache_->corr_[ic]->data()+icorr) == iterValue_) {
-                    for (Int nPoints=0; nPoints<ichanbslnmax_[ic]; ++nPoints) {
-                        ++iseg;
-                        cacheChunk_(iseg)  = ic;
-                        cacheOffset_(iseg) = icorr + nPoints*nCorr;
-					    nSegPoints_(iseg)  = 1;
-                    }
-                }
-            }
-            break;
-        }
-        default:
+		case PMS::CORR: {
+			Int nCorr = chsh(0,ic);
+			for (Int icorr=0; icorr<nCorr; ++icorr) {
+				if (*(plotmscache_->corr_[ic]->data()+icorr) == iterValue_) {
+					for (Int nPoints=0; nPoints<ichanbslnmax_[ic]; ++nPoints) {
+						++iseg;
+						cacheChunk_(iseg)  = ic;
+						cacheOffset_(iseg) = icorr + nPoints*nCorr;
+						nSegPoints_(iseg)  = 1;
+					}
+				}
+			}
+			break;
+		}
+		default:
 			// shouldn't reach here...
 			throw(AipsError("Unsupported iteration axis: "+PMS::axis(iterAxis_)));
 			break;
@@ -693,8 +702,7 @@ void PlotMSIndexer::setUpIndexing() {
 		nSegment_ = iseg+1;
 
 		// Cope with no segments found
-		//  (this happens when all data is flagged, time-averaging is on,
-		//    and iteration is off, in v3.2)
+		//  (this happens when all data is flagged, time-averaging is on, iteration is off, in v3.2)
 		if (nSegment_==0) nSegment_=1;
 
 		// (w/ copy)
@@ -708,18 +716,155 @@ void PlotMSIndexer::setUpIndexing() {
 	nCumulPoints_(0) = nSegPoints_(0);
 	for (Int iseg=1; iseg<nSegment_; ++iseg)
 		nCumulPoints_(iseg) = nCumulPoints_(iseg-1) + nSegPoints_(iseg);
-
 	nPoints_.reference(nSegPoints_);
 	nCumulative_.reference(nCumulPoints_);
 
-	//  cout << "done." << endl;
+	if (itsXConnect_ != "none") {
+		reindexForConnect();
+	}
+}
 
-	// Compute the nominal plot ranges
-	computeRanges();
+void PlotMSIndexer::reindexForConnect() {
+	// Need points reordered for connecting points.
+	bool doTimeConnect(itsXConnect_ != "none" && itsTimeConnect_),
+		 xIsIter(currentX_ == iterAxis_),
+		 hasChan(plotmscache_->hasChan()),
+		 hasAnt2(plotmscache_->hasAnt2());
 
-	// The indexer is now ready for plotting
-	indexerReady_ = true;
+	// set up sortkeys and sort
+	bool needCorr(true), needAnt1(true), needAnt2(hasAnt2),
+		 needSpw(true), needChan(hasChan), needTime(true);
+	if (doTimeConnect || (currentX_==PMS::TIME)) {
+		needTime = false;
+	} else if (xIsIter) {
+		// use all sortkeys
+	} else switch (currentX_) {
+		case PMS::SPW:
+			needSpw = false;
+			break;
+		case PMS::CHANNEL:
+		case PMS::FREQUENCY:
+			needChan = false;
+			break;
+		case PMS::CORR:
+			needCorr = false;
+			break;
+		case PMS::ANTENNA1:
+			needAnt1 = false;
+			break;
+		case PMS::ANTENNA2:
+			needAnt2 = false;
+			break;
+		default:
+			// use all sortkeys
+			break;
+	}
 
+	casacore::uInt npoints(nCumulPoints_(nSegment_-1));
+	Vector<Int> points(npoints);
+	indgen(points);
+	casacore::Vector<casacore::Double> timevec(npoints), spwvec(npoints), corrvec(npoints),
+		ant1vec(npoints), ant2vec(npoints), chanvec(npoints);
+	for (Int point: points) {
+		setChunk(point, true);
+		if (needTime)
+			timevec[point] = plotmscache_->getTime(currChunk_, getIndex0000(currChunk_, irel_));
+		if (needCorr)
+			corrvec[point] = plotmscache_->getCorr(currChunk_, getIndex1000(currChunk_, irel_));
+		if (needAnt1)
+			ant1vec[point] = plotmscache_->getAnt1(currChunk_, getIndex0010(currChunk_, irel_));
+		if (needAnt2)
+			ant2vec[point] = plotmscache_->getAnt2(currChunk_, getIndex0010(currChunk_, irel_));
+		if (needSpw)
+			spwvec[point] =  plotmscache_->getSpw(currChunk_, getIndex0000(currChunk_, irel_));
+		if (needChan)
+			chanvec[point] = plotmscache_->getChan(currChunk_, getIndex0100(currChunk_, irel_));
+	}
+
+	casacore::Sort sorter(points.data(), npoints);
+	if (needCorr) sorter.sortKey(corrvec.data(), TpDouble);
+	if (needAnt1) sorter.sortKey(ant1vec.data(), TpDouble);
+	if (needAnt2) sorter.sortKey(ant2vec.data(), TpDouble);
+	if (needSpw)  sorter.sortKey(spwvec.data(), TpDouble);
+	if (needChan) sorter.sortKey(chanvec.data(), TpDouble);
+	if (needTime) sorter.sortKey(timevec.data(), TpDouble);
+	Vector<uInt> idx;
+	sorter.sort(idx, npoints);
+
+	// redo chunk, offset for *sorted* points, find boundaries for nSegment_, nCumulPoints_
+	casacore::Vector<casacore::uInt> chunk(npoints), offset(npoints);
+	casacore::Double thiscorr, thisant1, thisant2, thisspw, thischan, thistime;
+	casacore::Double lastcorr, lastant1, lastant2, lastspw, lastchan, lasttime;
+	casacore::Int isegment(0);
+	casacore::Vector<casacore::uInt> nptsPerSeg;
+	for (uInt i=0; i<npoints; ++i) {
+		setChunk(points(idx(i)), true);
+		chunk(i) = currChunk_;
+		offset(i) = irel_;
+
+		thiscorr = plotmscache_->getCorr(currChunk_, getIndex1000(currChunk_, irel_));
+		thisant1 = plotmscache_->getAnt1(currChunk_, getIndex0010(currChunk_, irel_));
+		if (needAnt2)
+			thisant2 = plotmscache_->getAnt2(currChunk_, getIndex0010(currChunk_, irel_));
+		thisspw =  plotmscache_->getSpw(currChunk_, getIndex0000(currChunk_, irel_));
+		thistime = plotmscache_->getTime(currChunk_, getIndex0000(currChunk_, irel_));
+		if (needChan)
+			thischan = plotmscache_->getChan(currChunk_, getIndex0100(currChunk_, irel_));
+
+		if (i > 0) {  // check if segment changed
+			bool newseg(false);
+			if (needCorr) newseg |= (thiscorr != lastcorr);
+			if (needAnt1) newseg |= (thisant1 != lastant1);
+			if (needAnt2) newseg |= (thisant2 != lastant2);
+			if (needSpw)  newseg |= (thisspw != lastspw);
+			if (needChan) newseg |= (thischan != lastchan);
+			if (needTime) newseg |= (thistime != lasttime);
+			if (newseg) {
+				nptsPerSeg.resize(isegment+1, true);
+				nptsPerSeg(isegment) = i;
+				++isegment;
+			}
+		}
+		if (i==npoints-1) { // segment including last point
+			nptsPerSeg.resize(isegment+1, true);
+			nptsPerSeg(isegment) = npoints;
+			++isegment;
+		} else {
+			lastcorr = thiscorr;
+			lastant1 = thisant1;
+			if (needAnt2) lastant2 = thisant2;
+			lastspw = thisspw;
+			if (needChan) lastchan = thischan;
+			lasttime = thistime;
+		}
+	}
+
+	nSegment_ = isegment;
+	nCumulPoints_.resize(isegment);
+	nCumulPoints_ = nptsPerSeg;
+	cacheChunk_.resize(npoints);
+	cacheChunk_ = chunk;
+	cacheOffset_.resize(npoints);
+	cacheOffset_ = offset;
+
+	if (currentX_ == PMS::FREQUENCY) {
+		freqsDecrease_.clear();
+		for (uInt chunk : cacheChunk_) {
+			Vector<Double> freqs(plotmscache_->freq(chunk));
+			freqsDecrease_[chunk] = (freqs(0) > freqs(freqs.size()-1));
+		}
+	}
+
+	connectReady_ = true;
+}
+
+bool PlotMSIndexer::reverseConnect(unsigned int index) const {
+	if (currentX_==PMS::FREQUENCY) {
+		setChunk(index);
+		return freqsDecrease_.at(currChunk_);
+	} else {
+		return false;
+	}
 }
 
 bool PlotMSIndexer::isGlobalXRange() const {
@@ -733,42 +878,52 @@ bool PlotMSIndexer::isGlobalYRange() const {
 void PlotMSIndexer::setGlobalMinMax(Bool globalX, Bool globalY ) {
     globalXMinMax_=globalX;
     globalYMinMax_=globalY;
-};
+}
 
-void PlotMSIndexer::setChunk(uInt i) const {
+Int PlotMSIndexer::nChunk() const {
+	return plotmscache_ ? plotmscache_->nChunk() : 0;
+}
+
+inline Double PlotMSIndexer::refTime() {
+	return plotmscache_->refTime();
+}
+
+void PlotMSIndexer::setChunk(uInt i, bool ignoreReindex) const {
+	// only ignore xconnector reindex during setup, so default is false
 
 	// NB: this method assumes that i>=lasti, for now
-
-	if (i==lasti_)
+	if (i==lasti_) {
 		// already found this one on previous call (e.g., for mask
 		//   or the other axis), so change nothing
 		return;
+	}
 
-	// reset to the first chunk if very first or earlier point requested
-	if (i==0 || i<lasti_) currSeg_=0;
+	if ((itsXConnect_=="none" || itsXConnect_=="") || ignoreReindex) {
+		// reset to the first chunk if very first or earlier point requested
+		if (i==0 || i<lasti_) currSeg_=0;
 
-	// Bump at segment boundaries
-	while (i > (nCumulPoints_(currSeg_)-1)) ++currSeg_;
+		// Bump at segment boundaries
+		while (i > (nCumulPoints_(currSeg_)-1)) ++currSeg_;
 
-	// TBD:  Back up to a previous chunk?
-	//  while (i < (nCumulative_(currChunk_)) && currChunk_>0) --currChunk_;
+		// Found current Indexer _segment_, so set current _cache_ chunk:
+		currChunk_=cacheChunk_(currSeg_);
 
+		// Calculate the offset into the current chunk
+		if (currSeg_>0)
+			irel_=Int(i-nCumulPoints_(currSeg_-1));
+		else
+			irel_=Int(i);
 
-	// Found current Indexer _segment_, so set current _cache_ chunk:
-	currChunk_=cacheChunk_(currSeg_);
+		// Offset into the cache (e.g., non-zero for baseline iteration)
+		irel_ += cacheOffset_(currSeg_);
 
-	// Calculate the offset into the current chunk
-	if (currSeg_>0)
-		irel_=Int(i-nCumulPoints_(currSeg_-1));
-	else
-		irel_=Int(i);
-
-	// Offset into the cache (e.g., non-zero for baseline iteration)
-	irel_+=cacheOffset_(currSeg_);
-
-	// Remember this i next time around
-	lasti_=i;
-
+		// Remember this i next time around
+		lasti_=i;
+	} else {
+		currChunk_ = cacheChunk_(i);
+		irel_ = cacheOffset_(i);
+		lasti_ = i;
+	}
 }
 
 void PlotMSIndexer::setMethod(CacheMemPtr& getmethod,PMS::Axis axis,
@@ -1100,6 +1255,12 @@ void PlotMSIndexer::setMethod(CacheMemPtr& getmethod,PMS::Axis axis,
 	case PMS::ELEVATION:
 		getmethod = &PlotMSCacheBase::getEl;
 		break;
+	case PMS::RA:
+		getmethod = &PlotMSCacheBase::getRa;
+		break;
+	case PMS::DEC:
+		getmethod = &PlotMSCacheBase::getDec;
+		break;
 	case PMS::PARANG:
 		getmethod = &PlotMSCacheBase::getParAng;
 		break;
@@ -1141,6 +1302,9 @@ void PlotMSIndexer::setMethod(CacheMemPtr& getmethod,PMS::Axis axis,
 		break;
 	case PMS::TSKY:
 		getmethod = &PlotMSCacheBase::getTsky;
+		break;
+	case PMS::IMAGESB:
+		getmethod = &PlotMSCacheBase::getImageSideband;
 		break;
 	default:
 		throw(AipsError("Can't find get method for "+PMS::axis(axis)+"."));
@@ -1207,6 +1371,7 @@ void PlotMSIndexer::setIndexer(IndexerMethPtr& indexmethod,PMS::Axis axis) {
 	case PMS::CHANNEL:
 	case PMS::ATM:
 	case PMS::TSKY:
+	case PMS::IMAGESB:
 		indexmethod = &PlotMSIndexer::getIndex0100;
 		break;
 
@@ -1245,6 +1410,8 @@ void PlotMSIndexer::setIndexer(IndexerMethPtr& indexmethod,PMS::Axis axis) {
 	case PMS::ANTENNA:
 	case PMS::AZIMUTH:
 	case PMS::ELEVATION:
+	case PMS::RA:
+	case PMS::DEC:
 	case PMS::PARANG:
 		indexmethod = &PlotMSIndexer::getIndex0001;
 		break;
@@ -1337,8 +1504,8 @@ Record PlotMSIndexer::getPointMetaData(Int i) {
 	xAndYAt(i, thisx, thisy);
 	// Collect meta data
 	String caltype(plotmscache_->calType());
-	Int ichan, chan, ant2;
-	Double freq;
+	Int ichan, chan = -1, ant2 = -1;
+	Double freq = 0;
 	String ant2name;
 	if (caltype != "GSPLINE") {
 		ichan = getIndex0100(currChunk_, irel_);
@@ -1859,12 +2026,15 @@ void PlotMSIndexer::flagInCache(const PlotMSFlagging& flagging,Bool flag) {
 	Cube<Bool> flagcube(plotmscache_->flag(currChunk_));
 	flagcube(corr,chan,bsln)=flag;
 
+	// flagrow not loaded by default, this gets seg fault
+	/*
 	// unset flagrow when unflagging (if present in cache)
 	if (!flag) {
 		Vector<Bool> flagrow(plotmscache_->flagrow(currChunk_));
 		if (flagrow.nelements()>0)
 			flagrow(bsln)=false;
 	}
+	*/
 }
 
 /* These may not ever be needed? (gmoellen 2011March15)
@@ -1920,8 +2090,8 @@ void PlotMSIndexer::collapseMask0001(Int ch,Array<Bool>& collmask) {
 void PlotMSIndexer::computeRanges() {
 
 	// Initialize limits
-	xmin_=ymin_=xflmin_=yflmin_=DBL_MAX;
-	xmax_=ymax_=xflmax_=yflmax_=-DBL_MAX;
+	xmin_=ymin_=xflmin_=yflmin_ = DBL_MAX;
+	xmax_=ymax_=xflmax_=yflmax_ = -DBL_MAX;
 
 	// We will count up flagged/unflagged here
 	sizeMasked_=sizeUnMasked_=0;
@@ -1967,6 +2137,133 @@ void PlotMSIndexer::log(const String& method, const String& message,
 	//  plotms_->getLogger()->postMessage(PMS::LOG_ORIGIN, method, message, eventType);}
 
 }
+
+const String PlotMSRaDecIndexer::CLASS_NAME = "PlotMSRaDecIndexer";
+
+using RaDecData = casacore::PtrBlock<casacore::Vector<casacore::Double>*>;
+const RaDecData PlotMSRaDecIndexer::EMPTY_DATA = RaDecData();
+
+PlotMSRaDecIndexer::PlotMSRaDecIndexer()
+	: PlotMSIndexer(),
+	cacheOk_(false),
+	axesOk_(false),
+	xAxisIsRa_(false),
+	xAxisIsDec_(false),
+	xAxisIsRaOrDec_(false),
+	yAxisIsRa_(false),
+	yAxisIsDec_(false),
+	yAxisIsRaOrDec_(false),
+	xRa_(EMPTY_DATA),
+	xDec_(EMPTY_DATA),
+	yRa_(EMPTY_DATA),
+	yDec_(EMPTY_DATA)
+{
+}
+
+PlotMSRaDecIndexer::PlotMSRaDecIndexer(PlotMSCacheBase* plotmscache,
+		PMS::Axis xAxis, PMS::DataColumn xData, PMS::Axis yAxis, PMS::DataColumn yData,
+		PMS::Axis iterAxis, casacore::Int iterValue, casacore::String xconnect,
+		bool timeconnect, int index)
+	:	PlotMSIndexer(plotmscache, xAxis, xData, yAxis, yData,
+					  iterAxis, iterValue, xconnect, timeconnect, index),
+		cacheOk_( plotmscache == nullptr ?
+				  throw AipsError(CLASS_NAME + " constructor: plotmscache pointer is null")
+				: true),
+		axesOk_( PMS::axisIsRaDec(xAxis) or PMS::axisIsRaDec(yAxis) ?
+				  true
+				: throw AipsError(CLASS_NAME + " constructor: no Ra/Dec axis")),
+		xAxisIsRa_ (xAxis == PMS::RA),
+		xAxisIsDec_(xAxis == PMS::DEC),
+		xAxisIsRaOrDec_(xAxisIsRa_ or xAxisIsDec_),
+		yAxisIsRa_ (yAxis == PMS::RA),
+		yAxisIsDec_(yAxis == PMS::DEC),
+		yAxisIsRaOrDec_(yAxisIsRa_ or yAxisIsDec_),
+		xRa_( xAxisIsRa_ ?
+			  plotmscache->getRaDataX(index)
+			: EMPTY_DATA),
+		xDec_(xAxisIsDec_ ?
+			 plotmscache->getDecDataX(index)
+			: EMPTY_DATA),
+		yRa_( yAxisIsRa_ ?
+			  plotmscache->getRaDataY(index)
+			: EMPTY_DATA),
+		yDec_(yAxisIsDec_ ?
+			  plotmscache->getDecDataY(index)
+			: EMPTY_DATA)
+{
+
+}
+
+PlotMSIndexer* PlotMSIndexerFactory::initIndexer(PlotMSCacheBase* plotmscache, PMS::Axis xAxis,
+	PMS::DataColumn xData, PMS::Axis yAxis, PMS::DataColumn yData,
+	PMS::Axis iterAxis, casacore::Int iterValue, casacore::String xconnector, bool timeconnector,
+	int index, bool makeRaDecIndexer){
+
+	PlotMSIndexer *indexer;
+
+	if (not makeRaDecIndexer){
+		indexer = new PlotMSIndexer(plotmscache, xAxis, xData, yAxis, yData,
+			iterAxis, iterValue, xconnector, timeconnector, index);
+	} else {
+		indexer = new PlotMSRaDecIndexer(plotmscache, xAxis, xData, yAxis, yData,
+			iterAxis, iterValue, xconnector, timeconnector, index);
+	}
+	indexer->computeRanges();
+	indexer->setReady();
+	return indexer;
+}
+
+double PlotMSRaDecIndexer::xAt(unsigned int i) const {
+	double x;
+	if (xAxisIsRaOrDec_) {
+		setChunk(i);  // sets chunk and relative index in chunk
+		if (xAxisIsRa_) { // getIndex1110, getIndex0001,
+			// getIndex0010: baseline dependence, e.g.:  ROW,ANTENNA1
+			x = getRaX(currChunk_,self->getIndex0010(currChunk_,irel_));
+		} else {
+			x = getDecX(currChunk_,self->getIndex0010(currChunk_,irel_));
+		}
+	} else {
+		x = PlotMSIndexer::xAt(i);
+	}
+	return x;
+}
+
+// Garbage
+//double x= (plotmscache_->*getXFromCache_)(currChunk_,
+//		(self->*XIndexer_)(currChunk_,irel_));
+//inline casacore::Double getRa(casacore::Int chnk,casacore::Int irel)
+//return *(ra_[chnk]->data()+irel); }
+
+double PlotMSRaDecIndexer::yAt(unsigned int i) const {
+	double y;
+	if (yAxisIsRaOrDec_) {
+		setChunk(i);  // sets chunk and relative index in chunk
+		if (yAxisIsRa_) {
+			y = getRaY(currChunk_,self->getIndex0010(currChunk_,irel_));
+		} else {
+			y = getDecY(currChunk_,self->getIndex0010(currChunk_,irel_));
+		}
+	} else {
+		y = PlotMSIndexer::yAt(i);
+	}
+	return y;
+}
+
+void PlotMSRaDecIndexer::xAndYAt(unsigned int index, double& x, double& y) const {
+	x = xAt(index);
+	y = yAt(index);
+}
+
+void PlotMSRaDecIndexer::xyAndMaskAt(unsigned int index,
+		double& x, double& y,
+		bool& mask) const {
+	xAndYAt(index,x,y);
+	mask = false;
+	//mask=!(*(plotmscache_->plmask_[dataIndex_][currChunk_]->data()+irel_));
+}
+
+
 
 }
 

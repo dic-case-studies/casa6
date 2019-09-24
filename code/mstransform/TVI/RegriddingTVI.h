@@ -137,7 +137,7 @@ protected:
 	mutable casacore::Double fftShift_p;
     casacore::FFTServer<casacore::Float, casacore::Complex> fFFTServer_p;
 
-	casacore::ROMSColumns *selectedInputMsCols_p;
+	casacore::MSColumns *selectedInputMsCols_p;
 	casacore::MSFieldColumns *inputMSFieldCols_p;
 
 	mutable map<casacore::Int,casacore::Float> weightFactorMap_p;
@@ -164,6 +164,28 @@ protected:
 
 	casacore::Record configuration_p;
 	ViImplementation2 *inputVii_p;
+};
+
+//////////////////////////////////////////////////////////////////////////
+// RegriddingTVILayerFactory class  (for _recursive_ layering)
+//////////////////////////////////////////////////////////////////////////
+
+class RegriddingTVILayerFactory : public ViiLayerFactory
+{
+
+public:
+
+  RegriddingTVILayerFactory(casacore::Record &configuration);
+
+  virtual ~RegriddingTVILayerFactory() {};
+
+protected:
+
+
+  virtual ViImplementation2 * createInstance(ViImplementation2* vii0) const;
+
+  const casacore::Record configuration_p;
+
 };
 
 //////////////////////////////////////////////////////////////////////////

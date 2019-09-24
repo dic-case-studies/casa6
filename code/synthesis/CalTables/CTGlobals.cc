@@ -187,7 +187,7 @@ void assignCTScanField(NewCalTable& ct, String msName,
   Table mstab(msName,Table::Old);
 
   // How many scans in total?
-  ROTableVector<Int> allscansTV(mstab,"SCAN_NUMBER");
+  TableVector<Int> allscansTV(mstab,"SCAN_NUMBER");
   Vector<Int> allscans=allscansTV.makeVector();
   Int nScan=genSort(allscans,Sort::Ascending,(Sort::QuickSort | Sort::NoDuplicates));
 
@@ -210,13 +210,13 @@ void assignCTScanField(NewCalTable& ct, String msName,
     while (!mstiter.pastEnd()) {
       Table thistab(mstiter.table());
       
-      Int scan=ROTableVector<Int>(thistab,"SCAN_NUMBER")(0);
+      Int scan=TableVector<Int>(thistab,"SCAN_NUMBER")(0);
       scanlist(iscan)=scan;
       
-      fieldlist(iscan)=ROTableVector<Int>(thistab,"FIELD_ID")(0);
-      obslist(iscan)=ROTableVector<Int>(thistab,"OBSERVATION_ID")(0);
+      fieldlist(iscan)=TableVector<Int>(thistab,"FIELD_ID")(0);
+      obslist(iscan)=TableVector<Int>(thistab,"OBSERVATION_ID")(0);
       
-      Vector<Double> times=ROTableVector<Double>(thistab,"TIME").makeVector();
+      Vector<Double> times=TableVector<Double>(thistab,"TIME").makeVector();
       timelo(iscan)=min(times)-1e-5;
       timehi(iscan)=max(times)+1e-5;
       

@@ -57,6 +57,7 @@ const String PlotMSDBusApp::PARAM_AXIS_Y = "yAxis";
 const String PlotMSDBusApp::PARAM_AXIS_Y_LOCATION = "yAxisLocation";
 const String PlotMSDBusApp::PARAM_SHOWATM = "showatm";
 const String PlotMSDBusApp::PARAM_SHOWTSKY = "showtsky";
+const String PlotMSDBusApp::PARAM_SHOWIMAGE = "showimage";
 const String PlotMSDBusApp::PARAM_GRIDROWS = "gridRows";
 const String PlotMSDBusApp::PARAM_GRIDCOLS = "gridCols";
 const String PlotMSDBusApp::PARAM_SHOWLEGEND = "showLegend";
@@ -64,6 +65,10 @@ const String PlotMSDBusApp::PARAM_LEGENDPOSITION = "legendPosition";
 const String PlotMSDBusApp::PARAM_CLEARSELECTIONS = "clearSelections";
 const String PlotMSDBusApp::PARAM_DATACOLUMN_X = "xDataColumn";
 const String PlotMSDBusApp::PARAM_DATACOLUMN_Y = "yDataColumn";
+const String PlotMSDBusApp::PARAM_FRAME_X = "xFrame";
+const String PlotMSDBusApp::PARAM_FRAME_Y = "yFrame";
+const String PlotMSDBusApp::PARAM_INTERP_X = "xInterp";
+const String PlotMSDBusApp::PARAM_INTERP_Y = "yInterp";
 const String PlotMSDBusApp::PARAM_DATA_INDEX = "overplotDataIndex";
 const String PlotMSDBusApp::PARAM_FILENAME = "filename";
 const String PlotMSDBusApp::PARAM_FLAGGING = "flagging";
@@ -92,6 +97,8 @@ const String PlotMSDBusApp::PARAM_COLORIZE = "colorize";
 const String PlotMSDBusApp::PARAM_COLORAXIS = "coloraxis";
 const String PlotMSDBusApp::PARAM_CANVASTITLE = "canvastitle";
 const String PlotMSDBusApp::PARAM_CANVASTITLEFONT = "canvastitlefont";
+const String PlotMSDBusApp::PARAM_SHOWXLABEL = "showxlabel";
+const String PlotMSDBusApp::PARAM_SHOWYLABEL = "showylabel";
 const String PlotMSDBusApp::PARAM_XAXISLABEL = "xaxislabel";
 const String PlotMSDBusApp::PARAM_YAXISLABEL = "yaxislabel";
 const String PlotMSDBusApp::PARAM_XAXISFONT = "xaxisfont";
@@ -125,6 +132,8 @@ const String PlotMSDBusApp::PARAM_FLAGGEDSYMBOLSIZE = "flaggedsymbolsize";
 const String PlotMSDBusApp::PARAM_FLAGGEDSYMBOLCOLOR = "flaggedsymbolcolor";
 const String PlotMSDBusApp::PARAM_FLAGGEDSYMBOLFILL = "flaggedsymbolfill";
 const String PlotMSDBusApp::PARAM_FLAGGEDSYMBOLOUTLINE = "flaggedsymboloutline";
+const String PlotMSDBusApp::PARAM_XCONNECTOR = "xconnector";
+const String PlotMSDBusApp::PARAM_TIMECONNECTOR = "timeconnector";
 
 
 const String PlotMSDBusApp::METHOD_GETLOGPARAMS = "getLogParams";
@@ -405,6 +414,7 @@ void PlotMSDBusApp::dbusRunXmlMethod(
 						PMS::dataColumn(c->yDataColumn()));
 				ret.define(PARAM_SHOWATM, c->showAtm());
 				ret.define(PARAM_SHOWTSKY, c->showTsky());
+				ret.define(PARAM_SHOWIMAGE, c->showImage());
 			}
 
 			if (disp!=NULL)  {
@@ -416,6 +426,8 @@ void PlotMSDBusApp::dbusRunXmlMethod(
 			if (can!=NULL)   {
 				ret.define(PARAM_CANVASTITLE,  can->titleFormat().format);
 				ret.define(PARAM_CANVASTITLEFONT,  can->titleFont());
+				ret.define(PARAM_SHOWXLABEL,  can->xLabelShown());
+				ret.define(PARAM_SHOWYLABEL,  can->yLabelShown());
 				ret.define(PARAM_XAXISLABEL,  can->xLabelFormat().format);
 				ret.define(PARAM_YAXISLABEL,  can->yLabelFormat().format);
 				ret.define(PARAM_XAXISFONT,  can->xAxisFont());
@@ -581,16 +593,51 @@ void PlotMSDBusApp::dbusRunXmlMethod(
 				ppcache->setYDataColumn(dc, dataIndex);
 			}
 		}
+		PMS::CoordSystem cs;
+		if(parameters.isDefined(PARAM_FRAME_X) &&
+				parameters.dataType(PARAM_FRAME_X) == TpString) {
+			cs = PMS::coordSystem(parameters.asString(PARAM_FRAME_X), &ok);
+			if(ok){
+				ppcache->setXFrame(cs, dataIndex);
+			}
+		}
+		if(parameters.isDefined(PARAM_FRAME_Y) &&
+				parameters.dataType(PARAM_FRAME_Y) == TpString) {
+			cs = PMS::coordSystem(parameters.asString(PARAM_FRAME_Y), &ok);
+			if(ok){
+				ppcache->setYFrame(cs, dataIndex);
+			}
+		}
+		PMS::InterpMethod im;
+		if(parameters.isDefined(PARAM_INTERP_X) &&
+				parameters.dataType(PARAM_INTERP_X) == TpString) {
+			im = PMS::interpMethod(parameters.asString(PARAM_INTERP_X), &ok);
+			if(ok){
+				ppcache->setXInterp(im, dataIndex);
+			}
+		}
+		if(parameters.isDefined(PARAM_INTERP_Y) &&
+				parameters.dataType(PARAM_INTERP_Y) == TpString) {
+			im = PMS::interpMethod(parameters.asString(PARAM_INTERP_Y), &ok);
+			if(ok){
+				ppcache->setYInterp(im, dataIndex);
+			}
+		}
+
 		if(parameters.isDefined(PARAM_SHOWATM) &&
 				parameters.dataType(PARAM_SHOWATM) == TpBool)   {
 			bool show = parameters.asBool(PARAM_SHOWATM);
 			ppcache->setShowAtm(show);
 		}
-
 		if(parameters.isDefined(PARAM_SHOWTSKY) &&
 				parameters.dataType(PARAM_SHOWTSKY) == TpBool)   {
 			bool show = parameters.asBool(PARAM_SHOWTSKY);
 			ppcache->setShowTsky(show);
+		}
+		if(parameters.isDefined(PARAM_SHOWIMAGE) &&
+				parameters.dataType(PARAM_SHOWIMAGE) == TpBool)   {
+			bool show = parameters.asBool(PARAM_SHOWIMAGE);
+			ppcache->setShowImage(show);
 		}
 
 
@@ -605,31 +652,54 @@ void PlotMSDBusApp::dbusRunXmlMethod(
 			ppcan->setTitleFormat(f);
 		}
 
-        if(parameters.isDefined(PARAM_CANVASTITLEFONT) &&
+		if(parameters.isDefined(PARAM_CANVASTITLEFONT) &&
 				parameters.dataType(PARAM_CANVASTITLEFONT) == TpInt)   {
 			Int size = parameters.asInt(PARAM_CANVASTITLEFONT);
-            ppcan->setTitleFontSet((size > 0));
+			ppcan->setTitleFontSet((size > 0));
 			ppcan->setTitleFont(size);
+		}
+
+		if(parameters.isDefined(PARAM_SHOWXLABEL) &&
+				parameters.dataType(PARAM_SHOWXLABEL) == TpBool)   {
+			Bool showX = parameters.asBool(PARAM_SHOWXLABEL);
+			ppcan->showXLabel(showX);
+		}
+		if(parameters.isDefined(PARAM_SHOWYLABEL) &&
+				parameters.dataType(PARAM_SHOWYLABEL) == TpBool)   {
+			Bool showY = parameters.asBool(PARAM_SHOWYLABEL);
+			ppcan->showYLabel(showY);
 		}
 
 		if(parameters.isDefined(PARAM_XAXISLABEL) &&
 				parameters.dataType(PARAM_XAXISLABEL) == TpString)   {
 			String S = parameters.asString(PARAM_XAXISLABEL);
 			PlotMSLabelFormat f = ppcan->xLabelFormat();
-			if (S.length()==0)
-				f = PlotMSLabelFormat(PMS::DEFAULT_CANVAS_AXIS_LABEL_FORMAT);
-			else
+			if (S.length()==0) {
+				if (ppcan->xLabelShown()) {
+					f = PlotMSLabelFormat(PMS::DEFAULT_CANVAS_AXIS_LABEL_FORMAT);
+				} else {
+					// a space translates to length 0; put space back
+					f.format = " ";
+				}
+			} else {
 				f.format = S;
+			}
 			ppcan->setXLabelFormat(f);
 		}
 		if(parameters.isDefined(PARAM_YAXISLABEL) &&
 				parameters.dataType(PARAM_YAXISLABEL) == TpString)   {
 			String S = parameters.asString(PARAM_YAXISLABEL);
 			PlotMSLabelFormat f = ppcan->yLabelFormat();
-			if (S.length()==0)
-				f = PlotMSLabelFormat(PMS::DEFAULT_CANVAS_AXIS_LABEL_FORMAT);
-			else
+			if (S.length()==0) {
+				if (ppcan->yLabelShown()) {
+					f = PlotMSLabelFormat(PMS::DEFAULT_CANVAS_AXIS_LABEL_FORMAT);
+				} else {
+					// a space translates to length 0; put space back
+					f.format = " ";
+				}
+			} else {
 				f.format = S;
+			}
 			ppcan->setYLabelFormat(f);
 		}
 
@@ -721,6 +791,16 @@ void PlotMSDBusApp::dbusRunXmlMethod(
 			ppdisp->setFlaggedSymbol(ps, dataIndex);
 		}
 
+		if(parameters.isDefined(PARAM_XCONNECTOR) &&
+			parameters.dataType(PARAM_XCONNECTOR) == TpString)   {
+			String xconnector = parameters.asString(PARAM_XCONNECTOR);
+			ppdisp->setXConnect(xconnector, dataIndex);
+		}
+		if(parameters.isDefined(PARAM_TIMECONNECTOR) &&
+				parameters.dataType(PARAM_TIMECONNECTOR) == TpBool)   {
+			bool timeconnector = parameters.asBool(PARAM_TIMECONNECTOR);
+			ppdisp->setTimeConnect(timeconnector, dataIndex);
+		}
 
 		if(parameters.isDefined(PARAM_COLORIZE) &&
 				parameters.dataType(PARAM_COLORIZE) == TpBool)   {

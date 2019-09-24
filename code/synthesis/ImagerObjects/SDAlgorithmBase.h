@@ -67,7 +67,9 @@ public:
 		   std::shared_ptr<SIImageStore> &imagestore,
 		   casacore::Int deconvolverid, 
                    casacore::Bool isautomasking=false, 
-                   casacore::Bool fastnoise=true);
+                   //casacore::Bool fastnoise=true);
+                   casacore::Bool fastnoise=true,
+                   casacore::Record robuststats=casacore::Record());
 
   void setRestoringBeam( casacore::GaussianBeam restbeam, casacore::String usebeam );
   //  void setMaskOptions( casacore::String maskstring );
@@ -79,7 +81,8 @@ public:
   virtual casacore::String getAlgorithmName(){return itsAlgorithmName;};
 
   virtual casacore::uInt getNTaylorTerms(){return 1;};
-
+  ///returns the estimate of memory used in kilobytes (kB);
+  virtual casacore::Long estimateRAM(const std::vector<int>& imsize);
 protected:
 
   // Pure virtual functions to be implemented by various algorithm deconvolvers.

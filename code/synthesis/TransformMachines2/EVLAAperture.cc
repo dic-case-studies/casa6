@@ -125,7 +125,7 @@ namespace casa{
       }
     telescopeName_p=telescopeNames[0];
 
-    //    ROMSSpWindowColumns mssp(vb.msColumns().spectralWindow());
+    //    MSSpWindowColumns mssp(vb.msColumns().spectralWindow());
     //Freq = vb.msColumns().spectralWindow().refFrequency()(0);
     Diameter_p=0;
     Nant_p     = vb.subtableColumns().antenna().nrow();

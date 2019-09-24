@@ -49,7 +49,7 @@ namespace casacore{
 template <typename T> class ArrayColumn;
 template <typename T> class CountedPtr;
 class VisModelDataI;
-template <typename T> class ROArrayColumn;
+template <typename T> class ArrayColumn;
 template <typename T, Int N> class RigidVector;
 template <typename T, Int N> class SquareMatrix;
 }
@@ -550,7 +550,7 @@ public:
 
 //    virtual void getFreqInSpwRange(casacore::Double& freqStart, casacore::Double& freqEnd, casacore::MFrequency::Types freqframe = casacore::MFrequency::LSRK) const;
 
-	// Access the current casacore::ROMSColumns object in MSIter
+	// Access the current casacore::MSColumns object in MSIter
 	virtual const vi::SubtableColumns &
 	subtableColumns() const override;
 
@@ -685,55 +685,55 @@ public:
     //**********************************************************************
 
     // Access to antenna subtable
-    const casacore::ROMSAntennaColumns& antennaSubtablecols() const override;
+    const casacore::MSAntennaColumns& antennaSubtablecols() const override;
 
     // Access to dataDescription subtable
-    const casacore::ROMSDataDescColumns& dataDescriptionSubtablecols() const override;
+    const casacore::MSDataDescColumns& dataDescriptionSubtablecols() const override;
 
     // Access to feed subtable
-    const casacore::ROMSFeedColumns& feedSubtablecols() const override;
+    const casacore::MSFeedColumns& feedSubtablecols() const override;
 
     // Access to field subtable
-    const casacore::ROMSFieldColumns& fieldSubtablecols() const override;
+    const casacore::MSFieldColumns& fieldSubtablecols() const override;
 
     // Access to flagCmd subtable
-    const casacore::ROMSFlagCmdColumns& flagCmdSubtablecols() const override;
+    const casacore::MSFlagCmdColumns& flagCmdSubtablecols() const override;
 
     // Access to history subtable
-    const casacore::ROMSHistoryColumns& historySubtablecols() const override;
+    const casacore::MSHistoryColumns& historySubtablecols() const override;
 
     // Access to observation subtable
-    const casacore::ROMSObservationColumns& observationSubtablecols() const override;
+    const casacore::MSObservationColumns& observationSubtablecols() const override;
 
     // Access to pointing subtable
-    const casacore::ROMSPointingColumns& pointingSubtablecols() const override;
+    const casacore::MSPointingColumns& pointingSubtablecols() const override;
 
     // Access to polarization subtable
-    const casacore::ROMSPolarizationColumns& polarizationSubtablecols() const override;
+    const casacore::MSPolarizationColumns& polarizationSubtablecols() const override;
 
     // Access to processor subtable
-    const casacore::ROMSProcessorColumns& processorSubtablecols() const override;
+    const casacore::MSProcessorColumns& processorSubtablecols() const override;
 
     // Access to spectralWindow subtable
-    const casacore::ROMSSpWindowColumns& spectralWindowSubtablecols() const override;
+    const casacore::MSSpWindowColumns& spectralWindowSubtablecols() const override;
 
     // Access to state subtable
-    const casacore::ROMSStateColumns& stateSubtablecols() const override;
+    const casacore::MSStateColumns& stateSubtablecols() const override;
 
     // Access to doppler subtable
-    const casacore::ROMSDopplerColumns& dopplerSubtablecols() const override;
+    const casacore::MSDopplerColumns& dopplerSubtablecols() const override;
 
     // Access to freqOffset subtable
-    const casacore::ROMSFreqOffsetColumns& freqOffsetSubtablecols() const override;
+    const casacore::MSFreqOffsetColumns& freqOffsetSubtablecols() const override;
 
     // Access to source subtable
-    const casacore::ROMSSourceColumns& sourceSubtablecols() const override;
+    const casacore::MSSourceColumns& sourceSubtablecols() const override;
 
     // Access to sysCal subtable
-    const casacore::ROMSSysCalColumns& sysCalSubtablecols() const override;
+    const casacore::MSSysCalColumns& sysCalSubtablecols() const override;
 
     // Access to weather subtable
-    const casacore::ROMSWeatherColumns& weatherSubtablecols() const override;
+    const casacore::MSWeatherColumns& weatherSubtablecols() const override;
 
 protected:
 
@@ -799,18 +799,18 @@ protected:
 	template <typename T>
 	void
 	getColumnRows(
-		const casacore::ROScalarColumn<T> & column,
+		const casacore::ScalarColumn<T> & column,
 		casacore::Vector<T> & array) const;
 
 	template <typename T>
 	void
-	getColumnRowsMatrix(const casacore::ROArrayColumn<T> & column,
+	getColumnRowsMatrix(const casacore::ArrayColumn<T> & column,
 	                    casacore::Matrix<T> & array,
 	                    casacore::Bool correlationSlicing) const;
 
 	template <typename T>
 	void
-	getColumnRows(const casacore::ROArrayColumn<T> & column,
+	getColumnRows(const casacore::ArrayColumn<T> & column,
 	              casacore::Array<T> & array) const;
 
 	casacore::Vector<casacore::Double>
@@ -862,7 +862,7 @@ protected:
 	getViP() const;
 
 //    void getVisibilityAsStokes(casacore::Matrix<CStokesVector> & visibilityStokes,
-//                                const casacore::ROArrayColumn<casacore::Complex> & column) const;
+//                                const casacore::ArrayColumn<casacore::Complex> & column) const;
 
 	VisBuffer2 *
 	getVisBuffer(const VisibilityIterator2 *) const;
@@ -913,7 +913,7 @@ protected:
 	// Allow access to the casacore::MSColumns object; for use by
 	// VisBuffer2Adapter *KLUGE*
 
-	const casacore::ROMSColumns *
+	const casacore::MSColumns *
 	msColumnsKluge() const;
 
 	// Method to reset the VI back to the start.  Unlike the public version

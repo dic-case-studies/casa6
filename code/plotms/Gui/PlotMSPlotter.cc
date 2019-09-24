@@ -536,6 +536,7 @@ void PlotMSPlotter::initialize(Plotter::Implementation imp) {
     itsActionMap_.insert(PlotMSAction::TOOL_ANNOTATE_TEXT, actionAnnotateText);
     itsActionMap_.insert(PlotMSAction::TOOL_ANNOTATE_RECTANGLE,
                          actionAnnotateRectangle);
+    itsActionMap_.insert(PlotMSAction::TOOL_FLAG_ALL, actionFlagAll);
     
     itsActionMap_.insert(PlotMSAction::TRACKER_ENABLE_HOVER, actionTrackerHover);
     itsActionMap_.insert(PlotMSAction::TRACKER_ENABLE_DISPLAY, actionTrackerDisplay);
@@ -628,6 +629,7 @@ void PlotMSPlotter::initialize(Plotter::Implementation imp) {
     toolGroup->addAction(actionPan);
     toolGroup->addAction(actionAnnotateText);
     toolGroup->addAction(actionAnnotateRectangle);
+    toolGroup->addAction(actionFlagAll);
     connect(toolGroup, SIGNAL(triggered(QAction*)), SLOT(action(QAction*)));
     connect(toolGroup, SIGNAL(unchecked()),
             itsToolsTab_, SLOT(toolsUnchecked()));
@@ -898,5 +900,24 @@ void PlotMSPlotter::gridSizeChanged( int rowCount, int colCount ){
 	itsPlotTab_->setGridSize(rowCount, colCount);
 }
 
+#if defined(WITHOUT_DBUS)
+void PlotMSPlotter::grpc_handle_op( ) {
+    std::lock_guard<std::mutex> exc(grpc_queue_mutex);
+    if ( ! grpc_queue.empty( ) ) {
+        std::function<void()> f = grpc_queue.front( );
+        grpc_queue.pop( );
+        try { f( ); }
+        catch(...) { fprintf( stderr, "exception encountered (gui sig)\n" ); }
+    }
+}
+
+void PlotMSPlotter::grpc_exit_now( ) {
+    close( );
+    itsParent_->quitApplication( );
+    QCoreApplication::exit( );
+    exit(0);
+}
+
+#endif
 
 }

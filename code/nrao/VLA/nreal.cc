@@ -189,7 +189,11 @@ int olopen_(int *unit_no, char *filename, int /*charCount*/)
       visDataFile = getTodaysFile(getVisDir(), visDataFile, 0);
       timeData = fopen("/home/vis-serv-mirror/vladata/lastdata", "r");
       if(timeData){
-        fscanf(timeData, "%ld %ld %zd", &lastMJAD, &lastTick, &lastOffset);
+#ifdef __APPLE__
+         fscanf(timeData, "%ld %ld %lld", &lastMJAD, &lastTick, &lastOffset);
+#else
+         fscanf(timeData, "%ld %ld %zd", &lastMJAD, &lastTick, &lastOffset);
+#endif
          MJAD = lastMJAD;
       }
       gethostname(iAm, 81);
@@ -203,7 +207,7 @@ int olopen_(int *unit_no, char *filename, int /*charCount*/)
       if(fpVisData)
          fclose(fpVisData);
    }
-   printf ("Data file is %s\n", visDataFile);
+   // printf ("Data file is %s\n", visDataFile);
    oldDay = whatsToday();
 
 
@@ -271,7 +275,7 @@ int diskread_(int */*unit_no*/, char *buffer)
    int RecordSize = PHYS_RECORD_SIZE;
    struct stat;
    int curDay;
-   size_t itemsGot;
+   size_t itemsGot = 0;
    static int feedback = 0;
 
 /*
@@ -284,21 +288,29 @@ int diskread_(int */*unit_no*/, char *buffer)
    /*free(tmTime);*/
    if(timeData){
       rewind(timeData);
+#ifdef __APPLE__
+      fscanf(timeData, "%ld %ld %lld", &MJAD, &lastTick, &lastOffset);
+#else
       fscanf(timeData, "%ld %ld %zd", &MJAD, &lastTick, &lastOffset);
+#endif
    }
    if(hostLog){
       rewind(hostLog);
+#ifdef __APPLE__
+      fprintf(hostLog, "%ld %ld %lld\n", MJAD, lastTick, lastOffset);
+#else
       fprintf(hostLog, "%ld %ld %zd\n", MJAD, lastTick, lastOffset);
+#endif
    }
    /* Now we check that we're at the end of file and try again after a bit */
    /* Double check there is enough data to read */
    /* Get the visibility data from the file */
    if(FirstRecord){
       if(feedback)
-         printf("Fetching 0");
+         printf("Fetching 0\n");
       PhysRecord = 0;
       itemsGot = fread(buffer, 2048, 1, fpVisData);
-     // printf("itemsGot %d %d", itemsGot, ftell(fpVisData));
+      // printf("itemsGot %d %d item size = 2048\n", itemsGot, ftell(fpVisData));
       if(!itemsGot || feof(fpVisData) || ferror(fpVisData)){
          clearerr(fpVisData);
          if(!ONLINE){
@@ -306,8 +318,8 @@ int diskread_(int */*unit_no*/, char *buffer)
 	    FirstRecord = 1;
 	 } else{
             if(!feedback)
-               printf("Fetching 1");
-	    feedback = 1;
+               printf("Fetching 1\n");
+	    // feedback = 1;
 	 }
          while(ONLINE && !QUIT){
             itemsGot = fread(buffer, 2048, 1, fpVisData);
@@ -321,7 +333,7 @@ int diskread_(int */*unit_no*/, char *buffer)
                   reattachCurrent();
 	          if(feedback)
 	             printf(".Next File found\n");
-	          feedback = 0;
+	          // feedback = 0;
                   oldDay +=1;
                }
                clearerr(fpVisData);
@@ -335,7 +347,7 @@ int diskread_(int */*unit_no*/, char *buffer)
       }
       memcpy((void *)&LRSize, buffer+sizeof(TapeHeader), sizeof(LRSize));
       LRSize = 2*ntohl(LRSize);
-      //printf ("LRSize %d\n", LRSize);
+      // printf ("LRSize %d\n", LRSize);
       NumPhysRecords = LRSize/(PHYS_RECORD_SIZE-4);
       if(LRSize%(PHYS_RECORD_SIZE-4)){
          NumPhysRecords += 1;
@@ -348,8 +360,10 @@ int diskread_(int */*unit_no*/, char *buffer)
       FirstRecord = 0;
    }
    if(feedback)
-      printf(".");
+      printf(".\n");
    PhysRecord++;
+   // std::cout << "PhysRecord, NumPhysRecords : " << PhysRecord << ", " << NumPhysRecords << std::endl;
+   // std::cout << "RecordSize : " << RecordSize << std::endl;
    if(PhysRecord == NumPhysRecords){
          RecordSize = LastSize;
          FirstRecord = 1;
@@ -357,9 +371,14 @@ int diskread_(int */*unit_no*/, char *buffer)
             printf("Fetched\n");
    }
    if(PhysRecord == 1){
-      itemsGot = fread(buffer+2048, RecordSize-2048, 1, fpVisData);
+       if (RecordSize > 2048) {
+           // finish getting this record
+           itemsGot = fread(buffer+2048, RecordSize-2048, 1, fpVisData);
+           // std::cout << "A: itemsGot : " << itemsGot << " item size = " << (RecordSize-2048) << " feof(fpVisData) : " << feof(fpVisData) << " ferror(fpVisData) " << ferror(fpVisData) << std::endl;
+       }
    } else {
       itemsGot = fread(buffer, RecordSize, 1, fpVisData);
+      // std::cout << "B: itemsGot : " << itemsGot << " item size = " << RecordSize << " feof(fpVisData) : " << feof(fpVisData) << " ferror(fpVisData) " << ferror(fpVisData) << std::endl;
    }
    if(!itemsGot || feof(fpVisData) || ferror(fpVisData))
       QUIT= 1;
@@ -376,6 +395,7 @@ int readVLALogRec(char *data){
    char  *physrec = new char[PHYS_RECORD_SIZE];    //Allocate the physical Record
 
    int bytesRead = diskread_(&dum,  physrec);  // Read first physical record
+   // std::cout << "bytesRead : " << bytesRead << std::endl;
 
    memcpy(&tapeHead, physrec, sizeof(TapeHeader)); //Get the "tape" information
 
@@ -383,10 +403,13 @@ int readVLALogRec(char *data){
    long LRSize ;
    memcpy((void *)&LRSize, physrec+sizeof(TapeHeader), sizeof(LRSize));
    LRSize = 2*ntohl(LRSize);
+   // std::cout << "LRSize : " << LRSize << std::endl;
         // Now shift the bits from the physical to Logical Record
    int BeePtr(0);
    int NumPhysRecs(ntohs(tapeHead.total));
    int en = sizeof(TapeHeader);
+   // std::cout << "NumPhysRecs : " << NumPhysRecs << std::endl;
+   // std::cout << "en : " << en << std::endl;
 
    if (ntohs(tapeHead.current) == 1) {
          memcpy(data+BeePtr, physrec+en, PHYS_RECORD_SIZE-en);
@@ -399,6 +422,7 @@ int readVLALogRec(char *data){
          BeePtr += (PHYS_RECORD_SIZE - en);
       }
    } else {
+       // std::cout << "QUIT=1 : " << std::endl;
       QUIT = 1;
    }
 

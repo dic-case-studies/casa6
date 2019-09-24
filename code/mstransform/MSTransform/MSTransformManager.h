@@ -396,6 +396,7 @@ protected:
 	void parseUVContSubParams(casacore::Record &configuration);
 	void setSpwAvg(casacore::Record &configuration);
 	void parsePolAvgParams(casacore::Record &configuration);
+	void parsePointingsInterpolationParams(casacore::Record &configuration);
 
 	// From input MS
 	void initDataSelectionParams();
@@ -486,7 +487,8 @@ protected:
 	void checkDataColumnsToFill();
 	void colCheckInfo(const casacore::String& inputColName, const casacore::String& outputColName);
 	void checkSPWChannelsKnownLimitation();
-
+	void checkCorrelatorPreaveraging();
+	
 	// Iterator set-up
 	virtual void setIterationApproach();
 	void generateIterator();
@@ -1392,6 +1394,10 @@ protected:
 	casacore::Bool polAverage_p;
 	casacore::Record polAverageConfig_p;
 
+	// Pointings interpolation transformation parameters
+	casacore::Bool pointingsInterpolation_p;
+	casacore::Record pointingsInterpolationConfig_p;
+
 	// Weight Spectrum parameters
 	casacore::Bool usewtspectrum_p;
 
@@ -1407,7 +1413,7 @@ protected:
 	casacore::MeasurementSet *inputMs_p;
 	casacore::MeasurementSet *selectedInputMs_p;
 	casacore::MeasurementSet *outputMs_p;
-	casacore::ROMSColumns *selectedInputMsCols_p;
+	casacore::MSColumns *selectedInputMsCols_p;
 	casacore::MSColumns *outputMsCols_p;
 	std::shared_ptr<casacore::MSFieldColumns> inputMSFieldCols_p;
 

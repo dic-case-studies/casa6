@@ -18,7 +18,6 @@
 #include <casa/BasicSL/String.h>
 #include <casa/Containers/Record.h>
 #include <casa/Containers/RecordDesc.h>
-#include <casa/Containers/SimOrdMap.h>
 
 #include <casa/Quanta/QC.h>
 #include <casa/Utilities/Regex.h>
@@ -151,8 +150,8 @@ calibrater::selectvis(const ::casac::variant& time,
     LogIO os(LogOrigin("calibrater", "setdata"), logSink_p);
     os << "Beginning selectvis--(MSSelection version)-------" << LogIO::POST;
     
-    casacore::MRadialVelocity mmStart = new casacore::MRadialVelocity(casa::casaQuantity(mstart));
-    casacore::MRadialVelocity mmStep = new casacore::MRadialVelocity(casa::casaQuantity(mstep));
+    const casacore::MRadialVelocity mmStart(casa::casaQuantity(mstart));
+    const casacore::MRadialVelocity mmStep(casa::casaQuantity(mstep));
     
     // run reset because setdata is going to delete itsCI's VisSet,
     //  which existing VisJones objects rely upon
@@ -300,10 +299,10 @@ calibrater::setcallib(const ::casac::record& callib) {
     LogIO os(LogOrigin("calibrater", "setcallib"));
     os << "Beginning setcallib---------" << LogIO::POST;
 
-    Record callibrec = *toRecord(callib);
+    std::unique_ptr<Record> callibrec(toRecord(callib));
 
     // Forward to the Calibrater object
-    itsCalibrater->setcallib2(callibrec);
+    itsCalibrater->setcallib2(*callibrec);
 
   } catch(AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -327,10 +326,10 @@ calibrater::validatecallib(const ::casac::record& callib) {
     LogIO os(LogOrigin("calibrater", "validatecallib"));
     os << "Beginning setcallib---------" << LogIO::POST;
 
-    Record callibrec = *toRecord(callib);
+    std::unique_ptr<Record> callibrec(toRecord(callib));
 
     // Forward to the Calibrater object
-    if (itsCalibrater->validatecallib(callibrec)) 
+    if (itsCalibrater->validatecallib(*callibrec))
       *itsLog << LogIO::NORMAL << "Cal library ok." << LogIO::POST;
 
   } catch(AipsError x) {
@@ -366,8 +365,11 @@ calibrater::setsolve(const std::string& type,
                      const bool smooth,
                      const bool zerorates,
                      const bool globalsolve,
+                     const int niter,
                      const vector<double>& delaywindow,
-                     const vector<double>& ratewindow
+                     const vector<double>& ratewindow,
+		     const std::string& solmode,
+		     const vector<double>& rmsthresh
     )
 {
   if (! itsMS) {
@@ -396,7 +398,7 @@ calibrater::setsolve(const std::string& type,
 			    toCasaString(refant),refantmode,
 			    solnorm,normtype, minsnr,combine,fillgaps,
 			    cfcache, painc, fitorder, fraction, numedge, radius, smooth,
-                            zerorates, globalsolve, delaywindow, ratewindow);
+                            zerorates, globalsolve, niter, delaywindow, ratewindow, solmode, rmsthresh);
   } catch(AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
@@ -864,11 +866,11 @@ casac::record* calibrater::fluxscale(
     String oName( "NAME" );
 
     Table oFieldTable( itsMS->fieldTableName() );
-    ROScalarColumn<String> oFieldColumn( oFieldTable, oName );
+    ScalarColumn<String> oFieldColumn( oFieldTable, oName );
     Vector<String> oFieldName( oFieldColumn.getColumn() );
 
     Table oSPWTable( itsMS->spectralWindowTableName() );
-    ROScalarColumn<String> oSPWColumn( oSPWTable, oName );
+    ScalarColumn<String> oSPWColumn( oSPWTable, oName );
     Vector<String> oSPWName( oSPWColumn.getColumn() );
 
 

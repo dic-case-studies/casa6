@@ -1,4 +1,3 @@
-
 ##########################################################################
 # task_imtrans.py
 #
@@ -60,33 +59,48 @@
 # To make users happy, cf https://bugs.aoc.nrao.edu/browse/CAS-607
 # </motivation>
 #
-
 ###########################################################################
-from taskinit import *
-from ialib import write_image_history
+from __future__ import absolute_import
+import sys
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image
+    from casatasks import casalog
+    from .ialib import write_image_history
+else:
+    from taskinit import *
+    from ialib import write_image_history
+
+    image = iatool
 
 def imtrans(imagename, outfile, order):
     casalog.origin('imtrans')
-    myia = iatool()
+    myia = image()
     myia.dohistory(False)
     outia = None
     try:
         if (not myia.open(imagename)):
-            raise Exception, "Cannot create image analysis tool using " + imagename
+            raise Exception("Cannot create image analysis tool using " + imagename)
         if (len(outfile) == 0):
-            raise Exception, "outfile parameter must be specified."
+            raise Exception("outfile parameter must be specified.")
         outia = myia.transpose(outfile=outfile, order=order)
         try:
-            param_names = imtrans.func_code.co_varnames[:imtrans.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]   
+            param_names = imtrans.__code__.co_varnames[:imtrans.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]   
             write_image_history(
                 outia, sys._getframe().f_code.co_name,
                 param_names, param_vals, casalog
             )
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         return True
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
         raise
     finally:

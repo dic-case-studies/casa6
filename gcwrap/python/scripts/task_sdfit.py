@@ -1,13 +1,23 @@
+from __future__ import absolute_import
 import numpy
 import os
 import time, datetime
-from taskinit import gentools, casalog
-import sdutil
-ms, sdms, tb = gentools(['ms','sdms','tb'])
-
-
 from numpy import ma, array, logical_not, logical_and
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, singledishms
+    from casatools import ms as mstool
+    from casatasks import casalog
+    from . import sdutil
+
+    ms = mstool( )
+    sdms = singledishms( )
+    tb = table( )
+else:
+    from taskinit import gentools, casalog
+    import sdutil
+    ms, sdms, tb = gentools(['ms','sdms','tb'])
 
 @sdutil.sdtask_decorator
 def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,
@@ -16,6 +26,7 @@ def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,
            polaverage=None, 
            fitfunc=None, fitmode=None, nfit=None, thresh=None, avg_limit=None,
            minwidth=None, edge=None, outfile=None, overwrite=None):
+
     casalog.origin('sdfit')
 
     try:
@@ -25,7 +36,7 @@ def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,
             else:
                 raise ValueError(outfile + ' exists.')
         if (fitmode not in  ['list', 'auto']):
-            raise ValueError, "fitmode='%s' is not supported yet" % fitmode
+            raise ValueError("fitmode='%s' is not supported yet" % fitmode)
         if (spw == ''): spw = '*'
 
         selection = ms.msseltoindex(vis=infile, spw=spw, field=field, 
@@ -60,19 +71,19 @@ def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,
                       tempfile=tempfile, tempoutfile=tempoutfile)
 
         if os.path.exists(tempfile):
-            return get_results(tempfile, fitfunc, nfit, outfile)
+            return _get_results(tempfile, fitfunc, nfit, outfile)
         else:
             raise Exception('temporary file was unexpectedly not created.')
 
-    except Exception, instance:
-        raise Exception, instance
+    except Exception:
+        raise
     finally:
         if 'tempfile' in locals() and os.path.exists(tempfile):
             os.system('rm -f %s' % tempfile)
         if 'tempoutfile' in locals() and os.path.exists(tempoutfile):
             os.system('rm -rf %s' % tempoutfile)
 
-def get_results(tempfile, fitfunc, nfit, outfile):
+def _get_results(tempfile, fitfunc, nfit, outfile):
     res = {'cent':[], 'peak':[], 'fwhm':[], 'nfit':[]}
     if (fitfunc == 'gaussian'):
         func = 'gauss'

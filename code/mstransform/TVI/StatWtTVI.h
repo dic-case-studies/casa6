@@ -197,13 +197,20 @@ private:
     // in their respective bins
     std::map<casacore::Int, std::vector<ChanBin>> _chanBins {};
     casacore::Int _minSamp = 2;
-    casacore::Bool _combineCorr = false;
+    casacore::Bool _combineCorr {false};
     casacore::CountedPtr<
-        casacore::StatisticsAlgorithm<casacore::Double,
-        casacore::Array<casacore::Float>::const_iterator,
-        casacore::Array<casacore::Bool>::const_iterator>
+        casacore::StatisticsAlgorithm<
+            casacore::Double,
+            casacore::Array<casacore::Float>::const_iterator,
+            casacore::Array<casacore::Bool>::const_iterator,
+            casacore::Array<casacore::Double>::const_iterator>
     > _statAlg {} ;
     std::unique_ptr<std::pair<casacore::Double, casacore::Double>> _wtrange {};
+    // The _chanSelFlags key is the spw. The value is a Cube for convenience
+    // for subchunk computations that require the same shaped cube of flags to
+    // be applied. The dimension that counts is the second (zero-based 1) as it
+    // has length equal to the number of channels in the spw. A value of True
+    // indicates that the channel is "flagged", ie should not be used.
     std::map<casacore::uInt, casacore::Cube<casacore::Bool>> _chanSelFlags {};
 
     mutable size_t _nTotalPts = 0;
@@ -240,20 +247,11 @@ private:
         const VisBuffer2 * const vb
     ) const;
 
+    void _computeWeightSpectrumAndFlags() const;
+
     const casacore::Cube<casacore::Complex> _dataCube(
         const VisBuffer2 *const vb
     ) const;
-
-    // combines the flag cube with the channel selection flags (if any)
-    casacore::Cube<casacore::Bool> _getResultantFlags(
-        casacore::Cube<casacore::Bool>& chanSelFlagTemplate,
-        casacore::Cube<casacore::Bool>& chanSelFlags,
-        casacore::Bool& initChanSelFlags,
-        casacore::Bool& doChanSelFlags, casacore::Int spw,
-        const casacore::Cube<casacore::Bool>& flagCube
-    ) const;
-
-    void _computeWeightSpectrumAndFlags() const;
 
     void _gatherAndComputeWeights() const;
 
@@ -261,29 +259,38 @@ private:
 
     void _gatherAndComputeWeightsTimeBlockProcessing() const;
 
-    // multi-threaded case
+    // combines the flag cube with the channel selection flags (if any)
+    casacore::Cube<casacore::Bool> _getResultantFlags(
+        casacore::Cube<casacore::Bool>& chanSelFlagTemplate,
+        casacore::Cube<casacore::Bool>& chanSelFlags,
+        casacore::Bool& initChanSelFlags, casacore::Int spw,
+        const casacore::Cube<casacore::Bool>& flagCube
+    ) const;
+
+    // CAS-12358
+    void _logUsedChannels() const;
+
     casacore::Double _computeWeight(
         const casacore::Cube<casacore::Complex>& data,
         const casacore::Cube<casacore::Bool>& flags,
-        casacore::uInt spw
+        const casacore::Cube<casacore::Double>& exposures, casacore::uInt spw
     ) const;
 
     void _computeWeightsTimeBlockProcessing(
         const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags
+        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags,
+        const std::map<BaselineChanBin, casacore::Cube<casacore::Double>>& exposures
     ) const;
 
     void _computeWeightsSlidingTimeWindow(
         const casacore::Cube<casacore::Complex>& data,
         const casacore::Cube<casacore::Bool>& flags,
-        const std::vector<std::set<casacore::uInt>>& rowMap,
-        casacore::uInt spw
+        const casacore::Cube<casacore::Double>& exposures,
+        const std::vector<std::set<casacore::uInt>>& rowMap, casacore::uInt spw
     ) const;
 
     casacore::Bool _parseConfiguration(const casacore::Record &configuration);
 	
-    //void _initialize();
-
     // swaps ant1/ant2 if necessary
     static Baseline _baseline(casacore::uInt ant1, casacore::uInt ant2);
 

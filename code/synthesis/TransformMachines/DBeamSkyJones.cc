@@ -66,8 +66,8 @@ DBeamSkyJones::DBeamSkyJones(MeasurementSet& ms,
   LogIO os(LogOrigin("DBeamSkyJones", "DBeamSkyJones"));
 
   if (makePBs) {
-    ROMSColumns msc(ms);
-    ROScalarColumn<String> telescopesCol(msc.observation().telescopeName());
+    MSColumns msc(ms);
+    ScalarColumn<String> telescopesCol(msc.observation().telescopeName());
         
     for (uInt i=0; i < telescopesCol.nrow(); i++) {
       String telescope_p = telescopesCol(i); // access to protected member of

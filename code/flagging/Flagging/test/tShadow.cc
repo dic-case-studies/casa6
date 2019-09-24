@@ -12,10 +12,10 @@ int main()
 {
 
     MeasurementSet ms("/tmp/ngc5921.ms");//, Table::Update);
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
 
 
-    //    ROMSFieldColumns msfcs(msc.field());
+    //    MSFieldColumns msfcs(msc.field());
 
     //MDirection pd0(msc.field().phaseDirMeas(0));
 
@@ -59,7 +59,7 @@ int main()
 
      */
 
-    const ROMSAntennaColumns &msac = msc.antenna();
+    const MSAntennaColumns &msac = msc.antenna();
     const ROScalarMeasColumn<MPosition> &position_column = msac.positionMeas();
     //    const ROScalarMeasColumn<MPosition> &offset_column = msac.offsetMeas();
 
@@ -68,12 +68,12 @@ int main()
     cout << "Position Measure reference: " << meas_ref.showMe() << endl;
     cout << "Position Measure reference: " << meas_ref.getType() << endl;
 
-    ROScalarColumn<Double> times(ROMSMainColumns(ms).time());
-    ROScalarColumn<Int> fields(ROMSMainColumns(ms).fieldId());
-    ROScalarMeasColumn<Muvw> uvw(ROMSMainColumns(ms).uvwMeas());
-    //    ROArrayColumn<Double> uvw(ROMSMainColumns(ms).uvw());
-    ROScalarColumn<Int> antenna1(ROMSMainColumns(ms).antenna1());
-    ROScalarColumn<Int> antenna2(ROMSMainColumns(ms).antenna2());
+    ScalarColumn<Double> times(MSMainColumns(ms).time());
+    ScalarColumn<Int> fields(MSMainColumns(ms).fieldId());
+    ROScalarMeasColumn<Muvw> uvw(MSMainColumns(ms).uvwMeas());
+    //    ArrayColumn<Double> uvw(MSMainColumns(ms).uvw());
+    ScalarColumn<Int> antenna1(MSMainColumns(ms).antenna1());
+    ScalarColumn<Int> antenna2(MSMainColumns(ms).antenna2());
 
     for (unsigned i = 31; i < 32; i++) {
         cout << "row = " << i << endl;

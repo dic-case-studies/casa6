@@ -77,7 +77,7 @@ namespace casa {
     sortcol[3]=MS::columnName(MS::TIME);
     MeasurementSet msselsort(mssel_p.sort(sortcol, Sort::Ascending, Sort::QuickSort));
 
-    mscIn_p=new ROMSColumns(msselsort);
+    mscIn_p=new MSColumns(msselsort);
     String msname=name;
     if(msname==""){
       msname=AppInfo::workFileName(100, "TempSubMS");

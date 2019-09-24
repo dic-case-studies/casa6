@@ -57,12 +57,16 @@ public:
 	      const casacore::Quantity& fieldofview=casacore::Quantity(0.0, "arcsec"),
 	      const casacore::Int npixels=0, 
 	      const casacore::Bool multiField=false,
+	      const casacore::Bool useCubeBriggs=false,
 	      const casacore::String& filtertype=casacore::String("Gaussian"),
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
-  
-  casacore::Bool setWeightDensity();
+  //set the weight density to the visibility iterator
+  //the default is to set it from the imagestore griwt() image
+  //Otherwise it will use this image passed here; useful for parallelization to
+  //share one grid to all children process
+  casacore::Bool setWeightDensity(const casacore::String& imagename=casacore::String(""));
   void predictModel();
   virtual void makeSdImage(casacore::Bool dopsf=false);
   ///This should replace makeSDImage and makePSF etc in the long run
@@ -116,7 +120,7 @@ public:
 		       const casacore::Bool mTermOn    = false,
 		       const casacore::Bool wbAWP      = true,
 		       const casacore::String cfCache  = "",
-		       const casacore::Bool doPointing = false,
+		       const casacore::Bool usePointing = false,
 		       const casacore::Bool doPBCorr   = true,
 		       const casacore::Bool conjBeams  = true,
 		       const casacore::Float computePAStep   = 360.0,
@@ -152,7 +156,7 @@ public:
 			  const casacore::Bool mTermOn,      
 			  const casacore::Bool wbAWP,        
 			  const casacore::String cfCache,    
-			  const casacore::Bool doPointing,   
+			  const casacore::Bool usePointing,   
 			  const casacore::Bool doPBCorr,     
 			  const casacore::Bool conjBeams,    
 			  const casacore::Float computePAStep,
@@ -197,6 +201,10 @@ public:
 				      casacore::CountedPtr<refim::FTMachine> ftmachine,
 				      casacore::CountedPtr<refim::FTMachine> iftmachine,
 				      casacore::uInt ntaylorterms=1);
+
+  // Calculate apparent sensitivity (for _Visibility_ spectrum)
+  //  _Image_ spectral grid TBD
+  virtual casacore::Record apparentSensitivity();
 
   bool makePB();
   bool makePrimaryBeam(PBMath& pbMath);

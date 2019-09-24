@@ -5,6 +5,12 @@
 
 #include <casa/namespace.h>
 
+namespace casac {
+
+class variant;
+
+}
+
 namespace casa {
 
 template <class T> class ImageHistory {
@@ -29,6 +35,7 @@ template <class T> class ImageHistory {
 public:
 
     ImageHistory() = delete;
+    
     ImageHistory(const SPIIT image);
 
     // destructor
@@ -61,11 +68,26 @@ public:
         const std::vector<std::pair<casacore::LogOrigin, casacore::String> >& history
     );
 
+    void addHistory(
+        const std::vector<std::pair<casacore::String, casacore::String>>& history
+    );
+
     // erase all messages. Cannot be undone!
     void clear();
 
     std::vector<casacore::String> get(casacore::Bool list) const;
     std::vector<string> getAsStdStrings(casacore::Bool list) const;
+
+    // return a vector<String> containing a formatted application 
+    // summary. Nothing is written to them image that is useful for
+    // history writing.
+    static std::vector<std::pair<casacore::String, casacore::String>> 
+    getApplicationHistory(
+        const casacore::LogOrigin& origin, const casacore::String& taskname,
+        const vector<casacore::String>& paramNames,
+        const vector<casac::variant>& paramValues,
+        const casacore::String& imageName
+    );
 
     // <group>
     //Append the specified image's history to this image's history

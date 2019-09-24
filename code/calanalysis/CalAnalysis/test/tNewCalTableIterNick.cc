@@ -85,7 +85,7 @@ void createNCT( void ) {
 
   Int numSPW = oNCT.spectralWindow().nrow();
 
-  ROMSSpWindowColumns oSPWCol( oNCT.spectralWindow() );
+  MSSpWindowColumns oSPWCol( oNCT.spectralWindow() );
   Vector<Int> oNumChannel = oSPWCol.numChan().getColumn();
 
 

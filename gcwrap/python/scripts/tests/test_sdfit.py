@@ -1,31 +1,59 @@
-#import os
+from __future__ import absolute_import
+from __future__ import print_function
+import os
 import copy
 import glob
 import sys
 import shutil
 import numpy
-from __main__ import default
-from tasks import *
-from taskinit import *
-import unittest
-#
-import listing
 from numpy import array
+#import listing
+import unittest
 
-from sdfit import sdfit
-from sdutil import tbmanager
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms
+    from casatasks import sdfit, flagdata
+    from casatasks.private.sdutil import tbmanager
 
-
-try:
+    ### for selection_syntax import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     import selection_syntax
-except:
-    import tests.selection_syntax as selection_syntax
 
-try:
-    import testutils
-except:
-    import tests.testutils as testutils
+    from testhelper import copytree_ignore_subversion
 
+    tb = table()
+
+    ctsys_resolve = ctsys.resolve
+
+    # default is not used in casatasks
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    from sdfit import sdfit
+    from sdutil import tbmanager
+    
+    try:
+        from . import selection_syntax
+    except:
+        import tests.selection_syntax as selection_syntax
+        
+    try:
+        from . import testutils
+    except:
+        import tests.testutils as testutils
+    copytree_ignore_subversion = testutils.copytree_ignore_subversion
+
+    # the global tb tool is used here
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+    
 ### Utilities for reading blparam file
 class FileReader(object):
     def __init__(self, filename):
@@ -81,7 +109,7 @@ class BlparamFileParser(FileReader):
 
     def _nrow(self):
         self.__nrow = 0
-        for i in xrange(self.nline()):
+        for i in range(self.nline()):
             if self.getline(i) == self.__ctxt:
                 self.__nrow += 1
         return self.__nrow
@@ -143,8 +171,7 @@ class sdfit_unittest_base(unittest.TestCase):
     Base class for sdfit unit test
     """
     # Data path of input/output
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-              '/data/regression/unittest/tsdfit/'
+    datapath = ctsys_resolve('regression/unittest/tsdfit')
     taskname = "sdfit"
     verboselog = False
 
@@ -236,11 +263,11 @@ class sdfit_unittest_base(unittest.TestCase):
         """
         # Check for paths
         if from_dir==None and dest_dir==None:
-            raise ValueError, "Can not copy files to exactly the same path."
+            raise ValueError("Can not copy files to exactly the same path.")
         from_path = os.path.abspath("." if from_dir==None else from_dir.rstrip("/"))
         to_path = os.path.abspath("." if dest_dir==None else dest_dir.rstrip("/"))
         if from_path == to_path:
-            raise ValueError, "Can not copy files to exactly the same path."
+            raise ValueError("Can not copy files to exactly the same path.")
         # Copy a list of files and directories
         for name in names:
             from_name = from_path + "/" + name
@@ -433,20 +460,20 @@ class sdfit_unittest_base(unittest.TestCase):
             #keylist = self.complist
         
         for key in keylist:
-            self.assertTrue(currstat.has_key(key),\
+            self.assertTrue(key in currstat,\
                             msg="%s is not defined in the current results."\
                             % key)
-            self.assertTrue(refstat.has_key(key),\
+            self.assertTrue(key in refstat,\
                             msg="%s is not defined in the reference data."\
                             % key)
             refval = refstat[key]
             currval = currstat[key]
             # Quantum values
             if isinstance(refval,dict):
-                if refval.has_key('unit') and currval.has_key('unit'):
+                if 'unit' in refval and 'unit' in currval:
                     if printstat:
-                        print "Comparing unit of '%s': %s (current run), %s (reference)" %\
-                              (key,currval['unit'],refval['unit'])
+                        print("Comparing unit of '%s': %s (current run), %s (reference)" %\
+                              (key,currval['unit'],refval['unit']))
                     self.assertEqual(refval['unit'],currval['unit'],\
                                      "The units of '%s' differs: %s (expected: %s)" % \
                                      (key, currval['unit'], refval['unit']))
@@ -458,8 +485,8 @@ class sdfit_unittest_base(unittest.TestCase):
             currval = self._to_list(currval)
             refval = self._to_list(refval)
             if printstat:
-                print "Comparing '%s': %s (current run), %s (reference)" %\
-                      (key,str(currval),str(refval))
+                print("Comparing '%s': %s (current run), %s (reference)" %\
+                      (key,str(currval),str(refval)))
             self.assertTrue(len(currval)==len(refval),"Number of elemnets in '%s' differs." % key)
             if isinstance(refval[0],str):
                 for i in range(len(currval)):
@@ -497,7 +524,6 @@ class sdfit_unittest_base(unittest.TestCase):
         Convert input to a list
         If input is None, this method simply returns None.
         """
-        import numpy
         listtypes = (list, tuple, numpy.ndarray)
         if input == None:
             return None
@@ -523,13 +549,13 @@ class sdfit_unittest_base(unittest.TestCase):
         coeffs_ref = blparse_ref.coeff()
         rms_ref = blparse_ref.rms()
         allowdiff = 0.01
-        print 'Check baseline parameters:'
-        for irow in xrange(len(rms_out)):
-            print 'Row %s:'%(irow)
-            print '   Reference rms  = %s'%(rms_ref[irow])
-            print '   Calculated rms = %s'%(rms_out[irow])
-            print '   Reference coeffs  = %s'%(coeffs_ref[irow])
-            print '   Calculated coeffs = %s'%(coeffs_out[irow])
+        print('Check baseline parameters:')
+        for irow in range(len(rms_out)):
+            print('Row %s:'%(irow))
+            print('   Reference rms  = %s'%(rms_ref[irow]))
+            print('   Calculated rms = %s'%(rms_out[irow]))
+            print('   Reference coeffs  = %s'%(coeffs_ref[irow]))
+            print('   Calculated coeffs = %s'%(coeffs_out[irow]))
             r0 = rms_ref[irow]
             r1 = rms_out[irow]
             rdiff = (r1 - r0) / r0
@@ -537,11 +563,11 @@ class sdfit_unittest_base(unittest.TestCase):
                             msg='row %s: rms is different'%(irow))
             c0 = coeffs_ref[irow]
             c1 = coeffs_out[irow]
-            for ic in xrange(len(c1)):
+            for ic in range(len(c1)):
                 rdiff = (c1[ic] - c0[ic]) / c0[ic]
                 self.assertTrue((abs(rdiff)<allowdiff),
                                 msg='row %s: coefficient for order %s is different'%(irow,ic))
-        print ''
+        print('')
 #         self.assertTrue(listing.compare(out,reference),
 #                         'New and reference files are different. %s != %s. '
 #                         %(out,reference))
@@ -581,7 +607,7 @@ class sdfit_basicTest(sdfit_unittest_base):
     # Input and output names
     infiles = ['gaussian.ms', 'lorentzian.ms']
     outroot = sdfit_unittest_base.taskname+'_basictest'
-    blrefroot = sdfit_unittest_base.datapath+'refblparam'
+    blrefroot = os.path.join(sdfit_unittest_base.datapath,'refblparam')
     tid = None
 
     answer012 = {'cent': [[4000.0], [5000.0], [3000.0], [2000.0], [4500.0], [5500.0]],
@@ -611,7 +637,7 @@ class sdfit_basicTest(sdfit_unittest_base):
         for infile in self.infiles:
             if os.path.exists(infile):
                 shutil.rmtree(infile)
-            shutil.copytree(self.datapath+infile, infile)
+            shutil.copytree(os.path.join(self.datapath,infile), infile)
         default(sdfit)
 
     def tearDown(self):
@@ -648,7 +674,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             spw = '0,1,2'
             nfit = [1]
             fitfunc = infile.split('.')[0]
-            print "testing " + fitfunc + " profile..."
+            print("testing " + fitfunc + " profile...")
             result = sdfit(infile=infile, datacolumn=datacolumn, spw=spw, nfit=nfit, fitfunc=fitfunc)
             npol = 2
             nrow = len(spw.split(','))
@@ -665,7 +691,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                         for j in range(len(result[key][i])):
                             result_lower = result[key][i][j][0] - 3.0 * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + 3.0 * result[key][i][j][1]
-                            #print "infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")"
+                            #print("infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")")
                             self.assertTrue(((result_lower <= answer[key][i][j]) and (answer[key][i][j] <= result_upper)),
                                             msg="row%s, comp%s result inconsistent with answer"%(i, j))
 
@@ -677,7 +703,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             spw = '3:0~4000;4001~8191'
             nfit = [1,1]
             fitfunc = infile.split('.')[0]
-            print "testing " + fitfunc + " profile..."
+            print("testing " + fitfunc + " profile...")
             result = sdfit(infile=infile, datacolumn=datacolumn, spw=spw, nfit=nfit, fitfunc=fitfunc)
             npol = 2
             nrow = 1
@@ -696,7 +722,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             if (key == "fwhm") and (i == 1) and (j == 0): thres = 18.0
                             result_lower = result[key][i][j][0] - thres * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + thres * result[key][i][j][1]
-                            #print "infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")"
+                            #print("infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")")
                             self.assertTrue(((result_lower <= answer[key][i][j]) and (answer[key][i][j] <= result_upper)),
                                             msg="row%s, comp%s result inconsistent with answer"%(i, j))
 
@@ -708,7 +734,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             spw = '3'
             nfit = [2]
             fitfunc = infile.split('.')[0]
-            print "testing " + fitfunc + " profile..."
+            print("testing " + fitfunc + " profile...")
             result = sdfit(infile=infile, datacolumn=datacolumn, spw=spw, nfit=nfit, fitfunc=fitfunc)
             npol = 2
             nrow = 1
@@ -725,7 +751,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                         for j in range(len(result[key][i])):
                             result_lower = result[key][i][j][0] - 3.0 * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + 3.0 * result[key][i][j][1]
-                            #print "infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")"
+                            #print("infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")")
                             self.assertTrue(((result_lower <= answer[key][i][j]) and (answer[key][i][j] <= result_upper)),
                                             msg="row%s, comp%s result inconsistent with answer"%(i, j))
 
@@ -739,7 +765,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             spw = '0,1,2'
             nfit = [1]
             fitfunc = infile.split('.')[0]
-            print "testing " + fitfunc + " profile..."
+            print("testing " + fitfunc + " profile...")
             result = sdfit(infile=infile_negative, datacolumn=datacolumn, spw=spw, nfit=nfit, fitfunc=fitfunc)
             shutil.rmtree(infile_negative)
             npol = 2
@@ -758,7 +784,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                         for j in range(len(result[key][i])):
                             result_lower = result[key][i][j][0] - 3.0 * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + 3.0 * result[key][i][j][1]
-                            #print infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")"
+                            #print(infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")")
                             self.assertTrue(((result_lower <= answer[key][i][j]) and (answer[key][i][j] <= result_upper)),
                                             msg="row%s, comp%s result inconsistent with answer"%(i, j))
 
@@ -772,7 +798,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             spw = '3:0~4000;4001~8191'
             nfit = [1,1]
             fitfunc = infile.split('.')[0]
-            print "testing " + fitfunc + " profile..."
+            print("testing " + fitfunc + " profile...")
             result = sdfit(infile=infile_negative, datacolumn=datacolumn, spw=spw, nfit=nfit, fitfunc=fitfunc)
             shutil.rmtree(infile_negative)
             npol = 2
@@ -793,7 +819,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             if (key == "fwhm") and (i == 1) and (j == 0): thres = 18.0
                             result_lower = result[key][i][j][0] - thres * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + thres * result[key][i][j][1]
-                            #print infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")"
+                            #print(infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")")
                             self.assertTrue(((result_lower <= answer[key][i][j]) and (answer[key][i][j] <= result_upper)),
                                             msg="row%s, comp%s result inconsistent with answer"%(i, j))
 
@@ -807,7 +833,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             spw = '3'
             nfit = [2]
             fitfunc = infile.split('.')[0]
-            print "testing " + fitfunc + " profile..."
+            print("testing " + fitfunc + " profile...")
             result = sdfit(infile=infile_negative, datacolumn=datacolumn, spw=spw, nfit=nfit, fitfunc=fitfunc)
             shutil.rmtree(infile_negative)
             npol = 2
@@ -828,7 +854,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             if (key == "fwhm") and (i == 1) and (j == 0): thres = 18.0
                             result_lower = result[key][i][j][0] - thres * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + thres * result[key][i][j][1]
-                            #print infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")"
+                            #print(infile="+infile+" --- "+"lower("+str(result_lower)+") - answer("+str(answer[key][i][j])+") - upper("+str(result_upper) +")")
                             self.assertTrue(((result_lower <= answer[key][i][j]) and (answer[key][i][j] <= result_upper)),
                                             msg="row%s, comp%s result inconsistent with answer"%(i, j))
 
@@ -839,8 +865,7 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
         intent, antenna, field, spw, timerange, scan, and pol,
     in combination with datacolumn selection = {corrected | float_data}
     """
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-        '/data/regression/unittest/tsdfit/'
+    datapath = ctsys_resolve('regression/unittest/tsdfit')
     infile = "analytic_type1.fit.ms"
     common_param = dict(infile=infile, outfile='',
                         fitfunc='gaussian',nfit=[1],fitmode='list')
@@ -863,7 +888,7 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
 
     def setUp(self):
         self._remove(self.templist)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdfit)
 
     def tearDown(self):
@@ -871,12 +896,12 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
 
     def _get_selection_string(self, key):
         if key not in self.selections.keys():
-            raise ValueError, "Invalid selection parameter %s" % key
+            raise ValueError("Invalid selection parameter %s" % key)
         return {key: self.selections[key][0]}
 
     def _get_selected_row_and_pol(self, key):
         if key not in self.selections.keys():
-            raise ValueError, "Invalid selection parameter %s" % key
+            raise ValueError("Invalid selection parameter %s" % key)
         pols = [0,1]
         rows = [0,1]
         if key == 'pol':  #self.selection stores pol ids
@@ -996,8 +1021,7 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
     """
     This class tests fitmode='auto'
     """
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-        '/data/regression/unittest/tsdfit/'
+    datapath = ctsys_resolve('regression/unittest/tsdfit')
     infile = "analytic_type2.fit1row.ms"
     common_param = dict(infile=infile, outfile='',datacolumn='float_data',
                         fitfunc='gaussian',fitmode='auto')
@@ -1013,7 +1037,7 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
 
     def setUp(self):
         self._remove([self.infile])
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdfit)
 
     def tearDown(self):
@@ -1136,8 +1160,7 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
           Averaging the first 4 rows, taking account of weight, gives
           Gaussian with peak amplitude of 1. 
     """
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-        '/data/regression/unittest/tsdfit/'
+    datapath = ctsys_resolve('regression/unittest/tsdfit')
     infile = "sdfit_tave.ms"
     outfile = "sdfit.out"
     common_param = dict(infile=infile, outfile=outfile, datacolumn='float_data',
@@ -1145,7 +1168,7 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
     select_param = dict(scan='8', intent='*ON_SOURCE*', field='4')
     def setUp(self):
         self._remove([self.infile])
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdfit)
 
     def tearDown(self):
@@ -1236,7 +1259,7 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
     answer = sdfit_basicTest.answer012
     
     def setUp(self):
-        testutils.copytree_ignore_subversion(self.datapath, self.infile)
+        copytree_ignore_subversion(self.datapath, self.infile)
         self.edit_weight()
     
     def tearDown(self):
@@ -1244,17 +1267,20 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
             shutil.rmtree(self.infile)
 
     def edit_weight(self):
-        (mytb,) = gentools(['tb'])
+        if is_CASA6:
+            mytb = table( )
+        else:
+            (mytb,) = gentools(['tb'])
         mytb.open(self.infile, nomodify=False)
         try:
-            print 'Editing weight'
-            for irow in xrange(mytb.nrows()):
+            print('Editing weight')
+            for irow in range(mytb.nrows()):
                 # weight for XX is two times larger than YY
-                print '    irow = {}'.format(irow)
+                print('    irow = {}'.format(irow))
                 weight = mytb.getcell('WEIGHT', irow)
-                print '    weight (before)', weight
+                print('    weight (before)', weight)
                 weight[1] *= 2.0
-                print '    weight (after)', weight
+                print('    weight (after)', weight)
                 mytb.putcell('WEIGHT', irow, weight)
         finally:
             mytb.close()
@@ -1264,7 +1290,6 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         Edit DATA_DESC_ID and TIME (TIME_CENTROID) so taht VI/VB2 takes more than 
         one row in one (sub)chunk
         """
-        (mytb) = gentools(['tb'])
         tb.open(self.infile, nomodify=False)
         try:
             ddid = tb.getcol('DATA_DESC_ID')
@@ -1288,7 +1313,12 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         if mode == 'default' or mode == 'stokes':
             scaled /= 2.0
         elif mode == 'geometric':
-            (myms, mytb,) = gentools(['ms', 'tb'])
+            if is_CASA6:
+                myms = ms()
+                mytb = table()
+            else:
+                (myms, mytb,) = gentools(['ms', 'tb'])
+                
             sel = myms.msseltoindex(vis=self.infile, spw='0')
             ddid = sel['dd'][0]
             mytb.open(self.infile)
@@ -1304,8 +1334,8 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         return scaled
             
     def verify(self, mode, result, where=[0,1]):
-        print 'mode=\'{}\''.format(mode)
-        print 'result=\'{}\''.format(result)
+        print('mode=\'{}\''.format(mode))
+        print('result=\'{}\''.format(result))
         
         # number of fit results
         # number of fit results should be 1
@@ -1330,10 +1360,10 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         cent_expected = numpy.asarray(self.answer['cent'])[where].squeeze()
         sort_index = numpy.argsort(cent_expected)
         cent_expected = cent_expected[sort_index]
-        print 'cent (result)={}\ncent (expected)={}'.format(cent_result, 
-                                                            cent_expected) 
+        print('cent (result)={}\ncent (expected)={}'.format(cent_result, 
+                                                            cent_expected)) 
         err_factor = 2.0
-        for i in xrange(2):
+        for i in range(2):
             self.assertLessEqual(cent_expected[i], cent_result[i] + err_factor * cent_err[i])
             self.assertGreaterEqual(cent_expected[i], cent_result[i] - err_factor * cent_err[i])
             
@@ -1344,10 +1374,10 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         fwhm_err = fwhm[0,:,1]
         fwhm_expected = numpy.asarray(self.answer['fwhm'])[where].squeeze()
         fwhm_expected = fwhm_expected[sort_index]
-        print 'fwhm (result)={}\nfwhm (expected)={}'.format(fwhm_result, 
-                                                            fwhm_expected) 
+        print('fwhm (result)={}\nfwhm (expected)={}'.format(fwhm_result, 
+                                                            fwhm_expected)) 
         err_factor = 2.0
-        for i in xrange(2):
+        for i in range(2):
             self.assertLessEqual(fwhm_expected[i], fwhm_result[i] + err_factor * fwhm_err[i])
             self.assertGreaterEqual(fwhm_expected[i], fwhm_result[i] - err_factor * fwhm_err[i])
         
@@ -1359,10 +1389,10 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         peak_expected = numpy.asarray(self.answer['peak'])[where].squeeze()
         peak_expected_scaled = self.scale_expected_peak(mode, peak_expected)
         peak_expected_scaled = peak_expected_scaled[sort_index]
-        print 'peak (result)={}\npeak (expected)={}'.format(peak_result, 
-                                                            peak_expected_scaled) 
+        print('peak (result)={}\npeak (expected)={}'.format(peak_result, 
+                                                            peak_expected_scaled)) 
         err_factor = 2.0
-        for i in xrange(2):
+        for i in range(2):
             self.assertLessEqual(peak_expected_scaled[i], peak_result[i] + err_factor * peak_err[i])
             self.assertGreaterEqual(peak_expected_scaled[i], peak_result[i] - err_factor * peak_err[i])
         
@@ -1380,7 +1410,7 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         # since edit_meta, effectively it corresponds to process both spw 0 and 1
         result = sdfit(infile=self.infile, datacolumn='float_data', fitfunc='gaussian', 
                        nfit=[2], spw='0', fitmode='auto', polaverage=mode)
-        for i in xrange(len(result['nfit'])):
+        for i in range(len(result['nfit'])):
             subresult = {}
             subresult['nfit'] = [result['nfit'][i]]
             subresult['cent'] = [result['cent'][i]]
@@ -1417,3 +1447,7 @@ def suite():
             sdfit_timeaverage,
             sdfit_polaverage
            ]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

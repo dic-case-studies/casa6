@@ -3053,6 +3053,8 @@ namespace asdm {
   		
       tableDesc_.addColumn(ScalarColumnDesc<String>("calReductionId", "blabla"));
   		
+      tableDesc_.addColumn(ScalarColumnDesc<String>("spectralWindowId", "blabla"));
+  		
   		
       tableDesc_.addColumn(ScalarColumnDesc<double>("startValidTime", "blabla"));
   		
@@ -3107,6 +3109,8 @@ namespace asdm {
   		
         ScalarColumn<String> calReductionId(*table_p_, "calReductionId");             
   		
+        ScalarColumn<String> spectralWindowId(*table_p_, "spectralWindowId");             
+  		
   		
         ScalarColumn<double> startValidTime(*table_p_, "startValidTime");             
   		
@@ -3160,6 +3164,10 @@ namespace asdm {
 
 	
 	    calReductionId.put(rowIndex, rows.at(i)->getCalReductionId().toString());
+	
+
+	
+	    spectralWindowId.put(rowIndex, rows.at(i)->getSpectralWindowId().toString());
 	
 
 		    
@@ -11567,7 +11575,7 @@ namespace asdm {
 
 	
 	    if (rows.at(i)->isParallaxExists())
-		    parallax.put(rowIndex, ext2CASA2D<Angle,double>(rows.at(i)->getParallax()));
+		    parallax.put(rowIndex, ext2CASA1D<Angle,double>(rows.at(i)->getParallax()));
 	
 
 		    rowIndex++;		

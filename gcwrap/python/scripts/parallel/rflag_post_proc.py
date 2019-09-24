@@ -1,4 +1,18 @@
-from taskinit import casalog
+from __future__ import absolute_import
+
+import numpy as np
+# as of python 2.5 the key parameter was added to eventually replace the cmp parameter for sorting
+# the cmp parameter was removed in python 3
+# this function is available in both python 2.x and 3.x to convert to something to be used with the key parameter
+# it would probably be better if this code was reworked to use the key parameter directly
+from functools import cmp_to_key
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
+else:
+    from taskinit import casalog
 
 def is_rflag_report(item):
     """
@@ -126,8 +140,6 @@ def finalize_agg_rflag_thresholds(rflag_dict):
         else:
             return 0
 
-    import numpy as np
-
     for key, val in rflag_dict.items():
         if not isinstance(val, str):
             # If the list was empty, we need a dummy (0,3)-shaped array
@@ -139,7 +151,7 @@ def finalize_agg_rflag_thresholds(rflag_dict):
             for idx in range(len(val)):
                 val[idx] = [val[idx][0], val[idx][1], np.median(val[idx][2])]
             # Sort to match better what is produced when not using parallelization
-            val = sorted(val, cmp=spw_field_comp)
+            val = sorted(val, key=cmp_to_key(spw_field_comp))
             rflag_dict[key] = np.array(val)
 
     return rflag_dict

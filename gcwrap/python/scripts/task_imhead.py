@@ -86,17 +86,30 @@
 # <todo>
 # </todo>
 
+from __future__ import absolute_import
 import numpy
+import sys
 import os
 
-from taskinit import *
-from ialib import write_image_history
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image
+    from casatools import imagemetadata
+    from .. import casalog
+    from .ialib import write_image_history
+else:
+    from taskinit import *
+    from ialib import write_image_history
+
+    image = iatool
+    imagemetadata = imdtool
 
 def imhead(
     imagename, mode, hdkey, hdvalue, verbose
 ):
     if mode.startswith('h') or mode.startswith('s'):
-        myia = iatool()
+        myia = image()
         try:
             myia.open(imagename)
             if mode.startswith('h'):
@@ -104,7 +117,7 @@ def imhead(
                 return True
             elif mode.startswith('s'):
                 return myia.summary(verbose=verbose)
-        except Exception, instance:
+        except Exception as instance:
             casalog.post(str('*** Error *** ') + str(instance), 'SEVERE')
             raise
         finally:
@@ -114,7 +127,7 @@ def imhead(
         or mode.startswith('g') or mode.startswith('l')
         or mode.startswith('p')
     ):
-        myimd = imdtool()
+        myimd = imagemetadata()
         try:
             myimd.open(imagename)
             res = False
@@ -130,16 +143,20 @@ def imhead(
                 res = myimd.set(hdkey, hdvalue)
             if res:
                 try:
-                    param_names = imhead.func_code.co_varnames[:imhead.func_code.co_argcount]
-                    param_vals = [eval(p) for p in param_names]   
+                    param_names = imhead.__code__.co_varnames[:imhead.__code__.co_argcount]
+                    if is_python3:
+                        vars = locals( )
+                        param_vals = [vars[p] for p in param_names]
+                    else:
+                        param_vals = [eval(p) for p in param_names]   
                     write_image_history(
                         imagename, sys._getframe().f_code.co_name,
                         param_names, param_vals, casalog
                     )
-                except Exception, instance:
+                except Exception as instance:
                     casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
             return res
-        except Exception, instance:
+        except Exception as instance:
             casalog.post(str('*** Error *** ') + str(instance), 'SEVERE')
             return False
         finally:

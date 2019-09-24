@@ -15,6 +15,7 @@ import numpy as np
 datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
 altdatapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/setjy/"
 calpath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/gaincal/"
+overlaypath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
 
 # Pick up alternative data directory to run tests on MMSs
 if os.environ.has_key('TEST_DATADIR'):   
@@ -28,35 +29,39 @@ class plotms_test_base(unittest.TestCase):
 
     testms  = "pm_ngc5921.ms"
     testms2 = "ngc5921.ms"
+    testms3 = "sun.subset.pentagon.ms"
+    testms4 = "split_ddid_mixedpol_CAS-12283.ms"
     testcaltable = 'ngc5921.ref1a.gcal'
     outputDir="/tmp/" + str(os.getpid()) + "/"
     plotfile_jpg = "/tmp/myplot.jpg"
     display = os.environ.get("DISPLAY")
     ms = os.path.join(outputDir, testms)
     ms2 = os.path.join(outputDir, testms2)
+    ms3 = os.path.join(outputDir, testms3)
+    ms4 = os.path.join(outputDir, testms4)
     caltable = os.path.join(outputDir, testcaltable)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
             shutil.rmtree(self.outputDir)
 
-    def setUpdata(self):
+    def setUpData(self):
         res = None
         default(plotms)
         if not os.path.exists(self.ms):
             shutil.copytree(os.path.join(datapath,self.testms), 
                     self.ms, symlinks=True)
 
-    def tearDowndata(self):
+    def tearDownData(self):
         self.cleanUp()
         pm.setPlotMSFilename("")
 
-    def setUpaltdata(self):
+    def setUpAltData(self):
         if not os.path.exists(self.ms2):
             shutil.copytree(os.path.join(altdatapath,self.testms2),
                     self.ms2, symlinks=True)
 
-    def setUpcaldata(self):
+    def setUpCalData(self):
         res = None
         default(plotms)
         if not os.path.exists(self.ms2):
@@ -66,6 +71,16 @@ class plotms_test_base(unittest.TestCase):
         if not os.path.exists(self.caltable):
             shutil.copytree(os.path.join(calpath, self.testcaltable),
                     self.caltable, symlinks=True)
+
+    def setUpPointingData(self):
+        if not os.path.exists(self.ms3):
+            shutil.copytree(os.path.join(datapath,self.testms3),
+                    self.ms3, symlinks=True)
+
+    def setUpOverlayData(self):
+        if not os.path.exists(self.ms4):
+            shutil.copytree(os.path.join(overlaypath,self.testms4),
+                    self.ms4, symlinks=True)
 
     def checkPlotfile(self, plotfileName, minSize, maxSize=None):
         self.assertTrue(os.path.isfile(plotfileName), "Plot was not created")
@@ -111,12 +126,12 @@ class test_basic(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
         # alternate data needed for plotting two different MSes
-        self.setUpaltdata()
+        self.setUpAltData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
             
     def test_basic_plot(self):
         '''test_basic_plot: Basic plot'''
@@ -282,31 +297,7 @@ class test_basic(plotms_test_base):
         self.removePlotfile(plotfile_pdf)
         print
 
-    def test_basic_overlays(self):
-        '''test_basic_overlays: showatm and showtsky overplots'''
-        self.plotfile_jpg = os.path.join(self.outputDir, "testBasic10.jpg")
-        self.removePlotfile()
-        time.sleep(5)
-        # basic plot with showatm, xaxis chan
-        res = plotms(vis=self.ms, xaxis='chan', plotfile=self.plotfile_jpg,
-            expformat="jpg", showgui=False, highres=True, showatm=True)   
-        self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 80000)
-        self.removePlotfile()
-        # basic plot with showtsky, xaxis freq
-        res = plotms(vis=self.ms, xaxis='freq', plotfile=self.plotfile_jpg,
-            expformat="jpg", showgui=False, highres=True, showtsky=True)   
-        self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 80000)
-        self.removePlotfile()
-        # plotfile without overlay: xaxis must be chan or freq
-        # so ignores showatm/tsky
-        res = plotms(vis=self.ms, plotfile=self.plotfile_jpg,
-            expformat="jpg", showgui=False, highres=True, showatm=True)   
-        self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 190000)
-        self.removePlotfile()
-        print
+
 
 # ------------------------------------------------------------------------------
 
@@ -315,10 +306,10 @@ class test_averaging(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
     
     def test_averaging_time(self):
         '''test_averaging_time: Average time'''
@@ -418,10 +409,11 @@ class test_axis(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
+        self.setUpPointingData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
 
     def test_axis_list(self):
         '''test_axis_list: Overplot scan and field y-axis with time x-axis.'''
@@ -450,7 +442,7 @@ class test_axis(plotms_test_base):
                      plotfile=self.plotfile_jpg, expformat='jpg',
                      highres=True)
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 210000)
+        self.checkPlotfile(self.plotfile_jpg, 200000)
         self.removePlotfile()
         
         print
@@ -571,13 +563,16 @@ class test_axis(plotms_test_base):
                 'sigma', 'sigmasp', 'flag', 'flagrow', 'uvdist', 
                 'uvwave', 'u', 'v', 'w', 'uwave', 'vwave', 'wwave', 
                 'azimuth', 'elevation', 'hourang', 'parang', 
-                'ant', 'ant-azimuth', 'ant-elevation', 'ant-parang',
+                'ant', 'ant-azimuth', 'ant-elevation', 'ant-parang', 'ant-ra', 'ant-dec',
                 'observation', 'intent']
         for axis in axes:
             filename = "testAxis10_" + axis + ".jpg"
             plotfile = os.path.join(self.outputDir, filename)
             self.removePlotfile(plotfile)
-            res = plotms(vis=self.ms, plotfile=plotfile, highres=True,
+            axis_vis = self.ms
+            if axis in ['ant-ra','ant-dec']:
+                axis_vis = self.ms3
+            res = plotms(vis=axis_vis, plotfile=plotfile, highres=True,
                          showgui=False, yaxis=axis)
             self.assertTrue(res)
             self.checkPlotfile(plotfile, 40000)
@@ -606,7 +601,7 @@ class test_axis(plotms_test_base):
                      plotfile=self.plotfile_jpg, expformat='jpg',
                      highres=True)
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 230000)
+        self.checkPlotfile(self.plotfile_jpg, 200000)
         self.removePlotfile()
         # test ms has no corrected data, should revert to data
         # Plot amp:corrected(->data) vs time and amp:model vs time. 
@@ -630,17 +625,87 @@ class test_axis(plotms_test_base):
         self.checkPlotfile(self.plotfile_jpg, 190000)
         print
 
+    def test_axis_radec_params(self,debug=False):
+        '''test_axis_radec_params: Test ant-ra/ant-dec parameters'''
+        yx_axes = [('ant-ra','time'),
+                   ('ant-dec','time'),
+                   ('ant-dec','ant-ra')
+                  ]
+        interp_methods = ['nearest','cubic spline']
+        # Sub-plots grid
+        grid_cols = len(yx_axes)
+        grid_rows = len(interp_methods)
+        n_plots = grid_rows*grid_cols
+        # Create 1 plot file per supported reference frame
+        ref_frames = {'icrs':30000,'j2000':30000,'b1950':30000,'galactic':30000,'azelgeo':30000}
+        for ref_frame, plot_min_size in ref_frames.iteritems():
+            # Plot file
+            plot_filename = "testAxis13_radec_" + ref_frame + ".png"
+            plot_dir = self.outputDir if not debug else '/tmp'
+            plot_path = os.path.join(plot_dir, plot_filename)
+            self.removePlotfile(plot_path)
+            # Create sub-plots, export plot when plotting last sub-plot
+            plot_index = 0
+            for row, interp_method in enumerate(interp_methods):
+                for col, (y_axis,x_axis) in enumerate(yx_axes):
+                    is_first_plot = (plot_index == 0)
+                    is_last_plot = ( (plot_index + 1) == n_plots)
+                    title_fmt = 'ref={ref_frame}, interp={interp}'
+                    title = title_fmt.format(ref_frame=ref_frame,
+                                             interp=interp_method)
+                    res = plotms(
+                              vis = self.ms3,
+                              #
+                              title = title,
+                              titlefont = 10,
+                              #
+                              gridrows = grid_rows,
+                              gridcols = grid_cols,
+                              #
+                              rowindex = row,
+                              colindex = col,
+                              plotindex = plot_index,
+                              #
+                              xaxis = x_axis,
+                              xframe = ref_frame,
+                              xinterp = interp_method,
+                              #
+                              yaxis = y_axis,
+                              yframe = ref_frame,
+                              yinterp = interp_method,
+                              #
+                              coloraxis = 'spw',
+                              #
+                              plotfile = plot_path if is_last_plot else '',
+                              width = 1024,
+                              height = 768,
+                              highres = True,
+                              overwrite = True,
+                              #
+                              showgui = False,
+                              #
+                              clearplots = is_first_plot
+                          )
+                    self.assertTrue(res)
+                    plot_index = plot_index + 1
+                    # Note: last plotms call is blocking : plotms waits 
+                    #        until all plots are drawn before exporting
+            self.checkPlotfile(plot_path, plot_min_size)
+            if not debug:
+                self.removePlotfile(plot_path)
+        print
+
 # ------------------------------------------------------------------------------
-       
+
 class test_calibration(plotms_test_base):
     ''' test plotms callib parameter '''
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpcaldata()
+        self.setUpCalData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
 
     def test_calibration_callib(self):
         '''test_calibration_callib: CAS-3034, CAS-7502 callib parameter for OTF calibration'''
@@ -680,10 +745,10 @@ class test_calplots(plotms_test_base):
     def setUp(self):
         self.checkDisplay()
         # cal table for plotting
-        self.setUpcaldata()
+        self.setUpCalData()
         
     def tearDown(self):
-        self.tearDowndata
+        self.tearDownData
 
     def test_calplot_basic(self):
         '''test_calplot_basic: Basic plot of caltable'''
@@ -807,11 +872,11 @@ class test_pageheader(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
 
     def tearDown(self):
         if not self.debug:
-            self.tearDowndata()
+            self.tearDownData()
 
     def checkPageHeader(self,expected_rows):
         page_header = PlotmsPageHeader(self.plotfile_png)
@@ -875,10 +940,10 @@ class test_display(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
        
     def test_display_symbol(self):
         '''test_display_symbol: Set a custom plotting symbol'''
@@ -1099,10 +1164,10 @@ class test_grid(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
 
     def test_grid_location(self):
         '''test_grid_location: Set rowindex & colindex to place a plot in a particular location'''
@@ -1274,10 +1339,10 @@ class test_iteration(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
     
     def test_iteration_scan(self):
         '''test_iteration_scan: Iterate by scan and export all'''
@@ -1486,10 +1551,10 @@ class test_multi(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
 
     def test_multi_cookbook(self):
         '''test_cookbook: Juergen's cookbook Plotting Multiple Data Sets example'''
@@ -1594,14 +1659,79 @@ class test_multi(plotms_test_base):
 
 # ------------------------------------------------------------------------------
 
+class test_overlays(plotms_test_base):
+
+    def setUp(self):
+        self.checkDisplay()
+        self.setUpData()
+        self.setUpOverlayData()
+        
+    def tearDown(self):
+        self.tearDownData()
+
+    def test_atm_overlays(self):
+        '''test_atm_overlays: showatm and showtsky overplots'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testOverlay01.jpg")
+        self.removePlotfile()
+        time.sleep(5)
+        # basic plot with showatm, xaxis chan
+        res = plotms(vis=self.ms, xaxis='chan', plotfile=self.plotfile_jpg,
+            expformat="jpg", showgui=False, highres=True, showatm=True)   
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 80000)
+        self.removePlotfile()
+        # basic plot with showtsky, xaxis freq
+        self.plotfile_jpg = os.path.join(self.outputDir, "testOverlay02.jpg")
+        self.removePlotfile()
+        res = plotms(vis=self.ms, xaxis='freq', plotfile=self.plotfile_jpg,
+            expformat="jpg", showgui=False, highres=True, showtsky=True)   
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 80000)
+        self.removePlotfile()
+        # plotfile without overlay: xaxis must be chan or freq
+        # so ignores showatm/tsky
+        self.plotfile_jpg = os.path.join(self.outputDir, "testOverlay03.jpg")
+        self.removePlotfile()
+        res = plotms(vis=self.ms, plotfile=self.plotfile_jpg,
+            expformat="jpg", showgui=False, highres=True, showatm=True)   
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 190000)
+        self.removePlotfile()
+        print
+
+    def test_image_overlay(self):
+        '''test_image_overlay: atm and image overplots'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testOverlay04.jpg")
+        self.removePlotfile()
+        time.sleep(5)
+
+        # showimage fails but should still plot showatm
+        res = plotms(vis=self.ms, xaxis='chan', plotfile=self.plotfile_jpg,
+            expformat="jpg", showgui=False, highres=True, showatm=True, showimage=True)   
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 80000)
+        self.removePlotfile()
+
+        # showimage succeeds
+        self.plotfile_jpg = os.path.join(self.outputDir, "testOverlay05.jpg")
+        self.removePlotfile()
+        res = plotms(vis=self.ms4, xaxis='freq', spw="58", plotfile=self.plotfile_jpg,
+            expformat="jpg", showgui=False, highres=True, showatm=True, showimage=True)   
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 190000)
+        self.removePlotfile()
+        print
+
+# ------------------------------------------------------------------------------
+
 class test_selection(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
  
     def test_selection_scan(self):
         '''test_selection_scan: Check scan invalid/valid selections'''
@@ -1728,10 +1858,10 @@ class test_transform(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpdata()
+        self.setUpData()
         
     def tearDown(self):
-        self.tearDowndata()
+        self.tearDownData()
         
     def test_transform_freqframe(self):
         '''test_transform_freqframe: Test frequency frames'''
@@ -1812,6 +1942,7 @@ def suite():
             test_grid,
             test_iteration,
             test_multi,
+            test_overlays,
             test_selection,
             test_transform
            ]

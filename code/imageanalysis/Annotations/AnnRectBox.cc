@@ -36,14 +36,15 @@ AnnRectBox::AnnRectBox(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) : AnnPolygon(
 		RECT_BOX, blcx, blcy, trcx, trcy,
 		dirRefFrameString, csys, imShape,
 		beginFreq, endFreq, freqRefFrameString,
 		dopplerString, restfreq, stokes,
-		annotationOnly
-	  ), _inputCorners(2) {
+		annotationOnly, requireImageRegion
+	), _inputCorners(2) {
 	_inputCorners[0].first = blcx;
 	_inputCorners[0].second = blcy;
 	_inputCorners[1].first = trcx;
@@ -57,9 +58,11 @@ AnnRectBox::AnnRectBox(
 	const Quantity& trcy,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
 ) : AnnPolygon(
-	RECT_BOX, blcx, blcy, trcx, trcy, csys, imShape, stokes
+	RECT_BOX, blcx, blcy, trcx, trcy, csys, imShape, stokes,
+	requireImageRegion
 ), _inputCorners(2) {
 	_inputCorners[0].first = blcx;
 	_inputCorners[0].second = blcy;
@@ -70,14 +73,14 @@ AnnRectBox::AnnRectBox(
 AnnRectBox& AnnRectBox::operator= (
 	const AnnRectBox& other
 ) {
-    if (this == &other) {
-    	return *this;
-    }
-    AnnPolygon::operator=(other);
-    _inputCorners.resize(other._inputCorners.shape());
-    _inputCorners = other._inputCorners;
+	if (this == &other) {
+		return *this;
+	}
+	AnnPolygon::operator=(other);
+	_inputCorners.resize(other._inputCorners.shape());
+	_inputCorners = other._inputCorners;
 
-    return *this;
+	return *this;
 }
 
 ostream& AnnRectBox::print(ostream &os) const {

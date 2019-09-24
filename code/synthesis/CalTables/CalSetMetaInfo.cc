@@ -77,13 +77,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     setRootName(root);
 
     calAntTable = new MSAntenna(fullSubTableName(antTableName));
-    calTableMSAC = new ROMSAntennaColumns(*calAntTable);
+    calTableMSAC = new MSAntennaColumns(*calAntTable);
 
     calFieldTable = new MSField(fullSubTableName(fieldTableName));
-    calTableMSFC = new ROMSFieldColumns(*calFieldTable);
+    calTableMSFC = new MSFieldColumns(*calFieldTable);
 
     calSpwTable = new MSSpectralWindow(fullSubTableName(spwTableName));
-    calTableMSSpC = new ROMSSpWindowColumns(*calSpwTable);
+    calTableMSSpC = new MSSpWindowColumns(*calSpwTable);
   }
   //
   //----------------------------------------------------------------

@@ -781,7 +781,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		// (should be set true (permanently) during
 		// construction, or this object will be useless,
 		// and do nothing).
-		casacore::ROMSColumns* msCols_;			// utility object for (unselected) itsMS.
+		casacore::MSColumns* msCols_;			// utility object for (unselected) itsMS.
 		casacore::Int nFieldIds_;			// Total number of fields, spectral windows,
 		casacore::Int nSpwIds_;				// in the (unselected) MS.
 		casacore::Vector<casacore::Int> nChan_;			// Number of channels, by Spectral window ID.
@@ -1318,7 +1318,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
 
-		casacore::List<void*> flagEdits_; 	// casacore::List of all the (so-far-unsaved) edits.
+		std::list<void*> flagEdits_; 	// casacore::List of all the (so-far-unsaved) edits.
 		// (<void*> rather than <FlagEdit_*> just to avoid the extra templates)
 
 

@@ -315,6 +315,9 @@ void MultiTermFTNew::initializeToVisNew(const VisBuffer2& vb,
   // Convert Stokes planes to correlation planes..
   for(uInt taylor=0;taylor<nterms_p;taylor++)
     {
+      
+      if(!(imstore->forwardGrid(taylor)).get())
+        throw(AipsError("MultiTermFTNew::InitializeToVisNew error imagestore has no valid grid initialized for taylor term "+String::toString(taylor)));
       stokesToCorrelation( *(imstore->model(taylor)) , *(imstore->forwardGrid(taylor) ) );
       
       if(vb.polarizationFrame()==MSIter::Linear) {
@@ -381,8 +384,17 @@ void MultiTermFTNew::initializeToVisNew(const VisBuffer2& vb,
 
 ///  void MultiTermFTNew::initializeToSky(Block<CountedPtr<ImageInterface<Complex> > > & compImageV
 //ec, Block<Matrix<Float> >& weightsVec, const VisBuffer& vb, const Bool dopsf)
+ Long MultiTermFTNew::estimateRAM(const CountedPtr<SIImageStore>& imstor){
+   Long mem=0;
+   for(uInt k=0; k < subftms_p.nelements(); ++k){
 
-void MultiTermFTNew::initializeToSkyNew(const Bool dopsf, 
+     mem+=subftms_p[k]->estimateRAM(imstor);
+   }
+
+   return mem;
+  }
+
+  void MultiTermFTNew::initializeToSkyNew(const Bool dopsf, 
 					const VisBuffer2& vb,
 					CountedPtr<SIImageStore> imstore)
 {
@@ -412,12 +424,22 @@ void MultiTermFTNew::initializeToSkyNew(const Bool dopsf,
   Matrix<Float> sumWeight;
   for(uInt taylor=0;taylor< (dopsf ? psfnterms_p : nterms_p);taylor++) 
     {
+
+        if(! (imstore->backwardGrid(taylor)).get())
+        throw(AipsError("MultiTermFTNew::InitializeToSkyNew error imagestore has no valid grid initialized for taylor term "+String::toString(taylor)));
       subftms_p[taylor]->initializeToSky(*(imstore->backwardGrid(taylor) ), sumWeight,vb);
     }
   
 }// end of initializeToSky
   
+ void MultiTermFTNew::initBriggsWeightor(vi::VisibilityIterator2& vi){
 
+
+   for (uInt k=0; k < subftms_p.nelements(); ++k){
+     subftms_p[k]->initBriggsWeightor(vi);
+   }
+
+  }
 
   void MultiTermFTNew::put(VisBuffer2& vb, Int row, Bool dopsf, refim::FTMachine::Type type)
   {
@@ -517,7 +539,7 @@ void MultiTermFTNew::finalizeToSkyNew(Bool dopsf,
       Vector<Double> refpix = (theImage[0]->coordinates().spectralCoordinate()).referencePixel();
       (theImage[0]->coordinates().spectralCoordinate()).toWorld( reffreq_p, refpix[0] );
     }
-    Bool useCorrected= !(ROMSColumns(vi.ms()).correctedData().isNull());
+    Bool useCorrected= !(MSColumns(vi.ms()).correctedData().isNull());
     if((type==FTMachine::CORRECTED) && (!useCorrected))
       type=FTMachine::OBSERVED;
    
@@ -624,7 +646,17 @@ void MultiTermFTNew::finalizeToSkyNew(Bool dopsf,
     tmp.copyData(le);
     return true;
   }
-  
+  //
+  // Set the supplied CFCache for all internal FTMs if they do use CFCache mechanism
+  //
+  void MultiTermFTNew::setCFCache(casacore::CountedPtr<CFCache>& cfc, const casacore::Bool resetCFC)
+  {
+    for (unsigned int i=0;i<subftms_p.nelements();i++)
+      {
+	if (subftms_p[i]->isUsingCFCache())
+	  subftms_p[i]->setCFCache(cfc,resetCFC);
+      }
+  }
   
 
   //---------------------------------------------------------------------------------------------------

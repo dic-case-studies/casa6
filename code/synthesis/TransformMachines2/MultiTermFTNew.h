@@ -99,7 +99,7 @@ public:
 				  const vi::VisBuffer2& vb,
 				  casacore::CountedPtr<SIImageStore> imstore);
 
-
+  virtual void initBriggsWeightor(vi::VisibilityIterator2& vi);
   // Called at the end of gridding : subftm->finalizeToSky()
   void finalizeToSky(){throw(casacore::AipsError("MultiTermFTNew::finalizeToSky() called without arguments!"));};
 
@@ -184,6 +184,8 @@ public:
       subftms_p[i]->setDryRun(val);
   };
   virtual casacore::Bool isUsingCFCache() {casacore::Bool v=false; if (subftms_p.nelements() > 0) v=subftms_p[0]->isUsingCFCache(); return v;};
+  virtual const casacore::CountedPtr<refim::FTMachine>& getFTM2(const casacore::Bool ) {return subftms_p[0];}
+  virtual void setCFCache(casacore::CountedPtr<CFCache>& cfc, const casacore::Bool resetCFC=true);
 
 
   ///return number of terms
@@ -197,7 +199,8 @@ public:
   virtual void setMovingSource(const casacore::MDirection& mdir);
   // set and get the location used for frame 
   virtual void setLocation(const casacore::MPosition& loc);
-  
+   ///estimate of memory necessary in kB
+   virtual casacore::Long estimateRAM(const casacore::CountedPtr<SIImageStore>& imstore);
 protected:
   // have to call the initmaps of subftm
   virtual void initMaps(const vi::VisBuffer2& vb);

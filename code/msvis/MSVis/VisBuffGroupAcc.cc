@@ -98,7 +98,7 @@ Bool VisBuffGroupAcc::fillChanMask(std::map<Int, Vector<Bool>*>& chanmask,
   Bool didSel = nranges > 0;
 
   if(didSel){
-    ROMSSpWindowColumns spwCols(ms.spectralWindow());
+    MSSpWindowColumns spwCols(ms.spectralWindow());
     Vector<Int> nChan0 = spwCols.numChan().getColumn();
 
     Vector<Int> uspw(chansel.column(0));
