@@ -59,6 +59,10 @@
 #include <graphics/X11/X_exit.h>
 */
 
+#if defined(CASA6)
+#include <asdmstman/AsdmStMan.h>
+#endif
+
 #if ! defined(WITHOUT_DBUS)
 #include <casadbus/utilities/Diagnostic.h>
 #endif
@@ -237,6 +241,10 @@ private:
 int main( int argc, const char *argv[] ) {
 
     std::string exepath(executable_path( ));
+
+#if defined(CASA6)
+    casa::AsdmStMan::registerClass( );
+#endif
 
 #ifndef NO_CRASH_REPORTER
     CrashReporter::initializeFromApplication(argv[0]);
