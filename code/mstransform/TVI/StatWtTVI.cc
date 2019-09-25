@@ -555,7 +555,7 @@ void StatWtTVI::checkTimeBinWidth(Double binWidth) {
     cout << __func__ << endl;
     ThrowIf(binWidth <= 0, "time bin width must be positive");
 }
-
+/*
 Double StatWtTVI::getTimeBinWidthUsingInterval(
     const MeasurementSet *const ms, Int n
 ) {
@@ -574,6 +574,7 @@ Double StatWtTVI::getTimeBinWidthUsingInterval(
     );
     return n*stats.median;
 }
+*/
 
 void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
     cout << __func__ << endl;
