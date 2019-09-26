@@ -71,13 +71,14 @@ public:
     // binWidth must be in seconds
     void setTimeBinWidth(casacore::Double binWidth);
 
+    /*
     // set the time bin width using an integral number of integration time.
     // For this purpose, the integration time is defined as the median value
     // of the INTERVAL column. If either extrema in this column is more than
     // 25% different from the median, an exception will be thrown because
     // there is no single representative value of the integration time.
     void setTimeBinWidthUsingInterval(casacore::uInt n);
-
+    */
     // set the StatWtTVI config record
     void setTVIConfig(const casacore::Record& config);
 

@@ -125,9 +125,11 @@ public:
 
     static void checkTimeBinWidth(casacore::Double binWidth);
 
+    /*
     static casacore::Double getTimeBinWidthUsingInterval(
         const casacore::MeasurementSet *const ms, casacore::Int n
     );
+    */
 
 protected:
 
@@ -229,7 +231,8 @@ private:
     // to the row index in the chunk
     mutable std::map<casacore::uInt, casacore::uInt>
         _rowIDInMSTorowIndexInChunk {};
-    casacore::Double _slidingTimeWindowWidth = -1;
+    std::unique_ptr<casacore::Double> _slidingTimeWindowWidth {};
+    std::unique_ptr<casacore::Int> _nTimeStamps {};
 
     casacore::Bool _mustComputeSigma = casacore::False;
     casacore::Bool _updateWeight = casacore::True;
@@ -256,7 +259,8 @@ private:
 
     void _gatherAndComputeWeights() const;
 
-    void _gatherAndComputeWeightsSlidingTimeWindow() const;
+    // sliding time bin window, and timebin was specified as a quantity
+    void _gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const;
 
     void _gatherAndComputeWeightsTimeBlockProcessing() const;
 

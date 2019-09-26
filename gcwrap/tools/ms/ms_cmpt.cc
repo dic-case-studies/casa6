@@ -6341,15 +6341,39 @@ record* ms::statwt(
             itsOriginalMS, preview, datacolumn, chanbin
         );
         StatWt statwt(itsMS, &statwtColConfig);
-        if (slidetimebin) {
-            // make the size of the encompassing chunks
-            // very large, so that chunk boundaries are determined only
-            // by changes in MS key values
+        const auto tbtype = timebin.type();
+        // first group in conditional requires all data in a chunk to be
+        // loaded at once. The second does as well and represents the default
+        // setting ince a CASA 5 variant always comes in as boolvecs even if a
+        // different default type is specified in the XML,
+        if (
+            (slidetimebin || tbtype == casac::variant::INT)
+            || (
+                // default value of timebin specified
+                tbtype == casac::variant::BOOLVEC && timebin.toBoolVec().empty()
+            )
+        ) {
+            // make the size of the encompassing chunks very large, so that
+            // subchunk boundaries are determined only by changes in MS key
+            // values
             statwt.setTimeBinWidth(1e8);
         }
+        else if (tbtype == casac::variant::STRING) {
+            auto myTimeBin = casaQuantity(timebin);
+            if (myTimeBin.getUnit().empty()) {
+                myTimeBin.setUnit("s");
+            }
+            if (myTimeBin.getValue() <= 0) {
+                myTimeBin.setValue(1e-5);
+            }
+            statwt.setTimeBinWidth(myTimeBin);
+        }
         else {
-            // block time processing
-            auto tbtype = timebin.type();
+            ThrowCc("Unsupported type for timebin, must be int or string");
+        }
+        /*
+        else {
+            // block time processing with raw time (eg seconds) timebin
             if (
                 tbtype == casac::variant::BOOLVEC && timebin.toBoolVec().empty()
             ) {
@@ -6378,6 +6402,7 @@ record* ms::statwt(
                 ThrowCc("Unsupported type for timebin, must be int or string");
             }
         }
+        */
         statwt.setCombine(combine);
         statwt.setPreview(preview);
         casac::record tviConfig;

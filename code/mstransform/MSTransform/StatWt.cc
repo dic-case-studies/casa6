@@ -73,6 +73,7 @@ void StatWt::setTimeBinWidth(Double binWidth) {
 
 }
 
+/*
 void StatWt::setTimeBinWidthUsingInterval(uInt n) {
     _timeBinWidth = vi::StatWtTVI::getTimeBinWidthUsingInterval(_ms, n);
     _log << LogOrigin("StatWt", __func__) << LogIO::NORMAL
@@ -83,6 +84,7 @@ void StatWt::setTimeBinWidthUsingInterval(uInt n) {
      cout << "set _timeBinWidth to " << _timeBinWidth << endl;
 
 }
+*/
 
 void StatWt::setCombine(const String& combine) {
     _combine = downcase(combine);

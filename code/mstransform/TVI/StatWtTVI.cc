@@ -248,27 +248,39 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
             );
             switch(mytype) {
             case TpDouble: {
-                _slidingTimeWindowWidth = config.asDouble(field);
-                checkTimeBinWidth(_slidingTimeWindowWidth);
+                _slidingTimeWindowWidth.reset(
+                    new Double(config.asDouble(field))
+                );
+                checkTimeBinWidth(*_slidingTimeWindowWidth);
                 break;
             }
+            /*
             case TpInt:
                 _slidingTimeWindowWidth = getTimeBinWidthUsingInterval(
                     &ms(), config.asInt(field)
                 );
                 break;
+            */
+            case TpInt:
+                _nTimeStamps.reset(new Int(config.asInt(field)));
+                ThrowIf(
+                    *_nTimeStamps <= 0,
+                    "Logic Error: nTimeStamps must be positive"
+                );
+                break;
             case TpString: {
                 QuantumHolder qh(casaQuantity(config.asString(field)));
-                _slidingTimeWindowWidth = getTimeBinWidthInSec(qh.asQuantity());
+                _slidingTimeWindowWidth.reset(
+                    new Double(getTimeBinWidthInSec(qh.asQuantity()))
+                );
                 break;
             }
             default:
-                ThrowCc("Logic Error: Unhandled type");
+                ThrowCc("Logic Error: Unhandled type for timebin");
             }
             LogIO log(LogOrigin("StatWtTVI", __func__));
             log << LogIO::NORMAL << "Using sliding time window of width "
-                << _slidingTimeWindowWidth << " s" << LogIO::POST;
-
+                << *_slidingTimeWindowWidth << " s" << LogIO::POST;
         }
     }
     _configureStatAlg(config);
@@ -556,6 +568,7 @@ void StatWtTVI::checkTimeBinWidth(Double binWidth) {
     ThrowIf(binWidth <= 0, "time bin width must be positive");
 }
 
+/*
 Double StatWtTVI::getTimeBinWidthUsingInterval(
     const MeasurementSet *const ms, Int n
 ) {
@@ -574,6 +587,7 @@ Double StatWtTVI::getTimeBinWidthUsingInterval(
     );
     return n*stats.median;
 }
+*/
 
 void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
     cout << __func__ << endl;
@@ -1012,7 +1026,7 @@ void StatWtTVI::_clearCache() {
     _newFlagRow.resize(0);
 }
 
-void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindow() const {
+void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
     cout << __func__ << endl;
 
     ViImplementation2* vii = getVii();
@@ -1026,7 +1040,7 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindow() const {
     // Baseline-subchunk number pair to row index in that chunk
     std::map<std::pair<Baseline, uInt>, uInt> baselineSubChunkToIndex;
     uInt subChunkID = 0;
-    auto halfWidth = _slidingTimeWindowWidth/2;
+    auto halfWidth = *_slidingTimeWindowWidth/2;
     // we build up the chunk data in the chunkData and chunkFlags cubes
     Cube<Complex> chunkData;
     Cube<Bool> chunkFlags;
@@ -1292,7 +1306,7 @@ void StatWtTVI::_gatherAndComputeWeights() const {
         _gatherAndComputeWeightsTimeBlockProcessing();
     }
     else {
-        _gatherAndComputeWeightsSlidingTimeWindow();
+        _gatherAndComputeWeightsSlidingTimeWindowForTimeBin();
     }
 }
 
