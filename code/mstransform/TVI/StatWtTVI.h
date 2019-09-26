@@ -124,11 +124,10 @@ public:
     );
 
     static void checkTimeBinWidth(casacore::Double binWidth);
-    /*
+
     static casacore::Double getTimeBinWidthUsingInterval(
         const casacore::MeasurementSet *const ms, casacore::Int n
     );
-    */
 
 protected:
 
