@@ -112,6 +112,7 @@ $hdr_dir = "binding/include";
                'sakura' => 'casa-source/gcwrap/tools/singledish/sakura.xml',
                'simulator' => 'casa-source/gcwrap/tools/synthesis/simulator.xml',
                'miriadfiller' => 'casa-source/gcwrap/tools/miriad/miriadfiller.xml',
+               'synthesismaskhandler' => 'casa-source/gcwrap/tools/synthesis/synthesismaskhandler.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -256,6 +257,9 @@ $hdr_dir = "binding/include";
                                 'casa-source/gcwrap/tools/synthesis/simulator_private.h', ],
                'miriadfiller' => [ 'casa-source/gcwrap/tools/miriad/miriadfiller_cmpt.cc',
                                    'casa-source/code/miriad/Filling/Importmiriad.cc' ],
+               'synthesismaskhandler' => [ 'casa-source/gcwrap/tools/synthesis/synthesismaskhandler_cmpt.cc',
+                                           'casa-source/gcwrap/tools/synthesis/synthesismaskhandler_forward.h',
+                                           'casa-source/gcwrap/tools/synthesis/synthesismaskhandler_private.h', ],
              );
 
 print "configuring CASAtools... this may take a little while...\n";
