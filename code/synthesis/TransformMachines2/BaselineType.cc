@@ -306,18 +306,27 @@ namespace casa{
 	  //     if (antennaGroups_p(ii,jj).size() > 0)
 	  // 	cerr << "AG: " << ii << " " << jj << " " << antennaGroups_p(ii,jj).size() << " with PO " << poGridOriginX + (ii-1)*sigmaDev << " " << poGridOriginY + (jj-1)*sigmaDev << endl;
 
-	  for(int ii=0; ii<binsx_p; ii++)
-	    for(int jj=0; jj<binsy_p; jj++)
-	      if(antennaGroups_p(ii,jj).size() > 0)
-		{
-		  totalGroups_p += 1;
-		  cerr<<"Antenna in bin ii "<<ii <<" jj  "<<jj << " is : ";
-		  for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
-		    cerr<<antennaGroups_p(ii,jj).at(kk)<<" ";
-		  cerr<< endl;
+	  {
+	    LogIO log_l(LogOrigin("BaselineType", "findAntennaGroups"));
+	    ostringstream ostr;
+		    
+	    for(int ii=0; ii<binsx_p; ii++)
+	      for(int jj=0; jj<binsy_p; jj++)
+		if(antennaGroups_p(ii,jj).size() > 0)
+		  {
+		    totalGroups_p += 1;
+		    ostr <<"Antenna in bin " << totalGroups_p << " is : ";
+		    for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
+		      ostr <<antennaGroups_p(ii,jj).at(kk)<<" ";
+		    log_l << ostr.str() << LogIO::POST;
+		    // cerr<<"Antenna in bin ii "<<ii <<" jj  "<<jj << " is : ";
+		    // for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
+		    //   cerr<<antennaGroups_p(ii,jj).at(kk)<<" ";
+		    // cerr<< endl;
 		  
-		}
-	  cerr << "total groups " <<totalGroups_p<<endl;
+		  }
+	  }
+	  //	  cerr << "total groups " <<totalGroups_p<<endl;
 	  cacheAntGroups(antennaGroups_p);
 	  return antennaGroups_p;
 	}
