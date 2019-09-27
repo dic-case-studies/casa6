@@ -50,6 +50,7 @@ namespace casa{
 	imageDC_p = other.imageDC_p;
 	imageObsInfo_p = other.imageObsInfo_p;
 	cachedPointingOffsets_p = other.cachedPointingOffsets_p;
+	cachedAntGridPointingOffsets_p = other.cachedAntGridPointingOffsets_p;
       }
     return *this;
   }
@@ -193,7 +194,7 @@ namespace casa{
 
   vector<vector<double> > PointingOffsets::fetchAntOffsetToPix(const VisBuffer2& vb, const Bool doPointing)
   {
-    Int numRow_p = vb.nRows();
+    // Int numRow_p = vb.nRows();
     vector<vector<double> > pix_l;
 
     vector<int> ant1, ant2;
@@ -210,7 +211,7 @@ namespace casa{
     pix_l[1].resize(ant1.size(),0);
 
     MVDirection vbdir=vb.direction1()(0).getValue();
-    for (int nant=0; nant< ant1.size();nant++)
+    for (unsigned int nant=0; nant< ant1.size();nant++)
       {
 
 	MDirection antDir1 =vbUtils_p.getPointingDir(vb, nant, 0, dc_p.directionType(), doPointing); 

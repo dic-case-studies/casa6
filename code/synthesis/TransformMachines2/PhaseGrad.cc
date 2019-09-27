@@ -54,7 +54,7 @@ namespace casa{
   //
   bool PhaseGrad::needsNewPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
 				    const VisBuffer2& vb,
-				    const int& row)
+				    const int& /*row*/)
   {
     unsigned int nRow=vb.nRows();
     Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
@@ -80,8 +80,8 @@ namespace casa{
   bool PhaseGrad::ComputeFieldPointingGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
 					   const CountedPtr<CFBuffer>& cfb,
 					   const VisBuffer2& vb,
-					   const int& row
-					   )
+					   const int& row,
+					   const pair<int,int> antGrp)
 
     {
       //
@@ -104,8 +104,14 @@ namespace casa{
       Bool needsCFShape_l = (needsNewPhaseGrad(pointingOffsets_p, vb, row));
       if (needsCFShape_l || needsNewFieldPG_p || needsNewPOPG_p )
 	{
-
-	  Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
+	  Vector<Vector<double> > pointingOffset;
+	  if(pointingOffsets_p->getDoPointing())
+	    {
+	      pointingOffset = pointingOffsets_p->pullAntGridPointingOffsets();
+	      // cerr << "Pointing Offsets in PG: "<<pointingOffset<<endl;
+	    }
+	  else
+	    pointingOffset = pointingOffsets_p->pullPointingOffsets();
 	  if(needsNewFieldPG_p)
 	    {
 	       log_l << "Computing Phase Grad for Field offset: " << row << " " << cached_FieldOffset_p[row](0) << cached_FieldOffset_p[row](1) << "  spw :" 
@@ -119,9 +125,9 @@ namespace casa{
 	    }
 	  else
 	    {
-	      log_l << "Computing Phase Grad for Antenna Pointing Offset for row : " << row << " " << pointingOffset[row][0] << " " << pointingOffset[row][1] << " spw :"
-		    << vb.spectralWindows()(0) << " and field " << vb.fieldId()(0)
-	      	    << LogIO::POST;
+	      // log_l << "Computing Phase Grad for Antenna Pointing Offset for row : " << row << " " << pointingOffset[row][0] << " " << pointingOffset[row][1] << " spw :"
+	      // 	    << vb.spectralWindows()(0) << " and field " << vb.fieldId()(0)
+	      // 	    << LogIO::POST;
 	    }
 	    
 	  int nx=maxCFShape_p(0), ny=maxCFShape_p(1);
@@ -130,19 +136,40 @@ namespace casa{
 	  Vector<int> convOrigin = maxCFShape_p/2;
 	  
 	  field_phaseGrad_p.resize(nx,ny);
-	  cached_FieldOffset_p[row] = pointingOffset[row];
+	  // cached_FieldOffset_p[row] = pointingOffset[row];
+	  vector<double> ant1PO_l, ant2PO_l, blPO_l;
+	  Vector<double> tmpblPO_l;
+	  ant1PO_l.resize(2,0);
+	  ant2PO_l.resize(2,0);
+	  blPO_l.resize(2,0);
+	  
+	  ant1PO_l[0] = (pointingOffset[0][antGrp.first]);
+	  ant1PO_l[1] = (pointingOffset[1][antGrp.first]);
+	  ant2PO_l[0] = (pointingOffset[0][antGrp.second]);
+	  ant2PO_l[1] = (pointingOffset[1][antGrp.second]);
+
+ 	  // cerr<<"Ant1: "<<antGrp.first << " "<< ant1PO_l[0] << " " << ant1PO_l[1] << endl;
+	  // cerr<<"Ant2: "<<antGrp.second << " "<< ant2PO_l[0] << " " << ant2PO_l[1] << endl;
 	  // cached_FieldOffset_p[row](0) = pointingOffset[row][0];
 	  // cached_FieldOffset_p[row](1) = pointingOffset[row][1];
-	  
+	  blPO_l[0] = (ant1PO_l[0] + ant2PO_l[0])/2;
+	  blPO_l[1] = (ant1PO_l[1] + ant2PO_l[1])/2;
+	  tmpblPO_l = pointingOffsets_p->gradPerPixel(blPO_l);
+	  cached_FieldOffset_p[row](0) = tmpblPO_l[0];
+	  cached_FieldOffset_p[row](1) = tmpblPO_l[1];
+	  // cached_FieldOffset_p[row](0) = pointingOffsets_p->gradPerPixel((ant1PO_l[0] + ant2PO_l[0])/2);
+	  // cached_FieldOffset_p[row](1) = pointingOffsets_p->gradPerPixel((ant1PO_l[1] + ant2PO_l[1])/2);
+
+	  // cerr << "Cached Field Offset is : " << cached_FieldOffset_p[row](0) << " " << cached_FieldOffset_p[row](1)<<endl;
 	  for(int ix=0;ix<nx;ix++)
 	    {
-	      grad = (ix-convOrigin[0])*pointingOffset[row][0];
+	      grad = (ix-convOrigin[0])*cached_FieldOffset_p[row](0);
 	      double sx,cx;
 	      SINCOS(grad,sx,cx);
 	      phx = Complex(cx,sx);
 	      for(int iy=0;iy<ny;iy++)
 		{
-		  grad = (iy-convOrigin[1])*pointingOffset[row][1];
+		  grad = (iy-convOrigin[1])*cached_FieldOffset_p[row](1);
 		  Double sy,cy;
 		  SINCOS(grad,sy,cy);
 		  phy = Complex(cy,sy);

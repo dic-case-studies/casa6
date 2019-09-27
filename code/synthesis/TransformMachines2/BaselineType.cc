@@ -67,11 +67,13 @@ namespace casa{
   
   // -----------------------------------------------------------------
 
-  BaselineType::BaselineType(): vbRows_p(), doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), totalGroups_p(0), antennaGroups_p(), cachedAntennaGroups_p() , vbRow2BLMap_p(), cachedPointingOffsets_p()
+  BaselineType::BaselineType(): vbRows_p(), doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), totalGroups_p(0), antennaGroups_p(), cachedAntennaGroups_p() , vbRow2BLMap_p(), cachedPointingOffsets_p(), antPair_p(), binsx_p(), binsy_p()
   {
     newPhaseGradComputed_p = false;
     vectorPhaseGradCalculator_p.resize(0);
     mapBLGroup_p.resize(0,0);
+    binsx_p = 0;
+    binsy_p = 0;
   };
 
   BaselineType& BaselineType::operator=(const BaselineType& other)
@@ -186,22 +188,30 @@ namespace casa{
 
 
 
-	  vector<double> pixSum(2,0), pixMean(2,0), pixVar(2,0), pixSigma(2,0), minPO(2,0), maxPO(2,0);
-	  vector<vector<double> > diffAntPointing_l(2);
+	  vector<double> pixSum(2,0), pixMean(2,0), pixVar(2,0), pixSigma(2,0), minPO(2,0), maxPO(2,0), minAntPO(2,0);
+	  vector<vector<double> > diffAntPointing_l(2), antGrdPointing_l(2);
 
 	  diffAntPointing_l[0].resize(poAnt1[0].size());
 	  diffAntPointing_l[1].resize(poAnt1[1].size());
+	  antGrdPointing_l[0].resize(poAnt1[0].size());
+	  antGrdPointing_l[1].resize(poAnt1[1].size());
 
+	  minAntPO[0] = *min_element(poAnt1[0].begin(), poAnt1[0].end());
+	  minAntPO[1] = *min_element(poAnt1[1].begin(), poAnt1[1].end());
+
+	  
 	  cerr << "#################################"<<endl;
 	  for (unsigned int i=0; i<uniqueAnt1.size();i++)
 	    {
-	      diffAntPointing_l[0][i] = poAnt1[0][i] - phaseDirPix_l[0];
-	      diffAntPointing_l[1][i] = poAnt1[1][i] - phaseDirPix_l[1];
+	      // diffAntPointing_l[0][i] = poAnt1[0][i] - phaseDirPix_l[0];
+	      // diffAntPointing_l[1][i] = poAnt1[1][i] - phaseDirPix_l[1];
+	      diffAntPointing_l[0][i] = poAnt1[0][i] - minAntPO[0];
+	      diffAntPointing_l[1][i] = poAnt1[1][i] - minAntPO[1];
+
 	      cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;
 	    }
 	  cerr << "#################################"<<endl;
 
-	  
 	  for(unsigned int ii=0; ii < pixSum.size();ii++)
 	    {
 
@@ -218,14 +228,14 @@ namespace casa{
 	      //pixMean[ii] = (pixSum[ii] - poAnt1[ii].size()*phaseDirPix_l[ii])/poAnt1[ii].size();
 	      pixSigma[ii] = sqrt(pixVar[ii])/poAnt1[ii].size();
 
-	      maxPO[ii] = *max_element(poAnt1[ii].begin(), poAnt1[ii].end()); 
-	      minPO[ii] = *min_element(poAnt1[ii].begin(), poAnt1[ii].end());
-	      // maxPO[ii] = *max_element(diffAntPointing_l[ii].begin(), diffAntPointing_l[ii].end());
-	      // minPO[ii] = *min_element(diffAntPointing_l[ii].begin(), diffAntPointing_l[ii].end());
+	      // maxPO[ii] = *max_element(poAnt1[ii].begin(), poAnt1[ii].end()); 
+	      // minPO[ii] = *min_element(poAnt1[ii].begin(), poAnt1[ii].end());
+	      maxPO[ii] = *max_element(diffAntPointing_l[ii].begin(), diffAntPointing_l[ii].end());
+	      minPO[ii] = *min_element(diffAntPointing_l[ii].begin(), diffAntPointing_l[ii].end());
 
 	    }
-	  cerr << "Maximum Pointing offset was : "<< maxPO[0] << " "<< maxPO[1]<< (int) (maxPO[0] - minPO[0])/sigmaDev << endl;
-	  cerr << "Minimum Pointing offset was : "<< minPO[0] << " "<< minPO[1]<<(int) (maxPO[1] - minPO[1])/sigmaDev << endl;
+	  cerr << "Maximum Pointing offset was : "<< maxPO[0] << " "<< maxPO[1]<< " " <<ceil ((maxPO[0] - minPO[0])/sigmaDev) << endl;
+	  cerr << "Minimum Pointing offset was : "<< minPO[0] << " "<< minPO[1]<< " " <<ceil ((maxPO[1] - minPO[1])/sigmaDev)<< endl;
 	  // The single loop above computes all the statistics we need.
 
 	  // pixSum[1] = accumulate(poAnt1[1].begin(),poAnt1[1].end(),0.0);
@@ -235,49 +245,70 @@ namespace casa{
 
 
 
-	  double combinedSigma = sqrt(pixSigma[0]*pixSigma[0] + pixSigma[1]*pixSigma[1]);
-	  // if(combinedSigma > sigmaDev)
+	  // double combinedSigma = sqrt(pixSigma[0]*pixSigma[0] + pixSigma[1]*pixSigma[1]);
+	  // // if(combinedSigma > sigmaDev)
 	    
-	  cerr << "Combined Sigma : "<< combinedSigma << endl;
-	  int binsx = (int)fabs((maxPO[0] - minPO[0])/sigmaDev)+1 , binsy = (int)fabs((maxPO[1]-minPO[1])/sigmaDev)+1;
-	  if (binsx%2==0) binsx++;
-	  if (binsy%2==0) binsy++;
+	  cerr << "Bin Size in pixels : "<< sigmaDev << endl;
 
-	  cerr <<"Binsx : "<<binsx <<" Binsy : "<<binsy<<endl;
-	  antennaGroups_p.resize(binsx,binsy);
+	  binsx_p = ceil((fabs(maxPO[0] - minPO[0])/sigmaDev)+1); 
+	  binsy_p = ceil((fabs(maxPO[1] - minPO[1])/sigmaDev)+1);
+	  
+	  deltaBinsX_p = sigmaDev;
+	  deltaBinsX_p = sigmaDev;
+
+	  if (binsx_p%2==0) binsx_p++;
+	  if (binsy_p%2==0) binsy_p++;
+
+	  cerr <<"Binsx : "<<binsx_p <<" Binsy : "<<binsy_p<<endl;
+	  antennaGroups_p.resize(binsx_p,binsy_p);
+
 	  cerr << "AntennaGroups_p shape : "<<antennaGroups_p.shape()<<endl;
-	  for(int ii=0; ii < binsx; ii++)
-	    for(int jj=0; jj < binsy; jj++)
+	  for(int ii=0; ii < binsx_p; ii++)
+	    for(int jj=0; jj < binsy_p; jj++)
 		antennaGroups_p(ii,jj).resize(0);
 
 
-	  int ii,jj, xOrigin=(binsx/2.0), yOrigin=(binsy/2.0);
+	  int ii,jj, xOrigin=floor(binsx_p/2.0), yOrigin=floor(binsy_p/2.0);
+	  cerr <<"xOrigin : "<<xOrigin <<" yOrigin : "<<yOrigin<<endl;
+	  int poGridOriginX = floor (maxPO[0] - minPO[0])/2.0 , poGridOriginY =  floor (maxPO[1] - minPO[1])/2.0 ;
+	  cerr <<"poGridOriginX : "<<poGridOriginX <<" poGridOriginY : "<<poGridOriginY<<endl;
 	  for(unsigned int kk=0; kk < poAnt1[0].size(); kk++)
 	    {
-	      ii = max(0,min((int)(diffAntPointing_l[0][kk]/sigmaDev + xOrigin), binsx-1));
-	      jj = max(0,min((int)(diffAntPointing_l[1][kk]/sigmaDev + yOrigin), binsy-1));
-	      // ii = (int)(diffAntPointing_l[0][kk]/sigmaDev + xOrigin);
-	      // jj = (int)(diffAntPointing_l[1][kk]/sigmaDev + yOrigin);
+	      	  // ii = max(0,min((int)(diffAntPointing_l[0][kk]/sigmaDev + xOrigin), binsx_p-1));
+		  // jj = max(0,min((int)(diffAntPointing_l[1][kk]/sigmaDev + yOrigin), binsy_p-1));
+		  // ii = (int)(diffAntPointing_l[0][kk]/sigmaDev + xOrigin);
+		  // jj = (int)(diffAntPointing_l[1][kk]/sigmaDev + yOrigin);
 	      
-	      cerr << ii << " " << jj << " " << diffAntPointing_l[0][kk]/sigmaDev << " " <<diffAntPointing_l[1][kk]/sigmaDev << " " << antennaGroups_p(ii,jj).size() << endl;
+		  ii = floor(diffAntPointing_l[0][kk]/sigmaDev);
+		  jj = floor(diffAntPointing_l[1][kk]/sigmaDev);
+		  
+		  cerr << ii << " " << jj << " " << diffAntPointing_l[0][kk]/sigmaDev + minAntPO[0]<< " " <<diffAntPointing_l[1][kk]/sigmaDev + minAntPO[1]<< " " << antennaGroups_p(ii,jj).size() << " " <<endl;
 
-	      // cerr << ii << " " << jj << " " << poAnt1[0][kk]/pixSigma[0] << " " <<poAnt1[1][kk]/pixSigma[1] << " " << antennaGroups_p(ii,jj).size() << endl;
+		  // cerr << ii << " " << jj << " " << poAnt1[0][kk]/pixSigma[0] << " " <<poAnt1[1][kk]/pixSigma[1] << " " << antennaGroups_p(ii,jj).size() << endl;
 
-	      antennaGroups_p(ii,jj).push_back(uniqueAnt1[kk]);
+		  antennaGroups_p(ii,jj).push_back(uniqueAnt1[kk]);
+		  antGrdPointing_l[0][kk] = minAntPO[0] + (ii-1)*sigmaDev;
+		  antGrdPointing_l[1][kk] = minAntPO[1] + (jj-1)*sigmaDev;
+		  // antGrdPointing_l[0][kk] = poGridOriginX + (ii-1)*sigmaDev;
+		  // antGrdPointing_l[1][kk] = poGridOriginY + (jj-1)*sigmaDev;
+
 	    }
-	  for(int ii=0; ii<binsx; ii++)
-	    for(int jj=0; jj<binsy; jj++)
-	      cerr << "AG: " << ii << " " << jj << " " << antennaGroups_p(ii,jj).size() << endl;
+	  pointingOffsets_p->setAntGridPointingOffsets(antGrdPointing_l);
+	  // for(int ii=0; ii<binsx_p; ii++)
+	  //   for(int jj=0; jj<binsy_p; jj++)
+	  //     if (antennaGroups_p(ii,jj).size() > 0)
+	  // 	cerr << "AG: " << ii << " " << jj << " " << antennaGroups_p(ii,jj).size() << " with PO " << poGridOriginX + (ii-1)*sigmaDev << " " << poGridOriginY + (jj-1)*sigmaDev << endl;
 
-	  for(int ii=0; ii<binsx; ii++)
-	    for(int jj=0; jj<binsy; jj++)
+	  for(int ii=0; ii<binsx_p; ii++)
+	    for(int jj=0; jj<binsy_p; jj++)
 	      if(antennaGroups_p(ii,jj).size() > 0)
 		{
 		  totalGroups_p += 1;
 		  cerr<<"Antenna in bin ii "<<ii <<" jj  "<<jj << " is : ";
 		  for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
 		    cerr<<antennaGroups_p(ii,jj).at(kk)<<" ";
-		  cerr<<endl;
+		  cerr<< endl;
+		  
 		}
 	  cerr << "total groups " <<totalGroups_p<<endl;
 	  cacheAntGroups(antennaGroups_p);
@@ -333,6 +364,13 @@ namespace casa{
     mapAntType1.resize(nRows);
     mapAntType2.resize(nRows);
     vbRow2BLMap_p.resize(nRows);
+
+    antPair_p.resize(nRows,make_pair(0,0));
+    // for (int kk=0; kk<nRows;kk++)
+    //   {
+    // 	antPair_p[kk].first = mapAntType1[kk];
+    // 	antPair_p[kk].second = mapAntType2[kk];
+    //   }
 
     blNeedsNewPOPG_p.resize(nRows);
     vector<int> uniqueBLType_p(nRows,0);
@@ -401,7 +439,6 @@ namespace casa{
     // cerr<<endl<<"#############################################"<<endl;
 
 
-     
       
     for (int kk=0; kk<nRows;kk++)
       {
@@ -409,10 +446,15 @@ namespace casa{
 	ix=mapAntType1[kk]-1;
 	iy=mapAntType2[kk]-1;
 
-	if ((ix>=0) && (iy>=0)) vbRow2BLMap_p[kk] = mapBLGroup_p(ix,iy);
-	else vbRow2BLMap_p[kk] = -1;
+	if ((ix>=0) && (iy>=0)) 
+	  {
+	    vbRow2BLMap_p[kk] = mapBLGroup_p(ix,iy);
+	    antPair_p[kk].first = ix;
+	    antPair_p[kk].second = iy;
+	  }
+	else 
+	  vbRow2BLMap_p[kk] = -1;
 	// cerr << "kk : " << kk << " " << ix << " " << iy << " " << vbRow2BLMap_p[kk] << " " << mapBLGroup_p(ix,iy) << endl;
-
       }
       
 
