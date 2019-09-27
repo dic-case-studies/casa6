@@ -302,7 +302,7 @@ public:
 	casacore::MeasurementSet * getInputMS() {return &ms_p;};
 	casacore::MeasurementSet * getSelectedInputMS() {return &mssel_p;};
 	casacore::MeasurementSet * getOutputMS() {return &msOut_p;};
-	casacore::ROMSColumns * getSelectedInputMSColumns() {return mscIn_p;};
+	casacore::MSColumns * getSelectedInputMSColumns() {return mscIn_p;};
 	casacore::MSColumns * getOutputMSColumns() {return msc_p;};
 
 	// Accesors for the Re-mapper objects
@@ -324,7 +324,7 @@ protected:
 	//  * not necessarily to anything useful.
 	casacore::MeasurementSet ms_p, mssel_p;
 	casacore::MSColumns * msc_p; // columns of msOut_p
-	casacore::ROMSColumns * mscIn_p;
+	casacore::MSColumns * mscIn_p;
 	casacore::Bool keepShape_p, // Iff true, each output array has the
 			// same shape as the corresponding input one.
 			// sameShape_p,             // Iff true, the shapes of the arrays do not

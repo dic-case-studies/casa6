@@ -46,10 +46,10 @@ synthesisdeconvolver::~synthesisdeconvolver()
 
   try 
     {
-      casacore::Record rec = *toRecord( decpars );
+      std::unique_ptr<casacore::Record> rec(toRecord( decpars ));
 
       SynthesisParamsDeconv decpars;
-      decpars.fromRecord( rec );
+      decpars.fromRecord( *rec );
       itsDeconvolver->setupDeconvolution( decpars );
       //      itsDeconvolver->setupDeconvolution( rec );
     } 
@@ -87,20 +87,35 @@ casac::record* synthesisdeconvolver::interactivegui(const casac::record& iterbot
 {
   casac::record* rstat(0);
   try {
-    casacore::Record recpars = *toRecord( iterbot );
-    rstat = fromRecord(itsDeconvolver->interactiveGUI( recpars ));
+    std::unique_ptr<casacore::Record> recpars(toRecord( iterbot ));
+    rstat = fromRecord(itsDeconvolver->interactiveGUI( *recpars ));
   } catch  (AipsError x) {
     RETHROW(x);
   }
   return rstat;
 }
+  variant* synthesisdeconvolver::estimatememory(const std::vector<int>& imsize){
+    long long mem1=0;
+    variant * mem_ptr=new variant (mem1);
+    try 
+    {
+      if(!itsDeconvolver)
+        throw(AipsError("cannot estimate memory without setup"));
+      mem1=itsDeconvolver->estimateRAM(imsize);
+      *mem_ptr=variant(mem1);
+    } catch  (AipsError x) {
+    RETHROW(x);
+  }
+    return mem_ptr;
 
+  }
+  
 casac::record* synthesisdeconvolver::executeminorcycle(const casac::record& iterbot)
 {
   casac::record* rstat(0);
   try {
-    casacore::Record recpars = *toRecord( iterbot );
-    rstat = fromRecord(itsDeconvolver->executeMinorCycle( recpars ));
+    std::unique_ptr<casacore::Record> recpars(toRecord( iterbot ));
+    rstat = fromRecord(itsDeconvolver->executeMinorCycle( *recpars ));
   } catch  (AipsError x) {
     RETHROW(x);
   }

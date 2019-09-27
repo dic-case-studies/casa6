@@ -101,7 +101,7 @@ void gridData(const vi::VisBuffer2& vb, Cube<Complex>& grid,
     Matrix<Int>	locuv;
     //Dang i thought the new vb will return Data or FloatData if correctedData was
     //not there
-    Bool hasCorrected=!(ROMSMainColumns(vb.getVi()->ms()).correctedData().isNull());
+    Bool hasCorrected=!(MSMainColumns(vb.getVi()->ms()).correctedData().isNull());
 	locateuvw(locuv, vb.uvw());
 	for (Int k=0; k < vb.nRows(); ++k){
 		Int newrow=locuv(1,k)*npix_p(0)+locuv(0,k);
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
 	String msname(argv[1]);
 	MeasurementSet myms(msname, Table::Old);
 
-	cerr << "spec type" << ROMSSpWindowColumns(myms.spectralWindow()).measFreqRef().getColumn() << endl;
+	cerr << "spec type" << MSSpWindowColumns(myms.spectralWindow()).measFreqRef().getColumn() << endl;
 	//////////////
 	MDirection  phasecenter(Quantity(230.5,"deg"), Quantity(5.0667, "deg"), MDirection::J2000);
 	//MSUVBin binner(phasecenter, 256,

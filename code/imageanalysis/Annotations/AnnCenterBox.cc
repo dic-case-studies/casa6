@@ -34,14 +34,15 @@ AnnCenterBox::AnnCenterBox(
 	const String& dopplerString,
 	const Quantity& restfreq,
 	const Vector<Stokes::StokesTypes> stokes,
-	const Bool annotationOnly
+	const Bool annotationOnly,
+	const Bool requireImageRegion
 ) :  AnnPolygon(
 		CENTER_BOX, xcenter, ycenter,
-		xwidth,	ywidth, Quantity(0, "deg"),
+		xwidth, ywidth, Quantity(0, "deg"),
 		dirRefFrameString, csys, imShape, beginFreq, endFreq,
 		freqRefFrameString, dopplerString,
 		restfreq, stokes,
-		annotationOnly
+		annotationOnly, requireImageRegion 
 	), _inpXCenter(xcenter),
 	_inpYCenter(ycenter), _inpXWidth(xwidth), _inpYWidth(ywidth) {}
 
@@ -52,12 +53,13 @@ AnnCenterBox::AnnCenterBox(
 	const Quantity& ywidth,
 	const CoordinateSystem& csys,
 	const IPosition& imShape,
-	const Vector<Stokes::StokesTypes>& stokes
+	const Vector<Stokes::StokesTypes>& stokes,
+	const Bool requireImageRegion
 ) : AnnPolygon(
 		CENTER_BOX, xcenter, ycenter,
 		xwidth, ywidth, Quantity(0, "deg"),
 		csys, imShape,
-		stokes
+		stokes, requireImageRegion
 	), _inpXCenter(xcenter),
 	_inpYCenter(ycenter), _inpXWidth(xwidth), _inpYWidth(ywidth)
 {}
@@ -65,15 +67,15 @@ AnnCenterBox::AnnCenterBox(
 AnnCenterBox& AnnCenterBox::operator= (
 	const AnnCenterBox& other
 ) {
-    if (this == &other) {
-    	return *this;
-    }
-    AnnRegion::operator=(other);
+	if (this == &other) {
+		return *this;
+	}
+	AnnRegion::operator=(other);
 	_inpXCenter = other._inpXCenter;
 	_inpYCenter = other._inpYCenter;
 	_inpXWidth = other._inpXWidth;
 	_inpYWidth = other._inpYWidth;
-    return *this;
+	return *this;
 }
 
 ostream& AnnCenterBox::print(ostream &os) const {

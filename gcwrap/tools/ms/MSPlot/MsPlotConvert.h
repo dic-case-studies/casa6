@@ -154,7 +154,7 @@ class MSPlotConvertAzimuth : public TPConvertBase
     public: 
    // Constructor
    MSPlotConvertAzimuth( casacore::MSDerivedValues * derived,
-               casacore::ROMSColumns * columns,
+               casacore::MSColumns * columns,
                casacore::Bool onXaxis )
         {
             log = SLog::slog();
@@ -308,7 +308,7 @@ class MSPlotConvertAzimuth : public TPConvertBase
 	casacore::MSDerivedValues * itsMsDerived;
         casacore::Int curFieldId, lastFieldId;
         casacore::Vector<casacore::Int> itsFieldIds;
-        casacore::ROMSColumns * itsColumns;
+        casacore::MSColumns * itsColumns;
 	
 	// Message logger
 	SLog* log;
@@ -332,7 +332,7 @@ class MSPlotConvertElevation : public TPConvertBase
     public: 
    // Constructor
    MSPlotConvertElevation( casacore::MSDerivedValues * derived,
-               casacore::ROMSColumns * columns,
+               casacore::MSColumns * columns,
                casacore::Bool onXaxis )
         {
             log = SLog::slog();
@@ -488,7 +488,7 @@ class MSPlotConvertElevation : public TPConvertBase
    casacore::MSDerivedValues * itsMsDerived;
         casacore::Int curFieldId, lastFieldId;
         casacore::Vector<casacore::Int> itsFieldIds;
-        casacore::ROMSColumns * itsColumns;
+        casacore::MSColumns * itsColumns;
 
    // Message logger
    SLog* log;
@@ -512,7 +512,7 @@ class MSPlotConvertHourangle : public TPConvertBase
     public: 
    // Constructor
    MSPlotConvertHourangle( casacore::MSDerivedValues * derived,
-            casacore::ROMSColumns * columns,
+            casacore::MSColumns * columns,
             casacore::Bool onXaxis )
         {
             log = SLog::slog();
@@ -530,7 +530,7 @@ class MSPlotConvertHourangle : public TPConvertBase
        itsColumns = columns;
        
        // Set the antenna info in the casacore::MS Derived
-       const casacore::ROMSAntennaColumns & antColumns = itsColumns->antenna();
+       const casacore::MSAntennaColumns & antColumns = itsColumns->antenna();
 
        // this is the average of all antennas. Use observatory 
        // position instead?
@@ -674,7 +674,7 @@ class MSPlotConvertHourangle : public TPConvertBase
    casacore::MSDerivedValues * itsMsDerived;
         casacore::Int curFieldId, lastFieldId;
         casacore::Vector<casacore::Int> itsFieldIds;
-        casacore::ROMSColumns * itsColumns;
+        casacore::MSColumns * itsColumns;
 
    // Message logger
    SLog* log;
@@ -699,7 +699,7 @@ class MSPlotConvertParallacticangle : public TPConvertBase
     public: 
    // Constructor
    MSPlotConvertParallacticangle( casacore::MSDerivedValues * derived,
-               casacore::ROMSColumns * columns,
+               casacore::MSColumns * columns,
                casacore::Bool onXaxis )
         {
             log = SLog::slog();
@@ -725,7 +725,7 @@ class MSPlotConvertParallacticangle : public TPConvertBase
        lastFieldId = -1;
 
        // Set the antenna info in the casacore::MS Derived
-       const casacore::ROMSAntennaColumns & antColumns = itsColumns->antenna();
+       const casacore::MSAntennaColumns & antColumns = itsColumns->antenna();
 
        // this is the average of all antennas. Use observatory 
        // position instead?
@@ -868,7 +868,7 @@ class MSPlotConvertParallacticangle : public TPConvertBase
         casacore::MSDerivedValues * itsMsDerived;
         casacore::Int curFieldId, lastFieldId;
         casacore::Vector<casacore::Int> itsFieldIds;
-        casacore::ROMSColumns * itsColumns;
+        casacore::MSColumns * itsColumns;
 
    // Message logger
    SLog* log;
@@ -899,7 +899,7 @@ class MSPlotConvertArrayPositions : public TPConvertBase
 {
     public: 
    // Constructor
-   MSPlotConvertArrayPositions( casacore::ROMSColumns * msColumn )
+   MSPlotConvertArrayPositions( casacore::MSColumns * msColumn )
         {
             log = SLog::slog();            
        numPlotted=0;
@@ -987,7 +987,7 @@ class MSPlotConvertArrayPositions : public TPConvertBase
 
     protected:
    casacore::MPosition 
-   getObservatory( casacore::ROMSColumns * msColumn )
+   getObservatory( casacore::MSColumns * msColumn )
         {
             casacore::String fnname = "getObservatory";
        if ( numPlotted % CASA_MPC_DBG_FREQ == 0 ) 
@@ -1020,7 +1020,7 @@ class MSPlotConvertArrayPositions : public TPConvertBase
    }
    
    casacore::Vector<casacore::MPosition>
-   getAntennas( casacore::ROMSColumns * msColumn )
+   getAntennas( casacore::MSColumns * msColumn )
    {
             casacore::String fnname = "getAntennas";
        if ( numPlotted % CASA_MPC_DBG_FREQ == 0 ) 
@@ -1037,7 +1037,7 @@ class MSPlotConvertArrayPositions : public TPConvertBase
    }
        
    void
-   getTopocentricAnts( casacore::ROMSColumns * msColumn )
+   getTopocentricAnts( casacore::MSColumns * msColumn )
         {
             casacore::String fnname = "getTopocentricAnts";
        if ( numPlotted % CASA_MPC_DBG_FREQ == 0 ) 
@@ -1106,7 +1106,7 @@ class MSPlotConvertArrayPositions : public TPConvertBase
    
      private:
    // Variables
-   casacore::ROMSColumns * itsMsColumn;
+   casacore::MSColumns * itsMsColumn;
         casacore::Bool convertOnX;
    casacore::Vector<casacore::Double> itsXValues;
    casacore::Vector<casacore::Double> itsYValues;
@@ -1486,7 +1486,7 @@ class MSPlotConvertChanToVelocity : public TPConvertBase
 {
     public: 
     // Constructor
-    MSPlotConvertChanToVelocity( casacore::Vector<casacore::Int> inSpwIds, casacore::ROMSColumns * columns,
+    MSPlotConvertChanToVelocity( casacore::Vector<casacore::Int> inSpwIds, casacore::MSColumns * columns,
 	   MsPlot *inMsPlot, casacore::Bool onXAxis )
    {
        log = SLog::slog();

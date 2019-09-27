@@ -102,11 +102,11 @@ typedef casacore::MSObservationColumns CTObservationColumns;
 typedef casacore::MSAntennaColumns CTAntennaColumns;
 typedef casacore::MSSpWindowColumns CTSpWindowColumns;
 typedef casacore::MSHistoryColumns CTHistoryColumns;
-typedef casacore::ROMSFieldColumns ROCTFieldColumns;
-typedef casacore::ROMSObservationColumns ROCTObservationColumns;
-typedef casacore::ROMSAntennaColumns ROCTAntennaColumns;
-typedef casacore::ROMSSpWindowColumns ROCTSpWindowColumns;
-typedef casacore::ROMSHistoryColumns ROCTHistoryColumns;
+typedef casacore::MSFieldColumns ROCTFieldColumns;
+typedef casacore::MSObservationColumns ROCTObservationColumns;
+typedef casacore::MSAntennaColumns ROCTAntennaColumns;
+typedef casacore::MSSpWindowColumns ROCTSpWindowColumns;
+typedef casacore::MSHistoryColumns ROCTHistoryColumns;
 
 class NewCalTable : public casacore::Table
 {

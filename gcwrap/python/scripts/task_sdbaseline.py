@@ -1,10 +1,27 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy
 import os
-from taskinit import gentools, casalog
-from mstools import write_history
-import sdutil
 from collections import Counter
-ms,sdms,tb,msmd = gentools(['ms','sdms','tb', 'msmd'])
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import singledishms, table, msmetadata
+    from casatools import ms as mstool
+    from casatasks import casalog
+    from .mstools import write_history
+    from . import sdutil
+
+    ms = mstool( )
+    sdms = singledishms( )
+    tb = table( )
+    msmd = msmetadata( )
+else:
+    from taskinit import gentools, casalog
+    from mstools import write_history
+    import sdutil
+    ms,sdms,tb,msmd = gentools(['ms','sdms','tb', 'msmd'])
 
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
@@ -28,15 +45,15 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if os.path.exists(outfile) and not overwrite:
             raise Exception("outfile='%s' exists, and cannot overwrite it." % (outfile))
         if (maskmode == 'interact'):
-            raise ValueError, "maskmode='%s' is not supported yet" % maskmode
+            raise ValueError("maskmode='%s' is not supported yet" % maskmode)
         if (blfunc == 'variable' and not os.path.exists(blparam)):
-            raise ValueError, "input file '%s' does not exists" % blparam
+            raise ValueError("input file '%s' does not exists" % blparam)
         
         if (spw == ''): spw = '*'
 
         if (blmode == 'apply'):
             if not os.path.exists(bltable):
-                raise ValueError, "file specified in bltable '%s' does not exist." % bltable
+                raise ValueError("file specified in bltable '%s' does not exist." % bltable)
 
             sorttab_info = remove_sorted_table_keyword(infile)
 
@@ -117,14 +134,18 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                 restore_sorted_table_keyword(infile, sorttab_info)
 
         # Write history to outfile
-        param_names = sdbaseline.func_code.co_varnames[:sdbaseline.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        param_names = sdbaseline.__code__.co_varnames[:sdbaseline.__code__.co_argcount]
+        if is_python3:
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
         write_history(ms, outfile, 'sdbaseline', param_names,
                       param_vals, casalog)
 
 
-    except Exception, instance:
-        raise Exception, instance
+    except Exception:
+        raise
 
 
 blformat_item = ['csv', 'text', 'table']
@@ -134,7 +155,7 @@ blformat_ext  = ['csv', 'txt',  'bltable']
 def check_fftthresh(fftthresh):
     has_valid_type = isinstance(fftthresh, float) or isinstance(fftthresh, int) or isinstance(fftthresh, str)
     if not has_valid_type:
-        raise ValueError, 'fftthresh must be float or integer or string.'
+        raise ValueError('fftthresh must be float or integer or string.')
 
     not_positive_mesg = 'threshold given to fftthresh must be positive.'
     
@@ -155,16 +176,16 @@ def check_fftthresh(fftthresh):
                     val_not_positive = True
             
             if val_not_positive:
-                raise ValueError, not_positive_mesg
-        except Exception, e:
-            if (e.message == not_positive_mesg):
+                raise ValueError(not_positive_mesg)
+        except Exception as e:
+            if (str(e) == not_positive_mesg):
                 raise
             else:
-                raise ValueError, 'fftthresh has a wrong format.'
+                raise ValueError('fftthresh has a wrong format.')
 
     else:
         if (fftthresh <= 0.0):
-            raise ValueError, not_positive_mesg
+            raise ValueError(not_positive_mesg)
 
 def prepare_for_blformat_bloutput(infile, blformat, bloutput, overwrite):
     # force to string list
@@ -177,13 +198,13 @@ def prepare_for_blformat_bloutput(infile, blformat, bloutput, overwrite):
 
     # check length
     if (len(blformat) != len(bloutput)):
-        raise ValueError, 'blformat and bloutput must have the same length.'
+        raise ValueError('blformat and bloutput must have the same length.')
 
     # check duplication
     if has_duplicate_nonnull_element(blformat):
-        raise ValueError, 'duplicate elements in blformat.'
+        raise ValueError('duplicate elements in blformat.')
     if has_duplicate_nonnull_element_ex(bloutput, blformat):
-        raise ValueError, 'duplicate elements in bloutput.'
+        raise ValueError('duplicate elements in bloutput.')
 
     # fill bloutput items to be output, then rearrange them
     # in the order of blformat_item.
@@ -197,9 +218,9 @@ def force_to_string_list(s, name):
     elif isinstance(s, list):
         for i in range(len(s)):
             if not isinstance(s[i], str):
-                raise ValueError, mesg
+                raise ValueError(mesg)
     else:
-        raise ValueError, mesg
+        raise ValueError(mesg)
     return s
 
 def has_duplicate_nonnull_element(in_list):
@@ -265,7 +286,7 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
     elif (blf=='variable'):
         ftitles = []
     else:
-        raise ValueError, "Unsupported blfunc = %s" % blfunc
+        raise ValueError("Unsupported blfunc = %s" % blfunc)
         
 
     mm = maskmode.lower()
@@ -285,7 +306,7 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
     separator = '#' * 60 + '\n'
     
     f.write(separator)
-    for i in xrange(len(info)):
+    for i in range(len(info)):
         f.write('%12s: %s\n' % tuple(info[i]))
     f.write(separator)
     f.write('\n')
@@ -309,7 +330,7 @@ def prepare_for_baselining(**keywords):
         keys += ['blparam', 'verbose']
         funcname += ('_' + blfunc)
     else:
-        raise ValueError, "Unsupported blfunc = %s" % blfunc
+        raise ValueError("Unsupported blfunc = %s" % blfunc)
     if blfunc!= 'variable':
         keys += ['clip_threshold_sigma', 'num_fitting_max']
         keys += ['linefinding', 'threshold', 'avg_limit', 'minwidth', 'edge']
@@ -330,8 +351,8 @@ def remove_sorted_table_keyword(infile):
                 res['sorttab_keywd'] = sorttab_keywd
                 res['sorttab_name'] = tb.getkeyword(sorttab_keywd)
                 tb.removekeyword(sorttab_keywd)
-        except Exception, e:
-            raise Exception, e
+        except Exception:
+            raise
 
     return res
 
@@ -341,5 +362,5 @@ def restore_sorted_table_keyword(infile, sorttab_info):
             try:
                 tb.putkeyword(sorttab_info['sorttab_keywd'],
                               sorttab_info['sorttab_name'])
-            except Exception, e:
-                raise Exception, e
+            except Exception:
+                raise

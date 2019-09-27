@@ -398,7 +398,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	// Use the selectedMS to generate time selection strings per part
 	//
 	//	Double Tint;
-	ROMSMainColumns mainCols(selectedMS);
+	MSMainColumns mainCols(selectedMS);
 	Vector<uInt> rowNumbers = selectedMS.rowNumbers();
 	Int nRows=selectedMS.nrow(), 
 	  dRows=nRows/npart;
@@ -597,7 +597,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   // case for scan intent specified 
                   if (userstate!="*") {
                     MeasurementSet elselms((elms)(exprNode), &elms);
-                    ROMSColumns tmpmsc(elselms);
+                    MSColumns tmpmsc(elselms);
                     Vector<Int> fldidv=tmpmsc.fieldId().getColumn();
                     if (fldidv.nelements()==0)
                       throw(AipsError("No field ids were selected, please check input parameters"));
@@ -2032,7 +2032,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  freqFrameValid=(freqFrame != MFrequency::REST || mode=="cubesource");
 	  
 	  //MFrequency::Types dataFrame=(MFrequency::Types)vi2.subtableColumns().spectralWindow().measFreqRef()(spwids[0]);
-	  MFrequency::Types dataFrame=(MFrequency::Types)ROMSColumns(*mss[j]).spectralWindow().measFreqRef()(spwids[0]);
+	  MFrequency::Types dataFrame=(MFrequency::Types)MSColumns(*mss[j]).spectralWindow().measFreqRef()(spwids[0]);
 	  
 	  Double datafstart, datafend;
 	  //VisBufferUtil::getFreqRange(datafstart, datafend, vi2, dataFrame );
@@ -2044,7 +2044,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  //cerr << "datafstart " << datafstart << " end " << datafend << endl;
 	  
 	  if (mode=="cubedata") {
-	    
 	    freqmin = datafstart;
 	    freqmax = datafend;
 	  }
@@ -2054,10 +2053,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    }
 	    String ephemtab(movingSource);
 	    if(movingSource=="TRACKFIELD"){
-	      Int fieldID=ROMSColumns(*mss[j]).fieldId()(0);
-	      ephemtab=Path(ROMSColumns(*mss[j]).field().ephemPath(fieldID)).absoluteName();
+	      Int fieldID=MSColumns(*mss[j]).fieldId()(0);
+	      ephemtab=Path(MSColumns(*mss[j]).field().ephemPath(fieldID)).absoluteName();
 	    }
-	    MEpoch refep=ROMSColumns(*mss[j]).timeMeas()(0);
+	    MEpoch refep=MSColumns(*mss[j]).timeMeas()(0);
 	    Quantity refsysvel;
 	    MSUtil::getFreqRangeAndRefFreqShift(freqmin,freqmax,refsysvel, refep, spwids,firstChannels, nChannels, *mss[j], ephemtab, trackDir, true);
 	    if(j==0)
@@ -2070,7 +2069,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    */
 	  }
 	  else {
-	    
 	    //VisBufferUtil::getFreqRange(freqmin,freqmax, vi2, freqFrameValid? freqFrame:MFrequency::REST );
 	    //cerr << "before " << freqmin << "   " << freqmax << endl;
 	    MSUtil::getFreqRangeInSpw( freqmin, freqmax, spwids, firstChannels,
@@ -2101,7 +2099,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Double datafstart, datafend;
     //freqFrameValid=(freqFrame != MFrequency::REST || mode != "cubedata" );
     freqFrameValid=(freqFrame != MFrequency::REST );
-    ROMSColumns msc(msobj);
+    MSColumns msc(msobj);
     MFrequency::Types dataFrame=(MFrequency::Types)msc.spectralWindow().measFreqRef()(spwids[0]);
     rvi->getFreqInSpwRange(datafstart, datafend, dataFrame );
     if (mode=="cubedata") {
@@ -2138,7 +2136,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       }
     else {
-      ROMSColumns msc(msobj);
+      MSColumns msc(msobj);
       String telescop = msc.observation().telescopeName()(0);
       MEpoch obsEpoch = msc.timeMeas()(0);
       MPosition obsPosition;
@@ -2157,7 +2155,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       
     if( phaseCenterFieldId != -1 )
       {
-	ROMSFieldColumns msfield(msobj.field());
+	MSFieldColumns msfield(msobj.field());
         if(phaseCenterFieldId == -2) // the case for  phasecenter=''
           {
 	    if(trackSource){
@@ -2476,7 +2474,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( ! msobj.isNull() )
       {
 	//defining observatory...needed for position on earth
-	ROMSColumns msc(msobj);
+	MSColumns msc(msobj);
 	String telescop = msc.observation().telescopeName()(0);
 	MEpoch obsEpoch = msc.timeMeas()(0);
 	MPosition obsPosition;
@@ -2529,7 +2527,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     MDirection phaseCenterToUse = phaseCenter;
     if( phaseCenterFieldId != -1 )
       {
-	ROMSFieldColumns msfield(msobj.field());
+	MSFieldColumns msfield(msobj.field());
 	phaseCenterToUse=msfield.phaseDirMeas( phaseCenterFieldId ); 
       }
     // Setup Phase center if it is specified only by field id.
@@ -2571,7 +2569,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //defining observatory...needed for position on earth
     // get the first ms for multiple MSes
-    ROMSColumns msc(msobj);
+    MSColumns msc(msobj);
     String telescop = msc.observation().telescopeName()(0);
     MEpoch obsEpoch = msc.timeMeas()(0);
     MPosition obsPosition;
@@ -2761,8 +2759,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     MDirection outdir;
     String ephemtab(movingSource);
     if(movingSource=="TRACKFIELD"){
-      Int fieldID=ROMSColumns(ms).fieldId()(0);
-      ephemtab=Path(ROMSColumns(ms).field().ephemPath(fieldID)).absoluteName();
+      Int fieldID=MSColumns(ms).fieldId()(0);
+      ephemtab=Path(MSColumns(ms).field().ephemPath(fieldID)).absoluteName();
     }
     casacore::MDirection::Types planetType=MDirection::castType(trackDir.getRef().getType());
     if( (! Table::isReadable(ephemtab)) &&   ( (planetType <= MDirection::N_Types) || (planetType >= MDirection::COMET)))
@@ -2773,7 +2771,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     MDirection tmpazel;
     if(planetType >=MDirection::MERCURY && planetType <MDirection::COMET){
       tmpazel=MDirection::Convert(trackDir, outref1)();
-      
     }
     else{
       MeasComet mcomet(Path(ephemtab).absoluteName());
@@ -3164,7 +3161,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    mType="imagemosaic";
 	    if (wprojplanes>1 || wprojplanes==-1){ ftmachine="wprojectft"; }
 	  }
-	if(gridder=="awproject" || gridder=="awprojectft")
+	if(gridder=="awproject" || gridder=="awprojectft" || gridder=="awp")
 	  {ftmachine="awprojectft";}
 	if(gridder=="singledish") {
 	  ftmachine="sd";
@@ -3182,8 +3179,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	// Spectral interpolation
 	err += readVal( inrec, String("interpolation"), interpolation );// not used in SI yet...
-	//mosaic use pointing
-	err += readVal( inrec, String("usepointing"), usePointing );
 	// Track moving source ?
 	err += readVal( inrec, String("distance"), distance );
 	err += readVal( inrec, String("tracksource"), trackSource );
@@ -3195,7 +3190,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	err += readVal( inrec, String("mterm"), mTermOn );
  	err += readVal( inrec, String("wbawp"), wbAWP );
 	err += readVal( inrec, String("cfcache"), cfCache );
-	err += readVal( inrec, String("dopointing"), doPointing );
+	err += readVal( inrec, String("usepointing"), usePointing );
 	err += readVal( inrec, String("dopbcorr"), doPBCorr );
 	err += readVal( inrec, String("conjbeams"), conjBeams );
 	err += readVal( inrec, String("computepastep"), computePAStep );
@@ -3315,7 +3310,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     mTermOn    = false;
     wbAWP      = true;
     cfCache  = "";
-    doPointing = false;
+    usePointing = false;
     doPBCorr   = true;
     conjBeams  = true;
     computePAStep=360.0;
@@ -3353,8 +3348,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     gridpar.define("interpolation",interpolation);
 
-    gridpar.define("usepointing", usePointing);
-    
     gridpar.define("distance", QuantityToString(distance));
     gridpar.define("tracksource", trackSource);
     gridpar.define("trackdir", MDirectionToString( trackDir ));
@@ -3364,7 +3357,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     gridpar.define("mterm",mTermOn );
     gridpar.define("wbawp", wbAWP);
     gridpar.define("cfcache", cfCache);
-    gridpar.define("dopointing",doPointing );
+    gridpar.define("usepointing",usePointing );
     gridpar.define("dopbcorr", doPBCorr);
     gridpar.define("conjbeams",conjBeams );
     gridpar.define("computepastep", computePAStep);
@@ -3716,7 +3709,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           // FIXME ! usebeam.length() == 0 is a poorly formed conditional, it
           // probably needs simplification or parenthesis, the compiler is
           // compaining about it
-		  if( (! usebeam.matches("common")) && ! usebeam.length()==0 )
+		  if( (! usebeam.matches("common")) && usebeam.length()!=0 )
 		    {
 		      Quantity bsize;
 		      err += readVal( inrec, String("restoringbeam"), bsize );

@@ -89,13 +89,13 @@ TEST_F( PlotMSCacheTest, testObsGeom) {
 
 	// Load expected/needed values from MeasurementSet
 	// main table columns
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Matrix<Double> uvw(msmc.uvw().getColumn());
 	Int ddID(msmc.dataDescId().get(0)),
 		fieldId(msmc.fieldId().get(0));
 	MEpoch epoch(msmc.timeMeas()(0));
 	// subtable columns
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int spw(mscol.dataDescription().spectralWindowId().get(ddID));
 	Vector<Double> chanfreqs(mscol.spectralWindow().chanFreq().get(spw));
   	uInt nAnt = mscol.antenna().nrow();

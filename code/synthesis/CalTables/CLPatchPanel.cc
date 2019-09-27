@@ -200,7 +200,7 @@ FieldCalMap::FieldCalMap(const String fieldcalmap,
 
 void FieldCalMap::setNearestFieldMap(const MeasurementSet& ms, const NewCalTable& ct) {
   // Access MS and CT columns
-  ROMSFieldColumns msfc(ms.field());
+  MSFieldColumns msfc(ms.field());
   ROCTColumns ctc(ct);
   setNearestFieldMap(msfc,ctc);
 }
@@ -211,7 +211,7 @@ void FieldCalMap::setNearestFieldMap(const NewCalTable& ctasms, const NewCalTabl
   setNearestFieldMap(msfc,ctc);
 }
 
-void FieldCalMap::setNearestFieldMap(const ROMSFieldColumns& msfc, const ROCTColumns& ctc) {
+void FieldCalMap::setNearestFieldMap(const MSFieldColumns& msfc, const ROCTColumns& ctc) {
 
   // Nominally, this many field need a map
   Int nMSFlds=msfc.nrow();
@@ -1160,7 +1160,7 @@ Vector<Int> CLPatchPanel::getCLuniqueIds(NewCalTable& ct, String vcol) {
 
 Vector<Int> CLPatchPanel::getMSuniqueIds(MeasurementSet& ms, String which) {
 
-  ROMSColumns msc(ms);
+  MSColumns msc(ms);
 
   // Extract the requested column as a Vector
   Vector<Int> colv;

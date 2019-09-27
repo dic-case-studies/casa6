@@ -216,7 +216,7 @@ std::vector<std::string> calanalysis::field( const bool name ) {
   if ( name ) {
 
     Table oTable( poCA->calName()+String("/FIELD"), Table::Old );
-    ROScalarColumn<String> oROSC( oTable, String("NAME") );
+    ScalarColumn<String> oROSC( oTable, String("NAME") );
 
     Vector<String> oFieldString;
     oROSC.getColumn( oFieldString, true );
@@ -278,7 +278,7 @@ std::vector<std::string> calanalysis::antenna( const bool name ) {
   if ( name ) {
 
     Table oTable( poCA->calName()+String("/ANTENNA"), Table::Old );
-    ROScalarColumn<String> oROSC( oTable, String("NAME") );
+    ScalarColumn<String> oROSC( oTable, String("NAME") );
 
     Vector<String> oAntennaString;
     oROSC.getColumn( oAntennaString, true );
@@ -542,7 +542,7 @@ std::vector<std::string> calanalysis::spw( const bool name ) {
   if ( name ) {
 
     Table oTable( poCA->calName()+String("/SPECTRAL_WINDOW"), Table::Old );
-    ROScalarColumn<String> oROSC( oTable, String("NAME") );
+    ScalarColumn<String> oROSC( oTable, String("NAME") );
 
     Vector<String> oSPWString;
     oROSC.getColumn( oSPWString, true );
@@ -1221,7 +1221,7 @@ Bool calanalysis::parseSPW( const ::casac::variant& spw,
 
     oChannel.resize( uiNumSPW );
     for ( uInt s=0; s<uiNumSPW; s++ ) {
-      oChannel[s] = CalAnalysis::unique<uInt>( oChannelTemp[s] );
+      CalAnalysis::unique<uInt>( oChannelTemp[s], oChannel[s] );
     }
 
   }
@@ -1303,7 +1303,7 @@ Bool calanalysis::parseFeed( const ::casac::variant& feed,
     delete [] aoFeed;
 
     oFeed.resize();
-    oFeed = CalAnalysis::unique<String>( oFeedTemp );
+    CalAnalysis::unique<String>( oFeedTemp, oFeed );
 
     if ( oFeed.nelements() != 1 && oFeed.nelements() != 2 ) {
       oFeed.resize();

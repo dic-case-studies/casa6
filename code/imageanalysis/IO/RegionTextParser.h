@@ -88,20 +88,30 @@ public:
     // or text by using this polarization selection<src>
     // <src>prependRegion</src> allows one to specify region(s) that will be prepended to
     // any text in <src>filename</src> or <src>text</src>
+	// <src>requireImageRegion</src> is passed to the AnnRegion constructors
+	// to indicate whether to rethrow ToLCRegionConversionError exception when
+	// the region is outside the image lattice, or create the object even if
+	// the ImageRegion has no lattice region. The default (true) rethrows the exception.
+	// CAS-12631: added for CARTA, which can import regions outside an image.
     RegionTextParser(
         const casacore::String& filename, const casacore::CoordinateSystem& csys,
         const casacore::IPosition& imShape, const casacore::Int requireAtLeastThisVersion,
         const casacore::String& prependRegion="",
         const casacore::String& globalOverrideChans="",
         const casacore::String& globalOverrrideStokes="",
-        casacore::Bool verbose=true
+        casacore::Bool verbose=true,
+        casacore::Bool requireImageRegion=true
     );
 
     RegionTextParser(
-        const casacore::CoordinateSystem& csys, const casacore::IPosition& imShape, const casacore::String& text,
+        const casacore::CoordinateSystem& csys,
+        const casacore::IPosition& imShape,
+        const casacore::String& text,
         const casacore::String& prependRegion="",
-        const casacore::String& globalOverrideChans="", const casacore::String& globalOverrrideStokes="",
-        casacore::Bool verbose=true
+        const casacore::String& globalOverrideChans="",
+        const casacore::String& globalOverrrideStokes="",
+        casacore::Bool verbose=true,
+        casacore::Bool requireImageRegion=true
     );
     //</group>
 
@@ -144,7 +154,7 @@ private:
 
     std::shared_ptr<casacore::Vector<casacore::Stokes::StokesTypes> > _overridingCorrRange;
 
-    void _parse(const casacore::String& contents, const casacore::String& fileDesc);
+    void _parse(const casacore::String& contents, const casacore::String& fileDesc, casacore::Bool requireImageRegion);
 
     casacore::Array<casacore::String> _extractTwoPairs(casacore::uInt& end, const casacore::String& string) const;
 
@@ -155,7 +165,7 @@ private:
 
     AnnotationBase::Type _getAnnotationType(
         casacore::Vector<casacore::Quantity>& qDirs,
-        std::vector<casacore::Quantity>& qunatities,
+        std::vector<casacore::Quantity>& quantities,
         casacore::String& textString,
         casacore::String& consumeMe, const casacore::String& preamble
     ) const;
@@ -174,7 +184,7 @@ private:
         const casacore::String& textString,
         const ParamSet& currentParamSet,
         const casacore::Bool annOnly, const casacore::Bool isDifference,
-        const casacore::String& preamble
+        const casacore::String& preamble, casacore::Bool requireImageRegion
     );
 
     std::pair<casacore::Quantity, casacore::Quantity> _quantitiesFromFrequencyString(

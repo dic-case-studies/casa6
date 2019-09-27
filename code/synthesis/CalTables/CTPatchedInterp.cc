@@ -65,6 +65,7 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
   nFPar_(nPar),
   timeType_(timetype),
   freqTypeStr_(freqtype),
+  relativeFreq_(freqtype.contains("rel")),
   freqInterpMethod0_(ftype(freqTypeStr_)),
   freqInterpMethod_(freqInterpMethod0_),
   freqInterpMethodVec_(),
@@ -129,12 +130,24 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
   if (isCmplx_)  // Complex input
     nFPar_*=2;  // interpolating 2X as many Float values
 
+
   // Set channel/freq info
   CTSpWindowColumns ctspw(ct_.spectralWindow());
   ctspw.numChan().getColumn(nChanIn_);
   freqIn_.resize(nCTSpw_);
-  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) 
+  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) {
     ctspw.chanFreq().get(iCTspw,freqIn_(iCTspw),true);
+    if (relativeFreq_) {
+      Vector<Double>& fIn(freqIn_(iCTspw));
+      fIn-=mean(fIn); //  assume mean freq is center, and apply offset
+      // Flip LSB
+      if (fIn.nelements()>1 && fIn(0)>fIn(1)) {
+	//cout << " spw=" << iCTspw << " LSB!" << endl;
+	fIn*=Double(-1.0);
+      }
+    }
+    //cout << " freqIn_(" << iCTspw << ")=" << freqIn_(iCTspw) << endl;
+  }
 
   // Manage 'byObs_' carefully
   if (byObs_) {
@@ -237,6 +250,7 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
   nFPar_(nPar),
   timeType_(timetype),
   freqTypeStr_(freqtype),
+  relativeFreq_(freqtype.contains("rel")),
   freqInterpMethod0_(ftype(freqTypeStr_)),
   freqInterpMethod_(freqInterpMethod0_),
   freqInterpMethodVec_(),
@@ -308,9 +322,19 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
   CTSpWindowColumns ctspw(ct_.spectralWindow());
   ctspw.numChan().getColumn(nChanIn_);
   freqIn_.resize(nCTSpw_);
-  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) 
+  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) {
     ctspw.chanFreq().get(iCTspw,freqIn_(iCTspw),true);
-
+    if (relativeFreq_) {
+      Vector<Double>& fIn(freqIn_(iCTspw));
+      fIn-=mean(fIn); //  assume mean freq is center, and apply offset
+      // Flip LSB
+      if (fIn.nelements()>1 && fIn(0)>fIn(1)) {
+	//cout << " spw=" << iCTspw << " LSB!" << endl;
+	fIn*=Double(-1.0);
+      }
+    }
+    //cout << " freqIn_(" << iCTspw << ")=" << freqIn_(iCTspw) << endl;
+  }
 
   // Manage 'byObs_' carefully
   if (byObs_) {
@@ -398,7 +422,7 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
 				 const String& timetype,
 				 const String& freqtype,
 				 const String& fieldtype,
-				 const ROMSColumns& mscol,
+				 const MSColumns& mscol,
 				 Vector<Int> spwmap,
 				 const CTTIFactoryPtr cttifactoryptr) :
   ct_(ct),
@@ -408,6 +432,7 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
   nFPar_(nPar),
   timeType_(timetype),
   freqTypeStr_(freqtype),
+  relativeFreq_(freqtype.contains("rel")),
   freqInterpMethod0_(ftype(freqTypeStr_)),
   freqInterpMethod_(freqInterpMethod0_),
   freqInterpMethodVec_(),
@@ -473,8 +498,19 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
   CTSpWindowColumns ctspw(ct_.spectralWindow());
   ctspw.numChan().getColumn(nChanIn_);
   freqIn_.resize(nCTSpw_);
-  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) 
+  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) {
     ctspw.chanFreq().get(iCTspw,freqIn_(iCTspw),true);
+    if (relativeFreq_) {
+      Vector<Double>& fIn(freqIn_(iCTspw));
+      fIn-=mean(fIn); //  assume mean freq is center, and apply offset
+      // Flip LSB
+      if (fIn.nelements()>1 && fIn(0)>fIn(1)) {
+	//cout << " spw=" << iCTspw << " LSB!" << endl;
+	fIn*=Double(-1.0);
+      }
+    }
+    //    cout << " freqIn_(" << iCTspw << ")=" << freqIn_(iCTspw) << endl;
+  }
 
   // Initialize caltable slices
   sliceTable();
@@ -997,12 +1033,12 @@ void CTPatchedInterp::makeInterpolators() {
 
 void CTPatchedInterp::setFldMap(const MSField& msfld) {
   
-  ROMSFieldColumns fcol(msfld);
+  MSFieldColumns fcol(msfld);
   setFldMap(fcol);
 
 }
 
-void CTPatchedInterp::setFldMap(const ROMSFieldColumns& fcol) {
+void CTPatchedInterp::setFldMap(const MSFieldColumns& fcol) {
 
    // Set the default fldmap
    setDefFldMap();
@@ -1148,8 +1184,8 @@ void CTPatchedInterp::setSpwMap(Vector<Int>& spwmap) {
 
 
   // Alert user if too many spws specified
-  //  TBD
-  //  if (spwmap.nelements()>nMSSpw_)
+  if (spwmap.nelements()>uInt(nMSSpw_))
+    throw(AipsError("Specified spwmap has more elements ("+String::toString(spwmap.nelements())+") than the number of spectral windows in the MS ("+String::toString(nMSSpw_)+")."));
     
   // Handle auto-fanout
   if (spwmap(0)==-999) {

@@ -287,7 +287,7 @@ void FJones::specify(const Record&) {
   vi2.originChunks();
   vi2.origin();
 
-  ROMSAntennaColumns antcol(ms.antenna());
+  MSAntennaColumns antcol(ms.antenna());
 
   // Measures stuff for ionosphere coords
   MeasFrame mframe;

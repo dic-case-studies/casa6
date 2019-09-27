@@ -89,7 +89,7 @@ TEST_F( PlotMSCacheTest, testMetadata) {
 	ASSERT_NE(nullptr, cache);  // make sure we have a cache
 
 	// Load expected values from MeasurementSet main table columns
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Int expScan(msmc.scanNumber().get(0)),
 		expField(msmc.fieldId().get(0));
 	Double expTime(msmc.time().get(0)),
@@ -104,7 +104,7 @@ TEST_F( PlotMSCacheTest, testMetadata) {
 	Int ddID(msmc.dataDescId().get(0)); // for spw, pol
 
 	// subtable columns
-	ROMSColumns mscol(sortedMS);
+	MSColumns mscol(sortedMS);
 	Int polID(mscol.dataDescription().polarizationId().get(ddID));
 	uInt nAnt(mscol.antenna().nrow());
 	Vector<Int> expChan,

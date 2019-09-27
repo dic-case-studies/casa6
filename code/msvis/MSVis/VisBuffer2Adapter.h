@@ -438,8 +438,8 @@ public:
     // Remove scratch cols data from vb
     virtual void removeScratchCols(){ IllegalOperation(); }
 
-    // Access the current casacore::ROMSColumns object via VisIter
-    virtual const casacore::ROMSColumns & msColumns() const
+    // Access the current casacore::MSColumns object via VisIter
+    virtual const casacore::MSColumns & msColumns() const
     {
         Assert (msColumns_p != 0);
         return * msColumns_p;
@@ -480,7 +480,7 @@ public:
 private:
 
 
-    const casacore::ROMSColumns * msColumns_p; // [use]
+    const casacore::MSColumns * msColumns_p; // [use]
     casacore::Vector<casacore::Int> nChannels_p;
     casacore::Int nChannelsScalar_p;
     casacore::Int nCorr_p;

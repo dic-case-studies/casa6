@@ -2283,42 +2283,6 @@ ITUPLE image::_fromarray(
     return ::casa::ITUPLE(f, c, d, dc);
 }
 
-bool image::fromascii(
-    const string& outfile, const string& infile,
-    const vector<int>& shape, const string& sep, const record& csys,
-    bool linear, bool overwrite
-) {
-    try {
-        _log << _ORIGIN;
-        ThrowIf(infile.empty(), "infile must be specified");
-        ThrowIf(
-            shape.size() == 1 && shape[0] == -1,
-            "Image shape must be specified"
-        );
-        std::unique_ptr<Record> coordsys(toRecord(csys));
-        _reset();
-        _imageF = ImageFactory::fromASCII(
-            outfile, infile, IPosition(Vector<Int>(shape)),
-            sep, *coordsys, linear, overwrite
-        );
-        vector<String> names {
-            "outfile", "infile", "shape", "sep",
-            "csys", "linear",  "overwrite"
-        };
-        vector<variant> values {
-            outfile, infile, shape, sep,
-            csys, linear,  overwrite
-        };
-        this->_addHistory(__func__, names, values);
-    }
-    catch (const AipsError& x) {
-        _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
-                << LogIO::POST;
-        RETHROW(x);
-    }
-    return true;
-}
-
 bool image::fromcomplist(
     const string& outfile, const vector<int>& shape, const variant& cl,
     const record& csys, bool overwrite, bool log, bool cache
@@ -2919,7 +2883,7 @@ record* image::getslice(
 image* image::hanning(
     const string& outfile, const variant& region,
     const variant& vmask, int axis, bool drop,
-    bool overwrite, bool /* async */, bool stretch,
+    bool overwrite, bool stretch,
     const string& dmethod
 ) {
     LogOrigin lor(_class, __func__);
@@ -3206,7 +3170,8 @@ template<class T> SPIIT image::_imagecalc(
 
 image* image::imageconcat(
     const string& outfile, const variant& infiles, int axis,
-    bool relax, bool tempclose, bool overwrite, bool reorder
+    bool relax, bool tempclose, bool overwrite, bool reorder,
+    const string& mode
 ) {
     try {
         Vector<String> inFiles;
@@ -3228,39 +3193,38 @@ image* image::imageconcat(
             "You must provide at least two images to concatentate"
         );
         auto first = imageNames[0];
-        imageNames.erase(imageNames.begin());
         std::shared_ptr<LatticeBase> latt(ImageOpener::openImage(first));
         ThrowIf (! latt, "Unable to open image " + first);
         auto dataType = latt->dataType();
         if (dataType == TpFloat) {
             return new image(
                 _concat<Float>(
-                    latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    outfile, infiles, axis, relax, tempclose,
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
         else if (dataType == TpComplex) {
             return new image(
                 _concat<Complex>(
-                    latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    outfile, infiles, axis, relax, tempclose,
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
         else if (dataType == TpDouble) {
             return new image(
                 _concat<Double>(
-                    latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    outfile, infiles, axis, relax, tempclose,
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
         else if (dataType == TpDComplex) {
             return new image(
                 _concat<DComplex>(
-                    latt, outfile, infiles, axis, relax, tempclose,
-                    overwrite, reorder, imageNames
+                    outfile, infiles, axis, relax, tempclose,
+                    overwrite, reorder, imageNames, mode
                 )
             );
         }
@@ -3279,28 +3243,36 @@ image* image::imageconcat(
 }
 
 template<class T> SPIIT image::_concat(
-    std::shared_ptr<LatticeBase> latt, const string& outfile,
+    const string& outfile,
     const variant& infiles, int axis, bool relax, bool tempclose,
-    bool overwrite, bool reorder, const vector<String>& imageNames
+    bool overwrite, bool reorder, vector<String>& imageNames,
+    const string& mode
 ) {
-    SPIIT im = std::dynamic_pointer_cast<ImageInterface<T>>(latt);
-    ThrowIf(! im, "dynamic cast failed");
-    ImageConcatenator<T> concat(im, outfile, overwrite);
+    ImageConcatenator<T> concat(imageNames, outfile, overwrite);
     concat.setAxis(axis);
     concat.setRelax(relax);
     concat.setReorder(reorder);
     concat.setTempClose(tempclose);
+    concat.setMode(mode);
+    auto finalImage = concat.concatenate();
     if (_doHistory) {
         vector<String> names {
             "outfile", "infiles", "axis", "relax", "tempclose",
-            "overwrite", "reorder"
+            "overwrite", "reorder", "mode"
         };
         vector<variant> values {
-            outfile, infiles, axis,  relax, tempclose, overwrite, reorder
+            outfile, infiles, axis,  relax, tempclose,
+            overwrite, reorder, mode
         };
-        concat.addHistory(_ORIGIN, "ia.imageconcat", names, values);
+        ImageHistory<T> history(finalImage);
+        history.addHistory(
+            history.getApplicationHistory(
+                _ORIGIN, "ia.imageconcat", names,
+                values, finalImage->name()
+            )
+        );
     }
-    return concat.concatenate(imageNames);
+    return finalImage;
 }
 
 bool image::insert(
@@ -3854,7 +3826,7 @@ image* image::moments(
     double stddev, const string& velocityType,
     const string& out, const string& smoothout,
     bool overwrite, bool removeAxis,
-    bool stretch, bool /* async */
+    bool stretch
 ) {
     try {
         _log << _ORIGIN;
@@ -4882,7 +4854,7 @@ void image::_processDirection(
 image* image::rebin(
     const string& outfile, const vector<int>& bin,
     const variant& region, const variant& vmask,
-    bool dropdeg, bool overwrite, bool /* async */,
+    bool dropdeg, bool overwrite,
     bool stretch, bool crop
 ) {
     LogOrigin lor(_class, __func__);
@@ -4954,7 +4926,7 @@ image* image::regrid(
     const vector<int>& inaxes, const variant& region, const variant& vmask,
     const string& method, int decimate, bool replicate, bool doRefChange,
     bool dropDegenerateAxes, bool overwrite, bool forceRegrid,
-    bool specAsVelocity, bool /* async */, bool stretch
+    bool specAsVelocity, bool stretch
 ) {
     try {
         LogOrigin lor(_class, __func__);
@@ -6150,44 +6122,6 @@ template <class T> record* image::_summary(
     );
 }
 
-bool image::toASCII(
-    const string& outfile, const variant& region,
-    const variant& mask, const string& sep,
-    const string& format, double maskvalue, bool overwrite,
-    bool stretch
-) {
-    // sep is hard-wired as ' ' which is what imagefromascii expects
-    _log << _ORIGIN;
-    if (_detached()) {
-        return false;
-    }
-    try {
-        _notSupported(__func__);
-        String Mask;
-        if (mask.type() == variant::BOOLVEC) {
-            Mask = "";
-        }
-        else if (
-            mask.type() == variant::STRING
-            || mask.type() == variant::STRINGVEC
-        ) {
-            Mask = mask.toString();
-        }
-        std::shared_ptr<Record> pRegion(_getRegion(region, false));
-        ImageFactory::toASCII(
-            _imageF, outfile, *pRegion, Mask,
-            sep, format, maskvalue, overwrite, stretch
-        );
-        return true;
-    }
-    catch (const AipsError& x) {
-        _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
-                << LogIO::POST;
-        RETHROW(x);
-    }
-    return false;
-}
-
 bool image::tofits(
     const string& fitsfile, bool velocity,
     bool optical, int bitpix, double minpix,
@@ -6195,7 +6129,7 @@ bool image::tofits(
     const variant& vmask, bool overwrite,
     bool dropdeg, bool deglast, bool dropstokes,
     bool stokeslast, bool wavelength, bool airwavelength,
-    bool /* async */, bool stretch, bool history
+    bool stretch, bool history
 ) {
     _log << _ORIGIN;
     if (_detached()) {

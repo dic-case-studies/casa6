@@ -165,7 +165,7 @@ Bool Reweighter::selectSpw(std::set<Int>& spwset, Vector<Int>& chanStartv,
     }
   }
   else{                            // select everything and rely on widths.
-    ROMSSpWindowColumns mySpwTab(ms_p.spectralWindow());
+    MSSpWindowColumns mySpwTab(ms_p.spectralWindow());
     uInt nspw = mySpwTab.nrow();
     Vector<Int> nchan(nspw);
 
@@ -524,8 +524,8 @@ Bool Reweighter::makeSelection()
     // numbers for negated antennas!
     //Vector<Int> selAnt1s(thisSelection.getAntenna1List());
     //Vector<Int> selAnt2s(thisSelection.getAntenna2List());
-    ROScalarColumn<Int> ant1c(mssel_p, MS::columnName(MS::ANTENNA1));
-    ROScalarColumn<Int> ant2c(mssel_p, MS::columnName(MS::ANTENNA2));
+    ScalarColumn<Int> ant1c(mssel_p, MS::columnName(MS::ANTENNA1));
+    ScalarColumn<Int> ant2c(mssel_p, MS::columnName(MS::ANTENNA2));
     Vector<Int> selAnts(ant1c.getColumn());
     uInt nAnts = selAnts.nelements();
 
@@ -651,7 +651,7 @@ Bool Reweighter::setSortOrder(Block<Int>& sort, const String& uncombinable,
   return !conflict;
 }
 
-const ROArrayColumn<Complex>& Reweighter::right_column(const ROMSColumns *msclala,
+const ArrayColumn<Complex>& Reweighter::right_column(const MSColumns *msclala,
                                                        const MS::PredefinedColumns col)
 {
   if(col == MS::DATA)

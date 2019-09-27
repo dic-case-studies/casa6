@@ -648,7 +648,7 @@ void PlotCal::getAxisTaQL(const String& axis,
       }
       else if (axis.contains("PHASE")) {
 	if (calType_p.contains("FRINGE")) {
-	  taql = "((180.0/PI())*(FPARAM[1,"+chansel+"]-FPARAM[4,"+chansel+"]))";
+	  taql = "((180.0/PI())*(FPARAM[1,"+chansel+"]-FPARAM[5,"+chansel+"]))";
 	  label = "Fringe Phase POLN Difference (deg)";
 	}
 	else {
@@ -683,7 +683,7 @@ void PlotCal::getAxisTaQL(const String& axis,
       }
       else if (axis.contains("DEL")) {
 	if (calType_p.contains("FRINGE")) {
-	  taql = "(FPARAM[2,"+chansel+"]-FPARAM[5,"+chansel+"])";
+	  taql = "(FPARAM[2,"+chansel+"]-FPARAM[6,"+chansel+"])";
 	  label = "Fringe Delay POLN Difference (nsec)";
 	} else {
 	  if (isNCT_p) 
@@ -695,7 +695,7 @@ void PlotCal::getAxisTaQL(const String& axis,
       }
       else if (axis.contains("RATE")) {
 	if (calType_p.contains("FRINGE")) {
-	  taql = "((FPARAM[3,"+chansel+"]-FPARAM[6,"+chansel+"])/1E-12)";
+	  taql = "((FPARAM[3,"+chansel+"]-FPARAM[7,"+chansel+"])/1E-12)";
 	  label = "Fringe Delay Rate POLN Difference (psec/sec)";
 	} else {
 	  throw(AipsError("Fringe delay rate not available in the specified CalTable."));
@@ -741,8 +741,8 @@ void PlotCal::getAxisTaQL(const String& axis,
       else if (axis.contains("PHASE")) {
 	if (calType_p.contains("FRINGE")) {
 	  if (polType_p=="R") polsel="1";
-	  else if (polType_p=="L") polsel="4";
-	  else polsel="1:4:3";
+	  else if (polType_p=="L") polsel="5";
+	  else polsel="1:5:4";
 	  taql = "((180.0/PI())*(FPARAM["+polsel+","+chansel+"]))";
 	  label = "Fringe Phase (deg)";
 	}
@@ -777,8 +777,8 @@ void PlotCal::getAxisTaQL(const String& axis,
       else if (axis.contains("DEL")) {
 	if (calType_p.contains("FRINGE")) {
 	  if (polType_p=="R") polsel="2";
-	  else if (polType_p=="L") polsel="5";
-	  else polsel="2:5:3";
+	  else if (polType_p=="L") polsel="6";
+	  else polsel="2:6:4";
 	  label = "Fringe Delay (nsec)";
 	  taql = "(FPARAM["+polsel+","+chansel+"])";
 	}
@@ -793,8 +793,8 @@ void PlotCal::getAxisTaQL(const String& axis,
       else if (axis.contains("RATE")) {
 	if (calType_p.contains("FRINGE")) {
 	  if (polType_p=="R") polsel="3";
-	  else if (polType_p=="L") polsel="6";
-	  else polsel="3:6:3";
+	  else if (polType_p=="L") polsel="7";
+	  else polsel="3:7:4";
 	}
 	else {
 	  throw(AipsError("Fringe delay rate not available in the specified CalTable."));
@@ -1233,11 +1233,11 @@ Int PlotCal::multiTables(const Table& tablein,
     tablesout(itab) = titer.table();
     tablesoutnames(itab)=tablesout(itab).tableName();
 
-    cdlist(itab) = ROScalarColumn<Int>(tablesout(itab),CDIcol())(0);
+    cdlist(itab) = ScalarColumn<Int>(tablesout(itab),CDIcol())(0);
     if (cdlist(itab)<0) cdlist(itab)=0;
 
     fldlist_p(itab).resize();
-    fldlist_p(itab) = ROScalarColumn<Int>(tablesout(itab),"FIELD_ID").getColumn();
+    fldlist_p(itab) = ScalarColumn<Int>(tablesout(itab),"FIELD_ID").getColumn();
 
     //    cout << "fldlist_p(itab) = " << fldlist_p(itab) << endl;
 
@@ -1382,7 +1382,7 @@ Int PlotCal::multiTables(const Table& tablein,
       nCalDesc_p=cdtab.nrow();
       if (nCalDesc_p>0) {
 
-	ROArrayColumn<Int> spwcol(cdtab,"SPECTRAL_WINDOW_ID");
+	ArrayColumn<Int> spwcol(cdtab,"SPECTRAL_WINDOW_ID");
 	tabSpws_p.resize();
 	tabSpws_p = spwcol.getColumn();
 	
@@ -1395,7 +1395,7 @@ Int PlotCal::multiTables(const Table& tablein,
 	MSstartChan_p.resize(nCalDesc_p);
 	MSstartChan_p=0;
 	if (calType_p=="B" || calType_p=="MF" || calType_p=="TSYS") {
-	  ROArrayColumn<Int> stchancol(cdtab,"CHAN_RANGE");
+	  ArrayColumn<Int> stchancol(cdtab,"CHAN_RANGE");
 	  Array<Int> stchan=stchancol.getColumn();
 	  for (Int i=0;i<nCalDesc_p;++i) {
 	    MSstartChan_p(i)=stchan(IPosition(4,0,0,0,i));
@@ -1403,7 +1403,7 @@ Int PlotCal::multiTables(const Table& tablein,
 	  }
 	}
 
-	ROScalarColumn<String> msNameCol(cdtab,"MS_NAME");
+	ScalarColumn<String> msNameCol(cdtab,"MS_NAME");
 	msName_p = msNameCol(0);
 
       }  // nCalDesc_p>0
@@ -1452,11 +1452,11 @@ Int PlotCal::multiTables(const Table& tablein,
     tabB = Table (aNewTab, Table::Memory, nrows);
     
     
-    ROArrayColumn<Complex>  origGain(tabSel_p,GAINcol());
-    ROArrayColumn<Bool> solnOk(tabSel_p, "SOLUTION_OK") ;
-    ROScalarColumn<Int> origBaseline(tabSel_p, "ANTENNA1");
-    ROScalarColumn<Int> origCalDesc(tabSel_p, CDIcol());
-    ROScalarColumn<Double> origTime(tabSel_p, "TIME");
+    ArrayColumn<Complex>  origGain(tabSel_p,GAINcol());
+    ArrayColumn<Bool> solnOk(tabSel_p, "SOLUTION_OK") ;
+    ScalarColumn<Int> origBaseline(tabSel_p, "ANTENNA1");
+    ScalarColumn<Int> origCalDesc(tabSel_p, CDIcol());
+    ScalarColumn<Double> origTime(tabSel_p, "TIME");
     Cube<Complex> ydata=origGain.getColumn();
     Vector<Int> baselines=origBaseline.getColumn();
     //Let's determine nAnt now
@@ -1630,8 +1630,8 @@ Int PlotCal::multiTables(const Table& tablein,
       Vector<String> fieldNames;
       Vector<String> antNames;
       MeasurementSet ms(msName_p);
-      fieldNames = ROMSFieldColumns(ms.field()).name().getColumn();
-      antNames = ROMSAntennaColumns(ms.antenna()).name().getColumn();
+      fieldNames = MSFieldColumns(ms.field()).name().getColumn();
+      antNames = MSAntennaColumns(ms.antenna()).name().getColumn();
      
       if (calType_p.contains("M")) {
 	Int nant=antNames.nelements();
@@ -1868,7 +1868,7 @@ Int PlotCal::multiTables(const Table& tablein,
 
     if (isNCT_p) {
       // Direct from the NCT
-      ROArrayColumn<Double> chanfreqcol(ROMSSpWindowColumns(ct_p.spectralWindow()).chanFreq());
+      ArrayColumn<Double> chanfreqcol(MSSpWindowColumns(ct_p.spectralWindow()).chanFreq());
 
       startFreq_p.resize(nCalDesc_p);
       stepFreq_p.resize(nCalDesc_p);
@@ -1899,7 +1899,7 @@ Int PlotCal::multiTables(const Table& tablein,
 	throw(AipsError("MS is not available to get frequencies for freq axis. Please plot channels instead."));
       
       MeasurementSet ms(msName_p);
-      ROArrayColumn<Double> chanfreqcol(ROMSSpWindowColumns(ms.spectralWindow()).chanFreq());
+      ArrayColumn<Double> chanfreqcol(MSSpWindowColumns(ms.spectralWindow()).chanFreq());
 
       startFreq_p.resize(nCalDesc_p);
       stepFreq_p.resize(nCalDesc_p);
@@ -1937,10 +1937,10 @@ Int PlotCal::multiTables(const Table& tablein,
 
     //    cout << "Evalutating BPOLY solutions...." << endl;
 
-    //    ROScalarColumn<Int> origAnt1(tabSel_p, "ANTENNA1");
-    ROScalarColumn<Int> origFld(tabSel_p, "FIELD_ID");
-    ROScalarColumn<Int> origCalDesc(tabSel_p, CDIcol());
-    ROScalarColumn<Double> origTime(tabSel_p, "TIME");
+    //    ScalarColumn<Int> origAnt1(tabSel_p, "ANTENNA1");
+    ScalarColumn<Int> origFld(tabSel_p, "FIELD_ID");
+    ScalarColumn<Int> origCalDesc(tabSel_p, CDIcol());
+    ScalarColumn<Double> origTime(tabSel_p, "TIME");
 
     // The following is cribbed from MeasurementComponents/BPoly.cc
     //-------------------------------------------------------------

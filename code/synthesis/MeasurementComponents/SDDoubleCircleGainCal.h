@@ -28,7 +28,7 @@ public:
   virtual ~SDDoubleCircleGainCal();
 
   // Return type name as string (ditto)
-  virtual casacore::String typeName() {
+  virtual casacore::String typeName() override {
     return "SDGAIN_OTFD";
   }
   virtual casacore::String longTypeName() override {
@@ -58,10 +58,10 @@ public:
 
   // This is the freq-dep version of G
   //   (this is the ONLY fundamental difference from G)
-  virtual casacore::Bool freqDepPar() { return true; };
+  virtual casacore::Bool freqDepPar() override { return true; };
 
   // Freq-dep Weight scaling
-  virtual casacore::Bool freqDepCalWt() { return true; };
+  virtual casacore::Bool freqDepCalWt() override { return true; };
 
   // Report solve info/params, e.g., for logging
   virtual casacore::String solveinfo() override;
@@ -78,7 +78,7 @@ public:
   virtual void keepNCT() override;
 
 protected:
-  virtual void syncWtScale();
+  virtual void syncWtScale() override;
 
 private:
   template<class Accessor>

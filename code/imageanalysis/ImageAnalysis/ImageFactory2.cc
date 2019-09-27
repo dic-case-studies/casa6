@@ -127,7 +127,7 @@ SPIIDC ImageFactory::complexDoubleImageFromShape(
         outfile, shape, csys, linear, overwrite, verbose, msgs
     );
 }
-
+/*
 SPIIF ImageFactory::fromASCII(
     const String& outfile, const String& infile,
     const IPosition& shape, const String& sep, const Record& csys,
@@ -170,7 +170,7 @@ SPIIF ImageFactory::fromASCII(
     Array<Float> pixels(vec.reform(IPosition(shape)));
     return imageFromArray(outfile, pixels, csys, linear, overwrite);
 }
-
+*/
 ITUPLE ImageFactory::fromImage(
     const String& outfile, const String& infile,
     const Record& region, const String& mask, Bool dropdeg,
@@ -286,7 +286,7 @@ ITUPLE ImageFactory::fromFile(const String& infile, Bool cache) {
     _checkInfile(infile);
     ComponentListImage::registerOpenFunction();
     unique_ptr<LatticeBase> latt(ImageOpener::openImage(infile));
-    ThrowIf (! latt, "Unable to open image");
+    ThrowIf (! latt, "Unable to open image " + infile);
     auto imagePtrs = _fromLatticeBase(latt);
     auto imageF = std::get<0>(imagePtrs);
     if (
@@ -298,6 +298,34 @@ ITUPLE ImageFactory::fromFile(const String& infile, Bool cache) {
     return imagePtrs;
 }
 
+SPIIF ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Float, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<0>(t);
+}
+
+SPIIC ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Complex, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<1>(t);
+}
+
+SPIID ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Double, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<2>(t);
+}
+
+SPIIDC ImageFactory::fromFile(
+    const casacore::String& filename, casacore::DComplex, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<3>(t);
+}
+ 
 ITUPLE ImageFactory::_fromLatticeBase(
     unique_ptr<LatticeBase>& latt
 ) {
@@ -382,7 +410,7 @@ void ImageFactory::rename(
 ) {
 	image = std::get<1>(_rename(image, name, overwrite));
 }
-
+/*
 void ImageFactory::toASCII(
 	SPCIIF image, const String& outfile, Record& region,
 	const String& mask, const String& sep,
@@ -451,7 +479,7 @@ void ImageFactory::toASCII(
 		nline += 1;
 	}
 }
-
+*/
 void ImageFactory::toFITS(
 	SPCIIF image, const String& outfile, Bool velocity, Bool optical,
 	Int bitpix, Double minpix, Double maxpix,

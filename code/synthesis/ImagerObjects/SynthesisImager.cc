@@ -322,9 +322,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       ////Channel selection 'flags' need for when using old VI/VB
       //set up Cube for storing the 'flags' for all MSes
       //find max no. channels from the current ms 
-      const ROMSSpWindowColumns spwc(thisms.spectralWindow());
+      const MSSpWindowColumns spwc(thisms.spectralWindow());
       uInt nspw = spwc.nrow();
-      const ROScalarColumn<Int> spwNchans(spwc.numChan());
+      const ScalarColumn<Int> spwNchans(spwc.numChan());
       Vector<Int> nchanvec = spwNchans.getColumn();
       Int maxnchan = 0;
       for (uInt i=0;i<nchanvec.nelements();i++) {
@@ -438,7 +438,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           // Intent can be used to select a field id so check
           // field ids actually present in the selection-applied MS
     	  Vector<Int>fields=thisSelection.getFieldList( & mss4vi_p[msin]);
-          ROMSColumns tmpmsc(mss4vi_p[msin]);
+          MSColumns tmpmsc(mss4vi_p[msin]);
           Vector<Int> fldidv=tmpmsc.fieldId().getColumn();
           std::set<Int> ufldids(fldidv.begin(),fldidv.end());
           std::vector<Int> tmpv(ufldids.begin(), ufldids.end());
@@ -625,7 +625,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				    const Bool mTermOn,//    = false,
 				    const Bool wbAWP,//      = true,
 				    const String cfCache,//  = "",
-				    const Bool doPointing,// = false,
+				    const Bool usePointing,// = false,
 				    const Bool doPBCorr,//   = true,
 				    const Bool conjBeams,//  = true,
 				    const Float computePAStep,         //=360.0
@@ -677,7 +677,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   gridpars.mTermOn=mTermOn;
   gridpars.wbAWP=wbAWP;
   gridpars.cfCache=cfCache;
-  gridpars.doPointing=doPointing;
+  gridpars.usePointing=usePointing;
   gridpars.doPBCorr=doPBCorr;
   gridpars.conjBeams=conjBeams;
   gridpars.computePAStep=computePAStep;
@@ -754,7 +754,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
 			gridpars.convFunc,
 			gridpars.aTermOn,gridpars.psTermOn, gridpars.mTermOn,
-			gridpars.wbAWP,gridpars.cfCache,gridpars.doPointing,
+			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,
 			gridpars.doPBCorr,gridpars.conjBeams,
 			gridpars.computePAStep,gridpars.rotatePAStep,
 			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
@@ -782,6 +782,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return true;
   }
 
+  Long SynthesisImager::estimateRAM(){
+    Long mem=0;
+    LogIO os( LogOrigin("SynthesisImager","estimateRAM",WHERE) );
+    if(itsMappers.nMappers()==0)
+      os << "SynthesisImage has not been setup to get an estimate of memory usage" << LogIO::WARN << LogIO::POST;
+    mem=itsMappers.estimateRAM();
+    return mem;
+  }
+  
   Bool SynthesisImager::defineImage(CountedPtr<SIImageStore> imstor, 
 				    const String& ftmachine)
   {
@@ -1028,6 +1037,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       const Quantity& noise, const Double robust,
 			       const Quantity& fieldofview,
 			       const Int npixels, const Bool multiField,
+			       const Bool /*useCubeBriggs*/,
 			       const String& filtertype, const Quantity& filterbmaj,
 			       const Quantity& filterbmin, const Quantity& filterbpa   )
   {
@@ -1253,7 +1263,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 							  CoordinateSystem& cSys,
 							  IPosition imShape, 
 							  const Bool overwrite,
-							  ROMSColumns& msc,
+							  MSColumns& msc,
 							  String mappertype,
 							  uInt ntaylorterms,
 							  Quantity distance,
@@ -1448,7 +1458,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Int extrachunks=0;
       Int chunksize=imagestore->getShape()[3]/chanchunks;
       Int rem=imagestore->getShape()[3] % chanchunks;
-
+      ///Avoid an extra chunk with 1 channel as it cause bumps in linear interpolation
+      ///See CAS-12625
+      while((rem==1) && (chunksize >1)){
+          chanchunks +=1;
+          chunksize=imagestore->getShape()[3]/chanchunks;
+          rem=imagestore->getShape()[3] % chanchunks;
+        }
+      
+      
+      
       if( rem>0 )
 	{
 	  // os << LogIO::WARN << "chanchunks ["+String::toString(chanchunks)+"] is not a divisor of nchan ["+String::toString(imagestore->getShape()[3])+"].";
@@ -1461,6 +1480,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	      if( rem % chunksize > 0 ) extrachunks += 1;
 	    }
 	}
+      
       
       os << "Creating " << chanchunks +extrachunks << " reference subCubes (channel chunks) for gridding " << LogIO::POST;
 
@@ -1588,7 +1608,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       // Create the ImageStore object
       CountedPtr<SIImageStore> imstor;
-      ROMSColumns msc(mss4vi_p[0]);
+      MSColumns msc(mss4vi_p[0]);
       imstor = createIMStore(imagename, csys, imshape, overwrite, msc, mappertype, ntaylorterms, distance,facets, iftm->useWeightImage(), startmodel );
 
       // Create the Mappers
@@ -1662,7 +1682,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					const Bool mTermOn,          //= false,
 					const Bool wbAWP,            //= true,
 					const String cfCache,        //= "",
-					const Bool doPointing,       //= false,
+					const Bool usePointing,       //= false,
 					const Bool doPBCorr,         //= true,
 					const Bool conjBeams,        //= true,
 					const Float computePAStep,         //=360.0
@@ -1715,7 +1735,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       createAWPFTMachine(theFT, theIFT, ftname, facets, wprojplane, 
 			 padding, useAutocorr, useDoublePrec, gridFunction,
 			 aTermOn, psTermOn, mTermOn, wbAWP, cfCache, 
-			 doPointing, doPBCorr, conjBeams, computePAStep,
+			 usePointing, doPBCorr, conjBeams, computePAStep,
 			 rotatePAStep, cache,tile,imageNamePrefix);
     }
     else if ( ftname == "mosaic" || ftname== "mosft" || ftname == "mosaicft" || ftname== "MosaicFT"){
@@ -1752,7 +1772,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	(ftname != "awprojectft" && ftname != "mawprojectft" && ftname != "proroft") )
       {
 	CountedPtr<SkyJones> vp;
-	ROMSColumns msc(mss4vi_p[0]);
+	MSColumns msc(mss4vi_p[0]);
 	Quantity parang(0.0,"deg");
 	Quantity skyposthreshold(0.0,"deg");
 	vp = new VPSkyJones(msc, true,  parang, BeamSquint::NONE,skyposthreshold);
@@ -1799,7 +1819,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					   const Bool mTermOn,          //= false,
 					   const Bool wbAWP,            //= true,
 					   const String cfCache,        //= "",
-					   const Bool doPointing,       //= false,
+					   const Bool usePointing,       //= false,
 					   const Bool doPBCorr,         //= true,
 					   const Bool conjBeams,        //= true,
 					   const Float computePAStep,   //=360.0
@@ -1849,7 +1869,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // else
     //   awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP);
 
-    ROMSObservationColumns msoc(mss4vi_p[0].observation());
+    MSObservationColumns msoc(mss4vi_p[0].observation());
     String telescopeName=msoc.telescopeName()(0);
     CountedPtr<ConvolutionFunction> awConvFunc = AWProjectFT::makeCFObject(telescopeName, 
 									   aTermOn,
@@ -1886,7 +1906,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     theFT = new AWProjectWBFTNew(wprojPlane, cache/2, 
 			      cfCacheObj, awConvFunc, 
 			      visResampler,
-			      /*true */doPointing, doPBCorr, 
+			      /*true */usePointing, doPBCorr, 
 			      tile, computePAStep, pbLimit_l, true,conjBeams,
 			      useDoublePrec);
 
@@ -1914,7 +1934,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // theIFT = new AWProjectWBFT(wprojPlane, cache/2, 
     // 			       cfCacheObj, awConvFunc, 
     // 			       visResampler,
-    // 			       /*true */doPointing, doPBCorr, 
+    // 			       /*true */usePointing, doPBCorr, 
     // 			       tile, computePAStep, pbLimit_l, true,conjBeams,
     // 			       useDoublePrec);
 
@@ -1939,7 +1959,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     if (!isATermOn) return new NoOpATerm();
     
-    ROMSObservationColumns msoc(ms.observation());
+    MSObservationColumns msoc(ms.observation());
     String ObsName=msoc.telescopeName()(0);
     if ((ObsName == "EVLA") || (ObsName == "VLA"))
       return new EVLAAperture();
@@ -2003,12 +2023,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os(LogOrigin("SynthesisImager", "createMosFTMachine",WHERE));
    
     rvi_p->originChunks();
-    ROMSColumns msc(rvi_p->ms());
+    MSColumns msc(rvi_p->ms());
     String telescop=msc.observation().telescopeName()(0);
     ///Multi ms with different telescop
     Bool multiTel=False;
     for(rvi_p->originChunks(); rvi_p->moreChunks(); rvi_p->nextChunk()){
-      if(rvi_p->newMS() && telescop !=  ROMSColumns(rvi_p->ms()).observation().telescopeName()(0))
+      if(rvi_p->newMS() && telescop !=  MSColumns(rvi_p->ms()).observation().telescopeName()(0))
 	multiTel=True;
     }
     rvi_p->originChunks();
@@ -2701,7 +2721,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     std::ostringstream ss;
     ss.precision(std::numeric_limits<double>::digits10+2);
     ss << df;
-    return ss.str();
+    //return ss.str();
+    return to_string(df);
   }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2726,7 +2747,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  
 	  if (doDefaultVP) {
 	    
-	    ROMSAntennaColumns ac(mss4vi_p[0].antenna());
+	    MSAntennaColumns ac(mss4vi_p[0].antenna());
 	    Double dishDiam=ac.dishDiameter()(0);
 	    if(!allEQ(ac.dishDiameter().getColumn(), dishDiam))
 	      os << LogIO::WARN
@@ -2789,7 +2810,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   Bool SynthesisImager::makePBImage(const String telescop){
 
   /*
-  ROScalarColumn<TableRecord> recCol(vpTable, (String)"pbdescription");
+  ScalarColumn<TableRecord> recCol(vpTable, (String)"pbdescription");
   PBMath myPB(recCol(0));
   */
   LogIO os( LogOrigin("SynthesisImager","makePBImage",WHERE) );
@@ -2848,6 +2869,22 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     movingSource_p=movingSource;
   }
   
+  bool SynthesisImager::isSpectralCube(){
+    bool retval=False;
+    for (Int k=0; k < itsMappers.nMappers(); ++k){
+      //For some reason imstore sometime returns 0 shape
+      //trying to test with with psf size breaks parallel = true in some cases...go figure
+      //if((((itsMappers.imageStore(k))->psf())->shape()[3]) != ((itsMappers.imageStore(k))->getShape()[3])){
+      //cerr << "shapes " << ((itsMappers.imageStore(k))->psf())->shape() << "   " <<  ((itsMappers.imageStore(k))->getShape()) << endl;
+      //throw(AipsError("images shape seem insistent "));
+      if((itsMappers.imageStore(k))->getShape()(3) ==0)
+	return True;
+      //}
+    if((itsMappers.imageStore(k))->getShape()(3) > 1)
+      retval=True;
+    }
+    return retval;
 
+  }
 } //# NAMESPACE CASA - END
 

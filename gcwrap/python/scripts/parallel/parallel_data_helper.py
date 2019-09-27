@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import re
 import shutil
@@ -6,19 +8,49 @@ import string
 import copy
 import time
 import subprocess
-from taskinit import *
-from parallel.parallel_task_helper import ParallelTaskHelper, JobData
-import partitionhelper as ph
+
 from numpy.f2py.auxfuncs import throw_error
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .parallel_task_helper import ParallelTaskHelper, JobData
+    from .. import partitionhelper as ph
+    from casatools import quanta, ms, msmetadata, mstransformer, table
+    from casatasks import casalog
+
+    _qa = quanta()
+else:
+    from taskinit import *
+    from parallel.parallel_task_helper import ParallelTaskHelper, JobData
+    import partitionhelper as ph
+
+    ms = mstool
+    msmetadata = msmdtool
+    table = tbtool
+    mstransformer = mttool
+
+    _qa = qa
+
+# common function to use to get a dictionary item iterator
+if is_python3:
+    def lociteritems(adict):
+        return adict.items()
+else:
+    def lociteritems(adict):
+        return adict.iteritems()
 
 # Decorator function to print the arguments of a function
 def dump_args(func):
     "This decorator dumps out the arguments passed to a function before calling it"
-    argnames = func.func_code.co_varnames[:func.func_code.co_argcount]
-    fname = func.func_name
+    argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
+    if is_python3:
+        fname = func.func_name
+    else:
+        fname = func.__name__
    
     def echo_func(*args,**kwargs):
-        print fname, ":", ', '.join('%s=%r' % entry for entry in zip(argnames,args) + kwargs.items())
+        print(fname, ":", ', '.join('%s=%r' % entry for entry in zip(argnames,args) + kwargs.items()))
         return func(*args, **kwargs)
    
     return echo_func
@@ -72,7 +104,7 @@ See examples in task_mstransform, task_partition.py, task_split2 or task_hanning
         # run the jobs in parallel
         try:
             pdh.go()
-        except Exception, instance:
+        except Exception as instance:
             casalog.post('%s'%instance,'ERROR')
             return False
             
@@ -95,7 +127,7 @@ See examples in task_mstransform, task_partition.py, task_split2 or task_hanning
         
         try:
             pdh.go()
-        except Exception, instance:
+        except Exception as instance:
             casalog.post('%s'%instance,'ERROR')
             return False
                     
@@ -115,11 +147,11 @@ class ParallelDataHelper(ParallelTaskHelper):
         self.__ddistart = None
         self._msTool = None
         self._tbTool = None
-        
-        if not self.__args.has_key('spw'):
+
+        if not 'spw' in self.__args:
             self.__args['spw'] = ''
             
-        if not self.__args.has_key('scan'):
+        if not 'scan' in self.__args:
               self.__args['scan'] = ''
             
         self.__spwSelection = self.__args['spw']
@@ -130,7 +162,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         
         # Start parameter for DDI in main table of each sub-MS.
         # It should be a counter of spw IDs starting at 0
-        if self.__args.has_key('ddistart'):
+        if 'ddistart' in self.__args:
               self.__ddistart = self.__args['ddistart']
                                         
     def setTaskName(self, thistask=''):        
@@ -142,19 +174,19 @@ class ParallelDataHelper(ParallelTaskHelper):
         
         if isinstance(self.__args['vis'], str):
             if not os.path.exists(self.__args['vis']):
-                raise IOError, 'Visibility data set not found - please verify the name.'
+                raise IOError('Visibility data set not found - please verify the name.')
 
         if isinstance(self.__args['outputvis'], str):
             # only one output MS
             if self.__args['outputvis'].isspace() or self.__args['outputvis'].__len__() == 0:
-                raise IOError, 'Please specify outputvis.'
+                raise IOError('Please specify outputvis.')
             
             elif os.path.exists(self.__args['outputvis']):
-                raise IOError, "Output MS %s already exists - will not overwrite it."%self.__args['outputvis']
+                raise IOError("Output MS %s already exists - will not overwrite it."%self.__args['outputvis'])
             
         flagversions = self.__args['outputvis']+".flagversions"
         if os.path.exists(flagversions):
-            raise IOError, "The flagversions %s for the output MS already exist. Please delete it."%flagversions                                     
+            raise IOError("The flagversions %s for the output MS already exist. Please delete it."%flagversions)
         
         return True 
         
@@ -216,7 +248,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 (self.__args['combinespws'] == False and self.__args['nspw'] == 1):
                 # Get the value of timebin as a float
                 timebin = self.__args['timebin']
-                tsec = qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 # For each subms, check if scans length is <=  timebin
                 for subms in subMSList:
@@ -236,7 +268,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 spwdict = ph.getScanSpwSummary(subMSList) 
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 timebin = self.__args['timebin']
-                tsec = qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 for subms in subMSList:
                     subms_spwids = ph.getSubMSSpwIds(subms, spwdict)
                     slist = map(str,subms_spwids)
@@ -257,7 +289,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             if (sepaxis != 'spw' and self.__args['combine'] == 'scan'):
                 scansel = self.__getScanIds(self.__args['vis'], self.__args['scan'])
                 timebin = self.__args['timebin']
-                tsec = qa.quantity(timebin,'s')['value']
+                tsec = _qa.quantity(timebin,'s')['value']
                 for subms in subMSList:
                     if not self.__isScanContained(subms, scansel, tsec):
                         casalog.post('Cannot process MMS in parallel when combine=\'scan\' because the subMSs do not contain all the selected scans',\
@@ -300,7 +332,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             myspwsel = '*'
     
         spwlist = []
-        msTool = mstool()
+        msTool = ms( )
         try:
             seldict = msTool.msseltoindex(vis=msfile,spw=myspwsel)
         except:
@@ -339,7 +371,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         scanlist = []
         if scansel.isspace() or scansel.__len__() == 0:
             # Get all the scan ids
-            mymsmd = msmdtool()
+            mymsmd = msmetadata( )
             mymsmd.open(msfile)
             scans = mymsmd.scannumbers()
             mymsmd.close()
@@ -371,7 +403,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             """
             isContained = False                            
             
-            mymsmd = msmdtool()
+            mymsmd = msmetadata( )
             mymsmd.open(subms)
             
             # Check if subms scans contain all selected scans
@@ -400,7 +432,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         
         # success
         retval = 1
-        if not self.__args.has_key('separationaxis'):
+        if not 'separationaxis' in self.__args:
             return retval
         
         else:
@@ -448,9 +480,9 @@ class ParallelDataHelper(ParallelTaskHelper):
             This method overrides the one from ParallelTaskHelper.
         """
                
-        msTool = mstool()
+        msTool = ms( )
         if not msTool.open(vis):
-            raise ValueError, "Unable to open MS %s," % vis
+            raise ValueError("Unable to open MS %s," % vis)
         rtnVal = msTool.ismultims() and \
                  isinstance(msTool.getreferencedtables(), list)
 
@@ -545,7 +577,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             pass
 
         if self.outputBase == '.' or self.outputBase == './':
-            raise ValueError, 'Error dealing with outputvis'
+            raise ValueError('Error dealing with outputvis')
         
         # The subMS are first saved inside a temporary directory
         self.dataDir = outputPath + '/' + self.outputBase+'.data'
@@ -569,7 +601,7 @@ class ParallelDataHelper(ParallelTaskHelper):
 
         # Input MMS, processed in parallel; output is an MMS
         # For tasks such as split2, hanningsmooth2
-        if ParallelDataHelper.isParallelMS(self._arg['vis']) and (not self._arg.has_key('monolithic_processing')):           
+        if ParallelDataHelper.isParallelMS(self._arg['vis']) and (not 'monolithic_processing' in self._arg):
             self.__createNoSeparationCommand()
             
         # For mstransform when processing input MMS in parallel
@@ -592,9 +624,9 @@ class ParallelDataHelper(ParallelTaskHelper):
 
         submslist = ParallelTaskHelper.getReferencedMSs(self._arg['vis'])
         if len(submslist) == 0:
-            raise ValueError, 'There are no subMSs in input vis'
+            raise ValueError('There are no subMSs in input vis')
                     
-        tbTool = tbtool()
+        tbTool = table( )
 
         listOutputMS = []
 
@@ -627,7 +659,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             for key in self._arguser:
                 localArgs[key] = self._arguser[key][subMs_idx]
                 
-            if self._arg.has_key('createmms'):
+            if 'createmms' in self._arg:
                 self._arg['createmms'] = False
                 localArgs['createmms'] = False
                 
@@ -680,7 +712,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         numSubMS = min(len(scanList),numSubMS)
         
         partitionedScans = self.__partition(scanList, numSubMS)        
-        for output in xrange(numSubMS):
+        for output in range(numSubMS):
             mmsCmd = copy.copy(self._arg)
             mmsCmd['createmms'] = False
             mmsCmd['scan']= ParallelTaskHelper.\
@@ -710,7 +742,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         numSubMS = min(len(spwList),numSubMS)
 
         # Get a dictionary of the spws parted for each subMS
-        spwList = map(str,spwList)
+        spwList = list(map(str,spwList))
         partitionedSPWs1 = self.__partition1(spwList,numSubMS)
 
         # Add the channel selections back to the spw expressions
@@ -731,7 +763,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             casalog.post('Error calculating the ddistart indices','SEVERE')
             raise
         
-        for output in xrange(numSubMS):
+        for output in range(numSubMS):
             mmsCmd = copy.copy(self._arg)
             mmsCmd['createmms'] = False
             if self.__selectionScanList is not None:
@@ -814,7 +846,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         # Calculate the ddistart for the subMSs (for each engine)
         ddistartlist = self.__calculateDDIstart(str_partitionedScans, partitionedSpws)
                 
-        if (len(ddistartlist) != len(xrange(numSpwPartitions*numScanPartitions))):
+        if (len(ddistartlist) != len(range(numSpwPartitions*numScanPartitions))):
             casalog.post('Error calculating ddistart for the engines', 'SEVERE')
             raise
         
@@ -824,7 +856,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         
         # index that composes the subms names (0000, 0001, etc.)
         sindex = 0
-        for output in xrange(numSpwPartitions*numScanPartitions):
+        for output in range(numSpwPartitions*numScanPartitions):
             
             # Avoid the NULL MS selections by verifying that the
             # combination scan-spw exist.
@@ -948,7 +980,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             submsBaselineMap[subms]['taql'] = mytaql
         
         # Create the commands for each SubMS (each engine)
-        for output in xrange(numSubMS):
+        for output in range(numSubMS):
             mmsCmd = copy.copy(self._arg)
             mmsCmd['createmms'] = False
             mmsCmd['taql'] = submsBaselineMap[output]['taql']
@@ -972,7 +1004,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         
         if self._msTool is None:
             # Open up the msTool
-            self._msTool = mstool()
+            self._msTool = ms( )
             self._msTool.open(self._arg['vis'])    
         else:
             self._msTool.reset()
@@ -1016,10 +1048,10 @@ class ParallelDataHelper(ParallelTaskHelper):
         # scan+spw separation axis 
         if hasscans:
             count = 0
-            for k,spws in partedspws.iteritems():
-                for ks,scans in partedscans.iteritems():
+            for k,spws in lociteritems(partedspws):
+                for ks,scans in lociteritems(partedscans):
                     if self._msTool is None:
-                        self._msTool = mstool()
+                        self._msTool = ms( )
                         self._msTool.open(self._arg['vis'],nomodify=False)
                     else:
                         self._msTool.reset()
@@ -1045,9 +1077,9 @@ class ParallelDataHelper(ParallelTaskHelper):
         # spw separation axis 
         else:
             count = 0
-            for k,spws in partedspws.iteritems():
+            for k,spws in lociteritems(partedspws):
                 if self._msTool is None:
-                    self._msTool = mstool()
+                    self._msTool = ms( )
                     self._msTool.open(self._arg['vis'],nomodify=False)
                 else:
                     self._msTool.reset()
@@ -1080,7 +1112,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         """
         
         if self._msTool is None:
-            self._msTool = mstool()
+            self._msTool = ms( )
             self._msTool.open(self._arg['vis'])    
         else:
             self._msTool.reset()
@@ -1104,7 +1136,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         scanList = [int(scan) for scan in scanSummary]
 
         if len(scanList) == 0:
-            raise ValueError, "No Scans present in the created MS."
+            raise ValueError("No Scans present in the created MS.")
 
         scanList.sort()
         return scanList
@@ -1151,7 +1183,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             except:
                 baselinelist = []
         else:
-            md = msmdtool()
+            md = msmetadata( )
             md.open(self._arg['vis'])
             baselines = md.baselines()
             md.close()
@@ -1192,7 +1224,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         """
         filter = None
         for (selSyntax, argSyntax) in selectionPairs:
-            if self._arg.has_key(argSyntax) and self._arg[argSyntax] != '':
+            if argSyntax in self._arg and self._arg[argSyntax] != '':
                 if filter is None:
                     filter = {}
                 filter[selSyntax] = self._arg[argSyntax]
@@ -1211,7 +1243,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         division = len(lst)/float(n)
         
         return [ lst[int(round(division * i)):
-                     int(round(division * (i+1)))] for i in xrange(int(n))]
+                     int(round(division * (i+1)))] for i in range(int(n))]
     
 #    @dump_args
     def __partition1(self, lst, n):
@@ -1233,7 +1265,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         # Create a dictionary for the parted spws:
         rdict = {}
         division = len(lst)/float(n)
-        for i in xrange(int(n)):
+        for i in range(int(n)):
             part = lst[int(round(division * i)):int(round(division * (i+1)))]
             rdict[i] = part
     
@@ -1278,7 +1310,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                 
         # Create a dictionary
         seldict = {}
-        for ns in xrange(len(spwid)):
+        for ns in range(len(spwid)):
             sel = {}
             sel['spw'] = spwid[ns]
             sel['channels'] = chanlist[ns]
@@ -1317,7 +1349,7 @@ class ParallelDataHelper(ParallelTaskHelper):
 #                    if v[i] == vals['spw'] and vals['channels'] != '':
                     # matches, now edit pardict
                     if v[i] == vals['spw']:
-#                        print v[i], seldict[keys]['spw'], seldict[keys]['channels']
+#                        print(v[i], seldict[keys]['spw'], seldict[keys]['channels'])
                         if vals['channels'] != '':
                             spwexpr = vals['spw'] + ':' + vals['channels']
                         else:
@@ -1381,13 +1413,13 @@ class ParallelDataHelper(ParallelTaskHelper):
         if parname == None:
             retval = False
             
-        elif self.__args.has_key(parname):
+        elif parname in self.__args:
             fblist = self.__args[parname]
             if isinstance(fblist,list):   
                              
                 if fblist.__len__() > 1:
                     if self.__spwList == None:           
-                        msTool = mstool()
+                        msTool = ms( )
                         msTool.open(self.__args['vis'])
                         spwsel = self.__args['spw'] 
                         msTool.msselect({'spw':spwsel})
@@ -1397,7 +1429,7 @@ class ParallelDataHelper(ParallelTaskHelper):
                         
                     if self.__spwList.__len__() != fblist.__len__():
                         retval = False
-                        raise ValueError, 'Number of %s is different from the number of spw' %parname                
+                        raise ValueError('Number of %s is different from the number of spw' %parname)
                  
 
         return retval
@@ -1419,7 +1451,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         elif self.__args['mode'] == 'velocity':
             restfreq = self.__args['restfreq']
             if restfreq == "" or restfreq.isspace():
-                raise ValueError, "Parameter restfreq must be set when mode='velocity'"
+                raise ValueError("Parameter restfreq must be set when mode='velocity'")
             
             if self.__args['start'] == 0:
                 self.__args['start'] = ''
@@ -1430,12 +1462,12 @@ class ParallelDataHelper(ParallelTaskHelper):
 
             # Check if the parameter has valid velocity units
             if not self.__args['start'] == '':
-                if (qa.quantity(self.__args['start'])['unit'].find('m/s') < 0):
-                    raise TypeError, 'Parameter start does not have valid velocity units'
+                if (_qa.quantity(self.__args['start'])['unit'].find('m/s') < 0):
+                    raise TypeError('Parameter start does not have valid velocity units')
             
             if not self.__args['width'] == '':
-                if (qa.quantity(self.__args['width'])['unit'].find('m/s') < 0):
-                    raise TypeError, 'Parameter width does not have valid velocity units'
+                if (_qa.quantity(self.__args['width'])['unit'].find('m/s') < 0):
+                    raise TypeError('Parameter width does not have valid velocity units')
                                             
         elif self.__args['mode'] == 'frequency':
             if self.__args['start'] == 0:
@@ -1445,12 +1477,12 @@ class ParallelDataHelper(ParallelTaskHelper):
     
             # Check if the parameter has valid frequency units
             if not self.__args['start'] == '':
-                if (qa.quantity(self.__args['start'])['unit'].find('Hz') < 0):
-                    raise TypeError, 'Parameter start does not have valid frequency units'
+                if (_qa.quantity(self.__args['start'])['unit'].find('Hz') < 0):
+                    raise TypeError('Parameter start does not have valid frequency units')
     
             if not self.__args['width'] == '':
-                if (qa.quantity(self.__args['width'])['unit'].find('Hz') < 0):
-                    raise TypeError, 'Parameter width does not have valid frequency units'        
+                if (_qa.quantity(self.__args['width'])['unit'].find('Hz') < 0):
+                    raise TypeError('Parameter width does not have valid frequency units')
         
         start = self.__args['start']
         width = self.__args['width']
@@ -1485,7 +1517,6 @@ class ParallelDataHelper(ParallelTaskHelper):
             for command_response in command_response_list:
                 outvis = command_response['parameters']['outputvis']
                 outputList[outvis] = command_response['ret']
-                                                                     
                      
         # List of failed MSs. TBD
         nFailures = []
@@ -1516,25 +1547,25 @@ class ParallelDataHelper(ParallelTaskHelper):
         
         # Only when input is MS or MS-like and createmms=True
         # Only partition and mstransform have the createmms parameter
-        if self._arg.has_key('createmms') and self._arg['createmms'] == True and self._arg['separationaxis'] == 'spw':
+        if 'createmms' in self._arg and self._arg['createmms'] == True and self._arg['separationaxis'] == 'spw':
 #            if (self._arg['separationaxis'] == 'spw' or 
 #                self._arg['separationaxis'] == 'auto'):   
 #            if (self._arg['separationaxis'] == 'spw'):   
                 
                 casalog.post('Consolidate the sub-tables')
              
-                toUpdateList = self.__ddidict.values()
+                toUpdateList = list(self.__ddidict.values())
                                 
                 toUpdateList.sort()
                 casalog.post('List to consolidate %s'%toUpdateList,'DEBUG')
                                 
                 # Consolidate the spw sub-tables to take channel selection
                 # or averages into account.
-                mtlocal1 = mttool()
+                mtlocal1 = mstransformer()
                 try:                        
                     mtlocal1.mergespwtables(toUpdateList)
                     mtlocal1.done()
-                except Exception, instance:
+                except Exception:
                     mtlocal1.done()
                     casalog.post('Cannot consolidate spw sub-tables in MMS','SEVERE')
                     return False
@@ -1574,7 +1605,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         # Parallel axis to write to table.info of MMS
         # By default take the one from the input MMS
         parallel_axis = ph.axisType(self.__args['vis'])
-        if self._arg.has_key('createmms') and self._arg['createmms'] == True:
+        if 'createmms' in self._arg and self._arg['createmms'] == True:
             parallel_axis = self._arg['separationaxis']
 
         if parallel_axis == 'auto' or parallel_axis == 'both':

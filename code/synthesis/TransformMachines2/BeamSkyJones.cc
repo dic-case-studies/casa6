@@ -303,7 +303,7 @@ void BeamSkyJones::update(const vi::VisBuffer2& vb, Int row)
   MDirection pointingDirection2 = vbutil_p->getPointingDir(vb, vb.antenna2()(row), row);
   //cerr << "DIR1 " << pointingDirection1.toString() << "   " <<  pointingDirection2.toString() << endl; 
   // Look up correct telescope
-  const ROMSObservationColumns& msoc=vb.subtableColumns().observation();
+  const MSObservationColumns& msoc=vb.subtableColumns().observation();
   telescope_p = msoc.telescopeName()(vb.arrayId()(0));
 
   updatePBMathIndices(vb,row); // lastUpdateIndex?_p are now valid
@@ -723,7 +723,7 @@ MDirection BeamSkyJones::convertDir(const vi::VisBuffer2& vb, const MDirection& 
   }
    MPosition pos;
    String tel("");
-   ROMSColumns msc(vb.ms());
+   MSColumns msc(vb.ms());
    if (vb.subtableColumns().observation().nrow() > 0) {
      tel = vb.subtableColumns().observation().telescopeName()(vb.observationId()(0));
    }

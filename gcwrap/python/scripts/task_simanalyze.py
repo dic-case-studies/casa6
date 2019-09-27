@@ -1,13 +1,28 @@
-from taskinit import *
-from simutil import *
+from __future__ import absolute_import
 import os
 import re
+import glob
 import pylab as pl
-import pdb
-from sdimaging import sdimaging
-from imregrid import imregrid
-from immath import immath
-from casa_stack_manip import stack_frame_find
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, image, imager
+    from casatasks import casalog, sdimaging, imregrid, immath, concat, feather
+    from . import sdbeamutil
+    from .simutil import *
+
+    tb = table( )
+    ia = image( )
+    im = imager( )
+else:
+    from taskinit import *
+    from simutil import *
+    from sdimaging import sdimaging
+    from imregrid import imregrid
+    from immath import immath
+    from casa_stack_manip import stack_frame_find
+
+    # the global tb, ia, and im tools are used
 
 def simanalyze(
     project=None,
@@ -38,13 +53,11 @@ def simanalyze(
     # Collect a list of parameter values to save inputs
     in_params =  locals()
 
-    import re
-    import glob
-
     casalog.origin('simanalyze')
     if verbose: casalog.filter(level="DEBUG2")
 
-    myf = stack_frame_find( )
+    if not is_CASA6:
+        myf = stack_frame_find( )
     
     # create the utility object:    
     myutil = simutil()
@@ -53,7 +66,6 @@ def simanalyze(
         myutil.openreport()
     if verbose: myutil.verbose = True
     msg = myutil.msg
-    from simutil import is_array_type
 
     # put output in directory called "project"
     fileroot = project
@@ -62,9 +74,12 @@ def simanalyze(
         # msg should raise an exception for priority=error
 
 
-    saveinputs = myf['saveinputs']
-    saveinputs('simanalyze',fileroot+"/"+project+".simanalyze.last")
-#               myparams=in_params)
+    if not is_CASA6:
+        saveinputs = myf['saveinputs']
+        saveinputs('simanalyze',fileroot+"/"+project+".simanalyze.last")
+        #               myparams=in_params)
+    else:
+        casalog.post("saveinputs not available in casatasks, skipping saving simanalyze inputs", priority='WARN')
 
     if (not image) and (not analyze):
         casalog.post("No operation to be done. Exiting from task.", "WARN")
@@ -123,7 +138,7 @@ def simanalyze(
                 if os.path.exists(fileroot+"/"+user_skymodel):
                     user_skymodel=fileroot+"/"+user_skymodel
                 elif len(user_skymodel)>0:
-                    raise Exception,"Can't find your specified skymodel "+user_skymodel
+                    raise Exception("Can't find your specified skymodel "+user_skymodel)
             # try to strip a searchable identifier
             tmpstring=user_skymodel.split("/")[-1]
             skymodel_searchstring=tmpstring.replace(".image","")
@@ -209,7 +224,7 @@ def simanalyze(
 
 
             if not mstoimage  and len(tpmstoimage) == 0:
-                raise Exception,"No MS found to image"
+                raise Exception("No MS found to image")
 
             # now try to parse the mslist for an identifier string that 
             # we can use to find the right skymodel if there are several
@@ -228,7 +243,6 @@ def simanalyze(
                     msg(" "+mstoimage[i],priority="info",origin='simanalyze')
                 msg(" will be concated and simultaneously deconvolved; if something else is desired, please specify vis, or image manually and use image=F",priority="info",origin='simanalyze')
                 concatms=project+"/"+project+".concat.ms"
-                from concat import concat
                 weights = get_concatweights(mstoimage)
                 msg(" concat("+str(mstoimage)+",concatvis='"+concatms+"',visweightscale="+str(weights)+")",origin='simanalyze')
                 if not dryrun:
@@ -368,7 +382,7 @@ def simanalyze(
                         minimsize = min(imsize)
                         psfsize = qa.mul(cell[0],3) # HACK
                     else:
-                        raise Exception,mstoimage+" not found."
+                        raise Exception(mstoimage+" not found.")
 
                 if imsize[0] < minimsize:
                     msg("The number of image pixel in x-axis, %d, is small to cover 8 x PSF. Setting x pixel number, %d." % (imsize[0], minimsize), priority='warn',origin='simanalyze')
@@ -408,13 +422,12 @@ def simanalyze(
                     tb.close()
                     aveant = pl.mean(diams)
                     # theoretical antenna beam size
-                    import sdbeamutil
                     pb_asec = sdbeamutil.primaryBeamArcsec(qa.tos(qa.convert(qa.quantity(model_specrefval),'GHz')),aveant,(0.75 if aveant==12.0 else 0.0),10.0)
                 elif dryrun:
                     aveant = 12.0
                     pb_asec = pbcoeff*0.29979/qa.convert(qa.quantity(model_specrefval),'GHz')['value']/aveant*3600.*180/pl.pi
                 else:
-                    raise Exception, tpmstoimage+" not found."
+                    raise Exception(tpmstoimage+" not found.")
 
                 # default PSF from PB of antenna
                 imbeam = {'major': qa.quantity(pb_asec,'arcsec'),
@@ -464,7 +477,7 @@ def simanalyze(
                     if not dryrun:
                         sdimaging(**sdim_param)
                         if not os.path.exists(temp_out):
-                            raise RuntimeError, "TP imaging failed."
+                            raise RuntimeError("TP imaging failed.")
 
                         # Scale image by convolved beam / antenna primary beam
                         ia.open(temp_out)
@@ -479,7 +492,7 @@ def simanalyze(
                         immath(imagename=temp_in, mode='evalexpr', expr="IM0*%f" % (beam_area_ratio),
                                outfile=temp_out)
                         if not os.path.exists(temp_out):
-                            raise RuntimeError, "TP image scaling failed."
+                            raise RuntimeError("TP image scaling failed.")
                         
                     # Regrid TP image to final resolution
                     msg("Regridding TP image to final resolution",origin='simanalyze')
@@ -610,7 +623,7 @@ def simanalyze(
             # feather
             if featherimage:
                 if not os.path.exists(featherimage):
-                    raise Exception,"Could not find featherimage "+featherimage
+                    raise Exception("Could not find featherimage "+featherimage)
             else:
                 featherimage=""
                 if tpimage:
@@ -623,7 +636,6 @@ def simanalyze(
 
             if os.path.exists(featherimage):
                 msg("feathering the interfermetric image "+imagename+".image with "+featherimage,origin='simanalyze',priority="info")
-                from feather import feather 
                 # TODO call with params?
                 msg("feather('"+imagename+".feather.image','"+imagename+".image','"+featherimage+"')",priority="info")
                 if not dryrun:
@@ -1000,23 +1012,23 @@ def simanalyze(
             myutil.closereport()
 
 
-    except TypeError, e:
+    except TypeError as e:
         finalize_tools()
         #msg("simanalyze -- TypeError: %s" % e,priority="error")
         casalog.post("simanalyze -- TypeError: %s" % e, priority="ERROR")
-        raise TypeError, e
+        raise
         return
-    except ValueError, e:
+    except ValueError as e:
         finalize_tools()
         #print "simanalyze -- OptionError: ", e
         casalog.post("simanalyze -- OptionError: %s" % e, priority="ERROR")
-        raise ValueError, e
+        raise
         return
-    except Exception, instance:
+    except Exception as instance:
         finalize_tools()
         #print '***Error***',instance
         casalog.post("simanalyze -- Exception: %s" % instance, priority="ERROR")
-        raise Exception, instance
+        raise
         return
 
 
@@ -1027,7 +1039,6 @@ def finalize_tools():
 
 ### A helper function to get concat weight
 def get_concatweights(mslist):
-    from simutil import is_array_type
     if type(mslist) == str:
         mslist = [mslist]
     if not is_array_type(mslist):

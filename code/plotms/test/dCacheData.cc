@@ -47,7 +47,7 @@ int main(int /*argc*/, char** /*argv[]*/) {
 	sortCols[2] = MS::columnName(MS::DATA_DESC_ID);
 	sortCols[3] = MS::columnName(MS::TIME);
 	MeasurementSet sortedMS = ms.sort(sortCols);
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Array<Complex> visData(msmc.data().getColumn());
 	IPosition visShape(visData.shape());
 	visShape.setLast(IPosition(1,expNRow));

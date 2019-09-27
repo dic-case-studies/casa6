@@ -49,14 +49,14 @@ RegionTextList::RegionTextList(
     const String& filename, const CoordinateSystem& csys,
     const IPosition shape,
     const String& prependRegion, const String& globalOverrideChans, const String& globalOverrrideStokes,
-    const Int requireAtLeastThisVersion, Bool verbose
+    const Int requireAtLeastThisVersion, Bool verbose, Bool requireImageRegion
 ) : _lines(),
     _csys(csys), _shape(shape), _canGetRegion(true), _union(), _composite() {
     RegionTextParser parser(
         filename, csys, shape, requireAtLeastThisVersion,
         prependRegion,
         globalOverrideChans, globalOverrrideStokes,
-        verbose
+        verbose, requireImageRegion
     );
     vector<AsciiAnnotationFileLine> lines = parser.getLines();
     vector<AsciiAnnotationFileLine>::const_iterator iter = lines.begin();
@@ -71,12 +71,12 @@ RegionTextList::RegionTextList(
     const CoordinateSystem& csys, const String& text,
     const IPosition shape, const String& prependRegion,
     const String& globalOverrideChans, const String& globalOverrrideStokes,
-    casacore::Bool verbose
+    Bool verbose, Bool requireImageRegion
 ) : _lines(),
     _csys(csys), _shape(shape), _canGetRegion(true), _union(), _composite() {
     RegionTextParser parser(
         csys, shape, text, prependRegion, globalOverrideChans,
-        globalOverrrideStokes, verbose
+        globalOverrrideStokes, verbose, requireImageRegion
     );
     Vector<AsciiAnnotationFileLine> lines = parser.getLines();
     for (

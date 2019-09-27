@@ -126,7 +126,7 @@ class SynthesisImager
 			   const casacore::Bool mTermOn    = false,
 			   const casacore::Bool wbAWP      = true,
 			   const casacore::String cfCache  = "",
-			   const casacore::Bool doPointing = false,
+			   const casacore::Bool usePointing = false,
 			   const casacore::Bool doPBCorr   = true,
 			   const casacore::Bool conjBeams  = true,
 			   const casacore::Float computePAStep=360.0,
@@ -158,6 +158,7 @@ class SynthesisImager
 	      const casacore::Quantity& fieldofview=casacore::Quantity(0.0, "arcsec"),
 	      const casacore::Int npixels=0, 
 	      const casacore::Bool multiField=false,
+	      const casacore::Bool usecubebriggs=false,
 	      const casacore::String& filtertype=casacore::String("Gaussian"),
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
@@ -213,7 +214,8 @@ class SynthesisImager
   const SynthesisParamsImage& getSynthesisParamsImage() {return impars_p;};
   ///This will set the movingSource_p
   void setMovingSource(const casacore::String& movsource);
-
+  ///return an estimate of memory it is going to use in kB
+  virtual casacore::Long estimateRAM();
 
 protected:
  
@@ -238,7 +240,7 @@ protected:
 		       const casacore::Bool mTermOn    = false,
 		       const casacore::Bool wbAWP      = true,
 		       const casacore::String cfCache  = "",
-		       const casacore::Bool doPointing = false,
+		       const casacore::Bool usePointing = false,
 		       const casacore::Bool doPBCorr   = true,
 		       const casacore::Bool conjBeams  = true,
 		       const casacore::Float computePAStep   = 360.0,
@@ -265,7 +267,7 @@ protected:
 					 casacore::CoordinateSystem& cSys,
 					 casacore::IPosition imShape, 
 					 const casacore::Bool overwrite,
-					 casacore::ROMSColumns& msc, 
+					 casacore::MSColumns& msc, 
 					 casacore::String mappertype="default", 
 					 casacore::uInt ntaylorterms=1,
 					 casacore::Quantity distance=casacore::Quantity(0.0, "m"),
@@ -307,7 +309,7 @@ protected:
 			  const casacore::Bool mTermOn,      
 			  const casacore::Bool wbAWP,        
 			  const casacore::String cfCache,    
-			  const casacore::Bool doPointing,   
+			  const casacore::Bool usePointing,   
 			  const casacore::Bool doPBCorr,     
 			  const casacore::Bool conjBeams,    
 			  const casacore::Float computePAStep,
@@ -354,7 +356,8 @@ protected:
   bool makePBImage(const casacore::String telescop);
   virtual bool makePrimaryBeam(PBMath& pbMath);
 
-  
+  ///is any of the images defined spectral cube
+  virtual bool isSpectralCube();
 
   /////////////// Member Objects
 

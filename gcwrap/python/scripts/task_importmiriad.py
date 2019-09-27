@@ -1,6 +1,17 @@
-import os
-from taskinit import *
-from mstools import write_history
+from __future__ import absolute_import
+from __future__ import print_function
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import miriadfiller
+    from casatasks import casalog
+    from .mstools import write_history
+else:
+    from taskinit import *
+    from mstools import write_history
+
+    miriadfiller = casac.miriadfiller
 
 def importmiriad (
     mirfile=None,
@@ -45,7 +56,7 @@ def importmiriad (
         """
 
     # Python script
-    mymf = casac.miriadfiller()
+    mymf = miriadfiller()
     try:
         try:
             casalog.origin('importmiriad')
@@ -53,21 +64,23 @@ def importmiriad (
             # beginning of importmiriad implementation
             # -----------------------------------------
             mymf.fill(vis,mirfile,tsys,spw,vel,linecal,wide,debug)
-        except Exception, e:
-          print e;
+        except Exception as e:
+          print(e)
           casalog.post("Failed to import miriad file %s" % mirfile)
           raise
         # Write the args to HISTORY.
         try:
-            mslocal = mstool()
-            param_names = \
-                importmiriad.func_code.co_varnames[:importmiriad.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+            param_names = importmiriad.__code__.co_varnames[:importmiriad.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             write_history(
-                mslocal, vis, 'importmiriad', param_names, 
+                mymf, vis, 'importmiriad', param_names, 
                 param_vals, casalog
             )
-        except Exception, instance:
+        except Exception:
             casalog.post("Failed to updated HISTORY", 'WARN')
     except:
         pass
@@ -77,4 +90,3 @@ def importmiriad (
         # -----------------------------------
         # end of importmiriad implementation
         # -----------------------------------
-

@@ -182,6 +182,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		friend std::ostream & operator << (std::ostream & os,
 		                                   const ColormapDefinition& pcreh);
 
+		static void shutdown( ) {
+			ourDefaultColormapTable.reset( );
+			ourUserColormapTable.reset( );
+		}
+
 	private:
 
 		// The name of this ColormapDefinition
@@ -198,8 +203,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		//The loaded colormaps (a replacement for the builtins)
 		//<group>
 		static casacore::String ourDefaultColormap;
-		static casacore::Table ourDefaultColormapTable;
-		static casacore::Table ourUserColormapTable;
+		static std::shared_ptr<casacore::Table> ourDefaultColormapTable;
+		static std::shared_ptr<casacore::Table> ourUserColormapTable;
 		static casacore::String ourTableVersion;
 		//</group>
 

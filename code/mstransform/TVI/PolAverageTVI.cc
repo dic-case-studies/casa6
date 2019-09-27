@@ -553,14 +553,14 @@ Vector<Stokes::StokesTypes> PolAverageTVI::getCorrelationTypesSelected() const {
 void PolAverageTVI::configurePolAverage() {
   MeasurementSet const &ms = getVii()->ms();
   auto const &msdd = ms.dataDescription();
-  ROMSDataDescColumns msddcols(msdd);
+  MSDataDescColumns msddcols(msdd);
   uInt ndd = msddcols.nrow();
   Vector<Int> polIds = msddcols.polarizationId().getColumn();
   doTransform_.resize(ndd);
   polId0_.resize(ndd);
   polId1_.resize(ndd);
   auto const &mspol = ms.polarization();
-  ROMSPolarizationColumns mspolcols(mspol);
+  MSPolarizationColumns mspolcols(mspol);
   doTransform_ = False;
   for (uInt idd = 0; idd < ndd; ++idd) {
     Vector<Int> corrType = mspolcols.corrType()(polIds[idd]);

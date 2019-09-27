@@ -189,7 +189,7 @@ int main () {
 				), AipsError
 			);
 		}
-	} catch (AipsError x) {
+	} catch (const AipsError& x) {
 		log << LogIO::SEVERE
 			<< "Caught exception: " << x.getMesg()
 			<< LogIO::POST;
