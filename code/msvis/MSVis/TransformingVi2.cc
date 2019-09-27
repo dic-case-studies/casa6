@@ -494,8 +494,8 @@ TransformingVi2::nSpectralWindows ()  const
     return getVii()->nSpectralWindows ();
 }
 
-Int TransformingVi2::nUniqueTimestampsInChunk() const {
-    return getVii()->nUniqueTimestampsInChunk();
+Int TransformingVi2::nSubChunks() const {
+    return getVii()->nSubChunks();
 }
 
 

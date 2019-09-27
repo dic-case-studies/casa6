@@ -230,7 +230,7 @@ private:
     // for running time window, for each subchunk, map the rowID (in the MS)
     // to the row index in the chunk
     mutable std::map<casacore::uInt, casacore::uInt>
-        _rowIDInMSTorowIndexInChunk {};
+        _rowIDInMSToRowIndexInChunk {};
     std::unique_ptr<casacore::Double> _slidingTimeWindowWidth {};
     std::unique_ptr<casacore::Int> _nTimeStamps {};
 

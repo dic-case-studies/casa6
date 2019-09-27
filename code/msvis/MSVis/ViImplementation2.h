@@ -556,7 +556,7 @@ public:
     virtual casacore::Int nRowsViWillSweep () const = 0; // number of rows in all selected ms's
     virtual casacore::Int nSpectralWindows () const = 0;
     // number of unique time stamps in chunk
-    virtual casacore::Int nUniqueTimestampsInChunk() const = 0;
+    virtual casacore::Int nSubChunks() const = 0;
 
     //   +-------------------+
     //   |                   |

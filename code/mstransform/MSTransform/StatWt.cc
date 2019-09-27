@@ -112,8 +112,11 @@ Record StatWt::writeWeights() {
     vi::VisBuffer2 *vb = vi->getVisBuffer();
     ProgressMeter pm(0, _ms->nrow(), "StatWt Progress");
     uInt64 count = 0;
+    cout << "begin outer loop" << endl;
     for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
+        cout << "inside outer loop" << endl;
         for (vi->origin(); vi->more(); vi->next()) {
+            cout << "inside inner loop" << endl;
             auto nrow = vb->nRows();
             if (_preview) {
                 // just need to run the flags to accumulate
