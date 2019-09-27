@@ -319,11 +319,7 @@ namespace casa{
 		    for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
 		      ostr <<antennaGroups_p(ii,jj).at(kk)<<" ";
 		    log_l << ostr.str() << LogIO::POST;
-		    // cerr<<"Antenna in bin ii "<<ii <<" jj  "<<jj << " is : ";
-		    // for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
-		    //   cerr<<antennaGroups_p(ii,jj).at(kk)<<" ";
-		    // cerr<< endl;
-		  
+		    //cerr << ostr.str() << endl;
 		  }
 	  }
 	  //	  cerr << "total groups " <<totalGroups_p<<endl;
