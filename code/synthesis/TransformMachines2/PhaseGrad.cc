@@ -107,7 +107,7 @@ namespace casa{
 	  Vector<Vector<double> > pointingOffset;
 	  if(pointingOffsets_p->getDoPointing())
 	    {
-	      pointingOffset = pointingOffsets_p->pullAntGridPointingOffsets();
+	      pointingOffset.assign(pointingOffsets_p->pullAntGridPointingOffsets());
 	      // cerr << "Pointing Offsets in PG: "<<pointingOffset<<endl;
 	    }
 	  else

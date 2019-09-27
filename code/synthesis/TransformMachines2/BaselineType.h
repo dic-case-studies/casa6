@@ -78,7 +78,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      void setCachedGroups(const bool& cachedGrps){cachedGroups_p = cachedGrps;};
      bool getCachedGroups(){return cachedGroups_p;};
      pair<int,int> getAntGrpPairs(const int& row){return antPair_p[row];};
-     void  setCachedAntennaPO(const casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets){cachedPointingOffsets_p = cachedPointingOffsets;};
+     void  setCachedAntennaPO(const casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets){cachedPointingOffsets_p.assign(cachedPointingOffsets);};
      casacore::Vector<casacore::Vector<casacore::Double> > getCachedAntennaPO(){return cachedPointingOffsets_p;};
 
 

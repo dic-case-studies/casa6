@@ -190,11 +190,14 @@ namespace casa{
 
 	  vector<double> pixSum(2,0), pixMean(2,0), pixVar(2,0), pixSigma(2,0), minPO(2,0), maxPO(2,0), minAntPO(2,0);
 	  vector<vector<double> > diffAntPointing_l(2), antGrdPointing_l(2);
+	  Vector<Vector<double> > casa_antGrdPointing_l(2);
 
 	  diffAntPointing_l[0].resize(poAnt1[0].size());
 	  diffAntPointing_l[1].resize(poAnt1[1].size());
 	  antGrdPointing_l[0].resize(poAnt1[0].size());
 	  antGrdPointing_l[1].resize(poAnt1[1].size());
+	  casa_antGrdPointing_l[0].resize(poAnt1[0].size());
+	  casa_antGrdPointing_l[1].resize(poAnt1[1].size());
 
 	  minAntPO[0] = *min_element(poAnt1[0].begin(), poAnt1[0].end());
 	  minAntPO[1] = *min_element(poAnt1[1].begin(), poAnt1[1].end());
@@ -289,11 +292,15 @@ namespace casa{
 		  antennaGroups_p(ii,jj).push_back(uniqueAnt1[kk]);
 		  antGrdPointing_l[0][kk] = minAntPO[0] + (ii-1)*sigmaDev;
 		  antGrdPointing_l[1][kk] = minAntPO[1] + (jj-1)*sigmaDev;
+
+		  casa_antGrdPointing_l(0)(kk) = minAntPO[0] + (ii-1)*sigmaDev;
+		  casa_antGrdPointing_l(1)(kk) = minAntPO[1] + (jj-1)*sigmaDev;
+		  
 		  // antGrdPointing_l[0][kk] = poGridOriginX + (ii-1)*sigmaDev;
 		  // antGrdPointing_l[1][kk] = poGridOriginY + (jj-1)*sigmaDev;
 
 	    }
-	  pointingOffsets_p->setAntGridPointingOffsets(antGrdPointing_l);
+	  pointingOffsets_p->setAntGridPointingOffsets(casa_antGrdPointing_l);
 	  // for(int ii=0; ii<binsx_p; ii++)
 	  //   for(int jj=0; jj<binsy_p; jj++)
 	  //     if (antennaGroups_p(ii,jj).size() > 0)

@@ -78,7 +78,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     void setOverSampling(const int& os) {convOversampling_p=os;}
 
-    void setAntGridPointingOffsets(const casacore::Vector<casacore::Vector<casacore::Double> >& antGridPointingOffsets){cachedAntGridPointingOffsets_p = antGridPointingOffsets;};
+    void setAntGridPointingOffsets(const casacore::Vector<casacore::Vector<casacore::Double> >& antGridPointingOffsets){cachedAntGridPointingOffsets_p.reference(antGridPointingOffsets);};
 
     casacore::Vector<casacore::Vector<casacore::Double> > pullPointingOffsets(){return cachedPointingOffsets_p;};
     casacore::Vector<casacore::Vector<casacore::Double> > pullAntGridPointingOffsets(){return cachedAntGridPointingOffsets_p;};
