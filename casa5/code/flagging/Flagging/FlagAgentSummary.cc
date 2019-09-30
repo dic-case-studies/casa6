@@ -76,19 +76,18 @@ FlagAgentSummary::FlagAgentSummary(FlagDataHandler *dh, Record config):
 
 FlagAgentSummary::~FlagAgentSummary()
 {
-	if (fieldCounts)
-	{
-		std::map<std::string, summary* >::iterator iter;
-		for(iter = fieldSummaryMap.begin(); iter != fieldSummaryMap.end(); iter++)
-		{
-			delete iter->second;
-		}
-		fieldSummaryMap.clear();
-	}
-	else
-	{
-		delete currentSummary;
-	}
+    if (fieldCounts)
+    {
+        for(const auto &iter : fieldSummaryMap)
+        {
+            delete iter.second;
+        }
+        fieldSummaryMap.clear();
+    }
+    else
+    {
+        delete currentSummary;
+    }
 
     // Compiler automagically calls FlagAgentBase::~FlagAgentBase()
 }
@@ -436,27 +435,23 @@ FlagAgentSummary::buildFlagCountPlots()
         FlagReport subRep1 = FlagReport("plotpoints",summaryName_p,"Percentage Flagged",
                 "Frequency ("+freqUnit.first+")", "% Flagged");
 
-        for (map<Int, map<uInt, uInt64> >::iterator key1 = currentSummary->accumChanneltotal.begin();
-                key1 != currentSummary->accumChanneltotal.end();
-                key1++)
+        for (const auto  &key1 : currentSummary->accumChanneltotal)
         {
-            Int nCh=currentSummary->accumChanneltotal[key1->first].size();
+            Int nCh=currentSummary->accumChanneltotal[key1.first].size();
 
             Vector<Float> freqVals(nCh), flagPercent(nCh);
             uInt chCount=0;
-            for (map<uInt, uInt64>::const_iterator key2 = key1->second.begin();
-                    key2 != key1->second.end();
-                    key2++)
+            for (const auto &key2 : key1.second)
             {
                 // read the frequency value for this channel.
-                freqVals[chCount] = frequencyList[key1->first][key2->first] / freqUnit.second;
+                freqVals[chCount] = frequencyList[key1.first][key2.first] / freqUnit.second;
 
                 // calculate the percentage flagged for this channel
-                if( key2->second > 0 )
+                if( key2.second > 0 )
                 {
                     flagPercent[chCount] = 100.0 *
-                            (Double) currentSummary->accumChannelflags[key1->first][key2->first] /
-                            (Double) key2->second;
+                            (Double) currentSummary->accumChannelflags[key1.first][key2.first] /
+                            (Double) key2.second;
                 }
                 else
                 {
@@ -468,7 +463,7 @@ FlagAgentSummary::buildFlagCountPlots()
             }
 
             subRep1.addData("line", freqVals,flagPercent,"",Vector<Float>(),
-                    "spw"+String::toString(key1->first));
+                    "spw"+String::toString(key1.first));
 
         }
 
@@ -487,15 +482,13 @@ FlagAgentSummary::buildFlagCountPlots()
         FlagReport subRep2 = FlagReport("plotpoints",summaryName_p,"Percentage Flagged",
                 "X meters (ITRF)", "Y meters (ITRF)");
 
-        for (map<std::string, uInt64>::const_iterator antkey = currentSummary->accumtotal["antenna"].begin();
-                antkey != currentSummary->accumtotal["antenna"].end();
-                antkey++)
+        for (const auto antkey : currentSummary->accumtotal["antenna"])
         {
             Int antId = 0; //antCount; // this needs to find the antenna-id for the antenna name.... aaaaah.
             for(antId=0; antId<(Int) flagDataHandler_p->antennaNames_p->nelements(); antId++)
             {
                 if( flagDataHandler_p->antennaNames_p->operator()(antId)
-                == String(antkey->first) ) break;
+                == String(antkey.first) ) break;
             }
 
             const Vector<double> xyz = (flagDataHandler_p->antennaPositions_p->operator()(antId))
@@ -503,8 +496,8 @@ FlagAgentSummary::buildFlagCountPlots()
             antPosX[antCount] = xyz[0]-xyzOrigin[0];
             antPosY[antCount] = xyz[1]-xyzOrigin[1];
             radius[antCount] = 200.0 *
-                    (Double) currentSummary->accumflags["antenna"][antkey->first]/
-                    (Double) antkey->second;
+                    (Double) currentSummary->accumflags["antenna"][antkey.first]/
+                    (Double) antkey.second;
             antCount++;
         }
         subRep2.addData("scatter", antPosX,antPosY,"circle",radius,"");
@@ -521,13 +514,11 @@ FlagAgentSummary::buildFlagCountPlots()
         FlagReport subRep3 = FlagReport("plotpoints",summaryName_p,"Percentage Flagged per baseline",
                 "Baseline Length (m)", "% Flagged");
 
-        for (map<std::string, uInt64>::const_iterator basekey = currentSummary->accumtotal["baseline"].begin();
-                basekey != currentSummary->accumtotal["baseline"].end();
-                basekey++)
+        for (const auto &basekey : currentSummary->accumtotal["baseline"])
         {
             Int antId1 = 0, antId2=0;
             String antName1,antName2;
-            antName1 = antName2 =  String(basekey->first);
+            antName1 = antName2 =  String(basekey.first);
             antName1 = antName1.before("&&");
             antName2 = antName2.after("&&");
             for(Int antId=0; antId<(Int) flagDataHandler_p->antennaNames_p->nelements(); antId++)
@@ -544,8 +535,8 @@ FlagAgentSummary::buildFlagCountPlots()
                     (xyz1[1]-xyz2[1])*(xyz1[1]-xyz2[1]) +
                     (xyz1[2]-xyz2[2])*(xyz1[2]-xyz2[2]) ) );
             flagFraction[baseCount] = 100.0 *
-                    (Double) currentSummary->accumflags["baseline"][basekey->first]/
-                    (Double) basekey->second;
+                    (Double) currentSummary->accumflags["baseline"][basekey.first]/
+                    (Double) basekey.second;
             baseCount++;
         }
         subRep3.addData("scatter", baselineLength,flagFraction,"",Vector<Float>(),"");
@@ -561,13 +552,11 @@ FlagAgentSummary::buildFlagCountPlots()
         Array<Float> ant1ant2View( IPosition(2, totalNAnt, totalNAnt) , (Float)0);
         std::pair<Int,Int> ant1ant2;
         Float percentageFlagged;
-        for (map<std::string, uInt64>::const_iterator	basekey = currentSummary->accumtotal["baseline"].begin();
-                basekey != currentSummary->accumtotal["baseline"].end();
-                basekey++)
+        for (const auto &basekey : currentSummary->accumtotal["baseline"])
         {
-            ant1ant2 = flagDataHandler_p->baselineToAnt1Ant2_p[basekey->first];
-            percentageFlagged = (Float)100*((Double)currentSummary->accumflags["baseline"][basekey->first] /
-            		(Double)currentSummary->accumtotal["baseline"][basekey->first]);
+            ant1ant2 = flagDataHandler_p->baselineToAnt1Ant2_p[basekey.first];
+            percentageFlagged = (Float)100*((Double)currentSummary->accumflags["baseline"][basekey.first] /
+                                            (Double)currentSummary->accumtotal["baseline"][basekey.first]);
             ant1ant2View(IPosition(2, ant1ant2.first, ant1ant2.second)) = percentageFlagged;
             ant1ant2View(IPosition(2, ant1ant2.second, ant1ant2.first)) = percentageFlagged;
 
@@ -586,18 +575,14 @@ FlagAgentSummary::buildFlagCountPlots()
 
 
         uInt scanIdx,antennaIdx = 0;
-        for (map<Int, std::map<Int, uInt64> >::const_iterator	antkey = currentSummary->accumAntScantotal.begin();
-                antkey != currentSummary->accumAntScantotal.end();
-                antkey++)
+        for (const auto &antkey : currentSummary->accumAntScantotal)
         {
             scanIdx = 0;
-            for (map<Int, uInt64>::const_iterator	scankey = antkey->second.begin();
-                    scankey != antkey->second.end();
-                    scankey++)
+            for (const auto scankey : antkey.second)
             {
-                percentageFlagged = (Float)100*((Double)currentSummary->accumAntScanflags[antkey->first][scankey->first] /
-                		(Double)currentSummary->accumAntScantotal[antkey->first][scankey->first]);
-                antScanViewPtr[totalNAnt*scanIdx + antkey->first] = percentageFlagged;
+                percentageFlagged = (Float)100*((Double)currentSummary->accumAntScanflags[antkey.first][scankey.first] /
+                                                (Double)currentSummary->accumAntScantotal[antkey.first][scankey.first]);
+                antScanViewPtr[totalNAnt*scanIdx + antkey.first] = percentageFlagged;
                 scanIdx += 1;
             }
             antennaIdx += 1;
@@ -621,13 +606,12 @@ FlagAgentSummary::getResult()
 
     if (fieldCounts)
     {
-    	std::map<std::string, summary* >::iterator iter;
-    	for(iter = fieldSummaryMap.begin(); iter != fieldSummaryMap.end(); iter++)
+        for(const auto &iter : fieldSummaryMap)
     	{
-    		Record subresult;
-    		currentSummary = iter->second;
-    		getResultCore(subresult);
-    		result.defineRecord(iter->first, subresult);
+            Record subresult;
+            currentSummary = iter.second;
+            getResultCore(subresult);
+            result.defineRecord(iter.first, subresult);
     	}
     }
     else
@@ -654,23 +638,22 @@ FlagAgentSummary::getResultCore(Record &result)
     {
         Record stats_key1;
 
-        for (map<Int, map<uInt, uInt64> >::iterator key1 = currentSummary->accumChanneltotal.begin();
-        		key1 != currentSummary->accumChanneltotal.end();key1++)
+        for (const auto &key1 : currentSummary->accumChanneltotal)
         {
             // Transform spw id into string
             stringstream spw_stringStream;
-            spw_stringStream << key1->first;
+            spw_stringStream << key1.first;
 
-            for (map<uInt, uInt64>::const_iterator key2 = key1->second.begin();key2 != key1->second.end();key2++)
+            for (const auto &key2 : key1.second)
             {
                 Record stats_key2;
 
-                stats_key2.define("flagged", (Double) currentSummary->accumChannelflags[key1->first][key2->first]);
-                stats_key2.define("total", (Double) key2->second);
+                stats_key2.define("flagged", (Double) currentSummary->accumChannelflags[key1.first][key2.first]);
+                stats_key2.define("total", (Double) key2.second);
 
                 // Transform channel id into string
                 stringstream channel_stringStream;
-                channel_stringStream << key2->first;
+                channel_stringStream << key2.first;
 
                 // Construct spw:channel string as first key
                 stats_key1.defineRecord(spw_stringStream.str() + ":" + channel_stringStream.str(), stats_key2);
@@ -678,17 +661,17 @@ FlagAgentSummary::getResultCore(Record &result)
                 stringstream percentage;
                 percentage.precision(3);
                 //				percentage.fixed;
-                if( key2->second > 0 )
+                if( key2.second > 0 )
                 {
                     percentage << " (" << 100.0 *
-                            (Double) currentSummary->accumChannelflags[key1->first][key2->first]/
-                            (Double) key2->second << "%)";
+                            (Double) currentSummary->accumChannelflags[key1.first][key2.first]/
+                            (Double) key2.second << "%)";
                 }
 
                 *logger_p 	<< LogIO::NORMAL
-                        << " Spw:" << key1->first << " Channel:" << key2->first
-                        << " flagged: " <<  (Double) currentSummary->accumChannelflags[key1->first][key2->first]
-                                         << " total: " <<  (Double) key2->second
+                        << " Spw:" << key1.first << " Channel:" << key2.first
+                        << " flagged: " <<  (Double) currentSummary->accumChannelflags[key1.first][key2.first]
+                                         << " total: " <<  (Double) key2.second
                                          << percentage.str()
                                          << LogIO::POST;
             }
@@ -702,38 +685,37 @@ FlagAgentSummary::getResultCore(Record &result)
     {
         Record stats_key1;
 
-        for (map<Int, map<string, uInt64> >::iterator key1 = currentSummary->accumPolarizationtotal.begin();
-        		key1 != currentSummary->accumPolarizationtotal.end();key1++)
+        for (const auto &key1 : currentSummary->accumPolarizationtotal)
         {
             // Transform spw id into string
             stringstream spw_stringStream;
-            spw_stringStream << key1->first;
+            spw_stringStream << key1.first;
 
-            for (map<string, uInt64>::const_iterator key2 = key1->second.begin();key2 != key1->second.end();key2++)
+            for (const auto &key2 : key1.second)
             {
                 Record stats_key2;
 
-                stats_key2.define("flagged", (Double) currentSummary->accumPolarizationflags[key1->first][key2->first]);
-                stats_key2.define("total", (Double) key2->second);
+                stats_key2.define("flagged", (Double) currentSummary->accumPolarizationflags[key1.first][key2.first]);
+                stats_key2.define("total", (Double) key2.second);
 
                 // Construct spw:correlation string as first key (Polarization already comes as a string)
-                stats_key1.defineRecord(spw_stringStream.str() + ":" + key2->first, stats_key2);
+                stats_key1.defineRecord(spw_stringStream.str() + ":" + key2.first, stats_key2);
 
                 // Calculate percentage flagged
                 stringstream percentage;
                 percentage.precision(3);
                 //				percentage.fixed;
-                if( key2->second > 0 )
+                if( key2.second > 0 )
                 {
                     percentage << " (" << 100.0 *
-                            (Double) currentSummary->accumPolarizationflags[key1->first][key2->first]/
-                            (Double) key2->second << "%)";
+                            (Double) currentSummary->accumPolarizationflags[key1.first][key2.first]/
+                            (Double) key2.second << "%)";
                 }
 
                 *logger_p 	<< LogIO::NORMAL
-                        << " Spw:" << key1->first << " Correlation:" << key2->first
-                        << " flagged: " <<  (Double) currentSummary->accumPolarizationflags[key1->first][key2->first]
-                                            << " total: " <<  (Double) key2->second
+                        << " Spw:" << key1.first << " Correlation:" << key2.first
+                        << " flagged: " <<  (Double) currentSummary->accumPolarizationflags[key1.first][key2.first]
+                                            << " total: " <<  (Double) key2.second
                                             << percentage.str()
                                             << LogIO::POST;
             }
@@ -746,23 +728,22 @@ FlagAgentSummary::getResultCore(Record &result)
     {
         Record stats_key1;
 
-        for (map<Int, map<Int, uInt64> >::iterator key1 = currentSummary->accumAntScantotal.begin();
-        		key1 != currentSummary->accumAntScantotal.end();key1++)
+        for (const auto &key1 : currentSummary->accumAntScantotal)
         {
             // Construct antenna name
             stringstream antenna_stringStream;
-            antenna_stringStream << flagDataHandler_p->antennaNames_p->operator()(key1->first);
+            antenna_stringStream << flagDataHandler_p->antennaNames_p->operator()(key1.first);
 
-            for (map<Int, uInt64>::const_iterator key2 = key1->second.begin();key2 != key1->second.end();key2++)
+            for (const auto &key2 : key1.second)
             {
                 // Construct scan name
                 stringstream scan_stringStream;
-                scan_stringStream << key2->first;
+                scan_stringStream << key2.first;
 
                 Record stats_key2;
 
-                stats_key2.define("flagged", (Double) currentSummary->accumAntScanflags[key1->first][key2->first]);
-                stats_key2.define("total", (Double) key2->second);
+                stats_key2.define("flagged", (Double) currentSummary->accumAntScanflags[key1.first][key2.first]);
+                stats_key2.define("total", (Double) key2.second);
 
                 // Construct spw:correlation string as first key (Polarization already comes as a string)
                 stats_key1.defineRecord(antenna_stringStream.str() + ":" + scan_stringStream.str(), stats_key2);
@@ -771,17 +752,17 @@ FlagAgentSummary::getResultCore(Record &result)
                 stringstream percentage;
                 percentage.precision(3);
                 //				percentage.fixed;
-                if( key2->second > 0 )
+                if( key2.second > 0 )
                 {
                     percentage << " (" << 100.0 *
-                            (Double) currentSummary->accumAntScanflags[key1->first][key2->first]/
-                            (Double) key2->second << "%)";
+                            (Double) currentSummary->accumAntScanflags[key1.first][key2.first]/
+                            (Double) key2.second << "%)";
                 }
 
                 *logger_p 	<< LogIO::NORMAL
-                        << " Spw:" << key1->first << " Correlation:" << key2->first
-                        << " flagged: " <<  (Double) currentSummary->accumAntScanflags[key1->first][key2->first]
-                                         << " total: " <<  (Double) key2->second
+                        << " Spw:" << key1.first << " Correlation:" << key2.first
+                        << " flagged: " <<  (Double) currentSummary->accumAntScanflags[key1.first][key2.first]
+                                         << " total: " <<  (Double) key2.second
                                          << percentage.str()
                                          << LogIO::POST;
             }
@@ -790,38 +771,37 @@ FlagAgentSummary::getResultCore(Record &result)
         result.defineRecord("antenna:scan", stats_key1);
     }
 
-    for (map<string, map<string, uInt64> >::iterator key1 = currentSummary->accumtotal.begin();
-    		key1 != currentSummary->accumtotal.end();key1++)
+    for (const auto &key1 : currentSummary->accumtotal)
     {
         Record stats_key1;
-        for (map<string, uInt64>::const_iterator key2 = key1->second.begin();key2 != key1->second.end();key2++)
+        for (const auto &key2 : key1.second)
         {
             Record stats_key2;
 
-            stats_key2.define("flagged", (Double) currentSummary->accumflags[key1->first][key2->first]);
-            stats_key2.define("total", (Double) key2->second);
-            stats_key1.defineRecord(key2->first, stats_key2);
+            stats_key2.define("flagged", (Double) currentSummary->accumflags[key1.first][key2.first]);
+            stats_key2.define("total", (Double) key2.second);
+            stats_key1.defineRecord(key2.first, stats_key2);
 
             // Calculate percentage flagged
             stringstream percentage;
             percentage.precision(3);
             //			percentage.fixed;
-            if( key2->second > 0 )
+            if( key2.second > 0 )
             {
                 percentage << " (" << 100.0 *
-                        (Double) currentSummary->accumflags[key1->first][key2->first] /
-                        (Double) key2->second << "%)";
+                        (Double) currentSummary->accumflags[key1.first][key2.first] /
+                        (Double) key2.second << "%)";
             }
 
             *logger_p 	<< LogIO::NORMAL
-                    << " " << key1->first << " " << key2->first
-                    << " flagged: " <<  (Double) currentSummary->accumflags[key1->first][key2->first]
-                                     << " total: " <<  (Double) key2->second
+                    << " " << key1.first << " " << key2.first
+                    << " flagged: " <<  (Double) currentSummary->accumflags[key1.first][key2.first]
+                                     << " total: " <<  (Double) key2.second
                                      << percentage.str()
                                      << LogIO::POST;
         }
 
-        result.defineRecord(key1->first, stats_key1);
+        result.defineRecord(key1.first, stats_key1);
     }
 
     result.define("flagged", (Double) currentSummary->accumTotalFlags);
