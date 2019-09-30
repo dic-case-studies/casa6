@@ -178,7 +178,9 @@ namespace casa{
 
 	  baselineType_p->makeVBRow2BLGMap(vb);
 	  vbRow2BLMap_p = baselineType_p->getVBRow2BLMap();
-	  setBLNeedsNewPOPG(vbRow2BLMap_p);
+	  // if(cachedFieldId_p != vb.fieldId()[0])
+	  if(needsNewPOPG_p)
+	    setBLNeedsNewPOPG(vbRow2BLMap_p);
 
 
 
