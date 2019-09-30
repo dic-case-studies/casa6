@@ -57,7 +57,7 @@ namespace casa{
 				    const int& /*row*/)
   {
     unsigned int nRow=vb.nRows();
-    Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
+    // Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
     if (cached_FieldOffset_p.nelements() < nRow) cached_FieldOffset_p.resize(nRow,true);
 
     return (
@@ -109,6 +109,7 @@ namespace casa{
 	    {
 	      pointingOffset.assign(pointingOffsets_p->pullAntGridPointingOffsets());
 	      // cerr << "Pointing Offsets in PG: "<<pointingOffset<<endl;
+	      // cerr << "NeedsCFShape_l " << needsCFShape_l <<" NeedsNewFieldPG_p " << needsNewFieldPG_p << " NeedsNewPOPG_p " << needsNewPOPG_p <<" row " <<row << endl;
 	    }
 	  else
 	    pointingOffset = pointingOffsets_p->pullPointingOffsets();
@@ -123,8 +124,10 @@ namespace casa{
 	      log_l << "Computing Phase Grad for change of max CF size : " << maxCFShape_p[0]
 		    << LogIO::POST;
 	    }
-	  else
+	  else if(needsNewPOPG_p)
 	    {
+
+	      // cerr << "NeedsNewPOPG_p for row "<< row << " " << vb.fieldId()(0)<< " " <<  vb.spectralWindows()(0) << endl;
 	      // log_l << "Computing Phase Grad for Antenna Pointing Offset for row : " << row << " " << pointingOffset[row][0] << " " << pointingOffset[row][1] << " spw :"
 	      // 	    << vb.spectralWindows()(0) << " and field " << vb.fieldId()(0)
 	      // 	    << LogIO::POST;
@@ -160,7 +163,7 @@ namespace casa{
 	  // cached_FieldOffset_p[row](0) = pointingOffsets_p->gradPerPixel((ant1PO_l[0] + ant2PO_l[0])/2);
 	  // cached_FieldOffset_p[row](1) = pointingOffsets_p->gradPerPixel((ant1PO_l[1] + ant2PO_l[1])/2);
 
-	  // cerr << "Cached Field Offset is : " << cached_FieldOffset_p[row](0) << " " << cached_FieldOffset_p[row](1)<<endl;
+ 	  // cerr << "Cached Field Offset is : " << cached_FieldOffset_p[row](0) << " " << cached_FieldOffset_p[row](1)<< " for row " << row << " field id " << vb.fieldId()(0) << endl;
 	  for(int ix=0;ix<nx;ix++)
 	    {
 	      grad = (ix-convOrigin[0])*cached_FieldOffset_p[row](0);
@@ -176,6 +179,7 @@ namespace casa{
 		  field_phaseGrad_p(ix,iy)=phx*phy;
 		}
 	    }
+	  needsNewPOPG_p = false;
 	  return true; // New phase gradient was computed
 	}
       return false;

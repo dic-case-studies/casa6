@@ -340,6 +340,7 @@ namespace casa{
 		    for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
 			ostr <<antennaGroups_p(ii,jj).at(kk)<<" ";
 		    log_l << ostr.str() << LogIO::POST;
+		    ostr<<"";
 		    //cerr << ostr.str() << endl;
 		  }
 	  }

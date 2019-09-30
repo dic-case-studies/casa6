@@ -104,9 +104,9 @@ namespace casa{
       
       for(unsigned int ii=0; ii < uniqueVbRow2BLMap_p.size(); ii++)
 	{
-	  // cerr << "unqVb2BL: "<< uniqueVbRow2BLMap_p[ii] << " ii " << ii << endl;
 	  int idx = baselineType_p->returnIdx(vbRow2BLMap_p, uniqueVbRow2BLMap_p[ii]);
 	  blNeedsNewPOPG_p[idx] = true;
+	  // cerr << "unqVb2BL: "<< uniqueVbRow2BLMap_p[ii] << " ii " << ii << endl;
 	}
 
       
@@ -139,23 +139,24 @@ namespace casa{
 	  baselineType_p->setCachedGroups(false);
 	  cachedFieldId_p = vb.fieldId()[0];
 	  vectorPhaseGradCalculator_p.resize(0);
-	}
-      else if (vbRows_p == 0)
-	{
 	  vbRows_p = vb.nRows();
-	  baselineType_p->setCachedGroups(false);
-	  needsNewPOPG_p = true;
 	}
+      // else if (vbRows_p == 0)
+      // 	{
+      // 	  vbRows_p = vb.nRows();
+      // 	  baselineType_p->setCachedGroups(false);
+      // 	  needsNewPOPG_p = false;
+      // 	}
       else if (vbRows_p != vb.nRows())
-	{
-	  vbRows_p = vb.nRows();
-	  baselineType_p->setCachedGroups(false);
-	  needsNewPOPG_p = true;
-	}
+      	{
+      	  vbRows_p = vb.nRows();
+      	  baselineType_p->setCachedGroups(false);
+      	  needsNewPOPG_p = true;
+      	}
       else
 	{
 	  baselineType_p->setCachedGroups(true);
-	   needsNewPOPG_p = false;
+	  needsNewPOPG_p = false;
 	}
       
 
@@ -180,8 +181,12 @@ namespace casa{
 	  vbRow2BLMap_p = baselineType_p->getVBRow2BLMap();
 	  // if(cachedFieldId_p != vb.fieldId()[0])
 	  if(needsNewPOPG_p)
-	    setBLNeedsNewPOPG(vbRow2BLMap_p);
-
+	    {
+	      setBLNeedsNewPOPG(vbRow2BLMap_p);
+	      // cerr << "Setting blNeedsNewPOPG_p" <<endl;
+	      // for (unsigned int ii= 0; ii < blNeedsNewPOPG_p.size();ii++)
+	      // 	cerr << "row " << ii << " "<<blNeedsNewPOPG_p[ii] << endl;
+	    }
 
 
 	  // cerr << "vbRow2BLMap_p" ;
@@ -328,12 +333,12 @@ namespace casa{
 	  uniqueVbRow2BLMap_p.erase(itrBLMap,uniqueVbRow2BLMap_p.end());
 	  int maxVB2BLMap = *max_element(uniqueVbRow2BLMap_p.begin(),uniqueVbRow2BLMap_p.end());
 	  pair<int,int> antGrp_l = (baselineType_p->getAntGrpPairs(myrow));
-	  if (myrow==0 )
-	    {
-	      blType_p = vbRow2BLMap_p[myrow];
-	      blNeedsNewPOPG_p[myrow] = true;
+	  // if (myrow==0 )
+	  //   {
+	      // blType_p = vbRow2BLMap_p[myrow];
+	      // blNeedsNewPOPG_p[myrow] = true;
 	      // cerr <<"New POPG_p required for vb row : "<< myrow << " vbRow2BLMap_p[row] " << vbRow2BLMap_p[myrow] << endl;
-	    }
+	    // }
 	  // else if (blType_p != vbRow2BLMap_p[myrow])
 	  //   {
 	  //     needsNewPOPG_p=true;
@@ -383,7 +388,7 @@ namespace casa{
 	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewFieldPG_p = needsNewFieldPG_p;
 	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row,antGrp_l);
 
-	    // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = true;
+	    blNeedsNewPOPG_p[myrow] = false;
 	 
 	}
       else
