@@ -127,9 +127,9 @@ FlagDataHandler::FlagDataHandler(string tablename, uShort iterationApproach, Dou
 	buffersInitialized_p = false;
 	iteratorGenerated_p = false;
 	stopIteration_p = false;
-	processedRows = 0;
-	chunkNo = 0;
-	bufferNo = 0;
+	processedRows_p = 0;
+	chunkNo_p = 0;
+	bufferNo_p = 0;
 
 	// Initialize stats
 	stats_p = false;

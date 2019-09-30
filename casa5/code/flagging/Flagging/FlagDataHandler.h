@@ -903,9 +903,9 @@ public:
 	// RO Visibility Iterator
 	VisBufferComponents2 *prefetchColumns_p;
 	// Iteration counters
-	casacore::uLong processedRows;
-	casacore::uShort chunkNo;
-	casacore::uShort bufferNo;
+	casacore::uLong processedRows_p;
+	casacore::uShort chunkNo_p;
+	casacore::uShort bufferNo_p;
 
 	// FlagDataHanler-FlagAgents interaction
 	bool flushFlags_p;

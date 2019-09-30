@@ -268,7 +268,8 @@ FlagAgentSummary::preProcessBuffer(const vi::VisBuffer2 &visBuffer)
 }
 
 bool
-FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &flags, uInt row)
+FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &flags,
+                                  uInt row)
 {
     const Int antenna1 = visBuffer.antenna1()[row];
     const Int antenna2 = visBuffer.antenna2()[row];
@@ -283,7 +284,7 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
     const auto scan_str = scan_stringStream.str();
 
     // Compute totals
-    Int nChannels,nRows;
+    Int nChannels, nRows;
     flags.shape(nChannels,nRows);
     const vector< vector<uInt> > polarizations = flags.getSelectedCorrelations();
     const Int nPolarizations = polarizations.size();
@@ -291,21 +292,17 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
 
     // Initialize polarization counts
     Int pol_i = 0;;
-    vector<uInt64> polarizationsBreakdownFlags;
-    for (pol_i=0;pol_i < nPolarizations;pol_i++)
-    {
-        polarizationsBreakdownFlags.push_back(0);
-    }
+    vector<uInt64> polarizationsBreakdownFlags(nPolarizations, 0);
 
     // Iterate through channels
     Bool flag;
     Int channel_i = 0;
     uInt64 rowFlags = 0;
     uInt64 channelFlags = 0;
-    for (channel_i=0;channel_i<nChannels;channel_i++)
+    for (channel_i=0; channel_i<nChannels; ++channel_i)
     {
         channelFlags = 0;
-        for (pol_i=0;pol_i < nPolarizations;pol_i++)
+        for (pol_i=0; pol_i < nPolarizations; ++pol_i)
         {
             flag = flags.getModifiedFlags(pol_i,channel_i,row);
             channelFlags += flag;
@@ -323,7 +320,7 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
     // Update polarization counts
     const polarizationIndexMap *toPolarizationIndexMap =
         flagDataHandler_p->getPolarizationIndexMap();
-    for (pol_i=0;pol_i < nPolarizations;pol_i++)
+    for (pol_i=0; pol_i < nPolarizations; ++pol_i)
     {
         const auto &polarization_str = (*toPolarizationIndexMap).at(polarizations[pol_i][0]);
         currentSummary->accumtotal["correlation"][polarization_str] += nChannels;

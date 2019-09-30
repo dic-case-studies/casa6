@@ -113,8 +113,8 @@ private:
         // to count total flags (on) in the current buffer
         size_t bufferFlags = 0;
 
-	string arrayId_str;
-	string fieldId_str;
+        string arrayId_str;
+        string fieldId_str;
 	string spw_str;
 	string observationId_str;
 
