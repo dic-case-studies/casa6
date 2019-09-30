@@ -23,6 +23,8 @@
 #ifndef FlagAgentSummary_H_
 #define FlagAgentSummary_H_
 
+#include <unordered_map>
+
 #include <flagging/Flagging/FlagAgentBase.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -45,17 +47,17 @@ class FlagAgentSummary : public FlagAgentBase {
 			accumTotalCount = 0;
 		}
 
-		std::map<std::string, std::map<std::string, casacore::uInt64> > accumflags;
-		std::map<std::string, std::map<std::string, casacore::uInt64> > accumtotal;
+		std::unordered_map<std::string, std::unordered_map<std::string, casacore::uInt64> > accumflags;
+		std::unordered_map<std::string, std::unordered_map<std::string, casacore::uInt64> > accumtotal;
 
-		std::map<casacore::Int, std::map<casacore::uInt, casacore::uInt64> > accumChannelflags;
-		std::map<casacore::Int, std::map<casacore::uInt, casacore::uInt64> > accumChanneltotal;
+		std::unordered_map<casacore::Int, std::unordered_map<casacore::uInt, casacore::uInt64> > accumChannelflags;
+		std::unordered_map<casacore::Int, std::unordered_map<casacore::uInt, casacore::uInt64> > accumChanneltotal;
 
-		std::map<casacore::Int, std::map<std::string, casacore::uInt64> > accumPolarizationflags;
-		std::map<casacore::Int, std::map<std::string, casacore::uInt64> > accumPolarizationtotal;
+		std::unordered_map<casacore::Int, std::unordered_map<std::string, casacore::uInt64> > accumPolarizationflags;
+		std::unordered_map<casacore::Int, std::unordered_map<std::string, casacore::uInt64> > accumPolarizationtotal;
 
-		std::map<casacore::Int, std::map<casacore::Int, casacore::uInt64> > accumAntScanflags;
-		std::map<casacore::Int, std::map<casacore::Int, casacore::uInt64> > accumAntScantotal;
+		std::unordered_map<casacore::Int, std::unordered_map<casacore::Int, casacore::uInt64> > accumAntScanflags;
+		std::unordered_map<casacore::Int, std::unordered_map<casacore::Int, casacore::uInt64> > accumAntScantotal;
 
 		casacore::uInt64 accumTotalFlags, accumTotalCount;
 	};
@@ -91,7 +93,7 @@ private:
 
 	// Build simple plot-reports from the summary dictionary
 	FlagReport buildFlagCountPlots();
-	std::map<casacore::Int , std::vector<casacore::Double> > frequencyList;
+	std::unordered_map<casacore::Int , std::vector<casacore::Double> > frequencyList;
 
 	casacore::Bool spwChannelCounts;
 	casacore::Bool spwPolarizationCounts;
@@ -99,7 +101,7 @@ private:
 	casacore::Bool fieldCounts;
 	casacore::String display_p;
 
-	std::map<std::string, summary* > fieldSummaryMap;
+	std::unordered_map<std::string, summary* > fieldSummaryMap;
 	summary *currentSummary;
 	casacore::Int arrayId;
 	casacore::Int fieldId;
