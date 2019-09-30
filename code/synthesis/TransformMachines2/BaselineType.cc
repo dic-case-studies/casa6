@@ -204,15 +204,15 @@ namespace casa{
 
 	  
 	  // cerr << "#################################"<<endl;
-	  // for (unsigned int i=0; i<uniqueAnt1.size();i++)
-	  //   {
+	  for (unsigned int i=0; i<uniqueAnt1.size();i++)
+	    {
 	  //     // diffAntPointing_l[0][i] = poAnt1[0][i] - phaseDirPix_l[0];
 	  //     // diffAntPointing_l[1][i] = poAnt1[1][i] - phaseDirPix_l[1];
-	  //     diffAntPointing_l[0][i] = poAnt1[0][i] - minAntPO[0];
-	  //     diffAntPointing_l[1][i] = poAnt1[1][i] - minAntPO[1];
+	      diffAntPointing_l[0][i] = poAnt1[0][i] - minAntPO[0];
+	      diffAntPointing_l[1][i] = poAnt1[1][i] - minAntPO[1];
 
-	  //     cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;
-	  //   }
+	      // cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;
+	    }
 	  // cerr << "#################################"<<endl;
 
 	  for(unsigned int ii=0; ii < pixSum.size();ii++)
@@ -292,7 +292,7 @@ namespace casa{
 		  // cerr << ii << " " << jj << " " << diffAntPointing_l[0][kk]/sigmaDev + minAntPO[0]<< " " <<diffAntPointing_l[1][kk]/sigmaDev + minAntPO[1]<< " " << antennaGroups_p(ii,jj).size() << " " <<endl;
 
 		  // cerr << ii << " " << jj << " " << poAnt1[0][kk]/pixSigma[0] << " " <<poAnt1[1][kk]/pixSigma[1] << " " << antennaGroups_p(ii,jj).size() << endl;
-
+		  // cerr << ii << " " << jj<< " " << poAnt1[0][kk] << " "<< poAnt1[0][kk] << endl;
 		  antennaGroups_p(ii,jj).push_back(uniqueAnt1[kk]);
 		  antGrdPointing_l[0][kk] = minAntPO[0] + (ii-1)*sigmaDev;
 		  antGrdPointing_l[1][kk] = minAntPO[1] + (jj-1)*sigmaDev;
@@ -322,6 +322,7 @@ namespace casa{
 		    {
 		      casa_antGrdPointing_l(0)(kk) = meanAntGrdPO_l(ii,jj)[0];
 		      casa_antGrdPointing_l(1)(kk) = meanAntGrdPO_l(ii,jj)[1];
+		      // cerr << "AG: " << ii << " " << jj << " " << antennaGroups_p(ii,jj).size() << " with PO " << meanAntGrdPO_l(ii,jj)[0] << " "<< meanAntGrdPO_l(ii,jj)[1] << endl;
 		    }
 	  
 	  // 	cerr << "AG: " << ii << " " << jj << " " << antennaGroups_p(ii,jj).size() << " with PO " << poGridOriginX + (ii-1)*sigmaDev << " " << poGridOriginY + (jj-1)*sigmaDev << endl;
