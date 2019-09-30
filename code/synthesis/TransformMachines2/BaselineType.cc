@@ -338,11 +338,11 @@ namespace casa{
 		    totalGroups_p += 1;
 		    ostr <<"Antenna in bin " << totalGroups_p << " is : ";
 		    for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
-			ostr <<antennaGroups_p(ii,jj).at(kk)<<" ";
-		    log_l << ostr.str() << LogIO::POST;
-		    ostr<<"";
+		      ostr <<antennaGroups_p(ii,jj).at(kk)<<" ";
+		    ostr << endl;
 		    //cerr << ostr.str() << endl;
 		  }
+	    log_l << ostr.str() << LogIO::POST;
 	  }
 	  //	  cerr << "total groups " <<totalGroups_p<<endl;
 	  cacheAntGroups(antennaGroups_p);
