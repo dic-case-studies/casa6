@@ -39,7 +39,6 @@ FlagAgentSummary::FlagAgentSummary(FlagDataHandler *dh, Record config):
     arrayId_str = String("");
     fieldId_str = String("");
     spw_str = String("");
-    scan_str = String("");
     observationId_str = String("");
 
     spwChannelCounts = false;
@@ -265,30 +264,31 @@ FlagAgentSummary::preProcessBuffer(const vi::VisBuffer2 &visBuffer)
         }
     }
 
-    return;
+    bufferTotal = 0;
+    bufferFlags = 0;
 }
 
 bool
 FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &flags, uInt row)
 {
-    Int antenna1 = visBuffer.antenna1()[row];
-    Int antenna2 = visBuffer.antenna2()[row];
-    String antenna1Name = flagDataHandler_p->antennaNames_p->operator()(antenna1);
-    String antenna2Name = flagDataHandler_p->antennaNames_p->operator()(antenna2);
-    String baseline = antenna1Name + "&&" + antenna2Name;
+    const Int antenna1 = visBuffer.antenna1()[row];
+    const Int antenna2 = visBuffer.antenna2()[row];
+    const String antenna1Name = flagDataHandler_p->antennaNames_p->operator()(antenna1);
+    const String antenna2Name = flagDataHandler_p->antennaNames_p->operator()(antenna2);
+    const String baseline = antenna1Name + "&&" + antenna2Name;
 
     // Get scan for each particular row to cover for the "combine scans" case
-    scan = visBuffer.scan()[row];
+    const auto scan = visBuffer.scan()[row];
     stringstream scan_stringStream;
     scan_stringStream << scan;
-    scan_str = scan_stringStream.str();
+    const auto scan_str = scan_stringStream.str();
 
     // Compute totals
     Int nChannels,nRows;
     flags.shape(nChannels,nRows);
-    vector< vector<uInt> > polarizations = flags.getSelectedCorrelations();
-    Int nPolarizations = polarizations.size();
-    uInt64 rowTotal = nChannels*nPolarizations;
+    const vector< vector<uInt> > polarizations = flags.getSelectedCorrelations();
+    const Int nPolarizations = polarizations.size();
+    const uInt64 rowTotal = nChannels*nPolarizations;
 
     // Initialize polarization counts
     Int pol_i = 0;;
@@ -316,42 +316,31 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
 
         if (spwChannelCounts)
         {
-        	currentSummary->accumChanneltotal[spw][channel_i] += nPolarizations;
+            currentSummary->accumChanneltotal[spw][channel_i] += nPolarizations;
             currentSummary->accumChannelflags[spw][channel_i] += channelFlags;
         }
     }
 
     // Update polarization counts
-    polarizationIndexMap *toPolarizationIndexMap = flagDataHandler_p->getPolarizationIndexMap();
-    String polarization_str;
+    const polarizationIndexMap *toPolarizationIndexMap =
+        flagDataHandler_p->getPolarizationIndexMap();
     for (pol_i=0;pol_i < nPolarizations;pol_i++)
     {
-        polarization_str = (*toPolarizationIndexMap)[polarizations[pol_i][0]];
+        const auto &polarization_str = (*toPolarizationIndexMap).at(polarizations[pol_i][0]);
         currentSummary->accumtotal["correlation"][polarization_str] += nChannels;
         currentSummary->accumflags["correlation"][polarization_str] += polarizationsBreakdownFlags[pol_i];
 
         if (spwPolarizationCounts)
         {
-        	currentSummary->accumPolarizationtotal[spw][polarization_str] += nChannels;
+            currentSummary->accumPolarizationtotal[spw][polarization_str] += nChannels;
             currentSummary->accumPolarizationflags[spw][polarization_str] += polarizationsBreakdownFlags[pol_i];
         }
     }
 
-    // Update row counts
-    currentSummary->accumtotal["array"][arrayId_str] += rowTotal;
-    currentSummary->accumflags["array"][arrayId_str] += rowFlags;
-
-    currentSummary->accumtotal["field"][fieldId_str] += rowTotal;
-    currentSummary->accumflags["field"][fieldId_str] += rowFlags;
-
-    currentSummary->accumtotal["spw"][spw_str] += rowTotal;
-    currentSummary->accumflags["spw"][spw_str] += rowFlags;
-
+    // Update row counts in fields that require row specific info (like scan, antenna and,
+    // optinally, baseline)
     currentSummary->accumtotal["scan"][scan_str] += rowTotal;
     currentSummary->accumflags["scan"][scan_str] += rowFlags;
-
-    currentSummary->accumtotal["observation"][observationId_str] += rowTotal;
-    currentSummary->accumflags["observation"][observationId_str] += rowFlags;
 
     currentSummary->accumtotal["antenna"][antenna1Name] += rowTotal;
     currentSummary->accumflags["antenna"][antenna1Name] += rowFlags;
@@ -370,15 +359,37 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
         currentSummary->accumAntScanflags[antenna1][scan] += rowFlags;
         if (antenna1 != antenna2)
         {
-        	currentSummary->accumAntScantotal[antenna2][scan] += rowTotal;
+            currentSummary->accumAntScantotal[antenna2][scan] += rowTotal;
             currentSummary->accumAntScanflags[antenna2][scan] += rowFlags;
         }
     }
 
-    currentSummary->accumTotalFlags += rowFlags;
-    currentSummary->accumTotalCount += rowTotal;
+    // keep updating buffer totals for postProcessBuffer()
+    bufferTotal += rowTotal;
+    bufferFlags += rowFlags;
 
     return false;
+}
+
+void
+FlagAgentSummary::postProcessBuffer() {
+    // Update here the summary fields that do not need to be update on a row per row basis
+    // (in computeRowFlags which would otherwise repeat all this many more times than needed)
+    // The main reason to put these here is that this is much faster (CAS-XXXX)
+    currentSummary->accumtotal["array"][arrayId_str] += bufferTotal;
+    currentSummary->accumflags["array"][arrayId_str] += bufferFlags;
+
+    currentSummary->accumtotal["field"][fieldId_str] += bufferTotal;
+    currentSummary->accumflags["field"][fieldId_str] += bufferFlags;
+
+    currentSummary->accumtotal["spw"][spw_str] += bufferTotal;
+    currentSummary->accumflags["spw"][spw_str] += bufferFlags;
+
+    currentSummary->accumtotal["observation"][observationId_str] += bufferTotal;
+    currentSummary->accumflags["observation"][observationId_str] += bufferFlags;
+
+    currentSummary->accumTotalCount += bufferTotal;
+    currentSummary->accumTotalFlags += bufferFlags;
 }
 
 FlagReport

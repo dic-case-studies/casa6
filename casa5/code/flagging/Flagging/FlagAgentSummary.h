@@ -72,6 +72,9 @@ protected:
 	// Common functionality for each visBuffer (don't repeat at the row level)
 	void preProcessBuffer(const vi::VisBuffer2 &visBuffer);
 
+        // Add flags sum into summary fields
+        void postProcessBuffer();
+
 	// Compute flags for a given mapped visibility point
 	bool computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &flags, casacore::uInt row);
 
@@ -103,11 +106,14 @@ private:
 	casacore::Int spw;
 	casacore::Int scan;
 	casacore::Int observationId;
+        // to count total flags (whether on/off) in the current buffer
+        size_t bufferTotal = 0;
+        // to count total flags (on) in the current buffer
+        size_t bufferFlags = 0;
 
 	string arrayId_str;
 	string fieldId_str;
 	string spw_str;
-	string scan_str;
 	string observationId_str;
 
 };

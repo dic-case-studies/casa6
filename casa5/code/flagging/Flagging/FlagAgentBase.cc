@@ -481,6 +481,7 @@ FlagAgentBase::runCore()
 			{
 				preProcessBuffer(*(flagDataHandler_p->visibilityBuffer_p));
 				iterateRows();
+				postProcessBuffer();
 				break;
 			}
 			// Iterate through (time,freq) maps per antenna pair
@@ -2110,7 +2111,11 @@ FlagAgentBase::checkIfProcessBuffer()
 void
 FlagAgentBase::preProcessBuffer(const vi::VisBuffer2 &/*visBuffer*/)
 {
-	return;
+}
+
+void
+FlagAgentBase::postProcessBuffer()
+{
 }
 
 void
