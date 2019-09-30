@@ -223,23 +223,17 @@ void
 FlagAgentSummary::preProcessBuffer(const vi::VisBuffer2 &visBuffer)
 {
     arrayId = visBuffer.arrayId()(0);
-    stringstream arrayId_stringStream;
-    arrayId_stringStream << arrayId;
-    arrayId_str = arrayId_stringStream.str();
+    arrayId_str = std::to_string(arrayId);
 
     fieldId = visBuffer.fieldId()(0);
     // Transform fieldId into field name using the corresponding subtable
     fieldId_str = flagDataHandler_p->fieldNames_p->operator()(fieldId);
 
     spw = visBuffer.spectralWindows()(0);
-    stringstream spw_stringStream;
-    spw_stringStream << spw;
-    spw_str = spw_stringStream.str();
+    spw_str = std::to_string(spw);
 
     observationId = visBuffer.observationId()[0];
-    stringstream observationId_stringStream;
-    observationId_stringStream << observationId;
-    observationId_str = observationId_stringStream.str();
+    observationId_str = std::to_string(spw);
 
     // Read in channel-frequencies.
     // RVU : I'm not sure if this should go here, or in the FlagDataHandler so that all agents get it.
@@ -273,15 +267,12 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
 {
     const Int antenna1 = visBuffer.antenna1()[row];
     const Int antenna2 = visBuffer.antenna2()[row];
-    const String antenna1Name = flagDataHandler_p->antennaNames_p->operator()(antenna1);
-    const String antenna2Name = flagDataHandler_p->antennaNames_p->operator()(antenna2);
-    const String baseline = antenna1Name + "&&" + antenna2Name;
+    const auto antenna1Name = flagDataHandler_p->antennaNames_p->operator()(antenna1);
+    const auto antenna2Name = flagDataHandler_p->antennaNames_p->operator()(antenna2);
 
     // Get scan for each particular row to cover for the "combine scans" case
     const auto scan = visBuffer.scan()[row];
-    stringstream scan_stringStream;
-    scan_stringStream << scan;
-    const auto scan_str = scan_stringStream.str();
+    const auto scan_str = std::to_string(scan);
 
     // Compute totals
     Int nChannels, nRows;
@@ -349,6 +340,7 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
 
     if ( baselineCounts )
     {
+        const auto baseline = antenna1Name + "&&" + antenna2Name;
     	currentSummary->accumtotal["baseline"][baseline] += rowTotal;
         currentSummary->accumflags["baseline"][baseline] += rowFlags;
         currentSummary->accumAntScantotal[antenna1][scan] += rowTotal;
@@ -485,7 +477,7 @@ FlagAgentSummary::buildFlagCountPlots()
             for(antId=0; antId<(Int) flagDataHandler_p->antennaNames_p->nelements(); antId++)
             {
                 if( flagDataHandler_p->antennaNames_p->operator()(antId)
-                == String(antkey.first) ) break;
+                    == String(antkey.first) ) break;
             }
 
             const Vector<double> xyz = (flagDataHandler_p->antennaPositions_p->operator()(antId))
@@ -515,7 +507,7 @@ FlagAgentSummary::buildFlagCountPlots()
         {
             Int antId1 = 0, antId2=0;
             String antName1,antName2;
-            antName1 = antName2 =  String(basekey.first);
+            antName1 = antName2 = String(basekey.first);
             antName1 = antName1.before("&&");
             antName2 = antName2.after("&&");
             for(Int antId=0; antId<(Int) flagDataHandler_p->antennaNames_p->nelements(); antId++)
