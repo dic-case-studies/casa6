@@ -325,7 +325,7 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
     }
 
     // Update row counts in fields that require row specific info (like scan, antenna and,
-    // optinally, baseline)
+    // optionally, baseline)
     currentSummary->accumtotal["scan"][scan_str] += rowTotal;
     currentSummary->accumflags["scan"][scan_str] += rowFlags;
 
@@ -361,9 +361,9 @@ FlagAgentSummary::computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &f
 
 void
 FlagAgentSummary::postProcessBuffer() {
-    // Update here the summary fields that do not need to be update on a row per row basis
+    // Update here the summary fields that do not need to be updated on a row per row basis
     // (in computeRowFlags which would otherwise repeat all this many more times than needed)
-    // The main reason to put these here is that this is much faster (CAS-XXXX)
+    // The main reason to put these here is that this is much faster (CAS-12714)
     currentSummary->accumtotal["array"][arrayId_str] += bufferTotal;
     currentSummary->accumflags["array"][arrayId_str] += bufferFlags;
 

@@ -536,7 +536,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::I:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is I" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is I" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::I] = pos;
                             (*polarizationIndexMap_p)[pos] = "I";
                             break;
@@ -544,7 +544,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::Q:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is Q" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is Q" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::Q] = pos;
                             (*polarizationIndexMap_p)[pos] = "Q";
                             break;
@@ -552,7 +552,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::U:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is U" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is U" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::U] = pos;
                             (*polarizationIndexMap_p)[pos] = "U";
                             break;
@@ -560,7 +560,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::V:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is V" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is V" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::V] = pos;
                             (*polarizationIndexMap_p)[pos] = "V";
                             break;
@@ -568,7 +568,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::XX:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is XX" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is XX" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::XX] = pos;
                             (*polarizationIndexMap_p)[pos] = "XX";
                             break;
@@ -576,7 +576,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::YY:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is YY" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is YY" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::YY] = pos;
                             (*polarizationIndexMap_p)[pos] = "YY";
                             break;
@@ -592,7 +592,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::YX:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is YX" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is YX" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::YX] = pos;
                             (*polarizationIndexMap_p)[pos] = "YX";
                             break;
@@ -600,7 +600,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::RR:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is RR" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is RR" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::RR] = pos;
                             (*polarizationIndexMap_p)[pos] = "RR";
                             break;
@@ -608,7 +608,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::LL:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is LL" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is LL" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::LL] = pos;
                             (*polarizationIndexMap_p)[pos] = "LL";
                             break;
@@ -616,7 +616,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case Stokes::RL:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is RL" << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is RL" << LogIO::POST;
                             (*polarizationMap_p)[Stokes::RL] = pos;
                             (*polarizationIndexMap_p)[pos] = "RL";
                             break;
@@ -632,7 +632,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case VisMapper::CALSOL1:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " Calibration solution 1 found at " << pos << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " Calibration solution 1 found at " << pos << LogIO::POST;
                             (*polarizationMap_p)[VisMapper::CALSOL1] = pos;
                             (*polarizationIndexMap_p)[pos] = "Sol1";
                             break;
@@ -640,7 +640,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case VisMapper::CALSOL2:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " Calibration solution 2 found at " << pos << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " Calibration solution 2 found at " << pos << LogIO::POST;
                             (*polarizationMap_p)[VisMapper::CALSOL2] = pos;
                             (*polarizationIndexMap_p)[pos] = "Sol2";
                             break;
@@ -648,7 +648,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case VisMapper::CALSOL3:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " Calibration solution 3 found at " << pos << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " Calibration solution 3 found at " << pos << LogIO::POST;
                             (*polarizationMap_p)[VisMapper::CALSOL3] = pos;
                             (*polarizationIndexMap_p)[pos] = "Sol3";
                             break;
@@ -656,7 +656,7 @@ FlagDataHandler::generatePolarizationsMap()
 			case VisMapper::CALSOL4:
 			{
                             if (logprio <= LogMessage::DEBUG2)
-				*logger_p << LogIO::DEBUG2 << " Calibration solution 4 found at " << pos << LogIO::POST;
+                                *logger_p << LogIO::DEBUG2 << " Calibration solution 4 found at " << pos << LogIO::POST;
                             (*polarizationMap_p)[VisMapper::CALSOL4] = pos;
                             (*polarizationIndexMap_p)[pos] = "Sol4";
                             break;
