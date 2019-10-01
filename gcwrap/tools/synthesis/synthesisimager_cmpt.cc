@@ -261,7 +261,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
 			    gpars.padding, gpars.useAutoCorr, gpars.useDoublePrec, gpars.wprojplanes, 
 			    gpars.convFunc, ipars.startModel, gpars.aTermOn,
 			    gpars.psTermOn, gpars.mTermOn, gpars.wbAWP, gpars.cfCache,
-			    gpars.usePointing,gpars.doPBCorr,gpars.conjBeams,
+			    gpars.usePointing,gpars.pointingsigdev,gpars.doPBCorr,gpars.conjBeams,
 			    gpars.computePAStep,gpars.rotatePAStep);
     */
 
@@ -271,47 +271,47 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
   return rstat;
 }
 
-
-bool
-synthesisimager::setimage(const std::string& imagename,
-			     const int nx, 
-			     const int ny,			
-			     const ::casac::variant& cellx, 
-			     const ::casac::variant& celly,
-			     const std::string& stokes,
-			     const ::casac::variant& phasecenter,
-			     const int nchan,
-			     const ::casac::variant& freqstart,
-			     const ::casac::variant& freqstep,
-			     const ::casac::variant& restfreq,
-			     const int facets,
-			     const std::string& ftmachine,
-			     const int ntaylorterms,
-			     const ::casac::variant& reffreq,
-			     const std::string& projection,
-			     const ::casac::variant& distance,
-			     const std::string& freqframe, 
-			     const bool tracksource,
-			     const ::casac::variant& trackdir,
-			     const bool overwrite,
-			     const float padding,
-			     const bool useautocorr,
-			     const bool usedoubleprec,
-			     const int wprojplanes,
-			     const std::string& convfunc,
-			     const std::string& startmodel,
-
-			     const bool aterm,//    = true,
-			     const bool psterm,//   = true,
-			     const bool mterm,//    = false,
-			     const bool wbawp,//      = true,
-			     const std::string& cfcache,//  = "",
-			     const bool usepointing,// = false,
-			     const bool dopbcorr,//   = true,
-			     const bool conjbeams,//  = false,
-			     const float computepastep,         //=360.0
-			     const float rotatepastep          //=5.0
-			     )
+  
+  bool
+  synthesisimager::setimage(const std::string& imagename,
+			    const int nx, 
+			    const int ny,			
+			    const ::casac::variant& cellx, 
+			    const ::casac::variant& celly,
+			    const std::string& stokes,
+			    const ::casac::variant& phasecenter,
+			    const int nchan,
+			    const ::casac::variant& freqstart,
+			    const ::casac::variant& freqstep,
+			    const ::casac::variant& restfreq,
+			    const int facets,
+			    const std::string& ftmachine,
+			    const int ntaylorterms,
+			    const ::casac::variant& reffreq,
+			    const std::string& projection,
+			    const ::casac::variant& distance,
+			    const std::string& freqframe, 
+			    const bool tracksource,
+			    const ::casac::variant& trackdir,
+			    const bool overwrite,
+			    const float padding,
+			    const bool useautocorr,
+			    const bool usedoubleprec,
+			    const int wprojplanes,
+			    const std::string& convfunc,
+			    const std::string& startmodel,
+			    const bool aterm,//    = true,
+			    const bool psterm,//   = true,
+			    const bool mterm,//    = false,
+			    const bool wbawp,//      = true,
+			    const std::string& cfcache,//  = "",
+			    const bool usepointing,// = false,
+			    const double pointingoffsetsigdev,//=10.0,
+			    const bool dopbcorr,//   = true,
+			    const bool conjbeams,//  = false,
+			    const float computepastep,         //=360.0
+			    const float rotatepastep          //=5.0
+			    )
 {
   Bool rstat(false);
 
@@ -404,11 +404,11 @@ synthesisimager::setimage(const std::string& imagename,
 
 
       rstat=itsImager->defineImage( imagename, nX, nY, cellX, cellY, stokes, phaseCenter,
-			      nchan, freqStart, freqStep, restFreq, facets, ftmachine, 
-			      ntaylorterms, refFreq, 
-			      imageprojection, cdistance, freqframetype, tracksource, trackDir, overwrite,
-			      padding, useautocorr, usedoubleprec, wprojplanes, convfunc, startmodel, aterm,
-			      psterm, mterm,wbawp, cfcache,usepointing,dopbcorr,conjbeams,computepastep,rotatepastep);
+				    nchan, freqStart, freqStep, restFreq, facets, ftmachine, 
+				    ntaylorterms, refFreq, 
+				    imageprojection, cdistance, freqframetype, tracksource, trackDir, overwrite,
+				    padding, useautocorr, usedoubleprec, wprojplanes, convfunc, startmodel, aterm,
+				    psterm, mterm,wbawp, cfcache,usepointing,dopbcorr,conjbeams,computepastep,rotatepastep);
     } 
   catch  (AipsError x) 
     {

@@ -87,7 +87,7 @@ def tclean(
     usepointing, #=false
     computepastep ,#=360.0,
     rotatepastep ,#=360.0,
-    pointingoffsetsigdev ,#=0.0,
+    pointingoffsetsigdev ,#=10.0,
 
     pblimit,#=0.01,
     normtype,#='flatnoise',

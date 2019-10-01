@@ -92,6 +92,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       CountedPtr<ConvolutionFunction>& cf,
 			       CountedPtr<VisibilityResamplerBase>& visResampler,
 			       Bool applyPointingOffset,
+			       Float pointingOffsetSigDev,
 			       Bool doPBCorr,
 			       Int itilesize, 
 			       Float paSteps,
@@ -99,7 +100,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       Bool usezero,
 			       Bool conjBeams,
 			       Bool doublePrecGrid)
-    : AWProjectFT(nWPlanes,icachesize,cfcache,cf,visResampler,applyPointingOffset,doPBCorr, itilesize,pbLimit,usezero,conjBeams,doublePrecGrid),
+    : AWProjectFT(nWPlanes,icachesize,cfcache,cf,visResampler,applyPointingOffset,pointingOffsetSigDev,doPBCorr, itilesize,pbLimit,usezero,conjBeams,doublePrecGrid),
       avgPBReady_p(false),resetPBs_p(true),wtImageFTDone_p(false),fieldIds_p(0),rotatedCFWts_p(),visResamplerWt_p(),oneTimeMessage_p(false)
   {
     (void)paSteps;
@@ -837,7 +838,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //timer_p.mark();
     visResamplerWt_p->copy(*visResampler_p);
     
-    Vector<Vector<Double> > pointingOffset(convFuncCtor_p->findPointingOffset(*image, vb,doPointing));
+    po_p->fetchPointingOffset(*image, vb, doPointing);
     //cerr << "AWPWB: " << pointingOffset << endl;
     // visResamplerWt_p->makeVBRow2CFBMap(*cfwts2_p,*convFuncCtor_p, vb,
     // 				      paChangeDetector.getParAngleTolerance(),
@@ -845,7 +846,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //    VB2CFBMap& theMap=visResamplerWt_p->getVBRow2CFBMap();
     vb2CFBMap_p->makeVBRow2CFBMap(*cfwts2_p,vb,
 				      paChangeDetector.getParAngleTolerance(),
-				      chanMap,polMap,pointingOffset);
+				      chanMap,polMap,po_p);
     convFuncCtor_p->prepareConvFunction(vb,*vb2CFBMap_p);
     //runTime1_p += timer_p.real();
     //

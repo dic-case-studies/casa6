@@ -381,9 +381,17 @@ Define the image coordinate systems and shapes.
      <value></value>
      </param>
 
-     <param type="bool" name="dopointing">
+     <param type="bool" name="usepointing">
      <description>Control application of the pointing correction</description>
      <value>false</value>
+     </param>
+
+     <param type="double" name="pointingoffsetsigdev">
+     <description>Control application of the pointing correction for heterogenous
+     array allowing for antenna pointing group identification using this parameter.
+     The parameter has a significant cost on the memory used for gridding. Please
+     utilize it wisely.</description>
+     <value>10.0</value>
      </param>
 
      <param type="bool" name="dopbcorr">

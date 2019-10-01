@@ -620,7 +620,7 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
 			gridpars.convFunc,
 			gridpars.aTermOn,gridpars.psTermOn, gridpars.mTermOn,
-			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,
+			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,gridpars.pointingOffsetSigDev,
 			gridpars.doPBCorr,gridpars.conjBeams,
 			gridpars.computePAStep,gridpars.rotatePAStep,
 			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
@@ -1543,6 +1543,7 @@ void SynthesisImagerVi2::unlockMSs()
 					const Bool wbAWP,            //= true,
 					   const String cfCache,        //= "",
 					   const Bool usePointing,       //= false,
+					   const Float pointingOffsetSigDev, //= 10.0,
 					   const Bool doPBCorr,         //= true,
 					   const Bool conjBeams,        //= true,
 					const Float computePAStep,         //=360.0
@@ -1605,7 +1606,7 @@ void SynthesisImagerVi2::unlockMSs()
       createAWPFTMachine(theFT, theIFT, ftname, facets, wprojplane, 
 			 padding, useAutocorr, useDoublePrec, gridFunction,
 			 aTermOn, psTermOn, mTermOn, wbAWP, cfCache, 
-			 usePointing, doPBCorr, conjBeams, computePAStep,
+			 usePointing, pointingOffsetSigDev, doPBCorr, conjBeams, computePAStep,
 			 rotatePAStep, cache,tile,imageNamePrefix);
     }
     else if ( ftname == "mosaic" || ftname== "mosft" || ftname == "mosaicft" || ftname== "MosaicFT"){
@@ -1693,29 +1694,30 @@ void SynthesisImagerVi2::unlockMSs()
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void SynthesisImagerVi2::createAWPFTMachine(CountedPtr<refim::FTMachine>& theFT, CountedPtr<refim::FTMachine>& theIFT, 
-					   const String&,// ftmName,
-					   const Int,// facets,            //=1
-					   //------------------------------
-					   const Int wprojPlane,        //=1,
-					   const Float,// padding,         //=1.0,
-					   const Bool,// useAutocorr,      //=false,
-					   const Bool useDoublePrec,    //=true,
-					   const String,// gridFunction,   //=String("SF"),
-					   //------------------------------
-					   const Bool aTermOn,          //= true,
-					   const Bool psTermOn,         //= true,
-					   const Bool mTermOn,          //= false,
-					   const Bool wbAWP,            //= true,
-					   const String cfCache,        //= "",
-					   const Bool usePointing,       //= false,
-					   const Bool doPBCorr,         //= true,
-					   const Bool conjBeams,        //= true,
-					   const Float computePAStep,   //=360.0
-					   const Float rotatePAStep,    //=5.0
-					   const Int cache,             //=1000000000,
-					   const Int tile,               //=16
-					   const String imageNamePrefix
-					)
+					      const String&,// ftmName,
+					      const Int,// facets,            //=1
+					      //------------------------------
+					      const Int wprojPlane,        //=1,
+					      const Float,// padding,         //=1.0,
+					      const Bool,// useAutocorr,      //=false,
+					      const Bool useDoublePrec,    //=true,
+					      const String,// gridFunction,   //=String("SF"),
+					      //------------------------------
+					      const Bool aTermOn,          //= true,
+					      const Bool psTermOn,         //= true,
+					      const Bool mTermOn,          //= false,
+					      const Bool wbAWP,            //= true,
+					      const String cfCache,        //= "",
+					      const Bool usePointing,       //= false,
+					      const Float pointingOffsetSigDev,//=10.0,
+					      const Bool doPBCorr,         //= true,
+					      const Bool conjBeams,        //= true,
+					      const Float computePAStep,   //=360.0
+					      const Float rotatePAStep,    //=5.0
+					      const Int cache,             //=1000000000,
+					      const Int tile,               //=16
+					      const String imageNamePrefix
+					      )
 
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","createAWPFTMachine",WHERE));
@@ -1764,8 +1766,6 @@ void SynthesisImagerVi2::unlockMSs()
 									   psTermOn, (wprojPlane > 1),
 									   mTermOn, wbAWP, conjBeams);
 
-    CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets(awConvFunc->getOversampling());
-    awConvFunc->setPointingOffsets(po);
     //
     // Construct the appropriate re-sampler.
     //
@@ -1798,7 +1798,7 @@ void SynthesisImagerVi2::unlockMSs()
     theFT = new refim::AWProjectWBFTNew(wprojPlane, cache/2, 
 			      cfCacheObj, awConvFunc, 
 			      visResampler,
-			      /*true */usePointing, doPBCorr, 
+					/*true */usePointing, pointingOffsetSigDev ,doPBCorr, 
 			      tile, computePAStep, pbLimit_l, true,conjBeams,
 			      useDoublePrec);
 

@@ -344,7 +344,7 @@ public:
 
   // For single-dish imaging
   casacore::String pointingDirCol;
-  casacore::Float skyPosThreshold;
+  casacore::Float skyPosThreshold, pointingOffsetSigDev;
   casacore::Int convSupport;
   casacore::Quantity truncateSize;
   casacore::Quantity gwidth;
