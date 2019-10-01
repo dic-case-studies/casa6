@@ -110,10 +110,10 @@ void createAWPFTMachine(CountedPtr<refim::FTMachine>& theFT, CountedPtr<refim::F
 									 aTermOn,
 									 psTermOn, true, mTermOn, wbAWP,
 									 false);
-   CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets(awConvFunc->getOversampling());
-
+   CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets();
+   po->setOverSampling(awConvFunc->getOversampling());
    po->setDoPointing(doPointing);
-   awConvFunc->setPointingOffsets(po);
+   // awConvFunc->setPointingOffsets(po);
   //
   // Construct the appropriate re-sampler.
   //
