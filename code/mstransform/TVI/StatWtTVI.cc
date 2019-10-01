@@ -1033,15 +1033,6 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
         "Logic error: neither _slidingTimeWindowWidth"
         "nor _nTimeStamps has been specified"
     );
-    auto isEven = False;
-    Int nBefore = 0;
-    Int nAfter = 0;
-    if (_nTimeStamps) {
-        isEven = *_nTimeStamps % 2 == 0;
-        nBefore = isEven ? (*_nTimeStamps/2) : (*_nTimeStamps - 1)/2;
-        // nAfter = isEven ? nBefore + 1 : nBefore;
-    }
-
     auto* vii = getVii();
     auto* vb = vii->getVisBuffer();
     // map of rowID (the index of the vector) to rowIDs that should be used to
@@ -1073,6 +1064,53 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
     auto slEnd = sl.end();
     const auto nSubChunks = vii->nSubChunks();
     // const Int lastSubChunkID = nSubChunks - 1;
+    std::vector<std::pair<uInt, uInt>> chunkIDToChunksNeededMap;
+    if (_nTimeStamps) {
+        auto isEven = *_nTimeStamps % 2 == 0;
+        const uInt halfTimeBin = *_nTimeStamps/2;
+        const auto nBefore = isEven ? (halfTimeBin) : (*_nTimeStamps - 1)/2;
+        const auto nAfter = isEven ? nBefore + 1 : nBefore;
+        // integer division
+        // p.first is the first sub chunk needed by the current index.
+        // p.second is the first sub chunk that needs the current index
+        pair<uInt, uInt> p;
+        for (Int i=0; i<nSubChunks; ++i) {
+            p.first = i - nBefore;
+            p.second = i - nAfter;
+            if ((uInt)i <= nBefore) {
+                p.first = 0;
+                // p.second = *_nTimeStamps - 1;
+            }
+            else if ((uInt)i >= nSubChunks - nAfter) {
+                p.first = nSubChunks - *_nTimeStamps;
+                // p.second = nSubChunks - 1;
+            }
+            if ((uInt)i <= nAfter) {
+                p.second = 0;
+            }
+            /*
+            else if (i >= nSubChunks - nAfter) {
+
+            }
+            */
+            // else if (isEven) {
+            /*
+            else {
+                p.first = i - nBefore;
+                //p.second = i + halfTimeBin;
+            }
+            */
+            /*
+            else {
+                // number of timestamps is odd and we are not near the edge
+                // of the block
+                p.first = p.first = i - halfTimeBin;
+                p.first = p.second = i + halfTimeBin;
+            }
+            */
+            chunkIDToChunksNeededMap.push_back(p);
+        }
+    }
     for (vii->origin(); vii->more(); vii->next(), ++subChunkID) {
         cout << "subChunkID " << subChunkID << endl;
         cout << "subChunkStartRowNum " << subchunkStartRowNum << endl;
@@ -1093,7 +1131,14 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
         const auto nrows = vb->nRows();
         // there is no guarantee a previous subchunk will be included,
         // eg if the timewidth is small enough
-        Int firstIncludedSubChunk = -1;
+        // This is the first subchunk ID that should be used for averaging
+        // grouping data for weight computation of the current subchunk ID.
+        Int firstChunkNeededByCurrentID = -1;
+        Int firstChunkThatNeedsCurrentID = -1;
+        // This is the first ID in the block whose data need to have the current
+        // subchunkID's gathered with other data used to compute the first ID's
+        // weights
+        // Int firstIDThatNeedsUpdating = -1;
         auto subchunkTime = vb->time()[0];
         auto rowInChunk = subchunkStartRowNum;
         if (_slidingTimeWindowWidth) {
@@ -1103,7 +1148,9 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
                 uInt idx = subChunkID - 1;
                 for (; siter!=send; ++siter, --idx) {
                     if (subchunkTime - *siter <= halfWidth) {
-                        firstIncludedSubChunk = idx;
+                        firstChunkNeededByCurrentID = idx;
+                        firstChunkThatNeedsCurrentID = idx;
+                        // _slidingTimeWindowWidth = idx;
                     }
                     else {
                         // should be time sorted, so we can break
@@ -1114,26 +1161,55 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
             }
         }
         else {
-            firstIncludedSubChunk = subChunkID - nBefore;
-            if (firstIncludedSubChunk < 0) {
-                firstIncludedSubChunk= 0;
+            // this one is incorrect
+            firstChunkNeededByCurrentID
+                = chunkIDToChunksNeededMap[subChunkID].first;
+            firstChunkThatNeedsCurrentID
+                = chunkIDToChunksNeededMap[subChunkID].second;
+
+            /*
+            firstIncludedIDForCurrentID = subChunkID - nBefore;
+            firstIDThatNeedsUpdating = firstIncludedIDForCurrentID;
+            if (isEven) {
+                // because of assymetry caused by the timebin
+                --firstIDThatNeedsUpdating;
+                if (firstIDThatNeedsUpdating < 0) {
+                    firstIDThatNeedsUpdating = 0;
+                }
+            }
+            if (firstIncludedIDForCurrentID < 0) {
+                firstIncludedIDForCurrentID = 0;
+                firstIDThatNeedsUpdating = 0;
             }
             if (subChunkID > nSubChunks - *_nTimeStamps) {
-                  firstIncludedSubChunk = nSubChunks - *_nTimeStamps;
+                  firstIncludedIDForCurrentID = nSubChunks - *_nTimeStamps;
+                  firstIDThatNeedsUpdating = firstIncludedIDForCurrentID;
             }
+            */
         }
 
         // auto rowInChunk = subchunkStartRowNum;
         // cout << "nrows " << nrows << endl;
         std::pair<Baseline, uInt> mypair;
+        mypair.second = subChunkID;
+        ThrowIf(
+            firstChunkNeededByCurrentID < 0,
+            "Logic Error: firstChunkNeededByCurrentID < 0"
+        );
+        ThrowIf(
+            firstChunkThatNeedsCurrentID < 0,
+            "Logic Error: firstChunkThatNeedsCurrentID < 0"
+        );
         for (Int row=0; row<nrows; ++row, ++rowInChunk) {
             const auto baseline = _baseline(ant1[row], ant2[row]);
             mypair.first = baseline;
             baselineSubChunkToIndex[mypair] = rowInChunk;
             std::set<uInt> myRowNums;
             myRowNums.insert(rowInChunk);
-            if (subChunkID > 0 && firstIncludedSubChunk >= 0) {
-                auto subchunk = firstIncludedSubChunk;
+            if (subChunkID > 0 /*&& firstChunkNeededByCurrentID >= 0 */) {
+                auto subchunk = min(
+                    firstChunkNeededByCurrentID, firstChunkThatNeedsCurrentID
+                );
                 for (; subchunk < (Int)subChunkID; ++subchunk) {
                     // if (_nTimeStamps && isEven && subchunk == firstIncludedSubChunk) {
                         // in the case of even values, we only want the current
@@ -1149,28 +1225,30 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
                         // if (baseline == Baseline(4, 6)) {
                          //   cout << "existingRowNum " << existingRowNum << endl;
                         // }
+                        /*
                         if (
-                            subchunk > firstIncludedSubChunk
+                            subchunk > firstIncludedIDForCurrentID
                             || ! _nTimeStamps || ! isEven
                         ) {
-                            // in the case of even *_nTimeStamps, we only want
-                            // *_nTimeStamps/2 - 1 rows previous to the current
-                            // row, so we do *not* execute the next line in that
-                            // case when we are processing the first subchunk,
-                            // because that subchunk is *_nTimeStamps/2 before
-                            // the current timestamp and so out of rnage
+                        */
+                        if (subchunk >= firstChunkNeededByCurrentID) {
+                            // The subchunk data is needed for computation
+                            // of the current subchunkID's weights
                             myRowNums.insert(existingRowNum);
                         }
-                        rowMap[existingRowNum].insert(rowInChunk);
+                        if (subchunk >= firstChunkThatNeedsCurrentID) {
+                            rowMap[existingRowNum].insert(rowInChunk);
+                        }
                     }
                 }
             }
-                rowMap.push_back(myRowNums);
-                if (baseline == Baseline(4, 6)) {
-                    auto myrow = rowMap.size() - 1;
-                    cout << "row num " << myrow << " included rows " << rowMap[myrow] << endl;
-                }
+            rowMap.push_back(myRowNums);
+            // debug
+            if (baseline == Baseline(4, 6)) {
+                auto myrow = rowMap.size() - 1;
+                cout << "row num " << myrow << " included rows " << rowMap[myrow] << endl;
             }
+        }
             /*
         }
         else {
