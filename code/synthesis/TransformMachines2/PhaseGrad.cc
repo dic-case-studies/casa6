@@ -139,24 +139,30 @@ namespace casa{
 	  ant1PO_l.resize(2,0);
 	  ant2PO_l.resize(2,0);
 	  blPO_l.resize(2,0);
-	  
-	  ant1PO_l[0] = (pointingOffset[0][antGrp.first]);
-	  ant1PO_l[1] = (pointingOffset[1][antGrp.first]);
-	  ant2PO_l[0] = (pointingOffset[0][antGrp.second]);
-	  ant2PO_l[1] = (pointingOffset[1][antGrp.second]);
 
- 	  // cerr<<"Ant1: "<<antGrp.first << " "<< ant1PO_l[0] << " " << ant1PO_l[1] << endl;
-	  // cerr<<"Ant2: "<<antGrp.second << " "<< ant2PO_l[0] << " " << ant2PO_l[1] << endl;
-	  // cached_FieldOffset_p[row](0) = pointingOffset[row][0];
-	  // cached_FieldOffset_p[row](1) = pointingOffset[row][1];
-	  blPO_l[0] = (ant1PO_l[0] + ant2PO_l[0])/2;
-	  blPO_l[1] = (ant1PO_l[1] + ant2PO_l[1])/2;
-	  tmpblPO_l = pointingOffsets_p->gradPerPixel(blPO_l);
-	  cached_FieldOffset_p[row](0) = tmpblPO_l[0];
-	  cached_FieldOffset_p[row](1) = tmpblPO_l[1];
-	  // cached_FieldOffset_p[row](0) = pointingOffsets_p->gradPerPixel((ant1PO_l[0] + ant2PO_l[0])/2);
-	  // cached_FieldOffset_p[row](1) = pointingOffsets_p->gradPerPixel((ant1PO_l[1] + ant2PO_l[1])/2);
+	  if(pointingOffsets_p->getDoPointing())
+	    {
+	      ant1PO_l[0] = (pointingOffset[0][antGrp.first]);
+	      ant1PO_l[1] = (pointingOffset[1][antGrp.first]);
+	      ant2PO_l[0] = (pointingOffset[0][antGrp.second]);
+	      ant2PO_l[1] = (pointingOffset[1][antGrp.second]);
 
+	      // cerr<<"Ant1: "<<antGrp.first << " "<< ant1PO_l[0] << " " << ant1PO_l[1] << endl;
+	      // cerr<<"Ant2: "<<antGrp.second << " "<< ant2PO_l[0] << " " << ant2PO_l[1] << endl;
+	      blPO_l[0] = (ant1PO_l[0] + ant2PO_l[0])/2;
+	      blPO_l[1] = (ant1PO_l[1] + ant2PO_l[1])/2;
+	      tmpblPO_l = pointingOffsets_p->gradPerPixel(blPO_l);
+	      cached_FieldOffset_p[row](0) = tmpblPO_l[0];
+	      cached_FieldOffset_p[row](1) = tmpblPO_l[1];
+	    }
+	  else
+	    {
+	      cached_FieldOffset_p[row](0) = pointingOffset[row][0];
+	      cached_FieldOffset_p[row](1) = pointingOffset[row][1];
+
+	      // cached_FieldOffset_p[row](0) = pointingOffsets_p->gradPerPixel((ant1PO_l[0] + ant2PO_l[0])/2);
+	      // cached_FieldOffset_p[row](1) = pointingOffsets_p->gradPerPixel((ant1PO_l[1] + ant2PO_l[1])/2);
+	    }
  	  // cerr << "Cached Field Offset is : " << cached_FieldOffset_p[row](0) << " " << cached_FieldOffset_p[row](1)<< " for row " << row << " field id " << vb.fieldId()(0) << endl;
 	  for(int ix=0;ix<nx;ix++)
 	    {
