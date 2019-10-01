@@ -59,6 +59,10 @@
 #include <graphics/X11/X_exit.h>
 */
 
+#if defined(CASA6)
+#include <asdmstman/AsdmStMan.h>
+#endif
+
 #if ! defined(WITHOUT_DBUS)
 #include <casadbus/utilities/Diagnostic.h>
 #endif
@@ -238,6 +242,10 @@ int main( int argc, const char *argv[] ) {
 
     std::string exepath(executable_path( ));
 
+#if defined(CASA6)
+    casa::AsdmStMan::registerClass( );
+#endif
+
 #ifndef NO_CRASH_REPORTER
     CrashReporter::initializeFromApplication(argv[0]);
 #endif
@@ -324,15 +332,15 @@ int main( int argc, const char *argv[] ) {
 		}
 
 	} else if ( ends_with(exepath, "/AppRun") ||
-                ends_with(exepath, "/CASAviewer.app/usr/bin/CASAviewer") ||
-                ends_with(exepath, "/casaviewer.app/usr/bin/casaviewer") ) {
+                ends_with(exepath, "/usr/bin/CASAviewer") ||
+                ends_with(exepath, "/usr/bin/casaviewer") ) {
 
 		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 		// linux  --  path is specific to package format
 		//
 		//    .../AppRun implies AppImage bash script startup, e.g. from an unpacked AppImage
-		//    .../CASAviewer.app/usr/bin/CASAviewer implies debugging or running from the
-		//                                          build tree before it has been packaged
+		//    .../usr/bin/CASAviewer implies debugging or running from the
+		//                           build tree before it has been packaged
 		//
 		// -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 		// initialize CASAviewer app data...
@@ -341,7 +349,7 @@ int main( int argc, const char *argv[] ) {
 		bool packed_app = ends_with(exepath, "/AppRun");
 		std::string datapath(exepath);
 		//     packed_app -> .../AppRun
-		// not packed_app -> .../CASAviewer.app/usr/bin/CASAviewer
+		// not packed_app -> .../usr/bin/CASAviewer
 		datapath.erase( datapath.end( ) -  (packed_app ? 6 : 18), datapath.end( ) );
 		std::string pgplotpath = datapath;			   // save for later...
 		std::string pluginpath = datapath;			   // save for later...

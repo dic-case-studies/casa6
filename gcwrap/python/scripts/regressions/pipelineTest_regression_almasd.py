@@ -15,6 +15,7 @@ rootdatapath = pathname+'/data/regression/pipeline/almasd/'
 # 2019-Mar-07 H. Ezawa
 # 2019-Mar-08 H. Ezawa : Updated the goal values for CASA 5.5
 # 2019-Mar-18 H. Ezawa : minor bug(s) fixed
+# 2019-Sep-07 H. Ezawa : Updated the goal values due to CAS-12664
 
 '''Initial VLA pipeline regression
    B. Kent, May 2015
@@ -49,8 +50,8 @@ def load_context(filename):
 def pipeline_regression():
     global regstate
     # global MIN_CASA_REVISION
-        
-    
+
+
     #revision = int(casadef.subversion_revision)
     #if MIN_CASA_REVISION > revision:
     #    msg = ('Minimum CASA revision for the pipeline is r%s, '
@@ -70,7 +71,7 @@ def pipeline_regression():
         import pipeline.recipes.hsd as hsd
     except ImportError, e:
         print(e)
-    
+
     # Check to see if the ASDM exists
     if not os.path.exists(ASDM):
         print( "Unable to open ASDM {}".format(ASDM) )
@@ -78,10 +79,10 @@ def pipeline_regression():
         raise IOError
     else:
         print( "Using {}".format(ASDM) )
-    
+
 # Run the Pipeline standard recipe
 
-    # copy jyperk file 
+    # copy jyperk file
     try:
         shutil.copy2( jyperk, jyperk_file )
     except:
@@ -117,7 +118,7 @@ def run():
 
 def stats():
     global startTime, endTime, startProc, endProc, regstate, standard_context_file
-    
+
     datestring = datetime.datetime.isoformat(datetime.datetime.today())
     outfile = 'sd_pipeline.'+datestring+'.log'
     try:
@@ -128,14 +129,14 @@ def stats():
 
     casa_version = casalog.version()
 
-    # import pipeline 
+    # import pipeline
     try:
         import pipeline
     except ImportError, e:
         print_log( logfile, e )
         print_log( logfile, "Unable to import the CASA pipeline")
         regstate = False
-    
+
     # Open context
     try:
         context = pipeline.Pipeline(context='last').context
@@ -167,7 +168,7 @@ def stats():
 
         # define goal values and tolerances #
         im_text={}
-        im_goal={} 
+        im_goal={}
         im_rtol={}
         im_atol={}
         im_act={}
@@ -183,20 +184,25 @@ def stats():
         # im_goal['direction'] = me.direction( 'J2000', '-174.271746303deg', '15.8228893587deg' )
         # r42408 or later
         im_goal['direction'] = me.direction( 'J2000', '-174.27166297deg', '15.8229093587deg' )
-        im_atol['direction'] = 0.01/3600.0   # separation angle in deg 
+        im_atol['direction'] = 0.01/3600.0   # separation angle in deg
         im_rtol['direction'] = 0            # n/a
 
-        im_text['flux'] = "Integrated Flux (Jy/beam)"       
+        im_text['flux'] = "Integrated Flux (Jy/beam)"
         # update reference due to PIPE-313
         # up to r42407
         # im_goal['flux'] = 0.359638377757
         # r42408 or later
-        im_goal['flux'] = 0.359533426907
+        # im_goal['flux'] = 0.359533426907
+        # im_atol['flux'] = 1E-8
+        # im_rtol['flux'] = 1E-5
+        # update reference due to CAS-12664
+        im_goal['flux'] = 0.354782044604
         im_atol['flux'] = 1E-8
         im_rtol['flux'] = 1E-5
 
+
         sp_text={}
-        sp_goal={} 
+        sp_goal={}
         sp_rtol={}
         sp_atol={}
         sp_act={}
@@ -220,7 +226,11 @@ def stats():
         # up to r42407
         # sp_goal['flux'] = 6.74114826797
         # r42408 or later
-        sp_goal['flux'] = 6.73362001474
+        # sp_goal['flux'] = 6.73362001474
+        # sp_atol['flux'] = 1E-8
+        # sp_rtol['flux'] = 1E-5
+        # update reference due to CAS-12664
+        sp_goal['flux'] = 6.72577005538
         sp_atol['flux'] = 1E-8
         sp_rtol['flux'] = 1E-5
 
@@ -269,7 +279,7 @@ def stats():
                 integ_region[ix][iy] = 0
                 if ( (cx-ix)**2 + (cy-iy)**2 ) < integ_radius**2:
                     integ_region[ix][iy] = 1
-        
+
         # calc integrated map
         imdata2_2d_region = imdata2_2d * integ_region
         immask2_2d_region = immask2_2d * integ_region
@@ -367,7 +377,7 @@ def stats():
             print_log( logfile, " Values are **NOT** within tolerances." )
             print_log( logfile, " Sigle dish regression **NOT** passed." )
             regstate = False
-            
+
     except Exception as e:
         regstate=False
         print_log( logfile, e )

@@ -27,7 +27,7 @@
  template <class T> void FTMachine::getGrid(casacore::Array<T>& thegrid){
 
     thegrid.resize();
-    void * ptr;
+    void * ptr = nullptr;
     casacore::Array<casacore::Float> tmpFloat;
     casacore::Array<casacore::Double> tmpDouble;
     casacore::IPosition shp;

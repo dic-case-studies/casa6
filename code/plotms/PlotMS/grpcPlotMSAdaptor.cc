@@ -406,7 +406,7 @@ namespace casa {
         }
         if (y.size( ) > 0) {
             bool ok = false;
-            auto a = PMS::axis(x, &ok);
+            auto a = PMS::axis(y, &ok);
             if (ok) cache->setYAxis(a,dataindex);
         }
         if (xdata.size( ) > 0) {
@@ -517,6 +517,37 @@ namespace casa {
         return grpc::Status::OK;
     }
 
+    // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
+    ::grpc::Status grpcPlotMS::setShowImage( ::grpc::ServerContext *context,
+                                             const ::rpc::plotms::SetToggle *req,
+                                             ::google::protobuf::Empty* ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+        if (debug) {
+            std::cout << "received setShowImage( ... ) event... (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stdout);
+        }
+
+        int index = req->index( );
+        if ( invalid_index(index) ) {
+            if (debug) std::cout << "ERROR index out of range in setShowImage(" << index << ")" << std::endl;
+            return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
+        }
+
+        bool show = req->state( );
+        bool update = req->update( );
+        ppcache(index)->setShowImage(show);
+
+        std::promise<bool> prom;
+        qtGO( [&]( ) {
+                  if (update) update_parameters(index);
+                  prom.set_value(true);
+              } );
+        auto fut = prom.get_future( );
+        fut.get( );
+
+        return grpc::Status::OK;
+    }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     void grpcPlotMS::populate_selection( const ::rpc::plotms::SetSelection &req, PlotMSSelection &sel ) {
