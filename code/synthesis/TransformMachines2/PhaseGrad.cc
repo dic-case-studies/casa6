@@ -52,20 +52,14 @@ namespace casa{
   //
   //----------------------------------------------------------------------
   //
-  bool PhaseGrad::needsNewPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
-				    const VisBuffer2& vb,
+  bool PhaseGrad::needsNewPhaseGrad(const VisBuffer2& vb,
 				    const int& /*row*/)
   {
     unsigned int nRow=vb.nRows();
-    // Vector<Vector<double> > pointingOffset = pointingOffsets_p->pullPointingOffsets();
     if (cached_FieldOffset_p.nelements() < nRow) cached_FieldOffset_p.resize(nRow,true);
 
-    return (
-	    // ((fabs(pointingOffset[row][0]-cached_FieldOffset_p[row](0))) > 1e-12) ||
-	    // ((fabs(pointingOffset[row][1]-cached_FieldOffset_p[row](1))) > 1e-12) ||
-	    (field_phaseGrad_p.shape()[0] < maxCFShape_p[0])           ||
-	    (field_phaseGrad_p.shape()[1] < maxCFShape_p[1])
-	    );
+    return ((field_phaseGrad_p.shape()[0] < maxCFShape_p[0])           ||
+	    (field_phaseGrad_p.shape()[1] < maxCFShape_p[1]));
   }
   //
   //----------------------------------------------------------------------
@@ -101,7 +95,7 @@ namespace casa{
       // If the pointing or the max. CF size changed, recompute the phase gradient.
       //
       LogIO log_l(LogOrigin("PhaseGrad","computeAntennaPointingGrad"));
-      Bool needsCFShape_l = (needsNewPhaseGrad(pointingOffsets_p, vb, row));
+      Bool needsCFShape_l = (needsNewPhaseGrad(vb, row));
       if (needsCFShape_l || needsNewFieldPG_p || needsNewPOPG_p )
 	{
 	  Vector<Vector<double> > pointingOffset;
@@ -115,23 +109,23 @@ namespace casa{
 	    pointingOffset = pointingOffsets_p->pullPointingOffsets();
 	  if(needsNewFieldPG_p)
 	    {
-	       log_l << "Computing Phase Grad for Field offset: " << row << " " << cached_FieldOffset_p[row](0) << cached_FieldOffset_p[row](1) << "  spw :" 
-		     << vb.spectralWindows()(0) << " and field " << vb.fieldId()(0) 
+	       log_l << "Computing Phase Grad for Field : " << vb.fieldId()(0) << "  for spw :" 
+		     << vb.spectralWindows()(0)
 		     << LogIO::POST;
 	    }
-	  else if(needsCFShape_l)
-	    {
-	      log_l << "Computing Phase Grad for change of max CF size : " << maxCFShape_p[0]
-		    << LogIO::POST;
-	    }
-	  else if(needsNewPOPG_p)
-	    {
+	  // else if(needsCFShape_l)
+	  //   {
+	  //     log_l << "Computing Phase Grad for change of max CF size : " << maxCFShape_p[0]
+	  // 	    << LogIO::POST;
+	  //   }
+	  // else if(needsNewPOPG_p)
+	  //   {
 
-	      // cerr << "NeedsNewPOPG_p for row "<< row << " " << vb.fieldId()(0)<< " " <<  vb.spectralWindows()(0) << endl;
-	      // log_l << "Computing Phase Grad for Antenna Pointing Offset for row : " << row << " " << pointingOffset[row][0] << " " << pointingOffset[row][1] << " spw :"
-	      // 	    << vb.spectralWindows()(0) << " and field " << vb.fieldId()(0)
-	      // 	    << LogIO::POST;
-	    }
+	  //     // cerr << "NeedsNewPOPG_p for row "<< row << " " << vb.fieldId()(0)<< " " <<  vb.spectralWindows()(0) << endl;
+	  //     // log_l << "Computing Phase Grad for Antenna Pointing Offset for row : " << row << " " << pointingOffset[row][0] << " " << pointingOffset[row][1] << " spw :"
+	  //     // 	    << vb.spectralWindows()(0) << " and field " << vb.fieldId()(0)
+	  //     // 	    << LogIO::POST;
+	  //   }
 	    
 	  int nx=maxCFShape_p(0), ny=maxCFShape_p(1);
 	  double grad;

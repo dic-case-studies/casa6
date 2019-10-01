@@ -274,9 +274,10 @@ namespace casa{
 		meanAntGrdPO_l(ii,jj).resize(2,0);
 	      }
 
-	  int ii,jj, xOrigin=floor(binsx_p/2.0), yOrigin=floor(binsy_p/2.0);
-	  // cerr <<"xOrigin : "<<xOrigin <<" yOrigin : "<<yOrigin<<endl;
-	  int poGridOriginX = floor (maxPO[0] - minPO[0])/2.0 , poGridOriginY =  floor (maxPO[1] - minPO[1])/2.0 ;
+	  int ii,jj; 
+	  // int xOrigin=floor(binsx_p/2.0), yOrigin=floor(binsy_p/2.0);
+	  // // cerr <<"xOrigin : "<<xOrigin <<" yOrigin : "<<yOrigin<<endl;
+	  // int poGridOriginX = floor (maxPO[0] - minPO[0])/2.0 , poGridOriginY =  floor (maxPO[1] - minPO[1])/2.0 ;
 
 	  // cerr <<"poGridOriginX : "<<poGridOriginX <<" poGridOriginY : "<<poGridOriginY<<endl;
 	  for(unsigned int kk=0; kk < poAnt1[0].size(); kk++)
@@ -340,7 +341,6 @@ namespace casa{
 		    for (unsigned int kk=0;kk<antennaGroups_p(ii,jj).size();kk++)
 		      ostr <<antennaGroups_p(ii,jj).at(kk)<<" ";
 		    ostr << endl;
-		    //cerr << ostr.str() << endl;
 		  }
 	    log_l << ostr.str() << LogIO::POST;
 	  }

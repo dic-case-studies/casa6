@@ -53,14 +53,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     PhaseGrad():field_phaseGrad_p(), antenna_phaseGrad_p(), cached_FieldOffset_p(), cachedCFBPtr_p(NULL), maxCFShape_p(2), needsNewFieldPG_p(false), needsNewPOPG_p(false)
     {};
 
-    ~PhaseGrad() {cerr << "PG good bye" << endl;};
+    ~PhaseGrad() {};
 
     PhaseGrad& operator=(const PhaseGrad& other);
     
     inline const casacore::Matrix<casacore::Complex>& getFieldPointingGrad() {return field_phaseGrad_p;}
     inline const casacore::Matrix<casacore::Complex>& getAntennaPointingGrad() {return antenna_phaseGrad_p;}
-    bool needsNewPhaseGrad(const casacore::CountedPtr<PointingOffsets>& pointingOffset,
-			   const vi::VisBuffer2& vb,
+    bool needsNewPhaseGrad(const vi::VisBuffer2& vb,
 			   const int& row);
     //    void getPhaseGrad(casacore::Matrix<casacore::Complex>& fullPhaseGrad) {fullPhaseGrad = antenna_phaseGrad_p + sky_phaseGrad_p;}
 

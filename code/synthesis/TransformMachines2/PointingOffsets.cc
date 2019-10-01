@@ -205,7 +205,7 @@ namespace casa{
     auto itr = unique(ant1.begin(),ant1.end());
     ant1.resize(distance(ant1.begin(),itr));
 
-    cerr <<"ant1.size()" << ant1.size() << endl;
+    // cerr <<"ant1.size()" << ant1.size() << endl;
     pix_l.resize(2);
     pix_l[0].resize(ant1.size(),0);
     pix_l[1].resize(ant1.size(),0);
@@ -219,7 +219,7 @@ namespace casa{
 	Vector<double> tmp = toPix(vb, antDir1, vbdir);
 	pix_l[0][nant]=tmp[0];
 	pix_l[1][nant]=tmp[1];
-	cerr<< "Ant : "<< ant1[nant]<< " Offsets : "<< pix_l[0][nant] << " " << pix_l[1][nant]<<endl;
+	// cerr<< "Ant : "<< ant1[nant]<< " Offsets : "<< pix_l[0][nant] << " " << pix_l[1][nant]<<endl;
 	// tmp = toPix(vb, antDir2, vbdir);
 	// pix_l[2][irow]=tmp[0];
 	// pix_l[3][irow]=tmp[1];
