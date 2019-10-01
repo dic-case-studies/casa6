@@ -233,7 +233,7 @@ FlagAgentSummary::preProcessBuffer(const vi::VisBuffer2 &visBuffer)
     spw_str = std::to_string(spw);
 
     observationId = visBuffer.observationId()[0];
-    observationId_str = std::to_string(spw);
+    observationId_str = std::to_string(observationId);
 
     // Read in channel-frequencies.
     // RVU : I'm not sure if this should go here, or in the FlagDataHandler so that all agents get it.
