@@ -24,16 +24,20 @@ import matplotlib.transforms
 import inspect
 from casatasks.private.casa_transition import *
 if is_CASA6:
+    from casatasks import casalog
     from casatools import table as tbtool
     from casatools import msmetadata as msmdtool
     from casatools import atmosphere as attool
     from casatools import quanta as qatool
     from casatools import measures as metool
     from casatools import ms as mstool
+    from casatools import ctsys
+    compare_version = ctsys.compare_version
 else:
     from taskinit import * # necessary for tb.open() to work
     if (type(casac.Quantity) != type):  # casa 4.x
         attool = casac.atmosphere
+    compare_version = cu.compare_version
 
 TOP_MARGIN  = 0.25   # Used if showatm=T or showtksy=T
 BOTTOM_MARGIN = 0.25 # Used if showfdm=T
@@ -1278,7 +1282,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     # Now open the associated ms tables via msmd tool
 #     msAnt = []  # comment this out when CAS-6801 changes are in place
     if (debug): print( "creating msmd tool")
-    if (cu.compare_version('<',[4,1,0])):  
+    if (compare_version('<',[4,1,0])):
         print("This version of casa is too old to use the msmd tool.  Use au.plotbandpass instead.")
         return
     mymsmd = ''
@@ -1288,7 +1292,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         if (os.path.exists(msName) == False):
             msName = os.path.dirname(caltable)+'/'+msName
             if (debug): print( "found msName = %s." % (msName))
-        if (cu.compare_version('<',[4,1,0])):
+        if (compare_version('<',[4,1,0])):
             print("This version of casa is too old to use the msmd tool.  Use au.plotbandpass instead.")
             return
         try:
@@ -1447,7 +1451,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
             print("WARNING: spw %d is not in the solution. Removing it from the list to plot." % (myspw))
             print("Available spws = ", uniqueSpwsInCalTable)
             keepSpwsToPlot.remove(myspw)
-            if (cu.compare_version('>=',[4,1,0]) and mymsmd != ''):  
+            if (compare_version('>=',[4,1,0]) and mymsmd != ''):
 # #              nonwvrspws = list(set(range(mymsmd.nspw())).difference(set(mymsmd.wvrspws())))
                 if (myspw not in range(mymsmd.nspw())):
                     print("FATAL: spw %d is not even in the ms.  There might be a bug in your script." % (myspw))
@@ -1462,7 +1466,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     originalSpwsToPlot = computeOriginalSpwsToPlot(spwsToPlot, originalSpw, tableFormat, debug)
            
     # Now generate the list of minimal basebands that contain the spws to be plotted
-    if (cu.compare_version('>=',[4,1,0]) and msFound):
+    if (compare_version('>=',[4,1,0]) and msFound):
         allBasebands = []
         if (mymsmd != ''):
           try:
@@ -2718,7 +2722,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         for baseband in basebands:
             myspwlist = []
             for spw in spwsToPlot:
-                if (cu.compare_version('>=',[4,1,0]) and msFound):
+                if (compare_version('>=',[4,1,0]) and msFound):
                     if (mymsmd.baseband(originalSpwsToPlot[list(spwsToPlot).index(spw)]) == baseband):
                         myspwlist.append(spw)
                 else:
@@ -2754,7 +2758,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
           if (debug): print("setting spwsToPlot for baseband %d (bbctr=%d) to %s" % (baseband, bbctr, str(spwsToPlot)))
        else:
            baseband = 0  # add from here to "ispw=" on 2014-04-05
-           if (cu.compare_version('>=',[4,1,0])):
+           if (compare_version('>=',[4,1,0])):
                if (debug): print("A, msName=%s, vis=%s" % (msName,vis))
                if (getBasebandDict(vis=msName,caltable=caltable,mymsmd=mymsmd) != {}):
                    if (debug): print("B")
@@ -2783,7 +2787,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                 allTimesFlaggedOnThisSpw = True # used only by overlay='time'
                 if (groupByBaseband == False):
                     baseband = 0
-                    if (cu.compare_version('>=',[4,1,0])):
+                    if (compare_version('>=',[4,1,0])):
                         if (getBasebandDict(vis=msName,caltable=caltable,mymsmd=mymsmd) != {}):
                             try:
                                 baseband = mymsmd.baseband(originalSpwsToPlot[spwctr])
@@ -5589,7 +5593,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
 
     n = myat.getNumChan()
     if (verbose): print("numchan = %s" % (str(n)))
-    if cu.compare_version('<',[4,0,0]):
+    if compare_version('<',[4,0,0]):
         dry = np.array(myat.getDryOpacitySpec(0)['dryOpacity'])
         wet = np.array(myat.getWetOpacitySpec(0)['wetOpacity'].value)
         TebbSky = []
@@ -5648,7 +5652,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
 #        freq = np.linspace(rf+((numchan-1)/2.)*chansepGHz, 
 #                           rf-((numchan-1)/2.)*chansepGHz, numchan)
     # Therewas a 1-channel offset in CASA 5.0.x (CAS-10228), but it was fixed.
-#    if (cu.compare_version('<',[5,1,0])):  
+#    if (compare_version('<',[5,1,0])):
 #        freq += chansepGHz
 
     if (verbose): print("Done CalcAtmTransmission")
@@ -6365,7 +6369,7 @@ def callFrequencyRangeForSpws(mymsmd, spwlist, vm, caltable=None):
     Uses msmd, unless the ms is not found, in which case it uses
     the spw information inside the (new-style) cal-table.
     """
-    if (mymsmd != '' and cu.compare_version('>=',[4,1,0])):
+    if (mymsmd != '' and compare_version('>=',[4,1,0])):
         return(frequencyRangeForSpws(mymsmd,spwlist))
     else:
         freqs = []
@@ -6465,7 +6469,7 @@ def getBasebandDict(vis=None, spwlist=[], caltable=None, mymsmd=None):
         return
     if (type(bbs) == int):  # old datasets will bomb on msmd.baseband()
         return(bbdict)
-    if (cu.compare_version('>=',[4,1,0]) and vis != None):
+    if (compare_version('>=',[4,1,0]) and vis != None):
         if (os.path.exists(vis)):
             needToClose = False
             if mymsmd is None or mymsmd == '':
@@ -6529,7 +6533,7 @@ def createCasaTool(mytool):
     A wrapper to handle the changing ways in which casa tools are invoked.
     Todd Hunter
     """
-    if (type(casac.Quantity) != type):  # casa 4.x
+    if is_CASA6 or type(casac.Quantity) != type:  # CASA 6, CASA 4.x
         myt = mytool()
     else:  # casa 3.x
         myt = mytool.create()
