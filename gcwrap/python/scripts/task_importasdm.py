@@ -512,11 +512,19 @@ def importasdm(
         ##############################################################################################3
         # CAS-7369 - Create an output Multi-MS (MMS)
         if createmms:
-            # Get the default parameters of partition
-            from tasks import partition
-            fpars = partition.parameters
-            for mypar in fpars.keys():
-                fpars[mypar] = partition.itsdefault(mypar)
+            fpars = { }
+            if is_CASA6:
+                # Get the default parameters of partition
+                import inspect
+                from casatasks import partition as pt
+                for k,v in inspect.signature(pt).parameters.items( ): 
+                    fpars[k] = v.default
+            else:
+                # Get the default parameters of partition
+                from tasks import partition
+                fpars = partition.parameters
+                for mypar in fpars.keys():
+                    fpars[mypar] = partition.itsdefault(mypar)
                 
             # Call the cluster for each MS
             for myviso in vistoproc:
