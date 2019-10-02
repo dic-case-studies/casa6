@@ -995,7 +995,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     allowedFrames = [11,21,31,41,51,61,71,81,22,32,42] # [11,22,32,42]
     if (int(subplot) > 100):
         # This will accept 111, 221, 321, 421, etc.
-        subplot /= 10
+        subplot //= 10
     if ((int(subplot) in allowedFrames)==False):
       print("Subplot choice (rows x columns) must be one of %s" % (str(allowedFrames)))
       print("(with an optional trailing digit that is ignored).")
@@ -1046,14 +1046,14 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         return()
     xframeStart = int(subplot)*10  # i.e. 110 or 220 or 420
     firstFrame = xframeStart + 1
-    lastFrame = xframeStart + (subplot/10)*(subplot%10)
+    lastFrame = xframeStart + (subplot//10)*(subplot%10)
     bottomRowFrames = [111,212,313,414,515,616,717,818,223,224,325,326,427,428]  # try to make this more general
     leftColumnFrames = [111,211,212,311,312,313,411,412,413,414,511,512,513,514,515,611,612,613,614,615,616,
                       711,712,713,714,715,716,717,811,812,813,814,815,816,817,818,221,223,321,323,325,421,423,425,427]
     rightColumnFrames = [111,211,212,311,312,313,411,412,413,414,511,512,513,514,515,611,612,613,614,615,616,
                        711,712,713,714,715,716,717,811,812,813,814,815,816,817,818,222,224,322,324,326,422,424,426,428]
     subplotCols = subplot % 10
-    subplotRows = subplot/10
+    subplotRows = subplot//10
     ystartPolLabel = 1.0-0.04*subplotRows
     ystartMadLabel = 0.04*subplotRows
     if (subplotCols == 1):
@@ -1143,9 +1143,9 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
             return()
     else:
         myhspace = 0.30
-    if (subplot/10 > 2):
+    if (subplot//10 > 2):
         myhspace = 0.4
-    if (subplot/10 > 3):
+    if (subplot//10 > 3):
         myhspace = 0.6
     mywspace = 0.25
     
@@ -3590,7 +3590,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                     print("If this doesn't work, email the developer (%s)." % (developerEmail))
                                     return()
           
-                                if (np.abs(myxrange/xrange2 - 1) > 0.05 + len(xflag)/len(xchannels)):  # 0.0666 is 2000/1875-1
+                                if (np.abs(myxrange/xrange2 - 1) > 0.05 + len(xflag)//len(xchannels)):  # 0.0666 is 2000/1875-1
                                    # These line widths are optimal for visualizing FDM over TDM
                                    width1 = 1
                                    width2 = 4
@@ -3891,7 +3891,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       else:
                           titleString = "%sspw%s,  field %d: %s%s" % (antennaString,spwString,uniqueFields[fieldIndex],
                                                                       fieldString,timeString)
-                      tsize = titlesize-int(len(titleString)/(maxCharsBeforeReducingTitleFontSize/subplotCols))
+                      tsize = titlesize-int(len(titleString)//(maxCharsBeforeReducingTitleFontSize//subplotCols))
                       pb.title(titleString, size=tsize)
                       if (abs(plotrange[0]) > 0 or abs(plotrange[1]) > 0):
                           SetNewXLimits([plotrange[0],plotrange[1]],5)
@@ -4427,7 +4427,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                     print("No phase data found in second solution.  Try increasing the solutionTimeThresholdSeconds above %.0f." % (solutionTimeThresholdSeconds))
                                     print("If this doesn't work, email the developer (%s)." % (developerEmail))
                                     return()
-                                if (np.abs(myxrange/xrange2 - 1) > 0.05 + len(xflag)/len(xchannels)):  # 0.0666 is 2000/1875-1
+                                if (np.abs(myxrange/xrange2 - 1) > 0.05 + len(xflag)//len(xchannels)):  # 0.0666 is 2000/1875-1
                                    # These line widths are optimal for visualizing FDM over TDM
                                    width1 = 1
                                    width2 = 4
@@ -4694,7 +4694,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                                  showBasebandNumber)
                       titleString = "%sspw%s,  field %d: %s%s" % (antennaString,
                                                                   spwString,uniqueFields[fieldIndex],fieldString,timeString)
-                      pb.title(titleString,size=titlesize-int(len(titleString)/(maxCharsBeforeReducingTitleFontSize/subplotCols)))
+                      pb.title(titleString,size=titlesize-int(len(titleString)//(maxCharsBeforeReducingTitleFontSize//subplotCols)))
                       if (abs(plotrange[0]) > 0 or abs(plotrange[1]) > 0):
                           SetNewXLimits([plotrange[0],plotrange[1]],18)
           
@@ -5561,12 +5561,12 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
     midLatitudeWinter = 3
     numchan = len(freqs)
     # Set the reference freq to be the middle of the middle two channels
-    reffreq=0.5*(freqs[numchan/2-1]+freqs[numchan/2])
+    reffreq=0.5*(freqs[numchan//2-1]+freqs[numchan//2])
     originalnumchan = numchan
     while (numchan > MAX_ATM_CALC_CHANNELS):
-        numchan /= 2
+        numchan //= 2
 #        print("Reducing numchan to ", numchan)
-        chans = range(0,originalnumchan,(originalnumchan/numchan))
+        chans = range(0,originalnumchan,(originalnumchan//numchan))
 
     chansep = (freqs[-1]-freqs[0])/(numchan-1)
     nbands = 1
@@ -6247,12 +6247,12 @@ def stdInfo(a, sigma=3, edge=0, spw=-1, xant=-1, pol=-1):
     number and list of channels that exceed sigma*std, and the worst outlier.
     """
     info = {}
-    if (edge >= len(a)/2):  # protect against too large of an edge value
+    if (edge >= len(a)//2):  # protect against too large of an edge value
         originalEdge = edge
-        if (len(a) == 2*(len(a)/2)):
-            edge = len(a)/2 - 1 # use middle 2 points
+        if (len(a) == 2*(len(a)//2)):
+            edge = len(a)//2 - 1 # use middle 2 points
         else:
-            edge = len(a)/2  # use central point
+            edge = len(a)//2  # use central point
         if (edge < 0):
             edge = 0
         print("stdInfo: WARNING edge value is too large for spw%d xant%d pol%d, reducing it from %d to %d." % (spw, xant, pol, originalEdge, edge))
@@ -6278,12 +6278,12 @@ def madInfo(a, madsigma=3, edge=0):
     of channels that exceed madsigma*MAD, and the worst outlier.
     """
     info = {}
-    if (edge >= len(a)/2):  # protect against too large of an edge value
+    if (edge >= len(a)//2):  # protect against too large of an edge value
         originalEdge = edge
-        if (len(a) == 2*(len(a)/2)):
-            edge = len(a)/2 - 1 # use middle 2 points
+        if (len(a) == 2*(len(a)//2)):
+            edge = len(a)//2 - 1 # use middle 2 points
         else:
-            edge = len(a)/2  # use central point
+            edge = len(a)//2  # use central point
         print("WARNING edge value is too large, reducing it from %d to %d." % (originalEdge, edge))
     info['mad'] = mad(a[edge:len(a)-edge])
     chan = []
@@ -6312,7 +6312,7 @@ def platformingCheck(a, threshold=DEFAULT_PLATFORMING_THRESHOLD):
 #    print("Checking channels %d-%d for platforming" % (startChan,endChan))
     if (startChan <= 0 or endChan >= len(a)):
         return
-    middleChan = (startChan+endChan)/2
+    middleChan = (startChan+endChan)//2
     channelRange1 = range(startChan,middleChan+1)
     channelRange2 = range(endChan,middleChan,-1)
     platforming = False
