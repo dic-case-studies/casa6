@@ -34,6 +34,9 @@ if is_CASA6:
     from casatools import ctsys
     compare_version = ctsys.compare_version
     quantity_as_casa_3x = False
+    # matplotlib 3.1.1 removed hold
+    def old_pb_hold(_hold):
+        pass
 else:
     from taskinit import * # necessary for tb.open() to work
     if (type(casac.Quantity) != type):  # casa 4.x
@@ -41,6 +44,7 @@ else:
     else:
         quantity_as_casa_3x = True # casa 3.x
     compare_version = cu.compare_version
+    old_pb_hold = pb.hold
 
 TOP_MARGIN  = 0.25   # Used if showatm=T or showtksy=T
 BOTTOM_MARGIN = 0.25 # Used if showfdm=T
@@ -3403,7 +3407,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                           drewAtmosphere = False
                       previousSubplot = xframe
                       alreadyPlottedAmp = True  # needed for (overlay='baseband', yaxis='both')  CAS-6477
-                      pb.hold(overlayAntennas or overlayTimes or overlaySpws or overlayBasebands)
+                      old_pb_hold(overlayAntennas or overlayTimes or overlaySpws or overlayBasebands)
                       gampx = np.abs(gplotx)
                       if (nPolarizations == 2):
                           gampy = np.abs(gploty)
@@ -3549,7 +3553,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       if (xaxis.find('chan')>=0 or (msFound==False and tableFormat==33)):    #  'amp'
                           if (debug):
                               print("amp: plot vs. channel **********************")
-                          pb.hold(True)
+                          old_pb_hold(True)
                           for p in range(nPolarizations):
                               if (overlayAntennas or overlayTimes):
                                   if (corr_type_string[p] in polsToPlot):
@@ -3584,7 +3588,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                               pb.xlabel("Channel", size=mysize)
                       elif (xaxis.find('freq')>=0):   # amp
                           if (bOverlay):
-                                pb.hold(True)
+                                old_pb_hold(True)
                                 myxrange = np.abs(xfrequencies[0]-xfrequencies[-1])
                                 try:
                                     xrange2 = np.abs(xfrequencies2[0]-xfrequencies2[-1])
@@ -3763,7 +3767,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                   amplitudeSolution2Y = np.mean(gampy)*(cc-np.mean(cc)+1)
                                   if (debug): print("Done mean(gampy)")
           
-                                  pb.hold(True)
+                                  old_pb_hold(True)
                                   for p in range(nPolarizations):
                                       if (corrTypeToString(corr_type[p]) in polsToPlot):
                                           pb.plot(pfrequencies[p], gamp[p],'%s%s'%(pcolor[p],ampmarkstyle), markersize=markersize,markeredgewidth=markeredgewidth)
@@ -3787,7 +3791,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                         newylimits = recalcYlimitsFreq(chanrange, newylimits, amplitudeSolution2Y, sideband,plotrange,ychannels2,debug,13,chanrangePercent=chanrangePercent)
                                   if (debug): print("Done this block")
                               else:
-                                  pb.hold(True)
+                                  old_pb_hold(True)
                                   for p in range(nPolarizations):
                                       if (corrTypeToString(corr_type[p]) in polsToPlot):
                                           pb.plot(pfrequencies[p], gamp[p],'%s%s'%(pcolor[p],ampmarkstyle), markersize=markersize,markeredgewidth=markeredgewidth)
@@ -3804,7 +3808,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                               # we are not overlaying any B or polynomial solutions      'amp vs. freq'
                               if (showflagged):
                                   # Also show the flagged data to see where the flags are
-                                  pb.hold(True)  # Matches line 2326 for xaxis='chan'
+                                  old_pb_hold(True)  # Matches line 2326 for xaxis='chan'
                                   for p in range(nPolarizations):
                                     if (corrTypeToString(corr_type[p]) in polsToPlot):
                                       if (overlayAntennas or overlayTimes):
@@ -3825,7 +3829,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                         pb.plot(pfrequencies[p], gamp[p], '%s%s'%(pcolor[p],ampmarkstyles[p]), markersize=markersize,markeredgewidth=markeredgewidth)
                                         newylimits = recalcYlimitsFreq(chanrange, newylimits, gamp[p], sideband,plotrange,xchannels,chanrangePercent=chanrangePercent)
                               else:   # showing only unflagged data    'amp vs. freq'
-                                  pb.hold(True)
+                                  old_pb_hold(True)
                                   for p in range(nPolarizations):
                                     if (debug):
                                         print("*p=%d, polsToPlot=%s, len(fieldsToPlot)=%d, len(timerangeList)=%d, myUniqueTime=%s" % (p,str(polsToPlot),len(fieldsToPlot),len(timerangeList), str(myUniqueTime)))
@@ -4291,7 +4295,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       if (previousSubplot != xframe):
                           drewAtmosphere = False
                       previousSubplot = xframe
-                      pb.hold(overlayAntennas or overlayTimes)
+                      old_pb_hold(overlayAntennas or overlayTimes)
                       gphsx = np.arctan2(np.imag(gplotx),np.real(gplotx))*180.0/math.pi
                       if (nPolarizations == 2):
                           gphsy = np.arctan2(np.imag(gploty),np.real(gploty))*180.0/math.pi
@@ -4378,7 +4382,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                 print("bOverlay is FALSE ===========================")
                           
                       if (xaxis.find('chan')>=0 or len(xfrequencies) < 1):    # 'phase'
-                          pb.hold(True)
+                          old_pb_hold(True)
                           for p in range(nPolarizations):
                             if (corrTypeToString(corr_type[p]) in polsToPlot):
                               if (overlayAntennas or overlayTimes):
@@ -4418,7 +4422,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                               pb.xlabel("Channel", size=mysize)
                       elif (xaxis.find('freq')>=0):     # 'phase'
                           if (bOverlay):
-                                pb.hold(True)
+                                old_pb_hold(True)
                                 if (debug):
                                     print("Preparing to plot phase from %f-%f for pols: %s" % (xfrequencies[0],xfrequencies[-1],str(polsToPlot)))
                                     print("Preparing to plot phase from %f-%f for pols: %s" % (pfrequencies[p][0],pfrequencies[p][-1],str(polsToPlot)))
@@ -4461,7 +4465,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                    width1 = 1
                                    width2 = 1
                                    # solutions may be different level of smoothing, so plot highest rms first
-                                   pb.hold(True)
+                                   old_pb_hold(True)
                                    if (MAD(gphsx) < MAD(gphsx2)):
                                      for p in range(nPolarizations):
                                        if (corrTypeToString(corr_type[p]) in polsToPlot):
@@ -4615,7 +4619,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                           matches2 = np.where(fa<yfrequencies[0])[0]
                                       mymean = complexMeanDeg(np.array(cc)[matches[0]:matches2[-1]+1])
                                       phaseSolution2Y = np.mean(gphsy) + cc - mymean
-                                      pb.hold(True)
+                                      old_pb_hold(True)
                                       for p in range(nPolarizations):
                                           if (corrTypeToString(corr_type[p]) in polsToPlot):
                                               pb.plot(pfrequencies[p], gphs[p],'%s%s' % (pcolor[p],phasemarkstyle), markersize=markersize,markeredgewidth=markeredgewidth)
@@ -4632,7 +4636,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                             pb.plot(frequenciesGHz2[index],phaseSolution2Y,'%s%s'%(y3color,bpolymarkstyle),markeredgewidth=markeredgewidth)
                                             newylimits = recalcYlimitsFreq(chanrange, newylimits, phaseSolution2Y, sideband,plotrange,xchannels2,chanrangePercent=chanrangePercent)
                                   else:
-                                      pb.hold(True)
+                                      old_pb_hold(True)
                                       for p in range(nPolarizations):
                                           if (corrTypeToString(corr_type[p]) in polsToPlot):
                                               pb.plot(pfrequencies[p], gphs[p],'%s%s'%(pcolor[p],phasemarkstyle), markersize=markersize,markeredgewidth=markeredgewidth)
@@ -4652,7 +4656,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                       SetNewYLimits([-minPhaseRange,minPhaseRange])
                           else:
                               # we are not overlaying any B or polynomial solutions   'phase vs. freq'
-                              pb.hold(True)
+                              old_pb_hold(True)
                               for p in range(nPolarizations):
                                   if (corrTypeToString(corr_type[p]) in polsToPlot):
                                       if (overlayAntennas or overlayTimes):
@@ -5992,7 +5996,7 @@ def showFDM(originalSpw, chanFreqGHz, baseband, showBasebandNumber, basebandDict
     y0,y1 = pb.ylim()
     yrange = y1 - y0
     myxrange = x1 - x0
-    pb.hold(True)
+    old_pb_hold(True)
     labelAbove = False  # False means label to the right
     for i in range(len(originalSpw)):
         nchan = len(chanFreqGHz[i])
