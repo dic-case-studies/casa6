@@ -100,6 +100,9 @@ class msmetadata_test(unittest.TestCase):
             "DV07", "DV08", "DV10", "DV12", "DV13",
             "DV14", "DV15", "DV16", "DV17", "DV18"
         ]
+        # test default works
+        got = self.md.antennanames()
+        self.assertEqual(got, names, "Default value of antennanames() doesn't match")
         for i in range(self.md.nantennas()):
             got = self.md.antennanames(i)
             self.assertTrue(got == [names[i]])
@@ -1665,9 +1668,17 @@ class msmetadata_test(unittest.TestCase):
     def test_CAS7837(self):
         """Test corner case with no intents to make sure it doesn't segfault"""
         thismd = msmetadata()
-        thismd.open(os.path.join(datadir,'W3OH_MC.ms'))
+        thisDataDir = ctsys.resolve('regression/cvel/input')
+        if os.path.exists('lala.ms'):
+            shutil.rmtree('lala.ms')
+        myms = ms()
+        myms.fromfits('lala.ms',os.path.join(thisDataDir,'W3OH_MC.UVFITS'))
+        myms.done()
+        thismd.open('lala.ms')
         self.assertTrue((thismd.fieldsforintent('*') == numpy.array([0])).all())
         thismd.done()
+        if os.path.exists('lala.ms'):
+            shutil.rmtree('lala.ms')
 
     def test_chaneffbws(self):
         """Test chaneffbws()"""
