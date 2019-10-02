@@ -3192,7 +3192,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                   print("1)setting myUniqueTime to %d" % (mytime))
                               myUniqueTime = mytime
                               ctr += 1
-                      if (ctr > fieldIndicesToPlot and bOverlay==False):
+                      if (ctr > len(fieldIndicesToPlot) and bOverlay==False):
                           print("multi-field time overlay ***************  why are there 2 matches?")
 # #     # #            if (ctr == 0):
 # #     # #                print("No match for %.1f in "%(t), uTPFPS)
