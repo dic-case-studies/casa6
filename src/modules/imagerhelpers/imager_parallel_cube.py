@@ -17,6 +17,7 @@ if is_CASA6:
     from .parallel_imager_helper import PyParallelImagerHelper
 else:
     from taskinit import *
+    from casac import casac
 
     from imagerhelpers.imager_base import PySynthesisImager
     from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
@@ -362,15 +363,17 @@ class PyParallelCubeSynthesisImager():
                         except:
                             casalog.post("Cleaning up the existing file named "+fullconcatimname,"DEBUG")
                             os.remove(fullconcatimname)
-
-                    # Remember to set tempclose=false to avoid a long accessing issue
+                    # set tempclose = false to avoid a long accessing issue
+                    #cmd = 'imageconcat inimages='+subimliststr+' outimage='+"'"+fullconcatimname+"'"+' type='+type+' tempclose=false'      
+                    #ret=os.system(cmd)
+                    #if ret!=0:
+                    #    casalog.post("concatenation of "+concatimname+" failed","WARN")
                     iatool=imageanalysis()
                     concattool = iatool.imageconcat(outfile=fullconcatimname, mode=type, infiles=subimliststr.strip("'"), axis=-1, tempclose=False, overwrite=True)
                     if(len(concattool.shape())==0):
                         casalog.post("concatenation of "+concatimname+" failed","WARN")
                     concattool.done()
                     
-
 
     def getSummary(self):
         joblist=[]
