@@ -33,10 +33,13 @@ if is_CASA6:
     from casatools import ms as mstool
     from casatools import ctsys
     compare_version = ctsys.compare_version
+    quantity_as_casa_3x = False
 else:
     from taskinit import * # necessary for tb.open() to work
     if (type(casac.Quantity) != type):  # casa 4.x
         attool = casac.atmosphere
+    else:
+        quantity_as_casa_3x = True # casa 3.x
     compare_version = cu.compare_version
 
 TOP_MARGIN  = 0.25   # Used if showatm=T or showtksy=T
@@ -5573,7 +5576,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
     if (verbose): print("Opening casac.atmosphere()")
     myat = createCasaTool(attool)
     if (verbose): print("Opened")
-    if (type(casac.Quantity) == type):  # casa 3.x
+    if quantity_as_casa_3x:  # casa 3.x
         fCenter = casac.Quantity(reffreq,'GHz')
         fResolution = casac.Quantity(chansep,'GHz')
         fWidth = casac.Quantity(numchan*chansep,'GHz')
@@ -6533,7 +6536,7 @@ def createCasaTool(mytool):
     A wrapper to handle the changing ways in which casa tools are invoked.
     Todd Hunter
     """
-    if is_CASA6 or type(casac.Quantity) != type:  # CASA 6, CASA 4.x
+    if is_CASA6 or not quantity_as_casa_3x:  # CASA 6, CASA 4.x
         myt = mytool()
     else:  # casa 3.x
         myt = mytool.create()
