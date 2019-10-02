@@ -1,7 +1,7 @@
 ##########################################################################
 ##########################################################################
 #
-# Test programs for the refactored imager :  test_refimager
+# Test programs for the refactored imager :  test_tclean
 #
 # Each of the following categories (classes) has a set of tests within it.
 #
