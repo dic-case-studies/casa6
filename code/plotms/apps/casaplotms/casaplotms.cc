@@ -45,6 +45,10 @@
 #include <stdcasa/StdCasa/CrashReporter.h>
 #endif
 
+#if defined(CASA6)
+#include <asdmstman/AsdmStMan.h>
+#endif
+
 #include <signal.h>
 #include <QDebug>
 #include <casa/namespace.h>
@@ -123,6 +127,10 @@ int main(int argc, char* argv[]) {
 
 #if (0)
 setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediately always */
+#endif
+
+#if defined(CASA6)
+    casa::AsdmStMan::registerClass( );
 #endif
 
 #ifndef NO_CRASH_REPORTER

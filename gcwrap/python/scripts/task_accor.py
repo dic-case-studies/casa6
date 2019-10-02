@@ -12,7 +12,7 @@ else:
         from callibrary import *
         from taskinit import *
 
-        calibrator = cbtool
+        calibrater = cbtool
 
 def accor(vis=None,caltable=None,
           field=None,spw=None,intent=None,
