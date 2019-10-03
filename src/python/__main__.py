@@ -21,6 +21,8 @@ for flag in sys.argv:
         print(__os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','proto','registrar.proto'))
     if flag == '--proto-shutdown':
         print(__os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','proto','shutdown.proto'))
+    if flag == '--proto-ping':
+        print(__os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','proto','ping.proto'))
     if flag == '--compiler-cc':
         print(build['build.compiler.cc'])
     if flag == '--compiler-cxx':
@@ -38,3 +40,4 @@ for flag in sys.argv:
         print("--grpc-protopy\t\tpath to Python protoc compiler")
         print("--proto-registrar\tpath to registrar protobuf spec")
         print("--proto-shutdown\tpath to shutdown protobuf spec")
+        print("--proto-ping\t\tpath to ping protobuf spec")
