@@ -24,16 +24,27 @@ import matplotlib.transforms
 import inspect
 from casatasks.private.casa_transition import *
 if is_CASA6:
+    from casatasks import casalog
     from casatools import table as tbtool
     from casatools import msmetadata as msmdtool
     from casatools import atmosphere as attool
     from casatools import quanta as qatool
     from casatools import measures as metool
     from casatools import ms as mstool
+    from casatools import ctsys
+    compare_version = ctsys.compare_version
+    quantity_as_casa_3x = False
+    # matplotlib 3.1.1 removed hold
+    def old_pb_hold(_hold):
+        pass
 else:
     from taskinit import * # necessary for tb.open() to work
     if (type(casac.Quantity) != type):  # casa 4.x
         attool = casac.atmosphere
+    else:
+        quantity_as_casa_3x = True # casa 3.x
+    compare_version = cu.compare_version
+    old_pb_hold = pb.hold
 
 TOP_MARGIN  = 0.25   # Used if showatm=T or showtksy=T
 BOTTOM_MARGIN = 0.25 # Used if showfdm=T
@@ -991,7 +1002,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     allowedFrames = [11,21,31,41,51,61,71,81,22,32,42] # [11,22,32,42]
     if (int(subplot) > 100):
         # This will accept 111, 221, 321, 421, etc.
-        subplot /= 10
+        subplot //= 10
     if ((int(subplot) in allowedFrames)==False):
       print("Subplot choice (rows x columns) must be one of %s" % (str(allowedFrames)))
       print("(with an optional trailing digit that is ignored).")
@@ -1042,14 +1053,14 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         return()
     xframeStart = int(subplot)*10  # i.e. 110 or 220 or 420
     firstFrame = xframeStart + 1
-    lastFrame = xframeStart + (subplot/10)*(subplot%10)
+    lastFrame = xframeStart + (subplot//10)*(subplot%10)
     bottomRowFrames = [111,212,313,414,515,616,717,818,223,224,325,326,427,428]  # try to make this more general
     leftColumnFrames = [111,211,212,311,312,313,411,412,413,414,511,512,513,514,515,611,612,613,614,615,616,
                       711,712,713,714,715,716,717,811,812,813,814,815,816,817,818,221,223,321,323,325,421,423,425,427]
     rightColumnFrames = [111,211,212,311,312,313,411,412,413,414,511,512,513,514,515,611,612,613,614,615,616,
                        711,712,713,714,715,716,717,811,812,813,814,815,816,817,818,222,224,322,324,326,422,424,426,428]
     subplotCols = subplot % 10
-    subplotRows = subplot/10
+    subplotRows = subplot//10
     ystartPolLabel = 1.0-0.04*subplotRows
     ystartMadLabel = 0.04*subplotRows
     if (subplotCols == 1):
@@ -1139,9 +1150,9 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
             return()
     else:
         myhspace = 0.30
-    if (subplot/10 > 2):
+    if (subplot//10 > 2):
         myhspace = 0.4
-    if (subplot/10 > 3):
+    if (subplot//10 > 3):
         myhspace = 0.6
     mywspace = 0.25
     
@@ -1278,7 +1289,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     # Now open the associated ms tables via msmd tool
 #     msAnt = []  # comment this out when CAS-6801 changes are in place
     if (debug): print( "creating msmd tool")
-    if (cu.compare_version('<',[4,1,0])):  
+    if (compare_version('<',[4,1,0])):
         print("This version of casa is too old to use the msmd tool.  Use au.plotbandpass instead.")
         return
     mymsmd = ''
@@ -1288,7 +1299,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         if (os.path.exists(msName) == False):
             msName = os.path.dirname(caltable)+'/'+msName
             if (debug): print( "found msName = %s." % (msName))
-        if (cu.compare_version('<',[4,1,0])):
+        if (compare_version('<',[4,1,0])):
             print("This version of casa is too old to use the msmd tool.  Use au.plotbandpass instead.")
             return
         try:
@@ -1447,7 +1458,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
             print("WARNING: spw %d is not in the solution. Removing it from the list to plot." % (myspw))
             print("Available spws = ", uniqueSpwsInCalTable)
             keepSpwsToPlot.remove(myspw)
-            if (cu.compare_version('>=',[4,1,0]) and mymsmd != ''):  
+            if (compare_version('>=',[4,1,0]) and mymsmd != ''):
 # #              nonwvrspws = list(set(range(mymsmd.nspw())).difference(set(mymsmd.wvrspws())))
                 if (myspw not in range(mymsmd.nspw())):
                     print("FATAL: spw %d is not even in the ms.  There might be a bug in your script." % (myspw))
@@ -1462,7 +1473,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     originalSpwsToPlot = computeOriginalSpwsToPlot(spwsToPlot, originalSpw, tableFormat, debug)
            
     # Now generate the list of minimal basebands that contain the spws to be plotted
-    if (cu.compare_version('>=',[4,1,0]) and msFound):
+    if (compare_version('>=',[4,1,0]) and msFound):
         allBasebands = []
         if (mymsmd != ''):
           try:
@@ -2718,7 +2729,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         for baseband in basebands:
             myspwlist = []
             for spw in spwsToPlot:
-                if (cu.compare_version('>=',[4,1,0]) and msFound):
+                if (compare_version('>=',[4,1,0]) and msFound):
                     if (mymsmd.baseband(originalSpwsToPlot[list(spwsToPlot).index(spw)]) == baseband):
                         myspwlist.append(spw)
                 else:
@@ -2754,7 +2765,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
           if (debug): print("setting spwsToPlot for baseband %d (bbctr=%d) to %s" % (baseband, bbctr, str(spwsToPlot)))
        else:
            baseband = 0  # add from here to "ispw=" on 2014-04-05
-           if (cu.compare_version('>=',[4,1,0])):
+           if (compare_version('>=',[4,1,0])):
                if (debug): print("A, msName=%s, vis=%s" % (msName,vis))
                if (getBasebandDict(vis=msName,caltable=caltable,mymsmd=mymsmd) != {}):
                    if (debug): print("B")
@@ -2783,7 +2794,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                 allTimesFlaggedOnThisSpw = True # used only by overlay='time'
                 if (groupByBaseband == False):
                     baseband = 0
-                    if (cu.compare_version('>=',[4,1,0])):
+                    if (compare_version('>=',[4,1,0])):
                         if (getBasebandDict(vis=msName,caltable=caltable,mymsmd=mymsmd) != {}):
                             try:
                                 baseband = mymsmd.baseband(originalSpwsToPlot[spwctr])
@@ -3185,7 +3196,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                   print("1)setting myUniqueTime to %d" % (mytime))
                               myUniqueTime = mytime
                               ctr += 1
-                      if (ctr > fieldIndicesToPlot and bOverlay==False):
+                      if (ctr > len(fieldIndicesToPlot) and bOverlay==False):
                           print("multi-field time overlay ***************  why are there 2 matches?")
 # #     # #            if (ctr == 0):
 # #     # #                print("No match for %.1f in "%(t), uTPFPS)
@@ -3396,7 +3407,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                           drewAtmosphere = False
                       previousSubplot = xframe
                       alreadyPlottedAmp = True  # needed for (overlay='baseband', yaxis='both')  CAS-6477
-                      pb.hold(overlayAntennas or overlayTimes or overlaySpws or overlayBasebands)
+                      old_pb_hold(overlayAntennas or overlayTimes or overlaySpws or overlayBasebands)
                       gampx = np.abs(gplotx)
                       if (nPolarizations == 2):
                           gampy = np.abs(gploty)
@@ -3542,7 +3553,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       if (xaxis.find('chan')>=0 or (msFound==False and tableFormat==33)):    #  'amp'
                           if (debug):
                               print("amp: plot vs. channel **********************")
-                          pb.hold(True)
+                          old_pb_hold(True)
                           for p in range(nPolarizations):
                               if (overlayAntennas or overlayTimes):
                                   if (corr_type_string[p] in polsToPlot):
@@ -3577,7 +3588,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                               pb.xlabel("Channel", size=mysize)
                       elif (xaxis.find('freq')>=0):   # amp
                           if (bOverlay):
-                                pb.hold(True)
+                                old_pb_hold(True)
                                 myxrange = np.abs(xfrequencies[0]-xfrequencies[-1])
                                 try:
                                     xrange2 = np.abs(xfrequencies2[0]-xfrequencies2[-1])
@@ -3586,7 +3597,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                     print("If this doesn't work, email the developer (%s)." % (developerEmail))
                                     return()
           
-                                if (np.abs(myxrange/xrange2 - 1) > 0.05 + len(xflag)/len(xchannels)):  # 0.0666 is 2000/1875-1
+                                if (np.abs(myxrange/xrange2 - 1) > 0.05 + len(xflag)//len(xchannels)):  # 0.0666 is 2000/1875-1
                                    # These line widths are optimal for visualizing FDM over TDM
                                    width1 = 1
                                    width2 = 4
@@ -3756,7 +3767,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                   amplitudeSolution2Y = np.mean(gampy)*(cc-np.mean(cc)+1)
                                   if (debug): print("Done mean(gampy)")
           
-                                  pb.hold(True)
+                                  old_pb_hold(True)
                                   for p in range(nPolarizations):
                                       if (corrTypeToString(corr_type[p]) in polsToPlot):
                                           pb.plot(pfrequencies[p], gamp[p],'%s%s'%(pcolor[p],ampmarkstyle), markersize=markersize,markeredgewidth=markeredgewidth)
@@ -3780,7 +3791,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                         newylimits = recalcYlimitsFreq(chanrange, newylimits, amplitudeSolution2Y, sideband,plotrange,ychannels2,debug,13,chanrangePercent=chanrangePercent)
                                   if (debug): print("Done this block")
                               else:
-                                  pb.hold(True)
+                                  old_pb_hold(True)
                                   for p in range(nPolarizations):
                                       if (corrTypeToString(corr_type[p]) in polsToPlot):
                                           pb.plot(pfrequencies[p], gamp[p],'%s%s'%(pcolor[p],ampmarkstyle), markersize=markersize,markeredgewidth=markeredgewidth)
@@ -3797,7 +3808,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                               # we are not overlaying any B or polynomial solutions      'amp vs. freq'
                               if (showflagged):
                                   # Also show the flagged data to see where the flags are
-                                  pb.hold(True)  # Matches line 2326 for xaxis='chan'
+                                  old_pb_hold(True)  # Matches line 2326 for xaxis='chan'
                                   for p in range(nPolarizations):
                                     if (corrTypeToString(corr_type[p]) in polsToPlot):
                                       if (overlayAntennas or overlayTimes):
@@ -3818,7 +3829,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                         pb.plot(pfrequencies[p], gamp[p], '%s%s'%(pcolor[p],ampmarkstyles[p]), markersize=markersize,markeredgewidth=markeredgewidth)
                                         newylimits = recalcYlimitsFreq(chanrange, newylimits, gamp[p], sideband,plotrange,xchannels,chanrangePercent=chanrangePercent)
                               else:   # showing only unflagged data    'amp vs. freq'
-                                  pb.hold(True)
+                                  old_pb_hold(True)
                                   for p in range(nPolarizations):
                                     if (debug):
                                         print("*p=%d, polsToPlot=%s, len(fieldsToPlot)=%d, len(timerangeList)=%d, myUniqueTime=%s" % (p,str(polsToPlot),len(fieldsToPlot),len(timerangeList), str(myUniqueTime)))
@@ -3887,7 +3898,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       else:
                           titleString = "%sspw%s,  field %d: %s%s" % (antennaString,spwString,uniqueFields[fieldIndex],
                                                                       fieldString,timeString)
-                      tsize = titlesize-int(len(titleString)/(maxCharsBeforeReducingTitleFontSize/subplotCols))
+                      tsize = titlesize-int(len(titleString)//(maxCharsBeforeReducingTitleFontSize//subplotCols))
                       pb.title(titleString, size=tsize)
                       if (abs(plotrange[0]) > 0 or abs(plotrange[1]) > 0):
                           SetNewXLimits([plotrange[0],plotrange[1]],5)
@@ -4284,7 +4295,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       if (previousSubplot != xframe):
                           drewAtmosphere = False
                       previousSubplot = xframe
-                      pb.hold(overlayAntennas or overlayTimes)
+                      old_pb_hold(overlayAntennas or overlayTimes)
                       gphsx = np.arctan2(np.imag(gplotx),np.real(gplotx))*180.0/math.pi
                       if (nPolarizations == 2):
                           gphsy = np.arctan2(np.imag(gploty),np.real(gploty))*180.0/math.pi
@@ -4371,7 +4382,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                 print("bOverlay is FALSE ===========================")
                           
                       if (xaxis.find('chan')>=0 or len(xfrequencies) < 1):    # 'phase'
-                          pb.hold(True)
+                          old_pb_hold(True)
                           for p in range(nPolarizations):
                             if (corrTypeToString(corr_type[p]) in polsToPlot):
                               if (overlayAntennas or overlayTimes):
@@ -4411,7 +4422,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                               pb.xlabel("Channel", size=mysize)
                       elif (xaxis.find('freq')>=0):     # 'phase'
                           if (bOverlay):
-                                pb.hold(True)
+                                old_pb_hold(True)
                                 if (debug):
                                     print("Preparing to plot phase from %f-%f for pols: %s" % (xfrequencies[0],xfrequencies[-1],str(polsToPlot)))
                                     print("Preparing to plot phase from %f-%f for pols: %s" % (pfrequencies[p][0],pfrequencies[p][-1],str(polsToPlot)))
@@ -4423,7 +4434,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                     print("No phase data found in second solution.  Try increasing the solutionTimeThresholdSeconds above %.0f." % (solutionTimeThresholdSeconds))
                                     print("If this doesn't work, email the developer (%s)." % (developerEmail))
                                     return()
-                                if (np.abs(myxrange/xrange2 - 1) > 0.05 + len(xflag)/len(xchannels)):  # 0.0666 is 2000/1875-1
+                                if (np.abs(myxrange/xrange2 - 1) > 0.05 + len(xflag)//len(xchannels)):  # 0.0666 is 2000/1875-1
                                    # These line widths are optimal for visualizing FDM over TDM
                                    width1 = 1
                                    width2 = 4
@@ -4454,7 +4465,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                    width1 = 1
                                    width2 = 1
                                    # solutions may be different level of smoothing, so plot highest rms first
-                                   pb.hold(True)
+                                   old_pb_hold(True)
                                    if (MAD(gphsx) < MAD(gphsx2)):
                                      for p in range(nPolarizations):
                                        if (corrTypeToString(corr_type[p]) in polsToPlot):
@@ -4608,7 +4619,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                           matches2 = np.where(fa<yfrequencies[0])[0]
                                       mymean = complexMeanDeg(np.array(cc)[matches[0]:matches2[-1]+1])
                                       phaseSolution2Y = np.mean(gphsy) + cc - mymean
-                                      pb.hold(True)
+                                      old_pb_hold(True)
                                       for p in range(nPolarizations):
                                           if (corrTypeToString(corr_type[p]) in polsToPlot):
                                               pb.plot(pfrequencies[p], gphs[p],'%s%s' % (pcolor[p],phasemarkstyle), markersize=markersize,markeredgewidth=markeredgewidth)
@@ -4625,7 +4636,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                             pb.plot(frequenciesGHz2[index],phaseSolution2Y,'%s%s'%(y3color,bpolymarkstyle),markeredgewidth=markeredgewidth)
                                             newylimits = recalcYlimitsFreq(chanrange, newylimits, phaseSolution2Y, sideband,plotrange,xchannels2,chanrangePercent=chanrangePercent)
                                   else:
-                                      pb.hold(True)
+                                      old_pb_hold(True)
                                       for p in range(nPolarizations):
                                           if (corrTypeToString(corr_type[p]) in polsToPlot):
                                               pb.plot(pfrequencies[p], gphs[p],'%s%s'%(pcolor[p],phasemarkstyle), markersize=markersize,markeredgewidth=markeredgewidth)
@@ -4645,7 +4656,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                       SetNewYLimits([-minPhaseRange,minPhaseRange])
                           else:
                               # we are not overlaying any B or polynomial solutions   'phase vs. freq'
-                              pb.hold(True)
+                              old_pb_hold(True)
                               for p in range(nPolarizations):
                                   if (corrTypeToString(corr_type[p]) in polsToPlot):
                                       if (overlayAntennas or overlayTimes):
@@ -4690,7 +4701,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                                  showBasebandNumber)
                       titleString = "%sspw%s,  field %d: %s%s" % (antennaString,
                                                                   spwString,uniqueFields[fieldIndex],fieldString,timeString)
-                      pb.title(titleString,size=titlesize-int(len(titleString)/(maxCharsBeforeReducingTitleFontSize/subplotCols)))
+                      pb.title(titleString,size=titlesize-int(len(titleString)//(maxCharsBeforeReducingTitleFontSize//subplotCols)))
                       if (abs(plotrange[0]) > 0 or abs(plotrange[1]) > 0):
                           SetNewXLimits([plotrange[0],plotrange[1]],18)
           
@@ -5557,19 +5568,19 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
     midLatitudeWinter = 3
     numchan = len(freqs)
     # Set the reference freq to be the middle of the middle two channels
-    reffreq=0.5*(freqs[numchan/2-1]+freqs[numchan/2])
+    reffreq=0.5*(freqs[numchan//2-1]+freqs[numchan//2])
     originalnumchan = numchan
     while (numchan > MAX_ATM_CALC_CHANNELS):
-        numchan /= 2
+        numchan //= 2
 #        print("Reducing numchan to ", numchan)
-        chans = range(0,originalnumchan,(originalnumchan/numchan))
+        chans = range(0,originalnumchan,(originalnumchan//numchan))
 
     chansep = (freqs[-1]-freqs[0])/(numchan-1)
     nbands = 1
     if (verbose): print("Opening casac.atmosphere()")
     myat = createCasaTool(attool)
     if (verbose): print("Opened")
-    if (type(casac.Quantity) == type):  # casa 3.x
+    if quantity_as_casa_3x:  # casa 3.x
         fCenter = casac.Quantity(reffreq,'GHz')
         fResolution = casac.Quantity(chansep,'GHz')
         fWidth = casac.Quantity(numchan*chansep,'GHz')
@@ -5589,7 +5600,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
 
     n = myat.getNumChan()
     if (verbose): print("numchan = %s" % (str(n)))
-    if cu.compare_version('<',[4,0,0]):
+    if compare_version('<',[4,0,0]):
         dry = np.array(myat.getDryOpacitySpec(0)['dryOpacity'])
         wet = np.array(myat.getWetOpacitySpec(0)['wetOpacity'].value)
         TebbSky = []
@@ -5648,7 +5659,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
 #        freq = np.linspace(rf+((numchan-1)/2.)*chansepGHz, 
 #                           rf-((numchan-1)/2.)*chansepGHz, numchan)
     # Therewas a 1-channel offset in CASA 5.0.x (CAS-10228), but it was fixed.
-#    if (cu.compare_version('<',[5,1,0])):  
+#    if (compare_version('<',[5,1,0])):
 #        freq += chansepGHz
 
     if (verbose): print("Done CalcAtmTransmission")
@@ -5985,7 +5996,7 @@ def showFDM(originalSpw, chanFreqGHz, baseband, showBasebandNumber, basebandDict
     y0,y1 = pb.ylim()
     yrange = y1 - y0
     myxrange = x1 - x0
-    pb.hold(True)
+    old_pb_hold(True)
     labelAbove = False  # False means label to the right
     for i in range(len(originalSpw)):
         nchan = len(chanFreqGHz[i])
@@ -6243,12 +6254,12 @@ def stdInfo(a, sigma=3, edge=0, spw=-1, xant=-1, pol=-1):
     number and list of channels that exceed sigma*std, and the worst outlier.
     """
     info = {}
-    if (edge >= len(a)/2):  # protect against too large of an edge value
+    if (edge >= len(a)//2):  # protect against too large of an edge value
         originalEdge = edge
-        if (len(a) == 2*(len(a)/2)):
-            edge = len(a)/2 - 1 # use middle 2 points
+        if (len(a) == 2*(len(a)//2)):
+            edge = len(a)//2 - 1 # use middle 2 points
         else:
-            edge = len(a)/2  # use central point
+            edge = len(a)//2  # use central point
         if (edge < 0):
             edge = 0
         print("stdInfo: WARNING edge value is too large for spw%d xant%d pol%d, reducing it from %d to %d." % (spw, xant, pol, originalEdge, edge))
@@ -6274,12 +6285,12 @@ def madInfo(a, madsigma=3, edge=0):
     of channels that exceed madsigma*MAD, and the worst outlier.
     """
     info = {}
-    if (edge >= len(a)/2):  # protect against too large of an edge value
+    if (edge >= len(a)//2):  # protect against too large of an edge value
         originalEdge = edge
-        if (len(a) == 2*(len(a)/2)):
-            edge = len(a)/2 - 1 # use middle 2 points
+        if (len(a) == 2*(len(a)//2)):
+            edge = len(a)//2 - 1 # use middle 2 points
         else:
-            edge = len(a)/2  # use central point
+            edge = len(a)//2  # use central point
         print("WARNING edge value is too large, reducing it from %d to %d." % (originalEdge, edge))
     info['mad'] = mad(a[edge:len(a)-edge])
     chan = []
@@ -6308,7 +6319,7 @@ def platformingCheck(a, threshold=DEFAULT_PLATFORMING_THRESHOLD):
 #    print("Checking channels %d-%d for platforming" % (startChan,endChan))
     if (startChan <= 0 or endChan >= len(a)):
         return
-    middleChan = (startChan+endChan)/2
+    middleChan = (startChan+endChan)//2
     channelRange1 = range(startChan,middleChan+1)
     channelRange2 = range(endChan,middleChan,-1)
     platforming = False
@@ -6365,7 +6376,7 @@ def callFrequencyRangeForSpws(mymsmd, spwlist, vm, caltable=None):
     Uses msmd, unless the ms is not found, in which case it uses
     the spw information inside the (new-style) cal-table.
     """
-    if (mymsmd != '' and cu.compare_version('>=',[4,1,0])):
+    if (mymsmd != '' and compare_version('>=',[4,1,0])):
         return(frequencyRangeForSpws(mymsmd,spwlist))
     else:
         freqs = []
@@ -6465,7 +6476,7 @@ def getBasebandDict(vis=None, spwlist=[], caltable=None, mymsmd=None):
         return
     if (type(bbs) == int):  # old datasets will bomb on msmd.baseband()
         return(bbdict)
-    if (cu.compare_version('>=',[4,1,0]) and vis != None):
+    if (compare_version('>=',[4,1,0]) and vis != None):
         if (os.path.exists(vis)):
             needToClose = False
             if mymsmd is None or mymsmd == '':
@@ -6529,7 +6540,7 @@ def createCasaTool(mytool):
     A wrapper to handle the changing ways in which casa tools are invoked.
     Todd Hunter
     """
-    if (type(casac.Quantity) != type):  # casa 4.x
+    if is_CASA6 or not quantity_as_casa_3x:  # CASA 6, CASA 4.x
         myt = mytool()
     else:  # casa 3.x
         myt = mytool.create()
