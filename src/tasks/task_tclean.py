@@ -366,19 +366,15 @@ def tclean(
                     t1=time.time();
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
                     
-
-        ## Close tools.
+        ##close tools
         # needs to deletools before concat or lock waits for ever
         imager.deleteTools()
-
+   
         if (pcube):
             print("running concatImages ...")
             casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
-            # fixed to move subcubes
             imager.concatImages(type=concattype)
-
         
-
         # CAS-10721 
         if niter>0 and savemodel != "none":
             casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_tclean")
