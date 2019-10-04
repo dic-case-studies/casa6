@@ -6,7 +6,6 @@ import string
 import time
 import re
 import copy
-from casac import casac
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -18,6 +17,7 @@ if is_CASA6:
     from .parallel_imager_helper import PyParallelImagerHelper
 else:
     from taskinit import *
+    from casac import casac
 
     from imagerhelpers.imager_base import PySynthesisImager
     from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
