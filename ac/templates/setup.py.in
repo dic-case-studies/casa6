@@ -377,6 +377,7 @@ def generate_pyinit(moduledir,tools):
                import casatools.ctuser as __user
                from .utils import utils as __utils
                import os as __os
+               import sys as __sys
                def __find_data_path( ):
 
                    def find_mount_point(path):
@@ -410,7 +411,7 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
-               ctsys.initialize( __find_user_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] + __find_data_path( ))
+               ctsys.initialize( __sys.executable, __find_user_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] + __find_data_path( ) )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
