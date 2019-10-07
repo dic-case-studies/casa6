@@ -3115,7 +3115,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
  /////////////////////// Grid/FTMachine Parameters
 
-  SynthesisParamsGrid::SynthesisParamsGrid():SynthesisParams()
+  SynthesisParamsGrid::SynthesisParamsGrid():SynthesisParams(),pointingOffsetSigDev()
   {
     setDefaults();
   }
@@ -3312,7 +3312,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     wbAWP      = true;
     cfCache  = "";
     usePointing = false;
-    pointingOffsetSigDev = 10.0;
+    pointingOffsetSigDev.resize(2,10.0);
     doPBCorr   = true;
     conjBeams  = true;
     computePAStep=360.0;

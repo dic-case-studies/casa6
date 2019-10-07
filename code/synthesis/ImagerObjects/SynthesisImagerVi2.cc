@@ -620,7 +620,7 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
 			gridpars.convFunc,
 			gridpars.aTermOn,gridpars.psTermOn, gridpars.mTermOn,
-			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,gridpars.pointingOffsetSigDev,
+			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,gridpars.pointingOffsetSigDev.tovector(),
 			gridpars.doPBCorr,gridpars.conjBeams,
 			gridpars.computePAStep,gridpars.rotatePAStep,
 			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
@@ -1543,7 +1543,8 @@ void SynthesisImagerVi2::unlockMSs()
 					const Bool wbAWP,            //= true,
 					   const String cfCache,        //= "",
 					   const Bool usePointing,       //= false,
-					   const Float pointingOffsetSigDev, //= 10.0,
+					   // const Vector<Float> pointingOffsetSigDev, //= 10.0,
+					   const vector<float> pointingOffsetSigDev,// = {10,10}
 					   const Bool doPBCorr,         //= true,
 					   const Bool conjBeams,        //= true,
 					const Float computePAStep,         //=360.0
@@ -1709,7 +1710,7 @@ void SynthesisImagerVi2::unlockMSs()
 					      const Bool wbAWP,            //= true,
 					      const String cfCache,        //= "",
 					      const Bool usePointing,       //= false,
-					      const Float pointingOffsetSigDev,//=10.0,
+					      const vector<Float> pointingOffsetSigDev,//={10,10},
 					      const Bool doPBCorr,         //= true,
 					      const Bool conjBeams,        //= true,
 					      const Float computePAStep,   //=360.0

@@ -174,7 +174,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		casacore::CountedPtr<ConvolutionFunction>& cf,
 		casacore::CountedPtr<VisibilityResamplerBase>& visResampler,
 		casacore::Bool applyPointingOffset=true,
-		casacore::Float doPointingOffsetSigDev=10.0,
+		/* casacore::Vector<casacore::Float> PointingOffsetSigDev={10,10}, */
+		vector<float> pointingOffsetSigDev={10,10},
 		casacore::Bool doPBCorr=true,
 		casacore::Int tilesize=16, 
 		casacore::Float pbLimit=5e-4,

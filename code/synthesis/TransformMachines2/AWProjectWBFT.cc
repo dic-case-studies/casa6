@@ -92,7 +92,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       CountedPtr<ConvolutionFunction>& cf,
 			       CountedPtr<VisibilityResamplerBase>& visResampler,
 			       Bool applyPointingOffset,
-			       Float pointingOffsetSigDev,
+			       vector<float> pointingOffsetSigDev,
 			       Bool doPBCorr,
 			       Int itilesize, 
 			       Float paSteps,

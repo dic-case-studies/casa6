@@ -174,7 +174,14 @@ namespace casa{
 	  // cerr<<"VB2CFBMap::makeVBRow2CFBMap DoP = T"<<endl;
 	  Float A2R = 4.848137E-06;
 	  Vector<Double> poIncrement = pointingOffsets_p->getIncrement();
-	  Double offsetDeviation = sigmaDev * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
+	  Double offsetDeviation;
+	  if(sigmaDev[0] > 0)
+	    offsetDeviation = sigmaDev[0] * A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
+	  else
+	    offsetDeviation = 1e-3*A2R / sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]);
+	  if(sigmaDev[1] == 0)
+	    sigmaDev[1] = sigmaDev[0];
+
 	  baselineType_p->findAntennaGroups(vb,pointingOffsets_p, offsetDeviation);
 
 	  baselineType_p->makeVBRow2BLGMap(vb);
@@ -203,18 +210,18 @@ namespace casa{
 	      sumResPO_l.resize(2);
 	      sumResPO_l[0]=0;
 	      sumResPO_l[1]=0;
-	      // cerr << "sumResPO_l "<< sumResPO_l << " poSize_l " << poSize_l << " cachedPOSize_l"<< cachedPOSize_l <<endl;
+	      //cerr << "sumResPO_l "<< sumResPO_l << " poSize_l " << poSize_l << " cachedPOSize_l"<< cachedPOSize_l << " " << sigmaDev[0] << " " << sigmaDev[1] <<endl;
 	      if(poSize_l == cachedPOSize_l)
 		{
 		  Vector < Vector <Double> > residualPointingOffsets_l = baselineType_p->getCachedAntennaPO() - pointingOffsets_p->pullPointingOffsets(); 
 		  for(unsigned int ii=0; ii < poSize_l; ii++) 
 		    sumResPO_l = sumResPO_l + residualPointingOffsets_l[ii];
 		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poSize_l;
-		  // cerr << "avgResPO_l"<< avgResPO_l <<endl;
-		  if(avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]) >= sigmaDev*A2R)
+		  //cerr << "avgResPO_l"<< avgResPO_l <<endl;
+		  if(avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]) >= sigmaDev[1]*A2R)
 		    {
 		      baselineType_p->setCachedGroups(false);
-		      baselineType_p->findAntennaGroups(vb,pointingOffsets_p, sigmaDev);
+		      baselineType_p->findAntennaGroups(vb,pointingOffsets_p, sigmaDev[0]);
 		      baselineType_p->setCachedAntennaPO(pointingOffsets_p->pullPointingOffsets());
 		      baselineType_p->makeVBRow2BLGMap(vb);
 		      vbRow2BLMap_p = baselineType_p->getVBRow2BLMap();
@@ -224,7 +231,7 @@ namespace casa{
 			  LogIO log_l(LogOrigin("VB2CFBMap", "makeVBRow2CFBMap[R&D]"));
 
 			  log_l << "The average antenna Offset : " << avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1])/A2R 
-				<< " arcsec, exceeds sigmaDev : " << sigmaDev 
+				<< " arcsec, exceeds sigmaDev : " << sigmaDev[1] 
 				<< " Field ID = " << vb.fieldId()(0) << LogIO::POST;
 			  
 			}
@@ -296,7 +303,7 @@ namespace casa{
 	      // baselineType_p->setDoPointing(doPointing_p);
 	      // if(computeAntennaGroups_p)
 	      // baselineType_p->findAntennaGroups(vb,pointingOffsets_p,sigmaDev);
-	      cfPhaseGrad_p(irow).reference(setBLPhaseGrad(pointingOffsets_p, cfb_l, vb, irow, sigmaDev));
+	      cfPhaseGrad_p(irow).reference(setBLPhaseGrad(pointingOffsets_p, cfb_l, vb, irow, sigmaDev[0]));
 	      totalCost_p += timer_p.real();
 	      totalVB_p++;
 	      // Set the CFB per VB row

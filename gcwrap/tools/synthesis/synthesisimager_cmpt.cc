@@ -306,7 +306,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
 			    const bool wbawp,//      = true,
 			    const std::string& cfcache,//  = "",
 			    const bool usepointing,// = false,
-			    const double pointingoffsetsigdev,//=10.0,
+			    const ::casac::variant& pointingoffsetsigdev,//=10.0,
 			    const bool dopbcorr,//   = true,
 			    const bool conjbeams,//  = false,
 			    const float computepastep,         //=360.0

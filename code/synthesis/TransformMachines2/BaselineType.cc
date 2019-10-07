@@ -189,7 +189,7 @@ namespace casa{
 
 
 	  vector<double> pixSum(2,0), pixMean(2,0), pixVar(2,0), pixSigma(2,0), minPO(2,0), maxPO(2,0), minAntPO(2,0);
-	  vector<vector<double> > diffAntPointing_l(2), antGrdPointing_l(2);
+	  vector<vector<double> > diffAntPointing_l(2), antGrdPointing_l(2), minDiffAntPointing_l(2);
 	  Vector<Vector<double> > casa_antGrdPointing_l(2);
 
 	  diffAntPointing_l[0].resize(poAnt1[0].size());
@@ -214,6 +214,7 @@ namespace casa{
 	      // cerr << "Ant "<< uniqueAnt1[i] << " PO: "<< poAnt1[0][i] - phaseDirPix_l[0]  << " " << poAnt1[1][i] - phaseDirPix_l[1] <<endl;
 	    }
 	  // cerr << "#################################"<<endl;
+	  
 
 	  for(unsigned int ii=0; ii < pixSum.size();ii++)
 	    {

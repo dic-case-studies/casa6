@@ -90,7 +90,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
      void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
-     void setPOSigmaDev(const Float& sigdev=3.0) {sigmaDev = double(sigdev);}
+     void setPOSigmaDev(const vector<float>& sigdev) {sigmaDev = sigdev;}
   //   protected:
      casacore::Vector<casacore::CountedPtr<CFBuffer > > vb2CFBMap_p;
      casacore::Vector<casacore::Matrix<casacore::Complex> > cfPhaseGrad_p;
@@ -105,7 +105,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      int blType_p;
      int vbRows_p;
      /* casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p; */
-     double sigmaDev ;
+     vector<float> sigmaDev ;
      casacore::Timer timer_p;
      float totalCost_p, totalVB_p;
    };
