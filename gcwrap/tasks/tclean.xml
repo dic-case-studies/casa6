@@ -1315,7 +1315,7 @@ that come from playing with this parameter value. Do not change from the default
                                   instrument is sensitive to is unconstrained by the data making
                                   it harder to recovery from errors during the minor cycle).
      </description>
-      <any type="variant" limittypes="intArray floatArray"/>
+      <any type="variant" limittypes="intArray doubleArray"/>
       <value type="intArray"></value>
     </param>
 
