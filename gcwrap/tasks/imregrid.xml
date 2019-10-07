@@ -108,8 +108,6 @@ interpolation   The interpolation method.  One of 'nearest', 'linear', 'cubic'.
 decimate        Decimation factor for coordinate grid computation
 replicate       Replicate image rather than regrid?
 overwrite">     Overwrite (unprompted) pre-existing output file?
-async           Run task in a separate process (return CASA prompt)
-                default: False; example: async=True
                 
 The new coordinate system is defined by the template parameter, which can be:
 

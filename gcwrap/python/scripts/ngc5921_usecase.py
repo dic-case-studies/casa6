@@ -456,10 +456,6 @@ datacolumn = 'data'
 # even though it will have only one field in it
 multisource = True
 
-# Run asynchronously so as not to interfere with other tasks
-# (BETA: also avoids crash on next importuvfits)
-async = True
-
 exportuvfits()
 
 #=====================================================================
@@ -610,10 +606,6 @@ clnfits = prefix + '.clean.fits'
 
 imagename = clnimage
 fitsimage = clnfits
-
-# Run asynchronously so as not to interfere with other tasks
-# (BETA: also avoids crash on next importfits)
-async = True
 
 exportfits()
 

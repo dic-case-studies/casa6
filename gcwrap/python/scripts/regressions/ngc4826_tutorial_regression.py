@@ -249,7 +249,6 @@ if benchmarking:
 #concatvis='ngc4826.tutorial.ms'
 #freqtol = ""
 #dirtol = "1arcsec"
-#async=False
 #
 #concat()
 

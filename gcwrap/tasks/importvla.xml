@@ -11,8 +11,7 @@ importvla(archivefiles=None,vis=None,
               project=None,
               starttime=None,stoptime=None,
               applytsys=None,
-              autocorr=None,antnamescheme=None,
-              async=None):
+              autocorr=None,antnamescheme=None):
   <shortdescription>Import VLA archive file(s) to a measurement set</shortdescription>
 <description>
 Imports an arbitrary number of VLA archive-format data sets into a

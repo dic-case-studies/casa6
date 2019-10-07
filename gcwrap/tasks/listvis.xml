@@ -115,9 +115,6 @@ listfile    write output to disk; will not overwrite
             default: '' --> write to screen
             listfile = 'solutions.txt'
 
-async       Run asynchronously
-            default = False; do not run asychronously
-
   </description>
 
   <input>
@@ -356,9 +353,6 @@ pagerows    rows per page of listing
 listfile    write output to disk; will not overwrite
             default: '' --> write to screen
             listfile = 'solutions.txt'
-
-async       Run asynchronously
-            default = False; do not run asychronously
 
    </example>
 

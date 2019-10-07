@@ -45,7 +45,6 @@ from taskinit import *
 
 # Enable benchmarking?
 benchmarking = True
-usedasync = False
 
 #
 # Set up some useful variables
@@ -114,7 +113,6 @@ try:
     weighting = 'briggs'
     pbcor = False
     usescratch = False
-#    async = T
     clean()
 
     # Record clean completion time
@@ -140,7 +138,6 @@ try:
     cell = '0.4arcsec'
     weighting = 'briggs'
     usescratch = False
-    async = False
     clean()  
     
     # Record clean completion time
