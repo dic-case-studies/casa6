@@ -43,6 +43,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     /**********************************************************************************************************
      **********************************************************************************************************
+     *****  grpcPing                                                                                      *****
+     **********************************************************************************************************
+     **********************************************************************************************************/
+    ::grpc::Status grpcPing::now( ::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty* ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+        if ( debug ) {
+            std::cout << "received ping event..." << std::endl;
+            fflush(stdout);
+        }
+        return grpc::Status::OK;
+    }
+    
+    /**********************************************************************************************************
+     **********************************************************************************************************
      *****  grpcShutdown                                                                                  *****
      **********************************************************************************************************
      **********************************************************************************************************/
@@ -935,7 +949,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto panel_or_data = req->id( ).id( );
 
         if (debug) {
-            std::cout << "received grpc contourlevels( " << panel_or_data << ", ..." << 
+            std::cout << "received grpc contourlevels( " << panel_or_data << ", ..." <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
             fflush(stdout);
         }
@@ -1012,7 +1026,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto thickness = req->thickness( );
 
         if (debug) {
-            std::cout << "received grpc contourthickness( " << panel_or_data << ", " << thickness << 
+            std::cout << "received grpc contourthickness( " << panel_or_data << ", " << thickness <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
             fflush(stdout);
         }
@@ -1046,7 +1060,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                     }
                 }
             }
-            
+
             if ( set_thickness ) return grpc::Status::OK;
             else return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "no changes made");
 
@@ -1068,7 +1082,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto color = req->color( );
 
         if (debug) {
-            std::cout << "received grpc contourthickness( " << panel_or_data << ", " << color << 
+            std::cout << "received grpc contourthickness( " << panel_or_data << ", " << color <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
             fflush(stdout);
         }

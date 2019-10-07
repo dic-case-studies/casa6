@@ -35,9 +35,16 @@
 #include <display/QtViewer/QtDisplayPanelGui.qo.h>
 #include <casagrpc/protos/img.grpc.pb.h>
 #include <casagrpc/protos/shutdown.grpc.pb.h>
+#include <casagrpc/protos/ping.grpc.pb.h>
 #include <grpc++/grpc++.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
+
+    class grpcPing : public ::casatools::rpc::Ping::Service {
+    public:
+        grpcPing( ) { }
+        ::grpc::Status now(::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty*);
+    };
 
     class grpcShutdown : public QObject, public ::casatools::rpc::Shutdown::Service {
 
@@ -291,7 +298,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     public:
         grpcViewerState(QtViewer *v) : 
             viewer_service(new grpcImageViewer(v)),
-            shutdown_service(new grpcShutdown(v)) { }
+            shutdown_service(new grpcShutdown(v)),
+            ping_service(new grpcPing( )) { }
 
         std::string uri;
 
@@ -299,6 +307,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
         std::unique_ptr<grpcImageViewer> viewer_service;
         std::unique_ptr<grpcShutdown> shutdown_service;
+        std::unique_ptr<grpcPing> ping_service;
 
         ~grpcViewerState( ) {
             if (getenv("GRPC_DEBUG")) {
