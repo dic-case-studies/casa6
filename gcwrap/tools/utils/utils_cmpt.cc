@@ -408,11 +408,14 @@ utils::_trigger_segfault (int faultType)
 // -------------------- initialize CASAtools ------------------
 
 static std::vector<std::string> default_data_path;
-bool utils::initialize(const std::vector<std::string> &default_path) {
+static std::string python_path;
+bool utils::initialize(const std::string &pypath, const std::vector<std::string> &default_path) {
     static bool initialized = false;
     if ( initialized ) return false;
     default_data_path = default_path;
+    python_path = pypath;
     casatools::get_state( ).setDataPath(default_data_path);
+    casatools::get_state( ).setPythonPath(python_path);
     // configure quanta/measures customizations...
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );
 #ifdef CASATOOLS
@@ -438,6 +441,10 @@ std::vector<std::string> utils::getpath( ) {
     const std::list<std::string> &path = casatools::get_state( ).dataPath( );
     std::copy( path.begin( ), path.end( ), std::back_inserter(result) );
     return result;
+}
+
+std::string utils::getpython( ) {
+    return casatools::get_state( ).pythonPath( );
 }
 
 void utils::clearpath( ) {
