@@ -1066,49 +1066,69 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
     // const Int lastSubChunkID = nSubChunks - 1;
     std::vector<std::pair<uInt, uInt>> chunkIDToChunksNeededMap;
     if (_nTimeStamps) {
-        auto isEven = *_nTimeStamps % 2 == 0;
-        const uInt halfTimeBin = *_nTimeStamps/2;
-        const auto nBefore = isEven ? (halfTimeBin) : (*_nTimeStamps - 1)/2;
-        const auto nAfter = isEven ? nBefore + 1 : nBefore;
-        // integer division
-        // p.first is the first sub chunk needed by the current index.
-        // p.second is the first sub chunk that needs the current index
         pair<uInt, uInt> p;
-        for (Int i=0; i<nSubChunks; ++i) {
-            p.first = i - nBefore;
-            p.second = i - nAfter;
-            if ((uInt)i <= nBefore) {
-                p.first = 0;
-                // p.second = *_nTimeStamps - 1;
+        if (_timeBlockProcessing) {
+            // TODO need to hook this up to outside so can get here if
+            // _timeBlockProcessing && _nTimeStamps
+            // integer division
+            uInt nBlocks = nSubChunks/(*_nTimeStamps);
+            if (nSubChunks % *_nTimeStamps > 0) {
+                ++nBlocks;
             }
-            else if ((uInt)i >= nSubChunks - nAfter) {
-                p.first = nSubChunks - *_nTimeStamps;
-                // p.second = nSubChunks - 1;
+            uInt subChunkCount = 0;
+            for (uInt blockCount = 0; blockCount < nBlocks; ++blockCount) {
+                p.first = subChunkCount;
+                p.second = (subChunkCount + *_nTimeStamps < nBlocks)
+                    ? subChunkCount + *_nTimeStamps - 1 : *_nTimeStamps - 1;
+                for (uInt i=subChunkCount; i<=p.second; ++i, ++subChunkCount) {
+                    chunkIDToChunksNeededMap.push_back(p);
+                }
             }
-            if ((uInt)i <= nAfter) {
-                p.second = 0;
-            }
-            /*
-            else if (i >= nSubChunks - nAfter) {
-
-            }
-            */
-            // else if (isEven) {
-            /*
-            else {
+        }
+        else {
+            auto isEven = *_nTimeStamps % 2 == 0;
+            const uInt halfTimeBin = *_nTimeStamps/2;
+            const auto nBefore = isEven ? (halfTimeBin) : (*_nTimeStamps - 1)/2;
+            const auto nAfter = isEven ? nBefore + 1 : nBefore;
+            // integer division
+            // p.first is the first sub chunk needed by the current index.
+            // p.second is the first sub chunk that needs the current index
+            for (Int i=0; i<nSubChunks; ++i) {
                 p.first = i - nBefore;
-                //p.second = i + halfTimeBin;
+                p.second = i - nAfter;
+                if ((uInt)i <= nBefore) {
+                    p.first = 0;
+                    // p.second = *_nTimeStamps - 1;
+                }
+                else if ((uInt)i >= nSubChunks - nAfter) {
+                    p.first = nSubChunks - *_nTimeStamps;
+                    // p.second = nSubChunks - 1;
+                }
+                if ((uInt)i <= nAfter) {
+                    p.second = 0;
+                }
+                /*
+                else if (i >= nSubChunks - nAfter) {
+
+                }
+                 */
+                // else if (isEven) {
+                /*
+                else {
+                    p.first = i - nBefore;
+                    //p.second = i + halfTimeBin;
+                }
+                 */
+                /*
+                else {
+                    // number of timestamps is odd and we are not near the edge
+                    // of the block
+                    p.first = p.first = i - halfTimeBin;
+                    p.first = p.second = i + halfTimeBin;
+                }
+                 */
+                chunkIDToChunksNeededMap.push_back(p);
             }
-            */
-            /*
-            else {
-                // number of timestamps is odd and we are not near the edge
-                // of the block
-                p.first = p.first = i - halfTimeBin;
-                p.first = p.second = i + halfTimeBin;
-            }
-            */
-            chunkIDToChunksNeededMap.push_back(p);
         }
     }
     for (vii->origin(); vii->more(); vii->next(), ++subChunkID) {
