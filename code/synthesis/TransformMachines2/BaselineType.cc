@@ -173,7 +173,7 @@ namespace casa{
 	  // const Int nRows = vb.nRows();
 	  cachedPointingOffsets_p.assign(pointingOffsets_p->pullPointingOffsets());
 	  vector< vector <double> > antDirPix_l = pointingOffsets_p->fetchAntOffsetToPix(vb, doPointing_p);
-	  cachedAntPointingOffsets_p.assign(stl2DVecToCasa2DVec(antDirPix_l));
+	  cachedAntPointingOffsets_p.reference(stl2DVecToCasa2DVec(antDirPix_l));
 	  MVDirection vbdir=vb.direction1()(0).getValue();	
 	  vector<double> phaseDirPix_l = (pointingOffsets_p->toPix(vb,vbdir,vbdir)).tovector();
 

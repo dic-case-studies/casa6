@@ -206,10 +206,10 @@ namespace casa{
 	      Vector < Vector <Double> > cachedAntPO_l = baselineType_p->getCachedAntennaPO();
 	      Vector < Vector <Double> > po_l =  pointingOffsets_p->fetchAntOffsetToPix(vb, doPointing_p) ; 
 
-	      IPosition poShape_X = po_l.shape();
-	      IPosition poShape_Y = po_l(0).shape();
-	      IPosition cachedPOShape_X = cachedAntPO_l.shape();
-	      IPosition cachedPOShape_Y = cachedAntPO_l(0).shape();
+	      unsigned int poShape_X = po_l.shape()[0];
+	      unsigned int poShape_Y = po_l(0).shape()[0];
+	      unsigned int cachedPOShape_X = cachedAntPO_l.shape()[0];
+	      unsigned int cachedPOShape_Y = cachedAntPO_l(0).shape()[0];
 
 	      Vector<Double> sumResPO_l, sumAntPO_l, sumPO_l;
 	      double avgResPO_l = 0.0;
@@ -235,7 +235,7 @@ namespace casa{
 		    }
 		  
 
-		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poShape_Y(0); // The units are in pixels here
+		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poShape_Y; // The units are in pixels here
 
 		  if(avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]) >= sigmaDev[1]*A2R)
 		    {
@@ -251,7 +251,7 @@ namespace casa{
 
 			  log_l << "The average antenna Offset : " << avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1])/A2R 
 				<< " arcsec, exceeds the second parameter of sigmaDev : " << sigmaDev[1] 
-				<< " Field ID = " << vb.fieldId()(0) << LogIO::POST;
+				<< " arcsec for Field ID = " << vb.fieldId()(0) << LogIO::POST;
 			  
 			}
 		      // cerr << "Avg of the Residual Pointing Offsets " << avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1])/A2R <<endl; 
