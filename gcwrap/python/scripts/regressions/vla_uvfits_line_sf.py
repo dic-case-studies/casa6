@@ -231,8 +231,7 @@ pipeline.calibrate['exportuvfits'] = {}
 pipeline.calibrate['exportuvfits']['args'] = { 'vis' : 'ngc5921.src.split.ms',
 		                               'fitsfile' : 'ngc5921.split.uvfits',
 				               'datacolumn':'data',
-					       'multisource':True,
-				               'async':True
+					       'multisource':True
 		                             }
 
 pipeline.image['verify'] = verify.image
@@ -265,8 +264,7 @@ pipeline.image['clean']['args'] = {'vis':'ngc5921.ms.contsub',
 		                }
 pipeline.image['exportfits'] = {}
 pipeline.image['exportfits']['args'] = {'imagename':'ngc5921.clean.image',
-		                        'fitsimage':'ngc5921.clean.fits',
-		                        'async':True
+		                        'fitsimage':'ngc5921.clean.fits'
 		                       }
 
 pipeline.analysis['verify'] = verify.analysis

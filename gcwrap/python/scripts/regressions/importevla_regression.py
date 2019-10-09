@@ -156,7 +156,6 @@ default('exportuvfits')
 vis = msfile
 fitsfile = msfile+'.uvfits'
 os.system('rm -rf '+fitsfile)
-async = False
 writestation = True
 # For AIPS compatibility
 combinespw = True
