@@ -5,7 +5,7 @@ If you are looking for the place to check out [CASA](http://casa.nrao.edu/) with
 
 CASAtools is a self-contained python module that provides the tools from the [CASA](http://casa.nrao.edu/) project. This module only contains the non-GUI tools which are the [SWIG](http://swig.org) bound C++ functionality from CASA.
 
-CASAtools can be built and used with either **Python** **2.7**, **3.4** or **3.6**. However, *[CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtasks/browse) can only be built with Python 3*. So if you plan to build [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtasks/browse), please ensure that you have a Python 3 interpreter available.
+CASAtools can be built and used with either **Python** **3.4** or **3.6**. However, *[CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtasks/browse) can only be built with Python 3*. So if you plan to build [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtasks/browse), please ensure that you have a Python 3 interpreter available.
 
 ## Maturity
 
@@ -72,7 +72,7 @@ Checkout the CASAtools source code:
 
 #### Build
 
-While CASAtools can be built with either Python 2.7 or Python 3, [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatasks/browse) requires Python 3 so it is probably best to build with Python 3 from the start. Make sure that ```-bash-4.2$ which python``` returns a path to the Python 3 executable you want to use because [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatasks/browse) builds with this executable.
+While CASAtools can be built with Python 3, [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatasks/browse) requires Python 3 so it is probably best to build with Python 3 from the start. Make sure that ```-bash-4.2$ which python``` returns a path to the Python 3 executable you want to use because [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatasks/browse) builds with this executable.
 
 With the CASA build environment set up, the CASAtools module can be built like:
 ```
