@@ -450,9 +450,11 @@ std::vector<std::string> utils::getpath( ) {
     return result;
 }
 
+#ifdef CASATOOLS
 std::string utils::getpython( ) {
     return casatools::get_state( ).pythonPath( );
 }
+#endif
 
 void utils::clearpath( ) {
     casatools::get_state( ).clearDataPath( );
