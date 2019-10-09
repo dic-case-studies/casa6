@@ -203,21 +203,40 @@ namespace casa{
 	  // cerr << "baselineType->cachedGroups_p : "<< baselineType_p->cachedGroups_p <<endl;
 	  if(baselineType_p->getCachedGroups())
 	    {
-	      unsigned int cachedPOSize_l = (baselineType_p->getCachedAntennaPO()).size();
-	      unsigned int poSize_l = (pointingOffsets_p->pullPointingOffsets()).size();
-	      Vector<Double> sumResPO_l;
+	      Vector < Vector <Double> > cachedAntPO_l = baselineType_p->getCachedAntennaPO();
+	      Vector < Vector <Double> > po_l =  pointingOffsets_p->fetchAntOffsetToPix(vb, doPointing_p) ; 
+
+	      IPosition poShape_X = po_l.shape();
+	      IPosition poShape_Y = po_l(0).shape();
+	      IPosition cachedPOShape_X = cachedAntPO_l.shape();
+	      IPosition cachedPOShape_Y = cachedAntPO_l(0).shape();
+
+	      Vector<Double> sumResPO_l, sumAntPO_l, sumPO_l;
 	      double avgResPO_l = 0.0;
-	      sumResPO_l.resize(2);
-	      sumResPO_l[0]=0;
-	      sumResPO_l[1]=0;
-	      //cerr << "sumResPO_l "<< sumResPO_l << " poSize_l " << poSize_l << " cachedPOSize_l"<< cachedPOSize_l << " " << sigmaDev[0] << " " << sigmaDev[1] <<endl;
-	      if(poSize_l == cachedPOSize_l)
+	      sumResPO_l.resize(2,0);
+	      sumAntPO_l.resize(2,0);
+	      sumPO_l.resize(2,0);
+
+	      // cerr << "cachedAntPO_l : " << cachedAntPO_l << endl;
+	      // cerr << "po_l : " << po_l << endl;
+
+	      
+	      if(poShape_X == cachedPOShape_X && poShape_Y == cachedPOShape_Y)
 		{
-		  Vector < Vector <Double> > residualPointingOffsets_l = baselineType_p->getCachedAntennaPO() - pointingOffsets_p->pullPointingOffsets(); 
-		  for(unsigned int ii=0; ii < poSize_l; ii++) 
-		    sumResPO_l = sumResPO_l + residualPointingOffsets_l[ii];
-		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poSize_l;
-		  //cerr << "avgResPO_l"<< avgResPO_l <<endl;
+		  Vector < Vector <Double> > residualPointingOffsets_l = cachedAntPO_l - po_l;
+		  for(unsigned int ii=0; ii < poShape_X; ii++) 
+		    {
+		      for (unsigned int jj=0; jj < poShape_Y; jj++)
+			{
+			  sumResPO_l[ii] = sumResPO_l[ii] + residualPointingOffsets_l[ii][jj];
+			  sumAntPO_l[ii] = sumAntPO_l[ii] + cachedAntPO_l[ii][jj];
+			  sumPO_l[ii] = sumPO_l[ii] + po_l[ii][jj];
+			}
+		    }
+		  
+
+		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poShape_Y(0); // The units are in pixels here
+
 		  if(avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1]) >= sigmaDev[1]*A2R)
 		    {
 		      baselineType_p->setCachedGroups(false);
@@ -231,11 +250,11 @@ namespace casa{
 			  LogIO log_l(LogOrigin("VB2CFBMap", "makeVBRow2CFBMap[R&D]"));
 
 			  log_l << "The average antenna Offset : " << avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1])/A2R 
-				<< " arcsec, exceeds sigmaDev : " << sigmaDev[1] 
+				<< " arcsec, exceeds the second parameter of sigmaDev : " << sigmaDev[1] 
 				<< " Field ID = " << vb.fieldId()(0) << LogIO::POST;
 			  
 			}
-		      cerr << "Avg of the Residual Pointing Offsets " << avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1])/A2R <<endl; 
+		      // cerr << "Avg of the Residual Pointing Offsets " << avgResPO_l*sqrt(poIncrement[0]*poIncrement[0] + poIncrement[1]*poIncrement[1])/A2R <<endl; 
 		    }
 		}
 	      else

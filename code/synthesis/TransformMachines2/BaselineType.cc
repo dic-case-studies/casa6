@@ -67,7 +67,7 @@ namespace casa{
   
   // -----------------------------------------------------------------
 
-  BaselineType::BaselineType(): vbRows_p(), doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), totalGroups_p(0), antennaGroups_p(), cachedAntennaGroups_p() , vbRow2BLMap_p(), cachedPointingOffsets_p(), antPair_p(), binsx_p(), binsy_p()
+  BaselineType::BaselineType(): vbRows_p(), doPointing_p(true), cachedGroups_p(false), vectorPhaseGradCalculator_p(), totalGroups_p(0), antennaGroups_p(), cachedAntennaGroups_p() , vbRow2BLMap_p(), cachedPointingOffsets_p(), cachedAntPointingOffsets_p(), antPair_p(), binsx_p(), binsy_p()
   {
     newPhaseGradComputed_p = false;
     vectorPhaseGradCalculator_p.resize(0);
@@ -145,6 +145,23 @@ namespace casa{
     //   }
   }
 
+  Vector<Vector<double> > BaselineType::stl2DVecToCasa2DVec (const vector<vector<double> >& stlVec)
+  {
+    int xrange = stlVec.size();
+    int yrange = stlVec[0].size();
+    Vector < Vector<double> > casVec;
+    casVec.resize(xrange,0);
+    for (int ii = 0; ii<xrange; ii++)
+      {
+	casVec(ii).resize(yrange,0);
+	for (int jj=0; jj<yrange; jj++)
+	  casVec(ii)(jj) = stlVec[ii][jj];
+      }
+
+    return casVec;
+  }
+
+
   Matrix<vector<int> > BaselineType::findAntennaGroups(const vi::VisBuffer2& vb, 
 						      const CountedPtr<PointingOffsets>& pointingOffsets_p, 
 						      const double& sigmaDev)
@@ -156,6 +173,7 @@ namespace casa{
 	  // const Int nRows = vb.nRows();
 	  cachedPointingOffsets_p.assign(pointingOffsets_p->pullPointingOffsets());
 	  vector< vector <double> > antDirPix_l = pointingOffsets_p->fetchAntOffsetToPix(vb, doPointing_p);
+	  cachedAntPointingOffsets_p.assign(stl2DVecToCasa2DVec(antDirPix_l));
 	  MVDirection vbdir=vb.direction1()(0).getValue();	
 	  vector<double> phaseDirPix_l = (pointingOffsets_p->toPix(vb,vbdir,vbdir)).tovector();
 

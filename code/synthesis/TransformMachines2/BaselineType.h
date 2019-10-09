@@ -79,9 +79,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      bool getCachedGroups(){return cachedGroups_p;};
      pair<int,int> getAntGrpPairs(const int& row){return antPair_p[row];};
      void  setCachedAntennaPO(const casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets){cachedPointingOffsets_p.assign(cachedPointingOffsets);};
-     casacore::Vector<casacore::Vector<casacore::Double> > getCachedAntennaPO(){return cachedPointingOffsets_p;};
+     casacore::Vector<casacore::Vector<casacore::Double> > getCachedAntennaPO(){return cachedAntPointingOffsets_p;};
 
-
+     casacore::Vector<casacore::Vector<double> > stl2DVecToCasa2DVec (const vector<vector<double> >& stlVec);
   private:  
      
      int vbRows_p;
@@ -93,7 +93,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      vector<bool> blNeedsNewPOPG_p;
      vector<int> vbRow2BLMap_p;
      casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p;
-     casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets_p;
+     casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets_p, cachedAntPointingOffsets_p;
      vector< pair <int, int> > antPair_p;
      int binsx_p, binsy_p;
      int deltaBinsX_p, deltaBinsY_p;
