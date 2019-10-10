@@ -382,7 +382,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], calwt=[False])
         datamean = np.mean(getparam(datacopy, 'WEIGHT'))
         
-        self.assertTrue(datamean == 576072000.0)
+        self.assertTrue(np.isclose(datamean, 576072000.0))
         
     def test_parang(self):
         '''
@@ -395,7 +395,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], parang=True)
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.40936784517874114+0.010518063253447309j)
+        self.assertTrue(np.isclose(datamean, 0.40936784517874114+0.010518063253447309j))
         
     def test_calflag(self):
         '''
@@ -408,7 +408,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], applymode='calflag')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.40933912826626284+0.010524099430369143j)
+        self.assertTrue(np.isclose(datamean, 0.40933912826626284+0.010524099430369143j))
         
     def test_trial(self):
         '''
@@ -437,7 +437,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], applymode='calflagstrict')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.40933912826626284+0.010524099430369143j)
+        self.assertTrue(np.isclose(datamean, 0.40933912826626284+0.010524099430369143j))
         
         
     def test_flagonly(self):
@@ -451,7 +451,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], applymode='flagonly')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.25983810264064156+0.045579181018852881j)
+        self.assertTrue(np.isclose(datamean, 0.25983810264064156+0.045579181018852881j))
         
         
     def test_flagonlystrict(self):
@@ -465,7 +465,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], applymode='flagonlystrict')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.25983810264064156+0.045579181018852881j)
+        self.assertTrue(np.isclose(datamean, 0.25983810264064156+0.045579181018852881j))
         
         
     def test_calonly(self):
@@ -479,7 +479,7 @@ class applycal_test(unittest.TestCase):
         applycal(vis=datacopy, gaintable=[gCal], applymode='calonly')
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
-        self.assertTrue(datamean == 0.40933912826626284+0.010524099430369143j)
+        self.assertTrue(np.isclose(datamean, 0.40933912826626284+0.010524099430369143j))
         
         
     def test_flagbackup(self):
