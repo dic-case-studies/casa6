@@ -209,6 +209,12 @@ returns true if initalization was performed; returns false if initialization was
 </description>
 
 <input>
+  <param type="string" name="python_path">
+	<description>path to python executable</description>
+  </param>
+</input>
+
+<input>
   <param type="stringArray" name="default_path">
 	<description>directories that should constitute the default data path</description>
   </param>
@@ -317,6 +323,15 @@ python is shutting down cleanup anything that is outstanding
 </description>
 
 <returns/>
+</method>
+
+<!-- ******************************************************************************** -->
+
+<!-- ******************** function to retrieve the path to python exe *************** -->
+
+<method type="function" name="getpython">
+<shortdescription>get path to python executable</shortdescription>
+<returns type="string"/>
 </method>
 
 <!-- ******************************************************************************** -->
