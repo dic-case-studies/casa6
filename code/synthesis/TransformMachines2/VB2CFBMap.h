@@ -57,7 +57,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
        LogIO log_l(LogOrigin("VB2CFBMap", "~VB2CFMap[R&D]"));
 
        log_l << "Total extra cost of heterogeneous array pointing correction = " << totalCost_p << "sec.  Total VBs processed =  " << totalVB_p << 
-	 ". The pointingsigdev use was = "<< sigmaDev <<LogIO::POST;
+	 ". The pointingoffsetsigdev used was = "<< sigmaDev <<LogIO::POST;
        
      };
      
