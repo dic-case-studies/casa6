@@ -47,9 +47,14 @@ if CASA6:
     vladata = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms/')
 
 else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-    libpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/testcallib.txt'
-    vladata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms/'
+    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
+        libpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/testcallib.txt'
+        vladata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms/'
+    else:
+        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
+        libpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/testcallib.txt'
+        vladata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
 
 
 caltab = 'cal.A'
