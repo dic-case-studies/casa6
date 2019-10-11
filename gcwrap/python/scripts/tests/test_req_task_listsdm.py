@@ -43,8 +43,12 @@ if CASA6:
     falsepath = casatools.ctsys.resolve('visibilities/evla')
     filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935'
-    falsepath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla'
+    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935'
+        falsepath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla'
+    else:
+        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935'
+        falsepath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla'
     filepath = 'testlog.log'
         
 logpath = casalog.logfile()
