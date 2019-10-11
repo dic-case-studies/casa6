@@ -105,14 +105,6 @@ from callibrary import *
 # Enable benchmarking?
 benchmarking = True
 
-# Run exportuvfits asynchronously (twice)?
-# S.Rankin - Shinosuke Kawakami found
-#   1. this test fails when "export_asynchronously = True"
-#   2. this value is used to set "async".
-#   3. no other test scripts set async = True.
-# export_asynchronously = True
-export_asynchronously = False
-
 checklistvis=True
 # 
 # Set up some useful variables
@@ -711,17 +703,9 @@ datacolumn = 'data'
 # even though it will have only one field in it
 multisource = True
 
-# Run asynchronously so as not to interfere with other tasks
-# (BETA: also avoids crash on next importuvfits)
-#async = True
-async = export_asynchronously
-
-async_exportuvfits_id = exportuvfits()
-print "async_exportuvfits_id =", async_exportuvfits_id
+exportuvfits()
 
 # Record exportuvfits completion time
-# NOTE: If async=true this can't be used to time exportuvfits
-#       but it is still needed as a start time for uvcontsub.
 if benchmarking:
     exportuvfitstime = time.time()
 
@@ -919,15 +903,9 @@ clnfits = prefix + '.clean.fits'
 imagename = clnimage
 fitsimage = clnfits
 
-# Run asynchronously so as not to interfere with other tasks
-# (BETA: also avoids crash on next importfits)
-#async = True
-async = export_asynchronously
-
-async_clean_id = exportfits()
+exportfits()
 
 # Record export FITS image completion time
-# NOTE: this is currently irrelevant because its async
 if benchmarking:
     exportimtime = time.time()
 
@@ -1095,19 +1073,6 @@ print ''
 tstutl.note("Opening UVFITS file " + srcuvfits +
                 " to verify its existence")
 
-if export_asynchronously:
-    while True:
-        try:
-            if tm.retrieve(async_exportuvfits_id):
-                break
-            else:
-                time.sleep(1)
-        except Exception, e:
-            tstutl.note("Error checking whether exportuvfits finished.",
-                        "SEVERE")
-            tstutl.note("async_exportuvfits_id was " + str(async_exportuvfits_id), "SEVERE")
-            raise e
-
 uvfitsexists=False
 if os.path.isfile(srcuvfits):
     uvfitsexists=True
@@ -1140,13 +1105,6 @@ else:
 print ''
 tstutl.note("Opening FITS image file " + fitsimage +
                 " to verify its existence")
-
-if export_asynchronously:
-    while True:
-        if tm.retrieve(async_clean_id):
-            break
-        else:
-            time.sleep(1)
 
 fitsimageexists=False
 if os.path.isfile(fitsimage):

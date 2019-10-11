@@ -292,7 +292,6 @@ elif ( importmode == 'fits' ):
     
     fitsfile = datafile
     vis = msfile
-    async = False
     
     saveinputs('importuvfits',prefix+'.importuvfits.saved')
     importuvfits()

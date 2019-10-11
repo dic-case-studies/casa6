@@ -458,7 +458,7 @@ ViReadImplAsync::moreChunks () const
     return b;
 }
 
-const ROMSColumns &
+const MSColumns &
 ViReadImplAsync::msColumns() const
 {
     ThrowIfNoVbaAttached ();

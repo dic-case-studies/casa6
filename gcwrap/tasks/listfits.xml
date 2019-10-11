@@ -26,8 +26,6 @@
         Keyword arguments:
         fitsfile -- Name of input fits file 
                 default: none; example: fitsfile='ngc5921.uvfits'
-        async -- Run asynchronously 
-                default = False; do not run asychronously
  </example>
  </task>
  </casaxml>

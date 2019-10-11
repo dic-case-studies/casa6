@@ -82,7 +82,7 @@ public:
 		  const casacore::String& timetype,
 		  const casacore::String& freqtype,
 		  const casacore::String& fieldtype,
-		  const casacore::ROMSColumns& mscol,
+		  const casacore::MSColumns& mscol,
 		  casacore::Vector<casacore::Int> spwmap=casacore::Vector<casacore::Int>(),
 		  const CTTIFactoryPtr cttifactoryptr=&CTTimeInterp1::factory);
 
@@ -133,7 +133,7 @@ private:
   // default: all 0 (no field-dep yet)
   void setDefFldMap() {fldMap_.resize(nMSFld_); fldMap_.set(0);};
   void setFldMap(const casacore::MSField& msfld);           // via nearest on-sky
-  void setFldMap(const casacore::ROMSFieldColumns& fcol);  // via nearest on-sky
+  void setFldMap(const casacore::MSFieldColumns& fcol);  // via nearest on-sky
   void setFldMap(casacore::Vector<casacore::Int>& fldmap);        // via ordered index list
   //void setFldMap(casacore::Vector<casacore::String>& field);     // via name matching
   //void setFldMap(casacore::uInt to, casacore::uInt from);        // via single to/from 

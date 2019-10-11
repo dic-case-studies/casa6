@@ -28,19 +28,19 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
     <param type="any" name="antenna">
       <description>A comma-delimited string list of antennas (either names or integer indices) for which to display solutions.  Default = all antennas.</description>
-      <any type="variant" limittypes="string int list"/>
+      <any type="variant" limittypes="string int stringArray intArray"/>
       <value type="string"></value>
     </param>
 
     <param type="any" name="field">
       <description>A comma-delimited string list of fields (either names or integer indices) for which to display solutions.  Default = all fields.</description>
-      <any type="variant" limittypes="string int list"/>
+      <any type="variant" limittypes="string int stringArray intArray"/>
       <value type="string"></value>
     </param>
 
     <param type="any" name="spw">
       <description>A comma-delimited string list of spws for which to display solutions.  Default = all spws.</description>
-      <any type="variant" limittypes="string int list"/>
+      <any type="variant" limittypes="string int stringArray intArray"/>
       <value type="string"></value>
     </param>
 
@@ -174,7 +174,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
     <param type="any" name="poln">
       <description>Polarizations to plot: "" = all, or "RR","RL","LR","LL","XX","XY","YX","YY","RR,LL","XX,YY"</description>
-      <any type="variant" limittypes="stringvec string list"/>
+      <any type="variant" limittypes="stringArray string"/>
       <value type="string"></value>
     </param>
 
@@ -201,7 +201,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
     <param type="any" name="chanrange" subparam="true">
       <description>Set xrange ("5~100") over which to autoscale y-axis for xaxis="freq"</description>
-      <any type="variant" limittypes="string intvec"/>
+      <any type="variant" limittypes="string intArray"/>
       <value type="string"></value>
     </param>
 
@@ -217,7 +217,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
     <param type="any" name="phase" subparam="true">
       <description>The y-axis limits to use for phase plots when yaxis="both"</description>
-      <any type="variant" limittypes="intvec string"/>
+      <any type="variant" limittypes="intArray string"/>
       <value type="string"></value>
     </param>
 
@@ -296,7 +296,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
     <param type="any" name="basebands">
       <description>A baseband number or list of baseband numbers for which to display solutions.  Default = all.</description>
-      <any type="variant" limittypes="int string list"/>
+      <any type="variant" limittypes="int string intArray"/>
       <value type="string"></value>
     </param>
 
@@ -307,7 +307,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
     <param type="any" name="scans">
       <description>A scan or list of scans for which to display solutions.  Default = all. Does not work with overlay="time".</description>
-      <any type="variant" limittypes="int string list"/>
+      <any type="variant" limittypes="int string intArray"/>
       <value type="string"></value>
     </param>
 

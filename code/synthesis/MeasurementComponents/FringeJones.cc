@@ -1834,7 +1834,7 @@ void CTRateAwareTimeInterp1::applyPhaseRate(Bool single)
 
   Int ispw=mcols_p->spwId()(0);  // should only be one (sliced ct_)!
   MSSpectralWindow msSpw(ct_.spectralWindow());
-  ROMSSpWindowColumns msCol(msSpw);
+  MSSpWindowColumns msCol(msSpw);
   //Vector<Double> refFreqs;
   //msCol.refFrequency().getColumn(refFreqs,True);
 
@@ -1938,7 +1938,7 @@ void FringeJones::setApply(const Record& apply) {
     //  from the CalTable
     // TBD:  revise as per refFreq decisions
     MSSpectralWindow msSpw(ct_->spectralWindow());
-    ROMSSpWindowColumns msCol(msSpw);
+    MSSpWindowColumns msCol(msSpw);
     msCol.refFrequency().getColumn(KrefFreqs_,true);
     KrefFreqs_/=1.0e9;  // in GHz
 
@@ -1954,7 +1954,7 @@ void FringeJones::setApply(const Record& apply) {
 
     // Use the "physical" (centroid) frequency, per spw 
     MSSpectralWindow msSpw(ct_->spectralWindow());
-    ROMSSpWindowColumns msCol(msSpw);
+    MSSpWindowColumns msCol(msSpw);
     Vector<Double> chanfreq;
     KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
     for (Int ispw=0;ispw<nSpw();++ispw) {
@@ -2182,7 +2182,7 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
     Vector<Double> myRefFreqs;
     // Cannot assume we have a calibration table (ct_) in this method.
     // MSSpectralWindow msSpw(ct_->spectralWindow());
-    /// ROMSSpWindowColumns spwCol(msSpw);
+    /// MSSpWindowColumns spwCol(msSpw);
     // spwCol.refFrequency().getColumn(myRefFreqs, true);
     //Double ref_freq = myRefFreqs(currSpw());
     //Double ref_freq = sdbs.freqs()(0);
@@ -2399,7 +2399,7 @@ void FringeJones::applyRefAnt() {
   Matrix<Double> xyz;
   if (msName()!="<noms>") {
     MeasurementSet ms(msName());
-    ROMSAntennaColumns msant(ms.antenna());
+    MSAntennaColumns msant(ms.antenna());
     msant.position().getColumn(xyz);
   }
   else {
@@ -2447,7 +2447,7 @@ void FringeJones::applyRefAnt() {
     refantchoices.resize(1,True);
   }
 
-  Vector<Int> nPol(nSpw(),nPar());  // TBD:or 1, if data was single pol
+  Vector<Int> nPol(nSpw(),2);  // TBD:or 1, if data was single pol
 
   if (nPar()==8) {
     // Verify that 2nd poln has unflagged solutions, PER SPW
@@ -2464,7 +2464,7 @@ void FringeJones::applyRefAnt() {
       fl.assign(ctiter.flag());
 
       IPosition blc(3,0,0,0), trc(fl.shape());
-      trc-=1; trc(0)=blc(0)=1;
+      trc-=1; blc(0)=nPar()/2;
       
       //      cout << "ispw = " << ispw << " nfalse(fl(1,:,:)) = " << nfalse(fl(blc,trc)) << endl;
       
@@ -2537,7 +2537,8 @@ void FringeJones::applyRefAnt() {
 	blcB(2)=trcB(2)=irefB;
 	found=true;  // maybe
 	for (Int ipol=0;ipol<nPol(ispw);++ipol) {
-	  blcA(0)=trcA(0)=blcB(0)=trcB(0)=ipol;
+	  blcA(0)=blcB(0)=ipol*nPar()/2;
+	  trcA(0)=trcB(0)=(ipol+1)*nPar()/2-1;
 	  found &= (nfalse(flA(blcA,trcA))>0);  // previous interval
 	  found &= (nfalse(flB(blcB,trcB))>0);  // current interval
 	} 

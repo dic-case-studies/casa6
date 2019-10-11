@@ -48,6 +48,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_flaghelper.py
   test_flagmanager.py
   test_fluxscale.py
+  test_fringefit.py
   test_gaincal.py
   test_getchunk.py
   test_gencal.py
@@ -73,7 +74,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_fft.py
   test_ia_findsources.py
   test_ia_fromarray.py
-  test_ia_fromascii.py
   test_ia_fromfits.py
   test_ia_fromimage.py
   test_ia_fromrecord.py
@@ -105,7 +105,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_setmiscinfo.py
   test_ia_subimage.py
   test_ia_summary.py
-  test_ia_toascii.py
   test_ia_tofits.py
   test_ia_twopointcorrelation.py
   test_imcollapse.py
@@ -221,6 +220,12 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_imrebin.py
   test_req_task_uvmodelfit.py
   test_req_task_imreframe.py
+  test_req_task_accor.py
+  test_req_task_applycal.py
+  test_req_task_fixplanets.py
+  test_req_task_fluxscale.py
+  test_req_task_listsdm.py
+  test_req_task_rmfit.py
 
   ###
   test_setjy.py

@@ -284,10 +284,10 @@ using namespace casa::vi;
       
       // Set the frame for the UVWMachine
       if(vb.isAttached()){
-	//mFrame_p=MeasFrame(MEpoch(Quantity(vb.time()(0), "s"), ROMSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
+	//mFrame_p=MeasFrame(MEpoch(Quantity(vb.time()(0), "s"), MSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
 	if(vbutil_p.null())
 	  vbutil_p=new VisBufferUtil(vb);	
-	romscol_p=new ROMSColumns(vb.ms());
+	romscol_p=new MSColumns(vb.ms());
 	Unit epochUnit=(romscol_p->time()).keywordSet().asArrayString("QuantumUnits")(IPosition(1,0));
 	if(!mFrame_p.epoch()) 
 	  mFrame_p.set(MEpoch(Quantity(vb.time()(0), epochUnit),  (romscol_p->timeMeas())(0).getRef()));
@@ -1089,7 +1089,7 @@ using namespace casa::vi;
     //image center is different from the phasecenter
     // UVrotation is false only if field never changes
   if(lastMSId_p != vb.msId())
-    romscol_p=new ROMSColumns(vb.ms());
+    romscol_p=new MSColumns(vb.ms());
    if((vb.fieldId()(0)!=lastFieldId_p) || (vb.msId()!=lastMSId_p)){
       doUVWRotation_p=true;
    } 
@@ -1206,7 +1206,7 @@ using namespace casa::vi;
     {
 
       if(lastMSId_p != vb.msId())
-	romscol_p=new ROMSColumns(vb.ms());
+	romscol_p=new MSColumns(vb.ms());
       //the uvw rotation is done for common tangent reprojection or if the
       //image center is different from the phasecenter
       // UVrotation is false only if field never changes
@@ -1755,7 +1755,7 @@ using namespace casa::vi;
     }
     
     initializeToSky(theImage,weight,*vb);
-    Bool useCorrected= !(ROMSColumns(vi.ms()).correctedData().isNull());
+    Bool useCorrected= !(MSColumns(vi.ms()).correctedData().isNull());
     if((type==FTMachine::CORRECTED) && (!useCorrected))
       type=FTMachine::OBSERVED;
     Bool normalize=true;
@@ -1847,7 +1847,7 @@ using namespace casa::vi;
       for (uInt k=0; k < selectedSpw_p.nelements(); ++k){
         Bool matchthis=matchChannel(selectedSpw_p[k], vb);
         anymatchChan= (anymatchChan || matchthis);
-        anyTopo=anyTopo || ((MFrequency::castType(ROMSColumns(vb.getVi()->ms()).spectralWindow().measFreqRef()(selectedSpw_p[k]))==MFrequency::TOPO) && freqFrameValid_p);
+        anyTopo=anyTopo || ((MFrequency::castType(MSColumns(vb.getVi()->ms()).spectralWindow().measFreqRef()(selectedSpw_p[k]))==MFrequency::TOPO) && freqFrameValid_p);
       }
 
       // if TOPO and valid frame things may match later but not now  thus we'll go
@@ -1887,7 +1887,7 @@ using namespace casa::vi;
     }
     if (spectralCoord_p.frequencySystem(False)==MFrequency::REST && fixMovingSource_p) {
       if(lastMSId_p != vb.msId()){
-	romscol_p=new ROMSColumns(vb.ms());
+	romscol_p=new MSColumns(vb.ms());
 	//if ms changed ...reset ephem table
 	if (upcase(movingDir_p.getRefString()).contains("APP")) {
 	  MeasComet mcomet(Path((romscol_p->field()).ephemPath(vb.fieldId()(0))).absoluteName());

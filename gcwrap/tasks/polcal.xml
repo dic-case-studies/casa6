@@ -171,6 +171,7 @@ calibrations can be applied on the fly.
 
         <param type="intArray" name="spwmap" subparam="true">
                 <description>Spectral windows combinations to form for gaintables(s)</description>
+                <type>any</type>
                 <value></value>
         </param>
 
@@ -422,8 +423,6 @@ calibrations can be applied on the fly.
                 Example:  spwmap=[0,0,1,1] means apply the caltable solutions
                           from spw = 0 to the spw 0,1 and spw 1 to spw 2,3.
                           spwmap=[[0,0,1,1],[0,1,0,1]]
-      async --  Run asynchronously
-               default = False; do not run asychronously
 </example> 
 
 </task>

@@ -23,7 +23,7 @@ namespace LibAIR2 {
     const casacore::MSAntenna & antTable(ms.antenna());
     const size_t nant=antTable.nrow();
     res.resize(nant, 3);
-    casacore::ROMSAntennaColumns acols(antTable);
+    casacore::MSAntennaColumns acols(antTable);
     const casacore::ArrayColumn<casacore::Double> &pos (acols.position());
     for(size_t i=0; i<nant; ++i)
     {
@@ -41,7 +41,7 @@ namespace LibAIR2 {
     const casacore::MSAntenna & antTable(ms.antenna());
     const size_t nant=antTable.nrow();
 
-    casacore::ROMSAntennaColumns acols(antTable);
+    casacore::MSAntennaColumns acols(antTable);
     const casacore::ScalarColumn<casacore::String> &names (acols.name());
     for(size_t i=0; i<nant; ++i)
     {

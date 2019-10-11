@@ -119,7 +119,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //is a reference MS. Else it will return all the types in the  SPW table
     static casacore::Vector<casacore::String> getSpectralFrames(casacore::Vector<casacore::MFrequency::Types>& types, const casacore::MeasurementSet& ms);
 
-    static void getIndexCombination(const casacore::ROMSColumns& mscol, casacore::Matrix<casacore::Int>& retval);
+    static void getIndexCombination(const casacore::MSColumns& mscol, casacore::Matrix<casacore::Int>& retval);
   private:
     static void rejectConsecutive(const casacore::Vector<casacore::Double>& t, casacore::Vector<casacore::Double>& retval, casacore::Vector<casacore::Int>& indx);
 

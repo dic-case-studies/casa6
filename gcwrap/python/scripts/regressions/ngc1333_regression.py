@@ -163,7 +163,6 @@ import regression_utility as tstutl
 
 # Enable benchmarking?
 benchmarking = True
-usedasync = False
 
 # Optionally turn off imaging (which is very time-consuming)
 doimage = True
@@ -912,7 +911,6 @@ if doimage:
     negcomponent = 2
     scales = [0, 3, 10]
     interpolation = 'nearest'
-    async = False
     
     clean()
 
@@ -942,7 +940,6 @@ if doimage:
     includepix=[0.003,100.0]
     excludepix = [-1]
     outfile = mom0redoutfile
-    async = False
     immoments()
     outfile = mom0blueoutfile
     chans='9~15'

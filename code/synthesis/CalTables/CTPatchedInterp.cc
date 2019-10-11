@@ -422,7 +422,7 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
 				 const String& timetype,
 				 const String& freqtype,
 				 const String& fieldtype,
-				 const ROMSColumns& mscol,
+				 const MSColumns& mscol,
 				 Vector<Int> spwmap,
 				 const CTTIFactoryPtr cttifactoryptr) :
   ct_(ct),
@@ -1033,12 +1033,12 @@ void CTPatchedInterp::makeInterpolators() {
 
 void CTPatchedInterp::setFldMap(const MSField& msfld) {
   
-  ROMSFieldColumns fcol(msfld);
+  MSFieldColumns fcol(msfld);
   setFldMap(fcol);
 
 }
 
-void CTPatchedInterp::setFldMap(const ROMSFieldColumns& fcol) {
+void CTPatchedInterp::setFldMap(const MSFieldColumns& fcol) {
 
    // Set the default fldmap
    setDefFldMap();

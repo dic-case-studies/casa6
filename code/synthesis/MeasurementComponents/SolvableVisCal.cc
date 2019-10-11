@@ -652,7 +652,7 @@ void SolvableVisCal::createCorruptor(const VisIter& vi,const Record& simpar, con
   // what matters is nPar not nCorr - then apply uses coridx
   corruptor_p->nPar()=nPar();
 
-  const ROMSSpWindowColumns& spwcols = vi.msColumns().spectralWindow();  
+  const MSSpWindowColumns& spwcols = vi.msColumns().spectralWindow();  
   //  if (prtlev()>3) cout << " SpwCols accessed:" << endl;
   //if (prtlev()>3) cout << "   nSpw()= " << nSpw() << " spwcols= " << nSpw() << endl;
   //if (prtlev()>3) cout << "   spwcols.nrow()= " << spwcols.nrow() << endl;  
@@ -2755,7 +2755,7 @@ void SolvableVisCal::setFracChanAve() {
 
   // TBD: calculate fintervalCh from fintervalHz
   MeasurementSet ms(msName());
-  ROMSSpWindowColumns spwcol(ms.spectralWindow());
+  MSSpWindowColumns spwcol(ms.spectralWindow());
 
   //  cout << "setFracChanAve!" << endl;
   for (Int ispw=0;ispw<nSpw();++ispw) {
@@ -4314,7 +4314,7 @@ void SolvableVisCal::loadMemCalTable(String ctname,String field) {
   //   (this may be revised by calcPar)
 
   // This should not be needed anymore (and it breaks portability)
-  //  ROMSSpWindowColumns spwcol(ct_->spectralWindow());
+  //  MSSpWindowColumns spwcol(ct_->spectralWindow());
   //  nChanParList().assign(spwcol.numChan().getColumn());
 
 }
@@ -6063,7 +6063,7 @@ void SolvableVisJones::applyRefAnt() {
   Matrix<Double> xyz;
   if (msName()!="<noms>") {
     MeasurementSet ms(msName());
-    ROMSAntennaColumns msant(ms.antenna());
+    MSAntennaColumns msant(ms.antenna());
     msant.position().getColumn(xyz);
   }
   else {
@@ -6449,7 +6449,7 @@ void SolvableVisJones::fluxscale(const String& outfile,
   Int nFld=max(fldList)+1;
 
   //get Antenna names
-  ROMSAntennaColumns antcol(ct_->antenna());
+  MSAntennaColumns antcol(ct_->antenna());
   Vector<String> antNames(antcol.name().getColumn());
 
   Vector<Double> solFreq(nSpw(),-1.0);
@@ -7467,7 +7467,7 @@ void SolvableVisJones::fluxscale(const String& outfile,
 
     //create incremental caltable
     if (incremental) {
-      //ROMSSpWindowColumns spwcol(ct_->spectralWindow());
+      //MSSpWindowColumns spwcol(ct_->spectralWindow());
       //Vector<Int> NCHAN=spwcol.numChan().getColumn();
       //nChanPar()=NCHAN(0);
 
@@ -7749,7 +7749,7 @@ void SolvableVisJones::listCal(const Vector<Int> ufldids,
 
 
     // Get nchan from the subtable
-    ROMSSpWindowColumns spwcol(ct_->spectralWindow());
+    MSSpWindowColumns spwcol(ct_->spectralWindow());
     Vector<Int> NCHAN=spwcol.numChan().getColumn();
 
     Int NANT=ct_->antenna().nrow();

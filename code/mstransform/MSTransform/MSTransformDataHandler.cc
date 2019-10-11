@@ -520,7 +520,7 @@ Bool MSTransformDataHandler::selectSpw(const String& spwstr,const Vector<Int>& s
 	else
 	{
 		// Select everything and rely on widths.
-		ROMSSpWindowColumns mySpwTab(ms_p.spectralWindow());
+		MSSpWindowColumns mySpwTab(ms_p.spectralWindow());
 		uInt nspw = mySpwTab.nrow();
 
 		nchan_p = mySpwTab.numChan().getColumn();
@@ -804,7 +804,7 @@ Bool MSTransformDataHandler::makeMSBasicStructure(String& msname,
 		return false;
 	}
 
-	mscIn_p = new ROMSColumns(mssel_p);
+	mscIn_p = new MSColumns(mssel_p);
 
 	// Note again the parseColumnNames() a few lines back that stops setupMS()
 	// from being called if the MS doesn't have the requested columns.
@@ -1570,7 +1570,7 @@ Bool MSTransformDataHandler::fillFieldTable()
 
 	MSFieldColumns msField(msOut_p.field());
 
-	const ROMSFieldColumns& fieldIn = mscIn_p->field();
+	const MSFieldColumns& fieldIn = mscIn_p->field();
 	ScalarColumn<String> code(fieldIn.code());
 	ArrayColumn<Double> delayDir(fieldIn.delayDir());
 	ScalarColumn<Bool> flagRow(fieldIn.flagRow());
@@ -1778,7 +1778,7 @@ Bool MSTransformDataHandler::fillFieldTable()
 Bool MSTransformDataHandler::copyEphemerisTable(MSFieldColumns & msField)
 {
 	LogIO os(LogOrigin("MSTransformDataHandler", __FUNCTION__));
-	const ROMSFieldColumns& fieldIn = mscIn_p->field();
+	const MSFieldColumns& fieldIn = mscIn_p->field();
 	ScalarColumn<Int> eID(fieldIn.ephemerisId());
 
 	if (eID.hasContent())
@@ -2019,7 +2019,7 @@ Bool MSTransformDataHandler::fillSPWTable()
 	LogIO os(LogOrigin("MSTransformDataHandler", __FUNCTION__));
 
 	// Selected input MS SPW Table Columns (read-only)
-	ROMSSpWindowColumns inSpWCols(mssel_p.spectralWindow());
+	MSSpWindowColumns inSpWCols(mssel_p.spectralWindow());
 
 	// SPW Table Columns of output MS (read-write)
 	MSSpWindowColumns& msSpW(msc_p->spectralWindow());
@@ -2461,7 +2461,7 @@ Bool MSTransformDataHandler::copyPointing()
 				uInt nAddedCols = addOptionalColumns(oldPoint, newPoint, true);
 				os << LogIO::DEBUG1 << "POINTING has " << nAddedCols << " optional columns." << LogIO::POST;
 
-				const ROMSPointingColumns oldPCs(oldPoint);
+				const MSPointingColumns oldPCs(oldPoint);
 				MSPointingColumns newPCs(newPoint);
 				newPCs.setEpochRef(MEpoch::castType(oldPCs.timeMeas().getMeasRef().getType()));
 				newPCs.setDirectionRef(MDirection::castType(oldPCs.directionMeasCol().getMeasRef().getType()));
@@ -2566,7 +2566,7 @@ Bool MSTransformDataHandler::copySource()
 		uInt nAddedCols = addOptionalColumns(oldSource, newSource, true);
 		os << LogIO::DEBUG1 << "SOURCE has " << nAddedCols << " optional columns." << LogIO::POST;
 
-		const ROMSSourceColumns incols(oldSource);
+		const MSSourceColumns incols(oldSource);
 		MSSourceColumns outcols(newSource);
 
 		// Copy the Measures frame info.  This has to be done before filling the rows.
@@ -2632,7 +2632,7 @@ Bool MSTransformDataHandler::copyAntenna()
 {
 	const MSAntenna& oldAnt = mssel_p.antenna();
 	MSAntenna& newAnt = msOut_p.antenna();
-	const ROMSAntennaColumns incols(oldAnt);
+	const MSAntennaColumns incols(oldAnt);
 	MSAntennaColumns outcols(newAnt);
 	Bool retval = false;
 
@@ -2672,7 +2672,7 @@ Bool MSTransformDataHandler::copyFeed()
 
 	const MSFeed& oldFeed = mssel_p.feed();
 	MSFeed& newFeed = msOut_p.feed();
-	const ROMSFeedColumns incols(oldFeed);
+	const MSFeedColumns incols(oldFeed);
 	MSFeedColumns outcols(newFeed);
 
 	outcols.setDirectionRef(MDirection::castType(incols.beamOffsetMeas().getMeasRef().getType()));
@@ -2783,7 +2783,7 @@ Bool MSTransformDataHandler::copyFlag_Cmd()
 			uInt nAddedCols = addOptionalColumns(oldFlag_Cmd, newFlag_Cmd, true);
 			os << LogIO::DEBUG1 << "FLAG_CMD has " << nAddedCols << " optional columns." << LogIO::POST;
 
-			const ROMSFlagCmdColumns oldFCs(oldFlag_Cmd);
+			const MSFlagCmdColumns oldFCs(oldFlag_Cmd);
 			MSFlagCmdColumns newFCs(newFlag_Cmd);
 			newFCs.setEpochRef(MEpoch::castType(oldFCs.timeMeas().getMeasRef().getType()));
 
@@ -2811,7 +2811,7 @@ Bool MSTransformDataHandler::copyHistory()
 	uInt nAddedCols = addOptionalColumns(oldHistory, newHistory, true);
 	os << LogIO::DEBUG1 << "HISTORY has " << nAddedCols << " optional columns." << LogIO::POST;
 
-	const ROMSHistoryColumns oldHCs(oldHistory);
+	const MSHistoryColumns oldHCs(oldHistory);
 	MSHistoryColumns newHCs(newHistory);
 	newHCs.setEpochRef(MEpoch::castType(oldHCs.timeMeas().getMeasRef().getType()));
 
@@ -2827,7 +2827,7 @@ Bool MSTransformDataHandler::copyObservation()
 {
 	const MSObservation& oldObs = mssel_p.observation();
 	MSObservation& newObs = msOut_p.observation();
-	const ROMSObservationColumns oldObsCols(oldObs);
+	const MSObservationColumns oldObsCols(oldObs);
 	MSObservationColumns newObsCols(newObs);
 	newObsCols.setEpochRef(MEpoch::castType(oldObsCols.releaseDateMeas().getMeasRef().getType()));
 
@@ -2877,7 +2877,7 @@ Bool MSTransformDataHandler::copyState()
 			if (!intentString_p.empty() and reindex_p)
 			{
 				MSState& newState = msOut_p.state();
-				const ROMSStateColumns oldStateCols(oldState);
+				const MSStateColumns oldStateCols(oldState);
 				MSStateColumns newStateCols(newState);
 
 				// Initialize stateRemapper_p if necessary.
@@ -2958,7 +2958,7 @@ Bool MSTransformDataHandler::copySyscal()
 			uInt nAddedCols = addOptionalColumns(oldSysc, newSysc, true);
 			os << LogIO::DEBUG1 << "SYSCAL has " << nAddedCols << " optional columns." << LogIO::POST;
 
-			const ROMSSysCalColumns incols(oldSysc);
+			const MSSysCalColumns incols(oldSysc);
 			MSSysCalColumns outcols(newSysc);
 			outcols.setEpochRef(MEpoch::castType(incols.timeMeas().getMeasRef().getType()));
 
@@ -3029,7 +3029,7 @@ Bool MSTransformDataHandler::copyWeather()
 			uInt nAddedCols = addOptionalColumns(oldWeath, newWeath, true);
 			os << LogIO::DEBUG1 << "WEATHER has " << nAddedCols << " optional columns." << LogIO::POST;
 
-			const ROMSWeatherColumns oldWCs(oldWeath);
+			const MSWeatherColumns oldWCs(oldWeath);
 			MSWeatherColumns newWCs(newWeath);
 			newWCs.setEpochRef(MEpoch::castType(oldWCs.timeMeas().getMeasRef().getType()));
 

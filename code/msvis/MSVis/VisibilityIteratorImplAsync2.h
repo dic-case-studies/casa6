@@ -455,7 +455,7 @@ public:
 
 //    virtual void getFreqInSpwRange(casacore::Double& freqStart, casacore::Double& freqEnd, casacore::MFrequency::Types freqframe = casacore::MFrequency::LSRK) const;
 
-    // Access the current casacore::ROMSColumns object in MSIter
+    // Access the current casacore::MSColumns object in MSIter
     virtual const vi::SubtableColumns & subtableColumns () const;
 
     // get back the selected spectral windows and spectral channels for

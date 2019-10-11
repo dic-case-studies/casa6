@@ -1044,7 +1044,7 @@ private:
            hPointing = ms.pointing();
            nRow   = hPointing.nrow();
 
-           unique_ptr<casacore::ROMSPointingColumns>  colPt( new casacore::ROMSPointingColumns(hPointing) );
+           unique_ptr<casacore::MSPointingColumns>  colPt( new casacore::MSPointingColumns(hPointing) );
            columnPointing = std::move(colPt);
       }
 
@@ -1071,7 +1071,7 @@ private:
     casacore::MSPointing         hPointing;
     casacore::uInt               nRow;
 
-    std::unique_ptr<casacore::ROMSPointingColumns>   columnPointing;
+    std::unique_ptr<casacore::MSPointingColumns>   columnPointing;
 
     ScalarColumn<Int>    pointingAntennaId      ;
     ScalarColumn<Double> pointingTime           ;

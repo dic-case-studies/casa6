@@ -61,7 +61,6 @@ import traceback
 
 # Enable benchmarking?
 benchmarking = True
-usedasync = False
 
 #
 # Set up some useful variables

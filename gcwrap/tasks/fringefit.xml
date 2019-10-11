@@ -150,6 +150,7 @@ Previous calibrations should be applied on the fly.
 
         <param type="intArray" name="spwmap" subparam="true">
                 <description>Spectral windows combinations to form for gaintables(s)</description>
+                <type>any</type>
                 <value></value>
         </param>
 
@@ -361,8 +362,6 @@ Previous calibrations should be applied on the fly.
       parang -- If True, apply the parallactic angle correction (required
                for polarization calibration)
                default: False
-      async --  Run asynchronously
-              default = False; do not run asychronously
 </example> 
 
 </task>

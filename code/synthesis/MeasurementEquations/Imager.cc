@@ -586,7 +586,7 @@ Bool Imager::open(MeasurementSet& theMs, Bool /*compress*/, Bool useModelCol)
     AlwaysAssert(rvi_p, AipsError);
     
     // Polarization
-    ROMSColumns msc(*mssel_p);
+    MSColumns msc(*mssel_p);
     Vector<String> polType=msc.feed().polarizationType()(0);
     if (polType(0)!="X" && polType(0)!="Y" &&
 	polType(0)!="R" && polType(0)!="L") {
@@ -845,7 +845,7 @@ Bool Imager::setimage(const Int nx, const Int ny,
     }
     else {
 
-      ROMSFieldColumns msfield(ms_p->field());
+      MSFieldColumns msfield(ms_p->field());
       phaseCenter_p=msfield.phaseDirMeas(fieldid_p);
       //    phaseCenter_p=msc.field().phaseDirMeas(fieldid_p);
     }
@@ -1057,7 +1057,7 @@ Bool Imager::defineImage(const Int nx, const Int ny,
       phaseCenter_p=phaseCenter;
     }
     else {
-      ROMSFieldColumns msfield(ms_p->field());
+      MSFieldColumns msfield(ms_p->field());
       phaseCenter_p=msfield.phaseDirMeas(fieldid_p);
     }
     
@@ -1268,7 +1268,7 @@ Bool Imager::advise(const Bool takeAdvice, const Float amplitudeLoss,
 	}
       }
 
-    ROMSColumns msc(*mssel_p);
+    MSColumns msc(*mssel_p);
     if(datafieldids_p.shape()!=0){
       //If setdata has been used prior to this
     phaseCenter=msc.field().phaseDirMeas(datafieldids_p(0));
@@ -1541,7 +1541,7 @@ Bool Imager::setdata(const String& mode, const Vector<Int>& nchan,
     uInt nms = 1;
     uInt nrow = chansels.nrow();
     dataspectralwindowids_p.resize();
-    const ROMSSpWindowColumns spwc(ms_p->spectralWindow());
+    const MSSpWindowColumns spwc(ms_p->spectralWindow());
     uInt nspw = spwc.nrow();
     const ScalarColumn<Int> spwNchans(spwc.numChan());
     Vector<Int> nchanvec = spwNchans.getColumn();
@@ -2413,7 +2413,7 @@ Bool Imager::linearmosaic(const String& mosaic,
     denominator.set(0.0);
     ImageRegrid<Float> regridder;
     
-    ROMSColumns msc(*ms_p);
+    MSColumns msc(*ms_p);
     for (uInt i=0; i < images.nelements(); ++i) {
       if(!Table::isReadable(images(i))) {   
 	os << LogIO::SEVERE << "Image " << images(i) << 
@@ -2773,7 +2773,7 @@ Bool Imager::uvrange(const Double& uvmin, const Double& uvmax)
 
      MSSpectralWindow msspw(tableCommand(spwsel.str(), 
 					 mssel_p->spectralWindow()));
-     ROMSSpWindowColumns spwc(msspw);
+     MSSpWindowColumns spwc(msspw);
 
      // This averaging scheme will work even if the spectral windows are
      // of different sizes.  Note, however, that using an average wavelength
@@ -3114,7 +3114,7 @@ Bool Imager::makeimage(const String& type, const String& image,
 	  telescope_p=coordsys.obsInfo().telescope();
 	}
 	this->unlock();
-	ROMSAntennaColumns ac(ms_p->antenna());
+	MSAntennaColumns ac(ms_p->antenna());
 	Double dishDiam=ac.dishDiameter()(0);
 	if(!allEQ(ac.dishDiameter().getColumn(), dishDiam))
 	  os << LogIO::WARN
@@ -4364,7 +4364,7 @@ Bool Imager::mem(const String& algorithm,
 	LogOrigin lor( String("imager"), String("mem()") );
 	LogMessage msg(lor);
 	sink.postLocally(msg);
-	ROMSHistoryColumns msHis(ms_p->history());
+	MSHistoryColumns msHis(ms_p->history());
 	transferHistory(imagelog, msHis);
 	for (Int thismodel=0;thismodel<Int(model.nelements());++thismodel) {
 	  PagedImage<Float> restoredImage(image(thismodel),
@@ -4597,7 +4597,7 @@ Bool Imager::setjy(const Vector<Int>& /*fieldid*/,
     String fluxScaleName;
     Bool matchedScale=false;
     Int spwid, fldid;
-    ROMSColumns msc(*ms_p);
+    MSColumns msc(*ms_p);
     ConstantSpectrum cspectrum;
     // TT
     Double meantime = msc.time()(0);
@@ -4825,7 +4825,7 @@ Record Imager::setjy(const Vector<Int>& /*fieldid*/,
     // if intent is given try to do AND with fieldIds
     if (intentstr!="") {
       mssel_p = new MeasurementSet((*ms_p)(exprNode), &(*ms_p));
-      ROMSColumns tmpmsc(*mssel_p);
+      MSColumns tmpmsc(*mssel_p);
       Vector<Int> fldidv=tmpmsc.fieldId().getColumn();
       if (fldidv.nelements()==0) 
         throw(AipsError("No field ids were selected, please check input parameters"));
@@ -4911,7 +4911,7 @@ Record Imager::setjy(const Vector<Int>& /*fieldid*/,
     Vector<Vector<Flux<Double> > > returnFluxes(nspws), returnFluxErrs(nspws);
     Vector<Vector<MFrequency> > mfreqs(nspws);
     Vector<Vector<Double> > fluxUsed(nspws); // fluxesUsed(nspws,4) 
-    ROMSColumns msc(*ms_p);
+    MSColumns msc(*ms_p);
     MEpoch aveEpoch=MEpoch(msc.timeMeas()(0));
     const Unit freqUnit = sjy_setup_arrs(returnFluxes, returnFluxErrs, fluxUsed, tempCLs, mfreqs,
                                          msc.spectralWindow(), nspws, selToRawSpwIds,
@@ -4969,7 +4969,7 @@ Record Imager::setjy(const Vector<Int>& /*fieldid*/,
         // The flux densities are calculated for all spws at once to avoid
         // repeatedly digging up the flux model (and possibly the ephemeris).
         //
-        ROMSColumns msselc(*mssel_p);
+        MSColumns msselc(*mssel_p);
         //if(nullSelect_p || msselc.nrow() < 1){
         if(!nullSelect_p and  msselc.nrow() < 1){
           os << ((timerange == "" && scanstr == ""
@@ -5297,7 +5297,7 @@ Unit Imager::sjy_setup_arrs(Vector<Vector<Flux<Double> > >& returnFluxes,
                             Vector<Vector<Double> >& fluxUsed,
                             Vector<String>& tempCLs,
                             Vector<Vector<MFrequency> >& mfreqs,
-                            const ROMSSpWindowColumns& spwcols, const uInt nspws,
+                            const MSSpWindowColumns& spwcols, const uInt nspws,
                             const Vector<Int>& selToRawSpwIds, const Bool chanDep)
 {
   // .getUnits() is a little confusing - it seems to return a Vector which is
@@ -5465,7 +5465,7 @@ Bool Imager::sjy_computeFlux(LogIO& os, FluxStandard& fluxStd,
                              String& fluxScaleName, MEpoch& aveEpoch,
                              const Vector<Vector<MFrequency> >& mfreqs,
                              const String& model, const String& fieldName, 
-                             const ROMSColumns& msc, const Int fldid, 
+                             const MSColumns& msc, const Int fldid, 
                              const MDirection& fieldDir, const Vector<Int>& selToRawSpwIds,
                              const String& standard)
 {
@@ -5818,7 +5818,7 @@ void Imager::sjy_makeComponentList(LogIO& os, Vector<String>& tempCLs,
 TempImage<Float>* Imager::sjy_prepImage(LogIO& os, FluxStandard& fluxStd,
                                         Vector<Double>& fluxUsed, Vector<Double>& freqsOfScale, 
                                         Vector<Double>& freqscale, const String& model,
-                                        const ROMSSpWindowColumns& spwcols,
+                                        const MSSpWindowColumns& spwcols,
                                         //const Int rawspwid, const Bool chanDep,
                                         const Vector<Int> rawspwids, const Bool chanDep,
                                         const Vector<Vector<MFrequency> >& mfreqs,
@@ -6672,7 +6672,7 @@ Bool Imager::plotvis(const String& type, const Int increment)
        << LogIO::POST;
     
     
-    ROMSColumns msc(*mssel_p);
+    MSColumns msc(*mssel_p);
     Bool hasCorrected=!(msc.correctedData().isNull());
     Bool hasModel= true; //with virtual model data service model data is always there
     //why bother if it is not requested
@@ -7243,7 +7243,7 @@ Bool Imager::plotsummary()
       timeFloat(i)=Float(t(i)-tStart);
     }
     
-    ROMSColumns msc(*ms_p);
+    MSColumns msc(*ms_p);
     PGPlotter plotter=getPGPlotter();
     plotter.subp(1, 2);
     plotter.page();
@@ -7842,7 +7842,7 @@ Int Imager::interactivemask(const String& image, const String& mask,
 	  LogOrigin lor( String("imager"), String("clean()") );
 	  LogMessage msg(lor);
 	  sink.postLocally(msg);
-	  ROMSHistoryColumns msHis(ms_p->history());
+	  MSHistoryColumns msHis(ms_p->history());
 	  transferHistory(imagelog, msHis);
 	  for (Int thismodel=0;thismodel<Int(aimage.nelements());++thismodel) {
 	    if(Table::isWritable(aimage(thismodel))){

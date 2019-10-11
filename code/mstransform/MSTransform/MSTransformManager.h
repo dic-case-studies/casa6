@@ -1413,7 +1413,7 @@ protected:
 	casacore::MeasurementSet *inputMs_p;
 	casacore::MeasurementSet *selectedInputMs_p;
 	casacore::MeasurementSet *outputMs_p;
-	casacore::ROMSColumns *selectedInputMsCols_p;
+	casacore::MSColumns *selectedInputMsCols_p;
 	casacore::MSColumns *outputMsCols_p;
 	std::shared_ptr<casacore::MSFieldColumns> inputMSFieldCols_p;
 

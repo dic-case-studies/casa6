@@ -55,7 +55,7 @@ namespace LibAIR2 {
 		std::vector<int> &sourceID,
 		const std::vector<size_t> &sortedI)
   {
-    const casacore::ROMSMainColumns cols(ms);
+    const casacore::MSMainColumns cols(ms);
     const casacore::ScalarColumn<casacore::Int> &f= cols.fieldId();
     const casacore::ScalarColumn<casacore::Double> &t= cols.time();
 
@@ -148,7 +148,7 @@ namespace LibAIR2 {
     const casacore::MSField & fieldT(ms.field());
     const size_t nfields=fieldT.nrow();
 
-    casacore::ROMSFieldColumns fcols(fieldT);
+    casacore::MSFieldColumns fcols(fieldT);
     const casacore::ScalarColumn<casacore::String> &names (fcols.name());
     for(size_t i=0; i<nfields; ++i)
     {
@@ -163,7 +163,7 @@ namespace LibAIR2 {
     const casacore::MSSource & srcTab(ms.source());
     const size_t nsource=srcTab.nrow();
 
-    casacore::ROMSSourceColumns scols(srcTab);
+    casacore::MSSourceColumns scols(srcTab);
     const casacore::ScalarColumn<casacore::String> &names (scols.name());
     const casacore::ScalarColumn<casacore::Int> & ids (scols.sourceId());
     for(size_t i=0; i<nsource; ++i)
@@ -183,7 +183,7 @@ namespace LibAIR2 {
 
     field_t sources=getSourceNames(ms);
 
-    casacore::ROMSFieldColumns fcols(fieldT);
+    casacore::MSFieldColumns fcols(fieldT);
     const casacore::ScalarColumn<casacore::Int> &fieldsrc (fcols.sourceId());
     for(size_t i=0; i<nfields; ++i)
     {
@@ -207,7 +207,7 @@ namespace LibAIR2 {
     std::map<size_t, size_t> res;
     const casacore::MSField & fieldT(ms.field());
     const size_t nfields=fieldT.nrow();
-    casacore::ROMSFieldColumns fcols(fieldT);
+    casacore::MSFieldColumns fcols(fieldT);
     const casacore::ScalarColumn<casacore::Int> &fieldsrc (fcols.sourceId());
     for(size_t i=0; i<nfields; ++i)
     {

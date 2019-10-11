@@ -155,7 +155,7 @@ public:
 
   // Picks a reference to DATA, MODEL_DATA, CORRECTED_DATA, or LAG_DATA out
   // of ms_p.  FLOAT_DATA is not included because it is not natively complex. 
-  const casacore::ArrayColumn<casacore::Complex>& right_column(const casacore::ROMSColumns *ms_p,
+  const casacore::ArrayColumn<casacore::Complex>& right_column(const casacore::MSColumns *ms_p,
                                              const casacore::MS::PredefinedColumns datacol);
 
   // Sets sort to a casacore::Block of columns that a VisibilityIterator should sort by,

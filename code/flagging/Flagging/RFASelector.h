@@ -113,7 +113,7 @@ protected:
                         the diameters array (true antenna diameters)
                      */
   casacore::Vector< casacore::Double > diameters;
-  casacore::ROMSAntennaColumns *ac;
+  casacore::MSAntennaColumns *ac;
 
   // elevation
   double lowerlimit;

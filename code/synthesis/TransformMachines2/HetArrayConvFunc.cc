@@ -122,8 +122,8 @@ void HetArrayConvFunc::findAntennaSizes(const vi::VisBuffer2& vb) {
 
       if(msId_p != vb.msId()) {
         msId_p=vb.msId();
-        //ROMSColumns mscol(vb.ms());
-        const ROMSAntennaColumns& ac=vb.subtableColumns().antenna();
+        //MSColumns mscol(vb.ms());
+        const MSAntennaColumns& ac=vb.subtableColumns().antenna();
         antIndexToDiamIndex_p.resize(ac.nrow());
         antIndexToDiamIndex_p.set(-1);
         Int diamIndex=antDiam2IndexMap_p.size( );

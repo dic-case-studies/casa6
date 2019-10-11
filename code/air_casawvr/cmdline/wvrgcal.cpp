@@ -49,6 +49,10 @@
 #include "wvrgcalerrors.hpp"
 #include "wvrgcalfeedback.hpp"
 
+#if defined(CASA6)
+#include <asdmstman/AsdmStMan.h>
+#endif
+
 using LibAIR2::fatalMsg;
 using LibAIR2::errorMsg;
 using LibAIR2::warnMsg;
@@ -845,6 +849,10 @@ static void defineOptions(boost::program_options::options_description &desc,
 int main(int argc,  char* argv[])
 {
   using namespace boost::program_options;
+
+#if defined(CASA6)
+  casa::AsdmStMan::registerClass( );
+#endif
 
   int rval = -2;
 

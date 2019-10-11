@@ -67,7 +67,7 @@ MSCacheVolMeter::MSCacheVolMeter(const MeasurementSet& ms,
 		nCorrPerDDID_(),
 		nAnt_(0) {
 
-	ROMSColumns msCol(ms);
+	MSColumns msCol(ms);
 
 	// Initialize chunks and rows counters
 	nDDID_ = msCol.dataDescription().nrow();

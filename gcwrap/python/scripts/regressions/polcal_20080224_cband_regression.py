@@ -303,8 +303,7 @@ elif ( importmode == 'fits' ):
     print "Use importuvfits to read UVFITS and make an MS"
 
     importuvfits(fitsfile=datafile,
-                 vis=msfile,
-                 async=False)
+                 vis=msfile)
 
 else:
     #

@@ -62,7 +62,7 @@ class NewCalTable;
 //
 // <synopsis>
 // This class provides read-only access to the columns in the NewCalTable, similar
-// to the casacore::ROMSColumns for MeasurementSet.
+// to the casacore::MSColumns for MeasurementSet.
 // It does the declaration of all the Scalar and ArrayColumns with the
 // correct types, so the application programmer doesn't have to
 // worry about getting those right. There is an access function
