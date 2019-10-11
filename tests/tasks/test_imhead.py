@@ -1493,7 +1493,7 @@ class imhead_test(unittest.TestCase):
                 "datamin", "datamax", "maxpos", "minpos",
                 "maxpixpos", "minpixpos"
             ]:
-                self.assertRaises(Exception, imhead(imagename=imagename, mode="set", hdkey=key, hdvalue=4))
+                self.assertRaises(AssertionError, imhead, imagename=imagename, mode="set", hdkey=key, hdvalue=4)
                
             key = "user-specified"
             for value in ["test-val", 6, self.qa.quantity("4km/s")]:
