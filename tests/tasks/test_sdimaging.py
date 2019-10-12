@@ -525,8 +525,11 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def test015(self):
         """Test015: negative minweight"""
-        res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
-        self.assertFalse(res)
+        success = False
+        try:
+            sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
+        except: success = True
+        self.assertTrue(success)
 
 
 ###
