@@ -303,7 +303,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         <param type="string" name="outframe" subparam="true" ignorecase="True">
             <description>Output reference frame (''=keep input frame).</description>
             <value></value>
-            <allowed kind="enum">
+            <allowed kind="enum" ignorecase="True">
             <value>topo</value>
             <value>geo</value>
             <value>lsrk</value>

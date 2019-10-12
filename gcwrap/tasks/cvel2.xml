@@ -473,7 +473,7 @@ coordinate transformation.
                         Example: outframe='BARY'     
 </description>
                 <value></value>
-                <allowed kind="enum">
+                <allowed kind="enum" ignorecase="True">
                         <value>topo</value>
                         <value>geo</value>
                         <value>lsrk</value>
