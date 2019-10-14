@@ -71,8 +71,12 @@ namespace casa{
   // 					   const double& /*cfRefFreq*/,
   // 					   const double& /*imRefFreq*/,
   // 					   const int& spwID, const int& fieldId)
+  // bool PhaseGrad::ComputeFieldPointingGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
+  // 					   const CountedPtr<CFBuffer>& cfb,
+  // 					   const VisBuffer2& vb,
+  // 					   const int& row,
+  // 					   const pair<int,int> antGrp)
   bool PhaseGrad::ComputeFieldPointingGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p,
-					   const CountedPtr<CFBuffer>& cfb,
 					   const VisBuffer2& vb,
 					   const int& row,
 					   const pair<int,int> antGrp)
@@ -81,16 +85,16 @@ namespace casa{
       //
       // Re-find the max. CF size if the CFB changed.
       //
-      CFBuffer *thisCFB = cfb.get();
-      if (thisCFB != cachedCFBPtr_p)
-	{
-	  maxCFShape_p[0] = maxCFShape_p[1] = cfb->getMaxCFSize();
-	  {
-	    // LogIO log_l(LogOrigin("PhaseGrad","computeFieldPointingGrad"));
-	    //cerr << "CFB changed: "<< thisCFB << " " << cachedCFBPtr_p << " " << vb.spectralWindows()(0) << " " << vb.fieldId()(0) << " " << maxCFShape_p << endl;
-	  }
-	  cachedCFBPtr_p = thisCFB;
-	}
+      // CFBuffer *thisCFB = cfb.get();
+      // if (thisCFB != cachedCFBPtr_p)
+      // 	{
+      // 	  maxCFShape_p[0] = maxCFShape_p[1] = cfb->getMaxCFSize();
+      // 	  {
+      // 	    // LogIO log_l(LogOrigin("PhaseGrad","computeFieldPointingGrad"));
+      // 	    //cerr << "CFB changed: "<< thisCFB << " " << cachedCFBPtr_p << " " << vb.spectralWindows()(0) << " " << vb.fieldId()(0) << " " << maxCFShape_p << endl;
+      // 	  }
+      // 	  cachedCFBPtr_p = thisCFB;
+      // 	}
       //
       // If the pointing or the max. CF size changed, recompute the phase gradient.
       //

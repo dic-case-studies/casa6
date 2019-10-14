@@ -83,7 +83,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      inline casacore::Matrix<casacore::Complex>& getCFPhaseGrad(const int& row)//, const int& ant0, const int& ant1)
      {return cfPhaseGrad_p(row);}
      virtual casacore::Matrix<casacore::Complex> setBLPhaseGrad(const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p ,
-								const casacore::CountedPtr<CFBuffer>& cfb,
 								const vi::VisBuffer2& vb,
 								const int& row,
 								const double& sigmaDev);
@@ -106,6 +105,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      int vbRows_p;
      /* casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p; */
      vector<float> sigmaDev ;
+     casacore::CountedPtr<CFBuffer> cachedCFBPtr_p;
+     Vector<int> maxCFShape_p;
      casacore::Timer timer_p;
      float totalCost_p, totalVB_p;
    };

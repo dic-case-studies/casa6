@@ -45,7 +45,7 @@ namespace casa{
   namespace refim{
     Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
 
-    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(), doPointing_p(false), cachedFieldId_p(-1), vbRow2BLMap_p(), vbRows_p(0), sigmaDev(), timer_p()
+    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(), doPointing_p(false), cachedFieldId_p(-1), vbRow2BLMap_p(), vbRows_p(0), sigmaDev(), cachedCFBPtr_p(), maxCFShape_p(2), timer_p()
     {
       baselineType_p = new BaselineType();
       needsNewPOPG_p = false;
@@ -131,7 +131,7 @@ namespace casa{
       //    vbRow2CFMap_p.resize(nPol, nChan, nRow);
       vb2CFBMap_p.resize(nRow);
       cfPhaseGrad_p.resize(nRow);
-
+      maxCFShape_p.resize(2,0);
       if(cachedFieldId_p != vb.fieldId()[0])
 	{
 	  needsNewFieldPG_p = true;
@@ -284,7 +284,13 @@ namespace casa{
 	  try
 	    {
 	      cfb_l = cfs.getCFBuffer(pa, dPA, ant1Type, ant2Type);
-	      //cfb_l->show("From VRB: ");
+	      
+	      if (cfb_l != cachedCFBPtr_p)
+		{
+		  maxCFShape_p[0] = maxCFShape_p[1] = cfb_l->getMaxCFSize();
+		  cerr << "CFBShape changed " << maxCFShape_p <<endl;
+		}
+	      cachedCFBPtr_p = cfb_l;
 	    }
 	  catch (CFNotCached& x)
 	    {
@@ -322,7 +328,7 @@ namespace casa{
 	      // baselineType_p->setDoPointing(doPointing_p);
 	      // if(computeAntennaGroups_p)
 	      // baselineType_p->findAntennaGroups(vb,pointingOffsets_p,sigmaDev);
-	      cfPhaseGrad_p(irow).reference(setBLPhaseGrad(pointingOffsets_p, cfb_l, vb, irow, sigmaDev[0]));
+	      cfPhaseGrad_p(irow).reference(setBLPhaseGrad(pointingOffsets_p, vb, irow, sigmaDev[0]));
 	      totalCost_p += timer_p.real();
 	      totalVB_p++;
 	      // Set the CFB per VB row
@@ -344,9 +350,8 @@ namespace casa{
     }
 
     Matrix<Complex> VB2CFBMap::setBLPhaseGrad(const CountedPtr<PointingOffsets>& pointingOffsets_p ,
-						 const CountedPtr<CFBuffer>& cfb,
-						 const vi::VisBuffer2& vb,
-						 const int& row,
+					      const vi::VisBuffer2& vb,
+					      const int& row,
 					      const double& /*sigmaDev*/)
     {
       int myrow=row;
@@ -409,10 +414,10 @@ namespace casa{
 	    // vectorPhaseGradCalculator_p[idx]->needsNewFieldPG_p = needsNewFieldPG_p;
 	    // vectorPhaseGradCalculator_p[idx]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow);
 	    // cerr << "maxVB2BLMap "<< maxVB2BLMap << " vbRow2BLMap_p[myrow]" << vbRow2BLMap_p[myrow] << " "  << myrow << " " << needsNewPOPG_p << endl;
-
+	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->maxCFShape_p = maxCFShape_p;
 	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = blNeedsNewPOPG_p[myrow];
 	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewFieldPG_p = needsNewFieldPG_p;
-	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,row,antGrp_l);
+	    vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,vb,row,antGrp_l);
 
 	    blNeedsNewPOPG_p[myrow] = false;
 	 
@@ -432,9 +437,10 @@ namespace casa{
 		vectorPhaseGradCalculator_p[myrow]=new PhaseGrad();
 	    }
 	  // vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,0);    
+	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->maxCFShape_p = maxCFShape_p;
 	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewPOPG_p = needsNewPOPG_p;
 	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->needsNewFieldPG_p = needsNewFieldPG_p;
-	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,cfb,vb,myrow,make_pair(0,0));
+	  vectorPhaseGradCalculator_p[vbRow2BLMap_p[myrow]]->ComputeFieldPointingGrad(pointingOffsets_p,vb,myrow,make_pair(0,0));
 	  idx =0;
 	}
       // if (needsNewPOPG_p)
