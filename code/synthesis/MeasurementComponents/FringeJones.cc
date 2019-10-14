@@ -69,7 +69,7 @@
 
 // DEVDEBUG gates the development debugging information to standard
 // error; it should be set to 0 for production.
-#define DEVDEBUG true
+#define DEVDEBUG false
 
 using namespace casa::vi;
 using namespace casacore;
@@ -973,8 +973,6 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
     
     Double refTime = bundle->get_t0();
 
-    std::cerr << "Starting jacobian" << std::endl;
-
     for (Int ibuf=0; ibuf < sdbs.nSDB(); ibuf++) {
         SolveDataBuffer& s (sdbs(ibuf));
         if (!s.Ok()) continue;
@@ -1168,7 +1166,6 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
             }
         } // loop over rows
     } // loop over SDBs
-    std::cerr << "Ending jacobian" << std::endl;
     if (DEVDEBUG) {
         print_baselines(baselines);
         cerr << "count " << count << endl;
