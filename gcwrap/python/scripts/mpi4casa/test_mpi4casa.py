@@ -1158,46 +1158,53 @@ class test_mpi4casa_flagdata(unittest.TestCase):
         
     def test_mpi4casa_flagdata_list_return_async(self):
         """Test flagdata summary in async mode"""
-        
+
+        # Do not make a copy of the input MMS for each flagdata command
+        # os.system("cp -r {} {}".format(self.vis, self.vis2))
+        # os.system("cp -r {} {}".format(self.vis, self.vis3))
+        os.system("ln -s {} {}".format(self.vis, self.vis2))
+        os.system("ln -s {} {}".format(self.vis, self.vis3))
+
         # First run flagdata sequentially
         bypassParallelProcessing = ParallelTaskHelper.getBypassParallelProcessing()
         ParallelTaskHelper.bypassParallelProcessing(2)
         res = flagdata(vis=self.vis, mode='summary')
         ParallelTaskHelper.bypassParallelProcessing(bypassParallelProcessing)
-        
-        # Make a copy of the input MMS for each flagdata instance
-        os.system("cp -r %s %s" % (self.vis,self.vis2))
-        os.system("cp -r %s %s" % (self.vis,self.vis3))
-        
+
         # Set async mode in ParallelTaskHelper
         ParallelTaskHelper.setAsyncMode(True)
-        
-        # Run applycal in MMS mode with the first set
-        request_id_1 = flagdata(vis=self.vis, mode='summary')    
-        
-        # Run applycal in MMS mode with the second set
-        request_id_2 = flagdata(vis=self.vis2, mode='summary')
-        
-        # Run applycal in MMS mode with the third set
-        request_id_3 = flagdata(vis=self.vis3, mode='summary')
-        
-        # Get response in block mode
-        reques_id_list = request_id_1 + request_id_2 + request_id_3
-        command_response_list = self.client.get_command_response(reques_id_list,True,True)        
-        
-        # Get result
+
+        try:
+            # Run applycal in MMS mode with the first set
+            request_id_1 = flagdata(vis=self.vis, mode='summary')
+            request_id_list = list(request_id_1)
+
+            # Run applycal in MMS mode with the second set
+            request_id_2 = flagdata(vis=self.vis2, mode='summary') #, cmdreason='bla bla')
+            request_id_list.extend(request_id_2)
+
+            # Run applycal in MMS mode with the third set
+            request_id_3 = flagdata(vis=self.vis3, mode='summary')
+            request_id_list.extend(request_id_3)
+        finally:
+            # Get response in block mode
+            request_id_list = request_id_1 + request_id_2 + request_id_3
+            command_response_list = self.client.get_command_response(request_id_list,
+                                                                     True, True)
+
+        # Get result. Block waiting for responses.
         res1 = ParallelTaskHelper.getResult(request_id_1,'flagdata')
         res2 = ParallelTaskHelper.getResult(request_id_2,'flagdata')
         res3 = ParallelTaskHelper.getResult(request_id_3,'flagdata')   
-        
+
         # Unset async mode in ParallelTaskHelper
-        ParallelTaskHelper.setAsyncMode(False)         
-        
+        ParallelTaskHelper.setAsyncMode(False)
+
+        self.maxDiff = None
         self.assertEqual(res1,res, "flagdata dictionary does not match for the first flagdata run")
         self.assertEqual(res2,res, "flagdata dictionary does not match for the second flagdata run")
-        self.assertEqual(res3,res, "flagdata dictionary does not match for the third flagdata run")       
-        
-        
+        self.assertEqual(res3,res, "flagdata dictionary does not match for the third flagdata run")
+
     def test_mpi4casa_flagdata_list_return_multithreading(self):
         """Test flagdata summary in multithreading mode"""
         
@@ -1482,25 +1489,28 @@ class test_mpi4casa_applycal(unittest.TestCase):
              
         # Set async mode in ParallelTaskHelper
         ParallelTaskHelper.setAsyncMode(True)
-        
-        # Run applycal in MMS mode with the first set
-        request_id_1 = applycal(vis=self.vis,gaintable=self.aux,
-                                gainfield=['nearest','nearest','0'],
-                                interp=['linear', 'linear','nearest'])    
-        
-        # Run applycal in MMS mode with the second set
-        request_id_2 = applycal(vis=self.vis2,gaintable=self.aux2,
-                                gainfield=['nearest','nearest','0'],
-                                interp=['linear', 'linear','nearest'])    
-        
-        # Run applycal in MMS mode with the third set
-        request_id_3 = applycal(vis=self.vis3,gaintable=self.aux3,
-                                gainfield=['nearest','nearest','0'],
-                                interp=['linear', 'linear','nearest'])   
-        
-        # Get response in block mode
-        reques_id_list = request_id_1 + request_id_2 + request_id_3
-        command_response_list = self.client.get_command_response(reques_id_list,True,True)        
+
+        try:
+            # Run applycal in MMS mode with the first set
+            request_id_1 = applycal(vis=self.vis, gaintable=self.aux,
+                                    gainfield=['nearest','nearest','0'],
+                                    interp=['linear', 'linear','nearest'])
+
+            # Run applycal in MMS mode with the second set
+            request_id_2 = applycal(vis=self.vis2, gaintable=self.aux2,
+                                    gainfield=['nearest','nearest','0'],
+                                    interp=['linear', 'linear','nearest'])
+
+            # Run applycal in MMS mode with the third set
+            request_id_3 = applycal(vis=self.vis3, gaintable=self.aux3,
+                                    gainfield=['nearest','nearest','0'],
+                                    interp=['linear', 'linear','nearest'])
+
+        finally:
+            # Get response in block mode
+            reques_id_list = request_id_1 + request_id_2 + request_id_3
+            command_response_list = self.client.get_command_response(reques_id_list,
+                                                                     True, True)
         
         # Unset async mode in ParallelTaskHelper
         ParallelTaskHelper.setAsyncMode(False)
@@ -1520,9 +1530,8 @@ class test_mpi4casa_applycal(unittest.TestCase):
         self.assertTrue(compare)
         compare = testhelper.compTables(self.ref_sorted,self.vis_sorted2,['FLAG_CATEGORY'])
         self.assertTrue(compare)
-        compare = testhelper.compTables(self.ref_sorted,self.vis_sorted3,['FLAG_CATEGORY'])  
-        
-        
+        compare = testhelper.compTables(self.ref_sorted,self.vis_sorted3,['FLAG_CATEGORY'])
+
     def test3_applycal_fluxscale_gcal_bcal_multithreading_mode(self):
         """Test 2: Apply calibration using fluxscal gcal and bcal tables in multithreading mode"""
         
