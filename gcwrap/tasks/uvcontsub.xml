@@ -165,8 +165,6 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         want_cont -- Create vis + '.cont' to hold the continuum estimate.
                 default: 'False'; example: want_cont=True
                 The continuum estimate will be placed in vis + '.cont'
-        async -- Run task in a separate process (return CASA prompt)
-                default: False; example: async=True
 
 </example> 
 </task>

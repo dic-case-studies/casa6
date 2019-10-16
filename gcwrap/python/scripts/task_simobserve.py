@@ -6,7 +6,7 @@ import pylab as pl
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import ctsys, quanta
+    from casatools import ctsys, quanta, imager
     from casatasks import casalog
     from .simutil import *
     from .simutil import is_array_type
@@ -17,6 +17,8 @@ else:
     from simutil import *
     from casa_stack_manip import stack_frame_find
     from simutil import is_array_type
+
+    imager = imtool
 
 def simobserve(
     project=None, 
@@ -137,15 +139,13 @@ def simobserve(
                 return False
 
 
+        # saveinputs is not available in casatasks
         if not is_CASA6:
             saveinputs = myf['saveinputs']
             # something broken in saveinputs
             in_params['antennalist']=''+in_params['antennalist']+''
             saveinputs('simobserve',fileroot+"/"+project+".simobserve.last",
                        myparams=in_params)
-        else:
-            casalog.post("saveinputs not available in casatasks, skipping saving simobserve inputs", priority='WARN')
-
 
         if is_array_type(skymodel):
             skymodel = skymodel[0]
@@ -1201,13 +1201,14 @@ def simobserve(
 
                     # show dirty beam from observed uv coverage
                     util.nextfig()
-                    im.open(msfile)
+                    imt = imager()
+                    imt.open(msfile)
                     # TODO spectral parms
                     msg("using default model cell "+str(model_cell[0])+
                         " for PSF calculation",origin='simobserve')
-                    im.defineimage(cellx=str(model_cell[0]["value"])+
-                                   str(model_cell[0]["unit"]),
-                                   nx=int(max([minimsize,128])))
+                    imt.defineimage(cellx=str(model_cell[0]["value"])+
+                                    str(model_cell[0]["unit"]),
+                                    nx=int(max([minimsize,128])))
                     # TODO trigger im.setoptions(ftmachine="mosaic")
                     if os.path.exists(fileroot+"/"+project+".quick.psf"):
                         shutil.rmtree(fileroot+"/"+project+".quick.psf")
@@ -1216,13 +1217,13 @@ def simobserve(
                     # temporarily(?) suppress that
                     if not telescopename in me.obslist():
                         casalog.filter("ERROR")                        
-                    im.approximatepsf(psf=fileroot+"/"+project+".quick.psf")
+                    imt.approximatepsf(psf=fileroot+"/"+project+".quick.psf")
                     if not telescopename in me.obslist():
                         casalog.filter() # set back to default level.
 
                     quickpsf_current = True
-                    beam = im.fitpsf(psf=fileroot+"/"+project+".quick.psf")
-                    im.done()
+                    beam = imt.fitpsf(psf=fileroot+"/"+project+".quick.psf")
+                    imt.done()
                     ia.open(fileroot+"/"+project+".quick.psf")
                     beamcs = ia.coordsys()
                     beam_array = ia.getchunk(axes=[beamcs.findcoordinate("spectral")['pixel'][0],beamcs.findcoordinate("stokes")['pixel'][0]],dropdeg=True)

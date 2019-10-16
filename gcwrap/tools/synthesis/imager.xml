@@ -292,10 +292,6 @@ gridfunction='pb' was selected).
      </param>
 
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 <example>
@@ -640,10 +636,6 @@ the mask the first time</description>
      <value></value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background?</description>
-     <value>false</value>
-     </param>
 </input>
 
 <returns type="record"/>
@@ -1295,10 +1287,6 @@ and composite numbers. You may use <link anchor="image:image.subimage.function">
      <value>false</value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 
 <returns type="bool"/>
@@ -1389,10 +1377,6 @@ is to perform this calculation and check the value obtained using
      <value>0deg</value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 <example>
@@ -1434,10 +1418,6 @@ the weights. Use the function <link anchor="imager:imager.summary.function">summ
 
      <param type="string" name="psf">
      <description>Name of input psf</description>
-     </param>
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
      </param>
 </input>
 <returns type="bool"/>
@@ -1674,10 +1654,6 @@ we specify the pointing center in terms of the row numbers of the FIELD subtable
      <value></value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 
 <returns type="bool"/>
@@ -1707,10 +1683,6 @@ vector of strings.
      <value></value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 <example>
@@ -1879,10 +1851,6 @@ ia.imagecalc('sdimage',
      <value>true</value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 
 <returns type="bool"/>
@@ -2041,10 +2009,6 @@ further, the easiest fix is to use
      <value>0.0Jy</value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 <example>
@@ -2216,10 +2180,6 @@ may be acceptable.
      <value></value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background?</description>
-     <value>false</value>
-     </param>
 </input>
 
 <returns type="bool"/>
@@ -2316,10 +2276,6 @@ solution phase will swap badly.
      <value></value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 
 <returns type="bool"/>
@@ -2433,10 +2389,6 @@ determine the primary beam function.
      <value>pb</value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 
 <returns type="bool"/>
@@ -2847,10 +2799,6 @@ componentlist. {\em Note that the model visibilities are updated}.
      <value></value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 <example>
@@ -2894,10 +2842,6 @@ parameters.
      <value></value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 <example>
@@ -3008,12 +2952,6 @@ Hz), the sum of weights and the absolute spectral window IDs used.
      </param>
 
 </output>
-<input>
-     <param type="bool" direction="in" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
-</input>
 <returns type="bool"/>
 
 <example>
@@ -3081,12 +3019,6 @@ by selecting a bandwidth matching the width of a single image channel.
      </param>
 
 </output>
-<input>
-     <param type="bool" direction="in" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
-</input>
 <returns type="bool"/>
 
 <example>
@@ -3149,10 +3081,6 @@ operations.
      <value>0deg</value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 </method>
@@ -4321,10 +4249,6 @@ not normalized.
      <value>true</value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 <example>
@@ -4518,10 +4442,6 @@ calculated from the specified weight (function of noise; usually $1/\sigma^2$) p
      <value>false</value>
      </param>
 
-     <param type="bool" name="async">
-     <description>Run asynchronously in the background</description>
-     <value>false</value>
-     </param>
 </input>
 <returns type="bool"/>
 <example>

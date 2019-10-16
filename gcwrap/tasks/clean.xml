@@ -1356,8 +1356,6 @@ spectral line cubes.
                             through all channels before the next major cycle.
                   True:  Major and minor cycles are performed one chunk
                             at a time, and output images cubes are concatenated.
-       async -- Run asynchronously 
-               default = False; do not run asychronously
 
 
         ======================================================================

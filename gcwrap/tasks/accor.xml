@@ -357,6 +357,7 @@ necessary.
                         1 to spw 2,3.
                         spwmap=[[0,0,1,1],[0,1,0,1]]
 </description>
+                <type>any</type>
                 <value></value>
         </param>
 

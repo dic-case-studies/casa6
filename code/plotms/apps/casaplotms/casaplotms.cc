@@ -45,6 +45,10 @@
 #include <stdcasa/StdCasa/CrashReporter.h>
 #endif
 
+#if defined(CASA6)
+#include <asdmstman/AsdmStMan.h>
+#endif
+
 #include <signal.h>
 #include <QDebug>
 #include <casa/namespace.h>
@@ -125,6 +129,10 @@ int main(int argc, char* argv[]) {
 setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediately always */
 #endif
 
+#if defined(CASA6)
+    casa::AsdmStMan::registerClass( );
+#endif
+
 #ifndef NO_CRASH_REPORTER
     String s = CrashReporter::initializeFromApplication(argv[0]);
     if (! s.empty()){
@@ -165,6 +173,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
            ARG_LOGFILTER = PlotMSDBusApp::APP_LOGFILTER_SWITCH,
 #else
            casapy_address = "",
+           ARG_LOGFILE = "--logfilename",
            ARG_SERVER = grpcPlotMS::APP_SERVER_SWITCH,
 #endif
            ARG_DEBUG1 = "-d",
@@ -307,6 +316,10 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
                  
                  << "\n* " << ARG_LOGFILTER << "=[priority]\n     "
                  << "Sets the log minimum priority filter."
+#else
+                 << "\n* " << ARG_LOGFILE << "=[filename]\n     "
+                 << "Sets the log file location (blank to use global)."
+                 
 #endif
                  << "\n* " << ARG_DEBUG1 << " or " << ARG_DEBUG2 << "\n     "
                  << "Turn on debugging log messages."
@@ -373,8 +386,8 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
         if(arg2 == ARG_VIS)         ms = arg3;
         else if(arg2 == ARG_XAXIS) xaxis = arg3;
         else if(arg2 == ARG_YAXIS) yaxis = arg3;
-#if ! defined(WITHOUT_DBUS)
         else if(arg2 == ARG_LOGFILE) logfile = arg3;
+#if ! defined(WITHOUT_DBUS)
         else if(arg2 == ARG_LOGFILTER) logfilter = arg3;
 #endif
         else {

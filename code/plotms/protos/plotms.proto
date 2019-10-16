@@ -15,6 +15,7 @@ service app {
     rpc setPlotAxes(SetAxes) returns (google.protobuf.Empty);
     rpc setShowAtm(SetToggle) returns (google.protobuf.Empty);
     rpc setShowTsky(SetToggle) returns (google.protobuf.Empty);
+    rpc setShowImage(SetToggle) returns (google.protobuf.Empty);
     rpc setPlotMSSelection(SetSelection) returns (google.protobuf.Empty);
     rpc setPlotMSAveraging(SetAveraging) returns (google.protobuf.Empty);
     rpc setPlotMSTransformations(SetTransform) returns (google.protobuf.Empty);

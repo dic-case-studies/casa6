@@ -652,15 +652,9 @@ datacolumn = 'data'
 # even though it will have only one field in it
 multisource = True
 
-# Run asynchronously so as not to interfere with other tasks
-# (BETA: also avoids crash on next importuvfits)
-async = True
-
 saveinputs('exportuvfits',prefix+'.exportuvfits.saved')
 
-myhandle = exportuvfits()
-
-print "The return value for this exportuvfits async task for tm is "+str(myhandle)
+exportuvfits()
 
 #=====================================================================
 #
@@ -894,15 +888,9 @@ clnfits = prefix + '.clean.fits'
 imagename = clnimage
 fitsimage = clnfits
 
-# Run asynchronously so as not to interfere with other tasks
-# (BETA: also avoids crash on next importfits)
-async = True
-
 saveinputs('exportfits',prefix+'.exportfits.saved')
 
-myhandle2 = exportfits()
-
-print "The return value for this exportfits async task for tm is "+str(myhandle2)
+exportfits()
 
 #=====================================================================
 #

@@ -2462,7 +2462,7 @@ void FringeJones::applyRefAnt() {
     refantchoices.resize(1,True);
   }
 
-  Vector<Int> nPol(nSpw(),nPar());  // TBD:or 1, if data was single pol
+  Vector<Int> nPol(nSpw(),2);  // TBD:or 1, if data was single pol
 
   if (nPar()==8) {
     // Verify that 2nd poln has unflagged solutions, PER SPW
@@ -2479,7 +2479,7 @@ void FringeJones::applyRefAnt() {
       fl.assign(ctiter.flag());
 
       IPosition blc(3,0,0,0), trc(fl.shape());
-      trc-=1; trc(0)=blc(0)=1;
+      trc-=1; blc(0)=nPar()/2;
       
       //      cout << "ispw = " << ispw << " nfalse(fl(1,:,:)) = " << nfalse(fl(blc,trc)) << endl;
       
@@ -2552,7 +2552,8 @@ void FringeJones::applyRefAnt() {
 	blcB(2)=trcB(2)=irefB;
 	found=true;  // maybe
 	for (Int ipol=0;ipol<nPol(ispw);++ipol) {
-	  blcA(0)=trcA(0)=blcB(0)=trcB(0)=ipol;
+	  blcA(0)=blcB(0)=ipol*nPar()/2;
+	  trcA(0)=trcB(0)=(ipol+1)*nPar()/2-1;
 	  found &= (nfalse(flA(blcA,trcA))>0);  // previous interval
 	  found &= (nfalse(flB(blcB,trcB))>0);  // current interval
 	} 

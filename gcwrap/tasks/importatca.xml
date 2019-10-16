@@ -10,8 +10,7 @@ importatca(files=None,vis=None,
               options=None,spw=None,
               nscans=None,
               lowfreq=None,highfreq=None,fields=None,
-              edge=None,
-              async=None):
+              edge=None):
 <shortdescription>Import ATCA RPFITS file(s) to a measurement set</shortdescription>
  <description>
 Imports an arbitrary number of ATCA RPFITS format data sets into a
