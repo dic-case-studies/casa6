@@ -1969,20 +1969,20 @@ def evaluateFlagParameters(pardict, pars):
 
     """
     if is_CASA6:
-        from casatasks import flagdata
+        from casatasks.flagdata import flagdata
     else:
         from tasks import flagdata
-     
+
     # Make a deepcopy of flagdata parameters dictionary for modification
     fpars = copy.deepcopy(pars)
  
     # Get the defaults of each parameter 
     for par in fpars.keys():
         if is_CASA6:
-            fpars[par] = get_task_arg_default(flagdata,par)
+            fpars[par] = get_task_arg_default(flagdata, par)
         else:
             fpars[par] = flagdata.itsdefault(par)
-     
+
     # Define the parameters that don't go in an input list in flagdata
     removepars = ['vis','inpfile','flagbackup','tbuff','cmdreason','savepars','outfile',
                   'display','action']
