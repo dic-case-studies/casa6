@@ -1175,15 +1175,15 @@ class test_mpi4casa_flagdata(unittest.TestCase):
         ParallelTaskHelper.setAsyncMode(True)
 
         try:
-            # Run applycal in MMS mode with the first set
+            # Run flagdata in MMS mode with the first set
             request_id_1 = flagdata(vis=self.vis, mode='summary')
             request_id_list = list(request_id_1)
 
-            # Run applycal in MMS mode with the second set
+            # Run flagdata in MMS mode with the second set
             request_id_2 = flagdata(vis=self.vis2, mode='summary') #, cmdreason='bla bla')
             request_id_list.extend(request_id_2)
 
-            # Run applycal in MMS mode with the third set
+            # Run flagdata in MMS mode with the third set
             request_id_3 = flagdata(vis=self.vis3, mode='summary')
             request_id_list.extend(request_id_3)
         finally:
