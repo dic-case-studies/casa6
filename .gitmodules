@@ -4,3 +4,6 @@
 [submodule "asap"]
 	path = asap
 	url = https://open-bitbucket.nrao.edu/scm/casa/casa-asap.git
+[submodule "casatools/grpc-source"]
+	path = casatools/grpc-source
+	url = https://github.com/grpc/grpc
