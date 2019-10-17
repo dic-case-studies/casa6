@@ -352,6 +352,41 @@ class ia_restoringbeam_test(unittest.TestCase):
         self.assertTrue("ia.setrestoringbeam" in msgs[-2])
         self.assertTrue("ia.setrestoringbeam" in msgs[-1])
         
+    def test_replacing_largest_beam(self):
+        """Verify fix for CAS-12627"""
+        myia = self._myia
+        myia.fromshape("",[20,20,1,2])
+        myia.setrestoringbeam(
+            channel=0, polarization=0, 
+            beam = {
+                'major': {'unit': 'arcsec', 'value': 77.02751922607422},
+                'minor': {'unit': 'arcsec', 'value': 50.90080261230469},
+                'positionangle': {'unit': 'deg', 'value': -83.47551727294922}
+            }
+        )
+        myia.setrestoringbeam(
+            channel=1, polarization=0, 
+            beam = {
+                'major': {'unit': 'arcsec', 'value': 10},
+                'minor': {'unit': 'arcsec', 'value': 10},
+                'positionangle': {'unit': 'deg', 'value': 0}
+            }
+        )
+        commonbeam = myia.commonbeam()
+        myia.setrestoringbeam(
+            channel=0, polarization=-1, 
+            beam = {
+                'major': {'unit': 'arcsec', 'value': 12},
+                'minor': {'unit': 'arcsec', 'value': 12},
+                'positionangle': {'unit': 'deg', 'value': 0}
+            }
+        )
+        newcommonbeam = myia.commonbeam()
+        self.assertEqual(
+            newcommonbeam['major']['value'], 12,
+            'replacement of largest beam failed'
+        )
+
 def suite():
     return [ia_restoringbeam_test]
 
