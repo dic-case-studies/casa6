@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+
+use POSIX;
+use File::Basename;
+use Cwd qw(abs_path getcwd);
+
+$name = basename($0);
+$exe = abs_path($0);
+$path = abs_path(dirname($exe));
+$java = '/usr/bin/java';
+$jarfile_name = "xml-casa-assembly-1.26.jar";
+
+### install path
+$jarfile = "$path/java/$jarfile_name";
+### development path
+if ( ! -e $jarfile ) { $jarfile = "$path/../target/scala-2.12/$jarfile_name" }
+die "configuration error, cannot find jar file ($jarfile_name)" unless -e $jarfile;
+
+@flags = ( );
+@inputs = ( );
+$doing_something = 0;
+
+
+foreach ( @ARGV ) {
+    m|^-markdown$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-upgrade$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-header$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-swig$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-tool$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-task$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-gotask$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-all$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-tgts$| && (push(@flags,$_),$doing_something=1,next);
+    m|^-output-tool-subdir$| && (push(@flags,$_),next);
+    m|^-help$| && (usage(), exit(0));
+    m|^gotask-imp-module=(.*)$| && (push(@flags,$_),next);
+    m|\.xml$| && -f && (push(@inputs,$_),next);
+    if ( m|^outdir=(.*)$| ) {
+        if ( -d $1 ) { push(@flags,$_) }
+        else { die "in '$_' directory does not exist" }
+        next;
+    }
+    if ( m|^output-h=(.*)$| ) {
+        if ( -d $1 ) { push(@flags,$_) }
+        else { die "in '$_' directory does not exist" }
+        next;
+    }
+    if ( m|^output-i=(.*)$| ) {
+        if ( -d $1 ) { push(@flags,$_) }
+        else { die "in '$_' directory does not exist" }
+        next;
+    }
+    if ( m|^output-c=(.*)$| ) {
+        if ( -d $1 ) { push(@flags,$_) }
+        else { die "in '$_' directory does not exist" }
+        next;
+    }
+    if ( m|^output-tool=(.*)$| ) {
+        if ( -d $1 ) { push(@flags,$_) }
+        else { die "in '$_' directory does not exist" }
+        next;
+    }
+    if ( m|^output-task=(.*)$| ) {
+        if ( -d $1 ) { push(@flags,$_) }
+        else { die "in '$_' directory does not exist" }
+        next;
+    }
+    if ( m|^output-gotask=(.*)$| ) {
+        if ( -d $1 ) { push(@flags,$_) }
+        else { die "in '$_' directory does not exist" }
+        next;
+    }
+    die "unknown argument'$_'";
+}
+
+unless ( $doing_something ) { print "parameters indicate a no-op...\n" }
+@args = ( basename($java), '-jar', $jarfile );
+push(@args,@flags);
+push(@args,@inputs);
+exec { $java } @args;
+#print join(' ',@args),"\n";
+
+sub usage {
+    print "$name [-help]\n";
+    print "\n        -help  --  display this message\n";
+    print "\n";
+}
