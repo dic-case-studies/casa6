@@ -1,5 +1,5 @@
 [submodule "casacore"]
-	path = casacore
+	path = casatools/casacore
 	url = https://github.com/casacore/casacore.git
 [submodule "asap"]
 	path = asap
