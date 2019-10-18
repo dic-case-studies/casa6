@@ -106,7 +106,7 @@ $hdr_dir = "binding/include";
                'spectralline' => 'casa-source/gcwrap/tools/spectralline/spectralline.xml',
                'singledishms' => 'casa-source/gcwrap/tools/singledish/singledishms.xml',
                'atcafiller' => 'casa-source/gcwrap/tools/atnf/atcafiller.xml',
-               'vlafiller' => 'casa-source/gcwrap/tools/nrao/vlafillertask.xml',
+               'vlafiller' => 'src/cmpt/vlafiller/vlafiller.xml',
                'iterbotsink' => 'src/cmpt/iterbot/iterbotsink.xml',
                'sdm' => 'src/cmpt/sdm/sdm.xml',
                'sakura' => 'casa-source/gcwrap/tools/singledish/sakura.xml',
@@ -219,7 +219,7 @@ $hdr_dir = "binding/include";
                'atcafiller' => [ 'casa-source/gcwrap/tools/atnf/atcafiller_cmpt.cc',
                                  'casa-source/gcwrap/tools/atnf/atcafiller_forward.h',
                                  'casa-source/gcwrap/tools/atnf/atcafiller_private.h', ],
-               'vlafiller' => [ 'casa-source/gcwrap/tools/nrao/vlafillertask_cmpt.cc' ],
+               'vlafiller' => [ 'src/cmpt/vlafiller/vlafiller_cmpt.cc' ],
                'iterbotsink' => [ 'src/cmpt/iterbot/iterbotsink_cmpt.cc',
                                   'src/cmpt/iterbot/iterbotsink_forward.h',
                                   'src/cmpt/iterbot/iterbotsink_private.h', ],
@@ -266,7 +266,7 @@ print "configuring CASAtools... this may take a little while...\n";
 unless ( -d $xml_dir ) { make_path($xml_dir) or die "failed to create xml dir: $!" }
 
 #fix_asdm_source("casa-source/code/alma");
-fix_vlafillertask("casa-source/gcwrap");
+#fix_vlafillertask("casa-source/gcwrap");
 
 foreach $k ( keys %xml_files ) { install($xml_files{$k},"$xml_dir/$k.xml") }
 foreach $k ( keys %xml_files ) {                                 ### always using the xml_files keys ensures consistency
