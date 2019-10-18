@@ -72,7 +72,7 @@ class VisImagingWeight_p;
 class PBMath;
 class VPSkyJones;
 class EPJones;
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 class ViewerProxy;
 #endif
 // <summary> Class that contains functions needed for imager </summary>
@@ -1046,7 +1046,7 @@ protected:
   VisImagingWeight imwgt_p;
 
   // viewer connection
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
   ViewerProxy *viewer_p;
 #endif
   int clean_panel_p;

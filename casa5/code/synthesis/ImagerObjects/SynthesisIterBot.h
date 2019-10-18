@@ -63,7 +63,7 @@ class SynthesisIterBot
 
   // Copy constructor and assignment operator
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
   // launch thread which opens DBus connection...
   void openDBus( );
 #endif
@@ -102,7 +102,7 @@ protected:
 
  private:
   std::thread  *dbus_thread;
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
   void dbus_thread_launch_pad( );
 #endif
 

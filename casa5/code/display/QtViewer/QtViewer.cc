@@ -25,7 +25,7 @@
 //#                        Charlottesville, VA 22903-2475 USA
 //#
 //# $Id$
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <display/QtViewer/QtDBusViewerAdaptor.qo.h>
 #else
 #include <display/QtViewer/grpcViewerAdaptor.qo.h>
@@ -48,7 +48,7 @@ extern int qInitResources_QtViewer();
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 	inline std::string to_string(const QString &other) { return std::string((const char*) other.toLatin1().data()); }
 #endif
 	QString QtViewer::name_;
@@ -59,7 +59,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	QtViewer::QtViewer( const std::list<std::string> &args, bool is_server, const char *server_string ) :
 		QtViewerBase(is_server),
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		dbus_(NULL),
 #endif
 		args_(args), is_server_(is_server) {
@@ -83,7 +83,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		//   casa::qInitResources_QtViewer()     :-)   dk
 
 		if ( is_server_ ) {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 			dbus_ = new QtDBusViewerAdaptor(this);
 			dbus_->connectToDBus(server_string_);
 		} else {
@@ -320,7 +320,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 		ColormapDefinition::shutdown( );
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 		static const auto debug = getenv("GRPC_DEBUG");
 		if ( grpc_ && grpc_->server ) {
 			if ( debug ) {
@@ -338,7 +338,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 #endif
 		QtViewerBase::quit(); 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 		if ( grpc_ && grpc_->server ) {
 			QCoreApplication::exit( );
 			// calling the system exit( ) here causes immediate
@@ -347,7 +347,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 #endif
 	}
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 
 	void QtViewer::grpc_handle_op( ) {
 		std::lock_guard<std::mutex> exc(grpc_queue_mutex);

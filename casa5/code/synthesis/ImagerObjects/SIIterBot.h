@@ -23,7 +23,7 @@
 #ifndef SYNTHESIS_SIITERBOT
 #define SYNTHESIS_SIITERBOT
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/utilities/BusAccess.h>
 #else
 #include <stdcasa/variant.h>
@@ -34,7 +34,7 @@
 // System utilities (for profiling macros)
 #include <casa/OS/HostInfo.h>
 #include <sys/time.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #if defined(DBUS_CPP)
 #include <dbus-cpp/dbus.h> /*for DBus::Variant... probably can be removed with *_adaptor class*/
 #else
@@ -199,7 +199,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			std::string getDescription( );
 			void setDescription( const std::string &value );
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
             std::map<std::string,casac::variant> getDetails( );
             casac::variant getSummary();
 			void controlUpdate(const std::map<std::string, casac::variant>& parameters);
@@ -309,7 +309,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	};
 
 	class SIIterBot_adaptor
-#if defined(INTERACTIVE_ITERATION) && ! defined(WITHOUT_DBUS)
+#if defined(INTERACTIVE_ITERATION) && ! defined(CASATOOLS)
 		: private dbus::address,
 		  private edu::nrao::casa::SynthesisImager_adaptor,
 		  public DBus::IntrospectableAdaptor,
@@ -330,7 +330,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					(void)val;  // To get the compiler to not warn...
 #endif
 				}
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
           void controlUpdate(const std::map< std::string, casac::variant >& newParams)
 											{
 												state->controlUpdate(newParams);
@@ -356,7 +356,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 											{ state->changeInteractiveMode(interactiveMode); }
 				std::string getDescription( )
 											{ return state->getDescription( ); }
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 				std::map< std::string, casac::variant > getDetails( )
 											{
 												return state->getDetails( );

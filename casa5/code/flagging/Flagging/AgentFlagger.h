@@ -42,7 +42,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 class FlagAgentSummary;
 class FlagDataHandler;
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 class FlagAgentDisplay;
 #endif
 
@@ -247,7 +247,7 @@ protected:
 	casacore::Bool mixed_p;
 
 	// Display agent parameters
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
         casa::FlagAgentDisplay *displayAgent_p;
 #endif
 

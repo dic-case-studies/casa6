@@ -8,22 +8,22 @@ file:///opt/casa/code/tools/xml/casa.xsd">
 
 <!-- This is a param set for vla filler -->
 
-<tool name="vlafillertask" module="vlafillertask">
+<tool name="vlafiller" module="vlafiller">
 
 <shortdescription>tool for VLA filler tasks</shortdescription>
 
 <description></description>
 
 
-<method type="constructor" name="vlafillertask">
+<method type="constructor" name="vlafiller">
 
-  <shortdescription>Construct an vlafillertask tool</shortdescription>
+  <shortdescription>Construct an vlafiller tool</shortdescription>
 
   <description></description>
 
   <input></input>
 
-  <returns type="vlafillertask"/>
+  <returns type="vlafiller"/>
 
   <example></example>
 

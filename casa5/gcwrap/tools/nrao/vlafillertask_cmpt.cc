@@ -1,8 +1,8 @@
 
 /***
- * Framework independent implementation file for vlafillertask...
+ * Framework independent implementation file for vlafiller...
  *
- * Implement the vlafillertask component here.
+ * Implement the vlafiller component here.
  * 
  * // TODO: WRITE YOUR DESCRIPTION HERE! 
  *
@@ -11,7 +11,7 @@
  ***/
 
 #include <iostream>
-#include <vlafillertask_cmpt.h>
+#include <vlafiller_cmpt.h>
 
 #include <nrao/VLA/VLAFiller.h>
 #include <nrao/VLA/VLAFilterSet.h>
@@ -48,18 +48,18 @@ using namespace std;
 using namespace casacore;
 namespace casac {
 
-vlafillertask::vlafillertask()
+vlafiller::vlafiller()
 {
 
 }
 
-vlafillertask::~vlafillertask()
+vlafiller::~vlafiller()
 {
 
 }
 
 void
-vlafillertask::fill(const std::string& msname, 
+vlafiller::fill(const std::string& msname, 
 		    const std::string& inputfile, 
 		    const std::string& project, 
 		    const std::string& start, 
