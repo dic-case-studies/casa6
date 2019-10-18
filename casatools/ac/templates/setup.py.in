@@ -762,7 +762,7 @@ platform_cflags = { 'darwin': [ ],
 
 props = load_properties('build.properties')
 
-module_cflags = { '/casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
+module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
                                  '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
                                  '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
                                  '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST',
@@ -811,7 +811,7 @@ def get_new_cxx_compiler_includes():
     return [
         '-Ibuild/%s/include' % distutils_dir_name('grpc-install'),
         '-Ibinding/include', '-Ibinding/generated/include', '-Ilibcasatools/generated/include',
-        '-Icasa-source/code', '-Icasa-source', '-Icasa-source/casacore', '-Iinclude',
+        '-Icasa-source/code', '-Icasa-source', '-Icasacore', '-Iinclude',
         '-Isakura-source/src'
     ]
 
@@ -873,7 +873,7 @@ def customize_compiler(self):
         ccache + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags()
         + get_new_cxx_compiler_includes() + cflags + default_compiler_so[1:]
     )
-    new_compiler_cc = ccache + [props['build.compiler.cc']] + get_optimization_flags() + ['-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include','-Icasa-source/code','-Icasa-source','-Icasa-source/casacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
+    new_compiler_cc = ccache + [props['build.compiler.cc']] + get_optimization_flags() + ['-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include', '-Icasa-source/code','-Icasacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
 
     if debug_build( ):
@@ -1427,7 +1427,7 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
         path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc','TransformMachines2/AWConvFuncEPJones.cc']
     )
     CORE_SRC = source_files(
-        "casa-source/casacore", file_suffix_filter=".cc")
+        "casacore", file_suffix_filter=".cc")
     #, subdir_filter=additional_subdir_filters)
     SAKURA_SRC = sakura_files() if use_sakura else []
     CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp") if use_atm else []
@@ -1452,7 +1452,7 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     g_dep_targ = g_dep_name + ": ;\nPRECIOUS: " + g_dep_name
     src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING]
     cflags = [
-        module_cflags['/code/'], module_cflags['/casacore/'],
+        module_cflags['/code/'], module_cflags['casacore/'],
         platform_cflags[sys.platform], module_cflags['/code/'],
         platform_cflags[sys.platform], module_cflags['binding/']
     ]
@@ -1501,10 +1501,10 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
 def write_yacc(additional_casacore_filtered_dirs=[], additional_casacode_filtered_dirs=[]):
     # yacc
     CASACORE_YACC = source_files(
-        "casa-source/casacore", file_suffix_filter=".yy",
+        "casacore", file_suffix_filter=".yy",
         subdir_filter=additional_casacore_filtered_dirs
     ) if additional_casacore_filtered_dirs else source_files(
-        "casa-source/casacore", file_suffix_filter=".yy"
+        "casacore", file_suffix_filter=".yy"
     )
     CODE_YACC = source_files(
         "casa-source/code", file_suffix_filter=".yy",
@@ -1534,10 +1534,10 @@ def write_yacc(additional_casacore_filtered_dirs=[], additional_casacode_filtere
 def write_lex(additional_casacore_filtered_dirs=[], additional_casacode_filtered_dirs=[]):
     # lex
     CASACORE_LEX = source_files(
-        "casa-source/casacore", file_suffix_filter=".ll",
+        "casacore", file_suffix_filter=".ll",
         subdir_filter=additional_casacore_filtered_dirs
     ) if additional_casacore_filtered_dirs else source_files(
-        "casa-source/casacore",file_suffix_filter=".ll"
+        "casacore",file_suffix_filter=".ll"
     )
     CODE_LEX = source_files(
         "casa-source/code",file_suffix_filter=".ll",
@@ -1563,7 +1563,7 @@ def write_lex(additional_casacore_filtered_dirs=[], additional_casacode_filtered
 
 def write_fortran(do_code=True):
     # fortran files
-    CORE_F77 = source_files( "casa-source/casacore",file_suffix_filter=".f",
+    CORE_F77 = source_files( "casacore",file_suffix_filter=".f",
                              file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
                                            'fmosft.f', 'fwproj.f', 'phasol.f' ]
     )
@@ -1682,13 +1682,13 @@ class create_makefile(Command):
         write_yacc()
         write_lex()
         # miriad c files
-        MIR_SRC =  source_files( "casa-source/casacore/mirlib",file_suffix_filter=".c" )
+        MIR_SRC =  source_files( "casacore/mirlib",file_suffix_filter=".c" )
         includes = sep.join(get_new_cxx_compiler_includes())
         flags = sep.join(["$(DEPFLAGS)"] + get_new_c_compiler_flags())
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
         cc = sep.join(get_ccache() + [props['build.compiler.cc']])
-        dflags = sep.join(module_cflags['/casacore/'])
+        dflags = sep.join(module_cflags['casacore/'])
         c_obj = (
             obj_name + ': {src} ' + dep_name + ' makefile \n\t{cc} {includes} {flags} {cflags} {dflags} -c $< -o $@'
             + '\n\t$(POSTCOMPILE)'
@@ -2033,7 +2033,7 @@ g_tool_shared_libs = None
 g_tools = None
 
 def generate_casacore_version_header():
-    with open("casa-source/casacore/CMakeLists.txt") as f:
+    with open("casacore/CMakeLists.txt") as f:
         for line in f:
             r = re.match(".*set\(PROJECT_VERSION_MAJOR (\d+)\)",line)
             if r is not None:
@@ -2049,7 +2049,7 @@ def generate_casacore_version_header():
 
     print("Casacore version " + casacore_version_major + "." + casacore_version_minor + "." + casacore_version_patch)
 
-    with open("include/casacore/casa/version.h","w") as out, open("casa-source/casacore/casa/version.h.in") as f:
+    with open("include/casacore/casa/version.h","w") as out, open("casacore/casa/version.h.in") as f:
         for line in f:
             l = line.replace("@PROJECT_VERSION_MAJOR@",str(casacore_version_major)) \
                      .replace("@PROJECT_VERSION_MINOR@",str(casacore_version_minor)) \
@@ -2086,9 +2086,9 @@ if __name__ == '__main__':
     a_priori_directory_exclusions += [ 'casadbus/session', 'casadbus/plotserver', 'casadbus/synthesis', 'casadbus/utilities', 'casadbus/viewer' ]
     a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SynthesisIterBot.cc' ]
 
-    CASACORE_YACC = source_files("casa-source/casacore",file_suffix_filter=".yy")
+    CASACORE_YACC = source_files("casacore",file_suffix_filter=".yy")
     CODE_YACC = source_files("casa-source/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
-    CASACORE_LEX = source_files("casa-source/casacore",file_suffix_filter=".ll")
+    CASACORE_LEX = source_files("casacore",file_suffix_filter=".ll")
     CODE_LEX = source_files("casa-source/code",file_suffix_filter=".ll",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
 
     generate_lex(CASACORE_LEX + CODE_LEX)
@@ -2097,10 +2097,10 @@ if __name__ == '__main__':
     # stuff in globals for genmake
     (g_tools_using_shared_libs, g_tool_shared_libs, g_tools) = (NEEDED, LIBS, TOOLS)
 
-    CORE_SRC = source_files("casa-source/casacore",file_suffix_filter=".cc")
-    MIR_SRC =  source_files("casa-source/casacore/mirlib",file_suffix_filter=".c")
+    CORE_SRC = source_files("casacore",file_suffix_filter=".cc")
+    MIR_SRC =  source_files("casacore/mirlib",file_suffix_filter=".c")
     SAKURA_SRC = sakura_files( )
-    CORE_F77 = source_files("casa-source/casacore",file_suffix_filter=".f",
+    CORE_F77 = source_files("casacore",file_suffix_filter=".f",
                             file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
                                           'fmosft.f', 'fwproj.f', 'phasol.f' ]
     )

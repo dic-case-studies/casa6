@@ -117,22 +117,16 @@ else:
             return ("","")
 
 def compute_version( ):
-    year = datetime.now().year
-
-    proc = Popen([ "git", "log", "--tags", "--simplify-by-decoration", '--pretty="format:%ci %d"', '--since="01/01/%d"' % year ], cwd="casa-source", stdout=PIPE, stderr=PIPE)
-    out,err = pipe_decode(proc.communicate( ))
-
-    if proc.returncode != 0:
-        print(err)
-        sys.exit("couldn't determine version number")
-
-    master_tags = [t for t in out.split('\n') if '-mas-' in t]
     if (args.version != None ):
         print (args.version.split("."))
         (major, minor) = args.version.split(".")
         return(int(major), int(minor))
     else:
-        return (year,len(master_tags))
+        proc = Popen( [ "version" ], stdout=PIPE, stderr=PIPE )
+        out,err = pipe_decode(proc.communicate( ))
+        (major, minor) = out.split( )[0].split(".")
+        print((major,minor))
+        return(int(major), int(minor))
 
 
 (casatasks_major,casatasks_minor) = compute_version( )
@@ -834,7 +828,7 @@ try:
             doing_wheel_build = False
 
     wheel_build = casa_binary_wheel
-    
+
     cmd_setup['bdist_wheel'] = casa_binary_wheel
 except ImportError:
     pass  # custom command not needed if wheel is not installed
