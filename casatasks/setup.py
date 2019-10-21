@@ -122,7 +122,7 @@ def compute_version( ):
         (major, minor) = args.version.split(".")
         return(int(major), int(minor))
     else:
-        proc = Popen( [ "version" ], stdout=PIPE, stderr=PIPE )
+        proc = Popen( [ "./version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
         (major, minor) = out.split( )[0].split(".")
         print((major,minor))
@@ -529,40 +529,6 @@ def upgrade_xml( conversions ):
     mkpath("xml")
     for k in conversions.keys( ):
         if not os.path.exists(conversions[k]) or os.path.getmtime(conversions[k]) < os.path.getmtime(k):
-            if k.endswith("/sdcal.xml"):
-                print("fixing %s" % k)
-                f = open(k,'r')
-                filedata = f.read()
-                f.close()
-                newdata = filedata.replace('<value type="dict">{}</value>','<value type="record"/>')
-                f = open(k,'w')
-                f.write(newdata)
-                f.close()
-
-            if k.endswith("/sdgaincal.xml"):
-                print("fixing %s" % k)
-                f = open(k,'r')
-                filedata = f.read()
-                f.close()
-                ## spwmap is intended to accept things like [[2,3,2,3],[-1]] is not an "intArray" so this must be an "any"
-                newdata = filedata.replace('<param type="intArray" name="spwmap" subparam="true">','<param type="any" name="spwmap" subparam="true">')
-                f = open(k,'w')
-                f.write(newdata)
-                f.close()
-
-            if k.endswith("/imval.xml"):
-                print("fixing %s" % k)
-                f = open(k,'r')
-                filedata = f.read()
-                f.close()
-                ## one test case test_imval.py is fundamentally broken, and fixing this through
-                ## a commit causes the test case to proceed past the broken spot... so here
-                ## we revert to patching at build time...
-                newdata = filedata.replace('<output>','<bogus_output>')
-                newdata = newdata.replace('</output>','</bogus_output>')
-                f = open(k,'w')
-                f.write(newdata)
-                f.close()
 
             print("upgrading %s" % k)
 
@@ -574,6 +540,15 @@ def upgrade_xml( conversions ):
             exit_code = proc.wait( )
             if exit_code != 0:
                 sys.exit('upgrading %s failed' % conversions[k])
+
+            if k.endswith("/imval.xml"):
+                print("fixing %s" % k)
+                ## one test case test_imval.py is fundamentally broken, and fixing this through
+                ## a commit causes the test case to proceed past the broken spot... so here
+                ## we revert to patching at build time...
+                output = output.replace('<output>','<bogus_output>')
+                output = output.replace('</output>','</bogus_output>')
+
             xmlfd = open(conversions[k], 'w')
             xmlfd.write(output)
             xmlfd.close( )

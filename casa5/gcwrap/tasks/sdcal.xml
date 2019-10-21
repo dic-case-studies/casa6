@@ -125,7 +125,7 @@ spectrum is
     <param type="any" name="spwmap" subparam="true">
       <description>A dictionary indicating spw combinations to apply Tsys calibration to target. The key should be spw for Tsys calibration and its associated value must be a list of science spws to be applied.</description>
       <any type="variant"/>
-      <value type="dict">{}</value>
+      <value type="record"/>
     </param>
 
     <param type="string" name="outfile" subparam="true">
@@ -185,29 +185,29 @@ spectrum is
         <equals value="apply">
           <default param="applytable"><value type="string"></value></default>
           <default param="interp"><value type="string"></value></default>
-          <default param="spwmap"><value type="dict">{}</value></default>
+          <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="ps,apply">
           <default param="applytable"><value type="string"></value></default>
           <default param="interp"><value type="string"></value></default>
-          <default param="spwmap"><value type="dict">{}</value></default>
+          <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="tsys,apply">
           <default param="applytable"><value type="string"></value></default>
           <default param="interp"><value type="string"></value></default>
-          <default param="spwmap"><value type="dict">{}</value></default>
+          <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="ps,tsys,apply">
           <default param="applytable"><value type="string"></value></default>
           <default param="interp"><value type="string"></value></default>
-          <default param="spwmap"><value type="dict">{}</value></default>
+          <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="otfraster,apply">
           <default param="fraction"><value type="string">10%</value></default>
           <default param="noff"><value type="int">-1</value></default>
           <default param="applytable"><value type="string"></value></default>
           <default param="interp"><value type="string"></value></default>
-          <default param="spwmap"><value type="dict">{}</value></default>
+          <default param="spwmap"><value type="record"/></default>
           <default param="intent"><value type="string">OBSERVE_TARGET#ON_SOURCE</value></default>
         </equals>
         <equals value="otfraster,tsys,apply">
@@ -215,20 +215,20 @@ spectrum is
           <default param="noff"><value type="int">-1</value></default>
           <default param="applytable"><value type="string"></value></default>
           <default param="interp"><value type="string"></value></default>
-          <default param="spwmap"><value type="dict">{}</value></default>
+          <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="otf,apply">
           <default param="fraction"><value type="string">10%</value></default>
           <default param="applytable"><value type="string"></value></default>
           <default param="interp"><value type="string"></value></default>
-          <default param="spwmap"><value type="dict">{}</value></default>
+          <default param="spwmap"><value type="record"/></default>
           <default param="intent"><value type="string">OBSERVE_TARGET#ON_SOURCE</value></default>
         </equals>
         <equals value="otf,tsys,apply">
           <default param="fraction"><value type="string">10%</value></default>
           <default param="applytable"><value type="string"></value></default>
           <default param="interp"><value type="string"></value></default>
-          <default param="spwmap"><value type="dict">{}</value></default>
+          <default param="spwmap"><value type="record"/></default>
         </equals>
       </when>
     </constraints>
