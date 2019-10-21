@@ -5,10 +5,26 @@ tasks will be available as Python wheels from a [PyPI repository](https://casa-p
 These wheels can then be installed in any version of Python 3.6. In time CASA will
 provide wheels for other versions of Python.
 
+### Organization
+
 CASA 6 divides CASA's functionality into two Python packages:
 
   * [casatools](casatools/readme.md) -- the C++ tools with a minimal Python layer
   * [casatasks](casatasks/readme.md) -- a pure Python layer which provides a higher level of abstraction
+
+[casatasks](casatasks/readme.md) is very similar to the CASA 5 tasks (but see discussion of inp/go below).
+However, with [casatools](casatools/readme.md) there was some redundancy in CASA 5. This redundancy has
+been removed. For example, the image analysis tool has always been called ```image``` but it was exposed
+in CASA 5 as ```ia``` (and public instance of the ```image``` tool) and ```iatool``` a synonym for
+```image```. The instance and synonym are no longer available for CASA 6 tools, but it is easy to import
+the CASA 6 tool in the CASA 5 style:
+```
+>>> from casatools import image as iatool
+>>> ia = iatool( )
+```
+These changes are sumarized in [this document](https://casa.nrao.edu/download/devel/docs/casa6/CASA-ToolNames.pdf).
+
+### Installation
 
 These packages can be installed in Python from NRAO's [PyPI repository](https://casa-pip.nrao.edu/).
 The recommended way to do this is using a virtual environment:
@@ -25,6 +41,8 @@ The recommended way to do this is using a virtual environment:
 -bash-4.2$ deactivate
 ```
 However, users are free to install CASA's wheels as they like.
+
+### Inp/Go and Subparameters
 
 In general, [casatasks](casatasks/readme.md) is identical to the CASA 5 version of the tasks.
 The primary difference is that the ```inp```, ```go```, ```default```, and *subparameters*
@@ -57,3 +75,19 @@ CASA 5.9.9-922 -- Common Astronomy Software Applications [2019.214]
 
 CASA <1>:
 ```
+
+### CASA's GUIs
+
+The primary GUIs [casaviewer](https://open-bitbucket.nrao.edu/projects/CASA/repos/casaviewer/browse)
+and [casaplotms](https://open-bitbucket.nrao.edu/projects/CASA/repos/casaplotms/browse) are available
+as separate modules. These allow the GUIs to be loaded and used.
+
+Some of the GUI tools available as part of CASA 5 are only available in the packaged tar-file based
+disribution of CASA 6. The GUIs that are currently only available in the monolithic vesion of
+CASA 6 currently includes:
+
+  1. casabrowser
+  2. casafeather
+  3. casalogger
+  4. casaplotserver
+
