@@ -28,7 +28,7 @@
 #include <display/QtViewer/QtApp.h>
 #include <plotms/Gui/PlotMSPlotter.qo.h>
 #include <plotms/PlotMS/PlotMS.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <plotms/PlotMS/PlotMSDBusApp.h>
 #include <casadbus/utilities/Diagnostic.h>
 #else
@@ -139,7 +139,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
         cerr << "*** Warning during crash reporter initialization: " << s << endl;
     }
 #endif
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     // log arguments if CASA_DIAGNOSTIC_FILE environment variable is set...
     casa::dbus::diagnostic.argv( argc, argv );
 #endif
@@ -167,7 +167,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
            ARG_CISTSR2 = "--cachedimagesizetoscreenresolution",
            ARG_PIXELS1 = "-p", 
            ARG_PIXELS2 = "--pixels",
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
            ARG_CASAPY = PlotMSDBusApp::APP_CASAPY_SWITCH,
            ARG_LOGFILE = PlotMSDBusApp::APP_LOGFILENAME_SWITCH,
            ARG_LOGFILTER = PlotMSDBusApp::APP_LOGFILTER_SWITCH,
@@ -304,7 +304,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
                  << "\n* " << ARG_CISTSR << " or " << ARG_CISTSR2 << "\n     "
                  << "Toggles setting the cached image size to screen "
                  << "resolution."
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
                  /*
                  // Don't advertise this switch...
                  << "\n* " << ARG_CASAPY << "\n     "
@@ -334,7 +334,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
         if((index = arg.find("=")) < arg.size() - 1) {
             arg2 = arg.before(index); arg2.downcase();
             arg3 = arg.after(index);
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
             if (arg2 == ARG_SERVER) {
                 casapy = true;
                 casapy_address = arg3;
@@ -350,7 +350,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
         } else if(arg2 == ARG_NOPOPUPS) {
             nopopups = true;
             continue;
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
         } else if(arg2 == ARG_CASAPY) {
             casapy = true;
             continue;
@@ -387,7 +387,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
         else if(arg2 == ARG_XAXIS) xaxis = arg3;
         else if(arg2 == ARG_YAXIS) yaxis = arg3;
         else if(arg2 == ARG_LOGFILE) logfile = arg3;
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
         else if(arg2 == ARG_LOGFILTER) logfilter = arg3;
 #endif
         else {
@@ -443,7 +443,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
     
     // Set up plotms object.
     PlotMSApp plotmsapp(params, casapy, showGui
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , casapy_address
 #endif
                         );

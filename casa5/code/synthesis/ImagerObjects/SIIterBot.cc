@@ -21,7 +21,7 @@
 //# $Id: $
 
 #include <synthesis/ImagerObjects/SIIterBot.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/session/DBusSession.h>
 #include <casadbus/utilities/Conversion.h>
 #endif
@@ -472,7 +472,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		//    summaryUpdate();
 	}
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 	casac::variant SIIterBot_state::getSummary( ) {
 		std::cout << __FUNCTION__ << " executing" << std::endl;
 		return casac::variant( );

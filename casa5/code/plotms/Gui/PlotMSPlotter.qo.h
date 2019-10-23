@@ -38,7 +38,7 @@
 
 #include <QMainWindow>
 #include <QToolButton>
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 #include <queue>
 #include <mutex>
 #include <functional>
@@ -220,7 +220,7 @@ public slots:
     
     virtual bool close();
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
     void grpc_handle_op( );
     void grpc_exit_now( );
 

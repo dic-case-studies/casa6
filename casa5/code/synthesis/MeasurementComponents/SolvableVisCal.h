@@ -51,7 +51,7 @@
 #include <casa/Logging/LogSink.h>
 #include <casa/Logging/LogIO.h>
 #include <casa/OS/Timer.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/plotserver/PlotServerProxy.h>
 #include <casadbus/utilities/BusAccess.h>
 #include <casadbus/session/DBusSession.h>
@@ -1019,7 +1019,7 @@ private:
        wTotal_p, wPreAnt_p;
 
   //for plotting
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
   PlotServerProxy* plotter_;
   casacore::Vector<dbus::variant> panels_id_;
 #endif

@@ -27,7 +27,7 @@
 #include <plotms/PlotMS/PlotMS.h>
 
 #include <plotms/Gui/PlotMSPlotter.qo.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <plotms/PlotMS/PlotMSDBusApp.h>
 #else
 #include <plotms/PlotMS/grpcPlotMSAdaptor.qo.h>
@@ -73,44 +73,44 @@ namespace casa {
 // Constructors/Destructors //
 
 PlotMSApp::PlotMSApp(bool connectToDBus, bool userGui
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , const casacore::String &casapy_address
 #endif
                      ) :
 		itsLastPlotter_(NULL), isGUI_(userGui), allow_popups(true), 
 		itsExportFormat( PlotExportFormat::JPG, "")
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		, itsDBus_(NULL)
 #endif
 {
 	initialize(connectToDBus, userGui
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , casapy_address
 #endif
                );
 }
 
 PlotMSApp::PlotMSApp(const PlotMSParameters& params, bool connectToDBus, bool userGui
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , const casacore::String &casapy_address
 #endif
                      ) :
 		itsPlotter_(NULL), itsLastPlotter_(NULL), isGUI_(userGui), 
 		allow_popups(true), itsParameters_(params),
 		itsExportFormat( PlotExportFormat::JPG, "")
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
         , itsDBus_(NULL)
 #endif
 {
 	initialize(connectToDBus, userGui
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , casapy_address
 #endif
                );
 }
 
 PlotMSApp::~PlotMSApp() {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     if(itsDBus_ != NULL) delete itsDBus_;
 #endif
 }
@@ -362,7 +362,7 @@ vector<String> PlotMSApp::getFiles() const {
 // Private Methods //
 
 void PlotMSApp::initialize(bool connectToDBus, bool userGui
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , const casacore::String &casapy_address
 #endif
                            ) {
@@ -394,7 +394,7 @@ void PlotMSApp::initialize(bool connectToDBus, bool userGui
     parametersHaveChanged(itsParameters_,
             PlotMSWatchedParameters::ALL_UPDATE_FLAGS());
     if(connectToDBus) {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
         itsDBus_ = new PlotMSDBusApp(*this);
         itsDBus_->connectToDBus();
 #else
