@@ -30,18 +30,18 @@
  *
  * File AnnotationTable.cpp
  */
-#include <ConversionException.h>
-#include <DuplicateKey.h>
-#include <OutOfBoundsException.h>
+#include <alma/ASDM/ConversionException.h>
+#include <alma/ASDM/DuplicateKey.h>
+#include <alma/ASDM/OutOfBoundsException.h>
 
 using asdm::ConversionException;
 using asdm::DuplicateKey;
 using asdm::OutOfBoundsException;
 
-#include <ASDM.h>
-#include <AnnotationTable.h>
-#include <AnnotationRow.h>
-#include <Parser.h>
+#include <alma/ASDM/ASDM.h>
+#include <alma/ASDM/AnnotationTable.h>
+#include <alma/ASDM/AnnotationRow.h>
+#include <alma/ASDM/Parser.h>
 
 using asdm::ASDM;
 using asdm::AnnotationTable;
@@ -56,7 +56,7 @@ using asdm::Parser;
 #include <algorithm>
 using namespace std;
 
-#include <Misc.h>
+#include <alma/ASDM/Misc.h>
 using namespace asdm;
 
 #include <libxml/parser.h>
@@ -108,6 +108,8 @@ namespace asdm {
 		
 			, "vvllValue"
 		
+			, "sValue"
+		
 			, "antennaId"
 				
 	};
@@ -124,7 +126,7 @@ namespace asdm {
     
     	 "annotationId" , "time" , "issue" , "details" 
     	,
-    	 "numAntenna" , "basebandName" , "numBaseband" , "interval" , "dValue" , "vdValue" , "vvdValues" , "llValue" , "vllValue" , "vvllValue" , "antennaId" 
+    	 "numAntenna" , "basebandName" , "numBaseband" , "interval" , "dValue" , "vdValue" , "vvdValues" , "llValue" , "vllValue" , "vvllValue" , "sValue" , "antennaId" 
     
 	};
 	        			
@@ -262,7 +264,7 @@ namespace asdm {
  	 * @param details 
 	
      */
-	AnnotationRow* AnnotationTable::newRow(ArrayTime time, string issue, string details){
+	AnnotationRow* AnnotationTable::newRow(ArrayTime time, std::string issue, std::string details){
 		AnnotationRow *row = new AnnotationRow(*this);
 			
 		row->setTime(time);
@@ -277,7 +279,7 @@ namespace asdm {
 
 
 AnnotationRow* AnnotationTable::newRow(AnnotationRow* row) {
-	return new AnnotationRow(*this, *row);
+	return new AnnotationRow(*this, row);
 }
 
 	//
@@ -450,7 +452,7 @@ AnnotationRow* AnnotationTable::newRow(AnnotationRow* row) {
  * @param details.
  	 		 
  */
-AnnotationRow* AnnotationTable::lookup(ArrayTime time, string issue, string details) {
+AnnotationRow* AnnotationTable::lookup(ArrayTime time, std::string issue, std::string details) {
 		AnnotationRow* aRow;
 		for (unsigned int i = 0; i < privateRows.size(); i++) {
 			aRow = privateRows.at(i); 
@@ -511,7 +513,7 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, string issue, string deta
 		string buf;
 
 		buf.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?> ");
-		buf.append("<AnnotationTable xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:annttn=\"http://Alma/XASDM/AnnotationTable\" xsi:schemaLocation=\"http://Alma/XASDM/AnnotationTable http://almaobservatory.org/XML/XASDM/3/AnnotationTable.xsd\" schemaVersion=\"3\" schemaRevision=\"-1\">\n");
+		buf.append("<AnnotationTable xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:annttn=\"http://Alma/XASDM/AnnotationTable\" xsi:schemaLocation=\"http://Alma/XASDM/AnnotationTable http://almaobservatory.org/XML/XASDM/4/AnnotationTable.xsd\" schemaVersion=\"4\" schemaRevision=\"-1\">\n");
 	
 		buf.append(entity.toXML());
 		string s = container.getEntity().toXML();
@@ -622,6 +624,9 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, string issue, string deta
 		//Does not change the convention defined in the model.	
 		//archiveAsBin = false;
 		//fileAsBin = false;
+
+                // clean up the xmlDoc pointer
+		if ( doc != NULL ) xmlFreeDoc(doc);
 		
 	}
 
@@ -638,7 +643,7 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, string issue, string deta
 		ostringstream oss;
 		oss << "<?xml version='1.0'  encoding='ISO-8859-1'?>";
 		oss << "\n";
-		oss << "<AnnotationTable xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:annttn=\"http://Alma/XASDM/AnnotationTable\" xsi:schemaLocation=\"http://Alma/XASDM/AnnotationTable http://almaobservatory.org/XML/XASDM/3/AnnotationTable.xsd\" schemaVersion=\"3\" schemaRevision=\"-1\">\n";
+		oss << "<AnnotationTable xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:annttn=\"http://Alma/XASDM/AnnotationTable\" xsi:schemaLocation=\"http://Alma/XASDM/AnnotationTable http://almaobservatory.org/XML/XASDM/4/AnnotationTable.xsd\" schemaVersion=\"4\" schemaRevision=\"-1\">\n";
 		oss<< "<Entity entityId='"<<UID<<"' entityIdEncrypted='na' entityTypeName='AnnotationTable' schemaVersion='1' documentVersion='1'/>\n";
 		oss<< "<ContainerEntity entityId='"<<containerUID<<"' entityIdEncrypted='na' entityTypeName='ASDM' schemaVersion='1' documentVersion='1'/>\n";
 		oss << "<BulkStoreRef file_id='"<<withoutUID<<"' byteOrder='"<<byteOrder->toString()<<"' />\n";
@@ -659,6 +664,7 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, string issue, string deta
 		oss << "<llValue/>\n"; 
 		oss << "<vllValue/>\n"; 
 		oss << "<vvllValue/>\n"; 
+		oss << "<sValue/>\n"; 
 		oss << "<antennaId/>\n"; 
 		oss << "</Attributes>\n";		
 		oss << "</AnnotationTable>\n";
@@ -804,6 +810,8 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, string issue, string deta
     	 
     attributesSeq.push_back("vvllValue") ; 
     	 
+    attributesSeq.push_back("sValue") ; 
+    	 
     attributesSeq.push_back("antennaId") ; 
     	
      
@@ -907,6 +915,8 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, string issue, string deta
     //Does not change the convention defined in the model.	
     //archiveAsBin = true;
     //fileAsBin = true;
+    if ( doc != NULL ) xmlFreeDoc(doc);
+
 	}
 	
 	void AnnotationTable::setUnknownAttributeBinaryReader(const string& attributeName, BinaryAttributeReaderFunctor* barFctr) {
@@ -1123,7 +1133,9 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, string issue, string deta
 			 << this->declaredSize
 			 << "'). I'll proceed with the value declared in ASDM.xml"
 			 << endl;
-    }    
+    }
+    // clean up xmlDoc pointer
+    if ( doc != NULL ) xmlFreeDoc(doc);    
   } 
  */
 

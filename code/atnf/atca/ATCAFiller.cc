@@ -28,6 +28,7 @@
 #include <atnf/atca/ATCAFiller.h>
 #include <atnf/atca/ATAtmosphere.h>
 #include <casa/Arrays/Cube.h>
+#include <casa/Utilities/GenSort.h>
 #include <scimath/Mathematics/FFTServer.h>
 #include <casa/OS/DirectoryIterator.h>
 #include <casa/OS/RegularFile.h>
@@ -52,7 +53,11 @@ birdie_p(false),
 reweight_p(false),
 noxycorr_p(false),
 obsType_p(0),
+hires_p(false),
 init_p(false),
+lastUT_p(0),
+bandWidth1_p(0),
+numChan1_p(0),
 shadow_p(0),
 autoFlag_p(true),
 flagScanType_p(false),
@@ -71,6 +76,7 @@ Bool ATCAFiller::open(const String& msName, const Vector<String>& rpfitsFiles,
   LogOrigin orig("ATCAFiller", "open()", WHERE);
   os_p = LogIO(orig);  
   rpfitsFiles_p = Directory::shellExpand(rpfitsFiles, false);
+  GenSort<String>::sort(rpfitsFiles_p);
   if (rpfitsFiles_p.nelements() > 0) {
      os_p << LogIO::NORMAL << "Expanded file names are : " << endl;
      for (uInt i=0; i<rpfitsFiles_p.nelements(); i++) {
@@ -1594,17 +1600,24 @@ void ATCAFiller::checkField() {
       sources_p = src;
 
       Double epoch=mjd0_p+Double(proper_.pm_epoch);
-      IPosition shape(2, 2, 2);
+      Int numPol = 0;
+      if (abs(proper_.pm_ra)+abs(proper_.pm_dec) > 0) {
+        numPol = 1;
+      }
+      IPosition shape(2, 2, numPol+1);
       Matrix<Double> dir(shape);
       // convert proper motions from s & " per year to rad/s
       const Double arcsecPerYear=C::arcsec/(365.25*C::day);
       dir(0, 0)=doubles_.su_ra[sourceno]; 
       dir(1, 0)=doubles_.su_dec[sourceno];
-      dir(0, 1)=proper_.pm_ra*15.*arcsecPerYear; // (15"/s)
-      dir(1, 1)=proper_.pm_dec*arcsecPerYear;
- 
+      if (numPol>0) {
+        dir(0, 1)=proper_.pm_ra*15.*arcsecPerYear; // (15"/s)
+        dir(1, 1)=proper_.pm_dec*arcsecPerYear;
+      } 
+
       if (fieldId_p<0) {
         os_p << LogIO::DEBUGGING << "Found field:" << src << LogIO::POST;
+        if (numPol>0) os_p << LogIO::DEBUGGING << "Field:" << src << " has proper motion parameters"<<LogIO::POST;
         fieldId_p=nField_p++;
         atms_p.field().addRow();
         Int nf=atms_p.field().nrow()-1;
@@ -1615,7 +1628,7 @@ void ATCAFiller::checkField() {
         msc_p->field().phaseDir().put(nf,dir);
         msc_p->field().delayDir().put(nf,dir);
         msc_p->field().referenceDir().put(nf, dir);
-        msc_p->field().numPoly().put(nf, 1);
+        msc_p->field().numPoly().put(nf, numPol);
         msc_p->field().time().put(nf,epoch);
         msc_p->field().code().put(nf,String(&names_.su_cal[sourceno*16],
                                       16).before(trailing));
@@ -1676,7 +1689,7 @@ void ATCAFiller::checkField() {
       prev_fieldId_p = fieldId_p;
       Double epoch=mjd0_p+Double(proper_.pm_epoch);
       Int np=atms_p.pointing().nrow();
-      IPosition shape(2, 2, 2);
+      IPosition shape(2, 2, 1);
       Matrix<Double> pointingDir(shape,0.0);
       pointingDir(0, 0)=doubles_.su_pra[sourceno]; 
       pointingDir(1, 0)=doubles_.su_pdec[sourceno];
@@ -1691,7 +1704,7 @@ void ATCAFiller::checkField() {
         if (i==0) { // ISM storage
           msc_p->pointing().time().put(np,epoch);
           msc_p->pointing().interval().put(np,DBL_MAX);
-          msc_p->pointing().numPoly().put(np, 1);
+          msc_p->pointing().numPoly().put(np, 0);
           msc_p->pointing().direction().put(np,pointingDir);
           msc_p->pointing().pointingOffset().put(np,pointingOffset);
           msc_p->pointing().tracking().put(np,True);

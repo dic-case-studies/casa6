@@ -22,7 +22,10 @@
 
 #include <flagging/Flagging/FlagAgentBase.h>
 
-// Needed for the factory method (create)
+#include <stdcasa/StdCasa/CasacSupport.h>
+#include <ms/MSSel/MSSelectionTools.h>
+
+// Headers of every concrete agent, needed for the factory method (create)
 #include <flagging/Flagging/FlagAgentTimeFreqCrop.h>
 #include <flagging/Flagging/FlagAgentClipping.h>
 #include <flagging/Flagging/FlagAgentSummary.h>
@@ -44,10 +47,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 /// FlagAgentBase implementation ///
 ////////////////////////////////////
 
-// NOTE: We have to initialize the polarizationList_p here, which is a OrderedMap<Int, Vector<Int> >
-// because otherwise the compiler complains because we are calling a theoretical default constructor
-// OrderedMap() that does not exist.
-FlagAgentBase::FlagAgentBase(FlagDataHandler *dh, Record config, uShort iterationApproach, Bool writePrivateFlagCube, Bool flag): polarizationList_p(Vector<Int>(0))
+FlagAgentBase::FlagAgentBase(FlagDataHandler *dh, Record config, uShort iterationApproach, Bool writePrivateFlagCube, Bool flag):
+    logger_p(new LogIO(LogOrigin("FlagAgentBase",__FUNCTION__,WHERE)))
 {
 	// Initialize logger
 	if (config.fieldNumber ("loglevel") >= 0)
@@ -58,7 +59,6 @@ FlagAgentBase::FlagAgentBase(FlagDataHandler *dh, Record config, uShort iteratio
 	{
 		logLevel_p = LogIO::NORMAL;
 	}
-	logger_p = new LogIO(LogOrigin("FlagAgentBase",__FUNCTION__,WHERE));
 
 	// Initialize members
 	initialize();
@@ -821,6 +821,8 @@ FlagAgentBase::setDataSelection(Record config)
 		{
 			*logger_p << LogIO::DEBUG1 << " no correlation selection" << LogIO::POST;
 		}
+
+
 		// Only process the polarization selection as in-row selection if there is no complex operator
 		else if ((polarizationSelection_p.find("REAL") == string::npos) and
 				(polarizationSelection_p.find("IMAG") == string::npos) and
@@ -856,10 +858,9 @@ FlagAgentBase::setDataSelection(Record config)
 					// Request to pre-load CorrType
 					flagDataHandler_p->preLoadColumn(VisBufferComponent2::CorrType);
 
-					// NOTE: casa::LogIO does not support outstream from OrderedMap<Int, Vector<Int> > objects yet
 					ostringstream polarizationListToPrint (ios::in | ios::out);
-					polarizationListToPrint << polarizationList_p;
-
+					for (const auto &item : polarizationList_p)
+                                            polarizationListToPrint << item.first << "=" << item.second << " ";
 					*logger_p << LogIO::DEBUG1 << " correlation selection is " << polarizationSelection_p << LogIO::POST;
 					*logger_p << LogIO::DEBUG1 << " correlation ids are " << polarizationListToPrint.str() << LogIO::POST;
 				}
@@ -1724,7 +1725,10 @@ FlagAgentBase::generatePolarizationIndex(uInt nPolarizations)
 		// it from the RW Visibility Iterator which is always a conventional one
 		// (not asyn I/O which does not implement it)
 		Int polId = visibilityBuffer_p->polarizationId();
-		Vector<Int> polarizations = polarizationList_p(polId);
+
+                // This will be empty when the 'correlation=' selection takes only
+                // polarizations that are not present in the current SPW.
+                const auto &polarizations = polarizationList_p[polId];
 
 		// Get accepted polarizations
 		for (uInt polarization_i=0;polarization_i<nPolarizations;polarization_i++)
@@ -1732,6 +1736,7 @@ FlagAgentBase::generatePolarizationIndex(uInt nPolarizations)
 			if (!find(polarizations,polarization_i)) continue;
 			polarizationIndex_p.push_back(polarization_i);
 		}
+
 	}
 	else
 	{
@@ -1783,7 +1788,7 @@ FlagAgentBase::indigen(vector<uInt> &index, uInt size)
 bool
 FlagAgentBase::isZero(Float number)
 {
-	int type = fpclassify(number);
+	int type = std::fpclassify(number);
 	switch (type)
 	{
 		case FP_NORMAL:
@@ -1811,7 +1816,7 @@ FlagAgentBase::isZero(Float number)
 bool
 FlagAgentBase::isZero(Double number)
 {
-	int type = fpclassify(number);
+	int type = std::fpclassify(number);
 	switch (type)
 	{
 		case FP_NORMAL:
@@ -1839,7 +1844,7 @@ FlagAgentBase::isZero(Double number)
 bool
 FlagAgentBase::isNaN(Float number)
 {
-	int type = fpclassify(number);
+	int type = std::fpclassify(number);
 	switch (type)
 	{
 		case FP_NORMAL:
@@ -1863,7 +1868,7 @@ FlagAgentBase::isNaN(Float number)
 bool
 FlagAgentBase::isNaN(Double number)
 {
-	int type = fpclassify(number);
+	int type = std::fpclassify(number);
 	switch (type)
 	{
 		case FP_NORMAL:
@@ -1887,7 +1892,7 @@ FlagAgentBase::isNaN(Double number)
 bool
 FlagAgentBase::isNaNOrZero(Float number)
 {
-	int type = fpclassify(number);
+	int type = std::fpclassify(number);
 	switch (type)
 	{
 		case FP_NORMAL:
@@ -1918,7 +1923,7 @@ FlagAgentBase::isNaNOrZero(Float number)
 bool
 FlagAgentBase::isNaNOrZero(Double number)
 {
-	int type = fpclassify(number);
+	int type = std::fpclassify(number);
 	switch (type)
 	{
 		case FP_NORMAL:
@@ -2013,7 +2018,7 @@ FlagAgentBase::tableSummary()
 }
 
 bool
-FlagAgentBase::find(Vector<Int> &validRange, Int element)
+FlagAgentBase::find(const Vector<Int> &validRange, Int element)
 {
 	for (uShort idx=0;idx<validRange.size(); idx++)
 	{
@@ -2023,7 +2028,7 @@ FlagAgentBase::find(Vector<Int> &validRange, Int element)
 }
 
 bool
-FlagAgentBase::find(Matrix<Double> &validRange, Double element)
+FlagAgentBase::find(const Matrix<Double> &validRange, Double element)
 {
 	IPosition size = validRange.shape();
 
@@ -2036,7 +2041,7 @@ FlagAgentBase::find(Matrix<Double> &validRange, Double element)
 }
 
 bool
-FlagAgentBase::find(Matrix<Int> &validPairs, Int element1, Int element2)
+FlagAgentBase::find(const Matrix<Int> &validPairs, Int element1, Int element2)
 {
 	Int x,y;
 	validPairs.shape(x,y);
@@ -2051,7 +2056,7 @@ FlagAgentBase::find(Matrix<Int> &validPairs, Int element1, Int element2)
 }
 
 bool
-FlagAgentBase::find(Block<int> &columns, int col)
+FlagAgentBase::find(const Block<int> &columns, int col)
 {
 	for (uInt i=0; i<columns.nelements(); i++)
 	{
@@ -2519,6 +2524,11 @@ FlagAgentBase::processAntennaPair(Int antenna1,Int antenna2)
 				computeAntennaPairFlags(*(flagDataHandler_p->visibilityBuffer_p),visibilitiesMap,flagsMap,antennaPair.first,antennaPair.second,*antennaRows);
 			}
 		}
+
+                // Delete antenna pair rows - prob generateAntennaPairRowsIndex should
+                // not return a pointer, but that requires a long cascade of changes elsewhere
+                delete antennaRows;
+
 	}
 	else
 	{

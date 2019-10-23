@@ -64,12 +64,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
 
-  SDAlgorithmMSMFS::SDAlgorithmMSMFS( uInt nTaylorTerms, Vector<Float> scalesizes ):
+  SDAlgorithmMSMFS::SDAlgorithmMSMFS( uInt nTaylorTerms, Vector<Float> scalesizes, Float smallscalebias):
     SDAlgorithmBase(),
     //    itsImages(),
     itsMatPsfs(), itsMatResiduals(), itsMatModels(),
     itsNTerms(nTaylorTerms),
     itsScaleSizes(scalesizes),
+    itsSmallScaleBias(smallscalebias),
     itsMTCleaner(),
     itsMTCsetup(false)
  {
@@ -116,6 +117,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	//cout << "Setting up the MT Cleaner once" << endl;
 	//Vector<Float> scalesizes(1); scalesizes[0]=0.0;
 	itsMTCleaner.setscales( itsScaleSizes );
+	
+	if(itsSmallScaleBias > 1)
+	{
+	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to 1." << LogIO::POST; 
+	  itsSmallScaleBias = 1;
+	}
+	
+	if(itsSmallScaleBias < -1)
+	{
+	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to -1." << LogIO::POST; 
+	  itsSmallScaleBias = -1;
+	}
+	
+	
+	itsMTCleaner.setSmallScaleBias(itsSmallScaleBias);
 	itsMTCleaner.setntaylorterms( itsNTerms );
 	itsMTCleaner.initialise( itsImages->getShape()[0], itsImages->getShape()[1] );
 	
@@ -160,7 +176,37 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   }
 
+  Long SDAlgorithmMSMFS::estimateRAM(const vector<int>& imsize){
+    ///taken from imager_resource_predictor.py
 
+    Long mem=0;
+    IPosition shp;
+    if(itsImages){
+      shp=itsImages->getShape();
+    }
+    else if(imsize.size() >1){
+      shp=IPosition(imsize);
+    }
+    else
+      return 0;
+      //throw(AipsError("Deconvolver cannot estimate the memory usage at this point"));
+    
+      // psf patches in the Hessian    
+    Long nscales=itsScaleSizes.nelements();
+    Long n4d = (nscales * (nscales+1) / 2.0) * (itsNTerms * (itsNTerms+1) / 2);
+      
+      Long nsupport = Long(Float(100.0/Float(shp(0)))* Float(100.0/Float(shp(1))* Float(n4d + nscales)));
+      
+      Long nfull = 2 + 2 + 3 * nscales + 3 * itsNTerms + (2 * itsNTerms - 1) + 2 * itsNTerms * nscales;
+      Long nfftserver = 1 + 2*2 ; /// 1 float and 2 complex
+      
+      Long mystery = 1 + 1;  /// TODO
+
+      Long ntotal = nsupport + nfull + nfftserver + mystery;
+      mem=sizeof(Float)*(shp(0))*(shp(1))*ntotal/1024;
+    
+    return mem;
+  }
   void SDAlgorithmMSMFS::takeOneStep( Float loopgain, Int cycleNiter, Float cycleThreshold, Float &peakresidual, Float &modelflux, Int &iterdone)
   {
 
@@ -202,7 +248,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
   
-   void SDAlgorithmMSMFS::restore(SHARED_PTR<SIImageStore> imagestore )
+   void SDAlgorithmMSMFS::restore(std::shared_ptr<SIImageStore> imagestore )
   {
 
     LogIO os( LogOrigin("SDAlgorithmMSMFS","restore",WHERE) );

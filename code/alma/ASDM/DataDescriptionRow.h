@@ -48,7 +48,7 @@
 
 
 	 
-#include <Tag.h>
+#include <alma/ASDM/Tag.h>
 	
 
 
@@ -58,12 +58,12 @@
 
 
 
-#include <ConversionException.h>
-#include <NoSuchRow.h>
-#include <IllegalAccessException.h>
+#include <alma/ASDM/ConversionException.h>
+#include <alma/ASDM/NoSuchRow.h>
+#include <alma/ASDM/IllegalAccessException.h>
 
-#include <RowTransformer.h>
-//#include <TableStreamReader.h>
+#include <alma/ASDM/RowTransformer.h>
+//#include <alma/ASDM/TableStreamReader.h>
 
 /*\file DataDescription.h
     \brief Generated from model's revision "1.62", branch "HEAD"
@@ -88,7 +88,7 @@ class PulsarRow;
 
 class DataDescriptionRow;
 typedef void (DataDescriptionRow::*DataDescriptionAttributeFromBin) (EndianIStream& eis);
-typedef void (DataDescriptionRow::*DataDescriptionAttributeFromText) (const string& s);
+typedef void (DataDescriptionRow::*DataDescriptionAttributeFromText) (const std::string& s);
 
 /**
  * The DataDescriptionRow class is a row of a DataDescriptionTable.
@@ -267,6 +267,8 @@ public:
 	/**
  	 * pulsarId pointer to the row in the Pulsar table having Pulsar.pulsarId == pulsarId
  	 * @return a PulsarRow*
+         *
+         * throws IllegalAccessException
  	 */
 	 PulsarRow* getPulsarUsingPulsarId();	
 
@@ -420,7 +422,7 @@ private:
 	 * @param table The table to which this row belongs.
 	 * @param row  The row which is to be copied.
 	 */
-	 DataDescriptionRow (DataDescriptionTable &table, DataDescriptionRow &row);
+	 DataDescriptionRow (DataDescriptionTable &table, DataDescriptionRow *row);
 	 	
 	////////////////////////////////
 	// Intrinsic Table Attributes //
@@ -509,6 +511,7 @@ private:
 void dataDescriptionIdFromBin( EndianIStream& eis);
 void polOrHoloIdFromBin( EndianIStream& eis);
 void spectralWindowIdFromBin( EndianIStream& eis);
+void pulsarIdFromBin( EndianIStream& eis);
 
 	
 */
@@ -518,15 +521,15 @@ void spectralWindowIdFromBin( EndianIStream& eis);
 	///////////////////////////////////
 	std::map<std::string, DataDescriptionAttributeFromText> fromTextMethods;
 	
-void dataDescriptionIdFromText (const string & s);
+void dataDescriptionIdFromText (const std::string & s);
 	
 	
-void polOrHoloIdFromText (const string & s);
+void polOrHoloIdFromText (const std::string & s);
 	
 	
-void spectralWindowIdFromText (const string & s);
+void spectralWindowIdFromText (const std::string & s);
 	
-void pulsarIdFromText (const string & s);
+void pulsarIdFromText (const std::string & s);
 		
 	
 	/**

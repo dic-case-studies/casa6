@@ -761,27 +761,27 @@ public:
    multi-window RefractiveIndexProfile object.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
-  Opacity getWetOpacity()
-  {
-    unsigned int n = 0;
-    return getWetOpacity(n);
-  }
+  Opacity getWetOpacity(){unsigned int n = 0; return getWetOpacity(n);}
+  Opacity getWetOpacityUpTo(Length refalti){unsigned int n = 0; return getWetOpacityUpTo(n, refalti);}
   /** Accesor to get the integrated zenith Wet Opacity for the current conditions,
    for the point nc of spectral window 0.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
-  Opacity getWetOpacity(unsigned int nc)
-  {
-    return getH2OLinesOpacity(nc) + getH2OContOpacity(nc);
-  }
+  Opacity getWetOpacity(unsigned int nc){return getH2OLinesOpacity(nc) + getH2OContOpacity(nc);}
+  Opacity getWetOpacityUpTo(unsigned int nc, Length refalti){return getH2OLinesOpacityUpTo(nc, refalti) + getH2OContOpacityUpTo(nc, refalti);}
   /** Accesor to get the integrated zenith Wet Opacity for the current conditions,
    for the point nc of spectral window spwid.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
   Opacity getWetOpacity(unsigned int spwid, unsigned int nc)
   {
-    if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0;
+  if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0;
     return getWetOpacity(v_transfertId_[spwid] + nc);
+  }
+  Opacity getWetOpacityUpTo(unsigned int spwid, unsigned int nc, Length refalti)
+  {
+  if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0;
+  return getWetOpacityUpTo(v_transfertId_[spwid] + nc, refalti);
   }
   /** Accesor to get the average Wet Opacity for the current conditions,
    in spectral window spwid.
@@ -865,57 +865,60 @@ public:
   {
     return getAverageWetOpacity(spwid) + getAverageDryOpacity(spwid);
   }
-
+  Opacity getTotalOpacityUpTo(Length refalti)
+  {
+    unsigned int n = 0;
+    return getTotalOpacityUpTo(n, refalti);
+  }
+  //  Opacity getTotalOpacityUpTo(unsigned int nc, Length refalti);
+  Opacity getTotalOpacityUpTo(unsigned int nc, Length refalti)
+  {
+    return getWetOpacityUpTo(nc,refalti) + getDryOpacityUpTo(nc,refalti);
+  }
+  Opacity getTotalOpacityUpTo(unsigned int spwid, unsigned int nc, Length refalti)
+  {
+    Opacity wrongOp(-999.0,"np");
+    if(!spwidAndIndexAreValid(spwid, nc)) return wrongOp;
+    return getTotalOpacityUpTo(v_transfertId_[spwid] + nc, refalti);
+  }
   /** Accesor to get the integrated zenith H2O Lines Opacity for the current conditions,
    for a single frequency RefractiveIndexProfile object or for the point 0 of spectral
    window 0 of a multi-window RefractiveIndexProfile object.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
-  Opacity getH2OLinesOpacity()
-  {
-    unsigned int n = 0;
-    return getH2OLinesOpacity(n);
-  }
+  Opacity getH2OLinesOpacity(){ unsigned int n = 0; return getH2OLinesOpacity(n);}
+  Opacity getH2OLinesOpacityUpTo(Length refalti){ unsigned int n = 0; return getH2OLinesOpacityUpTo(n, refalti);}
   /** Accesor to get the integrated zenith H2O Lines Opacity for the current conditions,
    for the point nc of spectral window 0.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
   Opacity getH2OLinesOpacity(unsigned int nc);
+  Opacity getH2OLinesOpacityUpTo(unsigned int nc, Length refalti);  
   /** Accesor to get the integrated zenith H2O Lines Opacity for the current conditions,
    for the point nc of spectral window spwid.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
-  Opacity getH2OLinesOpacity(unsigned int spwid, unsigned int nc)
-  {
-    if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0;
-    return getH2OLinesOpacity(v_transfertId_[spwid] + nc);
-  }
-
+  Opacity getH2OLinesOpacity(unsigned int spwid, unsigned int nc){ if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0; return getH2OLinesOpacity(v_transfertId_[spwid] + nc);}
+  Opacity getH2OLinesOpacityUpTo(unsigned int spwid, unsigned int nc, Length refalti){ if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0; return getH2OLinesOpacityUpTo(v_transfertId_[spwid] + nc, refalti);}
   /** Accesor to get the integrated zenith H2O Continuum Opacity for the current conditions,
    for a single frequency RefractiveIndexProfile object or for the point 0 of spectral
    window 0 of a multi-window RefractiveIndexProfile object.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
-  Opacity getH2OContOpacity()
-  {
-    unsigned int n = 0;
-    return getH2OContOpacity(n);
-  }
+  Opacity getH2OContOpacity(){unsigned int n = 0; return getH2OContOpacity(n);}
+  Opacity getH2OContOpacityUpTo(Length refalti){unsigned int n = 0; return getH2OContOpacityUpTo(n, refalti);}
   /** Accesor to get the integrated zenith H2O Continuum Opacity for the current conditions,
    for the point nc of spectral window 0.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
   Opacity getH2OContOpacity(unsigned int nc);
+  Opacity getH2OContOpacityUpTo(unsigned int nc, Length refalti);
   /** Accesor to get the integrated zenith H2O Continuum Opacity for the current conditions,
    for the point nc of spectral window spwid.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
-  Opacity getH2OContOpacity(unsigned int spwid, unsigned int nc)
-  {
-    if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0;
-    return getH2OContOpacity(v_transfertId_[spwid] + nc);
-  }
-
+  Opacity getH2OContOpacity(unsigned int spwid, unsigned int nc){ if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0; return getH2OContOpacity(v_transfertId_[spwid] + nc);}
+  Opacity getH2OContOpacityUpTo(unsigned int spwid, unsigned int nc, Length refalti){ if(!spwidAndIndexAreValid(spwid, nc)) return (double) -999.0; return getH2OContOpacityUpTo(v_transfertId_[spwid] + nc, refalti);}
   /** Accesor to get the integrated zenith H2O Atmospheric Phase Delay (Dispersive part)
    for the current conditions, for a single frequency RefractiveIndexProfile object or
    for the point 0 of spectral window 0 of a multi-window RefractiveIndexProfile object.

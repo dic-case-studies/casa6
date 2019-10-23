@@ -97,24 +97,29 @@ def immoments(
     retValue=None
     casalog.origin('immoments')
     _myia = iatool()
+    _tmp_csys = None
     try:
+        if (len(outfile) == 0):
+            raise Exception, "outfile must be specified" 
         _myia.dohistory(False)
         # First check to see if the output file exists.  If it
         # does then we abort.  CASA doesn't allow files to be
         # over-written, just a policy.
-        if ( len( outfile ) > 0 and os.path.exists( outfile ) ):
+        if os.path.exists(outfile):
             raise Exception, 'Output file, '+outfile+\
               ' exists. immoment can not proceed, please\n'\
               'remove it or change the output file name.'
         elif ( len( outfile ) ==  1 ):
             raise Exception, 'outfile is not specified but must be'
-        _myia.open(imagename) 
-        reg = _rg.frombcs(csys=_myia.coordsys().torecord(),
+        _myia.open(imagename)
+        _tmp_csys = _myia.coordsys()
+        reg = _rg.frombcs(csys=_tmp_csys.torecord(),
             shape=_myia.shape(), box=box, chans=chans, stokes=stokes,
             stokescontrol="a", region=region
         )
         if isinstance(axis, str):
-             axis = _myia.coordsys().findaxisbyname(axis)
+            axis = _tmp_csys.findaxisbyname(axis)
+        _tmp_csys.done()
         outia = _myia.moments(
             moments=moments, axis=int(axis), mask=mask,
             region=reg, includepix=includepix,
@@ -134,15 +139,16 @@ def immoments(
         except Exception, instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         return True
-    except Exception, x:
-        _myia.done()
-        print '*** Error ***: ' + str(x)
+    except Exception, instance:
+        casalog.post('*** Error *** ' + str(instance), 'SEVERE') 
         raise
     finally:
         _myia.done()
+        _rg.done()
         if outia:
             outia.done()
-
+        if _tmp_csys:
+            _tmp_csys.done()
 
 def _immoments_get_created_images(out1name, outfile):
     dirpath = os.path.dirname(out1name)

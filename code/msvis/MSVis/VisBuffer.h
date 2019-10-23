@@ -157,6 +157,7 @@ class VisBuffer {
     friend class VisBufferAsyncWrapper; // for async i/o
     friend class ViReadImplAsync; // for async I/O
     friend class SIMapperCollection; //for SIimager as we need access to casacore::MS object
+    friend class VisModelData;  // need access to ms to recover the model rec
 
 public:
     // Create empty VisBuffer you can assign to or attach.
@@ -780,8 +781,8 @@ public:
     // Remove scratch cols data from vb
     virtual void removeScratchCols();
 
-    // Access the current casacore::ROMSColumns object via VisIter
-    virtual const casacore::ROMSColumns & msColumns() const {
+    // Access the current casacore::MSColumns object via VisIter
+    virtual const casacore::MSColumns & msColumns() const {
         return visIter_p->msColumns();
     }
 

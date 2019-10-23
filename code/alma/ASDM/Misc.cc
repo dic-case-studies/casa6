@@ -25,7 +25,7 @@
  * File Misc.cpp
  */
 
-#include <Misc.h>
+#include <alma/ASDM/Misc.h>
  
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -55,7 +55,7 @@ using namespace std;
 
 extern int xmlLoadExtDtdDefaultValue;
 
-#include "ASDMValuesParser.h"
+#include <alma/ASDM/ASDMValuesParser.h>
 
 namespace asdm {
   bool directoryExists(const char* dir) {
@@ -99,25 +99,20 @@ namespace asdm {
   }
     
   void ByteSwap(unsigned char * b, int n) {
-    register int i = 0;
-    register int j = n-1;
+    int i = 0;
+    int j = n-1;
     while (i<j) {
       std::swap(b[i], b[j]);
       i++, j--;
     }
   }
 
-#if defined(__APPLE__)
-  const ByteOrder* ByteOrder::Little_Endian = new ByteOrder("Little_Endian", __DARWIN_LITTLE_ENDIAN);
-  const ByteOrder* ByteOrder::Big_Endian = new ByteOrder("Big_Endian", __DARWIN_BIG_ENDIAN);
-#else 
-  const ByteOrder* ByteOrder::Little_Endian = new ByteOrder("Little_Endian", __LITTLE_ENDIAN);
-  const ByteOrder* ByteOrder::Big_Endian = new ByteOrder("Big_Endian", __BIG_ENDIAN);
-#endif
+  const ByteOrder* ByteOrder::Little_Endian = new ByteOrder("Little_Endian");
+  const ByteOrder* ByteOrder::Big_Endian = new ByteOrder("Big_Endian");
   const ByteOrder* ByteOrder::Machine_Endianity = ByteOrder::machineEndianity();
 
-  ByteOrder::ByteOrder(const string& name, int endianity):
-    name_(name), endianity_(endianity){;}
+  ByteOrder::ByteOrder(const string& name):
+    name_(name) {;}
 
   ByteOrder::~ByteOrder() {;}
 
@@ -198,7 +193,6 @@ namespace asdm {
 
     rootSubdir["INTROOT"]  = "config/";
     rootSubdir["ACSROOT"]  = "config/";
-    rootSubdir["CASAPATH"] = "data/alma/asdm/";
 
     return true;
   }
@@ -377,6 +371,7 @@ namespace asdm {
       }
       cur = cur -> next;
     }
+    xmlFreeDoc(execBlockDoc);
 
     return result;
   }
@@ -430,74 +425,6 @@ namespace asdm {
     return result;
   }
 
-  string ASDMUtils::pathToxslTransform( const string& xsltFilename) {
-    const char * envVars[] = {"INTROOT", "ACSROOT"};
-    char * rootDir_p;
-    for (unsigned int i = 0; i < sizeof(envVars) / sizeof(char *) ; i++) 
-      if ((rootDir_p = getenv(envVars[i])) != 0) {
-	string rootPath(rootDir_p);
-	vector<string> rootPathElements;
-#ifndef WITHOUT_BOOST
-	boost::algorithm::split(rootPathElements, rootPath, boost::algorithm::is_any_of(" "));
-	for ( vector<string>::iterator iter = rootPathElements.begin(); iter != rootPathElements.end(); iter++) {
-	  string xsltPath = *iter;
-	  if (!boost::algorithm::ends_with(xsltPath, "/")) xsltPath+="/";
-	  xsltPath+=rootSubdir[string(envVars[i])]+ xsltFilename;
-	  if (getenv("ASDM_DEBUG"))
-	    cout << "pathToxslTransform tries to locate '" << xsltPath << "'." << endl;
-	  if (boost::filesystem::exists(boost::filesystem::path(xsltPath)))
-	    return xsltPath;
-	}
-#else
-	strsplit(rootPath,' ',rootPathElements);
-	for ( vector<string>::iterator iter = rootPathElements.begin(); iter != rootPathElements.end(); iter++) {
-	  string xsltPath = *iter;
-	  if (xsltPath.back()!='/') xsltPath+="/";
-	  xsltPath+=rootSubdir[string(envVars[i])]+ xsltFilename;
-	  if (getenv("ASDM_DEBUG"))
-	    cout << "pathToxslTransform tries to locate '" << xsltPath << "'." << endl;
-	  if (file_exists(xsltPath))
-	    return xsltPath;
-	}
-#endif
-      }
-
-    // Ok it seems that we are not in an ALMA/ACS environment, then look for $CASAPATH/data.
-    if ((rootDir_p = getenv("CASAPATH")) != 0) {
-      string rootPath(rootDir_p);
-      vector<string> rootPathElements;
-#ifndef WITHOUT_BOOST
-      boost::algorithm::split(rootPathElements, rootPath, boost::algorithm::is_any_of(" "));
-      string xsltPath = rootPathElements[0];
-      if (!boost::algorithm::ends_with(xsltPath, "/")) xsltPath+="/";
-      xsltPath+="data/alma/asdm/";
-      xsltPath+=xsltFilename;
-      if (getenv("ASDM_DEBUG"))
-	cout << "pathToxslTransform tries to locate '" << xsltPath << "'." << endl;
-
-      if (boost::filesystem::exists(boost::filesystem::path(xsltPath)))
-	return xsltPath;
-#else
-      strsplit(rootPath, ' ', rootPathElements);
-      string xsltPath = rootPathElements[0];
-      if (xsltPath.back()!='/') xsltPath+="/";
-      xsltPath+="data/alma/asdm/";
-      xsltPath+=xsltFilename;
-      if (getenv("ASDM_DEBUG"))
-	cout << "pathToxslTransform tries to locate '" << xsltPath << "'." << endl;
-
-      if (file_exists(xsltPath))
-	return xsltPath;
-#endif
-    }
-
-    if (getenv("ASDM_DEBUG"))
-      cout  << "pathToxslTransform returns an empty xsltPath " << endl;
-
-    // Here rootDir_p == NULL , let's return an empty string.
-    return "" ;  // An empty string will be interpreted as no file found.
-  }
-  
   string ASDMUtils::pathToV2V3ALMAxslTransform() {return pathToxslTransform(filenameOfV2V3xslTransform[ASDMUtils::ALMA]);}
   string ASDMUtils::pathToV2V3EVLAxslTransform() {return pathToxslTransform(filenameOfV2V3xslTransform[ASDMUtils::EVLA]);}
   string ASDMUtils::nameOfV2V3xslTransform(ASDMUtils::Origin origin) {

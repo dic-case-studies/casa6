@@ -99,6 +99,9 @@ class msmd_test(unittest.TestCase):
             "DV07", "DV08", "DV10", "DV12", "DV13",
             "DV14", "DV15", "DV16", "DV17", "DV18"
         ]
+        # test default works
+        got = self.md.antennanames()
+        self.assertEqual(got, names, "Default value of antennanames() doesn't match")
         for i in range(self.md.nantennas()):
             got = self.md.antennanames(i)
             self.assertTrue(got == [names[i]])
@@ -820,7 +823,10 @@ class msmd_test(unittest.TestCase):
     def test_tdmspws(self):
         """Test tdmspws()"""
         got = self.md.tdmspws()
-        expec = numpy.array([1, 3, 5, 7, 9, 11, 13, 15])
+        expec = numpy.array([
+            0, 1, 3, 5, 7, 9, 11, 13, 15, 25, 26, 27, 28,
+            29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39
+        ])
         self.assertTrue((got == expec).all())
 
     def test_timesforfield(self):
@@ -1018,15 +1024,12 @@ class msmd_test(unittest.TestCase):
     def test_wvrspws(self):
         """Test wvrspws()"""
         got = self.md.wvrspws()
-        expec = numpy.array([
-            0, 25, 26, 27, 28, 29, 30, 31,
-            32, 33, 34, 35, 36, 37, 38, 39
-        ])
+        expec = []
         self.assertTrue((got == expec).all())
         got = self.md.wvrspws(complement=False)
         self.assertTrue((got == expec).all())
         got = self.md.wvrspws(complement=True)
-        expec = range(1, 25)
+        expec = range(0, 40)
         self.assertTrue((got == expec).all())
 
     def test_almaspws(self):
@@ -1066,7 +1069,7 @@ class msmd_test(unittest.TestCase):
         self.assertTrue((got == expec).all())
 
         got = self.md.almaspws(tdm=True)
-        expec = [1, 3, 5, 7, 9, 11, 13, 15]
+        expec = [0, 1, 3, 5, 7, 9, 11, 13, 15] + range(25,40)
         self.assertTrue((got == expec).all())
         got = self.md.almaspws(tdm=True, complement=True)
         jj = range(40)
@@ -1076,15 +1079,11 @@ class msmd_test(unittest.TestCase):
         self.assertTrue((got == expec).all())
 
         got = self.md.almaspws(wvr=True)
-        expec = numpy.array([
-            0, 25, 26, 27, 28, 29, 30, 31,
-            32, 33, 34, 35, 36, 37, 38, 39
-        ])
+        expec = []
         self.assertTrue((got == expec).all())
         got = self.md.almaspws(wvr=True, complement=True)
-        expec = range(1, 25)
+        expec = range(0, 40)
         self.assertTrue((got == expec).all())
-
 
     def test_bandwidths(self):
         """Test bandwidths()"""

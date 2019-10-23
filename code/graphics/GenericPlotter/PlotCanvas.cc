@@ -157,6 +157,30 @@ void PlotCanvas::clearSelectedRects(){
 	}
 }
 
+void PlotCanvas::clearMark() {
+  if (!m_standardTools.null()) {
+    m_standardTools->clearMark();
+  }
+}
+
+bool PlotCanvas::isMarkedForFlag() {
+  return (!m_standardTools.null()) ? m_standardTools->isMarkedForFlag() : false;
+}
+
+bool PlotCanvas::isMarkedForUnflag() {
+  return (!m_standardTools.null()) ? m_standardTools->isMarkedForUnflag() : false;
+}
+
+bool PlotCanvas::isBackgroundColorChanged() {
+  return (!m_standardTools.null()) ? m_standardTools->isBackgroundColorChanged() : false;
+}
+
+void PlotCanvas::setAllFlagged() {
+  if (!m_standardTools.null()) {
+    m_standardTools->setAllFlagged();
+  }
+}
+
 bool PlotCanvas::hasThreadedDrawing() const {
     PlotFactory* f = implementationFactory();
     bool ret = f != NULL && f->canvasHasThreadedDrawing();
@@ -185,6 +209,10 @@ void PlotCanvas::setTitleFont(const PlotFontPtr font) {
 }
 
 
+PlotAreaFillPtr PlotCanvas::defaultBackground() const {
+  return PlotAreaFillPtr(nullptr);
+}
+
 void PlotCanvas::setBackground(const PlotAreaFillPtr areaFill)   {
     if(!areaFill.null()) setBackground(*areaFill); 
 }
@@ -200,11 +228,9 @@ void PlotCanvas::setBackground(const String& color,
 
 
 
-#if (0)  // checking hypothesis: this is not used anywhere
 bool PlotCanvas::isAxisShown(PlotAxis axis) const { 
 	return shownAxes() & axis; 
 }
-#endif
 
 
 /* DSW: SITE OF X-Y SHORTCIRCUIT */
@@ -691,7 +717,6 @@ PlotCanvas::locate(const PlotRegion& r) const {
     double xLeft = region.upperLeft().x(), xRight = region.lowerRight().x(),
            yTop = region.upperLeft().y(), yBottom = region.lowerRight().y();
     double x, y;
-    pair<unsigned int, unsigned int> p;
     vector<pair<unsigned int, unsigned int> >* v2;
     unsigned int rangeLow = 0;
     bool inRange;

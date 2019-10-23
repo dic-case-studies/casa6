@@ -25,12 +25,13 @@
 
 
 casa_add_python( tools tools_imagerhelpers lib/python${PYTHONV}/imagerhelpers
+  fixedDict.py 
   imager_base.py	
   imager_parallel_cube.py
   parallel_imager_helper.py 
   imager_parallel_continuum.py  
   imager_parallel_deconvolver.py  
   input_parameters.py  
-  test_imager_helper.py
+  testhelper_imager.py
   __init__.py
 )

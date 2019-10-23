@@ -334,7 +334,7 @@ deconvolver::psfname()
 }
 
 bool
-deconvolver::make(const std::string& image, const bool /*async*/)
+deconvolver::make(const std::string& image)
 {
   try {
 
@@ -363,7 +363,7 @@ deconvolver::convolve(const std::string& convolvemodel, const std::string& model
 }
 
 bool
-deconvolver::makegaussian(const std::string& gaussianimage, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa, const bool normalize, const bool /*async*/)
+deconvolver::makegaussian(const std::string& gaussianimage, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa, const bool normalize)
 {
   try {
 
@@ -411,7 +411,7 @@ deconvolver::updatestate(const std::string& /*f*/, const std::string& /*method*/
 
 
 casac::record* 
-deconvolver::clean(const std::string& algorithm, const int niter, const double gain, const ::casac::variant& threshold, const bool displayprogress, const std::string& model, const std::string& mask, const bool /*async*/)
+deconvolver::clean(const std::string& algorithm, const int niter, const double gain, const ::casac::variant& threshold, const bool displayprogress, const std::string& model, const std::string& mask)
 {
   casac::record* rstat(0);
   try {
@@ -489,7 +489,7 @@ deconvolver::setscales(const std::string& scalemethod, const int nscales, const 
 }
 
 bool
-deconvolver::ft(const std::string& model, const std::string& transform, const bool /*async*/)
+deconvolver::ft(const std::string& model, const std::string& transform)
 {
   try {
     
@@ -503,7 +503,7 @@ deconvolver::ft(const std::string& model, const std::string& transform, const bo
 }
 
 bool
-deconvolver::restore(const std::string& model, const std::string& image, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa, const bool /*async*/)
+deconvolver::restore(const std::string& model, const std::string& image, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa)
 {
   try {
 
@@ -531,7 +531,7 @@ deconvolver::restore(const std::string& model, const std::string& image, const :
 }
 
 bool
-deconvolver::residual(const std::string& model, const std::string& image, const bool /*async*/)
+deconvolver::residual(const std::string& model, const std::string& image)
 {
 
   try {
@@ -545,7 +545,7 @@ deconvolver::residual(const std::string& model, const std::string& image, const 
 }
 
 bool
-deconvolver::smooth(const std::string& model, const std::string& image, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa, const bool normalize, const bool /*async*/)
+deconvolver::smooth(const std::string& model, const std::string& image, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa, const bool normalize)
 {
 
   try {
@@ -575,7 +575,7 @@ deconvolver::smooth(const std::string& model, const std::string& image, const ::
 }
 
 bool
-deconvolver::mem(const std::string& entropy, const int niter, const ::casac::variant& sigma, const ::casac::variant& targetflux, const bool constrainflux, const bool displayprogress, const std::string& model, const std::string& prior, const std::string& mask, const bool imageplane, const bool /*async*/)
+deconvolver::mem(const std::string& entropy, const int niter, const ::casac::variant& sigma, const ::casac::variant& targetflux, const bool constrainflux, const bool displayprogress, const std::string& model, const std::string& prior, const std::string& mask, const bool imageplane)
 {
   try {
     casacore::Quantity targflux(1.0, "Jy");
@@ -599,7 +599,7 @@ deconvolver::mem(const std::string& entropy, const int niter, const ::casac::var
 }
 
 bool
-deconvolver::makeprior(const std::string& prior, const std::string& templateimage, const ::casac::variant& lowclipfrom, const ::casac::variant& lowclipto, const ::casac::variant& highclipfrom, const ::casac::variant& highclipto, const std::vector<int>& blc, const std::vector<int>& trc, const bool /*async*/)
+deconvolver::makeprior(const std::string& prior, const std::string& templateimage, const ::casac::variant& lowclipfrom, const ::casac::variant& lowclipto, const ::casac::variant& highclipfrom, const ::casac::variant& highclipto, const std::vector<int>& blc, const std::vector<int>& trc)
 {
 
   try {
@@ -632,8 +632,7 @@ deconvolver::makeprior(const std::string& prior, const std::string& templateimag
 
 bool deconvolver::mtopen(const int ntaylor,
 			 const std::vector<double>& scalevector,
-			 const std::vector<std::string>& psfs,
-			 const bool /*async*/)
+			 const std::vector<std::string>& psfs)
 {
 
   if(itsDeconv==0)
@@ -668,8 +667,7 @@ deconvolver::mtclean(const std::vector<std::string>& residuals,
 			  const double gain, 
 			  const ::casac::variant& threshold, 
 			  const bool displayprogress,
-			  const std::string& mask,
-			  const bool /*async*/)
+			  const std::string& mask)
 {
 
   casac::record* rstat(0);
@@ -707,8 +705,7 @@ bool deconvolver::mtrestore(const std::vector<std::string>& models,
 			  const std::vector<std::string>& images,
 			  const ::casac::variant& bmaj, 
 			  const ::casac::variant& bmin, 
-			  const ::casac::variant& bpa, 
-			  const bool /*async*/)
+			  const ::casac::variant& bpa)
 {
 
  try {
@@ -748,8 +745,7 @@ bool deconvolver::mtcalcpowerlaw(const std::vector<std::string>& images,
                                  const std::string& alphaname,
                                  const std::string& betaname,
                                  const ::casac::variant& threshold, 
-                                 const bool calcerror,
-                                 const bool /*async*/)
+                                 const bool calcerror)
 {
 
  try {

@@ -1,22 +1,39 @@
 # geodesy and pointing and other helper functions that are useful
 # to be available outside of the simdata task
 # geodesy from NGS: http://www.ngs.noaa.gov/TOOLS/program_descriptions.html
-import casac
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shutil
-import commands
-# all I really need is casalog, but how to get it:?
-from taskinit import *
 import pylab as pl
 
-# qa doesn't hold state.
-#qatool = casac.homefinder.find_home_by_name('quantaHome')
-#qa = qatool.create()
-im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
+    from casatasks import casalog
+    tb = table( )
+    ia = image( )
+    po = imagepol( )
+    rg = regionmanager( )
+    cb = calibrater( )
+    me = measures( )
+    qa = quanta( )
+    cs = coordsys( )
+    cl = componentlist( )
+    sm = simulator( )
 
+else:
+    #import casac
+    # all I really need is casalog, but how to get it:?
+    from taskinit import *
 
-# 4.2.2:
-#im, cb, ms, tb, fl, me, ia, po, sm, cl, cs, rg, sl, dc, vp, msmd, fi, fn, imd = gentools()
+    # qa doesn't hold state.
+    #qatool = casac.homefinder.find_home_by_name('quantaHome')
+    #qa = qatool.create()
+    im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+
+    # 4.2.2:
+    #im, cb, ms, tb, fl, me, ia, po, sm, cl, cs, rg, sl, dc, vp, msmd, fi, fn, imd = gentools()
 
 # functions defined outside of the simutil class
 def is_array_type(value):
@@ -72,7 +89,7 @@ class compositenumber:
         while maxi<(n2*n3*n5) and itsnumbers[maxi]<=maxval: maxi=maxi+1
         self.itsnumbers=pl.int64(itsnumbers[0:maxi])
     def list(self):
-        print self.itsnumbers
+        print(self.itsnumbers)
     def nextlarger(self,x):
         if x>max(self.itsnumbers): self.generate(2*x)
         xi=0
@@ -214,13 +231,13 @@ class simutil:
                 s=foo[0]+"\x1b[35mWARNING\x1b[0m"+foo[1]
 
             if origin:
-                print clr+"["+origin+"] "+bw+s
+                print(clr+"["+origin+"] "+bw+s)
             else:
-                print s
+                print(s)
 
 
         if priority=="ERROR":
-            raise Exception, s
+            raise Exception(s)
         else:            
             if origin==None:
                 origin="simutil"
@@ -493,6 +510,8 @@ class simutil:
         # haveing eliminated other options, we need to calculate:
         epoch, centx, centy = self.direction_splitter()
 
+        pointings = []
+
         shorttype=str.upper(maptype[0:3])
 #        if not shorttype=="HEX":
 #            self.msg("can't calculate map of maptype "+maptype,priority="error")
@@ -524,7 +543,7 @@ class simutil:
 
             # Start from the top because in the Southern hemisphere it sets first.
             y = qa.add(centy, qa.mul(0.5 * (nrows - 1), yspacing))
-            for row in xrange(0, nrows):         # xrange stops early.
+            for row in range(0, nrows):         # xrange stops early.
                 xspacing = qa.mul(1.0 / pl.cos(qa.convert(y, 'rad')['value']),spacing)
                 ystr = qa.formxxx(y, format='dms',prec=5)
                 
@@ -535,7 +554,7 @@ class simutil:
                     xmin = qa.sub(centx, qa.mul(ncolstomin - 0.5,
                                                 xspacing))
                     stopcolp1 = evencols
-                for col in xrange(0, stopcolp1):        # xrange stops early.
+                for col in range(0, stopcolp1):        # xrange stops early.
                     x = qa.formxxx(qa.add(xmin, qa.mul(col, xspacing)),
                                    format='hms',prec=5)
                     pointings.append("%s%s %s" % (epoch, x, ystr))
@@ -562,14 +581,14 @@ class simutil:
 
             # Start from the top because in the Southern hemisphere it sets first.
             y = qa.add(centy, qa.mul(0.5 * (nrows - 1), yspacing))
-            for row in xrange(0, nrows):         # xrange stops early.
+            for row in range(0, nrows):         # xrange stops early.
                 xspacing = qa.mul(1.0 / pl.cos(qa.convert(y, 'rad')['value']),spacing)
                 ystr = qa.formxxx(y, format='dms',prec=5)
 
                 xmin = qa.sub(centx, qa.mul(ncolstomin, xspacing))
                 stopcolp1 = ncols
         
-                for col in xrange(0, stopcolp1):        # xrange stops early.
+                for col in range(0, stopcolp1):        # xrange stops early.
                     x = qa.formxxx(qa.add(xmin, qa.mul(col, xspacing)),
                                    format='hms',prec=5)
                     pointings.append("%s%s %s" % (epoch, x, ystr))
@@ -719,7 +738,7 @@ class simutil:
         J2000 23h59m36.61 -019d52m12.35 60.0
         
         """
-        f=open(filename,"write")
+        f=open(filename,'w')
         f.write('#Epoch     RA          DEC      TIME[sec]\n')
         if type(pointings)!=type([]):
             pointings=[pointings]
@@ -765,7 +784,7 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print "[simutil] WARN: precession not handled by average_direction()"
+                print("[simutil] WARN: precession not handled by average_direction()")
             x = self.wrapang(x, avgx, 360.0)
             avgx += (x - avgx) / i
             avgy += (y - avgy) / i
@@ -814,7 +833,7 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print "[simutil] WARN: precession not handled by average_direction()"
+                print("[simutil] WARN: precession not handled by average_direction()")
             x = self.wrapang(x, avgx, 360.0)
             xx.append(x)
             yy.append(y)
@@ -1030,6 +1049,8 @@ class simutil:
             t0=[ 17, 30, 45, 51, 65, 55,  75, 196, 100, 230]
             # CAS-8802 B5 = 163-211GHz:
             t0=[ 17, 30, 45, 51, 55, 55,  75, 196, 100, 230]
+            # CAS-12387 match Cycle 7 OT and ASC
+            t0=[ 25, 30, 40, 42, 50, 50,  72, 135, 105, 230]
 
             flim=[31.3,950]
             if self.verbose: self.msg("using ALMA/ACA Rx specs",origin="noisetemp")
@@ -1441,8 +1462,9 @@ class simutil:
 
         # where to start plotting?
         offset=-0.5
-        if settime < time: offset-=0.5
-        if rise > time: offset+=0.5
+        # this assumes that the values can be compared directly - already assumed in code above
+        if settime['m0']['value'] < time['m0']['value']: offset -= 0.5
+        if rise['m0']['value'] > time['m0']['value']: offset+=0.5
         time['m0']['value']+=offset
 
         times=[]
@@ -1583,13 +1605,13 @@ class simutil:
                 break
         f.close()
 
-        if not params.has_key("coordsys"):
+        if "coordsys" not in params:
             self.msg("Must specify coordinate system #coorsys=XYZ|UTM|LOCin antenna file",origin="readantenna",priority="error")
             return -1
         else:
             self.coordsys=params["coordsys"]
 
-        if params.has_key("observatory"):
+        if "observatory" in params:
             self.telescopename=params["observatory"]
         else:
             self.telescopename="SIMULATED"
@@ -1604,7 +1626,7 @@ class simutil:
         if found:
             posobs=me.measure(me.observatory(self.telescopename),'WGS84')
             
-        if params.has_key("COFA"):
+        if "COFA" in params:
             obs_latlon=params["COFA"].split(",")
             cofa_lon=float(obs_latlon[0])
             cofa_lat=float(obs_latlon[1])
@@ -1635,17 +1657,17 @@ class simutil:
             if (params["coordsys"].upper()=="UTM"):
         ### expect easting, northing, elevation in m
                 self.msg("Antenna locations in UTM; will read from file easting, northing, elevation in m",origin="readantenna") 
-                if params.has_key("zone"):
+                if "zone" in params:
                     zone=params["zone"]
                 else:
                     self.msg("You must specify zone=NN in your antenna file",origin="readantenna",priority="error")
                     return -1
-                if params.has_key("datum"):
+                if "datum" in params:
                     datum=params["datum"]
                 else:
                     self.msg("You must specify datum in your antenna file",origin="readantenna",priority="error")
                     return -1
-                if params.has_key("hemisphere"):
+                if "hemisphere" in params:
                     nors=params["hemisphere"]
                     nors=nors[0].upper()
                 else:
@@ -1908,14 +1930,14 @@ class simutil:
             'WGS72' :[   0, 0  , 4.5,'WD','World Geodetic System - 72'    ],
             'WGS84' :[   0, 0  ,   0,'WE','World Geodetic System - 84'    ]}
         
-        if not datums.has_key(datumcode):
+        if datumcode not in datums:
             self.msg("unknown datum %s" % datumcode,priority="error")
             return -1
         
         datum=datums[datumcode]
         ellipsoid=datum[3]
         
-        if not ellipsoids.has_key(ellipsoid):
+        if ellipsoid not in ellipsoids:
             self.msg("unknown ellipsoid %s" % ellipsoid,priority="error")
             return -1
         
@@ -2278,8 +2300,8 @@ class simutil:
         csinlon=pl.sin(clon)        
         csinlat=pl.sin(clat)
         ccoslat=pl.cos(clat)
-        import types
-        if isinstance(x,types.FloatType): # weak
+
+        if isinstance(x,float): # weak
             x=[x]
             y=[y]
             z=[z]
@@ -2485,9 +2507,9 @@ class simutil:
                     inbright=inb
             try:
                 scalefactor=float(inbright)/pl.nanmax(arr)
-            except Exception, e:
+            except Exception:
                 in_ia.close()
-                raise Exception, e
+                raise
 
         # check shape characteristics of the input;
         # add degenerate axes as neeed:
@@ -2525,10 +2547,10 @@ class simutil:
                 incell = qa.abs(qa.convert(incell,'arcsec'))
                 # incell[0]<0 for RA increasing left
                 incell = [qa.mul(incell,-1),incell]
-        except Exception, e:
+        except Exception:
             # invalid incell
             in_ia.close()
-            raise Exception, e
+            raise
         # later, we can test validity with qa.compare()
 
 
@@ -2963,7 +2985,7 @@ class simutil:
             interactive=False
         # print clean inputs no matter what, so user can use them.
         # and write a clean.last file
-        cleanlast=open(imagename+".clean.last","write")
+        cleanlast=open(imagename+".clean.last",'w')
         cleanlast.write('taskname            = "clean"\n')
 
         #self.msg("clean inputs:")        
@@ -3014,7 +3036,7 @@ class simutil:
         cleanlast.write('scaletype               = "SAULT"\n')
         cleanlast.write('multiscale              = []\n')
         cleanlast.write('negcomponent            = -1\n')
-        cleanlast.write('smallscalebias          = 0.6\n')
+        cleanlast.write('smallscalebias          = 0.0\n')
         cleanlast.write('interactive             = '+str(interactive)+'\n')
         if interactive:
             cleanstr=cleanstr+",interactive=True"
@@ -3509,7 +3531,7 @@ class simutil:
         maxlength = 0
         minlength = 1e9
         #mylengths = pl.zeros([nAntennas,nAntennas])
-        mylengths=pl.zeros(nAntennas*(nAntennas-1)/2)
+        mylengths=pl.zeros(nAntennas*(nAntennas-1)//2)
         k=0
 
         for i in range(nAntennas):
@@ -3558,11 +3580,11 @@ class simutil:
         import scipy.interpolate as spintrp
         
         if not qa.compare(beam, "rad"):
-            raise ValueError, "beam should be a quantity of antenna primary beam size (angle)"
+            raise ValueError("beam should be a quantity of antenna primary beam size (angle)")
         if not qa.compare(cell, "rad"):
-            raise ValueError, "cell should be a quantity of image pixel size (angle)"
+            raise ValueError("cell should be a quantity of image pixel size (angle)")
         if len(sampling) > 0 and not qa.compare(sampling, "rad"):
-            raise ValueError, "sampling should be a quantity of pointing spacing (angle)"
+            raise ValueError("sampling should be a quantity of pointing spacing (angle)")
         if (convsupport < -1):
             convsupport = 3
 

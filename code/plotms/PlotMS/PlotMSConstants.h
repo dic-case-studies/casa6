@@ -39,10 +39,10 @@ namespace casa {
 // separately, their intended use is for them to be used sequentially.
 // Parameters:
 // * NAME: name of the enum,
-// * ALLMETHOD: name of the method that returns a vector of all defined members
+// * ALLMETHOD: name of the method that returns a std::vector of all defined members
 //              of the enum (also nALLMETHOD which returns the number of
 //              defined members in the enum),
-// * ALLSTRMETHOD: name of the method that returns a vector of the string
+// * ALLSTRMETHOD: name of the method that returns a std::vector of the string
 //                 representation of all defined members of the enum,
 // * CONVMETHOD: name of the method that converts between the enum and its
 //               casacore::String representation,
@@ -56,12 +56,12 @@ namespace casa {
         __VA_ARGS__                                                           \
     };                                                                        \
                                                                               \
-    static const vector< NAME >& ALLMETHOD () {                               \
+    static const std::vector< NAME >& ALLMETHOD () {                               \
         static const NAME arr[] = {                                           \
             __VA_ARGS__                                                       \
         };                                                                    \
         static const int count = sizeof(arr) / sizeof(arr[0]);                \
-        static const vector< NAME > v(arr, &arr[count]);                      \
+        static const std::vector< NAME > v(arr, &arr[count]);                      \
         return v;                                                             \
     }                                                                         \
                                                                               \
@@ -71,12 +71,12 @@ namespace casa {
     }
 
 #define PMS_ENUM2(NAME,ALLMETHOD,ALLSTRMETHOD,CONVMETHOD,...)                 \
-    static const vector<casacore::String>& ALLSTRMETHOD () {                            \
+    static const std::vector<casacore::String>& ALLSTRMETHOD () {                            \
         static const casacore::String arr[] = {                                         \
             __VA_ARGS__                                                       \
         };                                                                    \
         static const int count = sizeof(arr) / sizeof(arr[0]);                \
-        static const vector<casacore::String> v(arr, &arr[count]);                      \
+        static const std::vector<casacore::String> v(arr, &arr[count]);                      \
         return v;                                                             \
     }                                                                         \
                                                                               \
@@ -84,8 +84,8 @@ namespace casa {
         return ALLSTRMETHOD ()[v]; }                                          \
                                                                               \
     static const NAME & CONVMETHOD (const casacore::String& v, bool* ok = NULL) {       \
-        const vector<casacore::String>& strs = ALLSTRMETHOD ();                         \
-        const vector< NAME >& enms = ALLMETHOD ();                            \
+        const std::vector<casacore::String>& strs = ALLSTRMETHOD ();                         \
+        const std::vector< NAME >& enms = ALLMETHOD ();                            \
         for(unsigned int i = 0; i < strs.size(); i++) {                       \
             if(PMS::strEq(v, strs[i], true)) {                                \
                 if(ok != NULL) *ok = true;                                    \
@@ -107,50 +107,53 @@ public:
     // xmlcasa/scripts/task_plotms.py.**
     // <group>
     PMS_ENUM1(Axis, axes, axesStrings, axis,
-		  // Metadata
-	      SCAN,FIELD,TIME,TIME_INTERVAL,
-	      SPW,CHANNEL,FREQUENCY,VELOCITY,CORR,
-	      ANTENNA1,ANTENNA2,BASELINE,ROW,
+          // Metadata
+          SCAN,FIELD,TIME,TIME_INTERVAL,
+          SPW,CHANNEL,FREQUENCY,VELOCITY,CORR,
+          ANTENNA1,ANTENNA2,BASELINE,ROW,
           OBSERVATION,INTENT,FEED1,FEED2,
-		  // Visibilities and flags
-	      AMP,PHASE,REAL,IMAG,WT,WTxAMP,WTSP,
-	      SIGMA, SIGMASP,
-	      FLAG,FLAG_ROW,
-		  // Observational geometry
-	      UVDIST,UVDIST_L,U,V,W,UWAVE,VWAVE,WWAVE,
-	      AZ0,EL0,HA0,PA0,
-		  // Antenna-based
-	      ANTENNA,AZIMUTH,ELEVATION,
-	      PARANG,
-		  // Calibration 
-	      GAMP,GPHASE,GREAL,GIMAG,
-	      DELAY,SWP,TSYS,OPAC, SNR, TEC, ANTPOS,
-		  // Ephemeris
-	      RADIAL_VELOCITY, RHO,
-		  // Overlays
-	      ATM, TSKY, NONE)
+          // Visibilities and flags
+          AMP,PHASE,REAL,IMAG,WT,WTxAMP,WTSP,
+          SIGMA, SIGMASP,
+          FLAG,FLAG_ROW,
+          // Observational geometry
+          UVDIST,UVDIST_L,U,V,W,UWAVE,VWAVE,WWAVE,
+          AZ0,EL0,HA0,PA0,
+          // Antenna-based
+          ANTENNA,AZIMUTH,ELEVATION,RA,DEC,
+          PARANG,
+          // Calibration 
+          GAMP,GPHASE,GREAL,GIMAG,
+          DELAY,SWP,TSYS,OPAC, SNR, TEC, ANTPOS,
+          // Ephemeris
+          RADIAL_VELOCITY, RHO,
+          // Overlays
+          ATM, TSKY, IMAGESB,
+		  // POLN only for plot axis labels, titles
+		  POLN, NONE)
 
     PMS_ENUM2(Axis, axes, axesStrings, axis,
-		  // Metadata
-	      "Scan","Field","Time","Interval",
-	      "Spw","Channel","Frequency","Velocity","Corr",
-	      "Antenna1","Antenna2","Baseline","Row",
-	      "Observation", "Intent", "Feed1", "Feed2",
-		  // Visibilities and flags
-	      "Amp","Phase","Real","Imag","Wt","Wt*Amp","WtSp",
-	      "Sigma", "SigmaSp", "Flag","FlagRow",
-		  // Observational geometry
-	      "UVdist","UVwave","U","V","W","Uwave","Vwave","Wwave",
-	      "Azimuth","Elevation","HourAngle","ParAngle",
-		  // Antenna-based
-	      "Antenna","Ant-Azimuth","Ant-Elevation","Ant-ParAngle",
-		  // Calibration 
-	      "Gain Amp","Gain Phase","Gain Real","Gain Imag",
-	      "Delay","SwPower","Tsys","Opac", "SNR", "TEC",
-		  "Antenna Positions",
-		  // Ephemeris
-	      "Radial Velocity", "Distance (rho)", 
-          "Atm Transmission", "Tsky", "None")
+          // Metadata
+          "Scan","Field","Time","Interval",
+          "Spw","Channel","Frequency","Velocity","Corr",
+          "Antenna1","Antenna2","Baseline","Row",
+          "Observation", "Intent", "Feed1", "Feed2",
+          // Visibilities and flags
+          "Amp","Phase","Real","Imag","Wt","Wt*Amp","WtSp",
+          "Sigma", "SigmaSp", "Flag","FlagRow",
+          // Observational geometry
+          "UVdist","UVwave","U","V","W","Uwave","Vwave","Wwave",
+          "Azimuth","Elevation","HourAngle","ParAngle",
+          // Antenna-based
+          "Antenna","Ant-Azimuth","Ant-Elevation","Ant-Ra","Ant-Dec","Ant-ParAngle",
+          // Calibration 
+          "Gain Amp","Gain Phase","Gain Real","Gain Imag",
+          "Delay","SwPower","Tsys","Opac", "SNR", "TEC",
+          "Antenna Positions",
+          // Ephemeris
+          "Radial Velocity", "Distance (rho)", 
+          "Atm Transmission", "Tsky", "Image Sideband", 
+		  "Poln", "None")
     // </group>
               
     // Returns the axes scale for the given axis.  Currently NORMAL unless the
@@ -162,25 +165,62 @@ public:
     // **If these are changed, also update: xmlcasa/tasks/plotms.xml.**
     // <group>
     PMS_ENUM1(DataColumn, dataColumns, dataColumnStrings, dataColumn,
-              DATA, CORRECTED, MODEL, CORRMODEL, DATAMODEL, DATA_DIVIDE_MODEL, 
-              CORRECTED_DIVIDE_MODEL, FLOAT_DATA)
+              DATA, CORRECTED, MODEL, FLOAT_DATA, CORRMODEL_V, CORRMODEL_S,
+              DATAMODEL_V, DATAMODEL_S, CORR_DIV_MODEL_V, CORR_DIV_MODEL_S,
+              DATA_DIV_MODEL_V, DATA_DIV_MODEL_S)
     PMS_ENUM2(DataColumn, dataColumns, dataColumnStrings, dataColumn,
-              "data", "corrected", "model", "corrected-model", "data-model", 
-              "data/model", "corrected/model", "float")
+              "data", "corrected", "model", "float",
+              "corrected-model_vector", "corrected-model_scalar",
+              "data-model_vector", "data-model_scalar",
+              "corrected/model_vector", "corrected/model_scalar",
+              "data/model_vector", "data/model_scalar")
     // </group>
-              
+
+    // Enum for the different coordinate systems for data axes.
+    // **If these are changed, also update: xmlcasa/tasks/plotms.xml.**
+    // <group>
+    PMS_ENUM1(CoordSystem, coordSystems, coordSystemStrings, coordSystem,
+              AZELGEO, ICRS, J2000, B1950, GALACTIC)
+    PMS_ENUM2(CoordSystem, coordSystems, coordSystemStrings, coordSystem,
+              "AZELGEO", "ICRS", "J2000", "B1950", "GALACTIC")
+    // </group>
+    static const casacore::String & longitudeName(CoordSystem r);
+    static const casacore::String & latitudeName(CoordSystem r);
+	static AngleFormat angleFormat(Axis axis, CoordSystem ref);
+	enum DirectionComponent {
+		LONGITUDE,
+		LATITUDE
+	};
+	static bool isDirectionComponent(Axis axis, DirectionComponent &dc);
+	static AngleFormat angleFormat(CoordSystem ref, DirectionComponent dc);
+
+
+    // Enum for the different interpolation methods for data axes.
+    // **If these are changed, also update: xmlcasa/tasks/plotms.xml.**
+    // <group>
+    PMS_ENUM1(InterpMethod, interpMethods, interpMethodStrings, interpMethod,
+              NEAREST, CUBIC_SPLINE)
+    PMS_ENUM2(InterpMethod, interpMethods, interpMethodStrings, interpMethod,
+              "Nearest", "Cubic Spline")
+    // </group>
+
     // Returns whether or not the given axis needs the second data parameter to
     // indicate which data column to use or not.  Currently false except for
     // AMP, PHASE, REAL, and IMAG.
     static bool axisIsData(Axis axis);
+    static bool axisIsCalData(Axis axis);
     // Cal table axes which need validation/slicing for poln selection
     static bool axisNeedsCalSlice(Axis axis);
     // Need datacolumn for averaging weight axes          
     static bool axisIsWeight(Axis axis);
     // for loading conjugates and setting axis ranges
     static bool axisIsUV(Axis axis);
-	// for adjusting axis ranges
+    static bool axisIsUVWave(Axis axis);
+    // for adjusting axis ranges
     static bool axisIsOverlay(Axis axis);
+    // right ascension or declination
+    static bool axisIsRaDec(Axis axis);
+    static casacore::uInt axisScaleBase(Axis axis);
               
     // Enum for different axes types.  Currently only used to display this
     // information to the user in the GUI's cache tab.
@@ -211,7 +251,6 @@ public:
     // Returns the unit for the given axis.
     static AxisUnit axisUnit(Axis axis);
     
-    
     // Convert to/from dates and doubles, using the given scale (must be either
     // DATE_MJ_SEC or DATE_MJ_DAY).
     // <group>
@@ -235,18 +274,18 @@ public:
     static bool recEq(const casacore::Record& rec1,
                       const casacore::Record& rec2);
     
-    // Converts the given templated vector to/from an int Vector.
+    // Converts the given templated std::vector to/from an int std::vector.
     // <group>
     template <class T>
-    static casacore::Vector<int> toIntVector(const vector<T>& v) {
+    static casacore::Vector<int> toIntVector(const std::vector<T>& v) {
         casacore::Vector<int> v2(v.size());
         for(unsigned int i = 0; i < v.size(); i++) v2[i] = (int)v[i];
         return v2;
     }
     
     template <class T>
-    static vector<T> fromIntVector(const casacore::Vector<int>& v) {
-        vector<T> v2(v.size());
+    static std::vector<T> fromIntVector(const casacore::Vector<int>& v) {
+        std::vector<T> v2(v.size());
         for(unsigned int i = 0; i < v.size(); i++) v2[i] = (T)v[i];
         return v2;
     }
@@ -289,7 +328,7 @@ public:
     // Colorizing Values //
               
     // Returns the list of unique colors used to colorize plots.
-    static const vector<casacore::String>& COLORS_LIST();
+    static const std::vector<casacore::String>& COLORS_LIST();
     
     
     // Default Parameter Values //
@@ -310,8 +349,11 @@ public:
     // <group>
     static const Axis DEFAULT_XAXIS;
     static const Axis DEFAULT_YAXIS;
+    static const Axis DEFAULT_CAL_YAXIS;
     static const DataColumn DEFAULT_DATACOLUMN;
     static const DataColumn DEFAULT_DATACOLUMN_WT;
+    static const CoordSystem DEFAULT_COORDSYSTEM;
+    static const InterpMethod DEFAULT_INTERPMETHOD;
     static const Axis DEFAULT_COLOR_AXIS;
     // </group>
     
@@ -322,7 +364,7 @@ public:
     static const casacore::String DEFAULT_CANVAS_AXIS_LABEL_FORMAT;
     static const bool DEFAULT_FONTSET;
     static const int DEFAULT_FONT;
-    static const bool DEFAULT_SHOWAXIS;
+    static const bool DEFAULT_SHOWAXISLABEL;
     static const bool DEFAULT_SHOWLEGEND;
     static const PlotCanvas::LegendPosition DEFAULT_LEGENDPOSITION;
     static const bool DEFAULT_SHOW_GRID;

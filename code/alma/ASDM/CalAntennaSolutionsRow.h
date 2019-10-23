@@ -48,23 +48,23 @@
 
 
 	 
-#include <Angle.h>
+#include <alma/ASDM/Angle.h>
 	
 
 	 
-#include <ArrayTime.h>
+#include <alma/ASDM/ArrayTime.h>
 	
 
 	 
-#include <Frequency.h>
+#include <alma/ASDM/Frequency.h>
 	
 
 	 
-#include <Tag.h>
+#include <alma/ASDM/Tag.h>
 	
 
 	 
-#include <Interval.h>
+#include <alma/ASDM/Interval.h>
 	
 
 
@@ -73,19 +73,15 @@
 	
 
 	
-#include "CAtmPhaseCorrection.h"
+#include <alma/Enumerations/CAtmPhaseCorrection.h>
 	
 
 	
-#include "CBasebandName.h"
+#include <alma/Enumerations/CBasebandName.h>
 	
 
 	
-#include "CReceiverBand.h"
-	
-
-	
-
+#include <alma/Enumerations/CReceiverBand.h>
 	
 
 	
@@ -99,7 +95,11 @@
 	
 
 	
-#include "CPolarizationType.h"
+
+	
+
+	
+#include <alma/Enumerations/CPolarizationType.h>
 	
 
 	
@@ -114,12 +114,12 @@
 
 
 
-#include <ConversionException.h>
-#include <NoSuchRow.h>
-#include <IllegalAccessException.h>
+#include <alma/ASDM/ConversionException.h>
+#include <alma/ASDM/NoSuchRow.h>
+#include <alma/ASDM/IllegalAccessException.h>
 
-#include <RowTransformer.h>
-//#include <TableStreamReader.h>
+#include <alma/ASDM/RowTransformer.h>
+//#include <alma/ASDM/TableStreamReader.h>
 
 /*\file CalAntennaSolutions.h
     \brief Generated from model's revision "-1", branch ""
@@ -135,11 +135,14 @@ class CalDataRow;
 
 // class asdm::CalReductionRow;
 class CalReductionRow;
+
+// class asdm::SpectralWindowRow;
+class SpectralWindowRow;
 	
 
 class CalAntennaSolutionsRow;
 typedef void (CalAntennaSolutionsRow::*CalAntennaSolutionsAttributeFromBin) (EndianIStream& eis);
-typedef void (CalAntennaSolutionsRow::*CalAntennaSolutionsAttributeFromText) (const string& s);
+typedef void (CalAntennaSolutionsRow::*CalAntennaSolutionsAttributeFromText) (const std::string& s);
 
 /**
  * The CalAntennaSolutionsRow class is a row of a CalAntennaSolutionsTable.
@@ -180,23 +183,23 @@ public:
 	
  	/**
  	 * Get antennaName.
- 	 * @return antennaName as string
+ 	 * @return antennaName as std::string
  	 */
- 	string getAntennaName() const;
+ 	std::string getAntennaName() const;
 	
  
  	
  	
  	/**
- 	 * Set antennaName with the specified string.
- 	 * @param antennaName The string value to which antennaName is to be set.
+ 	 * Set antennaName with the specified std::string.
+ 	 * @param antennaName The std::string value to which antennaName is to be set.
  	 
  		
  			
  	 * @throw IllegalAccessException If an attempt is made to change this field after is has been added to the table.
  	 		
  	 */
- 	void setAntennaName (string antennaName);
+ 	void setAntennaName (std::string antennaName);
   		
 	
 	
@@ -398,21 +401,21 @@ public:
 	
  	/**
  	 * Get refAntennaName.
- 	 * @return refAntennaName as string
+ 	 * @return refAntennaName as std::string
  	 */
- 	string getRefAntennaName() const;
+ 	std::string getRefAntennaName() const;
 	
  
  	
  	
  	/**
- 	 * Set refAntennaName with the specified string.
- 	 * @param refAntennaName The string value to which refAntennaName is to be set.
+ 	 * Set refAntennaName with the specified std::string.
+ 	 * @param refAntennaName The std::string value to which refAntennaName is to be set.
  	 
  		
  			
  	 */
- 	void setRefAntennaName (string refAntennaName);
+ 	void setRefAntennaName (std::string refAntennaName);
   		
 	
 	
@@ -428,21 +431,21 @@ public:
 	
  	/**
  	 * Get direction.
- 	 * @return direction as vector<Angle >
+ 	 * @return direction as std::vector<Angle >
  	 */
- 	vector<Angle > getDirection() const;
+ 	std::vector<Angle > getDirection() const;
 	
  
  	
  	
  	/**
- 	 * Set direction with the specified vector<Angle >.
- 	 * @param direction The vector<Angle > value to which direction is to be set.
+ 	 * Set direction with the specified std::vector<Angle >.
+ 	 * @param direction The std::vector<Angle > value to which direction is to be set.
  	 
  		
  			
  	 */
- 	void setDirection (vector<Angle > direction);
+ 	void setDirection (std::vector<Angle > direction);
   		
 	
 	
@@ -458,21 +461,21 @@ public:
 	
  	/**
  	 * Get frequencyRange.
- 	 * @return frequencyRange as vector<Frequency >
+ 	 * @return frequencyRange as std::vector<Frequency >
  	 */
- 	vector<Frequency > getFrequencyRange() const;
+ 	std::vector<Frequency > getFrequencyRange() const;
 	
  
  	
  	
  	/**
- 	 * Set frequencyRange with the specified vector<Frequency >.
- 	 * @param frequencyRange The vector<Frequency > value to which frequencyRange is to be set.
+ 	 * Set frequencyRange with the specified std::vector<Frequency >.
+ 	 * @param frequencyRange The std::vector<Frequency > value to which frequencyRange is to be set.
  	 
  		
  			
  	 */
- 	void setFrequencyRange (vector<Frequency > frequencyRange);
+ 	void setFrequencyRange (std::vector<Frequency > frequencyRange);
   		
 	
 	
@@ -518,21 +521,21 @@ public:
 	
  	/**
  	 * Get polarizationTypes.
- 	 * @return polarizationTypes as vector<PolarizationTypeMod::PolarizationType >
+ 	 * @return polarizationTypes as std::vector<PolarizationTypeMod::PolarizationType >
  	 */
- 	vector<PolarizationTypeMod::PolarizationType > getPolarizationTypes() const;
+ 	std::vector<PolarizationTypeMod::PolarizationType > getPolarizationTypes() const;
 	
  
  	
  	
  	/**
- 	 * Set polarizationTypes with the specified vector<PolarizationTypeMod::PolarizationType >.
- 	 * @param polarizationTypes The vector<PolarizationTypeMod::PolarizationType > value to which polarizationTypes is to be set.
+ 	 * Set polarizationTypes with the specified std::vector<PolarizationTypeMod::PolarizationType >.
+ 	 * @param polarizationTypes The std::vector<PolarizationTypeMod::PolarizationType > value to which polarizationTypes is to be set.
  	 
  		
  			
  	 */
- 	void setPolarizationTypes (vector<PolarizationTypeMod::PolarizationType > polarizationTypes);
+ 	void setPolarizationTypes (std::vector<PolarizationTypeMod::PolarizationType > polarizationTypes);
   		
 	
 	
@@ -578,21 +581,21 @@ public:
 	
  	/**
  	 * Get phaseAnt.
- 	 * @return phaseAnt as vector<float >
+ 	 * @return phaseAnt as std::vector<float >
  	 */
- 	vector<float > getPhaseAnt() const;
+ 	std::vector<float > getPhaseAnt() const;
 	
  
  	
  	
  	/**
- 	 * Set phaseAnt with the specified vector<float >.
- 	 * @param phaseAnt The vector<float > value to which phaseAnt is to be set.
+ 	 * Set phaseAnt with the specified std::vector<float >.
+ 	 * @param phaseAnt The std::vector<float > value to which phaseAnt is to be set.
  	 
  		
  			
  	 */
- 	void setPhaseAnt (vector<float > phaseAnt);
+ 	void setPhaseAnt (std::vector<float > phaseAnt);
   		
 	
 	
@@ -608,21 +611,21 @@ public:
 	
  	/**
  	 * Get phaseAntRMS.
- 	 * @return phaseAntRMS as vector<float >
+ 	 * @return phaseAntRMS as std::vector<float >
  	 */
- 	vector<float > getPhaseAntRMS() const;
+ 	std::vector<float > getPhaseAntRMS() const;
 	
  
  	
  	
  	/**
- 	 * Set phaseAntRMS with the specified vector<float >.
- 	 * @param phaseAntRMS The vector<float > value to which phaseAntRMS is to be set.
+ 	 * Set phaseAntRMS with the specified std::vector<float >.
+ 	 * @param phaseAntRMS The std::vector<float > value to which phaseAntRMS is to be set.
  	 
  		
  			
  	 */
- 	void setPhaseAntRMS (vector<float > phaseAntRMS);
+ 	void setPhaseAntRMS (std::vector<float > phaseAntRMS);
   		
 	
 	
@@ -638,21 +641,21 @@ public:
 	
  	/**
  	 * Get amplitudeAnt.
- 	 * @return amplitudeAnt as vector<float >
+ 	 * @return amplitudeAnt as std::vector<float >
  	 */
- 	vector<float > getAmplitudeAnt() const;
+ 	std::vector<float > getAmplitudeAnt() const;
 	
  
  	
  	
  	/**
- 	 * Set amplitudeAnt with the specified vector<float >.
- 	 * @param amplitudeAnt The vector<float > value to which amplitudeAnt is to be set.
+ 	 * Set amplitudeAnt with the specified std::vector<float >.
+ 	 * @param amplitudeAnt The std::vector<float > value to which amplitudeAnt is to be set.
  	 
  		
  			
  	 */
- 	void setAmplitudeAnt (vector<float > amplitudeAnt);
+ 	void setAmplitudeAnt (std::vector<float > amplitudeAnt);
   		
 	
 	
@@ -668,21 +671,21 @@ public:
 	
  	/**
  	 * Get amplitudeAntRMS.
- 	 * @return amplitudeAntRMS as vector<float >
+ 	 * @return amplitudeAntRMS as std::vector<float >
  	 */
- 	vector<float > getAmplitudeAntRMS() const;
+ 	std::vector<float > getAmplitudeAntRMS() const;
 	
  
  	
  	
  	/**
- 	 * Set amplitudeAntRMS with the specified vector<float >.
- 	 * @param amplitudeAntRMS The vector<float > value to which amplitudeAntRMS is to be set.
+ 	 * Set amplitudeAntRMS with the specified std::vector<float >.
+ 	 * @param amplitudeAntRMS The std::vector<float > value to which amplitudeAntRMS is to be set.
  	 
  		
  			
  	 */
- 	void setAmplitudeAntRMS (vector<float > amplitudeAntRMS);
+ 	void setAmplitudeAntRMS (std::vector<float > amplitudeAntRMS);
   		
 	
 	
@@ -757,6 +760,38 @@ public:
 	
 
 
+	
+	// ===> Attribute spectralWindowId
+	
+	
+	
+
+	
+ 	/**
+ 	 * Get spectralWindowId.
+ 	 * @return spectralWindowId as Tag
+ 	 */
+ 	Tag getSpectralWindowId() const;
+	
+ 
+ 	
+ 	
+ 	/**
+ 	 * Set spectralWindowId with the specified Tag.
+ 	 * @param spectralWindowId The Tag value to which spectralWindowId is to be set.
+ 	 
+ 		
+ 			
+ 	 * @throw IllegalAccessException If an attempt is made to change this field after is has been added to the table.
+ 	 		
+ 	 */
+ 	void setSpectralWindowId (Tag spectralWindowId);
+  		
+	
+	
+	
+
+
 	///////////
 	// Links //
 	///////////
@@ -792,6 +827,21 @@ public:
 	
 
 	
+
+	
+		
+	/**
+	 * spectralWindowId pointer to the row in the SpectralWindow table having SpectralWindow.spectralWindowId == spectralWindowId
+	 * @return a SpectralWindowRow*
+	 * 
+	 
+	 */
+	 SpectralWindowRow* getSpectralWindowUsingSpectralWindowId();
+	 
+
+	
+
+	
 	
 	
 	/**
@@ -809,6 +859,8 @@ public:
 	 * @param calDataId
 	    
 	 * @param calReductionId
+	    
+	 * @param spectralWindowId
 	    
 	 * @param startValidTime
 	    
@@ -837,7 +889,7 @@ public:
 	 * @param amplitudeAntRMS
 	    
 	 */ 
-	bool compareNoAutoInc(string antennaName, AtmPhaseCorrectionMod::AtmPhaseCorrection atmPhaseCorrection, ReceiverBandMod::ReceiverBand receiverBand, BasebandNameMod::BasebandName basebandName, Tag calDataId, Tag calReductionId, ArrayTime startValidTime, ArrayTime endValidTime, int numReceptor, string refAntennaName, vector<Angle > direction, vector<Frequency > frequencyRange, Interval integrationTime, vector<PolarizationTypeMod::PolarizationType > polarizationTypes, bool correctionValidity, vector<float > phaseAnt, vector<float > phaseAntRMS, vector<float > amplitudeAnt, vector<float > amplitudeAntRMS);
+	bool compareNoAutoInc(std::string antennaName, AtmPhaseCorrectionMod::AtmPhaseCorrection atmPhaseCorrection, ReceiverBandMod::ReceiverBand receiverBand, BasebandNameMod::BasebandName basebandName, Tag calDataId, Tag calReductionId, Tag spectralWindowId, ArrayTime startValidTime, ArrayTime endValidTime, int numReceptor, std::string refAntennaName, std::vector<Angle > direction, std::vector<Frequency > frequencyRange, Interval integrationTime, std::vector<PolarizationTypeMod::PolarizationType > polarizationTypes, bool correctionValidity, std::vector<float > phaseAnt, std::vector<float > phaseAntRMS, std::vector<float > amplitudeAnt, std::vector<float > amplitudeAntRMS);
 	
 	
 
@@ -873,7 +925,7 @@ public:
 	 * @param amplitudeAntRMS
 	    
 	 */ 
-	bool compareRequiredValue(ArrayTime startValidTime, ArrayTime endValidTime, int numReceptor, string refAntennaName, vector<Angle > direction, vector<Frequency > frequencyRange, Interval integrationTime, vector<PolarizationTypeMod::PolarizationType > polarizationTypes, bool correctionValidity, vector<float > phaseAnt, vector<float > phaseAntRMS, vector<float > amplitudeAnt, vector<float > amplitudeAntRMS); 
+	bool compareRequiredValue(ArrayTime startValidTime, ArrayTime endValidTime, int numReceptor, std::string refAntennaName, std::vector<Angle > direction, std::vector<Frequency > frequencyRange, Interval integrationTime, std::vector<PolarizationTypeMod::PolarizationType > polarizationTypes, bool correctionValidity, std::vector<float > phaseAnt, std::vector<float > phaseAntRMS, std::vector<float > amplitudeAnt, std::vector<float > amplitudeAntRMS); 
 		 
 	
 	/**
@@ -938,6 +990,7 @@ void receiverBandFromBin( EndianIStream& eis);
 void basebandNameFromBin( EndianIStream& eis);
 void calDataIdFromBin( EndianIStream& eis);
 void calReductionIdFromBin( EndianIStream& eis);
+void spectralWindowIdFromBin( EndianIStream& eis);
 void startValidTimeFromBin( EndianIStream& eis);
 void endValidTimeFromBin( EndianIStream& eis);
 void numReceptorFromBin( EndianIStream& eis);
@@ -1013,7 +1066,7 @@ private:
 	 * @param table The table to which this row belongs.
 	 * @param row  The row which is to be copied.
 	 */
-	 CalAntennaSolutionsRow (CalAntennaSolutionsTable &table, CalAntennaSolutionsRow &row);
+	 CalAntennaSolutionsRow (CalAntennaSolutionsTable &table, CalAntennaSolutionsRow *row);
 	 	
 	////////////////////////////////
 	// Intrinsic Table Attributes //
@@ -1024,7 +1077,7 @@ private:
 	
 	
 
-	string antennaName;
+	std::string antennaName;
 
 	
 	
@@ -1101,7 +1154,7 @@ private:
 	
 	
 
-	string refAntennaName;
+	std::string refAntennaName;
 
 	
 	
@@ -1112,7 +1165,7 @@ private:
 	
 	
 
-	vector<Angle > direction;
+	std::vector<Angle > direction;
 
 	
 	
@@ -1123,7 +1176,7 @@ private:
 	
 	
 
-	vector<Frequency > frequencyRange;
+	std::vector<Frequency > frequencyRange;
 
 	
 	
@@ -1145,7 +1198,7 @@ private:
 	
 	
 
-	vector<PolarizationTypeMod::PolarizationType > polarizationTypes;
+	std::vector<PolarizationTypeMod::PolarizationType > polarizationTypes;
 
 	
 	
@@ -1167,7 +1220,7 @@ private:
 	
 	
 
-	vector<float > phaseAnt;
+	std::vector<float > phaseAnt;
 
 	
 	
@@ -1178,7 +1231,7 @@ private:
 	
 	
 
-	vector<float > phaseAntRMS;
+	std::vector<float > phaseAntRMS;
 
 	
 	
@@ -1189,7 +1242,7 @@ private:
 	
 	
 
-	vector<float > amplitudeAnt;
+	std::vector<float > amplitudeAnt;
 
 	
 	
@@ -1200,7 +1253,7 @@ private:
 	
 	
 
-	vector<float > amplitudeAntRMS;
+	std::vector<float > amplitudeAntRMS;
 
 	
 	
@@ -1232,10 +1285,28 @@ private:
 	
  	
 
+	
+	// ===> Attribute spectralWindowId
+	
+	
+
+	Tag spectralWindowId;
+
+	
+	
+ 	
+
 	///////////
 	// Links //
 	///////////
 	
+	
+		
+
+	 
+
+	
+
 	
 		
 
@@ -1262,6 +1333,7 @@ void receiverBandFromBin( EndianIStream& eis);
 void basebandNameFromBin( EndianIStream& eis);
 void calDataIdFromBin( EndianIStream& eis);
 void calReductionIdFromBin( EndianIStream& eis);
+void spectralWindowIdFromBin( EndianIStream& eis);
 void startValidTimeFromBin( EndianIStream& eis);
 void endValidTimeFromBin( EndianIStream& eis);
 void numReceptorFromBin( EndianIStream& eis);
@@ -1284,61 +1356,64 @@ void amplitudeAntRMSFromBin( EndianIStream& eis);
 	///////////////////////////////////
 	std::map<std::string, CalAntennaSolutionsAttributeFromText> fromTextMethods;
 	
-void antennaNameFromText (const string & s);
+void antennaNameFromText (const std::string & s);
 	
 	
-void atmPhaseCorrectionFromText (const string & s);
+void atmPhaseCorrectionFromText (const std::string & s);
 	
 	
-void receiverBandFromText (const string & s);
+void receiverBandFromText (const std::string & s);
 	
 	
-void basebandNameFromText (const string & s);
+void basebandNameFromText (const std::string & s);
 	
 	
-void calDataIdFromText (const string & s);
+void calDataIdFromText (const std::string & s);
 	
 	
-void calReductionIdFromText (const string & s);
+void calReductionIdFromText (const std::string & s);
 	
 	
-void startValidTimeFromText (const string & s);
+void spectralWindowIdFromText (const std::string & s);
 	
 	
-void endValidTimeFromText (const string & s);
+void startValidTimeFromText (const std::string & s);
 	
 	
-void numReceptorFromText (const string & s);
+void endValidTimeFromText (const std::string & s);
 	
 	
-void refAntennaNameFromText (const string & s);
+void numReceptorFromText (const std::string & s);
 	
 	
-void directionFromText (const string & s);
+void refAntennaNameFromText (const std::string & s);
 	
 	
-void frequencyRangeFromText (const string & s);
+void directionFromText (const std::string & s);
 	
 	
-void integrationTimeFromText (const string & s);
+void frequencyRangeFromText (const std::string & s);
 	
 	
-void polarizationTypesFromText (const string & s);
+void integrationTimeFromText (const std::string & s);
 	
 	
-void correctionValidityFromText (const string & s);
+void polarizationTypesFromText (const std::string & s);
 	
 	
-void phaseAntFromText (const string & s);
+void correctionValidityFromText (const std::string & s);
 	
 	
-void phaseAntRMSFromText (const string & s);
+void phaseAntFromText (const std::string & s);
 	
 	
-void amplitudeAntFromText (const string & s);
+void phaseAntRMSFromText (const std::string & s);
 	
 	
-void amplitudeAntRMSFromText (const string & s);
+void amplitudeAntFromText (const std::string & s);
+	
+	
+void amplitudeAntRMSFromText (const std::string & s);
 	
 
 		

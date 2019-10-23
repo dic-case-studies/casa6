@@ -1,8 +1,9 @@
 #include <imageanalysis/ImageAnalysis/ImageHistory.h>
 
+#include <stdcasa/variant.h>
 #include <iomanip>
 
-#include <casa/OS/Time.h>
+//#include <casa/OS/Time.h>
 
 namespace casa {
 
@@ -89,6 +90,19 @@ template<class T> void ImageHistory<T>::addHistory(
     addHistory(origin.toString(), history);
 }
 
+template<class T> void ImageHistory<T>::clear() {
+    _image->logger().clear();
+}
+
+template <class T>
+void ImageHistory<T>::addHistory(
+    const std::vector<std::pair<casacore::String, casacore::String>>& history
+) {
+    for (const auto& line: history) {
+        addHistory(line.first, line.second);
+    }
+}
+
 template<class T> casacore::LogIO& ImageHistory<T>::getLogSink() {
     return _image->logSink();
 }
@@ -119,6 +133,47 @@ template<class T> std::vector<String> ImageHistory<T>::get(
     return t;
 }
 
+template <class T> std::vector<std::pair<casacore::String, casacore::String>> 
+ImageHistory<T>::getApplicationHistory(
+    const casacore::LogOrigin& origin, const casacore::String& taskname,
+    const vector<casacore::String>& paramNames, const vector<casac::variant>& paramValues,
+    const casacore::String& imageName
+) {
+    ThrowIf(
+        paramNames.size() != paramValues.size(),
+        "paramNames and paramValues must have the same number of elements"
+    );
+    std::pair<casacore::String, casacore::String> x;
+    x.first = origin.fullName();
+    x.second = "Ran " + taskname + " on " + imageName;
+    std::vector<std::pair<casacore::String, casacore::String>> appHistory;
+    appHistory.push_back(x);
+    vector<std::pair<casacore::String, casac::variant>> inputs;
+    vector<casacore::String>::const_iterator end = paramNames.end();
+    auto begin = paramNames.cbegin();
+    auto value = paramValues.cbegin();
+    //auto end = paramNames.cend();
+    casacore::String out = taskname + "(";
+    casacore::String quote;
+    // auto name = begin;
+    for (auto name = begin; name != end; ++name, ++value) {
+        if (name != begin) {
+            out += ", ";
+        }
+        quote = value->type() == casac::variant::STRING ? "'" : "";
+        out += *name + "=" + quote;
+        out += value->toString();
+        out += quote;
+        /*
+        name++;
+        value++;
+        */
+    }
+    x.second = out + ")";
+    appHistory.push_back(x);
+    return appHistory;
+}
+
 template<class T> vector<string> ImageHistory<T>::getAsStdStrings(
         casacore::Bool list
 ) const {
@@ -135,11 +190,12 @@ template<class T> template <class U>  void ImageHistory<T>::append(
 ) {
     _image->logger().append(image->logger());
 }
-/*
-template<class T> void ImageHistory<T>::append(
-        SPCIIC image
+
+template<class T> template <class U>  void ImageHistory<T>::append(
+    SPIIU image
 ) {
-    _image->logger().append(image->logger());
+    append(std::const_pointer_cast<const casacore::ImageInterface<U>>(image));
+    //_image->logger().append(image->logger());
 }
-*/
+
 }

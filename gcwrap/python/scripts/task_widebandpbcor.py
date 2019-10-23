@@ -4,13 +4,27 @@
 # v1.0: 2012.09.10, U.R.V.
 #
 ################################################
+from __future__ import absolute_import
 import os
 import numpy as np
 import shutil
 from scipy import linalg
-from taskinit import *
 
-im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+   from casatools import imager, image, quanta, measures
+   from casatasks import casalog
+
+   im = imager( )
+   ia = image( )
+   qa = quanta( )
+   me = measures( )
+else:
+   from taskinit import *
+
+   im,me,ia=gentools(['im','me','ia'])
+   # also uses the global qa tool
+
 def widebandpbcor(vis='',
                   imagename='mfim',
                   nterms=2,
@@ -41,8 +55,8 @@ def widebandpbcor(vis='',
    taylorlist=[]
    residuallist=[]
    for i in range(0,nterms):
-	taylorlist.append(imagename+'.image.tt'+str(i));
-	residuallist.append(imagename+'.residual.tt'+str(i));
+        taylorlist.append(imagename+'.image.tt'+str(i));
+        residuallist.append(imagename+'.residual.tt'+str(i));
         if(not os.path.exists(taylorlist[i])):
             casalog.post('Taylor-coeff Restored Image : ' + taylorlist[i] + ' not found.','SEVERE')
             return False
@@ -605,7 +619,7 @@ def _set_clean_beam(imname,beamshape):
       ia.open(imname);
       try:
           ia.setrestoringbeam(major=beamshape[0],minor=beamshape[1],pa=beamshape[2]);
-      except Exception, e:
+      except Exception as e:
           casalog.post( "Error setting restoring beam : " + e , 'WARN');
           ia.close();
           return False;

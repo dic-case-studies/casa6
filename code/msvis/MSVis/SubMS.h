@@ -49,7 +49,7 @@
 namespace casacore{
 
 class MSSelection; // #include <ms/MSSel/MSSelection.h>
-template<class T> class ROArrayColumn;
+template<class T> class ArrayColumn;
 class Table;
 }
 
@@ -454,20 +454,20 @@ class SubMS
   // return value is true if the parameters are OK.
   // if writeTables is true, the vectors are filled and the SPW, DD, and SOURCE tables are modified;
   // the return value in this case is true only if a successful modification (or none) took place
-  casacore::Bool setRegridParameters(vector<casacore::Int>& oldSpwId,
-			   vector<casacore::Int>& oldFieldId,
-			   vector<casacore::Int>& newDataDescId,
-			   vector<casacore::Bool>& regrid,
-			   vector<casacore::Bool>& transform,
-			   vector<casacore::MDirection>& theFieldDirV,
-			   vector<casacore::MPosition>& mObsPosV,
-			   vector<casacore::MFrequency::Types>& fromFrameTypeV,
-			   vector<casacore::MFrequency::Ref>& outFrameV,
-			   vector<casacore::MRadialVelocity>& outRadVelV,
-			   vector<casacore::Double>& weightScaleV,
-			   vector< casacore::Vector<casacore::Double> >& xold, 
-			   vector< casacore::Vector<casacore::Double> >& xout, 
-			   vector< casacore::Vector<casacore::Double> >& xin, 
+  casacore::Bool setRegridParameters(std::vector<casacore::Int>& oldSpwId,
+			   std::vector<casacore::Int>& oldFieldId,
+			   std::vector<casacore::Int>& newDataDescId,
+			   std::vector<casacore::Bool>& regrid,
+			   std::vector<casacore::Bool>& transform,
+			   std::vector<casacore::MDirection>& theFieldDirV,
+			   std::vector<casacore::MPosition>& mObsPosV,
+			   std::vector<casacore::MFrequency::Types>& fromFrameTypeV,
+			   std::vector<casacore::MFrequency::Ref>& outFrameV,
+			   std::vector<casacore::MRadialVelocity>& outRadVelV,
+			   std::vector<casacore::Double>& weightScaleV,
+			   std::vector< casacore::Vector<casacore::Double> >& xold, 
+			   std::vector< casacore::Vector<casacore::Double> >& xout, 
+			   std::vector< casacore::Vector<casacore::Double> >& xin, 
 			   vector< casacore::Int >& method, // interpolation method cast to Int
 			   casacore::Bool& msMod,
 			   const casacore::String& outframe,
@@ -572,14 +572,14 @@ class SubMS
   void copySubtable(const casacore::String& tabName, const casacore::Table& inTab,
                     const casacore::Bool noRows=false);
 
-  casacore::Bool getDataColumn(casacore::ROArrayColumn<casacore::Complex>& data,
+  casacore::Bool getDataColumn(casacore::ArrayColumn<casacore::Complex>& data,
                      const casacore::MS::PredefinedColumns colName);
-  casacore::Bool getDataColumn(casacore::ROArrayColumn<casacore::Float>& data,
+  casacore::Bool getDataColumn(casacore::ArrayColumn<casacore::Float>& data,
                      const casacore::MS::PredefinedColumns colName);
-  casacore::Bool putDataColumn(casacore::MSColumns& msc, casacore::ROArrayColumn<casacore::Complex>& data,
+  casacore::Bool putDataColumn(casacore::MSColumns& msc, casacore::ArrayColumn<casacore::Complex>& data,
                      const casacore::MS::PredefinedColumns datacol,
                      const casacore::Bool writeToDataCol=false);
-  casacore::Bool putDataColumn(casacore::MSColumns& msc, casacore::ROArrayColumn<casacore::Float>& data,
+  casacore::Bool putDataColumn(casacore::MSColumns& msc, casacore::ArrayColumn<casacore::Float>& data,
                      const casacore::MS::PredefinedColumns datacol,
                      const casacore::Bool writeToDataCol=false);
 
@@ -615,7 +615,7 @@ class SubMS
 
   // Picks a reference to DATA, MODEL_DATA, CORRECTED_DATA, or LAG_DATA out
   // of ms_p.  FLOAT_DATA is not included because it is not natively complex. 
-  const casacore::ROArrayColumn<casacore::Complex>& right_column(const casacore::ROMSColumns *ms_p,
+  const casacore::ArrayColumn<casacore::Complex>& right_column(const casacore::MSColumns *ms_p,
                                              const casacore::MS::PredefinedColumns datacol);
 
   // The writable version of the above.
@@ -624,7 +624,7 @@ class SubMS
 				     const casacore::Bool writeToDataCol);
 
   // Figures out the number, maximum, and index of the selected antennas.
-  casacore::uInt fillAntIndexer(std::map<casacore::Int, casacore::Int>& antIndexer, const casacore::ROMSColumns *msc);
+  casacore::uInt fillAntIndexer(std::map<casacore::Int, casacore::Int>& antIndexer, const casacore::MSColumns *msc);
 
   // Read the input, time average it to timeBin_p, and write the output.
   // The first version uses VisibilityIterator (much faster), but the second
@@ -665,12 +665,12 @@ class SubMS
   //
   // Throws an exception if incol and outcol do not have the same # of rows, or
   // incol has a value that is not in selvals.
-  void remapColumn(casacore::ScalarColumn<casacore::Int>& outcol, const casacore::ROScalarColumn<casacore::Int>& incol,
+  void remapColumn(casacore::ScalarColumn<casacore::Int>& outcol, const casacore::ScalarColumn<casacore::Int>& incol,
                    const casacore::Vector<casacore::Int>& selvals);
 
   // Equivalent to but slightly more efficient than
   // remapColumn(outcol, incol, incol.getColumn()).
-  void remapColumn(casacore::ScalarColumn<casacore::Int>& outcol, const casacore::ROScalarColumn<casacore::Int>& incol);
+  void remapColumn(casacore::ScalarColumn<casacore::Int>& outcol, const casacore::ScalarColumn<casacore::Int>& incol);
 
   //static void make_map(const casacore::Vector<casacore::Int>& mscol, casacore::Vector<casacore::Int>& mapper);
 
@@ -717,7 +717,7 @@ class SubMS
   //  * not necessarily to anything useful.
   casacore::MeasurementSet ms_p, mssel_p;
   casacore::MSColumns * msc_p;		// columns of msOut_p
-  casacore::ROMSColumns * mscIn_p;
+  casacore::MSColumns * mscIn_p;
   casacore::Bool keepShape_p,      	// Iff true, each output array has the
 				// same shape as the corresponding input one.
        // sameShape_p,             // Iff true, the shapes of the arrays do not

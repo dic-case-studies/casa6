@@ -727,9 +727,9 @@ TransformingVi2::weightSpectrum (Cube<Float> & wtsp)  const
 }
 
 void
-TransformingVi2::sigmaSpectrum (Cube<Float> & wtsp)  const
+TransformingVi2::sigmaSpectrum (Cube<Float> & sigsp)  const
 {
-     getVii()->sigmaSpectrum (wtsp);
+     getVii()->sigmaSpectrum (sigsp);
 }
 
 Bool
@@ -914,6 +914,94 @@ void TransformingVi2::calculateFlagRowFromFlagCube (const Cube<Bool> &flagCube, 
 	return;
 }
 
+//**********************************************************************
+// Methods to access the subtables.
+//**********************************************************************
+
+const casacore::MSAntennaColumns& TransformingVi2::antennaSubtablecols() const
+{
+    return getVii()->antennaSubtablecols();
+}
+
+const casacore::MSDataDescColumns& TransformingVi2::dataDescriptionSubtablecols() const
+{
+    return getVii()->dataDescriptionSubtablecols();
+}
+
+const casacore::MSFeedColumns& TransformingVi2::feedSubtablecols() const
+{
+    return getVii()->feedSubtablecols();
+}
+
+const casacore::MSFieldColumns& TransformingVi2::fieldSubtablecols() const
+{
+    return getVii()->fieldSubtablecols();
+}
+
+const casacore::MSFlagCmdColumns& TransformingVi2::flagCmdSubtablecols() const
+{
+    return getVii()->flagCmdSubtablecols();
+}
+
+const casacore::MSHistoryColumns& TransformingVi2::historySubtablecols() const
+{
+    return getVii()->historySubtablecols();
+}
+
+const casacore::MSObservationColumns& TransformingVi2::observationSubtablecols() const
+{
+    return getVii()->observationSubtablecols();
+}
+
+const casacore::MSPointingColumns& TransformingVi2::pointingSubtablecols() const
+{
+    return getVii()->pointingSubtablecols();
+}
+
+const casacore::MSPolarizationColumns& TransformingVi2::polarizationSubtablecols() const
+{
+    return getVii()->polarizationSubtablecols();
+}
+
+const casacore::MSProcessorColumns& TransformingVi2::processorSubtablecols() const
+{
+    return getVii()->processorSubtablecols();
+}
+
+const casacore::MSSpWindowColumns& TransformingVi2::spectralWindowSubtablecols() const
+{
+    return getVii()->spectralWindowSubtablecols();
+}
+
+const casacore::MSStateColumns& TransformingVi2::stateSubtablecols() const
+{
+    return getVii()->stateSubtablecols();
+}
+
+const casacore::MSDopplerColumns& TransformingVi2::dopplerSubtablecols() const
+{
+    return getVii()->dopplerSubtablecols();
+}
+
+const casacore::MSFreqOffsetColumns& TransformingVi2::freqOffsetSubtablecols() const
+{
+    return getVii()->freqOffsetSubtablecols();
+}
+
+const casacore::MSSourceColumns& TransformingVi2::sourceSubtablecols() const
+{
+    return getVii()->sourceSubtablecols();
+}
+
+const casacore::MSSysCalColumns& TransformingVi2::sysCalSubtablecols() const
+{
+    return getVii()->sysCalSubtablecols();
+}
+
+const casacore::MSWeatherColumns& TransformingVi2::weatherSubtablecols() const
+{
+    return getVii()->weatherSubtablecols();
+}
 
 
 } // end namespace vi

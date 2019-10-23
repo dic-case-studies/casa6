@@ -41,6 +41,7 @@
 #include <msvis/MSVis/StokesVector.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
 #include <synthesis/TransformMachines2/GridFT.h>
+#include <synthesis/Utilities/FFT2D.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <images/Images/ImageInterface.h>
 #include <images/Images/PagedImage.h>
@@ -212,7 +213,15 @@ GridFT::GridFT(const GridFT& other) : FTMachine(), machineName_p("GridFT")
     return new GridFT(*this);
   }
 
-//----------------------------------------------------------------------
+  //===============================
+ Long GridFT::estimateRAM(const CountedPtr<SIImageStore>& imstor){
+   Long mem=FTMachine::estimateRAM(imstor);
+   mem=mem*padding_p*padding_p;
+   return mem;
+  }
+
+
+  //----------------------------------------------------------------------
 void GridFT::init() {
 
   logIO() << LogOrigin("GridFT", "init")  << LogIO::NORMAL;
@@ -238,7 +247,7 @@ void GridFT::init() {
   */
     // We are padding.
     isTiled=false;
-    if(!noPadding_p){
+    if(!noPadding_p && padding_p > 1.01){
       CompositeNumber cn(uInt(image->shape()(0)*2));    
       nx    = cn.nextLargerEven(Int(padding_p*Float(image->shape()(0))-0.5));
       ny    = cn.nextLargerEven(Int(padding_p*Float(image->shape()(1))-0.5));
@@ -322,8 +331,7 @@ void GridFT::initializeToVis(ImageInterface<Complex>& iimage,
   // Initialize the maps for polarization and channel. These maps
   // translate visibility indices into image indices
   initMaps(vb);
-
-  // Need to reset nx, ny for padding
+    // Need to reset nx, ny for padding
   // Padding is possible only for non-tiled processing
   
 
@@ -334,7 +342,7 @@ void GridFT::initializeToVis(ImageInterface<Complex>& iimage,
   // If we are memory-based then read the image in and create an
   // ArrayLattice otherwise just use the PagedImage
   /*if(isTiled) {
-    lattice=SHARED_PTR<Lattice<Complex> >(image, false);
+    lattice=std::shared_ptr<Lattice<Complex> >(image, false);
   }
   else {
      
@@ -385,8 +393,8 @@ void GridFT::prepGridForDegrid(){
    }
    image->clearCache();
    // Now do the FFT2D in place
-   LatticeFFT::cfft2d(*lattice);
-   
+   //LatticeFFT::cfft2d(*lattice);
+   ft_p.c2cFFT(*lattice);
    //logIO() << LogIO::DEBUGGING
    //	    << "Finished grid correction and FFT of image" << LogIO::POST;
     
@@ -395,6 +403,9 @@ void GridFT::prepGridForDegrid(){
 
 void GridFT::finalizeToVis()
 {
+
+  logIO() << LogOrigin("GridFT", "finalizeToVis")  << LogIO::NORMAL;
+  logIO() <<LogIO::NORMAL2<< "Time to degrid " << timedegrid_p <<LogIO::POST;
   timedegrid_p=0.0;
 
  if(arrayLattice) arrayLattice=nullptr;
@@ -402,7 +413,7 @@ void GridFT::finalizeToVis()
   griddedData.resize();
   if(isTiled) {
 
-    logIO() << LogOrigin("GridFT", "finalizeToVis")  << LogIO::NORMAL;
+   
 
     AlwaysAssert(imageCache, AipsError);
     AlwaysAssert(image, AipsError);
@@ -462,12 +473,13 @@ void GridFT::finalizeToSky()
   //AlwaysAssert(lattice, AipsError);
   // Now we flush the cache and report statistics
   // For memory based, we don't write anything out yet.
-  //cerr <<"Time to massage data " << timemass_p << endl;
-  //cerr <<"Time to grid data " << timegrid_p << endl;
+  logIO() << LogOrigin("GridFT", "finalizeToSky")  << LogIO::NORMAL;
+  logIO()<<LogIO::NORMAL2 <<"Time to massage data " << timemass_p << LogIO::POST;
+  logIO()<< LogIO::NORMAL2 <<"Time to grid data " << timegrid_p << LogIO::POST;
   timemass_p=0.0;
   timegrid_p=0.0;
   if(isTiled) {
-    logIO() << LogOrigin("GridFT", "finalizeToSky")  << LogIO::NORMAL;
+  
 
     AlwaysAssert(image, AipsError);
     AlwaysAssert(imageCache, AipsError);
@@ -700,8 +712,10 @@ void GridFT::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
   Timer tim;
   tim.mark();
 
-  const Matrix<Float> *imagingweight;
-  imagingweight=&(vb.imagingWeight());
+  //const Matrix<Float> *imagingweight;
+  //imagingweight=&(vb.imagingWeight());
+  Matrix<Float> imagingweight;
+  getImagingWeight(imagingweight, vb);
   
   if(dopsf) {type=FTMachine::PSF;}
 
@@ -709,7 +723,7 @@ void GridFT::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
   //Fortran gridder need the flag as ints 
   Cube<Int> flags;
   Matrix<Float> elWeight;
-  interpolateFrequencyTogrid(vb, *imagingweight,data, flags, elWeight, type);
+  interpolateFrequencyTogrid(vb, imagingweight,data, flags, elWeight, type);
 
 
   Bool iswgtCopy;
@@ -791,7 +805,7 @@ void GridFT::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
 
 #pragma omp parallel default(none) private(irow) firstprivate(visfreqstor, nvchan, scalestor, offsetstor, csamp, phasorstor, uvstor, locstor, offstor, dpstor, cinv, dow) shared(startRow, endRow) num_threads(nth)
   {
-#pragma omp for
+#pragma omp for schedule(dynamic)
   for (irow=startRow; irow<=endRow; ++irow){
     //locateuvw(uvstor,dpstor, visfreqstor, nvchan, scalestor, offsetstor, csamp, 
     //	      locstor, 
@@ -804,6 +818,14 @@ void GridFT::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
   Int idopsf=0;
   if(dopsf) idopsf=1;
 
+  //////TESTOO
+  //ofstream myfile;
+  //myfile.open ("putLoc.txt", ios::out | ios::app | ios::ate );
+  //myfile << vb.rowIds()(0) << " uv " << uvw.column(0) << " loc " << loc(0,0,0) << ", " << loc(1,0,0) << "\n" << endl;
+  //myfile.close();
+  ///////////////
+
+  
 
   Vector<Int> rowFlags(vb.nRows());
   rowFlags=0;
@@ -828,8 +850,8 @@ void GridFT::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
   ixsub=1;
   iysub=1; 
   if (nth >4){
-    ixsub=16;
-    iysub=16; 
+    ixsub=8;
+    iysub=8; 
   }
   else if(nth >1) {
      ixsub=2;
@@ -872,7 +894,7 @@ void GridFT::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
   
   {
     //cerr << "numthreads " << omp_get_num_threads() << endl;
-#pragma omp for 
+#pragma omp for schedule(dynamic) 
     for(icounter=0; icounter < ixsub*iysub; ++icounter){
       //cerr << "thread id " << omp_get_thread_num() << endl;
       Int x0=xsect(icounter);
@@ -916,7 +938,7 @@ void GridFT::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
 #pragma omp parallel default(none) private(icounter, del) firstprivate(idopsf, datStorage, wgtStorage, flagstor, rowflagstor, convfuncstor, pmapstor, cmapstor, gridstor, nxp, nyp, np, nc,ixsub, iysub, rend, rbeg, csamp, csupp, nvispol, nvischan, nvisrow, phasorstor, locstor, offstor, xsect, ysect, nxsect, nysect) shared(sumwgt) num_threads(ixsub*iysub)
     {
       //cerr << "numthreads " << omp_get_num_threads() << endl;
-#pragma omp for
+#pragma omp for schedule(dynamic)
 
       for(icounter=0; icounter < ixsub*iysub; ++icounter){
 	//cerr << "thread id " << omp_get_thread_num() << endl;
@@ -998,6 +1020,18 @@ void GridFT::get(vi::VisBuffer2& vb, Int row)
     //vb.modelVisCube().xyPlane(row)=Complex(0.0,0.0);
   }
 
+
+///Channel matching for the actual spectral window of buffer
+    matchChannel(vb);
+  
+  
+  //cerr << "chanMap " << chanMap << endl;
+  //No point in reading data if its not matching in frequency
+  if(max(chanMap)==-1)
+    return;
+
+
+
   // Get the uvws in a form that Fortran can use
   Matrix<Double> uvw(negateUV(vb));
   Vector<Double> dphase(vb.nRows());
@@ -1014,20 +1048,7 @@ void GridFT::get(vi::VisBuffer2& vb, Int row)
 
   //Here we redo the match or use previous match
   
-  //Channel matching for the actual spectral window of buffer
-  //if(doConversion_p[vb.spectralWindows()[0]]){
-    matchChannel(vb);
-  //}
-  //else{
-  //  chanMap.resize();
-  //  chanMap=multiChanMap_p[vb.spectralWindows()[0]];
-  //}
-
-  //cerr << "chanMap " << chanMap << endl;
-  //No point in reading data if its not matching in frequency
-  if(max(chanMap)==-1)
-    return;
-
+  
   Cube<Complex> data;
   Cube<Int> flags;
   getInterpolateArrays(vb, data, flags);
@@ -1080,7 +1101,7 @@ void GridFT::get(vi::VisBuffer2& vb, Int row)
 #pragma omp parallel default(none) private(irow) firstprivate(visfreqstor, nvchan, scalestor, offsetstor, csamp, phasorstor, uvstor, locstor, offstor, dpstor, cinv, dow) shared(startRow, endRow) num_threads(nth) 
 
   {
-#pragma omp for
+#pragma omp for schedule(dynamic)
   for (irow=startRow; irow<=endRow; ++irow){
     //locateuvw(uvstor,dpstor, visfreqstor, nvchan, scalestor, offsetstor, csamp, 
     //	      locstor, 
@@ -1124,13 +1145,13 @@ void GridFT::get(vi::VisBuffer2& vb, Int row)
     const Int * rowflagstor=rowFlags.getStorage(del);
 
 
-    Int npart=nth*2;
+    Int npart=nth;
     
 
     Int ix=0;
 #pragma omp parallel default(none) private(ix, rbeg, rend) firstprivate(datStorage, flagstor, rowflagstor, convfuncstor, pmapstor, cmapstor, gridstor, nxp, nyp, np, nc, csamp, csupp, nvp, nvc, nvisrow, phasorstor, locstor, offstor) shared(npart) num_threads(npart)
     { 
-#pragma omp for 
+#pragma omp for schedule(dynamic) 
       for (ix=0; ix< npart; ++ix){
 	rbeg=ix*(nvisrow/npart)+1;
 	rend=(ix != (npart-1)) ? (rbeg+(nvisrow/npart)-1) : (rbeg+(nvisrow/npart)+nvisrow%npart-1) ;
@@ -1211,7 +1232,8 @@ ImageInterface<Complex>& GridFT::getImage(Matrix<Float>& weights, Bool normalize
     if(useDoubleGrid_p)
       {
 	ArrayLattice<DComplex> darrayLattice(griddedData2);
-	LatticeFFT::cfft2d(darrayLattice,false);
+	//LatticeFFT::cfft2d(darrayLattice,false);
+	ft_p.c2cFFT(darrayLattice, False);
 	griddedData.resize(griddedData2.shape());
 	convertArray(griddedData, griddedData2);
 	
@@ -1225,7 +1247,9 @@ ImageInterface<Complex>& GridFT::getImage(Matrix<Float>& weights, Bool normalize
     else{
       arrayLattice.reset( new ArrayLattice<Complex>(griddedData) );
       lattice=arrayLattice;
-      LatticeFFT::cfft2d(*lattice,false);
+      
+      //LatticeFFT::cfft2d(*lattice,false);
+      ft_p.c2cFFT(*lattice, False);
     }
 
     
@@ -1383,7 +1407,7 @@ Bool GridFT::fromRecord(String& error,
     // Might be changing the shape of sumWeight
 
     if(isTiled) {
-      lattice=SHARED_PTR<Lattice<Complex> >(image, false);
+      lattice=std::shared_ptr<Lattice<Complex> >(image, false);
     }
     else {
       // Make the grid the correct shape and turn it into an array lattice

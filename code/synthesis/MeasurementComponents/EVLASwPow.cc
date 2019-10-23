@@ -106,7 +106,7 @@ EVLASwPow::EVLASwPow(VisSet& vs) :
   calDevTabName_(vs.caldeviceTableName()),
   correff_(Float(0.932)),     // EVLA-specific net corr efficiency (4bit)
   frgrotscale_(Float(1.176)), // EVLA-specific fringe rotation mean _scale_
-  nyquist_(1.0),
+  //nyquist_(1.0),
   effChBW_()
 
 {
@@ -116,7 +116,7 @@ EVLASwPow::EVLASwPow(VisSet& vs) :
   startChanList().set(0);
 
   // Get spw total bandwidths
-  const ROMSSpWindowColumns& spwcols = vs.iter().msColumns().spectralWindow();
+  const MSSpWindowColumns& spwcols = vs.iter().msColumns().spectralWindow();
   effChBW_.resize(nSpw());
   for (Int ispw=0;ispw<nSpw();++ispw) 
     effChBW_(ispw)=Vector<Double>(spwcols.effectiveBW()(0))(0);
@@ -131,7 +131,7 @@ EVLASwPow::EVLASwPow(String msname,Int MSnAnt,Int MSnSpw) :
   calDevTabName_(""),
   correff_(Float(0.932)),     // EVLA-specific net corr efficiency (4bit)
   frgrotscale_(Float(1.176)), // EVLA-specific fringe rotation mean _scale_
-  nyquist_(1.0),
+  //nyquist_(1.0),
   effChBW_()
 
 {
@@ -148,8 +148,8 @@ EVLASwPow::EVLASwPow(String msname,Int MSnAnt,Int MSnSpw) :
   calDevTabName_ = ms.rwKeywordSet().asTable("CALDEVICE").tableName();
 
   // Get spw total bandwidths
-  ROMSColumns mscol(ms);
-  const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
+  MSColumns mscol(ms);
+  const MSSpWindowColumns& spwcols = mscol.spectralWindow();
   effChBW_.resize(nSpw());
   for (Int ispw=0;ispw<nSpw();++ispw) 
     effChBW_(ispw)=Vector<Double>(spwcols.effectiveBW()(0))(0);
@@ -164,7 +164,7 @@ EVLASwPow::EVLASwPow(const MSMetaInfoForCal& msmc) :
   calDevTabName_(""),
   correff_(Float(0.932)),     // EVLA-specific net corr efficiency (4bit)
   frgrotscale_(Float(1.176)), // EVLA-specific fringe rotation mean _scale_
-  nyquist_(1.0),
+  //nyquist_(1.0),
   effChBW_()
 
 {
@@ -181,8 +181,8 @@ EVLASwPow::EVLASwPow(const MSMetaInfoForCal& msmc) :
   calDevTabName_ = ms.rwKeywordSet().asTable("CALDEVICE").tableName();
 
   // Get spw total bandwidths
-  ROMSColumns mscol(ms);
-  const ROMSSpWindowColumns& spwcols = mscol.spectralWindow();
+  MSColumns mscol(ms);
+  const MSSpWindowColumns& spwcols = mscol.spectralWindow();
   effChBW_.resize(nSpw());
   for (Int ispw=0;ispw<nSpw();++ispw) 
     effChBW_(ispw)=Vector<Double>(spwcols.effectiveBW()(0))(0);
@@ -301,13 +301,13 @@ void EVLASwPow::specify(const Record& specify) {
 
     Table itab(sysPowIter.table());
 
-    ROScalarColumn<Int> spwCol(itab,"SPECTRAL_WINDOW_ID");
-    ROScalarColumn<Double> timeCol(itab,"TIME");
-    ROScalarColumn<Double> intervalCol(itab,"INTERVAL");
-    ROScalarColumn<Int> antCol(itab,"ANTENNA_ID");
-    ROArrayColumn<Float> swsumCol(itab,"SWITCHED_SUM");
-    ROArrayColumn<Float> swdiffCol(itab,"SWITCHED_DIFF");
-    ROArrayColumn<Float> rqCol(itab,"REQUANTIZER_GAIN");
+    ScalarColumn<Int> spwCol(itab,"SPECTRAL_WINDOW_ID");
+    ScalarColumn<Double> timeCol(itab,"TIME");
+    ScalarColumn<Double> intervalCol(itab,"INTERVAL");
+    ScalarColumn<Int> antCol(itab,"ANTENNA_ID");
+    ArrayColumn<Float> swsumCol(itab,"SWITCHED_SUM");
+    ArrayColumn<Float> swdiffCol(itab,"SWITCHED_DIFF");
+    ArrayColumn<Float> rqCol(itab,"REQUANTIZER_GAIN");
 
     Int ispw=spwCol(0);
 
@@ -500,13 +500,13 @@ void EVLASwPow::fillTcals() {
 
     Table itab(calDevIter.table());
 
-    ROScalarColumn<Int> spwCol(itab,"SPECTRAL_WINDOW_ID");
-    ROScalarColumn<Double> timeCol(itab,"TIME");
-    ROScalarColumn<Double> intervalCol(itab,"INTERVAL");
-    ROScalarColumn<Int> antCol(itab,"ANTENNA_ID");
-    ROScalarColumn<Int> numLoadCol(itab,"NUM_CAL_LOAD");
+    ScalarColumn<Int> spwCol(itab,"SPECTRAL_WINDOW_ID");
+    ScalarColumn<Double> timeCol(itab,"TIME");
+    ScalarColumn<Double> intervalCol(itab,"INTERVAL");
+    ScalarColumn<Int> antCol(itab,"ANTENNA_ID");
+    ScalarColumn<Int> numLoadCol(itab,"NUM_CAL_LOAD");
 
-    ROArrayColumn<Float> noiseCalCol(itab,"NOISE_CAL");
+    ArrayColumn<Float> noiseCalCol(itab,"NOISE_CAL");
 
     Int ispw=spwCol(0);
     Int iant=antCol(0);

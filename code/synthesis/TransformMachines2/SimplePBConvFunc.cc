@@ -66,6 +66,7 @@
 #include <synthesis/TransformMachines2/SkyJones.h>
 
 #include <casa/Utilities/CompositeNumber.h>
+#include <iomanip>
 #include <math.h>
 
 using namespace casacore;
@@ -80,29 +81,32 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
         npol_p(-1), pointToPix_p(), directionIndex_p(-1), thePix_p(0),
         filledFluxScale_p(false),doneMainConv_p(0),
                                       
-	calcFluxScale_p(true), convFunctionMap_p(-1), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p()  {
+				      calcFluxScale_p(true), usePointingTable_p(False), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p()    {
     //
 
     pbClass_p=PBMathInterface::COMMONPB;
     ft_p=FFT2D(true);
+    usePointingTable_p=False;
 }
 
   SimplePBConvFunc::SimplePBConvFunc(const PBMathInterface::PBClass typeToUse): 
     nchan_p(-1),npol_p(-1),pointToPix_p(),
     directionIndex_p(-1), thePix_p(0), filledFluxScale_p(false),doneMainConv_p(0), 
-     calcFluxScale_p(true), convFunctionMap_p(-1), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p() {
+    calcFluxScale_p(true), usePointingTable_p(False), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p() {
     //
     pbClass_p=typeToUse;
     ft_p=FFT2D(true);
+    usePointingTable_p=False;
   }
   SimplePBConvFunc::SimplePBConvFunc(const RecordInterface& rec, const Bool calcfluxneeded)
   : nchan_p(-1),npol_p(-1),pointToPix_p(), directionIndex_p(-1), thePix_p(0), filledFluxScale_p(false),
     doneMainConv_p(0), 
-    calcFluxScale_p(calcfluxneeded), convFunctionMap_p(-1), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p()
+    calcFluxScale_p(calcfluxneeded), usePointingTable_p(False), actualConvIndex_p(-1), convSize_p(0), convSupport_p(0), pointingPix_p() 
   {
     String err;
     fromRecord(err, rec, calcfluxneeded);
     ft_p=FFT2D(true);
+    usePointingTable_p=False;
   }
   SimplePBConvFunc::~SimplePBConvFunc(){
     //
@@ -121,7 +125,7 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
       ObsInfo imInfo=csys_p.obsInfo();
       String tel= imInfo.telescope();
       MPosition pos;
-      ROMSColumns mscol(vb.ms());
+      MSColumns mscol(vb.ms());
       if (vb.subtableColumns().observation().nrow() > 0) {
 	tel =vb.subtableColumns().observation().telescopeName()(mscol.observationId()(0));
       }
@@ -131,7 +135,8 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
     	  Int ant1=vb.antenna1()(0);
     	  pos=vb.subtableColumns().antenna().positionMeas()(ant1);
       }
-      //cout << "TELESCOPE " << tel << endl;
+      imInfo.setTelescope(tel);
+      csys_p.setObsInfo(imInfo);
       //Store this to build epochs via the time access of visbuffer later
       timeMType_p=MEpoch::castType(mscol.timeMeas()(0).getRef().getType());
       timeUnit_p=Unit(mscol.timeMeas().measDesc().getUnits()(0).getName());
@@ -230,7 +235,8 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
     convSizes_p.resize(0, true);
     convSupportBlock_p.resize(0, true);
     convFunctionMap_p.clear();
-   vbConvIndex_p.clear(); 
+   vbConvIndex_p.clear();
+   ft_p=FFT2D(true);
   }
 
 
@@ -264,13 +270,14 @@ SimplePBConvFunc::SimplePBConvFunc(): nchan_p(-1),
     }
     Bool hasValidPointing=False;
     if(Table::isReadable(vb.ms().pointingTableName())){
-      hasValidPointing=(vb.ms().pointing().nrow() >0);
+      hasValidPointing=usePointingTable_p &&  (vb.ms().pointing().nrow() >0);
     }
+   
     Int val=ant1PointingCache_p.nelements();
     ant1PointingCache_p.resize(val+1, true);
     if(hasValidPointing){
       //ant1PointingCache_p[val]=vb.direction1()[0];
-      ant1PointingCache_p[val]=vbUtil_p.getPointingDir(vb, vb.antenna1()(0), 0);
+      ant1PointingCache_p[val]=vbutil_p->getPointingDir(vb, vb.antenna1()(0), 0, dc_p.directionType());
     }
     else
       ant1PointingCache_p[val]=vbutil_p->getPhaseCenter(vb);
@@ -868,24 +875,32 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     for (Int k=0; k < nchan; ++k)
       chanFreqs[k]=minfreq-origwidth+tol/2.0+tol*Double(k);
     Int activechan=0;
-    chanMap.set(-1);
+    chanMap.set(0);
     for (uInt k=0; k < chanMap.nelements(); ++k){
-     
-      while((activechan< nchan) && Float(fabs(freq[k]-chanFreqs[activechan])) > Float(tol/2.0)){
-	//		cerr << "k " << k << " atcivechan " << activechan << " comparison " 
+      Double mindiff=DBL_MAX;
+      Int nearestchan=0;
+      while((activechan< nchan) && Double(abs(freq[k]-chanFreqs[activechan])) > Double(tol/Double(2.0))){
+        if(mindiff > Double(abs(freq[k]-chanFreqs[activechan]))){
+          mindiff=Double(abs(freq[k]-chanFreqs[activechan]));
+          nearestchan=activechan;
+        }
+          
+        //	cerr << "k " << k << " atcivechan " << activechan << " comparison " 
 	//     << freq[k] << "    " << chanFreqs[activechan]  << endl;	
 	++activechan;
       }
-      if(activechan != nchan)
+      if(activechan != nchan){
 	chanMap[k]=activechan;
+      }
       //////////////////
-      //if(chanMap[k] < 0)
-      //cerr << "freq diffs " << freq[k]-chanFreqs << "  TOL " << tol/2.0 << endl;
-
+      else{
+        //cerr << std::setprecision(10) << "freq diffs " << freq[k]-chanFreqs << "  TOL " << tol/2.0 << endl;
+        chanMap[k]=nearestchan;
+      }
       ///////////////////////////
       activechan=0;
     }
-
+    //cerr << chanMap << endl;
     return;
   }
 
@@ -1006,6 +1021,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
       rec.define("pbclass", Int(pbClass_p));
       rec.define("actualconvindex",  actualConvIndex_p);
       rec.define("donemainconv", doneMainConv_p);
+      rec.define("usepointingtable", usePointingTable_p);
       //The following is not needed ..can be regenerated
       //rec.define("pointingpix", pointingPix_p);
     }
@@ -1029,7 +1045,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
        convSupportBlock_p.resize(numConv, true, false);
        convWeights_p.resize(numConv, true, false);
        convSizes_p.resize(numConv, true, false);
-       convFunctionMap_p=SimpleOrderedMap<String, Int>(-1);
+       convFunctionMap_p.clear( );
        vbConvIndex_p.erase(vbConvIndex_p.begin(), vbConvIndex_p.end());
        for (Int k=0; k < numConv; ++k){
 	 convFunctions_p[k]=new Array<Complex>();
@@ -1051,6 +1067,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
        }
        pbClass_p=static_cast<PBMathInterface::PBClass>(rec.asInt("pbclass"));
        rec.get("actualconvindex",  actualConvIndex_p);
+       rec.get("usepointingtable", usePointingTable_p);
        pointingPix_p.resize();
        //rec.get("pointingpix", pointingPix_p);
        calcFluxScale_p=calcFluxneeded;

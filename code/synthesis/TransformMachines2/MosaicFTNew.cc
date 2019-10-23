@@ -91,6 +91,11 @@ using namespace casa::refim;
     return new MosaicFTNew(*this);
   }
 
+  MosaicFTNew::MosaicFTNew(const RecordInterface& stateRec)
+  : MosaicFT(stateRec)
+{
+  
+}
 // Finalize the FFT to the Sky. Here we actually do the FFT and
 // return the resulting image
 ImageInterface<Complex>& MosaicFTNew::getImage(Matrix<Float>& weights,
@@ -129,7 +134,7 @@ ImageInterface<Complex>& MosaicFTNew::getImage(Matrix<Float>& weights,
 	    << "Starting FFT and scaling of image" << LogIO::POST;
     if(useDoubleGrid_p){
       ArrayLattice<DComplex> darrayLattice(griddedData2);
-      LatticeFFT::cfft2d(darrayLattice,false);
+      ft_p.c2cFFT(darrayLattice,false);
       griddedData.resize(griddedData2.shape());
       convertArray(griddedData, griddedData2);
       
@@ -142,7 +147,7 @@ ImageInterface<Complex>& MosaicFTNew::getImage(Matrix<Float>& weights,
     else{
       arrayLattice = new ArrayLattice<Complex>(griddedData);
       lattice=arrayLattice;
-      LatticeFFT::cfft2d(*lattice,false);
+      ft_p.c2cFFT(*lattice,false);
     }
     
     {

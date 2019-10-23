@@ -67,7 +67,9 @@ VisBuffer::VisBuffer()
     validate();
     oldMSId_p = -1;
 
-    if (VisModelDataI::create() != NULL) visModelData_p = VisModelDataI::create();
+    std::unique_ptr<casa::VisModelDataI> check(VisModelDataI::create());
+    if (check)
+        visModelData_p = check.release();
 }
 
 VisBuffer::VisBuffer(ROVisibilityIterator & iter)
@@ -79,7 +81,9 @@ VisBuffer::VisBuffer(ROVisibilityIterator & iter)
     oldMSId_p = -1;
     corrSorted_p = false;
 
-    if (VisModelDataI::create() != NULL) visModelData_p = VisModelDataI::create();
+    std::unique_ptr<casa::VisModelDataI> check(VisModelDataI::create());
+    if (check)
+        visModelData_p = check.release();
 }
 
 VisBuffer::VisBuffer(const VisBuffer & vb)
@@ -2123,7 +2127,7 @@ Vector<MDirection>& VisBuffer::fillDirection1()
   direction1OK_p = true;
   firstDirection1OK_p=true;
   direction1_p.resize(antenna1_p.nelements()); // could also use nRow()
-  const ROMSPointingColumns & mspc = msColumns().pointing();
+  const MSPointingColumns & mspc = msColumns().pointing();
   lastPointTableRow_p = mspc.pointingIndex(antenna1()(0),
                                            time()(0), lastPointTableRow_p);
   if (visIter_p->allBeamOffsetsZero() && lastPointTableRow_p < 0) {
@@ -2187,7 +2191,7 @@ MDirection& VisBuffer::fillFirstDirection1()
   
   //feed1_pa();
   firstDirection1OK_p=true;
-  const ROMSPointingColumns & mspc = msColumns().pointing();
+  const MSPointingColumns & mspc = msColumns().pointing();
   lastPointTableRow_p = mspc.pointingIndex(antenna1()(0),
                                            time()(0), lastPointTableRow_p);
   if (visIter_p->allBeamOffsetsZero() && lastPointTableRow_p < 0) {
@@ -2239,7 +2243,7 @@ Vector<MDirection>& VisBuffer::fillDirection2()
   feed2_pa();
   direction2OK_p = true;
   direction2_p.resize(antenna2_p.nelements()); // could also use nRow()
-  const ROMSPointingColumns & mspc = msColumns().pointing();
+  const MSPointingColumns & mspc = msColumns().pointing();
   lastPointTableRow_p = mspc.pointingIndex(antenna2()(0), time()(0), lastPointTableRow_p);
   if (visIter_p->allBeamOffsetsZero() && lastPointTableRow_p < 0) {
     // if no true pointing information is found
@@ -2476,7 +2480,11 @@ Cube<Complex>& VisBuffer::fillVisCube(VisibilityIterator::DataColumn whichOne)
 	  if (not visModelData_p.null()) hasmodkey = visModelData_p->isModelDefinedI(fieldId(), visIter_p->ms(), modelkey, snum);
 	  if( hasmodkey || !(visIter_p->ms().tableDesc().isColumn("MODEL_DATA")))
 	  {
+	    
 		  //cerr << "HASMOD " << visModelData_p.hasModel(msId(), fieldId(), spectralWindow()) << endl;
+	    visModelData_p->init(*this);
+	    ////This bit can be removed when we do not support old model vesions saved
+	    if(!(visModelData_p->isVersion2())){
 		  if(visModelData_p->hasModel(msId(), fieldId(), spectralWindow()) ==-1){
 			  if(hasmodkey){
 				  //String whichrec=visIter_p->ms().keywordSet().asString(modelkey);
@@ -2486,6 +2494,8 @@ Cube<Complex>& VisBuffer::fillVisCube(VisibilityIterator::DataColumn whichOne)
 				  }
 			  }
 		  }
+	    }
+	    ////////////////////////////
 		  visModelData_p->getModelVis(*this);
 	  }
 	  else

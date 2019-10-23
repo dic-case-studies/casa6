@@ -66,10 +66,10 @@ public:
 	virtual casacore::ImageRegion asImageRegion() const;
 
 	// this version is deprecated, use the version that returns
-	// SHARED_PTR instead
+	// std::shared_ptr instead
 	virtual casacore::CountedPtr<const casacore::WCRegion> getRegion() const;
 
-	virtual SHARED_PTR<const casacore::WCRegion> getRegion2() const;
+	virtual std::shared_ptr<const casacore::WCRegion> getRegion2() const;
 
 	// returns true unless overridden.
 	virtual casacore::Bool isRegion() const;
@@ -82,7 +82,7 @@ public:
 	// If there is no spectral axis, a zero length vector is returned. Otherwise,
 	// a vector of two values is returned. The zeroth value will always be less
 	// than or equal to the first.
-	vector<casacore::Double> getSpectralPixelRange() const;
+    std::vector<casacore::Double> getSpectralPixelRange() const;
 
 
 	casacore::Bool setFrequencyLimits(
@@ -106,6 +106,12 @@ protected:
 	// <src>freqRefFrame</src>, <src>dopplerString</src>, and
 	// <src>restfreq</src> are ignored. If provided, <src>beginFreq</src>
 	// and <src>endFreq</src> must conform to the same units.
+	// <src>requireImageRegion</src> indicates whether to rethrow the
+	// ToLCRegionConversionError exception when the region is outside the
+	// image, or to create the AnnRegion object even if the ImageRegion has no
+	// lattice region. The default (true) rethrows the exception to maintain
+	// the previous behavior.
+	// CAS-12631: added for CARTA, which can import regions outside an image.
 	AnnRegion(
 		const Type shape,
 		const casacore::String& dirRefFrameString,
@@ -117,7 +123,8 @@ protected:
 		const casacore::String& dopplerString,
 		const casacore::Quantity& restfreq,
 		const casacore::Vector<casacore::Stokes::StokesTypes> stokes,
-		const casacore::Bool annotationOnly
+		const casacore::Bool annotationOnly,
+		casacore::Bool requireImageRegion=true
 	);
 
 	// use if all coordinate values will be specified in
@@ -129,7 +136,8 @@ protected:
 		const Type shape,
 		const casacore::CoordinateSystem& csys,
 		const casacore::IPosition& imShape,
-		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes
+		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes,
+		casacore::Bool requireImageRegion=true
 	);
 
 	// copy constructor
@@ -140,6 +148,8 @@ protected:
 
 	casacore::Bool operator== (const AnnRegion& other) const;
 
+	// check if image region has a region
+	casacore::Bool hasImageRegion() const;
 
 	// extend the direction plane region over spectral and/or polarization
 	// coordinates
@@ -158,13 +168,15 @@ protected:
 	// defined in the direction plane
 	void _setDirectionRegion(const casacore::ImageRegion& region);
 
+	casacore::Bool _requireImageRegion;
+	casacore::ImageRegion _imageRegion, _directionRegion;
+
 private:
 
 	casacore::Bool _isAnnotationOnly;
 	casacore::Bool _isDifference, _constructing;
-	casacore::ImageRegion _imageRegion, _directionRegion;
 	casacore::IPosition _imShape;
-	vector<casacore::Double> _spectralPixelRange;
+	std::vector<casacore::Double> _spectralPixelRange;
 
 	static const casacore::String _class;
 
@@ -175,6 +187,8 @@ private:
 	) const;
 
 	void _init();
+
+	casacore::Bool _hasDirectionRegion();
 
 };
 

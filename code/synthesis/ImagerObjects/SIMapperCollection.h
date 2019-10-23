@@ -68,6 +68,8 @@ class SIMapperCollection
 		  const casacore::Bool overwrite );
   */
   void initializeGrid(vi::VisBuffer2& vb, casacore::Bool dopsf=false,const casacore::Int mapperid=-1);
+  ///This version is for initializing BriggsCubeWeightor
+  void initializeGrid(vi::VisibilityIterator2& vi, casacore::Bool dopsf=false, const casacore::Int mapperid=-1);
   void grid(vi::VisBuffer2& vb, casacore::Bool dopsf=false, refim::FTMachine::Type col=refim::FTMachine::CORRECTED,
 	    const casacore::Int mapperid=-1);
   void finalizeGrid(vi::VisBuffer2& vb, casacore::Bool dopsf=false,const casacore::Int mapperid=-1);
@@ -114,7 +116,8 @@ class SIMapperCollection
   const casacore::CountedPtr<SIMapper> getMapper(casacore::Int which)
   {AlwaysAssert(which>=0 && which<(casacore::Int)itsMappers.nelements(),casacore::AipsError);
     return itsMappers[which];};
-
+  virtual casacore::Long estimateRAM();
+  
 protected:
 
   ///////////////////// Member Objects

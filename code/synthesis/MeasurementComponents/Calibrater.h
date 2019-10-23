@@ -123,6 +123,7 @@ class Calibrater
 		 const casacore::String& refant="",
 		 const casacore::String& refantmode="flex",
 		 const casacore::Bool solnorm=false,
+		 const casacore::String& normtype="mean",
 		 const casacore::Float minsnr=0.0f,
 		 const casacore::String& combine="",
 		 const casacore::Int fillgaps=0,
@@ -133,7 +134,14 @@ class Calibrater
                  const casacore::Int numedge=-1,
                  const casacore::String& radius="",
                  const casacore::Bool smooth=true,
-                 const casacore::Bool zerorates=false);
+                 const casacore::Bool zerorates=false,
+       const casacore::Bool globalsolve=true,
+       const casacore::Int niter=100,
+       const casacore::Vector<casacore::Double>& delaywindow=casacore::Vector<casacore::Double>(), 
+       const casacore::Vector<casacore::Double>& ratewindow=casacore::Vector<casacore::Double>(),
+		 const casacore::String& solmode="",
+		 const casacore::Vector<casacore::Double>& rmsthresh=casacore::Vector<casacore::Double>()
+);
 
   // Arrange to solve for BPOLY (using casacore::MSSelection syntax)
   casacore::Bool setsolvebandpoly(const casacore::String& table,
@@ -361,7 +369,7 @@ class Calibrater
 
   // casacore::MSSelection object
   casacore::MSSelection* mss_p;
-  vi::FrequencySelections* frequencySelections_p;
+  std::shared_ptr<vi::FrequencySelections> frequencySelections_p;
 
   // Meta-info server for calibration
   MSMetaInfoForCal* msmc_p;

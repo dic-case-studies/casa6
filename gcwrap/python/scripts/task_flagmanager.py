@@ -1,6 +1,17 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import time
-from taskinit import *
+import copy
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import agentflagger
+    from casatasks import casalog
+else:
+    from taskinit import *
+
+    agentflagger = casac.agentflagger
 
 
 def flagmanager(
@@ -13,22 +24,43 @@ def flagmanager(
     ):
 
     casalog.origin('flagmanager')
-    aflocal = casac.agentflagger()
+    aflocal = agentflagger()
 
     try:
         if type(vis) == str and os.path.exists(vis):
             if mode != 'rename':
                 aflocal.open(vis)
         else:
-            raise Exception, \
-                'Visibility data set not found - please verify the name'
+            raise Exception('Visibility data set not found - please verify the name')
         if mode == 'list':
-            aflocal.getflagversionlist()
-            print 'See logger for flag versions for this MS'
+            flist = []
+            flist = aflocal.getflagversionlist()
+            
+            # Get the name of the MS and properly add it to the dictionary
+            if "\nMS : " in flist[0]:
+                MS = flist.pop(0)
+                MS = MS.strip("\nMS : ")
+                
+            flist.remove('main : working copy in main table')
+            fdict = dict(enumerate(flist))
+            fversionsdict = copy.deepcopy(fdict)
+            for k in fdict:
+                singleversion = {}
+                # split each flagversion into versionname and comment
+                # The below partitioning is a big fragile. If the string contains
+                # other entries of the character ':', the spliting will fail
+                (versionname, middle, comment) = fdict[k].partition(':')
+                singleversion['name'] = versionname.rstrip()
+                singleversion['comment'] = comment.lstrip()
+                fversionsdict[k] = singleversion
+            
+            fversionsdict['MS'] = MS
+            print('See logger for flag versions for this MS')
+            return fversionsdict
             
         elif mode == 'save':
             if versionname == '':
-                raise IOError, "Illegal empty versionname: ''"
+                raise IOError("Illegal empty versionname: ''")
             
             newdir = vis+'.flagversions/flags.'+versionname
             if os.path.exists(newdir):
@@ -82,14 +114,12 @@ def flagmanager(
             olddir = vis + '.flagversions/flags.' + oldname
             newdir = vis + '.flagversions/flags.' + versionname
             if not os.path.isdir(olddir):
-                raise Exception, 'No such flagversions: ' + str(oldname)
+                raise Exception('No such flagversions: ' + str(oldname))
             
             if os.path.exists(newdir):
-                raise Exception, 'Flagversions ' + str(versionname) \
-                    + ' already exists!'
+                raise Exception('Flagversions ' + str(versionname) + ' already exists!')
 
-            casalog.post('Rename flagversions "%s" to "%s"' % (oldname,
-                         versionname))
+            casalog.post('Rename flagversions "%s" to "%s"' % (oldname,versionname))
 
             os.rename(olddir, newdir)
 
@@ -110,11 +140,9 @@ def flagmanager(
             fd.close()
             
         else:
-            raise Exception, 'Unknown mode' + str(mode)
+            raise Exception('Unknown mode' + str(mode))
         
         aflocal.done()
-    except Exception, instance:
-#        print '*** Error ***', instance
-        raise Exception, instance
-
-
+    except Exception:
+        aflocal.done()
+        raise

@@ -403,7 +403,7 @@ def _handle_image_params(imsize, cell, phasecenter,
         # if empty, it should be determined here...
         if _phasecenter == "":
             _phasecenter = map_param['center']
-        
+    
     return _imsize, _cell, _phasecenter
 
 def _calc_pblimit(minweight):
@@ -551,6 +551,7 @@ def set_beam_size(vis, imagename,
         csys = ia.coordsys()
         outref = csys.referencecode('direction')[0]
         cell = list(csys.increment(type='direction', format='s')['string'])
+        csys.done()
 
     old_tool = OldImagerBasedTools()
     sampling_params = old_tool.get_pointing_sampling_params(vis, field, spw, baseline, scan, intent,
@@ -658,9 +659,34 @@ def do_weight_mask(imagename, weightimage, minweight):
     casalog.post("The weight image '%s' is returned by this task, if the user wishes to assess the results in detail." \
                  % (weightimage), "INFO")
         
+def get_ms_column_unit(tb, colname):
+    col_unit = ''
+    if colname in tb.colnames():
+        cdkw = tb.getcoldesc(colname)['keywords']
+        if cdkw.has_key('QuantumUnits'):
+            u = cdkw['QuantumUnits']
+            if isinstance(u, str):
+                col_unit = u.strip()
+            elif isinstance(u, list):
+                col_unit = u[0].strip()
+    return col_unit
+
+def get_brightness_unit_from_ms(msname):
+    image_unit = ''
+    with open_table(msname) as tb:
+        image_unit = get_ms_column_unit(tb, 'DATA')
+        if image_unit == '': image_unit = get_ms_column_unit(tb, 'FLOAT_DATA')
+    if image_unit.upper() == 'K':
+        image_unit = 'K'
+    else:
+        image_unit = 'Jy/beam'
+
+    return image_unit
+
+
 
 def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, mode, nchan, start, width, veltype, outframe,
-               gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter, projection, ephemsrcname,
+               gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter, projection, 
                pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
     
     origin = 'tsdimaging'
@@ -712,11 +738,15 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
         ggwidth = _handle_grid_defaults(gwidth)
         gjwidth = _handle_grid_defaults(jwidth)
         
+        _ephemsrcname = ''
+        if isinstance(phasecenter, str) and phasecenter.strip().upper() in ['MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON', 'TRACKFIELD']:
+            _ephemsrcname = phasecenter
+
         # handle image parameters
         if isinstance(infiles, str) or len(infiles) == 1:
             _imsize, _cell, _phasecenter = _handle_image_params(imsize, cell, phasecenter, infiles, 
                                                                 field, _spw, antenna, scan, intent,
-                                                                _restfreq, pointingcolumn, ephemsrcname)
+                                                                _restfreq, pointingcolumn, _ephemsrcname)
         else:
             # sort input data using cleanhelper function to get consistent result with older sdimaging
             o = OldImagerBasedTools()
@@ -725,9 +755,8 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
             _imsize, _cell, _phasecenter = _handle_image_params(imsize, cell, phasecenter, sorted_vis, 
                                                                 sorted_field, sorted_spw, sorted_antenna, 
                                                                 sorted_scan, sorted_intent,
-                                                                _restfreq, pointingcolumn, ephemsrcname)
-           
-            
+                                                                _restfreq, pointingcolumn, _ephemsrcname)
+
         # calculate pblimit from minweight
         pblimit = _calc_pblimit(minweight)
         
@@ -762,6 +791,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
             # fix specmode to 'cubedata'
             # output spectral coordinate will be determined based on mode, start, and width 
             specmode='cube',
+            #specmode='cubesource',
             gridder='singledish',
             # single dish specific parameters
             gridfunction=gridfunction,
@@ -777,7 +807,6 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
             pblimit=pblimit
         )
         
-        # TODO: hadnle ephemsrcname
         # handle brightnessunit (CAS-11503)
         image_unit = ''
         if len(brightnessunit) > 0:
@@ -814,11 +843,12 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
         casalog.post('*** Executing runMajorCycle ***', origin=origin)
         casalog.post('NF = {0}'.format(imager.NF), origin=origin)
         #imager.runMajorCycle()  # Make initial dirty / residual image
+        casalog.post('*** makeSdPSF... ***', origin=origin)
         imager.makeSdPSF()
+        casalog.post('*** makeSdImage... ***', origin=origin)
         imager.makeSdImage()
         
     except Exception as e:
-        #print 'Exception : ' + str(e)
         casalog.post('Exception from task_tsdimaging : ' + str(e), "SEVERE", origin=origin)
 #         if imager != None:
 #             imager.deleteTools() 
@@ -863,10 +893,12 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
         antenna_diameter = tb.getcell('DISH_DIAMETER', antenna_index)
     set_beam_size(rep_ms, imagename,
                   rep_field, rep_spw, baseline, rep_scan, rep_intent,
-                  ephemsrcname, pointingcolumn, antenna_name, antenna_diameter,
+                  _ephemsrcname, pointingcolumn, antenna_name, antenna_diameter,
                   _restfreq, gridfunction, convsupport, truncate, gwidth, jwidth)
     
     # set brightness unit (CAS-11503)
+    if len(image_unit) == 0:
+        image_unit = get_brightness_unit_from_ms(rep_ms)
     if len(image_unit) > 0:
         with open_ia(imagename) as ia:
             casalog.post("Setting brightness unit '%s' to image." % image_unit)

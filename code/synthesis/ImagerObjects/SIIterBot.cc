@@ -63,7 +63,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	////////////////////////////////////
   
 	// All SIIterBot_states must have 'type' and 'name' defined.
-	SIIterBot_state::SIIterBot_state( SHARED_PTR<SIIterBot_callback> cb ) :
+	SIIterBot_state::SIIterBot_state( std::shared_ptr<SIIterBot_callback> cb ) :
 						itsDescription("no description is currently available..."),
 						itsMinPsfFraction(0.05),
 						itsMaxPsfFraction(0.8),
@@ -165,8 +165,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   usePeakRes = itsMinorCyclePeakResidual; 
                 }
 		else{usePeakRes = itsPeakResidual; }
+
                 // for debugging, remove it later
-                os<<LogIO::DEBUG1<<"cleanComplete-- itsCycleThreshold="<<itsCycleThreshold<<LogIO::POST;
+                os<<LogIO::DEBUG1<<"cleanComplete-- itsCycleThreshold without itsThreshold limit="<<itsCycleThreshold<<LogIO::POST;
                 
 		//		cout << "itsMajorDone="<<itsMajorDone<<" itsIterDone="<<itsIterDone<< " itsInitPeakResidual="<<itsInitPeakResidual<<" itsPeakResidual="<<itsPeakResidual <<" itsPrevPeakResidual : " <<  itsPrevPeakResidual << " itsStopFlag="<<itsStopFlag<<endl;
 
@@ -177,9 +178,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		  }
                 // for debugging, remove it later
                 os <<LogIO::DEBUG1<<"itsThreshold="<<itsThreshold<<" itsNsigmaThreshold===="<<itsNsigmaThreshold<<LogIO::POST;
-                os <<LogIO::DEBUG1<<"usePeakRes="<<usePeakRes<<" itsPeakResidual="<<itsPeakResidual<<LogIO::POST;
+                os <<LogIO::DEBUG1<<"usePeakRes="<<usePeakRes<<" itsPeakResidual="<<itsPeakResidual<<" itsPrevPeakRes="<<itsPrevPeakResidual<<LogIO::POST;
                 os <<LogIO::DEBUG1<<"itsIterDone="<<itsIterDone<<" itsNiter="<<itsNiter<<LogIO::POST;
-
 		/// This may interfere with some other criterion... check.
                 Float tol = 0.01; // threshold test torelance (CAS-11278)
 		if ( itsMajorDone==0 && itsIterDone==0 )
@@ -189,7 +189,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                    }
 		else if ( itsIterDone >= itsNiter || 
 		     itsPeakResidual <= itsThreshold ||
-                     abs(itsPeakResidual - itsThreshold)/itsThreshold < tol ||   
+                     itsPeakResidual <= itsNsigmaThreshold ||
+	             abs(itsPeakResidual - itsThreshold)/itsThreshold < tol ||   
+	             abs(itsPeakResidual - itsNsigmaThreshold)/itsNsigmaThreshold < tol ||   
 		     itsStopFlag )
 		  {
 		    //		    os << "Reached global stopping criteria : ";
@@ -197,7 +199,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		    if( itsIterDone >= itsNiter ) { stopCode=1; }
 		    //os << "Numer of iterations. "; // (" << itsIterDone << ") >= limit (" << itsNiter << ")" ;
 		    if( usePeakRes <= itsThreshold || (usePeakRes-itsThreshold)/itsThreshold < tol) {stopCode=2; }
-                    else if ( usePeakRes <= itsNsigmaThreshold ) {
+                    else if ( usePeakRes <= itsNsigmaThreshold || (itsPeakResidual - itsNsigmaThreshold)/itsNsigmaThreshold < tol ) {
                       if (itsNsigmaThreshold!=0.0) { stopCode=8; } // for nsigma=0.0 this mode is turned off
                     }
                     
@@ -840,7 +842,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	}
 
-	SIIterBot_adaptor::SIIterBot_adaptor( SHARED_PTR<SIIterBot_state> s, const std::string &bus_name, const std::string &object_path) :
+	SIIterBot_adaptor::SIIterBot_adaptor( std::shared_ptr<SIIterBot_state> s, const std::string &bus_name, const std::string &object_path) :
 #ifdef INTERACTIVE_ITERATION
 				dbus::address(bus_name),
 				DBus::ObjectAdaptor( DBusSession::instance().connection( ), object_path ),

@@ -5,8 +5,6 @@
  *      Author: jjacobs
  */
 
-#undef casacore
-
 #include <msvis/MSVis/PointingDirectionCache.h>
 
 #include <casa/Exceptions/Error.h>
@@ -21,7 +19,7 @@ using namespace casacore;
 namespace casa {
 namespace vi {
 
-PointingColumns::PointingColumns (const ROMSPointingColumns & pointingColumns)
+PointingColumns::PointingColumns (const MSPointingColumns & pointingColumns)
 : pointingColumns_p (pointingColumns)
 {}
 
@@ -62,7 +60,6 @@ PointingDirectionCache::PointingDirectionCache (int nAntennas,
 : antennaLevelCache_p (MinTimeEntries, MaxTimeEntries, nAntennas, this),
   antennaEarliestTime_p (nAntennas, -1.0),
   lastRowRead_p (-1),
-  nAdded_p (0),
   nFallbacks_p (0),
   nHits_p (0),
   pointingEofReached_p (false),

@@ -42,7 +42,7 @@ using namespace casacore;
 namespace casa {
 
 
-SHARED_PTR<ComponentListImage> ImageFactory::createComponentListImage(
+std::shared_ptr<ComponentListImage> ImageFactory::createComponentListImage(
     const String& outfile, const Record& cl, const Vector<Int>& shape,
     const Record& csys, Bool overwrite, Bool log, Bool cache
 ) {
@@ -63,7 +63,7 @@ SHARED_PTR<ComponentListImage> ImageFactory::createComponentListImage(
         mycsys = *csysPtr;
     }
 
-    SHARED_PTR<ComponentListImage> image(
+    std::shared_ptr<ComponentListImage> image(
         outfile.empty()
         ? new ComponentListImage(mycl, mycsys, IPosition(shape), cache)
         : new ComponentListImage(mycl, mycsys, IPosition(shape), outfile, cache)
@@ -81,14 +81,13 @@ SHARED_PTR<ComponentListImage> ImageFactory::createComponentListImage(
     return image;
 }
 
-
 SPIIF ImageFactory::floatImageFromShape(
 		const String& outfile, const Vector<Int>& shape,
 		const Record& csys, Bool linear,
 		Bool overwrite, Bool verbose,
 		const vector<std::pair<LogOrigin, String> > *const &msgs
 ) {
-	return _fromShape<Float>(
+	return fromShape<Float>(
 			outfile, shape, csys, linear,
 			overwrite, verbose, msgs
 	);
@@ -100,7 +99,7 @@ SPIIC ImageFactory::complexImageFromShape(
 		Bool overwrite, Bool verbose,
 		const vector<std::pair<LogOrigin, String> > *const &msgs
 ) {
-	return _fromShape<Complex>(
+	return fromShape<Complex>(
 			outfile, shape, csys, linear,
 			overwrite, verbose, msgs
 	);
@@ -112,7 +111,7 @@ SPIID ImageFactory::doubleImageFromShape(
     Bool overwrite, Bool verbose,
     const std::vector<std::pair<LogOrigin, String> > *const &msgs
 ) {
-    return _fromShape<Double>(
+    return fromShape<Double>(
         outfile, shape, csys, linear,
         overwrite, verbose, msgs
     );
@@ -124,12 +123,11 @@ SPIIDC ImageFactory::complexDoubleImageFromShape(
     Bool overwrite, casacore::Bool verbose,
     const std::vector<std::pair<LogOrigin, String> > *const &msgs
 ) {
-    return _fromShape<DComplex>(
-        outfile, shape, csys, linear,
-        overwrite, verbose, msgs
+    return fromShape<DComplex>(
+        outfile, shape, csys, linear, overwrite, verbose, msgs
     );
 }
-
+/*
 SPIIF ImageFactory::fromASCII(
     const String& outfile, const String& infile,
     const IPosition& shape, const String& sep, const Record& csys,
@@ -137,10 +135,8 @@ SPIIF ImageFactory::fromASCII(
 ) {
     Path filePath(infile);
     auto fileName = filePath.expandedName();
-
     ifstream inFile(fileName.c_str());
     ThrowIf(!inFile, "Cannot open " + infile);
-
     auto n = shape.product();
     auto nx = shape[0];
     Vector<Float> a(n, 0.0);
@@ -174,7 +170,7 @@ SPIIF ImageFactory::fromASCII(
     Array<Float> pixels(vec.reform(IPosition(shape)));
     return imageFromArray(outfile, pixels, csys, linear, overwrite);
 }
-
+*/
 ITUPLE ImageFactory::fromImage(
     const String& outfile, const String& infile,
     const Record& region, const String& mask, Bool dropdeg,
@@ -286,50 +282,11 @@ CoordinateSystem* ImageFactory::_makeCoordinateSystem(
     return csys.release();
 }
 
-SPIIC ImageFactory::makeComplex(
-	SPCIIF realPart, SPCIIF imagPart, const String& outfile,
-	const Record& region, Bool overwrite
-) {
-	_checkOutfile(outfile, overwrite);
-	const IPosition realShape = realPart->shape();
-	const IPosition imagShape = imagPart->shape();
-	ThrowIf(
-		!realShape.isEqual(imagShape),
-		"Image shapes are not identical"
-	);
-	const auto& cSysReal = realPart->coordinates();
-	const auto& cSysImag = imagPart->coordinates();
-	ThrowIf(
-		!cSysReal.near(cSysImag),
-		"Image Coordinate systems are not conformant"
-	);
-
-	String mask;
-	auto subRealImage = SubImageFactory<Float>::createSubImageRO(
-		*realPart, region, mask, nullptr
-	);
-	auto subImagImage = SubImageFactory<Float>::createSubImageRO(
-		*imagPart, region, mask, nullptr
-	);
-	auto complexImage = makeComplexImage(
-	    DYNAMIC_POINTER_CAST<const casacore::ImageInterface<casacore::Float>>(
-	        subRealImage
-	    ),
-	    DYNAMIC_POINTER_CAST<const casacore::ImageInterface<casacore::Float>>(
-	        subImagImage
-	    )
-	);
-	return SubImageFactory<Complex>::createImage(
-		*complexImage, outfile, Record(), "", AxesSpecifier(),
-		overwrite, false, false
-	);
-}
-
 ITUPLE ImageFactory::fromFile(const String& infile, Bool cache) {
     _checkInfile(infile);
     ComponentListImage::registerOpenFunction();
     unique_ptr<LatticeBase> latt(ImageOpener::openImage(infile));
-    ThrowIf (! latt, "Unable to open image");
+    ThrowIf (! latt, "Unable to open image " + infile);
     auto imagePtrs = _fromLatticeBase(latt);
     auto imageF = std::get<0>(imagePtrs);
     if (
@@ -341,6 +298,34 @@ ITUPLE ImageFactory::fromFile(const String& infile, Bool cache) {
     return imagePtrs;
 }
 
+SPIIF ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Float, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<0>(t);
+}
+
+SPIIC ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Complex, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<1>(t);
+}
+
+SPIID ImageFactory::fromFile(
+    const casacore::String& filename, casacore::Double, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<2>(t);
+}
+
+SPIIDC ImageFactory::fromFile(
+    const casacore::String& filename, casacore::DComplex, casacore::Bool cache
+) {
+    auto t = fromFile(filename, cache);
+    return std::get<3>(t);
+}
+ 
 ITUPLE ImageFactory::_fromLatticeBase(
     unique_ptr<LatticeBase>& latt
 ) {
@@ -425,7 +410,7 @@ void ImageFactory::rename(
 ) {
 	image = std::get<1>(_rename(image, name, overwrite));
 }
-
+/*
 void ImageFactory::toASCII(
 	SPCIIF image, const String& outfile, Record& region,
 	const String& mask, const String& sep,
@@ -494,7 +479,7 @@ void ImageFactory::toASCII(
 		nline += 1;
 	}
 }
-
+*/
 void ImageFactory::toFITS(
 	SPCIIF image, const String& outfile, Bool velocity, Bool optical,
 	Int bitpix, Double minpix, Double maxpix,

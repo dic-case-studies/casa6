@@ -76,7 +76,7 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: " << x.getMesg()
 					<< LogIO::POST;
@@ -114,7 +114,7 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: " << x.getMesg()
 					<< LogIO::POST;
@@ -152,7 +152,7 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: " << x.getMesg()
 					<< LogIO::POST;
@@ -190,14 +190,60 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			}
-			catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: " << x.getMesg()
 					<< LogIO::POST;
 			}
 			AlwaysAssert(thrown, AipsError);
 		}
+
+		{
+			log << LogIO::NORMAL << "Test region outside image throws exception"
+				<< LogIO::POST;
+			Bool thrown = true;
+			Quantity centerx(450, "pix");
+			Quantity centery(400, "pix");
+			Quantity inner(30, "arcsec");
+			Quantity outer(40, "arcsec");
+			Vector<Stokes::StokesTypes> stokes(0);
+			try {
+				AnnAnnulus ann(
+					centerx, centery, inner, outer,
+					csys, shape, stokes
+				);
+				thrown = false;
+			} catch (const ToLCRegionConversionError& x) {
+				log << LogIO::NORMAL
+					<< "Exception thrown as expected: " << x.getMesg()
+					<< LogIO::POST;
+			}
+			AlwaysAssert(thrown, AipsError);
+		}
+		{
+			log << LogIO::NORMAL << "Test region outside image not required"
+				<< LogIO::POST;
+			Bool thrown = true;
+			Quantity centerx(450, "pix");
+			Quantity centery(400, "pix");
+			Quantity inner(30, "arcsec");
+			Quantity outer(40, "arcsec");
+			Vector<Stokes::StokesTypes> stokes(0);
+			Bool requireRegion(false);
+			try {
+				AnnAnnulus ann(
+					centerx, centery, inner, outer,
+					csys, shape, stokes, requireRegion
+				);
+				thrown = false;
+			} catch (const ToLCRegionConversionError& x) {
+				log << LogIO::NORMAL
+					<< "Unexpected exception thrown: " << x.getMesg()
+					<< LogIO::POST;
+			}
+			AlwaysAssert(!thrown, AipsError);
+		}
+
 		{
 			log << LogIO::NORMAL << "Test precision"
 				<< LogIO::POST;
@@ -670,8 +716,7 @@ int main () {
 				try {
 					annulus.setColor("purple");
 					AlwaysAssert(false, AipsError);
-				}
-				catch (AipsError x) {
+				} catch (const AipsError& x) {
 					log << LogIO::NORMAL << "Exception caught as expected: "
 						<< x.getMesg() << LogIO::POST;
 					thrown = true;
@@ -684,8 +729,7 @@ int main () {
 				try {
 					annulus.setColor("GG0022");
 					AlwaysAssert(false, AipsError);
-				}
-				catch (AipsError x) {
+				} catch (const AipsError& x) {
 					log << LogIO::NORMAL << "Exception caught as expected: "
 						<< x.getMesg() << LogIO::POST;
 					thrown = true;
@@ -719,8 +763,7 @@ int main () {
 			annulus.print(oss);
 			cout << oss.str() << endl;
 		}
-	}
-	catch (AipsError x) {
+	} catch (const AipsError& x) {
 		cerr << "Caught exception: " << x.getMesg() << endl;
 		return 1;
 	}

@@ -115,7 +115,7 @@ namespace casa{
   //
   Double getCurrentTimeStamp(const VisBuffer2& vb)
   {
-    LogIO os(LogOrigin("Utils", "getCurrentTimeStamp", WHERE));
+    //LogIO os(LogOrigin("Utils", "getCurrentTimeStamp", WHERE));
 
     Int N=vb.nRows();
     for(Int i=0;i<N;i++)
@@ -752,32 +752,41 @@ namespace casa{
   // or from a env. variable (in this precidence order).
   //
   template <class T>
-  T SynthesisUtils::getenv(const char *name,const T defaultVal)
-  {
-    stringstream defaultStr;
-    defaultStr << defaultVal;
-    T val;
-    uInt handle = Aipsrc::registerRC(name, defaultStr.str().c_str());    
-    String strVal = Aipsrc::get(handle);
-    stringstream toT(strVal);
-    toT >> val;
-    // Looks like Aipsrc did not find the named variable.  See if an
-    // env. variable is defined.
-    if (val==defaultVal)
+    T SynthesisUtils::getenv(const char *name, const T defaultVal)
+    {
+      T val=defaultVal;
+      stringstream defaultStr;
+      defaultStr << defaultVal;
       {
 	char *valStr=NULL;
-	if ((valStr = std::getenv(name)) != NULL)
+	std::string tt(name);
+	unsigned long pos;
+	while((pos=tt.find(".")) != tt.npos)
+	  tt.replace(pos, 1, "_");
+
+	if ((valStr = std::getenv(tt.c_str())) != NULL)
 	  {
 	    stringstream toT2(valStr);
 	    toT2 >> val;
 	  }
       }
-    return val;
-  }
+      // If environment variable was not found (val remained set to the
+      // defaulVal), look in ~/.aipsrc.
+      if (val==defaultVal)
+	{
+	  uint handle = Aipsrc::registerRC(name, defaultStr.str().c_str());    
+	  String strVal = Aipsrc::get(handle);
+	  stringstream toT(strVal);
+	  toT >> val;
+	}
+      return val;
+    }
+    template 
+    Int SynthesisUtils::getenv(const char *name, const Int defaultVal);
   template 
-  Int SynthesisUtils::getenv(const char *name, const Int defaultVal);
-template 
-  Bool SynthesisUtils::getenv(const char *name, const Bool defaultVal);
+    Bool SynthesisUtils::getenv(const char *name, const Bool defaultVal);
+  template 
+    Float SynthesisUtils::getenv(const char *name, const Float defaultVal);
 
   Float SynthesisUtils::libreSpheroidal(Float nu) 
   {
@@ -1144,7 +1153,7 @@ template
     os << csList << std::endl;
   }
  const casacore::Array<Complex> SynthesisUtils::getCFPixels(const casacore::String& Dir,
-							     const casacore::String& fileName)
+							    const casacore::String& fileName)
   {
     try
       {
@@ -1157,6 +1166,22 @@ template
 	log_l << x.getMesg() << LogIO::EXCEPTION;
       }
     return casacore::Array<Complex>(); // Just to keep the complier happy.  Program control should never get here.
+  }
+  
+ const casacore::IPosition SynthesisUtils::getCFShape(const casacore::String& Dir,
+						      const casacore::String& fileName)
+  {
+    try
+      {
+	casacore::PagedImage<casacore::Complex> thisCF(Dir+'/'+fileName);
+	return thisCF.shape();
+      }
+    catch (AipsError &x)
+      {
+	LogIO log_l(LogOrigin("SynthesisUtils","getCFShape"));
+	log_l << x.getMesg() << LogIO::EXCEPTION;
+      }
+    return casacore::IPosition(); // Just to keep the complier happy.  Program control should never get here.
   }
   
   casacore::TableRecord SynthesisUtils::getCFParams(const casacore::String& Dir,

@@ -7,6 +7,7 @@ import traceback
 import unittest
 import testhelper
 import filecmp
+import shutil
 from taskinit import mstool,tbtool,cbtool,casalog,casac,casa
 from tasks import setjy,flagdata,applycal,uvcontsub
 from mpi4casa.MPIEnvironment import MPIEnvironment
@@ -1157,46 +1158,53 @@ class test_mpi4casa_flagdata(unittest.TestCase):
         
     def test_mpi4casa_flagdata_list_return_async(self):
         """Test flagdata summary in async mode"""
-        
+
+        # Do not make a copy of the input MMS for each flagdata command
+        # os.system("cp -r {} {}".format(self.vis, self.vis2))
+        # os.system("cp -r {} {}".format(self.vis, self.vis3))
+        os.system("ln -s {} {}".format(self.vis, self.vis2))
+        os.system("ln -s {} {}".format(self.vis, self.vis3))
+
         # First run flagdata sequentially
         bypassParallelProcessing = ParallelTaskHelper.getBypassParallelProcessing()
         ParallelTaskHelper.bypassParallelProcessing(2)
         res = flagdata(vis=self.vis, mode='summary')
         ParallelTaskHelper.bypassParallelProcessing(bypassParallelProcessing)
-        
-        # Make a copy of the input MMS for each flagdata instance
-        os.system("cp -r %s %s" % (self.vis,self.vis2))
-        os.system("cp -r %s %s" % (self.vis,self.vis3))
-        
+
         # Set async mode in ParallelTaskHelper
         ParallelTaskHelper.setAsyncMode(True)
-        
-        # Run applycal in MMS mode with the first set
-        request_id_1 = flagdata(vis=self.vis, mode='summary')    
-        
-        # Run applycal in MMS mode with the second set
-        request_id_2 = flagdata(vis=self.vis2, mode='summary')
-        
-        # Run applycal in MMS mode with the third set
-        request_id_3 = flagdata(vis=self.vis3, mode='summary')
-        
-        # Get response in block mode
-        reques_id_list = request_id_1 + request_id_2 + request_id_3
-        command_response_list = self.client.get_command_response(reques_id_list,True,True)        
-        
-        # Get result
+
+        try:
+            # Run flagdata in MMS mode with the first set
+            request_id_1 = flagdata(vis=self.vis, mode='summary')
+            request_id_list = list(request_id_1)
+
+            # Run flagdata in MMS mode with the second set
+            request_id_2 = flagdata(vis=self.vis2, mode='summary') #, cmdreason='bla bla')
+            request_id_list.extend(request_id_2)
+
+            # Run flagdata in MMS mode with the third set
+            request_id_3 = flagdata(vis=self.vis3, mode='summary')
+            request_id_list.extend(request_id_3)
+        finally:
+            # Get response in block mode
+            request_id_list = request_id_1 + request_id_2 + request_id_3
+            command_response_list = self.client.get_command_response(request_id_list,
+                                                                     True, True)
+
+        # Get result. Block waiting for responses.
         res1 = ParallelTaskHelper.getResult(request_id_1,'flagdata')
         res2 = ParallelTaskHelper.getResult(request_id_2,'flagdata')
         res3 = ParallelTaskHelper.getResult(request_id_3,'flagdata')   
-        
+
         # Unset async mode in ParallelTaskHelper
-        ParallelTaskHelper.setAsyncMode(False)         
-        
+        ParallelTaskHelper.setAsyncMode(False)
+
+        self.maxDiff = None
         self.assertEqual(res1,res, "flagdata dictionary does not match for the first flagdata run")
         self.assertEqual(res2,res, "flagdata dictionary does not match for the second flagdata run")
-        self.assertEqual(res3,res, "flagdata dictionary does not match for the third flagdata run")       
-        
-        
+        self.assertEqual(res3,res, "flagdata dictionary does not match for the third flagdata run")
+
     def test_mpi4casa_flagdata_list_return_multithreading(self):
         """Test flagdata summary in multithreading mode"""
         
@@ -1481,25 +1489,28 @@ class test_mpi4casa_applycal(unittest.TestCase):
              
         # Set async mode in ParallelTaskHelper
         ParallelTaskHelper.setAsyncMode(True)
-        
-        # Run applycal in MMS mode with the first set
-        request_id_1 = applycal(vis=self.vis,gaintable=self.aux,
-                                gainfield=['nearest','nearest','0'],
-                                interp=['linear', 'linear','nearest'])    
-        
-        # Run applycal in MMS mode with the second set
-        request_id_2 = applycal(vis=self.vis2,gaintable=self.aux2,
-                                gainfield=['nearest','nearest','0'],
-                                interp=['linear', 'linear','nearest'])    
-        
-        # Run applycal in MMS mode with the third set
-        request_id_3 = applycal(vis=self.vis3,gaintable=self.aux3,
-                                gainfield=['nearest','nearest','0'],
-                                interp=['linear', 'linear','nearest'])   
-        
-        # Get response in block mode
-        reques_id_list = request_id_1 + request_id_2 + request_id_3
-        command_response_list = self.client.get_command_response(reques_id_list,True,True)        
+
+        try:
+            # Run applycal in MMS mode with the first set
+            request_id_1 = applycal(vis=self.vis, gaintable=self.aux,
+                                    gainfield=['nearest','nearest','0'],
+                                    interp=['linear', 'linear','nearest'])
+
+            # Run applycal in MMS mode with the second set
+            request_id_2 = applycal(vis=self.vis2, gaintable=self.aux2,
+                                    gainfield=['nearest','nearest','0'],
+                                    interp=['linear', 'linear','nearest'])
+
+            # Run applycal in MMS mode with the third set
+            request_id_3 = applycal(vis=self.vis3, gaintable=self.aux3,
+                                    gainfield=['nearest','nearest','0'],
+                                    interp=['linear', 'linear','nearest'])
+
+        finally:
+            # Get response in block mode
+            reques_id_list = request_id_1 + request_id_2 + request_id_3
+            command_response_list = self.client.get_command_response(reques_id_list,
+                                                                     True, True)
         
         # Unset async mode in ParallelTaskHelper
         ParallelTaskHelper.setAsyncMode(False)
@@ -1519,9 +1530,8 @@ class test_mpi4casa_applycal(unittest.TestCase):
         self.assertTrue(compare)
         compare = testhelper.compTables(self.ref_sorted,self.vis_sorted2,['FLAG_CATEGORY'])
         self.assertTrue(compare)
-        compare = testhelper.compTables(self.ref_sorted,self.vis_sorted3,['FLAG_CATEGORY'])  
-        
-        
+        compare = testhelper.compTables(self.ref_sorted,self.vis_sorted3,['FLAG_CATEGORY'])
+
     def test3_applycal_fluxscale_gcal_bcal_multithreading_mode(self):
         """Test 2: Apply calibration using fluxscal gcal and bcal tables in multithreading mode"""
         
@@ -1995,6 +2005,52 @@ class test_mpi4casa_runtime_settings(unittest.TestCase):
                          "getNumCPUs(use_aipsrc=True) wrong after setNumCPUs(3,self.server_list)")                                      
         
 
+class test_push_commands_parallel_task(unittest.TestCase):
+    """
+    Tests to catch the following failure observed in the past:
+    When the pipeline pushes a command using the MPIClient interface to a server
+    and the command is a task that is MMS-parallel, the task will fail to execute
+    in the MPI server because it will try to distribute work to the servers, as if
+    it was the MPI client!
+    This can affect the so-called "Tier0" parallelization approach in the pipeline.
+    See CAS-9871, CAS-11316.
+
+    This is a minimal start, just to have basic coverage for this issue. It could
+    benefit from a few additional (short, fast) tests.
+    """
+
+    def setUp(self):
+        self.vis = "ngc5921.applycal.mms"
+        setUpFile(self.vis, 'vis')
+
+        self.client = MPICommandClient()
+        self.client.set_log_mode('redirect')
+        self.client.start_services()
+
+    def tearDown(self):
+        self.client = None
+        shutil.rmtree(self.vis)
+
+    def test_push_simple_flagdata(self):
+        # the servers need to know where the tests are running (and the test files are
+        # located)
+        cmd_cd = "os.chdir('{0}')".format(os.getcwd())
+        resp = self.client.push_command_request(cmd_cd, True, None)
+        resp = resp[0]
+
+        self.assertEqual(resp['successful'], True)
+
+        cmd = "flagdata(vis='{0}', mode='summary')".format(self.vis)
+        resp = self.client.push_command_request(cmd, True, None)
+        resp = resp[0]
+
+        self.assertEqual(resp['status'], 'response received')
+        self.assertEqual(resp['successful'], True)
+        flag_dict = resp['ret']
+        self.assertEqual(flag_dict['type'], 'summary')
+        self.assertEqual(flag_dict['flagged'], 203994)
+
+
 def suite():
     return [test_MPICommandClient,
             test_MPIInterface,
@@ -2006,4 +2062,6 @@ def suite():
             test_mpi4casa_NullSelection,
             test_mpi4casa_plotms,
             test_mpi4casa_log_level,
-            test_mpi4casa_runtime_settings]
+            test_mpi4casa_runtime_settings,
+            test_push_commands_parallel_task
+    ]

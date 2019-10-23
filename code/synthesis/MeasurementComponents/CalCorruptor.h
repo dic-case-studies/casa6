@@ -277,7 +277,7 @@ class AtmosCorruptor : public CalCorruptor {
 
    void initialize(const casacore::Int Seed, const casacore::Float Beta, const casacore::Float scale, const casacore::Int rxType);
    void initialize(const casacore::Int Seed, const casacore::Float Beta, const casacore::Float scale, const casacore::Int rxType, 
-		   const casacore::ROMSAntennaColumns& antcols);
+		   const casacore::MSAntennaColumns& antcols);
    // phase corruption gain for a T
    casacore::Complex cphase(const casacore::Int islot);
    casacore::Complex cphase(const casacore::Int ix, const casacore::Int iy, const casacore::Int islot);

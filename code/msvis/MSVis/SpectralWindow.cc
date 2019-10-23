@@ -19,7 +19,7 @@ using namespace casacore;
 namespace casa {
 namespace ms {
 
-SpectralWindow::SpectralWindow (const ROMSSpWindowColumns & columns, Int spectralWindowId)
+SpectralWindow::SpectralWindow (const MSSpWindowColumns & columns, Int spectralWindowId)
 : id_p (spectralWindowId)
 {
     fillScalars (columns);
@@ -28,7 +28,7 @@ SpectralWindow::SpectralWindow (const ROMSSpWindowColumns & columns, Int spectra
 }
 
 void
-SpectralWindow::fillArrays(const ROMSSpWindowColumns & columns)
+SpectralWindow::fillArrays(const MSSpWindowColumns & columns)
 {
     // Read in the data as parallel arrays
 
@@ -63,7 +63,7 @@ SpectralWindow::getScalar (const ScalarColumn<T> & column)
 }
 
 void
-SpectralWindow::fillScalars (const ROMSSpWindowColumns & columns)
+SpectralWindow::fillScalars (const MSSpWindowColumns & columns)
 {
     flagged_p = getScalar (columns.flagRow());
     frequencyGroup_p = getScalar (columns.freqGroup());
@@ -81,8 +81,8 @@ SpectralWindows::SpectralWindows (const MeasurementSet * ms)
 {
     // Get the Spectral Columns Object
 
-    auto_ptr <ROMSColumns> msColumns (new ROMSColumns (* ms));
-    const ROMSSpWindowColumns & spectralWindowColumns = msColumns->spectralWindow();
+    unique_ptr <MSColumns> msColumns (new MSColumns (* ms));
+    const MSSpWindowColumns & spectralWindowColumns = msColumns->spectralWindow();
 
     // Create on spectral window object per row in the table.
 

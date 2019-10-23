@@ -59,7 +59,8 @@ public:
 		const casacore::String& dopplerString,
 		const casacore::Quantity& restfreq,
 		const casacore::Vector<casacore::Stokes::StokesTypes> stokes,
-		const casacore::Bool annotationOnly
+		const casacore::Bool annotationOnly,
+		const casacore::Bool requireImageRegion=true
 	);
 
 	// Simplified constructor.
@@ -73,7 +74,8 @@ public:
 		const casacore::Vector<casacore::Quantity>& yPositions,
 		const casacore::CoordinateSystem& csys,
 		const casacore::IPosition& imShape,
-		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes
+		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes,
+		const casacore::Bool requireImageRegion=true
 	);
 
 	// implicit copy constructor and destructor are fine
@@ -84,10 +86,10 @@ public:
 	casacore::Vector<casacore::MDirection> getCorners() const;
 
 	// get the world coordinates of the polygon vertices
-	void worldVertices(vector<casacore::Quantity>& x, vector<casacore::Quantity>& y) const;
+	void worldVertices(std::vector<casacore::Quantity>& x, std::vector<casacore::Quantity>& y) const;
 
 	// get the pixel coordinates of the polygon vertices
-	void pixelVertices(vector<casacore::Double>& x, vector<casacore::Double>& y) const;
+	void pixelVertices(std::vector<casacore::Double>& x, std::vector<casacore::Double>& y) const;
 
 
 	virtual std::ostream& print(std::ostream &os) const;
@@ -109,7 +111,8 @@ protected:
 		const casacore::String& dopplerString,
 		const casacore::Quantity& restfreq,
 		const casacore::Vector<casacore::Stokes::StokesTypes> stokes,
-		const casacore::Bool annotationOnly
+		const casacore::Bool annotationOnly,
+		const casacore::Bool requireImageRegion=true
 	);
 
 	// Simplified constructor.
@@ -126,7 +129,8 @@ protected:
 		const casacore::Quantity& trcy,
 		const casacore::CoordinateSystem& csys,
 		const casacore::IPosition& imShape,
-		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes
+		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes,
+		const casacore::Bool requireImageRegion=true
 	);
 
 	// For centered rectangles
@@ -146,7 +150,8 @@ protected:
 		const casacore::String& dopplerString,
 		const casacore::Quantity& restfreq,
 		const casacore::Vector<casacore::Stokes::StokesTypes> stokes,
-		const casacore::Bool annotationOnly
+		const casacore::Bool annotationOnly,
+		const casacore::Bool requireImageRegion=true
 	);
 
 		// Simplified constructor.
@@ -164,7 +169,8 @@ protected:
 			const casacore::Quantity& positionAngle,
 			const casacore::CoordinateSystem& csys,
 			const casacore::IPosition& imShape,
-			const casacore::Vector<casacore::Stokes::StokesTypes>& stokes
+			const casacore::Vector<casacore::Stokes::StokesTypes>& stokes,
+			const casacore::Bool requireImageRegion=true
 		);
 
 private:

@@ -110,8 +110,8 @@ ms::ms()
         itsSel = new MSSelector();
         itsLog = new LogIO();
         itsMSS = new MSSelection();
-        itsVI = NULL;
-        itsVI2 = NULL;
+        itsVI = nullptr;
+        itsVI2 = nullptr;
         doingIterations_p=false;
         doingAveraging_p=false;
         polnExpr_p = "";
@@ -132,14 +132,14 @@ ms::ms()
 ms::~ms()
 {
     try {
-        if(itsMS)           {delete itsMS;itsMS=NULL;}
-        if(itsOriginalMS)   {delete itsOriginalMS;itsOriginalMS=NULL;}
-        if(itsSelectedMS)   {delete itsSelectedMS;itsSelectedMS=NULL;}
-        if(itsSel)          {delete itsSel; itsSel=NULL;}
-        if(itsLog)          {delete itsLog; itsLog=NULL;}
-        if(itsMSS)          {delete itsMSS; itsMSS=NULL;}
-        if (itsVI)          {delete itsVI; itsVI=NULL;}
-        if (itsVI2)         {delete itsVI2; itsVI2=NULL;}
+        if(itsMS)           {delete itsMS;itsMS=nullptr;}
+        if(itsOriginalMS)   {delete itsOriginalMS;itsOriginalMS=nullptr;}
+        if(itsSelectedMS)   {delete itsSelectedMS;itsSelectedMS=nullptr;}
+        if(itsSel)          {delete itsSel; itsSel=nullptr;}
+        if(itsLog)          {delete itsLog; itsLog=nullptr;}
+        if(itsMSS)          {delete itsMSS; itsMSS=nullptr;}
+        if (itsVI)          {delete itsVI; itsVI=nullptr;}
+        if (itsVI2)         {delete itsVI2; itsVI2=nullptr;}
         doingIterations_p=false;
         doingAveraging_p=false;
         polnExpr_p = "";
@@ -507,8 +507,8 @@ ms::close()
             delete itsSelectedMS;  itsSelectedMS = new MeasurementSet();
             itsSel->setMS(*itsMS);
             if (itsMSS) {delete itsMSS;  itsMSS = new MSSelection();};
-            if (itsVI) {delete itsVI; itsVI=NULL;}
-            if (itsVI2) {delete itsVI2; itsVI2=NULL;}
+            if (itsVI) {delete itsVI; itsVI=nullptr;}
+            if (itsVI2) {delete itsVI2; itsVI2=nullptr;}
             doingIterations_p=false;
             doingAveraging_p=false;
             polnExpr_p = "";
@@ -875,6 +875,18 @@ ms::listhistory()
     return rstat;
 }
 
+// Helper for the writehistory methods. Just setup the history sub-table
+void setupMSHistory(MeasurementSet &ms)
+{
+    // make sure the MS has a HISTORY table
+    if(!(Table::isReadable(ms.historyTableName()))){
+        TableRecord &kws = ms.rwKeywordSet();
+        SetupNewTable historySetup(ms.historyTableName(),
+                                   MSHistory::requiredTableDesc(),Table::New);
+        kws.defineTable(MS::keywordName(MS::HISTORY), Table(historySetup));
+    }
+}
+
 bool
 ms::writehistory(const std::string& message, const std::string& parms, const std::string& origin, const std::string& msname, const std::string& app)
 {
@@ -888,20 +900,46 @@ ms::writehistory(const std::string& message, const std::string& parms, const std
                 outMS = MeasurementSet(ms::name(),
                                        TableLock::AutoLocking,Table::Update);
             }
-            // make sure the MS has a HISTORY table
-            if(!(Table::isReadable(outMS.historyTableName()))){
-                TableRecord &kws = outMS.rwKeywordSet();
-                SetupNewTable historySetup(outMS.historyTableName(),
-                                           MSHistory::requiredTableDesc(),Table::New);
-                kws.defineTable(MS::keywordName(MS::HISTORY), Table(historySetup));
-            }
+            setupMSHistory(outMS);
             MSHistoryHandler::addMessage(outMS, message, app, parms, origin);
             rstat = true;
         }
-    } catch (AipsError x) {
-        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+    } catch (const AipsError &exc) {
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << exc.getMesg() << LogIO::POST;
         Table::relinquishAutoLocks(true);
-        RETHROW(x);
+        RETHROW(exc);
+    }
+    Table::relinquishAutoLocks(true);
+    return rstat;
+}
+
+bool
+ms::writehistory_batch(const std::vector<std::string>& messages, const std::string& parms,
+                       const std::string& origin, const std::string& msname,
+                       const std::string& app)
+{
+    Bool rstat(false);
+    try {
+        if (messages.size() > 0 || parms.length() > 0) {
+            MeasurementSet outMS;
+            if (msname.length() > 0) {
+                outMS = MeasurementSet(msname,TableLock::AutoLocking,Table::Update);
+            } else {
+                outMS = MeasurementSet(ms::name(),
+                                       TableLock::AutoLocking,Table::Update);
+            }
+            setupMSHistory(outMS);
+
+            MSHistoryHandler mshh(outMS, app);
+            for (const auto &msg : messages) {
+                mshh.addMessage(msg, parms, origin);
+            }
+            rstat = true;
+        }
+    } catch (const AipsError &exc) {
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << exc.getMesg() << LogIO::POST;
+        Table::relinquishAutoLocks(true);
+        RETHROW(exc);
     }
     Table::relinquishAutoLocks(true);
     return rstat;
@@ -1147,8 +1185,8 @@ ms::statisticsold(const std::string& column,
 
             Vector<Bool> flagrows;
             Cube<Bool> flags;
-            unsigned flagrows_length;
-            unsigned flags_length;
+            unsigned flagrows_length = 0;
+            unsigned flags_length = 0;
 
             for (vi.originChunks();
                  vi.moreChunks();
@@ -2292,7 +2330,7 @@ ms::selectinit(const int datadescid, const bool resetsel)
 				String ddidTaql = "DATA_DESC_ID IN [" + selDDID + "]";
 				Record taqlSelRec(Record::Variable);
 				taqlSelRec.define("taql", ddidTaql);
-				::casac::record* casacRec = fromRecord(taqlSelRec);
+				std::unique_ptr<::casac::record> casacRec(fromRecord(taqlSelRec));
 				try {
 					// test it first, can't revert MSSelection selection
 					retval = doMSSelection(*casacRec, true);  // onlyparse=true
@@ -2331,9 +2369,8 @@ ms::selectold(const ::casac::record& items)
     Bool retval = false;
     try {
         if(!detached()){
-            Record *myTmp = toRecord(items);
+            std::unique_ptr<casacore::Record> myTmp(toRecord(items));
             retval = itsSel->select(*myTmp, false);
-            delete myTmp;
         }
     } catch (AipsError x) {
         *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -2354,7 +2391,7 @@ ms::select(const ::casac::record& items)
 		if(!detached()){
             if (checkinit()) {
               *itsLog << LogOrigin("ms", "select");
-              Record* selRecord = toRecord(items);
+              std::unique_ptr<Record> selRecord(toRecord(items));
               for (uInt field=0; field < selRecord->nfields(); ++field) {
                 String fieldStr = selRecord->name(field);
                 fieldStr.upcase();
@@ -2428,7 +2465,7 @@ ms::select(const ::casac::record& items)
                         Record uvdistSelRec(Record::Variable);
                         String uvdistExpr = String::toString(uvdist[0]) + "~" + String::toString(uvdist[1]);
                         uvdistSelRec.define("uvdist", uvdistExpr);
-                        ::casac::record* casacRec = fromRecord(uvdistSelRec);
+                        std::unique_ptr<::casac::record> casacRec(fromRecord(uvdistSelRec));
                         retval = retval & doMSSelection(*casacRec);
                     } else {
                         *itsLog << LogIO::WARN << "Illegal value for uvdist range selection: two element numeric vector required" << LogIO::POST;
@@ -2448,7 +2485,6 @@ ms::select(const ::casac::record& items)
                   *itsLog << LogIO::WARN << "Unrecognized field in input ignored: "+fieldStr << LogIO::POST;
                      
               }
-			  delete selRecord;
 		  }
         }
 	} catch (AipsError x) {
@@ -2493,7 +2529,7 @@ ms::selecttaql(const std::string& taqlstr)
             Record taqlSelRec(Record::Variable);
             String taqlExpr = String::toString(taqlstr);
             taqlSelRec.define("taql", taqlExpr);
-            ::casac::record* casacRec = fromRecord(taqlSelRec);
+            std::unique_ptr<::casac::record> casacRec(fromRecord(taqlSelRec));
             retval = doMSSelection(*casacRec);
         }
 	} catch (AipsError x) {
@@ -2590,7 +2626,7 @@ ms::selectchannel(const int nchan, const int start, const int width, const int i
                 }
                 int end = selChans(selChans.size()-1);
                 Vector<Int> spws = getspectralwindows();
-                ROMSColumns msc(*itsSelectedMS);
+                MSColumns msc(*itsSelectedMS);
                 Int numchans = msc.spectralWindow().numChan().getColumn()(spws(0));
                 if (start>numchans || end>numchans) {
                     *itsLog << LogIO::SEVERE << "Illegal channel selection"<<LogIO::POST;
@@ -2661,7 +2697,7 @@ ms::selectpolarization(const std::vector<std::string>& wantedpol)
                 Record polnSelRec(Record::Variable);
                 String polnExpr = MSSelection::nameExprStr(wantedpol);
                 polnSelRec.define("polarization", polnExpr);
-                ::casac::record* casacRec = fromRecord(polnSelRec);
+                std::unique_ptr<::casac::record> casacRec(fromRecord(polnSelRec));
                 retval = doMSSelection(*casacRec);
                 if (retval) {
                     polnExpr_p = polnExpr;
@@ -2916,8 +2952,8 @@ ms::cvel(const std::string& mode,
 
         {
             Table spwtable(originalName+"/SPECTRAL_WINDOW");
-            ROArrayColumn<Double> chanwidths(spwtable, "CHAN_WIDTH");
-            ROArrayColumn<Double> chanfreqs(spwtable, "CHAN_FREQ");
+            ArrayColumn<Double> chanwidths(spwtable, "CHAN_WIDTH");
+            ArrayColumn<Double> chanfreqs(spwtable, "CHAN_FREQ");
 
             if(spwtable.nrow()>1){
                 needToClearModel = true;
@@ -3079,8 +3115,8 @@ ms::cvel(const std::string& mode,
         if(rstat){
             // print parameters of final SPW
             Table spwtable(originalName+"/SPECTRAL_WINDOW");
-            ROArrayColumn<Double> chanwidths(spwtable, "CHAN_WIDTH");
-            ROArrayColumn<Double> chanfreqs(spwtable, "CHAN_FREQ");
+            ArrayColumn<Double> chanwidths(spwtable, "CHAN_WIDTH");
+            ArrayColumn<Double> chanfreqs(spwtable, "CHAN_FREQ");
 
             Vector<Double> cw(chanwidths(0));
             Vector<Double> cf(chanfreqs(0));
@@ -3190,17 +3226,17 @@ ms::cvelfreqs(const std::vector<int>& spwids,
             Vector<Double> newCHAN_WIDTH;
 
 
-            ROMSMainColumns mainCols(*itsMS);
-            ROScalarColumn<Double> timeCol(mainCols.time());
-            ROScalarColumn<Int> ddCol(mainCols.dataDescId());
-            ROScalarColumn<Int> fieldCol(mainCols.fieldId());
+            MSMainColumns mainCols(*itsMS);
+            ScalarColumn<Double> timeCol(mainCols.time());
+            ScalarColumn<Int> ddCol(mainCols.dataDescId());
+            ScalarColumn<Int> fieldCol(mainCols.fieldId());
 
-            ROMSDataDescColumns DDCols(itsMS->dataDescription());
-            ROScalarColumn<Int> spwidCol(DDCols.spectralWindowId());
+            MSDataDescColumns DDCols(itsMS->dataDescription());
+            ScalarColumn<Int> spwidCol(DDCols.spectralWindowId());
 
-            ROMSSpWindowColumns SPWCols(itsMS->spectralWindow());
-            ROMSFieldColumns FIELDCols(itsMS->field());
-            ROMSAntennaColumns ANTCols(itsMS->antenna());
+            MSSpWindowColumns SPWCols(itsMS->spectralWindow());
+            MSFieldColumns FIELDCols(itsMS->field());
+            MSAntennaColumns ANTCols(itsMS->antenna());
 
             // extract grid from SPW given by spwids
             Vector<Double> oldCHAN_FREQ;
@@ -3349,7 +3385,7 @@ ms::cvelfreqs(const std::vector<int>& spwids,
             {
                 casacore::MPosition Xpos;
                 String Xobservatory;
-                ROMSObservationColumns XObsCols(itsMS->observation());
+                MSObservationColumns XObsCols(itsMS->observation());
                 if (itsMS->observation().nrow() > 0) {
                     Xobservatory = XObsCols.telescopeName()(mainCols.observationId()(0));
                 }
@@ -3438,7 +3474,7 @@ Vector<Int> ms::addgaps(Vector<Int> ifrnums, Int gap) {
 
 Vector<Int> ms::getifrnumbers() {
     // Get vector of ifr numbers in MS
-    ROMSColumns msc(*itsSelectedMS);
+    MSColumns msc(*itsSelectedMS);
     const Sort::Order order = Sort::Ascending;
     const Int option = Sort::HeapSort | Sort::NoDuplicates;
     // form ifr numbers
@@ -3629,7 +3665,7 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int
             // Check for ha, last, ut -- included in AXIS_INFO
             // Check data columns: empty array if does not exist
             // (issue warning once!)
-            ROMSColumns msc(*itsSelectedMS);
+            MSColumns msc(*itsSelectedMS);
             Bool noCorrectedCol = msc.correctedData().isNull();
             Bool noModelCol = msc.modelData().isNull();
             Bool noFloatCol = msc.floatData().isNull();
@@ -4245,7 +4281,7 @@ void ms::getInfoOptions(Vector<Bool> info_options, Record& outputRec) {
         Vector<Int> fields = outputRec.asArrayInt("field_id");
         // set up MSDerivedValues
         MSDerivedValues msd;
-        ROMSColumns msCol(*itsSelectedMS);
+        MSColumns msCol(*itsSelectedMS);
         msd.setAntennas(msCol.antenna());
         MEpoch ep=msCol.timeMeas()(0);
         // iterate through fields
@@ -4291,7 +4327,7 @@ Vector<String> ms::getCorrAxis(vi::VisBuffer2* vb2) {
     return names;
 }
 
-Vector<String> ms::getCorrAxis(ROMSColumns& msc) {
+Vector<String> ms::getCorrAxis(MSColumns& msc) {
     Vector<String> names;
     getWantedPolNames(names);  // user selected poln needing conversion
     if (names.size() == 0) {
@@ -4304,7 +4340,7 @@ Vector<String> ms::getCorrAxis(ROMSColumns& msc) {
     return names;
 }
 
-Vector<Int> ms::getCorrTypes(ROMSColumns& msc) {
+Vector<Int> ms::getCorrTypes(MSColumns& msc) {
     // return all or selected corr types in POLN table
     Int ddid = msc.dataDescId()(0);
     Int polId = msc.dataDescription().polarizationId()(ddid);
@@ -4313,13 +4349,11 @@ Vector<Int> ms::getCorrTypes(ROMSColumns& msc) {
         corrTypes = allCorrTypes;
     } else { // user selected existing poln, get corr_types 
         // The keys are DDIDs, vals are indices in POLN table corrTypes
-        OrderedMap<Int, Vector<Int> > polmap(itsMSS->getPolMap());
-        // set up map iterator and get value  for ddid
-        ConstMapIter<Int, Vector<Int> > mapiter(polmap);
+        std::map<Int, Vector<Int> > polmap(itsMSS->getPolMap());
         Vector<Int> corrTypeIdx;
-        for (mapiter.toStart(); !mapiter.atEnd(); mapiter++) {
-            if (mapiter.getKey() == polId) {
-                corrTypeIdx = mapiter.getVal();
+        for ( auto mapiter = polmap.begin( ); mapiter != polmap.end( ); ++mapiter ) {
+            if (mapiter->first == polId) {
+                corrTypeIdx = mapiter->second;
                 break;
             }
         }
@@ -4342,7 +4376,7 @@ void ms::getWantedPolNames(casacore::Vector<casacore::String>& names) {
 }
 
 Record ms::getFreqAxis() {
-    ROMSColumns msCol(*itsSelectedMS);
+    MSColumns msCol(*itsSelectedMS);
     // get columns from SPECTRAL_WINDOW table
     Vector<Int> spws = getspectralwindows();
     int nSpw = spws.nelements();
@@ -4393,7 +4427,7 @@ Record ms::getIfrAxis() {
     Vector<String> ifrshortnames(ifrnumbers_p.size());
     Vector<Double> baselines(ifrnumbers_p.size(), 0.0);
     // read columns from MS
-    ROMSColumns msCol(*itsSelectedMS);
+    MSColumns msCol(*itsSelectedMS);
     Vector<String> antnames = msCol.antenna().name().getColumn();
     Array<Double> antpos = msCol.antenna().position().getColumn();
 
@@ -4878,7 +4912,7 @@ bool ms::getitem(String item, vi::VisBuffer2* vb2, Record& outputRec, bool ifrax
     return getokay;
 }
 
-bool ms::getitem(String item, ROMSColumns& msc, Record& outputRec) {
+bool ms::getitem(String item, MSColumns& msc, Record& outputRec) {
     bool getokay(true);
     String itemname = downcase(item);
     Record intermediateValue(RecordInterface::Variable); // for visibilities, get data first
@@ -5226,9 +5260,8 @@ ms::putdataold(const ::casac::record& items)
     Bool rstat(False);
     try {
         if(!detached()){
-            Record *myTmp = toRecord(items);
+            std::unique_ptr<Record> myTmp(toRecord(items));
             rstat = itsSel->putData(*myTmp);
-            delete myTmp;
         }
     } catch (AipsError x) {
         *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -5270,7 +5303,7 @@ ms::putdata(const ::casac::record& items)
                 return false;
             }
 
-            Record* putRecord = toRecord(items);
+            std::unique_ptr<Record> putRecord(toRecord(items));
             // check for valid fields for putdata, issue warning once
             Vector<Bool> allowed(putRecord->nfields());
             for (uInt i=0; i<putRecord->nfields(); ++i) {
@@ -5323,7 +5356,6 @@ ms::putdata(const ::casac::record& items)
                 } // else
                 rstat = true;
             }
-            delete putRecord;
         }
     } catch (AipsError x) {
         *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -5335,7 +5367,7 @@ ms::putdata(const ::casac::record& items)
 }
 
 bool ms::allowPut(String fieldname) {
-    ROMSColumns msc(*itsSelectedMS);
+    MSColumns msc(*itsSelectedMS);
     MSS::Field fld = MSS::field(fieldname);
     bool allow(true);
     switch(fld) {
@@ -6001,7 +6033,7 @@ ms::split(const std::string&      outputms,  const ::casac::variant& field,
           const std::string&      obs)
 {
     Bool rstat(false);
-    SubMS *splitter = NULL;
+    SubMS *splitter = nullptr;
     try {
         *itsLog << LogOrigin("ms", "split");
         splitter = new SubMS(*itsMS);
@@ -6054,7 +6086,7 @@ ms::split(const std::string&      outputms,  const ::casac::variant& field,
 
         *itsLog << LogIO::NORMAL2 << "SubMS made" << LogIO::POST;
         delete splitter;
-        splitter = NULL;
+        splitter = nullptr;
 
         {// Update HISTORY table of newly created MS
             String message= toCasaString(outputms) + " split from " + itsMS->tableName();
@@ -6150,7 +6182,7 @@ ms::partition(const std::string&      outputms,   const ::casac::variant& field,
 
 Vector<Int> ms::getspectralwindows() {
     // Get list of selected SPWs from DDID selection
-    ROMSColumns msc(*itsSelectedMS);
+    MSColumns msc(*itsSelectedMS);
     Vector<Int> allDDIDs = msc.dataDescId().getColumn();
     Vector<Int> allSPWs = msc.dataDescription().spectralWindowId().getColumn();
     Int n = GenSort<Int>::sort(allDDIDs, Sort::Ascending, Sort::NoDuplicates);
@@ -6205,7 +6237,7 @@ ms::iterinit(const std::vector<std::string>& columns, const double interval,
     try {
         if (!detached()) {
             // make sure we start fresh
-            if (itsVI2)         {delete itsVI2; itsVI2=NULL;}
+            if (itsVI2)         {delete itsVI2; itsVI2=nullptr;}
 
             Bool polnSelection = !polnExpr_p.empty();
             Bool chanSelection = !chanselExpr_p.empty();
@@ -6232,55 +6264,55 @@ ms::iterinit(const std::vector<std::string>& columns, const double interval,
             // Make VI2 basic layer
             bool writable = true;  // for putdata
             vi::VisIterImpl2LayerFactory viilayer(itsSelectedMS, iterpar, writable);
+            
+            // Define in-row selections with FrequencySelection class
+            // The selection has to be applied to the layer directly attached to the MS
+            if (polnSelection || (chanSelection)) {
+                auto freqSels = std::make_shared<vi::FrequencySelections>();
+                vi::FrequencySelectionUsingChannels freqSelChan;
+                if (polnSelection) {
+                    Vector<Vector<Slice>> corrslices, chanslices;
+                    mssSetData(*itsSelectedMS, *itsSelectedMS, 
+                        chanslices, corrslices, "", "", "", "", "", "", 
+                        "", polnExpr_p, "", "", "", "", 1, itsMSS);
+                    freqSelChan.addCorrelationSlices(corrslices);
+                }
+
+                if (chanSelection) {
+                    Int nchan(chansel_p[0]), start(chansel_p[1]), width(chansel_p[2]), inc(chansel_p[3]);
+                    Vector<Int> spws = getspectralwindows();
+                    for (Int chanbin=0; chanbin<nchan; ++chanbin) {
+                        for (uInt spwIdx=0; spwIdx<spws.size(); ++spwIdx) 
+                            freqSelChan.add(spws(spwIdx), start, width, 1);
+                        start += inc;
+                    }
+                }
+                freqSels->add(freqSelChan);
+                viilayer.setFrequencySelections(freqSels);
+            }
+
             Vector<vi::ViiLayerFactory*> layers(1);
             layers[0] = &viilayer;
 
+            std::unique_ptr<vi::ChannelAverageTVILayerFactory> chanavglayer(nullptr);
             // Add channel-averaging layer if requested in selectchannel 
             if (chanAverage) {
                 Record config;
                 config.define("chanbin", chansel_p[2]);
-                if (chanSelection) {
-                    String spwExpr = getSpwExpr() + chanselExpr_p;
-                    config.define("spw", spwExpr);
-                }
-                vi::ChannelAverageTVILayerFactory* chanavglayer =
-                    new vi::ChannelAverageTVILayerFactory(config);
+                chanavglayer.reset(new vi::ChannelAverageTVILayerFactory(config));
                 layers.resize(layers.size()+1, True);
-                layers[1] = chanavglayer;
+                layers[1] = chanavglayer.get();
             }
 
             // Create VI2
             itsVI2 = new vi::VisibilityIterator2(layers);
-            if (itsVI2 != NULL) {
+            if (itsVI2 != nullptr) {
                 // Apply max rows
                 if (maxrows>0) {
                     maxrows_p = True;
                     itsVI2->setRowBlocking(maxrows-1);
                 }
 
-                // Apply in-row selections with FrequencySelection class
-                // If chanavg, chan selection handled in chanavg layer;
-                if (polnSelection || (chanSelection)) {
-                    vi::FrequencySelectionUsingChannels freqSel = vi::FrequencySelectionUsingChannels();
-                    if (polnSelection) {
-                        Vector<Vector<Slice>> corrslices, chanslices;
-                        mssSetData(*itsSelectedMS, *itsSelectedMS, 
-                            chanslices, corrslices, "", "", "", "", "", "", 
-                            "", polnExpr_p, "", "", "", "", 1, itsMSS);
-                        freqSel.addCorrelationSlices(corrslices);
-                    }
-
-                    if (chanSelection) {
-                        Int nchan(chansel_p[0]), start(chansel_p[1]), width(chansel_p[2]), inc(chansel_p[3]);
-                        Vector<Int> spws = getspectralwindows();
-                        for (Int chanbin=0; chanbin<nchan; ++chanbin) {
-                            for (uInt spwIdx=0; spwIdx<spws.size(); ++spwIdx) 
-                                freqSel.add(spws(spwIdx), start, width, 1);
-                            start += inc;
-                        }
-                    }
-                    itsVI2->setFrequencySelection(freqSel);
-                }
                 rstat = true;
             }
         }
@@ -6298,7 +6330,7 @@ record* ms::statwt(
     bool slidetimebin, const casac::variant& chanbin,
     int minsamp, const string& statalg, double fence,
     const string& center, bool lside, double zscore,
-    int maxiter, const string& excludechans,
+    int maxiter, const string& fitspw, bool excludechans,
     const std::vector<double>& wtrange, bool preview,
     const string& datacolumn
 ) {
@@ -6319,12 +6351,22 @@ record* ms::statwt(
         }
         else {
             // block time processing
-            if (timebin.type() == casac::variant::INT) {
+            auto tbtype = timebin.type();
+            if (
+                tbtype == casac::variant::BOOLVEC && timebin.toBoolVec().empty()
+            ) {
+                // default for tool method since variants always come in as
+                // boolvecs even if defaults specified in the XML, Because,
+                // you know, no one apparently knows how to fix that bug which
+                // has been around for years
+                statwt.setTimeBinWidth(casacore::Quantity(0.001, "s"));
+            }
+            else if (tbtype == casac::variant::INT) {
                 auto n = timebin.toInt();
                 ThrowIf(n <= 0, "timebin must be positive");
                 statwt.setTimeBinWidthUsingInterval(timebin.touInt());
             }
-            else {
+            else if (tbtype == casac::variant::STRING){
                 casacore::Quantity myTimeBin = casaQuantity(timebin);
                 if (myTimeBin.getUnit().empty()) {
                     myTimeBin.setUnit("s");
@@ -6333,6 +6375,9 @@ record* ms::statwt(
                     myTimeBin.setValue(1e-5);
                 }
                 statwt.setTimeBinWidth(myTimeBin);
+            }
+            else {
+                ThrowCc("Unsupported type for timebin, must be int or string");
             }
         }
         statwt.setCombine(combine);
@@ -6349,6 +6394,7 @@ record* ms::statwt(
         tviConfig["lside"] = lside;
         tviConfig["zscore"] = zscore;
         tviConfig["maxiter"] = maxiter;
+        tviConfig["fitspw"] = fitspw;
         tviConfig["excludechans"] = excludechans;
         tviConfig["wtrange"] = wtrange;
         tviConfig["datacolumn"] = datacolumn;
@@ -6490,7 +6536,7 @@ ms::iterend()
         if(!detached())
             if (itsVI2) {
                 delete itsVI2;
-                itsVI2 = NULL;
+                itsVI2 = nullptr;
             }
             rstat = true;
     } catch (AipsError x) {
@@ -6849,7 +6895,7 @@ Bool ms::doMSSelection(const ::casac::record& exprs, const bool onlyparse)
 	Bool retVal=false;
 	try
 	{
-		Record *casaRec = toRecord(exprs);
+		std::unique_ptr<Record> casaRec(toRecord(exprs));
 		String spwExpr, timeExpr, fieldExpr, baselineExpr, scanExpr, scanIntentExpr,
 			polnExpr, uvDistExpr, obsExpr, arrayExpr, taQLExpr;
 		Int nFields = casaRec->nfields();
@@ -7061,7 +7107,7 @@ ms::addephemcol(const casacore::MeasurementSet& appendedMS)
     if(!itsMS->field().actualTableDesc().isColumn(MSField::columnName(MSField::EPHEMERIS_ID))){
         // if not, test if the other MS uses ephem objects
         Bool usesEphems = false;
-        const ROMSFieldColumns otherFldCol(appendedMS.field());
+        const MSFieldColumns otherFldCol(appendedMS.field());
         for(uInt i=0; i<otherFldCol.nrow(); i++){
             if(!otherFldCol.ephemPath(i).empty()){
                 usesEphems = true;
@@ -7107,7 +7153,7 @@ ms::niterinit(const std::vector<std::string>& /*columns*/, const double interval
     sort[0]=MS::TIME;
     try
     {
-        if (itsVI == NULL)
+        if (itsVI == nullptr)
             itsVI = new VisibilityIterator(*itsMS, sort, adddefaultsortcolumns, interval);
         else
             *itsVI = VisibilityIterator(*itsMS, sort, adddefaultsortcolumns, interval);
@@ -7210,7 +7256,7 @@ ms::ngetdata(const std::vector<std::string>& items, const bool /*ifraxis*/, cons
 
     try
     {
-        if (itsVI == NULL)
+        if (itsVI == nullptr)
             niterinit(items,0.0,0,false);
         // if (doingIterations_p == false)
         //  niterorigin();

@@ -117,7 +117,7 @@ namespace casa
       casacore::Double nearestValue(const casacore::Vector<casacore::Double>& list, const casacore::Double& val, casacore::Int& index);
       
       template <class T>
-      T stdNearestValue(const vector<T>& list, const T& val, casacore::Int& index);
+      T stdNearestValue(const std::vector<T>& list, const T& val, casacore::Int& index);
       
       casacore::CoordinateSystem makeUVCoords(casacore::CoordinateSystem& imageCoordSys,
 				    casacore::IPosition& shape);
@@ -135,6 +135,7 @@ namespace casa
       
       void showCS(const casacore::CoordinateSystem& cs, std::ostream& os, const casacore::String& msg=casacore::String());
       const casacore::Array<casacore::Complex> getCFPixels(const casacore::String& Dir, const casacore::String& fileName);
+      const casacore::IPosition getCFShape(const casacore::String& Dir, const casacore::String& fileName);
 
       void rotate2(const double& actualPA, CFCell& baseCFC, CFCell& cfc, const double& rotAngleIncr);
       

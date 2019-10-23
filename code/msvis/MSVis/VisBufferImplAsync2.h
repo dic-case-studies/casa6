@@ -180,7 +180,7 @@ private:
     casacore::Vector<casacore::Double>                 lsrFrequency_p; // calculated by getTopoFreqs if velSelection_p
     casacore::MEpoch                         mEpoch_p;
     const casacore::MeasurementSet *         measurementSet_p;  // [use]
-    mutable casacore::ROMSColumns *          msColumns_p; // [own]
+    mutable casacore::MSColumns *          msColumns_p; // [own]
     casacore::MSDerivedValues *              msd_p; // [own]
     casacore::Int                            nAntennas_p;
     casacore::Int                            nCoh_p;
@@ -189,7 +189,7 @@ private:
     casacore::Bool                           newSpectralWindow_p;
     casacore::Int                            nRowChunk_p;
     casacore::Int                            nSpw_p;
-    //const casacore::ROScalarColumn<casacore::Int> *    obsMFreqTypes_p; // [use]
+    //const casacore::ScalarColumn<casacore::Int> *    obsMFreqTypes_p; // [use]
     casacore::MPosition                      observatoryPosition_p;
     mutable casacore::Vector<casacore::Float>          parangCached_p;      // mutable because it is a cached value
     mutable casacore::Double                 parangCachedTime_p;  // mutable because it is a cached value

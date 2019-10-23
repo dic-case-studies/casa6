@@ -50,6 +50,10 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             return data_path;
         }
 
+        virtual std::string pythonPath( ) const {
+            return python_path;
+        }
+
         void clearDataPath( ) {
             // protect critical section...
             std::lock_guard<std::mutex> guard(data_path_mutex);
@@ -83,13 +87,19 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
                             } );
         }
 
+        void setPythonPath(const std::string &pypath) {
+            // protect critical section...
+            std::lock_guard<std::mutex> guard(data_path_mutex);
+            python_path = pypath;
+        }
+
         // get map of registrations
         std::list<ServiceId> services( ) { return registrar.services( ); }
         // returns true if a registration for 'id' was found
         bool removeService( std::string id ) { return registrar.remove(id); }
         // returns assigned identifier (likely based upon the proposed_id)
-        ServiceId addService( std::string proposed_id, std::string type, std::string uri ) {
-            return registrar.add(ServiceId(proposed_id, type, uri));
+        ServiceId addService( std::string proposed_id, std::string uri, const std::list<std::string> &types ) {
+            return registrar.add(ServiceId(proposed_id, uri, types));
         }
         ServiceId addService( const ServiceId &new_service ) {
             return registrar.add(new_service);
@@ -106,6 +116,7 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
       private:
         std::mutex data_path_mutex;
         std::list<std::string> data_path;
+        std::string python_path;
         Registrar registrar;
     };
 

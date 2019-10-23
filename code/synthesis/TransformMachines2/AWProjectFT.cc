@@ -55,9 +55,9 @@
 
 #include <synthesis/TransformMachines2/ATerm.h>
 #include <synthesis/TransformMachines2/NoOpATerm.h>
+#include <synthesis/TransformMachines2/PhaseGrad.h>
 #include <synthesis/TransformMachines2/AWConvFunc.h>
 #include <synthesis/TransformMachines2/EVLAAperture.h>
-#include <synthesis/TransformMachines2/AWConvFuncEPJones.h>
 
 //#define CONVSIZE (1024*2)
 // #define OVERSAMPLING 2
@@ -113,19 +113,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   ATerm* AWProjectFT::createTelescopeATerm(const String& telescopeName, const Bool& isATermOn)
   {
-    LogIO os(LogOrigin("AWProjectFT2", "createTelescopeATerm",WHERE));
     
     if (!isATermOn) return new NoOpATerm();
     
-    // ROMSObservationColumns msoc(ms.observation());
+    // MSObservationColumns msoc(ms.observation());
     // String ObsName=msoc.telescopeName()(0);
     if ((telescopeName == "EVLA") || (telescopeName == "VLA"))
       return new EVLAAperture();
     else
       {
+	LogIO os(LogOrigin("AWProjectFT2", "createTelescopeATerm",WHERE));
 	os << "Telescope name ('"+
 	  telescopeName+"') in the MS not recognized to create the telescope specific ATerm" 
-	   << LogIO::WARN;
+	   << LogIO::EXCEPTION;
       }
     
     return NULL;
@@ -135,7 +135,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 							    const Bool aTermOn,
 							    const Bool psTermOn,
 							    const Bool wTermOn,
-							    const Bool mTermOn,
+							    const Bool,// mTermOn,
 							    const Bool wbAWP,
 							    const Bool conjBeams)
   {
@@ -156,10 +156,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     CountedPtr<ConvolutionFunction> awConvFunc;
     //    awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm, !wbAWP);
     //if ((ftmName=="mawprojectft") || (mTermOn))
-    if (mTermOn)
-      awConvFunc = new AWConvFuncEPJones(apertureFunction,psTerm,wTerm,wbAWP, conjBeams);
-    else
-      awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP, conjBeams);
+
+    awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP, conjBeams);
     return awConvFunc;
   }
   //
@@ -171,14 +169,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       gridder(0), isTiled(false), arrayLattice( ), lattice( ), 
       maxAbsData(0.0), centerLoc(IPosition(4,0)), offsetLoc(IPosition(4,0)),
       pointingToImage(0), usezero_p(false),
-      // convFunc_p(), convWeights_p(),
       epJ_p(),
       doPBCorrection(true), conjBeams_p(true),/*cfCache_p(cfcache),*/ paChangeDetector(),
       rotateOTFPAIncr_p(0.1),
       Second("s"),Radian("rad"),Day("d"), pbNormalized_p(false), paNdxProcessed_p(),
       visResampler_p(), sensitivityPatternQualifier_p(-1),sensitivityPatternQualifierStr_p(""),
-      rotatedConvFunc_p(),//cfs2_p(), cfwts2_p(), 
-      runTime1_p(0.0), previousSPWID_p(-1)
+    rotatedConvFunc_p(),
+    runTime1_p(0.0),phaseGrad_p(), previousSPWID_p(-1), self_p(), vb2CFBMap_p()
   {
     //    convSize=0;
     tangentSpecified_p=false;
@@ -208,6 +205,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     pop_p->init();
     CFBuffer::initCFBStruct(cfbst_pub);
     //    rotatedConvFunc_p.data=new Array<Complex>();    
+    //    self_p.reset(this);
+    vb2CFBMap_p = new VB2CFBMap();
   }
   //
   //---------------------------------------------------------------
@@ -236,7 +235,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       rotateOTFPAIncr_p(0.1),
       Second("s"),Radian("rad"),Day("d"), pbNormalized_p(false),
       visResampler_p(visResampler), sensitivityPatternQualifier_p(-1),sensitivityPatternQualifierStr_p(""),
-      rotatedConvFunc_p(), runTime1_p(0.0),  previousSPWID_p(-1)
+    rotatedConvFunc_p(), runTime1_p(0.0),  previousSPWID_p(-1),self_p(), vb2CFBMap_p()
   {
     //convSize=0;
     tangentSpecified_p=false;
@@ -271,20 +270,22 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //    rotatedConvFunc_p.data=new Array<Complex>();
     CFBuffer::initCFBStruct(cfbst_pub);
     muellerType_p = muellerType;
+    //    self_p.reset(this);
+    vb2CFBMap_p = new VB2CFBMap();
   }
   //
   //---------------------------------------------------------------
   //
   AWProjectFT::AWProjectFT(const RecordInterface& stateRec)
-    : FTMachine(),Second("s"),Radian("rad"),Day("d"),visResampler_p()//, cfs2_p(), cfwts2_p()
+    : FTMachine(),Second("s"),Radian("rad"),Day("d"),visResampler_p(), self_p(), vb2CFBMap_p()
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "AWProjectFT[R&D]"));
     //
     // Construct from the input state record
     //
     String error;
     
     if (!fromRecord(stateRec)) {
+      LogIO log_l(LogOrigin("AWProjectFT2", "AWProjectFT[R&D]"));
       log_l << "Failed to create " << name() << " object." << LogIO::EXCEPTION;
     };
     maxConvSupport=-1;
@@ -298,6 +299,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	cfwts2_p =  CountedPtr<CFStore2>(&cfCache_p->memCacheWt2_p[0],false);//new CFStore2;
       }
     pop_p->init();
+    //    self_p.reset(this);
+    vb2CFBMap_p = new VB2CFBMap();
   }
   //
   //----------------------------------------------------------------------
@@ -412,6 +415,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	runTime1_p = other.runTime1_p;
 	muellerType_p = other.muellerType_p;
 	previousSPWID_p = other.previousSPWID_p;
+	vb2CFBMap_p = other.vb2CFBMap_p;
+	//	self_p = other.self_p;
       };
     return *this;
   };
@@ -567,7 +572,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					Array<Float> &m_off,
 					Bool Evaluate)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "findPointingOffsets[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "findPointingOffsets[R&D]"));
     Int NAnt = 0;
     MEpoch LAST;
     Double thisTime = getCurrentTimeStamp(vb);
@@ -686,7 +691,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					Array<Float> &m_off,
 					Bool Evaluate)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "findPointingOffsets[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "findPointingOffsets[R&D]"));
     Int NAnt = 0;
     //Float tmp;
     // TBD: adapt the following to VisCal mechanism:
@@ -952,7 +957,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void AWProjectFT::makeCFPolMap(const VisBuffer2& vb, const Vector<Int>& locCfStokes,
 				 Vector<Int>& polM)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "makeCFPolMap[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "makeCFPolMap[R&D]"));
     //    Vector<Int> msStokes = vb.corrType();
     // cerr << "Using vb2.correlationTypes() in place of vb.corrType(): AWPFT.cc:954" << endl;
     Vector<Int> msStokes = vb.correlationTypes();
@@ -1148,7 +1153,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void AWProjectFT::findConvFunction(const ImageInterface<Complex>& image,
 				     const VisBuffer2& vb)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "findConvFunction[R&D]"));
     if (!paChangeDetector.changed(vb,0)) return;
     Int cfSource=CFDefs::NOTCACHED;
     CoordinateSystem ftcoords;
@@ -1164,12 +1168,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     lastPAUsedForWtImg = currentCFPA = pa;
 
-    Vector<Double> pointingOffset(convFuncCtor_p->findPointingOffset(image,vb));
+    Vector<Vector<Double> > pointingOffset(convFuncCtor_p->findPointingOffset(image,vb, doPointing));
     Float dPA = paChangeDetector.getParAngleTolerance().getValue("rad");
     Quantity dPAQuant = Quantity(paChangeDetector.getParAngleTolerance());
-    cfSource = visResampler_p->makeVBRow2CFMap(*cfs2_p,*convFuncCtor_p, vb,
-					       dPAQuant,
-					       chanMap,polMap,pointingOffset);
+    // cfSource = visResampler_p->makeVBRow2CFBMap(*cfs2_p,
+    // 						*convFuncCtor_p, 
+    // 						vb,
+    // 					       dPAQuant,
+    // 					       chanMap,polMap,pointingOffset);
+    vb2CFBMap_p->setDoPointing(doPointing);
+    cfSource = vb2CFBMap_p->makeVBRow2CFBMap(*cfs2_p,
+						vb,
+						dPAQuant,
+						chanMap,polMap,pointingOffset);
 
     if (cfSource == CFDefs::NOTCACHED)
       {
@@ -1265,6 +1276,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	String unit(" KB");
 	memUsed = (Int)(memUsed/1024.0+0.5);
 	if (memUsed > 1024) {memUsed /=1024; unit=" MB";}
+
+	LogIO log_l(LogOrigin("AWProjectFT2", "findConvFunction[R&D]"));
 	log_l << "Convolution function memory footprint:" 
 	      << (Int)(memUsed) << unit << " out of a maximum of "
 	      << HostInfo::memoryTotal(true)/1024 << " MB" << LogIO::POST;
@@ -1531,8 +1544,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   //
   void AWProjectFT::finalizeToVis()
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "finalizeToVis[R&D]"));
-    
     //    cerr << "De-gridding run time = " << visResampler_p->runTimeDG_p << endl;
     visResampler_p->runTimeDG_p=0.0;
 
@@ -1547,6 +1558,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	ostringstream o;
 	imageCache->flush();
 	imageCache->showCacheStatistics(o);
+
+	LogIO log_l(LogOrigin("AWProjectFT2", "finalizeToVis[R&D]"));
 	log_l << o.str() << LogIO::POST;
       }
     if(pointingToImage) delete pointingToImage; pointingToImage=0;
@@ -1561,7 +1574,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				     Matrix<Float>& weight,
 				     const VisBuffer2& vb)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "initializeToSky[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "initializeToSky[R&D]"));
     
     // image always points to the image
     image=&iimage;
@@ -1628,7 +1641,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // Now we flush the cache and report statistics For memory based,
     // we don't write anything out yet.
     //
-    LogIO log_l(LogOrigin("AWProjectFT2", "finalizeToSky[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "finalizeToSky[R&D]"));
 
     if(isTiled) 
       {
@@ -1637,7 +1650,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	imageCache->flush();
 	ostringstream o;
 	imageCache->showCacheStatistics(o);
-	log_l << o.str() << LogIO::POST;
+	//	log_l << o.str() << LogIO::POST;
       }
     if(pointingToImage) delete pointingToImage; pointingToImage=0;
 
@@ -1672,7 +1685,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     void AWProjectFT::put(const VisBuffer2& vb, Int /*row*/, Bool dopsf,
 			FTMachine::Type type)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "put[R&D]"));
     // Take care of translation of Bools to Integer
     makingPSF=dopsf;
     
@@ -1682,6 +1694,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
     catch(AipsError& x)
       {
+	LogIO log_l(LogOrigin("AWProjectFT2", "put[R&D]"));
 	log_l << x.getMesg() << LogIO::WARN;
 	return;
       }
@@ -1689,18 +1702,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     Nant_p     = vb.subtableColumns().antenna().nrow();
 
-    const Matrix<Float> *imagingweight;
-    imagingweight=&(vb.imagingWeight());
+    //const Matrix<Float> *imagingweight;
+    //imagingweight=&(vb.imagingWeight());
+    Matrix<Float> imagingweight;
+    getImagingWeight(imagingweight, vb);
 
     Cube<Complex> data;
     //Fortran gridder need the flag as ints 
     Cube<Int> flags;
     Matrix<Float> elWeight;
-    interpolateFrequencyTogrid(vb, *imagingweight,data, flags, elWeight, type);
 
-    Int NAnt;
-    if (doPointing) NAnt = findPointingOffsets(vb,l_offsets,m_offsets,true);
-    NAnt=NAnt;  // Dummy statement to supress complier warnings and will be used when pointing offsets are used.
+    interpolateFrequencyTogrid(vb, imagingweight,data, flags, elWeight, type);
+    // nAnt set but not used
+    // Int NAnt;
+    // if (doPointing) NAnt = findPointingOffsets(vb,l_offsets,m_offsets,true);
     //
     // If row is -1 then we pass through all rows
     //
@@ -1783,7 +1798,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void AWProjectFT::resampleDataToGrid(Array<Complex>& griddedData_l, VBStore& vbs, 
 				       const VisBuffer2& /*vb*/, Bool& dopsf)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "resampleDataToGrid[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "resampleDataToGrid[R&D]"));
     visResampler_p->DataToGrid(griddedData_l, vbs, sumWeight, dopsf); 
     //    cerr << "####SumWt(C): " << sumWeight << endl;
   }
@@ -1793,7 +1808,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void AWProjectFT::resampleDataToGrid(Array<DComplex>& griddedData_l, VBStore& vbs, 
 				       const VisBuffer2& /*vb*/, Bool& dopsf)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "resampleDataToGridD[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "resampleDataToGridD[R&D]"));
     visResampler_p->DataToGrid(griddedData_l, vbs, sumWeight, dopsf); 
     //    cerr << "####SumWt(DC): " << sumWeight << endl;
   }
@@ -1802,7 +1817,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   //
   void AWProjectFT::get(VisBuffer2& vb, Int /*row*/)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "get[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "get[R&D]"));
     // If row is -1 then we pass through all rows
 
     //------COMMON FROM HERE
@@ -1825,9 +1840,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     findConvFunction(*image, vb);
     
     Nant_p     = vb.subtableColumns().antenna().nrow();
-    Int NAnt=0;
-    if (doPointing)   NAnt = findPointingOffsets(vb,l_offsets,m_offsets,true);
-    NAnt=NAnt;  // Dummy statement to supress complier warnings and will be used when pointing offsets are used.
+    // NAnt set but not used
+    // Int NAnt=0;
+    // if (doPointing)   NAnt = findPointingOffsets(vb,l_offsets,m_offsets,true);
     
     // Get the uvws in a form that Fortran can use
     Matrix<Double> uvw(negateUV(vb));
@@ -1901,7 +1916,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void AWProjectFT::resampleGridToData(VBStore& vbs, Array<Complex>& griddedData_l,
 				       const VisBuffer2& /*vb*/)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "resampleGridToData[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "resampleGridToData[R&D]"));
     //    Timer tim;
     //    tim.mark();
     visResampler_p->GridToData(vbs, griddedData_l);
@@ -2038,11 +2053,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
       }
 
-    // {
-    //   // TempImage<Complex> tt(lattice->shape(), image->coordinates());
-    //   // tt.put(lattice->get());
-    //   storeImg(String("uvgrid.im"), *image);
-    // }
+    {
+      // TempImage<Complex> tt(lattice->shape(), image->coordinates());
+      // tt.put(lattice->get());
+      //storeImg(String("uvgrid.im"), *image);
+    }
 
     return *image;
   }
@@ -2053,7 +2068,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void AWProjectFT::getWeightImage(ImageInterface<Float>& weightImage,
 				   Matrix<Float>& weights) 
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "getWeightImage[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "getWeightImage[R&D]"));
     
     weights.resize(sumWeight.shape());
     convertArray(weights,sumWeight);
@@ -2065,8 +2080,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int nx=latticeShape(0);
     Int ny=latticeShape(1);
     
-    IPosition loc(2, 0);
-    IPosition cursorShape(4, nx, ny, 1, 1);
+    IPosition cursorShape(4, nx, ny, latticeShape(2), latticeShape(3));
     IPosition axisPath(4, 0, 1, 2, 3);
     LatticeStepper lsx(latticeShape, cursorShape, axisPath);
     LatticeIterator<Float> lix(weightImage, lsx);
@@ -2078,16 +2092,27 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	//lix.rwCursor()=weights(pol,chan);
 	lix.rwCursor()=liy.rwCursor();
       }
+
+    // {
+    //   String name("wtim.im");
+    //   storeImg(name,weightImage);
+    //   String nameavgpb("avgpb.im");
+    //   storeImg(nameavgpb,*avgPB_p);
+    // }
   }
   //
   //---------------------------------------------------------------
   //
   Bool AWProjectFT::toRecord(RecordInterface& outRec, Bool withImage) 
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "toRecord[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "toRecord[R&D]"));
     
     // Save the current AWProjectFT object to an output state record
     Bool retval = true;
+    String error;
+    //save the base class variables
+    if(!FTMachine::toRecord(error, outRec, withImage, ""))
+      return false;
     Double cacheVal=(Double) cachesize;
     outRec.define("cache", cacheVal);
     outRec.define("tile", tilesize);
@@ -2134,9 +2159,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   //
   Bool AWProjectFT::fromRecord(const RecordInterface& inRec)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "fromRecord[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "fromRecord[R&D]"));
 
     Bool retval = true;
+    String error;
+    if(!FTMachine::fromRecord(error, inRec))
+      return false;
     imageCache=0; lattice=0; arrayLattice=0;
     Double cacheVal;
     inRec.get("cache", cacheVal);
@@ -2388,7 +2416,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				 const Bool& dopsf,
 				 const Vector<Int>& /*gridShape*/)
   {
-    LogIO log_l(LogOrigin("AWProjectFT2", "setupVBStore[R&D]"));
+    //    LogIO log_l(LogOrigin("AWProjectFT2", "setupVBStore[R&D]"));
 
     //    Vector<Int> ConjCFMap, CFMap;
 
@@ -2434,14 +2462,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     vbs.flagCube_p.resize(flagCube.shape());  vbs.flagCube_p = false; vbs.flagCube_p(flagCube!=0) = true;
     vbs.conjBeams_p=conjBeams_p;
 
-    timer_p.mark();
+    //timer_p.mark();
 
-    Vector<Double> pointingOffset(convFuncCtor_p->findPointingOffset(*image, vb));
+    Vector<Vector<Double> >pointingOffset(convFuncCtor_p->findPointingOffset(*image, vb, doPointing));
     if (makingPSF){
       cfwts2_p->invokeGC(vbs.spwID_p);
-      visResampler_p->makeVBRow2CFMap(*cfwts2_p,*convFuncCtor_p, vb,
+      vb2CFBMap_p->setDoPointing(doPointing);
+      vb2CFBMap_p->makeVBRow2CFBMap(*cfwts2_p,
+				      vb,
 				      paChangeDetector.getParAngleTolerance(),
 				      chanMap,polMap,pointingOffset);
+      // visResampler_p->makeVBRow2CFBMap(*cfwts2_p,*convFuncCtor_p, vb,
+      // 				      paChangeDetector.getParAngleTolerance(),
+      // 				      chanMap,polMap,pointingOffset);
     }
     else
       {
@@ -2462,22 +2495,52 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 
 	cfs2_p->invokeGC(vbs.spwID_p);
-      visResampler_p->makeVBRow2CFMap(*cfs2_p,*convFuncCtor_p, vb,
-				      paChangeDetector.getParAngleTolerance(),
-				      chanMap,polMap,pointingOffset);
+	vb2CFBMap_p->setDoPointing(doPointing);
+	vb2CFBMap_p->makeVBRow2CFBMap(*cfs2_p, vb,
+				       paChangeDetector.getParAngleTolerance(),
+				       chanMap,polMap,pointingOffset);
+
+      // visResampler_p->makeVBRow2CFBMap(*cfs2_p,*convFuncCtor_p, vb,
+      // 				      paChangeDetector.getParAngleTolerance(),
+      // 				      chanMap,polMap,pointingOffset);
 
       }
-    //    VBRow2CFMapType theMap(visResampler_p->getVBRow2CFMap());
-    VBRow2CFBMapType& theMap=visResampler_p->getVBRow2CFBMap();
+
+    //    VB2CFBMap& theMap=visResampler_p->getVBRow2CFBMap();
+    // 
+    // Trigger the computation of phase gradiant corresponding to the
+    // field offset (from the VB) w.r.t. the image phase center.
+    //
+    {
+      // Vector<int> maxCFShape(2), convOrigin(2);
+      // maxCFShape[0] = maxCFShape[1] = theMap[0]->getMaxCFSize();
+      // cerr << maxCFShape << endl;
+      // double dummyCFFreq, dummyIMFreq;
+      // int vbSpw = vb.spectralWindows()(0);
+      // int vbFieldID = -1;//((const Int)((vbs.vb_p)->fieldId()(0)));
+
+      // convOrigin = maxCFShape/2;
+      // if (phaseGrad_p.ComputeFieldPointingGrad(pointingOffset,
+      // 					       maxCFShape,
+      // 					       convOrigin,
+      // 					       dummyCFFreq,
+      // 					       dummyIMFreq,
+      // 					       vbSpw, vbFieldID))
+      
+
+      // WRONG --  WE NEED NOT CALL THIS.  DELETE THIS?
+      //      vb2CFBMap_p->phaseGradCalculator_p->ComputeFieldPointingGrad(pointingOffset,(*vb2CFBMap_p)[0],vb,0);
+
+      // visResampler_p->setFieldPhaseGrad(vb2CFBMap_p->phaseGrad_p->getFieldPointingGrad());
+
+      // if (phaseGrad_p.ComputeFieldPointingGrad(pointingOffset,(*vb2CFBMap_p)[0],vb))
+      // 	visResampler_p->setFieldPhaseGrad(phaseGrad_p.getFieldPointingGrad());
+    }
     //
     // For AzElApertures, this rotates the CFs.
     //
-    convFuncCtor_p->prepareConvFunction(vb,theMap);
+    convFuncCtor_p->prepareConvFunction(vb,*vb2CFBMap_p);
     
-    
-    //    CFBStruct cfbst_pub;
-    //UUU    theMap[0]->getAsStruct(cfbst_pub);
-    //UUU    vbs.cfBSt_p=cfbst_pub;
     vbs.accumCFs_p=((vbs.uvw_p.nelements() == 0) && dopsf);
     
     
@@ -2492,6 +2555,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // 		 << cfcst.ySupport 
     // 		 << endl;
     // 	  }
+    visResampler_p->setVB2CFMap(vb2CFBMap_p);
 
     
     // The following code is required only for GPU or multi-threaded
@@ -2501,9 +2565,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //
     //makeThGridCoords(vbs,gridShape);
 
-    runTime1_p += timer_p.real();
+    //runTime1_p += timer_p.real();
     visResampler_p->initializeDataBuffers(vbs);
-    //    visResampler_p->setConvFunc(cfs_p);
   }
 
   //

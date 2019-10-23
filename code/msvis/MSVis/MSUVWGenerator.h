@@ -173,9 +173,8 @@ private:
 
   // casacore::Coordinate system selectors.
   casacore::MBaseline::Ref bl_csys_p;
-  casacore::Muvw::Types    uvw_csys_p;
   
-  const casacore::ROMSAntennaColumns& antColumns_p;
+  const casacore::MSAntennaColumns& antColumns_p;
 
   // The antenna positions of ms_p in ITRF.  It cannot be const because of the
   // need to update satellite positions.
@@ -203,7 +202,7 @@ private:
   casacore::MPosition refpos_p;
   
   // Ditto for feed.
-  //const casacore::ROMSFeedColumns *feedColumns_;
+  //const casacore::MSFeedColumns *feedColumns_;
 
   // The offset between the feed and the phase reference point of each antenna
   // in the same frame as ant_offsets.  Therefore the feed position is
@@ -241,8 +240,7 @@ private:
   casacore::Vector<casacore::Vector<casacore::Double> > antUVW_p;
 
   // the 3 fundamental attributes of the state machine
-  casacore::Double                timeCentroid_p;
-  casacore::ROArrayColumn<casacore::Double> phaseDir_p; 
+  casacore::ArrayColumn<casacore::Double> phaseDir_p; 
   //casacore::Int                   subarrayId_p;
 
   // The number of wavelengths by which a feed may move relative to the
@@ -282,10 +280,8 @@ private:
   // errors.  The latter effect is often neglected, and the offsets are written
   // as sets of zeroes, even though they really are not.
   //
-  casacore::Double offset_tolerance;
   
   // 
-  casacore::Bool   adj_uvw_for_ptg_err;
 };
   
 } //# NAMESPACE CASA - END

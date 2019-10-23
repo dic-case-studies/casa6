@@ -1,9 +1,21 @@
 
+from __future__ import absolute_import
 import os
 import shutil
-from taskinit import *
-from parallel.parallel_data_helper import ParallelDataHelper
 
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import mstransformer as mttool
+    from casatools import ms as mstool
+    from casatools import table as tbtool
+    from casatasks import casalog
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from .mstools import write_history
+else:
+    from taskinit import casalog, mttool, tbtool, mstool
+    from mstools import write_history
+    from parallel.parallel_data_helper import ParallelDataHelper
 
 def cvel2(
     vis,
@@ -38,6 +50,12 @@ def cvel2(
         class, implemented in parallel.parallel_data_helper.py. 
     """
 
+    if is_CASA6:
+        assert outputvis != '', "Must provide output data set name in parameter outputvis."
+        assert not os.path.exists(outputvis), "Output MS %s already exists - will not overwrite." % outputvis
+        assert not os.path.exists(outputvis+".flagversions"), \
+            "The flagversions \"%s.flagversions\" for the output MS already exist. Please delete." % outputvis
+
     # Initialize the helper class  
     pdh = ParallelDataHelper("cvel2", locals()) 
 
@@ -46,35 +64,34 @@ def cvel2(
     # Validate input and output parameters
     try:
         pdh.setupIO()
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('%s'%instance,'ERROR')
         return False
 
     # Input vis is an MMS
-    if pdh.isParallelMS(vis) and keepmms:
+    if pdh.isMMSAndNotServer(vis) and keepmms:
         
         status = True   
         
         # Work the heuristics of combinespws=True and the separationaxis of the input             
         retval = pdh.validateInputParams()
         if not retval['status']:
-            raise Exception, 'Unable to continue with MMS processing'
+            raise Exception('Unable to continue with MMS processing')
                         
         pdh.setupCluster('cvel2')
 
         # Execute the jobs
         try:
             status = pdh.go()
-        except Exception, instance:
+        except Exception as instance:
             casalog.post('%s'%instance,'ERROR')
             return status
                            
         return status
 
 
-    # Create local copy of the MSTransform tool
+    # Create local copy of the MSTransform and table tools
     mtlocal = mttool()
-
     tblocal = tbtool()
 
     try:
@@ -134,7 +151,7 @@ def cvel2(
             
         mtlocal.done()
 
-    except Exception, instance:
+    except Exception as instance:
         mtlocal.done()
         casalog.post('%s'%instance,'ERROR')
         return False
@@ -142,13 +159,16 @@ def cvel2(
     # Write history to output MS, not the input ms.
     try:
         mslocal = mstool()
-        param_names = cvel2.func_code.co_varnames[:cvel2.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        param_names = cvel2.__code__.co_varnames[:cvel2.__code__.co_argcount]
+        if is_python3:
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
         write_history(mslocal, outputvis, 'cvel2', param_names,
                       param_vals, casalog)
-    except Exception, instance:
-        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                     'WARN')
+    except Exception as instance:
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
         return False
 
     mslocal = None

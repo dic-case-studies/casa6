@@ -39,7 +39,6 @@ from taskinit import *
 
 # Enable benchmarking?
 benchmarking = True
-usedasync = False
 
 # The testdir where all output files will be kept
 testdir='nf_regression/'

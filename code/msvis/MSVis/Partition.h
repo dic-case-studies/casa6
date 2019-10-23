@@ -41,7 +41,7 @@
 #ifndef MSVIS_PARTITION_H
 namespace casacore{
 
-template<class T> class ROArrayColumn;
+template<class T> class ArrayColumn;
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -176,14 +176,14 @@ private:
   casacore::Bool fillAccessoryMainCols();
 
   // *** Private member functions ***
-  casacore::Bool getDataColumn(casacore::ROArrayColumn<casacore::Complex>& data,
+  casacore::Bool getDataColumn(casacore::ArrayColumn<casacore::Complex>& data,
                      const casacore::MS::PredefinedColumns colName);
-  casacore::Bool getDataColumn(casacore::ROArrayColumn<casacore::Float>& data,
+  casacore::Bool getDataColumn(casacore::ArrayColumn<casacore::Float>& data,
                      const casacore::MS::PredefinedColumns colName);
-  casacore::Bool putDataColumn(casacore::MSColumns& msc, casacore::ROArrayColumn<casacore::Complex>& data,
+  casacore::Bool putDataColumn(casacore::MSColumns& msc, casacore::ArrayColumn<casacore::Complex>& data,
                      const casacore::MS::PredefinedColumns datacol,
                      const casacore::Bool writeToDataCol=false);
-  casacore::Bool putDataColumn(casacore::MSColumns& msc, casacore::ROArrayColumn<casacore::Float>& data,
+  casacore::Bool putDataColumn(casacore::MSColumns& msc, casacore::ArrayColumn<casacore::Float>& data,
                      const casacore::MS::PredefinedColumns datacol,
                      const casacore::Bool writeToDataCol=false);
 
@@ -210,7 +210,7 @@ private:
   //  * not necessarily to anything useful.
   casacore::MeasurementSet ms_p, mssel_p;
   casacore::MSMainColumns * msc_p;		// columns of msOut_p
-  casacore::ROMSColumns * mscIn_p;
+  casacore::MSColumns * mscIn_p;
   casacore::Bool   antennaSel_p;		// Selecting by antenna?
   casacore::Double timeBin_p;
   casacore::String scanString_p,          // Selects scans by #number#.  Historically named.

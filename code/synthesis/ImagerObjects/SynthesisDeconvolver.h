@@ -99,10 +99,12 @@ class SynthesisDeconvolver
   void setStartingModel();
   casacore::Bool setupMask();
   void setAutoMask();
-
+  void checkRestoringBeam();
+  ////return estimate of memory usage in kB
+  casacore::Long estimateRAM(const std::vector<int>& imsize);
 protected:
 
-  SHARED_PTR<SIImageStore> makeImageStore( casacore::String imagename );
+  std::shared_ptr<SIImageStore> makeImageStore( casacore::String imagename );
   /*
   void findMinMax(const casacore::Array<casacore::Float>& lattice,
 					const casacore::Array<casacore::Float>& mask,
@@ -126,10 +128,10 @@ protected:
 
   /////////////// Member Objects
 
-  SHARED_PTR<SDAlgorithmBase> itsDeconvolver;
-  SHARED_PTR<SDMaskHandler> itsMaskHandler;
+  std::shared_ptr<SDAlgorithmBase> itsDeconvolver;
+  std::shared_ptr<SDMaskHandler> itsMaskHandler;
 
-  SHARED_PTR<SIImageStore> itsImages;
+  std::shared_ptr<SIImageStore> itsImages;
 
   casacore::IPosition itsImageShape;
   
@@ -146,6 +148,8 @@ protected:
 
   casacore::uInt itsDeconvolverId;
   casacore::Vector<casacore::Float> itsScales;
+
+  casacore::String itsUseBeam;
 
   ///// for mask
   casacore::String itsMaskType;
@@ -173,7 +177,9 @@ protected:
   casacore::Bool itsDoGrowPrune;
   casacore::Float  itsMinPercentChange;
   casacore::Bool itsVerbose;  
+  casacore::Bool itsFastNoise;  
   casacore::Vector<casacore::Bool> itsChanFlag;
+  casacore::Record itsRobustStats;
   casacore::Bool initializeChanMaskFlag; 
   casacore::TempImage<casacore::Float> itsPosMask;
   

@@ -47,7 +47,7 @@ StatWtTVI::StatWtTVI(ViImplementation2 * inputVii, const Record &configuration)
 	// associated with the object itself is cleaned up there is no memory leak.
     ThrowIf(
         ! _parseConfiguration(configuration),
-	    "Error parsing StatWtTVI configuration"
+        "Error parsing StatWtTVI configuration"
     );
     // FIXME when the TVI framework has methods to
     // check for metadata, like the existence of
@@ -56,14 +56,13 @@ StatWtTVI::StatWtTVI(ViImplementation2 * inputVii, const Record &configuration)
     ThrowIf(
         (_column == CORRECTED || _column == RESIDUAL)
         && ! origMS.isColumn(MSMainEnums::CORRECTED_DATA),
-        "StatWtTVI requires the MS to have a "
-        "CORRECTED_DATA column. This MS does not"
+        "StatWtTVI requires the MS to have a CORRECTED_DATA column. This MS "
+        "does not"
     );
     ThrowIf(
         (_column == DATA || _column == RESIDUAL_DATA)
         && ! origMS.isColumn(MSMainEnums::DATA),
-        "StatWtTVI requires the MS to have a "
-        "DATA column. This MS does not"
+        "StatWtTVI requires the MS to have a DATA column. This MS does not"
     );
     _mustComputeSigma = (_column == DATA || _column == RESIDUAL_DATA);
     _updateWeight = ! _mustComputeSigma 
@@ -141,21 +140,33 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
         if (! myrange.empty()) {
             ThrowIf(
                 myrange.size() != 2,
-                "Array specified in '" + field + "' must have exactly two values"
+                "Array specified in '" + field
+                + "' must have exactly two values"
             );
             ThrowIf(
                 casacore::anyLT(myrange, 0.0),
-                "Both values specified in '" + field + "' array must be non-negative"
+                "Both values specified in '" + field
+                + "' array must be non-negative"
             );
             std::set<Double> rangeset(myrange.begin(), myrange.end());
             ThrowIf(
-                rangeset.size() == 1, "Values specified in '" + field + "' array must be unique"
+                rangeset.size() == 1, "Values specified in '" + field
+                + "' array must be unique"
             );
             auto iter = rangeset.begin();
             _wtrange.reset(new std::pair<Double, Double>(*iter, *(++iter)));
         }
     }
+    auto excludeChans = False;
     field = "excludechans";
+    if (config.isDefined(field)) {
+        ThrowIf(
+            config.type(config.fieldNumber(field)) != TpBool,
+            "Unsupported type for field '" + field + "'"
+        );
+        excludeChans = config.asBool(field);
+    }
+    field = "fitspw";
     if (config.isDefined(field)) {
         ThrowIf(
             config.type(config.fieldNumber(field)) != TpString,
@@ -163,11 +174,13 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
         );
         auto val = config.asString(field);
         if (! val.empty()) {
-            MSSelection sel(ms());
+            // FIXME references underlying MS
+            const auto& myms = ms();
+            MSSelection sel(myms);
             sel.setSpwExpr(val);
             auto chans = sel.getChanList();
             auto nrows = chans.nrow();
-            MSMetaData md(&ms(), 50);
+            MSMetaData md(&myms, 50);
             auto nchans = md.nChans();
             IPosition start(3, 0);
             IPosition stop(3, 0);
@@ -176,13 +189,18 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
                 auto row = chans.row(i);
                 const auto& spw = row[0];
                 if (_chanSelFlags.find(spw) == _chanSelFlags.end()) {
-                    _chanSelFlags[spw] = Cube<Bool>(1, nchans[spw], 1, False);
+                    _chanSelFlags[spw]
+                        = Cube<Bool>(1, nchans[spw], 1, ! excludeChans);
                 }
                 start[1] = row[1];
+                ThrowIf(
+                    start[1] < 0, "Invalid channel selection in spw "
+                    + String::toString(spw))
+                ;
                 stop[1] = row[2];
                 step[1] = row[3];
                 Slicer slice(start, stop, step, Slicer::endIsLast);
-                _chanSelFlags[spw](slice) = True;
+                _chanSelFlags[spw](slice) = excludeChans;
             }
         }
     }
@@ -272,8 +290,8 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
         }
         else {
             casacore::StatisticsAlgorithmFactory<
-                casacore::Double,casacore::Array<casacore::Float>::const_iterator,
-                casacore::Array<casacore::Bool>::const_iterator
+                Double, Array<casacore::Float>::const_iterator,
+                Array<Bool>::const_iterator
             > saf;
             if (alg.startsWith("ch")) {
                 Int maxiter = -1;
@@ -297,7 +315,7 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
                 saf.configureChauvenet(zscore, maxiter);
             }
             else if (alg.startsWith("f")) {
-                FitToHalfStatisticsData::CENTER center = FitToHalfStatisticsData::CMEAN;
+                auto center = FitToHalfStatisticsData::CMEAN;
                 field = "center";
                 if (config.isDefined(field)) {
                     ThrowIf(
@@ -320,7 +338,7 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
                     }
                 }
                 field = "lside";
-                FitToHalfStatisticsData::USE_DATA ud = FitToHalfStatisticsData::LE_CENTER;
+                auto ud = FitToHalfStatisticsData::LE_CENTER;
                 if (config.isDefined(field)) {
                     ThrowIf(
                         config.type(config.fieldNumber(field)) != TpBool,
@@ -357,7 +375,6 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
         >();
     }
     std::set<StatisticsData::STATS> stats {StatisticsData::VARIANCE};
-    //stats.insert(StatisticsData::VARIANCE);
     _statAlg->setStatsToCalculate(stats);
     // also configure the _wtStats object here
     _wtStats.reset(
@@ -371,17 +388,82 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
     _wtStats->setCalculateAsAdded(True);
 }
 
+void StatWtTVI::_logUsedChannels() const {
+    // FIXME uses underlying MS
+    MSMetaData msmd(&ms(), 100.0);
+    const auto nchan = msmd.nChans();
+    // uInt nspw = nchan.size();
+    LogIO log(LogOrigin("StatWtTVI", __func__));
+    log << LogIO::NORMAL << "Weights are being computed using ";
+    const auto cend = _chanSelFlags.cend();
+    const auto nspw = _samples.size();
+    uInt spwCount = 0;
+    // for (uInt i=0; i<nspw; ++i) {
+    for (const auto& kv: _samples) {
+        const auto spw = kv.first;
+        log << "SPW " << spw << ", channels ";
+        const auto flagCube = _chanSelFlags.find(spw);
+        if (flagCube == cend) {
+            log << "0~" << (nchan[spw] - 1);
+        }
+        else {
+            vector<pair<uInt, uInt>> startEnd;
+            const auto flags = flagCube->second.tovector();
+            bool started = false;
+            std::unique_ptr<pair<uInt, uInt>> curPair;
+            for (uInt j=0; j<nchan[spw]; ++j) {
+                if (started) {
+                    if (flags[j]) {
+                        // found a bad channel, end current range
+                        startEnd.push_back(*curPair);
+                        started = false;
+                    }
+                    else {
+                        // found a "good" channel, update end of current range
+                        curPair->second = j;
+                    }
+                }
+                else if (! flags[j]) {
+                    // found a good channel, start new range
+                    started = true;
+                    curPair.reset(new pair<uInt, uInt>(j, j));
+                }
+            }
+            if (curPair) {
+                if (started) {
+                    // The last pair won't get added inside the previous loop, 
+                    // so add it here
+                    startEnd.push_back(*curPair);
+                }
+                auto nPairs = startEnd.size();
+                for (uInt i=0; i<nPairs; ++i) {
+                    log  << startEnd[i].first << "~" << startEnd[i].second;
+                    if (i < nPairs - 1) {
+                        log << ", ";
+                    }
+                }
+            }
+            else {
+                // if the pointer never got set, all the channels are bad
+                log << "no channels";
+            }
+        }
+        if (spwCount < (nspw - 1)) {
+            log << ";";
+        }
+        ++spwCount;
+    }
+    log << LogIO::POST;
+}
+
 void StatWtTVI::_setChanBinMap(const casacore::Quantity& binWidth) {
     if (! binWidth.isConform(Unit("Hz"))) {
         ostringstream oss;
-        oss << "If specified as a quantity, channel bin width must have frequency units. "
-            << binWidth << " does not.";
+        oss << "If specified as a quantity, channel bin width must have "
+            << "frequency units. " << binWidth << " does not.";
         ThrowCc(oss.str());
     }
-    ThrowIf(
-        binWidth.getValue() <= 0,
-        "channel bin width must be positive"
-    );
+    ThrowIf(binWidth.getValue() <= 0, "channel bin width must be positive");
     MSMetaData msmd(&ms(), 100.0);
     auto chanFreqs = msmd.getChanFreqs();
     auto nspw = chanFreqs.size();
@@ -460,19 +542,23 @@ Double StatWtTVI::getTimeBinWidthInSec(const casacore::Quantity& binWidth) {
 }
 
 void StatWtTVI::checkTimeBinWidth(Double binWidth) {
-    ThrowIf(
-        binWidth <= 0, "time bin width must be positive"
-    );
+    ThrowIf(binWidth <= 0, "time bin width must be positive");
 }
 
-Double StatWtTVI::getTimeBinWidthUsingInterval(const casacore::MeasurementSet *const ms, Int n) {
+Double StatWtTVI::getTimeBinWidthUsingInterval(
+    const MeasurementSet *const ms, Int n
+) {
     ThrowIf(n <= 0, "number of time intervals must be positive");
     MSMetaData msmd(ms, 0.0);
     auto stats = msmd.getIntervalStatistics();
     ThrowIf(
-        stats.max/stats.median - 1 > 0.25
-        || 1 - stats.min/stats.median > 0.25,
-        "There is not a representative integration time in the INTERVAL column"
+        stats.max/stats.median - 1 > 0.25 || 1 - stats.min/stats.median > 0.25,
+        "There is not a representative integration time in the INTERVAL "
+        "column, likely due to different visibility integration times across "
+        "different scans. Please select only parts of the MeasurementSet that "
+        "have a uniform integration time for each execution of statwt. "
+        "Multiple statwt executions may be needed to cover all MS rows with "
+        "different integration (INTERVAL) values."
     );
     return n*stats.median;
 }
@@ -486,9 +572,9 @@ void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
         }
         sigmaSp = Float(1.0)/sqrt(_newWtSp);
         if (anyEQ(_newWtSp, Float(0))) {
-            Matrix<Float>::iterator iter = sigmaSp.begin();
-            Matrix<Float>::iterator end = sigmaSp.end();
-            Matrix<Float>::iterator witer = _newWtSp.begin();
+            auto iter = sigmaSp.begin();
+            auto end = sigmaSp.end();
+            auto witer = _newWtSp.cbegin();
             for ( ; iter != end; ++iter, ++witer) {
                 if (*witer == 0) {
                     *iter = -1;
@@ -630,15 +716,17 @@ void StatWtTVI::_weightSpectrumFlagsTimeBlockProcessing(
                 }
                 slice.setStart(sliceStart);
                 slice.setEnd(sliceEnd);
-                _updateWtSpFlags(wtsp, flagCube, checkFlags, slice, weights[corr]);
+                _updateWtSpFlags(
+                    wtsp, flagCube, checkFlags, slice, weights[corr]
+                );
             }
         }
     }
 }
 
 void StatWtTVI::_updateWtSpFlags(
-    Cube<Float>& wtsp, Cube<Bool>& flags,
-    Bool& checkFlags, const Slicer& slice, Float wt
+    Cube<Float>& wtsp, Cube<Bool>& flags, Bool& checkFlags,
+    const Slicer& slice, Float wt
 ) const {
     // writable array reference
     auto flagSlice = flags(slice);
@@ -667,7 +755,7 @@ void StatWtTVI::_updateWtSpFlags(
 std::pair<Cube<Float>, Cube<Bool>> StatWtTVI::_getLowerLayerWtSpFlags(
     size_t& nOrigFlagged
 ) const {
-    auto mypair = make_pair(Cube<Float>(), Cube<Bool>());
+    auto mypair = std::make_pair(Cube<Float>(), Cube<Bool>());
     if (*_mustComputeWtSp) {
         getVii()->weightSpectrum(mypair.first);
     }
@@ -752,7 +840,9 @@ void StatWtTVI::weight(Matrix<Float> & wtmat) const {
                     }
                     else {
                         auto mask = ! flags;
-                        cs.setData(weights.begin(), mask.begin(), weights.size());
+                        cs.setData(
+                            weights.begin(), mask.begin(), weights.size()
+                        );
                         wtmat(corr, i) = cs.getMedian();
                     }
                 }
@@ -824,7 +914,9 @@ void StatWtTVI::_weightSingleChanBinSlidingTimeWindow(
         }
         else {
             for (uInt corr=0; corr<ncorr; ++corr) {
-                wtmat(corr, i) = _slidingTimeWindowWeights(corr, 0, chunkRowIndex);
+                wtmat(corr, i) = _slidingTimeWindowWeights(
+                    corr, 0, chunkRowIndex
+                );
             }
         }
     }
@@ -904,8 +996,7 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindow() const {
     Cube<Complex> chunkData;
     Cube<Bool> chunkFlags;
     uInt subchunkStartIndex = 0;
-    auto doChanSelFlags = ! _chanSelFlags.empty();
-    auto initChanSelTemplate = doChanSelFlags;
+    auto initChanSelTemplate = True;
     Cube<Bool> chanSelFlagTemplate, chanSelFlags;
     // we cannot know the spw until inside the subchunk loop
     Int spw = -1;
@@ -971,9 +1062,8 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindow() const {
         }
         const auto dataCube = _dataCube(vb);
         auto resultantFlags = _getResultantFlags(
-            chanSelFlagTemplate, chanSelFlags,
-            initChanSelTemplate, doChanSelFlags, spw,
-            vb->flagCube()
+            chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
+            spw, vb->flagCube()
         );
         // build up chunkData and chunkFlags one subchunk at a time
         if (chunkData.empty()) {
@@ -998,7 +1088,7 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindow() const {
     _computeWeightsSlidingTimeWindow(chunkData, chunkFlags, rowMap, spw);
 }
 
-const casacore::Cube<casacore::Complex> StatWtTVI::_dataCube(const VisBuffer2 *const vb) const {
+const Cube<Complex> StatWtTVI::_dataCube(const VisBuffer2 *const vb) const {
     switch (_column) {
     case CORRECTED:
         return vb->visCubeCorrected();
@@ -1024,10 +1114,8 @@ const casacore::Cube<casacore::Complex> StatWtTVI::_dataCube(const VisBuffer2 *c
 }
 
 void StatWtTVI::_computeWeightsSlidingTimeWindow(
-    const casacore::Cube<casacore::Complex>& data,
-    const casacore::Cube<casacore::Bool>& flags,
-    const std::vector<std::set<uInt>>& rowMap,
-    uInt spw
+    const Cube<Complex>& data, const Cube<Bool>& flags,
+    const std::vector<std::set<uInt>>& rowMap, uInt spw
 ) const {
     auto chunkShape = data.shape();
     const auto nActCorr = chunkShape[0];
@@ -1045,7 +1133,9 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
         IPosition chunkSliceStart(3, 0);
         auto chunkSliceLength = chunkShape;
         chunkSliceLength[2] = 1;
-        Slicer chunkSlice(chunkSliceStart, chunkSliceLength, Slicer::endIsLength);
+        Slicer chunkSlice(
+            chunkSliceStart, chunkSliceLength, Slicer::endIsLength
+        );
         auto chunkSliceEnd = chunkSlice.end();
         auto appendingSlice = chunkSlice;
         auto appendingSliceStart = appendingSlice.start();
@@ -1092,9 +1182,11 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
                 intraChunkSliceEnd[1] = citer->end;
                 intraChunkSlice.setStart(intraChunkSliceStart);
                 intraChunkSlice.setEnd(intraChunkSliceEnd);
-                _slidingTimeWindowWeights(corr, iChanBin, iRow) = _computeWeight(
-                    dataArray(intraChunkSlice), flagArray(intraChunkSlice), spw
-                );
+                _slidingTimeWindowWeights(corr, iChanBin, iRow)
+                    = _computeWeight(
+                        dataArray(intraChunkSlice), flagArray(intraChunkSlice),
+                        spw
+                    );
             }
         }
     }
@@ -1116,14 +1208,13 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
     //  Essentially, we are sorting the incoming data into
     //   allvis, to enable a convenient variance calculation
     _weights.clear();
-    ViImplementation2* vii = getVii();
-    VisBuffer2* vb = vii->getVisBuffer();
+    auto* vii = getVii();
+    auto* vb = vii->getVisBuffer();
     std::map<BaselineChanBin, Cube<Complex>> data;
     std::map<BaselineChanBin, Cube<Bool>> flags;
     IPosition blc(3, 0);
     auto trc = blc;
-    auto doChanSelFlags = ! _chanSelFlags.empty();
-    auto initChanSelTemplate = doChanSelFlags;
+    auto initChanSelTemplate = True;
     Cube<Bool> chanSelFlagTemplate, chanSelFlags;
     auto firstTime = True;
     // we cannot know the spw until we are in the subchunks loop
@@ -1147,9 +1238,8 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
         const auto nrows = vb->nRows();
         const auto npol = dataCube.nrow();
         auto resultantFlags = _getResultantFlags(
-            chanSelFlagTemplate, chanSelFlags,
-            initChanSelTemplate, doChanSelFlags, spw,
-            flagCube
+            chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
+            spw, flagCube
         );
         auto bins = _chanBins.find(spw)->second;
         BaselineChanBin blcb;
@@ -1197,10 +1287,9 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
 
 Cube<Bool> StatWtTVI::_getResultantFlags(
     Cube<Bool>& chanSelFlagTemplate, Cube<Bool>& chanSelFlags,
-    Bool& initTemplate, Bool& doChanSelFlags, Int spw,
-    const casacore::Cube<casacore::Bool>& flagCube
+    Bool& initTemplate, Int spw, const Cube<Bool>& flagCube
 ) const {
-    if (! doChanSelFlags) {
+    if (_chanSelFlags.find(spw) == _chanSelFlags.cend()) {
         // no selection of channels to ignore
         return flagCube;
     }
@@ -1209,11 +1298,7 @@ Cube<Bool> StatWtTVI::_getResultantFlags(
         // in the chunk are guaranteed to have the same spw
         // because each subchunk is guaranteed to have a single
         // data description ID.
-        auto chanSelFlagIter = _chanSelFlags.find(spw);
-        doChanSelFlags = chanSelFlagIter != _chanSelFlags.end();
-        if (doChanSelFlags) {
-            chanSelFlagTemplate = chanSelFlagIter->second;
-        }
+        chanSelFlagTemplate = _chanSelFlags.find(spw)->second;
         initTemplate = False;
     }
     auto dataShape = flagCube.shape();
@@ -1267,12 +1352,12 @@ Bool StatWtTVI::_checkFirsSubChunk(
     }
 }
 
-void StatWtTVI::initWeightSpectrum (const casacore::Cube<casacore::Float>& wtspec) {
+void StatWtTVI::initWeightSpectrum (const Cube<Float>& wtspec) {
     // Pass to next layer down
     getVii()->initWeightSpectrum(wtspec);
 }
 
-void StatWtTVI::initSigmaSpectrum (const casacore::Cube<casacore::Float>& sigspec) {
+void StatWtTVI::initSigmaSpectrum (const Cube<Float>& sigspec) {
     // Pass to next layer down
     getVii()->initSigmaSpectrum(sigspec);
 }
@@ -1301,8 +1386,8 @@ void StatWtTVI::_computeWeightsTimeBlockProcessing(
     const map<BaselineChanBin, Cube<Complex>>& data,
     const map<BaselineChanBin, Cube<Bool>>& flags
 ) const {
-    auto diter = data.begin();
-    auto dend = data.end();
+    auto diter = data.cbegin();
+    auto dend = data.cend();
     const auto nActCorr = diter->second.shape()[0];
     const auto ncorr = _combineCorr ? 1 : nActCorr;
     // spw will be the same for all members
@@ -1324,7 +1409,7 @@ void StatWtTVI::_computeWeightsTimeBlockProcessing(
         auto flagsForBLCB = flags.find(blcb)->second;
         for (uInt corr=0; corr<ncorr; ++corr) {
             IPosition start(3, 0);
-            IPosition end = dataForBLCB.shape() - 1;
+            auto end = dataForBLCB.shape() - 1;
             if (! _combineCorr) {
                 start[0] = corr;
                 end[0] = corr;
@@ -1340,6 +1425,11 @@ void StatWtTVI::_computeWeightsTimeBlockProcessing(
 casacore::Double StatWtTVI::_computeWeight(
     const Cube<Complex>& data, const Cube<Bool>& flags, uInt spw
 ) const {
+    const auto npts = data.size();
+    if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
+        // not enough points, trivial
+        return 0;
+    }
     // called in multi-threaded mode
     std::unique_ptr<
         StatisticsAlgorithm<
@@ -1347,11 +1437,6 @@ casacore::Double StatWtTVI::_computeWeight(
             Array<Bool>::const_iterator
         >
     > statAlg(_statAlg->clone());
-    const auto npts = data.size();
-    if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
-        // not enough points, trivial
-        return 0;
-    }
     // some data not flagged
     const auto realPart = real(data);
     const auto imagPart = imag(data);
@@ -1402,9 +1487,22 @@ void StatWtTVI::summarizeFlagging() const {
     log << LogIO::NORMAL << "TOTAL FLAGGED DATA AFTER RUNNING STATWT: "
         << total << "%" << LogIO::POST;
     log << LogIO::NORMAL << std::endl << LogIO::POST;
+    if (_nOrigFlaggedPts == _nTotalPts) {
+        log << LogIO::WARN << "IT APPEARS THAT ALL THE DATA IN THE INPUT "
+            << "MS/SELECTION WERE FLAGGED PRIOR TO RUNNING STATWT"
+            << LogIO::POST;
+        log << LogIO::NORMAL << std::endl << LogIO::POST;
+    }
+    else if (_nOrigFlaggedPts + _nNewFlaggedPts == _nTotalPts) {
+        log << LogIO::WARN << "IT APPEARS THAT STATWT FLAGGED ALL THE DATA "
+            "IN THE REQUESTED SELECTION THAT WASN'T ORIGINALLY FLAGGED"
+            << LogIO::POST;
+        log << LogIO::NORMAL << std::endl << LogIO::POST;
+    }
     String col0 = "SPECTRAL_WINDOW";
     String col1 = "SAMPLES_WITH_NON-ZERO_VARIANCE";
-    String col2 = "SAMPLES_WHERE_REAL_PART_VARIANCE_DIFFERS_BY_>50%_FROM_IMAGINARY_PART";
+    String col2 = "SAMPLES_WHERE_REAL_PART_VARIANCE_DIFFERS_BY_>50%_FROM_"
+        "IMAGINARY_PART";
     log << LogIO::NORMAL << col0 << " " << col1 << " " << col2 << LogIO::POST;
     auto n0 = col0.size();
     auto n1 = col1.size();
@@ -1412,22 +1510,36 @@ void StatWtTVI::summarizeFlagging() const {
     for (const auto& sample: _samples) {
         ostringstream oss;
         oss << std::setw(n0) << sample.first << " " << std::setw(n1)
-            << sample.second.first << " " << std::setw(n2) << sample.second.second;
+            << sample.second.first << " " << std::setw(n2)
+            << sample.second.second;
         log << LogIO::NORMAL << oss.str() << LogIO::POST;
     }
 }
 
 void StatWtTVI::summarizeStats(Double& mean, Double& variance) const {
-    mean = _wtStats->getStatistic(StatisticsData::MEAN);
-    variance = _wtStats->getStatistic(StatisticsData::VARIANCE);
     LogIO log(LogOrigin("StatWtTVI", __func__));
-    log << LogIO::NORMAL << "The mean of the computed weights is "
-        << mean << LogIO::POST;
-    log << LogIO::NORMAL << "The variance of the computed weights is "
-        << variance << LogIO::POST;
-    log << LogIO::NORMAL << "Weights which had corresponding flags of True "
-        << "prior to running this application were not used to compute these stats."
-        << LogIO::POST;
+    _logUsedChannels();
+    try {
+        mean = _wtStats->getStatistic(StatisticsData::MEAN);
+        variance = _wtStats->getStatistic(StatisticsData::VARIANCE);
+        log << LogIO::NORMAL << "The mean of the computed weights is "
+            << mean << LogIO::POST;
+        log << LogIO::NORMAL << "The variance of the computed weights is "
+            << variance << LogIO::POST;
+        log << LogIO::NORMAL << "Weights which had corresponding flags of True "
+            << "prior to running this application were not used to compute these "
+            << "stats." << LogIO::POST;
+    }
+    catch (const AipsError& x) {
+        log << LogIO::WARN << "There was a problem calculating the mean and "
+            << "variance of the weights computed by this application. Perhaps there "
+            << "was something amiss with the input MS and/or the selection criteria. "
+            << "Examples of such issues are that all the data were originally flagged "
+            << "or that the sample size was consistently too small for computations "
+            << "of variances" << LogIO::POST;
+        setNaN(mean);
+        setNaN(variance);
+    }
 }
 
 void StatWtTVI::origin() {

@@ -1,11 +1,30 @@
+
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import time
 import numpy as np
-from taskinit import *
-from callibrary import *
-import flaghelper as fh
-from parallel.parallel_task_helper import ParallelTaskHelper
 
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from .. import casalog
+    from .callibrary import *
+    from . import flaghelper as fh
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from .parallel.parallel_task_helper import ParallelTaskHelper
+    from .mstools import write_history
+    from casatools import ms, calibrater
+else:
+    from taskinit import *
+    from mstools import write_history
+    from callibrary import *
+    import flaghelper as fh
+    from parallel.parallel_data_helper import ParallelDataHelper
+    from parallel.parallel_task_helper import ParallelTaskHelper
+
+    calibrater = cbtool
+    ms = mstool
 
 def applycal(
     vis=None,
@@ -35,7 +54,7 @@ def applycal(
     casalog.origin('applycal')
 
     # Take care of the trivial parallelization
-    if ParallelTaskHelper.isParallelMS(vis):
+    if ParallelDataHelper.isMMSAndNotServer(vis):
         
         # Back up the flags, if requested (and if necessary)
         if flagbackup and applymode != 'calonly' and applymode != 'trial':
@@ -52,14 +71,13 @@ def applycal(
             return
 
     try:
-        mycb = cbtool()
+        mycb = calibrater( )
         if (type(vis) == str) & os.path.exists(vis):
             # add CORRECTED_DATA column
             mycb.open(filename=vis, compress=False, addcorr=True,
                       addmodel=False)
         else:
-            raise Exception, \
-                'Visibility data set not found - please verify the name'
+            raise Exception( 'Visibility data set not found - please verify the name' )
 
         # enforce default if unspecified
         if applymode == '':
@@ -178,54 +196,70 @@ def applycal(
             # write history
         try:
             param_names = \
-                applycal.func_code.co_varnames[:applycal.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+                          applycal.__code__.co_varnames[:applycal.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
             write_history(
-                mstool(),
+                ms(),
                 vis,
                 'applycal',
                 param_names,
                 param_vals,
                 casalog,
                 )
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY"
                          % instance, 'WARN')
-    except Exception, instance:
-        print '*** Error ***', instance
+    except Exception as instance:
+        print('*** Error ***', instance)
         mycb.close()
         casalog.post("Error in applycal: %s" % str(instance), "SEVERE")
-        raise Exception, "Error in applycal: "+str(instance)
+        raise Exception( "Error in applycal: "+str(instance) )
 
 def reportflags(rec):
     try:
-        if rec.keys().count('origin') == 1 and rec['origin'] \
-            == 'Calibrater::correct' and rec.keys().count('VisEquation'
-                ) == 1:
+        if 'origin' in rec and rec['origin'] \
+            == 'Calibrater::correct' and 'VisEquation' in rec:
             casalog.post('Calibration apply flagging statistics (among calibrateable spws):'
                          )
             VE = rec['VisEquation']
             nterm = len(VE)
             if nterm > 0:
-                casalog.post('  Total selected visibilities (among calibrateable spws) = '
-                              + str(VE['*1']['ndata']))
+                nVisTotal=VE['nVisTotal']
+
+                casalog.post('  Total visibilities selected for correction (ncorr x nchan x nrow summed over spws) = '
+                              + str(nVisTotal))
                 casalog.post('  Flags:')
-                for iterm in range(nterm):
+                partlog=False
+                for iterm in range(nterm-1):    # one of the keys is nVisTotal; the rest are caltable indices
                     VEi = VE['*' + str(iterm + 1)]
+
+                    nVisThis=VEi['ndata']
+                    partial='  '
+                    if nVisThis<nVisTotal:
+                        partlog=True
+                        partial='**'
                     flstr = '   ' + VEi['type']
                     flstr += ': '
                     flstr += 'In: ' + str(VEi['nflagIn'])
-                    flstr += ' (' + str(100. * VEi['nflagIn']
-                            / VEi['ndata']) + '%) --> '
+                    flstr += ' / '+str(nVisThis)+partial
+                    flstr += ' (' + str(100. * VEi['nflagIn']/nVisThis) + '%) --> '
                     flstr += 'Out: ' + str(VEi['nflagOut'])
-                    flstr += ' (' + str(100. * VEi['nflagOut']
-                            / VEi['ndata']) + '%)'
-                    if VEi.has_key('table'):
+                    flstr += ' / '+str(nVisThis)+partial
+                    flstr += ' (' + str(100. * VEi['nflagOut']/nVisThis) + '%)'
+
+                    if 'table' in VEi:
                         flstr += ' (' + VEi['table'] + ')'
                     casalog.post(flstr)
-    except Exception, instance:
+                if partlog:
+                    casalog.post('     ** = Denotes caltable that only corrected a subset of total selected visibilities')
+
+    except Exception as instance:
         # complain mildly, but don't alarm
         casalog.post('Error formatting some or all of the applycal flagging log info: '
-                      + str(instance))
+                      + str(instance), 'SEVERE')
 
 

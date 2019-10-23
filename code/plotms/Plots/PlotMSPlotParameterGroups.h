@@ -29,6 +29,7 @@
 
 #include <plotms/Plots/PlotMSPlotParameters.h>
 
+#include <plotms/PlotMS/PlotMSParameters.h>
 #include <plotms/PlotMS/PlotMSAveraging.h>
 #include <plotms/PlotMS/PlotMSExportParam.h>
 #include <plotms/PlotMS/PlotMSIterParam.h>
@@ -165,7 +166,7 @@ public:
 	bool operator== (const Group & other) const;
 
 
-	bool isSet() const {
+	bool filenameIsSet() const {
 		return !itsFilename_.empty();
 	}
 
@@ -180,12 +181,21 @@ public:
 	}
 
     // based on PlotMSCacheBase::Type enum {MS, CAL}
-    const casacore::Int & type() const {
-        return itsType_;
+    const casacore::Int & cacheType() const {
+        return itsCacheType_;
     }
-	void setType (const casacore::Int & value) {
-		if (itsType_ != value) {
-			itsType_ = value;
+	void setCacheType (const casacore::Int & value) {
+		if (itsCacheType_ != value) {
+			itsCacheType_ = value;
+			updated();
+		}
+	}
+    const casacore::String & calType() const {
+        return itsCalType_;
+    }
+	void setCalType (const casacore::String & value) {
+		if (itsCalType_ != value) {
+			itsCalType_ = value;
 			updated();
 		}
 	}
@@ -237,7 +247,8 @@ private:
 
 	/* Parameters' values */
 	casacore::String itsFilename_;
-	casacore::Int itsType_;
+	casacore::Int itsCacheType_;
+	casacore::String itsCalType_;
 	PlotMSSelection itsSelection_;
 	PlotMSAveraging itsAveraging_;
 	PlotMSTransformations itsTransformations_;
@@ -245,7 +256,8 @@ private:
 
 	/* Key strings for casacore::Record */
 	static const casacore::String REC_FILENAME;
-	static const casacore::String REC_TYPE;
+	static const casacore::String REC_CACHETYPE;
+	static const casacore::String REC_CALTYPE;
 	static const casacore::String REC_SELECTION;
 	static const casacore::String REC_AVERAGING;
 	static const casacore::String REC_TRANSFORMATIONS;
@@ -325,10 +337,10 @@ public:
 			const PMS::DataColumn & yData, unsigned int index = 0);
 	//<group>
 
-	const vector<PMS::Axis> &xAxes() const {
+	const std::vector<PMS::Axis> &xAxes() const {
 		return itsXAxes_;
 	}
-	void setXAxes (const vector<PMS::Axis> &value) {
+	void setXAxes (const std::vector<PMS::Axis> &value) {
 		if (itsXAxes_ != value) {
 			itsXAxes_ = value;
 			updated();
@@ -336,7 +348,7 @@ public:
 	}
 	PMS::Axis xAxis (unsigned int index = 0) const {
 		if (index >= itsXAxes_.size())
-			const_cast< vector<PMS::Axis>& >(itsXAxes_).resize (index + 1);
+			const_cast< std::vector<PMS::Axis>& >(itsXAxes_).resize (index + 1);
 		return itsXAxes_[index];
 	}
 	void setXAxis (const PMS::Axis & value, unsigned int index = 0) {
@@ -349,10 +361,10 @@ public:
 	}
 
 
-	const vector<PMS::Axis>&yAxes() const {
+	const std::vector<PMS::Axis>&yAxes() const {
 		return itsYAxes_;
 	}
-	void setYAxes (const vector<PMS::Axis> &value) {
+	void setYAxes (const std::vector<PMS::Axis> &value) {
 		if (itsYAxes_ != value) {
 			itsYAxes_ = value;
 			updated();
@@ -360,7 +372,7 @@ public:
 	}
 	PMS::Axis yAxis (unsigned int index = 0) const {
 		if (index >= itsYAxes_.size())
-			const_cast< vector<PMS::Axis> &>(itsYAxes_).resize (index + 1);
+			const_cast< std::vector<PMS::Axis> &>(itsYAxes_).resize (index + 1);
 		return itsYAxes_[index];
 	}
 	void setYAxis (const PMS::Axis & value, unsigned int index = 0) {
@@ -374,7 +386,7 @@ public:
 
 
 
-	const vector<PMS::DataColumn> &xDataColumns() const {
+	const std::vector<PMS::DataColumn> &xDataColumns() const {
 		return itsXData_;
 	}
 	void setXDataColumns (const vector < PMS::DataColumn > &value) {
@@ -425,11 +437,124 @@ public:
 		}
 	}
 
+
+	const vector < PMS::CoordSystem > &xFrames() const {
+		return itsXFrame_;
+	}
+	void setXFrames (const vector < PMS::CoordSystem > &value) {
+		if (itsXFrame_ != value) {
+			itsXFrame_ = value;
+			updated();
+		}
+	}
+	PMS::CoordSystem xFrame (unsigned int index = 0) const {
+		if (index >= itsXFrame_.size())
+			const_cast < vector < PMS::CoordSystem >
+		&>(itsXFrame_).resize (index + 1);
+		return itsXFrame_[index];
+	}
+	void setXFrame (const PMS::CoordSystem & value, unsigned int index =
+			0) {
+		if (index >= itsXFrame_.size())
+			itsXFrame_.resize (index + 1);
+		if (itsXFrame_[index] != value)   {
+			itsXFrame_[index] = value;
+			updated();
+		}
+	}
+
+
+	const vector < PMS::CoordSystem > &yFrames() const {
+		return itsYFrame_;
+	}
+	void setYFrames (const vector < PMS::CoordSystem > &value) {
+		if (itsYFrame_ != value) {
+			itsYFrame_ = value;
+			updated();
+		}
+	}
+	PMS::CoordSystem yFrame (unsigned int index = 0) const {
+		if (index >= itsYFrame_.size())
+			const_cast < vector < PMS::CoordSystem >
+		&>(itsYFrame_).resize (index + 1);
+		return itsYFrame_[index];
+	}
+
+	void setYFrame (const PMS::CoordSystem & value, unsigned int index =
+			0) {
+		if (index >= itsYFrame_.size())
+			itsYFrame_.resize (index + 1);
+		if (itsYFrame_[index] != value)   {
+			itsYFrame_[index] = value;
+			updated();
+		}
+	}
+
+
+	const vector < PMS::InterpMethod > &xInterps() const {
+		return itsXInterp_;
+	}
+	void setXInterps (const vector < PMS::InterpMethod > &value) {
+		if (itsXInterp_ != value) {
+			itsXInterp_ = value;
+			updated();
+		}
+	}
+	PMS::InterpMethod xInterp (unsigned int index = 0) const {
+		if (index >= itsXInterp_.size())
+			const_cast < vector < PMS::InterpMethod >
+		&>(itsXInterp_).resize (index + 1);
+		return itsXInterp_[index];
+	}
+	void setXInterp (const PMS::InterpMethod & value, unsigned int index =
+			0) {
+		if (index >= itsXInterp_.size())
+			itsXInterp_.resize (index + 1);
+		if (itsXInterp_[index] != value)   {
+			itsXInterp_[index] = value;
+			updated();
+		}
+	}
+
+
+	const vector < PMS::InterpMethod > &yInterps() const {
+		return itsYInterp_;
+	}
+	void setYInterps (const vector < PMS::InterpMethod > &value) {
+		if (itsYInterp_ != value) {
+			itsYInterp_ = value;
+			updated();
+		}
+	}
+	PMS::InterpMethod yInterp (unsigned int index = 0) const {
+		if (index >= itsYInterp_.size())
+			const_cast < vector < PMS::InterpMethod >
+		&>(itsYInterp_).resize (index + 1);
+		return itsYInterp_[index];
+	}
+	void setYInterp (const PMS::InterpMethod & value, unsigned int index =
+			0) {
+		if (index >= itsYInterp_.size())
+			itsYInterp_.resize (index + 1);
+		if (itsYInterp_[index] != value)   {
+			itsYInterp_[index] = value;
+			updated();
+		}
+	}
+
+	DirectionAxisParams xDirectionParams (unsigned int index = 0) const {
+		return DirectionAxisParams(xFrame(index),xInterp(index));
+	}
+	DirectionAxisParams yDirectionParams (unsigned int index = 0) const {
+		return DirectionAxisParams(yFrame(index),yInterp(index));
+	}
+
+
 	bool showAtm() const {
 		return itsShowAtm_;
 	}
 	void setShowAtm (const bool & value) {
-	    if (itsShowAtm_!= value) {
+	    if (itsShowAtm_ != value) {
 		    itsShowAtm_ = value;
 		    updated();
 	    }
@@ -439,12 +564,21 @@ public:
 		return itsShowTsky_;
 	}
 	void setShowTsky (const bool & value) {
-	    if (itsShowTsky_!= value) {
+	    if (itsShowTsky_ != value) {
 		    itsShowTsky_ = value;
 		    updated();
 	    }
     }
 
+    bool showImage() const {
+		return itsShowImage_;
+	}
+	void setShowImage (const bool & value) {
+	    if (itsShowImage_ != value) {
+		    itsShowImage_ = value;
+		    updated();
+	    }
+    }
 	void resize( int count );
 
 private:
@@ -452,20 +586,32 @@ private:
 	PMS_PP_Cache& assign(const PMS_PP_Cache* o);
 
 	/* Parameters' values */
-	vector<PMS::Axis> itsXAxes_;
-	vector<PMS::Axis> itsYAxes_;
-	vector<PMS::DataColumn> itsXData_;
-	vector<PMS::DataColumn> itsYData_;
+	std::vector<PMS::Axis> itsXAxes_;
+	std::vector<PMS::Axis> itsYAxes_;
+	std::vector<PMS::DataColumn> itsXData_;
+	std::vector<PMS::DataColumn> itsYData_;
+	std::vector<PMS::CoordSystem> itsXFrame_;
+	std::vector<PMS::InterpMethod> itsXInterp_;
+	std::vector<PMS::CoordSystem> itsYFrame_;
+	std::vector<PMS::InterpMethod> itsYInterp_;
+	
 	bool itsShowAtm_;
 	bool itsShowTsky_;
+	bool itsShowImage_;
+
 
 	/* Key strings for casacore::Record */
 	static const casacore::String REC_XAXES;
 	static const casacore::String REC_YAXES;
 	static const casacore::String REC_XDATACOLS;
 	static const casacore::String REC_YDATACOLS;
+	static const casacore::String REC_XFRAMES;
+	static const casacore::String REC_YFRAMES;
+	static const casacore::String REC_XINTERPS;
+	static const casacore::String REC_YINTERPS;
 	static const casacore::String REC_SHOWATM;
 	static const casacore::String REC_SHOWTSKY;
+	static const casacore::String REC_SHOWIMAGE;
 
 	void setDefaults();
 };
@@ -575,7 +721,7 @@ public:
 	}
 
 
-	const vector<PlotAxis> &yAxes() const {
+	const std::vector<PlotAxis> &yAxes() const {
 		return itsYAxes_;
 	}
 	void setYAxes (const vector < PlotAxis > &value) {
@@ -610,7 +756,7 @@ public:
 
 
 
-	const vector<bool> &xRangesSet() const {
+	const std::vector<bool> &xRangesSet() const {
 		return itsXRangesSet_;
 	}
 	void setXRanges (const vector < bool > &value) {
@@ -715,12 +861,12 @@ private:
 	PMS_PP_Axes& assign(const PMS_PP_Axes* o);
 
 	/* Parameters' values */
-	vector<PlotAxis> itsXAxes_;
-	vector<PlotAxis> itsYAxes_;
-	vector<bool> itsXRangesSet_;
-	vector<bool> itsYRangesSet_;
-	vector<prange_t> itsXRanges_;
-	vector<prange_t> itsYRanges_;
+	std::vector<PlotAxis> itsXAxes_;
+	std::vector<PlotAxis> itsYAxes_;
+	std::vector<bool> itsXRangesSet_;
+	std::vector<bool> itsYRangesSet_;
+	std::vector<prange_t> itsXRanges_;
+	std::vector<prange_t> itsYRanges_;
 
 	/* Key strings for casacore::Record */
 	static const casacore::String REC_XAXES;
@@ -795,7 +941,7 @@ public:
 	void setLabelFormats (const PlotMSLabelFormat & xFormat,
 			const PlotMSLabelFormat & yFormat,
 			unsigned int index = 0);
-	void showAxes (const bool & xShow, const bool & yShow,
+	void showAxesLabels (const bool & xLabelShow, const bool & yLabelShow,
 			unsigned int index = 0);
 	void showLegend (const bool & show,
 			const PlotCanvas::LegendPosition & pos,
@@ -937,53 +1083,52 @@ public:
 	}
 
 
-	const vector < bool > &xAxesShown() const {
-		return itsXAxesShown_;
+	const vector < bool > &xLabelsShown() const {
+		return itsXLabelsShown_;
 	}
-	void showXAxes (const vector < bool > &value) {
-		if (itsXAxesShown_ != value) {
-			itsXAxesShown_ = value;
+	void showXLabels (const vector < bool > &value) {
+		if (itsXLabelsShown_ != value) {
+			itsXLabelsShown_ = value;
 			updated();
 		}
 	}
-	bool xAxisShown (unsigned int index = 0) const {
-		if (index >= itsXAxesShown_.size())
-			const_cast < vector < bool > &>(itsXAxesShown_).resize (index + 1);
-		return itsXAxesShown_[index];
+	bool xLabelShown (unsigned int index = 0) const {
+		if (index >= itsXLabelsShown_.size())
+			const_cast < vector < bool > &>(itsXLabelsShown_).resize (index + 1);
+		return itsXLabelsShown_[index];
 	}
-	void showXAxis (const bool & value, unsigned int index = 0) {
-		if (index >= itsXAxesShown_.size())
-			itsXAxesShown_.resize (index + 1);
-		if (itsXAxesShown_[index] != value) {
-			itsXAxesShown_[index] = value;
-			updated();
-		}
-	}
-
-
-	const vector < bool > &yAxesShown() const {
-		return itsYAxesShown_;
-	}
-	void showYAxes (const vector < bool > &value) {
-		if (itsYAxesShown_ != value) {
-			itsYAxesShown_ = value;
-			updated();
-		}
-	}
-	bool yAxisShown (unsigned int index = 0) const {
-		if (index >= itsYAxesShown_.size())
-			const_cast < vector < bool > &>(itsYAxesShown_).resize (index + 1);
-		return itsYAxesShown_[index];
-	}
-	void showYAxis (const bool & value, unsigned int index = 0) {
-		if (index >= itsYAxesShown_.size())
-			itsYAxesShown_.resize (index + 1);
-		if (itsYAxesShown_[index] != value) {
-			itsYAxesShown_[index] = value;
+	void showXLabel (const bool & value, unsigned int index = 0) {
+		if (index >= itsXLabelsShown_.size())
+			itsXLabelsShown_.resize (index + 1);
+		if (itsXLabelsShown_[index] != value) {
+			itsXLabelsShown_[index] = value;
 			updated();
 		}
 	}
 
+
+	const vector < bool > &yLabelsShown() const {
+		return itsYLabelsShown_;
+	}
+	void showYLabels (const vector < bool > &value) {
+		if (itsYLabelsShown_ != value) {
+			itsYLabelsShown_ = value;
+			updated();
+		}
+	}
+	bool yLabelShown (unsigned int index = 0) const {
+		if (index >= itsYLabelsShown_.size())
+			const_cast < vector < bool > &>(itsYLabelsShown_).resize (index + 1);
+		return itsYLabelsShown_[index];
+	}
+	void showYLabel (const bool & value, unsigned int index = 0) {
+		if (index >= itsYLabelsShown_.size())
+			itsYLabelsShown_.resize (index + 1);
+		if (itsYLabelsShown_[index] != value) {
+			itsYLabelsShown_[index] = value;
+			updated();
+		}
+	}
 
 	const vector < bool > &legendsShown() const {
 		return itsLegendsShown_;
@@ -1196,23 +1341,23 @@ private:
 	PMS_PP_Canvas& assign(const PMS_PP_Canvas* o );
 
 	/* Parameters' values */
-	vector<PlotMSLabelFormat> itsXLabels_;
-	vector<bool> itsXFontsSet_;
-	vector<casacore::Int> itsXAxisFonts_;
-	vector<PlotMSLabelFormat> itsYLabels_;
-	vector<bool> itsYFontsSet_;
-	vector<casacore::Int> itsYAxisFonts_;
-	vector<bool> itsXAxesShown_;
-	vector<bool> itsYAxesShown_;
-	vector<bool> itsLegendsShown_;
-	vector<PlotCanvas::LegendPosition > itsLegendsPos_;
-	vector<PlotMSLabelFormat> itsTitles_;
-	vector<bool> itsTitleFontsSet_;
-	vector<casacore::Int> itsTitleFonts_;
-	vector<bool> itsGridMajsShown_;
-	vector<bool> itsGridMinsShown_;
-	vector<PlotLinePtr> itsGridMajLines_;
-	vector<PlotLinePtr> itsGridMinLines_;
+	std::vector<PlotMSLabelFormat> itsXLabels_;
+	std::vector<bool> itsXFontsSet_;
+	std::vector<casacore::Int> itsXAxisFonts_;
+	std::vector<PlotMSLabelFormat> itsYLabels_;
+	std::vector<bool> itsYFontsSet_;
+	std::vector<casacore::Int> itsYAxisFonts_;
+	std::vector<bool> itsXLabelsShown_;
+	std::vector<bool> itsYLabelsShown_;
+	std::vector<bool> itsLegendsShown_;
+	std::vector<PlotCanvas::LegendPosition > itsLegendsPos_;
+	std::vector<PlotMSLabelFormat> itsTitles_;
+	std::vector<bool> itsTitleFontsSet_;
+	std::vector<casacore::Int> itsTitleFonts_;
+	std::vector<bool> itsGridMajsShown_;
+	std::vector<bool> itsGridMinsShown_;
+	std::vector<PlotLinePtr> itsGridMajLines_;
+	std::vector<PlotLinePtr> itsGridMinLines_;
 
 	/* Key strings for casacore::Record */
 	static const casacore::String REC_XLABELS;
@@ -1221,8 +1366,8 @@ private:
 	static const casacore::String REC_YLABELS;
 	static const casacore::String REC_YFONTSSET;
 	static const casacore::String REC_YAXISFONTS;
-	static const casacore::String REC_SHOWXAXES;
-	static const casacore::String REC_SHOWYAXES;
+	static const casacore::String REC_SHOWXLABELS;
+	static const casacore::String REC_SHOWYLABELS;
 	static const casacore::String REC_SHOWLEGENDS;
 	static const casacore::String REC_LEGENDSPOS;
 	static const casacore::String REC_TITLES;
@@ -1246,6 +1391,7 @@ private:
 // * flagged and unflagged symbols
 // * plot title format
 // * colorize flag and axis
+// * xconnect and timeconnect (connect points on plot along x- or time-axis)
 // Parameters are vector-based, on a per-plot basis.
 //
 class PMS_PP_Display : public PlotMSPlotParameters::Group {
@@ -1311,7 +1457,7 @@ public:
 	PlotSymbolPtr unflaggedSymbol (unsigned int index = 0) const {
 		if (index >= itsUnflaggedSymbols_.size()){
 			int newSize = index+1;
-			vector<PlotSymbolPtr> & unflaggedSymbols = const_cast < vector <PlotSymbolPtr > &>(itsUnflaggedSymbols_);
+			std::vector<PlotSymbolPtr> & unflaggedSymbols = const_cast < vector <PlotSymbolPtr > &>(itsUnflaggedSymbols_);
 			unflaggedSymbols.resize ( newSize);
 			for ( int j = 0; j < newSize; j++ ){
 				if ( unflaggedSymbols[j].null() ){
@@ -1335,7 +1481,7 @@ public:
 	PlotSymbolPtr flaggedSymbol (unsigned int index = 0) const {
 		if (index >= itsFlaggedSymbols_.size()){
 			int newSize = index + 1;
-			vector<PlotSymbolPtr> & flaggedSymbols = const_cast < vector <PlotSymbolPtr > &>(itsFlaggedSymbols_);
+			std::vector<PlotSymbolPtr> & flaggedSymbols = const_cast < vector <PlotSymbolPtr > &>(itsFlaggedSymbols_);
 			flaggedSymbols.resize( newSize );
 			for ( int j = 0; j < newSize; j++ ){
 				if ( flaggedSymbols[j].null()){
@@ -1395,8 +1541,7 @@ public:
 	}
 	PMS::Axis colorizeAxis (unsigned int index = 0) const {
 		if (index >= itsColorizeAxes_.size())
-			const_cast < vector < PMS::Axis >
-		&>(itsColorizeAxes_).resize (index + 1);
+			const_cast < vector < PMS::Axis >&>(itsColorizeAxes_).resize (index + 1);
 		return itsColorizeAxes_[index];
 	}
 	void setColorize (const PMS::Axis & value, unsigned int index = 0) {
@@ -1409,7 +1554,53 @@ public:
 	}
 
 
+	void setConnect(const casacore::String& xconnect, const bool& timeconnect, unsigned int index = 0);
 
+	const vector<casacore::String>& xConnects() const {
+		return itsXConnects_;
+	}
+	void setXConnects(const vector<casacore::String>& value) {
+		if (itsXConnects_ != value) {
+			itsXConnects_ = value;
+			updated();
+		}
+	}
+	casacore::String xConnect(unsigned int index=0) const {
+		if (index >= itsXConnects_.size())
+			const_cast < vector < casacore::String >&>(itsXConnects_).resize (index + 1);
+		return itsXConnects_[index];
+	}
+	void setXConnect(const casacore::String& value, unsigned int index=0) {
+		if (index >= itsXConnects_.size())
+			itsXConnects_.resize (index + 1);
+		if (itsXConnects_[index] != value) {
+			itsXConnects_[index] = value;
+			updated();
+		}
+	}
+
+	const vector<bool>& timeConnects() const {
+		return itsTimeConnects_;
+	}
+	void setTimeConnects(const vector<bool>& value) {
+		if (itsTimeConnects_ != value) {
+			itsTimeConnects_ = value;
+			updated();
+		}
+	}
+	bool timeConnect(unsigned int index=0) const {
+		if (index >= itsTimeConnects_.size())
+			const_cast < vector < bool >&>(itsTimeConnects_).resize (index + 1);
+		return itsTimeConnects_[index];
+	}
+	void setTimeConnect(const bool& value, unsigned int index=0) {
+		if (index >= itsTimeConnects_.size())
+			itsTimeConnects_.resize (index + 1);
+		if (itsTimeConnects_[index] != value) {
+			itsTimeConnects_[index] = value;
+			updated();
+		}
+	}
 
 private:
 
@@ -1423,6 +1614,8 @@ private:
 	vector<PlotMSLabelFormat> itsTitleFormats_;
 	vector<bool> itsColorizeFlags_;
 	vector<PMS::Axis> itsColorizeAxes_;
+	vector<casacore::String> itsXConnects_;
+	vector<bool> itsTimeConnects_;
 
 
 	/* Key strings for casacore::Record */
@@ -1431,6 +1624,8 @@ private:
 	static const casacore::String REC_TITLES;
 	static const casacore::String REC_COLFLAGS;
 	static const casacore::String REC_COLAXES;
+	static const casacore::String REC_XCONNECT;
+	static const casacore::String REC_TIMECONNECT;
 
 	void setDefaults();
 };

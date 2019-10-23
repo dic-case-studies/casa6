@@ -1128,7 +1128,7 @@ using namespace casa::vi;
 	(ftname != "awprojectft" && ftname != "mawprojectft" && ftname != "proroft") )
       {
 	CountedPtr<SkyJones> vp = NULL;
-	ROMSColumns msc(*mss_p[0]);
+	MSColumns msc(*mss_p[0]);
 	Quantity parang(0.0,"deg");
 	Quantity skyposthreshold(0.0,"deg");
 	vp = new VPSkyJones(msc, true,  parang, BeamSquint::NONE,skyposthreshold);
@@ -1280,7 +1280,7 @@ using namespace casa::vi;
     
     if (!isATermOn) return new refim::NoOpATerm();
     
-    ROMSObservationColumns msoc(ms.observation());
+    MSObservationColumns msoc(ms.observation());
     String ObsName=msoc.telescopeName()(0);
     if ((ObsName == "EVLA") || (ObsName == "VLA"))
       return new refim::EVLAAperture();

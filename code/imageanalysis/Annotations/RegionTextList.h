@@ -88,13 +88,15 @@ public:
     // <src>shape</src> is the image shape and is only used if
     // the first region is a difference; in that case, the all pixels in entire
     // shape are set to good initially.
+    // <src>requireImageRegion</src> is passed to the parser so that file lines are
+    // added only for regions inside the image.
     RegionTextList(
         const casacore::String& filename, const casacore::CoordinateSystem& csys,
         const casacore::IPosition shape, const casacore::String& prependRegion="",
         const casacore::String& globalOverrideChans="",
         const casacore::String& globalOverrrideStokes="",
         const casacore::Int requireAtLeastThisVersion=RegionTextParser::CURRENT_VERSION,
-        casacore::Bool verbose=true
+        casacore::Bool verbose=true, casacore::Bool requireImageRegion=true
     );
 
     // create a list by reading it from a text string.
@@ -104,13 +106,15 @@ public:
     // <src>shape</src> is the image shape and is only used if
     // the first region is a difference; in that case, the all pixels in entire
     // shape are set to good initially.
+    // <src>requireImageRegion</src> is passed to the parser so that file lines are
+    // added only for regions inside the image.
     RegionTextList(
         const casacore::CoordinateSystem& csys, const casacore::String& text,
         const casacore::IPosition shape,
         const casacore::String& prependRegion="",
         const casacore::String& globalOverrideChans="",
         const casacore::String& globalOverrrideStokes="",
-        casacore::Bool verbose=true
+        casacore::Bool verbose=true, casacore::Bool requireImageRegion=true
     );
     //</group>
 
@@ -140,15 +144,15 @@ public:
 
 private:
     casacore::Vector<AsciiAnnotationFileLine> _lines;
-    vector<SHARED_PTR<const casacore::WCRegion> > _regions;
+    std::vector<std::shared_ptr<const casacore::WCRegion> > _regions;
     casacore::CoordinateSystem _csys;
     casacore::IPosition _shape;
     casacore::Bool _canGetRegion;
     // if false, then the corresponding region is complementary to
     // the result of the previous region operations in the sequence
-    vector<casacore::Bool> _union;
-    mutable vector<SHARED_PTR<const casacore::WCDifference> > _myDiff;
-    mutable SHARED_PTR<const casacore::WCRegion> _composite;
+    std::vector<casacore::Bool> _union;
+    mutable std::vector<std::shared_ptr<const casacore::WCDifference> > _myDiff;
+    mutable std::shared_ptr<const casacore::WCRegion> _composite;
 };
 
 inline std::ostream &operator<<(std::ostream& os, const RegionTextList& list) {

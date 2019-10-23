@@ -191,7 +191,7 @@ using namespace casacore;
   {
 
 	  if(col==FTMachine::CORRECTED){
-		  if(ROMSColumns((vb.getVi())->ms()).correctedData().isNull()){
+		  if(MSColumns((vb.getVi())->ms()).correctedData().isNull()){
 			  col=FTMachine::OBSERVED;
 			  //			  cerr << "Max of visCube" << max(vb.visCube()) << " model " << max(vb.visCubeModel())<< endl;
 			  vb.setVisCube(vb.visCube()- vb.visCubeModel());

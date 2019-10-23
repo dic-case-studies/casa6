@@ -1,4 +1,3 @@
-//# ComponentShape.h: Base class for component shapes
 //# Copyright (C) 1998,1999,2000,2001
 //# Associated Universities, Inc. Washington DC, USA.
 //#
@@ -23,7 +22,6 @@
 //#                        520 Edgemont Road
 //#                        Charlottesville, VA 22903-2475 USA
 //#
-//# $Id: ComponentShape.h 20739 2009-09-29 01:15:15Z Malte.Marquarding $
 
 #ifndef ANNOTATIONS_ANNOTATIONBASE_H
 #define ANNOTATIONS_ANNOTATIONBASE_H
@@ -50,13 +48,15 @@ namespace casa {
 // set in the constructor but can be set by mutator methods.
 //
 // casacore::Input directions will be converted to the reference frame of the
-// input coordinate system upon construction if necessary.
+// input coordinate system upon construction if necessary. The coordinate
+// system specified in the constructor should be that associated with the
+// image to which the region/annotation is being applied.
 // </synopsis>
 
 class AnnotationBase {
 public:
 
-	using RGB = vector<float>;
+	using RGB = std::vector<float>;
     
 	// The pairs have longitude as the first member and latitude as the second
 	using Direction = casacore::Vector<std::pair<casacore::Quantity,casacore::Quantity> >;
@@ -139,7 +139,7 @@ public:
 	static const casacore::Bool DEFAULT_USETEX;
 	static const RGB DEFAULT_LABELCOLOR;
 	static const casacore::String DEFAULT_LABELPOS;
-	static const vector<casacore::Int> DEFAULT_LABELOFF;
+	static const std::vector<casacore::Int> DEFAULT_LABELOFF;
 
 	static const casacore::Regex rgbHexRegex;
 
@@ -249,9 +249,9 @@ public:
 	void setLabelPosition(const casacore::String& position);
 
 	// <src>offset</src> must have two elements
-	void setLabelOffset(const vector<casacore::Int>& offset);
+	void setLabelOffset(const std::vector<casacore::Int>& offset);
 
-	vector<casacore::Int> getLabelOffset() const;
+    std::vector<casacore::Int> getLabelOffset() const;
 
 	virtual std::ostream& print(std::ostream &os) const = 0;
 
@@ -284,8 +284,7 @@ public:
 	static std::list<std::string> colorChoices();
 
 	// get the coordinate system associated with this object.
-	// This is the same coordinates system used to construct the object.
-
+	// This is the same coordinate system used to construct the object.
 	inline const casacore::CoordinateSystem& getCsys() const {
 		return _csys;
 	}
@@ -324,10 +323,13 @@ public:
 	}
 
 protected:
-
+    // <group>
 	// if <src>freqRefFrame</src> or <src>dopplerString</src> are empty,
 	// the values from the spectral coordinate of csys will be used, if one
-	// exists. if restfreq=casacore::Quantity(0, "Hz") -> use the rest frequency associated with the coordinate system
+	// exists. if restfreq=casacore::Quantity(0, "Hz") -> use the rest frequency
+    // associated with the coordinate system.
+    // The provided coordinate system should be that of the image to which
+    // the region/annotation is being applied.
 	AnnotationBase(
 		const Type type, const casacore::String& dirRefFrameString,
 		const casacore::CoordinateSystem& csys, const casacore::Quantity& beginFreq,
@@ -345,9 +347,7 @@ protected:
 		const Type type, const casacore::CoordinateSystem& csys,
 		const casacore::Vector<casacore::Stokes::StokesTypes>& stokes
 	);
-
-	// the implicitly defined copy constructor is fine
-	// AnnotationBase(const AnnotationBase& other);
+    // <group>
 
 	// assignment operator
 	AnnotationBase& operator= (const AnnotationBase& other);
@@ -367,8 +367,6 @@ protected:
 	);
 
 	virtual void _printPairs(std::ostream& os) const;
-
-
 
 	inline const casacore::IPosition& _getDirectionAxes() const {
 		return _directionAxes;
@@ -417,7 +415,7 @@ private:
 	std::map<Keyword, casacore::Bool> _globals;
 	std::map<Keyword, casacore::String> _params;
 	casacore::Bool _printGlobals;
-	vector<casacore::Int> _labelOff;
+    std::vector<casacore::Int> _labelOff;
 
 	static casacore::Bool _doneUnitInit, _doneColorInit;
 	static std::map<casacore::String, LineStyle> _lineStyleMap;

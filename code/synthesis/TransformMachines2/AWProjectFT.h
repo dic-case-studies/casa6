@@ -60,8 +60,9 @@
 #include <coordinates/Coordinates/DirectionCoordinate.h>
 
 #include <synthesis/TransformMachines2/AWConvFunc.h>
-#include <synthesis/TransformMachines2/AWConvFuncEPJones.h>
 #include <synthesis/TransformMachines2/ATerm.h>
+#include <synthesis/TransformMachines2/PhaseGrad.h>
+#include <synthesis/TransformMachines2/VB2CFBMap.h>
 
 #include <casa/OS/Timer.h>
 
@@ -155,12 +156,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     static ATerm* createTelescopeATerm(const casacore::String& telescopeName, 
 				       const casacore::Bool& isATermOn);
     static casacore::CountedPtr<ConvolutionFunction> makeCFObject(const casacore::String& telescopeName,
-							const casacore::Bool aTermOn,
-							const casacore::Bool psTermOn,
-							const casacore::Bool wTermOn,
-							const casacore::Bool mTermOn,
-							const casacore::Bool wBAWP,
-							const casacore::Bool conjBeams);
+								  const casacore::Bool aTermOn,
+								  const casacore::Bool psTermOn,
+								  const casacore::Bool wTermOn,
+								  const casacore::Bool mTermOn,
+								  const casacore::Bool wBAWP,
+								  const casacore::Bool conjBeams);
     AWProjectFT();
     
     // Constructor: cachesize is the size of the cache in words
@@ -412,6 +413,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     virtual void ComputeResiduals(vi::VisBuffer2&vb, casacore::Bool useCorrected);
     void makeWBCFWt(CFStore2& cfs,const casacore::Double imRefFreq);
 
+    virtual const casacore::CountedPtr<refim::FTMachine>& getFTM2(const casacore::Bool )
+    {
+      return self_p;
+    }
+
     CFBStruct cfbst_pub;
     // Image Scaling and offset
     casacore::Vector<casacore::Double> uvScale, uvOffset;
@@ -553,8 +559,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Double runTime1_p;
 
     PolOuterProduct::MuellerType muellerType_p;
+    PhaseGrad phaseGrad_p;
 
     casacore::Int previousSPWID_p;
+
+    casacore::CountedPtr<refim::FTMachine> self_p;
+    casacore::CountedPtr<refim::VB2CFBMap> vb2CFBMap_p;
+
 #include "AWProjectFT.FORTRANSTUFF.INC"
   };
 } //# NAMESPACE CASA - END

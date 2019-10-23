@@ -82,7 +82,7 @@ public:
 		  const casacore::String& timetype,
 		  const casacore::String& freqtype,
 		  const casacore::String& fieldtype,
-		  const casacore::ROMSColumns& mscol,
+		  const casacore::MSColumns& mscol,
 		  casacore::Vector<casacore::Int> spwmap=casacore::Vector<casacore::Int>(),
 		  const CTTIFactoryPtr cttifactoryptr=&CTTimeInterp1::factory);
 
@@ -117,7 +117,9 @@ public:
 private:
 
   // Null ctor does nothing
-  CTPatchedInterp() :mtype_(VisCalEnum::GLOBAL) {};
+  CTPatchedInterp() :
+    mtype_(VisCalEnum::GLOBAL),
+    freqInterpMethod0_(casacore::InterpolateArray1D<casacore::Double,casacore::Float>::nearestNeighbour) {};
   
   // Setup methods
   void sliceTable();
@@ -131,7 +133,7 @@ private:
   // default: all 0 (no field-dep yet)
   void setDefFldMap() {fldMap_.resize(nMSFld_); fldMap_.set(0);};
   void setFldMap(const casacore::MSField& msfld);           // via nearest on-sky
-  void setFldMap(const casacore::ROMSFieldColumns& fcol);  // via nearest on-sky
+  void setFldMap(const casacore::MSFieldColumns& fcol);  // via nearest on-sky
   void setFldMap(casacore::Vector<casacore::Int>& fldmap);        // via ordered index list
   //void setFldMap(casacore::Vector<casacore::String>& field);     // via name matching
   //void setFldMap(casacore::uInt to, casacore::uInt from);        // via single to/from 
@@ -184,10 +186,17 @@ private:
   casacore::Int nPar_, nFPar_;
 
   // Interpolation modes
-  casacore::String timeType_, freqType_;
+  casacore::String timeType_, freqTypeStr_;
 
-  casacore::InterpolateArray1D<casacore::Double,casacore::Float>::InterpolationMethod ia1dmethod_;
+  // Relative-to-center interpolation
+  casacore::Bool relativeFreq_;
 
+  // Freq-dep interpolation method (from InterpolateArray1D enum)
+#define INTERPMETHOD casacore::InterpolateArray1D<casacore::Double,casacore::Float>::InterpolationMethod
+  const INTERPMETHOD freqInterpMethod0_;  // user-specified
+  INTERPMETHOD freqInterpMethod_;         // current
+  casacore::Vector<INTERPMETHOD> freqInterpMethodVec_;  // per ms spw
+  
   // Are we slicing caltable by field?
   casacore::Bool byObs_,byField_;
 

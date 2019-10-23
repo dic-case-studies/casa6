@@ -46,8 +46,8 @@ synthesisnormalizer::~synthesisnormalizer()
 
   try 
     {
-      casacore::Record rec = *toRecord( normpars );
-      itsNormalizer->setupNormalizer( rec );
+      std::unique_ptr<casacore::Record> rec(toRecord( normpars ));
+      itsNormalizer->setupNormalizer( *rec );
     } 
   catch  (AipsError x) 
     {
@@ -81,6 +81,19 @@ synthesisimstore* synthesisnormalizer::getimstore()
   }
   return rstat;
 }
+
+  bool synthesisnormalizer::unlockimages(){
+
+    Bool rstat(false);
+    try {
+      rstat=(itsNormalizer->getImageStore())->releaseLocks();
+    } catch  (AipsError x) {
+      RETHROW(x);
+    }
+    return rstat;
+
+
+  }
 
 bool synthesisnormalizer::gatherweightdensity()
 {

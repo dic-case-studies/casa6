@@ -5,25 +5,31 @@
 #
 ################################################
 
-from taskinit import *
+from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import shutil
 import numpy
-from taskinit import *
 import copy
-import time;
+import time
 
-#from refimagerhelper import PySynthesisImager
-#from refimagerhelper import PyParallelContSynthesisImager,PyParallelCubeSynthesisImager
-#from refimagerhelper import ImagerParameters
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
 
-from imagerhelpers.imager_base import PySynthesisImager
-from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
-from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
-from imagerhelpers.input_parameters import ImagerParameters
+    from casatasks.private.imagerhelpers.imager_base import PySynthesisImager
+    from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
+    from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
+else:
+    from taskinit import *
 
-
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
+    from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from imagerhelpers.input_parameters import ImagerParameters
 
 def tclean(
     ####### Data Selection
@@ -60,24 +66,28 @@ def tclean(
 #    sysvel,#='',
 #    sysvelframe,#='',
     interpolation,#='',
+    perchanweightdensity, #=''
     ## 
     ####### Gridding parameters
-    gridder,#='ft', 
+    gridder,#='ft',
     facets,#=1,
+    psfphasecenter,#='',
     chanchunks,#=1,
 
     wprojplanes,#=1,
 
     ### PB
     vptable,
-
+    mosweight, #=True
     aterm,#=True,
     psterm,#=True,
     wbawp ,#= True,
     conjbeams ,#= True,
     cfcache ,#= "",
+    usepointing, #=false
     computepastep ,#=360.0,
     rotatepastep ,#=360.0,
+    pointingoffsetsigdev ,#=0.0,
 
     pblimit,#=0.01,
     normtype,#='flatnoise',
@@ -86,7 +96,7 @@ def tclean(
     deconvolver,#='hogbom',
     scales,#=[],
     nterms,#=1,
-    smallscalebias,#=0.6
+    smallscalebias,#=0.0
 
     ### restoration options
     restoration,
@@ -99,6 +109,7 @@ def tclean(
     ##### Weighting
     weighting,#='natural',
     robust,#=0.5,
+    noise,#0.0Jy
     npixels,#=0,
 #    uvtaper,#=False,
     uvtaper,#=[],
@@ -119,9 +130,9 @@ def tclean(
     usemask,#='user',
     mask,#='',
     pbmask,#='',
-    maskthreshold,#='',
-    maskresolution,#='',
-    nmask,#=0,
+    # maskthreshold,#='',
+    # maskresolution,#='',
+    # nmask,#=0,
 
     ##### automask by multithresh
     sidelobethreshold,#=5.0,
@@ -135,6 +146,7 @@ def tclean(
     dogrowprune,#=True
     minpercentchange,#=0.0
     verbose, #=False
+    fastnoise, #=False
 
     ## Misc
 
@@ -154,16 +166,29 @@ def tclean(
     #####################################################
     
     ### Move these checks elsewhere ? 
+    inpparams=locals().copy()
+    ###now deal with parameters which are not the same name 
+    inpparams['msname']= inpparams.pop('vis')
+    inpparams['timestr']= inpparams.pop('timerange')
+    inpparams['uvdist']= inpparams.pop('uvrange')
+    inpparams['obs']= inpparams.pop('observation')
+    inpparams['state']= inpparams.pop('intent')
+    inpparams['loopgain']=inpparams.pop('gain')
+    inpparams['scalebias']=inpparams.pop('smallscalebias')
 
     if specmode=='cont':
         specmode='mfs'
-
+        inpparams['specmode']='mfs'
 #    if specmode=='mfs' and nterms==1 and deconvolver == "mtmfs":
 #        casalog.post( "The MTMFS deconvolution algorithm (deconvolver='mtmfs') needs nterms>1.Please set nterms=2 (or more). ", "WARN", "task_tclean" )
 #        return
 
-    if specmode!='mfs' and deconvolver=="mtmfs":
-        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs'.", "WARN", "task_tclean" )
+    if (deconvolver=="mtmfs") and (specmode!='mfs') and (specmode!='cube' or nterms!=1) and (specmode!='cubedata' or nterms!=1):
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_tclean" )
+        return
+      
+    if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 and parallel==True):
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_tclean" )
         return
 
     #####################################################
@@ -173,118 +198,32 @@ def tclean(
     imager = None
     paramList = None
 
+    # Put all parameters into dictionaries and check them.
+    ##make a dictionary of parameters that ImagerParameters take
+
+    if is_python3:
+        defparm=dict(list(zip(ImagerParameters.__init__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__)))
+    else:
+        defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.func_defaults))
+        
+    ###assign values to the ones passed to tclean and if not defined yet in tclean...
+    ###assign them the default value of the constructor
+    bparm={k:  inpparams[k] if k in inpparams else defparm[k]  for k in defparm.keys()}
+
+    ###default mosweight=True is tripping other gridders as they are not
+    ###expecting it to be true
+    if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
+        bparm['mosweight']=False
+    paramList=ImagerParameters(**bparm)
+
     # deprecation message
     if usemask=='auto-thresh' or usemask=='auto-thresh2':
         casalog.post(usemask+" is deprecated, will be removed in CASA 5.4.  It is recommended to use auto-multithresh instead", "WARN") 
 
-    # Put all parameters into dictionaries and check them. 
-    paramList = ImagerParameters(
-        msname =vis,
-        field=field,
-        spw=spw,
-        timestr=timerange,
-        uvdist=uvrange,
-        antenna=antenna,
-        scan=scan,
-        obs=observation,
-        state=intent,
-        datacolumn=datacolumn,
-
-        ### Image....
-        imagename=imagename,
-        #### Direction Image Coords
-        imsize=imsize, 
-        cell=cell, 
-        phasecenter=phasecenter,
-        stokes=stokes,
-        projection=projection,
-        startmodel=startmodel,
-
-        ### Spectral Image Coords
-        specmode=specmode,
-        reffreq=reffreq,
-        nchan=nchan,
-        start=start,
-        width=width,
-        outframe=outframe,
-        veltype=veltype,
-        restfreq=restfreq,
-        sysvel='', #sysvel,
-        sysvelframe='', #sysvelframe,
-        interpolation=interpolation,
-
-        gridder=gridder,
-#        ftmachine=ftmachine,
-        facets=facets,
-        chanchunks=chanchunks,
-
-        wprojplanes=wprojplanes,
-
-        vptable=vptable,
-
-        ### Gridding....
-
-        aterm=aterm,
-        psterm=psterm,
-        wbawp = wbawp,
-        cfcache = cfcache,
-        conjbeams = conjbeams,
-        computepastep =computepastep,
-        rotatepastep = rotatepastep,
-
-        pblimit=pblimit,
-        normtype=normtype,
-
-        outlierfile=outlierfile,
-        restart=restart,
-
-        weighting=weighting,
-        robust=robust,
-        npixels=npixels,
-        uvtaper=uvtaper,
-
-        ### Deconvolution
-        niter=niter,
-        cycleniter=cycleniter,
-        loopgain=gain,
-        threshold=threshold,
-        nsigma=nsigma,
-        cyclefactor=cyclefactor,
-        minpsffraction=minpsffraction, 
-        maxpsffraction=maxpsffraction,
-        interactive=interactive,
-
-        deconvolver=deconvolver,
-        scales=scales,
-        nterms=nterms,
-        scalebias=smallscalebias,
-        restoringbeam=restoringbeam,
-        
-        ### new mask params
-        usemask=usemask,
-        mask=mask,
-        pbmask=pbmask,
-        maskthreshold=maskthreshold,
-        maskresolution=maskresolution,
-        nmask=nmask,
-
-        ### automask multithresh params
-        sidelobethreshold=sidelobethreshold,
-        noisethreshold=noisethreshold,
-        lownoisethreshold=lownoisethreshold,
-        negativethreshold=negativethreshold,
-        smoothfactor=smoothfactor,
-        minbeamfrac=minbeamfrac,
-        cutthreshold=cutthreshold,
-        growiterations=growiterations,
-        dogrowprune=dogrowprune,
-        minpercentchange=minpercentchange,
-        verbose=verbose,
- 
-        savemodel=savemodel
-        )
-
     #paramList.printParameters()
+    
+    if pointingoffsetsigdev!=0.0 and usepointing==False:
+        casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
 
     pcube=False
     concattype=''
@@ -298,17 +237,21 @@ def tclean(
         return False
    
     ## Setup Imager objects, for different parallelization schemes.
+    imagerInst=PySynthesisImager
     if parallel==False and pcube==False:
-   
          imager = PySynthesisImager(params=paramList)
+         imagerInst=PySynthesisImager
     elif parallel==True:
          imager = PyParallelContSynthesisImager(params=paramList)
+         imagerInst=PyParallelContSynthesisImager
     elif pcube==True:
          imager = PyParallelCubeSynthesisImager(params=paramList)
+         imagerInst=PyParallelCubeSynthesisImager
          # virtualconcat type - changed from virtualmove to virtualcopy 2016-07-20
-         concattype='virtualcopy'
+         #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
+         concattype='copyvirtual'
     else:
-         print 'Invalid parallel combination in doClean.'
+         print('Invalid parallel combination in doClean.')
          return False
     
     retrec={}
@@ -337,6 +280,9 @@ def tclean(
             t1=time.time();
             casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
+        ####now is the time to check estimated memory
+        imager.estimatememory()
+            
         if niter>0:
             t0=time.time();
             imager.initializeIterationControl()
@@ -346,9 +292,18 @@ def tclean(
         ## Make PSF
         if calcpsf==True:
             t0=time.time();
-
+             
             imager.makePSF()
-
+            if((psfphasecenter != '') and (gridder=='mosaic')):
+                print("doing with different phasecenter psf")
+                imager.unlockimages(0)
+                psfParameters=paramList.getAllPars()
+                psfParameters['phasecenter']=psfphasecenter
+                psfParamList=ImagerParameters(**psfParameters)
+                psfimager=imagerInst(params=psfParamList)
+                psfimager.initializeImagers()
+                psfimager.setWeighting()
+                psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
             t1=time.time();
             casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
@@ -364,7 +319,7 @@ def tclean(
                 t0=time.time();
                 imager.runMajorCycle()
                 t1=time.time();
-                casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+                casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean"); 
 
             ## In case of no deconvolution iterations....
             if niter==0 and calcres==False:
@@ -411,17 +366,15 @@ def tclean(
                     t1=time.time();
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
                     
-
-
-        if (pcube):
-            print "running concatImages ..."
-            casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
-            # fixed to move subcubes
-            imager.concatImages(type=concattype)
-
-        ## Close tools.
+        ##close tools
+        # needs to deletools before concat or lock waits for ever
         imager.deleteTools()
-
+   
+        if (pcube):
+            print("running concatImages ...")
+            casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
+            imager.concatImages(type=concattype)
+        
         # CAS-10721 
         if niter>0 and savemodel != "none":
             casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_tclean")

@@ -64,11 +64,27 @@
 # <todo>
 # </todo>
 
-import numpy
+from __future__ import absolute_import
+
 import os
-from importuvfits import *
-from taskinit import *
-#from fg import *
+import numpy
+
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import table, ms, agentflagger, quanta
+    from casatasks import casalog, importuvfits
+    from .mstools import write_history
+
+    _qa = quanta( )
+else:
+    from importuvfits import *
+    from taskinit import *
+    from mstools import write_history
+    #from fg import *
+
+    # not a local tool
+    _qa = qa
 
 def importgmrt( fitsfile, flagfile, vis ):
     retValue=False
@@ -128,23 +144,31 @@ def importgmrt( fitsfile, flagfile, vis ):
     try:
         casalog.post( 'Starting import ...', 'NORMAL' )
         importuvfits( fitsfile, vis )
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( str(instance), 'SEVERE' )
         return retValue
 
-#    mytb, myms, myfg = gentools(['tb', 'ms', 'fg'])
-    mytb, myms = gentools(['tb', 'ms'])
-    aflocal = casac.agentflagger()
+    if is_CASA6:
+        mytb = table( )
+        myms = ms( )
+        aflocal = agentflagger( )
+    else:
+        #    mytb, myms, myfg = gentools(['tb', 'ms', 'fg'])
+        mytb, myms = gentools(['tb', 'ms'])
+        aflocal = casac.agentflagger()
 
     # Write history
     try:
-        param_names = importgmrt.func_code.co_varnames[:importgmrt.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        param_names = importgmrt.__code__.co_varnames[:importgmrt.__code__.co_argcount]
+        if is_python3:
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
         ok &= write_history(myms, vis, 'importgmrt', param_names,
                             param_vals, casalog)
-    except Exception, instance:
-        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                     'WARN')
+    except Exception as instance:
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
     
     # CASA's importuvfits doesn't understand the GMRT antenna
     # names very well and/or the FITS files tend to put the
@@ -160,7 +184,7 @@ def importgmrt( fitsfile, flagfile, vis ):
             names.append( stations[idx].split(':')[0] )
         mytb.putcol( 'NAME', numpy.array( names ) )
         mytb.done()
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( 'Unable to properly name the antennas, but continuing')
         casalog.post( str(instance), 'WARN' )
 
@@ -181,10 +205,10 @@ def importgmrt( fitsfile, flagfile, vis ):
         myms.done()
 
         # Now have the observation time range in a numpy array.
-        startObs = qa.time( str( trange[0] )+'s', prec=8, form='ymd' )[0]
-        endObs   = qa.time( str( trange[1] )+'s', prec=8, form='ymd' )[0]
+        startObs = _qa.time( str( trange[0] )+'s', prec=8, form='ymd' )[0]
+        endObs   = _qa.time( str( trange[1] )+'s', prec=8, form='ymd' )[0]
         
-    except Exception, instance:
+    except Exception as instance:
         casalog.post( 'Unable to find obaservation start/en times', 'SEVERE' )
         casalog.post( str(instance), 'SEVERE' )
         return retValue
@@ -202,7 +226,7 @@ def importgmrt( fitsfile, flagfile, vis ):
         for month in range( int( startMM ), int( endMM ) + 1 ):
             for day in range( int( startDD ), int( endDD ) + 1 ):
                 days.append( str(year) + '/' + str(month) + '/' + str(day) + '/' )
-	casalog.post( "DAYS: "+str(days), 'DEBUG1')
+        casalog.post( "DAYS: "+str(days), 'DEBUG1')
 
 
     # Read through the flag file(s) and assemble it into
@@ -216,9 +240,9 @@ def importgmrt( fitsfile, flagfile, vis ):
     #    2. 
     #
     casalog.post( 'Starting the flagging ...', 'NORMAL' )
-					  
-	# First lets save the flag information as we got it from the
-	# flag file.
+                                          
+        # First lets save the flag information as we got it from the
+        # flag file.
 #    myfg.open( vis )
 #    myfg.saveflagversion( 'none', 'No flagging performed yet' )
 #    myfg.done()
@@ -230,7 +254,7 @@ def importgmrt( fitsfile, flagfile, vis ):
         casalog.post( 'Reading flag file '+file, 'NORMAL2' )
         FLAG_FILE = open( file, 'r' )
         line = FLAG_FILE.readline()
-        ant_names = []		
+        ant_names = []          
         
         while ( len( line ) > 0 ):
             casalog.post( 'Read from flag file: '+str(line), 'DEBUG1' )
@@ -242,11 +266,11 @@ def importgmrt( fitsfile, flagfile, vis ):
 
             # Skip comment lines, and the end of file.
             if ( len(line) < 1 or ( line[0] == '!' and line[2:6] !=  'PANT' ) ):
-				line = FLAG_FILE.readline()
-				continue
-			
+                                line = FLAG_FILE.readline()
+                                continue
+                        
             # Store the antenna name list
-            if ( line[0:6] == '! PANT' ):			
+            if ( line[0:6] == '! PANT' ):                       
                 ant_names= line.split(':')[1].lstrip(' ').split(' ')
                 line = FLAG_FILE.readline()
                 continue
@@ -322,9 +346,9 @@ def importgmrt( fitsfile, flagfile, vis ):
             # Verify the syntax of the ANTENNA & BASELINE keywords, 
             # if ANTENNA will always have only one.  I suspect we
             # with to loop through the baselines only here.
-			#
-			# OLD CODE FOR creating ANT SELECTION STRING
-			#
+                        #
+                        # OLD CODE FOR creating ANT SELECTION STRING
+                        #
             #antStr=''
             #selectAntStr=''
             #if ( len( antennas ) > 0 and len( baselines ) > 0 ):
@@ -343,12 +367,12 @@ def importgmrt( fitsfile, flagfile, vis ):
             
             antStr=''
             #if ( len( antennas ) > 0 and len( baselines ) > 0 ):
-			#	# We are selecting baselines.
-			#	for ant1 in antennas:
+                        #       # We are selecting baselines.
+                        #       for ant1 in antennas:
             #        for ant2 in baselines:
             #            if ( len( antStr ) < 1 ):
             #                antStr=str(int(ant1)-1)+'&'+str(int(ant2)-1)
-			#    selectAntStr=antStr
+                        #    selectAntStr=antStr
             #elif ( len( antennas ) > 0 ):
             if ( len( antennas ) > 0 ):
                 antStr = ant_names[ int(antennas)-1 ].strip( ' ' )
@@ -374,7 +398,7 @@ def importgmrt( fitsfile, flagfile, vis ):
                 aflocal.init()
                 aflocal.run(True, True)
                 aflocal.done()
-            except Exception, instance:
+            except Exception as instance:
                 casalog.post( 'Unable to flag data from flag file '+file\
                               +'.\nAntennas='+antennas+' and timerange='\
                               +timerange, 'WARN' )
@@ -385,7 +409,7 @@ def importgmrt( fitsfile, flagfile, vis ):
             
         FLAG_FILE.close()
 
-	# Save a Flag version so we can revert back to it if we wish
+        # Save a Flag version so we can revert back to it if we wish
 #    myfg.open( vis )
 #    myfg.saveflagversion( 'import', 'Flagged the data from the GMRT flag file' )
 #    myfg.done()
@@ -395,8 +419,3 @@ def importgmrt( fitsfile, flagfile, vis ):
 
     retValue = True
     return retValue
-
-
-    
-    
-

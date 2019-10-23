@@ -32,7 +32,6 @@
 #include <mutex>
 #include <sys/file.h>
 
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -71,21 +70,12 @@ logsink::logsink(const std::string &filename, bool telemetrytoggle, const std::s
   }
 
   if (telemetryEnabled) {
-    if( ! telemetryLog.size( ) ){
-       char *buff = NULL;
-       if ( inTelemetryfilename.at(0) == '/' )
-           telemetryLog = inTelemetryfilename;
-       else {
-           char *mybuff = getcwd(buff, MAXPATHLEN);
-           telemetryLog = string(mybuff) + "/" + inTelemetryfilename;
-       }
-    }
-    telemetryLoggerPid = std::to_string(getpid());
+     setstatslogfile(inTelemetryfilename);
   }
 
   // jagonzal: Set task and processor name
-  taskname = new casacore::String("casa");
-  processor_name = casacore::String("casa");
+  taskname = "casa";
+  processor_name = "casa";
 
   //cout << "thelogsink=" << thelogsink << endl;
   thelogsink = new casa::TSLogSink(theLogName);
@@ -130,10 +120,10 @@ bool logsink::origin(const std::string &fromwhere)
     delete itsorigin;
     itsorigin = new LogOrigin(processor_name);
     //String* taskname = new String(fromwhere);
-    taskname = new String(fromwhere);
-    itsorigin->taskName(*taskname);
-    thelogsink->setTaskName(*taskname);
-    LogSink().globalSink().setTaskName(*taskname);
+    taskname = fromwhere;
+    itsorigin->taskName(taskname);
+    thelogsink->setTaskName(taskname);
+    LogSink().globalSink().setTaskName(taskname);
     return rstat;
 }
 
@@ -141,9 +131,9 @@ bool logsink::origin(const std::string &fromwhere)
 // but in the MPI case we use the hostname and rank involved)
 bool logsink::processorOrigin(const std::string &fromwhere)
 {
-	bool rstat = true;
+    bool rstat = true;
 
-    processor_name = casacore::String(fromwhere);
+    processor_name = fromwhere;
 
     return rstat;
 }
@@ -283,7 +273,7 @@ logsink::postLocally(const std::string& message,
 
 std::mutex _stat_mutex;
 bool logsink::poststat(const std::string& message,
-		   const std::string& origin)
+                       const std::string& /*origin*/)
 {
     int fd = open(telemetryLog.c_str(), O_RDWR | O_CREAT, 0666);
     int telemetryFileLocked = flock(fd, LOCK_EX | LOCK_NB);
@@ -297,11 +287,12 @@ bool logsink::poststat(const std::string& message,
                 std::time_t convertedtime = std::chrono::system_clock::to_time_t(timestamp);
                 char formattedtime[20];
                 strftime(formattedtime, 20, "%Y-%m-%d %H:%M:%S", localtime(&convertedtime));
-                std::string telemetryOrigin = " ";
+                std::string telemetryOrigin =" ";
                 if(itsorigin) {
-                    telemetryOrigin = itsorigin->toString();
+                    std::string origOrigin = itsorigin->toString();
+                    std::remove_copy(origOrigin.begin(), origOrigin.end(), std::back_inserter(telemetryOrigin), ':');
                 }
-                tlog << formattedtime << " :: " << telemetryLoggerPid<< " :: "<< telemetryOrigin << " :: " << message << "\n";
+                tlog << formattedtime << " :: " << telemetryLoggerPid<< " ::"<< telemetryOrigin << " :: " << message << "\n";
                 tlog.close();
             } catch (const std::exception& e) { // caught by reference to base
                 std::cout << "Writing stats failed: '" << e.what() << "'\n";
@@ -315,6 +306,7 @@ bool logsink::poststat(const std::string& message,
         cout << "Telemetry file is locked by another process. Won't write stats.";
     }
     flock(fd, LOCK_UN);
+    close(fd);
     return true;
 }
 
@@ -366,6 +358,8 @@ bool logsink::setlogfile(const std::string& filename)
    if(tmpname != "null") {
       casacore::File filein( tmpname ) ;
       logname = filein.path().absoluteName() ;
+      if ( ! thelogsink )
+          thelogsink = &LogSink().globalSink();
       static_cast<TSLogSink*>(thelogsink)->setLogSink(logname);
    }
    else
@@ -380,9 +374,18 @@ bool logsink::setlogfile(const std::string& filename)
 
 bool logsink::setstatslogfile(const std::string& filename)
 {
-   telemetryLog = filename;
-   return true;
+  //cout << "Setting stats file to " << filename << "\n";
+  char *buff = NULL;
+  if ( filename.at(0) == '/' )
+     telemetryLog = filename;
+  else {
+     char *mybuff = getcwd(buff, MAXPATHLEN);
+     telemetryLog = string(mybuff) + "/" + filename;
+  }
+  telemetryLoggerPid = std::to_string(getpid());
+  return true;
 }
+
 string logsink::getstatslogfile()
 {
    return telemetryLog ;

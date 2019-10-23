@@ -81,7 +81,9 @@ public:
   /** A constructor of an empty profile with n layers, that can be filled up later. */
   AtmProfile(unsigned int n);
 
-  /** A long constructor of the atmospheric profile from the basic set of parameters described above. */
+  /** A long constructor of the atmospheric profile from the basic set of parameters described above. 
+      Please note that this constructor assumes that the &altitude of the antenna is the SAME of the 
+      weather station that provides: &groundPressure, &groundTemperature, and &relativeHumidity */
   AtmProfile(const Length &altitude,
              const Pressure &groundPressure,
              const Temperature &groundTemperature,
@@ -93,6 +95,7 @@ public:
              const Length &topAtmProfile,
              unsigned int atmType); //Atmospheretype atmType);
 
+  
   /** A long constructor of the atmospheric profile from the basic set of parameters described above which, 
       in addition, includes user-defined temperature profile  */
   AtmProfile(const Length &altitude,
@@ -278,6 +281,14 @@ public:
   /** Alternative accessor to the ground altitude of site (length units) */
   Length getGroundAltitude() const { return altitude_; }
 
+   /** setter for the ground altitude of site (length units). Careful! It will remove or add layers if necessary. 
+       Ground values of T/P/h would change as well */
+  void setAltitude(const Length &groundaltitude);
+
+  /** Alternative setter for the ground altitude of site (length units). Careful! It will remove or add layers if necessary. 
+       Ground values of T/P/h would change as well */
+  // void setGroundAltitude(const Length &groundaltitude);
+ 
   /** Accessor to the altitude of the tropopause (length units) */
   Length getTropopauseAltitude() const { return tropoAltitude_; }
 
@@ -469,7 +480,7 @@ protected:
   Temperature tropoTemperature_; //!< Temperature at the tropopause
   unsigned int tropoLayer_; //!< Layer where tropopause starts
   Length tropoAltitude_; //!< Altitude where tropopause starts
-  Pressure groundPressure_; //!< Ground pressure at the site (mb)
+  Pressure groundPressure_; //!< Ground pressure at the site 
   Humidity relativeHumidity_; /** Relative humidity at the site (%)
    used only to make an estimate
    of the water vapor column, first guess) */
@@ -480,9 +491,11 @@ protected:
    P_ground=550; DP: 10; DP1:
    1.2 ==> The pressure levels will
    then be 550, 560, 572, 586.4, .... */
+
   Length altitude_; //!< Altitude of the site (km)
   Length topAtmProfile_; //!< Top of atmospheric profile (km)
   unsigned int numLayer_; //!< Total number of layers in the output	atmospheric profiles
+  double fractionLast_;  //!< Fraction of last layer needed for some calculations
   bool newBasicParam_;
   vector<double> v_layerThickness_; //!< Thickness of layer (m)
   vector<double> v_layerTemperature_; //!< Temp. of layers (K)

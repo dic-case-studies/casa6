@@ -426,10 +426,17 @@ public:
   Opacity getAverageDryContOpacity(unsigned int spwid);
 
   /** Function to retrieve the integrated Dry Opacity along the atmospheric path for single frequency RefractiveIndexProfile object */
-  Opacity getDryOpacity();
+  Opacity getDryOpacity(){return getDryOpacity(0);}
+  Opacity getDryOpacityUpTo(Length refalti){return getDryOpacityUpTo(0,refalti);}
   /** Function to retrieve the integrated Dry Opacity along the atmospheric path for channel nc in an RefractiveIndexProfile object with a spectral grid */
   Opacity getDryOpacity(unsigned int nc);
-  Opacity getDryOpacity(unsigned int spwid, unsigned int nc);
+  Opacity getDryOpacityUpTo(unsigned int nc, Length refalti);
+  Opacity getDryOpacity(unsigned int spwid, unsigned int nc){ if(!spwidAndIndexAreValid(spwid, nc)) return Opacity(-999.0); return getDryOpacity(v_transfertId_[spwid] + nc);}
+  Opacity getDryOpacityUpTo(unsigned int spwid, unsigned int nc, Length refalti)
+  {
+    if(!spwidAndIndexAreValid(spwid, nc))return Opacity(-999.0);
+    return getDryOpacityUpTo(v_transfertId_[spwid] + nc, refalti);
+  }
   Opacity getAverageDryOpacity(unsigned int spwid);
 
   /** Function to retrieve the integrated Dry Continuum Opacity along the atmospheric path for single frequency RefractiveIndexProfile object */

@@ -1,13 +1,32 @@
+from __future__ import absolute_import
 import os
 import re
 import string
 import time
 import shutil
 import numpy as np
-from taskinit import *
-from update_spw import update_spwchan
-import flaghelper as fh
-from parallel.parallel_data_helper import ParallelDataHelper
+
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from . import flaghelper as fh
+    from .update_spw import update_spwchan
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from .mstools import write_history
+    from casatasks import casalog
+    from casatools import quanta
+    from casatools import table as tbtool
+    from casatools import ms as mstool
+    from casatools import mstransformer as mttool
+
+    _qa = quanta( )
+else:
+    import flaghelper as fh
+    from update_spw import update_spwchan
+    from parallel.parallel_data_helper import ParallelDataHelper
+    from mstools import write_history
+    from taskinit import casalog, mttool, qatool, mstool, tbtool
+
+    _qa = qatool()
 
 def split(vis, 
           outputvis, 
@@ -40,23 +59,23 @@ def split(vis,
     # Validate input and output parameters
     try:
         pdh.setupIO()
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('%s'%instance,'ERROR')
         return False
 
     # Input vis is an MMS
-    if pdh.isParallelMS(vis) and keepmms:
+    if pdh.isMMSAndNotServer(vis) and keepmms:
         
         retval = pdh.validateInputParams()
         if not retval['status']:
-            raise Exception, 'Unable to continue with MMS processing'
+            raise Exception('Unable to continue with MMS processing')
                         
         pdh.setupCluster('split')
 
         # Execute the jobs
         try:
             pdh.go()
-        except Exception, instance:
+        except Exception as instance:
             casalog.post('%s'%instance,'ERROR')
             return False
                     
@@ -64,7 +83,7 @@ def split(vis,
         
 
     # Create local copy of the MSTransform tool
-    mtlocal = mttool()
+    mtlocal = mttool( )
 
     try:
                     
@@ -94,7 +113,10 @@ def split(vis,
         # String type
         if isinstance(width, str):
             if width.isdigit():
-                chanbin = string.atoi(width)
+                if is_python3:
+                    chanbin = int(width)
+                else:
+                    chanbin = string.atoi(width)
             else:
                 casalog.post('Parameter width is invalid. Using 1 as default', 'WARN')
                 chanbin = width = 1
@@ -134,7 +156,7 @@ def split(vis,
         
         # Time averaging
         timeaverage = False
-        tb = qa.convert(qa.quantity(timebin), 's')['value']
+        tb = _qa.convert(_qa.quantity(timebin), 's')['value']
         if tb > 0:
             timeaverage = True
             
@@ -157,7 +179,7 @@ def split(vis,
             
         mtlocal.done()
 
-    except Exception, instance:
+    except Exception as instance:
         mtlocal.done()
         casalog.post('%s'%instance,'ERROR')
         return False
@@ -202,7 +224,7 @@ def split(vis,
                         widths = chanbin
                     else:
                         if hasattr(chanbin, '__iter__') and len(chanbin) > 1:
-                            for i in xrange(len(chanbin)):
+                            for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
     #                        print 'using ms.msseltoindex + a scalar width'
@@ -212,10 +234,10 @@ def split(vis,
                                 w = chanbin[0]
                             else:
                                 w = chanbin
-                            for i in xrange(numspw):
+                            for i in range(numspw):
                                 widths[i] = w
     #                print 'widths =', widths 
-                    for rownum in xrange(nflgcmds):
+                    for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
                         if spwmatch:
@@ -237,11 +259,9 @@ def split(vis,
                                         repl = "spw='" + sch2 + "'"
                                     cmd = cmds[rownum].replace(spwmatch.group(), repl)
                             #except: # cmd[rownum] no longer applies.
-                            except Exception, e:
+                            except Exception as e:
                                 casalog.post(
-                                    "Error %s updating row %d of FLAG_CMD" % (e,
-                                                                              rownum),
-                                             'WARN')
+                                    "Error %s updating row %d of FLAG_CMD" % (e,rownum), 'WARN')
                                 casalog.post('sch1 = ' + sch1, 'DEBUG1')
                                 casalog.post('cmd = ' + cmd, 'DEBUG1')
                             if cmd != cmds[rownum]:
@@ -256,26 +276,28 @@ def split(vis,
                 
             mytb.close()
             
-        except Exception, instance:
+        except Exception as instance:
             if isopen:
                 mytb.close()
             mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
-                         'SEVERE')
+            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),'SEVERE')
             return False
 
     mytb = None
 
     # Write history to output MS, not the input ms.
     try:
-        param_names = split.func_code.co_varnames[:split.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        param_names = split.__code__.co_varnames[:split.__code__.co_argcount]
+        if is_python3:
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
         write_history(mslocal, outputvis, 'split', param_names,
                       param_vals, casalog)
-    except Exception, instance:
-        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                     'WARN')
+    except Exception as instance:
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
         return False
 
     mslocal = None

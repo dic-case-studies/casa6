@@ -309,15 +309,15 @@ private:
   casacore::Array<casacore::Int> npoints_;
   void clipMinMax();
 
-  casacore::Int getIndex(const casacore::ROMSPointingColumns& mspc, const casacore::Double& time,
+  casacore::Int getIndex(const casacore::MSPointingColumns& mspc, const casacore::Double& time,
 	       const casacore::Double& interval=-1.0, const casacore::Int& antid=-1);
 
   casacore::Bool getXYPos(const vi::VisBuffer2& vb, casacore::Int row);
 
   //get the casacore::MDirection from a chosen column of pointing table
-  casacore::MDirection directionMeas(const casacore::ROMSPointingColumns& mspc, const casacore::Int& index);
-  casacore::MDirection directionMeas(const casacore::ROMSPointingColumns& mspc, const casacore::Int& index, const casacore::Double& time);
-  casacore::MDirection interpolateDirectionMeas(const casacore::ROMSPointingColumns& mspc, const casacore::Double& time,
+  casacore::MDirection directionMeas(const casacore::MSPointingColumns& mspc, const casacore::Int& index);
+  casacore::MDirection directionMeas(const casacore::MSPointingColumns& mspc, const casacore::Int& index, const casacore::Double& time);
+  casacore::MDirection interpolateDirectionMeas(const casacore::MSPointingColumns& mspc, const casacore::Double& time,
                                   const casacore::Int& index, const casacore::Int& index1, const casacore::Int& index2);
 
   void pickWeights(const vi::VisBuffer2&vb, casacore::Matrix<casacore::Float>& weight);

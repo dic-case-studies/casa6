@@ -88,7 +88,8 @@ const int PMS_PP::UPDATE_PLOTMS_OPTIONS =
 
 // PMS_PP_MSData record keys.
 const String PMS_PP_MSData::REC_FILENAME = "filename";
-const String PMS_PP_MSData::REC_TYPE = "type";
+const String PMS_PP_MSData::REC_CACHETYPE = "cachetype";
+const String PMS_PP_MSData::REC_CALTYPE = "caltype";
 const String PMS_PP_MSData::REC_SELECTION = "selection";
 const String PMS_PP_MSData::REC_AVERAGING = "averaging";
 const String PMS_PP_MSData::REC_TRANSFORMATIONS = "transformations";
@@ -120,7 +121,8 @@ Record PMS_PP_MSData::toRecord() const
 {
 	Record rec;
 	rec.define(REC_FILENAME, itsFilename_);
-	rec.define(REC_TYPE, itsType_);
+	rec.define(REC_CACHETYPE, itsCacheType_);
+	rec.define(REC_CALTYPE, itsCalType_);
 	rec.defineRecord(REC_SELECTION, itsSelection_.toRecord());
 	rec.defineRecord(REC_AVERAGING, itsAveraging_.toRecord());
 	rec.defineRecord(REC_TRANSFORMATIONS, itsTransformations_.toRecord());
@@ -137,9 +139,14 @@ void PMS_PP_MSData::fromRecord(const Record& record)
 		itsFilename_ = record.asString(REC_FILENAME);
 		valuesChanged = true;
 	}
-	if (record.isDefined(REC_TYPE) && record.dataType(REC_TYPE) == TpInt && itsType_ != record.asInt(REC_TYPE))
+	if (record.isDefined(REC_CACHETYPE) && record.dataType(REC_CACHETYPE) == TpInt && itsCacheType_ != record.asInt(REC_CACHETYPE))
 	{
-		itsType_ = record.asInt(REC_TYPE);
+		itsCacheType_ = record.asInt(REC_CACHETYPE);
+		valuesChanged = true;
+	}
+	if (record.isDefined(REC_CALTYPE) && record.dataType(REC_CALTYPE) == TpString && itsCalType_ != record.asString(REC_CALTYPE))
+	{
+		itsCalType_ = record.asString(REC_CALTYPE);
 		valuesChanged = true;
 	}
 	if (record.isDefined(REC_SELECTION) && record.dataType(REC_SELECTION) == TpRecord)
@@ -199,7 +206,8 @@ PMS_PP_MSData& PMS_PP_MSData::assign(const PMS_PP_MSData* o){
 	if (o != NULL && *this != *o)
 	{
 		itsFilename_ = o->itsFilename_;
-		itsType_ = o->itsType_;
+		itsCacheType_ = o->itsCacheType_;
+		itsCalType_ = o->itsCalType_;
 		itsSelection_ = o->itsSelection_;
 		itsAveraging_ = o->itsAveraging_;
 		itsTransformations_ = o->itsTransformations_;
@@ -215,7 +223,8 @@ bool PMS_PP_MSData::operator==(const Group& other) const
 	const PMS_PP_MSData* o = dynamic_cast<const PMS_PP_MSData*>(&other);
 	if (o == NULL) return false;
 	if (itsFilename_ != o->itsFilename_) return false;
-	if (itsType_ != o->itsType_) return false;
+	if (itsCacheType_ != o->itsCacheType_) return false;
+	if (itsCalType_ != o->itsCalType_) return false;
 	if (itsSelection_ != o->itsSelection_) return false;
 	if (itsAveraging_ != o->itsAveraging_) return false;
 	if (itsTransformations_ != o->itsTransformations_) return false;
@@ -228,7 +237,8 @@ bool PMS_PP_MSData::operator==(const Group& other) const
 void PMS_PP_MSData::setDefaults()
 {
 	itsFilename_ = "";
-    itsType_ = 0; // MS
+    itsCacheType_ = 0; // MS
+    itsCalType_ = "";
 	itsSelection_ = PlotMSSelection();
 	itsAveraging_ = PlotMSAveraging();
 	itsTransformations_ = PlotMSTransformations();
@@ -251,6 +261,7 @@ const String PMS_PP_Cache::REC_XDATACOLS = "xdatacolumns";
 const String PMS_PP_Cache::REC_YDATACOLS = "ydatacolumns";
 const String PMS_PP_Cache::REC_SHOWATM = "showatm";
 const String PMS_PP_Cache::REC_SHOWTSKY = "showtsky";
+const String PMS_PP_Cache::REC_SHOWIMAGE = "showimage";
 
 
 PMS_PP_Cache::PMS_PP_Cache(PlotFactoryPtr factory)
@@ -273,6 +284,7 @@ Record PMS_PP_Cache::toRecord() const
 	rec.define(REC_YDATACOLS, PMS::toIntVector<PMS::DataColumn>(itsYData_));
 	rec.define(REC_SHOWATM, itsShowAtm_);
 	rec.define(REC_SHOWTSKY, itsShowTsky_);
+	rec.define(REC_SHOWIMAGE, itsShowImage_);
 	return rec;
 }
 
@@ -334,6 +346,15 @@ void PMS_PP_Cache::fromRecord(const Record& record)
 			valuesChanged = true;
 		}
 	}
+    if (record.isDefined(REC_SHOWIMAGE) && record.dataType(REC_SHOWIMAGE) == TpBool)
+	{
+		bool tmp = record.asBool(REC_SHOWIMAGE);
+		if (itsShowImage_ != tmp)
+		{
+			itsShowImage_ = tmp;
+			valuesChanged = true;
+		}
+	}
 
 	if (valuesChanged) updated();
 }
@@ -355,8 +376,13 @@ PMS_PP_Cache& PMS_PP_Cache::assign(const PMS_PP_Cache* o){
 		itsYAxes_ = o->itsYAxes_;
 		itsXData_ = o->itsXData_;
 		itsYData_ = o->itsYData_;
+		itsXFrame_ = o->itsXFrame_;
+		itsYFrame_ = o->itsYFrame_;
+		itsXInterp_ = o->itsXInterp_;
+		itsYInterp_ = o->itsYInterp_;
         itsShowAtm_ = o->itsShowAtm_;
         itsShowTsky_ = o->itsShowTsky_;
+        itsShowImage_ = o->itsShowImage_;
 		updated();
 	}
 	return *this;
@@ -371,8 +397,13 @@ bool PMS_PP_Cache::operator==(const Group& other) const
 	if (itsYAxes_ != o->itsYAxes_) return false;
 	if (itsXData_ != o->itsXData_) return false;
 	if (itsYData_ != o->itsYData_) return false;
+	if (itsXFrame_ != o->itsXFrame_) return false;
+	if (itsYFrame_ != o->itsYFrame_) return false;
+	if (itsXInterp_ != o->itsXInterp_) return false;
+	if (itsYInterp_ != o->itsYInterp_) return false;
     if (itsShowAtm_ != o->itsShowAtm_) return false;
     if (itsShowTsky_ != o->itsShowTsky_) return false;
+    if (itsShowImage_ != o->itsShowImage_) return false;
 	return true;
     		}
 
@@ -385,8 +416,13 @@ void PMS_PP_Cache::setDefaults(){
 	itsYAxes_ = vector<PMS::Axis>(1, PMS::NONE);
 	itsXData_ = vector<PMS::DataColumn>(1, PMS::DEFAULT_DATACOLUMN);
 	itsYData_ = vector<PMS::DataColumn>(1, PMS::DEFAULT_DATACOLUMN);
+	itsXFrame_ = vector<PMS::CoordSystem>(1, PMS::DEFAULT_COORDSYSTEM);
+	itsYFrame_ = vector<PMS::CoordSystem>(1, PMS::DEFAULT_COORDSYSTEM);
+	itsXInterp_ = vector<PMS::InterpMethod>(1, PMS::DEFAULT_INTERPMETHOD);
+	itsYInterp_ = vector<PMS::InterpMethod>(1, PMS::DEFAULT_INTERPMETHOD);
     itsShowAtm_ = false;
     itsShowTsky_ = false;
+    itsShowImage_ = false;
 }
 
 void PMS_PP_Cache::resize( int count ){
@@ -394,6 +430,10 @@ void PMS_PP_Cache::resize( int count ){
 	itsYAxes_ = vector<PMS::Axis>(count, PMS::NONE);
 	itsXData_ = vector<PMS::DataColumn>(count, PMS::DEFAULT_DATACOLUMN);
 	itsYData_ = vector<PMS::DataColumn>(count, PMS::DEFAULT_DATACOLUMN);
+	itsXFrame_ = vector<PMS::CoordSystem>(count, PMS::DEFAULT_COORDSYSTEM);
+	itsYFrame_ = vector<PMS::CoordSystem>(count, PMS::DEFAULT_COORDSYSTEM);
+	itsXInterp_ = vector<PMS::InterpMethod>(count, PMS::DEFAULT_INTERPMETHOD);
+	itsYInterp_ = vector<PMS::InterpMethod>(count, PMS::DEFAULT_INTERPMETHOD);
 }
 
 unsigned int PMS_PP_Cache::numXAxes() const{
@@ -413,6 +453,8 @@ void PMS_PP_Cache::setAxes(const PMS::Axis& xAxis, const PMS::Axis& yAxis,
 	if (index >= itsXAxes_.size()){
 		resized = true;
 		const_cast< vector<PMS::Axis>& >(itsXAxes_).resize (index + 1);
+		itsXFrame_.resize(index + 1);
+		itsXInterp_.resize(index + 1);
 	}
 	if (index >= itsXData_.size()){
 		resized = true;
@@ -421,6 +463,8 @@ void PMS_PP_Cache::setAxes(const PMS::Axis& xAxis, const PMS::Axis& yAxis,
 	if (index >= itsYAxes_.size()){
 		resized = true;
 		const_cast< vector<PMS::Axis>& >(itsYAxes_).resize (index + 1);
+		itsYFrame_.resize(index + 1);
+		itsYInterp_.resize(index + 1);
 	}
 	if (index >= itsYData_.size()){
 		resized = true;
@@ -762,14 +806,14 @@ void PMS_PP_Axes::setRanges(const bool& xSet, const bool& ySet,
 ///////////////////////////////
 
 // PMS_PP_Canvas record keys.
+const String PMS_PP_Canvas::REC_SHOWXLABELS = "showXLabels";
 const String PMS_PP_Canvas::REC_XLABELS = "xLabelFormats";
 const String PMS_PP_Canvas::REC_XFONTSSET = "xFontsSet";
 const String PMS_PP_Canvas::REC_XAXISFONTS = "xAxisFonts";
+const String PMS_PP_Canvas::REC_SHOWYLABELS = "showYLabels";
 const String PMS_PP_Canvas::REC_YLABELS = "yLabelFormats";
 const String PMS_PP_Canvas::REC_YFONTSSET = "yFontsSet";
 const String PMS_PP_Canvas::REC_YAXISFONTS = "yAxisFonts";
-const String PMS_PP_Canvas::REC_SHOWXAXES = "showXAxes";
-const String PMS_PP_Canvas::REC_SHOWYAXES = "showYAxes";
 const String PMS_PP_Canvas::REC_SHOWLEGENDS = "showLegends";
 const String PMS_PP_Canvas::REC_LEGENDSPOS = "legendPositions";
 const String PMS_PP_Canvas::REC_TITLES = "canvasTitleFormats";
@@ -805,8 +849,8 @@ Record PMS_PP_Canvas::toRecord() const
 		for (unsigned int i = 0; i < itsYLabels_.size(); i++) tmpRec.define(i, itsYLabels_[i] .format);
 		rec.defineRecord(REC_YLABELS, tmpRec);
 	}
-	rec.define(REC_SHOWXAXES, Vector<bool>(itsXAxesShown_));
-	rec.define(REC_SHOWYAXES, Vector<bool>(itsYAxesShown_));
+	rec.define(REC_SHOWXLABELS, Vector<bool>(itsXLabelsShown_));
+	rec.define(REC_SHOWYLABELS, Vector<bool>(itsYLabelsShown_));
 	rec.define(REC_XFONTSSET, Vector<bool>(itsXFontsSet_));
 	rec.define(REC_YFONTSSET, Vector<bool>(itsYFontsSet_));
 	rec.define(REC_XAXISFONTS, Vector<int>(itsXAxisFonts_));
@@ -905,23 +949,23 @@ void PMS_PP_Canvas::fromRecord(const Record& record)
 			valuesChanged = true;
 		}
 	}
-	if (record.isDefined(REC_SHOWXAXES) && record.dataType(REC_SHOWXAXES) == TpArrayBool)
+    if (record.isDefined(REC_SHOWXLABELS) && record.dataType(REC_SHOWXLABELS) == TpArrayBool)
 	{
 		vector<bool> tmp;
-		record.asArrayBool(REC_SHOWXAXES).tovector(tmp);
-		if (itsXAxesShown_ != tmp)
+		record.asArrayBool(REC_SHOWXLABELS).tovector(tmp);
+		if (itsXLabelsShown_ != tmp)
 		{
-			itsXAxesShown_ = tmp;
+			itsXLabelsShown_ = tmp;
 			valuesChanged = true;
 		}
 	}
-	if (record.isDefined(REC_SHOWYAXES) && record.dataType(REC_SHOWYAXES) == TpArrayBool)
+    if (record.isDefined(REC_SHOWYLABELS) && record.dataType(REC_SHOWYLABELS) == TpArrayBool)
 	{
 		vector<bool> tmp;
-		record.asArrayBool(REC_SHOWYAXES).tovector(tmp);
-		if (itsYAxesShown_ != tmp)
+		record.asArrayBool(REC_SHOWYLABELS).tovector(tmp);
+		if (itsYLabelsShown_ != tmp)
 		{
-			itsYAxesShown_ = tmp;
+			itsYLabelsShown_ = tmp;
 			valuesChanged = true;
 		}
 	}
@@ -1072,8 +1116,8 @@ PMS_PP_Canvas& PMS_PP_Canvas::assign(const PMS_PP_Canvas* o ){
 		itsXAxisFonts_ = o->itsXAxisFonts_;
 		itsYFontsSet_ = o->itsYFontsSet_;
 		itsYAxisFonts_ = o->itsYAxisFonts_;
-		itsXAxesShown_ = o->itsXAxesShown_;
-		itsYAxesShown_ = o->itsYAxesShown_;
+		itsXLabelsShown_ = o->itsXLabelsShown_;
+		itsYLabelsShown_ = o->itsYLabelsShown_;
 		itsLegendsShown_ = o->itsLegendsShown_;
 		itsLegendsPos_ = o->itsLegendsPos_;
 		itsTitles_ = o->itsTitles_;
@@ -1101,8 +1145,8 @@ bool PMS_PP_Canvas::operator==(const Group& other) const
 	if (itsYFontsSet_ != o->itsYFontsSet_) return false;
 	if (itsXAxisFonts_ != o->itsXAxisFonts_) return false;
 	if (itsYAxisFonts_ != o->itsYAxisFonts_) return false;
-	if (itsXAxesShown_ != o->itsXAxesShown_) return false;
-	if (itsYAxesShown_ != o->itsYAxesShown_) return false;
+	if (itsXLabelsShown_ != o->itsXLabelsShown_) return false;
+	if (itsYLabelsShown_ != o->itsYLabelsShown_) return false;
 	if (itsLegendsShown_.size() != o->itsLegendsShown_.size() || itsLegendsPos_.size() != o->itsLegendsPos_.size() || itsLegendsShown_.size() != itsLegendsPos_.size()) return false;
 	for (unsigned int i = 0; i < itsLegendsShown_.size(); i++) if (itsLegendsShown_[i] != o->itsLegendsShown_[i] || (itsLegendsShown_[i] && itsLegendsPos_[i] != o->itsLegendsPos_[i])) return false;
 	if (itsTitles_ != o->itsTitles_) return false;
@@ -1124,8 +1168,8 @@ void PMS_PP_Canvas::setDefaults()
 	itsYFontsSet_ = vector<bool>(1, PMS::DEFAULT_FONTSET);
 	itsXAxisFonts_ = vector<Int>(1, PMS::DEFAULT_FONT);
 	itsYAxisFonts_ = vector<Int>(1, PMS::DEFAULT_FONT);
-	itsXAxesShown_ = vector<bool>(1, PMS::DEFAULT_SHOWAXIS);
-	itsYAxesShown_ = vector<bool>(1, PMS::DEFAULT_SHOWAXIS);
+	itsXLabelsShown_ = vector<bool>(1, PMS::DEFAULT_SHOWAXISLABEL);
+	itsYLabelsShown_ = vector<bool>(1, PMS::DEFAULT_SHOWAXISLABEL);
 	itsLegendsShown_ = vector<bool>(1, PMS::DEFAULT_SHOWLEGEND);
 	itsLegendsPos_ = vector<PlotCanvas::LegendPosition>(1, PMS::DEFAULT_LEGENDPOSITION);
 	itsTitles_ = vector<PlotMSLabelFormat>(1, PlotMSLabelFormat(PMS::DEFAULT_TITLE_FORMAT));
@@ -1153,13 +1197,13 @@ void PMS_PP_Canvas::setLabelFormats(const PlotMSLabelFormat& xFormat,
 	}
 }
 
-void PMS_PP_Canvas::showAxes(const bool& xShow, const bool& yShow,
+void PMS_PP_Canvas::showAxesLabels(const bool& xShowLabel, const bool& yShowLabel,
 		unsigned int index)
 {
-	if (itsXAxesShown_[index] != xShow || itsYAxesShown_[index] != yShow)
+	if (itsXLabelsShown_[index] != xShowLabel || itsYLabelsShown_[index] != yShowLabel)
 	{
-		itsXAxesShown_[index] = xShow;
-		itsYAxesShown_[index] = yShow;
+		itsXLabelsShown_[index] = xShowLabel;
+		itsYLabelsShown_[index] = yShowLabel;
 		updated();
 	}
 }
@@ -1233,6 +1277,8 @@ const String PMS_PP_Display::REC_FLAGGEDS = "flaggedSymbols";
 const String PMS_PP_Display::REC_TITLES = "titles";
 const String PMS_PP_Display::REC_COLFLAGS = "colorizeFlags";
 const String PMS_PP_Display::REC_COLAXES = "colorizeAxes";
+const String PMS_PP_Display::REC_XCONNECT = "xConnect";
+const String PMS_PP_Display::REC_TIMECONNECT = "timeConnect";
 
 
 PMS_PP_Display::PMS_PP_Display(PlotFactoryPtr factory) : PlotMSPlotParameters::Group(factory)
@@ -1276,6 +1322,13 @@ Record PMS_PP_Display::toRecord() const {
 
 	rec.define(REC_COLFLAGS, Vector<bool>(itsColorizeFlags_));
 	rec.define(REC_COLAXES, PMS::toIntVector<PMS::Axis>(itsColorizeAxes_));
+
+	Record tmpRec4;
+	for (unsigned int i = 0; i < itsXConnects_.size(); i++){
+		tmpRec4.define(i, itsXConnects_[i]);
+	}
+	rec.defineRecord(REC_XCONNECT, tmpRec4);
+	rec.define(REC_TIMECONNECT, Vector<bool>(itsTimeConnects_));
 
 	return rec;
 }
@@ -1357,6 +1410,28 @@ void PMS_PP_Display::fromRecord(const Record& record)
 			valuesChanged = true;
 		}
 	}
+	
+	if (record.isDefined(REC_XCONNECT) && record.dataType(REC_XCONNECT) == TpRecord)
+	{
+		const Record& tmpRec = record.asRecord(REC_XCONNECT);
+		itsXConnects_.resize(tmpRec.nfields());
+		for (unsigned int i= 0; i < itsXConnects_.size() && i < tmpRec.nfields(); i++) {
+			String value = tmpRec.asString(i);
+			if (tmpRec.dataType(i)==TpString && itsXConnects_[i] != value) {
+				itsXConnects_[i] = value;
+				valuesChanged = true;
+			}
+		}
+	}
+	if (record.isDefined(REC_TIMECONNECT) && record.dataType(REC_TIMECONNECT) == TpArrayBool)
+	{
+		vector<bool> tmp;
+		record.asArrayBool(REC_TIMECONNECT).tovector(tmp);
+		if (itsTimeConnects_ != tmp) {
+			itsTimeConnects_ = tmp;
+			valuesChanged = true;
+		}
+	}
 
 	if (valuesChanged) updated();
 }
@@ -1383,6 +1458,8 @@ PMS_PP_Display& PMS_PP_Display::assign( const PMS_PP_Display* o ){
 		itsTitleFormats_ = o->itsTitleFormats_;
 		itsColorizeFlags_ = o->itsColorizeFlags_;
 		itsColorizeAxes_ = o->itsColorizeAxes_;
+		itsXConnects_ = o->itsXConnects_;
+		itsTimeConnects_ = o->itsTimeConnects_;
 
 		updated();
 	}
@@ -1421,12 +1498,20 @@ bool PMS_PP_Display::operator==(const Group& other) const
 		}
 	}
 	if (itsTitleFormats_ != o->itsTitleFormats_) return false;
-	if (itsColorizeFlags_.size() != o->itsColorizeFlags_.size() || itsColorizeAxes_.size() != o->itsColorizeAxes_.size() || itsColorizeFlags_.size() != itsColorizeAxes_.size()) return false;
+	if ((itsColorizeFlags_.size() != o->itsColorizeFlags_.size()) || 
+		(itsColorizeAxes_.size() != o->itsColorizeAxes_.size()) || 
+		(itsColorizeFlags_.size() != itsColorizeAxes_.size())) return false;
 	for (unsigned int i = 0; i < itsColorizeFlags_.size(); i++){
-		if (itsColorizeFlags_[i] != o->itsColorizeFlags_[i] ||
-				(itsColorizeFlags_[i] && itsColorizeAxes_[i] != o->itsColorizeAxes_[i])){
+		if ((itsColorizeFlags_[i] != o->itsColorizeFlags_[i]) ||
+		    (itsColorizeFlags_[i] && (itsColorizeAxes_[i] != o->itsColorizeAxes_[i]))){
 			return false;
 		}
+	}
+	if ((itsXConnects_.size() != o->itsXConnects_.size()) ||
+	    (itsTimeConnects_.size() != o->itsTimeConnects_.size())) return false;
+	for (unsigned int i = 0; i < itsXConnects_.size(); i++){
+		if ((itsXConnects_[i] != o->itsXConnects_[i]) ||
+			(itsTimeConnects_[i] != o->itsTimeConnects_[i])) return false;
 	}
 	return true;
 }
@@ -1439,6 +1524,8 @@ void PMS_PP_Display::setDefaults()
 	itsTitleFormats_ = vector<PlotMSLabelFormat>(1, PlotMSLabelFormat(PMS::DEFAULT_TITLE_FORMAT));
 	itsColorizeFlags_ = vector<bool>(1, false);
 	itsColorizeAxes_ = vector<PMS::Axis>(1, PMS::DEFAULT_COLOR_AXIS);
+	itsXConnects_ = vector<casacore::String>(1, "none");
+	itsTimeConnects_ = vector<bool>(1, false);
 
 }
 
@@ -1465,7 +1552,6 @@ void PMS_PP_Display::setUnflaggedSymbol (const PlotSymbolPtr & value, unsigned i
 		itsUnflaggedSymbols_[index]->fromRecord( newValueRecord );
 		changed = true;
 	}
-
 
 	if ( changed ){
 		updated();
@@ -1498,7 +1584,18 @@ void PMS_PP_Display::setColorize (const bool & value, unsigned int index ) {
 	}
 }
 
-
+void PMS_PP_Display::setConnect(const casacore::String& xconnect, const bool& timeconnect,
+		unsigned int index) {
+	if (index >= itsXConnects_.size())
+		itsXConnects_.resize (index + 1, "none");
+	if (index >= itsTimeConnects_.size())
+		itsTimeConnects_.resize (index + 1, false);
+	if (itsXConnects_[index]!= xconnect || itsTimeConnects_[index]!= timeconnect) {
+		itsXConnects_[index] = xconnect;
+		itsTimeConnects_[index] = timeconnect;
+		updated();
+	}
+}
 
 void PMS_PP_Display::resizeVectors(unsigned int newSize)
 {
@@ -1508,6 +1605,8 @@ void PMS_PP_Display::resizeVectors(unsigned int newSize)
 	itsTitleFormats_.resize(newSize, PlotMSLabelFormat(PMS::DEFAULT_TITLE_FORMAT));
 	itsColorizeFlags_.resize(newSize, false);
 	itsColorizeAxes_.resize(newSize, PMS::DEFAULT_COLOR_AXIS);
+	itsXConnects_.resize(newSize, "none");
+	itsTimeConnects_.resize(newSize, false);
 
 	for (unsigned int i = 0; i < newSize; i++)
 	{

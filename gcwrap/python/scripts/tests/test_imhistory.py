@@ -65,20 +65,33 @@
 #
 
 ###########################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image, table
+    from casatasks import imhistory
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
+    image = iatool
+    table = tbtool
 
 class imhistory_test(unittest.TestCase):
     def setUp(self):
-        self._myia = iatool()
+        self._myia = image()
+        self._tb = table()
     
     def tearDown(self):
         self._myia.done()
-        self.assertTrue(len(tb.showcache()) == 0)
+        self.assertTrue(len(self._tb.showcache()) == 0)
+        self._tb.done()
         
     def test_imhistory(self):
         """Test general functionality"""
@@ -90,7 +103,7 @@ class imhistory_test(unittest.TestCase):
         h = imhistory(imagename, mode="list")
         self.assertTrue(len(h) == 3, "Incorrect history length")
         for hh in h[1:2]:
-            print hh
+            print(hh)
             self.assertTrue("fromshape" in hh, "Incorrect message")
         msg = "fred"
         self.assertTrue(
@@ -105,3 +118,7 @@ class imhistory_test(unittest.TestCase):
  
 def suite():
     return [imhistory_test]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

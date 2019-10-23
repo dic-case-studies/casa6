@@ -115,9 +115,6 @@ listfile    write output to disk; will not overwrite
             default: '' --> write to screen
             listfile = 'solutions.txt'
 
-async       Run asynchronously
-            default = False; do not run asychronously
-
   </description>
 
   <input>
@@ -128,19 +125,19 @@ async       Run asynchronously
     </param>
 
     <param type="string" name="options">
-	    <description>List options: ap only </description>
-	    <value>ap</value>
+          <description>List options: ap only </description>
+          <value>ap</value>
     </param>
 
     <param type="string" name="datacolumn">
-	    <description>Column to list: data, float_data, corrected, model, residual</description>
+          <description>Column to list: data, float_data, corrected, model, residual</description>
           <value>data</value>
-	    <allowed kind="enum">
-	          <value>data</value>
-	          <value>float_data</value>
-	          <value>corrected</value>
-	          <value>model</value>
-	          <value>residual</value>
+          <allowed kind="enum">
+                <value>data</value>
+                <value>float_data</value>
+                <value>corrected</value>
+                <value>model</value>
+                <value>residual</value>
           </allowed>
     </param>
 
@@ -157,41 +154,41 @@ async       Run asynchronously
     </param>
 
     <param type="bool" name="selectdata">
-	    <description>Other data selection parameters</description>
-	    <value>False</value>
+          <description>Other data selection parameters</description>
+          <value>False</value>
     </param>
 
     <param type="string" name="antenna" subparam="true">
-	    <description>Antenna/baselines</description>
-	    <value></value>
+          <description>Antenna/baselines</description>
+          <value></value>
         <example>''==>all, antenna = '3'</example>
     </param>
 
     <param type="string" name="timerange" subparam="true">
-	    <description>Time range</description>
-	    <value></value>
+          <description>Time range</description>
+          <value></value>
         <example>''==>all</example>
     </param>
 
     <param type="string" name="correlation" subparam="true">
-	    <description>Correlations</description>
-	    <value></value>
+          <description>Correlations</description>
+          <value></value>
         <example>''==>all, correlation = 'RR RL'</example>
     </param>
 
     <param type="string" name="scan" subparam="true">
-	    <description>Scan numbers</description>
-	    <value></value>
+          <description>Scan numbers</description>
+          <value></value>
     </param>
 
     <param type="string" name="feed" subparam="true">
-	    <description>Multi-feed numbers (Not yet implemented)</description>
-	    <value></value>
+          <description>Multi-feed numbers (Not yet implemented)</description>
+          <value></value>
     </param>
 
     <param type="string" name="array" subparam="true">
-	    <description>Array numbers (Not yet implemented)</description>
-	    <value></value>
+          <description>Array numbers (Not yet implemented)</description>
+          <value></value>
     </param>
 
     <param type="any" name="observation">
@@ -201,15 +198,15 @@ async       Run asynchronously
     </param>
 
     <param type="string" name="uvrange" subparam="true">
-	    <description>uv range</description>
-	    <value></value>
+          <description>uv range</description>
+          <value></value>
         <example>''==>all; not yet implemented</example>
     </param>
 
     <param type="string" name="average">
-	    <description>Averaging mode </description>
+          <description>Averaging mode </description>
           <value></value>
-	    <allowed kind="enum">
+          <allowed kind="enum">
                 <value></value>
                 <value>none</value>
                 <value>time</value>
@@ -338,7 +335,7 @@ selectdata  Toggle the following 7 selection parameters.
 
       observation Select by observation ID(s).
                   default: ''-->all;
-		  example: observation='0' (select obsID 0)
+                  example: observation='0' (select obsID 0)
 
       uvrange     Select baseline lengths to list.
                   default: ''--> all; examples:
@@ -356,9 +353,6 @@ pagerows    rows per page of listing
 listfile    write output to disk; will not overwrite
             default: '' --> write to screen
             listfile = 'solutions.txt'
-
-async       Run asynchronously
-            default = False; do not run asychronously
 
    </example>
 

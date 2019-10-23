@@ -226,7 +226,9 @@ public:
   virtual casacore::String name() const;
   virtual void setMiscInfo(const casacore::Int qualifier){(void)qualifier;};
   virtual void ComputeResiduals(vi::VisBuffer2&/*vb*/, casacore::Bool /*useCorrected*/) {};
-
+  ///estimate of memory necessary in kB
+   virtual casacore::Long estimateRAM(const casacore::CountedPtr<SIImageStore>& imstore);
+  
 protected:
 
 
@@ -262,11 +264,11 @@ protected:
   casacore::Bool isTiled;
 
   // casacore::Array lattice
-  SHARED_PTR<casacore::Lattice<casacore::Complex> > arrayLattice;
+  std::shared_ptr<casacore::Lattice<casacore::Complex> > arrayLattice;
 
   // Lattice. For non-tiled gridding, this will point to arrayLattice,
   //  whereas for tiled gridding, this points to the image
-  SHARED_PTR<casacore::Lattice<casacore::Complex> > lattice;
+  std::shared_ptr<casacore::Lattice<casacore::Complex> > lattice;
 
   casacore::String convType;
 

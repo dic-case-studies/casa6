@@ -1,13 +1,32 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-import commands
 import math
 import shutil
 import string
 import time
-import re;
-from taskinit import *
+import re
 import copy
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink, ctsys, table
+    from casatasks import casalog
+
+    ctsys_hostinfo = ctsys.hostinfo
+    _tb = table()
+else:
+    from taskinit import *
+
+    synthesisimager = casac.synthesisimager
+    synthesisdeconvolver = casac.synthesisdeconvolver
+    synthesisnormalizer = casac.synthesisnormalizer
+    # make it look like the CASA6 version even though it's using the CASA5 named tool not present in CASA6
+    iterbotsink = casac.synthesisiterbot
+
+    ctsys_hostinfo = casac.cu.hostinfo
+
+    _tb = tb
 '''
 A set of helper functions for tclean.
 
@@ -49,7 +68,7 @@ class PySynthesisImager:
         self.ncycle = 0
 #        isvalid = self.checkParameters()
 #        if isvalid==False:
-#            print 'Invalid parameters'
+#            print('Invalid parameters')
 
 #############################################
 #    def checkParameters(self):
@@ -64,7 +83,7 @@ class PySynthesisImager:
         # NoOps (in SynthesisImager.cc) if the gridder is not one
         # which uses CFCache.
         if (exists):
-            print "CFCache already exists";
+            print("CFCache already exists")
         else:
             self.dryGridding();
             self.fillCFCache();
@@ -74,9 +93,9 @@ class PySynthesisImager:
     def initializeImagers(self):
         
         ## Initialize the tool for the current node
-        self.SItool = casac.synthesisimager()
+        self.SItool = synthesisimager()
  
-        ##print 'impars ', self.allimpars['0']['specmode'], 'frame', self.allimpars['0']['outframe']
+        ##print('impars ', self.allimpars['0']['specmode'], 'frame', self.allimpars['0']['outframe'])
         ## Send in selection parameters for all MSs in the list.
         for mss in sorted( (self.allselpars).keys() ):
 #            if(self.allimpars['0']['specmode']=='cubedata'):
@@ -98,40 +117,65 @@ class PySynthesisImager:
             exists = (os.path.exists(cfCacheName) and os.path.isdir(cfCacheName));
 
         for fld in range(0,self.NF):
-            #print "self.allimpars=",self.allimpars,"\n"
+            #print("self.allimpars=",self.allimpars,"\n")
             self.SItool.defineimage( self.allimpars[str(fld)] , self.allgridpars[str(fld)] )
     
+        ###commenting this out so that tuneSelect is done after weighting
+        ###CAS-11687
         # For cube imaging:  align the data selections and image setup
-        if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
-            self.SItool.tuneselectdata()
-
+        #if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
+         #   self.SItool.tuneselectdata()
         #self.makeCFCache(exists);
 
 #############################################
 
     def initializeDeconvolvers(self):
          for immod in range(0,self.NF):
-              self.SDtools.append(casac.synthesisdeconvolver())
+              self.SDtools.append(synthesisdeconvolver())
               self.SDtools[immod].setupdeconvolution(decpars=self.alldecpars[str(immod)])
+             
 
 #############################################
     ## Overloaded by ParallelCont
     def initializeNormalizers(self):
         for immod in range(0,self.NF):
-            self.PStools.append(casac.synthesisnormalizer())
+            self.PStools.append(synthesisnormalizer())
             normpars = self.allnormpars[str(immod)]
             self.PStools[immod].setupnormalizer(normpars=normpars)
 
 #############################################
 
     def initializeIterationControl(self):
-        self.IBtool = casac.synthesisiterbot()
+        # note that in CASA5 this is casac.synthesisiterbot
+        self.IBtool = iterbotsink()
         itbot = self.IBtool.setupiteration(iterpars=self.iterpars)
 
 #############################################
-
+    def estimatememory(self):
+        #print "MEMORY usage ", self.SItool.estimatememory(), type(self.SItool.estimatememory())
+        #griddermem=0
+        if(self.SItool != None):
+            griddermem= self.SItool.estimatememory()
+        deconmem=0
+        for immod in range(0,self.NF):
+            ims= self.allimpars[str(immod)]['imsize']
+            if(type(ims)==int) :
+                ims=[ims, ims]
+            if(len(ims) ==1):
+                ims.append(ims[0])
+            #print 'shape', self.allimpars[str(immod)]['imsize'], len(ims) 
+            #print "DECON mem usage ", self.SDtools[immod].estimatememory(ims)
+            if(len(self.SDtools) > immod):
+                if(self.SDtools != None):
+                    deconmem+=self.SDtools[immod].estimatememory(ims)
+        availmem=ctsys_hostinfo()['memory']['available']
+        if((deconmem+griddermem) > 0.8*availmem):
+            casalog.post("Memory available "+str(availmem)+" kB is very close to amount of required memory "+str(deconmem+griddermem)+" kB" , "WARN")
+        else:
+            casalog.post("Memory available "+str(availmem)+" kB and  required memory "+str(deconmem+griddermem)+" kB" , "INFO2")
+############################################
     def restoreImages(self):
-         for immod in range(0,self.NF):
+        for immod in range(0,self.NF):
               self.SDtools[immod].restore()
 
 #############################################
@@ -164,7 +208,7 @@ class PySynthesisImager:
               self.IBtool.done()
 
     def deleteCluster(self):
-#         print 'no cluster to delete'
+#         print('no cluster to delete')
         return
 
     def initDefaults(self):
@@ -200,9 +244,9 @@ class PySynthesisImager:
 #         self.runInteractiveGUI2()
 
          # Check with the iteration controller about convergence.
-         #print "check convergence"
+         #print("check convergence")
          stopflag = self.IBtool.cleanComplete()
-         #print 'Converged : ', stopflag
+         #print('Converged : ', stopflag)
          if( stopflag>0 ):
              #stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles']
              stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 3 times from the previous major cycle','peak residual increased by more than 3 times from the minimum reached','zero mask', 'any combination of n-sigma and other valid exit criterion']
@@ -254,7 +298,7 @@ class PySynthesisImager:
         forcestop = True
         if self.iterpars['interactive'] == True:
             self.stopMinor = self.IBtool.pauseforinteraction()
-            #print "Actioncodes in python : " , self.stopMinor
+            #print("Actioncodes in python : " , self.stopMinor)
 
             for akey in self.stopMinor:
                 if self.stopMinor[akey] < 0:
@@ -277,7 +321,7 @@ class PySynthesisImager:
                     #    wstr = "Saving virtual model"
                     #casalog.post("Model visibilities may not have been saved in the MS even though you have asked for it. Please check the logger for the phrases 'Run (Last) Major Cycle'  and  '" + wstr +"'. If these do not appear, then please save the model via a separate tclean run with niter=0,calcres=F,calcpsf=F. It will pick up the existing model from disk and save/predict it.   Reason for this : For performance reasons model visibilities are saved only in the last major cycle. If the X button on the interactive GUI is used to terminate a run before this automatically detected 'last' major cycle, the model isn't written. However, a subsequent tclean run as described above will predict and save the model. ","WARN")
 
-        #print 'Mask changed during interaction  : ', maskchanged
+        #print('Mask changed during interaction  : ', maskchanged)
         return ( maskchanged or forcestop )
 
 #############################################
@@ -289,6 +333,16 @@ class PySynthesisImager:
         for immod in range(0,self.NF):
             self.PStools[immod].gatherpsfweight() 
             self.PStools[immod].dividepsfbyweight()
+            if self.SDtools != []:
+                if immod <= len(self.SDtools) - 1:
+                    self.SDtools[immod].checkrestoringbeam()
+
+
+#############################################
+    def calcVisAppSens(self):
+
+        return self.SItool.apparentsens()
+
 
 #############################################
 
@@ -381,13 +435,30 @@ class PySynthesisImager:
         self.SItool.makesdpsf()
 
 #############################################
+    def makeImage(self, imagetype='observed', image='', compleximage='', imagefieldid=0):
+        """
+        This should replace makeSDImage, makeSDPSF  and makePSF 
+        etc in the long run
+        But for now you can do the following images i.e string recognized by type
+        "observed", "model", "corrected", "psf", "residual", "singledish-observed", 
+        "singledish", "coverage", "holography", "holography-observed"
+        For holography the FTmachine should be SDGrid and the baselines
+        selected should be those that are pointed up with the antenna which is rastering.
+        """
+        self.SItool.makeimage(imagetype, image, compleximage, imagefieldid)
+#############################################
 
 ## Overloaded for parallel runs
     def setWeighting(self):
         ## Set weighting parameters, and all pars common to all fields.
         self.SItool.setweighting( **(self.weightpars) )
+        ##moved the tuneselect after weighting so that
+        ##the weight densities use all the data selected CAS-11687
+        ###For cube imaging:  align the data selections and image setup
+        if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
+            self.SItool.tuneselectdata()
         
- #       print "get set density from python"
+ #       print("get set density from python")
  #       self.SItool.getweightdensity()
  #       self.SItool.setweightdensity()
 
@@ -411,9 +482,17 @@ class PySynthesisImager:
 #############################################
 
     def runMinorCycleCore(self):
+
+        # Set False for release packages. 
+        # Only set this to True for testing and debugging automask in parallel mode
+        # since in parallel mode, runtime setting of the enviroment variable
+        # currently does not work.
+        # False = disable always save intermediate images mode
+        alwaysSaveIntermediateImages=False
+
         # Get iteration control parameters
         iterbotrec = self.IBtool.getminorcyclecontrols()
-        ##print "Minor Cycle controls : ", iterbotrec
+        ##print("Minor Cycle controls : ", iterbotrec)
 
         self.IBtool.resetminorcycleinfo() 
 
@@ -422,10 +501,19 @@ class PySynthesisImager:
         self.ncycle+=1
         for immod in range(0,self.NF):  
             if self.stopMinor[str(immod)]<3 :
+
+                # temporarily disable the check (=> always save the intermediate images
+                if alwaysSaveIntermediateImages or ('SAVE_ALL_RESIMS' in os.environ and os.environ['SAVE_ALL_RESIMS']=="true"):
+                    resname = self.allimpars[str(immod)]['imagename']+'.residual'
+                    tempresname = self.allimpars[str(immod)]['imagename']+'.inputres'+str(self.ncycle)
+                    if os.path.isdir(resname):
+                        shutil.copytree(resname, tempresname)
+
                 exrec = self.SDtools[immod].executeminorcycle( iterbotrecord = iterbotrec )
-                #print '.... iterdone for ', immod, ' : ' , exrec['iterdone']
+
+                #print('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
                 self.IBtool.mergeexecrecord( exrec )
-                if os.environ.has_key('SAVE_ALL_AUTOMASKS') and os.environ['SAVE_ALL_AUTOMASKS']=="true":
+                if alwaysSaveIntermediateImages or ('SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     tempmaskname = self.allimpars[str(immod)]['imagename']+'.autothresh'+str(self.ncycle)
                     if os.path.isdir(maskname):
@@ -454,8 +542,8 @@ class PySynthesisImager:
 
     def plotReport( self, summ={} ,fignum=1 ):
 
-        if not ( summ.has_key('summaryminor') and summ.has_key('summarymajor') and summ.has_key('threshold') and summ['summaryminor'].shape[0]==6 ):
-            print 'Cannot make summary plot. Please check contents of the output dictionary from tclean.'
+        if not ( 'summaryminor' in summ and 'summarymajor' in summ and 'threshold' in summ and summ['summaryminor'].shape[0]==6 ):
+            print('Cannot make summary plot. Please check contents of the output dictionary from tclean.')
             return summ
 
         import pylab as pl
@@ -476,69 +564,80 @@ class PySynthesisImager:
         if minarr.size==0:
             casalog.post("Zero iteration: no summary plot is generated.", "WARN")
         else:
-	    iterlist = minarr[0,:]
-	    eps=0.0
-	    peakresstart=[]
-	    peakresend=[]
-	    modfluxstart=[]
-	    modfluxend=[]
-	    itercountstart=[]
-	    itercountend=[]
-	    peakresstart.append( minarr[1,:][0] )
-	    modfluxstart.append( minarr[2,:][0] )
-	    itercountstart.append( minarr[0,:][0] + eps )
-	    peakresend.append( minarr[1,:][0] )
-	    modfluxend.append( minarr[2,:][0] )
-	    itercountend.append( minarr[0,:][0] + eps )
-	    for ii in range(0,len(iterlist)-1):
-		if iterlist[ii]==iterlist[ii+1]:
-		    peakresend.append( minarr[1,:][ii] )
-		    peakresstart.append( minarr[1,:][ii+1] ) 
-		    modfluxend.append( minarr[2,:][ii] )
-		    modfluxstart.append( minarr[2,:][ii+1] )
-		    itercountend.append( iterlist[ii]-eps )
-		    itercountstart.append( iterlist[ii]+eps )
+            iterlist = minarr[0,:]
+            eps=0.0
+            peakresstart=[]
+            peakresend=[]
+            modfluxstart=[]
+            modfluxend=[]
+            itercountstart=[]
+            itercountend=[]
+            peakresstart.append( minarr[1,:][0] )
+            modfluxstart.append( minarr[2,:][0] )
+            itercountstart.append( minarr[0,:][0] + eps )
+            peakresend.append( minarr[1,:][0] )
+            modfluxend.append( minarr[2,:][0] )
+            itercountend.append( minarr[0,:][0] + eps )
+            for ii in range(0,len(iterlist)-1):
+                if iterlist[ii]==iterlist[ii+1]:
+                    peakresend.append( minarr[1,:][ii] )
+                    peakresstart.append( minarr[1,:][ii+1] ) 
+                    modfluxend.append( minarr[2,:][ii] )
+                    modfluxstart.append( minarr[2,:][ii+1] )
+                    itercountend.append( iterlist[ii]-eps )
+                    itercountstart.append( iterlist[ii]+eps )
 
-	    peakresend.append( minarr[1,:][len(iterlist)-1] )
-	    modfluxend.append( minarr[2,:][len(iterlist)-1] )
-	    itercountend.append( minarr[0,:][len(iterlist)-1] + eps )
+            peakresend.append( minarr[1,:][len(iterlist)-1] )
+            modfluxend.append( minarr[2,:][len(iterlist)-1] )
+            itercountend.append( minarr[0,:][len(iterlist)-1] + eps )
 
     #        pl.plot( iterlist , minarr[1,:] , 'r.-' , label='peak residual' , linewidth=1.5, markersize=8.0)
     #        pl.plot( iterlist , minarr[2,:] , 'b.-' , label='model flux' )
     #        pl.plot( iterlist , minarr[3,:] , 'g--' , label='cycle threshold' )
 
-	    pl.plot( itercountstart , peakresstart , 'r.--' , label='peak residual (start)')
-	    pl.plot( itercountend , peakresend , 'r.-' , label='peak residual (end)',linewidth=2.5)
-	    pl.plot( itercountstart , modfluxstart , 'b.--' , label='model flux (start)' )
-	    pl.plot( itercountend , modfluxend , 'b.-' , label='model flux (end)',linewidth=2.5 )
-	    pl.plot( iterlist , minarr[3,:] , 'g--' , label='cycle threshold', linewidth=2.5 )
-	    maxval = amax( minarr[1,:] )
-	    maxval = max( maxval, amax( minarr[2,:] ) )
-	    
-	    bcols = ['b','g','r','y','c']
-	    minv=1
-	    niterdone = len(minarr[4,:])
-	  
-	    if len(summ['summarymajor'].shape)==1 and summ['summarymajor'].shape[0]>0 :       
-		pl.vlines(summ['summarymajor'],0,maxval, label='major cycles', linewidth=2.0)
+            pl.plot( itercountstart , peakresstart , 'r.--' , label='peak residual (start)')
+            pl.plot( itercountend , peakresend , 'r.-' , label='peak residual (end)',linewidth=2.5)
+            pl.plot( itercountstart , modfluxstart , 'b.--' , label='model flux (start)' )
+            pl.plot( itercountend , modfluxend , 'b.-' , label='model flux (end)',linewidth=2.5 )
+            pl.plot( iterlist , minarr[3,:] , 'g--' , label='cycle threshold', linewidth=2.5 )
+            maxval = amax( minarr[1,:] )
+            maxval = max( maxval, amax( minarr[2,:] ) )
+            
+            bcols = ['b','g','r','y','c']
+            minv=1
+            niterdone = len(minarr[4,:])
+          
+            if len(summ['summarymajor'].shape)==1 and summ['summarymajor'].shape[0]>0 :       
+                pl.vlines(summ['summarymajor'],0,maxval, label='major cycles', linewidth=2.0)
 
-	    pl.hlines( summ['threshold'], 0, summ['iterdone'] , linestyle='dashed' ,label='threshold')
-	
-	    pl.xlabel( 'Iteration Count' )
-	    pl.ylabel( 'Peak Residual (red), Model Flux (blue)' )
+            pl.hlines( summ['threshold'], 0, summ['iterdone'] , linestyle='dashed' ,label='threshold')
+        
+            pl.xlabel( 'Iteration Count' )
+            pl.ylabel( 'Peak Residual (red), Model Flux (blue)' )
 
-	    ax = pl.axes()
-	    box = ax.get_position()
-	    ax.set_position([box.x0, box.y0, box.width, box.height*0.8])
+            ax = pl.axes()
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width, box.height*0.8])
 
-	    pl.legend(loc='lower center', bbox_to_anchor=(0.5, 1.05),
-		      ncol=3, fancybox=True, shadow=True)
+            pl.legend(loc='lower center', bbox_to_anchor=(0.5, 1.05),
+                      ncol=3, fancybox=True, shadow=True)
 
-	    pl.savefig('summaryplot_'+str(fignum)+'.png')
-	    pl.ion()
+            pl.savefig('summaryplot_'+str(fignum)+'.png')
+            pl.ion()
 
         return summ;
+    #############################################
 
+    def unlockimages( self, imageid=0 ):
+        """
+        Will try to unlock images attached for the image or outlier field id 
+        in this instance
+        """
+        retval=False;
+        if(len(self.PStools)> imageid):
+            retval=self.SItool.unlockimages(imageid)
+            retval=retval and self.PStools[imageid].unlockimages()
+        return retval
 #######################################################
 #######################################################
 

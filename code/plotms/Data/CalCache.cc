@@ -101,8 +101,7 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
   setFilename(filename_);
 
   // Trap unsupported modes: cal types, averaging, transforms, poln ratio
-  if (calType_[0]=='A' || calType_[0]=='M' || 
-		  (calType_[0]=='X' && calType_.contains("Mueller"))) {
+  if (calType_[0]=='M' || (calType_[0]=='X' && calType_.contains("Mueller"))) {
     throw AipsError("Cal table type " + calType_ + " is unsupported in plotms. Please continue to use plotcal.");
   }
 
@@ -117,10 +116,11 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
   // poln ratio
   polnRatio_ = false;
   if (selection_.corr()=="/") {
-    if (calType_=="BPOLY" || calType_[0] == 'T' || calType_[0] == 'F')
+    if (calType_=="BPOLY" || calType_[0] == 'T' || calType_[0] == 'F') {
       throw(AipsError("Polarization ratio plots not supported for " + calType_ + " tables."));
-    else
+	} else {
       polnRatio_ = true;
+    }
   }
 
   antnames_.resize();
@@ -190,7 +190,7 @@ void CalCache::setUpCalIter(NewCalTable& selct, Bool readonly) {
   Int nsortcol(4);
   Block<String> columns(nsortcol);
   columns[0]="SCAN_NUMBER";
-  columns[1]="FIELD_ID";   
+  columns[1]="FIELD_ID";
   columns[2]="SPECTRAL_WINDOW_ID";
   columns[3]="TIME";
 
@@ -629,20 +629,28 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
           break;
         }
         case PMS::ATM:
-        case PMS::TSKY: { 
+        case PMS::TSKY: 
+        case PMS::IMAGESB: {
           casacore::Int spw = cti.thisSpw();
           casacore::Int scan = cti.thisScan();
           casacore::Vector<casacore::Double> freqsGHz = cti.freq()/1e9;
           casacore::Vector<casacore::Double> curve(1, 0.0);
-          bool isAtm = (axis==PMS::ATM);
-          if (plotmsAtm_) {
-              curve.resize();    
-              curve = plotmsAtm_->calcOverlayCurve(spw, scan, freqsGHz, isAtm);
-          }
-          if (isAtm)
+          if (axis == PMS::ATM) { 
+              if (plotmsAtm_) {
+                  plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqsGHz);
+              }
               *atm_[chunk] = curve;
-          else
+          } else if (axis == PMS::TSKY) {
+              if (plotmsAtm_) {
+                  plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqsGHz);
+              }
               *tsky_[chunk] = curve;
+          } else {
+              if (plotmsAtm_) {
+                  plotmsAtm_->calcImageCurve(curve, spw, scan, freqsGHz);
+              }
+              *imageSideband_[chunk] = curve;
+          }
           break;
         }
         default:
@@ -818,11 +826,11 @@ void CalCache::flagToDisk(const PlotMSFlagging& flagging,
   // Delete the NCTs and VisIter so lock is released
   if (ct != nullptr) {
     delete ct;
-	ct = nullptr;
+    ct = nullptr;
   }
   if (selct != nullptr) {
     delete selct;
-	selct = nullptr;
+    selct = nullptr;
   }
   if (wci_p != nullptr) {
     delete wci_p;
@@ -1198,7 +1206,7 @@ void CalCache::loadCalAxis(ROSolvableVisJonesMCol& mcol,
 void CalCache::getChanFreqsFromMS(Vector< Vector<Double> >& mschanfreqs) {
   // shape is (nchan, nspw)
   MeasurementSet ms(msname_);
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
   uInt nspw = mscol.spectralWindow().nrow();
   mschanfreqs.resize(nspw);
   for (uInt spw=0; spw<nspw; ++spw) {

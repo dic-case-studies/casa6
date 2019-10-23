@@ -62,7 +62,7 @@ RegionTextParser::RegionTextParser(
     const Int requireAtLeastThisVersion,
     const String& prependRegion,
     const String& globalOverrideChans, const String& globalOverrrideStokes,
-    Bool verbose
+    Bool verbose, bool requireImageRegion
 ) : _csys(csys), _log(new LogIO()), _currentGlobals(),
     _lines(), _globalKeysToApply(), _fileVersion(-1), _imShape(imShape),
     _regions(0), _verbose(verbose) {
@@ -107,14 +107,14 @@ RegionTextParser::RegionTextParser(
         _determineVersion(chunk, filename, requireAtLeastThisVersion);
     }
     contents += chunk;
-    _parse(contents, filename);
+    _parse(contents, filename, requireImageRegion);
 }
 
 RegionTextParser::RegionTextParser(
     const CoordinateSystem& csys, const IPosition& imShape,
     const String& text, const String& prependRegion,
     const String& globalOverrideChans, const String& globalOverrrideStokes,
-    Bool verbose
+    Bool verbose, Bool requireImageRegion
 ) : _csys(csys), _log(new LogIO()), _currentGlobals(), _lines(),
     _globalKeysToApply(), _fileVersion(-1), _imShape(imShape), _regions(0),
     _verbose(verbose) {
@@ -126,7 +126,7 @@ RegionTextParser::RegionTextParser(
     _setInitialGlobals();
     _setOverridingChannelRange(globalOverrideChans);
     _setOverridingCorrelations(globalOverrrideStokes);
-    _parse(prependRegion.empty() ? text : prependRegion + "\n" + text, "");
+    _parse(prependRegion.empty() ? text : prependRegion + "\n" + text, "", requireImageRegion);
 }
 
 RegionTextParser::~RegionTextParser() {}
@@ -205,7 +205,7 @@ void RegionTextParser::_determineVersion(
     }
 }
 
-void RegionTextParser::_parse(const String& contents, const String& fileDesc) {
+void RegionTextParser::_parse(const String& contents, const String& fileDesc, bool requireImageRegion) {
     _log->origin(LogOrigin("AsciiRegionFileParser", __func__));
     static const Regex startAnn("^ann[[:space:]]+");
     static const Regex startDiff("^-[[:space:]]+");
@@ -345,7 +345,8 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc) {
         }
         _createAnnotation(
             annType, qDirs, qFreqs, quantities, textString,
-            currentParamSet, annOnly, difference, preamble
+            currentParamSet, annOnly, difference, preamble,
+            requireImageRegion
         );
     }
     if (_verbose) {
@@ -569,8 +570,8 @@ RegionTextParser::ParamSet RegionTextParser::getParamSet(
     Bool& spectralParmsUpdated, LogIO& log,
     const String& text, const String& preamble,
     const CoordinateSystem& csys,
-    SHARED_PTR<std::pair<MFrequency, MFrequency> > overridingFreqRange,
-    SHARED_PTR<Vector<Stokes::StokesTypes> > overridingCorrRange
+    std::shared_ptr<std::pair<MFrequency, MFrequency> > overridingFreqRange,
+    std::shared_ptr<Vector<Stokes::StokesTypes> > overridingCorrRange
 ) {
     ParamSet parms;
     spectralParmsUpdated = false;
@@ -808,7 +809,7 @@ void RegionTextParser::_createAnnotation(
     const String& textString,
     const ParamSet& currentParamSet,
     const Bool annOnly, const Bool isDifference,
-    const String& preamble
+    const String& preamble, Bool requireImageRegion
 ) {
     CountedPtr<AnnotationBase> annotation;
     Vector<Stokes::StokesTypes> stokes(0);
@@ -842,7 +843,7 @@ void RegionTextParser::_createAnnotation(
                 qDirs[0], qDirs[1], qDirs[2], qDirs[3],
                 dirRefFrame, _csys, _imShape, qFreqs.first, qFreqs.second,
                 freqRefFrame, doppler, restfreq, stokes,
-                annOnly
+                annOnly, requireImageRegion
             );
             break;
         case AnnotationBase::CENTER_BOX:
@@ -850,14 +851,14 @@ void RegionTextParser::_createAnnotation(
                 qDirs[0], qDirs[1], quantities[0], quantities[1],
                 dirRefFrame, _csys, _imShape, qFreqs.first, qFreqs.second,
                 freqRefFrame, doppler, restfreq, stokes,
-                annOnly
+                annOnly, requireImageRegion
             );
             break;
         case AnnotationBase::ROTATED_BOX:
             annotation = new AnnRotBox(
                 qDirs[0], qDirs[1], quantities[0], quantities[1],
                 quantities[2], dirRefFrame, _csys, _imShape, qFreqs.first, qFreqs.second,
-                freqRefFrame, doppler, restfreq,  stokes, annOnly
+                freqRefFrame, doppler, restfreq,  stokes, annOnly, requireImageRegion
             );
             break;
         case AnnotationBase::POLYGON:
@@ -870,7 +871,7 @@ void RegionTextParser::_createAnnotation(
                 }
                 annotation = new AnnPolygon(
                     x, y, dirRefFrame,  _csys, _imShape, qFreqs.first, qFreqs.second,
-                    freqRefFrame, doppler, restfreq,  stokes, annOnly
+                    freqRefFrame, doppler, restfreq,  stokes, annOnly, requireImageRegion
                 );
             }
             break;
@@ -884,14 +885,14 @@ void RegionTextParser::_createAnnotation(
                 annotation = new AnnEllipse(
                     qDirs[0], qDirs[1], quantities[0], quantities[0], Quantity(0, "deg"),
                     dirRefFrame,  _csys, _imShape, qFreqs.first, qFreqs.second,
-                    freqRefFrame, doppler, restfreq,  stokes, annOnly
+                    freqRefFrame, doppler, restfreq,  stokes, annOnly, requireImageRegion
                 );
             }
             else {
                 annotation = new AnnCircle(
                     qDirs[0], qDirs[1], quantities[0],
                     dirRefFrame,  _csys, _imShape, qFreqs.first, qFreqs.second,
-                    freqRefFrame, doppler, restfreq,  stokes, annOnly
+                    freqRefFrame, doppler, restfreq,  stokes, annOnly, requireImageRegion
                 );
             }
             break;
@@ -899,14 +900,14 @@ void RegionTextParser::_createAnnotation(
             annotation = new AnnAnnulus(
                 qDirs[0], qDirs[1], quantities[0], quantities[1],
                 dirRefFrame,  _csys, _imShape, qFreqs.first, qFreqs.second,
-                freqRefFrame, doppler, restfreq,  stokes, annOnly
+                freqRefFrame, doppler, restfreq,  stokes, annOnly, requireImageRegion
             );
             break;
         case AnnotationBase::ELLIPSE:
             annotation = new AnnEllipse(
                 qDirs[0], qDirs[1], quantities[0], quantities[1], quantities[2],
                 dirRefFrame,  _csys, _imShape, qFreqs.first, qFreqs.second,
-                freqRefFrame, doppler, restfreq,  stokes, annOnly
+                freqRefFrame, doppler, restfreq,  stokes, annOnly, requireImageRegion
             );
             break;
         case AnnotationBase::LINE:

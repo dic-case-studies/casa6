@@ -30,7 +30,7 @@
  *
  * File Merger.h
  */
-#include <Merger.h>
+#include <alma/ASDM/Merger.h>
 
 using namespace std;
 
@@ -3111,6 +3111,14 @@ namespace asdm {
 				
 			Tag calReductionIdTag = getTag(row->getCalReductionId(), mergeCalReductionPtr);
 			row->setCalReductionId(calReductionIdTag);
+				
+			
+		
+			
+				
+				
+			Tag spectralWindowIdTag = getTag(row->getSpectralWindowId(), mergeSpectralWindowPtr);
+			row->setSpectralWindowId(spectralWindowIdTag);
 				
 			
 		

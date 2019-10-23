@@ -37,6 +37,7 @@
 #include <alma/ASDM/Frequency.h>
 #include <alma/ASDM/Angle.h>
 #include <alma/ASDM/AngularRate.h>
+#include <alma/ASDM/ArrayTime.h>
 #include <alma/ASDM/Length.h>
 #include <alma/ASDM/Temperature.h>
 #include <alma/ASDM/ArrayTimeInterval.h>
@@ -48,12 +49,13 @@
 #include <alma/Enumerations/CFrequencyReferenceCode.h>
 #include <alma/Enumerations/CReceiverBand.h>
 #include <alma/Enumerations/CReceiverSideband.h>
+#include <alma/MS2ASDM/MapWithDefault.h>
 
 
-#ifndef MSVIS_MS2ASDM_H
+#ifndef MS2ASDM_MS2ASDM_H
+#define MS2ASDM_MS2ASDM_H
+
 namespace casa { //# NAMESPACE CASA - BEGIN
-
-#define MSVIS_MS2ASDM_H
 
 // <summary>
 // MS2ASDM provides functionalities to create an ASDM (ALMA science data model)
@@ -75,7 +77,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 // <synopsis>
 // </synopsis>
 
-  class MS2ASDM : public casacore::ROMSColumns
+  class MS2ASDM : public casacore::MSColumns
 {
 
  public:
@@ -132,15 +134,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   AntennaTypeMod::AntennaType ASDMAntennaType( const casacore::String& type ); 
 
   // convert time in seconds to an array time
-  ArrayTime ASDMArrayTime( const casacore::Double seconds ){ 
-    return ArrayTime((int64_t) (floor(seconds*ArrayTime::unitsInASecond))); }
+  asdm::ArrayTime ASDMArrayTime( const casacore::Double seconds ){ 
+      return asdm::ArrayTime((int64_t) (floor(seconds*asdm::ArrayTime::unitsInASecond))); }
 
   // convert array time to time in seconds
-  casacore::Double MSTimeSecs( const ArrayTime atime ){ 
-    return (casacore::Double) atime.get() / (casacore::Double)ArrayTime::unitsInASecond; }
+  casacore::Double MSTimeSecs( const asdm::ArrayTime atime ){ 
+      return (casacore::Double) atime.get() / (casacore::Double) asdm::ArrayTime::unitsInASecond; }
 
   asdm::Interval ASDMInterval( const casacore::Double seconds ){ 
-    return asdm::Interval((int64_t) (floor(seconds*ArrayTime::unitsInASecond))); }
+      return asdm::Interval((int64_t) (floor(seconds*asdm::ArrayTime::unitsInASecond))); }
 
   // convert casacore::MS style time interval to ASDM ArrayTimeInterval
   asdm::ArrayTimeInterval ASDMTimeInterval( const casacore::Quantity midpoint, const casacore::Quantity interval);
@@ -154,7 +156,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return timeQuant()(mainTabRow).getValue("s") + intervalQuant()(mainTabRow).getValue("s")/2.; }
 
   // convert casacore::MDirection to a vector of Angles
-  vector< asdm::Angle > ASDMAngleV(const casacore::MDirection mDir);
+  std::vector< asdm::Angle > ASDMAngleV(const casacore::MDirection mDir);
 
   // convert casacore::MDirection type to ASDM DirectionReferenceCode
   DirectionReferenceCodeMod::DirectionReferenceCode ASDMDirRefCode(const casacore::MDirection::Types type);
@@ -262,7 +264,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					   const casacore::uInt startRow, const casacore::uInt endRow,
 					   const asdm::Tag eBlockId,
 					   int& datasize, asdm::EntityRef& dataOid, 
-					   vector< asdm::Tag >& stateId);
+					   std::vector< asdm::Tag >& stateId);
 
   casacore::Bool writePointingModel(); // write dummy pointing models
 
@@ -306,23 +308,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   casacore::String asdmDir_p; // ASDM output directory name
 
-  casacore::SimpleOrderedMap <casacore::String, asdm::Tag> asdmStationId_p;  
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmAntennaId_p;
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmSpectralWindowId_p;
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmPolarizationId_p;
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmProcessorId_p;
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmFieldId_p;
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmEphemerisId_p;
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmDataDescriptionId_p;
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmStateId_p;
-  casacore::SimpleOrderedMap <casacore::uInt, asdm::Tag> asdmConfigDescriptionId_p; // maps from casacore::MS Main rows
-  casacore::SimpleOrderedMap <casacore::Int, asdm::Tag> asdmSBSummaryId_p; // maps from casacore::MS Observation Id + 10000*SpwId
-  casacore::SimpleOrderedMap <casacore::Double, asdm::Tag> asdmExecBlockId_p; // maps from casacore::MS Main timestamps 
-  casacore::SimpleOrderedMap <casacore::Int, int> asdmFeedId_p; // ASDM feed id is not a Tag
-  casacore::SimpleOrderedMap <casacore::Int, int> asdmSourceId_p; // neither is the source id
-  casacore::SimpleOrderedMap <asdm::Tag, int> asdmPointingModelId_p; // maps ASDM Antenna Id to dummy pointing model
+  // The default value for the Tag keys is Tag(), so the std::map works as is
+  std::map <casacore::String, asdm::Tag> asdmStationId_p;  
+  std::map <casacore::Int, asdm::Tag> asdmAntennaId_p;
+  std::map <casacore::Int, asdm::Tag> asdmSpectralWindowId_p;
+  std::map <casacore::Int, asdm::Tag> asdmPolarizationId_p;
+  std::map <casacore::Int, asdm::Tag> asdmProcessorId_p;
+  std::map <casacore::Int, asdm::Tag> asdmFieldId_p;
+  std::map <casacore::Int, asdm::Tag> asdmEphemerisId_p;
+  std::map <casacore::Int, asdm::Tag> asdmDataDescriptionId_p;
+  std::map <casacore::Int, asdm::Tag> asdmStateId_p;
+  std::map <casacore::uInt, asdm::Tag> asdmConfigDescriptionId_p; // maps from casacore::MS Main rows
+  std::map <casacore::Int, asdm::Tag> asdmSBSummaryId_p; // maps from casacore::MS Observation Id + 10000*SpwId
+  std::map <casacore::Double, asdm::Tag> asdmExecBlockId_p; // maps from casacore::MS Main timestamps 
+  // the default value for the int values is -1, needs MapWithDefault
+  MapWithDefault <casacore::Int, int> asdmFeedId_p; // ASDM feed id is not a Tag
+  MapWithDefault <casacore::Int, int> asdmSourceId_p; // neither is the source id
+  MapWithDefault <asdm::Tag, int> asdmPointingModelId_p; // maps ASDM Antenna Id to dummy pointing model
 
-  vector< vector< casacore::Bool > > skipCorr_p; // skipCorr_p[j][PolId] indicates that correlation 
+  std::vector< std::vector< casacore::Bool > > skipCorr_p; // skipCorr_p[j][PolId] indicates that correlation 
                                        // product j for POLARIZATION_ID PolId should not 
                                        // be written in the ASDM
 
@@ -330,10 +334,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
 } //# NAMESPACE CASA - END
-
-//#ifndef AIPS_NO_TEMPLATE_SRC
-//#include <alma/MS2ASDM/MS2ASDM.tcc>
-//#endif //# AIPS_NO_TEMPLATE_SRC
 
 #endif
 

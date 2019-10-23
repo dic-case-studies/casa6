@@ -28,27 +28,29 @@
  * | If you do, all changes will be lost when the file is re-generated. |
  *  --------------------------------------------------------------------
  *
+ * Note, DataDescriptionRow.cpp is no longer being generated.
+ *
  * File DataDescriptionRow.cpp
  */
  
 #include <vector>
-using std::vector;
-
 #include <set>
-using std::set;
 
-#include <ASDM.h>
-#include <DataDescriptionRow.h>
-#include <DataDescriptionTable.h>
+#include <alma/ASDM/ASDM.h>
+#include <alma/ASDM/DataDescriptionRow.h>
+#include <alma/ASDM/DataDescriptionTable.h>
 
-#include <PolarizationTable.h>
-#include <PolarizationRow.h>
+#include <alma/ASDM/PolarizationTable.h>
+#include <alma/ASDM/PolarizationRow.h>
 
-#include <SpectralWindowTable.h>
-#include <SpectralWindowRow.h>
+#include <alma/ASDM/HolographyTable.h>
+#include <alma/ASDM/HolographyRow.h>
 
-#include <PulsarTable.h>
-#include <PulsarRow.h>	
+#include <alma/ASDM/SpectralWindowTable.h>
+#include <alma/ASDM/SpectralWindowRow.h>
+
+#include <alma/ASDM/PulsarTable.h>
+#include <alma/ASDM/PulsarRow.h>
 
 using asdm::ASDM;
 using asdm::DataDescriptionRow;
@@ -57,20 +59,21 @@ using asdm::DataDescriptionTable;
 using asdm::PolarizationTable;
 using asdm::PolarizationRow;
 
+using asdm::HolographyTable;
+using asdm::HolographyRow;
+
 using asdm::SpectralWindowTable;
 using asdm::SpectralWindowRow;
 
 using asdm::PulsarTable;
 using asdm::PulsarRow;
 
-#include <Parser.h>
-using asdm::Parser;
+#include <alma/ASDM/Parser.h>
+#include <alma/ASDM/EnumerationParser.h>
+#include <alma/ASDM/ASDMValuesParser.h>
+#include <alma/ASDM/InvalidArgumentException.h>
 
-#include <EnumerationParser.h>
-#include <ASDMValuesParser.h>
- 
-#include <InvalidArgumentException.h>
-using asdm::InvalidArgumentException;
+using namespace std;
 
 namespace asdm {
 	DataDescriptionRow::~DataDescriptionRow() {
@@ -103,7 +106,7 @@ namespace asdm {
 	DataDescriptionRowIDL *DataDescriptionRow::toIDL() const {
 		DataDescriptionRowIDL *x = new DataDescriptionRowIDL ();
 		
-		// Fill the IDL structure.
+		// Set the x's fields.
 	
 		
 	
@@ -327,7 +330,9 @@ namespace asdm {
 
 			setPulsarId(Parser::getTag("pulsarId","Pulsar",rowDoc));
 
-		}
+		} else {
+                    clearPulsarId();
+                }
 		
 	
 
@@ -649,7 +654,7 @@ void DataDescriptionRow::pulsarIdFromBin(EndianIStream& eis) {
 		
 
 	/**
-	 * Returns the pointer to the row in the Polarization table having Polarization.polOrHoloId == polOrHoloId
+	 * Returns the pointer to the row in the Polarization table having Polarization.polarizationId == polOrHoloId
 	 * @return a PolarizationRow*
 	 * 
 	 
@@ -658,7 +663,22 @@ void DataDescriptionRow::pulsarIdFromBin(EndianIStream& eis) {
 	 
 	 	return table.getContainer().getPolarization().getRowByKey(polOrHoloId);
 	 }
+
+
+
 	 
+	/**
+	 * Returns the pointer to the row in the Holography table having Holography.holographyId == polOrHoloId
+	 * @return a HolographyRow*
+	 * 
+	 
+	 */
+	 HolographyRow* DataDescriptionRow::getHolographyUsingPolOrHoloId() {
+	 
+	 	return table.getContainer().getHolography().getRowByKey(polOrHoloId);
+	 }
+	 
+
 
 	
 
@@ -681,8 +701,8 @@ void DataDescriptionRow::pulsarIdFromBin(EndianIStream& eis) {
 
 	
         /**
-         * Returns the pointer to the row in the DataDescription table having DataDescription.pulsarId == pulsarId
-         * @return a DataDescriptionRow*
+         * Returns the pointer to the row in the Pulsar table having Pulsar.pulsarId == pulsarId
+         * @return a PulsarRow*
          * 
          
          * throws IllegalAccessException
@@ -705,8 +725,9 @@ void DataDescriptionRow::pulsarIdFromBin(EndianIStream& eis) {
 	 * to which they belong.
 	 * @param table The table to which this row belongs.
 	 */ 
-	DataDescriptionRow::DataDescriptionRow (DataDescriptionTable &t) : table(t) {
+    DataDescriptionRow::DataDescriptionRow (DataDescriptionTable &t) : table(t) {
 		hasBeenAdded = false;
+                pulsarIdExists = false;
 		
 	
 	
@@ -748,10 +769,11 @@ void DataDescriptionRow::pulsarIdFromBin(EndianIStream& eis) {
 		
 	}
 	
-	DataDescriptionRow::DataDescriptionRow (DataDescriptionTable &t, DataDescriptionRow &row) : table(t) {
+	DataDescriptionRow::DataDescriptionRow (DataDescriptionTable &t, DataDescriptionRow *row) : table(t) {
 		hasBeenAdded = false;
+                pulsarIdExists = false;
 		
-		if (&row == 0) {
+		if (row == 0) {
 	
 	
 	
@@ -765,17 +787,17 @@ void DataDescriptionRow::pulsarIdFromBin(EndianIStream& eis) {
 		else {
 	
 		
-			dataDescriptionId = row.dataDescriptionId;
+			dataDescriptionId = row->dataDescriptionId;
 		
 		
 		
 		
-			polOrHoloId = row.polOrHoloId;
+			polOrHoloId = row->polOrHoloId;
 		
-			spectralWindowId = row.spectralWindowId;
+			spectralWindowId = row->spectralWindowId;
 		
-			if (row.pulsarIdExists) {
-				pulsarId = row.pulsarId;
+			if (row->pulsarIdExists) {
+				pulsarId = row->pulsarId;
 				pulsarIdExists = true;
 			}
 			else
@@ -858,6 +880,7 @@ void DataDescriptionRow::pulsarIdFromBin(EndianIStream& eis) {
 		result["dataDescriptionId"] = &DataDescriptionRow::dataDescriptionIdFromBin;
 		result["polOrHoloId"] = &DataDescriptionRow::polOrHoloIdFromBin;
 		result["spectralWindowId"] = &DataDescriptionRow::spectralWindowIdFromBin;
+                result["pulsarId"] = &DataDescriptionRow::pulsarIdFromBin;
 		
 		
 			

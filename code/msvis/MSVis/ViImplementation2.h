@@ -33,10 +33,12 @@
 #include <msvis/MSVis/VisBufferComponents2.h>
 #include <measures/Measures/MFrequency.h>
 #include <measures/Measures/Stokes.h>
+#include <measures/Measures/Stokes.h>
 
 #include <map>
 #include <vector>
 
+//Forward declarations
 namespace casacore{
 
 template <typename T> class Array;
@@ -54,6 +56,23 @@ class Slice;
 class String;
 template <typename T, Int n> class SquareMatrix;
 template <typename T> class Vector;
+class MSAntennaColumns;
+class MSDataDescColumns;
+class MSFeedColumns;
+class MSFieldColumns;
+class MSFlagCmdColumns;
+class MSHistoryColumns;
+class MSObservationColumns;
+class MSPointingColumns;
+class MSPolarizationColumns;
+class MSProcessorColumns;
+class MSSpWindowColumns;
+class MSStateColumns;
+class MSDopplerColumns;
+class MSFreqOffsetColumns;
+class MSSourceColumns;
+class MSSysCalColumns;
+class MSWeatherColumns;
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -515,7 +534,7 @@ public:
 
     virtual void slurp () const = 0;
 
-    // Access the current casacore::ROMSColumns object in MSIter
+    // Access the current casacore::MSColumns object in MSIter
 
     virtual const vi::SubtableColumns & subtableColumns () const = 0;
 
@@ -609,6 +628,63 @@ public:
 
     virtual void writeModel(const casacore::RecordInterface& rec, casacore::Bool iscomponentlist=true,
                             casacore::Bool incremental=false) = 0;
+
+    //**********************************************************************
+    // Methods to access the subtables.
+    // Note that for some subclasses, like TransformingTVI, those tables
+    // might be created on the fly, rather than read from the MS.
+    //**********************************************************************
+
+    // Access to antenna subtable
+    virtual const casacore::MSAntennaColumns& antennaSubtablecols() const = 0;
+
+    // Access to dataDescription subtable
+    virtual const casacore::MSDataDescColumns& dataDescriptionSubtablecols() const = 0;
+
+    // Access to feed subtable
+    virtual const casacore::MSFeedColumns& feedSubtablecols() const = 0;
+
+    // Access to field subtable
+    virtual const casacore::MSFieldColumns& fieldSubtablecols() const = 0;
+
+    // Access to flagCmd subtable
+    virtual const casacore::MSFlagCmdColumns& flagCmdSubtablecols() const = 0;
+
+    // Access to history subtable
+    virtual const casacore::MSHistoryColumns& historySubtablecols() const = 0;
+
+    // Access to observation subtable
+    virtual const casacore::MSObservationColumns& observationSubtablecols() const = 0;
+
+    // Access to pointing subtable
+    virtual const casacore::MSPointingColumns& pointingSubtablecols() const = 0;
+
+    // Access to polarization subtable
+    virtual const casacore::MSPolarizationColumns& polarizationSubtablecols() const = 0;
+
+    // Access to processor subtable
+    virtual const casacore::MSProcessorColumns& processorSubtablecols() const = 0;
+
+    // Access to spectralWindow subtable
+    virtual const casacore::MSSpWindowColumns& spectralWindowSubtablecols() const = 0;
+
+    // Access to state subtable
+    virtual const casacore::MSStateColumns& stateSubtablecols() const = 0;
+
+    // Access to doppler subtable
+    virtual const casacore::MSDopplerColumns& dopplerSubtablecols() const = 0;
+
+    // Access to freqOffset subtable
+    virtual const casacore::MSFreqOffsetColumns& freqOffsetSubtablecols() const = 0;
+
+    // Access to source subtable
+    virtual const casacore::MSSourceColumns& sourceSubtablecols() const = 0;
+
+    // Access to sysCal subtable
+    virtual const casacore::MSSysCalColumns& sysCalSubtablecols() const = 0;
+
+    // Access to weather subtable
+    virtual const casacore::MSWeatherColumns& weatherSubtablecols() const = 0;
 
 
 protected:

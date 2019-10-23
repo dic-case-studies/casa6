@@ -578,7 +578,9 @@ VisibilityIteratorImplAsync2::existsColumn (VisBufferComponent2 id) const
     case VisibilityModel:
     case VisibilityCubeModel:
 
-        result = ! columns_p.modelVis_p.isNull();
+      result = 
+          (!columns_p.modelVis_p.isNull() && columns_p.modelVis_p.isDefined(0)) ||
+          modelDataGenerator_p != nullptr;
         break;
 
     case VisibilityObserved:
@@ -1170,13 +1172,13 @@ VisibilityIteratorImplAsync2::getSpectralWindowChannels (Int msId, Int spectralW
     // frequency and width columns.  Use those columns to extract the frequency
     // and width lists for the specified spectral window.
 
-    const ROMSSpWindowColumns& spectralWindow = subtableColumns_p->spectralWindow();
+    const MSSpWindowColumns& spectralWindow = subtableColumns_p->spectralWindow();
 
-    const ROArrayColumn<Double>& frequenciesColumn = spectralWindow.chanFreq();
+    const ArrayColumn<Double>& frequenciesColumn = spectralWindow.chanFreq();
     Vector<Double> frequencies;
     frequenciesColumn.get (spectralWindowId, frequencies, true);
 
-    const ROArrayColumn<Double>& widthsColumn = spectralWindow.chanWidth();
+    const ArrayColumn<Double>& widthsColumn = spectralWindow.chanWidth();
     Vector<Double> widths;
     widthsColumn.get (spectralWindowId, widths, true);
 
@@ -1594,7 +1596,7 @@ VisibilityIteratorImplAsync2::visibilityObserved (Matrix<CStokesVector> & vis) c
 
 void
 VisibilityIteratorImplAsync2::getVisibilityAsStokes (Matrix<CStokesVector> & visibilityStokes,
-                                                    const ROArrayColumn<Complex> & column) const
+                                                    const ArrayColumn<Complex> & column) const
 {
     // Read in the raw visibility data
 
