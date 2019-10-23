@@ -60,8 +60,37 @@ class Fringefit_tests(unittest.TestCase):
         reference = os.path.join(datapath, mbdcal)
         self.assertTrue(th.compTables(mbdcal, reference, ['WEIGHT']))
 
+
+class Fringefit_single_tests(unittest.TestCase):
+    prefix = 'n08c1-single'
+    msfile = prefix + '.ms'
+
+    def setUp(self):
+        shutil.copytree(os.path.join(datapath, self.msfile), self.msfile)
+
+    def tearDown(self):
+        shutil.rmtree(self.msfile)
+        shutil.rmtree(self.prefix + '.sbdcal', True)
+
+    def test_single(self):
+        sbdcal = self.prefix + '.sbdcal'
+        fringefit(vis=self.msfile, caltable=sbdcal, refant='EF')
+        tb.open(sbdcal)
+        flag = tb.getcol('FLAG')
+        # CAS-12693: Check that the right parameters are flagged
+        self.assertFalse(flag[0, 0, 0])
+        self.assertFalse(flag[0, 0, 1])
+        self.assertTrue(flag[0, 0, 2])
+        self.assertFalse(flag[0, 0, 3])
+        self.assertTrue(flag[0, 0, 4])
+        self.assertTrue(flag[4, 0, 0])
+        self.assertTrue(flag[4, 0, 1])
+        self.assertTrue(flag[4, 0, 2])
+        self.assertTrue(flag[4, 0, 3])
+        self.assertTrue(flag[4, 0, 4])
+
 def suite():
-    return [Fringefit_tests]
+    return [Fringefit_tests, Fringefit_single_tests]
 
 if __name__ == '__main__':
     unittest.main()

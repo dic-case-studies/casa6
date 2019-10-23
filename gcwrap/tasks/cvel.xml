@@ -140,7 +140,7 @@ Hanning smoothing may not be necessary.
         <param type="string" name="outframe" ignorecase="True">
                 <description>Output frame (not case-sensitive, \'\'=keep input frame)</description>
                 <value></value>
-                <allowed kind="enum">
+                <allowed kind="enum" ignorecase="True">
                         <value>topo</value>
                         <value>geo</value>
                         <value>lsrk</value>

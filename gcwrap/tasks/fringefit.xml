@@ -362,8 +362,6 @@ Previous calibrations should be applied on the fly.
       parang -- If True, apply the parallactic angle correction (required
                for polarization calibration)
                default: False
-      async --  Run asynchronously
-              default = False; do not run asychronously
 </example> 
 
 </task>

@@ -37,7 +37,7 @@
 #include <casacore/casa/Quanta/UnitMap.h>
 #include <casatools/Config/State.h>
 #ifdef CASATOOLS
-#include <asdmstman/Register.h>
+#include <asdmstman/AsdmStMan.h>
 #include <toolversion.h>
 #endif
 
@@ -408,15 +408,25 @@ utils::_trigger_segfault (int faultType)
 // -------------------- initialize CASAtools ------------------
 
 static std::vector<std::string> default_data_path;
+static std::string python_path;
+#ifdef CASATOOLS
+// CASA 6
+bool utils::initialize(const std::string &pypath, const std::vector<std::string> &default_path) {
+#else
+// CASA 5
 bool utils::initialize(const std::vector<std::string> &default_path) {
+    std::string pypath;
+#endif
     static bool initialized = false;
     if ( initialized ) return false;
     default_data_path = default_path;
+    python_path = pypath;
     casatools::get_state( ).setDataPath(default_data_path);
+    casatools::get_state( ).setPythonPath(python_path);
     // configure quanta/measures customizations...
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );
 #ifdef CASATOOLS
-    register_asdmstman( );
+    casa::AsdmStMan::registerClass( );
 #endif
     initialized = true;
     return true;
@@ -439,6 +449,12 @@ std::vector<std::string> utils::getpath( ) {
     std::copy( path.begin( ), path.end( ), std::back_inserter(result) );
     return result;
 }
+
+#ifdef CASATOOLS
+std::string utils::getpython( ) {
+    return casatools::get_state( ).pythonPath( );
+}
+#endif
 
 void utils::clearpath( ) {
     casatools::get_state( ).clearDataPath( );

@@ -77,10 +77,10 @@ class listhistory_test(unittest.TestCase):
         # Get the number of lines in file
         # the number of expected lines differs
         if is_CASA6:
-            refnum=10
+            refnum=17
             if self.itismms:
                 # this is a guess, not tested
-                refnum = 33
+                refnum = 40
         else:
             # for CASA5, get only the relevant lines in the logfile
             newfile= "newlisth.log"

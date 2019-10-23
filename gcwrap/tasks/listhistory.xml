@@ -28,8 +28,6 @@
         Keyword arguments:
         vis -- Name of input visibility file 
                 default: none; example: vis='ngc5921.ms'
-        async -- Run asynchronously 
-                default = False; do not run asychronously
  </example>
  </task>
  </casaxml>

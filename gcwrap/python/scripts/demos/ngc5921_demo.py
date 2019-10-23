@@ -700,8 +700,6 @@ print "Created "+splitms
 # in the DATA column already.
 # Write as a multisource UVFITS (with SU table)
 # even though it will have only one field in it
-# Run asynchronously so as not to interfere with other tasks
-# (BETA: also avoids crash on next importuvfits)
 #
 #print '--Export UVFITS--'
 #default('exportuvfits')
@@ -712,13 +710,12 @@ print "Created "+splitms
 #fitsfile = srcuvfits
 #datacolumn = 'data'
 #multisource = True
-#async = True
 #
 #saveinputs('exportuvfits',prefix+'.exportuvfits.saved')
 #
 #myhandle = exportuvfits()
 #
-#print "The return value for this exportuvfits async task for tm is "+str(myhandle)
+#print "The return value for this exportuvfits task for tm is "+str(myhandle)
 
 #=====================================================================
 #
@@ -922,8 +919,6 @@ if scriptmode:
 #=====================================================================
 #
 # Here is how to export the Final CLEAN Image as FITS
-# Run asynchronously so as not to interfere with other tasks
-# (BETA: also avoids crash on next importfits)
 #
 #print '--Final Export CLEAN FITS--'
 #default('exportfits')
@@ -932,13 +927,12 @@ if scriptmode:
 #
 #imagename = clnimage
 #fitsimage = clnfits
-#async = True
 #
 #saveinputs('exportfits',prefix+'.exportfits.saved')
 #
 #myhandle2 = exportfits()
 #
-#print "The return value for this exportfits async task for tm is "+str(myhandle2)
+#print "The return value for this exportfits task for tm is "+str(myhandle2)
 
 #=====================================================================
 #

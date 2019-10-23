@@ -510,6 +510,8 @@ class simutil:
         # haveing eliminated other options, we need to calculate:
         epoch, centx, centy = self.direction_splitter()
 
+        pointings = []
+
         shorttype=str.upper(maptype[0:3])
 #        if not shorttype=="HEX":
 #            self.msg("can't calculate map of maptype "+maptype,priority="error")
@@ -1460,8 +1462,9 @@ class simutil:
 
         # where to start plotting?
         offset=-0.5
-        if settime < time: offset-=0.5
-        if rise > time: offset+=0.5
+        # this assumes that the values can be compared directly - already assumed in code above
+        if settime['m0']['value'] < time['m0']['value']: offset -= 0.5
+        if rise['m0']['value'] > time['m0']['value']: offset+=0.5
         time['m0']['value']+=offset
 
         times=[]

@@ -131,6 +131,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			connect( shutdown_svc, SIGNAL(exit_now( )),
 					 this, SLOT(quit( )) );
 
+			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+            // ping service is used by casatools etc. to check to see if gRPC
+            // server is still running...
+			auto ping_svc = state->ping_service.get( );
+			builder.RegisterService(ping_svc);
 
 			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 			// Launch server...

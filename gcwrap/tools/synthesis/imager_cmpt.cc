@@ -152,7 +152,7 @@ imager::advise( const bool takeadvice, const double amplitudeloss, const ::casac
   }
 
 bool
-imager::approximatepsf(const std::string& psf, const bool /*async*/)
+imager::approximatepsf(const std::string& psf)
 {
 
    Bool rstat(false);
@@ -245,7 +245,7 @@ bool imager::calcuvw(const std::vector<int>& fields, const std::string& refcode,
                    const std::vector<std::string>& residual,
                    const std::vector<std::string>& psfnames,
                    const bool interactive, const int npercycle,
-                   const std::string& masktemplate, const bool /*async*/)
+                   const std::string& masktemplate)
 {
   casac::record* rstat(0);
    if(hasValidMS_p)
@@ -393,7 +393,7 @@ imager::exprmask(const std::string& /*mask*/, const double /*expr*/)
 }
 
 bool
-imager::feather(const std::string& image, const std::string& highres, const std::string& lowres, const std::string& lowpsf, const double dishdiam, const bool showplot, const bool /*async*/)
+imager::feather(const std::string& image, const std::string& highres, const std::string& lowres, const std::string& lowpsf, const double dishdiam, const bool showplot)
 {
 
   Bool rstat(false);
@@ -408,7 +408,7 @@ imager::feather(const std::string& image, const std::string& highres, const std:
 }
 
 bool
-imager::filter(const std::string& type, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa, const bool /*async*/)
+imager::filter(const std::string& type, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -430,7 +430,7 @@ imager::filter(const std::string& type, const ::casac::variant& bmaj, const ::ca
 }
 
 bool
-imager::fitpsf( const std::string& psf, const bool /*async*/,
+imager::fitpsf( const std::string& psf,
 	       ::casac::record& bmaj, ::casac::record& bmin, ::casac::record& bpa)
 {
   /*
@@ -539,7 +539,7 @@ imager::ft(const std::vector<std::string>& model, const std::string& complist, c
 }
 
 bool
-imager::linearmosaic(const std::vector<std::string>& images, const std::string& mosaic, const std::string& fluxscale, const std::string& sensitivity, const std::vector<int>& fieldids, const bool usedefaultvp, const std::string& vptable, const bool /*async*/)
+imager::linearmosaic(const std::vector<std::string>& images, const std::string& mosaic, const std::string& fluxscale, const std::string& sensitivity, const std::vector<int>& fieldids, const bool usedefaultvp, const std::string& vptable)
 {
 
    Bool rstat(false);
@@ -562,7 +562,7 @@ imager::linearmosaic(const std::vector<std::string>& images, const std::string& 
     return rstat;
 }
 
-bool imager::make(const std::string& image, const bool /*async*/)
+bool imager::make(const std::string& image)
 {
 
    Bool rstat(false);
@@ -616,8 +616,7 @@ std::string imager::predictcomp(const std::string& objname,
 }
 
 bool imager::makeimage(const std::string& type, const std::string& image,
-                       const std::string& compleximage, const bool verbose,
-                       const bool /*async*/)
+                       const std::string& compleximage, const bool verbose)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -653,7 +652,7 @@ bool imager::makemodelfromsd(const std::string& sdimage, const std::string& mode
 }
 
 bool imager::mask(const std::string& image, const std::string& mask,
-                  const ::casac::variant& threshold, const bool /*async*/)
+                  const ::casac::variant& threshold)
 {
    Bool rstat(false);
    try {
@@ -666,7 +665,7 @@ bool imager::mask(const std::string& image, const std::string& mask,
 }
 
 bool
-imager::mem(const std::string& algorithm, const int niter, const ::casac::variant& sigma, const ::casac::variant& targetflux, const bool constrainflux, const bool displayprogress, const std::vector<std::string>& model, const std::vector<bool>& keepfixed, const std::string& complist, const std::vector<std::string>& prior, const std::vector<std::string>& mask, const std::vector<std::string>& image, const std::vector<std::string>& residual, const bool /*async*/)
+imager::mem(const std::string& algorithm, const int niter, const ::casac::variant& sigma, const ::casac::variant& targetflux, const bool constrainflux, const bool displayprogress, const std::vector<std::string>& model, const std::vector<bool>& keepfixed, const std::string& complist, const std::vector<std::string>& prior, const std::vector<std::string>& mask, const std::vector<std::string>& image, const std::vector<std::string>& residual)
 {
 
    Bool rstat(false);
@@ -693,7 +692,7 @@ imager::mem(const std::string& algorithm, const int niter, const ::casac::varian
 }
 
 bool
-imager::nnls(const std::vector<std::string>& model, const std::vector<bool>& keepfixed, const std::string& complist, const int niter, const double tolerance, const std::vector<std::string>& fluxmask, const std::vector<std::string>& datamask, const std::vector<std::string>& image, const std::vector<std::string>& residual, const bool /*async*/)
+imager::nnls(const std::vector<std::string>& model, const std::vector<bool>& keepfixed, const std::string& complist, const int niter, const double tolerance, const std::vector<std::string>& fluxmask, const std::vector<std::string>& datamask, const std::vector<std::string>& image, const std::vector<std::string>& residual)
 {
 
    Bool rstat(false);
@@ -756,8 +755,7 @@ bool
 imager::pb(const std::string& inimage, const std::string& outimage,
            const std::string& incomps, const std::string& outcomps,
            const std::string& operation, const ::casac::variant& pointingcenter,
-           const ::casac::variant& parangle, const std::string& pborvp,
-           const bool /*async*/)
+           const ::casac::variant& parangle, const std::string& pborvp)
 {
   Bool rstat(false);
   if(hasValidMS_p){
@@ -1178,7 +1176,7 @@ imager::regiontoimagemask(const std::string& mask,
 
 
 bool
-imager::residual(const std::vector<std::string>& model, const std::string& complist, const std::vector<std::string>& image, const bool /*async*/)
+imager::residual(const std::vector<std::string>& model, const std::string& complist, const std::vector<std::string>& image)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -1218,7 +1216,7 @@ bool imager::updateresidual(const std::vector<std::string>& model, const std::st
 }
 
 bool
-imager::restore(const std::vector<std::string>& model, const std::string& complist, const std::vector<std::string>& image, const std::vector<std::string>& residual, const bool /*async*/)
+imager::restore(const std::vector<std::string>& model, const std::string& complist, const std::vector<std::string>& image, const std::vector<std::string>& residual)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -1238,7 +1236,7 @@ imager::restore(const std::vector<std::string>& model, const std::string& compli
 }
 
 bool
-imager::sensitivity(const bool /*async*/, ::casac::record& pointsource, double& relative,
+imager::sensitivity(::casac::record& pointsource, double& relative,
                     double& sumweights,
 		    ::casac::record& senrec)
 {
@@ -1304,7 +1302,7 @@ imager::sensitivity(const bool /*async*/, ::casac::record& pointsource, double& 
 }
 
 bool
-imager::apparentsens(const bool /*async*/, double& pointsource, double& relative)
+imager::apparentsens(double& pointsource, double& relative)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -1327,7 +1325,7 @@ imager::apparentsens(const bool /*async*/, double& pointsource, double& relative
 
 bool
 imager::setbeam(const ::casac::variant& bmaj, const ::casac::variant& bmin,
-                const ::casac::variant& bpa, const bool /*async*/)
+                const ::casac::variant& bpa)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -1833,7 +1831,7 @@ bool imager::setvp(const bool dovp, const bool usedefaultvp,
 }
 
 bool
-imager::smooth(const std::vector<std::string>& model, const std::vector<std::string>& image, const bool usefit, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa, const bool normalize, const bool /*async*/)
+imager::smooth(const std::vector<std::string>& model, const std::vector<std::string>& image, const bool usefit, const ::casac::variant& bmaj, const ::casac::variant& bmin, const ::casac::variant& bpa, const bool normalize)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -1908,7 +1906,7 @@ bool
 imager::weight(const std::string& type, const std::string& rmode,
                const ::casac::variant& noise, const double robust,
                const ::casac::variant& fieldofview, const int npixels,
-               const bool mosaic, const bool /*async*/)
+               const bool mosaic)
 {
   Bool rstat(false);
   if(hasValidMS_p){

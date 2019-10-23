@@ -735,8 +735,7 @@ class split_test_cst(SplitChecker):
 #                             timebin='', timerange='',
 #                             scan='', array='', uvrange='',
 #                             correlation='',
-#                             observation='1~3,5',
-#                             async=False)
+#                             observation='1~3,5')
             default(mstransform)
             splitran = mstransform(inpms, self.outms, datacolumn='data',
                              field='', spw='', 
@@ -806,8 +805,7 @@ class split_test_state(unittest.TestCase):
             shutil.rmtree(self.outms, ignore_errors=True)
             os.symlink(self.inpms, self.locms)  # Paranoia
 #            splitran = split(self.locms, self.outms, datacolumn='data',
-#                             intent='OBSERVE_TARGET.UNSPECIFIED',
-#                             async=False)
+#                             intent='OBSERVE_TARGET.UNSPECIFIED')
             default(mstransform)
             splitran = mstransform(self.locms, self.outms, datacolumn='data',
                              intent='OBSERVE_TARGET.UNSPECIFIED'

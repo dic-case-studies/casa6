@@ -226,6 +226,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_fluxscale.py
   test_req_task_listsdm.py
   test_req_task_rmfit.py
+  test_req_task_gaincal.py
 
   ###
   test_setjy.py
