@@ -48,7 +48,7 @@
 #include <display/QtViewer/QtDataManager.ui.h>
 #include <display/QtViewer/QtDataMgrMsSelect.ui.h>
 #include <display/QtViewer/VOParam.ui.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casaqt/QtDBus/dVO.h>
 #endif
 #include <graphics/X11/X_exit.h>
@@ -199,7 +199,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		void region_item_state_change(QTreeWidgetItem*,int);
 		void region_selection_change( viewer::Region *rgn, bool selected );
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #ifdef WITH_VO
         //---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---
         //  VO controls...
@@ -364,7 +364,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
         bool slice_available;
         bool regrid_available;
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #ifdef WITH_VO
         void setupVO( );
         // returns true if everything is OK...

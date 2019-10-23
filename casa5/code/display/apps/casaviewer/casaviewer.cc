@@ -63,7 +63,7 @@
 #include <asdmstman/AsdmStMan.h>
 #endif
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/utilities/Diagnostic.h>
 #endif
 #include <display/DisplayErrors.h>
@@ -249,7 +249,7 @@ int main( int argc, const char *argv[] ) {
 #ifndef NO_CRASH_REPORTER
     CrashReporter::initializeFromApplication(argv[0]);
 #endif
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 	casa::dbus::diagnostic.argv( argc, argv );
 #endif
 
@@ -589,7 +589,7 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 				char *name = strdup( &argv[x][8] );
 				if ( strlen(name) <= 0 ) {
 					free( name );
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 					qWarning("no gRPC registry provided with '--server=...'");
 					qFatal("exiting...");
 					exit(1);
@@ -604,7 +604,7 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 				char *name = strdup( &argv[x][9] );
 				if ( strlen(name) <= 0 ) {
 					free( name );
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 					qWarning("no gRPC registry provided with '--server=...'");
 					qFatal("exiting...");
 					exit(1);
@@ -613,7 +613,7 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 					server_string = name;
 				}
 			}
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
         } else if ( ! strncmp(argv[x],"--dbusname",10) ) {
 			if ( argv[x][10] == '=' ) {
 				char *name = strdup( &argv[x][11] );
@@ -682,7 +682,7 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 			arg = (char*) malloc( sizeof(char)*(strlen(server_string)+15) );
 			sprintf( arg, "--server=%s", server_string );
 		} else {
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 			qWarning("no gRPC registry provided with '--server=...'");
 			qFatal("exiting...");
 			exit(1);

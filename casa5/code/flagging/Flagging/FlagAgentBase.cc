@@ -35,7 +35,7 @@
 #include <flagging/Flagging/FlagAgentShadow.h>
 #include <flagging/Flagging/FlagAgentExtension.h>
 #include <flagging/Flagging/FlagAgentRFlag.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <flagging/Flagging/FlagAgentDisplay.h>
 #endif
 #include <flagging/Flagging/FlagAgentAntennaIntegrations.h>
@@ -314,7 +314,7 @@ FlagAgentBase::create (FlagDataHandler *dh,Record config)
 		FlagAgentAntennaIntegrations* agent = new FlagAgentAntennaIntegrations(dh,config,writePrivateFlags, true);
 		return agent;
 	}
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 	// Display
 	else if (mode.compare("display")==0)
 	{

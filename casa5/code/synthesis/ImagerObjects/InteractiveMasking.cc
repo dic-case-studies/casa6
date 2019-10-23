@@ -55,7 +55,7 @@ namespace casa{
     return true;
   }
   
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
   bool new_interactive_clean_callback::callback( const DBus::Message &msg ) {
     if (msg.is_signal("edu.nrao.casa.viewer","interact")) {
       DBus::MessageIter ri = msg.reader( );
@@ -259,7 +259,7 @@ namespace casa{
 
     Double startmask = maskSum(mask);
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
     return false;
 #else
     if ( viewer_p == 0 ) {

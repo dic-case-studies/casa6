@@ -30,7 +30,7 @@
 #include <casa/Logging/LogIO.h>
 #include <casa/Logging/LogMessage.h>
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 #include <stdcasa/variant.h>
 #else
 #include <casadbus/viewer/ViewerProxy.h>
@@ -41,14 +41,14 @@
 
 namespace casa { //# NAMESPACE CASA - BEGIN
   casacore::Bool clone(const casacore::String& imageName, const casacore::String& newImageName);
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
   class ViewerProxy;
 #endif
   class new_interactive_clean_callback 
   {
   public:
     new_interactive_clean_callback( ) { }
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
     casac::variant result( ) { return result_; }
   private:
     casac::variant result_;
@@ -64,7 +64,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
   public:
     InteractiveMasking() :
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
       viewer_p(0),
 #endif
       clean_panel_p(0), image_id_p(0), mask_id_p(0),
@@ -73,7 +73,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     ~InteractiveMasking()
     {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
       if ( viewer_p ) 
 	{
 	  // viewer_p->close( clean_panel_p );
@@ -94,7 +94,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Float maskSum(const casacore::String& maskname);
 
   private:
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     ViewerProxy *viewer_p;
 #endif
     int clean_panel_p;
