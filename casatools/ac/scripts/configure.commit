@@ -1,0 +1,17 @@
+#! /bin/sh
+# Display the SHA1 of the commit in which configure.ac was last modified.
+# If it's not checked in yet, use the SHA1 of HEAD plus -dirty.
+##############################################################################
+### replace 'code' with configure.ac once configure.ac is committed to git ###
+##############################################################################
+signal=code
+
+if [ ! -d .git ] ; then
+  # if no .git directory, assume they're not using Git
+  printf '# unknown commit'
+elif git diff --quiet HEAD -- $signal ; then
+  # $signal is not modified
+  printf '# commit %s ' `git rev-list --max-count=1 HEAD -- $signal`
+else # $signal is modified
+  printf '# commit %s-dirty ' `git rev-parse HEAD`
+fi

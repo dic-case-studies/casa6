@@ -1,6 +1,6 @@
-[submodule "casacore"]
-	path = casacore
+[submodule "casatools/grpc-source"]
+	path = casatools/grpc-source
+	url = https://github.com/grpc/grpc
+[submodule "casatools/casacore"]
+	path = casatools/casacore
 	url = https://github.com/casacore/casacore.git
-[submodule "asap"]
-	path = asap
-	url = https://open-bitbucket.nrao.edu/scm/casa/casa-asap.git
