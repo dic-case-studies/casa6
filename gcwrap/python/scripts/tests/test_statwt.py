@@ -603,7 +603,7 @@ class statwt_test(unittest.TestCase):
             )
             shutil.rmtree(dst)
 
-    def test_slding_time_window(self):
+    def test_sliding_time_window(self):
         """ Test sliding time window"""
         dst = "ngc5921.split.sliding_time_window.ms"
         ref = datadir + "ngc5921.slidingtimebin300s_2.ms.ref"
@@ -611,7 +611,9 @@ class statwt_test(unittest.TestCase):
         rtol = 1e-7
         timebin = "300s"
         myms = mstool()
-        for i in [0, 1]:
+        # for i in [0, 1]:
+        # debug only
+        for i in [0]:
             shutil.copytree(src, dst)
             if i == 0:
                 myms.open(dst, nomodify=False)

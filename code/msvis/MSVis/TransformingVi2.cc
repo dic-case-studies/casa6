@@ -494,6 +494,11 @@ TransformingVi2::nSpectralWindows ()  const
     return getVii()->nSpectralWindows ();
 }
 
+Int TransformingVi2::nSubChunks() const {
+    return getVii()->nSubChunks();
+}
+
+
 void
 TransformingVi2::nextChunk ()
 {

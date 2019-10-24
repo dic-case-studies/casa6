@@ -6326,13 +6326,11 @@ ms::iterinit(const std::vector<std::string>& columns, const double interval,
 }
 
 record* ms::statwt(
-    const string& combine, const casac::variant& timebin,
-    bool slidetimebin, const casac::variant& chanbin,
-    int minsamp, const string& statalg, double fence,
-    const string& center, bool lside, double zscore,
-    int maxiter, const string& fitspw, bool excludechans,
-    const std::vector<double>& wtrange, bool preview,
-    const string& datacolumn
+    const string& combine, const casac::variant& timebin, bool slidetimebin,
+    const casac::variant& chanbin, int minsamp, const string& statalg,
+    double fence, const string& center, bool lside, double zscore, int maxiter,
+    const string& fitspw, bool excludechans, const std::vector<double>& wtrange,
+    bool preview, const string& datacolumn
 ) {
     *itsLog << LogOrigin("ms", __func__);
     try {
@@ -6343,27 +6341,51 @@ record* ms::statwt(
             itsOriginalMS, preview, datacolumn, chanbin
         );
         StatWt statwt(itsMS, &statwtColConfig);
-        if (slidetimebin) {
-            // make the size of the encompassing chunks
-            // very large, so that chunk boundaries are determined only
-            // by changes in MS key values
+        const auto tbtype = timebin.type();
+        // first group in conditional requires all data in a chunk to be
+        // loaded at once. The second does as well and represents the default
+        // setting ince a CASA 5 variant always comes in as boolvecs even if a
+        // different default type is specified in the XML,
+        if (
+            (slidetimebin || tbtype == casac::variant::INT)
+            || (
+                // default value of timebin specified
+                tbtype == casac::variant::BOOLVEC && timebin.toBoolVec().empty()
+            )
+        ) {
+            // make the size of the encompassing chunks very large, so that
+            // subchunk boundaries are determined only by changes in MS key
+            // values
             statwt.setTimeBinWidth(1e8);
         }
+        else if (tbtype == casac::variant::STRING) {
+            auto myTimeBin = casaQuantity(timebin);
+            if (myTimeBin.getUnit().empty()) {
+                myTimeBin.setUnit("s");
+            }
+            if (myTimeBin.getValue() <= 0) {
+                myTimeBin.setValue(1e-5);
+            }
+            statwt.setTimeBinWidth(myTimeBin);
+        }
         else {
-            // block time processing
-            auto tbtype = timebin.type();
+            ThrowCc("Unsupported type for timebin, must be int or string");
+        }
+        /*
+        else {
+            // block time processing with raw time (eg seconds) timebin
             if (
                 tbtype == casac::variant::BOOLVEC && timebin.toBoolVec().empty()
             ) {
-                // default for tool method since variants always come in as
-                // boolvecs even if defaults specified in the XML, Because,
-                // you know, no one apparently knows how to fix that bug which
-                // has been around for years
+                // default for tool method since a variant always comes in as
+                // boolvecs even if a different default type is specified in the
+                // XML,
+                // FIXME needs to be uInt(1) for current ticket default
+                // requirements
                 statwt.setTimeBinWidth(casacore::Quantity(0.001, "s"));
             }
             else if (tbtype == casac::variant::INT) {
-                auto n = timebin.toInt();
-                ThrowIf(n <= 0, "timebin must be positive");
+                ThrowIf(timebin.toInt() <= 0, "timebin must be positive");
                 statwt.setTimeBinWidthUsingInterval(timebin.touInt());
             }
             else if (tbtype == casac::variant::STRING){
@@ -6380,6 +6402,7 @@ record* ms::statwt(
                 ThrowCc("Unsupported type for timebin, must be int or string");
             }
         }
+        */
         statwt.setCombine(combine);
         statwt.setPreview(preview);
         casac::record tviConfig;
@@ -6403,7 +6426,8 @@ record* ms::statwt(
         return fromRecord(statwt.writeWeights());
     }
     catch (const AipsError& x) {
-        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+        *itsLog << LogIO::SEVERE << "Exception Reported: "
+            << x.getMesg() << LogIO::POST;
         Table::relinquishAutoLocks(true);
         RETHROW(x);
     }

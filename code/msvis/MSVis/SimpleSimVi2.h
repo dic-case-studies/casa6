@@ -350,6 +350,7 @@ public:
   virtual casacore::Int nRowsInChunk () const override; // number rows in current chunk
   virtual casacore::Int nRowsViWillSweep () const override; // number of rows in all selected ms's
   virtual casacore::Int nSpectralWindows () const override;
+  virtual casacore::Int nSubChunks() const override;
 
   // Writeback methods are Irrelevant for non-disk-reading VI2
   virtual void writeBackChanges (VisBuffer2* ) override { SSVi2NotPossible() };

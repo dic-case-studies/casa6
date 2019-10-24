@@ -125,9 +125,11 @@ public:
 
     static void checkTimeBinWidth(casacore::Double binWidth);
 
+    /*
     static casacore::Double getTimeBinWidthUsingInterval(
         const casacore::MeasurementSet *const ms, casacore::Int n
     );
+    */
 
 protected:
 
@@ -199,9 +201,12 @@ private:
     casacore::Int _minSamp = 2;
     casacore::Bool _combineCorr {false};
     casacore::CountedPtr<
-        casacore::StatisticsAlgorithm<casacore::Double,
-        casacore::Array<casacore::Float>::const_iterator,
-        casacore::Array<casacore::Bool>::const_iterator>
+        casacore::StatisticsAlgorithm<
+            casacore::Double,
+            casacore::Array<casacore::Float>::const_iterator,
+            casacore::Array<casacore::Bool>::const_iterator /*,
+            casacore::Array<casacore::Double>::const_iterator> */
+        >
     > _statAlg {} ;
     std::unique_ptr<std::pair<casacore::Double, casacore::Double>> _wtrange {};
     // The _chanSelFlags key is the spw. The value is a Cube for convenience
@@ -225,8 +230,9 @@ private:
     // for running time window, for each subchunk, map the rowID (in the MS)
     // to the row index in the chunk
     mutable std::map<casacore::uInt, casacore::uInt>
-        _rowIDInMSTorowIndexInChunk {};
-    casacore::Double _slidingTimeWindowWidth = -1;
+        _rowIDInMSToRowIndexInChunk {};
+    std::unique_ptr<casacore::Double> _slidingTimeWindowWidth {};
+    std::unique_ptr<casacore::Int> _nTimeStamps {};
 
     casacore::Bool _mustComputeSigma = casacore::False;
     casacore::Bool _updateWeight = casacore::True;
@@ -253,7 +259,8 @@ private:
 
     void _gatherAndComputeWeights() const;
 
-    void _gatherAndComputeWeightsSlidingTimeWindow() const;
+    // sliding time bin window, and timebin was specified as a quantity
+    void _gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const;
 
     void _gatherAndComputeWeightsTimeBlockProcessing() const;
 
@@ -268,29 +275,27 @@ private:
     // CAS-12358
     void _logUsedChannels() const;
 
-    // multi-threaded case
     casacore::Double _computeWeight(
         const casacore::Cube<casacore::Complex>& data,
         const casacore::Cube<casacore::Bool>& flags,
-        casacore::uInt spw
+        const casacore::Cube<casacore::Double>& exposures, casacore::uInt spw
     ) const;
 
     void _computeWeightsTimeBlockProcessing(
         const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags
+        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags,
+        const std::map<BaselineChanBin, casacore::Cube<casacore::Double>>& exposures
     ) const;
 
     void _computeWeightsSlidingTimeWindow(
         const casacore::Cube<casacore::Complex>& data,
         const casacore::Cube<casacore::Bool>& flags,
-        const std::vector<std::set<casacore::uInt>>& rowMap,
-        casacore::uInt spw
+        const casacore::Cube<casacore::Double>& exposures,
+        const std::vector<std::set<casacore::uInt>>& rowMap, casacore::uInt spw
     ) const;
 
     casacore::Bool _parseConfiguration(const casacore::Record &configuration);
 	
-    //void _initialize();
-
     // swaps ant1/ant2 if necessary
     static Baseline _baseline(casacore::uInt ant1, casacore::uInt ant2);
 

@@ -58,20 +58,33 @@ void StatWt::setOutputMS(const casacore::String& outname) {
 
 void StatWt::setTimeBinWidth(const casacore::Quantity& binWidth) {
     _timeBinWidth = vi::StatWtTVI::getTimeBinWidthInSec(binWidth);
+    cout << __func__ << endl;
+    cout << "set _timeBinWidth to " << _timeBinWidth << endl;
+
+
 }
 
 void StatWt::setTimeBinWidth(Double binWidth) {
+    cout << "passed in binWidth " << binWidth << endl;
     vi::StatWtTVI::checkTimeBinWidth(binWidth);
     _timeBinWidth = binWidth;
+    cout << __FILE__ << " " << __func__ << endl;
+     cout << "set _timeBinWidth to " << _timeBinWidth << endl;
+
 }
 
+/*
 void StatWt::setTimeBinWidthUsingInterval(uInt n) {
     _timeBinWidth = vi::StatWtTVI::getTimeBinWidthUsingInterval(_ms, n);
     _log << LogOrigin("StatWt", __func__) << LogIO::NORMAL
         << "Determined representative integration time of "
         << (_timeBinWidth/(Double)n) << "s. Setting time bin width to "
         << _timeBinWidth << "s" << LogIO::POST;
+    cout << __func__ << endl;
+     cout << "set _timeBinWidth to " << _timeBinWidth << endl;
+
 }
+*/
 
 void StatWt::setCombine(const String& combine) {
     _combine = downcase(combine);
@@ -99,8 +112,11 @@ Record StatWt::writeWeights() {
     vi::VisBuffer2 *vb = vi->getVisBuffer();
     ProgressMeter pm(0, _ms->nrow(), "StatWt Progress");
     uInt64 count = 0;
+    cout << "begin outer loop" << endl;
     for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
+        cout << "inside outer loop" << endl;
         for (vi->origin(); vi->more(); vi->next()) {
+            cout << "inside inner loop" << endl;
             auto nrow = vb->nRows();
             if (_preview) {
                 // just need to run the flags to accumulate
@@ -182,6 +198,7 @@ void StatWt::_constructVi(
         ++i;
     }
     vi::SortColumns sc(sort, False);
+    cout << "configuring TVI with timebinwidht " << _timeBinWidth << endl;
     vi::IteratingParameters ipar(_timeBinWidth, sc);
     vi::VisIterImpl2LayerFactory data(_ms, ipar, True);
     std::unique_ptr<Record> config(dynamic_cast<Record*>(_tviConfig.clone()));
