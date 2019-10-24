@@ -1,0 +1,210 @@
+##########################################################################
+# imfit_test.py
+#
+# Copyright (C) 2008, 2009
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Library General Public License
+# along with this library; if not, write to the Free Software Foundation,
+# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+#
+# Correspondence concerning AIPS++ should be adressed as follows:
+#        Internet email: aips2-request@nrao.edu.
+#        Postal address: AIPS++ Project Office
+#                        National Radio Astronomy Observatory
+#                        520 Edgemont Road
+#                        Charlottesville, VA 22903-2475 USA
+#
+# <author>
+# Dave Mehringer
+# </author>
+#
+# <summary>
+# Test suite for the CASA tool method ia.decimate()
+# </summary>
+#
+# <reviewed reviwer="" date="" tests="" demos="">
+# </reviewed
+#
+# <prerequisite>
+# <ul>
+# </ul>
+# </prerequisite>
+#
+# <etymology>
+# Test for the ia.decimate() tool method
+# </etymology>
+#
+# <synopsis>
+# Test the ia.decimate() method.
+# </synopsis> 
+#
+# <example>
+#
+# This test runs as part of the CASA python unit test suite and can be run from
+# the command line via eg
+# 
+# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_ia_decimate[test1,test2,...]
+#
+# </example>
+#
+# <motivation>
+# To provide a test standard for the ia.decimate() tool method to ensure
+# coding changes do not break the associated bits 
+# </motivation>
+#
+
+###########################################################################
+import shutil
+import unittest
+import numpy
+
+from casatools import image as iatool
+from casatools import table
+from casatools import regionmanager
+
+class ia_decimate_test(unittest.TestCase):
+    
+    def setUp(self):
+        self.rg = regionmanager( )
+        pass
+    
+    def tearDown(self):
+        self.rg.done( )
+        tb = table( )
+        self.assertTrue(len(tb.showcache()) == 0)
+        tb.done( )
+    
+    def test_stretch(self):
+        """ ia.decimate(): Test stretch parameter"""
+        yy = iatool()
+        mymask = "maskim"
+        yy.fromshape(mymask, [20, 20, 1, 1])
+        yy.addnoise()
+        yy.done()
+        shape = [20,20,1,5]
+        yy.fromshape("", shape)
+        #yy.addnoise()
+        self.assertRaises(
+            Exception,
+            yy.decimate, outfile="xx.im", mask=mymask + ">0",
+            stretch=False
+        )
+        zz = yy.decimate(
+            outfile="xx2.im", mask=mymask + ">0", stretch=True
+        )
+        self.assertTrue(type(zz) == type(yy))
+        yy.done()
+        zz.done()
+        
+    def test_methods(self):
+        """Test straight aggregation methods"""
+        myia = iatool()
+        for m in [0, 1]:
+            imagename = "myim_" + str(m)  + ".im"
+            shape = numpy.array([10, 20, 41, 1])
+            myia.fromshape(imagename, shape)
+            myia.addnoise()
+            myia.calcmask(imagename + " < 0")
+            factor = 4
+            if m == 0:
+                method = "copy"
+            if m == 1:
+                method = "mean"
+            zz = myia.decimate("", axis=2, factor=factor, method=method)
+            expec = shape
+            expec[2] /= factor
+            if m == 0:
+                expec[2] += 1
+            print("method %s" % method)
+            self.assertTrue((zz.shape() == expec).all())
+            
+            inc = myia.coordsys()
+            outc = zz.coordsys()
+            expec = inc.increment()['numeric']
+            expec[2] *= factor
+            got = outc.increment()['numeric']
+            self.assertTrue((expec == got).all())
+            
+            expec = inc.referencepixel()['numeric']
+            expec[2] /= factor
+            got = outc.referencepixel()['numeric']
+            self.assertTrue((expec == got).all())
+            
+            expec = inc.referencevalue()['numeric']
+            got = outc.referencevalue()['numeric']
+            self.assertTrue((expec == got).all())
+            
+            for i in range(10):
+                blc = [0, 0, i*factor, 0]
+                trc = shape - 1
+                if m == 0:
+                    trc[2] = i*factor
+                    expdata = myia.getchunk(blc, trc)
+                    expmask = myia.getchunk(blc, trc, getmask=True)
+                elif m == 1:
+                    trc[2] = (i+1)*factor - 1
+                    reg = self.rg.box(blc, trc)
+                    cc = myia.collapse("mean", 2, region=reg)
+                    expdata = cc.getchunk()
+                    expmask = cc.getchunk(getmask=True)
+                blc = [0, 0, i, 0]
+                trc = shape - 1
+                trc[2] = i
+                got = zz.getchunk(blc, trc)
+                self.assertTrue((expdata == got).all())
+                got = zz.getchunk(blc, trc, getmask=True)
+                self.assertTrue((expmask == got).all())
+            myia.done()
+            zz.done()
+            
+    def test_multiple_regions(self):
+        """Test multiple region support"""
+        myia = iatool()
+        myia.fromshape("", [20, 20, 20])
+        r1 = self.rg.frombcs(
+            box="0, 0, 9, 9", csys=myia.coordsys().torecord(),
+            shape=myia.shape()
+        )
+        r2 = self.rg.frombcs(
+            box="10, 10, 19, 19", csys=myia.coordsys().torecord(),
+            shape=myia.shape()
+        )
+        regions =  {'region1':r1,  'region2':r2}
+        reg = self.rg.makeunion(regions)
+        bb = myia.decimate("mregions.im", axis=2, factor=2, region=reg)
+        self.assertTrue(bb.getchunk([0,0,0], [9,9,9], getmask=True).all())
+        self.assertTrue(bb.getchunk([10,10,0], [19,19,9], getmask=True).all())
+        self.assertTrue((bb.getchunk([0,10,0], [9,19,9], getmask=True) == False).all())
+        self.assertTrue((bb.getchunk([10,0,0], [19,9,9], getmask=True) == False).all())
+
+
+        bb.done()
+        myia.done()
+        
+    def test_history(self):
+        """Verify history writing"""
+        myia = iatool()
+        myia.fromshape("",[20,20,20])
+        bb = myia.decimate("")
+        myia.done()
+        msgs = bb.history()
+        bb.done()
+        self.assertTrue("ia.decimate" in msgs[-2])        
+        self.assertTrue("ia.decimate" in msgs[-1])        
+        
+def suite():
+    return [ia_decimate_test]
+
+if __name__ == '__main__':
+    unittest.main()
