@@ -2367,7 +2367,7 @@ Bool Simulator::createSkyEquation(const Vector<String>& image,
       ams=ms_p;
     }
     // 2016 from SynthesisImager:
-    ROMSColumns msc(*ams);
+    MSColumns msc(*ams);
     String telescop=msc.observation().telescopeName()(0);
     PBMath::CommonPB kpb;
     Record rec;

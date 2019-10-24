@@ -74,7 +74,7 @@ int main () {
 				);
 
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL << "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
 			}
@@ -110,14 +110,62 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
 			}
 			AlwaysAssert(thrown, AipsError);
-
 		}
+
+		{
+			log << LogIO::NORMAL
+				<< "Test region outside image throws exception"
+				<< LogIO::POST;
+			Bool thrown = true;
+			Quantity centerx(450, "pix");
+			Quantity centery(400, "pix");
+			Quantity widthx(30, "arcsec");
+			Quantity widthy(45, "arcsec");
+			Vector<Stokes::StokesTypes> stokes(0);
+			try {
+				AnnCenterBox box(
+					centerx, centery, widthx, widthy,
+					csys, shape, stokes
+				);
+				thrown = false;
+			} catch (const ToLCRegionConversionError& x) {
+				log << LogIO::NORMAL
+					<< "Exception thrown as expected: "
+					<< x.getMesg() << LogIO::POST;
+			}
+			AlwaysAssert(thrown, AipsError);
+		}
+		{
+			log << LogIO::NORMAL
+				<< "Test region outside image not required"
+				<< LogIO::POST;
+			Bool thrown = true;
+			Quantity centerx(450, "pix");
+			Quantity centery(400, "pix");
+			Quantity widthx(30, "arcsec");
+			Quantity widthy(45, "arcsec");
+			Vector<Stokes::StokesTypes> stokes(0);
+			Bool requireRegion(false);
+			try {
+				AnnCenterBox box(
+					centerx, centery, widthx, widthy,
+					csys, shape, stokes, requireRegion
+				);
+				thrown = false;
+			} catch (const ToLCRegionConversionError& x) {
+				log << LogIO::NORMAL
+					<< "Unexpected exception thrown: "
+					<< x.getMesg() << LogIO::POST;
+			}
+			AlwaysAssert(!thrown, AipsError);
+		}
+
 		{
 			Quantity centerx(0.6, "arcmin");
 			Quantity centery(1.2, "arcmin");

@@ -47,7 +47,7 @@ PI_TVI::PointingInterpolationTVI(ViImplementation2 *inputVII) :
 	inputVII->ms().pointing().throwIfNull();
 
 	// Input MS / pointing direction units and ref
-	ROMSPointingColumns mspc(getVii()->ms().pointing());
+	MSPointingColumns mspc(getVii()->ms().pointing());
 	auto dirUnits = mspc.directionMeasCol().measDesc().getUnits();
 	lonUnit_ = dirUnits[0];
 	latUnit_ = dirUnits[1];
@@ -70,7 +70,7 @@ void PI_TVI::setupInterpolator(){
 
 		// Selected, data-taking antennas
 		Vector<Bool> isSelected(nAnts);
-		ROMSColumns msCols(ms);
+		MSColumns msCols(ms);
 		cout << "Extracting active antennas ..." << endl;
 		for (auto antId : msCols.antenna1().getColumn()) isSelected[antId] = true;
 		for (auto antId : msCols.antenna2().getColumn()) isSelected[antId] = true;
@@ -222,7 +222,7 @@ String PI_TVI::taQLSet(const std::set<int> & inputSet){
 using PI_Interp = PI_TVI::Interpolator;
 
 PI_Interp::Interpolator()
-	: interp_(InterpMethod::SPLINE),
+	: interp_(InterpMethod::CUBIC_SPLINE),
 	  nearestPointingTimeStamp_(0.0)
 {
 }
@@ -401,7 +401,7 @@ void PI_Interp::computeSplineCoeffs(const PointingTimes& time,
 
 
 Vector<Double> PI_Interp::pointingDir(int antId, double timeStamp) const {
-//const ROMSPointingColumns& mspc,
+//const MSPointingColumns& mspc,
 //const Double& time,
 //const Int& index,
 //const Int& antid) {

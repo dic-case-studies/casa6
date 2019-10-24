@@ -11,7 +11,6 @@
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/Slicer.h>
 #include <casa/BasicSL/String.h>
-#include <casa/Containers/Stack.h>
 #include <casa/Quanta/MVDoppler.h>
 #include <casa/aips.h>
 #include <casa/System/AipsrcValue.h>
@@ -389,6 +388,13 @@ VisibilityIterator2::useImagingWeight (const VisImagingWeight & viw)
     impl_p->useImagingWeight(viw);
 }
 
+const VisImagingWeight & 
+VisibilityIterator2::getImagingWeightGenerator () const
+{
+    CheckImplementationPointer ();
+    return impl_p->getImagingWeightGenerator ();
+}
+
 void
 VisibilityIterator2::writeFlag (const Cube<Bool>& flag)
 {
@@ -464,119 +470,119 @@ VisibilityIterator2::hasWeightScaling () const
   return impl_p->hasWeightScaling ();
 }
 
-const casacore::ROMSAntennaColumns& VisibilityIterator2::antennaSubtablecols() const
+const casacore::MSAntennaColumns& VisibilityIterator2::antennaSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->antennaSubtablecols ();
 }
 
-const casacore::ROMSDataDescColumns& VisibilityIterator2::dataDescriptionSubtablecols() const
+const casacore::MSDataDescColumns& VisibilityIterator2::dataDescriptionSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->dataDescriptionSubtablecols ();
 }
 
-const casacore::ROMSFeedColumns& VisibilityIterator2::feedSubtablecols() const
+const casacore::MSFeedColumns& VisibilityIterator2::feedSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->feedSubtablecols ();
 }
 
-const casacore::ROMSFieldColumns& VisibilityIterator2::fieldSubtablecols() const
+const casacore::MSFieldColumns& VisibilityIterator2::fieldSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->fieldSubtablecols ();
 }
 
-const casacore::ROMSFlagCmdColumns& VisibilityIterator2::flagCmdSubtablecols() const
+const casacore::MSFlagCmdColumns& VisibilityIterator2::flagCmdSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->flagCmdSubtablecols ();
 }
 
-const casacore::ROMSHistoryColumns& VisibilityIterator2::historySubtablecols() const
+const casacore::MSHistoryColumns& VisibilityIterator2::historySubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->historySubtablecols ();
 }
 
-const casacore::ROMSObservationColumns& VisibilityIterator2::observationSubtablecols() const
+const casacore::MSObservationColumns& VisibilityIterator2::observationSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->observationSubtablecols ();
 }
 
-const casacore::ROMSPointingColumns& VisibilityIterator2::pointingSubtablecols() const
+const casacore::MSPointingColumns& VisibilityIterator2::pointingSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->pointingSubtablecols ();
 }
 
-const casacore::ROMSPolarizationColumns& VisibilityIterator2::polarizationSubtablecols() const
+const casacore::MSPolarizationColumns& VisibilityIterator2::polarizationSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->polarizationSubtablecols ();
 }
 
-const casacore::ROMSProcessorColumns& VisibilityIterator2::processorSubtablecols() const
+const casacore::MSProcessorColumns& VisibilityIterator2::processorSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->processorSubtablecols ();
 }
 
-const casacore::ROMSSpWindowColumns& VisibilityIterator2::spectralWindowSubtablecols() const
+const casacore::MSSpWindowColumns& VisibilityIterator2::spectralWindowSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->spectralWindowSubtablecols ();
 }
 
-const casacore::ROMSStateColumns& VisibilityIterator2::stateSubtablecols() const
+const casacore::MSStateColumns& VisibilityIterator2::stateSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->stateSubtablecols ();
 }
 
-const casacore::ROMSDopplerColumns& VisibilityIterator2::dopplerSubtablecols() const
+const casacore::MSDopplerColumns& VisibilityIterator2::dopplerSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->dopplerSubtablecols ();
 }
 
-const casacore::ROMSFreqOffsetColumns& VisibilityIterator2::freqOffsetSubtablecols() const
+const casacore::MSFreqOffsetColumns& VisibilityIterator2::freqOffsetSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->freqOffsetSubtablecols ();
 }
 
-const casacore::ROMSSourceColumns& VisibilityIterator2::sourceSubtablecols() const
+const casacore::MSSourceColumns& VisibilityIterator2::sourceSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->sourceSubtablecols ();
 }
 
-const casacore::ROMSSysCalColumns& VisibilityIterator2::sysCalSubtablecols() const
+const casacore::MSSysCalColumns& VisibilityIterator2::sysCalSubtablecols() const
 {
   CheckImplementationPointer ();
 
   return impl_p->sysCalSubtablecols ();
 }
 
-const casacore::ROMSWeatherColumns& VisibilityIterator2::weatherSubtablecols() const
+const casacore::MSWeatherColumns& VisibilityIterator2::weatherSubtablecols() const
 {
   CheckImplementationPointer ();
 
@@ -587,105 +593,105 @@ SubtableColumns::SubtableColumns (CountedPtr <MSIter> msIter)
 : msIter_p (msIter)
 {}
 
-const ROMSAntennaColumns&
+const MSAntennaColumns&
 SubtableColumns::antenna() const
 {
     return msIter_p->msColumns().antenna();
 }
 
-const ROMSDataDescColumns&
+const MSDataDescColumns&
 SubtableColumns::dataDescription() const
 {
     return msIter_p->msColumns().dataDescription();
 }
 
-const ROMSFeedColumns&
+const MSFeedColumns&
 SubtableColumns::feed() const
 {
     return msIter_p->msColumns().feed();
 }
 
-const ROMSFieldColumns&
+const MSFieldColumns&
 SubtableColumns::field() const
 {
     return msIter_p->msColumns().field();
 }
 
-const ROMSFlagCmdColumns&
+const MSFlagCmdColumns&
 SubtableColumns::flagCmd() const
 {
     return msIter_p->msColumns().flagCmd();
 }
 
-const ROMSHistoryColumns&
+const MSHistoryColumns&
 SubtableColumns::history() const
 {
     return msIter_p->msColumns().history();
 }
 
-const ROMSObservationColumns&
+const MSObservationColumns&
 SubtableColumns::observation() const
 {
     return msIter_p->msColumns().observation();
 }
 
-const ROMSPointingColumns&
+const MSPointingColumns&
 SubtableColumns::pointing() const
 {
     return msIter_p->msColumns().pointing();
 }
 
-const ROMSPolarizationColumns&
+const MSPolarizationColumns&
 SubtableColumns::polarization() const
 {
 
     return msIter_p->msColumns().polarization();
 }
 
-const ROMSProcessorColumns&
+const MSProcessorColumns&
 SubtableColumns::processor() const
 {
     return msIter_p->msColumns().processor();
 }
 
-const ROMSSpWindowColumns&
+const MSSpWindowColumns&
 SubtableColumns::spectralWindow() const
 {
 
     return msIter_p->msColumns().spectralWindow();
 }
 
-const ROMSStateColumns&
+const MSStateColumns&
 SubtableColumns::state() const
 {
     return msIter_p->msColumns().state();
 }
 
-const ROMSDopplerColumns&
+const MSDopplerColumns&
 SubtableColumns::doppler() const
 {
     return msIter_p->msColumns().doppler();
 }
 
-const ROMSFreqOffsetColumns&
+const MSFreqOffsetColumns&
 SubtableColumns::freqOffset() const
 {
     return msIter_p->msColumns().freqOffset();
 }
 
-const ROMSSourceColumns&
+const MSSourceColumns&
 SubtableColumns::source() const
 {
     return msIter_p->msColumns().source();
 }
 
-const ROMSSysCalColumns&
+const MSSysCalColumns&
 SubtableColumns::sysCal() const
 {
     return msIter_p->msColumns().sysCal();
 }
 
-const ROMSWeatherColumns&
+const MSWeatherColumns&
 SubtableColumns::weather() const
 {
     return msIter_p->msColumns().weather();

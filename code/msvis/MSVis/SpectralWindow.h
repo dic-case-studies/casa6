@@ -57,7 +57,7 @@ public:
     typedef std::vector<SpectralChannel> Channels;
     typedef Channels::const_iterator const_iterator;
 
-    SpectralWindow (const casacore::ROMSSpWindowColumns & columns, casacore::Int spectralWindowId);
+    SpectralWindow (const casacore::MSSpWindowColumns & columns, casacore::Int spectralWindowId);
 
     const_iterator begin () const;
     bool empty () const;
@@ -78,9 +78,9 @@ public:
 
 protected:
 
-    void fillArrays(const casacore::ROMSSpWindowColumns & columns);
+    void fillArrays(const casacore::MSSpWindowColumns & columns);
     casacore::Vector<casacore::Double> getArray (const casacore::ArrayColumn<casacore::Double> & arrayColumn);
-    void fillScalars (const casacore::ROMSSpWindowColumns & columns);
+    void fillScalars (const casacore::MSSpWindowColumns & columns);
     template<typename T>
     T getScalar (const casacore::ScalarColumn<T> & column);
 

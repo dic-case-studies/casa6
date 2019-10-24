@@ -40,6 +40,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_cvel2.py
   test_cvelfreqs.py
   test_exportasdm.py
+  test_exportfits.py
   test_fixplanets.py
   test_fixvis.py
   test_flagcmd.py
@@ -47,6 +48,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_flaghelper.py
   test_flagmanager.py
   test_fluxscale.py
+  test_fringefit.py
   test_gaincal.py
   test_getchunk.py
   test_gencal.py
@@ -72,7 +74,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_fft.py
   test_ia_findsources.py
   test_ia_fromarray.py
-  test_ia_fromascii.py
   test_ia_fromfits.py
   test_ia_fromimage.py
   test_ia_fromrecord.py
@@ -104,7 +105,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_setmiscinfo.py
   test_ia_subimage.py
   test_ia_summary.py
-  test_ia_toascii.py
   test_ia_tofits.py
   test_ia_twopointcorrelation.py
   test_imcollapse.py
@@ -141,9 +141,11 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_msmd.py
   test_mstransform.py
   test_mstransform_mms.py
+  test_mstransform_subset.py
   test_mst_cvel.py
   test_mst_cvelB.py
   test_mst_split.py
+  test_nrobeamaverage.py
   test_oldhanningsmooth.py
   test_oldsplit.py
   test_mstool.py
@@ -172,8 +174,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_po_sigmalinpolposang.py
   test_po_totpolint.py
   test_predictcomp.py
-  test_refimager.py
-  test_refimager_parallel.py
   test_rerefant.py
   test_report.py
   test_rg_selectedchannels.py
@@ -189,6 +189,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_sdpolaverage.py
   test_sdsidebandsplit.py
   test_sdsmooth.py
+  test_tclean.py
 
   ### CASAGUIDES ###
   test_FirstLook_Imaging.py
@@ -214,6 +215,18 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_clearcal.py
   test_req_task_imhead.py
   test_req_task_visstat.py
+  test_req_task_delmod.py
+  test_req_task_feather.py
+  test_req_task_imrebin.py
+  test_req_task_uvmodelfit.py
+  test_req_task_imreframe.py
+  test_req_task_accor.py
+  test_req_task_applycal.py
+  test_req_task_fixplanets.py
+  test_req_task_fluxscale.py
+  test_req_task_listsdm.py
+  test_req_task_rmfit.py
+  test_req_task_gaincal.py
 
   ###
   test_setjy.py

@@ -482,7 +482,7 @@ void DJones::logResults() {
   rl(0)="R: ";
   rl(1)="L: ";
 
-  ROMSAntennaColumns antcol(ct_->antenna());
+  MSAntennaColumns antcol(ct_->antenna());
   Vector<String> antNames(antcol.name().getColumn());
 
   logSink() << "The instrumental polarization solutions are: " << LogIO::POST;
@@ -1130,7 +1130,7 @@ DfllsJones::~DfllsJones() {
   if (prtlev()>2) cout << "Dflls::~Dflls()" << endl;
 }
 
-
+/*
 
 // **********************************************************
 //  XMueller: positiona angle for circulars
@@ -1414,11 +1414,11 @@ void XMueller::solveOneVB(const VisBuffer& vb) {
     } // !flagRow
   } // row
   
-/*
-  cout << "spw = " << currSpw() << endl;
-  cout << " rl = " << rl << " " << arg(rl)*180.0/C::pi << endl;
-  cout << " lr = " << lr << " " << arg(lr)*180.0/C::pi << endl;
-*/
+
+//  cout << "spw = " << currSpw() << endl;
+//  cout << " rl = " << rl << " " << arg(rl)*180.0/C::pi << endl;
+//  cout << " lr = " << lr << " " << arg(lr)*180.0/C::pi << endl;
+
 
     // combine lr with rl
   rl+=conj(lr);
@@ -2746,7 +2746,7 @@ GlinXphfJones::~GlinXphfJones() {
   if (prtlev()>2) cout << "GlinXphf::~GlinXphf()" << endl;
 }
 
-
+*/
 
 
 

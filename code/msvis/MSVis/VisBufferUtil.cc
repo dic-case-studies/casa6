@@ -36,7 +36,9 @@
 #include <casa/Arrays/Vector.h>
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/Cube.h>
+#include <casacore/casa/Utilities/Sort.h>
 #include <casa/OS/Timer.h>
+#include <casa/OS/Path.h>
 #include <measures/Measures/UVWMachine.h>
 #include <measures/Measures/MeasTable.h>
 #include <ms/MSSel/MSSelectionTools.h>
@@ -48,6 +50,7 @@
 #include <msvis/MSVis/VisBuffer.h>
 #include <ms/MeasurementSets/MSColumns.h>
 #include <casa/iostream.h>
+#include <fstream>
 #include <iomanip>
 #ifdef _OPENMP
 #include <omp.h>
@@ -117,7 +120,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   VisBufferUtil::VisBufferUtil(const vi::VisBuffer2& vb): oldMSId_p(-1), oldPCMSId_p(-1),  timeAntIndex_p(0), cachedPointingDir_p(0), cachedPhaseCenter_p(0) {
 	if(!vb.isAttached())
 		ThrowCc("Programmer Error: used a detached Visbuffer when it should not have been so");
-	ROMSColumns msc(vb.ms());
+	MSColumns msc(vb.ms());
   // The nominal epoch
   MEpoch ep=msc.timeMeas()(0);
 
@@ -143,7 +146,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 }
 VisBufferUtil::VisBufferUtil(const vi::VisibilityIterator2& iter): oldMSId_p(-1) {
 
-	ROMSColumns msc(iter.ms());
+	MSColumns msc(iter.ms());
   // The nominal epoch
   MEpoch ep=msc.timeMeas()(0);
 
@@ -309,7 +312,7 @@ Bool VisBufferUtil::interpolateFrequency(Cube<Complex>& data,
       outfreqMin=C::dbl_max;
       outfreqMax=0;
       vi::VisBuffer2* vb=vi.getVisBuffer();
-      ROMSColumns msc(vi.ms());
+      MSColumns msc(vi.ms());
       // The nominal epoch
       MEpoch ep=msc.timeMeas()(0);
       
@@ -415,7 +418,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 				     const vi::VisBuffer2& vb, 
 				     const MFrequency::Types freqFrame){
   Int spw=vb.spectralWindows()(0);
-  MFrequency::Types obsMFreqType=(MFrequency::Types)(ROMSColumns(vb.ms()).spectralWindow().measFreqRef()(spw));
+  MFrequency::Types obsMFreqType=(MFrequency::Types)(MSColumns(vb.ms()).spectralWindow().measFreqRef()(spw));
 
   
 
@@ -423,7 +426,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
   Vector<Int> chanNums=vb.getChannelNumbers(0);
   
   Vector<Double> inFreq(chanNums.nelements());
-  Vector<Double> spwfreqs=ROMSColumns(vb.ms()).spectralWindow().chanFreq().get(spw);
+  Vector<Double> spwfreqs=MSColumns(vb.ms()).spectralWindow().chanFreq().get(spw);
   for (uInt k=0; k < chanNums.nelements(); ++k){
 
     inFreq[k]=spwfreqs[chanNums[k]];
@@ -562,7 +565,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 
  	 // The input frequencies (a reference)
  	 Vector<Double> inFreq(vb.getFrequencies(row));
- 	 ROMSColumns msc(iter.ms());
+ 	 MSColumns msc(iter.ms());
 
      MEpoch ep(Quantity(vb.time()(row)/86400.0, "d"), msc.timeMeas()(0).getRef());
  	 MDirection dir(msc.field().phaseDirMeasCol()(vb.fieldId()(row))(IPosition(1,0)));
@@ -623,76 +626,136 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
  }
 
  MDirection VisBufferUtil::getPointingDir(const VisBuffer& vb, const Int antid, const Int vbrow){
-	 Timer tim;
-	 tim.mark();
-	 //MDirection outdir;
-	 if(oldMSId_p != vb.msId()){
-		 tim.mark();
-		 oldMSId_p=vb.msId();
-		 if(timeAntIndex_p.shape()(0) < (oldMSId_p+1)){
-			 timeAntIndex_p.resize(oldMSId_p+1, true);
-		 	 cachedPointingDir_p.resize(oldMSId_p+1, true);
-		 }
-		 if(  timeAntIndex_p[oldMSId_p].empty()){
-			 Vector<Double> tOrig;
-			 vb.msColumns().time().getColumn(tOrig);
-			 Vector<Double> t;
-			 rejectConsecutive(tOrig, t);
-			 Vector<uInt>  uniqIndx;
-			 uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
-			 uInt nAnt=vb.msColumns().antenna().nrow();
-			 const ROMSPointingColumns& mspc=vb.msColumns().pointing();
-			 Int guessIndex=0;
-			 for (uInt k=0; k <nTimes; ++k){
-				 for (uInt a=0; a < nAnt; ++a){
-					 std::ostringstream oss;
-					 oss.precision(13);
-					 oss << t[uniqIndx[k]] << "_" << a;
-					 String key=oss.str();
-					 //String key=String::toString(t[uniqIndx[k]])+String("_")+String::toString(a);
-					 Int row=mspc.pointingIndex(a, t[uniqIndx[k]], guessIndex);
-					 //cerr << "String "<< key << "pointing row "<< row << endl;
-					 timeAntIndex_p[oldMSId_p][key]=row > -1 ? cachedPointingDir_p[oldMSId_p].shape()[0] : -1;
-					 guessIndex=row;
-					 if(row >-1){
-						 cachedPointingDir_p[oldMSId_p].resize(cachedPointingDir_p[oldMSId_p].nelements()+1, true);
-						 cachedPointingDir_p[oldMSId_p][cachedPointingDir_p[oldMSId_p].nelements()-1]=mspc.directionMeas(row);
-					 }
+	
+   Timer tim;
+   tim.mark();
+   const MSColumns& msc=vb.msColumns();
+   //cerr << "oldMSId_p " << oldMSId_p << " vb " <<  vb.msId() << endl;
+   if(vb.msId() < 0)
+     throw(AipsError("VisBuffer is not attached to an ms so cannot get pointing "));
+   if(oldMSId_p != vb.msId()){
+     oldMSId_p=vb.msId();
+     if(timeAntIndex_p.shape()(0) < (oldMSId_p+1)){
+       timeAntIndex_p.resize(oldMSId_p+1, true);
+       cachedPointingDir_p.resize(oldMSId_p+1, true);
+     }
+     if(  timeAntIndex_p[oldMSId_p].empty()){
+       Vector<Double> tOrig;
+       msc.time().getColumn(tOrig);
+       Vector<Double> t;
+       rejectConsecutive(tOrig, t);
+       Vector<uInt>  uniqIndx;
+       uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
+       uInt nAnt=msc.antenna().nrow();
+       const MSPointingColumns& mspc=msc.pointing();
+       Vector<Double> tUniq(nTimes);
+       for (uInt k=0; k <nTimes; ++k){
+	 tUniq[k]= t[uniqIndx[k]];
+       }
+       Bool tstor, timcolstor, intcolstor, antcolstor;
+       Double * tuniqptr=tUniq.getStorage(tstor);
+       Int cshape=cachedPointingDir_p[oldMSId_p].shape()[0];
+       cachedPointingDir_p[oldMSId_p].resize(cshape+nTimes*nAnt, True);
+       Vector<Double> timecol;
+       Vector<Double> intervalcol;
+       Vector<Int> antcol;
+       mspc.time().getColumn(timecol, True);
+       mspc.interval().getColumn(intervalcol, True);
+       mspc.antennaId().getColumn(antcol, True);
+       Double *tcolptr=timecol.getStorage(timcolstor);
+       Double *intcolptr=intervalcol.getStorage(intcolstor);
+       Int * antcolptr=antcol.getStorage(antcolstor);
+       Int npointrow=msc.pointing().nrow();
+#pragma omp parallel for firstprivate(nTimes, tuniqptr, tcolptr, antcolptr, intcolptr, npointrow), shared(mspc)
+       for (uInt a=0; a < nAnt; ++a){
+	 
+	 //Double wtime1=omp_get_wtime();
+	 Vector<Int> indices;
+	 Vector<MDirection> theDirs(nTimes);
+	 pointingIndex(tcolptr, antcolptr, intcolptr, npointrow, a, nTimes, tuniqptr, indices);
+	 
+#pragma omp critical
+	 {
+	   for (uInt k=0; k <nTimes; ++k){
+	     
+	     
+	     // std::ostringstream oss;
+	     // oss.precision(13);
+	     // oss << tuniqptr[k] << "_" << a;
+	     // String key=oss.str();
+	     std::pair<double, int> key=make_pair(t[uniqIndx[k]],a);
+	     timeAntIndex_p[oldMSId_p][key]=indices[k] > -1 ? cshape : -1;
+	     
+	     if(indices[k] >-1){
+	       
+	       cachedPointingDir_p[oldMSId_p][cshape]=mspc.directionMeas(indices[k]);
+	       cshape+=1;
+	     }
+	     
+	     
+	   }
+	 }//end critical
+	 
+	 
+       }
+       
+       cachedPointingDir_p[oldMSId_p].resize(cshape, True);
+     }
+     
+   }
 
-				 }
-			 }
-
-		 }
-		 tim.show("After caching all ant pointings");
-	 }
-
-	 /////
-	 //	 String index=String::toString(vb.time()(vbrow))+String("_")+String::toString(antid);
-	 std::ostringstream oss;
-	 oss.precision(13);
-	 oss << vb.time()(vbrow) << "_" << antid  ;
-	 String index=oss.str();
-	 Int rowincache=timeAntIndex_p[oldMSId_p][index];
-	 //cerr << "key "<< index << " index " << rowincache << endl;
-	 tim.show("retrieved cache");
-	 if(rowincache <0)
-		 return vb.phaseCenter();
-	 return cachedPointingDir_p[oldMSId_p][rowincache];
-
-
+   /////
+   //	 String index=String::toString(vb.time()(vbrow))+String("_")+String::toString(antid);
+   // std::ostringstream oss;
+   // oss.precision(13);
+   // oss << vb.time()(vbrow) << "_" << antid  ;
+   // String index=oss.str();
+   //cerr << "index "<< index << endl;
+   ////////////
+   /*
+  for (auto it = timeAntIndex_p[oldMSId_p].begin(); it != timeAntIndex_p[oldMSId_p].end();       ++it)
+    {
+      cerr << (*it).first << " --> " << (*it).second << endl;
+    }
+   */
+   /////////////
+   std::pair<double, int> index=make_pair(vb.time()(vbrow), antid);
+   Int rowincache=timeAntIndex_p[oldMSId_p][index];
+	 ///////TESTOO
+	 /* if(rowincache>=0){
+	   cerr << "msid " << oldMSId_p << " key "<< index << " index " << rowincache<<  "   "  << cachedPointingDir_p[oldMSId_p][rowincache] << endl;
+	   }*/
+	 /////////////
+	 //tim.show("retrieved cache");
+   if(rowincache <0)
+     return vb.phaseCenter();
+   return cachedPointingDir_p[oldMSId_p][rowincache];
 
  }
-  MDirection VisBufferUtil::getPointingDir(const vi::VisBuffer2& vb, const Int antid, const Int vbrow, const Bool usePointing){
-	 Timer tim;
-	 tim.mark();
+  MDirection VisBufferUtil::getPointingDir(const vi::VisBuffer2& vb, const Int antid, const Int vbrow, const MDirection::Types dirframe, const Bool usePointing){
+
+    //Double wtime0=omp_get_wtime();
 	 Int rowincache=-1;
 	 if(usePointing){
-	   ROMSColumns msc(vb.ms());
 	   if(oldMSId_p != vb.msId()){
+	     MSColumns msc(vb.ms());
 	     oldMSId_p=vb.msId();
 	     if(timeAntIndex_p.shape()(0) < (oldMSId_p+1)){
 	       timeAntIndex_p.resize(oldMSId_p+1, true);
 	       cachedPointingDir_p.resize(oldMSId_p+1, true);
+	     }
+	     MEpoch::Types timeType=MEpoch::castType(msc.timeMeas()(0).getRef().getType());
+	     Unit timeUnit(msc.timeMeas().measDesc().getUnits()(0).getName());
+	     MPosition pos;
+	     String tel;
+	     if (vb.subtableColumns().observation().nrow() > 0) {
+	       tel =vb.subtableColumns().observation().telescopeName()(msc.observationId()(0));
+	     }
+	     if (tel.length() == 0 || !tel.contains("VLA") ||
+		 !MeasTable::Observatory(pos,tel)) {
+	       // unknown observatory, use first antenna
+	       Int ant1=vb.antenna1()(0);
+	       pos=vb.subtableColumns().antenna().positionMeas()(ant1);
 	     }
 	     if(  timeAntIndex_p[oldMSId_p].empty()){
 	       Vector<Double> tOrig;
@@ -702,7 +765,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 	       Vector<uInt>  uniqIndx;
 	       uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 	       uInt nAnt=msc.antenna().nrow();
-			 const ROMSPointingColumns& mspc=msc.pointing();
+			 const MSPointingColumns& mspc=msc.pointing();
 			 Vector<Double> tUniq(nTimes);
 			 for (uInt k=0; k <nTimes; ++k){
 			   tUniq[k]= t[uniqIndx[k]];
@@ -721,29 +784,38 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 			 Double *intcolptr=intervalcol.getStorage(intcolstor);
 			 Int * antcolptr=antcol.getStorage(antcolstor);
 			 Int npointrow=vb.ms().pointing().nrow();
-#pragma omp parallel for firstprivate(nTimes, tuniqptr, tcolptr, antcolptr, intcolptr, npointrow), shared(mspc)
+			 //ofstream myfile;
+			 //myfile.open ("POINTING.txt", ios::trunc);
+#pragma omp parallel for firstprivate(nTimes, tuniqptr, tcolptr, antcolptr, intcolptr, npointrow, timeType, timeUnit, pos, dirframe), shared(mspc)
 			 for (uInt a=0; a < nAnt; ++a){
 			   
 			   //Double wtime1=omp_get_wtime();
 			   Vector<Int> indices;
-			   Vector<MDirection> theDirs(nTimes);
+			   //Vector<MDirection> theDirs(nTimes);
 			   pointingIndex(tcolptr, antcolptr, intcolptr, npointrow, a, nTimes, tuniqptr, indices);
 			   
 #pragma omp critical
 			   {
+			     MEpoch timenow(Quantity(tuniqptr[0], timeUnit),timeType);
+			     MeasFrame mframe(timenow, pos);
+			     MDirection::Convert cvt(MDirection(), MDirection::Ref(dirframe, mframe));
 			     for (uInt k=0; k <nTimes; ++k){
 			       
 			       
-			       std::ostringstream oss;
+			       /*std::ostringstream oss;
 			       oss.precision(13);
 			       oss << tuniqptr[k] << "_" << a;
 			       String key=oss.str();
-			       
+			       */
+			       //			       myfile <<std::setprecision(13) <<  tuniqptr[k] << "_" << a << " index "<<  indices[k] << "\n";
+			       pair<double, int> key=make_pair(tuniqptr[k],a);
 			       timeAntIndex_p[oldMSId_p][key]=indices[k] > -1 ? cshape : -1;
 			       
 			       if(indices[k] >-1){
+				 timenow=MEpoch(Quantity(tuniqptr[k], timeUnit),timeType);
+				 mframe.resetEpoch(timenow);
+				 cachedPointingDir_p[oldMSId_p][cshape]=cvt(mspc.directionMeas(indices[k]));
 				 
-				 cachedPointingDir_p[oldMSId_p][cshape]=mspc.directionMeas(indices[k]);
 				 cshape+=1;
 			       }
 			       
@@ -753,7 +825,6 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 			   
 			   
 			 }
-			 
 			 cachedPointingDir_p[oldMSId_p].resize(cshape, True);
 	     }
 	     
@@ -761,16 +832,14 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 
 	   /////
 	   //	 String index=String::toString(vb.time()(vbrow))+String("_")+String::toString(antid);
-	   std::ostringstream oss;
+	   /* std::ostringstream oss;
 	   oss.precision(13);
 	   oss << vb.time()(vbrow) << "_" << antid  ;
 	   String index=oss.str();
-	   rowincache=timeAntIndex_p[oldMSId_p][index];
-	 ///////TESTOO
-	 /* if(rowincache>=0){
-	   cerr << "msid " << oldMSId_p << " key "<< index << " index " << rowincache<<  "   "  << cachedPointingDir_p[oldMSId_p][rowincache] << endl;
-	   }*/
-	 /////////////
+	   */
+	   pair<double, int> index=make_pair(vb.time()(vbrow),antid);
+	   rowincache=timeAntIndex_p[oldMSId_p].at(index);
+
 	 //tim.show("retrieved cache");
 	 }///if usepointing
 	 if(rowincache <0)
@@ -787,48 +856,90 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
     
     indices.set(-1);
     Int guessRow=0;
-  
+    
     for(Int pt=0; pt < ntimes; ++pt){
       //cerr << "  " << guessRow ;
-      for (Int k=0; k< 2; ++k){
+     
+      /*for (Int k=0; k< 2; ++k){
 	Int start=guessRow;
 	Int end=nrow;
 	if(k==1){
 	  start=0;
 	  end=guessRow;
 	}
-	for (Int i=start; i<end; i++) {
+      */
+      Double nearval=1e99;
+      Int nearestIndx=-1;
+      Int start=0;
+      Int end=nrow;
+      for (Int i=start; i<end; i++) {
+	if(intervalcol[i]<=0.0 && ant==antcol[i]){
+	  if(abs(timecol[i]-ptime[pt]) < nearval){
+	    nearestIndx=i;
+	    nearval=abs(timecol[i]-ptime[pt]);
+	  }
+	}
+      }
+      indices[pt]=nearestIndx;
+
+      
+      for (Int i=start; i<end; i++) {
 	  if(ant == antcol[i]){
-	    Double halfInt=0.0;  
-	    if(intervalcol[i]==0.0){
+	    Double halfInt=0.0;
+	    Bool done=False;
+	    if(intervalcol[i]<=0.0){
+	    //  if(abs(timecol[inx[i]]-ptime[pt]) < nearval){
+	    //	nearestIndx=inx[i];
+	    //  }
 	      Int counter=0;
 	      Int adder=1;
-	  
-	      while(!( (timecol[i+counter]!=timecol[i]))){
+	      done=False;
+		//	      while(!( (timecol[i+counter]!=timecol[i]))){
+	      while(!done){
 		counter=counter+adder;
 		if(nrow <= i+counter){
-		adder=-1; 
-		counter=0;
+		  adder=-1; 
+		  counter=0;
 		}
 		////Could not find another point (interval is infinite)  hence only 1 valid point
 		if( (i+counter) < 0){
+		  cerr << "HIT BREAK " << endl;
 		  indices[pt]=i;
-		break;
+		  break;
 		}
-	      }       
+		if( (antcol[i+counter]==ant && timecol[i+counter] != timecol[i]) ){
+		  done=True;
+		}
+	      }
+	    
+	      //if(ant==12 && abs(timecol[i+counter]-timecol[i]) > 10.0){
+	      //cerr << "i " << i << "  counter " << counter << " done " << done << " adder " << adder << "ant count "<< antcol[i+counter] << "  diff " <<   abs(timecol[i+counter]-timecol[i]) << endl;
+	      // }
 	      halfInt = abs(timecol[i+counter]-timecol[i])/2.0;
 	    }
 	    else{
 	      halfInt = intervalcol[i]/2.0;
 	    }
 	    if (halfInt>0.0) {
-	      if (timecol[i] >= ptime[pt] - halfInt && timecol[i] <= ptime[pt] + halfInt) {
-		indices[pt]=i;
+	      
+	      if ((timecol[i] >= (ptime[pt] - halfInt)) && (timecol[i] <= (ptime[pt] + halfInt))) {
+		////TESTOO
+		//if(ant==12){
+		//  cerr << "timecol " << timecol[i] << " halfInt " << halfInt << " TEST " << timecol[nearestIndx] << " inx " << i << "   " << nearestIndx << endl;
+		//}
+		indices[pt]=abs(timecol[i]-ptime[pt]) <  nearval ? i : nearestIndx;
+		////////TESTOO
+		if(indices[pt] > 4688000){
+		  cerr <<  indices[pt] << " timecol " << timecol[i] << " halfInt " << halfInt << " TEST " << timecol[nearestIndx] << "  nearval " << nearval << " inx " << i << "   " << nearestIndx << endl;
+		  
+		}
+		///////////////////
 		guessRow=i;
 	      break;
 	      }
 	    } else {
 	      // valid for all times (we should also handle interval<0 -> timestamps)
+	      cerr << "JUMPY " << i << " ant " << ant << " halfint " << halfInt << " done "<< done <<  endl;
 	      indices[pt]=i;
 	      guessRow=i;
 	      break;
@@ -837,9 +948,10 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 	  }//if ant
 	}//start end
 	
-      }//k
+	//}//k
      
     }//pt
+ 
     //cerr << "ant " << ant << " indices " << indices << endl;
   }
 
@@ -849,7 +961,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
      Double timeph = timeo > 0.0 ? timeo : vb.time()(0); 
 	 //MDirection outdir;
 	 if(oldPCMSId_p != vb.msId()){
-	   ROMSColumns msc(vb.ms());
+	   MSColumns msc(vb.ms());
 	   //tim.mark();
 	   //cerr << "MSID: "<< oldPCMSId_p <<  "    " << vb.msId() << endl;
 	   oldPCMSId_p=vb.msId();
@@ -869,12 +981,19 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 		   
 		   uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 		   //cerr << "ntimes " << nTimes << "  " << uniqIndx  << "\n  origInx " << origindx << endl;
-		   const ROMSFieldColumns& msfc=msc.field();
+		   const MSFieldColumns& msfc=msc.field();
 		   for (uInt k=0; k <nTimes; ++k){
 		     //cerr << t[uniqIndx[k]] << "   " <<  fieldId[origindx[uniqIndx[k]]] << endl;
 		     //cerr << msfc.phaseDirMeas(fieldId[origindx[uniqIndx[k]]], t[uniqIndx[k]]) << endl;
 		     //cerr << "size " <<  cachedPhaseCenter_p[oldPCMSId_p].size() << endl;
+                     String ephemIfAny=msfc.ephemPath(fieldId[origindx[uniqIndx[k]]]);
+                     if(ephemIfAny=="" || !Table::isReadable(ephemIfAny, False)){
 		       (cachedPhaseCenter_p[oldPCMSId_p])[t[uniqIndx[k]]]=msfc.phaseDirMeas(fieldId[origindx[uniqIndx[k]]], t[uniqIndx[k]]);
+                     }
+                     else{
+                       Vector<MDirection> refDir(msfc.referenceDirMeasCol()(fieldId[origindx[uniqIndx[k]]]));
+                       (cachedPhaseCenter_p[oldPCMSId_p])[t[uniqIndx[k]]]=getEphemBasedPhaseDir(vb, ephemIfAny, refDir(0),   t[uniqIndx[k]]);
+                     }
 		     
 		   }
 			
@@ -916,15 +1035,36 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 
  }
 
+
+  MDirection VisBufferUtil::getEphemBasedPhaseDir(const vi::VisBuffer2& vb, const String& ephemPath, const MDirection&refDir,  const Double t){
+    MEpoch ep(Quantity(t, "s"), ROMSColumns(vb.ms()).timeMeas()(0).getRef());
+    mframe_.resetEpoch(ep);
+    if(!Table::isReadable(ephemPath, False))
+      return refDir;
+    MeasComet mcomet(Path(ephemPath).absoluteName());
+    mframe_.set(mcomet);
+    MDirection::Ref outref1(MDirection::AZEL, mframe_);
+    MDirection tmpazel=MDirection::Convert(MDirection(MDirection::COMET), outref1)();
+    MDirection::Types outtype=(MDirection::Types) refDir.getRef().getType();
+    MDirection::Ref outref(outtype, mframe_);
+    MDirection outdir=MDirection::Convert(tmpazel, outref)();
+    MVDirection mvoutdir(outdir.getAngle());
+    MVDirection mvrefdir(refDir.getAngle());
+    //copying what ROMSFieldColumns::extractDirMeas  does
+    mvoutdir.shift(mvrefdir.getAngle(), True);
+    return MDirection(mvoutdir, outtype);
+  }
+  
    MDirection VisBufferUtil::getEphemDir(const vi::VisBuffer2& vb, 
 					 const Double timeo){
 
      Double timeEphem = timeo > 0.0 ? timeo : vb.time()(0); 
-     ROMSColumns msc(vb.ms());
-     const ROMSFieldColumns& msfc=msc.field();
+     MSColumns msc(vb.ms());
+     const MSFieldColumns& msfc=msc.field();
      Int fieldId=vb.fieldId()(0);
-     return msfc.ephemerisDirMeas(fieldId, timeEphem);
-     
+     MDirection refDir(Quantity(0, "deg"), Quantity(0, "deg"),(MDirection::Types)msfc.ephemerisDirMeas(fieldId, timeEphem).getRef().getType());
+     //Now do the parallax correction
+     return getEphemBasedPhaseDir(vb, msfc.ephemPath(fieldId), refDir, timeEphem);
 
 
    }

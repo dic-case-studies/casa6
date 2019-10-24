@@ -51,9 +51,10 @@
 #include <synthesis/TransformMachines/FTMachine.h>
 #include <synthesis/TransformMachines2/FTMachine.h>
 #include <synthesis/TransformMachines2/AWProjectWBFTNew.h>
-#include <synthesis/TransformMachines2/AWConvFuncEPJones.h>
+//#include <synthesis/TransformMachines2/AWConvFuncEPJones.h>
 #include <synthesis/TransformMachines2/EVLAAperture.h>
 #include <synthesis/TransformMachines2/AWVisResampler.h>
+#include <synthesis/TransformMachines2/PointingOffsets.h>
 
 using namespace casa;
 using namespace casacore;
@@ -103,12 +104,16 @@ void createAWPFTMachine(CountedPtr<refim::FTMachine>& theFT, CountedPtr<refim::F
       os << LogIO::NORMAL << "Performing WBAW-Projection" << LogIO::POST; // Loglevel PROGRESS
     }
   
-  // ROMSObservationColumns msoc(mss4vi_p[0].observation());
+  // MSObservationColumns msoc(mss4vi_p[0].observation());
   // String telescopeName=msoc.telescopeName()(0);
   CountedPtr<refim::ConvolutionFunction> awConvFunc = AWProjectFT::makeCFObject(telescopeName, 
 									 aTermOn,
 									 psTermOn, true, mTermOn, wbAWP,
 									 false);
+   CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets(awConvFunc->getOversampling());
+
+   po->setDoPointing(doPointing);
+   awConvFunc->setPointingOffsets(po);
   //
   // Construct the appropriate re-sampler.
   //

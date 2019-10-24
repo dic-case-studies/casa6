@@ -93,6 +93,7 @@ scripts/TablePlotQt4Agg.py
 scripts/TablePlotTkAgg.py
 scripts/task_accor.py
 scripts/task_accum.py
+scripts/task_apparentsens.py
 scripts/task_applycal.py
 scripts/task_asdmsummary.py
 scripts/task_bandpass.py
@@ -166,6 +167,7 @@ scripts/task_listvis.py
 scripts/task_makemask.py 
 scripts/task_mstransform.py
 scripts/task_msuvbin.py
+scripts/task_nrobeamaverage.py
 scripts/task_partition.py
 scripts/task_plotants.py
 scripts/task_plotbandpass.py
@@ -175,6 +177,7 @@ scripts/task_plotweather.py
 scripts/task_plotprofilemap.py
 scripts/task_oldsplit.py
 scripts/task_polcal.py
+scripts/task_polfromgain.py
 scripts/task_predictcomp.py
 scripts/task_rerefant.py
 scripts/task_rmfit.py
@@ -239,3 +242,4 @@ add_subdirectory( scripts/recipes )
 add_subdirectory( scripts/parallel )
 add_subdirectory( scripts/mpi4casa )
 add_subdirectory( scripts/imagerhelpers )
+add_subdirectory( scripts/casatasks )

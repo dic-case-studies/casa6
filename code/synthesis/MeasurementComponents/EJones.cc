@@ -166,14 +166,14 @@ void EGainCurve::setSpecify(const Record& specify) {
   //  the right gain curves
 
   MeasurementSet ms(msName());
-  ROMSColumns mscol(ms);
+  MSColumns mscol(ms);
 
   // The antenna names
-  const ROMSAntennaColumns& antcol(mscol.antenna());
+  const MSAntennaColumns& antcol(mscol.antenna());
   antnames_ = antcol.name().getColumn();
 
   // Observation info
-  const ROMSObservationColumns& obscol(mscol.observation());
+  const MSObservationColumns& obscol(mscol.observation());
 
   String telescope(obscol.telescopeName()(0));
 
@@ -219,7 +219,7 @@ void EGainCurve::setSpecify(const Record& specify) {
   Vector<Double> timerange(obscol.timeRange()(0));
   obstime_ = timerange(0);
 
-  const ROMSSpWindowColumns& spwcol(mscol.spectralWindow());
+  const MSSpWindowColumns& spwcol(mscol.spectralWindow());
   spwfreqs_.resize(nSpw());
   spwfreqs_.set(0.0);
   spwbands_.resize(nSpw());
@@ -365,7 +365,7 @@ void EGainCurve::specify(const Record& specify) {
 	{
 	  Table nomgaintab = freqgaintab(freqgaintab.col("ANTENNA")=="0");
 	  if (nomgaintab.nrow() > 0) {
-	    ROArrayColumn<Float> gain(nomgaintab,"GAIN");
+	    ArrayColumn<Float> gain(nomgaintab,"GAIN");
 	    nomgain=gain(0);
 	  } else {
 	    // nominal gain is unity
@@ -383,7 +383,7 @@ void EGainCurve::specify(const Record& specify) {
 	  // Select antenna by name
 	  Table antgaintab = freqgaintab(freqgaintab.col("ANTENNA")==antnames_(iant));
 	  if (antgaintab.nrow() > 0) {
-	    ROArrayColumn<Float> gain(antgaintab,"GAIN");
+	    ArrayColumn<Float> gain(antgaintab,"GAIN");
 	    piter.array().nonDegenerate().reform(gain(0).shape())=gain(0);
 	  } else {
 	    piter.array().nonDegenerate().reform(nomgain.shape())=nomgain;

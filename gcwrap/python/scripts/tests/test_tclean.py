@@ -1,7 +1,7 @@
 ##########################################################################
 ##########################################################################
 #
-# Test programs for the refactored imager :  test_refimager
+# Test programs for the refactored imager :  test_tclean
 #
 # Each of the following categories (classes) has a set of tests within it.
 #
@@ -16,12 +16,12 @@
 #
 # To run from within casapy :  
 #
-#  runUnitTest.main(['test_refimager'])                                                                           # Run all tests
-#  runUnitTest.main(['test_refimager[test_onefield]'])                                                    # Run tests from test_onefield
-#  runUnitTest.main(['test_refimager[test_onefield_mtmfs]'])                                        # Run one specific test
-#  runUnitTest.main(['test_refimager[test_onefield_mtmfs,test_onefield_hogbom]'])    # Multiple specific tests
+#  runUnitTest.main(['test_tclean'])                                              # Run all tests
+#  runUnitTest.main(['test_tclean[test_onefield]'])                               # Run tests from test_onefield
+#  runUnitTest.main(['test_tclean[test_onefield_mtmfs]'])                         # Run one specific test
+#  runUnitTest.main(['test_tclean[test_onefield_mtmfs,test_onefield_hogbom]'])    # Multiple specific tests
 #
-# To see the full list of tests :   grep "\"\"\" \[" test_refimager.py
+# To see the full list of tests :   grep "\"\"\" \[" test_tclean.py
 #
 #  These tests need data stored in data/regression/unittest/clean/refimager
 #
@@ -32,7 +32,10 @@
 #  --- Get test datasets :  svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/regression/unittest/clean/refimager
 #
 # ########################################################################
-# SKIPPED TESTS (as of 2019.02.05 - Seven tests total)
+# SKIPPED TESTS 
+# More tests were added to skip (as of 2019,04,26)
+#
+# (as of 2019.02.05 - Seven tests total)
 # The following tests are currently skipped as the supports of the particular
 # modes are not available in parallel mode yet
 # =>   
@@ -46,6 +49,26 @@
 # =>  test_multifield_facets_mfs
 #     test_multifield_facets_mtmfs
 #     test_cube_D1
+# 
+# Added to skip at least for 5.5
+#     test_cube_chanchunks
+#     test_cube_chanchunks_savemodel (possible race conditions)
+#     test_modelvis_2 (possible race conditions)
+#     test_modelvis_3 (possible race conditions)
+#     test_modelvis_5 (possible race conditions)
+#     test_modelvis_6 (possible race conditions)
+#     test_modelvis_7 (possible race conditions)
+#     test_modelvis_8 (possible race conditions)
+#     test_modelvis_9 (possible race conditions)
+#     test_modelvis_10 (possible race conditions)
+#     test_modelvis_11 (possible race conditions)
+#     test_startmodel_with_mask_mfs(possible race conditions)
+#     test_startmodel_with_mask_mtmfs(possible race conditions)
+
+#Ressurected from skipping after some fixes
+#     test_mask_5
+#     test_iterbot_cube_2
+#     test_multifield_both_cube
 ##########################################################################
 #
 #  Datasets
@@ -61,37 +84,59 @@
 #
 ##########################################################################
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-import commands
-import numpy
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
 import inspect
 import numpy as np
-from parallel.parallel_task_helper import ParallelTaskHelper
+import operator
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+     from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
+     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor
+     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
 
-_ia = iatool( )
-_vp = vptool( )
-_cb = cbtool( )
+     sys.path.append(os.path.abspath(os.path.basename(__file__)))
+     from testhelper_imager import TestHelpers
 
-from imagerhelpers.test_imager_helper import TestHelpers
+     _ia = image( )
+     _vp = vpmanager( )
+     _cb = calibrater( )
+     _qa = quanta( )
+     _me = measures( )
+     
+     refdatapath = ctsys.resolve('regression/unittest/clean/refimager')
+     #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
+     #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
+else:
+     from __main__ import default
+     from tasks import *
+     from taskinit import *
+     from parallel.parallel_task_helper import ParallelTaskHelper
+     from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+     from imagerhelpers.testhelper_imager import TestHelpers
 
+     _ia = iatool( )
+     _vp = vptool( )
+     _cb = cbtool( )
+     # not local tools
+     _qa = qa
+     _me = me
+
+     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager'
+     #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
+     #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
+     
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor,test_mosaic_mtmfs,test_mosaic_cube]
 #     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
-
-refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
-#refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData/"
-#refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests/"
-
  
-
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
 
@@ -99,11 +144,15 @@ class testref_base(unittest.TestCase):
           self.epsilon = 0.05
           self.msfile = ""
           self.img = "tst"
+          self.cfcache = 'cfcach'
           # To use subdir in the output image names in some tests (CAS-10937)
           self.img_subdir = 'refimager_tst_subdir'
           self.parallel = False
+          self.nnode = 0
           if ParallelTaskHelper.isMPIEnabled():
               self.parallel = True
+              self.PH = PyParallelImagerHelper()
+              self.nnode = len(self.PH.getNodeList())
 
           self.th = TestHelpers()
 
@@ -119,11 +168,22 @@ class testref_base(unittest.TestCase):
                self.msfile=msname
           if (os.path.exists(self.msfile)):
                os.system('rm -rf ' + self.msfile)
-          shutil.copytree(refdatapath+self.msfile, self.msfile)
+          shutil.copytree(os.path.join(refdatapath,self.msfile), self.msfile)
           
+     def prepCfcache(self,cfcache=""):
+         if (os.path.exists(self.cfcache)):
+               os.system('rm -rf ' + self.cfcache)
+         if cfcache!="":
+               self.cfcache=cfcache 
+         if (os.path.exists(self.cfcache)):
+               os.system('rm -rf ' + self.cfcache)
+         shutil.copytree(os.path.join(refdatapath,self.cfcache), self.cfcache)
+
      def delData(self,msname=""):
           if msname != "":
                self.msfile=msname
+          if (os.path.exists(self.cfcache)):
+               os.system('rm -rf ' + self.cfcache)
           if (os.path.exists(self.msfile)):
                os.system('rm -rf ' + self.msfile)
           os.system('rm -rf ' + self.img_subdir)
@@ -134,15 +194,14 @@ class testref_base(unittest.TestCase):
               self.maskname=maskname
           if (os.path.exists(self.maskname)):
               os.system('rm -rf ' + self.maskname)
-          shutil.copytree(refdatapath+self.maskname, self.maskname)
+          shutil.copytree(os.path.join(refdatapath,self.maskname), self.maskname)
 
      def checkfinal(self,pstr=""):
           #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
-          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_refimager["+ inspect.stack()[1][3] +"]'])"
+          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] +"]'])"
           casalog.post(pstr,'INFO')
           if( pstr.count("(Fail") > 0 ):
                self.fail("\n"+pstr)
-
 
 ##############################################
 ##############################################
@@ -184,7 +243,7 @@ class test_onefield(testref_base):
           """ [onefield] Test_Onefield_multiscale : mfs with multiscale minor cycle """
           self.prepData('refim_eptwochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=10,deconvolver='multiscale',scales=[0,20,40,100],interactive=0,parallel=self.parallel)
-          report=self.th.checkall(ret=ret, peakres=1.28, modflux=2.87, iterdone=10, imexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imval=[(self.img+'.psf',1.0,[100,100,0,0])])
+          report=self.th.checkall(ret=ret, peakres=0.823, modflux=3.816, iterdone=10, imexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imval=[(self.img+'.psf',1.0,[100,100,0,0])])
           self.checkfinal(pstr=report)
 
      def test_onefield_mtmfs(self):
@@ -204,8 +263,55 @@ class test_onefield(testref_base):
           report=self.th.checkall(imexist=[self.img+'.psf',self.img+'_2.psf',self.img+'_3.psf'] )
           self.checkfinal(pstr=report)
 
+     # weighting test
+     def test_onefield_weighting(self):
+          """ [onefield] Test_Onefield_weighting : mfs with different weighting (natural, uniform, briggs, radial, superuniform)"""
+          self.prepData('refim_twochan.ms')
+          # default = natural
+          ret0 = tclean(vis=self.msfile,imagename=self.img+'0',imsize=100,cell='8.0arcsec',niter=10,weighting='natural', interactive=0,parallel=self.parallel) 
+          # uniform
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,weighting='uniform', interactive=0,parallel=self.parallel) 
+          report=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'.psf', self.img+'.residual', self.img+'.image', self.img+'.model'], imval=[(self.img+'.psf',1.0,[50,50,0,0])])
+          self.checkfinal(pstr=report)
+
+          # briggs r=-2
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,weighting='briggs', robust=-2, interactive=0,parallel=self.parallel)     
+          report2=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'2.psf', self.img+'2.residual', self.img+'2.image', self.img+'2.model'], imval=[(self.img+'2.psf',1.0,[50,50,0,0])])
+
+          # briggs r=0.5(default)
+          ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,weighting='briggs', robust=0.5, interactive=0,parallel=self.parallel)     
+          report3=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image', self.img+'3.model'], imval=[(self.img+'3.psf',1.0,[50,50,0,0])])
+
+          # briggs r=2
+          ret4 = tclean(vis=self.msfile,imagename=self.img+'4',imsize=100,cell='8.0arcsec',niter=10,weighting='briggs', robust=2, interactive=0,parallel=self.parallel)     
+          report4=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image', self.img+'4.model'], imval=[(self.img+'4.psf',1.0,[50,50,0,0])])
+
+          # radial
+          ret5 = tclean(vis=self.msfile,imagename=self.img+'5',imsize=100,cell='8.0arcsec',niter=10,weighting='radial', interactive=0,parallel=self.parallel)     
+          report5=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'5.psf', self.img+'5.residual', self.img+'5.image', self.img+'5.model'], imval=[(self.img+'5.psf',1.0,[50,50,0,0])])
+
+          # superuniform
+          ret6 = tclean(vis=self.msfile,imagename=self.img+'6',imsize=100,cell='8.0arcsec',niter=10,weighting='superuniform', interactive=0,parallel=self.parallel)     
+          report6=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'6.psf', self.img+'6.residual', self.img+'6.image', self.img+'6.model'], imval=[(self.img+'6.psf',1.0,[50,50,0,0])])
+
+          # beamareas: uniform < briggs-r=-2 < briggs r=0.5 < briggs r=+2 < natural, ...
+          # by default, it checks if im1's beam < im2's beam
+          print("Test beamarea of tst0.image (natural) is greater than beamarea of tst.image (uniform)")
+          self.assertTrue(self.th.check_beam_compare(self.img+'.image', self.img+'0.image'))
+          # parallel fails - uniform wt. psf seems to be bigger in parallel than that of serial run
+          #print("Test beamarea of tst2.image (briggs -2) is greater than beamarea of tst.image (uniform)")
+          #self.assertTrue(self.th.check_beam_compare(self.img+'.image', self.img+'2.image'))
+          print("Test beamarea of tst3.image (briggs 0.5) is greater than beamarea of tst2.image (briggs -2))")
+          self.assertTrue(self.th.check_beam_compare(self.img+'2.image', self.img+'3.image'))
+          print("Test beamarea of tst4.image (briggs 2) is greater than beamarea of tst3.image (briggs 0.5))")
+          self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
+     
+     
+
      def test_onefield_twoMS(self):
-          """ [onefield] Test_Onefield_twoMS : One field, two input MSs """
+          """ [onefield] Test_Onefield_twoMS : One field, two input MSs, also
+          test automatic fallback to 'data' column when no 'corrected' data
+          column"""
           ms1 = 'refim_point_onespw0.ms'
           ms2 = 'refim_point_onespw1.ms'
           self.prepData(ms1)
@@ -218,11 +324,33 @@ class test_onefield(testref_base):
 #              correct=True
 #          self.assertTrue(correct)
           ## This run should go smoothly.
-          ret = tclean(vis=[ms1,ms2],field='0',spw=['0','0'], imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='hogbom',niter=10,datacolumn='data',parallel=self.parallel)
+          ret = tclean(vis=[ms1,ms2],field='0',spw=['0','0'], imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='hogbom',niter=10,parallel=self.parallel)
           report=self.th.checkall(imexist=[self.img+'.psf',self.img+'.residual'])
           self.delData(ms1)
           self.delData(ms2)
           self.checkfinal(pstr=report)
+
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. onefield with two MSs, briggs weighing. Enable this when CAS011978 is fixed")
+     def test_onefield_twoMS_Briggs(self):
+          """ [onefield] Test_Onefield_twoMS with Briggs weighting: One field, two input MSs (for verification of CAS-11978)"""
+          ms1 = 'refim_point_onespw0.ms'
+          ms2 = 'refim_point_onespw1.ms'
+          self.prepData(ms1)
+          self.prepData(ms2)
+#          try:
+#               ## This run should fail with an exception
+#               ret = tclean(vis=[ms1,ms2],field='0',spw=['0','0'], imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='hogbom',niter=10)
+#               correct=False
+#          except Exception as e:
+#              correct=True
+#          self.assertTrue(correct)
+          ## This run should go smoothly. 
+          ret = tclean(vis=[ms1,ms2],field='0',spw=['0','0'], imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='hogbom',niter=10,weighting='briggs', interactive=0, parallel=self.parallel)
+          report=self.th.checkall(ret=ret, peakres=0.365259, modflux=0.798692, imexist=[self.img+'.psf',self.img+'.residual'])
+          self.delData(ms1)
+          self.delData(ms2)
+          self.checkfinal(pstr=report)
+
 
      def test_onefield_twoMS_diffcolumns(self):
           """ [onefield] Test_Onefield_twoMS_diffcolumns : One field, two input MSs, one with data and one with data and corrected """
@@ -241,6 +369,25 @@ class test_onefield(testref_base):
           self.delData(ms2)
           self.checkfinal(pstr=report)
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Erratic in parallel")
+     def test_onefield_briggsabs(self):
+          """[onefield] test_onefield_briggsabs: """
+          self.prepData('refim_point_withline.ms')
+          delmod(self.msfile)
+          imnat=self.img+"_nat"
+          imbriggs0=self.img+"_briggsabs_0"
+          imbriggs_2=self.img+"_briggsabs_2"
+          imbriggs_2_2=self.img+"_briggsabs_2_2pix"
+          retnat = tclean(vis=self.msfile,imagename=imnat,imsize=100,cell='8.0arcsec',specmode='mfs',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='natural', parallel=self.parallel)
+          ret0 = tclean(vis=self.msfile,imagename=imbriggs0,imsize=100,cell='8.0arcsec',specmode='mfs', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggsabs', robust=0, noise='1Jy',parallel=self.parallel)
+          ret_2=tclean(vis=self.msfile,imagename=imbriggs_2,imsize=100,cell='8.0arcsec',specmode='mfs', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggsabs', robust=-2.0, noise='1Jy', parallel=self.parallel)
+###          ret_2_1=tclean(vis=self.msfile,imagename=imbriggs_2_2,imsize=100,cell='8.0arcsec',specmode='mfs', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggsabs', robust=-2.0, npixels=2, noise='1Jy', parallel=self.parallel)
+
+          self.assertTrue(os.path.exists(imnat+'.image') and os.path.exists(imbriggs0+'.image') and os.path.exists(imbriggs_2+'.image') )
+          ###briggsabs 0 should be natural
+          self.assertTrue(self.th.check_beam_compare(imbriggs0+'.image', imnat+'.image', operator.eq))
+          self.assertTrue(self.th.check_beam_compare(imbriggs_2+'.image', imbriggs0+'.image'))
+        ###  self.assertTrue(self.th.check_beam_compare(imbriggs_2_2+'.image', imbriggs_2+'.image', operator.le))
 
      def test_onefield_restart_mfs(self):
           """ [onefield] : test_onefield_restart_mfs : Check calcpsf,calcres and ability to restart and continue"""
@@ -390,7 +537,120 @@ class test_onefield(testref_base):
           report=self.th.checkall(ret=ret, peakres=0.369, modflux=0.689, iterdone=10, imexist=[self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0', self.img+'.model.tt0'], imval=[(self.img+'.psf.tt0',1.0,[50,50,0,0]),(self.img+'.image.tt0',1.05,[50,50,0,0])])
           ## iterdone=11 only because of the return (iterdone_p+1) in MultiTermMatrixCleaner::mtclean() !
           self.checkfinal(pstr=report)
+          
+     def test_onefield_mtmfs_smallscalebias(self):
+          """ [onefield] Test_Onefield_mtmfs : mt-mfs with minor cycle iterations and smallscalebias = 0.9 """
+          self.prepData('refim_eptwochan.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,smallscalebias=0.9,scales=[0,20,40,100])
+          report=self.th.checkall(ret=ret, peakres=0.73153, modflux=2.9194, iterdone=10, imexist=[self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0', self.img+'.model.tt0'],imval=[(self.img+'.image.tt0',0.526,[100,100,0,0])])
+          self.checkfinal(pstr=report)   
 
+     def test_onefield_gridders(self):
+          """ [onefield] Test_Onefield_gridders : Check all single field gridder equivalent names are accepted """
+          self.prepData('refim_twochan.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',gridder='ft', interactive=0,parallel=self.parallel)
+          report=self.th.checkall(imexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'], imval=[(self.img+'.psf', 1.0, [50,50,0,0])])
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',gridder='gridft', interactive=0,parallel=self.parallel)
+          report2=self.th.checkall(imexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'], imval=[(self.img+'.psf', 1.0, [50,50,0,0])])
+          self.checkfinal(pstr=report+report2)
+
+
+     def test_onefield_cube_restoringbeam(self):
+          """ [onefield] Test explicit restoring beams for cube : Test peak flux with niter=0, compared with smoothing vs restoringbeam"""
+          
+          self.prepData('refim_point.ms')
+          
+          ret1 = tclean(vis=self.msfile,imagename=self.img,
+                        imsize=100,cell='10.0arcsec',interpolation='nearest',
+                        interactive=0,niter=0,specmode='cube',
+                        parallel=self.parallel)
+          imsmooth(imagename=self.img+'.image', targetres=True, major='120.0arcsec', minor='120.0arcsec', pa='0deg',outfile=self.img+'.smoothed.image',overwrite=True)
+
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'.rest',
+                        imsize=100,cell='10.0arcsec',interpolation='nearest',
+                        interactive=0,niter=0,specmode='cube',restoringbeam='120.0arcsec',
+                        parallel=self.parallel)
+          
+          header = imhead(self.img+'.rest.image',verbose=False)
+          
+          estr = "["+inspect.stack()[1][3]+"] Has single restoring beam ? : " + self.th.verdict('restoringbeam' in header) + "\n"
+
+          report = self.th.checkall(imexist=[self.img+'.rest.image'],
+                                     imval=[(self.img+'.image',1.36,[50,50,0,2]),
+                                            (self.img+'.smoothed.image',1.54,[50,50,0,2]),
+                                            (self.img+'.rest.image',1.54,[50,50,0,2]),
+                                            (self.img+'.image',0.79,[50,50,0,18]),
+                                            (self.img+'.smoothed.image',1.21,[50,50,0,18]),
+                                            (self.img+'.rest.image',1.21,[50,50,0,18])  ])
+
+          ## Note : In this test, setting niter=2000 will get all the runs to produce the same correct values.
+          
+          ## Pass or Fail (and why) ?
+          self.checkfinal(estr+report)
+
+
+     def test_onefield_mtmfs_restoringbeam(self):
+          """ [onefield] Test explicit restoring beams for mtmfs : Test peak flux with niter=0, compared with smoothing vs   restoringbeam"""
+          
+          self.prepData('refim_point.ms')
+          
+          ret1 = tclean(vis=self.msfile,imagename=self.img,
+                        imsize=100,cell='10.0arcsec',
+                        interactive=0,niter=0,specmode='mfs', deconvolver='mtmfs',
+                        parallel=self.parallel)
+
+          imsmooth(imagename=self.img+'.image.tt0', targetres=True,
+                   major='120.0arcsec', minor='120.0arcsec', pa='0deg',
+                   outfile=self.img+'.smoothed.image.tt0',overwrite=True)
+          imsmooth(imagename=self.img+'.image.tt1', targetres=True,
+                   major='120.0arcsec', minor='120.0arcsec', pa='0deg',
+                   outfile=self.img+'.smoothed.image.tt1',overwrite=True)
+          #os.system('rm -rf '+code+'trest_1_smoothed.alpha')
+          immath(imagename=[self.img+'.smoothed.image.tt0', self.img+'.smoothed.image.tt1'],
+                 mode='evalexpr', expr='IM1/IM0',outfile=self.img+'.smoothed.alpha')
+
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'.rest',
+                        imsize=100,cell='10.0arcsec',
+                        interactive=0,niter=0,specmode='mfs', deconvolver='mtmfs',restoringbeam='120.0arcsec',
+                        parallel=self.parallel)
+          
+          report = self.th.checkall(imexist=[self.img+'.rest.image.tt0'],
+                                     imval=[(self.img+'.image.tt0',1.06,[50,50,0,0]),
+                                            (self.img+'.alpha',-1.03,[50,50,0,0]),
+                                            (self.img+'.smoothed.image.tt0',1.5,[50,50,0,0]),
+                                            (self.img+'.smoothed.alpha',-2.19,[50,50,0,0]),
+                                            (self.img+'.rest.image.tt0',1.5,[50,50,0,0]),
+                                            (self.img+'.rest.alpha',-2.19,[50,50,0,0])  ])
+
+          ## Note : In this test, setting niter=100 will get all the runs to produce the same, correct alpha=-1.0
+
+          ## Pass or Fail (and why) ?
+          self.checkfinal(report)
+
+     def test_onefield_projections(self):
+          """ [onefield] Test_Onefield_projections : test selected projections  """
+          self.prepData('refim_twochan.ms')
+          # default projection = SIN
+          ret = tclean(vis=self.msfile,imagename=self.img+'SIN',imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'NCP',projection='NCP',imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
+          ret3 = tclean(vis=self.msfile,imagename=self.img+'TAN',projection='TAN',imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
+          ret4 = tclean(vis=self.msfile,imagename=self.img+'ARC',projection='ARC',imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
+          # Current fails with "wcs wcsset_error: Invalid parameter value" for HEALPix
+          #ret5 = tclean(vis=self.msfile,imagename=self.img+'HPX',projection='HPX',imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
+          testname=inspect.stack()[0][3]
+          report=self.th.checkall(ret=ret, imexist=[self.img+'SIN.image', self.img+'NCP.image', self.img+'TAN.image',self.img+'ARC.image'], imval=[(self.img+'SIN.psf',1.0,[50,50,0,0])])
+          retSIN = imhead(self.img+"SIN.image", mode='list')
+          retNCP = imhead(self.img+"NCP.image", mode='list')
+          retTAN = imhead(self.img+"TAN.image", mode='list')
+          retARC = imhead(self.img+"ARC.image", mode='list')
+
+          checkimage = "["+testname+"] The image in SIN projection : (" + self.th.verdict(retSIN['projection']=='SIN') + ")\n"
+          # in serial 'NCP' is added in projection key but in parallel, this seems to be trancated.
+          checkimage += "["+testname+"] The image in NCP projection : (" + self.th.verdict(retNCP['projection'].find('SIN ([0, 1.16122]')==0) + ")\n"
+          checkimage += "["+testname+"] The image in TAN projection : (" + self.th.verdict(retTAN['projection']=='TAN') + ")\n"
+          checkimage += "["+testname+"] The image in ARC projection : (" + self.th.verdict(retARC['projection']=='ARC') + ")\n"
+          
+          self.checkfinal(pstr=checkimage+report)
 
 ##############################################
 ##############################################
@@ -484,6 +744,8 @@ class test_iterbot(testref_base):
 
           self.checkfinal(report)
 
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
+     # test_imager_helper issue - now fixed and working
      def test_iterbot_cube_2(self):
           """ [iterbot] Test_Iterbot_cube_2 : High threshold, iterate only on line channels. """
           self.prepData('refim_point_withline.ms')
@@ -491,6 +753,7 @@ class test_iterbot(testref_base):
 
           ret={}
           if self.parallel:
+            # peakres and modflux is determined from node1 
             ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'peakres', 'modflux'])
           else:
             ret=retpar 
@@ -541,7 +804,7 @@ class test_iterbot(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='hogbom',parallel=self.parallel)
           report2=self.th.checkall(ret=ret2, peakres=0.3530, modflux=0.7719, iterdone=10, nmajordone=2,imexist=[self.img+'2.psf', self.img+'2.residual', self.img+'2.image'])
 
-          ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='multiscale',parallel=self.parallel)
+          ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='multiscale',parallel=self.parallel,smallscalebias=0.6)
           report3=self.th.checkall(ret=ret3, peakres=0.3922, modflux=0.7327, iterdone=10, nmajordone=2,imexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'])
      
 
@@ -622,7 +885,10 @@ class test_multifield(testref_base):
           ret={}
           if self.parallel:
             ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
-            iterdone_expected=46
+            if self.nnode < 2:
+              iterdone_expected=42  # single server case = serial
+            else:
+              iterdone_expected=46
           else:
             iterdone_expected=42
             ret=retpar 
@@ -959,27 +1225,27 @@ class test_cube(testref_base):
           ## Setup some variables to use in all the tests
 
           ## chan 4 (TOPO)
-          qfstart=qa.quantity("1.2GHz")
-          #qvstart=qa.quantity("-59958.5km/s")
+          qfstart=_qa.quantity("1.2GHz")
+          #qvstart=_qa.quantity("-59958.5km/s")
           # for restf=1.25GHz
-          qvstart=qa.quantity("11991.7km/s")
+          qvstart=_qa.quantity("11991.7km/s")
           # ch10
-          #qvstart=qa.quantity("16788.4km/s")
+          #qvstart=_qa.quantity("16788.4km/s")
 
-          #mfstart=me.frequency('LSRK',qa.quantity("1.09999GHz"))
+          #mfstart=_me.frequency('LSRK',_qa.quantity("1.09999GHz"))
           # ch4 (for rest 1.25GHz)
-          mfstart=me.frequency('LSRK',qa.quantity("1.199989GHz"))
-          mvstart=me.radialvelocity('BARY',qa.quantity("11977.6km/s"))
-          #dop = me.todoppler('radio',mfstart,qa.quantity('1.0GHz'))
-          mfstart10=me.frequency('LSRK',qa.quantity(" 1.17999GHz"))                                                        
+          mfstart=_me.frequency('LSRK',_qa.quantity("1.199989GHz"))
+          mvstart=_me.radialvelocity('BARY',_qa.quantity("11977.6km/s"))
+          #dop = _me.todoppler('radio',mfstart,_qa.quantity('1.0GHz'))
+          mfstart10=_me.frequency('LSRK',_qa.quantity(" 1.17999GHz"))                                                        
           # doppler with ch4 freq
-          dop = me.todoppler('radio',mfstart,qa.quantity('1.25GHz'))                                              
+          dop = _me.todoppler('radio',mfstart,_qa.quantity('1.25GHz'))                                              
 
           #1chan width 
-          #qvwidth = qa.quantity("11991.700km/s")
-          #qvwidth = qa.quantity("4796.7km/s")
-          qvwidth = qa.quantity("11991.7km/s")
-          mvwidth = me.radialvelocity('TOPO',qvwidth)
+          #qvwidth = _qa.quantity("11991.700km/s")
+          #qvwidth = _qa.quantity("4796.7km/s")
+          qvwidth = _qa.quantity("11991.7km/s")
+          mvwidth = _me.radialvelocity('TOPO',qvwidth)
 
           # restf = 1.25GHz
           # vel range: 59961.1 -  -31174.7 km/s (lsrk/radio)
@@ -1054,7 +1320,7 @@ class test_cube(testref_base):
 
      def run_cubetclean(self, testid):
           """ core function to execute a cube tclean """
-          if self.testList[testid].has_key('interpolation'):
+          if 'interpolation' in self.testList[testid]:
               interpolation = self.testList[testid]['interpolation']
           else:
               interpolation = 'linear'
@@ -1074,7 +1340,7 @@ class test_cube(testref_base):
      def test_cube_0(self):
           """ [cube] Test_Cube_0 new """
           testid=0
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1088,7 +1354,7 @@ class test_cube(testref_base):
      def test_cube_1(self):
           """ [cube] Test_Cube_1  """
           testid=1
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1103,7 +1369,7 @@ class test_cube(testref_base):
      def test_cube_2(self):
           """ [cube] Test_Cube_2  """
           testid=2
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1118,7 +1384,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_3  """
           # start = 5 (1.25GHZ IN TOPO)
           testid=3
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1132,7 +1398,7 @@ class test_cube(testref_base):
      def test_cube_4(self):
           """ [cube] Test_Cube_4  """
           testid=4
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1147,7 +1413,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_5  """
           # width by freq (2x chanw) result should be the same as #2
           testid=5
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1162,7 +1428,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_6  """ 
           # start in freq=1.1GHz (=chan5)
           testid=6
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1183,7 +1449,7 @@ class test_cube(testref_base):
           # select overlapping data and image selections (this seems to me more correct? behavior)
           # as of 2019.01.08, this is no longer true, psf blanked for chan 0 and 1 for parallel
           testid=7
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1206,7 +1472,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_8  """
           # start =1.5GHz(chan10)  width=-50MHz TOPO (descending freq)
           testid=8
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1221,7 +1487,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_9  """
           # width in vel (=23983.4km/s=2xChanW) def start (=cube will be ascending order in vel)
           testid=9
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1236,7 +1502,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_10  """
           # width in vel = -23983.4m/s def start (cube will be in descending order in vel)
           testid=10
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1251,7 +1517,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_11  """
           # start 11991.7km/s (chan4)
           testid=11
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1266,7 +1532,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_12  """
           # start 11977.6km/s (BARY) = chan4
           testid=12
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1281,7 +1547,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_13  """
           # 
           testid=13
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           # use own tclean command as nchan need to modify
           ret = tclean(vis=self.msfile,field='0',imsize=100,cell='8.0arcsec',niter=10,specmode='cube',nchan=8,restfreq=['1.25GHz'],
@@ -1300,7 +1566,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_14  """
           # start = quantity ('1.2GHz') frame default(LSRK)
           testid=14
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1315,7 +1581,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_15  """
           # measure freq in LSRK ch4
           testid=15
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1330,7 +1596,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_16  """
           # start quantity vel=11991.7km/s outframe=topo (ascending vel order)
           testid=16
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1345,7 +1611,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_17  """
           # start measure vel=11977.6km/s BARY, outframe=TOPO will be overridedden (ascending vel order)
           testid=17
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1361,7 +1627,7 @@ class test_cube(testref_base):
           # defaut start, width in vel (quantity) +11991.7km/s (TOPO, radio)=datachan width, will be
           # ascending order in vel so highet DATA channel will be chan 0 in the image (image chan0=1.45GHz)
           testid=18
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1376,7 +1642,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_19  """
           # default start, width in vel (measure) +11991.7km/s (TOPO, radio)
           testid=19
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1391,7 +1657,7 @@ class test_cube(testref_base):
           """ [cube] Test_Cube_20  """
           # doppler (with ch4 LSRK freq, rest freq=1.25GHz)
           testid=20
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1408,7 +1674,7 @@ class test_cube(testref_base):
           # data sel with channel gap (10,11 excluded) 4~9, 12~14
           testid=21
           self.testList[testid]['interpolation']='nearest'
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1425,7 +1691,7 @@ class test_cube(testref_base):
           # stride (step=2) use nearest interpolation (other interpotion methods
           # may not work well...)
           testid=22
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1439,7 +1705,7 @@ class test_cube(testref_base):
      def test_cube_23(self):
           """ [cube] Test_Cube_23  """
           testid=23
-          print " : " , self.testList[testid]['desc']
+          print(" : " , self.testList[testid]['desc'])
           self.prepData('refim_point.ms')
           ret = self.run_cubetclean(testid)
 
@@ -1667,12 +1933,28 @@ class test_cube(testref_base):
           report=self.th.checkall(imexist=[self.img+'.image'],imval=[(self.img+'.image',92.1789,[128,128,0,20])])
           ## line is tighter
           self.checkfinal(report)
-
+     def test_cube_perchanweight_briggs(self):
+          """[cube] test_cube_perchanweight_briggs: """
+          self.prepData('refim_point_withline.ms')
+          delmod(self.msfile)
+          imnat=self.img+"_nat"
+          imbriggs0=self.img+"_briggs0"
+          imbriggs_2=self.img+"_briggs_2"
+          imbriggs_3=self.img+"_briggs_3"
+          retnat = tclean(vis=self.msfile,imagename=imnat,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='natural', parallel=self.parallel)
+          ret0 = tclean(vis=self.msfile,imagename=imbriggs0,imsize=100,cell='8.0arcsec',specmode='cube', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggs', robust=0, parallel=self.parallel)
+          ret_2=tclean(vis=self.msfile,imagename=imbriggs_2,imsize=100,cell='8.0arcsec',specmode='cube', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggs', robust=-2.0, parallel=self.parallel)
+          ret_3=tclean(vis=self.msfile,imagename=imbriggs_3,imsize=100,cell='8.0arcsec',specmode='cube', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggs', robust=0.0, uvtaper=['50arcsec'], parallel=self.parallel)
+          self.assertTrue(os.path.exists(imnat+'.image') and os.path.exists(imbriggs0+'.image') and os.path.exists(imbriggs_2+'.image') and  os.path.exists(imbriggs_3+'.image') )
+          self.assertTrue(self.th.check_beam_compare(imbriggs0+'.image', imnat+'.image', operator.lt))
+          self.assertTrue(self.th.check_beam_compare(imbriggs_2+'.image', imbriggs0+'.image', operator.lt))
+          self.assertTrue(self.th.check_beam_compare(imbriggs0+'.image', imbriggs_3+'.image', operator.lt))
 #     def test_cube_D3(self):
 #          """ EMPTY : [cube] Test_Cube_D3 : specmode cubesrc - Doppler correct to a SOURCE ephemeris"""
 #          ret = tclean(vis=self.msfile,field='1',spw='0:105~135',specmode='cubesrc',nchan=30,start=105,width=1,veltype='radio',imagename=self.img,imsize=256,cell='0.01arcmin',phasecenter=1,deconvolver='hogbom',niter=10)
 #          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
 
+     @unittest.skipIf(is_CASA6, "Skip because plotms is not available in casatasks")
      def test_cube_continuum_subtract_uvsub(self):
           """ [cube] Test_Cube_continuum_subtract :  Using uvsub """
           self.prepData('refim_point_withline.ms')
@@ -1683,7 +1965,7 @@ class test_cube(testref_base):
           # Let's include a subdir in the output image name. This could cause failures, at
           # least in parallel mode (CAS-10937).
           imagename = os.path.join(self.img_subdir, self.img)
-          print "IMAGENAME=",imagename
+          print("IMAGENAME=",imagename)
           ret = tclean(vis=self.msfile,imagename=imagename,imsize=100,cell='8.0arcsec', spw='0:12~19',niter=50,gain=0.2,savemodel='modelcolumn',
                        deconvolver='mtmfs',parallel=self.parallel)
 #          self.assertTrue(self.th.exists(self.img+'.model') )
@@ -1725,7 +2007,7 @@ class test_cube(testref_base):
               ret = tclean(vis=self.msfile,imagename=self.img+'1',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',
                        restoringbeam='common',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'1.psf') and os.path.exists(self.img+'1.image') )
-          report2=self.th.checkall(imexist=[self.img+'1.image'],imval=[(self.img+'1.image',0.8906,[54,50,0,0]), (self.img+'1.image',0.35945,[54,50,0,19]) , (self.img+'1.residual',0.033942,[54,50,0,19]) ])
+          report2=self.th.checkall(imexist=[self.img+'1.image'],imval=[(self.img+'1.image',0.8906,[54,50,0,0]), (self.img+'1.image',0.51977,[54,50,0,19]) , (self.img+'1.residual',0.033942,[54,50,0,19]) ])
           # OLD - first channel has been restored by a 'common' beam picked from channel 2
           self.checkfinal(report1+report2)
 
@@ -1754,16 +2036,17 @@ class test_cube(testref_base):
           
           header = imhead(self.img+'.image',verbose=False)
                
-          estr = "["+inspect.stack()[1][3]+"] Has single restoring beam ? : " + self.th.verdict( header.has_key('restoringbeam')) + "\n"
+          estr = "["+inspect.stack()[1][3]+"] Has single restoring beam ? : " + self.th.verdict( 'restoringbeam' in header) + "\n"
 
           report2 = self.th.checkall(imexist=[self.img+'.image'], 
-                                     imval=[(self.img+'.image',0.770445,[54,50,0,1]),
-                                            (self.img+'.image',0.408929,[54,50,0,15])  ])
+                                     imval=[(self.img+'.image',0.770450,[54,50,0,1]),
+                                            (self.img+'.image',0.567246,[54,50,0,15])  ])
           
           ## Pass or Fail (and why) ?
           self.checkfinal(estr+report2)
 
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
      def test_cube_chanchunks(self):
           """ [cube] Test channel chunking for large cubes """
           self.prepData('refim_point.ms')
@@ -1785,6 +2068,7 @@ class test_cube(testref_base):
           self.checkfinal(report)
 
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_cube_chanchunks_savemodel(self):
           """ [cube] Test channel chunking for large cubes and save model """
           self.prepData('refim_point.ms')
@@ -1794,6 +2078,22 @@ class test_cube(testref_base):
           report=self.th.checkall(imexist=[self.img+'cc.image'],imval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
           self.assertTrue( self.th.checkmodelchan(self.msfile,5) > 0.0 and self.th.checkmodelchan(self.msfile,18) > 0.0 )
           self.checkfinal(report)
+          
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")     
+     def test_cube_mtmfs_nterms1(self):		
+          """ [cube] Test mtmfs with cube and nterms = 1 """		
+          self.prepData('refim_eptwochan.ms')		
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cube', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])		
+          report=self.th.checkall(ret=ret, imexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
+          self.checkfinal(report)		
+          
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")     
+     def test_cubedata_mtmfs_nterms1(self):		
+          """ [cube] Test mtmfs with cube data and nterms = 1 """		
+          self.prepData('refim_eptwochan.ms')		
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cubedata', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])		
+          report=self.th.checkall(ret=ret, imexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
+          self.checkfinal(report) 
 
 ##############################################
 ##############################################
@@ -1848,6 +2148,8 @@ class test_mask(testref_base):
           report=self.th.checkall(imexist=[self.img+'1.mask', self.img+'2.mask'], imval=[(self.img+'1.mask',0.0,[50,50,0,1]),(self.img+'1.mask',1.0,[50,50,0,2]),(self.img+'1.mask',1.0,[50,50,0,10]),(self.img+'1.mask',0.0,[50,50,0,11]),(self.img+'2.mask',1.0,[50,50,0,0]),(self.img+'2.mask',1.0,[50,50,0,4]),(self.img+'2.mask',0.0,[50,50,0,10])])
           self.checkfinal(report)
 
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
+     # parallel mode issue was fixed in imageanalysis 2019.05.23
      def test_mask_5(self):
           """ [mask] test_mask_5 : Input cube mask that has different chan
           ranges (use mask from the 1st tclean with a different channel range in the 2nd tclean run)"""
@@ -1907,7 +2209,6 @@ class test_mask(testref_base):
 #          report=self.th.checkall(imexist=[self.img+'.mask'], imval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
 #          self.checkfinal(report)
 
-
 # the option, auto-thresh removed
 #     def test_mask_autobox_pbmask(self):
 #         """ [mask] test_mask_autobox_nmask : Autoboxing  with pbmask"""
@@ -1958,6 +2259,7 @@ class test_mask(testref_base):
 #          report=self.th.checkall(imexist=[self.img+'.mask'], imval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
 #          self.checkfinal(report)
 
+     # AUTOMASK TESTS
      def test_mask_autobox_multithresh(self):
           """ [mask] test_mask__autobox_multithresh :  multi-threshold Autobox (default)"""
           self.prepData('refim_twochan.ms')
@@ -2013,6 +2315,19 @@ class test_mask(testref_base):
                        usemask='auto-multithresh', negativethreshold=5.0,parallel=self.parallel)
           report=self.th.checkall(imexist=[self.img+'.mask'], imval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[60,40,0,0]),(self.img+'.mask',0.0,[65,50,0,0])])
           self.checkfinal(report)
+
+     def test_mask_autobox_multithresh_mfs_IQUV(self):
+          """ [mask] test_mask__autobox_multithresh_mtmfs_IQUV :  multi-threshold Autobox (minbeamfrac=0.3) with cube full polarizaiton (IQUV) imaging """
+          self.prepData('refim_point_linRL.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='mfs',interpolation='nearest',usemask="auto-multithresh", verbose=True, parallel=self.parallel)
+          report=self.th.checkall(imexist=[self.img+'.mask'], imval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[40,60,0,0]),(self.img+'.mask',0.0,[65,50,0,0]), (self.img+'.mask', 1.0,[40,60,3,0])])
+          self.checkfinal(report)
+      
+     def test_mask_autobox_multithresh_cube_IQUV(self):
+          """ [mask] test_mask__autobox_multithresh_cube_IQUV :  multi-threshold Autobox (minbeamfrac=0.05) with cube full polarizaiton (IQUV) imaging """
+          self.prepData('refim_point_linXY.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube',interpolation='nearest',usemask="auto-multithresh", minbeamfrac=0.05,  verbose=True, parallel=self.parallel)
+          report=self.th.checkall(imexist=[self.img+'.mask'], imval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[35,75,0,0]),(self.img+'.mask',0.0,[32,80,1,1]), (self.img+'.mask',1.0,[35,60,1,1]), (self.img+'.mask',1.0,[60,30,3,0])])
 
 #     def test_mask_outregion(self):
 #          """ [mask] test_mask_outregion : Input mask has region that goes outside the image """
@@ -2075,7 +2390,7 @@ class test_mask(testref_base):
           report=self.th.checkall(ret=ret, imexist=[self.img+'.mask'],
           imval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,0,1]),(self.img+'.mask',1.0,[50,50,0,2]), (self.img+'.mask',0.0,[65,65,0,1])])
 
-	
+        
      def test_mask_expand_contstokesImask_to_IQUV(self):
           """ [mask] test_mask_expand_contstokesImask_to_IQUV : Test for expanding
           input continuum Stokes I mask to continuum multi-stokes imaging  """
@@ -2419,6 +2734,16 @@ class test_widefield(testref_base):
 
           #do stokes V too..
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. mosaic, Briggs weighting with mosweight=True. Enable this after fixing CAS-11978")
+     def test_widefield_mosaicft_mfs_mosweightTrue(self):
+          """ [widefield] Test_Widefield_mosaic : MFS with mosaicft  stokes I briggs mosweight=True(default)"""
+          self.prepData("refim_mawproject.ms")
+          ret = tclean(vis=self.msfile,spw='1',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",
+                       niter=30,gridder='mosaicft',deconvolver='hogbom',pblimit=0.3,weighting='briggs', parallel=self.parallel)
+          report=self.th.checkall(imexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imval=[(self.img+'.image',0.962813, [256,256,0,0]),(self.img+'.weight',0.50520, [256,256,0,0]) ] )
+          #ret = clean(vis=self.msfile,spw='1',field='*',imagename=self.img+'.old',imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",niter=30,imagermode='mosaic',psfmode='hogbom')
+          self.checkfinal(report)
+
      def test_widefield_mosaicft_mtmfs(self):
           """ [widefield] Test_Widefield_mosaicft_mtmfs : MT-MFS with mosaicft  stokes I, alpha """
           self.prepData("refim_mawproject.ms")
@@ -2459,34 +2784,6 @@ class test_widefield(testref_base):
           #do stokes V too..
 
      
-class test_widefield_failing(testref_base):
-
-     def test_widefield_imagemosaic(self):
-          """ [widefield] Test_Widefield_imagemosaic : Image domain mosaic for single-term mfs (or narrowband)  """
-          self.prepData("refim_mawproject.ms")
-          ret = tclean(vis=self.msfile,spw='1',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",
-                       niter=30,gridder='imagemosaic',deconvolver='hogbom',parallel=self.parallel)
-          report=self.th.checkall(imexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imval=[(self.img+'.image',1.0,[256,256,0,0]),(self.img+'.weight',0.493,[256,256,0,0]) ] )
-          self.checkfinal(report)
-
-
-     def test_widefield_mosaic_outlier(self):
-          """ [multifield] Test_widefield_mosaic_outlier : Mosaic with an outlier field """
-          #### Need another dataset for this.
-          self.prepData("refim_mawproject.ms")
-          ## Outlier uses gridft
-          self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:42.0 +40.55.58.543\nmask=circle[[40pix,40pix],10pix]\ngridder=gridft')
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",
-                       outlierfile=self.img+'.out.txt',niter=10,deconvolver='hogbom',gridder='mosaicft',interactive=0,parallel=self.parallel)
-          report=self.th.checkall(ret=ret, 
-                        iterdone=10,  # outlier field has nothing in it :).
-                        nmajordone=2,
-                        imexist=[self.img+'.image', self.img+'1.image'],
-                        imval=[(self.img+'.image',0.933,[256,256,0,0]),
-                               (self.img+'1.image',0.0,[40,40,0,0])])
-          self.checkfinal(report)
-          #### NOT WORKING as the model is being picked from tst1, so residual after 0.6 model and one major cycle is same as dirty and the output image is 1.6 instead of 0.93.
-
 ##############################################
 ##############################################
 
@@ -2501,6 +2798,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==False )
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_2(self):
           """ [modelpredict] Test_modelvis_2 : mfs with save model column """
           self.prepData("refim_twochan.ms")
@@ -2518,6 +2816,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_3(self):
           """ [modelpredict] Test_modelvis_3 : mfs with save virtual model """
           self.prepData("refim_twochan.ms")
@@ -2543,6 +2842,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==False )
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled() or is_CASA6, "Skip the test temporarily, plotms unavailable in casatasks")
      def test_modelvis_5(self):
           """ [modelpredict] Test_modelvis_5 : mt-mfs with save model column """
           self.prepData("refim_twochan.ms")
@@ -2560,6 +2860,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_6(self):
           """ [modelpredict] Test_modelvis_6 : mt-mfs with save virtual model """
           self.prepData("refim_twochan.ms")
@@ -2574,6 +2875,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==True )
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_7(self):
           """ [modelpredict] Test_modelvis_7 : cube with chan selection and save model column """
           ## check explicit channels ...
@@ -2595,6 +2897,7 @@ class test_modelvis(testref_base):
           self.checkfinal(reportcv)
 
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_8(self):
           """ [modelpredict] Test_modelvis_8 : cube with chan selection and save virtual model """
           ## check explicit channels ...
@@ -2611,6 +2914,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==True )
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_9(self):
           """ [modelpredict] Test_modelvis_9 : Don't de-grid channels with zero model. Also test limited-freq mask """
           self.prepData("refim_point.ms")
@@ -2626,6 +2930,7 @@ class test_modelvis(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',startmodel=self.img+'.model',niter=0,
                        savemodel='virtual',parallel=self.parallel)
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_10(self):
           """ [modelpredict] Test_modelvis_10 : Use input model of different (narrower) freq range than data """
           self.prepData("refim_point.ms")
@@ -2651,6 +2956,7 @@ class test_modelvis(testref_base):
                        savemodel='virtual',parallel=self.parallel)
           ## cannot check anything here....  just that it runs without error
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_11(self):
           """ [modelpredict] Test_modelvis_11 : Predict model image over channel gaps not included in imaging """
           self.prepData("refim_point.ms")
@@ -2770,6 +3076,7 @@ class test_startmodel(testref_base):
                              (self.img+'4.residual.tt1',-0.01519,[50,50,0,0])     ] )
           self.checkfinal(report)
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_startmodel_with_mask_mfs(self):
           """ [startmodel] test_startmodel_with_mask_mfs : Mask out some regions in the startmodel, before prediction """
           self.prepData("refim_twopoints_twochan.ms")
@@ -2794,6 +3101,7 @@ class test_startmodel(testref_base):
                                 (self.img+'.3.model',0.024,[154,172,0,0])   ] )
           self.checkfinal(report)
           
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_startmodel_with_mask_mtmfs(self):
           """ [startmodel] test_startmodel_with_mask_mtmfs : Mask out some regions in the startmodel, before prediction """
           self.prepData("refim_twopoints_twochan.ms")
@@ -2904,3 +3212,675 @@ class test_pbcor(testref_base):
           report2=self.th.checkall(imexist=[self.img+'.image', self.img+'.pb'], imval=[(self.img+'.pb',0.7,[256,256,0,0])] , immask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])]  )
 
           self.checkfinal(report1+report2)
+
+#####################################################
+#####################################################
+#####################################################
+#####################################################
+class test_mosaic_mtmfs(testref_base):
+     def test_mtmfs_standard_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = ''
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec', gridder='standard',field=field,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          widebandpbcor(vis=self.msfile, imagename=self.img,nterms=2,reffreq='1.5GHz',pbmin=0.1, field=field, spwlist=[0,1,2], chanlist=[0,0,0], weightlist=[1.0,1.0,1.0])
+          report1=self.th.checkall(imval=[(self.img+'.pbcor.image.tt0',1.021635,[512,596,0,0]),(self.img+'.pbcor.image.alpha', -0.4811849,[512,596,0,0]),(self.img+'.pbcor.workdirectory/' + self.img + '.pb.alpha',-1.526915,[512,596,0,0])])
+         
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec', gridder='standard',field=field,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          widebandpbcor(vis=self.msfile, imagename=self.img,nterms=2,reffreq='1.5GHz',pbmin=0.1, field=field, spwlist=[0,1,2], chanlist=[0,0,0], weightlist=[1.0,1.0,1.0])
+          report2=self.th.checkall(imval=[(self.img+'.pbcor.image.tt0',1.02163529396,[512,596,0,0]),(self.img+'.pbcor.image.alpha', -0.481181353331 ,[512,596,0,0]),(self.img+'.pbcor.workdirectory/' + self.img + '.pb.alpha',-1.52691471577,[512,596,0,0])])
+          
+          self.checkfinal(report1+report2)
+     
+     ###########################
+     #warning
+     def test_mtmfs_standard_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec', gridder='standard',field=field,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.696767389774,[512,596,0,0]),(self.img+'.alpha', -1.22704184055,[512,596,0,0])])
+          widebandpbcor(vis=self.msfile, imagename=self.img,nterms=2,reffreq='1.5GHz',pbmin=0.1, field=field, spwlist=[0,1,2], chanlist=[0,0,0], weightlist=[1.0,1.0,1.0])
+          report2=self.th.checkall(imval=[(self.img+'.pbcor.image.tt0',0.7115,[512,596,0,0]),(self.img+'.pbcor.image.alpha',-1.2540572,[512,596,0,0]),(self.img+'.pbcor.workdirectory/' + self.img + '.pb.alpha',0.027015,[512,596,0,0])])
+          
+          os.system('rm -rf ' + self.img+'*')
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec', gridder='standard',field=field,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.tt0', 0.696766972542 ,[512,596,0,0]),(self.img+'.alpha',-1.2270386219,[512,596,0,0])])
+          widebandpbcor(vis=self.msfile, imagename=self.img,nterms=2,reffreq='1.5GHz',pbmin=0.1, field=field, spwlist=[0,1,2], chanlist=[0,0,0], weightlist=[1.0,1.0,1.0])
+          report4=self.th.checkall(imval=[(self.img+'.pbcor.image.tt0',0.7115,[512,596,0,0]),(self.img+'.pbcor.image.alpha',-1.2540572,[512,596,0,0]),(self.img+'.pbcor.workdirectory/' + self.img + '.pb.alpha',0.027015,[512,596,0,0])])
+          
+          self.checkfinal(report1 + report2 + report3 + report4 + '\n Warning: values must be theoretically validated')
+          
+#############################
+     #
+     def test_mtmfs_mosaic_cbFalse_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = '' 
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.5302894,[512,596,0,0]),(self.img+'.pb.tt0',0.5144197,[512,596,0,0]),(self.img+'.alpha',-3.29580,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.450807213783 ,[512,596,0,0]),(self.img+'.pb.tt0',0.514419734478,[512,596,0,0]),(self.img+'.alpha',-1.6693893671,[512,596,0,0])])
+          self.checkfinal(report1+report2)
+
+     def test_mtmfs_mosaic_cbFalse_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0', 0.97402,[512,596,0,0]),(self.img+'.pb.tt0', 0.982510,[512,596,0,0]),(self.img+'.alpha', -0.9880,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0', 0.982747793198,[512,596,0,0]),(self.img+'.pb.tt0', 0.982510685921,[512,596,0,0]),(self.img+'.alpha', -0.69006639719,[512,596,0,0])])
+          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+      
+     def test_mtmfs_mosaic_cbTrue_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = '' 
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.492861807346,[512,596,0,0]),(self.img+'.pb.tt0', 0.492951124907,[512,596,0,0]),(self.img+'.alpha',-0.586531162262,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.494806170464,[512,596,0,0]),(self.img+'.pb.tt0', 0.492951124907,[512,596,0,0]),(self.img+'.alpha',-0.548104763031,[512,596,0,0])])
+          self.checkfinal(report1 + report2)
+     
+     def test_mtmfs_mosaic_cbTrue_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',1.004476,[512,596,0,0]),(self.img+'.pb.tt0',0.98724,[512,596,0,0]),(self.img+'.alpha',-1.216693,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.989150226116,[512,596,0,0]),(self.img+'.pb.tt0',0.987243115902,[512,596,0,0]),(self.img+'.alpha',-0.771613717079,[512,596,0,0])])
+          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          
+          ###################    
+     def test_mtmfs_mosaic_cbTrue_onefield_use_standard_psf(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbTrue")
+          phasecenter = '' 
+          field='0'
+          
+          ## Run the standard gridder imaging.
+          tclean(vis=self.msfile, imagename='std',niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='standard',field=field,cfcache=self.cfcache,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          
+          ## Make the residual images using mosaic/awproject
+          os.system('rm -rf '+self.img+'.*'); 
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,cfcache=self.cfcache,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+           
+          ## Replace the PSFs with those from the standard gridder
+          os.system('rm -rf '+self.img+'.psf*')
+          os.system('cp -r std.psf.tt0 '+self.img+'.psf.tt0')
+          os.system('cp -r std.psf.tt1 '+self.img+'.psf.tt1')
+          os.system('cp -r std.psf.tt2 '+self.img+'.psf.tt2')
+          
+          ## Restart tclean with calcres=False and calcpsf=False
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,calcres=False, calcpsf=False,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+
+          report=self.th.checkall(imval=[(self.img+'.image.tt0', 0.492902100086 ,[512,596,0,0]),(self.img+'.pb.tt0',   0.492951124907 ,[512,596,0,0]),(self.img+'.alpha',    -0.591838240623,[512,596,0,0])])
+          self.checkfinal(report)
+             
+     def test_mtmfs_mosaic_cbTrue_twofield_use_standard_psf(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbTrue")
+          phasecenter = '' 
+          field='0,1'
+          
+          ## Run the standard gridder imaging.
+          tclean(vis=self.msfile, imagename='std',niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='standard',field=field,cfcache=self.cfcache,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          
+          ## Make the residual images using mosaic/awproject
+          os.system('rm -rf '+self.img+'.*'); 
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,cfcache=self.cfcache,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+           
+          ## Replace the PSFs with those from the standard gridder
+          os.system('rm -rf '+self.img+'.psf*')
+          os.system('cp -r std.psf.tt0 '+self.img+'.psf.tt0')
+          os.system('cp -r std.psf.tt1 '+self.img+'.psf.tt1')
+          os.system('cp -r std.psf.tt2 '+self.img+'.psf.tt2')
+          
+          ## Restart tclean with calcres=False and calcpsf=False
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,calcres=False, calcpsf=False,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          report=self.th.checkall(imval=[(self.img+'.image.tt0',  0.982702195644,[512,596,0,0]),(self.img+'.pb.tt0', 0.987243115902,[512,596,0,0]),(self.img+'.alpha',  -0.55044066906,[512,596,0,0])])
+          self.checkfinal(report)
+
+#############################        
+
+     def test_mtmfs_awproject_cbFalse_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter =''
+          field='0'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.5269711,[512,596,0,0]),(self.img+'.pb.tt0',0.50752753,[512,596,0,0]),(self.img+'.alpha',-3.24132061,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.451119929552,[512,596,0,0]),(self.img+'.pb.tt0',0.507527530193,[512,596,0,0]),(self.img+'.alpha',-1.65221953392,[512,596,0,0])])
+          self.checkfinal(report1 + report2)
+
+
+     def test_mtmfs_awproject_cbFalse_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.97862583398,[512,596,0,0]),(self.img+'.pb.tt0',0.979142010212,[512,596,0,0]),(self.img+'.alpha',-1.24368548393,[512,596,0,0])])
+          
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject', field=field,  cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.975049376488,[512,596,0,0]),(self.img+'.pb.tt0',0.979141950607,[512,596,0,0]),(self.img+'.alpha',-0.80353230238,[512,596,0,0])])
+          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          
+     def test_mtmfs_awproject_cbTrue_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbTrue")
+          phasecenter = '' 
+          field='0'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.477538466454,[512,596,0,0]),(self.img+'.pb.tt0', 0.479197412729,[512,596,0,0]),(self.img+'.alpha',  -0.562356948853,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.482177525759,[512,596,0,0]),(self.img+'.pb.tt0', 0.479197442532,[512,596,0,0]),(self.img+'.alpha',  -0.568624258041,[512,596,0,0])])
+          self.checkfinal(report1 + report2)
+             
+     def test_mtmfs_awproject_cbTrue_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbTrue")
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0', 0.974482476711 ,[512,596,0,0]),(self.img+'.pb.tt0',0.979797422886,[512,596,0,0]),(self.img+'.alpha', -0.538577735424 ,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0', 0.97661459446 ,[512,596,0,0]),(self.img+'.pb.tt0',0.979797422886,[512,596,0,0]),(self.img+'.alpha', -0.538577854633 ,[512,596,0,0])])
+          self.checkfinal(report1+report2)
+###################    
+     def test_mtmfs_awproject_cbTrue_onefield_use_standard_psf(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbTrue")
+          phasecenter = '' 
+          field='0'
+          
+          ## Run the standard gridder imaging.
+          tclean(vis=self.msfile, imagename='std',niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='standard',field=field,cfcache=self.cfcache,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          
+          ## Make the residual images using mosaic/awproject
+          os.system('rm -rf '+self.img+'.*'); 
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+           
+          ## Replace the PSFs with those from the standard gridder
+          os.system('rm -rf '+self.img+'.psf*')
+          os.system('cp -r std.psf.tt0 '+self.img+'.psf.tt0')
+          os.system('cp -r std.psf.tt1 '+self.img+'.psf.tt1')
+          os.system('cp -r std.psf.tt2 '+self.img+'.psf.tt2')
+          
+          ## Restart tclean with calcres=False and calcpsf=False
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,calcres=False, calcpsf=False,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+
+          report=self.th.checkall(imval=[(self.img+'.image.tt0',0.477585822344,[512,596,0,0]),(self.img+'.pb.tt0',  0.479197412729 ,[512,596,0,0]),(self.img+'.alpha',   -0.569523513317,[512,596,0,0])])
+          self.checkfinal(report)
+             
+     def test_mtmfs_awproject_cbTrue_twofield_use_standard_psf(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbTrue")
+          phasecenter = '' 
+          field='0,1'
+          
+          ## Run the standard gridder imaging.
+          tclean(vis=self.msfile, imagename='std',niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='standard',field=field,cfcache=self.cfcache,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          
+          ## Make the residual images using mosaic/awproject
+          os.system('rm -rf '+self.img+'.*'); 
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache,conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+           
+          ## Replace the PSFs with those from the standard gridder
+          os.system('rm -rf '+self.img+'.psf*')
+          os.system('cp -r std.psf.tt0 '+self.img+'.psf.tt0')
+          os.system('cp -r std.psf.tt1 '+self.img+'.psf.tt1')
+          os.system('cp -r std.psf.tt2 '+self.img+'.psf.tt2')
+          
+          ## Restart tclean with calcres=False and calcpsf=False
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,calcres=False, calcpsf=False,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
+          report=self.th.checkall(imval=[(self.img+'.image.tt0', 0.974559485912,[512,596,0,0]),(self.img+'.pb.tt0', 0.979797422886,[512,596,0,0]),(self.img+'.alpha',  -0.542647540569,[512,596,0,0])])
+          self.checkfinal(report)
+          
+          
+     def test_mtmfs_mosaic_cbFalse_onefield_upTrue(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = '' 
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, usepointing=True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.5302894,[512,596,0,0]),(self.img+'.pb.tt0',0.5144197,[512,596,0,0]),(self.img+'.alpha',-3.29580,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, usepointing=True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.450807213783 ,[512,596,0,0]),(self.img+'.pb.tt0',0.514419734478,[512,596,0,0]),(self.img+'.alpha',-1.6693893671,[512,596,0,0])])
+          self.checkfinal(report1+report2)
+
+     def test_mtmfs_mosaic_cbFalse_twofield_upTrue(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, usepointing=True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0', 0.97402,[512,596,0,0]),(self.img+'.pb.tt0', 0.982510,[512,596,0,0]),(self.img+'.alpha', -0.9880,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, usepointing=True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0', 0.982747793198,[512,596,0,0]),(self.img+'.pb.tt0', 0.982510685921,[512,596,0,0]),(self.img+'.alpha', -0.69006639719,[512,596,0,0])])
+          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          
+          
+          
+     def test_mtmfs_awproject_cbFalse_onefield_upTrue(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter =''
+          field='0'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field, usepointing=True, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.5269711,[512,596,0,0]),(self.img+'.pb.tt0',0.50752753,[512,596,0,0]),(self.img+'.alpha',-3.24132061,[512,596,0,0])])
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field, usepointing=True, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.451119929552,[512,596,0,0]),(self.img+'.pb.tt0',0.507527530193,[512,596,0,0]),(self.img+'.alpha',-1.65221953392,[512,596,0,0])])
+          self.checkfinal(report1 + report2)
+
+
+     def test_mtmfs_awproject_cbFalse_twofield_upTrue(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  usepointing=True, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.tt0',0.97862583398,[512,596,0,0]),(self.img+'.pb.tt0',0.979142010212,[512,596,0,0]),(self.img+'.alpha',-1.24368548393,[512,596,0,0])])
+          
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject', field=field,  usepointing=True, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
+          report2=self.th.checkall(imval=[(self.img+'.image.tt0',0.975049376488,[512,596,0,0]),(self.img+'.pb.tt0',0.979141950607,[512,596,0,0]),(self.img+'.alpha',-0.80353230238,[512,596,0,0])])
+          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          
+
+###########################################################
+###########################################################
+###########################################################
+class test_mosaic_cube(testref_base):
+     def test_cube_standard_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = ''
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec', gridder='standard',field=field,pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor', 1.10922563076,[512,596,0,0]),(self.img+'.image.pbcor',0.989520609379,[512,596,0,1]),(self.img+'.image.pbcor',0.90361648798,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -0.505622766021, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec', gridder='standard',field=field,pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor', 1.10922467709,[512,596,0,0]),(self.img+'.image.pbcor', 0.989521086216,[512,596,0,1]),(self.img+'.image.pbcor',0.903617084026,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -0.505622766021, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+     
+     def test_cube_standard_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec', gridder='standard',field=field,pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',0.895364701748,[512,596,0,0]),(self.img+'.image.pbcor',0.701696813107,[512,596,0,1]),(self.img+'.image.pbcor',0.539412796497,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -1.249799253, valname='Spectral flux', exact=False)
+          
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec', gridder='standard',field=field,pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor', 0.895363807678,[512,596,0,0]),(self.img+'.image.pbcor',0.701696515083,[512,596,0,1]),(self.img+'.image.pbcor',0.539413094521,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -1.24979542771, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+     
+###########################################################
+     def test_cube_mosaic_cbFalse_mwFalse_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = '' 
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.1021887064,[512,596,0,0]),(self.img+'.image.pbcor',0.983152985573,[512,596,0,1]),(self.img+'.image.pbcor',0.905956506729,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index,  -0.483567460558, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11281049252,[512,596,0,0]),(self.img+'.image.pbcor',0.994237959385,[512,596,0,1]),(self.img+'.image.pbcor',0.912590324879,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index,  -0.48920856272, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+          
+     def test_cube_mosaic_cbFalse_mwFalse_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10354316235,[512,596,0,0]),(self.img+'.image.pbcor',0.981979846954,[512,596,0,1]),(self.img+'.image.pbcor', 0.895015060902,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -0.516544552, valname='Spectral flux', exact=False)
+          
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11373543739,[512,596,0,0]),(self.img+'.image.pbcor',0.994349777699,[512,596,0,1]),(self.img+'.image.pbcor', 0.909038066864,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -0.500876470767, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+           
+     def test_cube_mosaic_cbFalse_mwTrue_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = '' 
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.1021887064,[512,596,0,0]),(self.img+'.image.pbcor',0.983152985573,[512,596,0,1]),(self.img+'.image.pbcor',0.905956506729,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index,  -0.483548182038, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11281049252,[512,596,0,0]),(self.img+'.image.pbcor',0.994237959385,[512,596,0,1]),(self.img+'.image.pbcor',0.912590324879,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index,  -0.48920856272, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+
+     def test_cube_mosaic_cbFalse_mwTrue_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10354316235,[512,596,0,0]),(self.img+'.image.pbcor', 0.981979727745,[512,596,0,1]),(self.img+'.image.pbcor', 0.895014822483,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -0.51654520997, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11373543739,[512,596,0,0]),(self.img+'.image.pbcor', 0.994349777699,[512,596,0,1]),(self.img+'.image.pbcor', 0.909038066864,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -0.50087647076, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+#####################################################  
+
+     def test_cube_awproject_cbFalse_mwFalse_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter = '' 
+          field='0'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor', 1.1262229681,[512,596,0,0]),(self.img+'.image.pbcor', 0.996681272984,[512,596,0,1]),(self.img+'.image.pbcor', 0.879481077194,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index,  -0.641964, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)      
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor', 1.13023257256,[512,596,0,0]),(self.img+'.image.pbcor', 1.00326132774,[512,596,0,1]),(self.img+'.image.pbcor',0.8681204319,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index,  -0.618663982179, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+          
+     def test_cube_awproject_cbFalse_mwFalse_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
+          field='0,1'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11765027046,[512,596,0,0]),(self.img+'.image.pbcor',0.990656971931,[512,596,0,1]),(self.img+'.image.pbcor', 0.879846811295,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -0.590028509558, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.12036144733,[512,596,0,0]),(self.img+'.image.pbcor',0.994982719421,[512,596,0,1]),(self.img+'.image.pbcor', 0.889532327652,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+          
+          
+     def test_cube_awproject_cbFalse_mwTrue_onefield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter = '' 
+          field='0'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.1262229681,[512,596,0,0]),(self.img+'.image.pbcor', 0.996681272984,[512,596,0,1]),(self.img+'.image.pbcor', 0.8681204319,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -0.641964870168, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.13023257256,[512,596,0,0]),(self.img+'.image.pbcor',  1.00326132774,[512,596,0,1]),(self.img+'.image.pbcor', 0.879481077194,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index,  -0.61866398217, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+          
+     def test_cube_awproject_cbFalse_mwTrue_twofield(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
+          field='0,1'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11765027046,[512,596,0,0]),(self.img+'.image.pbcor',0.990656971931,[512,596,0,1]),(self.img+'.image.pbcor', 0.879846811295,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -0.590028509558, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=True,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.12036144733,[512,596,0,0]),(self.img+'.image.pbcor',0.994982719421,[512,596,0,1]),(self.img+'.image.pbcor', 0.889532327652,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4) 
+          
+#####################################################  
+##################################################### 
+##################################################### 
+     def test_cube_mosaic_cbFalse_mwFalse_onefield_upTrue(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = '' 
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,  usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.1021887064,[512,596,0,0]),(self.img+'.image.pbcor',0.983152985573,[512,596,0,1]),(self.img+'.image.pbcor',0.905956506729,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index,  -0.483567460558, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,  usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11281049252,[512,596,0,0]),(self.img+'.image.pbcor',0.994237959385,[512,596,0,1]),(self.img+'.image.pbcor',0.912590324879,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index,  -0.48920856272, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+          
+     def test_cube_mosaic_cbFalse_mwFalse_twofield_upTrue(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,  usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10354316235,[512,596,0,0]),(self.img+'.image.pbcor',0.981979846954,[512,596,0,1]),(self.img+'.image.pbcor', 0.895015060902,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -0.516544552, valname='Spectral flux', exact=False)
+          
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,  usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11373543739,[512,596,0,0]),(self.img+'.image.pbcor',0.994349777699,[512,596,0,1]),(self.img+'.image.pbcor', 0.909038066864,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -0.500876470767, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+
+     def test_cube_awproject_cbFalse_mwFalse_onefield_upTrue(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter = '' 
+          field='0'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor', 1.1262229681,[512,596,0,0]),(self.img+'.image.pbcor', 0.996681272984,[512,596,0,1]),(self.img+'.image.pbcor', 0.879481077194,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index,  -0.641964, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)      
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor', 1.13023257256,[512,596,0,0]),(self.img+'.image.pbcor', 1.00326132774,[512,596,0,1]),(self.img+'.image.pbcor',0.8681204319,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index,  -0.618663982179, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+          
+     def test_cube_awproject_cbFalse_mwFalse_twofield_upTrue(self):
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
+          phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
+          field='0,1'
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.11765027046,[512,596,0,0]),(self.img+'.image.pbcor',0.990656971931,[512,596,0,1]),(self.img+'.image.pbcor', 0.879846811295,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index, -0.590028509558, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, usepointing = True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,reffreq='1.5GHz',pbcor=True,mosweight=False,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.12036144733,[512,596,0,0]),(self.img+'.image.pbcor',0.994982719421,[512,596,0,1]),(self.img+'.image.pbcor', 0.889532327652,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+
+if is_CASA6:
+     if __name__ == '__main__':
+          unittest.main()

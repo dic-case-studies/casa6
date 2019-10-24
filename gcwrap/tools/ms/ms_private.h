@@ -6,7 +6,7 @@ void setNewSel(const casacore::MeasurementSet& newSelectedMS);
 
 casacore::Bool checkinit();
 casacore::Vector<casacore::Int> getCorrTypes(casa::vi::VisBuffer2* vb2);
-casacore::Vector<casacore::Int> getCorrTypes(casacore::ROMSColumns& msc);
+casacore::Vector<casacore::Int> getCorrTypes(casacore::MSColumns& msc);
 casacore::Vector<casacore::Int> getspectralwindows();
 casacore::Vector<casacore::Int> getifrnumbers();
 casacore::Vector<casacore::Int> getbaselines(casa::vi::VisBuffer2* vb2);
@@ -23,7 +23,7 @@ casacore::String getSpwExpr();
 
 // for getdata2 axis_info:
 casacore::Vector<casacore::String> getCorrAxis(casa::vi::VisBuffer2* vb2);
-casacore::Vector<casacore::String> getCorrAxis(casacore::ROMSColumns& msc);
+casacore::Vector<casacore::String> getCorrAxis(casacore::MSColumns& msc);
 void getWantedPolNames(casacore::Vector<casacore::String>& names);
 casacore::Record getFreqAxis();
 casacore::Record getIfrAxis();
@@ -33,7 +33,7 @@ void incTimeAxis(casacore::IPosition& cubeshape);
 // Add data to return record (getdata), with helpers:
 bool getitem(casacore::String item, casa::vi::VisBuffer2* vb2,
         casacore::Record& addToRec, bool ifraxis);
-bool getitem(casacore::String item, casacore::ROMSColumns& msc,
+bool getitem(casacore::String item, casacore::MSColumns& msc,
         casacore::Record& outputRec);
 bool itemIsData(casacore::String item);
 casacore::String getbaseitem(casacore::String item);

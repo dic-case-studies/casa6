@@ -88,7 +88,7 @@ TEST_F( PlotMSCacheTest, testFieldSelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, ""/*polnExpr*/, ""/*scanExpr*/,
 		""/*arrayExpr*/, ""/*stateExpr*/, ""/*obsExpr*/, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> visData(msmc.data().getColumn());
 	Int expField(msmc.fieldId().get(0));
 	// resize for nrows
@@ -131,7 +131,7 @@ TEST_F( PlotMSCacheTest, testSpwSelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, ""/*polnExpr*/, ""/*scanExpr*/,
 		""/*arrayExpr*/, ""/*stateExpr*/, ""/*obsExpr*/, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> visData(msmc.data().getColumn());
 	// resize for nchans, nrows in first chunk
 	Slicer visSlicer(Slice(), chanSlices(0)(0), Slice(0,expNRow));
@@ -177,7 +177,7 @@ TEST_F( PlotMSCacheTest, testTimeSelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, ""/*polnExpr*/, ""/*scanExpr*/,
 		""/*arrayExpr*/, ""/*stateExpr*/, ""/*obsExpr*/, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> visData(msmc.data().getColumn());
 	Double expTime(msmc.time().get(0));
 	// resize for nrows
@@ -240,7 +240,7 @@ TEST_F( PlotMSCacheTest, testAntennaSelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, ""/*polnExpr*/, ""/*scanExpr*/,
 		""/*arrayExpr*/, ""/*stateExpr*/, ""/*obsExpr*/, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Vector<Int> expAnt1(msmc.antenna1().getColumn()),
 		expAnt2(msmc.antenna2().getColumn());
 
@@ -276,7 +276,7 @@ TEST_F( PlotMSCacheTest, testScanSelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, ""/*polnExpr*/, scanExpr,
 		""/*arrayExpr*/, ""/*stateExpr*/, ""/*obsExpr*/, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Int expScan(msmc.scanNumber().get(0));
 	Array<Complex> visData(msmc.data().getColumn());
 	// resize for nrows
@@ -317,7 +317,7 @@ TEST_F( PlotMSCacheTest, testCorrSelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, polnExpr, ""/*scanExpr*/,
 		""/*arrayExpr*/, ""/*stateExpr*/, ""/*obsExpr*/, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> visData(msmc.data().getColumn());
 	// slice for corrSlices, nrows in first chunk
 	Slicer visSlicer(corrSlices(0)(0), Slice(), Slice(0,expNRow));
@@ -358,7 +358,7 @@ TEST_F( PlotMSCacheTest, testArraySelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, ""/*polnExpr*/, ""/*scanExpr*/,
 		arrayExpr, ""/*stateExpr*/, ""/*obsExpr*/, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> visData(msmc.data().getColumn());
 	// resize for nrows
 	IPosition visShape(visData.shape());
@@ -394,7 +394,7 @@ TEST_F( PlotMSCacheTest, testObservationSelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, ""/*polnExpr*/, ""/*scanExpr*/,
 		""/*arrayExpr*/, ""/*stateExpr*/, obsExpr, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> visData(msmc.data().getColumn());
 	Int expObs(msmc.observationId().get(0));
 	// resize for nrows
@@ -450,7 +450,7 @@ TEST_F( PlotMSCacheTest, testFeedSelection) {
 		""/*uvDistExpr*/, ""/*taQLExpr*/, ""/*polnExpr*/, ""/*scanExpr*/,
 		""/*arrayExpr*/, ""/*stateExpr*/, ""/*obsExpr*/, feedExpr);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Int expFeed(msmc.feed1().get(0));
 
 	// set PlotMSSelection and load cache
@@ -484,7 +484,7 @@ TEST_F( PlotMSCacheTest, testTaQLSelection) {
 		""/*uvDistExpr*/, taQLExpr, ""/*polnExpr*/, ""/*scanExpr*/,
 		""/*arrayExpr*/, ""/*stateExpr*/, ""/*obsExpr*/, ""/*feedExpr*/);
 	// main table columns
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> visData(msmc.data().getColumn());
 	Int expField(msmc.fieldId().get(0));
 	// resize for nrows

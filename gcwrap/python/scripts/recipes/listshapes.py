@@ -1,22 +1,27 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+from __future__ import print_function
 from glob import glob
 import os
 
-try:
-    from  casac import *  # No-op if already in casapy.
-except:
-    import sys
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table
+else:
+    try:
+        from  casac import *  # No-op if already in casapy.
+    except:
+        import sys
     
-    casacpath = glob(os.sep.join(os.environ["CASAPATH"].split() +
+        casacpath = glob(os.sep.join(os.environ["CASAPATH"].split() +
                                  ['python', '2.*']))  # devs
-    casacpath.sort()
-    casacpath.reverse()
-    casacpath.extend(glob(os.sep.join([os.environ["CASAPATH"].split()[0],
+        casacpath.sort()
+        casacpath.reverse()
+        casacpath.extend(glob(os.sep.join([os.environ["CASAPATH"].split()[0],
                                        'lib', 'python2.*'])))  # users
-    #print "casacpath =", "\n".join(casacpath)
-    sys.path.extend(casacpath)
-
+        #print "casacpath =", "\n".join(casacpath)
+        sys.path.extend(casacpath)
 
 def get_tool(toolname):
     """
@@ -24,9 +29,12 @@ def get_tool(toolname):
     """
     tool = None
     if toolname != 'table':
-        tool = casac.table()
+        if is_CASA6:
+            tool = table()
+        else:
+            tool = casac.table()
     else:
-        print "The factory name for", toolname, "is unknown."
+        print("The factory name for", toolname, "is unknown.")
     return tool
 
 
@@ -83,18 +91,18 @@ def checkMSes(holderdict, dir, files):
         """
         retval = False
         if not hasattr(mytb, 'open'):
-            raise ValueError, 'mytb is not a tb tool'
+            raise ValueError('mytb is not a tb tool')
         try:
             mytb.open(whichtab)
             retval = True
-        except Exception, e:
+        except Exception as e:
             # Typically if we are here whichtab is too malformed for
             # mytb to handle, and e is usually "whichtab does not exist",
             # which is usually incorrect.
             if str(e)[-15:] == " does not exist":
-                print "tb could not open", whichtab
+                print("tb could not open", whichtab)
             else:
-                print "Error", e, "from tb.open(", whichtab, ")"
+                print("Error", e, "from tb.open(", whichtab, ")")
             mytb.close()  # Just in case.
         return retval
     
@@ -120,12 +128,12 @@ def checkMSes(holderdict, dir, files):
         if not myopen(mytb, currms + '/DATA_DESCRIPTION'):
             break
 
-        for row in xrange(mytb.nrows()):
+        for row in range(mytb.nrows()):
             if not mytb.getcell('FLAG_ROW', row):
                 key = (num_corrs[mytb.getcell('POLARIZATION_ID', row)],
                        num_chans[mytb.getcell('SPECTRAL_WINDOW_ID', row)])
                 if incl_ddid:
-                    if retval[currms].has_key(key):
+                    if key in retval[currms]:
                         retval[currms][key].append(row)
                     else:
                         retval[currms][key] = [row]

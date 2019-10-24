@@ -1,6 +1,18 @@
-from taskinit import *
+from __future__ import absolute_import
 import glob
+import os
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, measures, quanta, ms
+    from casatasks import casalog
+else:
+    from taskinit import *
+    from taskinit import tbtool as table
+    from taskinit import metool as measures
+    from taskinit import qatool as quanta
+    from taskinit import mstool as ms
+    
 # Conversion of TOPO ephemerides to GEO (ICRS)
 #
 # Example:
@@ -33,9 +45,9 @@ def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
         return False
 
     #convert RA, DEC, and RadVel
-    tbt = tbtool()
-    met = metool()
-    qat = qatool()
+    tbt = table()
+    met = measures()
+    qat = quanta()
 
     tbt.open(tablename)
     ra = tbt.getcol('RA')
@@ -43,9 +55,9 @@ def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
     radvel = tbt.getcol('RadVel')
     radvelunit = 'km/s'
     tmpkw = tbt.getcolkeywords('RadVel')
-    if tmpkw.has_key('UNIT'):
+    if 'UNIT' in tmpkw:
         radvelunit = tmpkw['UNIT']
-    elif tmpkw.has_key('QuantumUnits'):
+    elif 'QuantumUnits' in tmpkw:
         radvelunit = tmpkw['QuantumUnits'][0]
     else:
         casalog.post('Cannot determine units of radial velocity column. Assuming km/s.', 'WARN')
@@ -57,7 +69,7 @@ def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
     geolat = kw['GeoLat'] # (deg)
     geolong = kw['GeoLong'] # (deg)
 
-    if kw.has_key('obsloc'):
+    if 'obsloc' in kw:
         obsloc = kw['obsloc']
     else:
         casalog.post('Ephemeris does not have the obsloc keyword.', 'INFO')
@@ -70,7 +82,7 @@ def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
     oldref = 'J2000'
     newref = 'ICRS'
 
-    if kw.has_key('posrefsys'):
+    if 'posrefsys' in kw:
         posref = kw['posrefsys']
     else:
         casalog.post('Ephemeris does not have the posrefsys keyword. Assuming ICRF/J2000.0', 'WARN')
@@ -155,7 +167,7 @@ def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
         tbt.putkeyword('obsloc', 'GEOCENTRIC')
         tbt.putkeyword('posrefsys', newposref)
         tbt.close()
-    except Exception, instance:
+    except Exception as instance:
         casalog.post("*** Error \'%s\' " % (instance), 'SEVERE')
         if overwrite and outtablename==tablename:
             casalog.post('Conversion in situ was not possible. Restoring original ephemeris ...', 'INFO')
@@ -170,8 +182,8 @@ def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
 
 
 def findattachedephemfields(vis='',field='*'):
-    mst = mstool()
-    tbt = tbtool()
+    mst = ms()
+    tbt = table()
 
     tbt.open(vis+'/FIELD')
     fields = mst.msseltoindex(vis=vis,field=field)['field']
@@ -198,8 +210,8 @@ def convert2geo(vis='', field=''):
     If there is attached ephemeris or if the ephemeris is already in GEO, nothing is done.
     """
 
-    mst = mstool()
-    tbt = tbtool()
+    mst = ms()
+    tbt = table()
 
     rval = True
 
@@ -235,7 +247,7 @@ def convert2geo(vis='', field=''):
 
         return rval
 
-    except Exception, instance:
+    except Exception as instance:
         casalog.post("*** Error \'%s\' " % (instance), 'SEVERE')
         return False
 

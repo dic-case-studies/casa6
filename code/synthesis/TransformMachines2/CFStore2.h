@@ -36,7 +36,6 @@
 #include <casa/Logging/LogIO.h>
 #include <casa/Logging/LogSink.h>
 #include <casa/Logging/LogOrigin.h>
-#include <casa/Containers/OrderedMap.h>
 #include <casa/Utilities/CountedPtr.h>
 #include <images/Images/ImageInterface.h>
 #include <msvis/MSVis/VisBuffer2.h>
@@ -44,7 +43,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   using namespace vi;
   namespace refim{
   using namespace CFDefs;
-  typedef casacore::Cube<casacore::CountedPtr<CFCell > > VBRow2CFMapType;
+  //typedef casacore::Cube<casacore::CountedPtr<CFCell > > VBRow2CFMapType;
   typedef casacore::Vector<casacore::CountedPtr<CFBuffer > > VBRow2CFBMapType;
   class CFStore2
   {

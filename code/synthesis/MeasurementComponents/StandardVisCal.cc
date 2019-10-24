@@ -592,7 +592,7 @@ void TJones::createCorruptor(const VisIter& vi, const Record& simpar, const Int 
       if (simpar.asString("mode") == "individual") 
 	tcorruptor_p->initialize(Seed,Beta,Scale,rxType);
       else if (simpar.asString("mode") == "screen") {
-	const ROMSAntennaColumns& antcols(vi.msColumns().antenna());
+	const MSAntennaColumns& antcols(vi.msColumns().antenna());
 	if (simpar.isDefined("windspeed")) {
 	  tcorruptor_p->windspeed()=simpar.asFloat("windspeed");
 	  tcorruptor_p->initialize(Seed,Beta,Scale,rxType,antcols);
@@ -703,6 +703,43 @@ GJones::GJones(const Int& nAnt) :
 GJones::~GJones() {
   if (prtlev()>2) cout << "G::~G()" << endl;
 }
+
+void GJones::setSolve(const Record& solve) {
+
+  // call parent to get general stuff
+  SolvableVisJones::setSolve(solve);
+
+  // parse solmode and rmsthresh
+  solmode()=String("");
+  if (solve.isDefined("solmode"))
+    solmode()=solve.asString("solmode");
+  solmode().upcase();
+  rmsthresh().resize(0);
+  if (solve.isDefined("rmsthresh")) {
+    Vector<Double> rmsth;
+    rmsth=solve.asArrayDouble("rmsthresh");  // parse from record as Vector<Double>
+    Int nrms=rmsth.nelements();
+    rmsthresh().resize(0);
+    if (nrms>0) {
+      rmsthresh().resize(nrms);
+      convertArray(rmsthresh(), rmsth); // convert into Float array
+    }
+  }
+  Int nrms=rmsthresh().nelements();
+  if (nrms==0 && solmode().contains("R")) {
+    rmsthresh().assign(Vector<Float>(std::vector<Float>({7.0,5.0,4.0,3.5,3.0,2.8,2.6,2.4,2.2,2.5})));
+  }
+
+  if (typeName()=="G Jones" || typeName()=="T Jones") {
+    if (solmode().contains("L1"))
+      logSink() << "Doing L1 solution." << LogIO::POST;
+    if (solmode().contains("R"))
+      logSink() << "Doing iterative outlier rejection using thresholds=" << rmsthresh() << LogIO::POST;
+  }
+
+
+}
+
 
 void GJones::guessPar(VisBuffer& vb) {
 
@@ -1113,6 +1150,11 @@ void BJones::setSolve(const Record& solve) {
 
   // call parent to get general stuff
   GJones::setSolve(solve);
+
+  if (solmode()!="") {
+    solmode()="";
+    cout << "solmode options not yet supported for B solutions; ignoring." << endl;
+  }
 
   // get max chan gap from user
   maxchangap_p=0;

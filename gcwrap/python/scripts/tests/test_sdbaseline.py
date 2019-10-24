@@ -1,25 +1,48 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import glob
 import sys
 import shutil
 import numpy
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
-#
-import listing
 from numpy import array
+#
+#import listing
 
-from sdbaseline import sdbaseline
-from sdutil import tbmanager
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table
+    from casatasks import sdbaseline
+    from casatasks.private.sdutil import tbmanager
 
-
-try:
+    ### for selection_syntax import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     import selection_syntax
-except:
-    import tests.selection_syntax as selection_syntax
 
+    tb = table( )
+
+    ctsys_resolve = ctsys.resolve
+
+    # default is not necessary in CASA6
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from sdbaseline import sdbaseline
+    from sdutil import tbmanager
+    # the global tb tool is used here as is
+
+    try:
+        from . import selection_syntax
+    except:
+        import tests.selection_syntax as selection_syntax
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
 
 ### Utilities for reading blparam file
 class FileReader(object):
@@ -76,7 +99,7 @@ class BlparamFileParser(FileReader):
 
     def _nrow(self):
         self.__nrow = 0
-        for i in xrange(self.nline()):
+        for i in range(self.nline()):
             if self.getline(i) == self.__ctxt:
                 self.__nrow += 1
         return self.__nrow
@@ -138,8 +161,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
     Base class for sdbaseline unit test
     """
     # Data path of input/output
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-              '/data/regression/unittest/tsdbaseline/'
+    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
     taskname = "sdbaseline"
     verboselog = False
 
@@ -231,11 +253,11 @@ class sdbaseline_unittest_base(unittest.TestCase):
         """
         # Check for paths
         if from_dir==None and dest_dir==None:
-            raise ValueError, "Can not copy files to exactly the same path."
+            raise ValueError("Can not copy files to exactly the same path.")
         from_path = os.path.abspath("." if from_dir==None else from_dir.rstrip("/"))
         to_path = os.path.abspath("." if dest_dir==None else dest_dir.rstrip("/"))
         if from_path == to_path:
-            raise ValueError, "Can not copy files to exactly the same path."
+            raise ValueError("Can not copy files to exactly the same path.")
         # Copy a list of files and directories
         for name in names:
             from_name = from_path + "/" + name
@@ -428,20 +450,20 @@ class sdbaseline_unittest_base(unittest.TestCase):
             #keylist = self.complist
         
         for key in keylist:
-            self.assertTrue(currstat.has_key(key),\
+            self.assertTrue(key in currstat,\
                             msg="%s is not defined in the current results."\
                             % key)
-            self.assertTrue(refstat.has_key(key),\
+            self.assertTrue(key in refstat,\
                             msg="%s is not defined in the reference data."\
                             % key)
             refval = refstat[key]
             currval = currstat[key]
             # Quantum values
             if isinstance(refval,dict):
-                if refval.has_key('unit') and currval.has_key('unit'):
+                if 'unit' in refval and 'unit' in currval:
                     if printstat:
-                        print "Comparing unit of '%s': %s (current run), %s (reference)" %\
-                              (key,currval['unit'],refval['unit'])
+                        print("Comparing unit of '%s': %s (current run), %s (reference)" %\
+                              (key,currval['unit'],refval['unit']))
                     self.assertEqual(refval['unit'],currval['unit'],\
                                      "The units of '%s' differs: %s (expected: %s)" % \
                                      (key, currval['unit'], refval['unit']))
@@ -453,8 +475,8 @@ class sdbaseline_unittest_base(unittest.TestCase):
             currval = self._to_list(currval)
             refval = self._to_list(refval)
             if printstat:
-                print "Comparing '%s': %s (current run), %s (reference)" %\
-                      (key,str(currval),str(refval))
+                print("Comparing '%s': %s (current run), %s (reference)" %\
+                      (key,str(currval),str(refval)))
             self.assertTrue(len(currval)==len(refval),"Number of elemnets in '%s' differs." % key)
             if isinstance(refval[0],str):
                 for i in range(len(currval)):
@@ -518,13 +540,13 @@ class sdbaseline_unittest_base(unittest.TestCase):
         coeffs_ref = blparse_ref.coeff()
         rms_ref = blparse_ref.rms()
         allowdiff = 0.01
-        print 'Check baseline parameters:'
-        for irow in xrange(len(rms_out)):
-            print 'Row %s:'%(irow)
-            print '   Reference rms  = %s'%(rms_ref[irow])
-            print '   Calculated rms = %s'%(rms_out[irow])
-            print '   Reference coeffs  = %s'%(coeffs_ref[irow])
-            print '   Calculated coeffs = %s'%(coeffs_out[irow])
+        print('Check baseline parameters:')
+        for irow in range(len(rms_out)):
+            print('Row %s:'%(irow))
+            print('   Reference rms  = %s'%(rms_ref[irow]))
+            print('   Calculated rms = %s'%(rms_out[irow]))
+            print('   Reference coeffs  = %s'%(coeffs_ref[irow]))
+            print('   Calculated coeffs = %s'%(coeffs_out[irow]))
             r0 = rms_ref[irow]
             r1 = rms_out[irow]
             rdiff = (r1 - r0) / r0
@@ -532,15 +554,11 @@ class sdbaseline_unittest_base(unittest.TestCase):
                             msg='row %s: rms is different'%(irow))
             c0 = coeffs_ref[irow]
             c1 = coeffs_out[irow]
-            for ic in xrange(len(c1)):
+            for ic in range(len(c1)):
                 rdiff = (c1[ic] - c0[ic]) / c0[ic]
                 self.assertTrue((abs(rdiff)<allowdiff),
                                 msg='row %s: coefficient for order %s is different'%(irow,ic))
-        print ''
-#         self.assertTrue(listing.compare(out,reference),
-#                         'New and reference files are different. %s != %s. '
-#                         %(out,reference))
-
+        print('')
 
 
 class sdbaseline_basicTest(sdbaseline_unittest_base):
@@ -571,16 +589,15 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     # Input and output names
     infile = 'OrionS_rawACSmod_calave.ms'
     outroot = sdbaseline_unittest_base.taskname+'_basictest'
-    blrefroot = sdbaseline_unittest_base.datapath+'refblparam'
+    blrefroot = os.path.join(sdbaseline_unittest_base.datapath,'refblparam')
     tid = None
 
     def setUp(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
 
         default(sdbaseline)
-
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -643,7 +660,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         # uncomment the next line once blparam file can be output
         #self._compareBLparam(outfile+"_blparam.txt",self.blrefroot+tid)
         results = self._getStats(outfile)
-        print self._getStats(outfile)
+        print(self._getStats(outfile))
         theresult = None
         for i in range(len(results)):
             theresult = results[i]
@@ -678,7 +695,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         # uncomment the next line once blparam file can be output
         #self._compareBLparam(outfile+"_blparam.txt",self.blrefroot+tid)
         results = self._getStats(outfile)
-        print self._getStats(outfile)
+        print(self._getStats(outfile))
         theresult = None
         for i in range(len(results)):
             theresult = results[i]
@@ -695,7 +712,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     
     def test003(self):
         """Basic Test 003: simple successful case: blfunc = 'cspline', maskmode = 'list' and masklist=[] (no mask)"""
-        print ""
+        print("")
 
         tid = '003'
         infile = self.infile
@@ -717,7 +734,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         self.assertEqual(result,None,msg="The task returned '"+str(result)+"' instead of None")
         #self._compareBLparam(outfile+"_blparam.txt",self.blrefroot+tid) 
         results = self._getStats(outfile)
-        print self._getStats(outfile)
+        print(self._getStats(outfile))
         
         theresult = None
         for i in range(len(results)):
@@ -771,7 +788,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         os.mkdir(outfile)
         try:
             result = sdbaseline(infile=infile, outfile=outfile, overwrite=False, maskmode=mode)
-        except Exception, e:
+        except Exception as e:
             #pos = str(e).find(outfile+' exists.')
             pos = str(e).find("outfile='" + outfile + "' exists, and cannot overwrite it.")
             self.assertNotEqual(pos, -1, msg='Unexpected exception was thrown: %s'%(str(e)))
@@ -787,7 +804,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         mode = 'list'
         try:
             sdbaseline(infile=infile, outfile=outfile, spw=spw, maskmode=mode)
-        except Exception, e:
+        except Exception as e:
             self.assertIn('Spw Expression: No match found for 10,', str(e))
 
 
@@ -813,7 +830,7 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
     # Input and output names
     infile = 'OrionS_rawACSmod_calave.ms'
     outroot = sdbaseline_unittest_base.taskname+'_masktest'
-    blrefroot = sdbaseline_unittest_base.datapath+'refblparam_mask'
+    blrefroot = os.path.join(sdbaseline_unittest_base.datapath,'refblparam_mask')
     tid = None
 
     # Channel range excluding bad edge
@@ -837,9 +854,8 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
     def setUp(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdbaseline)
-
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -895,7 +911,7 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
         spw = '2:%s'%(';'.join(map(self._get_range_in_string,self.blchan2)))
         pol = 'RR'
 
-        print 'spw =', spw
+        print('spw =', spw)
 
         result = sdbaseline(infile=infile,datacolumn=datacolumn,maskmode=mode,
                             outfile=outfile,spw=spw,pol=pol)
@@ -998,7 +1014,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
     def setUp(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
 
         default(sdbaseline)
 
@@ -1057,7 +1073,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
-        addwn = (0)
+        addwn = [0]
         result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                              blfunc='sinusoid',addwn=addwn,applyfft=False)
         self.assertEqual(result,None,
@@ -1069,7 +1085,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
-        addwn = (0,1)
+        addwn = [0,1]
         result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                              blfunc='sinusoid',addwn=addwn,applyfft=False)
         self.assertEqual(result,None,
@@ -1336,7 +1352,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'addwn must contain at least one element.')
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
         
     def test101(self):
         """Sinusoid Test 101: no effective wave number set (addwn empty list, applyfft=True)"""
@@ -1349,7 +1365,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'addwn must contain at least one element.')
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
         
     def test102(self):
         """Sinusoid Test 102: no effective wave number set (addwn empty tuple, applyfft=False)"""
@@ -1357,12 +1373,12 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
-        addwn = ()
+        addwn = []
         try:
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'addwn must contain at least one element.')
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
         
     def test103(self):
         """Sinusoid Test 103: no effective wave number set (addwn empty tuple, applyfft=True)"""
@@ -1370,12 +1386,12 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
-        addwn = ()
+        addwn = []
         try:
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'addwn must contain at least one element.')
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
         
     def test104(self):
         """Sinusoid Test 104: no effective wave number set (addwn empty string, applyfft=False)"""
@@ -1388,7 +1404,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'string index out of range')
+            self.assertEqual(str(e), 'string index out of range')
         
     def test105(self):
         """Sinusoid Test 105: no effective wave number set (addwn empty string, applyfft=True)"""
@@ -1401,7 +1417,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'string index out of range')
+            self.assertEqual(str(e), 'string index out of range')
         
     def test106(self):
         """Sinusoid Test 106: no effective wave number set (addwn and rejwn identical, applyfft=False)"""
@@ -1415,7 +1431,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
         
     def test107(self):
         """Sinusoid Test 107: no effective wave number set (addwn and rejwn identical, applyfft=True)"""
@@ -1429,7 +1445,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
         
     def test108(self):
         """Sinusoid Test 108: no effective wave number set (rejwn covers wider range than that of addwn, applyfft=False)"""
@@ -1443,7 +1459,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=False)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
         
     def test109(self):
         """Sinusoid Test 109: no effective wave number set (rejwn covers wider range than that of addwn, applyfft=True)"""
@@ -1457,7 +1473,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test110(self):
         """Sinusoid Test 110: wn range greater than upper limit"""
@@ -1471,7 +1487,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test111(self):
         """Sinusoid Test 111: explicitly specify wn value (greater than upper limit)"""
@@ -1485,7 +1501,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'No effective wave number given for sinusoidal fitting.')
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test112(self):
         """Sinusoid Test 112: explicitly specify wn value (negative)"""
@@ -1499,7 +1515,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'wrong value given for addwn/rejwn')
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
 
     def test113(self):
         """Sinusoid Test 113: explicitly specify wn value (addwn has negative and greater than upper limit)"""
@@ -1513,7 +1529,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'wrong value given for addwn/rejwn')
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
 
     def test114(self):
         """Sinusoid Test 114: explicitly specify wn value (both addwn/rejwn have negative and greater than upper limit)"""
@@ -1527,7 +1543,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',addwn=addwn,rejwn=rejwn,applyfft=True)
         except Exception as e:
-            self.assertEqual(e.message, 'wrong value given for addwn/rejwn')
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
 
     def test115(self):
         """Sinusoid Test 115: wrong fftthresh (as list)"""
@@ -1540,7 +1556,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh must be float or integer or string.')
+            self.assertEqual(str(e), 'fftthresh must be float or integer or string.')
 
     def test116(self):
         """Sinusoid Test 116: wrong fftthresh (as string 'asigma')"""
@@ -1553,7 +1569,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test117(self):
         """Sinusoid Test 117: wrong fftthresh (as string 'topa')"""
@@ -1566,7 +1582,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test118(self):
         """Sinusoid Test 118: wrong fftthresh (as string 'top3sigma')"""
@@ -1579,7 +1595,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test119(self):
         """Sinusoid Test 119: wrong fftthresh (as string 'a123')"""
@@ -1592,7 +1608,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test120(self):
         """Sinusoid Test 120: wrong fftthresh (as string '')"""
@@ -1605,7 +1621,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test121(self):
         """Sinusoid Test 121: wrong fftthresh (as string '-3.0')"""
@@ -1618,7 +1634,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test122(self):
         """Sinusoid Test 122: wrong fftthresh (as string '0.0')"""
@@ -1631,7 +1647,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test123(self):
         """Sinusoid Test 123: wrong fftthresh (as string '-3')"""
@@ -1644,7 +1660,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test124(self):
         """Sinusoid Test 124: wrong fftthresh (as string '0')"""
@@ -1657,7 +1673,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test125(self):
         """Sinusoid Test 125: wrong fftthresh (as string '-3.0sigma')"""
@@ -1670,7 +1686,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test126(self):
         """Sinusoid Test 126: wrong fftthresh (as string '0.0sigma')"""
@@ -1683,7 +1699,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test127(self):
         """Sinusoid Test 127: wrong fftthresh (as string '-3sigma')"""
@@ -1696,7 +1712,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test128(self):
         """Sinusoid Test 128: wrong fftthresh (as string '0sigma')"""
@@ -1709,7 +1725,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test129(self):
         """Sinusoid Test 129: wrong fftthresh (as string 'top-3')"""
@@ -1722,7 +1738,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test130(self):
         """Sinusoid Test 130: wrong fftthresh (as string 'top0')"""
@@ -1735,7 +1751,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test131(self):
         """Sinusoid Test 131: wrong fftthresh (as string 'top1.5')"""
@@ -1748,7 +1764,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'fftthresh has a wrong format.')
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
 
     def test132(self):
         """Sinusoid Test 132: wrong fftthresh (as float -3.0)"""
@@ -1761,7 +1777,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test133(self):
         """Sinusoid Test 133: wrong fftthresh (as float 0.0)"""
@@ -1774,7 +1790,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test134(self):
         """Sinusoid Test 134: wrong fftthresh (as int -3)"""
@@ -1787,7 +1803,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
     def test135(self):
         """Sinusoid Test 135: wrong fftthresh (as int 0)"""
@@ -1800,9 +1816,10 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                                  blfunc='sinusoid',applyfft=True,fftthresh=fftthresh)
         except Exception as e:
-            self.assertEqual(e.message, 'threshold given to fftthresh must be positive.')
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
 
 
+# this class is not included in the suite, skip the tests (needed for CASA6)
 class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
     """
     Unit tests for task sdbaseline. No interactive testing.
@@ -1816,13 +1833,13 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
     # Input and output names
     infile = 'testMultiIF.asap'
     blparamfile_suffix = '_blparam.txt'
-    outroot = sdbaseline_unittest_base.taskname+'_multi'
+    outroot = os.path.join(sdbaseline_unittest_base.taskname,'_multi')
     refblparamfile = 'refblparam_multiIF'
 
     def setUp(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdbaseline)
 
 
@@ -1839,14 +1856,15 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
             shutil.rmtree(self.infile)
         os.system('rm -rf '+self.outroot+'*')
 
+    @unittest.skip("Not currently part of the the test suite")
     def test200(self):
         """test200: Test the task works with multi IF data"""
         infile = self.infile
         mode = "list"
         blfunc = "poly"
         order = 1
-        outfile = self.outroot+".asap"
-        blparamfile = outfile+self.blparamfile_suffix
+        outfile = os.path.join(self.outroot,".asap")
+        blparamfile = os.path.join(outfile,self.blparamfile_suffix)
         
         result = sdbaseline(infile=infile,maskmode=mode,outfile=outfile,blfunc=blfunc,order=order)
         self.assertEqual(result, None, msg="The task returned '"+str(result)+"' instead of None")
@@ -1916,7 +1934,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
     def setUp(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdbaseline)
 
 
@@ -1945,7 +1963,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         tb.open(bltable)
         try:
             for i in range(npol*tb.nrows()):
-                irow = i / npol
+                irow = i // npol
                 ipol = i % npol
                 is_skipped = (option != '') and (irow == 2) and (ipol == 1)
 
@@ -2060,7 +2078,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         rms_s0p0_ms = [0.150905484071, 0.150905484071, 0.149185846787]
 
         for i in range(len(blfunc)):
-            print 'testing blfunc='+blfunc[i]+'...'
+            print('testing blfunc='+blfunc[i]+'...')
             outfile = self.outroot+self.tid+blfunc[i]+'.ms'
             bloutput= self.outroot+self.tid+blfunc[i]+'.bltable'
             result = sdbaseline(infile=infile,datacolumn=datacolumn,
@@ -2117,11 +2135,11 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         polval = ['', 'RR', 'LL']
         for i in range(len(blfunc)):
             for j in range(len(testmode)):
-                print 'testing blfunc='+blfunc[i]+', testmode='+testmode[j]+'...'
+                print('testing blfunc='+blfunc[i]+', testmode='+testmode[j]+'...')
                 #prepare input data
                 if os.path.exists(infile):
                     shutil.rmtree(infile)
-                shutil.copytree(self.datapath+self.infile, infile)
+                shutil.copytree(os.path.join(self.datapath,self.infile), infile)
 
                 tb.open(tablename=infile, nomodify=False)
                 r2msk = tb.getcell('FLAG', 2)
@@ -2165,11 +2183,11 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         prange = [[0,1], [0], [1]]
         polval = ['', 'RR', 'LL']
         for j in range(len(testmode)):
-            print 'testing blfunc='+blfunc+', testmode='+testmode[j]+'...'
+            print('testing blfunc='+blfunc+', testmode='+testmode[j]+'...')
             #prepare input data
             if os.path.exists(self.infile):
                 shutil.rmtree(self.infile)
-            shutil.copytree(self.datapath+self.infile, self.infile)
+            shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
 
             blparam = self.outroot+'.blparam'
             self._createBlparamFile(blparam, self.blparam_order, self.blparam_dic, '')
@@ -2223,9 +2241,8 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
     def setUp(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdbaseline)
-        
        
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2342,7 +2359,7 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         try:
             tb.open(tablename=self.bltable, nomodify=False)
             tb.removerows([2])
-            self.assertEquals(tb.nrows(), 3, msg='failed to remove a row in bltable.')
+            self.assertEqual(tb.nrows(), 3, msg='failed to remove a row in bltable.')
         finally:
             tb.close()
         
@@ -2415,7 +2432,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         """
         self.infile = infile
         sdbaseline(infile=self.infile,blfunc='variable',outfile=self.outfile,**task_param)
-        colname = (task_param['datacolumn'] if task_param.has_key('datacolumn') else 'data').upper()
+        colname = (task_param['datacolumn'] if 'datacolumn' in task_param else 'data').upper()
 
         # calculate statistics of valid spectrum. Test flagged spectrum.
         ivalid_spec = 0
@@ -2440,7 +2457,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                         valid_idx.append(ispec)
                     ispec += 1
         # shrink reference list if # of processed spectra is smaller than reference (selection)
-        if len(stats_list) < len(reference[reference.keys()[0]]):
+        if len(stats_list) < len(list(reference.values())[0]):
             self.assertEqual(len(valid_idx), len(stats_list),
                              "Internal error: len(valid_idx)!=len(stats_list)")
             reference = self.__select_stats(reference, valid_idx)
@@ -2452,9 +2469,9 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def testVariable00(self):
         """Test blfunc='variable' with variable baseline functions and orders"""
         infile='analytic_variable.ms'
-        paramfile='analytic_variable_blparam.txt'
-        self._refetch_files([infile, paramfile], self.datapath)
-        self._run_test(infile,self.refstat0,blparam=paramfile,datacolumn=self.column)
+        self.paramfile='analytic_variable_blparam.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        self._run_test(infile,self.refstat0,blparam=self.paramfile,datacolumn=self.column)
 
 
         if os.path.exists(self.infile+'_blparam.txt'):
@@ -2467,10 +2484,9 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def testVariable01(self):
         """Test blfunc='variable' with skipping rows by comment ('#') (rows should be flagged)"""
         infile='analytic_variable.ms'
-        paramfile='analytic_variable_blparam_comment.txt'
-        self._refetch_files([infile, paramfile], self.datapath)
-        self._run_test(infile,self.refstat0,flag_spec=[(0,0)],blparam=paramfile,datacolumn=self.column)
-
+        self.paramfile='analytic_variable_blparam_comment.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        self._run_test(infile,self.refstat0,flag_spec=[(0,0)],blparam=self.paramfile,datacolumn=self.column)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2482,10 +2498,9 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def testVariable02(self):
         """Test blfunc='variable' with non-existent lines in blparam file (rows should be flagged)"""
         infile='analytic_variable.ms'
-        paramfile='analytic_variable_blparam_2lines.txt'
-        self._refetch_files([infile, paramfile], self.datapath)
-        self._run_test(infile,self.refstat0,flag_spec=[(0,0),(1,1)],blparam=paramfile,datacolumn=self.column)
-
+        self.paramfile='analytic_variable_blparam_2lines.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        self._run_test(infile,self.refstat0,flag_spec=[(0,0),(1,1)],blparam=self.paramfile,datacolumn=self.column)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2497,11 +2512,10 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def testVariable03(self):
         """Test blfunc='variable' with mask selection"""
         infile='analytic_order3_withoffset.ms'
-        paramfile='analytic_variable_blparam_mask.txt'
-        self._refetch_files([infile, paramfile], self.datapath)
+        self.paramfile='analytic_variable_blparam_mask.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
         mask = [[[0,4000],[6000,8000]], [[0,5000],[6000,8000]], [[0,3000],[5000,8000]], None]
-        self._run_test(infile,self.refstat0,mask=mask,blparam=paramfile,datacolumn=self.column)
-
+        self._run_test(infile,self.refstat0,mask=mask,blparam=self.paramfile,datacolumn=self.column)
     
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2510,14 +2524,12 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile+'_blparam.btable'):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
-
     def testVariable04(self):
         """Test blfunc='variable' with data selection (spw='1')"""
         infile='analytic_variable.ms'
-        paramfile='analytic_variable_blparam_spw1.txt'
-        self._refetch_files([infile, paramfile], self.datapath)
-        self._run_test(infile,self.refstat0,spw='1',blparam=paramfile,datacolumn=self.column)
-
+        self.paramfile='analytic_variable_blparam_spw1.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        self._run_test(infile,self.refstat0,spw='1',blparam=self.paramfile,datacolumn=self.column)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2526,16 +2538,14 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile+'_blparam.btable'):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
-
     def testVariable05(self):
         """Test blfunc='variable' with clipping"""
         infile='analytic_order3_withoffset.ms'
-        paramfile='analytic_variable_blparam_clip.txt'
-        self._refetch_files([infile, paramfile], self.datapath)
+        self.paramfile='analytic_variable_blparam_clip.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
         mask = [[[0,4000],[6000,8000]], [[0,5000],[6000,8000]], [[0,3000],[5000,8000]], None]
         self._run_test(infile,self.refstat0,atol=1.e-5,
-                       mask=mask,blparam=paramfile,datacolumn=self.column)
-
+                       mask=mask,blparam=self.paramfile,datacolumn=self.column)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2547,11 +2557,9 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def testVariable06(self):
         """Test blfunc='variable' with duplicated fitting parameters (the last one is adopted)"""
         infile='analytic_variable.ms'
-        paramfile='analytic_variable_blparam_duplicate.txt'
-        self._refetch_files([infile, paramfile], self.datapath)
-        self._run_test(infile,self.refstat0,blparam=paramfile,datacolumn=self.column)
-
-
+        self.paramfile='analytic_variable_blparam_duplicate.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        self._run_test(infile,self.refstat0,blparam=self.paramfile,datacolumn=self.column)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2559,7 +2567,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
             os.remove(self.infile+ '_blparam.csv')
         if os.path.exists(self.infile+'_blparam.btable'):
             shutil.rmtree(self.infile+ '_blparam.btable')
-
 
 
 class sdbaseline_bloutputTest(sdbaseline_unittest_base):
@@ -2679,31 +2686,30 @@ Basic unit tests for task sdbaseline. No interactive testing.
     def setUp(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         
         if os.path.exists(self.blparam):
             #shutil.rmtree(self.blparam)
             os.system('rm '+ self.blparam)
-        shutil.copyfile(self.datapath+self.blparam, self.blparam)
-        shutil.copyfile(self.datapath+self.bloutput_poly_txt, self.bloutput_poly_txt)
-        shutil.copyfile(self.datapath+self.bloutput_poly_csv, self.bloutput_poly_csv)        
-        shutil.copyfile(self.datapath+self.bloutput_cspline_txt, self.bloutput_cspline_txt)
-        shutil.copyfile(self.datapath+self.bloutput_cspline_csv, self.bloutput_cspline_csv)
-        shutil.copyfile(self.datapath+self.bloutput_variable_txt, self.bloutput_variable_txt)
-        shutil.copyfile(self.datapath+self.bloutput_variable_csv, self.bloutput_variable_csv)
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_csv, self.bloutput_sinusoid_csv)
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_txt, self.bloutput_sinusoid_txt)
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_addwn012_rejwn0_txt, self.bloutput_sinusoid_addwn012_rejwn0_txt)
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_addwn012_rejwn02_txt, self.bloutput_sinusoid_addwn012_rejwn02_txt)
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_addwn012_rejwn1_txt, self.bloutput_sinusoid_addwn012_rejwn1_txt)
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_addwn012_rejwn0_csv, self.bloutput_sinusoid_addwn012_rejwn0_csv)
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_addwn012_rejwn02_csv, self.bloutput_sinusoid_addwn012_rejwn02_csv)
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_addwn012_rejwn1_csv, self.bloutput_sinusoid_addwn012_rejwn1_csv)
+        shutil.copyfile(os.path.join(self.datapath,self.blparam), self.blparam)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_poly_txt), self.bloutput_poly_txt)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_poly_csv), self.bloutput_poly_csv)        
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_cspline_txt), self.bloutput_cspline_txt)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_cspline_csv), self.bloutput_cspline_csv)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_variable_txt), self.bloutput_variable_txt)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_variable_csv), self.bloutput_variable_csv)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_csv), self.bloutput_sinusoid_csv)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_txt), self.bloutput_sinusoid_txt)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwn012_rejwn0_txt), self.bloutput_sinusoid_addwn012_rejwn0_txt)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwn012_rejwn02_txt), self.bloutput_sinusoid_addwn012_rejwn02_txt)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwn012_rejwn1_txt), self.bloutput_sinusoid_addwn012_rejwn1_txt)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwn012_rejwn0_csv), self.bloutput_sinusoid_addwn012_rejwn0_csv)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwn012_rejwn02_csv), self.bloutput_sinusoid_addwn012_rejwn02_csv)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwn012_rejwn1_csv), self.bloutput_sinusoid_addwn012_rejwn1_csv)
 
-        shutil.copyfile(self.datapath+self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt, self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
+        shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt), self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
 
         default(sdbaseline)
-
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -4486,7 +4492,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
             else: os.remove(prevout)
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdbaseline)
 
     def tearDown(self):
@@ -4597,8 +4603,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
 #         self.run_test(self.sinustat, spw=self.spw, edge=self.noedge, blfunc='sinusoid')
 
 class sdbaseline_selection(unittest.TestCase):
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-              '/data/regression/unittest/tsdbaseline/'
+    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
     infile = "analytic_type1.bl.ms"
     outfile = "baselined.ms"
     bloutfile = infile + "_blparam.txt"
@@ -4632,7 +4637,7 @@ class sdbaseline_selection(unittest.TestCase):
 
     def setUp(self):
         self._clearup()
-        shutil.copytree(self.datapath+self.infile, self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
         default(sdbaseline)
 
     def tearDown(self):
@@ -4640,12 +4645,12 @@ class sdbaseline_selection(unittest.TestCase):
 
     def _get_selection_string(self, key):
         if key not in self.selections.keys():
-            raise ValueError, "Invalid selection parameter %s" % key
+            raise ValueError("Invalid selection parameter %s" % key)
         return {key: self.selections[key][0]}
 
     def _get_selected_row_and_pol(self, key):
         if key not in self.selections.keys():
-            raise ValueError, "Invalid selection parameter %s" % key
+            raise ValueError("Invalid selection parameter %s" % key)
         pols = [0,1]
         rows = [0,1]
         if key == 'pol':  #self.selection stores pol ids
@@ -4840,3 +4845,7 @@ def suite():
             sdbaseline_autoTest,
             sdbaseline_selection
             ]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

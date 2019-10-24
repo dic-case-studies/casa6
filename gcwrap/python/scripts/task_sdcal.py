@@ -1,17 +1,33 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 import numpy
 import numpy.random as random
 import shutil
 
-from taskinit import *
-from applycal import applycal
-from mstools import write_history
-import types
-import sdutil
+# get is_CASA6 and is_python3
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import calibrater, table, ms
+    from casatasks import casalog, applycal
+    from . import sdutil
+    from .mstools import write_history
 
-# Calibrator tool
-(cb,myms) = gentools(['cb','ms'])
+    # Table tool
+    tb = table()
+    # Calibrator tool
+    cb = calibrater()
+    # MS tool
+    myms = ms()
+else:
+    from taskinit import *
+    from applycal import applycal
+    from mstools import write_history
+    import sdutil
+
+    # Calibrator tool
+    (cb,myms) = gentools(['cb','ms'])
 
 def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
            width=0.5, elongated=False, applytable='',interp='', spwmap={},
@@ -29,9 +45,9 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
         # Parameters check
         if calmode == 'tsys':
             if scan != '':
-                raise UserWarning, "Scan input must be ''(=all) in calmode='tsys'."
+                raise UserWarning("Scan input must be ''(=all) in calmode='tsys'.")
             if spw != '':
-                raise UserWarning, "Spw input must be ''(=all) in calmode='tsys'."
+                raise UserWarning("Spw input must be ''(=all) in calmode='tsys'.")
 
         if isinstance(infile,str) and os.path.exists(infile):
             # check if CORRECTED_DATA is necessary
@@ -40,16 +56,16 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
             cb.open(filename=infile,compress=False,addcorr=addcorr,addmodel=False)
             cb.selectvis(spw=spw, scan=scan, field=field)
         else:
-            raise Exception, 'Infile data set not found - please verify the name'
+            raise Exception('Infile data set not found - please verify the name')
 
         if not isinstance(calmode,str):
-            raise Exception, "Calmode must be a string"
+            raise Exception("Calmode must be a string")
         
         if calmode.lower() not in ['tsys', 'ps', 'otfraster', 'otf', 'apply']: 
-            raise Exception, "Calmode must be either 'ps' or 'otfraster' or  'otf' or 'tsys' or 'apply'."
+            raise Exception("Calmode must be either 'ps' or 'otfraster' or  'otf' or 'tsys' or 'apply'.")
 
         if (not overwrite) and os.path.exists(outfile):
-            raise RuntimeError, "overwrite is False and output file exists: {}".format(outfile)
+            raise RuntimeError("overwrite is False and output file exists: {}".format(outfile))
 
         # Calibration
         if calmode == 'apply': # Calibrate using existing tables
@@ -63,16 +79,16 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
                 
             # no calibration table
             if len(_table_list) == 0:
-                raise Exception, 'Applytable name must be specified.'
+                raise Exception('Applytable name must be specified.')
             
             # check calibration table files
             for table in _table_list:
                 # empty string
                 if len(table) == 0:
-                    raise Exception, 'Applytable name must be specified.'
+                    raise Exception('Applytable name must be specified.')
                 # unexisting table
                 if not os.path.exists(table):
-                    raise Exception, "Table doesn't exist: {}".format(table)
+                    raise Exception("Table doesn't exist: {}".format(table))
             
             # warning on usage difference with asap.sdcal2
             if (outfile != ''):
@@ -83,17 +99,17 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
                 ])
                 casalog.post(warning_msg,priority="WARN")
 
-            if(type(spwmap)!=types.ListType and (type(spwmap)!=types.DictType)):
-                raise Exception, 'Spwmap type must be list or dictionary.'
+            if(type(spwmap)!=list and (type(spwmap)!=dict)):
+                raise Exception('Spwmap type must be list or dictionary.')
 
-            if (type(spwmap)==types.DictType):
+            if (type(spwmap)==dict):
                 MS = infile
                 tb.open(MS+'/SPECTRAL_WINDOW')
                 total_spwID=tb.nrows()
                 tb.close()
                 
                 spwmap_dict = spwmap
-                spwmap_list = range(total_spwID)
+                spwmap_list = list(range(total_spwID))
 
                 for key, value in spwmap_dict.items():
                     for v in value:
@@ -118,11 +134,15 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
             cb.correct(applymode='calflag')
             
             # Write to HISTORY table of MS
-            param_names = sdcal.func_code.co_varnames[:sdcal.func_code.co_argcount] 
-            param_vals = [eval(p) for p in param_names]
+            param_names = sdcal.__code__.co_varnames[:sdcal.__code__.co_argcount]
+            if is_python3:
+                vars = locals()
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
+                
             write_history(myms, infile, 'sdcal', param_names, 
                               param_vals, casalog) 
-            
 
         else: # Compute calibration table
             # Reconciliating 'Python world' calmode with 'C++ world' calmode
@@ -134,26 +154,26 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
                           }
             
             if len(outfile) == 0:
-                raise RuntimeError, 'Output file name must be specified.'
+                raise RuntimeError('Output file name must be specified.')
             
             if calmode == 'tsys':
                 cb.specifycal(caltable=outfile,time="",spw=spw,caltype=cpp_calmode[calmode])
             else:
                 fraction_numeric = to_numeric_fraction(fraction)
                 if noff <= 0 and fraction_numeric >= 0.5:
-                    raise ValueError, 'Too many edge points. fraction must be < 0.5.'
+                    raise ValueError('Too many edge points. fraction must be < 0.5.')
                 # Setup calibrator
                 cb.selectvis(spw=spw, scan=scan, field=field, intent=intent)
                 cb.setsolve(type=cpp_calmode[calmode], table=outfile, fraction=fraction_numeric, numedge=noff)
                 # Compute calibration table
                 cb.solve()
 
-    except UserWarning, instance:
-        print '*** Warning ***',instance
+    except UserWarning as instance:
+        print('*** Warning *** %s' % instance)
 
-    except Exception, instance:
-        print '*** Error ***',instance
-        raise Exception, instance
+    except Exception as instance:
+        print('*** Error *** %s' % instance)
+        raise
 
     finally:
         cb.close()
@@ -181,7 +201,7 @@ def to_numeric_fraction(fraction):
                     fraction_numeric = float(fraction)
         else:
             fraction_numeric = float(fraction)
-    except Exception, e:
+    except Exception as e:
         casalog.post(str(e), priority='SEVERE', origin='sdcal')
         raise RuntimeError('Invalid fraction value (original error message: "%s")'%(str(e)))
 
@@ -189,12 +209,12 @@ def to_numeric_fraction(fraction):
     
 def temporary_name(calmode):
     num_trial = 100
-    for i in xrange(num_trial):
+    for i in range(num_trial):
         number = random.random_integers(num_trial)
         name = ('__sdcal_composite_mode_%s_%3s.tab'%(calmode,number)).replace(' ','0')
         if not os.path.exists(name):
             return name
-    raise RuntimeError, 'Failed to configure temporary caltable name.'
+    raise RuntimeError('Failed to configure temporary caltable name.')
 
 def temporary_calibration(calmode, arg_template, **kwargs):
     caltable = temporary_name(calmode)
@@ -206,11 +226,11 @@ def temporary_calibration(calmode, arg_template, **kwargs):
     myargs['overwrite'] = False
     # optional argument for sdcal
     for (k,v) in kwargs.items():
-        if myargs.has_key(k):
+        if k in myargs:
             myargs[k] = v
     sdcal(**myargs)
     if not os.path.exists(caltable):
-        raise RuntimeError, 'Failed to create temporary caltable.'
+        raise RuntimeError('Failed to create temporary caltable.')
     return caltable
 
 def fix_for_intent(calmodes, input_args):
@@ -224,7 +244,7 @@ def fix_for_intent(calmodes, input_args):
     else:
         output_args = input_args
     return output_args
-        
+
 
 def handle_composite_mode(args):
     kwargs = args.copy()
@@ -268,7 +288,7 @@ def handle_composite_mode(args):
         # apply temporary caltables
         if 'apply' in calmodes:
             if len(applytable_list) == 0:
-                raise RuntimeError, "No applytable has been created/registered."
+                raise RuntimeError("No applytable has been created/registered.")
             myargs = kwargs.copy()
             myargs['calmode'] = 'apply'
             myargs['applytable'] = precalibrations + applytable_list

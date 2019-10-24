@@ -38,7 +38,7 @@ template <class T> class ImageConcat;
 
 namespace casa {
 
-template <class T>  class ImageConcatenator : public ImageTask<T> {
+template <class T>  class ImageConcatenator /*: public ImageTask<T>*/ {
 	// <summary>
 	// Top level interface for concatenating images
 	// </summary>
@@ -59,17 +59,29 @@ template <class T>  class ImageConcatenator : public ImageTask<T> {
 
 public:
 
-	// <src>image</src> should be the first image in
+	ImageConcatenator() = delete;
+	
+    // <src>image</src> should be the first image in
     // the list of images to be concatenated.
+    /*
 	ImageConcatenator(
-		SPCIIT image, const casacore::String& outname, casacore::Bool overwrite
+		SPIIT image, const casacore::String& outname, casacore::Bool overwrite
 	);
+    */
+
+    ImageConcatenator(
+        std::vector<casacore::String>& images,
+        const casacore::String& outname, casacore::Bool overwrite
+    );
+
+
 
 	// destructor
 	~ImageConcatenator();
 
 	// Perform the concatenation.
-	SPIIT concatenate(const std::vector<casacore::String>& imageNames);
+    // SPIIT concatenate(const std::vector<casacore::String>& imageNames);
+    SPIIT concatenate();
 
 	// Set the axis along which to do the concatenation. A negative value
 	// of <src>axis</src> means use the spectral axis. An exception is thrown
@@ -78,6 +90,8 @@ public:
 
 	void setTempClose(casacore::Bool b) { _tempClose = b; }
 
+    void setMode(const casacore::String& mymode);
+
 	void setRelax(casacore::Bool b) { _relax = b; }
 
 	void setReorder(casacore::Bool b) { _reorder = b; }
@@ -85,32 +99,34 @@ public:
 	casacore::String getClass() const;
 
 protected:
-	inline  CasacRegionManager::StokesControl _getStokesControl() const {
-		return CasacRegionManager::USE_ALL_STOKES;
-	}
-
-	inline std::vector<casacore::Coordinate::Type> _getNecessaryCoordinates() const {
-		return std::vector<casacore::Coordinate::Type>(0);
- 	}
+    enum MODE{
+        COPYVIRTUAL,
+        MOVEVIRTUAL,
+        NOMOVEVIRTUAL,
+        PAGED
+    };
 
 private:
-	casacore::Int _axis;
-	casacore::Bool _tempClose, _relax, _reorder;
-	static const casacore::String _class;
+    std::vector<casacore::String> _imageNames;
+    casacore::String _outname;
+    casacore::Bool _overwrite;
+    casacore::Int _axis = -1;
+    casacore::Bool _tempClose = false;
+    casacore::Bool _relax = false;
+    casacore::Bool _reorder = false;
+    MODE _mode = PAGED;
+    static const casacore::String _class;
 
-	// disallow default constructor
-	ImageConcatenator();
+    // returns true if world coordinate values increase
+    // with pixel coordinate values
+    casacore::Bool _minAxisValues(
+        casacore::Double& min, const casacore::CoordinateSystem& csys,
+        const casacore::IPosition& shape
+    ) const;
 
-	// returns true if world coordinate values increase
-	// with pixel coordinate values
-	casacore::Bool _minMaxAxisValues(
-		casacore::Double& min, casacore::Double& max, casacore::uInt ndim,
-		const casacore::CoordinateSystem& csys, const casacore::IPosition& shape
-	) const;
-
-	void _addImage(
-	    std::unique_ptr<casacore::ImageConcat<T> >& pConcat,
-	    const casacore::String& name
+    void _addImage(
+	    std::shared_ptr<casacore::ImageConcat<T>> pConcat,
+	    const casacore::String& name, casacore::Bool first
 	) const;
 
 };

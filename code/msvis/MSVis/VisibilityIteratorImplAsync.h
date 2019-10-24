@@ -8,8 +8,8 @@
 #if ! defined (VisibilityIteratorAsync_H_)
 #define VisibilityIteratorAsync_H_
 
+#include <stack>
 #include <set>
-using std::set;
 
 #include <msvis/MSVis/VisibilityIteratorImpl.h>
 #include <msvis/MSVis/AsynchronousInterface.h>
@@ -175,7 +175,7 @@ public:
     casacore::Vector<casacore::Double>& lsrFrequency(casacore::Vector<casacore::Double>& ) const { NotImplementedROVIA; }
     void lsrFrequency(const casacore::Int& , casacore::Vector<casacore::Double>& , casacore::Bool& ) { NotImplementedROVIA; }
     const casacore::MeasurementSet& ms() const  { NotImplementedROVIA; }
-    const casacore::ROMSColumns& msColumns() const;
+    const casacore::MSColumns& msColumns() const;
     casacore::Int msId() const;
     casacore::Int nCorr() const { NotPrefetched; }
     casacore::Int nRow() const { NotPrefetched; }
@@ -270,7 +270,7 @@ private:
     asyncio::AsynchronousInterface * interface_p; // [own]
     casacore::Int                              msId_p;
     PrefetchColumns                  prefetchColumns_p;
-    casacore::Stack<VisBufferAsyncWrapper *>   vbaWrapperStack_p;
+    std::stack<VisBufferAsyncWrapper *>   vbaWrapperStack_p;
     VisBufferAsync *                 visBufferAsync_p;
     asyncio::VlaData *               vlaData_p; // [use]
     asyncio::VLAT *                  vlat_p; // [use]

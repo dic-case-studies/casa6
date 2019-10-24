@@ -76,7 +76,7 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: " << x.getMesg()
 					<< LogIO::POST;
@@ -113,13 +113,60 @@ int main () {
 					dopplerString, restfreq, stokes, false
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: " << x.getMesg()
 					<< LogIO::POST;
 			}
 			AlwaysAssert(thrown, AipsError);
 		}
+
+		{
+			log << LogIO::NORMAL
+				<< "Test region outside image throws exception"
+				<< LogIO::POST;
+			Bool thrown = true;
+			Quantity centerx(450, "pix");
+			Quantity centery(400, "pix");
+			Quantity radius(30, "arcsec");
+			Vector<Stokes::StokesTypes> stokes(0);
+			try {
+				AnnCircle circle(
+					centerx, centery, radius,
+					csys, shape, stokes
+				);
+				thrown = false;
+			} catch (const ToLCRegionConversionError& x) {
+				log << LogIO::NORMAL
+					<< "Exception thrown as expected: "
+					<< x.getMesg() << LogIO::POST;
+			}
+			AlwaysAssert(thrown, AipsError);
+		}
+		{
+			log << LogIO::NORMAL
+				<< "Test region outside image not required"
+				<< LogIO::POST;
+			Bool thrown = true;
+			Quantity centerx(450, "pix");
+			Quantity centery(400, "pix");
+			Quantity radius(30, "arcsec");
+			Vector<Stokes::StokesTypes> stokes(0);
+			Bool requireRegion(false);
+			try {
+				AnnCircle circle(
+					centerx, centery, radius,
+					csys, shape, stokes, requireRegion
+				);
+				thrown = false;
+			} catch (const ToLCRegionConversionError& x) {
+				log << LogIO::NORMAL
+					<< "Unexpected exception thrown: "
+					<< x.getMesg() << LogIO::POST;
+			}
+			AlwaysAssert(!thrown, AipsError);
+		}
+
 		{
 			Quantity centerx(-0.01, "deg");
 			Quantity centery(0.02, "deg");
@@ -559,7 +606,7 @@ int main () {
 				AipsError
 			);
 		}
-	} catch (AipsError x) {
+	} catch (const AipsError& x) {
 		cerr << "Caught exception: " << x.getMesg() << endl;
 		return 1;
 	}

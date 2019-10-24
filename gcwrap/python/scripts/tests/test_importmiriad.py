@@ -16,13 +16,38 @@
 # Input data:                                                               #
 #                                                                           #
 #############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms
+    from casatasks import importmiriad
+
+    ctsys_resolve = ctsys.resolve
+
+    _tb = table( )
+    _ms = ms( )
+
+    stype = str
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+
+    def ctsys_resolve(apath):
+        dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+        return os.path.join(dataRoot,apath)
+
+    # not local tools
+    _tb = tb
+    _ms = ms
+
+    stype = basestring
 
 myname = 'importmiriad-unit-test'
 
@@ -34,15 +59,15 @@ msname = my_dataset_names[0].split('.')[0]+'.ms'
 
 def checktable(thename, theexpectation, dataslice=[]):
     global msname, myname
-    tb.open(msname+"/"+thename)
+    _tb.open(os.path.join(msname,thename))
     if thename == "":
         thename = "MAIN"
     for mycell in theexpectation:
-        print myname, ": comparing ", mycell
+        print(myname, ": comparing ", mycell)
         if mycell[0]=="DATA" or mycell[0]=="CHAN_WIDTH" or mycell[0]=="CHAN_FREQ":
-	    value = tb.getcellslice(mycell[0], mycell[1],dataslice[0],dataslice[1],dataslice[2])
-	else:
-	    value = tb.getcell(mycell[0], mycell[1])
+            value = _tb.getcellslice(mycell[0], mycell[1],dataslice[0],dataslice[1],dataslice[2])
+        else:
+            value = _tb.getcell(mycell[0], mycell[1])
         # see if value is array
         try:
             isarray = value.__len__
@@ -54,7 +79,7 @@ def checktable(thename, theexpectation, dataslice=[]):
             else:
                 in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
         else:
-            if isinstance(value, basestring):
+            if isinstance(value, stype):
                 in_agreement = value == mycell[2]
             else:
                 # it's an array
@@ -67,13 +92,13 @@ def checktable(thename, theexpectation, dataslice=[]):
                     except:
                         in_agreement = False
         if not in_agreement:
-            print myname, ":  Error in MS subtable", thename, ":"
-            print "     column ", mycell[0], " row ", mycell[1], " contains ", value
-            print "     expected value is ", mycell[2]
-            tb.close()
+            print(myname, ":  Error in MS subtable", thename, ":")
+            print("     column ", mycell[0], " row ", mycell[1], " contains ", value)
+            print("     expected value is ", mycell[2])
+            _tb.close()
             return False
-    tb.close()
-    print myname, ": table ", thename, " as expected."
+    _tb.close()
+    print(myname, ": table ", thename, " as expected.")
     return True
 
 
@@ -85,12 +110,13 @@ class test_importmiriad(unittest.TestCase):
     def setUp(self):
         res = None
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importmiriad/'
+        datapath='regression/unittest/importmiriad'
         for fname in my_dataset_names:
             if(os.path.exists(fname)):
                 shutil.rmtree(fname)
-            shutil.copytree(datapath + fname, fname)
-        default(importmiriad)
+            shutil.copytree(ctsys_resolve(os.path.join(datapath,fname)), fname)
+        if not is_CASA6:
+            default(importmiriad)
         
     def tearDown(self):
         for fname in my_dataset_names:
@@ -103,10 +129,10 @@ class test_importmiriad(unittest.TestCase):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
         self.res = importmiriad(my_dataset_names[0], msname,tsys=False)
-        print myname, ": Success! Now checking output ..."
+        print(myname, ": Success! Now checking output ...")
         mscomponents = set(["table.dat",
                             "table.f0",
-			    "table.f0i",
+                            "table.f0i",
                             "table.f1",
                             "table.f1_TSM1",
                             "table.f2",
@@ -153,21 +179,21 @@ class test_importmiriad(unittest.TestCase):
                             ])
         for name in mscomponents:
             if not os.access(msname+"/"+name, os.F_OK):
-                print myname, ": Error  ", msname+"/"+name, "doesn't exist ..."
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
             else:
-                print myname, ": ", name, "present."
-        print myname, ": MS exists. All tables present. Try opening as MS ..."
+                print(myname, ": ", name, "present.")
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
         try:
-            ms.open(msname)
+            _ms.open(msname)
         except:
-            print myname, ": Error  Cannot open MS table", tablename
+            print(myname, ": Error  Cannot open MS table", tablename)
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
-            print myname, ": OK. Checking tables in detail ..."
+            _ms.close()
+            print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
     
             # check main table first
@@ -177,11 +203,11 @@ class test_importmiriad(unittest.TestCase):
                          ['UVW',       0, [ 167.85437179, 11.69765597, 6.01248136], 1E-8],
                          ['EXPOSURE',  0, 9.856, 1E-4],
                          ['DATA',      0,[[ 40.19867706 -8.43087101j],
-      					  [ -0.65212655 +0.32635808j],
-      					  [  0.77692640 -0.51819152j],
-      					  [ 47.81456757+12.74779224j]], 1E-8]
+                                          [ -0.65212655 +0.32635808j],
+                                          [  0.77692640 -0.51819152j],
+                                          [ 47.81456757+12.74779224j]], 1E-8]
                          ]
-	    dataslice=[[0,1025],[3,1025],[1,1]]
+            dataslice=[[0,1025],[3,1025],[1,1]]
             results = checktable(name, expected, dataslice)
             if not results:
                 retValue['success']=False
@@ -191,9 +217,9 @@ class test_importmiriad(unittest.TestCase):
                          ['UVW',       209, [3725.85784932, 228.183798, 117.68756041], 1E-8],
                          ['EXPOSURE',  209, 9.856, 1E-4],
                          ['DATA',      209,[[ 54.56027985-2.18005967j],
-       				            [ -0.06506564-0.72650862j],
-      				            [  0.65535468+0.22498345j],
-       					    [ 45.48416138+1.93808842j]], 1E-8]
+                                            [ -0.06506564-0.72650862j],
+                                            [  0.65535468+0.22498345j],
+                                            [ 45.48416138+1.93808842j]], 1E-8]
                          ]
             results = checktable(name, expected, dataslice)
             if not results:
@@ -216,7 +242,7 @@ class test_importmiriad(unittest.TestCase):
                          ['CHAN_WIDTH',      0, [ -1e6, -1e6, -1e6], 0.1],
                          ['CHAN_FREQ',       0, [  3124e6,   3123e6,  3122e6], 0.01E6]
                          ]
-	    freqSlice=[[0],[2],[1]]
+            freqSlice=[[0],[2],[1]]
             results = checktable(name, expected,freqSlice)
             if not results:
                 retValue['success']=False
@@ -227,3 +253,7 @@ class test_importmiriad(unittest.TestCase):
     
 def suite():
     return [test_importmiriad]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

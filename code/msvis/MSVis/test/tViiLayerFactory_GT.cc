@@ -497,7 +497,7 @@ public:
         // Note that the creation of a new subtables is done using a
         // copy of the original subtables. However, to access these we
         // need to use the method table() of a given column (e. g. name() )
-        // It would be better if the ROMSAntennaColumns object had
+        // It would be better if the MSAntennaColumns object had
         // an getter to the MSAntenna object.
         // The same applies to the other subtables
 
@@ -531,17 +531,17 @@ public:
     }
 
 
-    const casacore::ROMSAntennaColumns& antennaSubtablecols() const override
+    const casacore::MSAntennaColumns& antennaSubtablecols() const override
     {
         return *newAntennaSubtablecols_p;
     }
 
-    const casacore::ROMSDataDescColumns& dataDescriptionSubtablecols() const override
+    const casacore::MSDataDescColumns& dataDescriptionSubtablecols() const override
     {
         return *newDDSubtablecols_p;
     }
 
-    const casacore::ROMSSpWindowColumns& spectralWindowSubtablecols() const override
+    const casacore::MSSpWindowColumns& spectralWindowSubtablecols() const override
     {
         return *newSPWSubtablecols_p;
     }
@@ -549,13 +549,13 @@ public:
 private:
 
     casacore::MSAntenna newAntennaSubtable_p;
-    std::unique_ptr<casacore::ROMSAntennaColumns> newAntennaSubtablecols_p;
+    std::unique_ptr<casacore::MSAntennaColumns> newAntennaSubtablecols_p;
 
     casacore::MSSpectralWindow newSPWSubtable_p;
-    std::unique_ptr<casacore::ROMSSpWindowColumns> newSPWSubtablecols_p;
+    std::unique_ptr<casacore::MSSpWindowColumns> newSPWSubtablecols_p;
 
     casacore::MSDataDescription newDDSubtable_p;
-    std::unique_ptr<casacore::ROMSDataDescColumns> newDDSubtablecols_p;
+    std::unique_ptr<casacore::MSDataDescColumns> newDDSubtablecols_p;
 
 };
 

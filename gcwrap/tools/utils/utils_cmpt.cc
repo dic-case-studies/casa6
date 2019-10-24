@@ -16,7 +16,9 @@
 #include <stdcasa/version.h>
 #include <utils_cmpt.h>
 #include <tools/utils/stdBaseInterface.h>
+#if ! defined(WITHOUT_DBUS)
 #include <tools/xerces/stdcasaXMLUtil.h>
+#endif
 #include <casa/Logging/LogIO.h>
 #include <casa/BasicSL/String.h>
 #include <casa/OS/File.h>
@@ -35,7 +37,7 @@
 #include <casacore/casa/Quanta/UnitMap.h>
 #include <casatools/Config/State.h>
 #ifdef CASATOOLS
-#include <asdmstman/Register.h>
+#include <asdmstman/AsdmStMan.h>
 #include <toolversion.h>
 #endif
 
@@ -59,6 +61,10 @@ utils::~utils()
   delete itsLog;
 }
 
+#if ! defined(WITHOUT_DBUS)
+// These parameter/XML processing routines are no longer needed with
+// CASA 6 because Cereberus is used for type checking based upon
+// generated JSON parameter descriptions...
 bool
 utils::verify(const ::casac::record& input, const ::casac::variant& xmldescriptor, bool throwexcept)
 {
@@ -208,6 +214,7 @@ utils::toxml(const ::casac::record& input, const bool asfile, const std::string&
    }
    return rstat;
 }
+#endif
 
 std::string
 utils::getrc(const std::string& rcvar)
@@ -401,15 +408,25 @@ utils::_trigger_segfault (int faultType)
 // -------------------- initialize CASAtools ------------------
 
 static std::vector<std::string> default_data_path;
+static std::string python_path;
+#ifdef CASATOOLS
+// CASA 6
+bool utils::initialize(const std::string &pypath, const std::vector<std::string> &default_path) {
+#else
+// CASA 5
 bool utils::initialize(const std::vector<std::string> &default_path) {
+    std::string pypath;
+#endif
     static bool initialized = false;
     if ( initialized ) return false;
     default_data_path = default_path;
+    python_path = pypath;
     casatools::get_state( ).setDataPath(default_data_path);
+    casatools::get_state( ).setPythonPath(python_path);
     // configure quanta/measures customizations...
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );
 #ifdef CASATOOLS
-    register_asdmstman( );
+    casa::AsdmStMan::registerClass( );
 #endif
     initialized = true;
     return true;
@@ -432,6 +449,12 @@ std::vector<std::string> utils::getpath( ) {
     std::copy( path.begin( ), path.end( ), std::back_inserter(result) );
     return result;
 }
+
+#ifdef CASATOOLS
+std::string utils::getpython( ) {
+    return casatools::get_state( ).pythonPath( );
+}
+#endif
 
 void utils::clearpath( ) {
     casatools::get_state( ).clearDataPath( );
@@ -457,8 +480,8 @@ std::string utils::resolve(const std::string &subdir) {
     for ( std::list<casatools::ServiceId>::const_iterator it=servs.begin( ); it != servs.end( ); ++it ) {
         casac::record *sub = new casac::record;
         sub->insert("id",it->id( ));
-        sub->insert("type",it->type( ));
         sub->insert("uri",it->uri( ));
+        sub->insert("types",std::vector<std::string>(it->types( ).begin( ),it->types( ).end( )));
         sub->insert("priority",it->priority( ));
         regrec->insert(std::to_string(count++),sub);
     }
@@ -486,6 +509,10 @@ utils::version( ) {
 
 std::string
 utils::version_desc( ) { return VersionInfo::desc( ); }
+
+std::string
+utils::version_variant( ) { return VersionInfo::variant( ); }
+
 
 std::string
 utils::version_info( ) { return VersionInfo::info( ); }

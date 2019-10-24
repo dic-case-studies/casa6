@@ -1,12 +1,29 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
 import unittest
+import numpy as np
 import os
 import filecmp
 import numpy
-from tasks import *
-from taskinit import *
-from casa_stack_manip import stack_frame_find
-from __main__ import default
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms
+    from casatasks import setjy
+    mslocal = ms()
+    ctsys_resolve = ctsys.resolve
+else:
+    from tasks import *
+    from taskinit import *
+    from taskinit import tbtool as table
+    from casa_stack_manip import stack_frame_find
+    from __main__ import default
+    mslocal = mstool()
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+
 """
 Unit tests for task setjy.
 
@@ -17,19 +34,19 @@ Features tested:
   3. Solar system (Uranus) flux density calibration.
 """
 
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/'
+datapath = ctsys_resolve('regression/unittest/setjy')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
-if os.environ.has_key('TEST_DATADIR'):
-    DATADIR = str(os.environ.get('TEST_DATADIR'))+'/setjy/'
+if 'TEST_DATADIR' in os.environ:
+    DATADIR = str(os.environ.get('TEST_DATADIR'))+'/setjy'
     if os.path.isdir(DATADIR):
         testmms = True
         datapath = DATADIR
 
-print 'setjy tests will use data from '+datapath
+print('setjy tests will use data from '+datapath)
 
-if os.environ.has_key('BYPASS_PARALLEL_PROCESSING'):
+if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
     ParallelTaskHelper.bypassParallelProcessing(1)
 
 
@@ -40,24 +57,24 @@ class SetjyUnitTestBase(unittest.TestCase):
         self.inpms = MS
 
         # Create working area
-        setjydatapath = 'unittest/setjy/'
+        # setjydatapath = 'unittest/setjy/'
         # 2015-02-02 TT: this seems unnessary directory layer...
         #if not os.path.exists(setjydatapath):
         #    print "\nCreate working area..."
         #    os.system('mkdir -p '+setjydatapath)
 
         # Create a new fresh copy of the MS
-        print "\nCreate a new local copy of the MS..."
-        #print " setjydatapath=",setjydatapath, " inpms=",self.inpms
+        print("\nCreate a new local copy of the MS...")
+        #print(" setjydatapath=",setjydatapath, " inpms=",self.inpms)
         if testmms:
-            os.system('cp -rH ' + datapath + self.inpms + ' '+self.inpms)
+            os.system('cp -rH ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
         else:
-            os.system('cp -rf ' + os.environ.get('CASAPATH').split()[0] + "/data/regression/" + setjydatapath + self.inpms + ' ' + self.inpms)
+            os.system('cp -rf ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
 
     def resetMS(self):
 
         if os.path.exists(self.inpms):
-            print "\nRemoving a local copy of MS from the previous test..."
+            print("\nRemoving a local copy of MS from the previous test...")
             #ret = os.system('rm -rf unittest/setjy/*')
             shutil.rmtree(self.inpms)
 
@@ -76,7 +93,7 @@ class SetjyUnitTestBase(unittest.TestCase):
         """
         retline = 'JUNK'
         try:
-            tblocal = tbtool()
+            tblocal = table()
             tblocal.open(vis + '/HISTORY')
             st = tblocal.query('ORIGIN == pattern("%s*")' % origin, columns='MESSAGE')
             nstrows = st.nrows()
@@ -85,7 +102,7 @@ class SetjyUnitTestBase(unittest.TestCase):
             if maxnback > nstrows:
                 maxnback = nstrows - 1
             stoprow = startrow - maxnback
-            for linenum in xrange(startrow, stoprow - 1, -1):
+            for linenum in range(startrow, stoprow - 1, -1):
                 curline = st.getcell('MESSAGE', linenum)
                 #if hint in curline:
                 if curline.find(hint)!=-1:
@@ -93,16 +110,16 @@ class SetjyUnitTestBase(unittest.TestCase):
                     break
             st.close()
             tblocal.close()
-        except Exception, e:
-            print "\nError getting last history line"
+        except Exception:
+            print("\nError getting last history line")
             tblocal.close()
-            raise e
+            raise
 
         return retline
 
     def check_history(self,histline, items):
         isok = True
-        #print "\nhistline=",histline, " items=",items
+        #print("\nhistline=",histline, " items=",items)
         for item in items:
             if item not in histline:
                 isok = False
@@ -110,7 +127,7 @@ class SetjyUnitTestBase(unittest.TestCase):
         if not isok:
             errmsg = "%s not found in %s.\n" % (items, histline)
             errmsg += "It could be that a change to HISTORY caused the wrong line to be selected."
-            raise AssertionError, errmsg
+            raise AssertionError(errmsg)
         return isok
 
     def check_eq(self,val, expval, tol=None):
@@ -127,15 +144,15 @@ class SetjyUnitTestBase(unittest.TestCase):
                 if hasattr(are_eq, 'all'):
                     are_eq = are_eq.all()
                 if not are_eq:
-                    raise ValueError, '!='
+                    raise ValueError('!=')
             except ValueError:
                 errmsg = "%r != %r" % (val, expval)
                 if (len(errmsg) > 66): # 66 = 78 - len('ValueError: ')
                     errmsg = "\n%r\n!=\n%r" % (val, expval)
-                raise ValueError, errmsg
-            except Exception, e:
-                print "Error comparing", val, "to", expval
-                raise e
+                raise ValueError(errmsg)
+            except Exception:
+                print("Error comparing", val, "to", expval)
+                raise
 
 
 class test_SingleObservation(SetjyUnitTestBase):
@@ -163,31 +180,31 @@ class test_SingleObservation(SetjyUnitTestBase):
         self.inpms += ".test1"
         record = {}
 
-        tblocal = tbtool()
+        tblocal = table()
         tblocal.open(self.inpms)
         cols = tblocal.colnames()
         tblocal.close()
         if 'MODEL_DATA' in cols:
-            raise ValueError, "The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols)
+            raise ValueError("The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols))
 
         try:
-            #print "\nRunning setjy(field='Uranus')."
-            print "\nRunning setjy(field='Titan')."
+            #print("\nRunning setjy(field='Uranus').")
+            print("\nRunning setjy(field='Titan').")
             #sjran = setjy(vis=self.inpms, field='Uranus', spw='', modimage='',
             sjran = setjy(vis=self.inpms, field='Titan', spw='', modimage='',
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2010', usescratch=True)
-            #print "sjran=",sjran
-        except Exception, e:
-            print "\nError running setjy(field='Uranus')"
-            raise e
+            #print("sjran=",sjran)
+        except Exception:
+            print("\nError running setjy(field='Uranus')")
+            raise
 
         try:
             tblocal.open(self.inpms)
             cols = tblocal.colnames()
             if 'MODEL_DATA' not in cols:
                 #raise AssertionError, "setjy(field='Uranus') did not add a MODEL_DATA column"
-                raise AssertionError, "setjy(field='Titan') did not add a MODEL_DATA column"
+                raise AssertionError("setjy(field='Titan') did not add a MODEL_DATA column")
             else:
                 #record['wvr'] = tblocal.getcell('MODEL_DATA', 0)
                 #record['auto3'] = tblocal.getcell('MODEL_DATA', 10)
@@ -229,11 +246,11 @@ class test_SingleObservation(SetjyUnitTestBase):
                     record['long3'] = subt.getcell('MODEL_DATA', 0)
                     subt.close()
                 else:
-		    record['auto2'] = tblocal.getcell('MODEL_DATA', 270)
-		    record['long2'] = tblocal.getcell('MODEL_DATA', 310)
-		    record['auto3'] = tblocal.getcell('MODEL_DATA', 408)
-		    record['med3'] = tblocal.getcell('MODEL_DATA', 424)
-		    record['long3'] = tblocal.getcell('MODEL_DATA', 438)
+                    record['auto2'] = tblocal.getcell('MODEL_DATA', 270)
+                    record['long2'] = tblocal.getcell('MODEL_DATA', 310)
+                    record['auto3'] = tblocal.getcell('MODEL_DATA', 408)
+                    record['med3'] = tblocal.getcell('MODEL_DATA', 424)
+                    record['long3'] = tblocal.getcell('MODEL_DATA', 438)
                 tblocal.close()
                 #record['history'] = self.get_last_history_line(self.inpms, origin='setjy::imager::setjy()', hint='Uranus')
                 #record['history'] = self.get_last_history_line(self.inpms, origin='imager::setjy()', hint='Uranus')
@@ -241,18 +258,18 @@ class test_SingleObservation(SetjyUnitTestBase):
                 # in the parent MS of MMS but actually setjy run with MMS update the history info in individual SUBMSes.
                 if not self.ismms: record['history'] = self.get_last_history_line(self.inpms, origin='imager::setjy()', hint='Titan')
                 self.result = record
-        except AssertionError, e:
-            print "\nError accesing MODEL_DATA"
+        except AssertionError:
+            print("\nError accesing MODEL_DATA")
             tblocal.close()
-            raise e
+            raise
 
         #"""Flux density in HISTORY (Uranus)?"""
         """Flux density in HISTORY (Titan)?"""
         #self.check_history(self.result['history'], ["Uranus", "V=0] Jy"])
-        #print "history =",self.result['history']
+        #print("history =",self.result['history'])
         if not self.ismms: self.check_history(self.result['history'], ["Titan", "V=0] Jy"])
         """Returned fluxes """
-        self.assertTrue(sjran.has_key('1')) 
+        self.assertTrue('1' in sjran) 
         #self.check_eq(sjran['0']['1']['fluxd'][0],65.23839313,0.0001)
         self.check_eq(sjran['1']['1']['fluxd'][0],3.33542042,0.0001)
 
@@ -284,30 +301,30 @@ class test_SingleObservation(SetjyUnitTestBase):
         self.inpms += ".test2"
         record = {}
 
-        tblocal = tbtool()
+        tblocal = table()
         tblocal.open(self.inpms)
         cols = tblocal.colnames()
         tblocal.close()
         if 'MODEL_DATA' in cols:
-            raise ValueError, "The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols)
+            raise ValueError("The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols))
 
         try:
-            #print "\nRunning setjy(field='Uranus')."
-            print "\nRunning setjy(field='Titan')."
+            #print("\nRunning setjy(field='Uranus').")
+            print("\nRunning setjy(field='Titan').")
             #sjran = setjy(vis=self.inpms, field='Uranus', spw='', modimage='',
             sjran = setjy(vis=self.inpms, field='Titan', spw='', modimage='',
                           scalebychan=True, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2010', usescratch=True)
-        except Exception, e:
-            #print "\nError running setjy(field='Uranus')"
-            print "\nError running setjy(field='Titan')"
-            raise e
+        except Exception:
+            #print("\nError running setjy(field='Uranus')")
+            print("\nError running setjy(field='Titan')")
+            raise
         try:
             tblocal.open(self.inpms)
             cols = tblocal.colnames()
  
             if 'MODEL_DATA' not in cols:
-                raise AssertionError, "setjy(field='Uranus') did not add a MODEL_DATA column"
+                raise AssertionError("setjy(field='Uranus') did not add a MODEL_DATA column")
             else:
                 #record['wvr'] = tblocal.getcell('MODEL_DATA', 0)
                 #record['auto1'] = tblocal.getcell('MODEL_DATA', 18)
@@ -316,10 +333,10 @@ class test_SingleObservation(SetjyUnitTestBase):
                 #record['long4'] = tblocal.getcell('MODEL_DATA', 3)
                 # Titan
                 if self.ismms:
-		    #record['auto0'] = tblocal.getcell('MODEL_DATA', 45)
-		    #record['long0'] = tblocal.getcell('MODEL_DATA', 78)
-		    #record['auto3'] = tblocal.getcell('MODEL_DATA', 2835)
-		    #record['long3'] = tblocal.getcell('MODEL_DATA', 2868)
+                    #record['auto0'] = tblocal.getcell('MODEL_DATA', 45)
+                    #record['long0'] = tblocal.getcell('MODEL_DATA', 78)
+                    #record['auto3'] = tblocal.getcell('MODEL_DATA', 2835)
+                    #record['long3'] = tblocal.getcell('MODEL_DATA', 2868)
                     querystr = 'FIELD_ID==1'
                     auto0query = querystr+' AND DATA_DESC_ID==0 AND ANTENNA1==0 AND ANTENNA2==0 AND TIME/(24*3600) IN [{MJD(2011/04/22/00:07:03),MJD(2011/04/22/00:07:13)}]'
                     subt = tblocal.query(auto0query)
@@ -327,30 +344,30 @@ class test_SingleObservation(SetjyUnitTestBase):
                     subt.close()
                     long0query = querystr+' AND DATA_DESC_ID==0 AND ANTENNA1==3 AND ANTENNA2==7 AND TIME/(24*3600) IN [{MJD(2011/04/22/00:07:03),MJD(2011/04/22/00:07:13)}]'
                     subt = tblocal.query(long0query)
-		    record['long0'] = subt.getcell('MODEL_DATA', 0)
+                    record['long0'] = subt.getcell('MODEL_DATA', 0)
                     subt.close()
                     auto3query = querystr+' AND DATA_DESC_ID==3 AND ANTENNA1==0 AND ANTENNA2==0 AND TIME < 2011/04/22/00:07:03'
                     subt = tblocal.query(auto3query)
-		    record['auto3'] = subt.getcell('MODEL_DATA', 0)
+                    record['auto3'] = subt.getcell('MODEL_DATA', 0)
                     subt.close()
                     long3query = querystr+' AND DATA_DESC_ID==3 AND ANTENNA1==3 AND ANTENNA2==7 AND TIME < 2011/04/22/00:07:03'
                     subt = tblocal.query(long3query)
-		    record['long3'] = subt.getcell('MODEL_DATA', 0)
+                    record['long3'] = subt.getcell('MODEL_DATA', 0)
                     subt.close()
                 else:
-		    record['auto0'] = tblocal.getcell('MODEL_DATA', 45)
-		    record['long0'] = tblocal.getcell('MODEL_DATA', 78)
-		    record['auto3'] = tblocal.getcell('MODEL_DATA', 405)
-		    record['long3'] = tblocal.getcell('MODEL_DATA', 438)
+                    record['auto0'] = tblocal.getcell('MODEL_DATA', 45)
+                    record['long0'] = tblocal.getcell('MODEL_DATA', 78)
+                    record['auto3'] = tblocal.getcell('MODEL_DATA', 405)
+                    record['long3'] = tblocal.getcell('MODEL_DATA', 438)
                 tblocal.close()
             #    record['history'] = self.get_last_history_line(self.inpms, origin='setjy::imager::setjy()', hint="V=0] Jy")
                 #record['history'] = self.get_last_history_line(self.inpms, origin='imager::setjy()', hint="V=0] Jy")
                 if not self.ismms: record['history'] = self.get_last_history_line(self.inpms, origin='imager::setjy()', hint="V=0] Jy")
                 self.result = record
-        except AssertionError, e:
-            print "\nError accesing MODEL_DATA"
+        except AssertionError:
+            print("\nError accesing MODEL_DATA")
             tblocal.close()
-            raise e
+            raise
 
         """Flux density in HISTORY (scalebychan)?"""
         #self.check_history(self.result['history'], ["Uranus", "V=0] Jy"])
@@ -421,29 +438,29 @@ class test_SingleObservation(SetjyUnitTestBase):
         self.inpms += ".test3"
         record = {}
 
-        tblocal = tbtool()
+        tblocal = table()
         tblocal.open(self.inpms)
         cols = tblocal.colnames()
         tblocal.close()
         if 'MODEL_DATA' in cols:
-            raise ValueError, "The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols)
+            raise ValueError("The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols))
 
         try:
-            #print "\nRunning setjy(field='Uranus')."
-            print "\nRunning setjy(field='Titan')."
+            #print("\nRunning setjy(field='Uranus').")
+            print("\nRunning setjy(field='Titan').")
             #sjran = setjy(vis=self.inpms, field='Uranus', spw='', modimage='',
             sjran = setjy(vis=self.inpms, field='Titan', spw='', modimage='',
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2012', usescratch=True)
-        except Exception, e:
-            print "\nError running setjy(field='Uranus')"
-            raise e
+        except Exception:
+            print("\nError running setjy(field='Uranus')")
+            raise
         try:
             tblocal.open(self.inpms)
             cols = tblocal.colnames()
             if 'MODEL_DATA' not in cols:
-                #raise AssertionError, "setjy(field='Uranus') did not add a MODEL_DATA column"
-                raise AssertionError, "setjy(field='Titan') did not add a MODEL_DATA column"
+                #raise AssertionError("setjy(field='Uranus') did not add a MODEL_DATA column")
+                raise AssertionError("setjy(field='Titan') did not add a MODEL_DATA column")
             else:
                 #record['wvr'] = tblocal.getcell('MODEL_DATA', 0)
                 #record['auto3'] = tblocal.getcell('MODEL_DATA', 10)
@@ -489,15 +506,15 @@ class test_SingleObservation(SetjyUnitTestBase):
                 #record['history'] = self.get_last_history_line(self.inpms, origin='setjy', hint='Uranus')
                 if not self.ismms: record['history'] = self.get_last_history_line(self.inpms, origin='setjy', hint='Titan')
                 self.result = record
-        except AssertionError, e:
-            print "\nError accesing MODEL_DATA"
+        except AssertionError:
+            print("\nError accesing MODEL_DATA")
             tblocal.close()
-            raise e
+            raise
 
         if debug:
-          print "self.result['history']=",self.result['history']
-          print "self.result['auto0']=",self.result['auto0']
-          print "self.result['auto3']=",self.result['auto3']
+          print("self.result['history']=",self.result['history'])
+          print("self.result['auto0']=",self.result['auto0'])
+          print("self.result['auto3']=",self.result['auto3'])
 
         #"""Flux density in HISTORY (Uranus)?"""
         #self.check_history(self.result['history'], ["Uranus:", "V=0.0] Jy"])
@@ -505,7 +522,7 @@ class test_SingleObservation(SetjyUnitTestBase):
         if not self.ismms: self.check_history(self.result['history'], ["Titan:", "V=0.0] Jy"])
 
         """Returned fluxes """
-        self.assertTrue(sjran.has_key('1')) 
+        self.assertTrue('1' in sjran) 
         self.check_eq(sjran['1']['1']['fluxd'][0],3.27488661,0.0001)
 
         #"""WVR spw"""
@@ -514,9 +531,9 @@ class test_SingleObservation(SetjyUnitTestBase):
         #self.check_eq(self.result['wvr'], numpy.array([[ 25.33490372+0.j, 25.33490372+0.j]]),0.0001)
 
         #"""Zero spacing of spw 3"""
-	#self.check_eq(self.result['auto3'], numpy.array([[ 66.72530365+0.j],[ 66.72530365+0.j]]),0.0001)
+        #self.check_eq(self.result['auto3'], numpy.array([[ 66.72530365+0.j],[ 66.72530365+0.j]]),0.0001)
         # new value after code and ephemeris data update 2012-10-03
-	#self.check_eq(self.result['auto3'], numpy.array([[ 66.71941376+0.j], [ 66.71941376+0.j]]),0.0001)
+        #self.check_eq(self.result['auto3'], numpy.array([[ 66.71941376+0.j], [ 66.71941376+0.j]]),0.0001)
         #"""Zero spacing of spw 4"""
         #self.check_eq(self.result['auto4'], numpy.array([[ 70.40153503+0.j],[ 70.40153503+0.j]]),0.0001)
         # new value after code and ephemeris data update 2012-10-03
@@ -544,30 +561,30 @@ class test_SingleObservation(SetjyUnitTestBase):
         self.inpms += ".test4"
         record = {}
 
-        tblocal = tbtool()
+        tblocal = table()
         tblocal.open(self.inpms)
         cols = tblocal.colnames()
         tblocal.close()
         if 'MODEL_DATA' in cols:
-            raise ValueError, "The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols)
+            raise ValueError("The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols))
 
         try:
-            #print "\nRunning setjy(field='Uranus')."
-            print "\nRunning setjy(field='Titan')."
+            #print("\nRunning setjy(field='Uranus').")
+            print("\nRunning setjy(field='Titan').")
             sjran = setjy(vis=self.inpms, field='', spw='', modimage='',
                           selectdata=True, intent="*AMPLI*",
                           scalebychan=True, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2010', usescratch=True)
-        except Exception, e:
-            #print "\nError running setjy(field='Uranus')"
-            print "\nError running setjy(field='Titan')"
-            raise e
+        except Exception:
+            #print("\nError running setjy(field='Uranus')")
+            print("\nError running setjy(field='Titan')")
+            raise
         try:
             tblocal.open(self.inpms)
             cols = tblocal.colnames()
             if 'MODEL_DATA' not in cols:
-                #raise AssertionError, "setjy(field='Uranus') did not add a MODEL_DATA column"
-                raise AssertionError, "setjy(field='Titan') did not add a MODEL_DATA column"
+                #raise AssertionError("setjy(field='Uranus') did not add a MODEL_DATA column")
+                raise AssertionError("setjy(field='Titan') did not add a MODEL_DATA column")
             else:
                 #record['wvr'] = tblocal.getcell('MODEL_DATA', 0)
                 #record['auto1'] = tblocal.getcell('MODEL_DATA', 18)
@@ -578,8 +595,8 @@ class test_SingleObservation(SetjyUnitTestBase):
                 if self.ismms:
                     #record['auto0'] = tblocal.getcell('MODEL_DATA', 45)
                     #record['long0'] = tblocal.getcell('MODEL_DATA', 78)
-		    #record['auto3'] = tblocal.getcell('MODEL_DATA', 2835)
-		    #record['long3'] = tblocal.getcell('MODEL_DATA', 2868)
+                    #record['auto3'] = tblocal.getcell('MODEL_DATA', 2835)
+                    #record['long3'] = tblocal.getcell('MODEL_DATA', 2868)
                     querystr = 'FIELD_ID==1'
                     auto0query = querystr+' AND DATA_DESC_ID==0 AND ANTENNA1==0 AND ANTENNA2==0 AND TIME/(24*3600) IN [{MJD(2011/04/22/00:07:03),MJD(2011/04/22/00:07:13)}]'
                     subt = tblocal.query(auto0query)
@@ -607,10 +624,10 @@ class test_SingleObservation(SetjyUnitTestBase):
                 #record['history'] = self.get_last_history_line(self.inpms, origin='setjy::imager::setjy()', hint="V=0] Jy")
                 if not self.ismms: record['history'] = self.get_last_history_line(self.inpms, origin='imager::setjy()', hint="V=0] Jy")
                 self.result = record
-        except AssertionError, e:
-            print "\nError accesing MODEL_DATA"
+        except AssertionError:
+            print("\nError accesing MODEL_DATA")
             tblocal.close()
-            raise e
+            raise
 
         """Flux density in HISTORY (selectbyIntent)?"""
         #self.check_history(self.result['history'], ["Uranus", "V=0] Jy"])
@@ -667,30 +684,30 @@ class test_SingleObservation(SetjyUnitTestBase):
         self.inpms += ".test5"
         record = {}
 
-        tblocal = tbtool()
+        tblocal = table()
         tblocal.open(self.inpms)
         cols = tblocal.colnames()
         tblocal.close()
         if 'MODEL_DATA' in cols:
-            raise ValueError, "The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols)
+            raise ValueError("The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols))
 
         try:
-            #print "\nRunning setjy(field='Uranus')."
-            print "\nRunning setjy(field='Titan')."
+            #print("\nRunning setjy(field='Uranus').")
+            print("\nRunning setjy(field='Titan').")
             sjran = setjy(vis=self.inpms, field='', spw='', modimage='',
                           selectdata=True, intent="*AMPLI*",
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2012', usescratch=True)
-        except Exception, e:
-            #print "\nError running setjy(field='Uranus')"
-            print "\nError running setjy(field='Titan')"
-            raise e
+        except Exception:
+            #print("\nError running setjy(field='Uranus')")
+            print("\nError running setjy(field='Titan')")
+            raise
         try:
             tblocal.open(self.inpms)
             cols = tblocal.colnames()
             if 'MODEL_DATA' not in cols:
-                #raise AssertionError, "setjy(field='Uranus') did not add a MODEL_DATA column"
-                raise AssertionError, "setjy(field='Titan') did not add a MODEL_DATA column"
+                #raise AssertionError("setjy(field='Uranus') did not add a MODEL_DATA column")
+                raise AssertionError("setjy(field='Titan') did not add a MODEL_DATA column")
             else:
                 #record['wvr'] = tblocal.getcell('MODEL_DATA', 0)
                 #record['auto3'] = tblocal.getcell('MODEL_DATA', 10)
@@ -727,24 +744,24 @@ class test_SingleObservation(SetjyUnitTestBase):
                     record['long3'] = subt.getcell('MODEL_DATA', 0)
                     subt.close()
                 else:
-		    record['auto2'] = tblocal.getcell('MODEL_DATA', 270)
-		    record['long2'] = tblocal.getcell('MODEL_DATA', 310)
-		    record['auto3'] = tblocal.getcell('MODEL_DATA', 408)
-		    record['med3'] = tblocal.getcell('MODEL_DATA', 424)
-		    record['long3'] = tblocal.getcell('MODEL_DATA', 438)
+                    record['auto2'] = tblocal.getcell('MODEL_DATA', 270)
+                    record['long2'] = tblocal.getcell('MODEL_DATA', 310)
+                    record['auto3'] = tblocal.getcell('MODEL_DATA', 408)
+                    record['med3'] = tblocal.getcell('MODEL_DATA', 424)
+                    record['long3'] = tblocal.getcell('MODEL_DATA', 438)
                 tblocal.close()
                 #record['history'] = self.get_last_history_line(self.inpms, origin='setjy', hint='Uranus')
                 if not self.ismms: record['history'] = self.get_last_history_line(self.inpms, origin='setjy', hint='Titan')
                 self.result = record
-        except AssertionError, e:
-            print "\nError accesing MODEL_DATA"
+        except AssertionError:
+            print("\nError accesing MODEL_DATA")
             tblocal.close()
-            raise e
+            raise
 
         if debug:
-          if not self.ismms: print "self.result['history']=",self.result['history']
-          print "self.result['auto0']=",self.result['auto0']
-          print "self.result['auto3']=",self.result['auto3']
+          if not self.ismms: print("self.result['history']=",self.result['history'])
+          print("self.result['auto0']=",self.result['auto0'])
+          print("self.result['auto3']=",self.result['auto3'])
 
         #"""Flux density in HISTORY (Uranus)?"""
         #self.check_history(self.result['history'], ["Uranus:", "V=0.0] Jy"])
@@ -753,9 +770,9 @@ class test_SingleObservation(SetjyUnitTestBase):
         # new value after code and ephemeris data update 2012-10-03
         #self.check_eq(self.result['wvr'], numpy.array([[ 25.33490372+0.j, 25.33490372+0.j]]),0.0001)
         #"""Zero spacing of spw 3"""
-	#self.check_eq(self.result['auto3'], numpy.array([[ 66.72530365+0.j],[ 66.72530365+0.j]]),0.0001)
+        #self.check_eq(self.result['auto3'], numpy.array([[ 66.72530365+0.j],[ 66.72530365+0.j]]),0.0001)
         # new value after code and ephemeris data update 2012-10-03
-	#self.check_eq(self.result['auto3'], numpy.array([[ 66.71941376+0.j], [ 66.71941376+0.j]]),0.0001)
+        #self.check_eq(self.result['auto3'], numpy.array([[ 66.71941376+0.j], [ 66.71941376+0.j]]),0.0001)
         #"""Zero spacing of spw 4"""
         #self.check_eq(self.result['auto4'], numpy.array([[ 70.40153503+0.j],[ 70.40153503+0.j]]),0.0001)
         # new value after code and ephemeris data update 2012-10-03
@@ -798,35 +815,35 @@ class test_MultipleObservations(SetjyUnitTestBase):
         self.inpms += ".test1"
         record = {}
 
-        tblocal = tbtool()
+        tblocal = table()
         tblocal.open(self.inpms)
         cols = tblocal.colnames()
         tblocal.close()
         if 'MODEL_DATA' in cols:
-            raise ValueError, "The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols)
+            raise ValueError("The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols))
 
         try:
-            print "\nRunning setjy(field='Titan')."
+            print("\nRunning setjy(field='Titan').")
             sjran = setjy(self.inpms, field='Titan', spw='',
                           selectdata=True, observation=1, 
                           modimage='',
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2010', usescratch=True)
-        except Exception, e:
-            print "\nError running setjy(field='Titan')"
-            raise e
+        except Exception:
+            print("\nError running setjy(field='Titan')")
+            raise
 
         try:
             tblocal.open(self.inpms)
             cols = tblocal.colnames()
             if 'MODEL_DATA' not in cols:
-                raise AssertionError, "setjy(field='Titan') did not add a MODEL_DATA column"
+                raise AssertionError("setjy(field='Titan') did not add a MODEL_DATA column")
             else:
                 if self.ismms:
                     # MMS data row layout changed 
-		    #record[0] = tblocal.getcell('MODEL_DATA', 0)[0, 0]
-		    #record[1] = tblocal.getcell('MODEL_DATA', 386)[0]
-		    #record[2] = tblocal.getcell('MODEL_DATA', 544)[0, 0]
+                    #record[0] = tblocal.getcell('MODEL_DATA', 0)[0, 0]
+                    #record[1] = tblocal.getcell('MODEL_DATA', 386)[0]
+                    #record[2] = tblocal.getcell('MODEL_DATA', 544)[0, 0]
                     querystr = 'STATE_ID==0'
                     query0 = querystr+' AND DATA_DESC_ID==0 AND ANTENNA1==0 AND ANTENNA2==1 AND FIELD_ID==0'
                     subt = tblocal.query(query0)
@@ -841,15 +858,15 @@ class test_MultipleObservations(SetjyUnitTestBase):
                     record[2] = subt.getcell('MODEL_DATA', 0)
 
                 else:
-		    record[0] = tblocal.getcell('MODEL_DATA', 0)[0, 0]
-		    record[1] = tblocal.getcell('MODEL_DATA', 666)[0]
-		    record[2] = tblocal.getcell('MODEL_DATA', 950)[0, 0]
+                    record[0] = tblocal.getcell('MODEL_DATA', 0)[0, 0]
+                    record[1] = tblocal.getcell('MODEL_DATA', 666)[0]
+                    record[2] = tblocal.getcell('MODEL_DATA', 950)[0, 0]
                 tblocal.close()
                 self.result = record
-        except AssertionError, e:
-            print "\nError accesing MODEL_DATA"
+        except AssertionError:
+            print("\nError accesing MODEL_DATA")
             tblocal.close()
-            raise e
+            raise
 
         """Was obsID 0 left alone?"""
         self.check_eq(self.result[0], 1.0+0.0j, 0.003)
@@ -868,34 +885,34 @@ class test_MultipleObservations(SetjyUnitTestBase):
         self.inpms += ".test2"
         record = {}
 
-        tblocal = tbtool()
+        tblocal = table()
         tblocal.open(self.inpms)
         cols = tblocal.colnames()
         tblocal.close()
         if 'MODEL_DATA' in cols:
-            raise ValueError, "The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols)
+            raise ValueError("The input MS, " + self.inpms + " already has a MODEL_DATA col" + str(cols))
 
         try:
-            print "\nRunning setjy(field='Titan')."
+            print("\nRunning setjy(field='Titan').")
             sjran = setjy(self.inpms, field='Titan', spw='',
                           selectdata=True, observation=1, 
                           modimage='',
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2012', usescratch=True)
-        except Exception, e:
-            print "\nError running setjy(field='Uranus')"
-            raise e
+        except Exception:
+            print("\nError running setjy(field='Uranus')")
+            raise
 
         try:
             tblocal.open(self.inpms)
             cols = tblocal.colnames()
             if 'MODEL_DATA' not in cols:
-                raise AssertionError, "setjy(field='Titan') did not add a MODEL_DATA column"
+                raise AssertionError("setjy(field='Titan') did not add a MODEL_DATA column")
             else:
                 if self.ismms:
-		    #record[0] = tblocal.getcell('MODEL_DATA', 0)[0, 0]
-		    #record[1] = tblocal.getcell('MODEL_DATA', 979)[0]
-		    #record[2] = tblocal.getcell('MODEL_DATA', 544)[0, 0]
+                    #record[0] = tblocal.getcell('MODEL_DATA', 0)[0, 0]
+                    #record[1] = tblocal.getcell('MODEL_DATA', 979)[0]
+                    #record[2] = tblocal.getcell('MODEL_DATA', 544)[0, 0]
                     querystr = 'STATE_ID==0'
                     query0 = querystr+' AND DATA_DESC_ID==0 AND ANTENNA1==0 AND ANTENNA2==1 AND FIELD_ID==0'
                     subt = tblocal.query(query0)
@@ -909,24 +926,24 @@ class test_MultipleObservations(SetjyUnitTestBase):
                     subt = tblocal.query(query1)
                     record[2] = subt.getcell('MODEL_DATA', 0)
                 else:
-		    record[0] = tblocal.getcell('MODEL_DATA', 0)[0, 0]
-		    record[1] = tblocal.getcell('MODEL_DATA', 671)[0]
-		    record[2] = tblocal.getcell('MODEL_DATA', 950)[0, 0]
+                    record[0] = tblocal.getcell('MODEL_DATA', 0)[0, 0]
+                    record[1] = tblocal.getcell('MODEL_DATA', 671)[0]
+                    record[2] = tblocal.getcell('MODEL_DATA', 950)[0, 0]
                 tblocal.close()
                 self.result = record
-        except AssertionError, e:
-            print "\nError accesing MODEL_DATA"
+        except AssertionError:
+            print("\nError accesing MODEL_DATA")
             tblocal.close()
-            raise e
+            raise
 
         """Was obsID 0 left alone?"""
         self.check_eq(self.result[0], 1.0+0.0j, 0.003)
         """Was obsID 1 set?"""
         self.check_eq(self.result[1],
-	#        numpy.array([ 1.21551239-0.33617234j,  1.19003308-0.41755155j,
-	#                      1.15911222-0.49702403j,  1.12289071-0.57422638j]),
-	        numpy.array([ 1.26114714+0.j,  1.26116526+0.j, 1.26118350+0.j,  1.26120162+0.j]),
-			      0.003)
+        #        numpy.array([ 1.21551239-0.33617234j,  1.19003308-0.41755155j,
+        #                      1.15911222-0.49702403j,  1.12289071-0.57422638j]),
+                numpy.array([ 1.26114714+0.j,  1.26116526+0.j, 1.26118350+0.j,  1.26120162+0.j]),
+                              0.003)
         """Was obsID 2 left alone?"""
         self.check_eq(self.result[2], 1.0+0.0j, 0.003)
         # TODO:use record to check values in MODEL_DATA
@@ -947,16 +964,16 @@ class test_ModImage(SetjyUnitTestBase):
         self.modelim = '3C147_U.im'
         self.result = {}
         #if not os.path.exists(self.inpuvf):
-        #    raise EnvironmentError, "Missing input UVFITS file: " + datapath + self.inpuvf
+        #    raise EnvironmentError("Missing input UVFITS file: " + datapath + self.inpuvf)
 
         #try:
             #if not os.path.exists('unittest/setjy'):
-            #    print "\nCreate working area..."
+            #    print("\nCreate working area...")
             #    os.system('mkdir -p unittest/setjy')
-        #    print "Importing", self.inpuvf, "to an MS."
+        #    print("Importing", self.inpuvf, "to an MS.")
         #    importuvfits(fitsfile=self.inpuvf, vis=self.inpms,antnamescheme="new")
         #except Exception, e:
-        #    print "importuvfits error:"
+        #    print("importuvfits error:")
         #    raise e
 
     def tearDown(self):
@@ -969,18 +986,18 @@ class test_ModImage(SetjyUnitTestBase):
         # The MS is in Q band, so deliberately choose the U band model so that the structure
         # is not too far off, but whether or not its flux density is scaled makes a difference.
 
-        print "Running multiple setjy with different parameters..."
+        print("Running multiple setjy with different parameters...")
         for use_oldstandard in [False, True]:
         # for debugging ...
         #for use_oldstandard in [True]:
             selStandard = ("Perley-Taylor 99" if use_oldstandard else "Perley-Butler 2010")
-            print "!!!!! Run with standard=\"%s\" !!!!!" % selStandard
+            print("!!!!! Run with standard=\"%s\" !!!!!" % selStandard)
             self.result[use_oldstandard] = self.run_setjy(use_oldstandard)
 
         
-        print "!!!! Run with standard=\"manual\", fluxdensity !!!!!"
+        print("!!!! Run with standard=\"manual\", fluxdensity !!!!!")
         self.result['fluxdens'] = self.run_setjy(False, 1234.0)
-        print "!!!! Run with standard=\"manual\", fluxdensity and spix !!!!!"
+        print("!!!! Run with standard=\"manual\", fluxdensity and spix !!!!!")
         self.result['spix'] = self.run_setjy(False,1234.0 * (43.42064/35.0)**0.7,-0.7,"35.0GHz")
 
         # check on HISTORY sub-table entries - does not check for values
@@ -1000,20 +1017,20 @@ class test_ModImage(SetjyUnitTestBase):
         # -different standards
         """ Returned flux density (using old standard) """
         # fieldid = 12
-        self.assertTrue(self.result[True]['setjyran'].has_key('12'))
+        self.assertTrue('12' in self.result[True]['setjyran'])
         self.check_eq(self.result[True]['setjyran']['12']['1']['fluxd'][0],0.91134687,0.0001)
         """ Returned flux density (default standard=Perley-Butler 2010) """
-        self.assertTrue(self.result[False]['setjyran'].has_key('12'))
+        self.assertTrue('12' in self.result[False]['setjyran'])
         #self.check_eq(self.result[False]['setjyran']['12']['1']['fluxd'][0],0.0,0.0001)
         # Updated value for the updated run_setjy 2014-05-01 TT
         self.check_eq(self.result[False]['setjyran']['12']['1']['fluxd'][0],1.0510757,0.0001)
         #
         # -manual mode (fluxdensity specification)
         """ Returned flux density (with input fluxdensity) """
-        self.assertTrue(self.result['fluxdens']['setjyran'].has_key('12'))
+        self.assertTrue('12' in self.result['fluxdens']['setjyran'])
         self.check_eq(self.result['fluxdens']['setjyran']['12']['1']['fluxd'][0],1234.0,0.0001)
         """ Returned flux density (with input fluxdensity and spix) """
-        self.assertTrue(self.result['spix']['setjyran'].has_key('12'))
+        self.assertTrue('12' in self.result['spix']['setjyran'])
         #self.check_eq(self.result['spix']['setjyran']['12']['1']['fluxd'][0],1233.91240671,0.0001)
         # Updated value for the updated run_setjy 2014-05-01 TT
         self.check_eq(self.result['spix']['setjyran']['12']['1']['fluxd'][0],1234.0328507,0.0001)
@@ -1072,7 +1089,7 @@ class test_ModImage(SetjyUnitTestBase):
                                                spix=spix, reffreq=reffreq,
                                                usescratch=True
                                                )
-
+                    
                     if not self.ismms: record['history'] = self.get_last_history_line(self.inpms,
                                                            origin='imager::setjy()',
                                                            hint='model image to I')
@@ -1092,26 +1109,25 @@ class test_ModImage(SetjyUnitTestBase):
                                                            origin='imager::setjy()',
                                                            hint='Flux density as a function of frequency')
 
-
-            ms.open(self.inpms)
-            record['short'] = ms.statistics(column='MODEL',
+            mslocal.open(self.inpms)
+            record['short'] = mslocal.statistics(column='MODEL',
                                             complex_value='amp',
                                             field='0542+498_1',
                                             baseline='2&9',
                                             time='2003/05/02/19:53:30.0',
                                             correlation='rr',
                                             reportingaxes='field')['FIELD_ID=12']['mean']
-            record['long']  = ms.statistics(column='MODEL',
+            record['long']  = mslocal.statistics(column='MODEL',
                                             complex_value='amp',
                                             field='0542+498_1',
                                             baseline='21&24',
                                             time='2003/05/02/19:53:30.0',
                                             correlation='ll',
                                             reportingaxes='field')['FIELD_ID=12']['mean']
-            ms.close()
-        except Exception, e:
-            print "Error from setjy or ms.statistics()"
-            raise e
+            mslocal.close()
+        except Exception:
+            print("Error from setjy or ms.statistics()")
+            raise
 
         return record
     
@@ -1141,12 +1157,12 @@ class test_newStandards(SetjyUnitTestBase):
         else: 
             outfldid = ""
             for ky in sjran.keys():
-                if sjran[ky].has_key('fieldName') and sjran[ky]['fieldName']==self.field:
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
                     outfldid = ky
                     break 
             ret = len(outfldid)
             if not ret:
-                print "FAIL: missing field = %s in the returned dictionary" % self.field 
+                print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['12']['0']['fluxd'][0],0.99137,0.0001)
         self.check_eq(sjran['12']['1']['fluxd'][0],0.99132,0.0001)
         self.assertTrue(ret)
@@ -1165,12 +1181,12 @@ class test_newStandards(SetjyUnitTestBase):
         else: 
             outfldid = ""
             for ky in sjran.keys():
-                if sjran[ky].has_key('fieldName') and sjran[ky]['fieldName']==self.field:
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
                     outfldid = ky
                     break 
             ret = len(outfldid)
             if not ret:
-                print "FAIL: missing field = %s in the returned dictionary" % self.field 
+                print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         #self.check_eq(sjran['12']['0']['fluxd'][0],1.15116881972,0.0001)
         #self.check_eq(sjran['12']['1']['fluxd'][0],1.15111995508,0.0001)
         self.check_eq(sjran['12']['0']['fluxd'][0],0.99137,0.0001)
@@ -1194,28 +1210,30 @@ class test_inputs(SetjyUnitTestBase):
         if os.path.exists(self.inpms):
             shutil.rmtree(self.inpms) 
 
-
         # test by temporarily setting __rethrow_casa_exceptions
         sjran=None
         try:
-            myf = stack_frame_find( )
-            original_rethrow_setting=myf.get('__rethrow_casa_exceptions',False)
-            myf['__rethrow_casa_exceptions']=True
-            print "\nRunning setjy with a non-existant vis"
+            # only necessary for CASA5, casatasks throw exceptions
+            if not is_CASA6:
+                myf = stack_frame_find( )
+                original_rethrow_setting=myf.get('__rethrow_casa_exceptions',False)
+                myf['__rethrow_casa_exceptions']=True
+            print("\nRunning setjy with a non-existant vis")
             sjran = setjy(vis=self.inpms,listmodels=False)
-        except Exception, setjyUTerr:
+        except Exception as setjyUTerr:
             msg = setjyUTerr.message
             self.assertNotEqual(msg.find("%s does not exist" % self.inpms), -1,
                                 'wrong type of exception is thrown')
         finally:
-            # put back original rethrow setting
-            myf['__rethrow_casa_exceptions']=original_rethrow_setting
+            if not is_CASA6:
+                # put back original rethrow setting
+                myf['__rethrow_casa_exceptions']=original_rethrow_setting
         self.assertEqual(sjran,None,"Failed to raise exception.") 
      
     def test_listmodels(self):
         """ Test listmodels mode """
         self.inpms=''
-        print "\nRunning setjy in listmodels mode ...."
+        print("\nRunning setjy in listmodels mode ....")
         sjran = setjy(vis=self.inpms,listmodels=True)
         self.assertTrue(sjran)
 
@@ -1250,12 +1268,12 @@ class test_conesearch(SetjyUnitTestBase):
         else: 
             outfldid = ""
             for ky in sjran.keys():
-                if sjran[ky].has_key('fieldName') and sjran[ky]['fieldName']==self.field:
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
                     outfldid = ky
                     break 
             ret = len(outfldid)
             if not ret:
-                print "FAIL: missing field = %s in the returned dictionary" % self.field 
+                print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['12']['1']['fluxd'][0],0.99125797,0.0001)
         self.assertTrue(ret)
 
@@ -1275,7 +1293,6 @@ class test_fluxscaleStandard(SetjyUnitTestBase):
 
     def test_fluxscaleStandard1(self):
         """ Test for accepting input fluxscale dictionary """
-        import numpy as np
         fluxscaledict=\
         {'1': {'0': {'fluxd': np.array([ 2.48362403,  0.        ,  0.        ,  0.        ]),
              'fluxdErr': np.array([ 0.00215907,  0.        ,  0.        ,  0.        ]),
@@ -1301,12 +1318,12 @@ class test_fluxscaleStandard(SetjyUnitTestBase):
         else:
             outfldid = ""
             for ky in sjran.keys():
-                if sjran[ky].has_key('fieldName') and sjran[ky]['fieldName']==fluxscaledict['1']['fieldName']:
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==fluxscaledict['1']['fieldName']:
                     outfldid = ky
                     break
             ret = len(outfldid)
             if not ret:
-                print "FAIL: missing field = %s in the returned dictionary" % self.field
+                print("FAIL: missing field = %s in the returned dictionary" % self.field)
         self.check_eq(sjran['1']['0']['fluxd'][0],2.48362403,0.0001)
         self.assertTrue(ret)
 
@@ -1403,28 +1420,30 @@ class test_inputs(SetjyUnitTestBase):
         if os.path.exists(self.inpms):
             shutil.rmtree(self.inpms) 
 
-
         # test by temporarily setting __rethrow_casa_exceptions
         sjran=None
         try:
-            myf = stack_frame_find( )
-            original_rethrow_setting=myf.get('__rethrow_casa_exceptions',False)
-            myf['__rethrow_casa_exceptions']=True
-            print "\nRunning setjy with a non-existant vis"
+            # only necessary for CASA5, casatasks throw exceptions
+            if not is_CASA6:
+                myf = stack_frame_find( )
+                original_rethrow_setting=myf.get('__rethrow_casa_exceptions',False)
+                myf['__rethrow_casa_exceptions']=True
+            print("\nRunning setjy with a non-existant vis")
             sjran = setjy(vis=self.inpms,listmodels=False)
-        except Exception, setjyUTerr:
-            msg = setjyUTerr.message
+        except Exception as setjyUTerr:
+            msg = str(setjyUTerr)
             self.assertNotEqual(msg.find("%s does not exist" % self.inpms), -1,
                                 'wrong type of exception is thrown')
         finally:
-            # put back original rethrow setting
-            myf['__rethrow_casa_exceptions']=original_rethrow_setting
+            if not is_CASA6:
+                # put back original rethrow setting
+                myf['__rethrow_casa_exceptions']=original_rethrow_setting
         self.assertEqual(sjran,None,"Failed to raise exception.") 
      
     def test_listmodels(self):
         """ Test listmodels mode """
         self.inpms=''
-        print "\nRunning setjy in listmodels mode ...."
+        print("\nRunning setjy in listmodels mode ....")
         sjran = setjy(vis=self.inpms,listmodels=True)
         self.assertTrue(sjran)
 
@@ -1459,12 +1478,12 @@ class test_conesearch(SetjyUnitTestBase):
         else: 
             outfldid = ""
             for ky in sjran.keys():
-                if sjran[ky].has_key('fieldName') and sjran[ky]['fieldName']==self.field:
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
                     outfldid = ky
                     break 
             ret = len(outfldid)
             if not ret:
-                print "FAIL: missing field = %s in the returned dictionary" % self.field 
+                print("FAIL: missing field = %s in the returned dictionary" % self.field) 
         self.check_eq(sjran['12']['1']['fluxd'][0],0.99125797,0.0001)
         self.assertTrue(ret)
 
@@ -1484,7 +1503,6 @@ class test_fluxscaleStandard(SetjyUnitTestBase):
 
     def test_fluxscaleStandard1(self):
         """ Test for accepting input fluxscale dictionary """
-        import numpy as np
         fluxscaledict=\
         {'1': {'0': {'fluxd': np.array([ 2.48362403,  0.        ,  0.        ,  0.        ]),
              'fluxdErr': np.array([ 0.00215907,  0.        ,  0.        ,  0.        ]),
@@ -1510,12 +1528,12 @@ class test_fluxscaleStandard(SetjyUnitTestBase):
         else:
             outfldid = ""
             for ky in sjran.keys():
-                if sjran[ky].has_key('fieldName') and sjran[ky]['fieldName']==fluxscaledict['1']['fieldName']:
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==fluxscaledict['1']['fieldName']:
                     outfldid = ky
                     break
             ret = len(outfldid)
             if not ret:
-                print "FAIL: missing field = %s in the returned dictionary" % self.field
+                print("FAIL: missing field = %s in the returned dictionary" % self.field)
         self.check_eq(sjran['1']['0']['fluxd'][0],2.48362403,0.0001)
         self.assertTrue(ret)
 
@@ -1546,8 +1564,8 @@ class test_setpol(SetjyUnitTestBase):
         if type(sjran)!=dict:
             ret = False
         #else:
-        #    print sjran 
-        #print "fluxdic=",sjran 
+        #    print(sjran)
+        #print("fluxdic=",sjran)
  
         self.check_eq(sjran['0']['0']['fluxd'][0],7.81694, 0.0001)
         self.assertTrue(ret)
@@ -1557,9 +1575,9 @@ class test_setpol(SetjyUnitTestBase):
         #logflx = log10(7.81694) + (-0.62)*log10(f/fref) + (-0.1)*log10(f/fref)
         # fmin at last chan (Freq=4662000000.0Hz)
         fexpmin = 7.68502
-        ms.open(self.inpms)
-        retrec = ms.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
-        ms.close()
+        mslocal.open(self.inpms)
+        retrec = mslocal.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
+        mslocal.close()
         self.check_eq(retrec['FIELD_ID=0']['min'],fexpmin,0.0001)
 
     def test_setpol2(self):
@@ -1576,7 +1594,7 @@ class test_setpol(SetjyUnitTestBase):
         if type(sjran)!=dict:
             ret = False
         #else:
-        #    print sjran
+        #    print(sjran)
 
         self.check_eq(sjran['0']['0']['fluxd'][0],7.81694, 0.0001)
         self.assertTrue(ret)
@@ -1586,10 +1604,10 @@ class test_setpol(SetjyUnitTestBase):
         #logflx = log10(7.81694) + (-0.62)*log10(f/fref) + (-0.1)*log10(f/fref)
         # fmin at last chan (Freq=4662000000.0Hz)
         fexpmin = 7.68527
-        ms.open(self.inpms)
-        retrec = ms.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
-        #retrec2 = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='phase')
-        ms.close()
+        mslocal.open(self.inpms)
+        retrec = mslocal.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
+        #retrec2 = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='phase')
+        mslocal.close()
         self.check_eq(retrec['FIELD_ID=0']['min'],fexpmin,0.0001)
 
     def test_setpol3(self):
@@ -1609,7 +1627,7 @@ class test_setpol(SetjyUnitTestBase):
         if type(sjran)!=dict:
             ret = False
         #else:
-        #    print sjran
+        #    print(sjran)
 
         self.check_eq(sjran['0']['0']['fluxd'][0],7.81694, 0.0001)
         self.assertTrue(ret)
@@ -1620,19 +1638,19 @@ class test_setpol(SetjyUnitTestBase):
         #logflx = log10(7.81694) + (-0.62)*log10(f/fref) + (-0.1)*log10(f/fref)
         # min fluxes  at last chan (Freq=4662000000.0Hz)
         ifexpmin = 7.68527
-        ms.open(self.inpms)
-        retrecI = ms.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
+        mslocal.open(self.inpms)
+        retrecI = mslocal.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
         # Q flux
         # polindex0 = 0.11190024, polindex = polindex0 - 0.5*(f-fref)/fref  (f-fref)/fref = 0.027778
         # => poindex_min = 0.09801124, with ifexpmin + pang constant => Qmin = 0.306371465
         # Umin = sqrt(I^2*polindex - Q^2)
         qfexpmin = 0.306371 
         ufexpmin = 0.688121784
-        retrecQ = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='real', reportingaxes='field') 
-        retrecU = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='imaginary', reportingaxes='field') 
-        #print "retrecQ=",retrecQ['MODEL']['min']
-        #print "retrecU=",retrecU['MODEL']['min']
-        ms.close()
+        retrecQ = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='real', reportingaxes='field') 
+        retrecU = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='imaginary', reportingaxes='field') 
+        #print("retrecQ=",retrecQ['MODEL']['min'])
+        #print("retrecU=",retrecU['MODEL']['min'])
+        mslocal.close()
         self.check_eq(retrecI['FIELD_ID=0']['min'],ifexpmin,0.0001)
         self.check_eq(retrecQ['FIELD_ID=0']['min'],qfexpmin,0.0001)
         self.check_eq(retrecU['FIELD_ID=0']['min'],ufexpmin,0.0001)
@@ -1654,7 +1672,7 @@ class test_setpol(SetjyUnitTestBase):
         if type(sjran)!=dict:
             ret = False
         #else:
-        #    print sjran
+        #    print(sjran)
 
         self.check_eq(sjran['0']['0']['fluxd'][0],7.81694, 0.0001)
         self.assertTrue(ret)
@@ -1665,8 +1683,8 @@ class test_setpol(SetjyUnitTestBase):
         #logflx = log10(7.81694) + (-0.62)*log10(f/fref) + (-0.1)*log10(f/fref)
         # min fluxes  at last chan (Freq=4662000000.0Hz)
         ifexpmin = 7.68527
-        ms.open(self.inpms)
-        retrecI = ms.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
+        mslocal.open(self.inpms)
+        retrecI = mslocal.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
         # U flux
         # polindex0 = 0.11190024, 
         # polangle0 = 0.5759586531581288, polangle = polangle0 - 0.5*(f-fref)/fref  (f-fref)/fref = 0.027778
@@ -1674,11 +1692,11 @@ class test_setpol(SetjyUnitTestBase):
         # Umin = sqrt(I^2*polindex^2 - Q^2)
         qfexpmax = 0.371472 
         ufexpmin = 0.775616 
-        retrecQ = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='real', reportingaxes='field')
-        retrecU = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='imaginary', reportingaxes='field')
-        #print "retrecQ=",retrecQ['MODEL']['min']
-        #print "retrecU=",retrecU['MODEL']['min']
-        ms.close()
+        retrecQ = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='real', reportingaxes='field')
+        retrecU = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='imaginary', reportingaxes='field')
+        #print("retrecQ=",retrecQ['MODEL']['min'])
+        #print("retrecU=",retrecU['MODEL']['min'])
+        mslocal.close()
         self.check_eq(retrecI['FIELD_ID=0']['min'],ifexpmin,0.0001)
         self.check_eq(retrecQ['FIELD_ID=0']['max'],qfexpmax,0.0001)
         self.check_eq(retrecU['FIELD_ID=0']['min'],ufexpmin,0.0001)
@@ -1701,7 +1719,7 @@ class test_setpol(SetjyUnitTestBase):
         if type(sjran)!=dict:
             ret = False
         #else:
-        #    print sjran
+        #    print(sjran)
 
         self.check_eq(sjran['0']['0']['fluxd'][0],7.81694, 0.0001)
         self.assertTrue(ret)
@@ -1712,19 +1730,19 @@ class test_setpol(SetjyUnitTestBase):
         #logflx = log10(7.81694) + (-0.62)*log10(f/fref)
         # min fluxes  at last chan (Freq=4662000000.0Hz)
         ifexpmin = 7.68527
-        ms.open(self.inpms)
-        retrecI = ms.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
+        mslocal.open(self.inpms)
+        retrecI = mslocal.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
         # U flux
         # polindex = 0.11190024,
         # polangle = 0.57595865
         # rotmeas = 10.0 => angle = 2*rotmeas*c^2*(fref^2-f^2)/ (f^2*f0^2) 
         qfexpend = 0.353443
         ufexpend = 0.783996
-        retrecQ = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='real', reportingaxes='field')
-        retrecU = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='imaginary', reportingaxes='field')
-        #print "retrecQ=",retrecQ['MODEL']['min']
-        #print "retrecU=",retrecU['MODEL']['min']
-        ms.close()
+        retrecQ = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='real', reportingaxes='field')
+        retrecU = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='imaginary', reportingaxes='field')
+        #print("retrecQ=",retrecQ['MODEL']['min'])
+        #print("retrecU=",retrecU['MODEL']['min'])
+        mslocal.close()
         self.check_eq(retrecI['FIELD_ID=0']['min'],ifexpmin,0.0001)
         self.check_eq(retrecQ['FIELD_ID=0']['min'],qfexpend,0.0001)
         self.check_eq(retrecU['FIELD_ID=0']['min'],ufexpend,0.0001)
@@ -1747,7 +1765,7 @@ class test_setpol(SetjyUnitTestBase):
         if type(sjran)!=dict:
             ret = False
         #else:
-        #    print sjran
+        #    print(sjran)
 
         self.check_eq(sjran['0']['0']['fluxd'][0],7.81694, 0.0001)
         self.assertTrue(ret)
@@ -1758,8 +1776,8 @@ class test_setpol(SetjyUnitTestBase):
         #logflx = log10(7.81694) + (-0.62)*log10(f/fref) + (-0.1)*log10(f/fref)^2
         # min fluxes  at last chan (Freq=4662000000.0Hz)
         ifexpmin = 7.6850217
-        ms.open(self.inpms)
-        retrecI = ms.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
+        mslocal.open(thems=self.inpms)
+        retrecI = mslocal.statistics(field='0', baseline='1&2', correlation='rr', column='model', complex_value='amp', reportingaxes='field')
         # U flux - based on python script calculation
         # polindex0 = 0.11190024, polindex= polindex0 +(-0.5)*(f-fref)/fref +(-0.1)*((f-fref)/fref)^2
         # polindex(f=fmax) = 
@@ -1768,12 +1786,12 @@ class test_setpol(SetjyUnitTestBase):
         qfexpmin = 0.328774
         ufexpmin = 0.678335
         anglemin = 1.119481
-        retrecQ = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='real', reportingaxes='field')
-        retrecU = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='imaginary', reportingaxes='field')
-        retrecAngle = ms.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='phase', reportingaxes='field')
-        #print "retrecQ=",retrecQ['MODEL']['min']
-        #print "retrecU=",retrecU['MODEL']['min']
-        ms.close()
+        retrecQ = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='real', reportingaxes='field')
+        retrecU = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='imaginary', reportingaxes='field')
+        retrecAngle = mslocal.statistics(field='0', baseline='1&2', correlation='rl', column='model', complex_value='phase', reportingaxes='field')
+        #print("retrecQ=",retrecQ['MODEL']['min'])
+        #print("retrecU=",retrecU['MODEL']['min'])
+        mslocal.close()
         self.check_eq(retrecI['FIELD_ID=0']['min'],ifexpmin,0.0001)
         self.check_eq(retrecQ['FIELD_ID=0']['min'],qfexpmin,0.0001)
         self.check_eq(retrecU['FIELD_ID=0']['min'],ufexpmin,0.0001)
@@ -1800,8 +1818,8 @@ class test_ephemtbl(SetjyUnitTestBase):
         self.setUpMS(msfile)
 
         sjran = setjy(vis=self.inpms, field='1', spw='0,1,2,3', standard='Butler-JPL-Horizons 2012', usescratch=True)
-        #print sjran
-        print "Checking returned flux densities..."
+        #print(sjran)
+        print("Checking returned flux densities...")
         self.check_eq(sjran['1']['0']['fluxd'][0],1.91422844,0.0001)
         self.check_eq(sjran['1']['1']['fluxd'][0],1.94107008,0.0001)
         self.check_eq(sjran['1']['2']['fluxd'][0],2.06917405,0.0001)
@@ -1812,27 +1830,27 @@ class test_ephemtbl(SetjyUnitTestBase):
         stats['1stNull']={}
         stats['phase0']={}
         stats['phase180']={}
-        ms.open(self.inpms)
-        stats['1stNull']['spw0']=ms.statistics(column='MODEL',complex_value='amp',field='1',spw='0',baseline='2&18',time='2015/06/21/04:56:50.4',reportingaxes='field')['FIELD_ID=1']
-        stats['1stNull']['spw1']=ms.statistics(column='MODEL',complex_value='amp',field='1',spw='1',baseline='0&16',time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1']
-        stats['1stNull']['spw2']=ms.statistics(column='MODEL',complex_value='amp',field='1',spw='2',baseline='7&13',time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1']
-        stats['1stNull']['spw3']=ms.statistics(column='MODEL',complex_value='amp',field='1',spw='3',baseline='7&13',time='2015/06/21/04:55:01.4',reportingaxes='field')['FIELD_ID=1']
-        stats['phase0']['spw0']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='0',baseline='0&16', time='2015/06/21/04:55:37.8',reportingaxes='field')['FIELD_ID=1']
-        stats['phase180']['spw0']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='0',baseline='2&18', time='2015/06/21/04:55:37.8',reportingaxes='field')['FIELD_ID=1'] 
-        stats['phase0']['spw1']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='1:186~190',baseline='0&16', time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1'] 
-        stats['phase180']['spw1']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='1:0~10',baseline='0&16', time='2015/06/21/04:55:37.8',reportingaxes='field')['FIELD_ID=1'] 
-        stats['phase0']['spw2']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='2:0~10',baseline='7&13', time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1'] 
-        stats['phase180']['spw2']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='2:180~190',baseline='7&13', time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1'] 
-        stats['phase0']['spw3']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='3:0~10',baseline='7&13', time='2015/06/21/04:55:01.4',reportingaxes='field')['FIELD_ID=1'] 
-        stats['phase180']['spw3']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='3:180~190',baseline='7&13', time='2015/06/21/04:55:01.4',reportingaxes='field')['FIELD_ID=1'] 
-        ms.close()
+        mslocal.open(self.inpms)
+        stats['1stNull']['spw0']=mslocal.statistics(column='MODEL',complex_value='amp',field='1',spw='0',baseline='2&18',time='2015/06/21/04:56:50.4',reportingaxes='field')['FIELD_ID=1']
+        stats['1stNull']['spw1']=mslocal.statistics(column='MODEL',complex_value='amp',field='1',spw='1',baseline='0&16',time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1']
+        stats['1stNull']['spw2']=mslocal.statistics(column='MODEL',complex_value='amp',field='1',spw='2',baseline='7&13',time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1']
+        stats['1stNull']['spw3']=mslocal.statistics(column='MODEL',complex_value='amp',field='1',spw='3',baseline='7&13',time='2015/06/21/04:55:01.4',reportingaxes='field')['FIELD_ID=1']
+        stats['phase0']['spw0']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='0',baseline='0&16', time='2015/06/21/04:55:37.8',reportingaxes='field')['FIELD_ID=1']
+        stats['phase180']['spw0']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='0',baseline='2&18', time='2015/06/21/04:55:37.8',reportingaxes='field')['FIELD_ID=1'] 
+        stats['phase0']['spw1']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='1:186~190',baseline='0&16', time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1'] 
+        stats['phase180']['spw1']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='1:0~10',baseline='0&16', time='2015/06/21/04:55:37.8',reportingaxes='field')['FIELD_ID=1'] 
+        stats['phase0']['spw2']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='2:0~10',baseline='7&13', time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1'] 
+        stats['phase180']['spw2']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='2:180~190',baseline='7&13', time='2015/06/21/04:54:25.1',reportingaxes='field')['FIELD_ID=1'] 
+        stats['phase0']['spw3']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='3:0~10',baseline='7&13', time='2015/06/21/04:55:01.4',reportingaxes='field')['FIELD_ID=1'] 
+        stats['phase180']['spw3']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='3:180~190',baseline='7&13', time='2015/06/21/04:55:01.4',reportingaxes='field')['FIELD_ID=1'] 
+        mslocal.close()
         spwlist = ['spw0','spw1','spw2','spw3']
-        print "Checking values of  model amplitudes near 1st null ..."
+        print("Checking values of  model amplitudes near 1st null ...")
         self.check_eq(stats['1stNull']['spw0']['min'],3.58091e-4,1.0e-4)
         self.check_eq(stats['1stNull']['spw1']['min'],2.00987e-6,1.0e-4)
         self.check_eq(stats['1stNull']['spw2']['min'],7.29703e-6,1.0e-4)
         self.check_eq(stats['1stNull']['spw3']['min'],2.16629e-5,1.0e-4)
-        print "Checking values of model phases transition of 1st null (shuold see phase 0 deg -> 180 deg)..."
+        print("Checking values of model phases transition of 1st null (shuold see phase 0 deg -> 180 deg)...")
         for spwn in spwlist:
             self.check_eq(stats['phase0'][spwn]['min']*180.0/numpy.pi,0.0,1.0e-4)
             self.check_eq((stats['phase180'][spwn]['min']*180.0/numpy.pi)%360,180.0,1.0e-4)
@@ -1844,8 +1862,8 @@ class test_ephemtbl(SetjyUnitTestBase):
         self.setUpMS(msfile)
 
         sjran = setjy(vis=self.inpms, field='1', spw='0,1,2,3', standard='Butler-JPL-Horizons 2012', usescratch=True)
-        #print sjran
-        print "Checking returned flux densities..."
+        #print(sjran)
+        print("Checking returned flux densities...")
         self.check_eq(sjran['1']['0']['fluxd'][0],36.20935440,0.0001)
         self.check_eq(sjran['1']['1']['fluxd'][0],37.05635071,0.0001)
         self.check_eq(sjran['1']['2']['fluxd'][0],33.30348587,0.0001)
@@ -1854,23 +1872,23 @@ class test_ephemtbl(SetjyUnitTestBase):
         stats={}
         stats['amp']={}
         stats['phase']={}
-        ms.open(self.inpms)
-        stats['amp']['spw0']=ms.statistics(column='MODEL',complex_value='amp',field='1',spw='0',reportingaxes='field')['FIELD_ID=1']
-        stats['amp']['spw1']=ms.statistics(column='MODEL',complex_value='amp',field='1',spw='1',reportingaxes='field')['FIELD_ID=1']
-        stats['amp']['spw2']=ms.statistics(column='MODEL',complex_value='amp',field='1',spw='2',reportingaxes='field')['FIELD_ID=1']
-        stats['amp']['spw3']=ms.statistics(column='MODEL',complex_value='amp',field='1',spw='3',reportingaxes='field')['FIELD_ID=1']
-        stats['phase']['spw0']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='0',reportingaxes='field')['FIELD_ID=1']
-        stats['phase']['spw1']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='1',reportingaxes='field')['FIELD_ID=1'] 
-        stats['phase']['spw2']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='2',reportingaxes='field')['FIELD_ID=1'] 
-        stats['phase']['spw3']=ms.statistics(column='MODEL',complex_value='phase',field='1',spw='3',reportingaxes='field')['FIELD_ID=1'] 
-        ms.close()
+        mslocal.open(self.inpms)
+        stats['amp']['spw0']=mslocal.statistics(column='MODEL',complex_value='amp',field='1',spw='0',reportingaxes='field')['FIELD_ID=1']
+        stats['amp']['spw1']=mslocal.statistics(column='MODEL',complex_value='amp',field='1',spw='1',reportingaxes='field')['FIELD_ID=1']
+        stats['amp']['spw2']=mslocal.statistics(column='MODEL',complex_value='amp',field='1',spw='2',reportingaxes='field')['FIELD_ID=1']
+        stats['amp']['spw3']=mslocal.statistics(column='MODEL',complex_value='amp',field='1',spw='3',reportingaxes='field')['FIELD_ID=1']
+        stats['phase']['spw0']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='0',reportingaxes='field')['FIELD_ID=1']
+        stats['phase']['spw1']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='1',reportingaxes='field')['FIELD_ID=1'] 
+        stats['phase']['spw2']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='2',reportingaxes='field')['FIELD_ID=1'] 
+        stats['phase']['spw3']=mslocal.statistics(column='MODEL',complex_value='phase',field='1',spw='3',reportingaxes='field')['FIELD_ID=1'] 
+        mslocal.close()
         spwlist = ['spw0','spw1','spw2','spw3']
-        print "Checking values of mean model amplitudes"
+        print("Checking values of mean model amplitudes")
         self.check_eq(stats['amp']['spw0']['mean'],31.924971781729685,1.0e-4)
         self.check_eq(stats['amp']['spw1']['mean'],32.768748886512704,1.0e-4)
         self.check_eq(stats['amp']['spw2']['mean'],30.069779582303905,1.0e-4)
         self.check_eq(stats['amp']['spw3']['mean'],29.615508822175407,1.0e-4)
-        print "Checking values of mean model phases"
+        print("Checking values of mean model phases")
         # icrs -> j2000 conversion via azelgeo seems to introduce some errors resulting non-zero phases...
         self.check_eq(stats['phase']['spw0']['mean'],2.3264814735449297e-08,1.0e-4)
         self.check_eq(stats['phase']['spw1']['mean'],2.3654161342165206e-08,1.0e-4)
@@ -1890,12 +1908,12 @@ class test_tpmAsteroid(SetjyUnitTestBase):
 
         #try:
             #if not os.path.exists('unittest/setjy'):
-            #    print "\nCreate working area..."
+            #    print("\nCreate working area...")
             #    os.system('mkdir -p unittest/setjy')
-        #    print "Importing", self.inpuvf, "to an MS."
+        #    print("Importing", self.inpuvf, "to an MS.")
         #    importuvfits(fitsfile=self.inpuvf, vis=self.inpms,antnamescheme="new")
         #except Exception, e:
-        #    print "importuvfits error:"
+        #    print("importuvfits error:")
         #    raise e
 
     def tearDown(self):
@@ -1906,7 +1924,7 @@ class test_tpmAsteroid(SetjyUnitTestBase):
         """ Test Thermo physical models for asteroid flux densities"""
 
         sjran = setjy(vis=self.inpms, field='Ceres,Vesta', spw='0,1,2,3', standard='Butler-JPL-Horizons 2012', intent="*CALIB*PHASE*",usescratch=True)
-        #print sjran
+        #print(sjran)
 
         # expected flux densities 
         # time field 2 (Ceres) : 2016/01/10/22:49:50
@@ -1954,10 +1972,14 @@ class test_NullSelection(SetjyUnitTestBase):
                     standard='Butler-JPL-Horizons 2012', intent="*CALIB*FLUX*",
                     usescratch=True)
 
-        self.assertEquals(res, False, "setjy did not return False for a null selection")
+        self.assertEqual(res, False, "setjy did not return False for a null selection")
 
 
 def suite():
     return [test_SingleObservation,test_MultipleObservations,test_ModImage, test_inputs,
             test_conesearch, test_fluxscaleStandard, test_setpol, test_ephemtbl,
             test_tpmAsteroid,test_NullSelection, test_newStandards]
+
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

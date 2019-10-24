@@ -32,7 +32,6 @@
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/Slicer.h>
 #include <casa/BasicSL/String.h>
-#include <casa/Containers/Stack.h>
 #include <casa/Quanta/MVDoppler.h>
 #include <casa/aips.h>
 #include <measures/Measures/MCDoppler.h>
@@ -456,7 +455,7 @@ public:
 
 //    virtual void getFreqInSpwRange(casacore::Double& freqStart, casacore::Double& freqEnd, casacore::MFrequency::Types freqframe = casacore::MFrequency::LSRK) const;
 
-    // Access the current casacore::ROMSColumns object in MSIter
+    // Access the current casacore::MSColumns object in MSIter
     virtual const vi::SubtableColumns & subtableColumns () const;
 
     // get back the selected spectral windows and spectral channels for
@@ -576,14 +575,14 @@ protected:
     // criteria (e.g., slicing) is in effect.
 
     template <typename T>
-    void getColumnRows (const casacore::ROArrayColumn<T> & column, casacore::Array<T> & array) const;
+    void getColumnRows (const casacore::ArrayColumn<T> & column, casacore::Array<T> & array) const;
 
     template <typename T>
     void
-    getColumnRowsMatrix (const casacore::ROArrayColumn<T> & column, casacore::Matrix<T> & array) const;
+    getColumnRowsMatrix (const casacore::ArrayColumn<T> & column, casacore::Matrix<T> & array) const;
 
     template <typename T>
-    void getColumnRows (const casacore::ROScalarColumn<T> & column, casacore::Vector<T> & array) const;
+    void getColumnRows (const casacore::ScalarColumn<T> & column, casacore::Vector<T> & array) const;
 
     casacore::Vector<casacore::Double> getFrequencies (casacore::Double time, casacore::Int frameOfReference) const;
     casacore::Vector<casacore::Int> getChannels (casacore::Double time, casacore::Int frameOfReference) const;
@@ -608,7 +607,7 @@ protected:
     VisibilityIterator2 * getViP () const;
 
     void getVisibilityAsStokes (casacore::Matrix<CStokesVector> & visibilityStokes,
-                                const casacore::ROArrayColumn<casacore::Complex> & column) const;
+                                const casacore::ArrayColumn<casacore::Complex> & column) const;
 
     // Ctor auxiliary method
 

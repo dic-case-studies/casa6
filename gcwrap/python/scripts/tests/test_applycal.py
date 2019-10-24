@@ -1,17 +1,33 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
-from __main__ import default
-from tasks import applycal
-from taskinit import cbtool, casalog
+
 import unittest
 import time
 
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import applycal,casalog
+    from casatools import calibrater,ctsys
+
+    ctsys_resolve = ctsys.resolve
+else:
+    from __main__ import default
+    from tasks import applycal
+    from taskinit import cbtool, casalog
+
+    calibrater = cbtool
+
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
     
 class test_base(unittest.TestCase):
         
     def setUpFile(self,file,type_file):
-        
+
         if type(file) is list:
             for file_i in file:
                 self.setUpFileCore(file_i,type_file)
@@ -28,11 +44,10 @@ class test_base(unittest.TestCase):
     def setUpFileCore(self,file,type_file):
         
         if os.path.exists(file):
-             print "%s file %s is already in the working area, deleting ..." % (type_file,file)
+             print("%s file %s is already in the working area, deleting ..." % (type_file,file))
              os.system('rm -rf ' + file)
-        print "Copy %s file %s into the working area..." % (type_file,file)
-        os.system('cp -R ' + os.environ.get('CASAPATH').split()[0] +
-                  '/data/regression/unittest/simplecluster/' + file + ' ' + file)
+        print("Copy %s file %s into the working area..." % (type_file,file))
+        os.system('cp -R ' + ctsys_resolve('regression/unittest/simplecluster/') + file + ' ' + file)
     
  
 class Applycal_mms_tests(test_base):
@@ -60,7 +75,7 @@ class Applycal_mms_tests(test_base):
         # Repository caltables are pre-v4.1, and we
         # must update them _before_ applycal to avoid contention
         casalog.post("Updating pre-v4.1 caltables: %s" % str(self.aux),"WARN","test1_applycal_fluxscale_gcal_bcal")
-        cblocal = cbtool()
+        cblocal = calibrater()
         for oldct in self.aux:
             cblocal.updatecaltable(oldct)
         casalog.post("Pre-v4.1 caltables updated","INFO","test1_applycal_fluxscale_gcal_bcal")
@@ -73,7 +88,7 @@ class Applycal_mms_tests(test_base):
         # Verify that flagbackup works
         self.assertTrue(os.path.exists(self.vis+'.flagversions'), 'Backup of flags was not created') 
         files = os.listdir(self.vis+'/SUBMSS')
-        print files
+        print(files)
         for ff in files:
             self.assertFalse(ff.__contains__('flagversions'))
             
@@ -82,3 +97,6 @@ class Applycal_mms_tests(test_base):
 def suite():
     return [Applycal_mms_tests]
      
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

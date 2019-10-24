@@ -108,7 +108,7 @@ int main () {
 					Vector<Stokes::StokesTypes>(0)
 				);
 				thrown = false;
-			} catch (AipsError x) {
+			} catch (const AipsError& x) {
 				log << LogIO::NORMAL
 					<< "Exception thrown as expected: "
 					<< x.getMesg() << LogIO::POST;
@@ -210,7 +210,7 @@ int main () {
 			cout << symbol << endl;
 
 		}
-	} catch (AipsError x) {
+	} catch (const AipsError& x) {
 		log << LogIO::SEVERE
 			<< "Caught exception: " << x.getMesg()
 			<< LogIO::POST;

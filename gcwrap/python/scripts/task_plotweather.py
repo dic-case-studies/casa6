@@ -195,7 +195,7 @@ def plotweather(vis='', seasonal_weight=0.5, doPlot=True, plotName = ''):
 
     fC=qa.quantity(25.0,'GHz')
     fW=qa.quantity(50.,'GHz')
-    fR=qa.quantity(0.25,'GHz')
+    fR=qa.quantity(0.025,'GHz')
 
     at=casac.atmosphere()
     hum=20.0

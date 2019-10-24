@@ -51,22 +51,22 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     start.resize();
     nchan.resize();
     Vector<Double> t;
-    ROScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
+    ScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
     //Vector<Int> ddId;
     //Vector<Int> fldId;
     
-    ROMSFieldColumns fieldCol(ms.field());
-    ROMSDataDescColumns ddCol(ms.dataDescription());
-    ROMSSpWindowColumns spwCol(ms.spectralWindow());
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
+    MSSpWindowColumns spwCol(ms.spectralWindow());
     ROScalarMeasColumn<MEpoch> timeCol(ms, MS::columnName(MS::TIME));
     Vector<uInt>  uniqIndx;
     uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 
     t.resize(0);
-    //ROScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
-    //ROScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
-    ROScalarColumn<Int> ddId(ms,MS::columnName(MS::DATA_DESC_ID));
-    ROScalarColumn<Int> fldId(ms,MS::columnName(MS::FIELD_ID));
+    //ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
+    //ScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
+    ScalarColumn<Int> ddId(ms,MS::columnName(MS::DATA_DESC_ID));
+    ScalarColumn<Int> fldId(ms,MS::columnName(MS::FIELD_ID));
     //now need to do the conversion to data frame from requested frame
     //Get the epoch mesasures of the first row
     MEpoch ep;
@@ -74,7 +74,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     String observatory;
     MPosition obsPos;
     /////observatory position
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
     if (ms.observation().nrow() > 0) {
       observatory = msc.observation().telescopeName()(msc.observationId()(0));
     }
@@ -136,7 +136,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   			  const Double freqStep,
   			  const MFrequency::Types freqframe){
 	  Vector<Int> fldId;
-	  ROScalarColumn<Int> (ms, MS::columnName (MS::FIELD_ID)).getColumn (fldId);
+	  ScalarColumn<Int> (ms, MS::columnName (MS::FIELD_ID)).getColumn (fldId);
 	  const Int option = Sort::HeapSort | Sort::NoDuplicates;
 	  const Sort::Order order = Sort::Ascending;
 
@@ -192,17 +192,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     start=-1;
     nchan=-1;
-    ROMSFieldColumns fieldCol(ms.field());
-    ROMSDataDescColumns ddCol(ms.dataDescription());
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
 	Vector<Int> dataDescSel=MSDataDescIndex(ms.dataDescription()).matchSpwId(spw);
 	//cerr << "dataDescSel " << dataDescSel << endl;
 	if(dataDescSel.nelements()==0)
 		return;
 	Vector<Double> t;
-    ROScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
+    ScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
 	Vector<Int> ddId;
-    ROScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
-    ROMSSpWindowColumns spwCol(ms.spectralWindow());
+    ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
+    MSSpWindowColumns spwCol(ms.spectralWindow());
     Vector<Double> ddIdD(ddId.shape());
     convertArray(ddIdD, ddId);
     ddIdD+= 1.0; //no zero id
@@ -221,8 +221,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     t.resize(0);
     
-    //ROScalarColumn<Int> ddId(ms,MS::columnName(MS::DATA_DESC_ID));
-    ROScalarColumn<Int> fldId(ms,MS::columnName(MS::FIELD_ID));
+    //ScalarColumn<Int> ddId(ms,MS::columnName(MS::DATA_DESC_ID));
+    ScalarColumn<Int> fldId(ms,MS::columnName(MS::FIELD_ID));
     //now need to do the conversion to data frame from requested frame
     //Get the epoch mesasures of the first row
     MEpoch ep;
@@ -230,7 +230,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     String observatory;
     MPosition obsPos;
     /////observatory position
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
     if (ms.observation().nrow() > 0) {
       observatory = msc.observation().telescopeName()(msc.observationId()(0));
     }
@@ -329,14 +329,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     freqStart=C::dbl_max;
     freqEnd=0.0;
     Vector<Double> t;
-    ROScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
+    ScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
     Vector<Int> ddId;
     Vector<Int> fldId;
-    ROScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
-    ROScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
-    ROMSFieldColumns fieldCol(ms.field());
-    ROMSDataDescColumns ddCol(ms.dataDescription());
-    ROMSSpWindowColumns spwCol(ms.spectralWindow());
+    ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
+    ScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
+    MSSpWindowColumns spwCol(ms.spectralWindow());
     ROScalarMeasColumn<MEpoch> timeCol(ms, MS::columnName(MS::TIME));
     Vector<Double> ddIdD(ddId.shape());
     convertArray(ddIdD, ddId);
@@ -365,7 +365,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     String observatory;
     MPosition obsPos;
     /////observatory position
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
     if (ms.observation().nrow() > 0) {
       observatory = msc.observation().telescopeName()(msc.observationId()(0));
     }
@@ -500,14 +500,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     freqStart=C::dbl_max;
     freqEnd=0.0;
     Vector<Double> t;
-    ROScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
+    ScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
     Vector<Int> ddId;
     Vector<Int> fldId;
-    ROScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
-    ROScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
-    ROMSFieldColumns fieldCol(ms.field());
-    ROMSDataDescColumns ddCol(ms.dataDescription());
-    ROMSSpWindowColumns spwCol(ms.spectralWindow());
+    ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
+    ScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
+    MSSpWindowColumns spwCol(ms.spectralWindow());
     ROScalarMeasColumn<MEpoch> timeCol(ms, MS::columnName(MS::TIME));
     Vector<Double> ddIdD(ddId.shape());
     convertArray(ddIdD, ddId);
@@ -532,7 +532,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     String observatory;
     MPosition obsPos;
     /////observatory position
-    ROMSColumns msc(ms);
+    MSColumns msc(ms);
     if (ms.observation().nrow() > 0) {
       observatory = msc.observation().telescopeName()(msc.observationId()(0));
     }
@@ -666,7 +666,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   Vector<String> MSUtil::getSpectralFrames(Vector<MFrequency::Types>& types, const MeasurementSet& ms)
   {
 	  Vector<String> retval;
-	  Vector<Int> typesAsInt=ROMSSpWindowColumns(ms.spectralWindow()).measFreqRef().getColumn();
+	  Vector<Int> typesAsInt=MSSpWindowColumns(ms.spectralWindow()).measFreqRef().getColumn();
 	  if(ms.nrow()==Table(ms.getPartNames()).nrow()){
 		  types.resize(typesAsInt.nelements());
 		  for (uInt k=0; k < types.nelements(); ++k)
@@ -674,12 +674,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   	  }
 	  else{
 		  Vector<Int> ddId;
-		  ROScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
+		  ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
 		  Vector<uInt>  uniqIndx;
 		  uInt nTimes=GenSort<Int>::sort (ddId, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
 		  ddId.resize(nTimes, true);
 		  Vector<Int> spwids(nTimes);
-		  Vector<Int> spwInDD=ROMSDataDescColumns(ms.dataDescription()).spectralWindowId().getColumn();
+		  Vector<Int> spwInDD=MSDataDescColumns(ms.dataDescription()).spectralWindowId().getColumn();
 		  for (uInt k=0; k < nTimes; ++k)
 			  spwids[k]=spwInDD[ddId[k]];
 
@@ -699,7 +699,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  return retval;
 
   }
-  void MSUtil::getIndexCombination(const ROMSColumns& mscol, Matrix<Int>& retval2){
+  void MSUtil::getIndexCombination(const MSColumns& mscol, Matrix<Int>& retval2){
     Vector<Vector<Int> >retval;
     Vector<Int> state = mscol.stateId().getColumn();
     Vector<Int> scan=mscol.scanNumber().getColumn();

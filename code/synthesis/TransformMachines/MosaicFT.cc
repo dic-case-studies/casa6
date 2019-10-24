@@ -1066,9 +1066,9 @@ void MosaicFT::put(const VisBuffer& vb, Int row, Bool dopsf,
 
 
   //Tell the gridder to grid the weights too ...need to do that once only
-  Int doWeightGridding=1;
-  if(doneWeightImage_p)
-    doWeightGridding=-1;
+  // Int doWeightGridding=1;
+  // if(doneWeightImage_p)
+  //  doWeightGridding=-1;
   Bool del;
   //    IPosition s(flags.shape());
   const IPosition& fs=flags.shape();
@@ -1174,7 +1174,7 @@ Int x0, y0, nxsub, nysub, ixsub, iysub, icounter, ix, iy;
   if(useDoubleGrid_p) {
     DComplex *gridstor=griddedData2.getStorage(gridcopy);
     
-#pragma omp parallel default(none) private(icounter,ix,iy,x0,y0,nxsub,nysub, del) firstprivate(idopsf, doWeightGridding, datStorage, wgtStorage, flagstor, rowflagstor, convstor, wconvstor, pmapstor, cmapstor, gridstor,  csupp, nxp, nyp, np, nc,ixsub, iysub, rend, rbeg, csamp, csize, nvp, nvc, nvisrow, phasorstor, locstor, offstor, convrowmapstor, convchanmapstor, convpolmapstor, nPolConv, nChanConv, nConvFunc) shared(swgtptr) num_threads(ixsub*iysub)
+#pragma omp parallel default(none) private(icounter,ix,iy,x0,y0,nxsub,nysub, del) firstprivate(idopsf, /*doWeightGridding,*/ datStorage, wgtStorage, flagstor, rowflagstor, convstor, wconvstor, pmapstor, cmapstor, gridstor,  csupp, nxp, nyp, np, nc,ixsub, iysub, rend, rbeg, csamp, csize, nvp, nvc, nvisrow, phasorstor, locstor, offstor, convrowmapstor, convchanmapstor, convpolmapstor, nPolConv, nChanConv, nConvFunc) shared(swgtptr) num_threads(ixsub*iysub)
     {   
 #pragma omp for schedule(dynamic, 1)      
     for(icounter=0; icounter < ixsub*iysub; ++icounter){
@@ -1246,7 +1246,7 @@ Int x0, y0, nxsub, nysub, ixsub, iysub, icounter, ix, iy;
     //cerr << "maps "  << convChanMap_p << "   " << chanMap  << endl;
     //cerr << "nchan " << nchan << "  nchanconv " << nChanConv << endl;
     Complex *gridstor=griddedData.getStorage(gridcopy);
-#pragma omp parallel default(none) private(icounter,ix,iy,x0,y0,nxsub,nysub, del) firstprivate(idopsf, doWeightGridding, datStorage, wgtStorage, flagstor, rowflagstor, convstor, wconvstor, pmapstor, cmapstor, gridstor, csupp, nxp, nyp, np, nc,ixsub, iysub, rend, rbeg, csamp, csize, nvp, nvc, nvisrow, phasorstor, locstor, offstor, convrowmapstor, convchanmapstor, convpolmapstor, nPolConv, nChanConv, nConvFunc) shared(sumwgt) num_threads(ixsub*iysub)
+#pragma omp parallel default(none) private(icounter,ix,iy,x0,y0,nxsub,nysub, del) firstprivate(idopsf, /*doWeightGridding,*/ datStorage, wgtStorage, flagstor, rowflagstor, convstor, wconvstor, pmapstor, cmapstor, gridstor, csupp, nxp, nyp, np, nc,ixsub, iysub, rend, rbeg, csamp, csize, nvp, nvc, nvisrow, phasorstor, locstor, offstor, convrowmapstor, convchanmapstor, convpolmapstor, nPolConv, nChanConv, nConvFunc) shared(sumwgt) num_threads(ixsub*iysub)
     {   
 #pragma omp for schedule(dynamic, 1)      
       for(icounter=0; icounter < ixsub*iysub; ++icounter){
@@ -2054,7 +2054,7 @@ void MosaicFT::makeImage(FTMachine::Type type,
 Bool MosaicFT::getXYPos(const VisBuffer& vb, Int row) {
   
   
-  const ROMSPointingColumns& act_mspc=vb.msColumns().pointing();
+  const MSPointingColumns& act_mspc=vb.msColumns().pointing();
   Int pointIndex=getIndex(act_mspc, vb.time()(row), vb.timeInterval()(row));
   if((pointIndex<0)||pointIndex>=Int(act_mspc.time().nrow())) {
     //    ostringstream o;
@@ -2111,7 +2111,7 @@ Bool MosaicFT::getXYPos(const VisBuffer& vb, Int row) {
 // history of previous matches. It is deterministic but not obvious.
 // One could cure this by searching but it would be considerably
 // costlier.
-Int MosaicFT::getIndex(const ROMSPointingColumns& mspc, const Double& time,
+Int MosaicFT::getIndex(const MSPointingColumns& mspc, const Double& time,
 		       const Double& /*interval*/) {
   Int start=lastIndex_p;
   // Search forwards

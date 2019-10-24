@@ -140,7 +140,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
             //Float nsigma = 150.0; // will set by user, fixed for 3sigma for now.
             Float nsigma = loopcontrols.getNsigma();
-            os<<"robustrms nelements="<<robustrms.nelements()<<LogIO::POST;
+            //os<<"robustrms nelements="<<robustrms.nelements()<<LogIO::POST;
             Float nsigmathresh; 
             if (robustrms.nelements()==0) {
               nsigmathresh = 0.0; 
@@ -335,6 +335,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				   Float currentresidual )
   {
     return loopcontrols.majorCycleRequired(currentresidual);
+  }
+
+  Long SDAlgorithmBase::estimateRAM(const vector<int>& imsize){
+    Long mem=0;
+    if(itsImages)
+    //Simple deconvolvers will have psf + residual + model + mask (1 plane at a time)
+      mem=sizeof(Float)*(itsImages->getShape()(0))*(itsImages->getShape()(1))*4/1024;
+    else if(imsize.size() >1)
+      mem=sizeof(Float)*(imsize[0])*(imsize[1])*4/1024;
+    else
+      return 0;
+      //throw(AipsError("Deconvolver cannot estimate the memory usage at this point"));
+    return mem;
   }
 
   void SDAlgorithmBase::setRestoringBeam( GaussianBeam restbeam, String usebeam )

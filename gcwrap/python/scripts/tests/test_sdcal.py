@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -5,22 +7,47 @@ import re
 import numpy
 import math
 import contextlib
-
-from __main__ import default
-from tasks import *
-from taskinit import *
 import unittest
-#
 import listing
-import sdutil
 
-from sdcal import sdcal
-from partition import partition
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, table, ms, measures
+    from casatasks import casalog, sdcal, partition, initweights
+    from casatasks.private import sdutil
 
-try:
-    from testutils import copytree_ignore_subversion
-except:
-    from tests.testutils import copytree_ignore_subversion
+    ### for testhelper import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from testhelper import copytree_ignore_subversion
+
+    tb = table()
+
+    ctsys_resolve = ctsys.resolve
+    # default isn't used in CASA6
+    def default(atask):
+        pass
+else:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    import sdutil
+    from sdcal import sdcal
+    from partition import partition
+
+    try:
+        from .testutils import copytree_ignore_subversion
+    except:
+        from tests.testutils import copytree_ignore_subversion
+
+    # make the CASA5 tool constuctors used here look the CASA6 versions
+    ms = mstool
+    table = tbtool
+    # the global tb is also used here
+    measures = metool
+
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
     
 @contextlib.contextmanager
 def mmshelper(vis, separationaxis='auto'):
@@ -50,7 +77,7 @@ class sdcal_test(unittest.TestCase):
     """
 
     # Data path of input
-    datapath=os.environ.get('CASAPATH').split()[0]+ '/data/regression/unittest/tsdcal/'
+    datapath=ctsys_resolve('regression/unittest/tsdcal')
 
     # Input 
     infile1 = 'uid___A002_X6218fb_X264.ms.sel'
@@ -61,8 +88,7 @@ class sdcal_test(unittest.TestCase):
         for infile in self.infiles:
             if os.path.exists(infile):
                 shutil.rmtree(infile)
-            shutil.copytree(self.datapath+infile, infile)		
-        default(sdcal)
+            shutil.copytree(os.path.join(self.datapath,infile), infile)		
 
     def tearDown(self):
         for infile in self.infiles:
@@ -101,18 +127,18 @@ class sdcal_test(unittest.TestCase):
         subt2.close()
 
         if (tsys1 == tsys2).all():
-            print ''
-            print 'The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape
-            print 'The shape of the FPARAM extracted with sdcal', tsys2.shape  
-            print 'Both tables are identical.'
+            print('')
+            print('The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape)
+            print('The shape of the FPARAM extracted with sdcal', tsys2.shape)
+            print('Both tables are identical.')
         else:
-            print ''
-            print 'The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape
-            print 'The shape of the FPARAM of the extraction with sdcal', tsys2.shape
-            print 'Both tables are not identical.'
+            print('')
+            print('The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape)
+            print('The shape of the FPARAM of the extraction with sdcal', tsys2.shape)
+            print('Both tables are not identical.')
 
         if flag.all()==0:
-            print 'ALL FLAGs are set to zero.'
+            print('ALL FLAGs are set to zero.')
 
 
     def test00M(self):
@@ -141,18 +167,18 @@ class sdcal_test(unittest.TestCase):
         subt2.close()
 
         if (tsys1 == tsys2).all():
-            print ''
-            print 'The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape
-            print 'The shape of the FPARAM extracted with sdcal', tsys2.shape  
-            print 'Both tables are identical.'
+            print('')
+            print('The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape)
+            print('The shape of the FPARAM extracted with sdcal', tsys2.shape)
+            print('Both tables are identical.')
         else:
-            print ''
-            print 'The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape
-            print 'The shape of the FPARAM of the extraction with sdcal', tsys2.shape
-            print 'Both tables are not identical.'
+            print('')
+            print('The shape of the MS/SYSCAL/TSYS_SPECTRUM', tsys1.shape)
+            print('The shape of the FPARAM of the extraction with sdcal', tsys2.shape)
+            print('Both tables are not identical.')
 
         if flag.all()==0:
-            print 'ALL FLAGs are set to zero.'
+            print('ALL FLAGs are set to zero.')
 
 
     def test01(self):
@@ -187,20 +213,20 @@ class sdcal_test(unittest.TestCase):
             sum_fparam1 += tb.getvarcol('FPARAM')['r1'][1][i][0]
         fparam0_ave=sum_fparam0/128.0
         fparam1_ave=sum_fparam1/128.0
-        print 'fparam_average_r1_0', fparam0_ave
-        print 'fparam_average_r1_1', fparam1_ave
-        print 'SIGMA00 ', sigma00
-        print 'SIGMA10 ', sigma10
-        print 'WEIGHT00 ', weight00
-        print 'WEIGHT10 ', weight10
+        print('fparam_average_r1_0', fparam0_ave)
+        print('fparam_average_r1_1', fparam1_ave)
+        print('SIGMA00 ', sigma00)
+        print('SIGMA10 ', sigma10)
+        print('WEIGHT00 ', weight00)
+        print('WEIGHT10 ', weight10)
         answer0 = 1/(sigma00**2)*1/(fparam0_ave**2) 
         answer1 = 1/(sigma10**2)*1/(fparam1_ave**2) 
-        print 'pol0: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer0
-        print 'pol1: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer1
+        print('pol0: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer0)
+        print('pol1: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer1)
         diff0_percent=(weight00-answer0)/weight00*100
         diff1_percent=(weight10-answer1)/weight10*100
-        print 'difference between fparam_r1_0 and weight00', diff0_percent, '%' 
-        print 'difference between fparam_r1_1 and weight10', diff1_percent, '%'
+        print('difference between fparam_r1_0 and weight00', diff0_percent, '%')
+        print('difference between fparam_r1_1 and weight10', diff1_percent, '%')
         tb.close()
             
         
@@ -236,28 +262,28 @@ class sdcal_test(unittest.TestCase):
             sum_fparam1 += tb.getvarcol('FPARAM')['r1'][1][i][0]
         fparam0_ave=sum_fparam0/128.0
         fparam1_ave=sum_fparam1/128.0
-        print 'fparam_average_r1_0', fparam0_ave
-        print 'fparam_average_r1_1', fparam1_ave
-        print 'SIGMA00 ', sigma00
-        print 'SIGMA10 ', sigma10
-        print 'WEIGHT00 ', weight00
-        print 'WEIGHT10 ', weight10
+        print('fparam_average_r1_0', fparam0_ave)
+        print('fparam_average_r1_1', fparam1_ave)
+        print('SIGMA00 ', sigma00)
+        print('SIGMA10 ', sigma10)
+        print('WEIGHT00 ', weight00)
+        print('WEIGHT10 ', weight10)
         answer0 = 1/(sigma00**2)*1/(fparam0_ave**2) 
         answer1 = 1/(sigma10**2)*1/(fparam1_ave**2) 
-        print 'pol0: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer0
-        print 'pol1: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer1
+        print('pol0: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer0)
+        print('pol1: 1/SIGMA**2 X 1/(FPARAM_ave)**2', answer1)
         diff0_percent=(weight00-answer0)/weight00*100
         diff1_percent=(weight10-answer1)/weight10*100
-        print 'difference between fparam_r1_0 and weight00', diff0_percent, '%' 
-        print 'difference between fparam_r1_1 and weight10', diff1_percent, '%'
+        print('difference between fparam_r1_0 and weight00', diff0_percent, '%')
+        print('difference between fparam_r1_1 and weight10', diff1_percent, '%')
         tb.close()
         
 
-        #print type(fparam_dict)
-        #print 'shape of fparam'
-        #print 'shape of fparam_dict['r29']', fparam_dict['r29'].shape
-        #print fparam_dict['r29'][0]
-        #print fparam_dict['r29'][1]
+        #print(type(fparam_dict))
+        #print('shape of fparam')
+        #print('shape of fparam_dict['r29']', fparam_dict['r29'].shape)
+        #print(fparam_dict['r29'][0])
+        #print(fparam_dict['r29'][1])
         #tb.close()
 
         #tb.open(infile)
@@ -267,19 +293,19 @@ class sdcal_test(unittest.TestCase):
         #subt=tb.query('', sortlist='ANTENNA1, TIME, SPECTRAL_WINDOW_ID', columns='FPARAM, DATA') 
         #data=subt2.getcol('DATA')
         #fparam=subt2.getcol('FPARAM')
-        #print data[0]
-        #print data[1]
-        #print fparam[0]
-        #print fparam[1]
+        #print(data[0])
+        #print(data[1])
+        #print(fparam[0])
+        #print(fparam[1])
 
         #subt_dict=tb.query('', sortlist='ANTENNA1, TIME', columns='WEIGHT, CORRECTED_DATA')
         #weight_dict = subt_dict.getcol('WEIGHT')
         #weight_dict=tb.getvarcol('WEIGHT')
-        #print type(weight_dict)
-        #print weight_dict['r69']
-        #print weight_dict['r69'][0]
-        #print weight_dict['r69'][1]
-        #print weight_dict
+        #print(type(weight_dict))
+        #print(weight_dict['r69'])
+        #print(weight_dict['r69'][0])
+        #print(weight_dict['r69'][1])
+        #print(weight_dict)
         
         #corrected_data_dict = subt_dict.getcol('CORRECTED_DATA')
         #tb.close()
@@ -296,11 +322,11 @@ class sdcal_test(unittest.TestCase):
         #sdcal(infile=infile, calmode='apply', spwmap=spwmap_list, applytable='tsys.cal', outfile='')
 
 
-        #print 'dict:', spwmap
-        #print 'list:', spwmap
+        #print('dict:', spwmap)
+        #print('list:', spwmap)
         #if spwmap.all()==spwmap_dict.all():
         #    Spwmap is able to cope with dictionary and list.
-        #print spwmap.all()==spwmap_dict.all()
+        #print(spwmap.all()==spwmap_dict.all())
 
 
     def test03(self):
@@ -332,12 +358,12 @@ class sdcal_test(unittest.TestCase):
         fparam= tb.getvarcol('FPARAM')['r1'][0][0][0]
         tb.close()
                 
-        print "CORRECTED_DATA", corrected_data
-        print "DATA", data
-        print "FPARAM", fparam
+        print("CORRECTED_DATA", corrected_data)
+        print("DATA", data)
+        print("FPARAM", fparam)
         diff = corrected_data.real - (data.real*fparam)
         diff_per = (diff/corrected_data.real)*100 
-        print "difference between CORRECTED_DATA and DATA X FPARAM", diff_per, "%" 
+        print("difference between CORRECTED_DATA and DATA X FPARAM", diff_per, "%")
     
        
     def test04(self):
@@ -372,12 +398,12 @@ class sdcal_test(unittest.TestCase):
         fparam_ave=sum_fparam/128.0    
         tb.close()
                 
-        print "CORRECTED_DATA", corrected_data
-        print "DATA", data
-        print "FPARAM average(128ch)", fparam_ave
+        print("CORRECTED_DATA", corrected_data)
+        print("DATA", data)
+        print("FPARAM average(128ch)", fparam_ave)
         diff = corrected_data.real - (data.real*fparam_ave)
         diff_per = (diff/corrected_data.real)*100 
-        print "difference between CORRECTED_DATA and DATA X FPARAM_average(128)", diff_per, "%" 
+        print("difference between CORRECTED_DATA and DATA X FPARAM_average(128)", diff_per, "%")
     
 
 
@@ -386,7 +412,7 @@ class sdcal_test(unittest.TestCase):
         (spwmap={1:[9], 3:[11], 5:[13], 7:[15]})
         antanna1=0, DATA_DISC_ID=9, FPARAM_average
         """
-        print '' 
+        print('')
         
         tid ="05"
         infile=self.infile1
@@ -409,12 +435,12 @@ class sdcal_test(unittest.TestCase):
         fparam= tb.getvarcol('FPARAM')['r1'][0][0][0]
         tb.close()
                 
-        print "CORRECTED_DATA", corrected_data
-        print "DATA", data
-        print "FPARAM", fparam
+        print("CORRECTED_DATA", corrected_data)
+        print("DATA", data)
+        print("FPARAM", fparam)
         diff = corrected_data.real - (data.real*fparam)
         diff_per = (diff/corrected_data.real)*100 
-        print "difference between CORRECTED_DATA and DATA X FPARAM", diff_per, "%" 
+        print("difference between CORRECTED_DATA and DATA X FPARAM", diff_per, "%")
     
 
 
@@ -446,14 +472,14 @@ class sdcal_test(unittest.TestCase):
         tb.open(self.tsystable)
         fparam=tb.getcell('FPARAM', row)
         for ch in range(total_ch):
-            #print 'SIGMA00 ', sigma[0]
-            #print 'SIGMA10 ', sigma[1]
-            #print 'WEIGHT_SPECTRUM00 ', weight_spectrum[0][ch]
-            #print 'WEIGHT_SPECTRUM10 ', weight_spectrum[1][ch]
+            #print('SIGMA00 ', sigma[0])
+            #print('SIGMA10 ', sigma[1])
+            #print('WEIGHT_SPECTRUM00 ', weight_spectrum[0][ch])
+            #print('WEIGHT_SPECTRUM10 ', weight_spectrum[1][ch])
             answer0 = 1/(sigma[0]**2)*1/(fparam[0][ch]**2) 
             answer1 = 1/(sigma[1]**2)*1/(fparam[1][ch]**2) 
-            #print 'pol0: 1/SIGMA**2 X 1/(FPARAM)**2', answer0
-            #print 'pol1: 1/SIGMA**2 X 1/(FPARAM)**2', answer1i
+            #print('pol0: 1/SIGMA**2 X 1/(FPARAM)**2', answer0)
+            #print('pol1: 1/SIGMA**2 X 1/(FPARAM)**2', answer1i)
             diff0=weight_spectrum[0][ch]-answer0
             diff1=weight_spectrum[1][ch]-answer1
             diff0_percent= diff0/weight_spectrum[0][ch]*100
@@ -461,9 +487,9 @@ class sdcal_test(unittest.TestCase):
 
             #diff0_percent=(weight_spectrum[0][ch]-answer0)/weight_spectrum[0][ch]*100
             #diff1_percent=(weight_spectrum[1][ch]-answer1)/weight_spectrum[1][ch]*100
-            print ''
-            print 'pol0 & pol1 ch '+ str(ch)+ ': diff between 1/SIGMA**2 X 1/(FPARAM['+str(ch)+'])**2 and WEIGHT_SPECTRUM['+ str(ch)+']' , diff0, diff1
-            print diff0_percent, '%', diff1_percent, '%'
+            print('')
+            print('pol0 & pol1 ch '+ str(ch)+ ': diff between 1/SIGMA**2 X 1/(FPARAM['+str(ch)+'])**2 and WEIGHT_SPECTRUM['+ str(ch)+']' , diff0, diff1)
+            print(diff0_percent, '%', diff1_percent, '%')
             #self.assertTrue(diff0 < eps, msg='The error is small enough')
         tb.close()
             
@@ -480,7 +506,7 @@ class sdcal_test_base(unittest.TestCase):
         decorators (invalid_argument_case, exception_case)
     """
     # Data path of input
-    datapath=os.environ.get('CASAPATH').split()[0]+ '/data/regression/unittest/tsdcal/'
+    datapath=ctsys_resolve('regression/unittest/tsdcal')
 
     # Input
     infile = 'uid___A002_X6218fb_X264.ms.sel'
@@ -522,7 +548,7 @@ class sdcal_test_base(unittest.TestCase):
                     func(self)
                     self.fail(msg='The task must throw exception')
                 the_exception = ctx.exception
-                message = the_exception.message
+                message = str(the_exception)
                 self.assertIsNotNone(re.search(exception_pattern, message), msg='error message \'%s\' is not expected.'%(message))
             return _wrapper
         return wrapper
@@ -610,9 +636,9 @@ class sdcal_test_ps(sdcal_test_base):
                     antenna1_selection = None
                     spw_selection = None
                 else:
-                    myms = gentools(['ms'])[0]
+                    myms = ms()
                     myargs = kwargs.copy()
-                    if not myargs.has_key('baseline'):
+                    if 'baseline' not in myargs:
                         with sdutil.tbmanager(self.infile) as tb:
                             antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                             myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
@@ -635,13 +661,13 @@ class sdcal_test_ps(sdcal_test_base):
                     for (spw,val) in d.items():
                         if spw_selection is not None and spw not in spw_selection:
                             continue
-                        #print ant, spw, val
+                        #print(ant, spw, val)
                         construct = lambda x: '%s == %s'%(x)
                         taql = ' && '.join(map(construct,[('ANTENNA1',ant), ('SPECTRAL_WINDOW_ID',spw)]))
                         with sdutil.table_selector(self.outfile, taql) as tb:
                             nrow = tb.nrows()
                             self.assertEqual(nrow, 3, msg='Number of rows mismatch')
-                            for irow in xrange(tb.nrows()):
+                            for irow in range(tb.nrows()):
                                 expected = val[irow]
                                 self.assertGreater(expected, 0.0, msg='Internal Error')
                                 fparam = tb.getcell('FPARAM', irow)
@@ -661,14 +687,22 @@ class sdcal_test_ps(sdcal_test_base):
         """
         test_ps00 --- default parameters (raises an error)
         """
-        self.result = sdcal()
+        # CASA6 throws an exception
+        if is_CASA6:
+            self.assertRaises(Exception, sdcal)
+        else:
+            self.result = sdcal()
 
     @invalid_argument_case
     def test_ps01(self):
         """
         test_ps01 --- invalid calibration type
         """
-        self.result = sdcal(infile=self.infile, calmode='invalid_type', outfile=self.outfile)
+        # CASA6 throwa nan exception
+        if is_CASA6:
+            self.assertRaises(Exception, sdcal, infile=self.infile, calmode='invalid_type', outfile=self.outfile)
+        else:
+            self.result = sdcal(infile=self.infile, calmode='invalid_type', outfile=self.outfile)
 
     @exception_case(RuntimeError, 'Spw Expression: No match found for 99,')
     def test_ps02(self):
@@ -785,19 +819,19 @@ class sdcal_test_otfraster(sdcal_test_base):
                         flag = tsel.getcol('FLAG')
                     finally:
                         tsel.close()
-                #print 'time_list', time_list
+                #print('time_list', time_list)
                 if len(time_list) < 2:
                     continue
                 data_list = []
                 time_difference = time_list[1:] - time_list[:-1]
-                #print 'time_difference', time_difference
+                #print('time_difference', time_difference)
                 gap_threshold = numpy.median(time_difference) * 5
-                #print 'gap_threshold', gap_threshold
+                #print('gap_threshold', gap_threshold)
                 gap_list = numpy.concatenate(([0], numpy.where(time_difference > gap_threshold)[0]+1))
                 if gap_list[-1] != len(time_list):
                     gap_list = numpy.concatenate((gap_list, [len(time_list)]))
-                #print 'gap_list', gap_list
-                for i in xrange(len(gap_list)-1):
+                #print('gap_list', gap_list)
+                for i in range(len(gap_list)-1):
                     start = gap_list[i]
                     end = gap_list[i+1]
                     raster_data = data[:,:,start:end]
@@ -807,7 +841,7 @@ class sdcal_test_otfraster(sdcal_test_base):
                     right_edge = raster_row[:,:,-numedge:].mean(axis=2)
                     data_list.extend([left_edge, right_edge])
                 expected_value[antenna][spw] = data_list
-                #print 'antenna', antenna, 'spw', spw, 'len(data_list)', len(data_list)
+                #print('antenna', antenna, 'spw', spw, 'len(data_list)', len(data_list))
                     
         return expected_value
 
@@ -851,9 +885,9 @@ class sdcal_test_otfraster(sdcal_test_base):
                     antenna1_selection = None
                     spw_selection = None
                 else:
-                    myms = gentools(['ms'])[0]
+                    myms = ms()
                     myargs = kwargs.copy()
-                    if not myargs.has_key('baseline'):
+                    if 'baseline' not in myargs:
                         with sdutil.tbmanager(self.infile) as tb:
                             antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                             myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
@@ -873,20 +907,20 @@ class sdcal_test_otfraster(sdcal_test_base):
                     for (spw,val) in d.items():
                         if spw_selection is not None and spw not in spw_selection:
                             continue
-                        #print ant, spw, val
+                        #print(ant, spw, val)
                         construct = lambda x: '%s == %s'%(x)
                         taql = ' && '.join(map(construct,[('ANTENNA1',ant), ('SPECTRAL_WINDOW_ID',spw)]))
                         with sdutil.table_selector(self.outfile, taql) as tb:
                             nrow = tb.nrows()
                             self.assertEqual(nrow, 6, msg='Number of rows mismatch')
-                            for irow in xrange(tb.nrows()):
+                            for irow in range(tb.nrows()):
                                 expected = val[irow]
                                 fparam = tb.getcell('FPARAM', irow)
                                 flag = tb.getcell('FLAG', irow)
                                 self.assertEqual(expected.shape, fparam.shape, msg='Shape mismatch for antenna %s spw %s row %s (expected %s actual %s)'%(ant,spw,irow,list(expected.shape),list(fparam.shape)))
                                 npol,nchan = expected.shape
-                                for ipol in xrange(npol):
-                                    for ichan in xrange(nchan):
+                                for ipol in range(npol):
+                                    for ichan in range(nchan):
                                         message_template = lambda x,y,z: 'Unexpected %s for antenna %s spw %s row %s pol %s channel %s (expected %s actual %s)'%(x,ant,spw,irow,ipol,ichan,y,z)
                                         _flag = flag[ipol,ichan]
                                         _mask = expected.mask[ipol,ichan]
@@ -1034,7 +1068,7 @@ def assert_true(condition,err_msg):
 class CasaTableChecker:
     """Base class for OTF mode checkers"""
     def __init__(self,tbl_path): 
-        self.tb = gentools(['tb'])[0]  
+        self.tb = table()
         self.path = tbl_path
         self.tb.open(self.path) # Raises RuntimeError on failure
         assert self.tb.ok()
@@ -1067,7 +1101,7 @@ class MsCorrectedDataChecker(CasaTableChecker):
                    str(self.path) + ': CORRECTED_DATA column missing')
         self.cdata = self.tb.getcol('CORRECTED_DATA')
         if convert_to_kelvin:
-            tbl_syscal = gentools(['tb'])[0]  
+            tbl_syscal = table()
             tbl_syscal.open(os.path.join(tbl_path,'SYSCAL'))
             tsys_spectrum = tbl_syscal.getcol('TSYS_SPECTRUM')
             self.cdata = tsys_spectrum * self.cdata
@@ -1106,7 +1140,7 @@ class sdcal_test_otf(unittest.TestCase):
     # Required checkers:
     # - compare 2 calibration tables
     # - compare 2 corrected data
-    datapath=os.environ.get('CASAPATH').split()[0]+ '/data/regression/unittest/tsdcal/'
+    datapath=ctsys_resolve('regression/unittest/tsdcal')
     ref_datapath=os.path.join(datapath,'otf_reference_data')
     sdcal_params = {}
     current_test_params = {}
@@ -1328,7 +1362,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
     test_otfephem02 | otf_ephem.ms     | 10%      | otf,apply
     """
     
-    datapath=os.environ.get('CASAPATH').split()[0]+ '/data/regression/unittest/tsdcal/'
+    datapath=ctsys_resolve('regression/unittest/tsdcal')
     infile = 'otf_ephem.ms'
     outfile = infile + '.otfcal'
         
@@ -1349,7 +1383,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
         with sdutil.tbmanager(os.path.join(vis, 'SOURCE')) as tb:
             names = tb.getcol('NAME')
         self.assertEqual(len(names), 1)
-        me = gentools(['me'])[0]
+        me = measures()
         direction_refcodes = me.listcodes(me.direction())
         ephemeris_codes = direction_refcodes['extra']
         self.assertIn(names[0].upper(), ephemeris_codes)
@@ -1376,7 +1410,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
         
         real = data.real
         expected = numpy.ones(real.shape, dtype=numpy.float64)
-        for irow in xrange(nrow):
+        for irow in range(nrow):
             if irow % 4 == 3:
                 expected[:,:,irow] = 0.0
         self.assertTrue(numpy.all(real == expected))
@@ -1408,13 +1442,13 @@ class Interpolator(object):
         outdata = data.copy()
         outflag = flag
         npol, nchan = outdata.shape
-        for ipol in xrange(npol):
+        for ipol in range(npol):
             valid_chans = numpy.where(outflag[ipol,:] == False)[0]
             if len(valid_chans) == 0:
                 continue
-            for ichan in xrange(nchan):
+            for ichan in range(nchan):
                 if outflag[ipol,ichan] == True:
-                    #print '###', ipol, ichan, 'before', data[ipol,ichan]
+                    #print('###', ipol, ichan, 'before', data[ipol,ichan])
                     if ichan <= valid_chans[0]:
                         outdata[ipol,ichan] = data[ipol,valid_chans[0]]
                     elif ichan >= valid_chans[-1]:
@@ -1426,7 +1460,7 @@ class Interpolator(object):
                         i0 = valid_chans[ii]
                         i1 = valid_chans[ii+1]
                         outdata[ipol,ichan] = ((i1 - ichan) * data[ipol,i0] + (ichan - i0) * data[ipol,i1]) / (i1 - i0)
-                    #print '###', ipol, ichan, 'after', data[ipol,ichan]
+                    #print('###', ipol, ichan, 'after', data[ipol,ichan])
         return outdata, outflag
 
     @staticmethod
@@ -1441,13 +1475,13 @@ class Interpolator(object):
         outdata = data.copy()
         outflag = flag
         npol, nchan = outdata.shape
-        for ipol in xrange(npol):
+        for ipol in range(npol):
             valid_chans = numpy.where(outflag[ipol,:] == False)[0]
             if len(valid_chans) == 0:
                 continue
-            for ichan in xrange(nchan):
+            for ichan in range(nchan):
                 if outflag[ipol,ichan] == True:
-                    #print '###', ipol, ichan, 'before', data[ipol,ichan]
+                    #print('###', ipol, ichan, 'before', data[ipol,ichan])
                     if ichan <= valid_chans[0]:
                         outdata[ipol,ichan] = data[ipol,valid_chans[0]]
                     elif ichan >= valid_chans[-1]:
@@ -1455,7 +1489,7 @@ class Interpolator(object):
                     else:
                         ii = abs(valid_chans - ichan).argmin()
                         outdata[ipol,ichan] = data[ipol,valid_chans[ii]]
-                    #print '###', ipol, ichan, 'after', data[ipol,ichan]
+                    #print('###', ipol, ichan, 'after', data[ipol,ichan])
         return outdata, outflag
 
     @staticmethod
@@ -1472,13 +1506,13 @@ class Interpolator(object):
         #
         # 2015/02/26 TN
         npol,nchan = flag.shape
-        #print '###BEFORE', flag[:,:12]
+        #print('###BEFORE', flag[:,:12])
         outflag = flag.copy()
-        for ichan in xrange(nchan-1):
+        for ichan in range(nchan-1):
             outflag[:,ichan] = numpy.logical_or(flag[:,ichan], flag[:,ichan+1])
         outflag[:,1:] = outflag[:,:-1]
         outflag[:,-1] = flag[:,-2]
-        #print '###AFTER', outflag[:,:12]
+        #print('###AFTER', outflag[:,:12])
 
         outdata, outflag = Interpolator.__interp_freq_linear(data, outflag)
         return outdata, outflag
@@ -1496,7 +1530,7 @@ class Interpolator(object):
         self.flag = None
         self.exposure = None
         self.finterp = getattr(Interpolator,'interp_freq_%s'%(finterp.lower()))
-        print 'self.finterp:', self.finterp.__name__
+        print('self.finterp:', self.finterp.__name__)
 
     def select(self, antenna, spw):
         self.taql = 'ANTENNA1 == %s && ANTENNA2 == %s && SPECTRAL_WINDOW_ID == %s'%(antenna, antenna, spw)
@@ -1631,9 +1665,9 @@ class sdcal_test_apply(sdcal_test_base):
         self._tearDown([self.infile, self.applytable])
 
     def check_weight(self, inweight, outweight, scale):
-        #print 'inweight', inweight
-        #print 'outweight', outweight
-        #print 'scale', scale
+        #print('inweight', inweight)
+        #print('outweight', outweight)
+        #print('scale', scale)
         # shape check
         self.assertEqual(inweight.shape, outweight.shape, msg='')
         
@@ -1664,9 +1698,9 @@ class sdcal_test_apply(sdcal_test_base):
             @functools.wraps(func)
             def _wrapper(self):
                 # data selection 
-                myms = gentools(['ms'])[0]
+                myms = ms()
                 myargs = kwargs.copy()
-                if not myargs.has_key('baseline'):
+                if 'baseline' not in myargs:
                     with sdutil.tbmanager(self.infile) as tb:
                         antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                         myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
@@ -1695,10 +1729,10 @@ class sdcal_test_apply(sdcal_test_base):
                             flag_org[antenna][spw] = tb.getcol('FLAG')
                             weight_org[antenna][spw] = tb.getcol('WEIGHT')
                             if 'WEIGHT_SPECTRUM' in tb.colnames() and tb.iscelldefined('WEIGHT_SPECTRUM', 0):
-                                #print 'WEIGHT_SPECTRUM is defined for antenna %s spw %s'%(antenna, spw)
+                                #print('WEIGHT_SPECTRUM is defined for antenna %s spw %s'%(antenna, spw))
                                 weightsp_org[antenna][spw] = tb.getcol('WEIGHT_SPECTRUM')
                             #else:
-                            #    print 'WEIGHT_SPECTRUM is NOT defined for antenna %s spw %s'%(antenna, spw)
+                            #    print('WEIGHT_SPECTRUM is NOT defined for antenna %s spw %s'%(antenna, spw))
                                 
                 # execute test
                 func(self)
@@ -1731,7 +1765,7 @@ class sdcal_test_apply(sdcal_test_base):
                     finterp = 'nearestflag'
                 
                 # result depends on interp
-                print 'Interpolation option:', tinterp, finterp
+                print('Interpolation option:', tinterp, finterp)
                 self.assertTrue(tinterp in ['linear', 'nearest'], msg='Internal Error')
                 if tinterp == 'linear':
                     interpolator = LinearInterpolator(self.applytable, finterp)
@@ -1743,12 +1777,12 @@ class sdcal_test_apply(sdcal_test_base):
                         taql = 'ANTENNA1 == %s && ANTENNA2 == %s && DATA_DESC_ID == %s'%(antenna, antenna, spwdd)
                         with sdutil.table_selector(self.infile, taql) as tb:
                             self.assertEqual(tb.nrows(), self.nrow_per_chunk, msg='Number of rows mismatch in antenna %s spw %s'%(antenna, spw))
-                            if weightsp_org[antenna].has_key(spw):
+                            if spw in weightsp_org[antenna]:
                                 has_weightsp = True
                                 
                             else:
                                 has_weightsp = False
-                            for irow in xrange(tb.nrows()):
+                            for irow in range(tb.nrows()):
                                 t = tb.getcell('TIME', irow)
                                 dt = tb.getcell('INTERVAL', irow)
                                 data = tb.getcell('DATA', irow)
@@ -1775,9 +1809,9 @@ class sdcal_test_apply(sdcal_test_base):
                                 else:
                                     self.check_weight(inweight, outweight, weightscale / tsyssq)
                                 
-                                #print 'antenna', antenna, 'spw', spw, 'row', irow
-                                #print 'inflag', inflag[:,:12], 'calflag', calflag[:,:12], 'expflag', expected_flag[:,:12], 'outflag', outflag[:,:12]
-                                #print 'ref', ref[:,126:130], 'data', data[:,126:130], 'expected', expected[:,126:130], 'corrected', corrected[:,126:130]
+                                #print('antenna', antenna, 'spw', spw, 'row', irow)
+                                #print('inflag', inflag[:,:12], 'calflag', calflag[:,:12], 'expflag', expected_flag[:,:12], 'outflag', outflag[:,:12])
+                                #print('ref', ref[:,126:130], 'data', data[:,126:130], 'expected', expected[:,126:130], 'corrected', corrected[:,126:130])
                                 
                                 self.assertEqual(corrected.shape, expected.shape, msg='Shape mismatch in antenna %s spw %s row %s (expeted %s actual %s)'%(antenna,spw,irow,list(expected.shape),list(corrected.shape)))
                                 npol, nchan = corrected.shape
@@ -1920,10 +1954,10 @@ class sdcal_test_apply(sdcal_test_base):
             with sdutil.tbmanager(self.infile, nomodify=False) as tb:
                 self.assertTrue('WEIGHT_SPECTRUM' in tb.colnames(), msg='Internal Error')
                 nrow = tb.nrows()
-                for irow in xrange(nrow):
+                for irow in range(nrow):
                     w = tb.getcell('WEIGHT', irow)
                     wsp = numpy.ones(tb.getcell('DATA', irow).shape, dtype=float)
-                    for ipol in xrange(len(w)):
+                    for ipol in range(len(w)):
                         wsp[ipol,:] = w[ipol]
                     tb.putcell('WEIGHT_SPECTRUM', irow, wsp)
                     self.assertTrue(tb.iscelldefined('WEIGHT_SPECTRUM', irow), msg='Internal Error')
@@ -1947,7 +1981,7 @@ class sdcal_test_apply(sdcal_test_base):
                 try:
                     nrow = tsel.nrows()
                     tsys = 100.0
-                    for irow in xrange(nrow):
+                    for irow in range(nrow):
                         tsys_spectrum = tsel.getcell('TSYS_SPECTRUM', irow)
                         tsys_spectrum[:] = 100.0
                         tsel.putcell('TSYS_SPECTRUM', irow, tsys_spectrum)
@@ -2011,7 +2045,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
     test_single_pol_apply --- apply caltable to single-polarization data
     test_single_pol_apply_composite --- on-the-fly calibration/application on single-polarization data
     """
-    datapath = os.environ.get('CASAPATH').split()[0]+ '/data/regression/unittest/singledish/'
+    datapath = ctsys_resolve('regression/unittest/singledish')
     # Input
     infile = 'analytic_spectra.ms'
     #applytable = infile + '.sky'
@@ -2074,7 +2108,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
         self.assertEqual(calshape[1], datashape[1])
         self.assertEqual(calshape[2], datashape[2])
         
-        for irow in xrange(nrow):
+        for irow in range(nrow):
             # FPARAM (pol 0)
             self.assertTrue(numpy.all(fparam[0, :, irow] == refdata[0, :, irow]))
             self.assertTrue(numpy.all(calflag[0, :, irow] == refflag[0, :, irow]))
@@ -2140,7 +2174,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
                 nrow = float_data.shape[2]
                 
                 off_data = numpy.zeros(corrected_data.shape, dtype=numpy.float64)
-                for irow in xrange(nrow):
+                for irow in range(nrow):
                     off_data[:,:,irow] = (refdata[:,:,1] * (sptime[irow] - reftime[0]) \
                                           + refdata[:,:,0] * (reftime[1] - sptime[irow])) \
                                             / (reftime[1] - reftime[0])
@@ -2151,7 +2185,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
                 diff = numpy.abs((corrected_data.real - calibrated) / calibrated)
                 diff_not_nan = diff[idx_not_nan]
                 eps = 1.0e-7
-                #print 'maxdiff = {}'.format(diff_not_nan.max())
+                #print('maxdiff = {}'.format(diff_not_nan.max()))
                 self.assertTrue(numpy.all(diff_not_nan < eps))
                 self.assertTrue(numpy.all(corrected_data[idx_not_nan].imag == 0.0))
             finally:
@@ -2190,4 +2224,6 @@ def suite():
             , sdcal_test_otf_ephem
             , sdcal_test_single_polarization]
 
-
+if is_CASA6:
+    if __name__ == '__main__':
+        unittest.main()

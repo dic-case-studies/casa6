@@ -90,7 +90,7 @@ TEST_F( PlotMSCacheTest, testAvgchannel) {
 	expNChan = 1;
 
 	// main table columns; ignoring flags since all unflagged data
-	ROMSMainColumns msmc(sortedMS);
+	MSMainColumns msmc(sortedMS);
 	Array<Complex> corrData(msmc.correctedData().getColumn());
 	Array<Float> wtsp(msmc.weightSpectrum().getColumn());
 	// adjust cube shapes for first chunk
@@ -146,7 +146,7 @@ TEST_F( PlotMSCacheTest, testAvgTime) {
 	mssSetData2(sortedMS, selMS, "", "", antennaExpr,
 		fieldExpr, "", "", "", "", scanExpr, "", "", "", "");
 	// main table columns; ignoring flags since all unflagged data
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> corrData(msmc.correctedData().getColumn());
 	Array<Float> wtsp(msmc.weightSpectrum().getColumn());
 	// adjust cube shapes for first chunk
@@ -200,7 +200,7 @@ TEST_F( PlotMSCacheTest, testAvgScan) {
 	mssSetData2(sortedMS, selMS, "", "", antennaExpr,
 		fieldExpr, "", "", "", "", "", "", "", "", "");
 	// main table columns; ignoring flags since all unflagged data
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> corrData(msmc.correctedData().getColumn());
 	Array<Float> wtsp(msmc.weightSpectrum().getColumn());
 
@@ -255,7 +255,7 @@ TEST_F( PlotMSCacheTest, testAvgField) {
 	mssSetData2(sortedMS, selMS, "", "", antennaExpr,
 		"", "", "", "", "", scanExpr, "", "", "", "");
 	// main table columns; ignoring flags since all unflagged data
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> corrData(msmc.correctedData().getColumn());
 	Array<Float> wtsp(msmc.weightSpectrum().getColumn());
 
@@ -308,7 +308,7 @@ TEST_F( PlotMSCacheTest, testAvgScanField) {
 	mssSetData2(sortedMS, selMS, "", "", antennaExpr,
 		"", "", "", "", "", "", "", "", "", "");
 	// main table columns; ignoring flags since all unflagged data
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> corrData(msmc.correctedData().getColumn());
 	Array<Float> wtsp(msmc.weightSpectrum().getColumn());
 
@@ -355,7 +355,7 @@ TEST_F( PlotMSCacheTest, testAvgBaseline) {
 	mssSetData2(sortedMS, selMS, "", "", antennaExpr,
 		"", "", "", "", "", "", "", "", "", "");
 	// main table columns; ignoring flags since all unflagged data
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> corrData(msmc.correctedData().getColumn());
 	// PlotMSVBAverager uses weight instead of weight spectrum
 	Matrix<Float> wt(msmc.weight().getColumn());
@@ -424,7 +424,7 @@ TEST_F( PlotMSCacheTest, testAvgAntenna) {
 	mssSetData2(sortedMS, selMS, "", "", antennaExpr,
 		"", "", "", "", "", "", "", "", "", "");
 	// main table columns; ignoring flags since all unflagged data
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Cube<Complex> corrData(msmc.correctedData().getColumn());
 	// PlotMSVBAverager uses weight instead of weight spectrum
 	Matrix<Float> wt(msmc.weight().getColumn());
@@ -523,7 +523,7 @@ TEST_F( PlotMSCacheTest, testAvgSpw) {
 	MeasurementSet selMS;
 	mssSetData2(sortedMS, selMS, "", timeExpr, "", "",
 		spwExpr, "", "", "", "", "", "", "", "");
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Cube<Complex> visData(msmc.data().getColumn());
 	Cube<Bool> flags(msmc.flag().getColumn());
 	Matrix<Float> wt(msmc.weight().getColumn());
@@ -619,7 +619,7 @@ TEST_F( PlotMSCacheTest, testAvgTimeScalar) {
 	mssSetData2(sortedMS, selMS, "", "", antennaExpr,
 		fieldExpr, "", "", "", "", scanExpr, "", "", "", "");
 	// main table columns; ignoring flags since all unflagged data
-	ROMSMainColumns msmc(selMS);
+	MSMainColumns msmc(selMS);
 	Array<Complex> corrData(msmc.correctedData().getColumn());
 	Array<Float> wtsp(msmc.weightSpectrum().getColumn());
 	// adjust cube shapes for first chunk

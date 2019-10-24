@@ -73,7 +73,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     multims_p=false;
     // sort out the channel selection
     Int nSpw=ms_p.spectralWindow().nrow();
-    ROMSSpWindowColumns msSpW(ms_p.spectralWindow());
+    MSSpWindowColumns msSpW(ms_p.spectralWindow());
     if(nSpw==0)
       throw(AipsError(String("There is no valid spectral windows in "+ms_p.tableName())));
     selection_p.resize(2,nSpw);
@@ -139,7 +139,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     multims_p=false;
     // sort out the channel selection
     Int nSpw=ms_p.spectralWindow().nrow();
-    ROMSSpWindowColumns msSpW(ms_p.spectralWindow());
+    MSSpWindowColumns msSpW(ms_p.spectralWindow());
     if(nSpw==0)
       throw(AipsError(String("There is no valid spectral windows in "+ms_p.tableName())));
     selection_p.resize(2,nSpw);
@@ -224,7 +224,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	blockStart[k]=chanSelection[k].row(0);
 	blockWidth[k]=chanSelection[k].row(1);
       }
-      ROMSSpWindowColumns msSpW(mss[k].spectralWindow());
+      MSSpWindowColumns msSpW(mss[k].spectralWindow());
       selection_p.resize(2,nSpw);
       //Drat...need to figure this one out....
       // fill in default selection
@@ -296,7 +296,7 @@ VisSet::VisSet(MeasurementSet& ms, const Matrix<Int>& chanSelection,
     Int nSpw=ms_p.spectralWindow().nrow();
     if(nSpw==0)
       throw(AipsError(String("There is no valid spectral windows in "+ms_p.tableName())));
-    ROMSSpWindowColumns msSpW(ms_p.spectralWindow());
+    MSSpWindowColumns msSpW(ms_p.spectralWindow());
     selection_p.resize(2,nSpw);
     // fill in default selection
     selection_p.row(0)=0; //start
@@ -365,6 +365,7 @@ VisSet::~VisSet() {
   if(!multims_p){
     (*blockOfMS_p)[0]=MeasurementSet();//breaking reference
   }
+  delete blockOfMS_p;
 };
 
 
@@ -518,7 +519,7 @@ void VisSet::selectAllChans() {
   message.message(os);
   logSink.post(message);
 
-  ROMSSpWindowColumns msSpW(ms_p.spectralWindow());
+  MSSpWindowColumns msSpW(ms_p.spectralWindow());
   Int nSpw=msSpW.nrow();
   if(nSpw==0)
     throw(AipsError(String("There is no valid spectral windows in "+ms_p.tableName())));
@@ -589,12 +590,12 @@ void VisSet::addCalSet(MeasurementSet& ms, Bool compress, Bool doModelData) {
     
     {
       // Define a column accessor to the observed data
-        ROTableColumn* data;
+        TableColumn* data;
         const bool data_is_float = ms.tableDesc().isColumn(MS::columnName(MS::FLOAT_DATA));
         if (data_is_float) {
-            data = new ROArrayColumn<Float> (ms, MS::columnName(MS::FLOAT_DATA));
+            data = new ArrayColumn<Float> (ms, MS::columnName(MS::FLOAT_DATA));
         } else {
-            data = new ROArrayColumn<Complex> (ms, MS::columnName(MS::DATA));
+            data = new ArrayColumn<Complex> (ms, MS::columnName(MS::DATA));
         };
 
         // Check if the data column is tiled and, if so, the
@@ -729,13 +730,13 @@ void VisSet::addCalSet(MeasurementSet& ms, Bool compress, Bool doModelData) {
         ArrayColumn<Complex> correctedData(ms, "CORRECTED_DATA");
 
         // Get data description column
-        ROScalarColumn<Int> dd_col = MSMainColumns(ms).dataDescId();
+        ScalarColumn<Int> dd_col = MSMainColumns(ms).dataDescId();
 
         // Get polarization column in dd table
-        ROScalarColumn<Int> pol_col = MSDataDescColumns(ms.dataDescription()).polarizationId();
+        ScalarColumn<Int> pol_col = MSDataDescColumns(ms.dataDescription()).polarizationId();
 
         // Get correlation column
-        ROArrayColumn<Int> corr_col(MSColumns(ms).polarization().corrType());
+        ArrayColumn<Int> corr_col(MSColumns(ms).polarization().corrType());
 
         Matrix<Complex> model_vis;
         Int last_dd_id = 0;
@@ -760,14 +761,14 @@ void VisSet::addCalSet(MeasurementSet& ms, Bool compress, Bool doModelData) {
             if (data_is_float) {
                 /* Convert to complex for the CORRECTED_DATA column */
                 Matrix<Float> f(rowShape);
-                dynamic_cast<ROArrayColumn<Float>*>(data)->get(row, f);
+                dynamic_cast<ArrayColumn<Float>*>(data)->get(row, f);
 
                 for (unsigned i = 0; (int)i < f.shape()(0); i++)
                     for (unsigned j = 0; (int)j < f.shape()(1); j++)
                         vis(i, j) = f(i, j);
             } 
             else {
-                dynamic_cast<ROArrayColumn<Complex>*>(data)->get(row, vis);
+                dynamic_cast<ArrayColumn<Complex>*>(data)->get(row, vis);
             }
 
             correctedData.put(row, vis);
@@ -841,12 +842,12 @@ void VisSet::addCalSet2(MeasurementSet& ms, Bool compress, Bool doModelData) {
     
     {
       // Define a column accessor to the observed data
-      ROTableColumn* data;
+      TableColumn* data;
       const bool data_is_float = ms.tableDesc().isColumn(MS::columnName(MS::FLOAT_DATA));
       if (data_is_float) {
-	data = new ROArrayColumn<Float> (ms, MS::columnName(MS::FLOAT_DATA));
+	data = new ArrayColumn<Float> (ms, MS::columnName(MS::FLOAT_DATA));
       } else {
-	data = new ROArrayColumn<Complex> (ms, MS::columnName(MS::DATA));
+	data = new ArrayColumn<Complex> (ms, MS::columnName(MS::DATA));
       };
       
       // Check if the data column is tiled and, if so, the
