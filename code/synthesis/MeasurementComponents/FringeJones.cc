@@ -847,7 +847,7 @@ expb_f(const gsl_vector *param, void *d, gsl_vector *f)
     AuxParamBundle *bundle = (AuxParamBundle *)d;
     SDBList& sdbs = bundle->sdbs;
     Double refTime = bundle->get_t0();
-
+    
     gsl_vector_set_zero(f);
     //    Vector<Double> freqs = sdbs.freqs();
 
@@ -863,6 +863,8 @@ expb_f(const gsl_vector *param, void *d, gsl_vector *f)
         if (!s.Ok()) continue;
 
 	const Vector<Double> freqs(s.freqs()); // This ibuf's freqs
+        Float fmin = min(freqs);
+        Float fmax = max(freqs);
 
         Cube<Complex> v = s.visCubeCorrected();
         Cube<Bool> fl = s.flagCube();
@@ -885,7 +887,7 @@ expb_f(const gsl_vector *param, void *d, gsl_vector *f)
             // polarization (icorr is an encoding of the
             // polarization of the correlation products).
             
-            Double phi0, tau, r;
+            Double phi0, tau, r, disp;
             {
                 Int i;
                 Double phi0_1, tau1, r1, disp1;
@@ -1015,11 +1017,11 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
             // polarization (icorr is an encoding of the
             // polarization of the correlation products).
             
-            Double phi0, tau, r;
+            Double phi0, tau, r, disp;
             {
                 Int i;
-                Double phi0_1, tau1, r1;
-                Double phi0_2, tau2, r2;
+                Double phi0_1, tau1, r1, disp1;
+                Double phi0_2, tau2, r2, disp2;
                 
                 phi0_1 = ((i = bundle->get_param_corr_param_index(ant1, 0))>=0) ? gsl_vector_get(param, i) : 0.0;
                 tau1   = ((i = bundle->get_param_corr_param_index(ant1, 1))>=0) ? gsl_vector_get(param, i) : 0.0;
@@ -1052,7 +1054,6 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
 
                 Float df = freqs(ichan) - fmin;
                 Float k_disp = 1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin;
-                Float ph_disp = disp*k_disp;
                     
                 // Add a 1e-9 factor because tau parameter is in nanoseconds.
                 //Double wDf = C::_2pi*(freqs(ichan) - freqs(0))*1e-9;
@@ -1062,21 +1063,18 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
                 Double ws = sin(mtheta);
                 Double wc = cos(mtheta);
 
-                Float df = freqs(ichan) - fmin;
-                Float k_disp = 1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin;
-
                 Double p0 = 1.0;
                 Double p1 = wDf;
                 Double p2 = wDt;
                 Double p3 = k_disp;
                 
-                Vector<Double> dterm2(3);
+                Vector<Double> dterm2(4);
                 dterm2(0) = -p0;
                 dterm2(1) = -p1;
                 dterm2(2) = -p2;
                 dterm2(3) = -p3;
 
-                Vector<Double> dterm1(3);
+                Vector<Double> dterm1(4);
                 dterm1(0) = p0;
                 dterm1(1) = p1;
                 dterm1(2) = p2;
@@ -1189,13 +1187,6 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
         }
     }
     if (DEVDEBUG && 0) {
-        cerr << "Param indices ";
-        std::copy(
-            params.begin(),
-            params.end(),
-            std::ostream_iterator<Int>(std::cerr, " ")
-            );
-        cerr << endl;
         print_baselines(baselines);
         cerr << "count " << count << endl;
         cerr << "v = ";
@@ -1285,11 +1276,11 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
             // polarization (icorr is an encoding of the
             // polarization of the correlation products).
             
-            Double phi0, tau, r;
+            Double phi0, tau, r, disp;
             {
                 Int i;
-                Double phi0_1, tau1, r1;
-                Double phi0_2, tau2, r2;
+                Double phi0_1, tau1, r1, disp1;
+                Double phi0_2, tau2, r2, disp2;
                 
                 phi0_1 = ((i = bundle->get_param_corr_param_index(ant1, 0))>=0) ? gsl_vector_get(param, i) : 0.0;
                 tau1   = ((i = bundle->get_param_corr_param_index(ant1, 1))>=0) ? gsl_vector_get(param, i) : 0.0;
@@ -1338,16 +1329,16 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
                 // Hold on a minute though! 
                 Double cx = w*cos(vtheta - mtheta);
 
-                Matrix<Double> dterm(3,3);
+                Matrix<Double> dterm(4,4);
                 dterm(0, 0) = cx;
                 dterm(0, 1) = wDf*cx;
                 dterm(0, 2) = wDt*cx;
-                dterm(0, 3) = k_disp*d01;
+                dterm(0, 3) = k_disp*dterm(0, 1);
                 dterm(1, 1) = wDf*dterm(0, 1);
                 dterm(1, 2) = wDt*dterm(0, 1);
-                dterm(1, 3) = wDf*d03;
+                dterm(1, 3) = wDf*dterm(0, 3);
                 dterm(2, 2) = wDt*dterm(1, 2);
-                dterm(2, 3) = wDt*d13;
+                dterm(2, 3) = wDt*dterm(1, 3);
                 dterm(3, 3) = k_disp*dterm(2, 3);
 
                 // Symmetry terms:
