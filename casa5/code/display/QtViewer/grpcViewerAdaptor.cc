@@ -220,8 +220,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     void grpcImageViewer::qtGO( std::function<void()> func ) {
-        std::lock_guard<std::mutex> exc(viewer_->grpc_queue_mutex);
-        viewer_->grpc_queue.push(func);
+        { std::lock_guard<std::mutex> exc(viewer_->grpc_queue_mutex);
+          viewer_->grpc_queue.push(func);
+        }
         emit new_op( );
     }
 
