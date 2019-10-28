@@ -15,6 +15,7 @@ import numpy as np
 from casatools import ms
 from casatools import table
 from casatools import ctsys
+from casatools.platform import bytes2str
 
 myname = 'test_createmultims'
 
@@ -56,17 +57,17 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
             It returns the value of AxisType or an empty string if it doesn't exist.
         """
-        tblocal = table( )
+        tbt_local = table( )
     
         axis = ''
 
         try:
-            tblocal.open(mmsname, nomodify=True)
-        except:
-            raise ValueError("Unable to open table %s" % mmsname)
-    
-        tbinfo = tblocal.info()
-        tblocal.close()
+            tbt_local.open(mmsname, nomodify=True)
+            tbinfo = tbt_local.info()
+        except Exception as exc:
+            raise ValueError("Unable to open table {0}. Exception: {1}".format(mmsname, exc))
+        finally:
+            tbt_local.close()
     
         if 'readme' in tbinfo:
             readme = tbinfo['readme']
@@ -88,12 +89,13 @@ def listpartition(vis=None, createdict=None, listfile=None):
         from subprocess import Popen, PIPE, STDOUT
 
         # Command line to run
-        ducmd = 'du -hs '+msfile
+        ducmd = 'du -hs {0}'.format(msfile)
     
-        p = Popen(ducmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
-    
-        sizeline = p.stdout.read()
-    
+        p = Popen(ducmd, shell=True, stdin=None, stdout=PIPE, stderr=STDOUT, close_fds=True)
+        o, e = p.communicate()             ### previously 'sizeline = p.stdout.read()' here
+                                           ### left process running...
+        sizeline = bytes2str(o.split( )[0])
+
         # Create a list of the output string, which looks like this:
         # ' 75M\tuidScan23.data/uidScan23.0000.ms\n'
         # This will create a list with [size,sub-ms]
@@ -112,6 +114,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
                     length = len(mystr)
                     if length > width:
                         width = length
+
                 elif par == 'channel':
                     chans = adict[aa]['scanId'][bb]['nchans']
                     mystr = str(chans)
@@ -167,10 +170,10 @@ def listpartition(vis=None, createdict=None, listfile=None):
                 msscanlist.append(scans)
                 spws = mslocal1.getspectralwindowinfo()
                 msspwlist.append(spws)
+            except Exception as exc:
+                raise Exception('Cannot get scan/spw information from subMS: {0}'.format(exc))
+            finally:
                 mslocal1.close()
-            except:
-                mslocal1.close()
-                raise Exception('Cannot get scan/spw information from subMS')
 
             # Get the data volume in bytes per sub-MS
             sizelist.append(getDiskUsage(subms))
@@ -244,7 +247,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
     mslocal = ms()
     mslocal1 = ms()
-            
+    ffout = None
 
     try:
         if (type(vis) == str) & os.path.exists(vis):
@@ -258,10 +261,10 @@ def listpartition(vis=None, createdict=None, listfile=None):
                 raise Exception('Output file \'%s\' already exists'%listfile)
             
             ffout = open(listfile, 'w')
-            
+
         # Is it a multi-MS?
         ismms = mslocal.ismultims()
-        
+
         # List of MSs to process
         mslist = []
         
