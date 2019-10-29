@@ -70,6 +70,7 @@ from collections import defaultdict
 from subprocess import call as Proc
 from subprocess import Popen, PIPE
 from datetime import datetime
+from inspect import currentframe, getframeinfo
 from textwrap import dedent
 from shutil import copy2
 import subprocess
@@ -1359,7 +1360,7 @@ cpp_target = "cpp_compile"
 yacc_target = "yacc_compile"
 lex_target = "lex_compile"
 c_target = "c_compile"
-test_target = "test_compile"
+# test_target = "test_compile"
 fortran_target = "f_compile"
 soabi = sysconfig.get_config_var('SOABI')
 lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
@@ -1649,6 +1650,7 @@ include $(MY_DEPS)
         """)
 
 def do_testing(cc, includes):
+    print("includes", includes)
     # compile tests
     CASACORE_CC = source_files(
         "casacore", subdir_filter=[], file_suffix_filter='cc', do_apriori_exclusions=False
@@ -1657,11 +1659,11 @@ def do_testing(cc, includes):
     CASACORE_TESTS = list(filter(r.match, CASACORE_CC))
     exe_name = os.path.join('build',distutils_dir_name('test')) + os.sep + '{base}'
     dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
-    print("*** dep_name", dep_name)
     # ' makefile \n\t{cc} {includes} {flags} {cflags} {dflags} -c $< -o $@'
     #         + '\n\t$(POSTCOMPILE)'
     sep = " "
-    flags = "$(DEPFLAGS) " + sep.join(get_new_cxx_compiler_flags())
+    # flags = "$(DEPFLAGS) " + sep.join(get_new_cxx_compiler_flags())
+    flags = sep.join(get_new_cxx_compiler_flags())
     dflags = sep.join(module_cflags['casacore/'])
     libdir = casac_dir + "/lib"
     libs = "-L" + libdir + " -lcasatools.cpython-36m-x86_64-linux-gnu  -lprotobuf -lgrpc -lgrpc++ -lgpr"
@@ -1670,34 +1672,100 @@ def do_testing(cc, includes):
     # removed dep_name
     # TODO need to link in python lib, see ticket
     # /usr/bin/ccache /opt/rh/devtoolset-4/root/bin/g++  -O2 -std=c++11 -Ibuild/grpc-install.linux-x86_64-3.6/include -Ibinding/include -Ibinding/generated/include -Ilibcasatools/generated/include -Icasa-source/code -Icasa-source -Icasacore -Iinclude -Isakura-source/src -I/opt/rh/rh-python36/root/usr/lib64/python3.6/site-packages/numpy/core/include -pthread -D_REENTRANT -I/usr/include/cfitsio -I/usr/include/eigen3 -I/opt/casa/03/include -DWITHOUT_DBUS -I/usr/include/libxml2 -I/usr/include -I/usr/include/wcslib  -fopenmp -Wno-unused-result -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1 -DNDEBUG -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -I/opt/rh/rh-python36/root/usr/include -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DAIPS_64B -DAIPS_AUTO_STL -DAIPS_DEBUG -DAIPS_HAS_QWT -DAIPS_LINUX -DAIPS_LITTLE_ENDIAN -DAIPS_STDLIB -DCASACORE_NEEDS_RETHROW -DCASA_USECASAPATH -DQWT6 -DUseCasacoreNamespace -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DNO_CRASH_REPORTER -fno-omit-frame-pointer -DWITHOUT_ACS -DWITHOUT_BOOST -DUSE_THREADS -DCASATOOLS -Dcasacore=casa6core -fcx-fortran-rules -DUSE_GRPC -Ibuild/binding.linux-x86_64-3.6/grpc -Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include -L./build/lib.linux-x86_64-3.6/casatools/__casac__/lib -L/opt/rh/rh-python36/root/usr/lib64  -lcasatools.cpython-36m-x86_64-linux-gnu  -lprotobuf -lgrpc -lgrpc++ -lgpr -lpython3.6m -o casacore_tests/tComplex -Wl,-rpath,./build/lib.linux-x86_64-3.6/casatools/__casac__/lib casacore/casa/BasicSL/test/tComplex.cc
-    test_targ = exe_name + ": {src} " + dep_name + " makefile " + libcasatools + \
+    # test_targ = exe_name + ": {src} " + dep_name + " makefile " + libcasatools + \
+    #    "\n\t $(CXX) " + flags + " " + includes + " " + sys_cflags \
+    #    + " " + dflags + " " + libs + " -o  $@ " + wflags + " $<" \
+    #    + '\n\t$(POSTCOMPILE)'
+    test_targ = exe_name + ": {src} makefile " + libcasatools + \
         "\n\t $(CXX) " + flags + " " + includes + " " + sys_cflags \
         + " " + dflags + " " + libs + " -o  $@ " + wflags + " $<" \
         + '\n\t$(POSTCOMPILE)'
-
     targdirs = set()
     # test_exec_dirs_targ = "test_exe_dirs"
     exe_list = []
     make_tests_targ = "create_tests"
     make_test_dirs = "make_test_dirs"
+    print("sys_cflags", sys_cflags)
+    print("dflags", dflags)
+    print("libs", libs)
+    print("wflags", wflags)
     with open("makefile", "a") as mk:
         for f in CASACORE_TESTS:
             name = os.path.basename(f)
             base = os.path.splitext(f)[0]
-            exefile = exe_name.format(base=base)
+            # it's just easier to keep track of if the strings are created in
+            # the loop rather than outside and then using format inside
+            exefile = os.path.join('build',distutils_dir_name('test')) \
+                + os.sep + base
+            # exefile = exe_name.format(base=base)
             exe_list.append(exefile)
             targdirs.add(os.path.dirname(exefile))
             # dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
+            location_info(mk, getframeinfo(currentframe()))
+            # excluding depname for now
+            # mk.write("\n\n" + test_targ.format(src=f, base=base))
+            mk.write("\n" + exefile + ": " + f + " makefile " + libcasatools)
             mk.write(
-                "\n\n" + test_targ.format(src=f, base=base) 
+                "\n\t $(CXX) " + flags + " " + includes + " " + sys_cflags + " "
+                # + libs + " "
+                # + "-pthread 
+                + "-D_REENTRANT -I/usr/include/cfitsio "
+                + "-I/usr/include/eigen3 -I/opt/casa/03/include -DWITHOUT_DBUS "
+                + "-I/usr/include/libxml2 -I/usr/include -I/usr/include/wcslib "
+                + "-fopenmp "
+                # + "-Wno-unused-result -Wsign-compare -DDYNAMIC_ANNOTATIONS_ENABLED=1
+                # + " -DNDEBUG -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions "
+                # + "-fstack-protector-strong --param=ssp-buffer-size=4 "
+                # + "-grecord-gcc-switches -m64 -mtune=generic "
+                # + "-D_GNU_SOURCE -fPIC -fwrapv "
+                + "-I/opt/rh/rh-python36/root/usr/include -pipe -Wall "
+                + "-Wp,-D_FORTIFY_SOURCE=2 -fexceptions "
+                + "-fstack-protector-strong --param=ssp-buffer-size=4 "
+                + "-grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE "
+                + "-DAIPS_64B -DAIPS_AUTO_STL -DAIPS_DEBUG "
+                + "-DAIPS_HAS_QWT -DAIPS_LINUX -DAIPS_LITTLE_ENDIAN "
+                + "-DAIPS_STDLIB -DCASACORE_NEEDS_RETHROW -DCASA_USECASAPATH "
+                + "-DQWT6 -DUseCasacoreNamespace -D_FILE_OFFSET_BITS=64 "
+                + "-D_LARGEFILE_SOURCE -DNO_CRASH_REPORTER "
+                + "-fno-omit-frame-pointer -DWITHOUT_ACS -DWITHOUT_BOOST "
+                + "-DUSE_THREADS -DCASATOOLS -Dcasacore=casa6core "
+                + "-fcx-fortran-rules -DUSE_GRPC "
+                + "-Ibuild/binding.linux-x86_64-3.6/grpc "
+                + "-Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include "
+                + "-L./build/lib.linux-x86_64-3.6/casatools/__casac__/lib "
+                + "-L/opt/rh/rh-python36/root/usr/lib64 "
+                + "-lcasatools.cpython-36m-x86_64-linux-gnu -lprotobuf -lgrpc "
+                + "-lgrpc++ -lgpr -lpython3.6m "
+                + "-o " + exefile + " " # + wflags + " " 
+                + " -Wl,-rpath,./build/lib.linux-x86_64-3.6/casatools/__casac__/lib "
+                + f
+                # + sys_cflags 
+                # + " " + dflags + " " + libs + " -o " + exefile + " " + wflags 
+                # + " " + f
             )
-            mk.write("\n" + g_dep_targ.format(base=base))
+            # ommitting POSTCOMPILE for now
+            #    + '\n\t$(POSTCOMPILE)')
+            # mk.write(
+            #     "\n\n" + test_targ.format(src=f, base=base) 
+            # )
             # mk.write("\n" + g_dep_targ.format(base=base))
+            # mk.write("\n" + g_dep_targ.format(base=base))
+        location_info(mk, getframeinfo(currentframe()))
         mk.write("\n# make directories for test executables\n")
-        mk.write(".PHONY: " + make_test_dirs + "\n")
-        mk.write(make_tests_targ + ": " + make_test_dirs + " " + sep.join(exe_list) + "\n")
+        mk.write("\n.PHONY: " + make_test_dirs)
+        mk.write(
+            "\n" + make_tests_targ + ": " + make_test_dirs + " " + sep.join(exe_list) \
+            + "\n"
+        )
         mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
-        mk.write(make_test_dirs + ":\n\t@mkdir -p " + mydirs + "\n")
+        mk.write("\n" + make_test_dirs + ":\n\t@mkdir -p " + mydirs + "\n")
+        
+def location_info(handle, frameinfo):
+    handle.write(
+        "\n# written from " + str(frameinfo.filename) + " line "
+        + str(frameinfo.lineno)
+    )
+    
 
 class create_makefile(Command):
     user_options = [
@@ -1732,7 +1800,7 @@ class create_makefile(Command):
         my_targets = [
                 yacc_target, lex_target, cpp_target, c_target,
                 fortran_target, libcasatools, swig_target, statics_wrap_target,
-                tool_libs_target, straight_copies_target, test_target, rsync_data_target
+                tool_libs_target, straight_copies_target, rsync_data_target
             ]
         write_makefile_begin(my_targets)
         write_make_cpp()
