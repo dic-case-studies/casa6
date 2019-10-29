@@ -1668,6 +1668,8 @@ def do_testing(cc, includes):
     libdir = casac_dir + "/lib"
     libs = "-L" + libdir + " -lcasatools.cpython-36m-x86_64-linux-gnu  -lprotobuf -lgrpc -lgrpc++ -lgpr"
     libs += " " + ldflags1
+    # remove -shared from libs because it causes a segfault
+    libs = libs.replace("-shared", "")
     wflags = "-Wl,-rpath," + libdir
     # removed dep_name
     # TODO need to link in python lib, see ticket
@@ -1707,7 +1709,7 @@ def do_testing(cc, includes):
             mk.write("\n" + exefile + ": " + f + " makefile " + libcasatools)
             mk.write(
                 "\n\t $(CXX) " + flags + " " + includes + " " + sys_cflags + " "
-                # + libs + " "
+                + libs + " "
                 # + "-pthread 
                 + "-D_REENTRANT -I/usr/include/cfitsio "
                 + "-I/usr/include/eigen3 -I/opt/casa/03/include -DWITHOUT_DBUS "
@@ -1732,10 +1734,12 @@ def do_testing(cc, includes):
                 + "-fcx-fortran-rules -DUSE_GRPC "
                 + "-Ibuild/binding.linux-x86_64-3.6/grpc "
                 + "-Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include "
-                + "-L./build/lib.linux-x86_64-3.6/casatools/__casac__/lib "
-                + "-L/opt/rh/rh-python36/root/usr/lib64 "
-                + "-lcasatools.cpython-36m-x86_64-linux-gnu -lprotobuf -lgrpc "
-                + "-lgrpc++ -lgpr -lpython3.6m "
+                # + "-L./build/lib.linux-x86_64-3.6/casatools/__casac__/lib "
+                # + "-L/opt/rh/rh-python36/root/usr/lib64 "
+                # + "-lcasatools.cpython-36m-x86_64-linux-gnu -lprotobuf -lgrpc "
+                # -shared causes a segfault
+                # + "-lgrpc++ -lgpr 
+                + "-lpython3.6m "
                 + "-o " + exefile + " " + wflags + " " 
                 # + " -Wl,-rpath,./build/lib.linux-x86_64-3.6/casatools/__casac__/lib "
                 + f
