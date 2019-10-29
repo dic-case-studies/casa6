@@ -1736,8 +1736,8 @@ def do_testing(cc, includes):
                 + "-L/opt/rh/rh-python36/root/usr/lib64 "
                 + "-lcasatools.cpython-36m-x86_64-linux-gnu -lprotobuf -lgrpc "
                 + "-lgrpc++ -lgpr -lpython3.6m "
-                + "-o " + exefile + " " # + wflags + " " 
-                + " -Wl,-rpath,./build/lib.linux-x86_64-3.6/casatools/__casac__/lib "
+                + "-o " + exefile + " " + wflags + " " 
+                # + " -Wl,-rpath,./build/lib.linux-x86_64-3.6/casatools/__casac__/lib "
                 + f
                 # + sys_cflags 
                 # + " " + dflags + " " + libs + " -o " + exefile + " " + wflags 
