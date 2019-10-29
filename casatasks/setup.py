@@ -265,6 +265,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_plotbandpass.py',
                     'src/scripts/predictcomp_helper.py',
                     'src/scripts/task_logging.py',
+                    'src/tasks/task_sdintimaging.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -481,6 +482,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/plotants.xml',
               'xml/fringefit.xml',
               'xml/plotbandpass.xml',
+              'xml/sdintimaging.xml',
 ]
 
 if pyversion < 3:
