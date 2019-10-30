@@ -32,8 +32,8 @@ foreach ( <JAVAVER> ) {
 }
 close(JAVAVER);
 die "cannot run $java" unless scalar(@java_version) > 0;
-die "java version 1.8 or greater is required\n" 
-    unless $java_version[0] > 1 || ($java_version[0] == 1 && $java_version[1] >= 8);
+die "java version 1.8 or greater is required\n"
+    unless $java_version[0] > 7 || ($java_version[0] == 1 && $java_version[1] >= 8);
 
 ### install path
 $distro_jarfile = $jarfile = "$path/java/$jarfile_name";
