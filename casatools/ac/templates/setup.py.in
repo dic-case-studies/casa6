@@ -1974,7 +1974,6 @@ class create_makefile_ia(Command):
     def initialize_options(self):
         print("setting up options for CARTA ia only build")
         global _debug_build_
-        _debug_build_ = '--debug' in sys.argv
         self.debug = 1 if _debug_build_ else 0
         print("create debug build is ", str(_debug_build_))
 
