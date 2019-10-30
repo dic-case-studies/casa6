@@ -98,20 +98,20 @@ On Linux, one can alternately use **make**, which supports incremental and paral
 -bash-4.2$ scripts/gcw-pick
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
--bash-4.2$ ./setup.py genmake [--debug]
--bash-4.2$ make
+-bash-4.2$ ./setup.py genmake
+-bash-4.2$ make [debug]
 ```
-The **--debug** parameter of the **./setup.py genmake** is optional. If provided, the resulting makefile is configured to use the -g option when compiling C++ code. Otherwise, the makefile is configured to produce an optimized build using the -O2 option when compiling C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, eg
-```
--bash-4.2$ make -j8
-```
-To execute a parallel build with eight threads.
-
 The **./setup.py genmake** command creates a file named *makefile* with the make commands. In general, this file should only be modified if one knows what they are doing. Once the *makefile* has been generated, one can make changes to most source files (eg, .cc and .h files) and simply rerun the **make** command to generate an updated build. However, there are cases when earlier commands will have to be rerun. For example, if *ac/templates/setup.py.in* is modified, commands starting with **autoconf** will have to be rerun to generate a new *setup.py* file.
 
 A non-exhaustive list of when **./setup.py genmake** followed by **make** will need to be rerun includes:
 * modification of cerberus files. These are copied by **./setup.py genmake**; **make** does not deal with them
 * changes in tool dependencies when modifying *&lt;tool&gt;.xml* files. If one does not change tool dependencies when modifying *&lt;tool&gt;.xml* files, they need only rerun **make**. However, if a new tool dependency is introduced or an existing dependency removed (eg via a function return value), one will have to start by rerunning **./setup.py genmake** so the new dependency can propagate to the the *makefile*.
+
+The **debug** parameter of **make** is optional. If provided, the resulting build is configured to use the -g option when compiling C and C++ code. Otherwise, the build is configured to be optimized using the -O2 option when compiling C and C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, eg
+```
+-bash-4.2$ make -j8
+```
+To execute a parallel build with eight threads.
 
 #### See If It Works
 
