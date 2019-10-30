@@ -3,7 +3,16 @@ import unittest
 import os
 import filecmp
 import pprint
-from casatools import agentflagger, ctsys
+
+try:
+    # CASA 6
+    from casatools import agentflagger, ctsys
+    ag_datapath = ctsys.resolve('regression/unittest/flagdata/')
+except ImportError:
+    # CASA 5
+    from taskinit import aftool as agentflagger
+    ag_datapath = os.environ.get('CASAPATH').split()[0]
+    ag_datapath = os.path.join(ag_datapath, 'data/regression/unittest/flagdata/')
 
 
 class test_base(unittest.TestCase):
@@ -15,8 +24,7 @@ class test_base(unittest.TestCase):
             print("The CalTable is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -31,8 +39,7 @@ class test_base(unittest.TestCase):
             
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 
@@ -46,8 +53,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 
@@ -61,8 +67,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_table()
@@ -75,8 +80,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_table()
@@ -89,8 +93,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_table()
@@ -101,13 +104,8 @@ class test_base(unittest.TestCase):
             
         # Need a fresh restart. Copy the MS
         shutil.rmtree(self.vis, True)
-        os.system('rm -rf ' + self.vis + '.flagversions')
-        
-        os.system('cp -r ' + \
-			ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis) 
-#        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/" 
-#        os.system('cp -RH '+datapath + self.vis +' '+ self.vis)            
-        
+        os.system('rm -rf ' + self.vis + '.flagversions')        
+        os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
         self.unflag_table()
         
     def unflag_table(self):
