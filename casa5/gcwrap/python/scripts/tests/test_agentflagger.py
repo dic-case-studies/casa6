@@ -103,8 +103,10 @@ class test_base(unittest.TestCase):
         shutil.rmtree(self.vis, True)
         os.system('rm -rf ' + self.vis + '.flagversions')
         
-        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/" 
-        os.system('cp -RH '+datapath + self.vis +' '+ self.vis)            
+        os.system('cp -r ' + \
+			ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis) 
+#        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/" 
+#        os.system('cp -RH '+datapath + self.vis +' '+ self.vis)            
         
         self.unflag_table()
         
@@ -802,7 +804,7 @@ class test_MS_datacols(test_base):
         
     def test_model_no_model_col(self):
         '''AgentFlagger:" raise an error when there isn't a MODEL or virtual MODEL column'''
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         aflocal.parseclipparameters(clipminmax=[2.3,3.1],datacolumn='RESIDUAL')
