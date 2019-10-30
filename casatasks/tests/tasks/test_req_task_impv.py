@@ -43,17 +43,19 @@ from filecmp import dircmp
 if CASA6:
     datapath = casatools.ctsys.resolve('image/ngc5921.clean.image')
     qa = casatools.quanta()
-    tb = casatools.table()
+    mytb = casatools.table()
     myia = casatools.image()
 
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
         datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image'
         myia = ia
+        mytb = tb
         
     else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image'
         myia = ia
+        mytb = tb
         
 testfile = 'testing.im'
 testfile2 = 'testing2.im'
@@ -295,8 +297,8 @@ class impv_test(unittest.TestCase):
         '''
         
         impv(imagename=datapath, outfile=testfile, center=[45,50], pa='45deg', length=5, mode='length')
-        tb.open(testfile)
-        tb.close()
+        mytb.open(testfile)
+        mytb.close()
     
     
 def suite():
