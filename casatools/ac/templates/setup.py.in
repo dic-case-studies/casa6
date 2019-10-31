@@ -1571,19 +1571,22 @@ def write_lex(additional_casacore_filtered_dirs=[], additional_casacode_filtered
 
 def write_fortran(do_code=True):
     # fortran files
-    CORE_F77 = source_files( "casacore",file_suffix_filter=".f",
-                             file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
-                                           'fmosft.f', 'fwproj.f', 'phasol.f' ]
+    CORE_F77 = source_files(
+        "casacore",file_suffix_filter=".f",
+        file_filter=[
+            'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f',
+            'atmroutines.f','fmosft.f', 'fwproj.f', 'phasol.f'
+        ]
     )
     CODE_F77 = source_files(
         "casa-source/code/synthesis/fortran",file_suffix_filter=".f"
     ) if do_code else []
     obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+    mkdirs_f77_target = "mk_f77_obj_dirs"
     f_obj = (
-        obj_name + ': {src} \n\t{f77} {flags} $< -o $@'
+        obj_name + ': {src} ' + mkdirs_f77_target + '\n\t{f77} {flags} $< -o $@'
     )
     f_list = []
-    mkdirs_f77_target = "mk_f77_obj_dirs"
     with open("makefile", "a") as mk:
         targdirs = set()
         for f in CORE_F77 + CODE_F77:
@@ -1599,7 +1602,7 @@ def write_fortran(do_code=True):
         mk.write(mkdirs_f77_target + ":\n\t@mkdir -p " + mydirs + "\n")
         mk.write("\n# targets to compile fortran code to object files\n")
         mk.write(".PHONY: " + fortran_target + "\n")
-        mk.write(fortran_target + ": " + mkdirs_f77_target + " " + sep.join(f_list) + "\n")
+        mk.write(fortran_target + ": " + sep.join(f_list) + "\n")
     global casatools_obj_list
     casatools_obj_list += f_list
 
@@ -1738,10 +1741,10 @@ def do_testing(cc, includes):
                 # -shared causes a segfault
                 + "-lpython3.6m " + dflags + " "
                 + "-o " + exefile + " " + wflags + " " 
-                + f
+                + f + " "
             )
             # ommitting POSTCOMPILE for now
-            #    + '\n\t$(POSTCOMPILE)')
+            #  + '\n\t$(POSTCOMPILE)')
             # mk.write(
             #     "\n\n" + test_targ.format(src=f, base=base) 
             # )
@@ -1751,10 +1754,14 @@ def do_testing(cc, includes):
         mk.write("\n# make directories for test executables\n")
         mk.write("\n.PHONY: " + make_test_dirs)
         mk.write(
-            "\n" + make_tests_targ + ": " + make_test_dirs + " " + sep.join(exe_list) \
-            + "\n"
+            "\n" + make_tests_targ + ": " + make_test_dirs + " " \
+            + sep.join(exe_list) + "\n"
         )
-        mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+        r = re.compile(os.sep + 'test\.')
+        substr = os.sep + 'temp.'
+        mydirs = sep.join(
+            list(targdirs) + ["$(DEPDIR)" + os.sep + r.sub(substr, s, 1) for s in targdirs]
+        )
         mk.write("\n" + make_test_dirs + ":\n\t@mkdir -p " + mydirs + "\n")
         
 def location_info(handle, frameinfo):
@@ -1763,7 +1770,6 @@ def location_info(handle, frameinfo):
         + str(frameinfo.lineno)
     )
     
-
 class create_makefile(Command):
     user_options = [
       # The format is (long option, short option, description).
