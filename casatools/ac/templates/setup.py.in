@@ -91,11 +91,20 @@ import argparse
 parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
+parser.add_argument('--debug', help='debug', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
+_debug_build_ = args.debug
+print("_debug_build_: " + str(_debug_build_))
 
-print (args.version)
+# Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
+for arg in sys.argv:
+    if (arg.startswith("--version")):
+        sys.argv.remove(arg)
+    if (arg.startswith("--debug")):
+        sys.argv.remove(arg)
+
 
 module_name = 'casatools'
 
@@ -797,7 +806,6 @@ def get_cflags():
                                                                       ###     /usr/include (e.g. rhel6)
     return cflags
 
-_debug_build_ = False
 def debug_build():
     return _debug_build_
 
@@ -1012,9 +1020,8 @@ try:
         def initialize_options(self):
             self.version = None
             bdist_wheel.initialize_options(self)
-            if '--debug' in sys.argv:
-                global _debug_build_
-                _debug_build_ = True
+            global _debug_build_
+            if _debug_build_:
                 self.debug = 1
             else:
                 self.debug = 0
@@ -1067,9 +1074,8 @@ class casa_build_ext(build_ext):
     def initialize_options(self):
         self.version = None
         build_ext.initialize_options(self)
-        if '--debug' in sys.argv:
-            global _debug_build_
-            _debug_build_ = True
+        global _debug_build_
+        if _debug_build_:
             self.debug = 1
         else:
             self.debug = 0
@@ -1646,15 +1652,12 @@ class create_makefile(Command):
     user_options = [
       # The format is (long option, short option, description).
 #     ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
-      ('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
+      #('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
     ]
 
     def initialize_options(self):
-        print("setting up options")
         global _debug_build_
-        _debug_build_ = '--debug' in sys.argv
-        self.debug = 1 if _debug_build_ else 0
-        print("create debug build is ", _debug_build_)
+        print("create debug build is ", str(_debug_build_))
 
     def finalize_options(self):
         pass
@@ -1965,15 +1968,14 @@ class create_makefile_ia(Command):
     user_options = [
         # The format is (long option, short option, description).
         # ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
-      ('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
+        #('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
     ]
 
     def initialize_options(self):
         print("setting up options for CARTA ia only build")
         global _debug_build_
-        _debug_build_ = '--debug' in sys.argv
         self.debug = 1 if _debug_build_ else 0
-        print("create debug build is ", _debug_build_)
+        print("create debug build is ", str(_debug_build_))
 
     def finalize_options(self):
         pass
