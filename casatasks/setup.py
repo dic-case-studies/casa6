@@ -265,6 +265,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_plotbandpass.py',
                     'src/scripts/predictcomp_helper.py',
                     'src/scripts/task_logging.py',
+                    'src/tasks/task_sdintimaging.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -374,6 +375,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/plotants.xml': 'xml/plotants.xml',
               'casa-source/gcwrap/tasks/fringefit.xml': 'xml/fringefit.xml',
               'casa-source/gcwrap/tasks/plotbandpass.xml': 'xml/plotbandpass.xml',
+              'casa-source/gcwrap/tasks/sdintimaging.xml': 'xml/sdintimaging.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -481,6 +483,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/plotants.xml',
               'xml/fringefit.xml',
               'xml/plotbandpass.xml',
+              'xml/sdintimaging.xml',
 ]
 
 if pyversion < 3:
