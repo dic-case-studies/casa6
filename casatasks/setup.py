@@ -375,6 +375,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/plotants.xml': 'xml/plotants.xml',
               'casa-source/gcwrap/tasks/fringefit.xml': 'xml/fringefit.xml',
               'casa-source/gcwrap/tasks/plotbandpass.xml': 'xml/plotbandpass.xml',
+              'casa-source/gcwrap/tasks/sdintimaging.xml': 'xml/sdintimaging.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',

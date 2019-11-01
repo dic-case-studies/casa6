@@ -49,7 +49,7 @@ def sdintimaging(
     sdimage, 
     sdpsf, 
     sdgain, 
-    sddiam,
+    dishdia,
 
     ####### Image definition
     imagename,#='',
@@ -166,20 +166,6 @@ def sdintimaging(
 
     ####### State parameters
     parallel):#=False):
-
-
-    ##################################################
-    # copied from SDINT.do_reconstruct 
-    #################################################
-    int_cube = imagename+'.int.cube'
-    sd_cube = imagename+'.sd.cube'
-    joint_cube = imagename+'.joint.cube'
-    joint_multiterm = imagename+'.joint.multiterm'
-
-    if pecmode=='mfs':
-        decname = joint_multiterm
-    else:
-        decname = joint_cube
 
     #####################################################
     #### Sanity checks and controls
