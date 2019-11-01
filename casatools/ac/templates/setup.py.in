@@ -1588,28 +1588,39 @@ def write_fortran(do_code=True):
     CODE_F77 = source_files(
         "casa-source/code/synthesis/fortran",file_suffix_filter=".f"
     ) if do_code else []
-    obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+    obj_name = build_distutils_temp + os.sep + '{base}.o'
     mkdirs_f77_target = "mk_f77_obj_dirs"
     f_obj = (
-        obj_name + ': {src} ' + mkdirs_f77_target + '\n\t{f77} {flags} $< -o $@'
+        obj_name + ': {src} {dir} makefile' + \
+        '\n\t{f77} {flags} $< -o $@'
     )
     f_list = []
+    targdirs = set()
     with open("makefile", "a") as mk:
-        targdirs = set()
         for f in CORE_F77 + CODE_F77:
             (base, ext) = os.path.splitext(f)
             flags = sep.join(get_fortran_compiler_flags(ext))
             objfile = obj_name.format(base=base)
-            targdirs.add(os.path.dirname(objfile))
+            dir = os.path.dirname(objfile)
+            targdirs.add(dir)
             f_list.append(objfile)
-            mk.write("\n\n" + f_obj.format(base=base, src=f, f77=f77, flags=flags))
+            mk.write(
+                "\n\n"
+                + f_obj.format(base=base, src=f, f77=f77, flags=flags, dir=dir)
+            )
+        for x in targdirs:
+            mk.write(
+                '\n' + x + ': ;'
+                + '\n\tif [ ! -d ' + x + ' ]; then mkdir -p ' + x + '; fi'
+        )
         mk.write("\n# make directories for fortran object files\n")
         mk.write(".PHONY: " + mkdirs_f77_target + "\n")
         mydirs = sep.join(list(targdirs))
-        mk.write(mkdirs_f77_target + ":\n\t@mkdir -p " + mydirs + "\n")
+        mk.write(mkdirs_f77_target + ': ' + sep.join(targdirs))
         mk.write("\n# targets to compile fortran code to object files\n")
         mk.write(".PHONY: " + fortran_target + "\n")
         mk.write(fortran_target + ": " + sep.join(f_list) + "\n")
+    # update casatools_obj_list
     global casatools_obj_list
     casatools_obj_list += f_list
 
@@ -1660,7 +1671,10 @@ MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
 include $(MY_DEPS)
         """)
 
-def do_testing(cc, includes):
+def do_testing(includes):
+    compile_casacore_tests(includes)
+
+def compile_casacore_tests(includes):
     # compile tests
     CASACORE_CC = source_files(
         "casacore", subdir_filter=['python'], file_suffix_filter='cc',
@@ -1678,12 +1692,6 @@ def do_testing(cc, includes):
         if re.search("^[td].*cc$", os.path.basename(f)):
             tmp.append(f)
     CASACORE_TESTS = tmp
-    #  r = re.compile("\/[td].*cc$")
-    #CASACORE_TESTS = list(filter(r.search, CASACORE_TESTS))
-    # exe_name = os.path.join('build',distutils_dir_name('test')) + os.sep + '{base}'
-    # dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
-    # ' makefile \n\t{cc} {includes} {flags} {cflags} {dflags} -c $< -o $@'
-    #         + '\n\t$(POSTCOMPILE)'
     sep = " "
     # flags = "$(DEPFLAGS) " + sep.join(get_new_cxx_compiler_flags())
     flags = sep.join(get_new_cxx_compiler_flags())
@@ -1695,12 +1703,10 @@ def do_testing(cc, includes):
     # remove -shared from libs because it causes a segfault
     libs = libs.replace("-shared", "")
     libs += ' -l' + ' -l'.join(link_libs)
-    wflags = "-Wl,-rpath," + libdir
-    # test_targ = exe_name + ": {src} makefile " + libcasatools + \
-    #    "\n\t $(CXX) " + flags + " " + includes + " " + sys_cflags \
-    #    + " " + dflags + " " + libs + " -o  $@ " + wflags + " $<" \
-    #    + '\n\t$(POSTCOMPILE)'
+    rellibdir = libdir.replace('build', '../../../../..')
+    wflags = "-Wl,-rpath," + rellibdir
     targdirs = set()
+    dirmap = {}
     # test_exec_dirs_targ = "test_exe_dirs"
     exe_list = []
     make_tests_targ = "build_casacore_tests"
@@ -1718,7 +1724,9 @@ def do_testing(cc, includes):
             exefile = build_distutils_temp + os.sep + base
             # exefile = exe_name.format(base=base)
             exe_list.append(exefile)
-            targdirs.add(os.path.dirname(exefile))
+            targdir = os.path.dirname(exefile)
+            targdirs.add(targdir)
+            dirmap[targdir] = os.path.dirname(f)
             # dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
             location_info(mk, getframeinfo(currentframe()))
             # excluding depname for now
@@ -1741,7 +1749,6 @@ def do_testing(cc, includes):
                 + "-DNO_CRASH_REPORTER -fno-omit-frame-pointer -DWITHOUT_ACS " \
                 + "-DUSE_GRPC -Ibuild/binding.linux-x86_64-3.6/grpc " \
                 + "-Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include "
-                # + "-L./build/lib.linux-x86_64-3.6/casatools/__casac__/lib "
                 # -shared causes a segfault
                 + "-lpython3.6m " + dflags + " "
                 + "-o " + exefile + " " + wflags + " " 
@@ -1757,10 +1764,6 @@ def do_testing(cc, includes):
         location_info(mk, getframeinfo(currentframe()))
         mk.write("\n# make directories for test executables\n")
         mk.write("\n.PHONY: " + make_test_dirs)
-        mk.write(
-            "\n" + make_tests_targ + ": " + make_test_dirs + " " \
-            + sep.join(exe_list) + "\n"
-        )
         r = re.compile(os.sep + 'test\.')
         substr = os.sep + 'temp.'
         mydirs = sep.join(
@@ -1768,6 +1771,34 @@ def do_testing(cc, includes):
             for s in targdirs]
         )
         mk.write("\n" + make_test_dirs + ":\n\t@mkdir -p " + mydirs + "\n")
+        cmd = []
+        make_links_targ = "create_casacore_test_links"
+        all_links = []
+        for build, orig in dirmap.items():
+            myfiles = [
+                f for f in listdir(orig)
+                if not re.search("^CMakeLists|cc$|h$", os.path.basename(f))
+            ]
+            links = [build + os.sep + f for f in myfiles]
+            all_links.extend(links)
+            n = build.count(os.sep) + 1
+            relpath = n * ('..' + os.sep) + orig + os.sep
+            cmd.extend([
+                (
+                    link + ": ;"
+                    + "\n\t if [ ! -L " + link + " ]; then ln -s " + relpath + o
+                    + " " + link + "; fi"
+                ) for (link, o) in zip(links, myfiles)
+            ])
+        mk.write('\n' + '\n\n'.join(cmd))
+        mk.write(
+            '\n' + make_links_targ + ': ' + sep.join(all_links) + ' '
+            + make_test_dirs
+        )
+        mk.write(
+            "\n" + make_tests_targ + ": " + make_test_dirs + " " \
+            + make_links_targ + " " + sep.join(exe_list) + "\n"
+        )
         
 def location_info(handle, frameinfo):
     handle.write(
@@ -2056,7 +2087,7 @@ class create_makefile(Command):
         # casac __init__.py generation, just use the python implmentation for now, no make target yet
         generate_casac_init_py()
         # testing
-        do_testing(cc, includes_code)
+        do_testing(includes_code)
         # rsync
         with open("makefile", "a") as mk:
             mk.write("\n# targets to rsync data repos\n")
