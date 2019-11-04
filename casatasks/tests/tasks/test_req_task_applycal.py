@@ -501,13 +501,4 @@ def suite():
     return[applycal_test]
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--strict', action="store_true", default=False, dest='strict_flag')
-    parser.add_argument('unittest_args', nargs='*')
-
-    args = parser.parse_args()
-    strict = False
-    if args.strict_flag:
-        strict = True
-    sys.argv[1:] = args.unittest_args
     unittest.main() 
