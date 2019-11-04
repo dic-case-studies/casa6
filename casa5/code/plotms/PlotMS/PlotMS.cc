@@ -443,7 +443,8 @@ void PlotMSApp::initialize(bool connectToDBus, bool userGui
         // grpc events/commands can be executed in the Qt GUI thread...
         plotms_svc->set_plotter(qplotobj);
         QObject::connect( plotms_svc, SIGNAL(new_op( )),
-                          qplotobj, SLOT(grpc_handle_op( )) );
+                          qplotobj, SLOT(grpc_handle_op( )),
+                          Qt::BlockingQueuedConnection );
 
         // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
         // Launch server...
