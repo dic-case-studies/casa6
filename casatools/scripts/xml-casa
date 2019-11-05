@@ -8,7 +8,7 @@ $name = basename($0);
 $exe = abs_path($0);
 $path = abs_path(dirname($exe));
 $java = '/usr/bin/java';
-$jarfile_name = "xml-casa-assembly-1.29.jar";
+$jarfile_name = "xml-casa-assembly-1.30.jar";
 
 ### install path
 $jarfile = "$path/java/$jarfile_name";
