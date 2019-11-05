@@ -232,7 +232,7 @@ private:
     mutable std::map<casacore::uInt, casacore::uInt>
         _rowIDInMSToRowIndexInChunk {};
     std::unique_ptr<casacore::Double> _slidingTimeWindowWidth {};
-    std::unique_ptr<casacore::Int> _nTimeStamps {};
+    std::unique_ptr<casacore::Int> _nTimeStampsInBin {};
 
     casacore::Bool _mustComputeSigma = casacore::False;
     casacore::Bool _updateWeight = casacore::True;
@@ -244,9 +244,18 @@ private:
         casacore::Array<casacore::Bool>::const_iterator>
     > _wtStats {};
 
+    // idToChunksNeededByIDMap maps subchunkIDs to the range of subchunk IDs
+    // they need. chunkNeededToIDsThatNeedChunkIDMap maps subchunk IDs that are
+    // needed to the subchunkIDs that need them. min/max IDs (.first/.second)
+    // in both cases
+    void _limits(
+            std::vector<std::pair<casacore::uInt, casacore::uInt>>& idToChunksNeededByIDMap,
+            std::vector<std::pair<casacore::uInt, casacore::uInt>>& chunkNeededToIDsThatNeedChunkIDMap
+    ) const;
+
     // returns True if this chunk has already been processed. This can happen
     // for the last chunk.
-    casacore::Bool _checkFirsSubChunk(
+    casacore::Bool _checkFirstSubChunk(
         casacore::Int& spw, casacore::Bool& firstTime,
         const VisBuffer2 * const vb
     ) const;
