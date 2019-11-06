@@ -60,7 +60,7 @@ else:
 caltab = 'cal.A'
 cal_default = 'cal.default'
 datacopy = 'uid_copy.ms'
-vlacopy = 'cla_copy.ms'
+vlacopy = 'vla_copy.ms'
 
 def cal_size(cal):
     '''
