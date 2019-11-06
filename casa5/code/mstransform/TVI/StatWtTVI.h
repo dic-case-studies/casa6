@@ -202,10 +202,9 @@ private:
     casacore::Bool _combineCorr {false};
     casacore::CountedPtr<
         casacore::StatisticsAlgorithm<
-            casacore::Double,
-            casacore::Array<casacore::Float>::const_iterator,
-            casacore::Array<casacore::Bool>::const_iterator /*,
-            casacore::Array<casacore::Double>::const_iterator> */
+            casacore::Double, casacore::Array<casacore::Float>::const_iterator,
+            casacore::Array<casacore::Bool>::const_iterator,
+            casacore::Array<casacore::Double>::const_iterator
         >
     > _statAlg {} ;
     std::unique_ptr<std::pair<casacore::Double, casacore::Double>> _wtrange {};
@@ -285,9 +284,9 @@ private:
     void _logUsedChannels() const;
 
     casacore::Double _computeWeight(
-        const casacore::Cube<casacore::Complex>& data,
-        const casacore::Cube<casacore::Bool>& flags,
-        const casacore::Cube<casacore::Double>& exposures, casacore::uInt spw
+        const casacore::Array<casacore::Complex>& data,
+        const casacore::Array<casacore::Bool>& flags,
+        const casacore::Array<casacore::Double>& exposures, casacore::uInt spw
     ) const;
 
     void _computeWeightsTimeBlockProcessing(

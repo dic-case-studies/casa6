@@ -298,16 +298,17 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
         auto alg = config.asString(field);
         alg.downcase();
         if (alg.startsWith("cl")) {
-            _statAlg = new ClassicalStatistics<
-                Double, Array<Float>::const_iterator,
-                Array<Bool>::const_iterator/* ,
-                Array<Double>::const_iterator */
-            >();
+            _statAlg.reset(
+                new ClassicalStatistics<
+                    Double, Array<Float>::const_iterator,
+                    Array<Bool>::const_iterator, Array<Double>::const_iterator
+                >()
+            );
         }
         else {
             casacore::StatisticsAlgorithmFactory<
-                Double, Array<casacore::Float>::const_iterator,
-                Array<Bool>::const_iterator/*, Array<Double>::const_iterator */
+                Double, Array<Float>::const_iterator,
+                Array<Bool>::const_iterator, Array<Double>::const_iterator
             > saf;
             if (alg.startsWith("ch")) {
                 Int maxiter = -1;
@@ -387,7 +388,7 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
     else {
         _statAlg = new ClassicalStatistics<
             Double, Array<Float>::const_iterator,
-            Array<Bool>::const_iterator /* , Array<Double>::const_iterator */
+            Array<Bool>::const_iterator, Array<Double>::const_iterator
         >();
     }
     std::set<StatisticsData::STATS> stats {StatisticsData::VARIANCE};
@@ -1346,8 +1347,6 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
     const Cube<Double>& exposures, const std::vector<std::set<uInt>>& rowMap,
     uInt spw
 ) const {
-    cout << __func__ << endl;
-
     auto chunkShape = data.shape();
     const auto nActCorr = chunkShape[0];
     const auto ncorr = _combineCorr ? 1 : nActCorr;
@@ -1442,8 +1441,6 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
     //   for the variance calculation
     //  Essentially, we are sorting the incoming data into
     //   allvis, to enable a convenient variance calculation
-    cout << __func__ << endl;
-
     _weights.clear();
     auto* vii = getVii();
     auto* vb = vii->getVisBuffer();
@@ -1456,7 +1453,6 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
     Cube<Bool> chanSelFlagTemplate, chanSelFlags;
     auto firstTime = True;
     // we cannot know the spw until we are in the subchunks loop
-    //cout << __FILE__ << " " << __LINE__ << endl;
     Int spw = -1;
     for (vii->origin(); vii->more(); vii->next()) {
         if (_checkFirstSubChunk(spw, firstTime, vb)) {
@@ -1469,77 +1465,44 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
                 )
             );
         }
-        //cout << __FILE__ << " " << __LINE__ << endl;
-
         const auto& ant1 = vb->antenna1();
         const auto& ant2 = vb->antenna2();
-        // [nC,nF,nR)
+        // [nCorr, nFreq, nRows)
         const auto& dataCube = _dataCube(vb);
         const auto& flagCube = vb->flagCube();
         const auto dataShape = dataCube.shape();
         Cube<Double> exposureCube(dataShape);
         const auto& exposureVector = vb->exposure();
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         {
             IPosition start(3, 0);
             auto end = dataShape - 1;
-            // cout << __FILE__ << " " << __LINE__ << endl;
-
             Slicer slice(start, end, Slicer::endIsLast);
             for (uInt jj=0; jj<dataShape[2]; ++jj) {
-                // cout << __FILE__ << " " << __LINE__ << endl;
-
                 start[2] = jj;
                 end[2] = jj;
-                // cout << __FILE__ << " " << __LINE__ << endl;
-
                 slice.setStart(start);
-                // cout << __FILE__ << " " << __LINE__ << endl;
-
                 slice.setEnd(end);
-                // cout << "shape " << dataShape << endl;
-                // cout << "start " << start << endl;
-                // cout << "end " << end << endl;
-                // cout << "slice " << slice << endl;
-                // cout << "exposure value " << exposureVector[jj] << endl;
                 exposureCube(slice) = exposureVector[jj];
-                // cout << __FILE__ << " " << __LINE__ << endl;
-
             }
         }
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         const auto nrows = vb->nRows();
         const auto npol = dataCube.nrow();
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         const auto resultantFlags = _getResultantFlags(
             chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
             spw, flagCube
         );
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
 
         auto bins = _chanBins.find(spw)->second;
         BaselineChanBin blcb;
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         blcb.spw = spw;
         IPosition dataCubeBLC(3, 0);
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         auto dataCubeTRC = dataCube.shape() - 1;
-        dataCubeTRC[2] = 0;
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         for (Int row=0; row<nrows; ++row) {
-            dataCubeTRC[2] = 0;
             dataCubeBLC[2] = row;
             dataCubeTRC[2] = row;
             blcb.baseline = _baseline(ant1[row], ant2[row]);
-            auto citer = bins.begin();
-            auto cend = bins.end();
+            auto citer = bins.cbegin();
+            auto cend = bins.cend();
             for (; citer!=cend; ++citer) {
                 dataCubeBLC[1] = citer->start;
                 dataCubeTRC[1] = citer->end;
@@ -1570,12 +1533,8 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
                     exposures[blcb](blc, trc) = exposureSlice;
                 }
             }
-            // cout << __FILE__ << " " << __LINE__ << endl;
-
         }
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
     _computeWeightsTimeBlockProcessing(data, flags, exposures);
 }
 
@@ -1583,15 +1542,10 @@ Cube<Bool> StatWtTVI::_getResultantFlags(
     Cube<Bool>& chanSelFlagTemplate, Cube<Bool>& chanSelFlags,
     Bool& initTemplate, Int spw, const Cube<Bool>& flagCube
 ) const {
-    // cout << __func__ << endl;
     if (_chanSelFlags.find(spw) == _chanSelFlags.cend()) {
         // no selection of channels to ignore
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         return flagCube;
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
     if (initTemplate) {
         // this can be done just once per chunk because all the rows
         // in the chunk are guaranteed to have the same spw
@@ -1600,8 +1554,6 @@ Cube<Bool> StatWtTVI::_getResultantFlags(
         chanSelFlagTemplate = _chanSelFlags.find(spw)->second;
         initTemplate = False;
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
     auto dataShape = flagCube.shape();
     chanSelFlags.resize(dataShape, False);
     auto ncorr = dataShape[0];
@@ -1620,8 +1572,6 @@ Cube<Bool> StatWtTVI::_getResultantFlags(
             chanSelFlags(sl) = chanSelFlagTemplate;
         }
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
     return flagCube || chanSelFlags;
 }
 
@@ -1635,7 +1585,6 @@ Bool StatWtTVI::_checkFirstSubChunk(
         return False;
     }
     const auto& rowIDs = vb->rowIds();
-
     if (_processedRowIDs.find(rowIDs[0]) == _processedRowIDs.end()) {
         // haven't processed this chunk
         _processedRowIDs.insert(rowIDs[0]);
@@ -1657,7 +1606,6 @@ Bool StatWtTVI::_checkFirstSubChunk(
 }
 
 void StatWtTVI::initWeightSpectrum (const Cube<Float>& wtspec) {
-    cout << __func__ << endl;
     // Pass to next layer down
     getVii()->initWeightSpectrum(wtspec);
 }
@@ -1676,18 +1624,7 @@ void StatWtTVI::writeBackChanges(VisBuffer2 *vb) {
 }
 
 StatWtTVI::Baseline StatWtTVI::_baseline(uInt ant1, uInt ant2) {
-    // cout << __func__ << endl;
-    Baseline baseline;
-    if (ant1 < ant2) {
-        // this may always be the case, but I'm not certain,
-        baseline.first = ant1;
-        baseline.second = ant2;
-    }
-    else {
-        baseline.first = ant2;
-        baseline.second = ant1;
-    }
-    return baseline;
+    return Baseline(min(ant1, ant2), max(ant1, ant2));
 }
 
 void StatWtTVI::_computeWeightsTimeBlockProcessing(
@@ -1695,9 +1632,6 @@ void StatWtTVI::_computeWeightsTimeBlockProcessing(
     const map<BaselineChanBin, Cube<Bool>>& flags,
     const map<BaselineChanBin, Cube<Double>>& exposures
 ) const {
-    cout << __func__ << endl;
-    // cout << __func__ << endl;
-
     auto diter = data.cbegin();
     auto dend = data.cend();
     const auto nActCorr = diter->second.shape()[0];
@@ -1737,12 +1671,10 @@ void StatWtTVI::_computeWeightsTimeBlockProcessing(
 }
 
 casacore::Double StatWtTVI::_computeWeight(
-    const Cube<Complex>& data, const Cube<Bool>& flags,
-    const Cube<Double>& exposures, uInt spw
+    const Array<Complex>& data, const Array<Bool>& flags,
+    const Array<Double>& exposures, uInt spw
 ) const {
-    // cout << __func__ << endl;
     const auto npts = data.size();
-    // cout << __FILE__ << " " << __LINE__ << endl;
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
         // not enough points, trivial
         return 0;
@@ -1752,27 +1684,18 @@ casacore::Double StatWtTVI::_computeWeight(
     std::unique_ptr<
         StatisticsAlgorithm<
             Double, Array<Float>::const_iterator,
-            Array<Bool>::const_iterator/*, Array<Double>::const_iterator*/
+            Array<Bool>::const_iterator, Array<Double>::const_iterator
         >
     > statAlg(_statAlg->clone());
-    // cout << __FILE__ << " " << __LINE__ << endl;
     // some data not flagged
     const auto realPart = real(data);
-    // cout << __FILE__ << " " << __LINE__ << endl;
     const auto imagPart = imag(data);
-    // cout << __FILE__ << " " << __LINE__ << endl;
     const auto mask = ! flags;
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    const auto riter = realPart.begin();
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    const auto iiter = imagPart.begin();
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    const auto miter = mask.begin();
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    const auto eiter = exposures.begin();
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    statAlg->setData(riter, /*eiter, */ miter, npts);
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    auto riter = realPart.begin();
+    auto iiter = imagPart.begin();
+    auto miter = mask.begin();
+    auto eiter = exposures.begin();
+    statAlg->setData(riter, eiter, miter, npts);
     // FIXME maybe need to get NVARIANCE for exposure time waiting
     auto realVar = statAlg->getStatistic(StatisticsData::VARIANCE);
     // reset data to imaginary parts
@@ -1804,7 +1727,6 @@ casacore::Double StatWtTVI::_computeWeight(
             ++_samples[spw].second;
         }
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
     return varSum == 0 ? 0 : 2/varSum;
 }
 
