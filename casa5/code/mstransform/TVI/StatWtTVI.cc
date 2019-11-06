@@ -45,7 +45,6 @@ StatWtTVI::StatWtTVI(ViImplementation2 * inputVii, const Record &configuration)
 	// Parse and check configuration parameters
 	// Note: if a constructor finishes by throwing an exception, the memory
 	// associated with the object itself is cleaned up there is no memory leak.
-    cout << __func__ << endl;
     ThrowIf(
         ! _parseConfiguration(configuration),
         "Error parsing StatWtTVI configuration"
@@ -54,20 +53,23 @@ StatWtTVI::StatWtTVI(ViImplementation2 * inputVii, const Record &configuration)
     // check for metadata, like the existence of
     // columns, remove references to the original MS
     const auto& origMS = ms();
+    // FIXME uses original MS explicitly
     ThrowIf(
         (_column == CORRECTED || _column == RESIDUAL)
         && ! origMS.isColumn(MSMainEnums::CORRECTED_DATA),
         "StatWtTVI requires the MS to have a CORRECTED_DATA column. This MS "
         "does not"
     );
+    // FIXME uses original MS explicitly
     ThrowIf(
         (_column == DATA || _column == RESIDUAL_DATA)
         && ! origMS.isColumn(MSMainEnums::DATA),
         "StatWtTVI requires the MS to have a DATA column. This MS does not"
     );
     _mustComputeSigma = (_column == DATA || _column == RESIDUAL_DATA);
+    // FIXME uses original MS explicitly
     _updateWeight = ! _mustComputeSigma 
-        || (_mustComputeSigma && ! ms().isColumn(MSMainEnums::CORRECTED_DATA));
+        || (_mustComputeSigma && ! origMS.isColumn(MSMainEnums::CORRECTED_DATA));
     _noModel = (_column == RESIDUAL || _column == RESIDUAL_DATA)
         && ! origMS.isColumn(MSMainEnums::MODEL_DATA)
         && ! origMS.source().isColumn(MSSourceEnums::SOURCE_MODEL);
@@ -229,60 +231,56 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
         }
     }
     field = "slidetimebin";
-    if (config.isDefined(field)) {
-        ThrowIf(
-            config.type(config.fieldNumber(field)) != TpBool,
-            "Unsupported type for field '" + field + "'"
-        );
-        _timeBlockProcessing = ! config.asBool(field);
-        if (! _timeBlockProcessing) {
-            field = "timebin";
-            ThrowIf(! config.isDefined(field), field + " not defined");
-            auto mytype = config.type(config.fieldNumber(field));
-            ThrowIf(
-                ! (
-                    mytype == TpString || mytype == TpDouble
-                    || mytype == TpInt
-                ),
-                "Unsupported type for field '" + field + "'"
-            );
-            switch(mytype) {
-            case TpDouble: {
-                _slidingTimeWindowWidth.reset(
-                    new Double(config.asDouble(field))
-                );
-                checkTimeBinWidth(*_slidingTimeWindowWidth);
-                break;
-            }
-            /*
-            case TpInt:
-                _slidingTimeWindowWidth = getTimeBinWidthUsingInterval(
-                    &ms(), config.asInt(field)
-                );
-                break;
-            */
-            case TpInt:
-                _nTimeStampsInBin.reset(new Int(config.asInt(field)));
-                ThrowIf(
-                    *_nTimeStampsInBin <= 0,
-                    "Logic Error: nTimeStamps must be positive"
-                );
-                break;
-            case TpString: {
-                QuantumHolder qh(casaQuantity(config.asString(field)));
-                _slidingTimeWindowWidth.reset(
-                    new Double(getTimeBinWidthInSec(qh.asQuantity()))
-                );
-                break;
-            }
-            default:
-                ThrowCc("Logic Error: Unhandled type for timebin");
-            }
-            LogIO log(LogOrigin("StatWtTVI", __func__));
-            log << LogIO::NORMAL << "Using sliding time window of width "
-                << *_slidingTimeWindowWidth << " s" << LogIO::POST;
-        }
+    ThrowIf(
+        ! config.isDefined(field), "Config param " + field + " must be defined"
+    );
+    ThrowIf(
+        config.type(config.fieldNumber(field)) != TpBool,
+        "Unsupported type for field '" + field + "'"
+    );
+    _timeBlockProcessing = ! config.asBool(field);
+    field = "timebin";
+    ThrowIf(
+        ! config.isDefined(field), "Config param " + field + " must be defined"
+    );
+    auto mytype = config.type(config.fieldNumber(field));
+    ThrowIf(
+        ! (
+            mytype == TpString || mytype == TpDouble
+            || mytype == TpInt
+        ),
+        "Unsupported type for field '" + field + "'"
+    );
+    switch(mytype) {
+    case TpDouble: {
+        _binWidthInSeconds.reset(new Double(config.asDouble(field)));
+        break;
     }
+    case TpInt:
+        _nTimeStampsInBin.reset(new Int(config.asInt(field)));
+        ThrowIf(
+            *_nTimeStampsInBin <= 0,
+            "Logic Error: nTimeStamps must be positive"
+        );
+        break;
+    case TpString: {
+        QuantumHolder qh(casaQuantity(config.asString(field)));
+        _binWidthInSeconds.reset(
+            new Double(getTimeBinWidthInSec(qh.asQuantity()))
+        );
+        break;
+    }
+    default:
+        ThrowCc("Logic Error: Unhandled type for timebin");
+
+    }
+    _doOneShot = _binWidthInSeconds && _timeBlockProcessing;
+        /*
+        LogIO log(LogOrigin("StatWtTVI", __func__));
+        log << LogIO::NORMAL << "Using sliding time window of width "
+            << *_slidingTimeWindowWidth << " s" << LogIO::POST;
+        */
+        //  }
     _configureStatAlg(config);
     return True;
 }
@@ -653,11 +651,11 @@ void StatWtTVI::_computeWeightSpectrumAndFlags() const {
         wtsp.resize(flagCube.shape());
     }
     auto checkFlags = False;
-    if (_timeBlockProcessing) {
-        _weightSpectrumFlagsTimeBlockProcessing(wtsp, flagCube, checkFlags);
+    if (_doOneShot) {
+        _weightSpectrumFlagsOneShotProcessing(wtsp, flagCube, checkFlags);
     }
     else {
-        _weightSpectrumFlagsSlidingTimeWindow(wtsp, flagCube, checkFlags);
+        _weightSpectrumFlagsMultiLoopProcessing(wtsp, flagCube, checkFlags);
     }
     if (checkFlags) {
         _nNewFlaggedPts += ntrue(flagCube) - nOrigFlagged;
@@ -666,11 +664,9 @@ void StatWtTVI::_computeWeightSpectrumAndFlags() const {
     _newFlag = flagCube;
 }
 
-void StatWtTVI::_weightSpectrumFlagsSlidingTimeWindow(
+void StatWtTVI::_weightSpectrumFlagsMultiLoopProcessing(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags
 ) const {
-    // cout << __func__ << endl;
-
     // fish out the rows relevant to this subchunk
     Vector<uInt> rowIDs;
     getRowIds(rowIDs);
@@ -708,7 +704,7 @@ void StatWtTVI::_weightSpectrumFlagsSlidingTimeWindow(
                 slice.setEnd(sliceEnd);
                 _updateWtSpFlags(
                     wtsp, flagCube, checkFlags, slice,
-                    _slidingTimeWindowWeights(corr, iChanBin, chunkRowIndex)
+                    _multiLoopWeights(corr, iChanBin, chunkRowIndex)
                 );
             }
             ++iChanBin;
@@ -716,15 +712,15 @@ void StatWtTVI::_weightSpectrumFlagsSlidingTimeWindow(
     }
 }
 
-void StatWtTVI::_weightSpectrumFlagsTimeBlockProcessing(
+void StatWtTVI::_weightSpectrumFlagsOneShotProcessing(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags
 ) const {
-    cout << __func__ << endl;
-
     Vector<Int> ant1, ant2, spws;
+    Vector<Double> exposures;
     antenna1(ant1);
     antenna2(ant2);
     spectralWindows(spws);
+    exposure(exposures);
     Slicer slice(IPosition(3, 0), flagCube.shape(), Slicer::endIsLength);
     auto sliceStart = slice.start();
     auto sliceEnd = slice.end();
@@ -741,8 +737,9 @@ void StatWtTVI::_weightSpectrumFlagsTimeBlockProcessing(
             sliceStart[1] = bin.start;
             sliceEnd[1] = bin.end;
             blcb.chanBin = bin;
-            auto weights = _weights.find(blcb)->second;
-            auto ncorr = weights.size();
+            auto variances = _variancesOneShotProcessing.find(blcb)->second;
+            auto ncorr = variances.size();
+            Vector<Double> weights = exposures[i]/variances;
             for (uInt corr=0; corr<ncorr; ++corr) {
                 if (! _combineCorr) {
                     sliceStart[0] = corr;
@@ -762,7 +759,6 @@ void StatWtTVI::_updateWtSpFlags(
     Cube<Float>& wtsp, Cube<Bool>& flags, Bool& checkFlags,
     const Slicer& slice, Float wt
 ) const {
-    // cout << __func__ << endl;
     // writable array reference
     auto flagSlice = flags(slice);
     if (*_mustComputeWtSp) {
@@ -827,8 +823,6 @@ void StatWtTVI::sigma(Matrix<Float>& sigmaMat) const {
 }
 
 void StatWtTVI::weight(Matrix<Float> & wtmat) const {
-    // cout << __func__ << endl;
-
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
     if (! _newWt.empty()) {
         if (_updateWeight) {
@@ -893,11 +887,11 @@ void StatWtTVI::weight(Matrix<Float> & wtmat) const {
     else {
         // the only way this can happen is if there is a single channel bin
         // for each baseline/spw pair
-        if (_timeBlockProcessing) {
-            _weightSingleChanBinBlockTimeProcessing(wtmat, nrows);
+        if (_doOneShot) {
+            _weightSingleChanBinOneShotProcessing(wtmat, nrows);
         }
         else {
-            _weightSingleChanBinSlidingTimeWindow(wtmat, nrows);
+            _weightSingleChanBinMultiLoopProcessing(wtmat, nrows);
         }
     }
     _newWt = wtmat.copy();
@@ -907,16 +901,16 @@ void StatWtTVI::weight(Matrix<Float> & wtmat) const {
     }
 }
 
-void StatWtTVI::_weightSingleChanBinBlockTimeProcessing(
+void StatWtTVI::_weightSingleChanBinOneShotProcessing(
     Matrix<Float>& wtmat, Int nrows
 ) const {
-    cout << __func__ << endl;
-
     Vector<Int> ant1, ant2, spws;
+    Vector<Double> exposures;
     antenna1(ant1);
     antenna2(ant2);
     spectralWindows(spws);
-    // all spws in a given chunk are guaranteed to be the same
+    exposure(exposures);
+    // There is only one spw in a chunk
     auto spw = *spws.begin();
     BaselineChanBin blcb;
     blcb.spw = spw;
@@ -924,21 +918,21 @@ void StatWtTVI::_weightSingleChanBinBlockTimeProcessing(
         auto bins = _chanBins.find(spw)->second;
         blcb.baseline = _baseline(ant1[i], ant2[i]);
         blcb.chanBin = bins[0];
-        auto weights = _weights.find(blcb)->second;
+        auto variances = _variancesOneShotProcessing.find(blcb)->second;
         if (_combineCorr) {
-            wtmat.column(i) = weights[0];
+            wtmat.column(i) = exposures[i]/variances[0];
         }
         else {
             auto corr = 0;
-            for (const auto weight: weights) {
-                wtmat(corr, i) = weight;
+            for (const auto variance: variances) {
+                wtmat(corr, i) = exposures[i]/variance;
                 ++corr;
             }
         }
     }
 }
 
-void StatWtTVI::_weightSingleChanBinSlidingTimeWindow(
+void StatWtTVI::_weightSingleChanBinMultiLoopProcessing(
     Matrix<Float>& wtmat, Int nrows
 ) const {
     cout << __func__ << endl;
@@ -954,11 +948,11 @@ void StatWtTVI::_weightSingleChanBinSlidingTimeWindow(
     auto ncorr = wtmat.nrow();
     for (Int i=0; i<nrows; ++i) {
         if (_combineCorr) {
-            wtmat.column(i) = _slidingTimeWindowWeights(0, 0, chunkRowIndex);
+            wtmat.column(i) = _multiLoopWeights(0, 0, chunkRowIndex);
         }
         else {
             for (uInt corr=0; corr<ncorr; ++corr) {
-                wtmat(corr, i) = _slidingTimeWindowWeights(
+                wtmat(corr, i) = _multiLoopWeights(
                     corr, 0, chunkRowIndex
                 );
             }
@@ -967,7 +961,6 @@ void StatWtTVI::_weightSingleChanBinSlidingTimeWindow(
 }
 
 void StatWtTVI::flag(Cube<Bool>& flagCube) const {
-    // cout << __func__ << endl;
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
     if (! _newFlag.empty()) {
         flagCube = _newFlag.copy();
@@ -978,7 +971,6 @@ void StatWtTVI::flag(Cube<Bool>& flagCube) const {
 }
 
 void StatWtTVI::flagRow(Vector<Bool>& flagRow) const {
-    // cout << __func__ << endl;
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
     if (! _newFlagRow.empty()) {
         flagRow = _newFlagRow.copy();
@@ -1029,11 +1021,11 @@ void StatWtTVI::_clearCache() {
     _newFlagRow.resize(0);
 }
 
-void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
+void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
     cout << __func__ << endl;
     ThrowIf(
-        ! (_slidingTimeWindowWidth || _nTimeStampsInBin ),
-        "Logic error: neither _slidingTimeWindowWidth"
+        ! (_binWidthInSeconds || _nTimeStampsInBin ),
+        "Logic error: neither _binWidthInSeconds"
         "nor _nTimeStamps has been specified"
     );
     auto* vii = getVii();
@@ -1132,14 +1124,10 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
         }
 
         const auto dataCube = _dataCube(vb);
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         const auto resultantFlags = _getResultantFlags(
             chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
             spw, vb->flagCube()
         );
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         const auto exposures = vb->exposure();
         const auto cubeShape = dataCube.shape();
         Cube<Double> resultExposures(cubeShape);
@@ -1180,7 +1168,7 @@ void StatWtTVI::_gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const {
         subChunkToTimeStamp.push_back(subchunkTime);
         subchunkStartRowNum += nrows;
     }
-    _computeWeightsSlidingTimeWindow(
+    _computeWeightsMultiLoopProcessing(
         chunkData, chunkFlags, chunkExposures, rowMap, spw
     );
 }
@@ -1196,8 +1184,6 @@ void StatWtTVI::_limits(
     if (_nTimeStampsInBin) {
         // fixed number of time stamps specified
         if (_timeBlockProcessing) {
-            // TODO need to hook this up to outside so can get here if
-            // _timeBlockProcessing && _nTimeStamps
             // integer division
             uInt nBlocks = nSubChunks/(*_nTimeStampsInBin);
             if (nSubChunks % *_nTimeStampsInBin > 0) {
@@ -1273,10 +1259,10 @@ void StatWtTVI::_limits(
         }
         else {
             ThrowIf(
-                ! _slidingTimeWindowWidth,
-                "Logic error: _slidingTimeWindowWidth not defined"
+                ! _binWidthInSeconds,
+                "Logic error: _binWidthInSeconds not defined"
             );
-            auto halfBinWidth = *_slidingTimeWindowWidth/2;
+            auto halfBinWidth = *_binWidthInSeconds/2;
             vector<Double> subChunkTimes;
             uInt subChunkCount = 0;
             for (vii->origin(); vii->more(); vii->next(), ++subChunkCount) {
@@ -1342,21 +1328,20 @@ const Cube<Complex> StatWtTVI::_dataCube(const VisBuffer2 *const vb) const {
     }
 }
 
-void StatWtTVI::_computeWeightsSlidingTimeWindow(
+void StatWtTVI::_computeWeightsMultiLoopProcessing(
     const Cube<Complex>& data, const Cube<Bool>& flags,
-    const Cube<Double>& exposures, const std::vector<std::set<uInt>>& rowMap,
+    const Vector<Double>& exposures, const std::vector<std::set<uInt>>& rowMap,
     uInt spw
 ) const {
     auto chunkShape = data.shape();
     const auto nActCorr = chunkShape[0];
     const auto ncorr = _combineCorr ? 1 : nActCorr;
     const auto& chanBins = _chanBins.find(spw)->second;
-    _slidingTimeWindowWeights.resize(
+    _multiLoopWeights.resize(
         IPosition(3, ncorr, chanBins.size(), chunkShape[2]),
         False
     );
     const auto nRows = rowMap.size();
-    cout << "nRows in " << __func__ << " " << nRows << endl;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -1380,14 +1365,15 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
         dataShape[2] = rowsToInclude.size();
         Cube<Complex> dataArray(dataShape);
         Cube<Bool> flagArray(dataShape);
-        Cube<Double> exposureArray(dataShape);
         auto siter = rowsToInclude.begin();
         auto send = rowsToInclude.end();
+        Vector<Double> exposureVector(rowsToInclude.size(), 0);
         uInt n = 0;
         // create an array with only the rows that should
         // be used in the computation of weights for the
         // current row
         for (; siter!=send; ++siter, ++n) {
+            exposureVector[n] = exposures[*siter];
             appendingSliceStart[2] = n;
             appendingSlice.setStart(appendingSliceStart);
             appendingSliceEnd[2] = n;
@@ -1398,7 +1384,6 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
             chunkSlice.setEnd(chunkSliceEnd);
             dataArray(appendingSlice) = data(chunkSlice);
             flagArray(appendingSlice) = flags(chunkSlice);
-            exposureArray(appendingSlice) = exposures(chunkSlice);
         }
         // slice up for correlations and channel binning
         intraChunkSliceEnd[2] = dataShape[2] - 1;
@@ -1415,10 +1400,11 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
                 intraChunkSliceEnd[1] = citer->end;
                 intraChunkSlice.setStart(intraChunkSliceStart);
                 intraChunkSlice.setEnd(intraChunkSliceEnd);
-                _slidingTimeWindowWeights(corr, iChanBin, iRow)
+                _multiLoopWeights(corr, iChanBin, iRow)
                     = _computeWeight(
                         dataArray(intraChunkSlice), flagArray(intraChunkSlice),
-                        exposureArray(intraChunkSlice), spw
+                        exposureVector(intraChunkSlice), spw,
+                        exposures[iRow]
                     );
             }
         }
@@ -1426,27 +1412,26 @@ void StatWtTVI::_computeWeightsSlidingTimeWindow(
 }
 
 void StatWtTVI::_gatherAndComputeWeights() const {
-    cout << __func__ << endl;
     if (_timeBlockProcessing) {
-        _gatherAndComputeWeightsTimeBlockProcessing();
+        _gatherAndComputeWeightsOneShotProcessing();
     }
     else {
-        _gatherAndComputeWeightsSlidingTimeWindowForTimeBin();
+        _gatherAndComputeWeightsMultiLoopProcessing();
     }
 }
 
-void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
+void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
     // Drive NEXT LOWER layer's ViImpl to gather data into allvis:
     //  Assumes all sub-chunks in the current chunk are to be used
     //   for the variance calculation
     //  Essentially, we are sorting the incoming data into
     //   allvis, to enable a convenient variance calculation
-    _weights.clear();
+    _variancesOneShotProcessing.clear();
     auto* vii = getVii();
     auto* vb = vii->getVisBuffer();
     std::map<BaselineChanBin, Cube<Complex>> data;
     std::map<BaselineChanBin, Cube<Bool>> flags;
-    std::map<BaselineChanBin, Cube<Double>> exposures;
+    std::map<BaselineChanBin, Vector<Double>> exposures;
     IPosition blc(3, 0);
     auto trc = blc;
     auto initChanSelTemplate = True;
@@ -1454,6 +1439,7 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
     auto firstTime = True;
     // we cannot know the spw until we are in the subchunks loop
     Int spw = -1;
+    // Vector<Double> exposureVector;
     for (vii->origin(); vii->more(); vii->next()) {
         if (_checkFirstSubChunk(spw, firstTime, vb)) {
             return;
@@ -1471,20 +1457,7 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
         const auto& dataCube = _dataCube(vb);
         const auto& flagCube = vb->flagCube();
         const auto dataShape = dataCube.shape();
-        Cube<Double> exposureCube(dataShape);
-        const auto& exposureVector = vb->exposure();
-        {
-            IPosition start(3, 0);
-            auto end = dataShape - 1;
-            Slicer slice(start, end, Slicer::endIsLast);
-            for (uInt jj=0; jj<dataShape[2]; ++jj) {
-                start[2] = jj;
-                end[2] = jj;
-                slice.setStart(start);
-                slice.setEnd(end);
-                exposureCube(slice) = exposureVector[jj];
-            }
-        }
+        // exposureVector = vb->exposure();
         const auto nrows = vb->nRows();
         const auto npol = dataCube.nrow();
         const auto resultantFlags = _getResultantFlags(
@@ -1510,11 +1483,10 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
                 blcb.chanBin.end = citer->end;
                 auto dataSlice = dataCube(dataCubeBLC, dataCubeTRC);
                 auto flagSlice = resultantFlags(dataCubeBLC, dataCubeTRC);
-                auto exposureSlice = exposureCube(dataCubeBLC, dataCubeTRC);
                 if (data.find(blcb) == data.end()) {
                     data[blcb] = dataSlice;
                     flags[blcb] = flagSlice;
-                    exposures[blcb] = exposureSlice;
+                    // exposures[blcb] = Vector<Double>(nrows, exposureVector[row]);
                 }
                 else {
                     auto myshape = data[blcb].shape();
@@ -1522,7 +1494,7 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
                     auto nchan = myshape[1];
                     data[blcb].resize(npol, nchan, nplane+1, True);
                     flags[blcb].resize(npol, nchan, nplane+1, True);
-                    exposures[blcb].resize(npol, nchan, nplane+1, True);
+                    // exposures[blcb].resize(nplane+1, True);
                     trc = myshape - 1;
                     // because we've extended the cube by one plane since
                     // myshape was determined.
@@ -1530,12 +1502,12 @@ void StatWtTVI::_gatherAndComputeWeightsTimeBlockProcessing() const {
                     blc[2] = trc[2];
                     data[blcb](blc, trc) = dataSlice;
                     flags[blcb](blc, trc) = flagSlice;
-                    exposures[blcb](blc, trc) = exposureSlice;
+                    // exposures[blcb][trc[2]] = exposureVector[row];
                 }
             }
         }
     }
-    _computeWeightsTimeBlockProcessing(data, flags, exposures);
+    _computeVariancesOneShotProcessing(data, flags, exposures);
 }
 
 Cube<Bool> StatWtTVI::_getResultantFlags(
@@ -1578,7 +1550,6 @@ Cube<Bool> StatWtTVI::_getResultantFlags(
 Bool StatWtTVI::_checkFirstSubChunk(
     Int& spw, Bool& firstTime, const VisBuffer2 * const vb
 ) const {
-    // cout << __func__ << endl;
     if (! firstTime) {
         // this chunk has already been checked, it has not
         // been processed previously
@@ -1618,7 +1589,6 @@ void StatWtTVI::initSigmaSpectrum (const Cube<Float>& sigspec) {
 
 
 void StatWtTVI::writeBackChanges(VisBuffer2 *vb) {
-    // cout << __func__ << endl;
     // Pass to next layer down
     getVii()->writeBackChanges(vb);
 }
@@ -1627,10 +1597,10 @@ StatWtTVI::Baseline StatWtTVI::_baseline(uInt ant1, uInt ant2) {
     return Baseline(min(ant1, ant2), max(ant1, ant2));
 }
 
-void StatWtTVI::_computeWeightsTimeBlockProcessing(
+void StatWtTVI::_computeVariancesOneShotProcessing(
     const map<BaselineChanBin, Cube<Complex>>& data,
     const map<BaselineChanBin, Cube<Bool>>& flags,
-    const map<BaselineChanBin, Cube<Double>>& exposures
+    const map<BaselineChanBin, Vector<Double>>& exposures
 ) const {
     auto diter = data.cbegin();
     auto dend = data.cend();
@@ -1643,7 +1613,7 @@ void StatWtTVI::_computeWeightsTimeBlockProcessing(
     for (; diter!=dend; ++diter, ++idx) {
         const auto& blcb = diter->first;
         keys[idx] = blcb;
-        _weights[blcb].resize(ncorr);
+        _variancesOneShotProcessing[blcb].resize(ncorr);
     }
     auto n = keys.size();
 #ifdef _OPENMP
@@ -1662,17 +1632,17 @@ void StatWtTVI::_computeWeightsTimeBlockProcessing(
                 end[0] = corr;
             }
             Slicer slice(start, end, Slicer::endIsLast);
-            _weights[blcb][corr] = _computeWeight(
+            _variancesOneShotProcessing[blcb][corr] = _computeVariance(
                 dataForBLCB(slice), flagsForBLCB(slice),
-                exposuresForBLCB(slice), spw
+                exposuresForBLCB, spw
             );
         }
     }
 }
 
-casacore::Double StatWtTVI::_computeWeight(
-    const Array<Complex>& data, const Array<Bool>& flags,
-    const Array<Double>& exposures, uInt spw
+Double StatWtTVI::_computeVariance(
+    const Cube<Complex>& data, const Cube<Bool>& flags,
+    const Vector<Double>& exposures, uInt spw
 ) const {
     const auto npts = data.size();
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
@@ -1680,7 +1650,6 @@ casacore::Double StatWtTVI::_computeWeight(
         return 0;
     }
     // called in multi-threaded mode
-    // FIXME uncomment and use when exposures are correctly used for weighting
     std::unique_ptr<
         StatisticsAlgorithm<
             Double, Array<Float>::const_iterator,
@@ -1691,21 +1660,26 @@ casacore::Double StatWtTVI::_computeWeight(
     const auto realPart = real(data);
     const auto imagPart = imag(data);
     const auto mask = ! flags;
+    Cube<Double> exposureCube(data.shape());
+    const auto nPlanes = data.nplane();
+    for (size_t i=0; i<nPlanes; ++i) {
+        exposureCube.xyPlane(i) = exposures[i];
+    }
     auto riter = realPart.begin();
     auto iiter = imagPart.begin();
     auto miter = mask.begin();
-    auto eiter = exposures.begin();
+    auto eiter = exposureCube.begin();
     statAlg->setData(riter, eiter, miter, npts);
-    // FIXME maybe need to get NVARIANCE for exposure time waiting
-    auto realVar = statAlg->getStatistic(StatisticsData::VARIANCE);
+    auto realStats = statAlg->getStatistics();
+    auto realVar = realStats.nvariance/realStats.npts;
     // reset data to imaginary parts
-    statAlg->setData(iiter, /*eiter,*/ miter, npts);
-    auto imagVar = statAlg->getStatistic(StatisticsData::VARIANCE);
+    statAlg->setData(iiter, eiter, miter, npts);
+    auto imagStats = statAlg->getStatistics();
+    auto imagVar = imagStats.nvariance/imagStats.npts;
     auto varSum = realVar + imagVar;
     // _samples.second can be updated in two different places, so use
     // a local (per thread) variable and update the object's private field in one
     // place
-    // cout << __FILE__ << " " << __LINE__ << endl;
     uInt updateSecond = False;
     if (varSum > 0) {
 #ifdef _OPENMP
@@ -1727,7 +1701,23 @@ casacore::Double StatWtTVI::_computeWeight(
             ++_samples[spw].second;
         }
     }
-    return varSum == 0 ? 0 : 2/varSum;
+    return varSum/2;
+}
+
+Double StatWtTVI::_computeWeight(
+    const Cube<Complex>& data, const Cube<Bool>& flags,
+    const Vector<Double>& exposures, uInt spw, Double targetExposure
+) const {
+    auto varEq = _computeVariance(data, flags, exposures, spw);
+    return varEq == 0 ? 0 : targetExposure/varEq;
+}
+
+Vector<Double> StatWtTVI::_computeWeights(
+    const Cube<Complex>& data, const Cube<Bool>& flags,
+    const Vector<Double>& exposures, uInt spw
+) const {
+    auto varEq = _computeVariance(data, flags, exposures, spw);
+    return varEq == 0 ? Vector<Double>(exposures.size(), 0) : exposures/varEq;
 }
 
 void StatWtTVI::summarizeFlagging() const {

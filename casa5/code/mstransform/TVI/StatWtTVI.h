@@ -22,7 +22,9 @@
 
 #include <msvis/MSVis/TransformingVi2.h>
 
+#include <casacore/casa/aipstype.h>
 #include <casacore/casa/Arrays/ArrayIter.h>
+#include <casacore/casa/BasicSL/Complex.h>
 #include <casacore/ms/MSSel/MSSelection.h>
 #include <casacore/scimath/StatsFramework/StatisticsAlgorithmFactory.h>
 
@@ -31,6 +33,12 @@
 #include <mstransform/TVI/UtilsTVI.h>
 #include <stdcasa/variant.h>
 #include <stdcasa/StdCasa/CasacSupport.h>
+
+#include <map>
+#include <vector>
+#include <utility>
+#include <set>
+#include <memory>
 
 namespace casa {
 
@@ -192,8 +200,8 @@ private:
     mutable casacore::Vector<casacore::Bool> _newFlagRow {};
     // the vector represents separate correlations, there will be
     // only one element in the vector if _combineCorr is true
-    mutable std::map<BaselineChanBin, std::vector<casacore::Double>>
-        _weights {};
+    mutable std::map<BaselineChanBin, casacore::Vector<casacore::Double>>
+        _variancesOneShotProcessing {};
     // The key refers to the spw, the value vector refers to the
     // channel numbers within that spw that are the first, last channel pair
     // in their respective bins
@@ -223,14 +231,22 @@ private:
         _samples {};
     mutable std::set<casacore::uInt> _processedRowIDs {};
     mutable std::vector<std::vector<casacore::Double>> _timeWindowWts {};
-    mutable casacore::Cube<casacore::Double> _slidingTimeWindowWeights {};
+    mutable casacore::Cube<casacore::Double> _multiLoopWeights {};
     // if False, the a sliding time window is being used
     casacore::Bool _timeBlockProcessing = true;
+    // we can process using classical VI/VB2 algorithm. Only happens if
+    // we are not using a sliding time window and if we are not using an
+    // integer number of time bins
+    casacore::Bool _doOneShot = true;
     // for running time window, for each subchunk, map the rowID (in the MS)
     // to the row index in the chunk
     mutable std::map<casacore::uInt, casacore::uInt>
         _rowIDInMSToRowIndexInChunk {};
-    std::unique_ptr<casacore::Double> _slidingTimeWindowWidth {};
+    // std::unique_ptr<casacore::Double> _slidingTimeWindowWidth {};
+    // if defined means we are using a window width in seconds
+    std::unique_ptr<casacore::Double> _binWidthInSeconds {};
+    // if defined means we are using an integer number of timestamps for the
+    // bin width
     std::unique_ptr<casacore::Int> _nTimeStampsInBin {};
 
     casacore::Bool _mustComputeSigma = casacore::False;
@@ -268,9 +284,9 @@ private:
     void _gatherAndComputeWeights() const;
 
     // sliding time bin window, and timebin was specified as a quantity
-    void _gatherAndComputeWeightsSlidingTimeWindowForTimeBin() const;
+    void _gatherAndComputeWeightsMultiLoopProcessing() const;
 
-    void _gatherAndComputeWeightsTimeBlockProcessing() const;
+    void _gatherAndComputeWeightsOneShotProcessing() const;
 
     // combines the flag cube with the channel selection flags (if any)
     casacore::Cube<casacore::Bool> _getResultantFlags(
@@ -283,22 +299,42 @@ private:
     // CAS-12358
     void _logUsedChannels() const;
 
-    casacore::Double _computeWeight(
-        const casacore::Array<casacore::Complex>& data,
-        const casacore::Array<casacore::Bool>& flags,
-        const casacore::Array<casacore::Double>& exposures, casacore::uInt spw
-    ) const;
-
-    void _computeWeightsTimeBlockProcessing(
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags,
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Double>>& exposures
-    ) const;
-
-    void _computeWeightsSlidingTimeWindow(
+    // compute the equivalent exposure weighted varaince,
+    // (var_real + var_imag)/2
+    casacore::Double _computeVariance(
         const casacore::Cube<casacore::Complex>& data,
         const casacore::Cube<casacore::Bool>& flags,
-        const casacore::Cube<casacore::Double>& exposures,
+        const casacore::Vector<casacore::Double>& exposures, casacore::uInt spw
+    ) const;
+
+    // all the exposures are used in weighting the variance, but the
+    // targetExposure is divided by the equivalent variance and returned.
+    casacore::Double _computeWeight(
+            const casacore::Cube<casacore::Complex>& data,
+            const casacore::Cube<casacore::Bool>& flags,
+            const casacore::Vector<casacore::Double>& exposures,
+            casacore::uInt spw, casacore::Double targetExposure
+        ) const;
+
+
+    // compute the exposure weighted weights.
+    casacore::Vector<casacore::Double> _computeWeights(
+        const casacore::Cube<casacore::Complex>& data,
+        const casacore::Cube<casacore::Bool>& flags,
+        const casacore::Vector<casacore::Double>& exposures, casacore::uInt spw
+    ) const;
+
+
+    void _computeVariancesOneShotProcessing(
+        const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
+        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags,
+        const std::map<BaselineChanBin, casacore::Vector<casacore::Double>>& exposures
+    ) const;
+
+    void _computeWeightsMultiLoopProcessing(
+        const casacore::Cube<casacore::Complex>& data,
+        const casacore::Cube<casacore::Bool>& flags,
+        const casacore::Vector<casacore::Double>& exposures,
         const std::vector<std::set<casacore::uInt>>& rowMap, casacore::uInt spw
     ) const;
 
@@ -327,21 +363,21 @@ private:
 
     void _configureStatAlg(const casacore::Record& config);
 
-    void _weightSpectrumFlagsTimeBlockProcessing(
+    void _weightSpectrumFlagsOneShotProcessing(
         casacore::Cube<casacore::Float>& wtsp,
         casacore::Cube<casacore::Bool>& flagCube, casacore::Bool& checkFlags
      ) const;
 
-    void _weightSpectrumFlagsSlidingTimeWindow(
+    void _weightSpectrumFlagsMultiLoopProcessing(
         casacore::Cube<casacore::Float>& wtsp,
         casacore::Cube<casacore::Bool>& flagCube, casacore::Bool& checkFlags
     ) const;
 
-    void _weightSingleChanBinBlockTimeProcessing(
+    void _weightSingleChanBinOneShotProcessing(
         casacore::Matrix<casacore::Float>& wtmat, casacore::Int nrows
     ) const;
 
-    void _weightSingleChanBinSlidingTimeWindow(
+    void _weightSingleChanBinMultiLoopProcessing(
         casacore::Matrix<casacore::Float>& wtmat, casacore::Int nrows
     ) const;
 
