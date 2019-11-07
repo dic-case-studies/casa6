@@ -3406,7 +3406,20 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       if (debug):
                           print("$$$$$$$$$$$$$$$$$$$$$$$  ready to plot amp on xframe %d" % (xframe))
 # #     # #            print(",,,,,,,,,,,,,,,, Starting with newylimits = ", newylimits)
-                      adesc = pb.subplot(xframe)
+
+                      # CAS-12786: old pyplots (up to CASA 5.6.1, matplotlib 1.10 used to accept "220"
+                      # Newer pyplots (matplotlib 3.1.1 won't).
+                      # Assume the index effectively used was 1 ("221")
+                      if str(xframe).endswith('0'):
+                          xframe_wrong0 = True
+                      else:
+                          xframe_wrong0 = False
+
+                      if not xframe_wrong0:
+                          adesc = pb.subplot(xframe)
+                      else:
+                          adesc = pb.subplot(xframe + 1)
+
                       if (previousSubplot != xframe):
                           drewAtmosphere = False
                       previousSubplot = xframe
