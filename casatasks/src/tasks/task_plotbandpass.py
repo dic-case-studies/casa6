@@ -5854,8 +5854,8 @@ def recalcYlimits(plotrange, ylimits, amp):
     if (len(amp) < 1):
         return(pb.ylim())
     if ((abs(plotrange[0]) > 0 or abs(plotrange[1]) > 0) and (plotrange[2] == 0 and plotrange[3] == 0)):
-        x0 = plotrange[0]
-        x1 = plotrange[1]
+        x0 = int(plotrange[0])
+        x1 = int(plotrange[1])
         if (x0 < 0):
             x0 = 0
         if (x1 > len(amp)-1):
