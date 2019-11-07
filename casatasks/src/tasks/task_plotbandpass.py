@@ -965,6 +965,11 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         
     if (pwv==''):
         pwv = 1.0
+
+    # CAS-12786: from a command that sets  poln='' we'll get poln as ['']
+    if isinstance(poln, list) and 1 == len(poln):
+        poln = poln[0]
+
     if (type(poln) != list):
           poln = poln.upper()
     if (poln == 'X'):
