@@ -976,12 +976,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     try
       {    
-	if( itsDataLoopPerMapper == false )
-	  {	runMajorCycle(false, lastcycle);}
-	else
-	  {	runMajorCycle2(false, lastcycle);}
+		
+	if( itsMaxShape[3] > 1 ){/// and valid ftmachines
+		runMajorCycleCube(false, lastcycle);
+	}
+	else{
+	 if( itsDataLoopPerMapper == false )
+		{	runMajorCycle(false, lastcycle);}
+	 else
+		{	runMajorCycle2(false, lastcycle);}
 	
-	
+	}
 	itsMappers.releaseImageLocks();
 
       }
@@ -1002,11 +1007,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
       try
       {
-	if( itsDataLoopPerMapper == false )
+	if(  itsMaxShape[3] >1){///and valid ftmachines
+		runMajorCycleCube(true, false);
+	}
+	else{
+	 if( itsDataLoopPerMapper == false )
 	  {runMajorCycle(true, false);}
 	else
 	  {runMajorCycle2(true, false);}
-
+	}
 	//	makeImage();
 
     	  itsMappers.releaseImageLocks();

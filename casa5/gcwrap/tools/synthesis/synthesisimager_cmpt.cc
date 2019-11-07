@@ -21,20 +21,24 @@
 
 #include <synthesis/ImagerObjects/SynthesisImager.h>
 #include <synthesis/ImagerObjects/SynthesisImagerVi2.h>
-
+#include <synthesis/Parallel/Applicator.h>
 
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
 
 #include <synthesisimager_cmpt.h>
 
+
 using namespace std;
 using namespace casacore;
 using namespace casa;
-
+namespace casa{
+           extern Applicator applicator;
+};
      
 using namespace casacore;
 namespace casac {
 
+  
   // Method used for creating the SynthesisImager object.  By default,
   // this will look at itsImager and decide if a new instance needs to
   // be constructed.  The second argument determines if
@@ -750,6 +754,34 @@ int synthesisimager::updatenchan()
     return rstat;
   }
 
+bool
+synthesisimager::initmpi()
+{
+  Bool rstat(false);
+
+  try 
+    {
+      cerr << "is applicator initialized " << applicator.initialized() << endl;
+	if(!applicator.initialized()){
+	  int argc=1;
+          char **argv;
+          casa::applicator.init ( argc, argv );
+          cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
+        rstat=true;
+	}
+	else{
+          rstat=false;
+          cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
+        }
+      
+    } 
+  catch  (AipsError x) 
+    {
+      RETHROW(x);
+    }
+  
+  return rstat;
+}
 
 bool
 synthesisimager::done()

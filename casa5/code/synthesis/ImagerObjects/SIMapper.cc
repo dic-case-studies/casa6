@@ -219,11 +219,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     //LogIO os( LogOrigin("SIMapper", "initializeDegrid",WHERE) );
      if(!useViVb2_p)
-       throw(AipsError("Programmer Error: using vi2 mode with vii constructor"));
+       throw(AipsError("Programmer Error: using vi2 mode with vii constructor")); 
     if(ft2_p.null() && cft2_p.null())
       return;
-
-    ft2_p->initializeToVisNew(vb, itsImages);
+    
+    if(ft2_p)
+      ft2_p->initializeToVisNew(vb, itsImages);
 
   }
   //////////////////OLD vi/vb version
@@ -232,10 +233,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //LogIO os( LogOrigin("SIMapper", "initializeDegrid",WHERE) );
      if(useViVb2_p)
        throw(AipsError("Programmer Error: using vi1 mode with vi2 constructor"));
+
     if(ft_p.null() && cft_p.null())
       return;
-
-    ft_p->initializeToVisNew(vb, itsImages);
+    if(ft_p)
+      ft_p->initializeToVisNew(vb, itsImages);
 
   }
 

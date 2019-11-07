@@ -324,9 +324,13 @@ protected:
 
   // Do the major cycle
   virtual void runMajorCycle(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
-
+  // Do the major cycle for cubes
+  virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false){(void)dopsf; (void)savemodel;throw(AipsError("Not implemented"));};
   // Version of major cycle code with mappers in a loop outside vi/vb.
   virtual void runMajorCycle2(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
+  virtual bool runCubePSFGridding(){throw(AipsError("Not implemented"));};
+  
+  virtual bool runCubeResidualGridding(casacore::Bool savemodel=false){(void)savemodel; throw(AipsError("Not implemented"));};
 
   /////This function should be called at every define image
   /////It associated the ftmachine with a given field
@@ -334,7 +338,6 @@ protected:
   //// Only one facetted image allowed
   //  void appendToMapperList(casacore::String imagename, casacore::CoordinateSystem& csys, casacore::String ftmachine,
   //		  	  casacore::Quantity distance=casacore::Quantity(0.0, "m"), casacore::Int facets=1, const casacore::Bool overwrite=false);
-
   void appendToMapperList(casacore::String imagename, 
 			  casacore::CoordinateSystem& csys, 
 			  casacore::IPosition imshape,

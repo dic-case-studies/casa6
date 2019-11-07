@@ -2586,7 +2586,7 @@ Float SIImageStore :: calcStd(Vector<Float> &vect, Vector<Bool> &flag, Float mea
 
     IPosition imshape = target.shape();
 
-    //cout << " SumWt  : " << lsumwt << " sumwtshape : " << lsumwt.shape() << " image shape : " << imshape << endl;
+    cerr << " SumWt  : " << lsumwt << " sumwtshape : " << lsumwt.shape() << " image shape : " << imshape << endl;
 
     AlwaysAssert( lsumwt.shape()[2] == imshape[2] , AipsError ); // polplanes
     AlwaysAssert( lsumwt.shape()[3] == imshape[3] , AipsError ); // chanplanes
@@ -2748,7 +2748,7 @@ Float SIImageStore::getModelFlux(uInt term)
   // Check for non-zero model (this is different from getting model flux, for derived SIIMMT)
 Bool SIImageStore::isModelEmpty()
   {
-    if( ! doesImageExist(itsImageName+imageExts(MODEL)) ) return True;
+    if( !itsModel && (! doesImageExist(itsImageName+imageExts(MODEL))) ) return True;
     else return  ( fabs( getModelFlux(0) ) < 1e-08 );
   }
 

@@ -3335,6 +3335,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     Record gridpar;
 
+	gridpar.define("imagename", imageName);
     // FTMachine params
     gridpar.define("padding", padding);
     gridpar.define("useautocorr",useAutoCorr );

@@ -1111,8 +1111,10 @@ endif()
 option(USE_MPI "Use MPI compiler" NO)
 set( CASAMPI "" )
 if (USE_MPI)
-  find_package(MPI)
+  message("Looking for MPI...")
+  find_package(MPI REQUIRED)
   if( MPI_CXX_FOUND )
+    message("Found MPI.")
     set( CASACORE_DEFINITIONS ${CASACORE_DEFINITIONS}
       -DHAVE_MPI
       )

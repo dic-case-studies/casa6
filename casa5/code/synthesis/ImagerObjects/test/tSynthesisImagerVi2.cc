@@ -215,11 +215,14 @@ using namespace casacore;
 			    std::shared_ptr<SIImageStore> subImStor=si->getSubImageStore(0, 1, k, nchan, 0,1);
 			    String freqBeg=String::toString(SpectralImageUtil::worldFreq((subImStor->residual())->coordinates(), Double(-0.5)))+"Hz";
 			    String freqEnd=String::toString(SpectralImageUtil::worldFreq((subImStor->residual())->coordinates(), Double(0.5)))+"Hz";
-			    SynthesisImager subImgr;
+			    SynthesisImagerVi2 subImgr;
 	  			  //can select the right channel to match subimage
-			    subImgr.selectData(msname, /*spw=*/"0", freqBeg, freqEnd, MFrequency::LSRK, /*field=*/"0",  
-					       /*antenna=*/"",  /*timestr*/"", /*scan*/"", /*obs*/"", /*state*/"",/*uvdist*/"", 
-					       /*taql*/"", /*usescratch*/false, /*readonly*/false, /*incrmodel*/true);
+			    //subImgr.selectData(msname, /*spw=*/"0", freqBeg, freqEnd, MFrequency::LSRK, /*field=*/"0",  
+				//	       /*antenna=*/"",  /*timestr*/"", /*scan*/"", /*obs*/"", /*state*/"",/*uvdist*/"", 
+				//	       /*taql*/"", /*usescratch*/false, /*readonly*/false, /*incrmodel*/true);
+				subImgr.selectData(msname, /*spw=*/"0",freqBeg, freqEnd, /*freqFrame*/MFrequency::LSRK, 
+			   /*field=*/"0",  /*antenna=*/"",  /*timestr*/"", /*scan*/"", /*obs*/"", /*state*/"",/*uvdist*/"", 
+			   /*taql*/"", /*usescratch*/false, /*readonly*/false);
 
 			    subImgr.defineImage(subImStor, "gridft");
 			    subImgr.weight("natural");

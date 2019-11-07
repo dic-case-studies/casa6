@@ -48,8 +48,10 @@ public:
 
   SynthesisImagerVi2();
   virtual ~SynthesisImagerVi2();
+  using SynthesisImager::selectData;
   virtual casacore::Bool selectData(const SynthesisParamsSelect& selpars);
   virtual casacore::Bool defineImage(SynthesisParamsImage& impars, const SynthesisParamsGrid& gridpars);
+  virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, const casacore::String& ftmachine);
   virtual casacore::Bool weight(const casacore::String& type="natural", 
 	      const casacore::String& rmode="norm",
 	      const casacore::Quantity& noise=casacore::Quantity(0.0, "Jy"), 
@@ -185,9 +187,15 @@ public:
  
 // Do the major cycle
   virtual void runMajorCycle(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
-
+  //Version for cubes
+  virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
   // Version of major cycle code with mappers in a loop outside vi/vb.
   virtual void runMajorCycle2(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
+  
+  virtual bool runCubePSFGridding();
+  
+  virtual bool runCubeResidualGridding(casacore::Bool savemodel=false);
+  
  
  void createMosFTMachine(casacore::CountedPtr<casa::refim::FTMachine>& theFT,
                          casacore::CountedPtr<casa::refim::FTMachine>&  theIFT,

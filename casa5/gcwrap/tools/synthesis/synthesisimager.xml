@@ -806,7 +806,20 @@ CORRECTED\_DATA and MODEL\_DATA columns
    </input>
 <returns type="bool"/>
 </method>
+<!-- ===================================== -->
 
+   <method type="function" name="initmpi">
+   <shortdescription>init c++ based mpy</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+<!-- ===================================== -->
 <!-- ===================================== -->
 
    <method type="function" name="done">

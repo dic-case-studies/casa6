@@ -69,6 +69,7 @@
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
 #include <synthesis/ImagerObjects/SIImageStore.h>
 #include <synthesis/ImagerObjects/SIImageStoreMultiTerm.h>
+#include <synthesis/ImagerObjects/CubeMajorCycleAlgorithm.h>
 
 #include <synthesis/MeasurementEquations/VPManager.h>
 #include <imageanalysis/Utilities/SpectralImageUtil.h>
@@ -104,16 +105,23 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <iomanip>
-
+#include <synthesis/Parallel/Applicator.h>
 
 using namespace std;
 
 using namespace casacore;
 
 namespace casa { //# NAMESPACE CASA - BEGIN
-
+  extern Applicator applicator;
   SynthesisImagerVi2::SynthesisImagerVi2() : SynthesisImager(), vi_p(0), fselections_p(nullptr) {
-
+	/*cerr << "is applicator initialized " << applicator.initialized() << endl;
+	if(!applicator.initialized()){
+	  int argc=1;
+        char **argv;
+        casa::applicator.init ( argc, argv );
+        cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
+	}
+	*/
     mss_p.resize(0);
   }
 
@@ -135,7 +143,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       {
 
     //Respect the readonly flag...necessary for multi-process access
-    MeasurementSet thisms(selpars.msname, TableLock(TableLock::AutoNoReadLocking),
+    MeasurementSet thisms(selpars.msname, TableLock(TableLock::UserNoReadLocking),
 				selpars.readonly ? Table::Old : Table::Update);
     thisms.setMemoryResidentSubtables (MrsEligibility::defaultEligible());
 
@@ -652,6 +660,35 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
     return true;
   }
 
+Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, 
+				    const String& ftmachine)
+  {
+    CountedPtr<refim::FTMachine> ftm, iftm;
+
+	cerr << "defineImage Type" << imstor->getType() << endl;
+    // The following call to createFTMachine() uses the
+    // following defaults
+    //
+    // facets=1, wprojplane=1, padding=1.0, useAutocorr=false, 
+    // useDoublePrec=true, gridFunction=String("SF")
+    //
+    createFTMachine(ftm, iftm, ftmachine);
+    
+    Int id=itsMappers.nMappers();
+    CoordinateSystem csys =imstor->getCSys();
+    IPosition imshape=imstor->getShape();
+    Int nx=imshape[0], ny=imshape[1];
+    if( (id==0) || (nx*ny > itsMaxShape[0]*itsMaxShape[1]))
+      {
+	itsMaxShape=imshape;
+	itsMaxCoordSys=csys;
+      }
+
+    itsMappers.addMapper(  createSIMapper( "default", imstor, ftm, iftm, id ) );
+    
+    return true;
+  }
+
 
  Bool SynthesisImagerVi2::weight(const String& type, const String& rmode,
 			       const Quantity& noise, const Double robust,
@@ -977,6 +1014,18 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     }
 
   /////////////////////////
+  
+ void SynthesisImagerVi2::runMajorCycleCube( const Bool dopsf, 
+				      const Bool savemodel) {
+	LogIO os( LogOrigin("SynthesisImagerVi2","runMajorCycleCube",WHERE) );		  
+	if(dopsf)
+		runCubePSFGridding();
+	else
+		runCubeResidualGridding(savemodel);
+	
+			  
+			  
+	}
  void SynthesisImagerVi2::runMajorCycle(const Bool dopsf, 
 				      const Bool savemodel)
   {
@@ -1222,7 +1271,199 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
   }// end runMajorCycle2
 
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  bool SynthesisImagerVi2::runCubePSFGridding(){
+	  int argc=1;
+        char **argv;
+        casa::applicator.init ( argc, argv );
+	//For serial or master only
+	cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  endl;
+	if (  applicator.isController() ) {
+		CubeMajorCycleAlgorithm *cmc =  new CubeMajorCycleAlgorithm();
+		//casa::applicator.defineAlgorithm(cmc);
+        ///For now just field 0 but should loop over all
+        CountedPtr<SIImageStore> imstor = imageStore ( 0 );
+        // checking that psf,  residual and sumwt is allDone
+        cerr << "PSF shapes "  <<  imstor->psf()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
+		Record vecSelParsRec;
+		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
+			Record selparsRec = dataSel_p[k].toRecord();
+			vecSelParsRec.defineRecord(String::toString(k), selparsRec);
+		}
+		Record imparsRec = impars_p.toRecord();
+		Record gridparsRec = gridpars_p.toRecord();
+		// Tell the child processes not to do the dividebyweight process as this is done
+		// right now in imager_base.py runMajorCycle
+		gridparsRec.define("dividebyweight",  False);
+        Int numchan=imstor->psf()->shape() [3];
+        imstor->psf()->unlock();
+        imstor->sumwt()->unlock();
+        //There is no control for PSFs
+        Record controlRecord;
+        // Tell the child processes not to do the dividebyweight process as this is done
+		// right now in imager_base.py runMajorCycle
+		controlRecord.define("dividebyweight",  False);
+        Int numprocs = applicator.numProcs();
+        cerr << "Number of procs: " << numprocs << endl;
+        Int rank ( 0 );
+        Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
+        Bool dopsf=True; // need to keep in context for serial bug
+        Bool allDone ( false );
+        for ( Int k=0; k < numchan; ++k ) {
+            assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
+            cerr << "assigned "<< assigned << endl;
+            while ( !assigned ) {
+                rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+                cerr << "while rank " << rank << endl;
+                Bool status;
+                casa::applicator.get ( status );
+                if ( status )
+                    cerr << k << " rank " << rank << " successful " << endl;
+                else
+                    cerr << k << " rank " << rank << " failed " << endl;
+                assigned = casa::applicator.nextAvailProcess ( *cmc, rank );
+
+            }
+
+            ///send process info
+            // put data sel params #1
+            applicator.put ( vecSelParsRec );
+            // put image sel params #2
+            applicator.put ( imparsRec );
+            // put gridders params #3
+            applicator.put ( gridparsRec );
+            // put which channel to process #4
+            applicator.put ( k );
+            // psf or residual CubeMajorCycleAlgorithm #5
+            applicator.put ( dopsf );
+            // store modelvis and other controls #6
+            applicator.put ( controlRecord );
+            /// Tell worker to process it
+            applicator.apply ( *cmc );
+
+        }
+        // Wait for all outstanding processes to return
+        rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+        while ( !allDone ) {
+			Int serialBug;
+			if(casa::applicator.isSerial())
+				casa::applicator.get(serialBug);// get that extra put
+            Bool status;
+            casa::applicator.get ( status );
+            if ( status )
+                cerr << "remainder rank " << rank << " successful " << endl;
+            else
+                cerr << "remainder rank " << rank << " failed " << endl;
+
+            rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+			if(casa::applicator.isSerial())
+				allDone=true;
+        }
+
+
+
+    }
+	
+	return true;  
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  bool SynthesisImagerVi2::runCubeResidualGridding(Bool savemodel){
+	  //dummy for now as init is overloaded on this signature
+        int argc=1;
+        char **argv;
+        casa::applicator.init ( argc, argv );
+	  //For serial or master only
+	if ( applicator.isController() ) {
+		CubeMajorCycleAlgorithm *cmc = new CubeMajorCycleAlgorithm();
+		//casa::applicator.defineAlgorithm(cmc);
+        ///For now just field 0 but should loop over all
+        CountedPtr<SIImageStore> imstor = imageStore ( 0 );
+        // checking that psf,  residual and sumwt is allDone
+        cerr << "shapes "  <<  imstor->residual()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
+		Record vecSelParsRec;
+		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
+			Record selparsRec = dataSel_p[k].toRecord();
+			vecSelParsRec.defineRecord(String::toString(k), selparsRec);
+		}
+		Record imparsRec = impars_p.toRecord();
+		Record gridparsRec = gridpars_p.toRecord();
+        Int numchan=imstor->residual()->shape() [3];
+        imstor->residual()->unlock();
+        imstor->sumwt()->unlock();
+		// For now this contains lastcycle if necessary in the future this
+		// should come from the master control record
+        Record controlRecord;
+        controlRecord.define("lastcycle",  savemodel);
+        // Tell the child processes not to do the dividebyweight process as this is done
+		// right now in imager_base.py runMajorCycle
+		controlRecord.define("dividebyweight",  False);
+        Int numprocs = applicator.numProcs();
+        cerr << "Number of procs: " << numprocs << endl;
+        Int rank ( 0 );
+        Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
+        Bool allDone ( false );
+		Bool dopsf=False; // need to keep in context for serial bug
+        for ( Int k=0; k < numchan; ++k ) {
+            assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
+            cerr << "assigned "<< assigned << endl;
+            while ( !assigned ) {
+                rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+                cerr << "while rank " << rank << endl;
+                Bool status;
+                casa::applicator.get ( status );
+                if ( status )
+                    cerr << k << " rank " << rank << " successful " << endl;
+                else
+                    cerr << k << " rank " << rank << " failed " << endl;
+                assigned = casa::applicator.nextAvailProcess ( *cmc, rank );
+
+            }
+
+            ///send process info
+            // put data sel params #1
+            applicator.put ( vecSelParsRec );
+            // put image sel params #2
+            applicator.put ( imparsRec );
+            // put gridders params #3
+            applicator.put ( gridparsRec );
+            // put which channel to process #4
+            applicator.put ( k );
+            // psf or residual CubeMajorCycleAlgorithm #5
+            applicator.put ( dopsf );
+            // store modelvis and other controls #6
+            applicator.put ( controlRecord );
+            /// Tell worker to process it
+            applicator.apply ( *cmc );
+
+        }
+        // Wait for all outstanding processes to return
+        rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+        while ( !allDone ) {
+			Int serialBug;
+			if(casa::applicator.isSerial())
+				casa::applicator.get(serialBug);// get that extra put
+            Bool status;
+            casa::applicator.get ( status );
+            if ( status )
+                cerr << "remainder rank " << rank << " successful " << endl;
+            else
+                cerr << "remainder rank " << rank << " failed " << endl;
+
+            rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+			if(casa::applicator.isSerial())
+				allDone=true;
+        }
+
+
+
+    }
+	  
+	  
+  
+	return true;
+  
+  }
+  /////////////////////////
   void SynthesisImagerVi2::predictModel(){
     LogIO os( LogOrigin("SynthesisImagerVi2","predictModel ",WHERE) );
 

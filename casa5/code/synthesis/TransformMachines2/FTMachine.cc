@@ -37,6 +37,7 @@
 #include <coordinates/Coordinates/SpectralCoordinate.h>
 #include <coordinates/Coordinates/StokesCoordinate.h>
 #include <coordinates/Coordinates/Projection.h>
+#include <casacore/lattices/Lattices/LatticeLocker.h>
 #include <ms/MeasurementSets/MSColumns.h>
 #include <casa/BasicSL/Constants.h>
 #include <synthesis/TransformMachines2/FTMachine.h>
@@ -2428,7 +2429,7 @@ using namespace casa::vi;
     AlwaysAssert(imstore->getNTaylorTerms(false)==1, AipsError);
 
     Matrix<Float> tempWts;
-
+    
     if(!(imstore->forwardGrid()).get())
       throw(AipsError("FTMAchine::InitializeToVisNew error imagestore has no valid grid initialized"));
     // Convert from Stokes planes to Correlation planes
@@ -2494,15 +2495,25 @@ using namespace casa::vi;
     // Straightforward case. No extra primary beams. No image mosaic
     if(sj_p.nelements() == 0 ) 
       {
-	correlationToStokes( getImage(sumWeights, false) , ( dopsf ? *(imstore->psf()) : *(imstore->residual()) ), dopsf);
-	
-	if( useWeightImage() && dopsf ) { 
-	  getWeightImage( *(imstore->weight())  , sumWeights); 
+        // cerr << "TYPEID " << typeid( *(imstore->psf())).name() << "     " << typeid(typeid( *(imstore->psf())).name()).name() << endl;
+        shared_ptr<ImageInterface<Float> > theim=dopsf ? imstore->psf() : imstore->residual();
+        //static_cast<decltype(imstore->residual())>(theim)->lock();
+        { LatticeLocker lock1 (*theim, FileLocker::Write);
+          correlationToStokes( getImage(sumWeights, false) , *theim, dopsf);
+        }
+	theim->unlock();
+        
+	if( useWeightImage() && dopsf ) {
+          
+          LatticeLocker lock1 (*(imstore->weight()), FileLocker::Write);
+	  getWeightImage( *(imstore->weight())  , sumWeights);
+          imstore->weight()->unlock();
 	  // Fill weight image only once, during PSF generation. Remember.... it is normalized only once
 	  // during PSF generation.
 	}
 	
 	// Take sumWeights from corrToStokes here....
+        LatticeLocker lock1 (*(imstore->sumwt()), FileLocker::Write);
 	Matrix<Float> sumWeightStokes( (imstore->sumwt())->shape()[2], (imstore->sumwt())->shape()[3]   );
 	StokesImageUtil::ToStokesSumWt( sumWeightStokes, sumWeights );
 
@@ -2510,6 +2521,7 @@ using namespace casa::vi;
 		      ((imstore->sumwt())->shape()[3] == sumWeightStokes.shape()[1] ) , AipsError );
 
 	(imstore->sumwt())->put( sumWeightStokes.reform((imstore->sumwt())->shape()) );
+        imstore->sumwt()->unlock();
 	
       }
     //------------------------------------------------------------------------------------
