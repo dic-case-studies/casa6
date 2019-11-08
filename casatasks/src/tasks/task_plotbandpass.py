@@ -718,6 +718,18 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     http://casaguides.nrao.edu/index.php?title=Plotbandpass
     -- Todd Hunter
     """
+
+    def safe_pb_subplot(xframe):
+        """
+        CAS-12786: old pyplots (up to CASA 5.6.1 used to accept "220" in the pos parameter
+        Newer pyplots won't. Assume the index effectively used was 1 ("221")
+        """
+        if str(xframe).endswith('0'):
+            adesc = pb.subplot(xframe + 1)
+        else:
+            adesc = pb.subplot(xframe)
+        return adesc
+
     casalog.origin('plotbandpass')
     casalogPost(debug,"%s" % (PLOTBANDPASS_REVISION_STRING))
     DEBUG = debug
@@ -3412,18 +3424,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                           print("$$$$$$$$$$$$$$$$$$$$$$$  ready to plot amp on xframe %d" % (xframe))
 # #     # #            print(",,,,,,,,,,,,,,,, Starting with newylimits = ", newylimits)
 
-                      # CAS-12786: old pyplots (up to CASA 5.6.1, matplotlib 1.10 used to accept "220"
-                      # Newer pyplots (matplotlib 3.1.1 won't).
-                      # Assume the index effectively used was 1 ("221")
-                      if str(xframe).endswith('0'):
-                          xframe_wrong0 = True
-                      else:
-                          xframe_wrong0 = False
-
-                      if not xframe_wrong0:
-                          adesc = pb.subplot(xframe)
-                      else:
-                          adesc = pb.subplot(xframe + 1)
+                      adesc = safe_pb_subplot(xframe)
 
                       if (previousSubplot != xframe):
                           drewAtmosphere = False
@@ -4313,7 +4314,9 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                       newylimits = phase
                       if (debug):
                           print("$$$$$$$$$$$$$$$$$$$$$$$  ready to plot phase on xframe %d" % (xframe))
-                      adesc = pb.subplot(xframe)
+
+                      adesc = safe_pb_subplot(xframe)
+
                       if (previousSubplot != xframe):
                           drewAtmosphere = False
                       previousSubplot = xframe
