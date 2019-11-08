@@ -6342,9 +6342,10 @@ record* ms::statwt(
         );
         StatWt statwt(itsMS, &statwtColConfig);
         const auto tbtype = timebin.type();
+        cout << "timebin " << timebin.toString() << endl;
         // first group in conditional requires all data in a chunk to be
         // loaded at once. The second does as well and represents the default
-        // setting ince a CASA 5 variant always comes in as boolvecs even if a
+        // setting since a CASA 5 variant always comes in as a boolvec even if a
         // different default type is specified in the XML,
         if (
             (slidetimebin || tbtype == casac::variant::INT)
@@ -6406,7 +6407,8 @@ record* ms::statwt(
         statwt.setCombine(combine);
         statwt.setPreview(preview);
         casac::record tviConfig;
-        tviConfig["timebin"] = timebin;
+        tviConfig["timebin"] = tbtype == casac::variant::BOOLVEC
+            ? Int(1) : timebin;
         tviConfig["slidetimebin"] = slidetimebin;
         tviConfig["combine"] = combine;
         tviConfig[vi::StatWtTVI::CHANBIN] = chanbin;

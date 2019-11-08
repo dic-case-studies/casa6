@@ -112,28 +112,35 @@ Record StatWt::writeWeights() {
     vi::VisBuffer2 *vb = vi->getVisBuffer();
     ProgressMeter pm(0, _ms->nrow(), "StatWt Progress");
     uInt64 count = 0;
-    cout << "begin outer loop" << endl;
+    // cout << "begin outer loop" << endl;
     for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
-        cout << "inside outer loop" << endl;
+        // cout << "inside outer loop" << endl;
         for (vi->origin(); vi->more(); vi->next()) {
-            cout << "inside inner loop" << endl;
+            // cout << "inside inner loop" << endl;
             auto nrow = vb->nRows();
+            // cout << __FILE__ << " " << __LINE__ << endl;
             if (_preview) {
                 // just need to run the flags to accumulate
                 // flagging info
                 vb->flagCube();
             }
             else {
+                // cout << __FILE__ << " " << __LINE__ << endl;
+
                 if (mustWriteWtSp) {
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
                     auto& x = vb->weightSpectrum();
                     ThrowIf(
                         x.empty(),
                         "WEIGHT_SPECTRUM is only partially initialized. "
-                        "StatWt2 cannot deal with such an MS"
+                        "StatWt cannot deal with such an MS"
                     );
                     vb->setWeightSpectrum(x);
                 }
                 if (mustWriteSigSp) {
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
                     auto& x = vb->sigmaSpectrum();
                     ThrowIf(
                         x.empty(),
@@ -143,11 +150,17 @@ Record StatWt::writeWeights() {
                     vb->setSigmaSpectrum(x);
                 }
                 if (mustWriteWt) {
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
                     vb->setWeight(vb->weight());
                 }
                 if (mustWriteSig) {
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
                     vb->setSigma(vb->sigma());
                 }
+                // cout << __FILE__ << " " << __LINE__ << endl;
+
                 vb->setFlagCube(vb->flagCube());
                 vb->setFlagRow(vb->flagRow());
                 vb->writeChangesBack();
@@ -198,7 +211,7 @@ void StatWt::_constructVi(
         ++i;
     }
     vi::SortColumns sc(sort, False);
-    cout << "configuring TVI with timebinwidht " << _timeBinWidth << endl;
+    cout << "configuring TVI with timebinwidth " << _timeBinWidth << endl;
     vi::IteratingParameters ipar(_timeBinWidth, sc);
     vi::VisIterImpl2LayerFactory data(_ms, ipar, True);
     std::unique_ptr<Record> config(dynamic_cast<Record*>(_tviConfig.clone()));

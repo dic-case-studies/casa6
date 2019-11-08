@@ -3476,7 +3476,7 @@ in spectral window 1.
      <description>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units.</description>
      <any type="variant" limittypes="string int"/>
      <!--  FIXME needs to be int 1 for the current ticket -->
-     <value type="string">0.001s</value>
+     <value type="int">1</value>
      <example>4</example>
      <example>"300s"</example>
      </param>

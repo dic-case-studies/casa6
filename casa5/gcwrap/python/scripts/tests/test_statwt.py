@@ -71,7 +71,6 @@ def _variance2(dr, di, flag, corr, row):
         vi = numpy.var(fi, ddof=1)
         return 2/(vr + vi)
 
-
 class statwt_test(unittest.TestCase):
 
     def test_algorithm(self):
@@ -84,22 +83,38 @@ class statwt_test(unittest.TestCase):
         dst = "ngc5921.split.ms"
         rtol = 1e-7
         for combine in ["", "corr"]:
+            print "*** aa"
             c = 0
-            for fitspw in ["0:0~9;21~63", "", "0:10~20"]:
+            for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
+                print "*** ab"
+
                 for i in [0,1]:
+                    print "*** ac"
                     shutil.copytree(src, dst) 
                     myms = mstool()
                     excludechans = c == 2
                     if i == 0:
+                        print "*** ad"
+                        # tool method
                         myms.open(dst, nomodify=False)
-                        myms.statwt(combine=combine, fitspw=fitspw, excludechans=excludechans)
+                        myms.statwt(
+                            combine=combine, fitspw=fitspw,
+                            excludechans=excludechans
+                        )
                         myms.done()
                     else:
-                        statwt(dst, combine=combine, fitspw=fitspw, excludechans=excludechans)
+                        print "*** ae"
+                        # task
+                        statwt(
+                            dst, combine=combine, fitspw=fitspw,
+                            excludechans=excludechans
+                        )
+                    print "*** af"
                     [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
                     actflag = flag.copy()
                     if fitspw != "":
                         actflag[:, 10:21, :] = True
+                    print "*** ab"
                     dr = numpy.real(data)
                     di = numpy.imag(data)
                     myshape = wtsp.shape
@@ -109,36 +124,47 @@ class statwt_test(unittest.TestCase):
                         for row in range(nrow):
                             expec = _variance(dr, di, actflag, row)
                             self.assertTrue(
-                                numpy.all(numpy.isclose(wt[:, row], expec, rtol=rtol)),
-                                "WEIGHT fail at row" + str(row) + ". got: " + str(wt[:, row])
-                                + " expec " + str(expec)
+                                numpy.all(
+                                    numpy.isclose(wt[:, row], expec, rtol=rtol)
+                                ), "WEIGHT fail at row" + str(row) + ". got: "
+                                + str(wt[:, row]) + " expec " + str(expec)
                             )
                             self.assertTrue(
                                 len(numpy.unique(wtsp[:,:,row])) == 1,
                                 "Weight values are not the same"
                             )
                             self.assertTrue(
-                                numpy.all(numpy.isclose(wtsp[:,:,row], expec, rtol)),
-                                "Incorrect weights"
+                                numpy.all(
+                                    numpy.isclose(wtsp[:,:,row], expec, rtol)
+                                ), "Incorrect weights"
                             )
                             if expec == 0:
-                                self.assertTrue(numpy.all(flag[:,:,row]), "Not all flags are true")
-                                self.assertTrue(frow[row], "FLAG_ROW is not true")
-                            else:
                                 self.assertTrue(
-                                    numpy.all(flag[:,:,row] == expflag[:,:,row]),
-                                    "FLAGs don't match"
+                                    numpy.all(flag[:,:,row]),
+                                    "Not all flags are true"
                                 )
                                 self.assertTrue(
-                                    frow[row] == expfrow[row], "FLAG_ROW doesn't match"
+                                    frow[row], "FLAG_ROW is not true"
+                                )
+                            else:
+                                self.assertTrue(
+                                    numpy.all(
+                                        flag[:,:,row] == expflag[:,:,row]
+                                    ), "FLAGs don't match"
+                                )
+                                self.assertTrue(
+                                    frow[row] == expfrow[row],
+                                    "FLAG_ROW doesn't match"
                                 )
                     else:
                         for row in range(nrow):
                             for corr in range(ncorr):
                                 expec = _variance2(dr, di, actflag, corr, row)
                                 self.assertTrue(
-                                    numpy.isclose(wt[corr, row], expec, rtol=rtol),
-                                    "WEIGHT fail at row" + str(row) + ". got: " + str(wt[corr, row])
+                                    numpy.isclose(
+                                        wt[corr, row], expec, rtol=rtol
+                                    ), "WEIGHT fail at row" + str(row)
+                                    + ". got: " + str(wt[corr, row])
                                     + " expec " + str(expec)
                                 )
                                 self.assertTrue(
@@ -147,21 +173,34 @@ class statwt_test(unittest.TestCase):
                                 )
                                 self.assertTrue(
                                     numpy.all(
-                                        numpy.isclose(wtsp[corr,:,row], expec, rtol)), "Incorrect weights"
+                                        numpy.isclose(
+                                            wtsp[corr,:,row], expec, rtol)
+                                        ), "Incorrect weights"
                                 )
                                 if expec == 0:
-                                    self.assertTrue(numpy.all(flag[corr,:,row]), "Not all flags are true")
+                                    self.assertTrue(
+                                        numpy.all(flag[corr,:,row]),
+                                        "Not all flags are true"
+                                    )
                                 else:
                                     self.assertTrue(
-                                        numpy.all(flag[corr,:,row] == expflag[corr,:,row]),
-                                        "FLAGs don't match at row " + str(row) + ".\n"
-                                        "Expected: " + str(expflag[corr,:,row]) + "\n"
+                                        numpy.all(
+                                            flag[corr,:,row]
+                                            == expflag[corr,:,row]
+                                        ),
+                                        "FLAGs don't match at row " + str(row)
+                                        + ".\nExpected: "
+                                        + str(expflag[corr,:,row]) + "\n"
                                         "Got     : " + str(flag[corr,:,row])
                                     )
                             if (numpy.all(flag[:,:,row])):
-                                self.assertTrue(frow[row], "FLAG_ROW is not true")
+                                self.assertTrue(
+                                    frow[row], "FLAG_ROW is not true"
+                                )
                             else:
-                                self.assertFalse(frow[row], "FLAG_ROW is not false")
+                                self.assertFalse(
+                                    frow[row], "FLAG_ROW is not false"
+                                )
                     shutil.rmtree(dst) 
                 c += 1               
 

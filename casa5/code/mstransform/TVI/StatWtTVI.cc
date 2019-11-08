@@ -80,9 +80,10 @@ StatWtTVI::StatWtTVI(ViImplementation2 * inputVii, const Record &configuration)
 StatWtTVI::~StatWtTVI() {}
 
 Bool StatWtTVI::_parseConfiguration(const Record& config) {
-    String field = CHANBIN;
+    // cout << "config in " << __func__ << config << endl;
+     String field = CHANBIN;
     if (config.isDefined(field)) {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
         // channel binning
         auto fieldNum = config.fieldNumber(field);
         switch (config.type(fieldNum)) {
@@ -244,6 +245,7 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
         ! config.isDefined(field), "Config param " + field + " must be defined"
     );
     auto mytype = config.type(config.fieldNumber(field));
+    // cout << "type for field " << field << " is " << mytype << endl;
     ThrowIf(
         ! (
             mytype == TpString || mytype == TpDouble
@@ -286,7 +288,7 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
 }
 
 void StatWtTVI::_configureStatAlg(const Record& config) {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     String field = "statalg";
     if (config.isDefined(field)) {
         ThrowIf(
@@ -405,7 +407,7 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
 }
 
 void StatWtTVI::_logUsedChannels() const {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     // FIXME uses underlying MS
     MSMetaData msmd(&ms(), 100.0);
     const auto nchan = msmd.nChans();
@@ -474,7 +476,7 @@ void StatWtTVI::_logUsedChannels() const {
 }
 
 void StatWtTVI::_setChanBinMap(const casacore::Quantity& binWidth) {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     if (! binWidth.isConform(Unit("Hz"))) {
         ostringstream oss;
         oss << "If specified as a quantity, channel bin width must have "
@@ -518,7 +520,7 @@ void StatWtTVI::_setChanBinMap(const casacore::Quantity& binWidth) {
 }
 
 void StatWtTVI::_setChanBinMap(Int binWidth) {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     ThrowIf(binWidth < 1, "Channel bin width must be positive");
     MSMetaData msmd(&ms(), 100.0);
     auto nchans = msmd.nChans();
@@ -537,7 +539,7 @@ void StatWtTVI::_setChanBinMap(Int binWidth) {
 }
 
 void StatWtTVI::_setDefaultChanBinMap() {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     MSMetaData msmd(&ms(), 0.0);
     auto nchans = msmd.nChans();
     auto niter = nchans.begin();
@@ -552,7 +554,7 @@ void StatWtTVI::_setDefaultChanBinMap() {
 }
 
 Double StatWtTVI::getTimeBinWidthInSec(const casacore::Quantity& binWidth) {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     ThrowIf(
         ! binWidth.isConform(Unit("s")),
         "Time bin width unit must be a unit of time"
@@ -563,7 +565,7 @@ Double StatWtTVI::getTimeBinWidthInSec(const casacore::Quantity& binWidth) {
 }
 
 void StatWtTVI::checkTimeBinWidth(Double binWidth) {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     ThrowIf(binWidth <= 0, "time bin width must be positive");
 }
 
@@ -589,7 +591,7 @@ Double StatWtTVI::getTimeBinWidthUsingInterval(
 */
 
 void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     if (_mustComputeSigma) {
         {
             Cube<Float> wtsp;
@@ -616,31 +618,58 @@ void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
 void StatWtTVI::weightSpectrum(Cube<Float>& newWtsp) const {
     // cout << __func__ << endl;
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
+    // cout << __FILE__ << " " << __LINE__ << endl;
     if (! *_mustComputeWtSp) {
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         newWtsp.resize(IPosition(3, 0));
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         return;
     }
     if (! _newWtSp.empty()) {
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         // already calculated
         if (_updateWeight) {
+            // cout << __FILE__ << " " << __LINE__ << endl;
+
             newWtsp = _newWtSp.copy();
+            // cout << __FILE__ << " " << __LINE__ << endl;
+
         }
         else {
+            //cout << __FILE__ << " " << __LINE__ << endl;
+
             TransformingVi2::weightSpectrum(newWtsp);
+            //cout << __FILE__ << " " << __LINE__ << endl;
+
         }
         return;
     }
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     _computeWeightSpectrumAndFlags();
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     if (_updateWeight) {
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         newWtsp = _newWtSp.copy();
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
     }
     else {
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         TransformingVi2::weightSpectrum(newWtsp);
     }
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
 }
 
 void StatWtTVI::_computeWeightSpectrumAndFlags() const {
-    // cout << __func__ << endl;
+    //cout << __func__ << endl;
     size_t nOrigFlagged;
     auto mypair = _getLowerLayerWtSpFlags(nOrigFlagged);
     auto& wtsp = mypair.first;
@@ -651,6 +680,7 @@ void StatWtTVI::_computeWeightSpectrumAndFlags() const {
         wtsp.resize(flagCube.shape());
     }
     auto checkFlags = False;
+    // cout << "_doOneShot " << _doOneShot << endl;
     if (_doOneShot) {
         _weightSpectrumFlagsOneShotProcessing(wtsp, flagCube, checkFlags);
     }
@@ -987,16 +1017,28 @@ void StatWtTVI::flagRow(Vector<Bool>& flagRow) const {
 }
 
 void StatWtTVI::originChunks(Bool forceRewind) {
-    // cout << __func__ << endl;
     // Drive next lower layer
+    // cout << __FILE__ << " " << __LINE__ << endl;
     getVii()->originChunks(forceRewind);
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     _weightsComputed = False;
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     _gatherAndComputeWeights();
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     _weightsComputed = True;
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     _clearCache();
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     // re-origin this chunk in next layer
     //  (ensures wider scopes see start of the this chunk)
     getVii()->origin();
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
 }
 
 void StatWtTVI::nextChunk() {
@@ -1022,7 +1064,7 @@ void StatWtTVI::_clearCache() {
 }
 
 void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     ThrowIf(
         ! (_binWidthInSeconds || _nTimeStampsInBin ),
         "Logic error: neither _binWidthInSeconds"
@@ -1046,7 +1088,8 @@ void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
     // values have one-to-one relationships to the corresponding data values
     // and so simplify dealing with the exposures which is fundamentally a
     // Vector
-    Cube<Double> chunkExposures;
+    // Cube<Double> chunkExposures;
+    std::vector<Double> exposures;
     uInt subchunkStartRowNum = 0;
     auto initChanSelTemplate = True;
     Cube<Bool> chanSelFlagTemplate, chanSelFlags;
@@ -1117,23 +1160,31 @@ void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
             }
             rowMap.push_back(myRowNums);
             // debug
+            /*
             if (baseline == Baseline(4, 6)) {
                 auto myrow = rowMap.size() - 1;
                 cout << "row num " << myrow << " included rows " << rowMap[myrow] << endl;
             }
+            */
         }
-
+        // cout << __FILE__ << " " << __LINE__ << endl;
         const auto dataCube = _dataCube(vb);
         const auto resultantFlags = _getResultantFlags(
             chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
             spw, vb->flagCube()
         );
-        const auto exposures = vb->exposure();
+        const auto myExposures = vb->exposure().tovector();
+        exposures.insert(
+            exposures.end(), myExposures.begin(), myExposures.end()
+        );
         const auto cubeShape = dataCube.shape();
-        Cube<Double> resultExposures(cubeShape);
+        // Cube<Double> resultExposures(cubeShape);
         IPosition sliceStart(3, 0);
         auto sliceEnd = cubeShape - 1;
-        Slicer exposureSlice(sliceStart, sliceEnd, Slicer::endIsLast);
+        // Slicer exposureSlice(sliceStart, sliceEnd, Slicer::endIsLast);
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
+        /*
         for (uInt jj=0; jj<cubeShape[2]; ++jj) {
             sliceStart[2] = jj;
             sliceEnd[2] = jj;
@@ -1144,33 +1195,39 @@ void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
 
             resultExposures(exposureSlice) = exposures[jj];
         }
+        */
 
         // build up chunkData and chunkFlags one subchunk at a time
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         if (chunkData.empty()) {
             chunkData = dataCube;
             chunkFlags = resultantFlags;
-            chunkExposures = resultExposures;
+            //chunkExposures = resultExposures;
         }
         else {
             auto newShape = chunkData.shape();
             newShape[2] += nrows;
             chunkData.resize(newShape, True);
             chunkFlags.resize(newShape, True);
-            chunkExposures.resize(newShape, True);
+            //chunkExposures.resize(newShape, True);
             slStart[2] = subchunkStartRowNum;
             sl.setStart(slStart);
             slEnd = newShape - 1;
             sl.setEnd(slEnd);
             chunkData(sl) = dataCube;
             chunkFlags(sl) = resultantFlags;
-            chunkExposures(sl) = resultExposures;
+            //chunkExposures(sl) = resultExposures;
         }
         subChunkToTimeStamp.push_back(subchunkTime);
         subchunkStartRowNum += nrows;
     }
+    // cout << "chunkexposres shape " << chunkExposures.shape() << endl;
     _computeWeightsMultiLoopProcessing(
-        chunkData, chunkFlags, chunkExposures, rowMap, spw
+        chunkData, chunkFlags, Vector<Double>(exposures), rowMap, spw
     );
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
 }
 
 void StatWtTVI::_limits(
@@ -1333,6 +1390,10 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
     const Vector<Double>& exposures, const std::vector<std::set<uInt>>& rowMap,
     uInt spw
 ) const {
+    // cout << "data shape " << data.shape() << endl;
+    // cout << "flags shape " << flags.shape() << endl;
+    // cout << "exposures shape " << exposures.shape() << endl;
+    // cout << "rowMap size " << rowMap.size() << endl;
     auto chunkShape = data.shape();
     const auto nActCorr = chunkShape[0];
     const auto ncorr = _combineCorr ? 1 : nActCorr;
@@ -1342,10 +1403,14 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
         False
     );
     const auto nRows = rowMap.size();
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (size_t iRow=0; iRow<nRows; ++iRow) {
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         IPosition chunkSliceStart(3, 0);
         auto chunkSliceLength = chunkShape;
         chunkSliceLength[2] = 1;
@@ -1367,6 +1432,8 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
         Cube<Bool> flagArray(dataShape);
         auto siter = rowsToInclude.begin();
         auto send = rowsToInclude.end();
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         Vector<Double> exposureVector(rowsToInclude.size(), 0);
         uInt n = 0;
         // create an array with only the rows that should
@@ -1385,9 +1452,13 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
             dataArray(appendingSlice) = data(chunkSlice);
             flagArray(appendingSlice) = flags(chunkSlice);
         }
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         // slice up for correlations and channel binning
         intraChunkSliceEnd[2] = dataShape[2] - 1;
         for (uInt corr=0; corr<ncorr; ++corr) {
+            // cout << __FILE__ << " " << __LINE__ << endl;
+
             if (! _combineCorr) {
                 intraChunkSliceStart[0] = corr;
                 intraChunkSliceEnd[0] = corr;
@@ -1396,27 +1467,43 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
             auto cend = chanBins.end();
             auto iChanBin = 0;
             for (; citer!=cend; ++citer, ++iChanBin) {
+                // cout << __FILE__ << " " << __LINE__ << endl;
+
                 intraChunkSliceStart[1] = citer->start;
                 intraChunkSliceEnd[1] = citer->end;
                 intraChunkSlice.setStart(intraChunkSliceStart);
                 intraChunkSlice.setEnd(intraChunkSliceEnd);
+                // cout << __FILE__ << " " << __LINE__ << endl;
+
                 _multiLoopWeights(corr, iChanBin, iRow)
                     = _computeWeight(
                         dataArray(intraChunkSlice), flagArray(intraChunkSlice),
-                        exposureVector(intraChunkSlice), spw,
-                        exposures[iRow]
+                        exposureVector, spw, exposures[iRow]
                     );
+                // cout << __FILE__ << " " << __LINE__ << endl;
+
             }
+            // cout << __FILE__ << " " << __LINE__ << endl;
+
         }
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
     }
+    //cout << __FILE__ << " " << __LINE__ << endl;
+
 }
 
 void StatWtTVI::_gatherAndComputeWeights() const {
-    if (_timeBlockProcessing) {
+    if (_doOneShot) {
+        // cout << __FILE__ << " " << __LINE__ << endl;
         _gatherAndComputeWeightsOneShotProcessing();
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
     }
     else {
         _gatherAndComputeWeightsMultiLoopProcessing();
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
     }
 }
 
@@ -1426,6 +1513,7 @@ void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
     //   for the variance calculation
     //  Essentially, we are sorting the incoming data into
     //   allvis, to enable a convenient variance calculation
+    // cout << __FILE__ << " " << __LINE__ << endl;
     _variancesOneShotProcessing.clear();
     auto* vii = getVii();
     auto* vb = vii->getVisBuffer();
@@ -1440,6 +1528,8 @@ void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
     // we cannot know the spw until we are in the subchunks loop
     Int spw = -1;
     // Vector<Double> exposureVector;
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     for (vii->origin(); vii->more(); vii->next()) {
         if (_checkFirstSubChunk(spw, firstTime, vb)) {
             return;
@@ -1451,25 +1541,30 @@ void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
                 )
             );
         }
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         const auto& ant1 = vb->antenna1();
         const auto& ant2 = vb->antenna2();
         // [nCorr, nFreq, nRows)
         const auto& dataCube = _dataCube(vb);
         const auto& flagCube = vb->flagCube();
         const auto dataShape = dataCube.shape();
-        // exposureVector = vb->exposure();
+        const auto& exposureVector = vb->exposure();
         const auto nrows = vb->nRows();
         const auto npol = dataCube.nrow();
         const auto resultantFlags = _getResultantFlags(
             chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
             spw, flagCube
         );
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
         auto bins = _chanBins.find(spw)->second;
         BaselineChanBin blcb;
         blcb.spw = spw;
         IPosition dataCubeBLC(3, 0);
         auto dataCubeTRC = dataCube.shape() - 1;
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         for (Int row=0; row<nrows; ++row) {
             dataCubeBLC[2] = row;
             dataCubeTRC[2] = row;
@@ -1486,7 +1581,7 @@ void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
                 if (data.find(blcb) == data.end()) {
                     data[blcb] = dataSlice;
                     flags[blcb] = flagSlice;
-                    // exposures[blcb] = Vector<Double>(nrows, exposureVector[row]);
+                    exposures[blcb] = Vector<Double>(1, exposureVector[row]);
                 }
                 else {
                     auto myshape = data[blcb].shape();
@@ -1494,7 +1589,7 @@ void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
                     auto nchan = myshape[1];
                     data[blcb].resize(npol, nchan, nplane+1, True);
                     flags[blcb].resize(npol, nchan, nplane+1, True);
-                    // exposures[blcb].resize(nplane+1, True);
+                    exposures[blcb].resize(nplane+1, True);
                     trc = myshape - 1;
                     // because we've extended the cube by one plane since
                     // myshape was determined.
@@ -1502,12 +1597,18 @@ void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
                     blc[2] = trc[2];
                     data[blcb](blc, trc) = dataSlice;
                     flags[blcb](blc, trc) = flagSlice;
-                    // exposures[blcb][trc[2]] = exposureVector[row];
+                    exposures[blcb][trc[2]] = exposureVector[row];
                 }
             }
         }
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
     }
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     _computeVariancesOneShotProcessing(data, flags, exposures);
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
 }
 
 Cube<Bool> StatWtTVI::_getResultantFlags(
@@ -1602,6 +1703,9 @@ void StatWtTVI::_computeVariancesOneShotProcessing(
     const map<BaselineChanBin, Cube<Bool>>& flags,
     const map<BaselineChanBin, Vector<Double>>& exposures
 ) const {
+    //cout << "exposures size " << exposures.size() << endl;
+    //cout << "flags size " << flags.size() << endl;
+    //cout << "data size " << data.size() << endl;
     auto diter = data.cbegin();
     auto dend = data.cend();
     const auto nActCorr = diter->second.shape()[0];
@@ -1610,20 +1714,34 @@ void StatWtTVI::_computeVariancesOneShotProcessing(
     const auto& spw = data.begin()->first.spw;
     std::vector<BaselineChanBin> keys(data.size());
     auto idx = 0;
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     for (; diter!=dend; ++diter, ++idx) {
         const auto& blcb = diter->first;
         keys[idx] = blcb;
         _variancesOneShotProcessing[blcb].resize(ncorr);
     }
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     auto n = keys.size();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (size_t i=0; i<n; ++i) {
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         auto blcb = keys[i];
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         auto dataForBLCB = data.find(blcb)->second;
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         auto flagsForBLCB = flags.find(blcb)->second;
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         auto exposuresForBLCB = exposures.find(blcb)->second;
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         for (uInt corr=0; corr<ncorr; ++corr) {
             IPosition start(3, 0);
             auto end = dataForBLCB.shape() - 1;
@@ -1637,7 +1755,11 @@ void StatWtTVI::_computeVariancesOneShotProcessing(
                 exposuresForBLCB, spw
             );
         }
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
     }
+    //cout << __FILE__ << " " << __LINE__ << endl;
+
 }
 
 Double StatWtTVI::_computeVariance(
@@ -1708,7 +1830,10 @@ Double StatWtTVI::_computeWeight(
     const Cube<Complex>& data, const Cube<Bool>& flags,
     const Vector<Double>& exposures, uInt spw, Double targetExposure
 ) const {
+    // cout << __FILE__ << " " << __LINE__ << endl;
     auto varEq = _computeVariance(data, flags, exposures, spw);
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
     return varEq == 0 ? 0 : targetExposure/varEq;
 }
 
@@ -1721,7 +1846,7 @@ Vector<Double> StatWtTVI::_computeWeights(
 }
 
 void StatWtTVI::summarizeFlagging() const {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     auto orig = (Double)_nOrigFlaggedPts/(Double)_nTotalPts*100;
     auto stwt = (Double)_nNewFlaggedPts/(Double)_nTotalPts*100;
     auto total = orig + stwt;
@@ -1762,7 +1887,7 @@ void StatWtTVI::summarizeFlagging() const {
 }
 
 void StatWtTVI::summarizeStats(Double& mean, Double& variance) const {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     LogIO log(LogOrigin("StatWtTVI", __func__));
     _logUsedChannels();
     try {
@@ -1789,7 +1914,7 @@ void StatWtTVI::summarizeStats(Double& mean, Double& variance) const {
 }
 
 void StatWtTVI::origin() {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     // Drive underlying ViImplementation2
     getVii()->origin();
     // Synchronize own VisBuffer
@@ -1798,7 +1923,7 @@ void StatWtTVI::origin() {
 }
 
 void StatWtTVI::next() {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     // Drive underlying ViImplementation2
     getVii()->next();
     // Synchronize own VisBuffer
