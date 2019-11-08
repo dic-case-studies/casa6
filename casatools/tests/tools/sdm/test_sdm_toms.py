@@ -28,6 +28,9 @@ reimp_msname = 'reimported-'+myms_dataset_name
 tblocal = table()
 mslocal = ms()
 
+# imported from casatasks convertephem
+# only used in test7_lazy3 which is currently disabled because that option from asdm2MS
+# is not (yet?) available in sdm.toms
 def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
     """
     converttopoephem2geo
@@ -299,7 +302,6 @@ class test_base(unittest.TestCase):
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+' '+self.asdm)
 
-
     def setUp_autocorr(self):
         self.asdm = 'AutocorrASDM'
         datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importasdm/'
@@ -345,7 +347,6 @@ class test_base(unittest.TestCase):
             if (os.path.exists(this_asdm_name)):
                 shutil.rmtree(this_asdm_name)
             shutil.copytree(os.path.join(datapath,this_asdm_name), this_asdm_name)
-
 
 ###########################
 # beginning of actual test
@@ -1285,7 +1286,7 @@ class asdm_import7(test_base):
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
-    @unittest.skip("uses stand-alone executable")
+    @unittest.skip("uses --inerpolate-ephemeris option in asdm2MS not (yet?) available in sdm.toms")
     def test7_lazy3(self):
         '''Asdm-import: Test good 12 m ASDM with Ephemeris table in lazy mode'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -1804,7 +1805,7 @@ class asdm_import7(test_base):
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
-    @unittest.skip("uses stand-alone executable")
+    @unittest.skip("uses --checkdupints option in asdm2MS not available in sdm.toms")
     def test7_skiprows1(self):
         '''Asdm-import: Test TP asdm, comparing output when duplicate DATA rows are skipped versus not-skipped, lazy and regular, with bdflagging on'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -2368,7 +2369,8 @@ class asdm_import8(test_base):
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
 def suite():
-    ### asdm_import4 should be resurected in the importasdm task test
+    ### asdm_import4 exists in the importasdm test, it involves flagging - which is largely
+    ### only implemented in the task, not this tool
     return [asdm_import1, asdm_import2, asdm_import3, asdm_import5, asdm_import6, asdm_import7, asdm_import8]
 
 if __name__ == '__main__':
