@@ -1,13 +1,7 @@
- 
-## CASAtasks 
 
-If you are looking for the place to check out [CASA](http://casa.nrao.edu/) with [Git](https://en.wikipedia.org/wiki/Git), this is not the right place. The repository to check out [CASA](http://casa.nrao.edu/) can be found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse). At some point in the future, this may form the underlying kernel for a future version of [CASA](http://casa.nrao.edu/), but at this point, this package is still in initial development.
+## CASAtasks
 
-CASAtasks is a self-contained python module that provides the tasks from the [CASA](http://casa.nrao.edu/) project. This package depends on the [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) python module being found in your **PYTHONPATH** at build time and runtime. The CASAtasks are stateless routines and recipes built on CASAtools.
-
-## Maturity
-
-This is is still in intial development (read *pre-alpha* software), and at this point, it is not intended for use outside of the CASA project. Currently it builds wherever [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) can be built, and the only extra Python dependency is [matplotlib](https://matplotlib.org). Python 3.4 or 3.6 **must** be used to build this module, but we plan to make an effort to get this to work with Python 2.7.
+CASAtasks is a self-contained python module that provides the tasks from the [CASA](http://casa.nrao.edu/) project. This package depends on the [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse) python module being found in your **PYTHONPATH** at build time and runtime. The CASAtasks are stateless routines and recipes built on CASAtools.
 
 ## Building CASAtasks
 
@@ -36,17 +30,17 @@ Second build and install [CASAtools](https://open-bitbucket.nrao.edu/projects/CA
 
 #### Checkout
 
-Checkout the CASAtasks source code:
+Checkout the casa6 source code:
 
 ```
--bash-4.2$ git clone -q --recursive https://open-bitbucket.nrao.edu/scm/casa/casatasks.git
+-bash-4.2$ git clone -q --recursive https://open-bitbucket.nrao.edu/scm/casa/casa6.git
 ```
 
 #### Build
 
 After all of the dependencies have been installed and the source code for CASAtasks is available we can build CASAtasks. Make sure that =which python= returns the version of python that was used to build [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse). Then build the tasks with:
 ```
--bash-4.2$ cd casatasks
+-bash-4.2$ cd casa6/casatasks
 -bash-4.2$ PYTHONPATH=../casatools/build/lib.macosx-10.12-x86_64-3.6 ./setup.py build
 ```
 **Substitute** the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) in the build line above.

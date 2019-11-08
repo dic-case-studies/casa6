@@ -175,7 +175,7 @@
 #include <components/ComponentModels/PointShape.h>
 #include <components/ComponentModels/DiskShape.h>
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/viewer/ViewerProxy.h>
 #include <casadbus/plotserver/PlotServerProxy.h>
 #include <casadbus/utilities/BusAccess.h>

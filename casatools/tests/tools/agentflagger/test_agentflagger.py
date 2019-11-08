@@ -3,7 +3,16 @@ import unittest
 import os
 import filecmp
 import pprint
-from casatools import agentflagger, ctsys
+
+try:
+    # CASA 6
+    from casatools import agentflagger, ctsys
+    ag_datapath = ctsys.resolve('regression/unittest/flagdata/')
+except ImportError:
+    # CASA 5
+    from taskinit import aftool as agentflagger
+    ag_datapath = os.environ.get('CASAPATH').split()[0]
+    ag_datapath = os.path.join(ag_datapath, 'data/regression/unittest/flagdata/')
 
 
 class test_base(unittest.TestCase):
@@ -15,8 +24,7 @@ class test_base(unittest.TestCase):
             print("The CalTable is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -31,8 +39,7 @@ class test_base(unittest.TestCase):
             
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 
@@ -46,8 +53,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 
@@ -61,8 +67,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_table()
@@ -75,8 +80,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_table()
@@ -89,10 +93,19 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + \
-                        ctsys.resolve("regression/unittest/flagdata/" + self.vis) + ' ' + self.vis)
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
+        self.unflag_table()
+
+    def setUp_ngc5921(self):
+        '''VLA data set, scan=1~7, spw=0 63 chans, RR,LL'''
+        self.vis = "ngc5921.ms"
+            
+        # Need a fresh restart. Copy the MS
+        shutil.rmtree(self.vis, True)
+        os.system('rm -rf ' + self.vis + '.flagversions')        
+        os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
         self.unflag_table()
         
     def unflag_table(self):
@@ -780,6 +793,25 @@ class test_MS(test_base):
         self.assertEqual(summary['report1']['flagged'], 0)
         self.assertEqual(summary['report2']['spw']['0']['flagged'], summary['report2']['spw']['0']['total'])
 
+class test_MS_datacols(test_base):
+    def setUp(self):
+        self.setUp_ngc5921()
+        
+    def tearDown(self):
+        shutil.rmtree(self.vis, True)
+        
+    def test_model_no_model_col(self):
+        '''AgentFlagger:" raise an error when there isn't a MODEL or virtual MODEL column'''
+        aflocal = agentflagger()
+        aflocal.open(self.vis)
+        aflocal.selectdata()
+        aflocal.parseclipparameters(clipminmax=[2.3,3.1],datacolumn='RESIDUAL')
+        aflocal.parsesummaryparameters(name='summary_none')
+        aflocal.init()
+        summary = aflocal.run()
+        aflocal.done()
+        self.assertEqual(summary['report0']['flagged'],0)
+
              
 class test_display(test_base):
     """AgentFlagger:: Automatic test to check basic behaviour of display GUI using pause=False option """
@@ -898,6 +930,7 @@ def suite():
             test_bpass,
             test_display,
             test_MS,
+            test_MS_datacols,
             cleanup]
 
 if __name__ == '__main__':

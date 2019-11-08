@@ -565,30 +565,33 @@ Bool MSTransformDataHandler::selectSpw(const String& spwstr,const Vector<Int>& s
 
 	// Check for and filter out selected spws that aren't included in DATA_DESCRIPTION.
 	// (See CAS-1673 for an example.)
-	std::set<Int> badSelSpwSlots(MSTransformDataHandler::findBadSpws(ms_p, spw_p));
-	uInt nbadSelSpwSlots = badSelSpwSlots.size();
-	if (nbadSelSpwSlots > 0)
+	std::set<Int> selectedSpwNotInDD(MSTransformDataHandler::findSpwsNotInDD(ms_p, spw_p));
+	uInt nSelectedSpwNotInDD = selectedSpwNotInDD.size();
+	if (nSelectedSpwNotInDD > 0)
 	{
-		os << LogIO::WARN << "Selected input spw(s)\n";
-		for (std::set<Int>::iterator bbit = badSelSpwSlots.begin(); bbit != badSelSpwSlots.end(); ++bbit)
+		os << LogIO::NORMAL << "The following a priori selected input spw(s)\n";
+		for (std::set<Int>::iterator spwit = selectedSpwNotInDD.begin();
+		     spwit != selectedSpwNotInDD.end(); ++spwit)
 		{
-			os << spw_p[*bbit] << " ";
+			os << spw_p[*spwit] << " ";
 		}
-		os << "\nwere not found in DATA_DESCRIPTION and are being excluded." << LogIO::POST;
+		os << "\nwere not found in DATA_DESCRIPTION (i. e. no rows in the main "
+		      "table reference them) and therefore "
+		      "are not included to the output." << LogIO::POST;
 
 		uInt nSelSpw = spw_p.nelements();
-		uInt ngoodSelSpwSlots = nSelSpw - nbadSelSpwSlots;
+		uInt ngoodSelSpwSlots = nSelSpw - nSelectedSpwNotInDD;
 		Vector<Int> spwc(ngoodSelSpwSlots);
 		Vector<Int> chanStartc(ngoodSelSpwSlots);
 		Vector<Int> chanEndc(ngoodSelSpwSlots);
 		Vector<Int> nchanc(ngoodSelSpwSlots);
 		Vector<Int> chanStepc(ngoodSelSpwSlots);
-		std::set<Int>::iterator bsend = badSelSpwSlots.end();
+		std::set<Int>::iterator spwNotDDEnd = selectedSpwNotInDD.end();
 
 		uInt j = 0;
 		for (uInt k = 0; k < nSelSpw; ++k)
 		{
-			if (badSelSpwSlots.find(k) == bsend)
+			if (selectedSpwNotInDD.find(k) == spwNotDDEnd)
 			{
 				spwc[j] = spw_p[k];
 				chanStartc[j] = chanStart_p[k];
@@ -617,7 +620,7 @@ Bool MSTransformDataHandler::selectSpw(const String& spwstr,const Vector<Int>& s
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
-std::set<Int> MSTransformDataHandler::findBadSpws(MeasurementSet& ms,Vector<Int> spwv)
+std::set<Int> MSTransformDataHandler::findSpwsNotInDD(MeasurementSet& ms,Vector<Int> spwv)
 {
 	ScalarColumn<Int> spws_in_dd(	ms.dataDescription(),
 									MSDataDescription::columnName(MSDataDescription::SPECTRAL_WINDOW_ID));

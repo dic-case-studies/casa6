@@ -900,7 +900,7 @@ void PlotMSPlotter::gridSizeChanged( int rowCount, int colCount ){
 	itsPlotTab_->setGridSize(rowCount, colCount);
 }
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 void PlotMSPlotter::grpc_handle_op( ) {
     std::lock_guard<std::mutex> exc(grpc_queue_mutex);
     if ( ! grpc_queue.empty( ) ) {
