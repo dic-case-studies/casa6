@@ -693,7 +693,30 @@ def computeHighestSpwIndexInSpwsToPlotThatHasCurrentScan(spwsToPlot, scansToPlot
             highestSpwIndex = i
     return(highestSpwIndex)
 
+def run_with_old_pyplot_style(func):
+    """
+    CAS-12786: this decorator is introduced here to have a single entry point before/after
+    which the style sheet of matplotlib/pylab can be tuned and restored before returning.
+
+    The motivation is that plotbandpass plots are heavily dependent on default image size,
+    grid style, ticks frequency, etc., as it used to be in matplotlib 1.1.0 (used in
+    CASA 5.x). In more recent matplotlib (3.1.1 is currently used in CASA 6.x) that style
+    can be reproduced using the style sheet 'classic'. This is the quickest and simplest way
+    to produce plotbandpass plots that look like those of CASA 5
+    # https://matplotlib.org/3.1.1/users/dflt_style_changes.html
+    """
+
+    def func_old_style(*args, **kwargs):
+        if is_CASA6:
+            with pb.style.context('classic'):
+                return func(*args, **kwargs)
+        else:
+            return func(*args, **kwargs)
+
+    return func_old_style
+
 DEFAULT_PLATFORMING_THRESHOLD = 10.0 # unused if platformingSigma != 0
+@run_with_old_pyplot_style
 def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                  xaxis='chan', figfile='', plotrange=[0,0,0,0], 
                  caltable2='', overlay='', showflagged=False, timeranges='',
