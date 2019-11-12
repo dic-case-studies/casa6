@@ -119,18 +119,18 @@ else:
 def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
-        (major, minor) = args.version.split(".")
-        return(int(major), int(minor))
+        (major, minor, patch) = args.version.split(".")
+        return(int(major), int(minor), int(patch))
     else:
         proc = Popen( [ "./version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
-        (major, minor) = out.split( )[0].split(".")
-        print((major,minor))
-        return(int(major), int(minor))
+        (major, minor, patch) = out.split( )[0].split(".")
+        print((major,minor,patch))
+        return(int(major), int(minor), int(patch))
 
 
 (casatasks_major,casatasks_minor) = compute_version( )
-casatasks_version = '%d.%d' % (casatasks_major,casatasks_minor)
+casatasks_version = '%d.%d.%d' % (casatasks_major,casatasks_minor, casatasks_patch)
 
 public_scripts = [ 'src/scripts/config.py' ]
 
@@ -579,7 +579,7 @@ def generate_pyinit(moduledir,tasks):
             fd.write("from .%s import %s\n" % (task,task))
 
         fd.write("\n")
-        fd.write("def version( ): return [ %d, %d ]\n" % (casatasks_major,casatasks_minor))
+        fd.write("def version( ): return [ %d, %d, %d ]\n" % (casatasks_major,casatasks_minor,casatasks_patch))
         fd.write("def version_string( ): return \"%s\"\n" % casatasks_version)
         fd.write("casalog.setglobal(True)\n")
         fd.write("\n")
