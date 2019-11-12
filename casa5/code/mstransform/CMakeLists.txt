@@ -43,6 +43,7 @@ casa_add_library( mstransform
  TVI/StatWtTVI.cc
  TVI/StatWtTVIFactory.cc
  TVI/StatWtTVILayerFactory.cc
+ TVI/StatWtVarianceAndWeightCalculator.cc
 )
 
 install (FILES
@@ -79,6 +80,7 @@ install (FILES
     TVI/StatWtTVI.h
     TVI/StatWtTVIFactory.h
     TVI/StatWtTVILayerFactory.h
+    TVI/StatWtVarianceAndWeightCalculator.h
 	DESTINATION include/casacode/mstransform/TVI
 	)
 	
@@ -91,3 +93,5 @@ casa_add_google_test( MODULES mstransform SOURCES TVI/test/tRecursiveVi2Layers_G
 casa_add_google_test( MODULES mstransform SOURCES TVI/test/PolAverageTVI_GTest.cc )
 #casa_add_google_test( MODULES mstransform SOURCES TVI/test/tChannelAverageTransformEngine_GT.cc )
 casa_add_google_test( MODULES mstransform SOURCES TVI/test/tStatWtTVI.cc  ../msvis/MSVis/test/TestUtilsTVI.cc ../msvis/MSVis/test/MsFactory.cc)
+casa_add_google_test( MODULES mstransform SOURCES TVI/test/tStatWtVarianceAndWeightCalculator.cc)
+

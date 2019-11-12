@@ -264,8 +264,8 @@ private:
     // needed to the subchunkIDs that need them. min/max IDs (.first/.second)
     // in both cases
     void _limits(
-            std::vector<std::pair<casacore::uInt, casacore::uInt>>& idToChunksNeededByIDMap,
-            std::vector<std::pair<casacore::uInt, casacore::uInt>>& chunkNeededToIDsThatNeedChunkIDMap
+        std::vector<std::pair<casacore::uInt, casacore::uInt>>& idToChunksNeededByIDMap,
+        std::vector<std::pair<casacore::uInt, casacore::uInt>>& chunkNeededToIDsThatNeedChunkIDMap
     ) const;
 
     // returns True if this chunk has already been processed. This can happen
