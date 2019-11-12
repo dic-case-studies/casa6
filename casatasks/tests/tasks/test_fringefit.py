@@ -8,16 +8,18 @@ import unittest
 # is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
 if is_CASA6:
-    from casatools import ms, ctsys
+    from casatools import ms, ctsys, table
     from casatasks import fringefit
 
+    tblocal = table()
     ctsys_resolve = ctsys.resolve
 else:
     from __main__ import default
     from tasks import *
-    from taskinit import *
+    from taskinit import tbtool
 
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    tblocal = tbtool()
 
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
@@ -60,8 +62,38 @@ class Fringefit_tests(unittest.TestCase):
         reference = os.path.join(datapath, mbdcal)
         self.assertTrue(th.compTables(mbdcal, reference, ['WEIGHT']))
 
+
+class Fringefit_single_tests(unittest.TestCase):
+    prefix = 'n08c1-single'
+    msfile = prefix + '.ms'
+
+    def setUp(self):
+        shutil.copytree(os.path.join(datapath, self.msfile), self.msfile)
+
+    def tearDown(self):
+        shutil.rmtree(self.msfile)
+        shutil.rmtree(self.prefix + '.sbdcal', True)
+
+    def test_single(self):
+        sbdcal = self.prefix + '.sbdcal'
+        fringefit(vis=self.msfile, caltable=sbdcal, refant='EF')
+        tblocal.open(sbdcal)
+        flag = tblocal.getcol('FLAG')
+        tblocal.close()
+        # CAS-12693: Check that the right parameters are flagged
+        self.assertFalse(flag[0, 0, 0])
+        self.assertFalse(flag[0, 0, 1])
+        self.assertTrue(flag[0, 0, 2])
+        self.assertFalse(flag[0, 0, 3])
+        self.assertTrue(flag[0, 0, 4])
+        self.assertTrue(flag[4, 0, 0])
+        self.assertTrue(flag[4, 0, 1])
+        self.assertTrue(flag[4, 0, 2])
+        self.assertTrue(flag[4, 0, 3])
+        self.assertTrue(flag[4, 0, 4])
+
 def suite():
-    return [Fringefit_tests]
+    return [Fringefit_tests, Fringefit_single_tests]
 
 if __name__ == '__main__':
     unittest.main()
