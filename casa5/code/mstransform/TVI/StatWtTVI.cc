@@ -26,6 +26,8 @@
 #include <casacore/ms/MSOper/MSMetaData.h>
 #include <casacore/tables/Tables/ArrColDesc.h>
 
+#include <mstransform/TVI/StatWtVarianceAndWeightCalculator.h>
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -382,17 +384,24 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
             else {
                 ThrowCc("Unsupported value for 'statalg'");
             }
-            _statAlg = saf.createStatsAlgorithm();
+            // clone needed for CountedPtr -> shared_ptr hand off
+            _statAlg.reset(saf.createStatsAlgorithm()->clone());
         }
     }
     else {
-        _statAlg = new ClassicalStatistics<
-            Double, Array<Float>::const_iterator,
-            Array<Bool>::const_iterator, Array<Double>::const_iterator
-        >();
+        _statAlg.reset(
+            new ClassicalStatistics<
+                Double, Array<Float>::const_iterator,
+                Array<Bool>::const_iterator, Array<Double>::const_iterator
+            >());
     }
     std::set<StatisticsData::STATS> stats {StatisticsData::VARIANCE};
     _statAlg->setStatsToCalculate(stats);
+    // create and configure the variance computer
+    _varianceComputer.reset(
+        new StatWtVarianceAndWeightCalculator(_statAlg, _samples)
+    );
+
     // also configure the _wtStats object here
     // FIXME? Does not include exposure weighting
     _wtStats.reset(
@@ -415,10 +424,10 @@ void StatWtTVI::_logUsedChannels() const {
     LogIO log(LogOrigin("StatWtTVI", __func__));
     log << LogIO::NORMAL << "Weights are being computed using ";
     const auto cend = _chanSelFlags.cend();
-    const auto nspw = _samples.size();
+    const auto nspw = _samples->size();
     uInt spwCount = 0;
     // for (uInt i=0; i<nspw; ++i) {
-    for (const auto& kv: _samples) {
+    for (const auto& kv: *_samples) {
         const auto spw = kv.first;
         log << "SPW " << spw << ", channels ";
         const auto flagCube = _chanSelFlags.find(spw);
@@ -1476,7 +1485,7 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
                 // cout << __FILE__ << " " << __LINE__ << endl;
 
                 _multiLoopWeights(corr, iChanBin, iRow)
-                    = _computeWeight(
+                    = _varianceComputer->computeWeight(
                         dataArray(intraChunkSlice), flagArray(intraChunkSlice),
                         exposureVector, spw, exposures[iRow]
                     );
@@ -1663,9 +1672,9 @@ Bool StatWtTVI::_checkFirstSubChunk(
         // the spw is the same for all subchunks, so it only needs to
         // be set once
         spw = *vb->spectralWindows().begin();
-        if (_samples.find(spw) == _samples.end()) {
-            _samples[spw].first = 0;
-            _samples[spw].second = 0;
+        if (_samples->find(spw) == _samples->end()) {
+            (*_samples)[spw].first = 0;
+            (*_samples)[spw].second = 0;
         }
         firstTime = False;
         return False;
@@ -1750,99 +1759,17 @@ void StatWtTVI::_computeVariancesOneShotProcessing(
                 end[0] = corr;
             }
             Slicer slice(start, end, Slicer::endIsLast);
-            _variancesOneShotProcessing[blcb][corr] = _computeVariance(
-                dataForBLCB(slice), flagsForBLCB(slice),
-                exposuresForBLCB, spw
-            );
+            _variancesOneShotProcessing[blcb][corr]
+                = _varianceComputer->computeVariance(
+                    dataForBLCB(slice), flagsForBLCB(slice),
+                    exposuresForBLCB, spw
+                );
         }
         // cout << __FILE__ << " " << __LINE__ << endl;
 
     }
     //cout << __FILE__ << " " << __LINE__ << endl;
 
-}
-
-Double StatWtTVI::_computeVariance(
-    const Cube<Complex>& data, const Cube<Bool>& flags,
-    const Vector<Double>& exposures, uInt spw
-) const {
-    const auto npts = data.size();
-    if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
-        // not enough points, trivial
-        return 0;
-    }
-    // called in multi-threaded mode
-    std::unique_ptr<
-        StatisticsAlgorithm<
-            Double, Array<Float>::const_iterator,
-            Array<Bool>::const_iterator, Array<Double>::const_iterator
-        >
-    > statAlg(_statAlg->clone());
-    // some data not flagged
-    const auto realPart = real(data);
-    const auto imagPart = imag(data);
-    const auto mask = ! flags;
-    Cube<Double> exposureCube(data.shape());
-    const auto nPlanes = data.nplane();
-    for (size_t i=0; i<nPlanes; ++i) {
-        exposureCube.xyPlane(i) = exposures[i];
-    }
-    auto riter = realPart.begin();
-    auto iiter = imagPart.begin();
-    auto miter = mask.begin();
-    auto eiter = exposureCube.begin();
-    statAlg->setData(riter, eiter, miter, npts);
-    auto realStats = statAlg->getStatistics();
-    auto realVar = realStats.nvariance/realStats.npts;
-    // reset data to imaginary parts
-    statAlg->setData(iiter, eiter, miter, npts);
-    auto imagStats = statAlg->getStatistics();
-    auto imagVar = imagStats.nvariance/imagStats.npts;
-    auto varSum = realVar + imagVar;
-    // _samples.second can be updated in two different places, so use
-    // a local (per thread) variable and update the object's private field in one
-    // place
-    uInt updateSecond = False;
-    if (varSum > 0) {
-#ifdef _OPENMP
-#pragma omp atomic
-#endif
-        ++_samples[spw].first;
-        if (imagVar == 0 || realVar == 0) {
-            updateSecond = True;
-        }
-        else {
-            auto ratio = imagVar/realVar;
-            auto inverse = 1/ratio;
-            updateSecond = ratio > 1.5 || inverse > 1.5;
-        }
-        if (updateSecond) {
-#ifdef _OPENMP
-#pragma omp atomic
-#endif
-            ++_samples[spw].second;
-        }
-    }
-    return varSum/2;
-}
-
-Double StatWtTVI::_computeWeight(
-    const Cube<Complex>& data, const Cube<Bool>& flags,
-    const Vector<Double>& exposures, uInt spw, Double targetExposure
-) const {
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    auto varEq = _computeVariance(data, flags, exposures, spw);
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
-    return varEq == 0 ? 0 : targetExposure/varEq;
-}
-
-Vector<Double> StatWtTVI::_computeWeights(
-    const Cube<Complex>& data, const Cube<Bool>& flags,
-    const Vector<Double>& exposures, uInt spw
-) const {
-    auto varEq = _computeVariance(data, flags, exposures, spw);
-    return varEq == 0 ? Vector<Double>(exposures.size(), 0) : exposures/varEq;
 }
 
 void StatWtTVI::summarizeFlagging() const {
@@ -1877,7 +1804,7 @@ void StatWtTVI::summarizeFlagging() const {
     auto n0 = col0.size();
     auto n1 = col1.size();
     auto n2 = col2.size();
-    for (const auto& sample: _samples) {
+    for (const auto& sample: *_samples) {
         ostringstream oss;
         oss << std::setw(n0) << sample.first << " " << std::setw(n1)
             << sample.second.first << " " << std::setw(n2)

@@ -30,6 +30,7 @@
 
 #include <msvis/MSVis/VisBuffer2.h>
 #include <msvis/MSVis/VisibilityIterator2.h>
+#include <mstransform/TVI/StatWtTypes.h>
 #include <mstransform/TVI/UtilsTVI.h>
 #include <stdcasa/variant.h>
 #include <stdcasa/StdCasa/CasacSupport.h>
@@ -42,6 +43,8 @@
 
 namespace casa {
 
+class StatWtVarianceAndWeightCalculator;
+
 namespace vi {
 
 class StatWtTVI : public TransformingVi2 {
@@ -49,6 +52,26 @@ class StatWtTVI : public TransformingVi2 {
 public:
 
     static const casacore::String CHANBIN;
+
+    using Baseline = std::pair<casacore::uInt, casacore::uInt>;
+
+    /*
+    struct ChanBin {
+        casacore::uInt start = 0;
+        casacore::uInt end = 0;
+
+        bool operator<(const ChanBin& other) const {
+            if (start < other.start) {
+                return true;
+            }
+            if (start == other.start && end < other.end) {
+                return true;
+            }
+            return false;
+        }
+    };
+    */
+
 
     // The following fields are supported in the input configuration record
     // combine           String, if contains "corr", data will be aggregated
@@ -147,27 +170,11 @@ protected:
     
 private:
 
-    using Baseline = std::pair<casacore::uInt, casacore::uInt>;
-
-    struct ChanBin {
-        casacore::uInt start = 0;
-        casacore::uInt end = 0;
-
-        bool operator<(const ChanBin& other) const {
-            if (start < other.start) {
-                return true;
-            }
-            if (start == other.start && end < other.end) {
-                return true;
-            }
-            return false;
-        }
-    };
 
     struct BaselineChanBin {
         Baseline baseline = std::make_pair(0, 0);
         casacore::uInt spw = 0;
-        ChanBin chanBin;
+        StatWtTypes::ChanBin chanBin;
         bool operator<(const BaselineChanBin& other) const {
             if (baseline < other.baseline) {
                 return true;
@@ -193,7 +200,7 @@ private:
     };
 
     mutable casacore::Bool _weightsComputed = false;
-    mutable std::unique_ptr<casacore::Bool> _mustComputeWtSp {};
+    mutable std::shared_ptr<casacore::Bool> _mustComputeWtSp {};
     mutable casacore::Cube<casacore::Float> _newWtSp {};
     mutable casacore::Matrix<casacore::Float> _newWt {};
     mutable casacore::Cube<casacore::Bool> _newFlag {};
@@ -205,10 +212,10 @@ private:
     // The key refers to the spw, the value vector refers to the
     // channel numbers within that spw that are the first, last channel pair
     // in their respective bins
-    std::map<casacore::Int, std::vector<ChanBin>> _chanBins {};
+    std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>> _chanBins {};
     casacore::Int _minSamp = 2;
     casacore::Bool _combineCorr {false};
-    casacore::CountedPtr<
+    std::shared_ptr<
         casacore::StatisticsAlgorithm<
             casacore::Double, casacore::Array<casacore::Float>::const_iterator,
             casacore::Array<casacore::Bool>::const_iterator,
@@ -227,8 +234,9 @@ private:
     mutable size_t _nNewFlaggedPts = 0;
     mutable size_t _nOrigFlaggedPts = 0;
     mutable Column _column = CORRECTED;
-    mutable std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
-        _samples {};
+    mutable std::shared_ptr<
+            std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
+        > _samples {};
     mutable std::set<casacore::uInt> _processedRowIDs {};
     mutable std::vector<std::vector<casacore::Double>> _timeWindowWts {};
     mutable casacore::Cube<casacore::Double> _multiLoopWeights {};
@@ -258,6 +266,8 @@ private:
         casacore::Array<casacore::Float>::const_iterator,
         casacore::Array<casacore::Bool>::const_iterator>
     > _wtStats {};
+
+    std::unique_ptr<StatWtVarianceAndWeightCalculator> _varianceComputer;
 
     // idToChunksNeededByIDMap maps subchunkIDs to the range of subchunk IDs
     // they need. chunkNeededToIDsThatNeedChunkIDMap maps subchunk IDs that are
@@ -298,32 +308,6 @@ private:
 
     // CAS-12358
     void _logUsedChannels() const;
-
-    // compute the equivalent exposure weighted varaince,
-    // (var_real + var_imag)/2
-    casacore::Double _computeVariance(
-        const casacore::Cube<casacore::Complex>& data,
-        const casacore::Cube<casacore::Bool>& flags,
-        const casacore::Vector<casacore::Double>& exposures, casacore::uInt spw
-    ) const;
-
-    // all the exposures are used in weighting the variance, but the
-    // targetExposure is divided by the equivalent variance and returned.
-    casacore::Double _computeWeight(
-            const casacore::Cube<casacore::Complex>& data,
-            const casacore::Cube<casacore::Bool>& flags,
-            const casacore::Vector<casacore::Double>& exposures,
-            casacore::uInt spw, casacore::Double targetExposure
-        ) const;
-
-
-    // compute the exposure weighted weights.
-    casacore::Vector<casacore::Double> _computeWeights(
-        const casacore::Cube<casacore::Complex>& data,
-        const casacore::Cube<casacore::Bool>& flags,
-        const casacore::Vector<casacore::Double>& exposures, casacore::uInt spw
-    ) const;
-
 
     void _computeVariancesOneShotProcessing(
         const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
