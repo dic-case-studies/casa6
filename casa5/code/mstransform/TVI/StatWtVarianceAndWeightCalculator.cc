@@ -129,13 +129,6 @@ Vector<Double> StatWtVarianceAndWeightCalculator::computeWeights(
     return varEq == 0 ? Vector<Double>(exposures.size(), 0) : exposures/varEq;
 }
 
-/*
-const std::map<uInt, std::pair<uInt, uInt>>&
-    StatWtVarianceAndWeightCalculator::getSamples() const {
-    return _samples;
-}
-*/
-
 void StatWtVarianceAndWeightCalculator::setMinSamp(Int minSamp) {
     _minSamp = minSamp;
 }

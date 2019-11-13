@@ -89,11 +89,6 @@ public:
         const casacore::Vector<casacore::Double>& exposures, casacore::uInt spw
     ) const;
 
-    /*
-    const std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>&
-        getSamples() const;
-        */
-
     void setMinSamp(casacore::Int minSamp);
 
 private:
