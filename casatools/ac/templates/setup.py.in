@@ -1697,7 +1697,6 @@ MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
 include $(MY_DEPS)
         """)
 
-<<<<<<< HEAD
 def do_testing():
     compile_casacore_tests()
 
