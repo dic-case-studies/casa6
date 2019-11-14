@@ -328,6 +328,18 @@ def install_version_header( major, minor, patch, verstr ):
             l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(major)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_VERSION_STRING@",verstr)
             out.write(l)
 
+def install_version_cc( major, minor, patch, verstr ):
+    with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
+        for line in f:
+            l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
+                    .replace("@CASA_VERSION_MINOR@",str(major))\
+                    .replace("@CASA_VERSION_PATCH@",str(patch))\
+                    .replace("@CASA_VERSION_FEATURE@","0")\
+                    .replace("@CASA_VARIANT@","")\
+                    .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")\
+                    .replace("@CASATOOLS_VERSION_STRING@",verstr)
+            out.write(l)
+
 def install_xml_casa( ):
     script = os.path.join('scripts','xml-casa')
     jar = os.path.join('scripts','java',xml_jar_file)
