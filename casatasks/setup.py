@@ -129,7 +129,7 @@ def compute_version( ):
         return(int(major), int(minor), int(patch))
 
 
-(casatasks_major,casatasks_minor) = compute_version( )
+(casatasks_major,casatasks_minor,casatasks_patch) = compute_version( )
 casatasks_version = '%d.%d.%d' % (casatasks_major,casatasks_minor, casatasks_patch)
 
 public_scripts = [ 'src/scripts/config.py' ]
