@@ -961,6 +961,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SynthesisImager","executeMajorCycle",WHERE) );
 
     nMajorCycles++;
+    if(controlRecord.isDefined("nmajorcycles"))
+      controlRecord.get("nmajorcycles", nMajorCycles);
 
     Bool lastcycle=false;
     if( controlRecord.isDefined("lastcycle") )

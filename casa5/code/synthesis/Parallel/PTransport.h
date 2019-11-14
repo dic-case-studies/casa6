@@ -148,7 +148,7 @@ class PTransport {
   // Current message tag
   casacore::Int aTag;
 
-  bool debug_p = true;
+  bool debug_p = false;
 };
 
 } //# NAMESPACE CASA - END

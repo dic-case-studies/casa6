@@ -2433,6 +2433,7 @@ using namespace casa::vi;
     if(!(imstore->forwardGrid()).get())
       throw(AipsError("FTMAchine::InitializeToVisNew error imagestore has no valid grid initialized"));
     // Convert from Stokes planes to Correlation planes
+    LatticeLocker lock1 (*(imstore->model()), FileLocker::Read);
     stokesToCorrelation(*(imstore->model()), *(imstore->forwardGrid()));
 
     if(vb.polarizationFrame()==MSIter::Linear) {

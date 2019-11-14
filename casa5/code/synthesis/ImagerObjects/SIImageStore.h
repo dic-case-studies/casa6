@@ -39,6 +39,7 @@
 #include <images/Images/TempImage.h>
 #include <images/Images/SubImage.h>
 #include <images/Regions/ImageRegion.h>
+#include <lattices/Lattices/LatticeLocker.h>
 #include <casa/BasicSL/Constants.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
@@ -310,6 +311,7 @@ private:
 
   std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsParentPsf, itsParentModel, itsParentResidual, itsParentWeight, itsParentImage, itsParentSumWt, itsParentGridWt, itsParentPB, itsParentImagePBcor;
 
+  std::shared_ptr<casacore::LatticeLocker> itsReadLock;
 
 };
 

@@ -193,7 +193,7 @@ class Applicator {
   void setupProcStatus();
   casacore::Int findFreeProc(casacore::Bool &lastOne);
 
-  bool debug_p = true;
+  bool debug_p = false;
   bool initialized_p;
   casacore::Int donesig_p; //have to keep in context in serial case
 };

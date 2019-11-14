@@ -43,7 +43,7 @@ CubeMajorCycleAlgorithm::~CubeMajorCycleAlgorithm() {
 }
 	
 void CubeMajorCycleAlgorithm::get() {
-	cerr << "in get for child process " << applicator.isWorker() << endl;
+	//cerr << "in get for child process " << applicator.isWorker() << endl;
 	Record imparsRec;
 	Record vecSelParsRec;
 	Record gridparsRec;
@@ -78,7 +78,7 @@ void CubeMajorCycleAlgorithm::put() {
 		applicator.put(serialBug_p);
 		
 	}
-	cerr << "in put " << status_p << endl;
+	//cerr << "in put " << status_p << endl;
 	applicator.put(status_p);	
 	
 }
@@ -113,6 +113,8 @@ void CubeMajorCycleAlgorithm::task(){
 			subImStor->residual()->flush();
 		}
 		subImStor->residual()->unlock();
+		if(subImStor->hasModel())
+			subImStor->model()->unlock();
 	}
 	else{
 		subImgr.makePSF();
@@ -144,12 +146,16 @@ CountedPtr<SIImageStore> CubeMajorCycleAlgorithm::subImageStore(){
 		subpsf.reset(SpectralImageUtil::getChannel(psf, chanId_p, chanId_p, true));
 	}
 	else{
+		//need to loop over all fields somewhere
 		PagedImage<Float> resid(residname, TableLock::UserNoReadLocking);
 		subresid.reset(SpectralImageUtil::getChannel(resid, chanId_p, chanId_p, true));
-		String modelname=imSel_p.imageName+".model";
-		if(Table::isReadable(modelname)){
-			PagedImage<Float> model(modelname, TableLock::UserNoReadLocking);
-			submodel.reset(SpectralImageUtil::getChannel(model, chanId_p, chanId_p, false));
+		//String modelname=imSel_p.imageName+".model";
+		if(controlRecord_p.isDefined("modelnames")){
+			Vector<String> modelnames(controlRecord_p.asArrayString("modelnames"));
+			if(Table::isReadable(modelnames[0])){
+				PagedImage<Float> model(modelnames[0], TableLock::UserNoReadLocking);
+				submodel.reset(SpectralImageUtil::getChannel(model, chanId_p, chanId_p, false));
+			}
 		}
 	}
 	
@@ -157,7 +163,7 @@ CountedPtr<SIImageStore> CubeMajorCycleAlgorithm::subImageStore(){
 	PagedImage<Float> sumwt(sumwgtname, TableLock::UserNoReadLocking);
 	shared_ptr<ImageInterface<Float> >subsumwt(SpectralImageUtil::getChannel(sumwt, chanId_p, chanId_p, true));
 	CountedPtr<SIImageStore> subimstor=new SimpleSIImageStore(submodel, subresid, subpsf, nullptr, nullptr, nullptr, subsumwt, nullptr, nullptr, nullptr);
-	cerr << "subimagestor TYPE" << subimstor->getType() << endl;
+	//cerr << "subimagestor TYPE" << subimstor->getType() << endl;
 	return subimstor;
 }
 

@@ -114,11 +114,9 @@ Int SerialTransport::put(const Double &d){
    return add2Queue((void *)&d);
 }
 Int SerialTransport::put(const Int &i){
-  cerr << "put int " << i << endl;
    return add2Queue((void *)&i);
 }
 Int SerialTransport::put(const String &s){
-  cerr << "put string" << s << endl;
    return add2Queue((void *)&s);
 }
 Int SerialTransport::put(const Bool &b){
@@ -187,7 +185,6 @@ Int SerialTransport::get(Double &d){
 Int SerialTransport::get(Int &i){
    Int r_status(0);
    i = *((Int *)getFromQueue());
-   cerr << "get int " << i << endl;
    return(r_status);
 }
 
@@ -196,7 +193,6 @@ Int SerialTransport::get(String &s){
    String * val = (String *)getFromQueue();
    if (val)
        s = *val;
-   cerr << "get string " << s << endl;
    return(r_status);
 }
 

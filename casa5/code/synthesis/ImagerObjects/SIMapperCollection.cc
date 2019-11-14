@@ -774,7 +774,7 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
       { 
 	validmodel |= (! ( ((itsMappers[model])->imageStore())->isModelEmpty() ));
       }
-    //cout << "anyNonZeroModel : " << validmodel << endl;
+    cerr << "###############anyNonZeroModel : " << validmodel << endl;
     return validmodel;
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////

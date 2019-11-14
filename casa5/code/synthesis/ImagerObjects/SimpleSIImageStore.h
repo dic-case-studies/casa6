@@ -62,6 +62,21 @@ public:
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Complex> > backwardGrid(casacore::uInt term=0);
     
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > sumwt(casacore::uInt term=0);
+	
+	virtual casacore::Bool hasPB(){return doesImageExist(itsImageName+imageExts(PB));}
+
+  virtual casacore::Bool hasSensitivity(){return (bool) itsWeight;}
+  //virtual casacore::Bool hasPB(){return (bool) itsPB;}
+
+  virtual casacore::Bool hasMask(){return (bool) itsMask; }
+  virtual casacore::Bool hasModel() {return (bool) itsModel;}
+  virtual casacore::Bool hasPsf() {return (bool) itsPsf;}
+  virtual casacore::Bool hasResidual() {return (bool) itsResidual;}
+  //hasResidualImage is not overloaded 
+  virtual casacore::Bool hasResidualImage() {return false;}
+  virtual casacore::Bool hasSumWt() {return (bool) itsSumWt;}
+  ///So far no need for overloading this
+  //virtual casacore::Bool hasRestored() {return doesImageExist(itsImageName+imageExts(IMAGE));}
 
 private:
 	std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB;

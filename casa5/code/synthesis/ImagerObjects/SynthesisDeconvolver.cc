@@ -48,6 +48,7 @@
 #include <images/Images/TempImage.h>
 #include <images/Images/SubImage.h>
 #include <images/Regions/ImageRegion.h>
+#include <lattices/Lattices/LatticeLocker.h>
 
 #include <imageanalysis/ImageAnalysis/CasaImageBeamSet.h>
 #include <synthesis/ImagerObjects/SynthesisDeconvolver.h>
@@ -612,6 +613,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           }
 	if( ! itsImages->hasMask() || emptyMask ) // i.e. if there is no existing mask to re-use...
 	  {
+            LatticeLocker lock1 (*(itsImages->mask()), FileLocker::Write);
 	    if( itsIsInteractive ) itsImages->mask()->set(0.0);
 	    else itsImages->mask()->set(1.0);
 	    os << "[" << itsImages->getName() << "] Initializing new mask to " << (itsIsInteractive?"0.0 for interactive drawing":"1.0 for the full image") << LogIO::POST;

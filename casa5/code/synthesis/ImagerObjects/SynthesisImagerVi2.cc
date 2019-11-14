@@ -113,7 +113,7 @@ using namespace casacore;
 
 namespace casa { //# NAMESPACE CASA - BEGIN
   extern Applicator applicator;
-  SynthesisImagerVi2::SynthesisImagerVi2() : SynthesisImager(), vi_p(0), fselections_p(nullptr) {
+  SynthesisImagerVi2::SynthesisImagerVi2() : SynthesisImager(), vi_p(0), fselections_p(nullptr), imparsVec_p(0), gridparsVec_p(0) {
 	/*cerr << "is applicator initialized " << applicator.initialized() << endl;
 	if(!applicator.initialized()){
 	  int argc=1;
@@ -656,7 +656,10 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
       {
 	os << "Error in adding Mapper : "+x.getMesg() << LogIO::EXCEPTION;
       }
-
+	imparsVec_p.resize(imparsVec_p.nelements()+1, true);
+	imparsVec_p[imparsVec_p.nelements()-1]=impars_p;
+	gridparsVec_p.resize(gridparsVec_p.nelements()+1, true);
+	gridparsVec_p[imparsVec_p.nelements()-1]=gridpars_p;
     return true;
   }
 
@@ -665,7 +668,6 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
   {
     CountedPtr<refim::FTMachine> ftm, iftm;
 
-	cerr << "defineImage Type" << imstor->getType() << endl;
     // The following call to createFTMachine() uses the
     // following defaults
     //
@@ -890,60 +892,25 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  // Do calculation here.
 	  // This runs once per image field (for multi-field imaging)
 	  // This runs once per cube partition, and will see only its own partition's shape
-	  chanchunks=1;
+		chanchunks=1;
 
-          CompositeNumber cn(uInt(imshape[0] * 2));
-          // heuristic factors multiplied to imshape based on gridder
-          size_t fudge_factor = 15;
-          if (ftm->name()=="MosaicFTNew") {
-              fudge_factor = 20;
-          }
-          else if (ftm->name()=="GridFT") {
-              fudge_factor = 9;
-          }
+		CompositeNumber cn(uInt(imshape[0] * 2));
+		// heuristic factors multiplied to imshape based on gridder
+		size_t fudge_factor = 15;
+		if (ftm->name()=="MosaicFTNew") {
+			fudge_factor = 20;
+		}
+		else if (ftm->name()=="GridFT") {
+			fudge_factor = 9;
+		}
 
-          Double required_mem = fudge_factor * sizeof(Float);
-          for (size_t i = 0; i < imshape.nelements(); i++) {
-              // gridding pads image and increases to composite number
-              if (i < 2) {
-                  required_mem *= cn.nextLargerEven(Int(padding*Float(imshape[i])-0.5));
-              }
-              else {
-                  required_mem *= imshape[i];
-              }
-          }
-
-          // get number of tclean processes running on the same machine
-          size_t nlocal_procs = 1;
-          if (getenv("OMPI_COMM_WORLD_LOCAL_SIZE")) {
-              std::stringstream ss(getenv("OMPI_COMM_WORLD_LOCAL_SIZE"));
-              ss >> nlocal_procs;
-          }
-          // assumes all processes need the same amount of memory
-          required_mem *= nlocal_procs;
-          Double usr_memfrac, usr_mem;
-          AipsrcValue<Double>::find(usr_memfrac, "system.resources.memfrac", 80.);
-          AipsrcValue<Double>::find(usr_mem, "system.resources.memory", -1.);
-          Double memory_avail;
-          if (usr_mem > 0.) {
-              memory_avail = usr_mem * 1024. * 1024.;
-          }
-          else {
-	    memory_avail = Double(HostInfo::memoryFree()) * (usr_memfrac / 100.) * 1024.;
-          }
-          // compute required chanchunks to fit into the available memory
-          chanchunks = (int)std::ceil((Double)required_mem / memory_avail);
-          if (imshape.nelements() == 4 && imshape[3] < chanchunks) {
-              chanchunks = imshape[3];
-              // TODO make chanchunks a divisor of nchannels?
-          }
-          chanchunks = chanchunks < 1 ? 1 : chanchunks;
-
-	  log_l << "Required memory " << required_mem / nlocal_procs / 1024. / 1024. / 1024.
+		chanchunks=nSubCubeFitInMemory(fudge_factor, imshape, padding);
+		/*log_l << "Required memory " << required_mem / nlocal_procs / 1024. / 1024. / 1024.
                  << "\nAvailable memory " << memory_avail / 1024. / 1024 / 1024.
                  << " (rc: memory fraction " << usr_memfrac << "% rc memory " << usr_mem / 1024.
                  << ")\n" << nlocal_procs << " other processes on node\n"
                  << "Setting chanchunks to " << chanchunks << LogIO::POST;
+		*/
 	}
 
       if( imshape.nelements()==4 && imshape[3]<chanchunks )
@@ -1014,6 +981,48 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     }
 
   /////////////////////////
+  int SynthesisImagerVi2::nSubCubeFitInMemory(const Int fudge_factor, const IPosition& imshape, const Float padding){
+	Double required_mem = fudge_factor * sizeof(Float);
+	int nsubcube=1;
+	CompositeNumber cn(uInt(imshape[0] * 2));
+	for (size_t i = 0; i < imshape.nelements(); i++) {
+			// gridding pads image and increases to composite number
+			if (i < 2) {
+				required_mem *= cn.nextLargerEven(Int(padding*Float(imshape[i])-0.5));
+			}
+			else {
+				required_mem *= imshape[i];
+			}
+	}
+
+	// get number of tclean processes running on the same machine
+	size_t nlocal_procs = 1;
+	if (getenv("OMPI_COMM_WORLD_LOCAL_SIZE")) {
+		std::stringstream ss(getenv("OMPI_COMM_WORLD_LOCAL_SIZE"));
+		ss >> nlocal_procs;
+	}
+	// assumes all processes need the same amount of memory
+	required_mem *= nlocal_procs;
+	Double usr_memfrac, usr_mem;
+	AipsrcValue<Double>::find(usr_memfrac, "system.resources.memfrac", 80.);
+	AipsrcValue<Double>::find(usr_mem, "system.resources.memory", -1.);
+	Double memory_avail;
+	if (usr_mem > 0.) {
+		memory_avail = usr_mem * 1024. * 1024.;
+	}
+	else {
+	    memory_avail = Double(HostInfo::memoryFree()) * (usr_memfrac / 100.) * 1024.;
+	}
+	// compute required chanchunks to fit into the available memory
+	nsubcube = (int)std::ceil((Double)required_mem / memory_avail);
+	if (imshape.nelements() == 4 && imshape[3] < nsubcube) {
+		nsubcube = imshape[3];
+              // TODO make chanchunks a divisor of nchannels?
+	}
+	nsubcube = nsubcube < 1 ? 1 : nsubcube;
+	  
+	return nsubcube; 
+  }
   
  void SynthesisImagerVi2::runMajorCycleCube( const Bool dopsf, 
 				      const Bool savemodel) {
@@ -1311,10 +1320,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         Bool allDone ( false );
         for ( Int k=0; k < numchan; ++k ) {
             assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
-            cerr << "assigned "<< assigned << endl;
+            //cerr << "assigned "<< assigned << endl;
             while ( !assigned ) {
                 rank = casa::applicator.nextProcessDone ( *cmc, allDone );
-                cerr << "while rank " << rank << endl;
+                //cerr << "while rank " << rank << endl;
                 Bool status;
                 casa::applicator.get ( status );
                 if ( status )
@@ -1376,10 +1385,25 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	if ( applicator.isController() ) {
 		CubeMajorCycleAlgorithm *cmc = new CubeMajorCycleAlgorithm();
 		//casa::applicator.defineAlgorithm(cmc);
+		
+		Record controlRecord;
+        controlRecord.define("lastcycle",  savemodel);
+		controlRecord.define("nmajorcycles", nMajorCycles);
+        // Tell the child processes not to do the dividebyweight process as this is done
+		// right now in imager_base.py runMajorCycle
+		controlRecord.define("dividebyweight",  False);
         ///For now just field 0 but should loop over all
+		///This is to pass in explicit model, residual names etc
+		controlRecord.define("nfields", Int(imparsVec_p.nelements()));
         CountedPtr<SIImageStore> imstor = imageStore ( 0 );
         // checking that psf,  residual and sumwt is allDone
-        cerr << "shapes "  <<  imstor->residual()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
+        //cerr << "shapes "  <<  imstor->residual()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
+		Vector<String> modelnames(Int(imparsVec_p.nelements()),"");
+		if(imstor->hasModel()){
+			modelnames(0)=imparsVec_p[0].imageName+".model";
+			imstor->model()->unlock();
+			controlRecord.define("modelnames", Vector<String>(1,impars_p.imageName+".model"));
+		}
 		Record vecSelParsRec;
 		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
 			Record selparsRec = dataSel_p[k].toRecord();
@@ -1390,13 +1414,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         Int numchan=imstor->residual()->shape() [3];
         imstor->residual()->unlock();
         imstor->sumwt()->unlock();
+		
 		// For now this contains lastcycle if necessary in the future this
 		// should come from the master control record
-        Record controlRecord;
-        controlRecord.define("lastcycle",  savemodel);
-        // Tell the child processes not to do the dividebyweight process as this is done
-		// right now in imager_base.py runMajorCycle
-		controlRecord.define("dividebyweight",  False);
+        
         Int numprocs = applicator.numProcs();
         cerr << "Number of procs: " << numprocs << endl;
         Int rank ( 0 );
@@ -1405,10 +1426,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		Bool dopsf=False; // need to keep in context for serial bug
         for ( Int k=0; k < numchan; ++k ) {
             assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
-            cerr << "assigned "<< assigned << endl;
+            //cerr << "assigned "<< assigned << endl;
             while ( !assigned ) {
                 rank = casa::applicator.nextProcessDone ( *cmc, allDone );
-                cerr << "while rank " << rank << endl;
+                //cerr << "while rank " << rank << endl;
                 Bool status;
                 casa::applicator.get ( status );
                 if ( status )

@@ -44,7 +44,7 @@
 #include <casa/OS/Path.h>
 
 #include <casa/OS/HostInfo.h>
-
+#include <lattices/Lattices/LatticeLocker.h>
 #include <ms/MeasurementSets/MSHistoryHandler.h>
 #include <ms/MeasurementSets/MeasurementSet.h>
 
@@ -287,6 +287,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ctemp.set(1.0);
     pbMath.applyPB(ctemp, ctemp, wcenter, Quantity(0.0, "deg"), BeamSquint::NONE);
     StokesImageUtil::To(pbTemp, ctemp);
+    LatticeLocker lock1(*(itsImages->pb()), FileLocker::Write);
     itsImages->pb()->copyData(  (LatticeExpr<Float>)((*(itsImages->pb()))+pbTemp) );
 
   }//addPB
@@ -353,6 +354,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   
   void SIMapper::initPB()
   {
+    LatticeLocker lock1(*(itsImages->pb()), FileLocker::Write);
     itsImages->pb()->set(0.0);
   }
 
@@ -368,6 +370,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ctemp.set(1.0);
     pbMath.applyPB(ctemp, ctemp, wcenter, Quantity(0.0, "deg"), BeamSquint::NONE);
     StokesImageUtil::To(pbTemp, ctemp);
+    LatticeLocker lock1(*(itsImages->pb()), FileLocker::Write);
     itsImages->pb()->copyData(  (LatticeExpr<Float>)((*(itsImages->pb()))+pbTemp) );
 
   }//addPB

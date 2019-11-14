@@ -58,7 +58,7 @@ MPITransport::MPITransport(Int argc, Char *argv[]) : PTransport()
 //
    int flag=0;
    MPI_Initialized(&flag);
-   cerr << "FLAG " << flag << endl;
+   //cerr << "FLAG " << flag << endl;
    if((flag && isController()) || MPI_Init(&argc, &argv) == MPI_SUCCESS){
      //if(MPI_Init(&argc, &argv) == MPI_SUCCESS){
       MPI_Comm_rank(MPI_COMM_WORLD, &myCpu);

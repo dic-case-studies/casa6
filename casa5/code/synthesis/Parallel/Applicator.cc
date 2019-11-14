@@ -78,7 +78,7 @@ void Applicator::initThreads(Int argc, Char *argv[]){
 #ifdef HAVE_MPI
   //if (debug_p) {
   if(initialized_p) return;
-      cerr << "In initThreads. argc: " << argc << ", argv: " << argv << '\n';
+  //  cerr << "In initThreads. argc: " << argc << ", argv: " << argv << '\n';
       //}
   // Initialize the MPI transport layer
   try {
@@ -119,10 +119,10 @@ void Applicator::init(Int argc, Char *argv[])
 {
 // Initialize the process and parallel transport layer
 //
-  cerr <<"Applicatorinit " << initialized_p << endl;
+  //cerr <<"Applicatorinit " << initialized_p << endl;
   if(comm) return;
   // Fill the map of known algorithms
-  cerr << "APPINIT defining algorithms " << endl;
+  //cerr << "APPINIT defining algorithms " << endl;
   defineAlgorithms();
 
 #ifdef HAVE_MPI
@@ -227,7 +227,7 @@ Bool Applicator::nextAvailProcess(Algorithm &a, Int &rank)
       // the assigned worker process to activate it (see loop()).
       comm->connect(rank);
       comm->setTag(tag);
-      cerr << "nextAvailproc settag " << tag << " rank " << rank << " name " << a.name() << endl;
+      //cerr << "nextAvailproc settag " << tag << " rank " << rank << " name " << a.name() << endl;
       put(tag);
       
       assigned = true;
@@ -265,7 +265,7 @@ Int Applicator::nextProcessDone(Algorithm &a, Bool &allDone)
 //
   Int rank = -1;
   allDone = true;
-  cerr << "nextprocess done procstatus " << procStatus << endl;
+  //cerr << "nextprocess done procstatus " << procStatus << endl;
   for (uInt i=0; i<procStatus.nelements(); i++) {
     if (procStatus(i) == ASSIGNED) {
       if (isSerial()) {
@@ -283,11 +283,11 @@ Int Applicator::nextProcessDone(Algorithm &a, Bool &allDone)
     // Wait for a process to finish with the correct algorithm tag
     comm->connectAnySource();
     Int tag = algorithmIds.find(a.name()) == algorithmIds.end( ) ? 0 : algorithmIds.at(a.name());
-    cerr <<"procdone name" << a.name() << " id " << tag << endl;
+    //cerr <<"procdone name" << a.name() << " id " << tag << endl;
     comm->setTag(tag);
     Int doneSignal;
     rank = get(doneSignal);
-    cerr <<" procdone rank " << rank << " donesig " << doneSignal << endl;
+    //cerr <<" procdone rank " << rank << " donesig " << doneSignal << endl;
     // Consistency check; should return a DONE signal to contoller
     // on completion.
     if (doneSignal != DONE) {
@@ -297,7 +297,7 @@ Int Applicator::nextProcessDone(Algorithm &a, Bool &allDone)
       comm->connect(rank);
       // Mark process as free
       procStatus(rank) = FREE;
-      cerr << "NEXTProcDone connect rank" << rank << " procstat " << procStatus << endl; 
+      //cerr << "NEXTProcDone connect rank" << rank << " procstat " << procStatus << endl; 
       usedAllThreads = false;
     }
   }
