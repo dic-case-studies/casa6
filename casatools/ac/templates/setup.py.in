@@ -1480,7 +1480,6 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
             + '{dflags} -c $< -o $@' \
             + '\n\t$(POSTCOMPILE)'
     )
-    # TODO: Ummm, why is this global being changed here?
     src = [
         CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING
     ]
@@ -1698,6 +1697,7 @@ MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
 include $(MY_DEPS)
         """)
 
+<<<<<<< HEAD
 def do_testing():
     compile_casacore_tests()
 
