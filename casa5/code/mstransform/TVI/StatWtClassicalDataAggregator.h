@@ -47,14 +47,40 @@ public:
     // the caller.
     StatWtClassicalDataAggregator(
         ViImplementation2 *const vii,
-        std::shared_ptr<casacore::Bool> mustComputeWtSp,
+        std::shared_ptr<const casacore::Bool> mustComputeWtSp,
         const std::map<
             casacore::Int, std::vector<StatWtTypes::ChanBin>
-        > chanBins
+        >& chanBins,
+        std::shared_ptr<
+            std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
+        > samples,
+        StatWtTypes::Column column, casacore::Bool noModel,
+        const std::map<casacore::uInt, casacore::Cube<casacore::Bool>>&
+            chanSelFlags,
+        casacore::Bool combineCorr,
+        std::shared_ptr<
+            casacore::ClassicalStatistics<casacore::Double,
+            casacore::Array<casacore::Float>::const_iterator,
+            casacore::Array<casacore::Bool>::const_iterator>
+        > wtStats,
+        std::shared_ptr<
+            const std::pair<casacore::Double, casacore::Double>
+        > wtrange
     );
+
+    ~StatWtClassicalDataAggregator();
 
     // aggregates the data and computes the weights
     void aggregate();
+
+    void weightSpectrumFlags(
+        casacore::Cube<casacore::Float>& wtsp,
+        casacore::Cube<casacore::Bool>& flagCube, casacore::Bool& checkFlags,
+        const casacore::Vector<casacore::Int>& ant1,
+        const casacore::Vector<casacore::Int>& ant2,
+        const casacore::Vector<casacore::Int>& spws,
+        const casacore::Vector<casacore::Double>& exposures
+     ) const;
 
 private:
 
@@ -78,7 +104,13 @@ private:
             _variancesOneShotProcessing {};
 
     ViImplementation2 *const _vii;
-    std::shared_ptr<casacore::Bool> _mustComputeWtSp;
+    const casacore::Bool _combineCorr;
+
+    void _computeVariancesOneShotProcessing(
+        const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
+        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags,
+        const std::map<BaselineChanBin, casacore::Vector<casacore::Double>>& exposures
+    ) const;
 };
 
 }

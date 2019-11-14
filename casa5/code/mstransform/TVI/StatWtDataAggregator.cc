@@ -19,6 +19,9 @@
 
 #include <mstransform/TVI/StatWtDataAggregator.h>
 
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/Cube.h>
+
 #include <mstransform/TVI/StatWtVarianceAndWeightCalculator.h>
 
 #ifdef _OPENMP
@@ -26,16 +29,33 @@
 #endif
 
 using namespace casacore;
+using namespace std;
 
 namespace casa {
 
 namespace vi {
 
 StatWtDataAggregator::StatWtDataAggregator(
-    const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>>& chanBins
-) : _chanBins(chanBins) {}
+    const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>>& chanBins,
+    std::shared_ptr<map<uInt, pair<uInt, uInt>>> samples,
+    StatWtTypes::Column column, Bool noModel,
+    const map<uInt, Cube<Bool>>& chanSelFlags,
+    std::shared_ptr<const casacore::Bool> mustComputeWtSp,
+    std::shared_ptr<
+        casacore::ClassicalStatistics<casacore::Double,
+        casacore::Array<casacore::Float>::const_iterator,
+        casacore::Array<casacore::Bool>::const_iterator>
+    > wtStats,
+    std::shared_ptr<const std::pair<casacore::Double, casacore::Double>> wtrange
+) : _chanBins(chanBins), _samples(samples), _column(column), _noModel(noModel),
+    _chanSelFlags(chanSelFlags), _mustComputeWtSp(mustComputeWtSp),
+    _wtStats(wtStats), _wtrange(wtrange) {}
 
-StatWtDataAggregator::Baseline StatWtTVI::_baseline(uInt ant1, uInt ant2) {
+StatWtDataAggregator::~StatWtDataAggregator() {}
+
+StatWtDataAggregator::Baseline StatWtDataAggregator::_baseline(
+    uInt ant1, uInt ant2
+) {
     return Baseline(min(ant1, ant2), max(ant1, ant2));
 }
 
@@ -73,18 +93,18 @@ const Cube<Complex> StatWtDataAggregator::_dataCube(
 ) const {
     // cout << __func__ << endl;
     switch (_column) {
-    case CORRECTED:
+    case StatWtTypes::CORRECTED:
         return vb->visCubeCorrected();
-    case DATA:
+    case StatWtTypes::DATA:
         return vb->visCube();
-    case RESIDUAL:
+    case StatWtTypes::RESIDUAL:
         if (_noModel) {
             return vb->visCubeCorrected();
         }
         else {
             return vb->visCubeCorrected() - vb->visCubeModel();
         }
-    case RESIDUAL_DATA:
+    case StatWtTypes::RESIDUAL_DATA:
         if(_noModel) {
             return vb->visCube();
         }
@@ -131,6 +151,34 @@ Cube<Bool> StatWtDataAggregator::_getResultantFlags(
         }
     }
     return flagCube || chanSelFlags;
+}
+
+void StatWtDataAggregator::_updateWtSpFlags(
+    Cube<Float>& wtsp, Cube<Bool>& flags, Bool& checkFlags,
+    const Slicer& slice, Float wt
+) const {
+    // writable array reference
+    auto flagSlice = flags(slice);
+    if (*_mustComputeWtSp) {
+        // writable array reference
+        auto wtSlice = wtsp(slice);
+        wtSlice = wt;
+        // update global stats before we potentially flag data
+        auto mask = ! flagSlice;
+        _wtStats->addData(wtSlice.begin(), mask.begin(), wtSlice.size());
+    }
+    else if (! allTrue(flagSlice)) {
+        // we don't need to compute WEIGHT_SPECTRUM, and the slice isn't
+        // entirely flagged, so we need to update the WEIGHT column stats
+        _wtStats->addData(Array<Float>(IPosition(1, 1), wt).begin(), 1);
+    }
+    if (
+        wt == 0
+        || (_wtrange && (wt < _wtrange->first || wt > _wtrange->second))
+    ) {
+        checkFlags = True;
+        flagSlice = True;
+    }
 }
 
 }

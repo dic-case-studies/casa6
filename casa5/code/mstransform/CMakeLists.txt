@@ -42,6 +42,7 @@ casa_add_library( mstransform
  TVI/PointingInterpolationTVI.cc
  TVI/StatWtClassicalDataAggregator.cc
  TVI/StatWtDataAggregator.cc
+ TVI/StatWtFloatingWindowDataAggregator.cc
  TVI/StatWtTVI.cc
  TVI/StatWtTVIFactory.cc
  TVI/StatWtTVILayerFactory.cc
@@ -85,6 +86,7 @@ install (FILES
     TVI/StatWtTypes.h
     TVI/StatWtClassicalDataAggregator.h
     TVI/StatWtDataAggregator.h
+    TVI/StatWtFloatingWindowAggregator.h
     TVI/StatWtVarianceAndWeightCalculator.h
 	DESTINATION include/casacode/mstransform/TVI
 	)

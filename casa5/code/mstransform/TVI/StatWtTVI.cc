@@ -57,23 +57,26 @@ StatWtTVI::StatWtTVI(ViImplementation2 * inputVii, const Record &configuration)
     const auto& origMS = ms();
     // FIXME uses original MS explicitly
     ThrowIf(
-        (_column == CORRECTED || _column == RESIDUAL)
+        (_column == StatWtTypes::CORRECTED || _column == StatWtTypes::RESIDUAL)
         && ! origMS.isColumn(MSMainEnums::CORRECTED_DATA),
         "StatWtTVI requires the MS to have a CORRECTED_DATA column. This MS "
         "does not"
     );
     // FIXME uses original MS explicitly
     ThrowIf(
-        (_column == DATA || _column == RESIDUAL_DATA)
+        (_column == StatWtTypes::DATA || _column == StatWtTypes::RESIDUAL_DATA)
         && ! origMS.isColumn(MSMainEnums::DATA),
         "StatWtTVI requires the MS to have a DATA column. This MS does not"
     );
-    _mustComputeSigma = (_column == DATA || _column == RESIDUAL_DATA);
+    _mustComputeSigma = (
+        _column == StatWtTypes::DATA || _column == StatWtTypes::RESIDUAL_DATA
+    );
     // FIXME uses original MS explicitly
     _updateWeight = ! _mustComputeSigma 
         || (_mustComputeSigma && ! origMS.isColumn(MSMainEnums::CORRECTED_DATA));
-    _noModel = (_column == RESIDUAL || _column == RESIDUAL_DATA)
-        && ! origMS.isColumn(MSMainEnums::MODEL_DATA)
+    _noModel = (
+            _column == StatWtTypes::RESIDUAL || _column == StatWtTypes::RESIDUAL_DATA
+        ) && ! origMS.isColumn(MSMainEnums::MODEL_DATA)
         && ! origMS.source().isColumn(MSSourceEnums::SOURCE_MODEL);
 	// Initialize attached VisBuffer
 	setVisBuffer(createAttachedVisBuffer(VbRekeyable));
@@ -227,10 +230,10 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
                 ),
                 "Unsupported value for " + field + ": " + val
             );
-            _column = val.startsWith("c") ? CORRECTED
-                : val.startsWith("d") ? DATA
-                : val.startsWith("residual_") ? RESIDUAL_DATA
-                : RESIDUAL;
+            _column = val.startsWith("c") ? StatWtTypes::CORRECTED
+                : val.startsWith("d") ? StatWtTypes::DATA
+                : val.startsWith("residual_") ? StatWtTypes::RESIDUAL_DATA
+                : StatWtTypes::RESIDUAL;
         }
     }
     field = "slidetimebin";
@@ -501,7 +504,7 @@ void StatWtTVI::_setChanBinMap(const casacore::Quantity& binWidth) {
         auto cfs = chanFreqs[i].getValue("Hz");
         auto citer = cfs.begin();
         auto cend = cfs.end();
-        ChanBin bin;
+        StatWtTypes::ChanBin bin;
         bin.start = 0;
         bin.end = 0;
         uInt chanNum = 0;
@@ -534,7 +537,7 @@ void StatWtTVI::_setChanBinMap(Int binWidth) {
     MSMetaData msmd(&ms(), 100.0);
     auto nchans = msmd.nChans();
     auto nspw = nchans.size();
-    ChanBin bin;
+    StatWtTypes::ChanBin bin;
     for (uInt i=0; i<nspw; ++i) {
         auto lastChan = nchans[i]-1;
         for (uInt j=0; j<nchans[i]; j += binWidth) {
@@ -554,7 +557,7 @@ void StatWtTVI::_setDefaultChanBinMap() {
     auto niter = nchans.begin();
     auto nend = nchans.end();
     Int i = 0;
-    ChanBin bin;
+    StatWtTypes::ChanBin bin;
     bin.start = 0;
     for (; niter!=nend; ++niter, ++i) {
         bin.end = *niter - 1;
@@ -1371,18 +1374,18 @@ void StatWtTVI::_limits(
 const Cube<Complex> StatWtTVI::_dataCube(const VisBuffer2 *const vb) const {
     // cout << __func__ << endl;
     switch (_column) {
-    case CORRECTED:
+    case StatWtTypes::CORRECTED:
         return vb->visCubeCorrected();
-    case DATA:
+    case StatWtTypes::DATA:
         return vb->visCube();
-    case RESIDUAL:
+    case StatWtTypes::RESIDUAL:
         if (_noModel) {
             return vb->visCubeCorrected();
         }
         else {
             return vb->visCubeCorrected() - vb->visCubeModel();
         }
-    case RESIDUAL_DATA:
+    case StatWtTypes::RESIDUAL_DATA:
         if(_noModel) {
             return vb->visCube();
         }
@@ -1505,7 +1508,12 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
 void StatWtTVI::_gatherAndComputeWeights() const {
     if (_doOneShot) {
         // cout << __FILE__ << " " << __LINE__ << endl;
-        _gatherAndComputeWeightsOneShotProcessing();
+        //_gatherAndComputeWeightsOneShotProcessing();
+        StatWtClassicalDataAggregator agg(
+            getVii(), _mustComputeWtSp, _chanBins, _samples, _column, _noModel,
+            _chanSelFlags, _combineCorr
+        );
+        agg.aggregate();
         // cout << __FILE__ << " " << __LINE__ << endl;
 
     }

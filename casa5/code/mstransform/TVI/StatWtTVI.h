@@ -186,7 +186,7 @@ private:
                 && chanBin < other.chanBin;
         };
     };
-
+/*
     enum Column {
         // column(s) to use
         // DATA
@@ -198,6 +198,7 @@ private:
         // DATA - MODEL_DATA
         RESIDUAL_DATA
     };
+*/
 
     mutable casacore::Bool _weightsComputed = false;
     mutable std::shared_ptr<casacore::Bool> _mustComputeWtSp {};
@@ -222,7 +223,7 @@ private:
             casacore::Array<casacore::Double>::const_iterator
         >
     > _statAlg {} ;
-    std::unique_ptr<std::pair<casacore::Double, casacore::Double>> _wtrange {};
+    std::shared_ptr<std::pair<casacore::Double, casacore::Double>> _wtrange {};
     // The _chanSelFlags key is the spw. The value is a Cube for convenience
     // for subchunk computations that require the same shaped cube of flags to
     // be applied. The dimension that counts is the second (zero-based 1) as it
@@ -233,7 +234,7 @@ private:
     mutable size_t _nTotalPts = 0;
     mutable size_t _nNewFlaggedPts = 0;
     mutable size_t _nOrigFlaggedPts = 0;
-    mutable Column _column = CORRECTED;
+    mutable StatWtTypes::Column _column = StatWtTypes::CORRECTED;
     mutable std::shared_ptr<
             std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
         > _samples {};

@@ -45,7 +45,21 @@ public:
             return false;
         }
     };
+
+    enum Column {
+        // column(s) to use
+        // DATA
+        DATA,
+        // CORRECTED_DATA
+        CORRECTED,
+        // CORRECTED_DATA - MODEL_DATA
+        RESIDUAL,
+        // DATA - MODEL_DATA
+        RESIDUAL_DATA
+    };
 };
+
+
 
 }
 
