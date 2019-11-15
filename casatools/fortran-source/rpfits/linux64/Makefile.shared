@@ -1,0 +1,37 @@
+# Linux Makefile for RPFITS (spitzer, Debian lenny).
+
+# The RPFITS root directory.
+RPFITSROOT := ..
+
+# Only used for locating platform-specific code in
+# $(RPFITSROOT)/code/$(RPARCH).
+RPARCH := linux
+
+# GNU Fortran and C compiler flags.
+FC     := gfortran
+FFLAGS := -g -O -fimplicit-none -Wall
+CFLAGS := -g -O -Wall
+RANLIB := ranlib
+
+LDFLAGS :=
+
+# Where to install stuff.
+PREFIX := /usr/local
+
+#-----------------------------------------------------------------------------
+# Include generic RPFITS makefile.
+-include $(RPFITSROOT)/GNUmakefile
+
+# Override generic targets for shared lib creation on 64-bit Linux
+sharedlib : $(SHRLIB) all;
+
+installsharedlib: $(SHRLIB) install;
+	-@ mkdir -p $(PREFIX)/lib
+	-@ $(RM) $(PREFIX)/lib/$(SHRLIB) $(PREFIX)/lib/$(SONAME) $(PREFIX)/lib/$(SHRLN)
+	   cp -p $(SHRLIB) $(PREFIX)/lib
+	   ln -s $(SHRLIB) $(PREFIX)/lib/$(SONAME)
+	   ln -s $(SHRLIB) $(PREFIX)/lib/$(SHRLN)
+
+sharedrealclean sharedcleanest : cleanest
+	-$(RM) $(SHRLIB) $(PICLIB)
+# End Override
