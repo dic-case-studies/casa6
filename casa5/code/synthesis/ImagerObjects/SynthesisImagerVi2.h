@@ -64,6 +64,8 @@ public:
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+  //set the weight from a Record generated from SynthesisUtils::fillWeightRecord
+  virtual casacore::Bool weight(const Record& inrec);
   //set the weight density to the visibility iterator
   //the default is to set it from the imagestore griwt() image
   //Otherwise it will use this image passed here; useful for parallelization to
@@ -194,7 +196,7 @@ public:
   
   virtual bool runCubePSFGridding();
   
-  virtual bool runCubeResidualGridding(casacore::Bool savemodel=false);
+  virtual bool runCubeGridding(casacore::Bool dopsf=false, casacore::Bool savemodel=false);
   
  
  void createMosFTMachine(casacore::CountedPtr<casa::refim::FTMachine>& theFT,
@@ -222,7 +224,7 @@ public:
   //Set up tracking direction ; return False if no tracking is set.
   //return Direction of moving source is in the frame of vb.phaseCenter() at the time of the first row of the vb
   casacore::Bool getMovingDirection(const vi::VisBuffer2& vb,  casacore::MDirection& movingDir);
-  int nSubCubeFitInMemory(const casacore::Int fudge_factor, const casacore::IPosition& imshape, const casacore::Float padding=1.0);
+  std::tuple<int, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int> > nSubCubeFitInMemory(const casacore::Int fudge_factor, const casacore::IPosition& imshape, const casacore::Float padding=1.0);
    // Other Options
   //casacore::Block<const casacore::MeasurementSet *> mss_p;
   casacore::CountedPtr<vi::VisibilityIterator2>  vi_p;
@@ -236,6 +238,7 @@ public:
   casacore::MFrequency::Types selFreqFrame_p;
   casacore::Vector<SynthesisParamsImage> imparsVec_p;
   casacore::Vector<SynthesisParamsGrid> gridparsVec_p;
+  casacore::Record weightParams_p;
 };
 } //# NAMESPACE CASA - END
 

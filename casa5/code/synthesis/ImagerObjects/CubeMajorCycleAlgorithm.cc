@@ -54,12 +54,14 @@ void CubeMajorCycleAlgorithm::get() {
 	// get gridders params #3
 	applicator.get(gridparsRec);
 	// get which channel to process #4
-	applicator.get(chanId_p);
+	applicator.get(chanRange_p);
+	cerr <<"GET chanRange " << chanRange_p << endl;
 	// psf or residual CubeMajorCycleAlgorithm #5
 	applicator.get(dopsf_p);
 	// store modelvis and other controls #6
 	applicator.get(controlRecord_p);
-	
+	// weight params
+	applicator.get(weightParams_p);
 	//Somewhere before this we have to make sure that vecSelPars has more than 0 fields)
 	dataSel_p.resize(vecSelParsRec.nfields());
 	/// Fill the private variables
@@ -101,8 +103,12 @@ void CubeMajorCycleAlgorithm::task(){
 		subImgr.selectData(dataSel_p[k]);
 	}
 	subImgr.defineImage(subImStor,  gridSel_p.ftmachine);
+	subImgr.setCubeGridding(False);
 	// TO DO get weight param and set weight
-	subImgr.weight("natural");
+	if(!weightParams_p.isDefined("type") || weightParams_p.asString("type")=="natural")
+		subImgr.weight("natural");
+	else
+		subImgr.weight(weightParams_p);
 	if (!dopsf_p){
 		subImgr.executeMajorCycle(controlRecord_p);
 		if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight"))
@@ -143,25 +149,25 @@ CountedPtr<SIImageStore> CubeMajorCycleAlgorithm::subImageStore(){
 	shared_ptr<ImageInterface<Float> >submodel=nullptr;
 	if(dopsf_p){
 		PagedImage<Float> psf(psfname, TableLock::UserNoReadLocking);
-		subpsf.reset(SpectralImageUtil::getChannel(psf, chanId_p, chanId_p, true));
+		subpsf.reset(SpectralImageUtil::getChannel(psf, chanRange_p[0], chanRange_p[1], true));
 	}
 	else{
 		//need to loop over all fields somewhere
 		PagedImage<Float> resid(residname, TableLock::UserNoReadLocking);
-		subresid.reset(SpectralImageUtil::getChannel(resid, chanId_p, chanId_p, true));
+		subresid.reset(SpectralImageUtil::getChannel(resid, chanRange_p[0], chanRange_p[1], true));
 		//String modelname=imSel_p.imageName+".model";
 		if(controlRecord_p.isDefined("modelnames")){
 			Vector<String> modelnames(controlRecord_p.asArrayString("modelnames"));
 			if(Table::isReadable(modelnames[0])){
 				PagedImage<Float> model(modelnames[0], TableLock::UserNoReadLocking);
-				submodel.reset(SpectralImageUtil::getChannel(model, chanId_p, chanId_p, false));
+				submodel.reset(SpectralImageUtil::getChannel(model, chanRange_p[0], chanRange_p[1], false));
 			}
 		}
 	}
 	
 	
 	PagedImage<Float> sumwt(sumwgtname, TableLock::UserNoReadLocking);
-	shared_ptr<ImageInterface<Float> >subsumwt(SpectralImageUtil::getChannel(sumwt, chanId_p, chanId_p, true));
+	shared_ptr<ImageInterface<Float> >subsumwt(SpectralImageUtil::getChannel(sumwt, chanRange_p[0], chanRange_p[1], true));
 	CountedPtr<SIImageStore> subimstor=new SimpleSIImageStore(submodel, subresid, subpsf, nullptr, nullptr, nullptr, subsumwt, nullptr, nullptr, nullptr);
 	//cerr << "subimagestor TYPE" << subimstor->getType() << endl;
 	return subimstor;

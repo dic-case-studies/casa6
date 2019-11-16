@@ -119,12 +119,15 @@ int main(int argc, char **argv)
 	imstor->residual()->unlock();
 	imstor->sumwt()->unlock();
 	Record gridparsRec = gridSel.toRecord();
-	Record controlRecord;                                    
+	Record controlRecord;   
+	Record weightRecord=SynthesisUtilMethods::fillWeightRecord();
+	
 	controlRecord.define("dividebyweight", True);
 	Int rank(0);
 	Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
 	Bool allDone(false);
 	Bool dopsf=False;
+	Vector<Int> chanRange(2);
 	//if(casa::applicator.isController()) {
         for (Int k=0; k < numchan; ++k) {
             assigned=casa::applicator.nextAvailProcess(*cmc, rank);
@@ -151,7 +154,8 @@ int main(int argc, char **argv)
 			// put gridders params #3
 			applicator.put(gridparsRec);
 			// put which channel to process #4
-			applicator.put(k);
+			chanRange.set(k);
+			applicator.put(chanRange);
 			// psf or residual CubeMajorCycleAlgorithm #5
 			if(lala==1)
 				dopsf=True;
@@ -160,6 +164,8 @@ int main(int argc, char **argv)
 			applicator.put(dopsf);
 			// store modelvis and other controls #6
 			applicator.put(controlRecord);
+			//tell the weighting scheme
+			applicator.put(weightRecord);
 			/// Tell worker to process it 
             applicator.apply(*cmc);
 

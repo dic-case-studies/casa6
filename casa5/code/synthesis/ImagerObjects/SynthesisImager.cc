@@ -107,7 +107,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   SynthesisImager::SynthesisImager() : itsMappers(SIMapperCollection()), writeAccess_p(True),
-				       gridpars_p(), impars_p(), movingSource_p("")
+				       gridpars_p(), impars_p(), movingSource_p(""), doingCubeGridding_p(True)
   {
 
      imwgt_p=VisImagingWeight("natural");
@@ -979,7 +979,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     try
       {    
 		
-	if( itsMaxShape[3] > 1 ){/// and valid ftmachines
+	if( itsMaxShape[3] > 1 && doingCubeGridding_p ){/// and valid ftmachines
 		runMajorCycleCube(false, lastcycle);
 	}
 	else{
@@ -1009,7 +1009,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
       try
       {
-	if(  itsMaxShape[3] >1){///and valid ftmachines
+	if(  itsMaxShape[3] >1 && doingCubeGridding_p){///and valid ftmachines
 		runMajorCycleCube(true, false);
 	}
 	else{

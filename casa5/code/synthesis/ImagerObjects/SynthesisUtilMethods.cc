@@ -181,7 +181,75 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return factors;
   }
 
+  /***make a record of synthesisimager::weight parameters***/
+  Record SynthesisUtilMethods::fillWeightRecord(const String& type, const String& rmode,
+			       const Quantity& noise, const Double robust,
+			       const Quantity& fieldofview,
+				 const Int npixels, const Bool multiField, const Bool useCubeBriggs,
+			       const String& filtertype, const Quantity& filterbmaj,
+                                                const Quantity& filterbmin, const Quantity& filterbpa){
 
+    Record outRec;
+    outRec.define("type", type);
+    outRec.define("rmode", rmode);
+    Record quantRec;
+    QuantumHolder(noise).toRecord(quantRec);
+    outRec.defineRecord("noise", quantRec);
+    outRec.define("robust", robust);
+    QuantumHolder(fieldofview).toRecord(quantRec);
+    outRec.defineRecord("fieldofview", quantRec);
+    outRec.define("npixels", npixels);
+    outRec.define("multifield", multiField);
+    outRec.define("usecubebriggs", useCubeBriggs);
+    outRec.define("filtertype", filtertype);
+    QuantumHolder(filterbmaj).toRecord(quantRec);
+    outRec.defineRecord("filterbmaj", quantRec);
+    QuantumHolder(filterbmin).toRecord(quantRec);
+    outRec.defineRecord("filterbmin", quantRec);
+    QuantumHolder(filterbpa).toRecord(quantRec);
+    outRec.defineRecord("filterbpa", quantRec);
+
+
+    return outRec;
+  }
+  void SynthesisUtilMethods::getFromWeightRecord(String& type, String& rmode,
+			       Quantity& noise, Double& robust,
+			       Quantity& fieldofview,
+				Int& npixels, Bool& multiField, Bool& useCubeBriggs,
+			       String& filtertype, Quantity& filterbmaj,
+                                                 Quantity& filterbmin, Quantity& filterbpa, const Record& inRec){
+    QuantumHolder qh;
+    String err;
+    if(!inRec.isDefined("type"))
+      throw(AipsError("Record is not filled with SynthesisUtilMethods::fillWeightRecord"));
+    inRec.get("type", type);
+    inRec.get("rmode", rmode);
+    if(!qh.fromRecord(err, inRec.asRecord("noise")))
+      throw(AipsError("Error in reading noise param"));
+    noise=qh.asQuantity();
+    inRec.get("robust", robust);
+    if(!qh.fromRecord(err, inRec.asRecord("fieldofview")))
+      throw(AipsError("Error in reading fieldofview param"));
+    fieldofview=qh.asQuantity();
+    inRec.get("npixels", npixels);
+    inRec.get("multifield", multiField);
+    inRec.get("usecubebriggs", useCubeBriggs);
+    inRec.get("filtertype", filtertype);
+    if(!qh.fromRecord(err, inRec.asRecord("filterbmaj")))
+      throw(AipsError("Error in reading filterbmaj param"));
+    filterbmaj=qh.asQuantity();
+    if(!qh.fromRecord(err, inRec.asRecord("filterbmin")))
+      throw(AipsError("Error in reading filterbmin param"));
+    filterbmin=qh.asQuantity();
+    if(!qh.fromRecord(err, inRec.asRecord("filterbpa")))
+      throw(AipsError("Error in reading filterbpa param"));
+    filterbpa=qh.asQuantity();
+
+
+
+  }
+  
+  
   /**
    * Get values from lines of a /proc/self/status file. For example:
    * 'VmRSS:     600 kB'

@@ -55,9 +55,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		casacore::Vector<SynthesisParamsSelect> dataSel_p;
 		SynthesisParamsImage imSel_p;
 		SynthesisParamsGrid gridSel_p;
-		casacore::Int chanId_p;
+		casacore::Vector<casacore::Int> chanRange_p;
 		casacore::Bool dopsf_p;
 		casacore::Record controlRecord_p;
+		casacore::Record weightParams_p;
 		
 		casacore::Bool status_p;
 		casacore::Int serialBug_p; //have to send a private variable in serial case

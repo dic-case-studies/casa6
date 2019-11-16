@@ -30,7 +30,16 @@ else:
     from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
-
+try:
+    if is_CASA6:
+        from casampi.MPIEnvironment import MPIEnvironment
+        from casampi import MPIInterface
+    else:
+        from mpi4casa.MPIEnvironment import MPIEnvironment
+        from mpi4casa import MPIInterface
+    mpi_available = True
+except ImportError:
+    mpi_available = False
 def tclean(
     ####### Data Selection
     vis,#='', 
@@ -229,9 +238,17 @@ def tclean(
 
     pcube=False
     concattype=''
-    if parallel==True and specmode!='mfs':
-        pcube=True
-        parallel=False
+    #if parallel==True and specmode!='mfs':
+    #    pcube=True
+    #    parallel=False
+    ####set the children to load c++ libraries and applicator
+    ### need to NO do when ftmachine is not supported
+    if mpi_available and MPIEnvironment.is_mpi_enabled and specmode!='mfs':
+        mint=MPIInterface.MPIInterface()
+        cl=mint.getCluster()
+        cl._cluster.pgc("from casac import casac", False)
+        cl._cluster.pgc("si=casac.synthesisimager()", False)
+        cl._cluster.pgc("si.initmpi()", False)
 
     # catch non operational case (parallel cube tclean with interative=T)
     if pcube and interactive:

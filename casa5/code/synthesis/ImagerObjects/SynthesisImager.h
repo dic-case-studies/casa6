@@ -164,6 +164,7 @@ class SynthesisImager
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
 
+  virtual casacore::Bool weight(const Record&){ return false;}; /*not implemented here */
   //Stores the weight density in an image. Returns the image name 
   casacore::String getWeightDensity();
   //set the weight density to the visibility iterator
@@ -216,7 +217,11 @@ class SynthesisImager
   void setMovingSource(const casacore::String& movsource);
   ///return an estimate of memory it is going to use in kB
   virtual casacore::Long estimateRAM();
+  ///set and get if using cube gridding
+  virtual void setCubeGridding(const casacore::Bool val){doingCubeGridding_p=val;};
+  virtual casacore::Bool getCubeGridding(){return doingCubeGridding_p;};
 
+    
 protected:
  
   /////////////// Internal Functions
@@ -423,7 +428,7 @@ protected:
   SynthesisParamsGrid gridpars_p;
   SynthesisParamsImage impars_p;
   String movingSource_p;
-
+  casacore::Bool doingCubeGridding_p;
 
 };
 

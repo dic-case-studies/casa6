@@ -687,11 +687,23 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
       }
 
     itsMappers.addMapper(  createSIMapper( "default", imstor, ftm, iftm, id ) );
-    
+    imageDefined_p=true;
     return true;
   }
 
-
+ Bool SynthesisImagerVi2::weight(const Record& inrec){
+	String type, rmode, filtertype;
+	Quantity noise, fieldofview,filterbmaj,filterbmin, filterbpa;  
+	Double robust;
+	Int npixels;
+	Bool multiField, useCubeBriggs;
+	SynthesisUtilMethods::getFromWeightRecord(type, rmode,noise, robust,fieldofview,npixels, multiField, useCubeBriggs,
+				  filtertype, filterbmaj,filterbmin, filterbpa, inrec);
+	return weight(type, rmode,noise, robust,fieldofview,npixels, multiField, useCubeBriggs,
+				  filtertype, filterbmaj,filterbmin, filterbpa );
+				
+	 
+ }
  Bool SynthesisImagerVi2::weight(const String& type, const String& rmode,
 			       const Quantity& noise, const Double robust,
 			       const Quantity& fieldofview,
@@ -699,6 +711,8 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
 			       const String& filtertype, const Quantity& filterbmaj,
 			       const Quantity& filterbmin, const Quantity& filterbpa   )
   {
+	weightParams_p=SynthesisUtilMethods::fillWeightRecord(type, rmode,noise, robust,fieldofview,
+				 npixels, multiField, useCubeBriggs,filtertype, filterbmaj,filterbmin, filterbpa);  
     LogIO os(LogOrigin("SynthesisImagerVi2", "weight()", WHERE));
        try {
     	//Int nx=itsMaxShape[0];
@@ -904,7 +918,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			fudge_factor = 9;
 		}
 
-		chanchunks=nSubCubeFitInMemory(fudge_factor, imshape, padding);
+		auto a=nSubCubeFitInMemory(fudge_factor, imshape, padding);
+		chanchunks=std::get<0>(a);
 		/*log_l << "Required memory " << required_mem / nlocal_procs / 1024. / 1024. / 1024.
                  << "\nAvailable memory " << memory_avail / 1024. / 1024 / 1024.
                  << " (rc: memory fraction " << usr_memfrac << "% rc memory " << usr_mem / 1024.
@@ -981,7 +996,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     }
 
   /////////////////////////
-  int SynthesisImagerVi2::nSubCubeFitInMemory(const Int fudge_factor, const IPosition& imshape, const Float padding){
+  std::tuple<int, Vector<Int>, Vector<Int> > SynthesisImagerVi2::nSubCubeFitInMemory(const Int fudge_factor, const IPosition& imshape, const Float padding){
 	Double required_mem = fudge_factor * sizeof(Float);
 	int nsubcube=1;
 	CompositeNumber cn(uInt(imshape[0] * 2));
@@ -1020,17 +1035,36 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
               // TODO make chanchunks a divisor of nchannels?
 	}
 	nsubcube = nsubcube < 1 ? 1 : nsubcube;
-	  
-	return nsubcube; 
+	 if(nsubcube < (applicator.numProcs()-1))
+		 nsubcube=(applicator.numProcs()-1);
+	Int chunksize=imshape[3]/nsubcube;
+	Int rem=imshape[3] % nsubcube;
+	///Avoid an extra chunk with 1 channel as it cause bumps in linear interpolation
+	///See CAS-12625
+	while((rem==1) && (chunksize >1)){
+		nsubcube +=1;
+		chunksize=imshape[3]/nsubcube;
+		rem=imshape[3] % nsubcube;
+	}
+	if(rem !=0) ++nsubcube;
+      
+	Vector<Int> start(nsubcube,0);
+	Vector<Int> end(nsubcube,chunksize-1);
+	for (Int k=1; k < nsubcube; ++k){
+		start(k)=end(k-1)+1;
+		end(k)=((k !=nsubcube-1) || rem==0)? (start(k)+chunksize-1) : (start(k)+rem-1);
+	}
+	 
+	return make_tuple(nsubcube, start, end); 
   }
   
  void SynthesisImagerVi2::runMajorCycleCube( const Bool dopsf, 
 				      const Bool savemodel) {
 	LogIO os( LogOrigin("SynthesisImagerVi2","runMajorCycleCube",WHERE) );		  
 	if(dopsf)
-		runCubePSFGridding();
+		runCubeGridding(True);
 	else
-		runCubeResidualGridding(savemodel);
+		runCubeGridding(False, savemodel);
 	
 			  
 			  
@@ -1041,7 +1075,6 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     LogIO os( LogOrigin("SynthesisImagerVi2","runMajorCycle",WHERE) );
 
     //    cout << "Savemodel : " << savemodel << "   readonly : " << readOnly_p << "   usescratch : " << useScratch_p << endl;
-
     Bool savemodelcolumn = savemodel && !readOnly_p && useScratch_p;
     Bool savevirtualmodel = savemodel && !readOnly_p && !useScratch_p;
 
@@ -1376,7 +1409,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	return true;  
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  bool SynthesisImagerVi2::runCubeResidualGridding(Bool savemodel){
+  bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, Bool savemodel){
 	  //dummy for now as init is overloaded on this signature
         int argc=1;
         char **argv;
@@ -1385,34 +1418,52 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	if ( applicator.isController() ) {
 		CubeMajorCycleAlgorithm *cmc = new CubeMajorCycleAlgorithm();
 		//casa::applicator.defineAlgorithm(cmc);
-		
+		Vector<Int> startchan;
+		Vector<Int> endchan;
+		Int numchunks;
+		Int fudge_factor = 15;
+		if ((itsMappers.getFTM2(0))->name()=="MosaicFTNew") {
+			fudge_factor = 20;
+		}
+		else if ((itsMappers.getFTM2(0))->name()=="GridFT") {
+			fudge_factor = 9;
+		}
+		std::tie(numchunks, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
+		cerr << "NUMCHUNKS " << numchunks << " start " <<  startchan << " end " << endchan << endl;
 		Record controlRecord;
-        controlRecord.define("lastcycle",  savemodel);
-		controlRecord.define("nmajorcycles", nMajorCycles);
-        // Tell the child processes not to do the dividebyweight process as this is done
-		// right now in imager_base.py runMajorCycle
-		controlRecord.define("dividebyweight",  False);
-        ///For now just field 0 but should loop over all
+		//For now just field 0 but should loop over all
 		///This is to pass in explicit model, residual names etc
 		controlRecord.define("nfields", Int(imparsVec_p.nelements()));
         CountedPtr<SIImageStore> imstor = imageStore ( 0 );
         // checking that psf,  residual and sumwt is allDone
         //cerr << "shapes "  <<  imstor->residual()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
-		Vector<String> modelnames(Int(imparsVec_p.nelements()),"");
-		if(imstor->hasModel()){
-			modelnames(0)=imparsVec_p[0].imageName+".model";
-			imstor->model()->unlock();
-			controlRecord.define("modelnames", Vector<String>(1,impars_p.imageName+".model"));
+		if(!dopsf){
+			controlRecord.define("lastcycle",  savemodel);
+			controlRecord.define("nmajorcycles", nMajorCycles);
+			Vector<String> modelnames(Int(imparsVec_p.nelements()),"");
+			if(imstor->hasModel()){
+				modelnames(0)=imparsVec_p[0].imageName+".model";
+				imstor->model()->unlock();
+				controlRecord.define("modelnames", Vector<String>(1,impars_p.imageName+".model"));
+			}
 		}
+        // Tell the child processes not to do the dividebyweight process as this is done
+		// right now in imager_base.py runMajorCycle
+		controlRecord.define("dividebyweight",  False);
+        
 		Record vecSelParsRec;
+		Vector<Int>vecRange(2);
 		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
 			Record selparsRec = dataSel_p[k].toRecord();
 			vecSelParsRec.defineRecord(String::toString(k), selparsRec);
 		}
 		Record imparsRec = impars_p.toRecord();
 		Record gridparsRec = gridpars_p.toRecord();
-        Int numchan=imstor->residual()->shape() [3];
-        imstor->residual()->unlock();
+        Int numchan=(dopsf) ? imstor->psf()->shape()[3] : imstor->residual()->shape() [3];
+		if(dopsf)
+			imstor->psf()->unlock();
+		else
+			imstor->residual()->unlock();
         imstor->sumwt()->unlock();
 		
 		// For now this contains lastcycle if necessary in the future this
@@ -1423,8 +1474,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         Int rank ( 0 );
         Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
         Bool allDone ( false );
-		Bool dopsf=False; // need to keep in context for serial bug
-        for ( Int k=0; k < numchan; ++k ) {
+        for ( Int k=0; k < numchunks; ++k ) {
             assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
             //cerr << "assigned "<< assigned << endl;
             while ( !assigned ) {
@@ -1448,11 +1498,15 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
             // put gridders params #3
             applicator.put ( gridparsRec );
             // put which channel to process #4
-            applicator.put ( k );
+			vecRange(0)=startchan(k);
+			vecRange(1)=endchan(k);
+            applicator.put ( vecRange );
             // psf or residual CubeMajorCycleAlgorithm #5
             applicator.put ( dopsf );
             // store modelvis and other controls #6
             applicator.put ( controlRecord );
+			// weighting scheme #7
+			applicator.put( weightParams_p);
             /// Tell worker to process it
             applicator.apply ( *cmc );
 
