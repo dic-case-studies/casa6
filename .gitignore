@@ -94,13 +94,6 @@ casa5/gcwrap/tools/scimath/pdf_files
 casa5/gcwrap/tools/synthesis/htmlfiles
 casa5/gcwrap/tools/synthesis/pdf_files
 /linux_64b
-<<<<<<< HEAD
-!gcwrap/python/scripts/imagerhelpers/*~
-!gcwrap/python/scripts/imagerhelpers/*.swp
-!gcwrap/python/scripts/imagerhelpers/*.swo
-.vscode/*
-=======
 !casa5/gcwrap/python/scripts/imagerhelpers/*~
 !casa5/gcwrap/python/scripts/imagerhelpers/*.swp
 !casa5/gcwrap/python/scripts/imagerhelpers/*.swo
->>>>>>> master
