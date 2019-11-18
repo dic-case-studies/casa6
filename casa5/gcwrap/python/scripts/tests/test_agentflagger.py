@@ -3,8 +3,16 @@ import unittest
 import os
 import filecmp
 import pprint
-from taskinit import aftool
-from __main__ import default
+
+try:
+    # CASA 6
+    from casatools import agentflagger, ctsys
+    ag_datapath = ctsys.resolve('regression/unittest/flagdata/')
+except ImportError:
+    # CASA 5
+    from taskinit import aftool as agentflagger
+    ag_datapath = os.environ.get('CASAPATH').split()[0]
+    ag_datapath = os.path.join(ag_datapath, 'data/regression/unittest/flagdata/')
 
 
 class test_base(unittest.TestCase):
@@ -13,12 +21,10 @@ class test_base(unittest.TestCase):
         self.vis = "cal.fewscans.bpass"
 
         if os.path.exists(self.vis):
-            print "The CalTable is already around, just unflag"
+            print("The CalTable is already around, just unflag")
         else:
-            print "Moving data..."
-            os.system('cp -r ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            print("Moving data...")
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -29,13 +35,11 @@ class test_base(unittest.TestCase):
         self.vis = "X7ef.tsys"
          
         if os.path.exists(self.vis):
-            print "The CalTable is already around, just unflag"
+            print("The CalTable is already around, just unflag")
             
         else:
-            print "Moving data..."
-            os.system('cp -r ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            print("Moving data...")
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 
@@ -46,12 +50,10 @@ class test_base(unittest.TestCase):
         self.vis = "Four_ants_3C286.ms"
 
         if os.path.exists(self.vis):
-            print "The MS is already around, just unflag"
+            print("The MS is already around, just unflag")
         else:
-            print "Moving data..."
-            os.system('cp -r ' + \
-                         os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            print("Moving data...")
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
 
@@ -62,12 +64,10 @@ class test_base(unittest.TestCase):
         self.vis = "TwoSpw.ms"
 
         if os.path.exists(self.vis):
-            print "The MS is already around, just unflag"
+            print("The MS is already around, just unflag")
         else:
-            print "Moving data..."
-            os.system('cp -r ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            print("Moving data...")
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_table()
@@ -77,12 +77,10 @@ class test_base(unittest.TestCase):
         self.vis = "uid___A002_X30a93d_X43e_small.ms"
 
         if os.path.exists(self.vis):
-            print "The MS is already around, just unflag"
+            print("The MS is already around, just unflag")
         else:
-            print "Moving data..."
-            os.system('cp -r ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            print("Moving data...")
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_table()
@@ -92,12 +90,10 @@ class test_base(unittest.TestCase):
         self.vis = "SDFloatColumn.ms"
 
         if os.path.exists(self.vis):
-            print "The MS is already around, just unflag"
+            print("The MS is already around, just unflag")
         else:
-            print "Moving data..."
-            os.system('cp -r ' + \
-                        os.environ.get('CASAPATH').split()[0] +
-                        "/data/regression/unittest/flagdata/" + self.vis + ' ' + self.vis)
+            print("Moving data...")
+            os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_table()
@@ -108,16 +104,13 @@ class test_base(unittest.TestCase):
             
         # Need a fresh restart. Copy the MS
         shutil.rmtree(self.vis, True)
-        os.system('rm -rf ' + self.vis + '.flagversions')
-        
-        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/" 
-        os.system('cp -RH '+datapath + self.vis +' '+ self.vis)            
-        
+        os.system('rm -rf ' + self.vis + '.flagversions')        
+        os.system('cp -RL {0} {1}'.format(os.path.join(ag_datapath, self.vis),self.vis))
         self.unflag_table()
         
     def unflag_table(self):
 
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
@@ -135,7 +128,7 @@ class test_tsys(test_base):
 
     def test_unsupported_elevation_tsys(self):
         '''AgentFlagger: Unsupported elevation mode'''
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         aflocal.parseelevationparameters()
@@ -146,7 +139,7 @@ class test_tsys(test_base):
 
     def test_mixed_agents_tsys(self):
         '''AgentFlagger: supported and unsupported agents in a list'''
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         aflocal.parsemanualparameters(spw='1')
@@ -159,7 +152,7 @@ class test_tsys(test_base):
         aflocal.done() 
         
         # Check the summary dictionary with field breakdown
-        fields = res['report0'].keys()
+        fields = list(res['report0'].keys())
         fields.remove('name')
         fields.remove('type')
         fflags1 = 0
@@ -179,7 +172,7 @@ class test_tsys(test_base):
         
     def test_manual_field_selection_agent_layer_for_tsys_CalTable(self):
         """AgentFlagger:: Manually flag a Tsys-based CalTable using flag agent selection engine for field """
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
@@ -199,7 +192,7 @@ class test_tsys(test_base):
 
     def test_manual_antenna_selection_agent_layer_for_tsys_CalTable(self):
         """AgentFlagger:: Manually flag a Tsys-based CalTable using flag agent selection engine for antenna"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
@@ -219,7 +212,7 @@ class test_tsys(test_base):
         """AgentFlagger:: Manually flag a Tsys-based CalTable using flag agent selection engine for antenna"""
 
         # Run the previous test but using the specific parsing functions
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         aflocal.parsemanualparameters(apply=False)
@@ -234,7 +227,7 @@ class test_tsys(test_base):
 
     def test_manual_field_msSelection_layer_for_tsys_CalTable(self):
         """AgentFlagger:: Manually flag a Tsys-based CalTable using MSSelection for field """
-        aflocal = aftool()
+        aflocal = agentflagger()
 
         aflocal.open(self.vis)
         aflocal.selectdata(field='0')
@@ -261,7 +254,7 @@ class test_tsys(test_base):
 
     def test_manual_antenna_msSelection_layer_for_tsys_CalTable(self):
         """AgentFlagger:: Manually flag a Tsys-based CalTable using MSSelection for antenna"""
-        aflocal = aftool()
+        aflocal = agentflagger()
 
         aflocal.open(self.vis)
         aflocal.selectdata(antenna='DV09')
@@ -286,7 +279,7 @@ class test_tsys(test_base):
         
     def test_clip_minmax_fparm_sol1(self):
         """AgentFlagger:: Test cliping first calibration solution product of FPARAM column using a minmax range """
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         correlation = 'Sol1'
         aflocal.open(self.vis)
@@ -312,7 +305,7 @@ class test_tsys(test_base):
         """AgentFlagger:: Test cliping first calibration solution product of FPARAM column using a minmax range """
 
         # Run the previous test but using the specific parsing functions
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         correlation = 'Sol1'
         aflocal.open(self.vis)
@@ -333,7 +326,7 @@ class test_tsys(test_base):
 
     def test_clip_minmax_fparm_sol1_extension(self):
         """AgentFlagger:: Test cliping first calibration solution product of FPARAM column using a minmax range, and then extend to the other solution """
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         aflocal.open(self.vis)
         aflocal.selectdata()
@@ -356,7 +349,7 @@ class test_tsys(test_base):
 
     def test_clip_minmax_fparm_sol2(self):
         """AgentFlagger:: Test cliping second calibration solution product of FPARAM column using a minmax range """
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         correlation = 'Sol2'
         aflocal.open(self.vis)
@@ -380,7 +373,7 @@ class test_tsys(test_base):
 
     def test_clip_minmax_fparm_sol1sol2(self):
         """AgentFlagger:: Test cliping first and second calibration solution products of FPARAM column using a minmax range """
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         correlation = 'Sol1,Sol2'
         aflocal.open(self.vis)
@@ -404,7 +397,7 @@ class test_tsys(test_base):
 
     def test_clip_minmax_fparm_all(self):
         """AgentFlagger:: Test cliping all calibration solution products of FPARAM column using a minmax range """
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         correlation = ''
         aflocal.open(self.vis)
@@ -428,7 +421,7 @@ class test_tsys(test_base):
 
     def test_clip_zeros_fparm_all(self):
         """AgentFlagger:: Test cliping only zeros in all calibration solution products of FPARAM column"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         correlation = ''
         aflocal.open(self.vis)
@@ -452,7 +445,7 @@ class test_tsys(test_base):
 
     def test_clip_nan_and_inf_fparm_all(self):
         """AgentFlagger:: Test cliping only NaNs/Infs in all calibration solution products of FPARAM column"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         correlation = ''
         aflocal.open(self.vis)
@@ -476,7 +469,7 @@ class test_tsys(test_base):
 
     def test_clip_minmax_fparm_error_case_absall(self):
         """AgentFlagger:: Error case test when a complex operator is used with CalTables """
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'FPARAM'
         correlation = 'ABS_ALL'
         aflocal.open(self.vis)
@@ -501,7 +494,7 @@ class test_tsys(test_base):
  
     def test_clip_minmax_snr_all_for_tsys_CalTable(self):
         """AgentFlagger:: Test cliping all calibration solution products of SNR column using a minmax range for Tsys CalTable"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'SNR'
         correlation = ''
         aflocal.open(self.vis)
@@ -532,7 +525,7 @@ class test_bpass(test_base):
 
     def test_default_cparam_bpass(self):
         '''Flagdata: flag CPARAM data column'''
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         aflocal.parseclipparameters(clipzeros=True,datacolumn='CPARAM')
@@ -544,7 +537,7 @@ class test_bpass(test_base):
 
     def test_manual_field_selection_agent_layer_for_bpass_CalTable(self):
         """AgentFlagger:: Manually flag a bpass-based CalTable using flag agent selection engine for field """
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
@@ -564,7 +557,7 @@ class test_bpass(test_base):
 
     def test_manual_antenna_selection_agent_layer_for_bpass_CalTable(self):
         """AgentFlagger:: Manually flag a bpass-based CalTable using flag agent selection engine for antenna"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
@@ -582,7 +575,7 @@ class test_bpass(test_base):
 
     def test_manual_field_msSelection_layer_for_bpass_CalTable(self):
         """AgentFlagger:: Manually flag a bpass-based CalTable using MSSelection for field """
-        aflocal = aftool()
+        aflocal = agentflagger()
 
         aflocal.open(self.vis)
         aflocal.selectdata({'field':'3C286_A'})
@@ -609,7 +602,7 @@ class test_bpass(test_base):
 
     def test_manual_antenna_msSelection_layer_for_bpass_CalTable(self):
         """AgentFlagger:: Manually flag a bpass-based CalTable using MSSelection for antenna"""
-        aflocal = aftool()
+        aflocal = agentflagger()
 
         aflocal.open(self.vis)
         aflocal.selectdata({'antenna':'ea09'})
@@ -634,7 +627,7 @@ class test_bpass(test_base):
 
     def test_clip_minmax_cparam_for_bpass(self):
         """AgentFlagger:: Clip all calibration solutions of CPARAM column using a minmax range"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'CPARAM'
         aflocal.open(self.vis)
         aflocal.selectdata()
@@ -650,7 +643,7 @@ class test_bpass(test_base):
         
     def test_clip_minmax_snr_all_for_bpass_CalTable(self):
         """AgentFlagger:: Test cliping all calibration solution products of SNR column using a minmax range for bpass CalTable"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = 'SNR'
         correlation = ''
         aflocal.open(self.vis)
@@ -674,7 +667,7 @@ class test_bpass(test_base):
 
     def test_rflag_cparam_sol2(self):
         """AgentFlagger:: Test rflag solution 2 of CPARAM column for bpass"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         correlation = 'Sol2'
         aflocal.open(self.vis)
         aflocal.selectdata()
@@ -693,7 +686,7 @@ class test_bpass(test_base):
     def test_tfcrop_cparam_sol1_extension(self):
         """AgentFlagger:: Test tfcrop first calibration solution product of CPARAM column, 
         and then extend to the other solution for bpass CalTable"""
-        aflocal = aftool()
+        aflocal = agentflagger()
         datacolumn = "CPARAM"
         correlation = 'Sol1'
         aflocal.open(self.vis)
@@ -725,7 +718,7 @@ class test_bpass(test_base):
         '''Test the antenna integrations flagging mode on a bpass-based CalTable
         using MSSelection for antenna'''
 
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         
@@ -760,7 +753,7 @@ class test_MS(test_base):
     def test_null_intent_selection1(self):
         '''Agentflagger: handle unknown scan intent in list mode'''
         
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         aflocal.parsemanualparameters(intent='FOCUS') # non-existing intent
@@ -777,7 +770,7 @@ class test_MS(test_base):
         
     def test_summarylist1(self):
         '''agentflagger: multiple summaries'''
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         aflocal.parsesummaryparameters(name='summary_1')
@@ -809,7 +802,7 @@ class test_MS_datacols(test_base):
         
     def test_model_no_model_col(self):
         '''AgentFlagger:" raise an error when there isn't a MODEL or virtual MODEL column'''
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         aflocal.parseclipparameters(clipminmax=[2.3,3.1],datacolumn='RESIDUAL')
@@ -826,7 +819,7 @@ class test_display(test_base):
     def test_display_data_single_channel_selection(self):
         """AgentFlagger:: Check nominal behaviour for single spw:chan selection """
         self.setUp_4Ants()
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
@@ -843,7 +836,7 @@ class test_display(test_base):
     def test_display_data_multiple_channel_selection(self):
         """AgentFlagger:: Check behaviour for multiple spw:chan selection """
         self.setUp_4Ants()
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
@@ -861,7 +854,7 @@ class test_display(test_base):
     def test_display_data_different_corrs_per_spw(self):
         """AgentFlagger:: Check behaviour when the number of correlation products changes between SPWs """
         self.setUp_CAS_4052()
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata()
         agentUnflag={'apply':True,'mode':'unflag'}
@@ -879,7 +872,7 @@ class test_display(test_base):
     def test_display_cal_tables(self):
         '''AgentFlagger: Select spws, display and flag cal tables'''
         self.setUp_bpass_case()
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata(spw='1')
         aflocal.parsemanualparameters(spw='1:0~10;60~63')
@@ -905,7 +898,7 @@ class test_display(test_base):
     def test_display_float_data(self):
         '''AgentFlagger: Select spw, display and flag single-dish MS'''
         self.setUp_float_data()
-        aflocal = aftool()
+        aflocal = agentflagger()
         aflocal.open(self.vis)
         aflocal.selectdata(spw='1~4')
         aflocal.parsemanualparameters()
@@ -939,3 +932,6 @@ def suite():
             test_MS,
             test_MS_datacols,
             cleanup]
+
+if __name__ == '__main__':
+    unittest.main()
