@@ -7050,7 +7050,7 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
         noWeatherData = False
         if (len(matches)>0 and len(matches2) > 0):
             # average the weather points enclosed by the scan time range
-            selectedValues = range(matches[0], matches2[-1]+1)
+            selectedValues = list(range(matches[0], matches2[-1]+1))
             if (selectedValues == []):
                 # there was a either gap in the weather data, or an incredibly short scan duration
                 if (verbose):
