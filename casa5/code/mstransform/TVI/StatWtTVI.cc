@@ -26,6 +26,8 @@
 #include <casacore/ms/MSOper/MSMetaData.h>
 #include <casacore/tables/Tables/ArrColDesc.h>
 
+#include <mstransform/TVI/StatWtClassicalDataAggregator.h>
+#include <mstransform/TVI/StatWtFloatingWindowDataAggregator.h>
 #include <mstransform/TVI/StatWtVarianceAndWeightCalculator.h>
 
 #ifdef _OPENMP
@@ -288,7 +290,25 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
             << *_slidingTimeWindowWidth << " s" << LogIO::POST;
         */
         //  }
+
     _configureStatAlg(config);
+    if (_doOneShot) {
+        _dataAggregator.reset(
+            new StatWtClassicalDataAggregator(
+                getVii(), _mustComputeWtSp, _chanBins, _samples, _column,
+                _noModel, _chanSelFlags, _wtStats, _wtrange, _combineCorr
+            )
+        );
+    }
+    else {
+        _dataAggregator.reset(
+               new StatWtFloatingWindowDataAggregator(
+                getVii(), _mustComputeWtSp, _chanBins, _samples, _column,
+                _noModel, _chanSelFlags, _combineCorr, _wtStats, _wtrange,
+                _binWidthInSeconds, _timeBlockProcessing
+            )
+        );
+    }
     return True;
 }
 
@@ -1506,13 +1526,20 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
 }
 
 void StatWtTVI::_gatherAndComputeWeights() const {
+    _dataAggregator->aggregate();
+    /*
     if (_doOneShot) {
         // cout << __FILE__ << " " << __LINE__ << endl;
         //_gatherAndComputeWeightsOneShotProcessing();
+         */
+        /*
         StatWtClassicalDataAggregator agg(
             getVii(), _mustComputeWtSp, _chanBins, _samples, _column, _noModel,
             _chanSelFlags, _combineCorr
         );
+        */
+
+    /*
         agg.aggregate();
         // cout << __FILE__ << " " << __LINE__ << endl;
 
@@ -1522,6 +1549,7 @@ void StatWtTVI::_gatherAndComputeWeights() const {
         // cout << __FILE__ << " " << __LINE__ << endl;
 
     }
+    */
 }
 
 void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {

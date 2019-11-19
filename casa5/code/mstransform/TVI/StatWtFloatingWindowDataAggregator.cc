@@ -1,5 +1,3 @@
-//# StatWtTVI.cc: This file contains the implementation of the StatWtTVI class.
-//#
 //#  CASA - Common Astronomy Software Applications (http://casa.nrao.edu/)
 //#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All rights reserved.
 //#  Copyright (C) European Southern Observatory, 2011, All rights reserved.
@@ -19,9 +17,11 @@
 //#  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 //#  MA 02111-1307  USA
 
-#include <mstransform/TVI/StatWtFloatingWindowAggregator.h>
+#include <mstransform/TVI/StatWtFloatingWindowDataAggregator.h>
 
 #include <scimath/StatsFramework/ClassicalStatistics.h>
+
+#include <msvis/MSVis/ViImplementation2.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -34,7 +34,7 @@ namespace casa {
 
 namespace vi {
 
-StatWtFloatingWindowAggregator::StatWtFloatingWindowAggregator(
+StatWtFloatingWindowDataAggregator::StatWtFloatingWindowDataAggregator(
     ViImplementation2 *const vii,
     std::shared_ptr<const Bool> mustComputeWtSp,
     const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>>& chanBins,
@@ -47,18 +47,482 @@ StatWtFloatingWindowAggregator::StatWtFloatingWindowAggregator(
             Array<Bool>::const_iterator
         >
     > wtStats,
-    std::shared_ptr<
-        const std::pair<casacore::Double, casacore::Double>
-    > wtrange
+    shared_ptr<const pair<Double, Double>> wtrange,
+    shared_ptr<const Double> binWidthInSeconds,
+    casacore::Bool timeBlockProcessing
 ) : StatWtDataAggregator(
-       chanBins, samples, column, noModel, chanSelFlags, mustComputeWtSp,
-       wtStats, wtrange
-    ),
-    _vii(vii), _combineCorr(combineCorr) {}
+       vii, chanBins, samples, column, noModel, chanSelFlags, mustComputeWtSp,
+       wtStats, wtrange, combineCorr
+    ), _binWidthInSeconds(binWidthInSeconds),
+    _timeBlockProcessing(timeBlockProcessing) {}
 
-StatWtFloatingWindowAggregator::~StatWtFloatingWindowAggregator() {}
+StatWtFloatingWindowDataAggregator::~StatWtFloatingWindowDataAggregator() {}
 
-void StatWtFloatingWindowAggregator::aggregate() {
+void StatWtFloatingWindowDataAggregator::aggregate() {
+    // cout << __func__ << endl;
+    ThrowIf(
+        ! (_binWidthInSeconds || _nTimeStampsInBin ),
+        "Logic error: neither _binWidthInSeconds"
+        "nor _nTimeStamps has been specified"
+    );
+    //auto* vii = getVii();
+    auto* vb = _vii->getVisBuffer();
+    // map of rowID (the index of the vector) to rowIDs that should be used to
+    // compute the weight for the key rowID
+    std::vector<std::set<uInt>> rowMap;
+    auto firstTime = True;
+    // each subchunk is guaranteed to represent exactly one time stamp
+    std::vector<Double> subChunkToTimeStamp;
+    // Baseline-subchunk number pair to row index in that chunk
+    std::map<std::pair<StatWtTypes::Baseline, uInt>, uInt> baselineSubChunkToIndex;
+    //auto halfWidth = *_slidingTimeWindowWidth/2;
+    // we build up the chunk data in the chunkData and chunkFlags cubes
+    Cube<Complex> chunkData;
+    Cube<Bool> chunkFlags;
+    // chunkExposures needs to be a Cube rather than a Vector so the individual
+    // values have one-to-one relationships to the corresponding data values
+    // and so simplify dealing with the exposures which is fundamentally a
+    // Vector
+    // Cube<Double> chunkExposures;
+    std::vector<Double> exposures;
+    uInt subchunkStartRowNum = 0;
+    auto initChanSelTemplate = True;
+    Cube<Bool> chanSelFlagTemplate, chanSelFlags;
+    // we cannot know the spw until inside the subchunk loop
+    Int spw = -1;
+    _rowIDInMSToRowIndexInChunk.clear();
+    Slicer sl(IPosition(3, 0), IPosition(3, 1));
+    auto slStart = sl.start();
+    auto slEnd = sl.end();
+    std::vector<std::pair<uInt, uInt>> idToChunksNeededByIDMap,
+        chunkNeededToIDsThatNeedChunkIDMap;
+    _limits(idToChunksNeededByIDMap, chunkNeededToIDsThatNeedChunkIDMap);
+    uInt subChunkID = 0;
+    for (_vii->origin(); _vii->more(); _vii->next(), ++subChunkID) {
+        if (_checkFirstSubChunk(spw, firstTime, vb)) {
+            return;
+        }
+        if (! _mustComputeWtSp) {
+            _mustComputeWtSp.reset(
+                new Bool(
+                    vb->existsColumn(VisBufferComponent2::WeightSpectrum)
+                )
+            );
+        }
+        _rowIDInMSToRowIndexInChunk[*vb->rowIds().begin()] = subchunkStartRowNum;
+        const auto& ant1 = vb->antenna1();
+        const auto& ant2 = vb->antenna2();
+        // [nCorrs, nFreqs, nRows)
+        const auto nrows = vb->nRows();
+        // there is no guarantee a previous subchunk will be included,
+        // eg if the timewidth is small enough
+        // This is the first subchunk ID that should be used for averaging
+        // grouping data for weight computation of the current subchunk ID.
+        auto firstChunkNeededByCurrentID = idToChunksNeededByIDMap[subChunkID].first;
+        auto firstChunkThatNeedsCurrentID = chunkNeededToIDsThatNeedChunkIDMap[subChunkID].first;
+        auto subchunkTime = vb->time()[0];
+        auto rowInChunk = subchunkStartRowNum;
+        pair<StatWtTypes::Baseline, uInt> mypair;
+        mypair.second = subChunkID;
+        for (Int row=0; row<nrows; ++row, ++rowInChunk) {
+            // loop over rows in sub chunk, grouping baseline specific data
+            // together
+            const auto baseline = _baseline(ant1[row], ant2[row]);
+            mypair.first = baseline;
+            baselineSubChunkToIndex[mypair] = rowInChunk;
+            std::set<uInt> myRowNums;
+            myRowNums.insert(rowInChunk);
+            if (subChunkID > 0) {
+                auto subchunk = min(
+                    firstChunkNeededByCurrentID, firstChunkThatNeedsCurrentID
+                );
+                for (; subchunk < subChunkID; ++subchunk) {
+                    const auto myend = baselineSubChunkToIndex.end();
+                    mypair.second = subchunk;
+                    auto testFound = baselineSubChunkToIndex.find(mypair);
+                    if (testFound != myend) {
+                        const auto existingRowNum = testFound->second;
+                        if (subchunk >= firstChunkNeededByCurrentID) {
+                            // The subchunk data is needed for computation
+                            // of the current subchunkID's weights
+                            myRowNums.insert(existingRowNum);
+                        }
+                        if (subchunk >= firstChunkThatNeedsCurrentID) {
+                            rowMap[existingRowNum].insert(rowInChunk);
+                        }
+                    }
+                }
+            }
+            rowMap.push_back(myRowNums);
+            // debug
+            /*
+            if (baseline == Baseline(4, 6)) {
+                auto myrow = rowMap.size() - 1;
+                cout << "row num " << myrow << " included rows " << rowMap[myrow] << endl;
+            }
+            */
+        }
+        // cout << __FILE__ << " " << __LINE__ << endl;
+        const auto dataCube = _dataCube(vb);
+        const auto resultantFlags = _getResultantFlags(
+            chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
+            spw, vb->flagCube()
+        );
+        const auto myExposures = vb->exposure().tovector();
+        exposures.insert(
+            exposures.end(), myExposures.begin(), myExposures.end()
+        );
+        const auto cubeShape = dataCube.shape();
+        // Cube<Double> resultExposures(cubeShape);
+        IPosition sliceStart(3, 0);
+        auto sliceEnd = cubeShape - 1;
+        // Slicer exposureSlice(sliceStart, sliceEnd, Slicer::endIsLast);
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
+        /*
+        for (uInt jj=0; jj<cubeShape[2]; ++jj) {
+            sliceStart[2] = jj;
+            sliceEnd[2] = jj;
+            exposureSlice.setStart(sliceStart);
+            exposureSlice.setEnd(sliceEnd);
+
+            // set all exposures in the slice to the same value
+
+            resultExposures(exposureSlice) = exposures[jj];
+        }
+        */
+
+        // build up chunkData and chunkFlags one subchunk at a time
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
+        if (chunkData.empty()) {
+            chunkData = dataCube;
+            chunkFlags = resultantFlags;
+            //chunkExposures = resultExposures;
+        }
+        else {
+            auto newShape = chunkData.shape();
+            newShape[2] += nrows;
+            chunkData.resize(newShape, True);
+            chunkFlags.resize(newShape, True);
+            //chunkExposures.resize(newShape, True);
+            slStart[2] = subchunkStartRowNum;
+            sl.setStart(slStart);
+            slEnd = newShape - 1;
+            sl.setEnd(slEnd);
+            chunkData(sl) = dataCube;
+            chunkFlags(sl) = resultantFlags;
+            //chunkExposures(sl) = resultExposures;
+        }
+        subChunkToTimeStamp.push_back(subchunkTime);
+        subchunkStartRowNum += nrows;
+    }
+    // cout << "chunkexposres shape " << chunkExposures.shape() << endl;
+    _computeWeightsMultiLoopProcessing(
+        chunkData, chunkFlags, Vector<Double>(exposures), rowMap, spw
+    );
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
+}
+
+void StatWtFloatingWindowDataAggregator::_computeWeightsMultiLoopProcessing(
+    const Cube<Complex>& data, const Cube<Bool>& flags,
+    const Vector<Double>& exposures, const std::vector<std::set<uInt>>& rowMap,
+    uInt spw
+) const {
+    // cout << "data shape " << data.shape() << endl;
+    // cout << "flags shape " << flags.shape() << endl;
+    // cout << "exposures shape " << exposures.shape() << endl;
+    // cout << "rowMap size " << rowMap.size() << endl;
+    auto chunkShape = data.shape();
+    const auto nActCorr = chunkShape[0];
+    const auto ncorr = _combineCorr ? 1 : nActCorr;
+    const auto& chanBins = _chanBins.find(spw)->second;
+    _multiLoopWeights.resize(
+        IPosition(3, ncorr, chanBins.size(), chunkShape[2]),
+        False
+    );
+    const auto nRows = rowMap.size();
+    // cout << __FILE__ << " " << __LINE__ << endl;
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (size_t iRow=0; iRow<nRows; ++iRow) {
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
+        IPosition chunkSliceStart(3, 0);
+        auto chunkSliceLength = chunkShape;
+        chunkSliceLength[2] = 1;
+        Slicer chunkSlice(
+            chunkSliceStart, chunkSliceLength, Slicer::endIsLength
+        );
+        auto chunkSliceEnd = chunkSlice.end();
+        auto appendingSlice = chunkSlice;
+        auto appendingSliceStart = appendingSlice.start();
+        auto appendingSliceEnd = appendingSlice.end();
+        auto intraChunkSlice = appendingSlice;
+        auto intraChunkSliceStart = intraChunkSlice.start();
+        auto intraChunkSliceEnd = intraChunkSlice.end();
+        intraChunkSliceEnd[0] = nActCorr - 1;
+        const auto& rowsToInclude = rowMap[iRow];
+        auto dataShape = chunkShape;
+        dataShape[2] = rowsToInclude.size();
+        Cube<Complex> dataArray(dataShape);
+        Cube<Bool> flagArray(dataShape);
+        auto siter = rowsToInclude.begin();
+        auto send = rowsToInclude.end();
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
+        Vector<Double> exposureVector(rowsToInclude.size(), 0);
+        uInt n = 0;
+        // create an array with only the rows that should
+        // be used in the computation of weights for the
+        // current row
+        for (; siter!=send; ++siter, ++n) {
+            exposureVector[n] = exposures[*siter];
+            appendingSliceStart[2] = n;
+            appendingSlice.setStart(appendingSliceStart);
+            appendingSliceEnd[2] = n;
+            appendingSlice.setEnd(appendingSliceEnd);
+            chunkSliceStart[2] = *siter;
+            chunkSlice.setStart(chunkSliceStart);
+            chunkSliceEnd[2] = *siter;
+            chunkSlice.setEnd(chunkSliceEnd);
+            dataArray(appendingSlice) = data(chunkSlice);
+            flagArray(appendingSlice) = flags(chunkSlice);
+        }
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
+        // slice up for correlations and channel binning
+        intraChunkSliceEnd[2] = dataShape[2] - 1;
+        for (uInt corr=0; corr<ncorr; ++corr) {
+            // cout << __FILE__ << " " << __LINE__ << endl;
+
+            if (! _combineCorr) {
+                intraChunkSliceStart[0] = corr;
+                intraChunkSliceEnd[0] = corr;
+            }
+            auto citer = chanBins.begin();
+            auto cend = chanBins.end();
+            auto iChanBin = 0;
+            for (; citer!=cend; ++citer, ++iChanBin) {
+                // cout << __FILE__ << " " << __LINE__ << endl;
+
+                intraChunkSliceStart[1] = citer->start;
+                intraChunkSliceEnd[1] = citer->end;
+                intraChunkSlice.setStart(intraChunkSliceStart);
+                intraChunkSlice.setEnd(intraChunkSliceEnd);
+                // cout << __FILE__ << " " << __LINE__ << endl;
+
+                _multiLoopWeights(corr, iChanBin, iRow)
+                    = _varianceComputer->computeWeight(
+                        dataArray(intraChunkSlice), flagArray(intraChunkSlice),
+                        exposureVector, spw, exposures[iRow]
+                    );
+                // cout << __FILE__ << " " << __LINE__ << endl;
+
+            }
+            // cout << __FILE__ << " " << __LINE__ << endl;
+
+        }
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
+    }
+    //cout << __FILE__ << " " << __LINE__ << endl;
+
+}
+
+void StatWtFloatingWindowDataAggregator::weightSpectrumFlags(
+    Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags,
+    const Vector<Int>& ant1, const Vector<Int>& /* ant2 */,
+    const Vector<Int>& spws, const Vector<Double>& /* exposures */,
+    const Vector<uInt>& rowIDs
+) const {
+
+/*
+void StatWtFloatingWindowDataAggregator::weightSpectrumFlags(
+    Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags
+) const {
+*/
+    // fish out the rows relevant to this subchunk
+    // Vector<uInt> rowIDs;
+    // getRowIds(rowIDs);
+    const auto start = _rowIDInMSToRowIndexInChunk.find(*rowIDs.begin());
+    ThrowIf(
+        start == _rowIDInMSToRowIndexInChunk.end(),
+        "Logic Error: Cannot find requested subchunk in stored chunk"
+    );
+    // this is the row index in the chunk
+    auto chunkRowIndex = start->second;
+    // auto chunkRowEnd = chunkRowIndex + nRows();
+    auto chunkRowEnd = chunkRowIndex + ant1.size();
+    Slicer slice(IPosition(3, 0), flagCube.shape(), Slicer::endIsLength);
+    auto sliceStart = slice.start();
+    auto sliceEnd = slice.end();
+    auto nCorrBins = _combineCorr ? 1 : flagCube.shape()[0];
+    // Vector<Int> spws;
+    // spectralWindows(spws);
+    auto spw = *spws.begin();
+    const auto& chanBins = _chanBins.find(spw)->second;
+    auto subChunkRowIndex = 0;
+    for (; chunkRowIndex < chunkRowEnd; ++chunkRowIndex, ++subChunkRowIndex) {
+        sliceStart[2] = subChunkRowIndex;
+        sliceEnd[2] = subChunkRowIndex;
+        auto iChanBin = 0;
+        for (const auto& chanBin: chanBins) {
+            sliceStart[1] = chanBin.start;
+            sliceEnd[1] = chanBin.end;
+            auto corr = 0;
+            for (; corr < nCorrBins; ++corr) {
+                if (! _combineCorr) {
+                    sliceStart[0] = corr;
+                    sliceEnd[0] = corr;
+                }
+                slice.setStart(sliceStart);
+                slice.setEnd(sliceEnd);
+                _updateWtSpFlags(
+                    wtsp, flagCube, checkFlags, slice,
+                    _multiLoopWeights(corr, iChanBin, chunkRowIndex)
+                );
+            }
+            ++iChanBin;
+        }
+    }
+}
+
+void StatWtFloatingWindowDataAggregator::_limits(
+    std::vector<std::pair<uInt, uInt>>& idToChunksNeededByIDMap,
+    std::vector<std::pair<uInt, uInt>>& chunkNeededToIDsThatNeedChunkIDMap
+) const {
+    // auto* vii = getVii();
+    auto* vb = _vii->getVisBuffer();
+    pair<uInt, uInt> p, q;
+    uInt nSubChunks = _vii->nSubChunks();
+    if (_nTimeStampsInBin) {
+        // fixed number of time stamps specified
+        if (_timeBlockProcessing) {
+            // integer division
+            uInt nBlocks = nSubChunks/(*_nTimeStampsInBin);
+            if (nSubChunks % *_nTimeStampsInBin > 0) {
+                ++nBlocks;
+            }
+            uInt subChunkCount = 0;
+            for (uInt blockCount = 0; blockCount < nBlocks; ++blockCount) {
+                if ((subChunkCount + *_nTimeStampsInBin <= nSubChunks)) {
+                    p.first = subChunkCount;
+                    p.second = subChunkCount + *_nTimeStampsInBin - 1;
+                }
+                else {
+                    // chunk edge
+                    p.first = nSubChunks - *_nTimeStampsInBin;
+                    p.second = nSubChunks - 1;
+                }
+                q = p;
+                for (uInt i=subChunkCount; i<=p.second; ++i, ++subChunkCount) {
+                    idToChunksNeededByIDMap.push_back(p);
+                    chunkNeededToIDsThatNeedChunkIDMap.push_back(q);
+                }
+            }
+        }
+        else {
+            // sliding time window, fixed number of time stamps (timebin
+            // specified as int
+            const auto isEven = *_nTimeStampsInBin % 2 == 0;
+            // integer division
+            const uInt halfTimeBin = *_nTimeStampsInBin/2;
+            const auto nBefore = isEven
+                ? (halfTimeBin) : (*_nTimeStampsInBin - 1)/2;
+            const auto nAfter = isEven ? nBefore + 1 : nBefore;
+            // integer division
+            // p.first is the first sub chunk needed by the current index.
+            // p.second is the first sub chunk that needs the current index
+            for (uInt i=0; i<nSubChunks; ++i) {
+                if (i <= nBefore) {
+                    p.first = 0;
+                }
+                else if (i >= nSubChunks - nAfter) {
+                    p.first = nSubChunks - *_nTimeStampsInBin;
+                }
+                else {
+                    p.first = i - nBefore;
+                }
+                if ((uInt)i >= nSubChunks - nAfter) {
+                    p.second = nSubChunks - 1;
+                }
+                else {
+                    p.second = i + nAfter;
+                }
+                if (i <= nAfter) {
+                    q.first = 0;
+                }
+                else {
+                    q.first = i - nAfter;
+                }
+                if (i + nAfter < nSubChunks) {
+                    q.second = i + nAfter;
+                }
+                else {
+                    q.second = nSubChunks - 1;
+                }
+                idToChunksNeededByIDMap.push_back(p);
+                chunkNeededToIDsThatNeedChunkIDMap.push_back(q);
+            }
+        }
+    }
+    else {
+        if (_timeBlockProcessing) {
+            // shouldn't get in here
+            ThrowCc("Logic error: shouldn't have gotten into this code block");
+        }
+        else {
+            ThrowIf(
+                ! _binWidthInSeconds,
+                "Logic error: _binWidthInSeconds not defined"
+            );
+            auto halfBinWidth = *_binWidthInSeconds/2;
+            vector<Double> subChunkTimes;
+            uInt subChunkCount = 0;
+            for (_vii->origin(); _vii->more(); _vii->next(), ++subChunkCount) {
+                // all times in a subchunk are the same
+                auto mytime = vb->time()[0];
+                subChunkTimes.push_back(mytime);
+                if (
+                    subChunkCount == 0
+                    || mytime - halfBinWidth <= subChunkTimes[0]
+                ) {
+                    p.first = 0;
+                }
+                else {
+                    auto it = std::lower_bound(
+                        subChunkTimes.cbegin(), subChunkTimes.cend(),
+                        mytime - halfBinWidth
+                    );
+                    ThrowIf(
+                        it == subChunkTimes.end(),
+                        "Logic Error for std::lower_bound()"
+                    );
+                    p.first = std::distance(subChunkTimes.cbegin(), it);
+                }
+            }
+            for (uInt subChunk=0; subChunk<=subChunkCount; ++subChunk) {
+                // get upper bound
+                auto upit = std::upper_bound(
+                    subChunkTimes.cbegin(), subChunkTimes.cend(),
+                    subChunkTimes[subChunk] - halfBinWidth
+                );
+                p.second = std::distance(subChunkTimes.cbegin(), upit);
+            }
+            q = p;
+            idToChunksNeededByIDMap.push_back(p);
+            chunkNeededToIDsThatNeedChunkIDMap.push_back(q);
+        }
+    }
+}
+
+
+/*
+void StatWtFloatingWindowDataAggregator::aggregate() {
     // Drive NEXT LOWER layer's ViImpl to gather data into allvis:
     //  Assumes all sub-chunks in the current chunk are to be used
     //   for the variance calculation
@@ -160,8 +624,10 @@ void StatWtFloatingWindowAggregator::aggregate() {
     // cout << __FILE__ << " " << __LINE__ << endl;
 
 }
+*/
 
-void StatWtFloatingWindowAggregator::_computeVariancesOneShotProcessing(
+/*
+void StatWtFloatingWindowDataAggregator::_computeVariancesOneShotProcessing(
     const map<BaselineChanBin, Cube<Complex>>& data,
     const map<BaselineChanBin, Cube<Bool>>& flags,
     const map<BaselineChanBin, Vector<Double>>& exposures
@@ -225,8 +691,10 @@ void StatWtFloatingWindowAggregator::_computeVariancesOneShotProcessing(
     //cout << __FILE__ << " " << __LINE__ << endl;
 
 }
+*/
+/*
 
-void StatWtFloatingWindowAggregator::weightSpectrumFlags(
+void StatWtFloatingWindowDataAggregator::weightSpectrumFlags(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags,
     const Vector<Int>& ant1, const Vector<Int>& ant2, const Vector<Int>& spws,
     const Vector<Double>& exposures
@@ -271,6 +739,7 @@ void StatWtFloatingWindowAggregator::weightSpectrumFlags(
         }
     }
 }
+*/
 
 }
 

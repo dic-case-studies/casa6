@@ -17,13 +17,16 @@
 //#  Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 //#  MA 02111-1307  USA
 
-#ifndef STATWTCLASSICALDATAAGGREGATOR_H_
-#define STATWTCLASSICALDATAAGGREGATOR_H_
+#ifndef STATWTFLOATINGWINDOWDATAAGGREGATOR_H_
+#define STATWTFLOATINGWINDOWDATAAGGREGATOR_H_
 
 #include <mstransform/TVI/StatWtDataAggregator.h>
-#include <msvis/MSVis/TransformingVi2.h>
 
-#include <mstransform/TVI/StatWtTVI.h>
+#include <casacore/casa/Arrays/Cube.h>
+
+// #include <msvis/MSVis/TransformingVi2.h>
+
+// #include <mstransform/TVI/StatWtTVI.h>
 
 #include <map>
 
@@ -36,15 +39,15 @@ namespace vi {
 // aggregating data that span subchunks. This algorithm is used when timebin is
 // an int and or when slidetimewindow is true.
 
-class StatWtFloatingWindowAggregator: public StatWtDataAggregator {
+class StatWtFloatingWindowDataAggregator: public StatWtDataAggregator {
 
 public:
     
-    StatWtFloatingWindowAggregator() = delete;
+    StatWtFloatingWindowDataAggregator() = delete;
 
     // out of necessity, the passed in pointer like variables are shared with
     // the caller.
-    StatWtFloatingWindowAggregator(
+    StatWtFloatingWindowDataAggregator(
         ViImplementation2 *const vii,
         std::shared_ptr<const casacore::Bool> mustComputeWtSp,
         const std::map<
@@ -64,10 +67,12 @@ public:
         > wtStats,
         std::shared_ptr<
             const std::pair<casacore::Double, casacore::Double>
-        > wtrange
+        > wtrange,
+        std::shared_ptr<const casacore::Double> binWidthInSeconds,
+        casacore::Bool timeBlockProcessing
     );
 
-    ~StatWtFloatingWindowAggregator();
+    ~StatWtFloatingWindowDataAggregator();
 
     // aggregates the data and computes the weights
     void aggregate();
@@ -78,10 +83,45 @@ public:
         const casacore::Vector<casacore::Int>& ant1,
         const casacore::Vector<casacore::Int>& ant2,
         const casacore::Vector<casacore::Int>& spws,
-        const casacore::Vector<casacore::Double>& exposures
+        const casacore::Vector<casacore::Double>& exposures,
+        const casacore::Vector<casacore::uInt>& rowIDs
      ) const;
 
 private:
+
+    std::shared_ptr<const casacore::Double> _binWidthInSeconds {};
+
+    // TODO can probably get rid of this in StatWtTVI
+    mutable casacore::Cube<casacore::Double> _multiLoopWeights {};
+
+    std::shared_ptr<casacore::Int> _nTimeStampsInBin {};
+
+    // TODO can probably get rid of this in StatWtTVI
+    // for running time window, for each subchunk, map the rowID (in the MS)
+    // to the row index in the chunk
+    mutable std::map<casacore::uInt, casacore::uInt>
+        _rowIDInMSToRowIndexInChunk {};
+
+    const casacore::Bool _timeBlockProcessing;
+
+    // TODO can probably get rid of this in StatWtTVI
+    void _computeWeightsMultiLoopProcessing(
+        const casacore::Cube<casacore::Complex>& data,
+        const casacore::Cube<casacore::Bool>& flags,
+        const casacore::Vector<casacore::Double>& exposures,
+        const std::vector<std::set<casacore::uInt>>& rowMap, casacore::uInt spw
+    ) const;
+
+    // TODO can probably get rid of this in StatWtTVI
+    // idToChunksNeededByIDMap maps subchunkIDs to the range of subchunk IDs
+    // they need. chunkNeededToIDsThatNeedChunkIDMap maps subchunk IDs that are
+    // needed to the subchunkIDs that need them. min/max IDs (.first/.second)
+    // in both cases
+    void _limits(
+        std::vector<std::pair<casacore::uInt, casacore::uInt>>& idToChunksNeededByIDMap,
+        std::vector<std::pair<casacore::uInt, casacore::uInt>>& chunkNeededToIDsThatNeedChunkIDMap
+    ) const;
+
     /*
     struct BaselineChanBin {
         vi::StatWtTVI::Baseline baseline = std::make_pair(0, 0);

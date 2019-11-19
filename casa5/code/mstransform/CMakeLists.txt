@@ -86,7 +86,7 @@ install (FILES
     TVI/StatWtTypes.h
     TVI/StatWtClassicalDataAggregator.h
     TVI/StatWtDataAggregator.h
-    TVI/StatWtFloatingWindowAggregator.h
+    TVI/StatWtFloatingWindowDataAggregator.h
     TVI/StatWtVarianceAndWeightCalculator.h
 	DESTINATION include/casacode/mstransform/TVI
 	)

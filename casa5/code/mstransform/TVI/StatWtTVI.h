@@ -30,6 +30,7 @@
 
 #include <msvis/MSVis/VisBuffer2.h>
 #include <msvis/MSVis/VisibilityIterator2.h>
+#include <mstransform/TVI/StatWtClassicalDataAggregator.h>
 #include <mstransform/TVI/StatWtTypes.h>
 #include <mstransform/TVI/UtilsTVI.h>
 #include <stdcasa/variant.h>
@@ -253,7 +254,7 @@ private:
         _rowIDInMSToRowIndexInChunk {};
     // std::unique_ptr<casacore::Double> _slidingTimeWindowWidth {};
     // if defined means we are using a window width in seconds
-    std::unique_ptr<casacore::Double> _binWidthInSeconds {};
+    std::shared_ptr<casacore::Double> _binWidthInSeconds {};
     // if defined means we are using an integer number of timestamps for the
     // bin width
     std::unique_ptr<casacore::Int> _nTimeStampsInBin {};
@@ -261,6 +262,8 @@ private:
     casacore::Bool _mustComputeSigma = casacore::False;
     casacore::Bool _updateWeight = casacore::True;
     casacore::Bool _noModel = casacore::False;
+
+    std::shared_ptr<StatWtDataAggregator> _dataAggregator {};
 
     std::shared_ptr<
         casacore::ClassicalStatistics<casacore::Double,

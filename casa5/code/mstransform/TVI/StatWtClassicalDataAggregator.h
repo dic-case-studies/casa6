@@ -23,8 +23,6 @@
 #include <mstransform/TVI/StatWtDataAggregator.h>
 #include <msvis/MSVis/TransformingVi2.h>
 
-#include <mstransform/TVI/StatWtTVI.h>
-
 #include <map>
 
 namespace casa {
@@ -57,7 +55,6 @@ public:
         StatWtTypes::Column column, casacore::Bool noModel,
         const std::map<casacore::uInt, casacore::Cube<casacore::Bool>>&
             chanSelFlags,
-        casacore::Bool combineCorr,
         std::shared_ptr<
             casacore::ClassicalStatistics<casacore::Double,
             casacore::Array<casacore::Float>::const_iterator,
@@ -65,7 +62,7 @@ public:
         > wtStats,
         std::shared_ptr<
             const std::pair<casacore::Double, casacore::Double>
-        > wtrange
+        > wtrange, casacore::Bool combineCorr
     );
 
     ~StatWtClassicalDataAggregator();
@@ -79,37 +76,26 @@ public:
         const casacore::Vector<casacore::Int>& ant1,
         const casacore::Vector<casacore::Int>& ant2,
         const casacore::Vector<casacore::Int>& spws,
-        const casacore::Vector<casacore::Double>& exposures
+        const casacore::Vector<casacore::Double>& exposures,
+        const casacore::Vector<casacore::uInt>& rowIDs
      ) const;
 
 private:
 
-    struct BaselineChanBin {
-        vi::StatWtTVI::Baseline baseline = std::make_pair(0, 0);
-        casacore::uInt spw = 0;
-        vi::StatWtTypes::ChanBin chanBin;
-        bool operator<(const BaselineChanBin& other) const {
-            if (baseline < other.baseline) {
-                return true;
-            }
-            if (baseline == other.baseline && spw < other.spw) {
-                return true;
-            }
-            return baseline == other.baseline && spw == other.spw
-                && chanBin < other.chanBin;
-        };
-    };
-
-    mutable std::map<BaselineChanBin, casacore::Vector<casacore::Double>>
-            _variancesOneShotProcessing {};
-
-    ViImplementation2 *const _vii;
-    const casacore::Bool _combineCorr;
+    mutable std::map<
+        StatWtTypes::BaselineChanBin, casacore::Vector<casacore::Double>
+    > _variancesOneShotProcessing {};
 
     void _computeVariancesOneShotProcessing(
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags,
-        const std::map<BaselineChanBin, casacore::Vector<casacore::Double>>& exposures
+        const std::map<
+            StatWtTypes::BaselineChanBin, casacore::Cube<casacore::Complex>
+        >& data,
+        const std::map<
+            StatWtTypes::BaselineChanBin, casacore::Cube<casacore::Bool>
+        >& flags,
+        const std::map<
+            StatWtTypes::BaselineChanBin, casacore::Vector<casacore::Double>
+        >& exposures
     ) const;
 };
 

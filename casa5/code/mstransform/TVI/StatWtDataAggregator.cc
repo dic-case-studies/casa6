@@ -36,7 +36,8 @@ namespace casa {
 namespace vi {
 
 StatWtDataAggregator::StatWtDataAggregator(
-    const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>>& chanBins,
+    ViImplementation2 *const vii,
+    const map<Int, vector<StatWtTypes::ChanBin>>& chanBins,
     std::shared_ptr<map<uInt, pair<uInt, uInt>>> samples,
     StatWtTypes::Column column, Bool noModel,
     const map<uInt, Cube<Bool>>& chanSelFlags,
@@ -46,17 +47,19 @@ StatWtDataAggregator::StatWtDataAggregator(
         casacore::Array<casacore::Float>::const_iterator,
         casacore::Array<casacore::Bool>::const_iterator>
     > wtStats,
-    std::shared_ptr<const std::pair<casacore::Double, casacore::Double>> wtrange
-) : _chanBins(chanBins), _samples(samples), _column(column), _noModel(noModel),
+    shared_ptr<const pair<Double, Double>> wtrange,
+    casacore::Bool combineCorr
+) : _vii(vii),
+_chanBins(chanBins), _samples(samples), _column(column), _noModel(noModel),
     _chanSelFlags(chanSelFlags), _mustComputeWtSp(mustComputeWtSp),
-    _wtStats(wtStats), _wtrange(wtrange) {}
+    _wtStats(wtStats), _wtrange(wtrange), _combineCorr(combineCorr) {}
 
 StatWtDataAggregator::~StatWtDataAggregator() {}
 
-StatWtDataAggregator::Baseline StatWtDataAggregator::_baseline(
+StatWtTypes::Baseline StatWtDataAggregator::_baseline(
     uInt ant1, uInt ant2
 ) {
-    return Baseline(min(ant1, ant2), max(ant1, ant2));
+    return StatWtTypes::Baseline(min(ant1, ant2), max(ant1, ant2));
 }
 
 Bool StatWtDataAggregator::_checkFirstSubChunk(

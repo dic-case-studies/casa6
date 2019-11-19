@@ -39,11 +39,10 @@ class StatWtDataAggregator {
 
 public:
     
-    using Baseline = std::pair<casacore::uInt, casacore::uInt>;
-
     StatWtDataAggregator() = delete;
 
     StatWtDataAggregator(
+        ViImplementation2 *const vii,
         const std::map<
             casacore::Int, std::vector<StatWtTypes::ChanBin>
         >& chanBins,
@@ -61,7 +60,8 @@ public:
         > wtStats,
         std::shared_ptr<
             const std::pair<casacore::Double, casacore::Double>
-        > wtrange
+        > wtrange,
+        casacore::Bool combineCorr
     );
 
     virtual ~StatWtDataAggregator();
@@ -76,11 +76,13 @@ public:
         const casacore::Vector<casacore::Int>& ant1,
         const casacore::Vector<casacore::Int>& ant2,
         const casacore::Vector<casacore::Int>& spws,
-        const casacore::Vector<casacore::Double>& exposures
+        const casacore::Vector<casacore::Double>& exposures,
+        const casacore::Vector<casacore::uInt>& rowIDs
     ) const = 0;
 
 protected:
 
+    ViImplementation2 *const _vii;
     const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>> _chanBins;
     // TODO you can probably get rid of this in StatWtTVI
     mutable std::set<casacore::uInt> _processedRowIDs {};
@@ -108,12 +110,13 @@ protected:
     // TODO you can probably get rid of this in StatWtTVI
     std::shared_ptr<const std::pair<casacore::Double, casacore::Double>>
         _wtrange;
-
-
+    const casacore::Bool _combineCorr;
 
     // TODO you can probably get rid of this in StatWtTVI
     // swaps ant1/ant2 if necessary
-    static Baseline _baseline(casacore::uInt ant1, casacore::uInt ant2);
+    static StatWtTypes::Baseline _baseline(
+        casacore::uInt ant1, casacore::uInt ant2
+    );
 
     // TODO you can probably get rid of this in StatWtTVI
     // returns True if this chunk has already been processed. This can happen

@@ -21,7 +21,8 @@
 
 #include <mstransform/TVI/StatWtClassicalDataAggregator.h>
 
-#include <scimath/StatsFramework/ClassicalStatistics.h>
+#include <casacore/casa/Arrays/Cube.h>
+#include <casacore/scimath/StatsFramework/ClassicalStatistics.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -40,21 +41,18 @@ StatWtClassicalDataAggregator::StatWtClassicalDataAggregator(
     const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>>& chanBins,
     std::shared_ptr<map<uInt, pair<uInt, uInt>>> samples,
     StatWtTypes::Column column, Bool noModel,
-    const map<uInt, Cube<Bool>>& chanSelFlags, Bool combineCorr,
+    const map<uInt, Cube<Bool>>& chanSelFlags,
     shared_ptr<
         ClassicalStatistics<
             Double, Array<Float>::const_iterator,
             Array<Bool>::const_iterator
         >
     > wtStats,
-    std::shared_ptr<
-        const std::pair<casacore::Double, casacore::Double>
-    > wtrange
+    shared_ptr<const pair<Double, Double>> wtrange, Bool combineCorr
 ) : StatWtDataAggregator(
-       chanBins, samples, column, noModel, chanSelFlags, mustComputeWtSp,
-       wtStats, wtrange
-    ),
-    _vii(vii), _combineCorr(combineCorr) {}
+       vii, chanBins, samples, column, noModel, chanSelFlags, mustComputeWtSp,
+       wtStats, wtrange, combineCorr
+    ) {}
 
 StatWtClassicalDataAggregator::~StatWtClassicalDataAggregator() {}
 
@@ -67,9 +65,9 @@ void StatWtClassicalDataAggregator::aggregate() {
     // cout << __FILE__ << " " << __LINE__ << endl;
     _variancesOneShotProcessing.clear();
     auto* vb = _vii->getVisBuffer();
-    std::map<BaselineChanBin, Cube<Complex>> data;
-    std::map<BaselineChanBin, Cube<Bool>> flags;
-    std::map<BaselineChanBin, Vector<Double>> exposures;
+    std::map<StatWtTypes::BaselineChanBin, Cube<Complex>> data;
+    std::map<StatWtTypes::BaselineChanBin, Cube<Bool>> flags;
+    std::map<StatWtTypes::BaselineChanBin, Vector<Double>> exposures;
     IPosition blc(3, 0);
     auto trc = blc;
     auto initChanSelTemplate = True;
@@ -109,7 +107,7 @@ void StatWtClassicalDataAggregator::aggregate() {
         // cout << __FILE__ << " " << __LINE__ << endl;
 
         auto bins = _chanBins.find(spw)->second;
-        BaselineChanBin blcb;
+        StatWtTypes::BaselineChanBin blcb;
         blcb.spw = spw;
         IPosition dataCubeBLC(3, 0);
         auto dataCubeTRC = dataCube.shape() - 1;
@@ -162,9 +160,9 @@ void StatWtClassicalDataAggregator::aggregate() {
 }
 
 void StatWtClassicalDataAggregator::_computeVariancesOneShotProcessing(
-    const map<BaselineChanBin, Cube<Complex>>& data,
-    const map<BaselineChanBin, Cube<Bool>>& flags,
-    const map<BaselineChanBin, Vector<Double>>& exposures
+    const map<StatWtTypes::BaselineChanBin, Cube<Complex>>& data,
+    const map<StatWtTypes::BaselineChanBin, Cube<Bool>>& flags,
+    const map<StatWtTypes::BaselineChanBin, Vector<Double>>& exposures
 ) const {
     //cout << "exposures size " << exposures.size() << endl;
     //cout << "flags size " << flags.size() << endl;
@@ -175,7 +173,7 @@ void StatWtClassicalDataAggregator::_computeVariancesOneShotProcessing(
     const auto ncorr = _combineCorr ? 1 : nActCorr;
     // spw will be the same for all members
     const auto& spw = data.begin()->first.spw;
-    std::vector<BaselineChanBin> keys(data.size());
+    vector<StatWtTypes::BaselineChanBin> keys(data.size());
     auto idx = 0;
     // cout << __FILE__ << " " << __LINE__ << endl;
 
@@ -229,7 +227,7 @@ void StatWtClassicalDataAggregator::_computeVariancesOneShotProcessing(
 void StatWtClassicalDataAggregator::weightSpectrumFlags(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags,
     const Vector<Int>& ant1, const Vector<Int>& ant2, const Vector<Int>& spws,
-    const Vector<Double>& exposures
+    const Vector<Double>& exposures, const Vector<uInt>& /*rowIDs*/
 ) const {
     //Vector<Int> ant1, ant2, spws;
     //Vector<Double> exposures;
@@ -245,7 +243,7 @@ void StatWtClassicalDataAggregator::weightSpectrumFlags(
     for (uInt i=0; i<nrows; ++i) {
         sliceStart[2] = i;
         sliceEnd[2] = i;
-        BaselineChanBin blcb;
+        StatWtTypes::BaselineChanBin blcb;
         blcb.baseline = _baseline(ant1[i], ant2[i]);
         auto spw = spws[i];
         blcb.spw = spw;

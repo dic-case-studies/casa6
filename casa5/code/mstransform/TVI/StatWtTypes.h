@@ -31,6 +31,8 @@ class StatWtTypes {
 
 public:
     
+    using Baseline = std::pair<casacore::uInt, casacore::uInt>;
+
     struct ChanBin {
         casacore::uInt start = 0;
         casacore::uInt end = 0;
@@ -57,9 +59,24 @@ public:
         // DATA - MODEL_DATA
         RESIDUAL_DATA
     };
+
+    struct BaselineChanBin {
+        Baseline baseline = std::make_pair(0, 0);
+        casacore::uInt spw = 0;
+        vi::StatWtTypes::ChanBin chanBin;
+        bool operator<(const BaselineChanBin& other) const {
+            if (baseline < other.baseline) {
+                return true;
+            }
+            if (baseline == other.baseline && spw < other.spw) {
+                return true;
+            }
+            return baseline == other.baseline && spw == other.spw
+                && chanBin < other.chanBin;
+        };
+    };
+
 };
-
-
 
 }
 
