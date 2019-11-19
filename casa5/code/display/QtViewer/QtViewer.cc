@@ -119,7 +119,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			// all gui operations must happen in the "gui thread" because Qt is not
 			// thread-safe... so we need create & result signals and slots
 			connect( viewer_svc, SIGNAL(new_op( )),
-					 this, SLOT(grpc_handle_op( )) );
+					 this, SLOT(grpc_handle_op( )),
+					 Qt::BlockingQueuedConnection );
 			connect( viewer_svc, SIGNAL(exit_now( )),
 					 this, SLOT(quit( )) );
 			builder.RegisterService(viewer_svc);

@@ -585,13 +585,19 @@ def generate_pyinit(moduledir,tasks):
         fd.write("\n")
         fd.write("def xml_interface_defs( ): return { %s }\n" % ", ".join(task_files_dict))
         fd.write("\n")
-        fd.write("# When in MPI mode, this will put servers into their serve() loop.\n")
-        fd.write("# From this point on user scripts can use tclean parallelization, Tier0 parallelization,\n")
-        fd.write("# and MMS-parallel tasks\n")
-        fd.write("try:\n")
-        fd.write("    import casampi.private.start_mpi\n")
-        fd.write("except ImportError:\n")
-        fd.write("    pass\n")
+        mpi_import_str = '\n'.join((
+            "# When in MPI mode, this will put servers into their serve() loop.",
+            "# From this point on user scripts can use tclean parallelization, Tier0 parallelization,",
+            "# and MMS-parallel tasks",
+            "try:",
+            "    import importlib",
+            "    _clith_spec = importlib.util.find_spec('casalith')",
+            "    # Defer to later if in casalith",
+            "    if _clith_spec is None:",
+            "        import casampi.private.start_mpi",
+            "except ImportError:",
+            "    pass\n"))
+        fd.write(mpi_import_str)
 
 class BuildCasa(build):
     description = "Description of the command"
