@@ -84,6 +84,7 @@ scripts/regression.py
 scripts/regressframe.py
 scripts/regression_utility.py
 scripts/sdbeamutil.py
+scripts/sdint_helper.py
 scripts/sdutil.py
 scripts/setjy_helper.py
 scripts/simutil.py

@@ -22,14 +22,231 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
+    from casatasks import imregrid
+    from .sdint_helper import *
 else:
     from taskinit import *
+    from tasks import *
 
     from imagerhelpers.imager_base import PySynthesisImager
     from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
+    from sdint_helper import *
 
+sdintlib = SDINT_helper()
+
+# setup functions
+def setup_imagerObj(parallel, pcube, paramList=None):
+    """
+    setup imaging parameters
+    """
+    defaultconstructor = False
+    if paramList!=None:
+        if not isinstance(paramList, ImagerParameters):
+            raise RuntimeError("Internal Error: invalid paramList")
+    else:
+       defaultconstructor = True
+ 
+    if parallel==False and pcube==False:
+        if defaultconstructor:
+            return PySynthesisImager
+        else:
+            return PySynthesisImager(params=paramList)
+           
+    elif parallel==True:
+        if defaultconstructor:
+            return  PyParallelContSynthesisImager
+        else:
+            return PyParallelContSynthesisImager(params=paramList)
+    elif pcube==True:
+        if defaultconstructor:
+            return PyParallelCubeSynthesisImager
+        else: 
+            return PyParallelCubeSynthesisImager(params=paramList)
+    else:
+        raise RuntimeError("Unsupported parallel and specmode combination")
+
+
+def setup_imager(imagename,pcube,calcres,calpsf,inparams):
+    """
+     Setup cube imaging for major cycles.
+     - Do initialization
+     - and run a major cycle
+    """
+    # create a local copy of input params dict so that it can be 
+    # modified
+    locparams = copy.deepcopy(inparams)
+
+    # cube imaging setup 
+    locparams['imagename']=imagename
+    locparams['specmode']='cube'
+    locparams['niter']=0
+    locparams['deconvolver']='hogbom'
+
+    print("local inparams(msname) in setup_imager==",locparams['msname']) 
+    params = ImagerParameters(**locparams)
+    #params = ImagerParameters(msname=self.vis, field=self.field,spw=self.spw,
+    #                              imagename=imagename,
+    #                              imsize=self.imsize, cell=self.cell, phasecenter=self.phasecenter,
+    #                              weighting=self.weighting,
+    #                              gridder=self.gridder, pblimit=self.pblimit,wprojplanes=self.wprojplanes,
+    #                              specmode='cube',nchan=self.nchan,
+    #                              reffreq=self.reffreq, width=self.width, start=self.start, interpolation=self.interpolation,
+    #                              interactive=self.interactive,
+    #                              deconvolver='hogbom', niter=0,
+    #                              wbawp=True)
+
+    imagertool = setup_imagerObj(locparams['parallel'], pcube, params)
+    imagerInst = setup_imagerObj(locparams['parallel'], pcube)
+
+    #self.imagertool = PySynthesisImager(params=params)
+    imagertool.initializeImagers()
+    imagertool.initializeNormalizers()
+    imagertool.setWeighting()
+    if 'psfphasecenter' in  locparams:
+        psfphasecenter = locparams['psfphasecenter']
+    else:
+        psfphasecenter = ''
+  
+    gridder = locparams['gridder']
+
+    if calpsf == True:
+        imagertool.makePSF()
+        imagertool.makePB()
+        if((psfphasecenter != '') and (gridder=='mosaic')):
+            print("doing with different phasecenter psf")
+            imagertool.unlockimages(0)
+            psfParameters=paramList.getAllPars()
+            psfParameters['phasecenter']=psfphasecenter
+            psfParamList=ImagerParameters(**psfParameters)
+            psfimager=imagerInst(params=psfParamList)
+            psfimager.initializeImagers()
+            psfimager.setWeighting()
+            psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
+
+    # can take out this since niter is fixed to 0
+    if locparams['niter'] >=0 :
+        ## Make dirty image
+        if calcres == True:
+            t0=time.time();
+            imagertool.runMajorCycle()
+            t1=time.time();
+            casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+
+        ## In case of no deconvolution iterations....
+        if locparams['niter']==0 and calcres==False:
+            if savemodel != "none":
+                imagertool.predictModel()
+
+    sdintlib.copy_restoringbeam(fromthis=imagename+'.psf', tothis=imagename+'.residual')
+    return imagertool
+
+def setup_deconvolver(imagename,pcube,inparams):
+    """
+    Cube or MFS minor cycles. 
+    """
+    #params = ImagerParameters(msname=self.vis, field=self.field,spw=self.spw,
+    #                          imagename=imagename,
+    #                            imsize=self.imsize, cell=self.cell, phasecenter=self.phasecenter,
+    #                              weighting=self.weighting,
+    #                              gridder=self.gridder, pblimit=self.pblimit,wprojplanes=self.wprojplanes,
+    #                              specmode=self.specmode,nchan=self.nchan,
+    #                              reffreq=self.reffreq, width=self.width, start=self.start, interpolation=self.interpolation,
+    #                              interactive=self.interactive,
+    #                              deconvolver=self.deconvolver, scales=self.scales,nterms=self.nterms,
+    #                              niter=self.niter,cycleniter=self.cycleniter, threshold=self.threshold,
+    #                              mask=self.mask)
+    print ('type(inparams)=', type(inparams))
+    print ("inparams['msname']=", inparams['msname'])
+    print ("inparams['deconvolver']=", inparams['deconvolver'])
+    print ("inparams['specmode']=", inparams['specmode'])
+    print ("inparams['gridder']=", inparams['gridder'])
+    inparams['imagename']=imagename
+    params = ImagerParameters(**inparams)
+    deconvolvertool = setup_imagerObj(inparams['parallel'], pcube, params)
+
+    ## Why are we initializing these ? 
+    deconvolvertool.initializeImagers()
+    deconvolvertool.initializeNormalizers()
+    deconvolvertool.setWeighting()
+
+
+        ### These three should be unncessary.  Need a 'makeimage' method for csys generation. 
+    deconvolvertool.makePSF() ## Make this to get a coordinate system
+    #deconvolvertool.makeImage('psf', imagename+'.psf')
+    deconvolvertool.makePB()  ## Make this to turn .weight into .pb maps
+    deconvolvertool.runMajorCycle() ## Make this to make template residual images.
+
+        ## Initialize deconvolvers. ( Order is important. This cleans up a leftover tablecache image.... FIX!)
+    deconvolvertool.initializeDeconvolvers()
+    deconvolvertool.initializeIterationControl()
+ 
+    return deconvolvertool
+
+def setup_sdimaging(template='',output='', inparms=None, sdparms=None):
+    """
+    Make the SD cube Image and PSF
+
+    Option 1 : Use/Regrid cubes for the observed image and PSF
+    Option 2 : Make the SD image and PSF cubes using 'tsdimager's usage of the SD gridder option.
+
+    Currently, only Option 1 is supported. 
+
+    """
+    sdintlib = SDINT_helper()
+    if 'sdpsf' in sdparms:
+        sdpsf = sdparms['sdpsf']
+    else:
+        raise RuntimeError("Internal Error: missing sdpsf parameter") 
+
+    if 'sdimage' in sdparms:
+        sdimage = sdparms['sdimage']
+    else:
+        raise RuntimeError("Internal Error: missing sdimage parameter") 
+    if 'pblimit' in inparms:
+        pblimit = inparms['pblimit']
+
+    ## Regrid the input SD image and PSF cubes to the target coordinate system. 
+    imregrid(imagename=sdpsf, template=template+'.psf',
+             output=output+'.psf',overwrite=True,axes=[0,1])
+    imregrid(imagename=sdimage, template=template+'.residual',
+             output=output+'.residual',overwrite=True,axes=[0,1])
+    imregrid(imagename=sdimage, template=template+'.residual',
+             output=output+'.image',overwrite=True,axes=[0,1])
+
+    ## Apply the pbmask from the INT image cube, to the SD cubes.
+    #TTB: Create *.mask cube  
+
+    sdintlib.addmask(inpimage=output+'.residual', pbimage=template+'.pb', pblimit=pblimit)
+    sdintlib.addmask(inpimage=output+'.image', pbimage=template+'.pb', pblimit=pblimit)
+
+
+def feather_residual(int_cube, sd_cube, joint_cube, applypb, inparm):
+
+    if applypb==True:
+        ## Take initial INT_dirty image to flat-sky. 
+        sdintlib.modify_with_pb(inpcube=int_cube+'.residual',
+                                    pbcube=int_cube+'.pb',
+                                    action='div',
+                                    pblimit=inparm['pblimit'],
+                                    freqdep=True)
+            
+        ## Feather flat-sky INT dirty image with SD image
+    sdintlib.feather_int_sd(sdcube=sd_cube+'.residual',
+                                intcube=int_cube+'.residual',
+                                jointcube=joint_cube+'.residual', ## output
+                                sdgain=inparm['sdgain'],
+                                dishdia=inparm['dishdia'],
+                                usedata=inparm['usedata'])
+
+    if applypb==True:
+       ## Multiply new JOINT dirty image by a common PB to get the effect of conjbeams. 
+       sdintlib.modify_with_pb(inpcube=joint_cube+'.residual',
+                                pbcube=int_cube+'.pb',
+                                action='mult',
+                                pblimit=inparm['pblimit'],
+                                freqdep=False)
 def sdintimaging(
     usedata,
     ####### Interfermeter Data Selection
@@ -167,6 +384,20 @@ def sdintimaging(
     ####### State parameters
     parallel):#=False):
 
+
+    ##################################################
+    # copied from SDINT.do_reconstruct 
+    #################################################
+    int_cube = imagename+'.int.cube'
+    sd_cube = imagename+'.sd.cube'
+    joint_cube = imagename+'.joint.cube'
+    joint_multiterm = imagename+'.joint.multiterm'
+
+    if specmode=='mfs':
+        decname = joint_multiterm
+    else:
+        decname = joint_cube
+
     #####################################################
     #### Sanity checks and controls
     #####################################################
@@ -174,7 +405,15 @@ def sdintimaging(
     ### Move these checks elsewhere ? 
     inpparams=locals().copy()
     ###now deal with parameters which are not the same name 
-    inpparams['msname']= inpparams.pop('vis')
+    print("current inpparams=",inpparams)
+    print("inpparams.keys()=",inpparams.keys())
+    locvis=inpparams.pop('vis')
+    print("LOCVIS====",locvis)
+    print("type(LOCVIS)====",type(locvis))
+     
+    inpparams['msname']=locvis.lstrip()
+    #inpparams['msname']=inpparams.pop('vis')
+    print("msname====",inpparams['msname'])
     inpparams['timestr']= inpparams.pop('timerange')
     inpparams['uvdist']= inpparams.pop('uvrange')
     inpparams['obs']= inpparams.pop('observation')
@@ -182,13 +421,23 @@ def sdintimaging(
     inpparams['loopgain']=inpparams.pop('gain')
     inpparams['scalebias']=inpparams.pop('smallscalebias')
 
+    sdparms={}
+    sdparms['sdimage']=inpparams['sdimage']
+    sdparms['sdpsf']=inpparams['sdpsf']
+    sdparms['sdgain']=inpparams['sdgain']
+
     if specmode=='cont':
         specmode='mfs'
         inpparams['specmode']='mfs'
-#    if specmode=='mfs' and nterms==1 and deconvolver == "mtmfs":
-#        casalog.post( "The MTMFS deconvolution algorithm (deconvolver='mtmfs') needs nterms>1.Please set nterms=2 (or more). ", "WARN", "task_tclean" )
-#        return
 
+    # from sdint
+    # automatically decide if pb need to be applied
+    applypb = pbcor
+    if gridder=='mosaic' or gridder=='awproject':
+       applypb = True
+    # else:
+    #     applypb = False
+   
     if (deconvolver=="mtmfs") and (specmode!='mfs') and (specmode!='cube' or nterms!=1) and (specmode!='cubedata' or nterms!=1):
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_tclean" )
         return
@@ -203,6 +452,7 @@ def sdintimaging(
 
     imager = None
     paramList = None
+    deconvolver = None
 
     # Put all parameters into dictionaries and check them.
     ##make a dictionary of parameters that ImagerParameters take
@@ -220,7 +470,8 @@ def sdintimaging(
     ###expecting it to be true
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
         bparm['mosweight']=False
-    paramList=ImagerParameters(**bparm)
+
+    #paramList=ImagerParameters(**bparm)
 
     #paramList.printParameters()
     
@@ -238,144 +489,240 @@ def sdintimaging(
         casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
         return False
    
+    ## move to a function
     ## Setup Imager objects, for different parallelization schemes.
-    imagerInst=PySynthesisImager
-    if parallel==False and pcube==False:
-         imager = PySynthesisImager(params=paramList)
-         imagerInst=PySynthesisImager
-    elif parallel==True:
-         imager = PyParallelContSynthesisImager(params=paramList)
-         imagerInst=PyParallelContSynthesisImager
-    elif pcube==True:
-         imager = PyParallelCubeSynthesisImager(params=paramList)
-         imagerInst=PyParallelCubeSynthesisImager
+    ##imagerInst=PySynthesisImager
+    ##if parallel==False and pcube==False:
+    ##     imager = PySynthesisImager(params=paramList)
+    ##     imagerInst=PySynthesisImager
+    #3elif parallel==True:
+    ##     imager = PyParallelContSynthesisImager(params=paramList)
+    ##     imagerInst=PyParallelContSynthesisImager
+    ##elif pcube==True:
+    ##     imager = PyParallelCubeSynthesisImager(params=paramList)
+    ##     imagerInst=PyParallelCubeSynthesisImager
          # virtualconcat type - changed from virtualmove to virtualcopy 2016-07-20
          #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
+    ##     concattype='copyvirtual'
+    ##else:
+    ##     print('Invalid parallel combination in doClean.')
+    ##     return False
+
+    if pcube==True:
          concattype='copyvirtual'
-    else:
-         print('Invalid parallel combination in doClean.')
-         return False
+        
     
     retrec={}
 
     try: 
-    #if (1):
+        sdintlib = SDINT_helper()
         ## Init major cycle elements
         t0=time.time();
-        imager.initializeImagers()
-    
-        # Construct the CFCache for AWProject-class of FTMs.  For
-        # other choices the following three calls become NoOps.
-        # imager.dryGridding();
-        # imager.fillCFCache();
-        # imager.reloadCFCache();
+        imager=setup_imager(int_cube, pcube, calcres, calcpsf, bparm) 
 
-        imager.initializeNormalizers()
-        imager.setWeighting()
+
+        ##imager.initializeImagers()
+    
+        ##imager.initializeNormalizers()
+        ##imager.setWeighting()
         t1=time.time();
         casalog.post("***Time for initializing imager and normalizers: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
         ## Init minor cycle elements
         if niter>0 or restoration==True:
             t0=time.time();
-            imager.initializeDeconvolvers()
+            deconvolver=setup_deconvolver(decname, pcube, bparm )
+            #imager.initializeDeconvolvers()
             t1=time.time();
-            casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+            #casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+            casalog.post("***Time for seting up deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+
+        setup_sdimaging(template=int_cube, output=sd_cube, inparms=bparm, sdparms=sdparms ) 
 
         ####now is the time to check estimated memory
+        # need to move to somewhere below???
         imager.estimatememory()
             
-        if niter>0:
-            t0=time.time();
-            imager.initializeIterationControl()
-            t1=time.time();
-            casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+        ##if niter>0:
+        ##    t0=time.time();
+        ##    imager.initializeIterationControl()
+        ##    t1=time.time();
+        ##    casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
             
+        #### MOVE THIS SECTION to setup_imager ....for sdint
         ## Make PSF
-        if calcpsf==True:
-            t0=time.time();
+        #if calcpsf==True:
+        #    t0=time.time();
              
-            imager.makePSF()
-            if((psfphasecenter != '') and (gridder=='mosaic')):
-                print("doing with different phasecenter psf")
-                imager.unlockimages(0)
-                psfParameters=paramList.getAllPars()
-                psfParameters['phasecenter']=psfphasecenter
-                psfParamList=ImagerParameters(**psfParameters)
-                psfimager=imagerInst(params=psfParamList)
-                psfimager.initializeImagers()
-                psfimager.setWeighting()
-                psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
-            t1=time.time();
-            casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+        #    imager.makePSF()
+        #    if((psfphasecenter != '') and (gridder=='mosaic')):
+        #        print("doing with different phasecenter psf")
+        #        imager.unlockimages(0)
+        #        psfParameters=paramList.getAllPars()
+        #        psfParameters['phasecenter']=psfphasecenter
+        #        psfParamList=ImagerParameters(**psfParameters)
+        #        psfimager=imagerInst(params=psfParamList)
+        #        psfimager.initializeImagers()
+        #        psfimager.setWeighting()
+        #        psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
+        #    t1=time.time();
+        #    casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
-            imager.makePB()
+        #    imager.makePB()
 
-            t2=time.time();
-            casalog.post("***Time for making PB: "+"%.2f"%(t2-t1)+" sec", "INFO3", "task_tclean");
+        #    t2=time.time();
+        #    casalog.post("***Time for making PB: "+"%.2f"%(t2-t1)+" sec", "INFO3", "task_tclean");
 
-        if niter >=0 : 
+        # Done inside setup_imager
+        #if niter >=0 : 
 
             ## Make dirty image
-            if calcres==True:
-                t0=time.time();
-                imager.runMajorCycle()
-                t1=time.time();
-                casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean"); 
+        #    if calcres==True:
+        #        t0=time.time();
+        #        imager.runMajorCycle()
+        #        t1=time.time();
+        #        casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean"); 
 
             ## In case of no deconvolution iterations....
-            if niter==0 and calcres==False:
-                if savemodel != "none":
-                    imager.predictModel()
+        #    if niter==0 and calcres==False:
+        #        if savemodel != "none":
+        #            imager.predictModel()
 
-            ## Do deconvolution and iterations
-            if niter>0 :
+        #### END MOVE THIS SECTION to setup_imager ....for sdint
 
-                isit = imager.hasConverged()
-                imager.updateMask()
+        #### SDINT specific feathering....
+        ## Feather INT and SD residual images (feather in flat-sky. output has common PB)
+        feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams)
+        sdintlib.feather_int_sd(sdcube=sd_cube+'.psf',
+                                intcube=int_cube+'.psf',
+                                jointcube=joint_cube+'.psf',
+                                sdgain=sdgain,
+                                dishdia=dishdia,
+                                usedata=usedata)
 
-                while ( not imager.hasConverged() ):
+        
+        if specmode=='mfs':
+            ## Calculate Spectral PSFs and Taylor Residuals
+            sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.psf',
+                                        mtname=joint_multiterm+'.psf',
+                                        nterms=nterms, reffreq=reffreq, dopsf=True)
+            sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.residual',
+                                        mtname=joint_multiterm+'.residual',
+                                        nterms=nterms, reffreq=reffreq, dopsf=False)
+
+
+        if niter>0 :
+            isit = deconvolver.hasConverged()
+            deconvolver.updateMask()
+
+            check = deconvolver.hasConverged()
+            print("hasConverged check ==",check)
+
+            while ( not deconvolver.hasConverged() ):
+            ## (SDINT) Start image reconstruction loops
+            ## while ( not self.deconvolvertool.hasConverged() ):
 
 #                    maskchanged = imager.updateMask()
 #                    if maskchanged and imager.hasConverged() :
 #                        break;
 
-                    t0=time.time();
-                    imager.runMinorCycle()
-                    t1=time.time();
-                    casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+                t0=time.time();
+                deconvolver.runMinorCycle()
+                t1=time.time();
+                casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
-                    t0=time.time();
-                    imager.runMajorCycle()
-                    t1=time.time();
-                    casalog.post("***Time for major cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+                ### sdint specific feathering steps HERE
+                ## Prepare the joint model cube for INT and SD major cycles
+                if specmode=='mfs':
+                    ## Convert Taylor model coefficients into a model cube : int_cube.model
+                    sdintlib.taylor_model_to_cube(cubename=int_cube, ## output 
+                                              mtname=joint_multiterm,  ## input
+                                              nterms=nterms, reffreq=reffreq)
+                else:
+                    ## Copy the joint_model cube to the int_cube.model
+                    shutil.rmtree(int_cube+'.model',ignore_errors=True)
+                    shutil.copytree(joint_cube+'.model', int_cube+'.model')
+                    hasfile=os.path.exists(joint_cube+'.model')
+                    print("has joint cube .image===",hasfile)
 
-                    imager.updateMask()
+                if applypb==True:
+                    ## Take the int_cube.model to flat sky. 
+                    sdintlib.modify_with_pb(inpcube=int_cube+'.model',
+                                        pbcube=int_cube+'.pb',
+                                        action='div', pblimit=pblimit,freqdep=False)
+
+                ## copy the int_cube.model to the sd_cube.model
+                shutil.rmtree(sd_cube+'.model',ignore_errors=True)
+                shutil.copytree(int_cube+'.model', sd_cube+'.model')
+
+                if applypb==True:
+                    ## Multiply flat-sky model with freq-dep PB
+                    sdintlib.modify_with_pb(inpcube=int_cube+'.model',
+                                        pbcube=int_cube+'.pb',
+                                        action='mult', pblimit=pblimit, freqdep=True)
+
+                ## Major cycle for interferometer data
+                t0=time.time();
+                imager.runMajorCycle()
+                t1=time.time();
+                casalog.post("***Time for major cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+
+                ## Major cycle for Single Dish data (uses the flat sky cube model in sd_cube.model )
+                sdintlib.calc_sd_residual(origcube=sd_cube+'.image',
+                                      modelcube=sd_cube+'.model',
+                                      residualcube=sd_cube+'.residual',  ## output
+                                      psfcube=sd_cube+'.psf')
+
+                ## Feather the residuals
+                feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams )
+
+                if specmode=='mfs':
+                    ## Calculate Spectral Taylor Residuals
+                    sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.residual',
+                                            mtname=joint_multiterm+'.residual',
+                                            nterms=nterms, reffreq=reffreq, dopsf=False)
+
+
+
+
+                deconvolver.updateMask()
 
                 ## Get summary from iterbot
                 if type(interactive) != bool:
-                    retrec=imager.getSummary();
+                    #retrec=imager.getSummary();
+                    retrec=deconvolver.getSummary();
 
             ## Restore images.
             if restoration==True:  
                 t0=time.time();
-                imager.restoreImages()
+                deconvolver.restoreImages()
                 t1=time.time();
                 casalog.post("***Time for restoring images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-                if pbcor==True:
+                #if pbcor==True:
+                if applypb==True:
                     t0=time.time();
-                    imager.pbcorImages()
+                    if specmode=='mfs':
+                        impbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , mode='divide', cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
+                    else:
+                        sdintlib.modify_with_pb(inpcube=joint_cube+'.image',
+                                        pbcube=int_cube+'.pb',
+                                        action='div', pblimit=pblimit, freqdep=False)
+
+
+                    #imager.pbcorImages()
                     t1=time.time();
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
                     
         ##close tools
         # needs to deletools before concat or lock waits for ever
         imager.deleteTools()
+        deconvolver.deleteTools()
    
         if (pcube):
             print("running concatImages ...")
             casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
-            imager.concatImages(type=concattype)
+            #imager.concatImages(type=concattype)
+            deconvolver.concatImages(type=concattype)
         
         # CAS-10721 
         if niter>0 and savemodel != "none":
@@ -384,12 +731,12 @@ def sdintimaging(
 
     except Exception as e:
         #print 'Exception : ' + str(e)
-        casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
+        casalog.post('Exception from task_sdintimaging : ' + str(e), "SEVERE", "task_sdintimaging")
         if imager != None:
             imager.deleteTools() 
 
         larg = list(e.args)
-        larg[0] = 'Exception from task_tclean : ' + str(larg[0])
+        larg[0] = 'Exception from task_sdintimaging : ' + str(larg[0])
         e.args = tuple(larg)
         raise
 
