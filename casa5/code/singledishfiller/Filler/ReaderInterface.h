@@ -50,7 +50,16 @@ private:
 
 class ReaderInterface: private NonCopyable<ReaderInterface> {
 public:
-  typedef NullOptionalTables<ReaderInterface> OptionalTables;
+  // OptionalTables must have a public static method, Generate,
+  // whose signature is as follows:
+  //
+  // static void Generate(casacore::Table &, Reader const &)
+  //
+  // OptionalTables::Generate is responsible for generating
+  // optional subtables that stores supplemental information
+  // not being able to stored into any other tables.
+  // NullOptionalTables is an implementation of "do nothing".
+  using OptionalTables = NullOptionalTables<ReaderInterface>;
 
   ReaderInterface(std::string const &name) :
     name_(name) {
@@ -63,17 +72,19 @@ public:
     return name_;
   }
 
-  virtual casacore::String getDataUnit() const {
-    return "";
-  }
+  // getDataUnit should return a string representing the unit
+  // of the data. If physical unit is not yet set (e.g. before
+  // calibration), please return empty sting.
+  virtual casacore::String getDataUnit() const = 0;
 
-  virtual casacore::Bool isFloatData() const {
-    return false;
-  }
+  // isFloatData should return
+  // *True* if resulting MS should have FLOAT_DATA column, while
+  // *False* if the MS require DATA column instead
+  virtual casacore::Bool isFloatData() const = 0;
 
-  virtual casacore::MDirection::Types getDirectionFrame() const {
-    return casacore::MDirection::J2000;
-  }
+  // getDirectionFrame should return appropriate direction
+  // frame information as a form of MDirection::Types enum
+  virtual casacore::MDirection::Types getDirectionFrame() const = 0;
 
   void initialize() {
     initializeCommon();
@@ -86,7 +97,7 @@ public:
   }
 
   // get number of rows for MAIN table
-  virtual size_t getNumberOfRows() = 0;
+  virtual size_t getNumberOfRows() const = 0;
 
   // to get OBSERVATION table
   // The method should return true if row entry is available.
