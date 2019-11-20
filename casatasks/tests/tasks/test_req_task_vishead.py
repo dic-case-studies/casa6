@@ -35,7 +35,6 @@ import sys
 import os
 import unittest
 import shutil
-import casaTestHelper
 
 if CASA6:
     casaimagepath = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms')
