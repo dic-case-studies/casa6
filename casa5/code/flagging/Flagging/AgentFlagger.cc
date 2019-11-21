@@ -542,23 +542,30 @@ AgentFlagger::parseAgentParameters(Record agent_params)
 /*
  * Build a string with a list of agents, for logging purposes. Uses the names they have in
  * the mode parameter, for example display, rflag, summary, etc. rather than the more
- * internal names of the agent classes.
+ * internal names of the agent classes. When the list of agents is very long, a short
+ * cut of the list is produced.
  *
  * @param agents list of agents (items as casacore records, with a "mode" field)
  * @return a comma separated list of agents
  */
 std::string buildListAgentNames(std::vector<Record> agents) {
+    const size_t MAX_LIST_PRINT = 10;
+
     std::string all;
     if (!agents.empty()) {
         auto elem = agents.cbegin();
         String mode;
         elem->get("mode", mode);
         all += mode;
+        size_t count = 1;
 
-        elem->get("mode", mode);
-        while (++elem != agents.cend()) {
+        while (++elem != agents.cend() && ++count <= MAX_LIST_PRINT) {
             elem->get("mode", mode);
             all += ", " + mode;
+        }
+        if (agents.size() > MAX_LIST_PRINT) {
+            all += ", ... (" + std::to_string(agents.size()-MAX_LIST_PRINT) +
+                " more, not shown)";
         }
     }
     return all;
@@ -639,7 +646,7 @@ AgentFlagger::initAgents()
             }
 
             if (tavg){
-                os << LogIO::WARN << "Cannot have " << mode << " mode with timeavg/"
+                os << LogIO::WARN << "Cannot have " << mode << " mode with timeavg=True or "
                     "channelavg=True and more than " << maxSizeWhenAvg << " agents (for "
                     "example when using extendflags, display, etc. or in list mode). Agent "
                     "will be ignored!" << LogIO::POST;
@@ -758,9 +765,10 @@ AgentFlagger::initAgents()
 		agents_list_p.push_back(fa);
                 agents_config_list_filtered.push_back(agent_rec);
 	}
-	os << LogIO::NORMAL << "There are "<< agents_list_p.size()
-           <<" valid agents in the list. Agents: "
-           << buildListAgentNames(agents_config_list_filtered) << LogIO::POST;
+
+	os << LogIO::NORMAL << "There are " << agents_list_p.size()
+	   << " valid agents in the list. Agents: "
+	   << buildListAgentNames(agents_config_list_filtered) << LogIO::POST;
 
 	// Clear the list so that this method cannot be called twice
 	agents_config_list_p.clear();
