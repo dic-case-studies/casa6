@@ -548,7 +548,7 @@ AgentFlagger::parseAgentParameters(Record agent_params)
  * @param agents list of agents (items as casacore records, with a "mode" field)
  * @return a comma separated list of agents
  */
-std::string buildListAgentNames(std::vector<Record> agents) {
+std::string buildListAgentNames(const std::vector<Record> &agents) {
     const size_t MAX_LIST_PRINT = 10;
 
     std::string all;
@@ -569,6 +569,71 @@ std::string buildListAgentNames(std::vector<Record> agents) {
         }
     }
     return all;
+}
+
+/*
+ * For a mode (agent) configuration check:
+ * if using time or channel averaging in auto-flagging modes (clip, tfcrop, rflag),
+ * the agents can only be used in combination with a subset of other agents. These
+ * 'whitelisted' agents are: + display + extend + antint.
+ * See CAS-12294 for discussions.
+ *
+ * @param mode flagging mode, using flagdata naming convention
+ * @param agent_rec record with the agent configuration
+ * @param anyNotAvg non-empty name if any avg-disallowed agent is in the list
+ *
+ * @throws AipsError if there is any configuration error
+ */
+void AgentFlagger::checkAveragingConfig(const std::string &mode, const Record &agent_rec,
+                                        const std::string &anyNotAvg) {
+    if ("clip" == mode or "rflag" == mode or "tfcrop" == mode) {
+        Bool tavg = false;
+        int exists = agent_rec.fieldNumber ("timeavg");
+        if (exists >= 0) {
+            agent_rec.get("timeavg", tavg);
+        }
+
+        Bool cavg = false;
+        exists = agent_rec.fieldNumber ("channelavg");
+        if (exists >= 0) {
+            agent_rec.get("channelavg", cavg);
+        }
+
+        if ((tavg or cavg) and not anyNotAvg.empty()) {
+            ostringstream msg;
+            msg << "Cannot use " << mode << " mode with timeavg=True or channelavg=True "
+                "and additional modes other than extend, display, and antint. timeavg="
+                << tavg << ", channelavg=" << cavg <<  ", and the following mode has been "
+                "set up: " << anyNotAvg + ". Refusing to accept this configuration.";
+            throw AipsError(msg);
+        }
+    }
+}
+
+/*
+ * Check: the auto-flagging agents (clip, tfcrop, rflag) can only be combined with some
+ * other selected agents: display + extend + antint.
+ * See CAS-12294 for discussions.
+ *
+ * @param configs list of agent configurations
+ *
+ * @throws AipsError if there is any configuration error
+ */
+std::string AgentFlagger::searchAnyAgentsNotAvg(const std::vector<Record> &configs)
+{
+    const std::vector<std::string> whitelist = { "clip", "rflag", "tfcrop", "extend", "display", "antint" };
+
+    for (const auto &agent : configs) {
+        String recname;
+        agent.get("mode", recname);
+        std::string name = recname;
+        const auto &found = std::find(whitelist.cbegin(), whitelist.cend(), name);
+        if (found == whitelist.cend()) {
+            return name;
+        }
+    }
+
+    return "";
 }
 
 // ---------------------------------------------------------------------
@@ -601,6 +666,10 @@ AgentFlagger::initAgents()
             " agents in the list. Agents: "
            << buildListAgentNames(agents_config_list_p) << LogIO::POST;
 
+
+        // Check once here, to re-use then with every agent in the list
+        const auto &anyAgentNotAvg = searchAnyAgentsNotAvg(agents_config_list_p);
+
 	size_t list_size = agents_config_list_p.size();
 
 	// Send the logging of the re-applying agents to the debug
@@ -627,32 +696,11 @@ AgentFlagger::initAgents()
 		agent_rec.get("mode", mode);
 
         /*
-         * Special considerations for some agents
+         * Special constraints for some agents
          */
 
-        size_t maxSizeWhenAvg = 2;
-        if (0 == mode.compare("clip")) {
-            maxSizeWhenAvg = 1;
-        }
-        // If clip agent is mixed with other agents and time average is true, skip it
-        if ((mode.compare("clip") == 0 and list_size > maxSizeWhenAvg) or
-            (mode.compare("rflag") == 0 and list_size > maxSizeWhenAvg) or
-            (mode.compare("tfcrop") == 0 and list_size > maxSizeWhenAvg))
-        {
-            Bool tavg = false;
-            int exists = agent_rec.fieldNumber ("timeavg");
-            if (exists >= 0) {
-                agent_rec.get("timeavg", tavg);
-            }
-
-            if (tavg){
-                os << LogIO::WARN << "Cannot have " << mode << " mode with timeavg=True or "
-                    "channelavg=True and more than " << maxSizeWhenAvg << " agents (for "
-                    "example when using extendflags, display, etc. or in list mode). Agent "
-                    "will be ignored!" << LogIO::POST;
-                continue;
-            }
-        }
+        // constraints that will produce exceptions if not met
+        checkAveragingConfig(mode, agent_rec, anyAgentNotAvg);
 
         // If quack mode with quackincrement = true, skip it
         if (mode.compare("quack") == 0 and i > 0 and list_size > 1){
