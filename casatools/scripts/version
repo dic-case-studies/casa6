@@ -1,27 +1,59 @@
 #!/usr/bin/perl
-$gitbranch=`git branch | grep "\*" | cut -d ' ' -f2`;
-chomp($gitbranch);
-#print ($gitbranch."\n");
-open( $githashes, "git log --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
-chomp( @hashes = <$githashes> );
-close( $githashes );
-@versions;
-foreach ( @hashes ) {
-	#print "$_\n";
-    open( $gitver, "git show-ref --tags -d | grep ^" . $_ . " | sed -e 's,.* refs/tags/,,' | sed -e 's/\\^{}//' 2> /dev/null |" );
-    chomp( @tags = <$gitver> );
-    #print ( $tags[$#tags], "\n" );
-    push @versions, @tags;
-    close( $gitver );
-}
-#print ($versions);
-@versions = grep(/^\d+\.\d+\.\d+\.\d+$/, @versions);
-#https://rosettacode.org/wiki/Sort_a_list_of_object_identifiers#Python
-my @sorted =
-    map { $_->[0] }
-    sort { $a->[1] cmp $b->[1] }
-    map { [$_, join '', map { sprintf "%8d", $_ } split /\./, $_] }
-    @versions;
 
+# Version type is used to select the appropriate grep pattern.
+# The idea is to look for either the latest master/release type tag "\d+.\d+.\d+.\d+"
+# or CAS-<number>-x tags. Both are required to construct a meaningful number for
+# the casatools/tasks wheels
+
+# Algorithm:
+
+# Get the branch type (options CAS-*, release/*, something else)
+# If CAS, return last CAS-tag and the last tag in the branch that conforms to \d+\.\d+\.\d+\.\d (release/master) tag.
+# If release/* return last tag that matches ^a.b.c.(N) if branch is release/a.b.c
+# Others branches TBD: last tag in the branch that conforms to \d+\.\d+\.\d+\.\d (release/master) tag? Something else? 100.100.100.100?
+
+
+#$versiontype=$ARGV[0];
+
+$gitbranch=`git rev-parse --abbrev-ref HEAD`;
+chomp($gitbranch);
+@sorted;
+if ($gitbranch =~ "^CAS-") {
+    @versions;
+    open( $tags, "git tag -l | grep $gitbranch | " );
+    chomp( @tags = <$tags> );
+    close( @tags );
+    @versions = grep(/^CAS-\d+-\d+$/, @tags);
+    print(@versions,"\n");
+    @sorted = sort(@versions)
+}
+else {
+    @versions;
+    #$gitbranch=`git branch | grep "\*" | cut -d ' ' -f2`;
+    chomp($gitbranch);
+    #print ($gitbranch."\n");
+    open( $githashes, "git log --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
+    chomp( @hashes = <$githashes> );
+    close( $githashes );
+    foreach ( @hashes ) {
+    	#print "$_\n";
+        open( $gitver, "git show-ref --tags -d | grep ^" . $_ . " | sed -e 's,.* refs/tags/,,' | sed -e 's/\\^{}//' 2> /dev/null |" );
+        chomp( @tags = <$gitver> );
+        #print ( $tags[$#tags], "\n" );
+        push @versions, @tags;
+        close( $gitver );
+    }
+    #print ($versions);
+
+    @versions = grep(/^\d+\.\d+\.\d+\.\d+$/, @versions);
+    print(@versions,"\n");
+
+    #https://rosettacode.org/wiki/Sort_a_list_of_object_identifiers#Python
+    @sorted =
+        map { $_->[0] }
+        sort { $a->[1] cmp $b->[1] }
+        map { [$_, join '', map { sprintf "%8d", $_ } split /\./, $_] }
+        @versions;
+}
 #print ("@sorted\n");
 print( $sorted[$#sorted], "\n" );
