@@ -104,8 +104,6 @@ AgentFlagger::done()
 
 	max_p = 0.0;
 
-	timeAvg_p = false;
-
 	dataselection_p = Record();
 
 	/*

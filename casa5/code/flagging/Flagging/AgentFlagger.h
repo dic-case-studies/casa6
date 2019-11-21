@@ -377,10 +377,6 @@ private:
 
 	// Store the temporary maximum value
 	casacore::Double max_p;
-
-	// casacore::Time average parameter in clip mode
-	casacore::Bool timeAvg_p;
-
 };
 
 
