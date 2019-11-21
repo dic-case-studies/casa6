@@ -103,8 +103,6 @@ AgentFlagger::done()
 	observation_p = "";
 
 	max_p = 0.0;
-	timeset_p = false;
-	iterset_p = false;
 
 	timeAvg_p = false;
 
@@ -677,6 +675,9 @@ AgentFlagger::initAgents()
 	Bool retstate = true;
         // Just to log this info
         std::vector<Record> agents_config_list_filtered;
+        // To set some parameters only once
+        bool itersetDone = false;
+        bool timesetDone = false;
 	// Loop through the vector of agents
 	for (size_t i=0; i < list_size; i++) {
 
@@ -715,21 +716,21 @@ AgentFlagger::initAgents()
         }
 
 		// Set the new time interval only once
-		if (!timeset_p and (mode.compare("tfcrop") == 0 or mode.compare("extend") == 0 or
+		if (!timesetDone and (mode.compare("tfcrop") == 0 or mode.compare("extend") == 0 or
 				mode.compare("rflag") == 0)) {
 			fdh_p->setTimeInterval(max_p);
-			timeset_p = true;
+			timesetDone = true;
 		}
 
 		// Change the new iteration approach only once
-		if (!iterset_p and (mode.compare("tfcrop") == 0 or mode.compare("extend") == 0
+		if (!itersetDone and (mode.compare("tfcrop") == 0 or mode.compare("extend") == 0
 				or mode.compare("rflag") == 0 or mode.compare("display") == 0)) {
 			if (combinescans_p)
 				fdh_p->setIterationApproach(FlagDataHandler::COMBINE_SCANS_MAP_ANTENNA_PAIRS_ONLY);
 			else
 				fdh_p->setIterationApproach(FlagDataHandler::COMPLETE_SCAN_MAP_ANTENNA_PAIRS_ONLY);
 
-			iterset_p = true;
+			itersetDone = true;
 		}
 
 		// Agent's name
