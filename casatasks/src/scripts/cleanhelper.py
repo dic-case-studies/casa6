@@ -3424,7 +3424,7 @@ class cleanhelper:
                     c += 1
 
                 factors.append(c)
-                lastresult /= c
+                lastresult //= c
             if(factors==[]): factors=[n]
             return  numpy.unique(factors).tolist() if douniq else factors 
         n=size

@@ -30,7 +30,7 @@
 #define QTVIEWER_H
 #include <list>
 #include <string>
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 #include <queue>
 #include <mutex>
 #endif
@@ -47,7 +47,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	class QtCleanPanelGui;
 	class QtCleanPanelGui2;
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 	class grpcViewerState;
 #endif
 
@@ -116,7 +116,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		// e.g., createDPG()).
 		virtual void quit();
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 
 		void grpc_handle_op( );
 
@@ -135,7 +135,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	protected:
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		QtDBusViewerAdaptor* dbus_;
 #else
 		std::shared_ptr<grpcViewerState> grpc_;

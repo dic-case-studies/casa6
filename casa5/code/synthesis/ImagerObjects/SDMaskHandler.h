@@ -39,7 +39,7 @@
 
 #include<synthesis/ImagerObjects/SIImageStore.h>
 #include<synthesis/ImagerObjects/SIImageStoreMultiTerm.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <synthesis/ImagerObjects/InteractiveMasking.h>
 #endif
 
@@ -417,7 +417,7 @@ public:
   casacore::Float getPBMaskLevel();
 
 protected:
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
   InteractiveMasking *interactiveMasker_p;
 #endif
 

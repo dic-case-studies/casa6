@@ -223,8 +223,9 @@ namespace casa {
             try { func( ); }
             catch(...) { fprintf( stderr, "exception encountered (gui call)\n"); }
         } else {
-            std::lock_guard<std::mutex> exc(plotter_->grpc_queue_mutex);
-            plotter_->grpc_queue.push(func);
+            {   std::lock_guard<std::mutex> exc(plotter_->grpc_queue_mutex);
+                plotter_->grpc_queue.push(func);
+            }
             emit new_op( );
         }
     }

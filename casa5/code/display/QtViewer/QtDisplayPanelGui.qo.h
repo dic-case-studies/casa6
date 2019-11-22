@@ -281,7 +281,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		void updateCursorInfo( WorldCanvas *wc, casacore::Quantity x, casacore::Quantity y );
 		typedef std::pair<QString, std::shared_ptr<casacore::ImageInterface<float> > > OverplotInterface;
 
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 		// Hold and release of refresh.  In order to draw, every call to hold()
 		// must be accompanied by a subsequent call to release() (so don't
 		// neglect: beware of exceptions, e.g.).  Calls can nest (they are

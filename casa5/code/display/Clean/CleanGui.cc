@@ -23,7 +23,7 @@
 //#                        Charlottesville, VA 22903-2475 USA
 //#
 #include <casa/Exceptions/Error.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/session/DBusSession.h>
 #include <casadbus/synthesis/ImagerControl.h>
 #include <casadbus/utilities/io.h>
@@ -118,7 +118,7 @@ namespace casa {
 
 			QTreeWidgetItem *current_item = 0;
 			try {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 				casa::DBusSession &session = casa::DBusSession::instance( );
 				typedef std::vector<std::string> namelist_t;
 				namelist_t names = session.listNames( );
@@ -345,7 +345,7 @@ namespace casa {
 				typedef std::map<std::string,variant_t> details_t;
 				details_t details = ic->getDetails( );
 #if DEBUG
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 				std::ostream_iterator<std::string> out( cerr, ", " );
 
 				std::transform( details.begin( ), details.end( ), out,

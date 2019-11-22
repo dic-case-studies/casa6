@@ -33,7 +33,7 @@
 #include <plotms/PlotMS/PlotMSFlagging.h>
 #include <plotms/PlotMS/PlotEngine.h>
 #include <plotms/Actions/PlotMSAction.h>
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
 #include <plotms/PlotMS/grpcPlotMSAdaptor.qo.h>
 #endif
 
@@ -58,7 +58,7 @@ public:
     // true, then the application registers itself with CASA's DBus server
     // using the PlotMSDBusApp::dbusName() with the current process ID.
     PlotMSApp(bool connectToDBus = false, bool userGui = true
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , const casacore::String &casapy_address = ""
 #endif
               );
@@ -67,7 +67,7 @@ public:
     // then the application registers itself with CASA's DBus server using the
     // PlotMSDBusApp::dbusName() with the current process ID.
     PlotMSApp(const PlotMSParameters& params, bool connectToDBus = false, bool userGui = true
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , const casacore::String &casapy_address = ""
 #endif
               );
@@ -213,7 +213,7 @@ private:
     
     // Plot manager.
     PlotMSPlotManager itsPlotManager_;
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     // DBus application, or NULL if one is not needed.
     PlotMSDBusApp* itsDBus_;
 #else
@@ -227,7 +227,7 @@ private:
 
     // Initializes a new PlotMS object, to be called from constructor.
     void initialize(bool connectToDBus, bool userGui
-#if defined(WITHOUT_DBUS)
+#if defined(CASATOOLS)
                         , const casacore::String &casapy_address=""
 #endif
                     );
