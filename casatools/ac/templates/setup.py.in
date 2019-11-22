@@ -155,7 +155,7 @@ else:
 def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
-        (major, minor, patch) = args.version.split(".")
+        (major, minor, micro, patch) = args.version.split(".")
         return(int(major), int(minor), int(micro), int(patch))
     else:
         proc = Popen( [ "scripts/version" ], stdout=PIPE, stderr=PIPE )
