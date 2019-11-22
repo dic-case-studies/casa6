@@ -1,5 +1,8 @@
 #!/usr/bin/perl
 
+# This script has to be run within the Git repository. It will inspect the
+# state of the current tree/branch in the workspace.
+
 # Version type is used to select the appropriate grep pattern.
 # The idea is to look for either the latest master/release type tag "\d+.\d+.\d+.\d+"
 # or CAS-<number>-x tags. Both are required to construct a meaningful number for
@@ -19,14 +22,34 @@
 
 my $gitbranch=`git rev-parse --abbrev-ref HEAD`;
 chomp($gitbranch);
-#print( "Last branch tag: " . get_last_branch_tag ($gitbranch) . "\n");
-#print( "Last master tag: " . get_last_master_tag ($gitbranch) . "\n");
-print( "Last release tag: " . get_last_release_tag ($gitbranch) . "\n");
-#print( "Last release tag for branch: " . get_last_release_tag_for_branch ($gitbranch) . "\n");
+my $last_branch_tag="";
+my $last_release_tag="";
+if ($gitbranch eq "master"){
+    #print("Resolving master tag\n");
+    $last_release_tag=get_last_master_tag ($gitbranch);
+    $last_branch_tag=$last_release_tag;
+}
+elsif ($gitbranch =~ "release/"){
+    #print("Resolving release tag\n");
+    $last_release_tag=get_last_release_tag ($gitbranch);
+    $last_branch_tag=$last_release_tag;
+} else {
+    #print("Resolving release tag\n");
+    $last_release_tag=get_last_release_tag_for_branch ($gitbranch);
+    $last_branch_tag=get_last_branch_tag ($gitbranch);
+
+}
+print ("$last_branch_tag $last_release_tag");
+my $headcommit=`git rev-parse HEAD`;
+my $tagcommit=`git rev-list -n 1 $last_branch_tag`;
+if ($headcommit ne $tagcommit) {
+    print (" dirty");
+}
+
+print ("\n");
 
 sub get_last_branch_tag () {
     my $gitbranch = shift;
-    #if ($gitbranch !~ "^release/" && $gitbranch ne "master") {
     my @versions;
     open( $tags, "git tag -l | grep $gitbranch | " );
     chomp( @tags = <$tags> );
@@ -44,7 +67,7 @@ sub get_last_master_tag () {
     chomp( @tags = <$tags> );
     close( @tags );
     @versions = grep(/^\d+\.\d+\.\d+\.\d+$/, @tags);
-    print(@versions,"\n");
+    #print(@versions,"\n");
 
     #https://rosettacode.org/wiki/Sort_a_list_of_object_identifiers#Perl
     my @sorted =
@@ -94,7 +117,7 @@ sub get_last_release_tag_for_branch () {
     #print ($versions);
 
     @versions = grep(/^\d+\.\d+\.\d+\.\d+$/, @versions);
-    print(@versions,"\n");
+    #print(@versions,"\n");
 
     #https://rosettacode.org/wiki/Sort_a_list_of_object_identifiers#Perl
     my @sorted =
@@ -105,6 +128,3 @@ sub get_last_release_tag_for_branch () {
 
     return($sorted[$#sorted]);
 }
-
-#print ("@sorted\n");
-#print( $sorted[$#sorted], "\n" );
