@@ -156,16 +156,34 @@ def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
         (major, minor, patch) = args.version.split(".")
-        return(int(major), int(minor), int(patch))
+        return(int(major), int(minor), int(micro), int(patch))
     else:
         proc = Popen( [ "scripts/version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
-        (major, minor, patch) = out.split( )[0].split(".")
-        print((major,minor, patch))
-        return(int(major), int(minor), int(patch))
+        print(out)
+        devbranchtag = out.split(" ")[0]
+        print(devbranchtag)
+        releasetag = out.split(" ")[1]
+        print(releasetag)
+        devbranchversion = ""
+        devbranchrevision = ""
+        if (devbranchtag != releasetag):
+            devbranchrevision = devbranchtag.split("-")[-1]
+            if (devbranchtag.startswith("CAS-")):
+                devbranchversion=devbranchtag.split("-")[1]
+            else:
+                devbranchversion=100
+            devbranchrevision = devbranchtag.split("-")[-1]
+        else:
+            isDevBranch = False
+        (major, minor, micro, patch) = releasetag.split(".")
+        print(major, minor, micro, patch)
+        return(int(major), int(minor), int(micro), int(patch), devbranchversion, devbranchrevision)
 
-(casatools_major,casatools_minor, casatools_patch) = compute_version( )
-casatools_version = '%d.%d.%d' % (casatools_major,casatools_minor,casatools_patch)
+(casatools_major,casatools_minor,casatools_micro,casatools_patch, devbranchversion, devbranchrevision) = compute_version( )
+casatools_version = '%d.%d.%d.%d' % (casatools_major,casatools_minor,casatools_micro,casatools_patch)
+if devbranchversion !="":
+    casatools_version = '%d.%d.%d.%da%sdev%s' % (casatools_major,casatools_minor,casatools_micro,casatools_patch,devbranchversion,devbranchrevision)
 
 ###
 ###  return string discription of the current operating system, e.g.
@@ -322,19 +340,20 @@ def so_version( ):
     x=(delta>>16)&0xffff
     return "%d.%d.%d" % (x,y,z)
 
-def install_version_header( major, minor, patch, verstr ):
+def install_version_header( major, minor, micro, patch, verstr ):
     with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
         for line in f:
-            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_VERSION_STRING@",verstr)
+            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_MICRO@",str(minor)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_VERSION_STRING@",verstr)
             out.write(l)
 
-def install_version_cc( major, minor, patch, verstr ):
+def install_version_cc( major, minor,micro, patch,  verstr ):
     with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
         for line in f:
+            # Sticking to the major, minor, micro, patch despite of the version.cc being what it is...
             l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
                     .replace("@CASA_VERSION_MINOR@",str(minor))\
-                    .replace("@CASA_VERSION_PATCH@",str(patch))\
-                    .replace("@CASA_VERSION_FEATURE@","0")\
+                    .replace("@CASA_VERSION_PATCH@",str(micro))\
+                    .replace("@CASA_VERSION_FEATURE@",str(patch))\
                     .replace("@CASA_VARIANT@","")\
                     .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")\
                     .replace("@CASATOOLS_VERSION_STRING@",verstr)
@@ -1113,8 +1132,8 @@ class casa_build_ext(build_ext):
         print("copying xml-casa...")
         install_xml_casa( )
         print("generating version header...")
-        install_version_header(casatools_major,casatools_minor,casatools_patch,casatools_version)
-        install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_version)
+        install_version_header(casatools_major,casatools_minor,casatools_micro,casatools_patch,casatools_version)
+        install_version_cc(casatools_major,casatools_minor,casatools_micro,casatools_patch,casatools_version)
 
         build_ext.run(self)
         """

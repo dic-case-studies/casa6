@@ -31,6 +31,7 @@
 namespace ToolVersionInfo {
     inline int major( ) { return @CASATOOLS_MAJOR@; }
     inline int minor( ) { return @CASATOOLS_MINOR@; }
+    inline int micro( ) { return @CASATOOLS_MICRO@; }
     inline int patch( ) { return @CASATOOLS_PATCH@; }
     inline std::string version( ) { return "@CASATOOLS_VERSION_STRING@"; }
 }
