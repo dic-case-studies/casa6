@@ -56,7 +56,7 @@
 #include <ms/MSSel/MSSelection.h>
 
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <synthesis/ImagerObjects/SIIterBot.h>
 #endif
 #include <synthesis/ImagerObjects/SynthesisImager.h>
@@ -84,7 +84,7 @@
 #include <synthesis/TransformMachines/AWConvFuncEPJones.h>
 #include <synthesis/TransformMachines/NoOpATerm.h>
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/viewer/ViewerProxy.h>
 #include <casadbus/plotserver/PlotServerProxy.h>
 #endif

@@ -45,7 +45,7 @@ namespace asdm {
     class ASDM_TABLE_BASE {
     protected:
         ASDM_TABLE_BASE();
-        virtual~ASDM_TABLE_BASE();
+        virtual ~ASDM_TABLE_BASE();
         std::string name_;
         casacore::Table* table_p_;
     public:
@@ -54,6 +54,7 @@ namespace asdm {
         virtual const casacore::TableDesc& tableDesc() const = 0;
         void buildAndAttachTable(casacore::MS* attachMS);
         virtual void fill(const ASDM& asdm) = 0;
+        void close();
 
         template<typename T, typename U>  casacore::Vector<U> basic2CASA1D(const std::vector<T>& v) {
             casacore::Vector<U> result;

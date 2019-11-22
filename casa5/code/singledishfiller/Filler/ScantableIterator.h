@@ -63,12 +63,12 @@ inline void getDataRangePerId(casacore::Vector<casacore::uInt> const &index_list
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-class ScantableIteratorInterface {
+class ScantableIteratorBase {
 public:
-  ScantableIteratorInterface(casacore::Table const &table) :
-      current_iter_(0), main_table_(table), num_iter_(0) {
+  ScantableIteratorBase() :
+      current_iter_(0), num_iter_(0) {
   }
-  virtual ~ScantableIteratorInterface() {
+  virtual ~ScantableIteratorBase() {
   }
   void initialize(size_t num_iter) {
     num_iter_ = num_iter;
@@ -83,15 +83,29 @@ public:
 
 protected:
   size_t current_iter_;
-  casacore::Table const main_table_;
 
 private:
   size_t num_iter_;
 };
 
-class ScantableFrequenciesIterator: public ScantableIteratorInterface {
+template<class _Product, class _Record>
+class ScantableIteratorInterface: public ScantableIteratorBase {
 public:
-  typedef std::map<casacore::Int, casacore::Int> Product;
+  using Product = _Product;
+  using Record = _Record;
+  ScantableIteratorInterface(casacore::Table const &table) :
+      ScantableIteratorBase(), main_table_(table) {
+  }
+  virtual ~ScantableIteratorInterface() {}
+  virtual void getEntry(Record &record) = 0;
+  virtual void getProduct(Product *p) = 0;
+protected:
+  casacore::Table const main_table_;
+};
+
+class ScantableFrequenciesIterator final :
+  public ScantableIteratorInterface<std::map<casacore::Int, casacore::Int>, sdfiller::SpectralWindowRecord> {
+public:
   ScantableFrequenciesIterator(casacore::Table const &table) :
       ScantableIteratorInterface(table) {
     casacore::TableRecord const &header = main_table_.keywordSet();
@@ -123,7 +137,7 @@ public:
   virtual ~ScantableFrequenciesIterator() {
   }
 
-  void getEntry(sdfiller::SpectralWindowRecord &record) {
+  void getEntry(Record &record) override {
     size_t const irow = current_iter_;
 //    std::cout << "getEntry for row " << irow << std::endl;
     casacore::Int spw_id = ifno_list_[irow];
@@ -161,7 +175,7 @@ public:
     // update product
     product_[spw_id] = num_chan;
   }
-  virtual void getProduct(Product *p) {
+  void getProduct(Product *p) override {
     if (p) {
       for (auto iter = product_.begin(); iter != product_.end(); ++iter) {
         (*p)[iter->first] = iter->second;
@@ -180,9 +194,9 @@ private:
   Product product_;
 };
 
-class ScantableFieldIterator: public ScantableIteratorInterface {
+class ScantableFieldIterator final :
+  public ScantableIteratorInterface<std::map<casacore::String, casacore::Int>, sdfiller::FieldRecord> {
 public:
-  typedef std::map<casacore::String, casacore::Int> Product;
   ScantableFieldIterator(casacore::Table const &table) :
       ScantableIteratorInterface(table), row_list_(), is_reserved_(), field_column_(
           main_table_, "FIELDNAME"), source_column_(main_table_, "SRCNAME"), time_column_(
@@ -201,7 +215,7 @@ public:
   virtual ~ScantableFieldIterator() {
   }
 
-  void getEntry(sdfiller::FieldRecord &record) {
+  void getEntry(Record &record) override {
     casacore::uInt const irow = row_list_[current_iter_];
     casacore::String field_name_with_id = field_column_(irow);
     auto pos = field_name_with_id.find("__");
@@ -255,7 +269,7 @@ public:
     // update product
     product_[field_name_with_id] = record.field_id;
   }
-  virtual void getProduct(Product *p) {
+  void getProduct(Product *p) override {
     if (p) {
       for (auto iter = product_.begin(); iter != product_.end(); ++iter) {
         (*p)[iter->first] = iter->second;
@@ -275,9 +289,9 @@ private:
   Product product_;
 };
 
-class ScantableSourceIterator: public ScantableIteratorInterface {
+class ScantableSourceIterator final :
+  public ScantableIteratorInterface<void *, sdfiller::SourceRecord> {
 public:
-  typedef void * Product;
   ScantableSourceIterator(casacore::Table const &table) :
       ScantableIteratorInterface(table), name_column_(main_table_, "SRCNAME"), direction_column_(
           main_table_, "SRCDIRECTION"), proper_motion_column_(main_table_,
@@ -378,7 +392,7 @@ public:
   virtual ~ScantableSourceIterator() {
   }
 
-  void getEntry(sdfiller::SourceRecord &record) {
+  void getEntry(sdfiller::SourceRecord &record) override {
     casacore::uInt const irow = row_list_[current_iter_];
     casacore::uInt const ifno = ifno_column_(irow);
     record.name = name_column_(irow);
@@ -442,7 +456,7 @@ public:
     record.time = 0.5 * (time_min + time_max);
     record.interval = (time_max - time_min);
   }
-  virtual void getProduct(Product */*p*/) {
+  void getProduct(Product */*p*/) override {
 
   }
 

@@ -26,7 +26,7 @@
 #define DISPLAY_CLEANGUI_H_
 
 #include <map>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/types/variant.h>
 #else
 #include <casagrpc/types/variant.h>
@@ -66,7 +66,7 @@ namespace casa {
 
 			// update information for the process currently selected...
 			void refresh( );
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 			std::map<std::string,dbus::variant> collect( );
 #else
 			std::map<std::string,grpc::variant> collect( );
