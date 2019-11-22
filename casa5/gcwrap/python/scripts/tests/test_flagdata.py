@@ -2390,11 +2390,15 @@ class test_clip(test_base):
         inplist = ["mode='manual' spw='7'",
                    "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]"]
 
+        # CAS-12294: should raise exception when trying to use timeavg and forbidden modes
+        # although task_flagdata will catch the exception and simply return {}
         flagdata(vis=self.vis, mode='list', inpfile=inplist)
         res = flagdata(vis=self.vis, mode='summary', spw='7,9')
-        self.assertEqual(res['spw']['7']['flagged'], 274944)
-        self.assertEqual(res['spw']['9']['flagged'], 0)
-        self.assertEqual(res['flagged'], 274944)
+        self.assertEqual(res, {})
+        # This is what it would flag if clip+timeavg+manual was accepted:
+        # self.assertEqual(res['spw']['7']['flagged'], 274944)
+        # self.assertEqual(res['spw']['9']['flagged'], 0)
+        # self.assertEqual(res['flagged'], 274944)
 
     def test_timeavg_list_mode2(self):
         '''flagdata: timeavg=True should not be accepted in list mode'''
@@ -3931,7 +3935,7 @@ class test_preaveraging(test_base):
 
         # Check results
         self.assertEqual(res1['flagged'], 36)
-        self.assertEqual(res2['flagged'], 0)
+        self.assertEqual(res2['flagged'], 60)
         
     def test_tfcrop_chanavg(self):
         '''flagdata: tfcrop with chan average and compare vs mstransform'''
