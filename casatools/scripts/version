@@ -19,10 +19,10 @@
 
 my $gitbranch=`git rev-parse --abbrev-ref HEAD`;
 chomp($gitbranch);
-print( "Last branch tag: " . get_last_branch_tag ($gitbranch) . "\n");
-print( "Last master tag: " . get_last_master_tag ($gitbranch) . "\n");
-#print( "Last release tag: " . get_last_release_tag ($gitbranch) . "\n");
-print( "Last release tag for branch: " . get_last_release_tag_for_branch ($gitbranch) . "\n");
+#print( "Last branch tag: " . get_last_branch_tag ($gitbranch) . "\n");
+#print( "Last master tag: " . get_last_master_tag ($gitbranch) . "\n");
+print( "Last release tag: " . get_last_release_tag ($gitbranch) . "\n");
+#print( "Last release tag for branch: " . get_last_release_tag_for_branch ($gitbranch) . "\n");
 
 sub get_last_branch_tag () {
     my $gitbranch = shift;
@@ -59,14 +59,12 @@ sub get_last_master_tag () {
 sub get_last_release_tag () {
     my $gitbranch = shift;
     my @versions;
-    my $gitbranch = shift;
-    my @versions;
-    $releaseid=(split($gitbranch, "/"))[-1];
-    open( $tags, "git tag -l | grep \"^$releaseid\" ");
+    $releaseid=(split('/',$gitbranch))[-1];
+    $grep_cmd = "git tag -l | grep \"" . "^" .$releaseid . "\" | ";
+    open( $tags, $grep_cmd);
     chomp( @tags = <$tags> );
     close( @tags );
     @versions = grep(/^\d+\.\d+\.\d+\.\d+$/, @tags);
-    print(@versions,"\n");
 
     #https://rosettacode.org/wiki/Sort_a_list_of_object_identifiers#Perl
     my @sorted =
@@ -75,7 +73,7 @@ sub get_last_release_tag () {
         map { [$_, join '', map { sprintf "%8d", $_ } split /\./, $_] }
         @versions;
 
-    return($sorted[$#sorted])#, "\n" );
+    return($sorted[$#sorted]);
 
 }
 
