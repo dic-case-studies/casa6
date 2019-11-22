@@ -44,13 +44,12 @@ public:
 
     StringTokenizer(const std::string &s, 
     	const std::string &delim = " \t\n\r\f", 
-    	bool returnDelims = false)
-    	throw (InvalidArgumentException);
+    	bool returnDelims = false);
 	virtual ~StringTokenizer();
 
     bool hasMoreTokens(); 
-    std::string nextToken() throw (OutOfBoundsException);
-    std::string nextToken(const std::string delim) throw (OutOfBoundsException);
+    std::string nextToken();
+    std::string nextToken(const std::string delim);
     int countTokens();
 
 private:
@@ -68,8 +67,8 @@ private:
 
     char maxDelimChar;
 
-    void setMaxDelimChar() throw (InvalidArgumentException);
-    int skipDelimiters(int startPos) throw (InvalidArgumentException);
+    void setMaxDelimChar();
+    int skipDelimiters(int startPos);
     int scanToken(int startPos);
 	int indexOfDelimiters(char c);
 
