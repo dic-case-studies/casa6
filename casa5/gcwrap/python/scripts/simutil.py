@@ -1628,9 +1628,11 @@ class simutil:
                             aid.append('A%02d'%nant)
                         nant+=1
             except IOError:
-                print "Could not read file: '%s'" %(antab)
+                self.msg("Could not read file: '%s'" %(antab), 
+                         origin='readantenna', priority='error')
             except ValueError:
-                print "Could not read file: '%s'" %(antab)
+                self.msg("Could not read file: '%s'" %(antab), 
+                         origin='readantenna', priority='error')
 
         if not params.has_key("coordsys"):
             self.msg("Must specify XYZ, UTM or LOC coordinate system"\
