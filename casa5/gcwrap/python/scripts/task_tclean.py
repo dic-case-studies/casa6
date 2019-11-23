@@ -224,7 +224,7 @@ def tclean(
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
         bparm['mosweight']=False
 
-    print('parameters {}'.format(bparm))    
+    #print('parameters {}'.format(bparm))    
     paramList=ImagerParameters(**bparm)
 
     # deprecation message

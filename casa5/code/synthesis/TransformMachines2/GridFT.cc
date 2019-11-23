@@ -1400,8 +1400,9 @@ Bool GridFT::fromRecord(String& error,
   inRec.get("nopadding", noPadding_p);
 
   machineName_p="GridFT";
-  ///setup some of the parameters
-  init();
+  ///setup some of the parameters if there is an image
+  if(inRec.isDefined("image") || inRec.isDefined("diskimage"))
+    init();
   /*if(!cmplxImage_p.null()){
     //FTMachine::fromRecord would have recovered the image
     // Might be changing the shape of sumWeight

@@ -45,6 +45,7 @@
 
 #include <synthesis/TransformMachines/StokesImageUtil.h>
 #include <synthesis/TransformMachines2/VisModelData.h>
+#include <casacore/lattices/Lattices/LatticeLocker.h>
 #include <images/Images/ImageInterface.h>
 #include <images/Images/SubImage.h>
 
@@ -479,9 +480,12 @@ void MultiTermFTNew::finalizeToSkyNew(Bool dopsf,
       {
 	Matrix<Float> sumWeights;
 	subftms_p[taylor]->finalizeToSky();
-	correlationToStokes( subftms_p[taylor]->getImage(sumWeights, false) , ( dopsf ? *(imstore->psf(taylor)) : *(imstore->residual(taylor)) ), dopsf);
-
+        shared_ptr<ImageInterface<Float> > theim=dopsf ? imstore->psf(taylor) : imstore->residual(taylor);
+        { LatticeLocker lock1 (*theim, FileLocker::Write);
+          correlationToStokes( subftms_p[taylor]->getImage(sumWeights, false) , *theim, dopsf);
+        }
 	if( subftms_p[taylor]->useWeightImage() && dopsf ) {
+          LatticeLocker lock1 (*(imstore->weight(taylor)), FileLocker::Write);
 	  subftms_p[taylor]->getWeightImage(*(imstore->weight(taylor)), sumWeights);
 	}
 
@@ -491,7 +495,7 @@ void MultiTermFTNew::finalizeToSkyNew(Bool dopsf,
 
 	AlwaysAssert( ( (imstore->sumwt(taylor))->shape()[2] == sumWeightStokes.shape()[0] ) && 
 		      ((imstore->sumwt(taylor))->shape()[3] == sumWeightStokes.shape()[1] ) , AipsError );
-	
+	LatticeLocker lock1 (*(imstore->sumwt(taylor)), FileLocker::Write);
 	(imstore->sumwt(taylor))->put( sumWeightStokes.reform((imstore->sumwt(taylor))->shape()) );
 
 	//	cout << "taylor : " << taylor << "   sumwt : " << sumWeights << endl;
