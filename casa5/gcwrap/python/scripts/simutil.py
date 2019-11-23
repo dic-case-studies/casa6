@@ -107,7 +107,7 @@ class simutil:
     To use these, create a simutil instance e.g.
      CASA> from simutil import simutil
      CASA> u=simutil()
-     CASA> x,y,z,d,padnames,telescope,posobs = u.readantenna("myconfig.cfg")
+     CASA> x,y,z,d,padnames,antnames,telescope,posobs = u.readantenna("myconfig.cfg")
     """
     def __init__(self, direction="",
                  centerfreq=qa.quantity("245GHz"),
@@ -1196,7 +1196,7 @@ class simutil:
                      os.path.exists(repodir+antennalist):
                 antennalist = repodir + antennalist
             if os.path.exists(antennalist):
-                stnx, stny, stnz, stnd, padnames, telescope, posobs = self.readantenna(antennalist)
+                stnx, stny, stnz, stnd, padnames, antnames, telescope, posobs = self.readantenna(antennalist)
             else:
                 self.msg("antennalist "+antennalist+" not found",priority="error")
                 return False
@@ -3561,7 +3561,7 @@ class simutil:
 ######################################
     # adapted from aU.getBaselineStats
     def baselineLengths(self, configfile):
-        stnx, stny, stnz, stnd, padnames, telescopename, posobs = self.readantenna(configfile)
+        stnx, stny, stnz, stnd, padnames, antnames, telescopename, posobs = self.readantenna(configfile)
 
         # use mean position, not official COFA=posobs
         cx=pl.mean(stnx)
