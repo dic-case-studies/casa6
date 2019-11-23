@@ -399,7 +399,7 @@ def simobserve(
 
         # Read antennalist
         if os.path.exists(antennalist):
-            stnx, stny, stnz, stnd, padnames, telescopename, posobs = util.readantenna(antennalist)
+            stnx, stny, stnz, stnd, padnames, antnames, telescopename, posobs = util.readantenna(antennalist)
             nant=len(stnx)
             if nant == 1:
                 if predict and uvmode:
@@ -407,7 +407,6 @@ def simobserve(
                     util.msg("antennalist contains only 1 antenna", 
                              priority="error")
                 uvmode = False
-            antnames = []
             if not uvmode: #Single-dish
                 # KS TODO: what if not predicting but SD with multi-Ants
                 # in antennalist (e.g., aca.tp)? In that case, PB on plots and
@@ -420,12 +419,12 @@ def simobserve(
                 stnz = [stnz[sdant]]
                 stnd = pl.array(stnd[sdant])
                 padnames = [padnames[sdant]]
+                antnames = [antnames[sdant]]
                 nant = 1
 
             # (set back to simdata - there must be an automatic way to do this)
             casalog.origin('simobserve')
 
-            for k in range(0,nant): antnames.append('A%02d'%k)
             aveant = stnd.mean()
             # TODO use max ant = min PB instead?
             pb = pbcoeff*0.29979/qa.convert(qa.quantity(model_specrefval),'GHz')['value']/aveant*3600.*180/pl.pi # arcsec
