@@ -417,12 +417,21 @@ observation?
 <description>Ascii file containing antenna positions.
                      Subparameter of obsmode='int|""'
 
-                     Each row has x y z coordinates and antenna
-                     diameter; header lines are required to specify
+                     Each row has x y z coordinates and antenna diameter
+		     with option station name and antenna name;
+		     header lines are required to specify:
                      # observatory=ALMA
                      # coordsys=UTM
+
+		     If the Universal Transverse Mercator projection is
+		     specified, then other keywords are required:
                      # datum=WGS84
                      # zone=19
+		     # hemisphere=S
+
+		     If the observatory keyword is not defined, then the
+		     COFA keyword should be, using a coordinate pair:
+		     #COFA=-67.75,-23.02
 
                    * Standard arrays are found in your CASA data
                      repository,

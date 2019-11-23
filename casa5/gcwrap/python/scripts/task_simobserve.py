@@ -1064,12 +1064,12 @@ def simobserve(
                     # get the "diam" out of PBMath AFAIK
                     if telescopename=="ALMA":
                         if (diam[0]<10)|(diam[0]>13):
-                            msg("Diameter = %f is inconsistent with telescope=ALMA in the configuration file.  *12m ALMA PB will be used*"%diam[0],priority="warn")
+                            msg("Diameter = %f is inconsistent with telescope=ALMA in the configuration file. *12m ALMA PB will be used*. Use observatory='ACA' in the configuration file to use a 7m diameter."%diam[0],priority="warn")
                             n=len(diam)
                             diam=12.+pl.zeros(n)
                     elif telescopename=="ACA":
                         if (diam[0]<6)|(diam[0]>7.5):
-                            msg("Diameter = %f is inconsistent with telescope=ALMA in the configuration file.  *7m ACA PB will be used*"%diam[0],priority="warn")
+                            msg("Diameter = %f is inconsistent with telescope=ALMA in the configuration file. *7m ACA PB will be used*"%diam[0],priority="warn")
                             n=len(diam)
                             diam=7.+pl.zeros(n)
                     else:
