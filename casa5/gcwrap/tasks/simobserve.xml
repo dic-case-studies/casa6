@@ -414,7 +414,7 @@ observation?
 
     <param type="string" name="antennalist" subparam="true">
 <shortdescription>Interferometer antenna position file</shortdescription>
-<description>Ascii file containing antenna positions.
+<description>Text file containing antenna positions.
                      Subparameter of obsmode='int|""'
 
                      Each row has x y z coordinates and antenna diameter
@@ -433,8 +433,8 @@ observation?
 		     COFA keyword should be, using a coordinate pair:
 		     #COFA=-67.75,-23.02
 
-                   * Standard arrays are found in your CASA data
-                     repository,
+                   * Standard array configurations are found in your
+		     CASA data repository,
                    * If "", simobserve will not not produce an
                      interferometric MS 
                    * A string of the form "alma;0.5arcsec" will be

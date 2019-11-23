@@ -1085,7 +1085,9 @@ class simutil:
                         t0=[67,  116, 134, 500]
                         flim=[180.,720]
                     else:
-                        self.msg("I don't know about the "+telescope+" receivers, using 200K",priority="warn",origin="noisetemp")
+                        self.msg("I don't know about the "+
+                                 telescope+" receivers, using 200K",
+                                 priority="warn",origin="noisetemp")
                         f0=[10,900]
                         t0=[200,200]
                         flim=[0,5000]
@@ -1096,8 +1098,10 @@ class simutil:
         
         if obsfreq<flim[0]:
             t_rx=t0[0]
-            self.msg("observing freqency is lower than expected for "+telescope,priority="warn",origin="noise")
-            self.msg("proceeding with extrapolated receiver temp="+str(t_rx),priority="warn",origin="noise")
+            self.msg("observing freqency is lower than expected for "+
+                     telescope,priority="warn",origin="noise")
+            self.msg("proceeding with extrapolated receiver temp="+
+                     str(t_rx),priority="warn",origin="noise")
         else:
             z=0
             while(f0[z]<obsfreq and z<len(t0)):
@@ -1105,8 +1109,10 @@ class simutil:
             t_rx=t0[z-1]
 
         if obsfreq>flim[1]:
-            self.msg("observing freqency is higher than expected for "+telescope,priority="warn",origin="noise")
-            self.msg("proceeding with extrapolated receiver temp="+str(t_rx),priority="warn",origin="noise")
+            self.msg("observing freqency is higher than expected for "+
+                     telescope,priority="warn",origin="noise")
+            self.msg("proceeding with extrapolated receiver temp="+
+                     str(t_rx),priority="warn",origin="noise")
         if obsfreq<=flim[1] and obsfreq>=flim[0]:
             self.msg("interpolated receiver temp="+str(t_rx),origin="noise")
 
@@ -1204,7 +1210,6 @@ class simutil:
             nant=len(stnx)
             # diam is only used as a test below, not quantitatively
             diam = pl.average(stnd)
-            antnames=padnames
             
  
         if (telescope==None or diam==None):
@@ -1358,6 +1363,7 @@ class simutil:
         z         - array of Z positions, i.e. stnz from readantenna
         diam      - numpy.array of antenna diameters, i.e. from readantenna
         padnames  - list of pad names
+        antnames  - list of antenna names
         posobs    - The observatory position as a measure.
 
         Optional:
@@ -1542,9 +1548,9 @@ class simutil:
     def readantenna(self, antab=None):
         """
         Helper function to read antenna configuration file; example:
-             #observatory=ALMA
-             #COFA=-67.75,-23.02
-             #coordsys=LOC (local tangent plane)
+             # observatory=ALMA
+             # COFA=-67.75,-23.02
+             # coordsys=LOC (local tangent plane)
              # uid___A002_Xdb6217_X55ec_target.ms
              # x             y               z             diam  station  ant
              -5.850273514   -125.9985379    -1.590364043   12.   A058     DA41
@@ -1642,19 +1648,9 @@ class simutil:
             self.msg("Using observatory= %s" % self.telescopename,
                      origin="readantenna")
 
-        found=False
-        # identify the exception list
-        obslist_lower = [obs for obs in me.obslist() 
-                         if any(char.islower() for char in obs)]
-        # again, sanitize input for people who don't want to use Shift key
-        if self.telescopename not in obslist_lower: 
-            t = self.telescopename.upper()
-        elif self.telescopename.upper() in [obs.upper() 
-                                            for obs in obslist_lower]:
-            # it's a known observatory but we cannot sanitize to uppercase
-            # see CAS-12753 for details
-            t = self.telescopename
         # me.observatory has partial matching implemented
+        found=False
+        t=self.telescopename.upper()
         for l in pl.arange(len(t)-1)+2:
             if t[0:l] in me.obslist(): found=True
         if found:
@@ -1665,9 +1661,7 @@ class simutil:
             cofa_lon=float(obs_latlon[0])
             cofa_lat=float(obs_latlon[1])
             cofa_alt=0.
-            posobs=me.position("WGS84",qa.quantity(cofa_lon,"deg"),
-                               qa.quantity(cofa_lat,"deg"),
-                               qa.quantity(cofa_alt,"m"))
+            posobs=me.position("WGS84",qa.quantity(cofa_lon,"deg"),qa.quantity(cofa_lat,"deg"),qa.quantity(cofa_alt,"m"))
             if found: 
                 self.msg("antenna config file specifies COFA but a known observatory "+self.telescopename+", so ignoring specified COFA.",priority="warn")
         elif not found:
@@ -1679,6 +1673,8 @@ class simutil:
                 # average at the end 
                 posobs={}
 
+            
+
         if (params["coordsys"].upper()=="XYZ"):
         ### earth-centered XYZ i.e. ITRF in casa
             stnx=inx
@@ -1689,7 +1685,7 @@ class simutil:
             stny=[]
             stnz=[]
             if (params["coordsys"].upper()=="UTM"):
-        ### expect easting, northing, elevation in m
+        ### expect easting, northing, altitude in m
                 self.msg("Antenna locations in UTM; will read "\
                          "from file easting, northing, elevation in m",
                          origin="readantenna") 

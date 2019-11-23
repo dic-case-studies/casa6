@@ -107,7 +107,7 @@ class simutil:
     To use these, create a simutil instance e.g.
      CASA> from simutil import simutil
      CASA> u=simutil()
-     CASA> x,y,z,d,padnames,telescope,posobs = u.readantenna("myconfig.cfg")
+     CASA> x,y,z,d,padnames,antnames,telescope,posobs = u.readantenna("myconfig.cfg")
     """
     def __init__(self, direction="",
                  centerfreq=qa.quantity("245GHz"),
@@ -1085,7 +1085,9 @@ class simutil:
                         t0=[67,  116, 134, 500]
                         flim=[180.,720]
                     else:
-                        self.msg("I don't know about the "+telescope+" receivers, using 200K",priority="warn",origin="noisetemp")
+                        self.msg("I don't know about the "+
+                                 telescope+" receivers, using 200K",
+                                 priority="warn",origin="noisetemp")
                         f0=[10,900]
                         t0=[200,200]
                         flim=[0,5000]
@@ -1096,8 +1098,10 @@ class simutil:
         
         if obsfreq<flim[0]:
             t_rx=t0[0]
-            self.msg("observing freqency is lower than expected for "+telescope,priority="warn",origin="noise")
-            self.msg("proceeding with extrapolated receiver temp="+str(t_rx),priority="warn",origin="noise")
+            self.msg("observing freqency is lower than expected for "+
+                     telescope,priority="warn",origin="noise")
+            self.msg("proceeding with extrapolated receiver temp="+
+                     str(t_rx),priority="warn",origin="noise")
         else:
             z=0
             while(f0[z]<obsfreq and z<len(t0)):
@@ -1105,8 +1109,10 @@ class simutil:
             t_rx=t0[z-1]
 
         if obsfreq>flim[1]:
-            self.msg("observing freqency is higher than expected for "+telescope,priority="warn",origin="noise")
-            self.msg("proceeding with extrapolated receiver temp="+str(t_rx),priority="warn",origin="noise")
+            self.msg("observing freqency is higher than expected for "+
+                     telescope,priority="warn",origin="noise")
+            self.msg("proceeding with extrapolated receiver temp="+
+                     str(t_rx),priority="warn",origin="noise")
         if obsfreq<=flim[1] and obsfreq>=flim[0]:
             self.msg("interpolated receiver temp="+str(t_rx),origin="noise")
 
@@ -1196,7 +1202,7 @@ class simutil:
                      os.path.exists(repodir+antennalist):
                 antennalist = repodir + antennalist
             if os.path.exists(antennalist):
-                stnx, stny, stnz, stnd, padnames, telescope, posobs = self.readantenna(antennalist)
+                stnx, stny, stnz, stnd, padnames, antnames, telescope, posobs = self.readantenna(antennalist)
             else:
                 self.msg("antennalist "+antennalist+" not found",priority="error")
                 return False
@@ -1204,7 +1210,6 @@ class simutil:
             nant=len(stnx)
             # diam is only used as a test below, not quantitatively
             diam = pl.average(stnd)
-            antnames=padnames
             
  
         if (telescope==None or diam==None):
@@ -1358,6 +1363,7 @@ class simutil:
         z         - array of Z positions, i.e. stnz from readantenna
         diam      - numpy.array of antenna diameters, i.e. from readantenna
         padnames  - list of pad names
+        antnames  - list of antenna names
         posobs    - The observatory position as a measure.
 
         Optional:
@@ -1542,71 +1548,94 @@ class simutil:
     def readantenna(self, antab=None):
         """
         Helper function to read antenna configuration file; example:
-             # observatory=FOO
+             # observatory=ALMA
              # COFA=-67.75,-23.02
              # coordsys=LOC (local tangent plane)
-             # x     y    z      diam  name 
-              20.  -20.   28.8   12.0  A12S
-              20.   20.   28.8   12.0  A12N
-             -20.  -20.   28.8    7.0  A07S
-             -20.   20.   28.8    7.0  A07N
+             # uid___A002_Xdb6217_X55ec_target.ms
+             # x             y               z             diam  station  ant
+             -5.850273514   -125.9985379    -1.590364043   12.   A058     DA41
+             -19.90369337    52.82680653    -1.892119601   12.   A023     DA42
+             13.45860758    -5.790196849    -2.087805181   12.   A035     DA43
+             5.606192499     7.646657746    -2.087775605   12.   A001     DA44
+             24.10057423    -25.95933768    -2.08466565    12.   A036     DA45
         lines beginning with "#" will be interpreted as header key=value 
            pairs if they contain "=", and as comments otherwise        
         for the observatory name, one can check the known observatories list
            me.obslist
-        if an unknown observatory is specified, then one either must
+        if an unknown observatory is specified, then one must either
            use absolute positions (coordsys XYZ,UTM), or 
            specify COFA= lon,lat 
         coordsys can be XYZ=earth-centered, 
-           UTM=easting,northing,alt, or LOC=xoffset,yoffset,height
+           UTM=easting,northing,altitude, or LOC=xoffset,yoffset,height
            
-        returns: earth-centered x,y,z, diameter, name, observatory_name, observatory_measure_dictionary
+        returns: earth-centered x,y,z, diameter, pad_name, antenna_name, observatory_name, observatory_measure_dictionary
 
         """
-        f=open(antab)
-        self.msg("Reading antenna positions from '%s'" % antab,origin="readantenna")
-        line= '  '
+        # all coord systems should have x,y,z,diam,pid, where xyz varies
+        params={} # to store key=value "header" parameters
         inx=[]
-        iny=[]
+        iny=[] # to store antenna positions
         inz=[]
-        ind=[]
-        id=[] # pad id
-        nant=0
-        line='    '
-        params={}
-        while (len(line)>0):
-            try: 
-                line=f.readline()
-                if line.startswith('#'):
-                    line=line[1:]
-                    paramlist=line.split('=')
-                ### if the line is a parameter line like coordsys=utms, then it stores that
-                    if (paramlist.__len__() == 2):
-                        if params==None:
-                            params={paramlist[0].strip():paramlist[1].strip()}
+        ind=[] # antenna diameter
+        pid=[] # pad id
+        aid=[] # antenna names
+        nant=0 # counter for input lines that meet format requirements
+
+        self.msg("Reading antenna positions from '%s'" % antab, 
+                 origin="readantenna")
+        with open(antab) as f:
+            try: # to read the file
+                for line in f:
+                    cols = line.split()
+                    if len(cols) == 0:
+                        pass # ignore empty rows
+                    if line.startswith('#'): # line is header
+                        paramlist = line[1:].split('=')
+                        if len(paramlist)==2: # key=value pair found
+                            # remove extra octothorpes then clean up and assign
+                            key = paramlist[0].replace('#','').strip()
+                            val = paramlist[1].replace('#','').strip()
+                            try:
+                                params[key]=val
+                            except TypeError:
+                                # params = None somehow? Legacy...
+                                params={key:val}
+                        else: 
+                            # no key=value pair found, so ignore
+                            pass
+                    else: # otherwise octothorpe starts comments
+                        # take only what's in front of the first one
+                        line = line.partition('#')[0]
+                        cols = line.split()
+                        # now check for data
+                        if len(cols)>3:
+                            # assign first four columns, assuming order
+                            inx.append(float(cols[0]))
+                            iny.append(float(cols[1]))
+                            inz.append(float(cols[2]))
+                            ind.append(float(cols[3]))
+                        if len(cols) > 5:
+                            # Found unique pad and antenna names
+                            pid.append(cols[4])
+                            aid.append(cols[5])
+                        elif len(cols) > 4:
+                            # Found pad names, but not antenna names, so dupl.
+                            pid.append(cols[4])
+                            aid.append(cols[4])
                         else:
-                            params[paramlist[0].strip()]=paramlist[1].strip()
-                else:
-                ### ignoring line that has less than 4 elements
-                ### all coord systems should have x,y,z,diam,id, where xyz varies
-                    #print line.split()
-                    if(len(line.split()) >3):
-                        splitline=line.split()
-                        inx.append(float(splitline[0]))
-                        iny.append(float(splitline[1]))
-                        inz.append(float(splitline[2]))
-                        ind.append(float(splitline[3]))
-                        if len(splitline)>4:
-                            id.append(splitline[4])
-                        else:
-                            id.append('A%02d'%nant)                            
-                        nant+=1                 
-            except:
-                break
-        f.close()
+                            # No antenna or pad names found in antab so default
+                            pid.append('A%02d'%nant)
+                            aid.append('A%02d'%nant)
+                        nant+=1
+            except IOError:
+                print "Could not read file: '%s'" %(antab)
+            except ValueError:
+                print "Could not read file: '%s'" %(antab)
 
         if "coordsys" not in params:
-            self.msg("Must specify coordinate system #coorsys=XYZ|UTM|LOCin antenna file",origin="readantenna",priority="error")
+            self.msg("Must specify XYZ, UTM or LOC coordinate system"\
+                     " in antenna file header",
+                     origin="readantenna",priority="error")
             return -1
         else:
             self.coordsys=params["coordsys"]
@@ -1616,7 +1645,8 @@ class simutil:
         else:
             self.telescopename="SIMULATED"
         if self.verbose:
-            self.msg("Using observatory= %s" % self.telescopename,origin="readantenna")
+            self.msg("Using observatory= %s" % self.telescopename,
+                     origin="readantenna")
 
         # me.observatory has partial matching implemented
         found=False
@@ -1655,17 +1685,21 @@ class simutil:
             stny=[]
             stnz=[]
             if (params["coordsys"].upper()=="UTM"):
-        ### expect easting, northing, elevation in m
-                self.msg("Antenna locations in UTM; will read from file easting, northing, elevation in m",origin="readantenna") 
+        ### expect easting, northing, altitude in m
+                self.msg("Antenna locations in UTM; will read "\
+                         "from file easting, northing, elevation in m",
+                         origin="readantenna") 
                 if "zone" in params:
                     zone=params["zone"]
                 else:
-                    self.msg("You must specify zone=NN in your antenna file",origin="readantenna",priority="error")
+                    self.msg("You must specify zone=NN in your antenna file",
+                             origin="readantenna",priority="error")
                     return -1
                 if "datum" in params:
                     datum=params["datum"]
                 else:
-                    self.msg("You must specify datum in your antenna file",origin="readantenna",priority="error")
+                    self.msg("You must specify datum in your antenna file",
+                             origin="readantenna",priority="error")
                     return -1
                 if "hemisphere" in params:
                     nors=params["hemisphere"]
@@ -1689,9 +1723,13 @@ class simutil:
                     obslon=qa.convert(posobs['m0'],'deg')['value']
                     obsalt=qa.convert(posobs['m2'],'m')['value']
                     if self.verbose:
-                        self.msg("converting local tangent plane coordinates to ITRF using observatory position = %f %f " % (obslat,obslon),origin="readantenna")
+                        self.msg("converting local tangent plane coordinates"\
+                                 "to ITRF using observatory position"\
+                                 "= %f %f " % (obslat,obslon),
+                                 origin="readantenna")
                     for i in range(len(inx)):
-                        x,y,z = self.locxyz2itrf(obslat,obslon,obsalt,inx[i],iny[i],inz[i])
+                        x,y,z = self.locxyz2itrf(obslat,obslon,obsalt,
+                                                 inx[i],iny[i],inz[i])
                         stnx.append(x)
                         stny.append(y)
                         stnz.append(z)                
@@ -1701,11 +1739,13 @@ class simutil:
             cofa_x=pl.average(x)
             cofa_y=pl.average(y)
             cofa_z=pl.average(z)
-            cofa_lat,cofa_lon,cofa_alt=self.xyz2long(cofa_x,cofa_y,cofa_z,'WGS84')
-            posobs=me.position("WGS84",qa.quantity(cofa_lon,"rad"),qa.quantity(cofa_lat,"rad"),qa.quantity(cofa_alt,"m"))
-
+            cofa_lat,cofa_lon,cofa_alt=self.xyz2long(cofa_x,cofa_y,cofa_z,
+                                                     'WGS84')
+            posobs=me.position("WGS84",qa.quantity(cofa_lon,"rad"),
+                               qa.quantity(cofa_lat,"rad"),
+                               qa.quantity(cofa_alt,"m"))
                     
-        return (stnx, stny, stnz, pl.array(ind), id, self.telescopename, posobs)
+        return (stnx, stny, stnz, pl.array(ind), pid, aid, self.telescopename, posobs)
 
 
 
@@ -3517,7 +3557,7 @@ class simutil:
 ######################################
     # adapted from aU.getBaselineStats
     def baselineLengths(self, configfile):
-        stnx, stny, stnz, stnd, padnames, telescopename, posobs = self.readantenna(configfile)
+        stnx, stny, stnz, stnd, padnames, antnames, telescopename, posobs = self.readantenna(configfile)
 
         # use mean position, not official COFA=posobs
         cx=pl.mean(stnx)
