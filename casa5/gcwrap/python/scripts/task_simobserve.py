@@ -361,7 +361,8 @@ def simobserve(
                             confnum = max(1,min(7,confnum))
                             conf = str(int(round(confnum)))
                             antennalist = os.path.join(repodir,"alma.cycle2." + conf + ".cfg")
-                            msg("converted resolution to antennalist "+antennalist)
+                            msg("converted resolution to antennalist "
+                                +antennalist)
                             resparsed=True
                         else:
                             msg("failed to find antenna configuration repository at "+repodir,priority="error")
@@ -375,7 +376,8 @@ def simobserve(
                         confnum = max(1,min(28,confnum))
                         conf = str(int(round(confnum)))
                         if len(conf) < 2: conf = '0' + conf
-                        antennalist = os.path.join(repodir,"alma.out" + conf + ".cfg")
+                        antennalist = os.path.join(repodir,"alma.out" 
+                                                   + conf + ".cfg")
                         msg("converted resolution to antennalist "+antennalist)
                     else:
                         msg("failed to find antenna configuration repository at "+repodir,priority="error")

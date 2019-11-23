@@ -418,8 +418,8 @@ observation?
                      Subparameter of obsmode='int|""'
 
                      Each row has x y z coordinates and antenna diameter
-		     with option station name and antenna name;
-		     header lines are required to specify:
+		     with optional station name and antenna name.
+		     Header lines are required to specify:
                      # observatory=ALMA
                      # coordsys=UTM
 
