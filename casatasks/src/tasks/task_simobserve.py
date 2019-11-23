@@ -360,8 +360,10 @@ def simobserve(
                             confnum = 10. ** (0.91 - 0.74 * (resl * qa.convert(model_specrefval,"GHz")['value']/345.))
                             confnum = max(1,min(7,confnum))
                             conf = str(int(round(confnum)))
-                            antennalist = os.path.join(repodir,"alma.cycle2." + conf + ".cfg")
-                            msg("converted resolution to antennalist "+antennalist)
+                            antennalist = os.path.join(repodir,"alma.cycle2." +
+                                                       conf + ".cfg")
+                            msg("converted resolution to antennalist "+
+                                antennalist)
                             resparsed=True
                         else:
                             msg("failed to find antenna configuration repository at "+repodir,priority="error")
@@ -375,7 +377,8 @@ def simobserve(
                         confnum = max(1,min(28,confnum))
                         conf = str(int(round(confnum)))
                         if len(conf) < 2: conf = '0' + conf
-                        antennalist = os.path.join(repodir,"alma.out" + conf + ".cfg")
+                        antennalist = os.path.join(repodir,"alma.out" 
+                                                   + conf + ".cfg")
                         msg("converted resolution to antennalist "+antennalist)
                     else:
                         msg("failed to find antenna configuration repository at "+repodir,priority="error")
@@ -399,7 +402,7 @@ def simobserve(
 
         # Read antennalist
         if os.path.exists(antennalist):
-            stnx, stny, stnz, stnd, padnames, telescopename, posobs = util.readantenna(antennalist)
+            stnx, stny, stnz, stnd, padnames, antnames, telescopename, posobs = util.readantenna(antennalist)
             nant=len(stnx)
             if nant == 1:
                 if predict and uvmode:
@@ -407,7 +410,6 @@ def simobserve(
                     util.msg("antennalist contains only 1 antenna", 
                              priority="error")
                 uvmode = False
-            antnames = []
             if not uvmode: #Single-dish
                 # KS TODO: what if not predicting but SD with multi-Ants
                 # in antennalist (e.g., aca.tp)? In that case, PB on plots and
@@ -420,12 +422,12 @@ def simobserve(
                 stnz = [stnz[sdant]]
                 stnd = pl.array(stnd[sdant])
                 padnames = [padnames[sdant]]
+                antnames = [antnames[sdant]]
                 nant = 1
 
             # (set back to simdata - there must be an automatic way to do this)
             casalog.origin('simobserve')
 
-            for k in range(0,nant): antnames.append('A%02d'%k)
             aveant = stnd.mean()
             # TODO use max ant = min PB instead?
             pb = pbcoeff*0.29979/qa.convert(qa.quantity(model_specrefval),'GHz')['value']/aveant*3600.*180/pl.pi # arcsec
@@ -1065,12 +1067,12 @@ def simobserve(
                     # get the "diam" out of PBMath AFAIK
                     if telescopename=="ALMA":
                         if (diam[0]<10)|(diam[0]>13):
-                            msg("Diameter = %f is inconsistent with telescope=ALMA in the configuration file.  *12m ALMA PB will be used*"%diam[0],priority="warn")
+                            msg("Diameter = %f is inconsistent with telescope=ALMA in the configuration file. *12m ALMA PB will be used*. Use observatory='ACA' in the configuration file to use a 7m diameter."%diam[0],priority="warn")
                             n=len(diam)
                             diam=12.+pl.zeros(n)
                     elif telescopename=="ACA":
                         if (diam[0]<6)|(diam[0]>7.5):
-                            msg("Diameter = %f is inconsistent with telescope=ALMA in the configuration file.  *7m ACA PB will be used*"%diam[0],priority="warn")
+                            msg("Diameter = %f is inconsistent with telescope=ALMA in the configuration file. *7m ACA PB will be used*"%diam[0],priority="warn")
                             n=len(diam)
                             diam=7.+pl.zeros(n)
                     else:

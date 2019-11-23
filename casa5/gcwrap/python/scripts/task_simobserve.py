@@ -360,9 +360,10 @@ def simobserve(
                             confnum = 10. ** (0.91 - 0.74 * (resl * qa.convert(model_specrefval,"GHz")['value']/345.))
                             confnum = max(1,min(7,confnum))
                             conf = str(int(round(confnum)))
-                            antennalist = os.path.join(repodir,"alma.cycle2." + conf + ".cfg")
-                            msg("converted resolution to antennalist "
-                                +antennalist)
+                            antennalist = os.path.join(repodir,"alma.cycle2." +
+                                                       conf + ".cfg")
+                            msg("converted resolution to antennalist "+
+                                antennalist)
                             resparsed=True
                         else:
                             msg("failed to find antenna configuration repository at "+repodir,priority="error")
