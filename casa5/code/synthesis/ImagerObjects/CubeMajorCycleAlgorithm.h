@@ -50,16 +50,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		casacore::String &name();
 	private:
 		void task();
-		casacore::CountedPtr<SIImageStore> subImageStore();
+		void reset();
+		casacore::CountedPtr<SIImageStore> subImageStore(const int whichImageId=0);
+		casacore::CountedPtr<SIImageStore> multiTermImageStore(const casacore::Int imId);
 		casacore::String myName_p;
 		casacore::Vector<SynthesisParamsSelect> dataSel_p;
-		SynthesisParamsImage imSel_p;
-		SynthesisParamsGrid gridSel_p;
+		casacore::Vector<SynthesisParamsImage> imSel_p;
+		casacore::Vector<SynthesisParamsGrid> gridSel_p;
+		casacore::Vector<casacore::Record> ftmRec_p;
+		casacore::Vector<casacore::Record> iftmRec_p;
+		casacore::Vector<casacore::Int> polRep_p;
 		casacore::Vector<casacore::Int> chanRange_p;
 		casacore::Bool dopsf_p;
 		casacore::Record controlRecord_p;
 		casacore::Record weightParams_p;
-		
+		casacore::Vector<casacore::Vector<casacore::String> > startmodel_p;
 		casacore::Bool status_p;
 		casacore::Int serialBug_p; //have to send a private variable in serial case
 	};

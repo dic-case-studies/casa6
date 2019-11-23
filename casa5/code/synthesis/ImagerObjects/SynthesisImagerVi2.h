@@ -52,6 +52,9 @@ public:
   virtual casacore::Bool selectData(const SynthesisParamsSelect& selpars);
   virtual casacore::Bool defineImage(SynthesisParamsImage& impars, const SynthesisParamsGrid& gridpars);
   virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, const casacore::String& ftmachine);
+  //Define image via a predefined SIImageStore object and ftmachines
+  virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, 
+                                     const casacore::Record& ftmachine, const casacore::Record& invftmachine);
   virtual casacore::Bool weight(const casacore::String& type="natural", 
 	      const casacore::String& rmode="norm",
 	      const casacore::Quantity& noise=casacore::Quantity(0.0, "Jy"), 
@@ -105,6 +108,7 @@ public:
 			  casacore::uInt ntaylorterms=1,
 			  casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
   virtual void unlockMSs();
+  virtual void lockMS(MeasurementSet& ms);
   virtual void createVisSet(const casacore::Bool writeaccess=false);
   void createFTMachine(casacore::CountedPtr<casa::refim::FTMachine>& theFT, 
 		       casacore::CountedPtr<casa::refim::FTMachine>& theIFT,  

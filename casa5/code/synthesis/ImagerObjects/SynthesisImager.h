@@ -136,6 +136,10 @@ class SynthesisImager
   virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, 
 			   const casacore::String& ftmachine);
 
+  //Define image via a predefine SIImageStore object and ftmachines
+  virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> , 
+                                     const casacore::Record& , const casacore::Record& ){return false;}; /*not implemented here*/
+
   casacore::Record getcsys() {return itsCsysRec;};
   casacore::Int updateNchan() {return itsNchan;};
 

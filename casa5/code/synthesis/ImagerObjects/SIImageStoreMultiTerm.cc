@@ -153,21 +153,24 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     itsNTerms = ntaylorterms;
 
-    itsPsfs.resize(2 * itsNTerms - 1);
-    itsModels.resize(itsNTerms);
-    itsResiduals.resize(itsNTerms);
-    itsWeights.resize(2 * itsNTerms - 1);
-    itsImages.resize(itsNTerms);
-    itsPBs.resize(itsNTerms);
-    itsSumWts.resize(2 * itsNTerms - 1);
+    auto fltPtrReset = [](Block<shared_ptr<ImageInterface<Float> > >&a) {for(uInt i=0; i < a.nelements(); ++i) a[i].reset();  };
+    itsPsfs.resize(2 * itsNTerms - 1); fltPtrReset(itsPsfs);
+    itsModels.resize(itsNTerms); fltPtrReset(itsModels);
+    itsResiduals.resize(itsNTerms); fltPtrReset(itsResiduals);
+    itsWeights.resize(2 * itsNTerms - 1); fltPtrReset(itsWeights);
+    itsImages.resize(itsNTerms); fltPtrReset(itsImages);
+    itsPBs.resize(itsNTerms); fltPtrReset(itsPBs);
+    itsSumWts.resize(2 * itsNTerms - 1); fltPtrReset(itsSumWts);
     itsMask.reset( );
     itsGridWt.reset( );
-    itsImagePBcors.resize(itsNTerms);
-
+    itsImagePBcors.resize(itsNTerms); fltPtrReset(itsImagePBcors);
+    
+    
+    
     itsMiscInfo=Record();
-
-    itsForwardGrids.resize(itsNTerms);
-    itsBackwardGrids.resize(2 * itsNTerms - 1);
+    auto cmplxPtrReset = [](Block<shared_ptr<ImageInterface<Complex> > >&a) {for(uInt i=0; i < a.nelements(); ++i) a[i].reset();  };
+    itsForwardGrids.resize(itsNTerms); cmplxPtrReset(itsForwardGrids);
+    itsBackwardGrids.resize(2 * itsNTerms - 1); cmplxPtrReset(itsBackwardGrids);
 
     itsImageName = imagename;
 
@@ -659,6 +662,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return itsForwardGrids[term];
   }
   std::shared_ptr<ImageInterface<Complex> > SIImageStoreMultiTerm::backwardGrid(uInt term){
+
   	  if( itsBackwardGrids[term] && (itsBackwardGrids[term]->shape() == itsImageShape))
   		  return itsBackwardGrids[term];
 	  //	  cout << "MT : Making backward grid of shape : " << itsImageShape << endl;

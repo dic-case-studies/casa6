@@ -151,6 +151,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     readOnly_p = selpars.readonly;
     //    cout << "**************** usescr : " << useScratch_p << "     readonly : " << readOnly_p << endl;
     //if you want to use scratch col...make sure they are there
+	lockMS(thisms);
     if(selpars.usescratch && !selpars.readonly){
       VisSetUtil::addScrCols(thisms, true, false, true, false);
       refim::VisModelData::clearModel(thisms);
@@ -658,6 +659,9 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
       }
 	imparsVec_p.resize(imparsVec_p.nelements()+1, true);
 	imparsVec_p[imparsVec_p.nelements()-1]=impars_p;
+	///For now cannot deal with cube and mtmfs in C++ parallel mode
+	if(imparsVec_p[0].deconvolver=="mtmfs") setCubeGridding(False);
+	//cerr <<"DECONV " << imparsVec_p[0].deconvolver << " cube gridding " << doingCubeGridding_p << endl;
 	gridparsVec_p.resize(gridparsVec_p.nelements()+1, true);
 	gridparsVec_p[imparsVec_p.nelements()-1]=gridpars_p;
     return true;
@@ -690,7 +694,27 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
     imageDefined_p=true;
     return true;
   }
+Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, 
+				    const Record& ftmRec, const Record& iftmRec)
+  {
+    CountedPtr<refim::FTMachine> ftm, iftm;
+	ftm=refim::VisModelData::NEW_FT(ftmRec);
+	iftm=refim::VisModelData::NEW_FT(iftmRec);
+    
+    Int id=itsMappers.nMappers();
+    CoordinateSystem csys =imstor->getCSys();
+    IPosition imshape=imstor->getShape();
+    Int nx=imshape[0], ny=imshape[1];
+    if( (id==0) || (nx*ny > itsMaxShape[0]*itsMaxShape[1]))
+      {
+	itsMaxShape=imshape;
+	itsMaxCoordSys=csys;
+      }
 
+    itsMappers.addMapper(  createSIMapper( "default", imstor, ftm, iftm, id ) );
+    imageDefined_p=true;
+    return true;
+  }
  Bool SynthesisImagerVi2::weight(const Record& inrec){
 	String type, rmode, filtertype;
 	Quantity noise, fieldofview,filterbmaj,filterbmin, filterbpa;  
@@ -1115,8 +1139,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			    vb->setVisCubeModel(mod); 
 			  }
 			  itsMappers.degrid(*vb, savevirtualmodel );
-			  if(savemodelcolumn && writeAccess_p ){			    
+			  if(savemodelcolumn && writeAccess_p ){	
+				const_cast<MeasurementSet& >((vi_p->ms())).lock(true);
 			    vi_p->writeVisModel(vb->visCubeModel());
+				const_cast<MeasurementSet& >((vi_p->ms())).unlock();
+				
 			    //static_cast<VisibilityIteratorImpl2 *> (vi_p->getImpl())->writeVisModel(vb->visCubeModel());
 
 			    // Cube<Complex> tt=vb->visCubeModel();
@@ -1418,6 +1445,16 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	if ( applicator.isController() ) {
 		CubeMajorCycleAlgorithm *cmc = new CubeMajorCycleAlgorithm();
 		//casa::applicator.defineAlgorithm(cmc);
+		//Initialize everything to get the setup as serial
+		{
+			vi::VisBuffer2* vb=vi_p->getVisBuffer();
+			vi_p->originChunks();
+			vi_p->origin();
+			if(!dopsf)itsMappers.initializeDegrid(*vb);
+			//do we need to do the BriggsWeightor here or not ?
+			itsMappers.initializeGrid(*vi_p,dopsf);
+		}
+		///Break things into chunks for parallelization or memory availabbility
 		Vector<Int> startchan;
 		Vector<Int> endchan;
 		Int numchunks;
@@ -1434,38 +1471,72 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		//For now just field 0 but should loop over all
 		///This is to pass in explicit model, residual names etc
 		controlRecord.define("nfields", Int(imparsVec_p.nelements()));
-        CountedPtr<SIImageStore> imstor = imageStore ( 0 );
+        //CountedPtr<SIImageStore> imstor = imageStore ( 0 );
         // checking that psf,  residual and sumwt is allDone
         //cerr << "shapes "  <<  imstor->residual()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
 		if(!dopsf){
 			controlRecord.define("lastcycle",  savemodel);
 			controlRecord.define("nmajorcycles", nMajorCycles);
 			Vector<String> modelnames(Int(imparsVec_p.nelements()),"");
-			if(imstor->hasModel()){
-				modelnames(0)=imparsVec_p[0].imageName+".model";
-				imstor->model()->unlock();
-				controlRecord.define("modelnames", Vector<String>(1,impars_p.imageName+".model"));
+			for(Int k=0; k < itsMappers.nMappers(); ++k){
+				if((itsMappers.imageStore(k))->hasModel()){
+					modelnames(k)=imparsVec_p[k].imageName+".model";
+					(itsMappers.imageStore(k))->model()->unlock();
+					controlRecord.define("modelnames", modelnames);
+				}
+			}
+			
+		}
+		Vector<String> weightnames(Int(imparsVec_p.nelements()),"");
+		for(Int k=0; k < itsMappers.nMappers(); ++k){
+			cerr << "FTMachine name " << (itsMappers.getFTM2(k))->name() << endl;
+			if((itsMappers.getFTM2(k))->useWeightImage()){
+				cerr << "Mosaic weight image " << itsMappers.imageStore(k)->weight(k)->name() << endl;
+				weightnames(k)=itsMappers.imageStore(k)->weight(k)->name();
 			}
 		}
+		controlRecord.define("weightnames", weightnames);
         // Tell the child processes not to do the dividebyweight process as this is done
 		// right now in imager_base.py runMajorCycle
 		controlRecord.define("dividebyweight",  False);
         
-		Record vecSelParsRec;
+		Record vecSelParsRec, vecImParsRec, vecGridParsRec;
 		Vector<Int>vecRange(2);
 		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
 			Record selparsRec = dataSel_p[k].toRecord();
 			vecSelParsRec.defineRecord(String::toString(k), selparsRec);
 		}
-		Record imparsRec = impars_p.toRecord();
-		Record gridparsRec = gridpars_p.toRecord();
-        Int numchan=(dopsf) ? imstor->psf()->shape()[3] : imstor->residual()->shape() [3];
-		if(dopsf)
-			imstor->psf()->unlock();
-		else
-			imstor->residual()->unlock();
-        imstor->sumwt()->unlock();
-		
+		for (uInt k=0; k < imparsVec_p.nelements(); ++k){
+			Record imparsRec = imparsVec_p[k].toRecord();
+			//need to send polrep
+			imparsRec.define("polrep", Int((itsMappers.imageStore(k))->getDataPolFrame()));
+			Record gridparsRec = gridparsVec_p[k].toRecord();
+			String err;
+			Record ftmrec, iftmrec;
+			if(!( (itsMappers.getFTM2(k)->toRecord(err, iftmrec,False)) && (itsMappers.getFTM2(k, false)->toRecord(err, ftmrec,False))))
+				throw(AipsError("FTMachines serialization failed"));
+			gridparsRec.defineRecord("ftmachine", ftmrec);
+			gridparsRec.defineRecord("iftmachine", iftmrec);
+			vecImParsRec.defineRecord(String::toString(k), imparsRec);
+			vecGridParsRec.defineRecord(String::toString(k), gridparsRec);
+		}
+        //Int numchan=(dopsf) ? imstor->psf()->shape()[3] : imstor->residual()->shape() [3];
+        for(Int k=0; k < itsMappers.nMappers(); ++k){
+			if(dopsf){
+				for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
+					(itsMappers.imageStore(k))->psf(j)->unlock();
+				}
+			}
+			else{
+				for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(false)); ++j){
+					(itsMappers.imageStore(k))->residual(j)->unlock();
+				}
+			}
+			for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
+			//cerr << k << " type " << (itsMappers.imageStore(k))->sumwt(j)->imageType() << " name " << (itsMappers.imageStore(k))->sumwt(j)->name() << endl;
+				(itsMappers.imageStore(k))->sumwt(j)->unlock();
+			}
+		}		
 		// For now this contains lastcycle if necessary in the future this
 		// should come from the master control record
         
@@ -1494,9 +1565,9 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
             // put data sel params #1
             applicator.put ( vecSelParsRec );
             // put image sel params #2
-            applicator.put ( imparsRec );
+            applicator.put ( vecImParsRec );
             // put gridders params #3
-            applicator.put ( gridparsRec );
+            applicator.put ( vecGridParsRec );
             // put which channel to process #4
 			vecRange(0)=startchan(k);
 			vecRange(1)=endchan(k);
@@ -1515,8 +1586,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         rank = casa::applicator.nextProcessDone ( *cmc, allDone );
         while ( !allDone ) {
 			Int serialBug;
-			if(casa::applicator.isSerial())
-				casa::applicator.get(serialBug);// get that extra put
+			//if(casa::applicator.isSerial())
+			//	casa::applicator.get(serialBug);// get that extra put
             Bool status;
             casa::applicator.get ( status );
             if ( status )
@@ -1809,7 +1880,37 @@ CountedPtr<SIMapper> SynthesisImagerVi2::createSIMapper(String mappertype,
     return localMapper;
   }
   
-
+void SynthesisImagerVi2::lockMS(MeasurementSet& thisms){
+	thisms.lock(true);
+    thisms.antenna().lock(false);
+	thisms.dataDescription().lock(false);
+    thisms.feed().lock(false);
+    thisms.field().lock(false);
+    thisms.observation().lock(false);
+    thisms.polarization().lock(false);
+    thisms.processor().lock(false);
+	thisms.spectralWindow().lock(false);
+    thisms.state().lock(false);
+    if(!thisms.doppler().isNull())
+      thisms.doppler().lock(false);
+    if(!thisms.flagCmd().isNull())
+      thisms.flagCmd().lock(false);
+    if(!thisms.freqOffset().isNull())
+      thisms.freqOffset().lock(false);
+	//True here as we can write in that
+    if(!thisms.history().isNull())
+      thisms.history().lock(true);
+    if(!thisms.pointing().isNull())
+      thisms.pointing().lock(false);
+	//we write virtual model here
+    if(!thisms.source().isNull())
+      thisms.source().lock(true);
+    if(!thisms.sysCal().isNull())
+      thisms.sysCal().lock(false);
+    if(!thisms.weather().isNull())
+      thisms.weather().lock(false);
+	
+}
 void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","unlockMSs",WHERE) );

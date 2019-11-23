@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 			datSel.datacolumn="corrected";
 	}
 	Record selparsRec = datSel.toRecord();
-	Record vecSelParsRec;
+	Record vecSelParsRec, vecImParsRec, vecGridParsRec;
 	vecSelParsRec.defineRecord(String::toString(0), selparsRec);
 	SynthesisParamsImage imSel;
 	{
@@ -95,6 +95,8 @@ int main(int argc, char **argv)
         imSel.refFreq = Quantity(0,"Hz");imSel.frame = ""; imSel.freqFrame=MFrequency::LSRK;imSel.sysvel="";imSel.sysvelframe=""; imSel.sysvelvalue=Quantity(0.0,"m/s");imSel.nTaylorTerms=1;imSel.deconvolver="hogbom";
 	}	
 	Record imparsRec = imSel.toRecord();
+	imparsRec.define("polrep", 0);
+	vecImParsRec.defineRecord(String::toString(0), imparsRec);
 	SynthesisParamsGrid gridSel;		
 	{
 		gridSel.ftmachine="gridft"; 
@@ -102,6 +104,7 @@ int main(int argc, char **argv)
 		gridSel.imageName = imSel.imageName;
 	 
 	}
+	
 	// Lets build the full imager and images
 	SynthesisImagerVi2 imgr;
 	imgr.selectData(datSel);
@@ -119,6 +122,7 @@ int main(int argc, char **argv)
 	imstor->residual()->unlock();
 	imstor->sumwt()->unlock();
 	Record gridparsRec = gridSel.toRecord();
+	vecGridParsRec.defineRecord(String::toString(0), gridparsRec);
 	Record controlRecord;   
 	Record weightRecord=SynthesisUtilMethods::fillWeightRecord();
 	
@@ -150,9 +154,9 @@ int main(int argc, char **argv)
             // put data sel params #1
 			applicator.put(vecSelParsRec);
 			// put image sel params #2
-			applicator.put(imparsRec);
+			applicator.put(vecImParsRec);
 			// put gridders params #3
-			applicator.put(gridparsRec);
+			applicator.put(vecGridParsRec);
 			// put which channel to process #4
 			chanRange.set(k);
 			applicator.put(chanRange);
@@ -174,8 +178,8 @@ int main(int argc, char **argv)
         rank = casa::applicator.nextProcessDone(*cmc, allDone);
         while (!allDone) {
 			Int serialbug;
-			if(casa::applicator.isSerial())
-				casa::applicator.get(serialbug);// get that extra put
+			//if(casa::applicator.isSerial())
+				//casa::applicator.get(serialbug);// get that extra put
             Bool status;
             casa::applicator.get(status);
             if(status)

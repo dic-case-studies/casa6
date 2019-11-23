@@ -210,6 +210,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsPolId = 0;
     
     itsOverWrite=False;
+    //need to to this init now so that imageExts is initialized
+    init();
 
     itsImageName = imagename;
 
@@ -605,7 +607,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       PagedImage<Float> godot(shape, csys, name);
 
     }
-    imptr.reset( new PagedImage<Float> (name, TableLock::UserNoReadLocking) );
+    TableLock::LockOption locktype=TableLock::AutoNoReadLocking;
+    if((name.contains(imageExts(PSF)) && !name.contains(imageExts(PSF)+".tt"))|| (name.contains(imageExts(RESIDUAL))&& !name.contains(imageExts(RESIDUAL)+".tt")) || (name.contains(imageExts(SUMWT)) && !name.contains(imageExts(SUMWT)+".tt"))){
+      locktype=TableLock::AutoNoReadLocking;
+    }
+    imptr.reset( new PagedImage<Float> (name, locktype) );
     {
       LatticeLocker lock1(*imptr, FileLocker::Write);
       initMetaInfo(imptr, name);
@@ -633,7 +639,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     itsOpened++;
     if(Table::isReadable(name)){
-      Table table(name, TableLock::UserNoReadLocking);
+      TableLock::LockOption locktype=TableLock::AutoNoReadLocking;
+      if((name.contains(imageExts(PSF)) && !name.contains(imageExts(PSF)+".tt"))|| (name.contains(imageExts(RESIDUAL))&& !name.contains(imageExts(RESIDUAL)+".tt")) || (name.contains(imageExts(SUMWT)) && !name.contains(imageExts(SUMWT)+".tt"))){
+        locktype=TableLock::AutoNoReadLocking;
+      }
+      Table table(name, locktype);
       String type = table.tableInfo().type();
       if (type != TableInfo::type(TableInfo::PAGEDIMAGE)) {
 
@@ -2649,7 +2659,7 @@ Float SIImageStore :: calcStd(Vector<Float> &vect, Vector<Bool> &flag, Float mea
     
     IPosition imshape = target.shape();
 
-    cerr << " SumWt  : " << lsumwt << " sumwtshape : " << lsumwt.shape() << " image shape : " << imshape << endl;
+    //cerr << " SumWt  : " << lsumwt << " sumwtshape : " << lsumwt.shape() << " image shape : " << imshape << endl;
 
     AlwaysAssert( lsumwt.shape()[2] == imshape[2] , AipsError ); // polplanes
     AlwaysAssert( lsumwt.shape()[3] == imshape[3] , AipsError ); // chanplanes

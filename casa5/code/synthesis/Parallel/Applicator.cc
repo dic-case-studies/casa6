@@ -181,6 +181,7 @@ void Applicator::loop()
   while(!die){
     comm->connectToController();
     comm->setAnyTag();
+    cerr << "in loop get" << endl;
     comm->get(what);
     if (debug_p) {
         cerr << "worker, got what (algID/stop): " << what << endl;
@@ -211,7 +212,7 @@ Bool Applicator::nextAvailProcess(Algorithm &a, Int &rank)
 // Assign the next available process for the specified Algorithm
 //  
   // Must be the controller to request a worker process
-  Bool assigned;
+  Bool assigned=False;
   if (isWorker()) {
     throw(AipsError("Must be the controller to assign a worker process"));
   } else {
@@ -227,17 +228,10 @@ Bool Applicator::nextAvailProcess(Algorithm &a, Int &rank)
       // the assigned worker process to activate it (see loop()).
       comm->connect(rank);
       comm->setTag(tag);
-      //cerr << "nextAvailproc settag " << tag << " rank " << rank << " name " << a.name() << endl;
+      cerr << "nextAvailproc settag " << tag << " rank " << rank << " name " << a.name() << endl;
       put(tag);
-      
-      assigned = true;
-      procStatus(rank) = ASSIGNED;
-    } else {
-      assigned = false;
-    }
-  }
-
-  if (not isWorker() and numProcs() <= 1){
+      /*
+      if (not isWorker() and numProcs() <= 1){
       // the first int, algID, is consumed in the loop for the workers when running
       // in multiprocess mode and there are at least 2 processes. When not multiprocess or a
       // single process, we need to consume it:
@@ -247,8 +241,29 @@ Bool Applicator::nextAvailProcess(Algorithm &a, Int &rank)
     if (debug_p) {
       cerr << "nextAvailproc controller, got algID: " << algID << " assigned " << assigned << " donesig " << donesig_p<<  endl;
      }
+      }
+      */
+      assigned = true;
+      procStatus(rank) = ASSIGNED;
+    } else {
+      assigned = false;
+    }
   }
-
+  cerr << "nextAvailproc controller assigned " << assigned << endl;
+  
+  if ((!isWorker()) && (numProcs() <= 1) && assigned){
+      // the first int, algID, is consumed in the loop for the workers when running
+      // in multiprocess mode and there are at least 2 processes. When not multiprocess or a
+      // single process, we need to consume it:
+      // TODO - it could be consumed up here, right after the put()
+      Int algID;
+      //comm->get(algID);
+      get(algID);
+    if (debug_p) {
+      cerr << "nextAvailproc controller, got algID: " << algID << " assigned " << assigned << " donesig " << donesig_p<<  endl;
+     }
+  }
+  
   return assigned;
 }
 
@@ -283,11 +298,11 @@ Int Applicator::nextProcessDone(Algorithm &a, Bool &allDone)
     // Wait for a process to finish with the correct algorithm tag
     comm->connectAnySource();
     Int tag = algorithmIds.find(a.name()) == algorithmIds.end( ) ? 0 : algorithmIds.at(a.name());
-    //cerr <<"procdone name" << a.name() << " id " << tag << endl;
+    cerr <<"procdone name" << a.name() << " id " << tag << endl;
     comm->setTag(tag);
     Int doneSignal;
     rank = get(doneSignal);
-    //cerr <<" procdone rank " << rank << " donesig " << doneSignal << endl;
+    cerr <<" procdone rank " << rank << " donesig " << doneSignal << endl;
     // Consistency check; should return a DONE signal to contoller
     // on completion.
     if (doneSignal != DONE) {
@@ -409,7 +424,7 @@ Int Applicator::findFreeProc(Bool &lastOne)
 // 
   Int freeProc = -1;
   Int nfree = 0;
-  //cerr <<"FreeProc procstat "<< procStatus << endl; 
+ 
   for (uInt i=0; i<procStatus.nelements(); i++) {
     if (procStatus(i) == FREE) {
       nfree++;
@@ -417,6 +432,7 @@ Int Applicator::findFreeProc(Bool &lastOne)
     }
   }
   lastOne = (nfree==1);
+  cerr <<"FreeProc procstat "<< procStatus << " nfree " << nfree << endl; 
   return freeProc;
 }
 

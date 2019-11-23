@@ -44,7 +44,7 @@
 #include <casa/OS/Path.h>
 
 #include <casa/OS/HostInfo.h>
-
+#include <lattices/Lattices/LatticeLocker.h>
 #include <images/Images/TempImage.h>
 #include <images/Images/SubImage.h>
 #include <images/Regions/ImageRegion.h>
@@ -286,7 +286,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisNormalizer::divideResidualByWeight()
   {
     LogIO os( LogOrigin("SynthesisNormalizer", "divideResidualByWeight",WHERE) );
-    
 
     if( itsNFacets==1) {
       itsImages->divideResidualByWeight( itsPBLimit, itsNormType );
@@ -302,6 +301,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisNormalizer::dividePSFByWeight()
   {
     LogIO os( LogOrigin("SynthesisNormalizer", "dividePSFByWeight",WHERE) );
+    LatticeLocker lock1 (*(itsImages->psf()), FileLocker::Write);
     
     if( itsNFacets==1) {
       itsImages->dividePSFByWeight(itsPBLimit);
