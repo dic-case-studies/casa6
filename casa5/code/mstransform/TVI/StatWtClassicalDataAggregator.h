@@ -45,13 +45,13 @@ public:
     // the caller.
     StatWtClassicalDataAggregator(
         ViImplementation2 *const vii,
-        std::shared_ptr<const casacore::Bool> mustComputeWtSp,
+        // std::shared_ptr<casacore::Bool>& mustComputeWtSp,
         const std::map<
             casacore::Int, std::vector<StatWtTypes::ChanBin>
         >& chanBins,
         std::shared_ptr<
             std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
-        > samples,
+        >& samples,
         StatWtTypes::Column column, casacore::Bool noModel,
         const std::map<casacore::uInt, casacore::Cube<casacore::Bool>>&
             chanSelFlags,
@@ -59,10 +59,18 @@ public:
             casacore::ClassicalStatistics<casacore::Double,
             casacore::Array<casacore::Float>::const_iterator,
             casacore::Array<casacore::Bool>::const_iterator>
-        > wtStats,
+        >& wtStats,
         std::shared_ptr<
             const std::pair<casacore::Double, casacore::Double>
-        > wtrange, casacore::Bool combineCorr
+        > wtrange, casacore::Bool combineCorr,
+        std::shared_ptr<
+            casacore::StatisticsAlgorithm<
+                casacore::Double,
+                casacore::Array<casacore::Float>::const_iterator,
+                casacore::Array<casacore::Bool>::const_iterator,
+                casacore::Array<casacore::Double>::const_iterator
+            >
+        >& statAlg
     );
 
     ~StatWtClassicalDataAggregator();

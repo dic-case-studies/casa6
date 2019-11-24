@@ -114,21 +114,21 @@ Record StatWt::writeWeights() {
     uInt64 count = 0;
     // cout << "begin outer loop" << endl;
     for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
-        // cout << "inside outer loop" << endl;
+        cout << "inside outer loop" << endl;
         for (vi->origin(); vi->more(); vi->next()) {
-            // cout << "inside inner loop" << endl;
+            cout << "inside inner loop" << endl;
             auto nrow = vb->nRows();
-            // cout << __FILE__ << " " << __LINE__ << endl;
+            cout << __FILE__ << " " << __LINE__ << endl;
             if (_preview) {
                 // just need to run the flags to accumulate
                 // flagging info
                 vb->flagCube();
             }
             else {
-                // cout << __FILE__ << " " << __LINE__ << endl;
+                cout << __FILE__ << " " << __LINE__ << endl;
 
                 if (mustWriteWtSp) {
-                    // cout << __FILE__ << " " << __LINE__ << endl;
+                    cout << __FILE__ << " " << __LINE__ << endl;
 
                     auto& x = vb->weightSpectrum();
                     ThrowIf(
@@ -139,7 +139,7 @@ Record StatWt::writeWeights() {
                     vb->setWeightSpectrum(x);
                 }
                 if (mustWriteSigSp) {
-                    // cout << __FILE__ << " " << __LINE__ << endl;
+                    cout << __FILE__ << " " << __LINE__ << endl;
 
                     auto& x = vb->sigmaSpectrum();
                     ThrowIf(
@@ -150,16 +150,16 @@ Record StatWt::writeWeights() {
                     vb->setSigmaSpectrum(x);
                 }
                 if (mustWriteWt) {
-                    // cout << __FILE__ << " " << __LINE__ << endl;
+                    cout << __FILE__ << " " << __LINE__ << endl;
 
                     vb->setWeight(vb->weight());
                 }
                 if (mustWriteSig) {
-                    // cout << __FILE__ << " " << __LINE__ << endl;
+                    cout << __FILE__ << " " << __LINE__ << endl;
 
                     vb->setSigma(vb->sigma());
                 }
-                // cout << __FILE__ << " " << __LINE__ << endl;
+                cout << __FILE__ << " " << __LINE__ << endl;
 
                 vb->setFlagCube(vb->flagCube());
                 vb->setFlagRow(vb->flagRow());

@@ -48,20 +48,28 @@ public:
         >& chanBins,
         std::shared_ptr<
             std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
-        > samples,
+        >& samples,
         StatWtTypes::Column column, casacore::Bool noModel,
         const std::map<casacore::uInt, casacore::Cube<casacore::Bool>>&
             chanSelFlags,
-        std::shared_ptr<const casacore::Bool> mustComputeWtSp,
+        // std::shared_ptr<casacore::Bool>& mustComputeWtSp,
         std::shared_ptr<
             casacore::ClassicalStatistics<casacore::Double,
             casacore::Array<casacore::Float>::const_iterator,
             casacore::Array<casacore::Bool>::const_iterator>
-        > wtStats,
+        >& wtStats,
         std::shared_ptr<
             const std::pair<casacore::Double, casacore::Double>
         > wtrange,
-        casacore::Bool combineCorr
+        casacore::Bool combineCorr,
+        std::shared_ptr<
+            casacore::StatisticsAlgorithm<
+                casacore::Double,
+                casacore::Array<casacore::Float>::const_iterator,
+                casacore::Array<casacore::Bool>::const_iterator,
+                casacore::Array<casacore::Double>::const_iterator
+            >
+        >& statAlg
     );
 
     virtual ~StatWtDataAggregator();
@@ -69,6 +77,10 @@ public:
     // aggregates the data and computes the weights
     virtual void aggregate() = 0;
     
+    casacore::Bool mustComputeWtSp() const;
+
+    void setMustComputeWtSp(std::shared_ptr<casacore::Bool> mcwp);
+
     // gets data TVI needs
     virtual void weightSpectrumFlags(
         casacore::Cube<casacore::Float>& wtsp,
@@ -101,7 +113,7 @@ protected:
     const std::map<casacore::uInt, casacore::Cube<casacore::Bool>>
         _chanSelFlags;
     // TODO you can probably get rid of this in StatWtTVI
-    std::shared_ptr<const casacore::Bool> _mustComputeWtSp;
+    std::shared_ptr<casacore::Bool> _mustComputeWtSp {};
     std::shared_ptr<
         casacore::ClassicalStatistics<casacore::Double,
         casacore::Array<casacore::Float>::const_iterator,
@@ -111,6 +123,15 @@ protected:
     std::shared_ptr<const std::pair<casacore::Double, casacore::Double>>
         _wtrange;
     const casacore::Bool _combineCorr;
+    /*
+    std::shared_ptr<
+        casacore::StatisticsAlgorithm<
+            casacore::Double, casacore::Array<casacore::Float>::const_iterator,
+            casacore::Array<casacore::Bool>::const_iterator,
+            casacore::Array<casacore::Double>::const_iterator
+        >
+    > _statAlg;
+    */
 
     // TODO you can probably get rid of this in StatWtTVI
     // swaps ant1/ant2 if necessary

@@ -238,7 +238,11 @@ private:
     mutable StatWtTypes::Column _column = StatWtTypes::CORRECTED;
     mutable std::shared_ptr<
             std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
-        > _samples {};
+        > _samples {
+        new std::map<
+            casacore::uInt, std::pair<casacore::uInt, casacore::uInt>
+        >()
+    };
     mutable std::set<casacore::uInt> _processedRowIDs {};
     mutable std::vector<std::vector<casacore::Double>> _timeWindowWts {};
     mutable casacore::Cube<casacore::Double> _multiLoopWeights {};
@@ -257,7 +261,7 @@ private:
     std::shared_ptr<casacore::Double> _binWidthInSeconds {};
     // if defined means we are using an integer number of timestamps for the
     // bin width
-    std::unique_ptr<casacore::Int> _nTimeStampsInBin {};
+    std::shared_ptr<casacore::Int> _nTimeStampsInBin {};
 
     casacore::Bool _mustComputeSigma = casacore::False;
     casacore::Bool _updateWeight = casacore::True;
@@ -271,7 +275,7 @@ private:
         casacore::Array<casacore::Bool>::const_iterator>
     > _wtStats {};
 
-    std::unique_ptr<StatWtVarianceAndWeightCalculator> _varianceComputer;
+    // std::unique_ptr<StatWtVarianceAndWeightCalculator> _varianceComputer;
 
     // idToChunksNeededByIDMap maps subchunkIDs to the range of subchunk IDs
     // they need. chunkNeededToIDsThatNeedChunkIDMap maps subchunk IDs that are
@@ -298,9 +302,9 @@ private:
     void _gatherAndComputeWeights() const;
 
     // sliding time bin window, and timebin was specified as a quantity
-    void _gatherAndComputeWeightsMultiLoopProcessing() const;
+    // void _gatherAndComputeWeightsMultiLoopProcessing() const;
 
-    void _gatherAndComputeWeightsOneShotProcessing() const;
+    //void _gatherAndComputeWeightsOneShotProcessing() const;
 
     // combines the flag cube with the channel selection flags (if any)
     casacore::Cube<casacore::Bool> _getResultantFlags(
@@ -312,19 +316,22 @@ private:
 
     // CAS-12358
     void _logUsedChannels() const;
-
+    /*
     void _computeVariancesOneShotProcessing(
         const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
         const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags,
         const std::map<BaselineChanBin, casacore::Vector<casacore::Double>>& exposures
     ) const;
+    */
 
+    /*
     void _computeWeightsMultiLoopProcessing(
         const casacore::Cube<casacore::Complex>& data,
         const casacore::Cube<casacore::Bool>& flags,
         const casacore::Vector<casacore::Double>& exposures,
         const std::vector<std::set<casacore::uInt>>& rowMap, casacore::uInt spw
     ) const;
+    */
 
     casacore::Bool _parseConfiguration(const casacore::Record &configuration);
 	
@@ -342,24 +349,28 @@ private:
     void _setDefaultChanBinMap();
 
     void _clearCache();
-
+    /*
     void _updateWtSpFlags(
         casacore::Cube<casacore::Float>& wtsp,
         casacore::Cube<casacore::Bool>& flags, casacore::Bool& checkFlags,
         const casacore::Slicer& slice, casacore::Float wt
     ) const;
+    */
 
     void _configureStatAlg(const casacore::Record& config);
 
+    /*
     void _weightSpectrumFlagsOneShotProcessing(
         casacore::Cube<casacore::Float>& wtsp,
         casacore::Cube<casacore::Bool>& flagCube, casacore::Bool& checkFlags
      ) const;
-
+     */
+    /*
     void _weightSpectrumFlagsMultiLoopProcessing(
         casacore::Cube<casacore::Float>& wtsp,
         casacore::Cube<casacore::Bool>& flagCube, casacore::Bool& checkFlags
     ) const;
+    */
 
     void _weightSingleChanBinOneShotProcessing(
         casacore::Matrix<casacore::Float>& wtmat, casacore::Int nrows

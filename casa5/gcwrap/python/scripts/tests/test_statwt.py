@@ -87,7 +87,6 @@ class statwt_test(unittest.TestCase):
             c = 0
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
                 print "*** ab"
-
                 for i in [0,1]:
                     print "*** ac"
                     shutil.copytree(src, dst) 
@@ -201,7 +200,10 @@ class statwt_test(unittest.TestCase):
                                 self.assertFalse(
                                     frow[row], "FLAG_ROW is not false"
                                 )
-                    shutil.rmtree(dst) 
+                    # DEBUG
+                    return
+                    shutil.rmtree(dst)
+                    
                 c += 1               
 
     def test_timebin(self):

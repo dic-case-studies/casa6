@@ -9,6 +9,15 @@ def statwt(
     wtrange, flagbackup, preview, datacolumn
 ):
     casalog.origin('statwt')
+    casalog.post(
+        "vis " + vis + " selectdata " + selectdata + " field " + field + " spw "
+        + spw, 'NORMAL'
+    )
+    casalog.post(
+        "intent " + intent + " array " + array + " observation " + observation
+        + "scan" + scan, 'NORMAL'
+    )
+    casalog.post("combine " + combine + " timebin " + timebin, 'NORMAL')
     if not selectdata:
         # CAS-10761, requirement provided by Urvashi
         if field or spw or intent or array or observation:

@@ -53,6 +53,9 @@ StatWtTVI::StatWtTVI(ViImplementation2 * inputVii, const Record &configuration)
         ! _parseConfiguration(configuration),
         "Error parsing StatWtTVI configuration"
     );
+    LogIO log(LogOrigin("StatWtTVI", __func__));
+    log << LogIO::NORMAL << "Using " << StatWtTypes::asString(_column)
+        << " to compute weights" << LogIO::POST;
     // FIXME when the TVI framework has methods to
     // check for metadata, like the existence of
     // columns, remove references to the original MS
@@ -236,6 +239,7 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
                 : val.startsWith("d") ? StatWtTypes::DATA
                 : val.startsWith("residual_") ? StatWtTypes::RESIDUAL_DATA
                 : StatWtTypes::RESIDUAL;
+
         }
     }
     field = "slidetimebin";
@@ -291,24 +295,32 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
         */
         //  }
 
+    cout << "calling aggregator constructor, _mustComputeWtSp " << _mustComputeWtSp << endl;
     _configureStatAlg(config);
     if (_doOneShot) {
         _dataAggregator.reset(
             new StatWtClassicalDataAggregator(
-                getVii(), _mustComputeWtSp, _chanBins, _samples, _column,
-                _noModel, _chanSelFlags, _wtStats, _wtrange, _combineCorr
+                getVii(), _chanBins, _samples, _column,
+                _noModel, _chanSelFlags, _wtStats, _wtrange, _combineCorr,
+                _statAlg
             )
         );
     }
     else {
+        if (! _binWidthInSeconds) {
+            cout << "_binWidthInSeconds is not set" << endl;
+        }
+        cout << "_timeBlockProcessing is set to " << _timeBlockProcessing << endl;
         _dataAggregator.reset(
                new StatWtFloatingWindowDataAggregator(
-                getVii(), _mustComputeWtSp, _chanBins, _samples, _column,
+                getVii(), _chanBins, _samples, _column,
                 _noModel, _chanSelFlags, _combineCorr, _wtStats, _wtrange,
-                _binWidthInSeconds, _timeBlockProcessing
+                _binWidthInSeconds, _nTimeStampsInBin, _timeBlockProcessing,
+                _statAlg
             )
         );
     }
+    _dataAggregator->setMustComputeWtSp(_mustComputeWtSp);
     return True;
 }
 
@@ -421,10 +433,11 @@ void StatWtTVI::_configureStatAlg(const Record& config) {
     std::set<StatisticsData::STATS> stats {StatisticsData::VARIANCE};
     _statAlg->setStatsToCalculate(stats);
     // create and configure the variance computer
+    /*
     _varianceComputer.reset(
         new StatWtVarianceAndWeightCalculator(_statAlg, _samples)
     );
-
+    */
     // also configure the _wtStats object here
     // FIXME? Does not include exposure weighting
     _wtStats.reset(
@@ -648,55 +661,59 @@ void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
 }
 
 void StatWtTVI::weightSpectrum(Cube<Float>& newWtsp) const {
-    // cout << __func__ << endl;
+    cout << __func__ << endl;
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    if (! *_mustComputeWtSp) {
-        // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << "_mustComputeWtSp " << _mustComputeWtSp << endl;
+    // if(! _mustComputeWtSp) {
+    //    cout << "_mustComputeWtSp is not set" << endl;
+    // }
+    if (! _dataAggregator->mustComputeWtSp()) {
+        cout << __FILE__ << " " << __LINE__ << endl;
 
         newWtsp.resize(IPosition(3, 0));
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
         return;
     }
     if (! _newWtSp.empty()) {
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
         // already calculated
         if (_updateWeight) {
-            // cout << __FILE__ << " " << __LINE__ << endl;
+            cout << __FILE__ << " " << __LINE__ << endl;
 
             newWtsp = _newWtSp.copy();
-            // cout << __FILE__ << " " << __LINE__ << endl;
+            cout << __FILE__ << " " << __LINE__ << endl;
 
         }
         else {
-            //cout << __FILE__ << " " << __LINE__ << endl;
+            cout << __FILE__ << " " << __LINE__ << endl;
 
             TransformingVi2::weightSpectrum(newWtsp);
-            //cout << __FILE__ << " " << __LINE__ << endl;
+            cout << __FILE__ << " " << __LINE__ << endl;
 
         }
         return;
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
     _computeWeightSpectrumAndFlags();
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
     if (_updateWeight) {
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
         newWtsp = _newWtSp.copy();
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
     }
     else {
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
         TransformingVi2::weightSpectrum(newWtsp);
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
 }
 
@@ -706,19 +723,34 @@ void StatWtTVI::_computeWeightSpectrumAndFlags() const {
     auto mypair = _getLowerLayerWtSpFlags(nOrigFlagged);
     auto& wtsp = mypair.first;
     auto& flagCube = mypair.second;
-    if (*_mustComputeWtSp && wtsp.empty()) {
+    // if (*_mustComputeWtSp && wtsp.empty()) {
+
+    if (_dataAggregator->mustComputeWtSp() && wtsp.empty()) {
         // This can happen in preview mode if
         // WEIGHT_SPECTRUM doesn't exist or is empty
         wtsp.resize(flagCube.shape());
     }
     auto checkFlags = False;
     // cout << "_doOneShot " << _doOneShot << endl;
+    /*
     if (_doOneShot) {
         _weightSpectrumFlagsOneShotProcessing(wtsp, flagCube, checkFlags);
     }
     else {
         _weightSpectrumFlagsMultiLoopProcessing(wtsp, flagCube, checkFlags);
     }
+    */
+    Vector<Int> ant1, ant2, spws;
+    antenna1(ant1);
+    antenna2(ant2);
+    spectralWindows(spws);
+    Vector<uInt> rowIDs;
+    getRowIds(rowIDs);
+    Vector<Double> exposures;
+    exposure(exposures);
+    _dataAggregator->weightSpectrumFlags(
+        wtsp, flagCube, checkFlags, ant1, ant2, spws, exposures, rowIDs
+    );
     if (checkFlags) {
         _nNewFlaggedPts += ntrue(flagCube) - nOrigFlagged;
     }
@@ -726,7 +758,8 @@ void StatWtTVI::_computeWeightSpectrumAndFlags() const {
     _newFlag = flagCube;
 }
 
-void StatWtTVI::_weightSpectrumFlagsMultiLoopProcessing(
+/*
+void StatWtTVI::_weightSpe  ctrumFlagsMultiLoopProcessing(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags
 ) const {
     // fish out the rows relevant to this subchunk
@@ -773,6 +806,9 @@ void StatWtTVI::_weightSpectrumFlagsMultiLoopProcessing(
         }
     }
 }
+*/
+
+/*
 
 void StatWtTVI::_weightSpectrumFlagsOneShotProcessing(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags
@@ -816,7 +852,9 @@ void StatWtTVI::_weightSpectrumFlagsOneShotProcessing(
         }
     }
 }
+*/
 
+/*
 void StatWtTVI::_updateWtSpFlags(
     Cube<Float>& wtsp, Cube<Bool>& flags, Bool& checkFlags,
     const Slicer& slice, Float wt
@@ -844,13 +882,15 @@ void StatWtTVI::_updateWtSpFlags(
         flagSlice = True;
     }
 }
+*/
 
 std::pair<Cube<Float>, Cube<Bool>> StatWtTVI::_getLowerLayerWtSpFlags(
     size_t& nOrigFlagged
 ) const {
     // cout << __func__ << endl;
     auto mypair = std::make_pair(Cube<Float>(), Cube<Bool>());
-    if (*_mustComputeWtSp) {
+    // if (*_mustComputeWtSp) {
+    if (_dataAggregator->mustComputeWtSp()) {
         getVii()->weightSpectrum(mypair.first);
     }
     getVii()->flag(mypair.second);
@@ -897,7 +937,9 @@ void StatWtTVI::weight(Matrix<Float> & wtmat) const {
     }
     auto nrows = nRows();
     getVii()->weight(wtmat);
-    if (*_mustComputeWtSp) {
+    // if (*_mustComputeWtSp) {
+
+    if (_dataAggregator->mustComputeWtSp()) {
         // always use classical algorithm to get median for weights
         ClassicalStatistics<
             Double, Array<Float>::const_iterator, Array<Bool>::const_iterator
@@ -1055,31 +1097,35 @@ void StatWtTVI::originChunks(Bool forceRewind) {
     // cout << __FILE__ << " " << __LINE__ << endl;
 
     _weightsComputed = False;
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
     _gatherAndComputeWeights();
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
     _weightsComputed = True;
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
     _clearCache();
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
     // re-origin this chunk in next layer
     //  (ensures wider scopes see start of the this chunk)
     getVii()->origin();
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
 }
 
 void StatWtTVI::nextChunk() {
-    // cout << __func__ << endl;
+    cout << __func__ << endl;
     // Drive next lower layer
     getVii()->nextChunk();
-    // cout << "n subchunks " << getVii()->nSubChunks() << endl;
+    cout << "n subchunks " << getVii()->nSubChunks() << endl;
     _weightsComputed = False;
+    cout << __FILE__ << " " << __LINE__ << endl;
+
     _gatherAndComputeWeights();
+    cout << __FILE__ << " " << __LINE__ << endl;
+
     _weightsComputed = True;
     _clearCache();
     // re-origin this chunk next layer
@@ -1095,6 +1141,7 @@ void StatWtTVI::_clearCache() {
     _newFlagRow.resize(0);
 }
 
+/*
 void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
     // cout << __func__ << endl;
     ThrowIf(
@@ -1192,12 +1239,12 @@ void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
             }
             rowMap.push_back(myRowNums);
             // debug
-            /*
-            if (baseline == Baseline(4, 6)) {
-                auto myrow = rowMap.size() - 1;
-                cout << "row num " << myrow << " included rows " << rowMap[myrow] << endl;
-            }
-            */
+
+            // if (baseline == Baseline(4, 6)) {
+            //    auto myrow = rowMap.size() - 1;
+            //    cout << "row num " << myrow << " included rows " << rowMap[myrow] << endl;
+            // }
+             *
         }
         // cout << __FILE__ << " " << __LINE__ << endl;
         const auto dataCube = _dataCube(vb);
@@ -1216,18 +1263,17 @@ void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
         // Slicer exposureSlice(sliceStart, sliceEnd, Slicer::endIsLast);
         // cout << __FILE__ << " " << __LINE__ << endl;
 
-        /*
-        for (uInt jj=0; jj<cubeShape[2]; ++jj) {
-            sliceStart[2] = jj;
-            sliceEnd[2] = jj;
-            exposureSlice.setStart(sliceStart);
-            exposureSlice.setEnd(sliceEnd);
+
+        // for (uInt jj=0; jj<cubeShape[2]; ++jj) {
+        //    sliceStart[2] = jj;
+        //    sliceEnd[2] = jj;
+        //    exposureSlice.setStart(sliceStart);
+        //    exposureSlice.setEnd(sliceEnd);
 
             // set all exposures in the slice to the same value
 
-            resultExposures(exposureSlice) = exposures[jj];
-        }
-        */
+        //    resultExposures(exposureSlice) = exposures[jj];
+        // }
 
         // build up chunkData and chunkFlags one subchunk at a time
         // cout << __FILE__ << " " << __LINE__ << endl;
@@ -1261,6 +1307,7 @@ void StatWtTVI::_gatherAndComputeWeightsMultiLoopProcessing() const {
     // cout << __FILE__ << " " << __LINE__ << endl;
 
 }
+*/
 
 void StatWtTVI::_limits(
     std::vector<std::pair<uInt, uInt>>& idToChunksNeededByIDMap,
@@ -1417,6 +1464,8 @@ const Cube<Complex> StatWtTVI::_dataCube(const VisBuffer2 *const vb) const {
     }
 }
 
+/*
+
 void StatWtTVI::_computeWeightsMultiLoopProcessing(
     const Cube<Complex>& data, const Cube<Bool>& flags,
     const Vector<Double>& exposures, const std::vector<std::set<uInt>>& rowMap,
@@ -1525,8 +1574,14 @@ void StatWtTVI::_computeWeightsMultiLoopProcessing(
 
 }
 
+*/
+
 void StatWtTVI::_gatherAndComputeWeights() const {
+    // cout << "before call to aggregate, _mustComputeWtSp is " << _mustComputeWtSp << endl;
     _dataAggregator->aggregate();
+    //cout << "after call to aggregate, _mustComputeWtSp is " << _mustComputeWtSp << endl;
+
+
     /*
     if (_doOneShot) {
         // cout << __FILE__ << " " << __LINE__ << endl;
@@ -1552,6 +1607,7 @@ void StatWtTVI::_gatherAndComputeWeights() const {
     */
 }
 
+/*
 void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
     // Drive NEXT LOWER layer's ViImpl to gather data into allvis:
     //  Assumes all sub-chunks in the current chunk are to be used
@@ -1655,6 +1711,7 @@ void StatWtTVI::_gatherAndComputeWeightsOneShotProcessing() const {
     // cout << __FILE__ << " " << __LINE__ << endl;
 
 }
+*/
 
 Cube<Bool> StatWtTVI::_getResultantFlags(
     Cube<Bool>& chanSelFlagTemplate, Cube<Bool>& chanSelFlags,
@@ -1743,6 +1800,7 @@ StatWtTVI::Baseline StatWtTVI::_baseline(uInt ant1, uInt ant2) {
     return Baseline(min(ant1, ant2), max(ant1, ant2));
 }
 
+/*
 void StatWtTVI::_computeVariancesOneShotProcessing(
     const map<BaselineChanBin, Cube<Complex>>& data,
     const map<BaselineChanBin, Cube<Bool>>& flags,
@@ -1807,6 +1865,7 @@ void StatWtTVI::_computeVariancesOneShotProcessing(
     //cout << __FILE__ << " " << __LINE__ << endl;
 
 }
+*/
 
 void StatWtTVI::summarizeFlagging() const {
     // cout << __func__ << endl;

@@ -1,5 +1,3 @@
-//# StatWtTVI.cc: This file contains the implementation of the StatWtTVI class.
-//#
 //#  CASA - Common Astronomy Software Applications (http://casa.nrao.edu/)
 //#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All rights reserved.
 //#  Copyright (C) European Southern Observatory, 2011, All rights reserved.
@@ -37,9 +35,9 @@ namespace vi {
 
 StatWtClassicalDataAggregator::StatWtClassicalDataAggregator(
     ViImplementation2 *const vii,
-    std::shared_ptr<const Bool> mustComputeWtSp,
-    const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>>& chanBins,
-    std::shared_ptr<map<uInt, pair<uInt, uInt>>> samples,
+    // shared_ptr<Bool>& mustComputeWtSp,
+    const map<Int, vector<StatWtTypes::ChanBin>>& chanBins,
+    std::shared_ptr<map<uInt, pair<uInt, uInt>>>& samples,
     StatWtTypes::Column column, Bool noModel,
     const map<uInt, Cube<Bool>>& chanSelFlags,
     shared_ptr<
@@ -47,11 +45,17 @@ StatWtClassicalDataAggregator::StatWtClassicalDataAggregator(
             Double, Array<Float>::const_iterator,
             Array<Bool>::const_iterator
         >
-    > wtStats,
-    shared_ptr<const pair<Double, Double>> wtrange, Bool combineCorr
+    >& wtStats,
+    shared_ptr<const pair<Double, Double>> wtrange, Bool combineCorr,
+    shared_ptr<
+        StatisticsAlgorithm<
+            Double, Array<Float>::const_iterator, Array<Bool>::const_iterator,
+            Array<Double>::const_iterator
+        >
+    >& statAlg
 ) : StatWtDataAggregator(
-       vii, chanBins, samples, column, noModel, chanSelFlags, mustComputeWtSp,
-       wtStats, wtrange, combineCorr
+       vii, chanBins, samples, column, noModel, chanSelFlags, /* mustComputeWtSp,*/
+       wtStats, wtrange, combineCorr, statAlg
     ) {}
 
 StatWtClassicalDataAggregator::~StatWtClassicalDataAggregator() {}

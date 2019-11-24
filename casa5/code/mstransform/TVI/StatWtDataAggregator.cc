@@ -22,8 +22,6 @@
 #include <casacore/casa/Arrays/ArrayMath.h>
 #include <casacore/casa/Arrays/Cube.h>
 
-#include <mstransform/TVI/StatWtVarianceAndWeightCalculator.h>
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -38,23 +36,43 @@ namespace vi {
 StatWtDataAggregator::StatWtDataAggregator(
     ViImplementation2 *const vii,
     const map<Int, vector<StatWtTypes::ChanBin>>& chanBins,
-    std::shared_ptr<map<uInt, pair<uInt, uInt>>> samples,
+    std::shared_ptr<map<uInt, pair<uInt, uInt>>>& samples,
     StatWtTypes::Column column, Bool noModel,
     const map<uInt, Cube<Bool>>& chanSelFlags,
-    std::shared_ptr<const casacore::Bool> mustComputeWtSp,
+    // std::shared_ptr<casacore::Bool>& mustComputeWtSp,
     std::shared_ptr<
         casacore::ClassicalStatistics<casacore::Double,
         casacore::Array<casacore::Float>::const_iterator,
         casacore::Array<casacore::Bool>::const_iterator>
-    > wtStats,
+    >& wtStats,
     shared_ptr<const pair<Double, Double>> wtrange,
-    casacore::Bool combineCorr
-) : _vii(vii),
-_chanBins(chanBins), _samples(samples), _column(column), _noModel(noModel),
-    _chanSelFlags(chanSelFlags), _mustComputeWtSp(mustComputeWtSp),
-    _wtStats(wtStats), _wtrange(wtrange), _combineCorr(combineCorr) {}
+    Bool combineCorr,
+    shared_ptr<
+        StatisticsAlgorithm<
+            Double, Array<Float>::const_iterator,
+            Array<Bool>::const_iterator, Array<Double>::const_iterator
+        >
+    >& statAlg
+) : _vii(vii), _chanBins(chanBins), _samples(samples),
+    _varianceComputer(new StatWtVarianceAndWeightCalculator(statAlg, _samples)),
+    _column(column),_noModel(noModel), _chanSelFlags(chanSelFlags),
+    /*_mustComputeWtSp(mustComputeWtSp),*/ _wtStats(wtStats), _wtrange(wtrange),
+    /*_statAlg(statAlg)*/
+    _combineCorr(combineCorr) {}
+
 
 StatWtDataAggregator::~StatWtDataAggregator() {}
+
+Bool StatWtDataAggregator::mustComputeWtSp() const {
+    return *_mustComputeWtSp;
+}
+
+void StatWtDataAggregator::setMustComputeWtSp(
+    std::shared_ptr<casacore::Bool> mcwp
+) {
+    _mustComputeWtSp = mcwp;
+}
+
 
 StatWtTypes::Baseline StatWtDataAggregator::_baseline(
     uInt ant1, uInt ant2
@@ -65,6 +83,8 @@ StatWtTypes::Baseline StatWtDataAggregator::_baseline(
 Bool StatWtDataAggregator::_checkFirstSubChunk(
     Int& spw, Bool& firstTime, const VisBuffer2 * const vb
 ) const {
+    cout << __FILE__ << " " << __LINE__ << endl;
+
     if (! firstTime) {
         // this chunk has already been checked, it has not
         // been processed previously
@@ -72,11 +92,17 @@ Bool StatWtDataAggregator::_checkFirstSubChunk(
     }
     const auto& rowIDs = vb->rowIds();
     if (_processedRowIDs.find(rowIDs[0]) == _processedRowIDs.end()) {
+        cout << __FILE__ << " " << __LINE__ << endl;
+
         // haven't processed this chunk
         _processedRowIDs.insert(rowIDs[0]);
         // the spw is the same for all subchunks, so it only needs to
         // be set once
         spw = *vb->spectralWindows().begin();
+        cout << __FILE__ << " " << __LINE__ << endl;
+        if (! _samples) {
+            cout << "_samples is not set" << endl;
+        }
         if (_samples->find(spw) == _samples->end()) {
             (*_samples)[spw].first = 0;
             (*_samples)[spw].second = 0;
@@ -85,6 +111,8 @@ Bool StatWtDataAggregator::_checkFirstSubChunk(
         return False;
     }
     else {
+        cout << __FILE__ << " " << __LINE__ << endl;
+
         // this chunk has been processed, this can happen at the end
         // when the last chunk is processed twice
         return True;

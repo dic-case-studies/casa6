@@ -6424,6 +6424,8 @@ record* ms::statwt(
         tviConfig["wtrange"] = wtrange;
         tviConfig["datacolumn"] = datacolumn;
         unique_ptr<Record> rec(toRecord(tviConfig));
+        cout << "tviConfig " << *rec << endl;
+
         statwt.setTVIConfig(*rec);
         return fromRecord(statwt.writeWeights());
     }

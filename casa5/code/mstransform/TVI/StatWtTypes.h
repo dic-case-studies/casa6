@@ -60,6 +60,21 @@ public:
         RESIDUAL_DATA
     };
 
+    static casacore::String asString(Column col) {
+        switch (col) {
+        case DATA:
+            return "DATA";
+        case CORRECTED:
+            return "CORRECTED_DATA";
+        case RESIDUAL:
+            return "CORRECTED_DATA - MODEL_DATA";
+        case RESIDUAL_DATA:
+            return "DATA - MODEL_DATA";
+        default:
+            ThrowCc("Unhandled column");
+        }
+    }
+
     struct BaselineChanBin {
         Baseline baseline = std::make_pair(0, 0);
         casacore::uInt spw = 0;

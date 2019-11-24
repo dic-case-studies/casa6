@@ -23,6 +23,9 @@
 #include <casacore/casa/Arrays/ArrayMath.h>
 #include <casacore/casa/Arrays/Cube.h>
 
+// DEBUG
+#include <casacore/casa/Arrays/ArrayIO.h>
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -40,7 +43,9 @@ StatWtVarianceAndWeightCalculator::StatWtVarianceAndWeightCalculator(
         >
     > statAlg,
     shared_ptr<map<uInt, pair<uInt, uInt>>> samples
-) : _statAlg(statAlg->clone()), _samples(samples) {}
+) : _statAlg(statAlg->clone()), _samples(samples) {
+    cout << "using stat algorithm " << _statAlg->algorithm() << endl;
+}
 
 StatWtVarianceAndWeightCalculator::~StatWtVarianceAndWeightCalculator() {}
 
@@ -49,6 +54,7 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     const Cube<Bool>& flags, const Vector<Double>& exposures,
     casacore::uInt spw
 ) const {
+    cout << "exposures " << exposures << endl;
     const auto npts = data.size();
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
         // not enough points, trivial
@@ -74,17 +80,19 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     auto iiter = imagPart.begin();
     auto miter = mask.begin();
     auto eiter = exposureCube.begin();
+    cout << "realPart " << realPart << endl;
+    cout << "exposureCube " << exposureCube << endl;
+    cout << "mask " << mask << endl;
+    cout << "npts " << npts << endl;
+
     statAlg->setData(riter, eiter, miter, npts);
     auto realStats = statAlg->getStatistics();
+    cout << "var " << realStats.variance << endl;
     auto realVar = realStats.nvariance/realStats.npts;
-    cout << "real npts " << realStats.npts << endl;
-    cout << "realVar " << realVar << endl;
     // reset data to imaginary parts
     statAlg->setData(iiter, eiter, miter, npts);
     auto imagStats = statAlg->getStatistics();
     auto imagVar = imagStats.nvariance/imagStats.npts;
-    cout << "imag npts " << imagStats.npts << endl;
-    cout << "imagVar " << imagVar << endl;
     auto varSum = realVar + imagVar;
     // _samples.second can be updated in two different places, so use
     // a local (per thread) variable and update the object's private field in one
@@ -110,6 +118,9 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
             ++((*_samples)[spw].second);
         }
     }
+//DEBUG
+
+    cout << "var sum " << varSum << endl;
     return varSum/2;
 }
 

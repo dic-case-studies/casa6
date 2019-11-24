@@ -22,6 +22,8 @@
 #include <scimath/StatsFramework/ClassicalStatistics.h>
 
 #include <msvis/MSVis/ViImplementation2.h>
+#include <mstransform/TVI/StatWtTypes.h>
+
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -36,9 +38,9 @@ namespace vi {
 
 StatWtFloatingWindowDataAggregator::StatWtFloatingWindowDataAggregator(
     ViImplementation2 *const vii,
-    std::shared_ptr<const Bool> mustComputeWtSp,
+    // std::shared_ptr<Bool>& mustComputeWtSp,
     const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>>& chanBins,
-    std::shared_ptr<map<uInt, pair<uInt, uInt>>> samples,
+    std::shared_ptr<map<uInt, pair<uInt, uInt>>>& samples,
     StatWtTypes::Column column, Bool noModel,
     const map<uInt, Cube<Bool>>& chanSelFlags, Bool combineCorr,
     shared_ptr<
@@ -46,25 +48,34 @@ StatWtFloatingWindowDataAggregator::StatWtFloatingWindowDataAggregator(
             Double, Array<Float>::const_iterator,
             Array<Bool>::const_iterator
         >
-    > wtStats,
+    >& wtStats,
     shared_ptr<const pair<Double, Double>> wtrange,
     shared_ptr<const Double> binWidthInSeconds,
-    casacore::Bool timeBlockProcessing
+    shared_ptr<const Int> nTimeStampsInBin, const Bool timeBlockProcessing,
+    shared_ptr<
+        StatisticsAlgorithm<
+            Double, Array<Float>::const_iterator,
+            Array<Bool>::const_iterator, Array<Double>::const_iterator
+        >
+    >& statAlg
 ) : StatWtDataAggregator(
-       vii, chanBins, samples, column, noModel, chanSelFlags, mustComputeWtSp,
-       wtStats, wtrange, combineCorr
+       vii, chanBins, samples, column, noModel, chanSelFlags, /* mustComputeWtSp,*/
+       wtStats, wtrange, combineCorr, statAlg
     ), _binWidthInSeconds(binWidthInSeconds),
-    _timeBlockProcessing(timeBlockProcessing) {}
+    _nTimeStampsInBin(nTimeStampsInBin),
+    _timeBlockProcessing(timeBlockProcessing) {
+        ThrowIf(
+            ! (_binWidthInSeconds || _nTimeStampsInBin ),
+            "Logic error: neither binWidthInSeconds "
+            "nor nTimeStampsInBin has been specified"
+        );
+}
 
 StatWtFloatingWindowDataAggregator::~StatWtFloatingWindowDataAggregator() {}
 
 void StatWtFloatingWindowDataAggregator::aggregate() {
-    // cout << __func__ << endl;
-    ThrowIf(
-        ! (_binWidthInSeconds || _nTimeStampsInBin ),
-        "Logic error: neither _binWidthInSeconds"
-        "nor _nTimeStamps has been specified"
-    );
+    cout << __func__ << endl;
+
     //auto* vii = getVii();
     auto* vb = _vii->getVisBuffer();
     // map of rowID (the index of the vector) to rowIDs that should be used to
@@ -85,6 +96,8 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
     // Vector
     // Cube<Double> chunkExposures;
     std::vector<Double> exposures;
+    cout << __FILE__ << " " << __LINE__ << endl;
+
     uInt subchunkStartRowNum = 0;
     auto initChanSelTemplate = True;
     Cube<Bool> chanSelFlagTemplate, chanSelFlags;
@@ -98,17 +111,28 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
         chunkNeededToIDsThatNeedChunkIDMap;
     _limits(idToChunksNeededByIDMap, chunkNeededToIDsThatNeedChunkIDMap);
     uInt subChunkID = 0;
+    cout << __FILE__ << " " << __LINE__ << endl;
+
     for (_vii->origin(); _vii->more(); _vii->next(), ++subChunkID) {
+        cout << __FILE__ << " " << __LINE__ << endl;
+
         if (_checkFirstSubChunk(spw, firstTime, vb)) {
+            cout << __FILE__ << " " << __LINE__ << endl;
+
             return;
         }
+        cout << "mustcomputewtsp " << _mustComputeWtSp << endl;
         if (! _mustComputeWtSp) {
             _mustComputeWtSp.reset(
                 new Bool(
                     vb->existsColumn(VisBufferComponent2::WeightSpectrum)
                 )
             );
+            cout << "has set _mustComputeWtSp to " << _mustComputeWtSp
+                    << " value " << *_mustComputeWtSp << endl;
         }
+        cout << __FILE__ << " " << __LINE__ << endl;
+
         _rowIDInMSToRowIndexInChunk[*vb->rowIds().begin()] = subchunkStartRowNum;
         const auto& ant1 = vb->antenna1();
         const auto& ant2 = vb->antenna2();
@@ -124,6 +148,8 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
         auto rowInChunk = subchunkStartRowNum;
         pair<StatWtTypes::Baseline, uInt> mypair;
         mypair.second = subChunkID;
+        cout << __FILE__ << " " << __LINE__ << endl;
+
         for (Int row=0; row<nrows; ++row, ++rowInChunk) {
             // loop over rows in sub chunk, grouping baseline specific data
             // together
@@ -162,7 +188,7 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
             }
             */
         }
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
         const auto dataCube = _dataCube(vb);
         const auto resultantFlags = _getResultantFlags(
             chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
@@ -193,7 +219,7 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
         */
 
         // build up chunkData and chunkFlags one subchunk at a time
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
         if (chunkData.empty()) {
             chunkData = dataCube;
@@ -218,10 +244,12 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
         subchunkStartRowNum += nrows;
     }
     // cout << "chunkexposres shape " << chunkExposures.shape() << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
+
     _computeWeightsMultiLoopProcessing(
         chunkData, chunkFlags, Vector<Double>(exposures), rowMap, spw
     );
-    // cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
 }
 
@@ -238,19 +266,20 @@ void StatWtFloatingWindowDataAggregator::_computeWeightsMultiLoopProcessing(
     const auto nActCorr = chunkShape[0];
     const auto ncorr = _combineCorr ? 1 : nActCorr;
     const auto& chanBins = _chanBins.find(spw)->second;
+    cout << __FILE__ << " " << __LINE__ << endl;
+
     _multiLoopWeights.resize(
         IPosition(3, ncorr, chanBins.size(), chunkShape[2]),
         False
     );
     const auto nRows = rowMap.size();
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
+    /*
+     * DEBUG
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
+*/
     for (size_t iRow=0; iRow<nRows; ++iRow) {
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         IPosition chunkSliceStart(3, 0);
         auto chunkSliceLength = chunkShape;
         chunkSliceLength[2] = 1;
@@ -272,7 +301,7 @@ void StatWtFloatingWindowDataAggregator::_computeWeightsMultiLoopProcessing(
         Cube<Bool> flagArray(dataShape);
         auto siter = rowsToInclude.begin();
         auto send = rowsToInclude.end();
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
         Vector<Double> exposureVector(rowsToInclude.size(), 0);
         uInt n = 0;
@@ -292,12 +321,12 @@ void StatWtFloatingWindowDataAggregator::_computeWeightsMultiLoopProcessing(
             dataArray(appendingSlice) = data(chunkSlice);
             flagArray(appendingSlice) = flags(chunkSlice);
         }
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
         // slice up for correlations and channel binning
         intraChunkSliceEnd[2] = dataShape[2] - 1;
         for (uInt corr=0; corr<ncorr; ++corr) {
-            // cout << __FILE__ << " " << __LINE__ << endl;
+            cout << __FILE__ << " " << __LINE__ << endl;
 
             if (! _combineCorr) {
                 intraChunkSliceStart[0] = corr;
@@ -307,29 +336,31 @@ void StatWtFloatingWindowDataAggregator::_computeWeightsMultiLoopProcessing(
             auto cend = chanBins.end();
             auto iChanBin = 0;
             for (; citer!=cend; ++citer, ++iChanBin) {
-                // cout << __FILE__ << " " << __LINE__ << endl;
+                cout << __FILE__ << " " << __LINE__ << endl;
 
                 intraChunkSliceStart[1] = citer->start;
                 intraChunkSliceEnd[1] = citer->end;
                 intraChunkSlice.setStart(intraChunkSliceStart);
                 intraChunkSlice.setEnd(intraChunkSliceEnd);
-                // cout << __FILE__ << " " << __LINE__ << endl;
-
+                cout << __FILE__ << " " << __LINE__ << endl;
+                if (! _varianceComputer) {
+                    cout << "variance computer not set" << endl;
+                }
                 _multiLoopWeights(corr, iChanBin, iRow)
                     = _varianceComputer->computeWeight(
                         dataArray(intraChunkSlice), flagArray(intraChunkSlice),
                         exposureVector, spw, exposures[iRow]
                     );
-                // cout << __FILE__ << " " << __LINE__ << endl;
+                cout << __FILE__ << " " << __LINE__ << endl;
 
             }
-            // cout << __FILE__ << " " << __LINE__ << endl;
+            cout << __FILE__ << " " << __LINE__ << endl;
 
         }
-        // cout << __FILE__ << " " << __LINE__ << endl;
+        cout << __FILE__ << " " << __LINE__ << endl;
 
     }
-    //cout << __FILE__ << " " << __LINE__ << endl;
+    cout << __FILE__ << " " << __LINE__ << endl;
 
 }
 

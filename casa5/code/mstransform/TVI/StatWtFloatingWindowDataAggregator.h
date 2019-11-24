@@ -24,10 +24,6 @@
 
 #include <casacore/casa/Arrays/Cube.h>
 
-// #include <msvis/MSVis/TransformingVi2.h>
-
-// #include <mstransform/TVI/StatWtTVI.h>
-
 #include <map>
 
 namespace casa {
@@ -45,17 +41,17 @@ public:
     
     StatWtFloatingWindowDataAggregator() = delete;
 
-    // out of necessity, the passed in pointer like variables are shared with
+    // out of necessity, the passed in pointer  like variables are shared with
     // the caller.
     StatWtFloatingWindowDataAggregator(
         ViImplementation2 *const vii,
-        std::shared_ptr<const casacore::Bool> mustComputeWtSp,
+        // std::shared_ptr<casacore::Bool>& mustComputeWtSp,
         const std::map<
             casacore::Int, std::vector<StatWtTypes::ChanBin>
         >& chanBins,
         std::shared_ptr<
             std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
-        > samples,
+        >& samples,
         StatWtTypes::Column column, casacore::Bool noModel,
         const std::map<casacore::uInt, casacore::Cube<casacore::Bool>>&
             chanSelFlags,
@@ -64,12 +60,21 @@ public:
             casacore::ClassicalStatistics<casacore::Double,
             casacore::Array<casacore::Float>::const_iterator,
             casacore::Array<casacore::Bool>::const_iterator>
-        > wtStats,
+        >& wtStats,
         std::shared_ptr<
             const std::pair<casacore::Double, casacore::Double>
         > wtrange,
         std::shared_ptr<const casacore::Double> binWidthInSeconds,
-        casacore::Bool timeBlockProcessing
+        std::shared_ptr<const casacore::Int> nTimeStampsInBin,
+        const casacore::Bool timeBlockProcessing,
+        std::shared_ptr<
+            casacore::StatisticsAlgorithm<
+                casacore::Double,
+                casacore::Array<casacore::Float>::const_iterator,
+                casacore::Array<casacore::Bool>::const_iterator,
+                casacore::Array<casacore::Double>::const_iterator
+            >
+        >& statAlg
     );
 
     ~StatWtFloatingWindowDataAggregator();
@@ -94,7 +99,7 @@ private:
     // TODO can probably get rid of this in StatWtTVI
     mutable casacore::Cube<casacore::Double> _multiLoopWeights {};
 
-    std::shared_ptr<casacore::Int> _nTimeStampsInBin {};
+    std::shared_ptr<const casacore::Int> _nTimeStampsInBin {};
 
     // TODO can probably get rid of this in StatWtTVI
     // for running time window, for each subchunk, map the rowID (in the MS)
