@@ -161,9 +161,13 @@ def compute_version( ):
         proc = Popen( [ "scripts/version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
         print(out)
-        devbranchtag = out.split(" ")[0]
+        devbranchtag = out.split(" ")[0].strip()
         print(devbranchtag)
-        releasetag = out.split(" ")[1]
+        releasetag = out.split(" ")[1].strip()
+        dirty=""
+        if (len(out.split(" ")) == 3):
+            print("Latest commit doesn't have a tag. Adding -dirty flag to version string.")
+            dirty="+" + out.split(" ")[2].strip() # "+" denotes local version identifier as described in PEP440  	
         print(releasetag)
         devbranchversion = ""
         devbranchrevision = ""
@@ -177,13 +181,15 @@ def compute_version( ):
         else:
             isDevBranch = False
         (major, minor, patch, feature) = releasetag.split(".")
-        print(major, minor, patch, feature)
-        return(int(major), int(minor), int(patch), int(feature), devbranchversion, devbranchrevision)
+        #print(major, minor, patch, feature, devbranchversion, devbranchrevision, dirty)
+        return(int(major), int(minor), int(patch), int(feature), devbranchversion, devbranchrevision, dirty)
 
-(casatools_major,casatools_minor,casatools_patch,casatools_feature, devbranchversion, devbranchrevision) = compute_version( )
-casatools_version = '%d.%d.%d.%d' % (casatools_major,casatools_minor,casatools_patch,casatools_feature)
+(casatools_major,casatools_minor,casatools_patch,casatools_feature, devbranchversion, devbranchrevision, dirty) = compute_version( )
+print(casatools_major, casatools_minor, casatools_patch, casatools_feature, devbranchversion, devbranchrevision, dirty)
+casatools_version = '%d.%d.%d.%d%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,dirty)
 if devbranchversion !="":
-    casatools_version = '%d.%d.%d.%da%sdev%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,devbranchversion,devbranchrevision)
+    casatools_version = '%d.%d.%d.%da%sdev%s%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,devbranchversion,devbranchrevision,dirty)
+print(casatools_version)
 
 ###
 ###  return string discription of the current operating system, e.g.
