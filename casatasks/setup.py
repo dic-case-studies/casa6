@@ -148,7 +148,7 @@ def compute_version( ):
         return(int(major), int(minor), int(patch), int(feature), devbranchversion, devbranchrevision, dirty)
 
 
-(casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, dirty) = compute_version( )
+(casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, devbranchversion, devbranchrevision, dirty) = compute_version( )
 casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, dirty)
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%sdev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
