@@ -1397,7 +1397,7 @@ MeasurementSet SingleDishOtfCal::selectMS(MeasurementSet const &ms)
     }
   }
 
-  Vector<uInt> rowList;
+  Vector<casacore::rownr_t> rowList;
 
   for (uInt field_id=0; field_id < tbl_field.nrow(); ++field_id){
     String field_sel(casacore::String::toString<uInt>(field_id));

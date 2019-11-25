@@ -152,12 +152,12 @@ class Kluge {
 
 public:
 
-typedef Array<T> (TableExprNode::* Extractor) (const Vector<uInt>& rownrs) const;
+typedef Array<T> (TableExprNode::* Extractor) (const Vector<rownr_t>& rownrs) const;
 
 static Array<T>
 extract (const TableExprNode & col, Extractor extractor)
 {
-  Vector<uInt> rownrs (col.nrow());
+  Vector<casacore::rownr_t> rownrs (col.nrow());
   indgen (rownrs);
 
   return ((& col) ->* extractor) (rownrs);
