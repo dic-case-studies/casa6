@@ -119,15 +119,19 @@ else:
 def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
-        (major, minor, micro, patch) = args.version.split(".")
-        return(int(major), int(minor), int(micro), int(patch))
+        (major, minor, patch, feature) = args.version.split(".")
+        return(int(major), int(minor), int(patch), int(feature))
     else:
         proc = Popen( [ "./version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
         print(out)
-        devbranchtag = out.split(" ")[0]
+        devbranchtag = out.split(" ")[0].strip()
         print(devbranchtag)
-        releasetag = out.split(" ")[1]
+        releasetag = out.split(" ")[1].strip()
+        dirty=""
+        if (len(out.split(" ")) == 3):
+            print("Latest commit doesn't have a tag. Adding -dirty flag to version string.")
+            dirty="+" + out.split(" ")[2].strip() # "+" denotes local version identifier as described in PEP440
         print(releasetag)
         devbranchversion = ""
         devbranchrevision = ""
@@ -140,15 +144,14 @@ def compute_version( ):
             devbranchrevision = devbranchtag.split("-")[-1]
         else:
             isDevBranch = False
-        (major, minor, micro, patch) = releasetag.split(".")
-        print(major, minor, micro, patch)
-        return(int(major), int(minor), int(micro), int(patch), devbranchversion, devbranchrevision)
+        (major, minor, patch, feature) = releasetag.split(".")
+        return(int(major), int(minor), int(patch), int(feature), devbranchversion, devbranchrevision, dirty)
 
 
-(casatasks_major,casatasks_minor,casatasks_micro,casatasks_patch) = compute_version( )
-casatasks_version = '%d.%d.%d.%d' % (casatasks_major,casatasks_minor,casatasks_micro,casatasks_patch)
+(casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, dirty) = compute_version( )
+casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, dirty)
 if devbranchversion !="":
-    casatools_version = '%d.%d.%d.%da%sdev%s' % (casatasks_major,casatasks_minor,casatasks_micro,casatasks_patch,devbranchversion,devbranchrevision)
+    casatasks_version = '%d.%d.%d.%da%sdev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
 public_scripts = [ 'src/scripts/config.py' ]
 
@@ -597,7 +600,7 @@ def generate_pyinit(moduledir,tasks):
             fd.write("from .%s import %s\n" % (task,task))
 
         fd.write("\n")
-        fd.write("def version( ): return [ %d, %d, %d, %d ]\n" % (casatasks_major,casatasks_minor,casatasks_micro,casatasks_patch))
+        fd.write("def version( ): return [ %d, %d, %d, %d ]\n" % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature))
         fd.write("def version_string( ): return \"%s\"\n" % casatasks_version)
         fd.write("casalog.setglobal(True)\n")
         fd.write("\n")
