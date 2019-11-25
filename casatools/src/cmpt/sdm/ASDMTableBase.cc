@@ -6,7 +6,14 @@ namespace asdm {
 
     ASDM_TABLE_BASE::ASDM_TABLE_BASE() {table_p_ = 0;}
 
-    ASDM_TABLE_BASE::~ASDM_TABLE_BASE() {}
+    ASDM_TABLE_BASE::~ASDM_TABLE_BASE() {
+        close();
+    }
+
+    void ASDM_TABLE_BASE::close() {
+        if (table_p_ != 0) delete table_p_;
+        table_p_ = 0;
+    }
 
     casacore::Table* ASDM_TABLE_BASE::table_p() {return table_p_;}
 
