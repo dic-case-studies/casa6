@@ -249,6 +249,11 @@ def feather_residual(int_cube, sd_cube, joint_cube, applypb, inparm):
                                 freqdep=False)
 def sdintimaging(
     usedata,
+    ####### Single dish input data
+    sdimage, 
+    sdpsf, 
+    sdgain, 
+    dishdia,
     ####### Interfermeter Data Selection
     vis,#='', 
     selectdata,
@@ -262,11 +267,6 @@ def sdintimaging(
     intent,#='',
     datacolumn,#='corrected',
 
-    ####### Single dish input data
-    sdimage, 
-    sdpsf, 
-    sdgain, 
-    dishdia,
 
     ####### Image definition
     imagename,#='',
@@ -517,6 +517,8 @@ def sdintimaging(
     try: 
         sdintlib = SDINT_helper()
         ## Init major cycle elements
+        ### debug (remove it later) 
+        casalog.post("INT cube setup ....")
         t0=time.time();
         imager=setup_imager(int_cube, pcube, calcres, calcpsf, bparm) 
 
@@ -526,18 +528,23 @@ def sdintimaging(
         ##imager.initializeNormalizers()
         ##imager.setWeighting()
         t1=time.time();
-        casalog.post("***Time for initializing imager and normalizers: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+        casalog.post("***Time for initializing imager (INT cube) : "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_sdintimaging");
 
         ## Init minor cycle elements
         if niter>0 or restoration==True:
+            ### debug (remove it later) 
+            casalog.post("Combined image setup ....")
             t0=time.time();
             deconvolver=setup_deconvolver(decname, pcube, bparm )
             #imager.initializeDeconvolvers()
             t1=time.time();
             #casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-            casalog.post("***Time for seting up deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+            casalog.post("***Time for seting up deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_sdintimaging");
 
-        setup_sdimaging(template=int_cube, output=sd_cube, inparms=bparm, sdparms=sdparms ) 
+        if usedata!='int':
+            ### debug (remove it later) 
+            casalog.post("SD cube setup ....")
+            setup_sdimaging(template=int_cube, output=sd_cube, inparms=bparm, sdparms=sdparms ) 
 
         ####now is the time to check estimated memory
         # need to move to somewhere below???
@@ -592,6 +599,7 @@ def sdintimaging(
 
         #### SDINT specific feathering....
         ## Feather INT and SD residual images (feather in flat-sky. output has common PB)
+        casalog.post("Feathering INT and SD residual images...")
         feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams)
         sdintlib.feather_int_sd(sdcube=sd_cube+'.psf',
                                 intcube=int_cube+'.psf',
@@ -603,6 +611,7 @@ def sdintimaging(
         
         if specmode=='mfs':
             ## Calculate Spectral PSFs and Taylor Residuals
+            casalog.post("Calculate spectral PSFs and Taylor Residuals...")
             sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.psf',
                                         mtname=joint_multiterm+'.psf',
                                         nterms=nterms, reffreq=reffreq, dopsf=True)
@@ -629,7 +638,7 @@ def sdintimaging(
                 t0=time.time();
                 deconvolver.runMinorCycle()
                 t1=time.time();
-                casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+                casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_sdintimaging");
 
                 ### sdint specific feathering steps HERE
                 ## Prepare the joint model cube for INT and SD major cycles
@@ -651,9 +660,10 @@ def sdintimaging(
                                         pbcube=int_cube+'.pb',
                                         action='div', pblimit=pblimit,freqdep=False)
 
-                ## copy the int_cube.model to the sd_cube.model
-                shutil.rmtree(sd_cube+'.model',ignore_errors=True)
-                shutil.copytree(int_cube+'.model', sd_cube+'.model')
+                if usedata!="int":
+                    ## copy the int_cube.model to the sd_cube.model
+                    shutil.rmtree(sd_cube+'.model',ignore_errors=True)
+                    shutil.copytree(int_cube+'.model', sd_cube+'.model')
 
                 if applypb==True:
                     ## Multiply flat-sky model with freq-dep PB
@@ -667,14 +677,15 @@ def sdintimaging(
                 t1=time.time();
                 casalog.post("***Time for major cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
-                ## Major cycle for Single Dish data (uses the flat sky cube model in sd_cube.model )
-                sdintlib.calc_sd_residual(origcube=sd_cube+'.image',
-                                      modelcube=sd_cube+'.model',
-                                      residualcube=sd_cube+'.residual',  ## output
-                                      psfcube=sd_cube+'.psf')
+                if usedata!="int":
+                    ## Major cycle for Single Dish data (uses the flat sky cube model in sd_cube.model )
+                    sdintlib.calc_sd_residual(origcube=sd_cube+'.image',
+                                              modelcube=sd_cube+'.model',
+                                              residualcube=sd_cube+'.residual',  ## output
+                                              psfcube=sd_cube+'.psf')
 
-                ## Feather the residuals
-                feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams )
+                    ## Feather the residuals
+                    feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams )
 
                 if specmode=='mfs':
                     ## Calculate Spectral Taylor Residuals

@@ -25,15 +25,50 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
   <input>
 
     <param name="usedata" type="string"> 
-     <shortdescription>Output image type</shortdescription>
+     <shortdescription>Output image type(int, sd, sdint)</shortdescription>
 <description>
-Output image type ('intonly', 'sdonly', 'sdint')
+Output image type: 'int' - use interferometric data only; 
+                   'sd' - use single dish data only;
+                   'sdint' - use both single dish and interferic data    
+
 </description>
       <value type="string">sdint</value>
     </param>
 
+<!-- SINGLE DISH INPUT PARAMETERS -->
+   <param subparam="true" type="string" name="sdimage">
+     <shortdescription>Input single dish image</shortdescription>
+<description>Input single dish image
+</description>
+      <value type="any"/>
+    </param>
 
-<!-- INT data selection  parameters --> 
+    <param subparam="true" type="string" name="sdpsf">
+     <shortdescription>Input single dish PSF image</shortdescription>
+<description>Input single dish PSF image. Or if float is given, it is taken as
+the dish diameter in m and calculate PSF assuminy Airy beam.
+</description>
+      <type>string</type><type>double</type>
+      <value type="string"/>
+    </param>
+
+    <param subparam="true" type="double" name="sdgain">
+     <shortdescription>A factor or gain to adjust single dish flux scale</shortdescription>
+<description>
+A factor or gain to adjust single dish flux scale (to use in feather stage)
+</description>
+      <value type="double">1.0</value>
+    </param>
+
+    <param subparam="true" type="double" name="dishdia">
+     <shortdescription>Effective dish diameter</shortdescription>
+<description>
+(Optional) effective dish diameter (if sdpsf is given as a dish diameter this will be ignored)
+</description>
+      <value type="double">100.0</value>
+    </param>
+
+<!-- INT DATA SELECTION PARAMETERS --> 
     <param type="any" name="vis" kind="ms" mustexist="true">
    <shortdescription>Name of input visibility file(s)</shortdescription>
 <description>Name(s) of input visibility file(s)
@@ -220,38 +255,6 @@ Output image type ('intonly', 'sdonly', 'sdint')
       <value type="string">corrected</value>
     </param>
 
-
-<!-- SD input parameters -->
-
-    <!--- subparamers ??? toggle by usedata ???? required if sdonly or sdint--> 
-    <param name="sdimage" type="string"> 
-     <shortdescription>Input single dish image</shortdescription>
-<description>Input single dish image 
-</description>
-      <value type="any"></value>
-    </param>
-    <param name="sdpsf" type="string"> 
-     <shortdescription>Input single dish PSF image</shortdescription>
-<description>Input single dish PSF image. Or if float is given, it is taken as
-the dish diameter in m and calculate PSF assuminy Airy beam. 
-</description>
-      <type>string</type><type>double</type>
-      <value type="string"></value>
-    </param>
-    <param name="sdgain" type="double"> 
-     <shortdescription>A factor or gain to adjust single dish flux scale</shortdescription>
-<description>
-A factor or gain to adjust single dish flux scale (to use in feather stage) 
-</description>
-      <value type="double">1.0</value>
-    </param>
-    <param name="dishdia" type="double"> 
-     <shortdescription>Effective dish diameter</shortdescription>
-<description>
-(Optional) effective dish diameter (if sdpsf is given as a dish diameter this will be ignored)
-</description>
-      <value type="double">100.0</value>
-    </param>
 
 <!--============================================== -->
 <!--                            Image Definition Parameters                                         -->
@@ -2586,21 +2589,20 @@ to use the correct direction in which the antenna is pointing with respect to th
 
    <constraints>
 
-<!--
-     <when param="vis">
-      <notequals type="string" value="">
-         <default param="field"><value>""</value></default>
-         <default param="spw"><value>""</value></default>
-         <default param="timerange"><value>""</value></default>
-         <default param="uvrange"><value>""</value></default>
-         <default param="antenna"><value>""</value></default>
-         <default param="scan"><value>""</value></default>
-         <default param="observation"><value>""</value></default>
-         <default param="intent"><value>""</value></default>
-         <default param="datacolumn"><value>"corrected"</value></default>
-       </notequals>
+     <when param="usedata">
+      <equals value="sd" type="string">
+        <default param="sdimage"><value>""</value></default>
+        <default param="sdpsf"><value>""</value></default>
+        <default param="sdgain"><value>1.0</value></default>
+        <default param="dishdiam"><value>100.0</value></default>
+      </equals>
+      <equals value="sdint" type="string">
+        <default param="sdimage"><value>""</value></default>
+        <default param="sdpsf"><value>""</value></default>
+        <default param="sdgain"><value>1.0</value></default>
+        <default param="dishdiam"><value>100.0</value></default>
+      </equals>
       </when>
--->
 
      <when param="selectdata">
       <equals type="bool" value="True">
