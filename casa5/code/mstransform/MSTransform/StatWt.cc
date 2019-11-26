@@ -58,18 +58,18 @@ void StatWt::setOutputMS(const casacore::String& outname) {
 
 void StatWt::setTimeBinWidth(const casacore::Quantity& binWidth) {
     _timeBinWidth = vi::StatWtTVI::getTimeBinWidthInSec(binWidth);
-    cout << __func__ << endl;
-    cout << "set _timeBinWidth to " << _timeBinWidth << endl;
+    // cout << __func__ << endl;
+    // cout << "set _timeBinWidth to " << _timeBinWidth << endl;
 
 
 }
 
 void StatWt::setTimeBinWidth(Double binWidth) {
-    cout << "passed in binWidth " << binWidth << endl;
+    // cout << "passed in binWidth " << binWidth << endl;
     vi::StatWtTVI::checkTimeBinWidth(binWidth);
     _timeBinWidth = binWidth;
-    cout << __FILE__ << " " << __func__ << endl;
-     cout << "set _timeBinWidth to " << _timeBinWidth << endl;
+    // cout << __FILE__ << " " << __func__ << endl;
+     // cout << "set _timeBinWidth to " << _timeBinWidth << endl;
 
 }
 
@@ -80,8 +80,8 @@ void StatWt::setTimeBinWidthUsingInterval(uInt n) {
         << "Determined representative integration time of "
         << (_timeBinWidth/(Double)n) << "s. Setting time bin width to "
         << _timeBinWidth << "s" << LogIO::POST;
-    cout << __func__ << endl;
-     cout << "set _timeBinWidth to " << _timeBinWidth << endl;
+    // cout << __func__ << endl;
+     // cout << "set _timeBinWidth to " << _timeBinWidth << endl;
 
 }
 */
@@ -114,21 +114,21 @@ Record StatWt::writeWeights() {
     uInt64 count = 0;
     // cout << "begin outer loop" << endl;
     for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
-        cout << "inside outer loop" << endl;
+        // cout << "inside outer loop" << endl;
         for (vi->origin(); vi->more(); vi->next()) {
-            cout << "inside inner loop" << endl;
+            // cout << "inside inner loop" << endl;
             auto nrow = vb->nRows();
-            cout << __FILE__ << " " << __LINE__ << endl;
+            // cout << __FILE__ << " " << __LINE__ << endl;
             if (_preview) {
                 // just need to run the flags to accumulate
                 // flagging info
                 vb->flagCube();
             }
             else {
-                cout << __FILE__ << " " << __LINE__ << endl;
+                // cout << __FILE__ << " " << __LINE__ << endl;
 
                 if (mustWriteWtSp) {
-                    cout << __FILE__ << " " << __LINE__ << endl;
+                    // cout << __FILE__ << " " << __LINE__ << endl;
 
                     auto& x = vb->weightSpectrum();
                     ThrowIf(
@@ -139,7 +139,7 @@ Record StatWt::writeWeights() {
                     vb->setWeightSpectrum(x);
                 }
                 if (mustWriteSigSp) {
-                    cout << __FILE__ << " " << __LINE__ << endl;
+                    // cout << __FILE__ << " " << __LINE__ << endl;
 
                     auto& x = vb->sigmaSpectrum();
                     ThrowIf(
@@ -150,16 +150,16 @@ Record StatWt::writeWeights() {
                     vb->setSigmaSpectrum(x);
                 }
                 if (mustWriteWt) {
-                    cout << __FILE__ << " " << __LINE__ << endl;
+                    // cout << __FILE__ << " " << __LINE__ << endl;
 
                     vb->setWeight(vb->weight());
                 }
                 if (mustWriteSig) {
-                    cout << __FILE__ << " " << __LINE__ << endl;
+                    // cout << __FILE__ << " " << __LINE__ << endl;
 
                     vb->setSigma(vb->sigma());
                 }
-                cout << __FILE__ << " " << __LINE__ << endl;
+                // cout << __FILE__ << " " << __LINE__ << endl;
 
                 vb->setFlagCube(vb->flagCube());
                 vb->setFlagRow(vb->flagRow());
@@ -211,7 +211,7 @@ void StatWt::_constructVi(
         ++i;
     }
     vi::SortColumns sc(sort, False);
-    cout << "configuring TVI with timebinwidth " << _timeBinWidth << endl;
+    // cout << "configuring TVI with timebinwidth " << _timeBinWidth << endl;
     vi::IteratingParameters ipar(_timeBinWidth, sc);
     vi::VisIterImpl2LayerFactory data(_ms, ipar, True);
     std::unique_ptr<Record> config(dynamic_cast<Record*>(_tviConfig.clone()));

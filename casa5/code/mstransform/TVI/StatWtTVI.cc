@@ -295,7 +295,7 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
         */
         //  }
 
-    cout << "calling aggregator constructor, _mustComputeWtSp " << _mustComputeWtSp << endl;
+    // cout << "calling aggregator constructor, _mustComputeWtSp " << _mustComputeWtSp << endl;
     _configureStatAlg(config);
     if (_doOneShot) {
         _dataAggregator.reset(
@@ -308,9 +308,9 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
     }
     else {
         if (! _binWidthInSeconds) {
-            cout << "_binWidthInSeconds is not set" << endl;
+            // cout << "_binWidthInSeconds is not set" << endl;
         }
-        cout << "_timeBlockProcessing is set to " << _timeBlockProcessing << endl;
+        // cout << "_timeBlockProcessing is set to " << _timeBlockProcessing << endl;
         _dataAggregator.reset(
                new StatWtFloatingWindowDataAggregator(
                 getVii(), _chanBins, _samples, _column,
@@ -661,59 +661,59 @@ void StatWtTVI::sigmaSpectrum(Cube<Float>& sigmaSp) const {
 }
 
 void StatWtTVI::weightSpectrum(Cube<Float>& newWtsp) const {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     ThrowIf(! _weightsComputed, "Weights have not been computed yet");
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
     // cout << "_mustComputeWtSp " << _mustComputeWtSp << endl;
     // if(! _mustComputeWtSp) {
     //    cout << "_mustComputeWtSp is not set" << endl;
     // }
     if (! _dataAggregator->mustComputeWtSp()) {
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
         newWtsp.resize(IPosition(3, 0));
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
         return;
     }
     if (! _newWtSp.empty()) {
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
         // already calculated
         if (_updateWeight) {
-            cout << __FILE__ << " " << __LINE__ << endl;
+            // cout << __FILE__ << " " << __LINE__ << endl;
 
             newWtsp = _newWtSp.copy();
-            cout << __FILE__ << " " << __LINE__ << endl;
+            // cout << __FILE__ << " " << __LINE__ << endl;
 
         }
         else {
-            cout << __FILE__ << " " << __LINE__ << endl;
+            // cout << __FILE__ << " " << __LINE__ << endl;
 
             TransformingVi2::weightSpectrum(newWtsp);
-            cout << __FILE__ << " " << __LINE__ << endl;
+            // cout << __FILE__ << " " << __LINE__ << endl;
 
         }
         return;
     }
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     _computeWeightSpectrumAndFlags();
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     if (_updateWeight) {
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
         newWtsp = _newWtSp.copy();
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
     }
     else {
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
         TransformingVi2::weightSpectrum(newWtsp);
     }
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
 }
 
@@ -901,7 +901,7 @@ std::pair<Cube<Float>, Cube<Bool>> StatWtTVI::_getLowerLayerWtSpFlags(
 }
 
 void StatWtTVI::sigma(Matrix<Float>& sigmaMat) const {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     if (_mustComputeSigma) {
         if (_newWt.empty()) {
             Matrix<Float> wtmat;
@@ -1039,7 +1039,7 @@ void StatWtTVI::_weightSingleChanBinOneShotProcessing(
 void StatWtTVI::_weightSingleChanBinMultiLoopProcessing(
     Matrix<Float>& wtmat, Int nrows
 ) const {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     Vector<uInt> rowIDs;
     getRowIds(rowIDs);
     const auto start = _rowIDInMSToRowIndexInChunk.find(*rowIDs.begin());
@@ -1097,34 +1097,34 @@ void StatWtTVI::originChunks(Bool forceRewind) {
     // cout << __FILE__ << " " << __LINE__ << endl;
 
     _weightsComputed = False;
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     _gatherAndComputeWeights();
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     _weightsComputed = True;
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     _clearCache();
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     // re-origin this chunk in next layer
     //  (ensures wider scopes see start of the this chunk)
     getVii()->origin();
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
 }
 
 void StatWtTVI::nextChunk() {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     // Drive next lower layer
     getVii()->nextChunk();
-    cout << "n subchunks " << getVii()->nSubChunks() << endl;
+    // cout << "n subchunks " << getVii()->nSubChunks() << endl;
     _weightsComputed = False;
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     _gatherAndComputeWeights();
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     _weightsComputed = True;
     _clearCache();
@@ -1785,7 +1785,7 @@ void StatWtTVI::initWeightSpectrum (const Cube<Float>& wtspec) {
 }
 
 void StatWtTVI::initSigmaSpectrum (const Cube<Float>& sigspec) {
-    cout << __func__ << endl;
+    // cout << __func__ << endl;
     // Pass to next layer down
     getVii()->initSigmaSpectrum(sigspec);
 }

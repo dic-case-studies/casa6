@@ -83,7 +83,7 @@ StatWtTypes::Baseline StatWtDataAggregator::_baseline(
 Bool StatWtDataAggregator::_checkFirstSubChunk(
     Int& spw, Bool& firstTime, const VisBuffer2 * const vb
 ) const {
-    cout << __FILE__ << " " << __LINE__ << endl;
+    // cout << __FILE__ << " " << __LINE__ << endl;
 
     if (! firstTime) {
         // this chunk has already been checked, it has not
@@ -92,16 +92,16 @@ Bool StatWtDataAggregator::_checkFirstSubChunk(
     }
     const auto& rowIDs = vb->rowIds();
     if (_processedRowIDs.find(rowIDs[0]) == _processedRowIDs.end()) {
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
         // haven't processed this chunk
         _processedRowIDs.insert(rowIDs[0]);
         // the spw is the same for all subchunks, so it only needs to
         // be set once
         spw = *vb->spectralWindows().begin();
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
         if (! _samples) {
-            cout << "_samples is not set" << endl;
+            // cout << "_samples is not set" << endl;
         }
         if (_samples->find(spw) == _samples->end()) {
             (*_samples)[spw].first = 0;
@@ -111,7 +111,7 @@ Bool StatWtDataAggregator::_checkFirstSubChunk(
         return False;
     }
     else {
-        cout << __FILE__ << " " << __LINE__ << endl;
+        // cout << __FILE__ << " " << __LINE__ << endl;
 
         // this chunk has been processed, this can happen at the end
         // when the last chunk is processed twice

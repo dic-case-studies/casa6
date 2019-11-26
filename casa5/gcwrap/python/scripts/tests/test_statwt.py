@@ -6,11 +6,103 @@ from tasks import *
 from taskinit import *
 import unittest
 import math
-import numpy
+import numpy as np
+import numpy.ma as ma
 import numbers
+
+from multiprocessing.pool import ThreadPool as Pool
+# from multiprocessing import Pool
+
+pool_size = 20  # your "parallelness"
 
 datadir = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/statwt/'
 src = datadir + 'ngc5921.split_2.ms'
+
+# rows and target_row are the row numbers from the subtable formed
+# by the baseline query
+# In the chan_flags, a value of False means the channel is good (not flagged)
+# so should be used. It follows the convention of the FLAGS column in the MS.
+def get_weights(data, flags, exposures, combine_corr, target_exposure):  
+    # print "enter get_weights"      
+    """
+    tb.open(ms)
+    if data_column.startswith('c'):
+        colname = 'CORRECTED_DATA'
+    elif data_column.startswith('d'):
+        colname = 'DATA'
+    else:
+        raise Exception("Unhandled column spec " + data_column)
+    subt = tb.query(
+        'ANTENNA1=' + str(baseline[0]) + ' AND ANTENNA2=' + str(baseline[1])
+    )
+    data_all = subt.getcol(colname)
+    print('data_all.shape',data_all.shape)
+    flags_all = subt.getcol('FLAG')
+    exposures_all = subt.getcol('EXPOSURE')
+    tb.done()
+    """
+    # data = None
+    # flags = None
+    # exposures = None
+    shape = data.shape
+    ncorr_groups = 1 if combine_corr else shape[0]
+    ncorr = shape[0]
+    weights = np.zeros([shape[0], shape[1]])
+    nrows = data.shape[2]
+    # print ("combine_corr", combine_corr, "ncorr_groups", ncorr_groups)
+
+    for corr in range(ncorr_groups):
+        """
+        for row in range(nrows):   
+            if combine_corr:
+                new_data = np.expand_dims(data_all[:,:,row], 2)
+                new_flags = np.expand_dims(flags_all[:,:,row], 2)
+            else:
+                new_data = np.expand_dims(data_all[corr:corr+1,:,row], 2)
+                new_flags = np.expand_dims(flags_all[corr:corr+1,:,row], 2)
+            new_exp = np.expand_dims(exposures_all[row], 0)
+            if data == None:
+                data = new_data
+                flags = new_flags
+                exposures = new_exp
+            else:
+                data = np.append(data, new_data, axis=2)
+                flags = np.append(flags, new_flags, axis=2)
+                exposures = np.append(exposures, new_exp, axis=0)
+            if chan_flags != None:
+                t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
+                flags = np.logical_or(flags, t_flags)
+        """
+        end = corr + 1 if ncorr_groups > 1 else ncorr + 1
+        var = variance(data[corr:end, :, :], flags[corr:end, :, :], exposures)
+        if var == 0:
+            weights[corr:end, :] = 0 
+        else:
+            # print 'var' + str(var)
+            weights[corr:end, :] = target_exposure/var
+        # weights.append(target_exposure/var)
+    return weights
+        
+
+def variance(data, flags, exposures):
+    # print "enter variance"
+    if flags.all():
+        return 0
+    expo = ma.masked_array(np.resize(exposures, data.shape), mask=flags)
+    d = ma.array(data, mask=flags)
+    myreal = np.real(d)
+    myimag = np.imag(d)
+    mean_r = np.sum(expo*myreal)/np.sum(expo)
+    mean_i = np.sum(expo*myimag)/np.sum(expo)
+    var_r = np.sum(expo * (myreal - mean_r)*(myreal - mean_r))/d.count()
+    var_i = np.sum(expo * (myimag - mean_i)*(myimag - mean_i))/d.count()
+    return (var_r + var_i)/2
+    
+
+                
+    
+
+
 
 def _get_dst_cols(dst, other="", dodata=True):
     mytb = tbtool()
@@ -51,27 +143,128 @@ def _get_table_cols(mytb):
 
 # combine correlations
 def _variance(dr, di, flag, row):
-    fr = numpy.extract(numpy.logical_not(flag[:,:,row]), dr[:,:,row])
-    fi = numpy.extract(numpy.logical_not(flag[:,:,row]), di[:,:,row])
+    fr = np.extract(np.logical_not(flag[:,:,row]), dr[:,:,row])
+    fi = np.extract(np.logical_not(flag[:,:,row]), di[:,:,row])
     if len(fr) <= 1:
         return 0
     else:
-        vr = numpy.var(fr, ddof=1)
-        vi = numpy.var(fi, ddof=1)
+        vr = np.var(fr, ddof=1)
+        vi = np.var(fi, ddof=1)
         return 2/(vr + vi)
 
 # per correlation
 def _variance2(dr, di, flag, corr, row):
-    fr = numpy.extract(numpy.logical_not(flag[corr,:,row]), dr[corr,:,row])
-    fi = numpy.extract(numpy.logical_not(flag[corr,:,row]), di[corr,:,row])
+    fr = np.extract(np.logical_not(flag[corr,:,row]), dr[corr,:,row])
+    fi = np.extract(np.logical_not(flag[corr,:,row]), di[corr,:,row])
     if len(fr) <= 1:
         return 0
     else:
-        vr = numpy.var(fr, ddof=1)
-        vi = numpy.var(fi, ddof=1)
+        vr = np.var(fr, ddof=1)
+        vi = np.var(fi, ddof=1)
         return 2/(vr + vi)
 
 class statwt_test(unittest.TestCase):
+    
+    def do_row(
+        self, row, ant1, ant2, data, flags, exposures, wtsp, combine_corr,
+        target_exposure
+    ):
+        # print "enter do_row"
+        # print 'aa'
+        # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
+        # print 'data ' + str(data.shape)
+        # print 'flags ' + str(flags.shape)
+        # print 'exposures ' + str(exposures.shape)
+        # print 'wtsp ' + str(wtsp.shape)
+        weights = get_weights(
+            data, flags,
+            exposures, combine_corr, target_exposure
+        )
+        # print("before", weights.shape)
+        new_weights = np.expand_dims(weights, 2)
+        # print 'bb'
+        # print "after " + str(new_weights.shape)
+        # print "wtsp " + str(wtsp.shape)
+        # print "allclose " + str(np.allclose(new_weights, wtsp))
+        self.assertTrue(
+            np.allclose(new_weights, wtsp), 'Failed wtsp, got '
+            + str(wtsp) + '\nexpected ' + str(new_weights)
+            + '\nbaseline ' + str([ant1, ant2])
+            + '\nrow ' + str(row)
+        )
+        # print 'cc'
+    
+    def _check_weights(
+        self, msname, mode, data_column, chan_flags, combine_corr
+    ):
+        # print("combine_corr", combine_corr)
+        if data_column.startswith('c'):
+            colname = 'CORRECTED_DATA'
+        elif data_column.startswith('d'):
+            colname = 'DATA'
+        else:
+            raise Exception("Unhandled column spec " + data_column)
+        if not mode.startswith('one'):
+            raise Exception("Unhandled mode")
+        # pool = Pool(pool_size)
+
+        for ant1 in range(10):
+            for ant2 in range((ant1 + 1), 10):
+                query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
+                tb.open(msname)
+                subt = tb.query(query_str)
+                data = subt.getcol(colname)
+                flags = subt.getcol('FLAG')
+                exposures = subt.getcol('EXPOSURE')
+                wt = subt.getcol('WEIGHT')
+                wtsp = subt.getcol('WEIGHT_SPECTRUM')
+                wt = subt.getcol('WEIGHT')
+                subt.done()
+                tb.done()
+                if type(chan_flags) != type(None):
+                    t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
+                    flags = np.logical_or(flags, t_flags)
+                nrows = data.shape[2]
+                for row in range(nrows):
+                    if mode.startswith('one'):
+                        start = row
+                        end = row+1
+                    """
+                    x = pool.apply_async(
+                        self.do_row,
+                        (
+                            row, ant1, ant2, data[:, :, start:end],
+                            flags[:, :, start:end], exposures[start:end],
+                            wtsp[:, :, start:end], combine_corr, exposures[row]
+                        )
+                    )
+                    # print "ff"
+                    x.get()
+                    # print "gg"
+                    """
+                    if mode.startswith('one'):
+                        start = row
+                        end = row+1
+                    # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
+                    weights = get_weights(
+                        data[:,:,start:end], flags[:, :, start:end],
+                        exposures[start: end], combine_corr, exposures[row]
+                    )
+                    self.assertTrue(
+                        np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
+                        + str(wtsp[:, :, row]) + '\nexpected ' + str(weights)
+                        + '\nbaseline ' + str([ant1, ant2])
+                        + '\nrow ' + str(row)
+                    )
+                    self.assertTrue(
+                        np.allclose(np.median(weights, 1), wt[:, row]),
+                        'Failed weight, got ' + str(wt[:, row])
+                        + '\nexpected ' + str(np.median(weights, 1))
+                        + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
+                        + str(row)
+                    )
+        # pool.close()
+        # pool.join()
 
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
@@ -82,18 +275,16 @@ class statwt_test(unittest.TestCase):
         mytb.done()
         dst = "ngc5921.split.ms"
         rtol = 1e-7
+        cflags = np.array(63 * [False])
+        cflags[10:21] = True
+        myms = mstool()
         for combine in ["", "corr"]:
-            print "*** aa"
             c = 0
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
-                print "*** ab"
                 for i in [0,1]:
-                    print "*** ac"
                     shutil.copytree(src, dst) 
-                    myms = mstool()
                     excludechans = c == 2
                     if i == 0:
-                        print "*** ad"
                         # tool method
                         myms.open(dst, nomodify=False)
                         myms.statwt(
@@ -102,20 +293,30 @@ class statwt_test(unittest.TestCase):
                         )
                         myms.done()
                     else:
-                        print "*** ae"
                         # task
                         statwt(
                             dst, combine=combine, fitspw=fitspw,
                             excludechans=excludechans
                         )
-                    print "*** af"
-                    [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
+                    # [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
+                    chan_flags = cflags if fitspw else None
+                    # print(
+                    #    "combine", combine, "c", c, "fitspw", fitspw, "i", i,
+                    #    "cflags", cflags
+                    # )
+
+                    self._check_weights(
+                        dst, mode='one_to_one', data_column='c',
+                        chan_flags=chan_flags, combine_corr=bool(combine)
+                    )
+
+                    
+                    """
                     actflag = flag.copy()
                     if fitspw != "":
                         actflag[:, 10:21, :] = True
-                    print "*** ab"
-                    dr = numpy.real(data)
-                    di = numpy.imag(data)
+                    dr = np.real(data)
+                    di = np.imag(data)
                     myshape = wtsp.shape
                     ncorr = myshape[0]
                     nrow = myshape[2]
@@ -123,23 +324,23 @@ class statwt_test(unittest.TestCase):
                         for row in range(nrow):
                             expec = _variance(dr, di, actflag, row)
                             self.assertTrue(
-                                numpy.all(
-                                    numpy.isclose(wt[:, row], expec, rtol=rtol)
+                                np.all(
+                                    np.isclose(wt[:, row], expec, rtol=rtol)
                                 ), "WEIGHT fail at row" + str(row) + ". got: "
                                 + str(wt[:, row]) + " expec " + str(expec)
                             )
                             self.assertTrue(
-                                len(numpy.unique(wtsp[:,:,row])) == 1,
+                                len(np.unique(wtsp[:,:,row])) == 1,
                                 "Weight values are not the same"
                             )
                             self.assertTrue(
-                                numpy.all(
-                                    numpy.isclose(wtsp[:,:,row], expec, rtol)
+                                np.all(
+                                    np.isclose(wtsp[:,:,row], expec, rtol)
                                 ), "Incorrect weights"
                             )
                             if expec == 0:
                                 self.assertTrue(
-                                    numpy.all(flag[:,:,row]),
+                                    np.all(flag[:,:,row]),
                                     "Not all flags are true"
                                 )
                                 self.assertTrue(
@@ -147,7 +348,7 @@ class statwt_test(unittest.TestCase):
                                 )
                             else:
                                 self.assertTrue(
-                                    numpy.all(
+                                    np.all(
                                         flag[:,:,row] == expflag[:,:,row]
                                     ), "FLAGs don't match"
                                 )
@@ -160,30 +361,30 @@ class statwt_test(unittest.TestCase):
                             for corr in range(ncorr):
                                 expec = _variance2(dr, di, actflag, corr, row)
                                 self.assertTrue(
-                                    numpy.isclose(
+                                    np.isclose(
                                         wt[corr, row], expec, rtol=rtol
                                     ), "WEIGHT fail at row" + str(row)
                                     + ". got: " + str(wt[corr, row])
                                     + " expec " + str(expec)
                                 )
                                 self.assertTrue(
-                                    len(numpy.unique(wtsp[corr,:,row])) == 1,
+                                    len(np.unique(wtsp[corr,:,row])) == 1,
                                     "Weight values are not the same"
                                 )
                                 self.assertTrue(
-                                    numpy.all(
-                                        numpy.isclose(
+                                    np.all(
+                                        np.isclose(
                                             wtsp[corr,:,row], expec, rtol)
                                         ), "Incorrect weights"
                                 )
                                 if expec == 0:
                                     self.assertTrue(
-                                        numpy.all(flag[corr,:,row]),
+                                        np.all(flag[corr,:,row]),
                                         "Not all flags are true"
                                     )
                                 else:
                                     self.assertTrue(
-                                        numpy.all(
+                                        np.all(
                                             flag[corr,:,row]
                                             == expflag[corr,:,row]
                                         ),
@@ -192,7 +393,7 @@ class statwt_test(unittest.TestCase):
                                         + str(expflag[corr,:,row]) + "\n"
                                         "Got     : " + str(flag[corr,:,row])
                                     )
-                            if (numpy.all(flag[:,:,row])):
+                            if (np.all(flag[:,:,row])):
                                 self.assertTrue(
                                     frow[row], "FLAG_ROW is not true"
                                 )
@@ -200,8 +401,7 @@ class statwt_test(unittest.TestCase):
                                 self.assertFalse(
                                     frow[row], "FLAG_ROW is not false"
                                 )
-                    # DEBUG
-                    return
+                    """
                     shutil.rmtree(dst)
                     
                 c += 1               
@@ -224,10 +424,10 @@ class statwt_test(unittest.TestCase):
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
                 [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
-                self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-                self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-                self.assertTrue(numpy.all(numpy.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
-                self.assertTrue(numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
+                self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+                self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+                self.assertTrue(np.all(np.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
+                self.assertTrue(np.all(np.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
                 shutil.rmtree(dst)
 
     def test_chanbin(self):
@@ -268,10 +468,10 @@ class statwt_test(unittest.TestCase):
                         myms.statwt(chanbin=chanbin, combine=combine)
                         myms.done()
                     [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
-                    self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-                    self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-                    self.assertTrue(numpy.all(numpy.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
-                    self.assertTrue(numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
+                    self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+                    self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+                    self.assertTrue(np.all(np.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
+                    self.assertTrue(np.all(np.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
                     shutil.rmtree(dst)
 
     def test_minsamp(self):
@@ -313,28 +513,28 @@ class statwt_test(unittest.TestCase):
             statwt(dst, field=field, combine=combine)
             [wt, wtsp, flag, frow, data, field_id] = _get_dst_cols(dst, "FIELD_ID")
             nrow = len(frow)
-            dr = numpy.real(data)
-            di = numpy.imag(data)
+            dr = np.real(data)
+            di = np.imag(data)
             for row in range(nrow):
                 if field_id[row] == 2:
                     expec = _variance(dr, di, flag, row)
                     self.assertTrue(
-                        numpy.all(numpy.isclose(wt[:, row], expec, rtol=rtol)),
+                        np.all(np.isclose(wt[:, row], expec, rtol=rtol)),
                         "WEIGHT fail at row" + str(row) + ". got: "
                         + str(wt[:, row]) + " expec " + str(expec)
                     )
                     self.assertTrue(
-                        numpy.all(numpy.isclose(wtsp[:,:,row], expec, rtol)),
+                        np.all(np.isclose(wtsp[:,:,row], expec, rtol)),
                         "Incorrect weight spectrum"   
                     )
                 else:
                     self.assertTrue(
-                        numpy.all(numpy.isclose(wt[:, row], origwt[:, row], rtol=rtol)),
+                        np.all(np.isclose(wt[:, row], origwt[:, row], rtol=rtol)),
                         "WEIGHT fail at row" + str(row) + ". got: " + str(wt[:, row])
                         + " expec " + str(origwt[:, row])
                     )
                     self.assertTrue(
-                        numpy.all(numpy.isclose(wtsp[:,:,row], origwtsp[:,:,row], rtol)),
+                        np.all(np.isclose(wtsp[:,:,row], origwtsp[:,:,row], rtol)),
                         "Incorrect weight spectrum"   
                     )
             shutil.rmtree(dst)
@@ -351,17 +551,17 @@ class statwt_test(unittest.TestCase):
         statwt(dst, spw=spw, combine=combine)
         [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
         nrow = len(frow)
-        dr = numpy.real(data)
-        di = numpy.imag(data)
+        dr = np.real(data)
+        di = np.imag(data)
         for row in range(nrow):
             expec = _variance(dr, di, flag, row)
             self.assertTrue(
-                numpy.all(numpy.isclose(wt[:, row], expec, rtol=rtol)),
+                np.all(np.isclose(wt[:, row], expec, rtol=rtol)),
                 "WEIGHT fail at row" + str(row) + ". got: "
                 + str(wt[:, row]) + " expec " + str(expec)
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(wtsp[:,:,row], expec, rtol)),
+                np.all(np.isclose(wtsp[:,:,row], expec, rtol)),
                 "Incorrect weight spectrum"   
             )
         shutil.rmtree(dst)
@@ -377,28 +577,28 @@ class statwt_test(unittest.TestCase):
         statwt(dst, scan=scan, combine=combine)
         [wt, wtsp, flag, frow, data, scan_id] = _get_dst_cols(dst, "SCAN_NUMBER")
         nrow = len(frow)
-        dr = numpy.real(data)
-        di = numpy.imag(data)
+        dr = np.real(data)
+        di = np.imag(data)
         for row in range(nrow):
             if str(scan_id[row]) == scan:
                 expec = _variance(dr, di, flag, row)
                 self.assertTrue(
-                    numpy.all(numpy.isclose(wt[:, row], expec, rtol=rtol)),
+                    np.all(np.isclose(wt[:, row], expec, rtol=rtol)),
                     "WEIGHT fail at row" + str(row) + ". got: "
                     + str(wt[:, row]) + " expec " + str(expec)
                 )
                 self.assertTrue(
-                    numpy.all(numpy.isclose(wtsp[:,:,row], expec, rtol)),
+                    np.all(np.isclose(wtsp[:,:,row], expec, rtol)),
                     "Incorrect weight spectrum"   
                 )
             else:
                 self.assertTrue(
-                    numpy.all(numpy.isclose(wt[:, row], origwt[:, row], rtol=rtol)),
+                    np.all(np.isclose(wt[:, row], origwt[:, row], rtol=rtol)),
                     "WEIGHT fail at row" + str(row) + ". got: " + str(wt[:, row])
                     + " expec " + str(origwt[:, row])
                 )
                 self.assertTrue(
-                    numpy.all(numpy.isclose(wtsp[:,:,row], origwtsp[:,:,row], rtol)),
+                    np.all(np.isclose(wtsp[:,:,row], origwtsp[:,:,row], rtol)),
                     "Incorrect weight spectrum"   
                 )
         shutil.rmtree(dst)
@@ -424,10 +624,10 @@ class statwt_test(unittest.TestCase):
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
                 [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
-                self.assertTrue(numpy.all(numpy.isclose(gotwt, expwt, rtol)))
-                self.assertTrue(numpy.all(numpy.isclose(gotwtsp, expwtsp, rtol)))
-                self.assertTrue(numpy.all(gotflag == expflag))
-                self.assertTrue(numpy.all(gotfrow == expfrow))
+                self.assertTrue(np.all(np.isclose(gotwt, expwt, rtol)))
+                self.assertTrue(np.all(np.isclose(gotwtsp, expwtsp, rtol)))
+                self.assertTrue(np.all(gotflag == expflag))
+                self.assertTrue(np.all(gotfrow == expfrow))
                 shutil.rmtree(dst)
         
     def test_no_scan_boundaries(self):
@@ -448,10 +648,10 @@ class statwt_test(unittest.TestCase):
             else:
                 statwt(dst, timebin=timebin, combine=combine)
             [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
-            self.assertTrue(numpy.all(numpy.isclose(gotwt, expwt, rtol)))
-            self.assertTrue(numpy.all(numpy.isclose(gotwtsp, expwtsp, rtol)))
-            self.assertTrue(numpy.all(gotflag == expflag))
-            self.assertTrue(numpy.all(gotfrow == expfrow))
+            self.assertTrue(np.all(np.isclose(gotwt, expwt, rtol)))
+            self.assertTrue(np.all(np.isclose(gotwtsp, expwtsp, rtol)))
+            self.assertTrue(np.all(gotflag == expflag))
+            self.assertTrue(np.all(gotfrow == expfrow))
             shutil.rmtree(dst)
     
     def test_no_scan_nor_field_boundaries(self):
@@ -472,10 +672,10 @@ class statwt_test(unittest.TestCase):
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
                 [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
-                self.assertTrue(numpy.all(numpy.isclose(gotwt, expwt, rtol)))
-                self.assertTrue(numpy.all(numpy.isclose(gotwtsp, expwtsp, rtol)))
-                self.assertTrue(numpy.all(gotflag == expflag))
-                self.assertTrue(numpy.all(gotfrow == expfrow))
+                self.assertTrue(np.all(np.isclose(gotwt, expwt, rtol)))
+                self.assertTrue(np.all(np.isclose(gotwtsp, expwtsp, rtol)))
+                self.assertTrue(np.all(gotflag == expflag))
+                self.assertTrue(np.all(gotfrow == expfrow))
                 shutil.rmtree(dst)
                 
     def test_statalg(self):
@@ -532,32 +732,32 @@ class statwt_test(unittest.TestCase):
                 statwt(dst, timebin=timebin, combine=combine, wtrange=wtrange)
             [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
             self.assertTrue(
-                numpy.all(
-                    tstflag == numpy.logical_or(
-                        refflag, numpy.logical_not(
-                            numpy.logical_and(tstwtsp >= 1, tstwtsp <= 2)
+                np.all(
+                    tstflag == np.logical_or(
+                        refflag, np.logical_not(
+                            np.logical_and(tstwtsp >= 1, tstwtsp <= 2)
                         )
                     )
                 ),
                 "FLAGs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.all(tstflag, axis=(0,1)) == tstfrow),
+                np.all(np.all(tstflag, axis=(0,1)) == tstfrow),
                 "FLAG_ROWs don't match"
             )
             nrows = tstwtsp.shape[2]
             for row in range(nrows):
-                rowwtsp = tstwtsp[:,:,row][numpy.logical_not(tstflag[:,:,row])]
+                rowwtsp = tstwtsp[:,:,row][np.logical_not(tstflag[:,:,row])]
                 if (len(rowwtsp) == 0):
                     expec = 0
                 else:
                     expec = rowwtsp[0]
                 self.assertTrue(
-                    numpy.all(numpy.isclose(tstwt[:, row], expec, rtol)),
+                    np.all(np.isclose(tstwt[:, row], expec, rtol)),
                     "WEIGHTs don't match"
                 )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
+                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
                 "WEIGHT_SPECTRUMs don't match"
             )
             shutil.rmtree(dst)
@@ -585,13 +785,13 @@ class statwt_test(unittest.TestCase):
                     dst, timebin=timebin, combine=combine, wtrange=wtrange, preview=preview
                 )
             [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
-            self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match"
+                np.all(np.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
+                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
                 "WEIGHT_SPECTRUMs don't match"
             )
             shutil.rmtree(dst)
@@ -624,22 +824,22 @@ class statwt_test(unittest.TestCase):
             [tstwt, tstwtsp, tstflag, tstfrow, tstsig, tstsigsp] = _get_dst_cols(
                 dst, ["SIGMA", "SIGMA_SPECTRUM"], False
             )
-            self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwt, refwt, rtol)),
+                np.all(np.isclose(tstwt, refwt, rtol)),
                 "WEIGHTs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
+                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
                 "WEIGHT_SPECTRUMs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstsig, refsig)),
+                np.all(np.isclose(tstsig, refsig)),
                 "SIGMA is incorrect"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstsigsp, refsigsp)),
+                np.all(np.isclose(tstsigsp, refsigsp)),
                 "SIGMA_SPECTRUM is incorrect"
             )
             shutil.rmtree(dst)
@@ -663,14 +863,14 @@ class statwt_test(unittest.TestCase):
             else:
                 statwt(dst, timebin=timebin, slidetimebin=True)
             [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
-            self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwt, refwt, rtol)),
+                np.all(np.isclose(tstwt, refwt, rtol)),
                 "WEIGHTs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
+                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
                 "WEIGHT_SPECTRUMs don't match"
             )
             shutil.rmtree(dst)
@@ -693,14 +893,14 @@ class statwt_test(unittest.TestCase):
             else:
                 statwt(dst, datacolumn=data)
             [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
-            self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwt, refwt, rtol)),
+                np.all(np.isclose(tstwt, refwt, rtol)),
                 "WEIGHTs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
+                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
                 "WEIGHT_SPECTRUMs don't match"
             )
             shutil.rmtree(dst)
@@ -726,14 +926,14 @@ class statwt_test(unittest.TestCase):
             else:
                 statwt(dst, datacolumn=data)
             [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
-            self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwt, refwt, rtol)),
+                np.all(np.isclose(tstwt, refwt, rtol)),
                 "WEIGHTs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
+                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
                 "WEIGHT_SPECTRUMs don't match"
             )
             shutil.rmtree(dst)
@@ -760,23 +960,23 @@ class statwt_test(unittest.TestCase):
             [tstwt, tstwtsp, tstflag, tstfrow, tstsig, tstsigsp] = _get_dst_cols(
                 dst, ["SIGMA", "SIGMA_SPECTRUM"], False
             )
-            self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
             shutil.rmtree(dst)
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwt, refwt, rtol)),
+                np.all(np.isclose(tstwt, refwt, rtol)),
                 "WEIGHTs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
+                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
                 "WEIGHT_SPECTRUMs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstsig, refsig, rtol)),
+                np.all(np.isclose(tstsig, refsig, rtol)),
                 "SIGMAs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstsigsp, refsigsp, rtol)),
+                np.all(np.isclose(tstsigsp, refsigsp, rtol)),
                 "SIGMA_SPECTRUMs don't match"
             )
 
@@ -805,24 +1005,24 @@ class statwt_test(unittest.TestCase):
             [tstwt, tstwtsp, tstflag, tstfrow, tstsigma, tstsigsp] = _get_dst_cols(
                 dst, ["SIGMA", "SIGMA_SPECTRUM"], False
             )
-            self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-            refsigma = 1/numpy.sqrt(refwt);
-            numpy.place(refsigma, refwt == 0, -1)
+            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            refsigma = 1/np.sqrt(refwt);
+            np.place(refsigma, refwt == 0, -1)
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwt, refwt, rtol)),
+                np.all(np.isclose(tstwt, refwt, rtol)),
                 "WEIGHTs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
+                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
                 "WEIGHT_SPECTRUMs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstsigma, refsig, rtol)),
+                np.all(np.isclose(tstsigma, refsig, rtol)),
                 "SIGMAs don't match"
             )
             self.assertTrue(
-                numpy.all(numpy.isclose(tstsigsp, refsigsp, rtol)),
+                np.all(np.isclose(tstsigsp, refsigsp, rtol)),
                 "SIGMA_SPECTRUMs don't match"
             )
             shutil.rmtree(dst)
@@ -842,11 +1042,11 @@ class statwt_test(unittest.TestCase):
             else:
                 res = statwt(dst)
             self.assertTrue(
-                numpy.isclose(res['mean'], 3.6326332, rtol),
+                np.isclose(res['mean'], 3.6326332, rtol),
                 "mean is incorrect"
             )
             self.assertTrue(
-                numpy.isclose(res['variance'], 6.6448922, rtol),
+                np.isclose(res['variance'], 6.6448922, rtol),
                 "variance is incorrect"
             )
             shutil.rmtree(dst)

@@ -44,7 +44,7 @@ StatWtVarianceAndWeightCalculator::StatWtVarianceAndWeightCalculator(
     > statAlg,
     shared_ptr<map<uInt, pair<uInt, uInt>>> samples
 ) : _statAlg(statAlg->clone()), _samples(samples) {
-    cout << "using stat algorithm " << _statAlg->algorithm() << endl;
+    // cout << "using stat algorithm " << _statAlg->algorithm() << endl;
 }
 
 StatWtVarianceAndWeightCalculator::~StatWtVarianceAndWeightCalculator() {}
@@ -54,7 +54,7 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     const Cube<Bool>& flags, const Vector<Double>& exposures,
     casacore::uInt spw
 ) const {
-    cout << "exposures " << exposures << endl;
+   //  cout << "exposures " << exposures << endl;
     const auto npts = data.size();
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
         // not enough points, trivial
@@ -80,14 +80,14 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     auto iiter = imagPart.begin();
     auto miter = mask.begin();
     auto eiter = exposureCube.begin();
-    cout << "realPart " << realPart << endl;
-    cout << "exposureCube " << exposureCube << endl;
-    cout << "mask " << mask << endl;
-    cout << "npts " << npts << endl;
+    // cout << "realPart " << realPart << endl;
+    // cout << "exposureCube " << exposureCube << endl;
+    // cout << "mask " << mask << endl;
+    // cout << "npts " << npts << endl;
 
     statAlg->setData(riter, eiter, miter, npts);
     auto realStats = statAlg->getStatistics();
-    cout << "var " << realStats.variance << endl;
+    // cout << "var " << realStats.variance << endl;
     auto realVar = realStats.nvariance/realStats.npts;
     // reset data to imaginary parts
     statAlg->setData(iiter, eiter, miter, npts);
@@ -120,7 +120,7 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     }
 //DEBUG
 
-    cout << "var sum " << varSum << endl;
+    // cout << "var sum " << varSum << endl;
     return varSum/2;
 }
 

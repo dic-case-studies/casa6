@@ -8,31 +8,43 @@ def statwt(
     fence, center, lside, zscore, maxiter, fitspw, excludechans,
     wtrange, flagbackup, preview, datacolumn
 ):
-    casalog.origin('statwt')
-    casalog.post(
-        "vis " + vis + " selectdata " + selectdata + " field " + field + " spw "
-        + spw, 'NORMAL'
-    )
-    casalog.post(
-        "intent " + intent + " array " + array + " observation " + observation
-        + "scan" + scan, 'NORMAL'
-    )
-    casalog.post("combine " + combine + " timebin " + timebin, 'NORMAL')
-    if not selectdata:
-        # CAS-10761, requirement provided by Urvashi
-        if field or spw or intent or array or observation:
-            casalog.post(
-                "selectdata=False, any explicitly set data "
-                + "selection parameters will be ignored",
-                "WARN"
-            )
-        field = ""
-        spw = ""
-        intent = ""
-        array = ""
-        observation = ""
-        scan = ""
     try:
+        print(
+            'vis', vis, 'selectdata', selectdata, 'field', field, 'spw', spw,
+            'intent', intent, 'array', array, 'observation', observation, 'scan', scan,
+            'combine', combine, 'timebin', timebin, 'slidetimebin', slidetimebin,
+            'chanbin', chanbin, 'minsamp', minsamp, 'statalg', statalg,
+            'fence', fence, 'center', center, 'lside', lside, 'zscore', zscore,
+            'maxiter', maxiter, 'fitspw', fitspw, 'excludechans', excludechans,
+            'wtrnage', wtrange, 'flagbackup', flagbackup, 'preview', preview,
+            'datacolumn', datacolumn
+        )
+
+
+        casalog.origin('statwt')
+        casalog.post(
+            "vis " + vis + " selectdata " + str(selectdata) + " field " + str(field) + " spw "
+            + str(spw), 'NORMAL'
+        )
+        casalog.post(
+            "intent " + intent + " array " + array + " observation " + observation
+            + "scan" + scan, 'NORMAL'
+        )
+        casalog.post("combine " + combine + " timebin " + str(timebin), 'NORMAL')
+        if not selectdata:
+            # CAS-10761, requirement provided by Urvashi
+            if field or spw or intent or array or observation:
+                casalog.post(
+                    "selectdata=False, any explicitly set data "
+                    + "selection parameters will be ignored",
+                    "WARN"
+                )
+            field = ""
+            spw = ""
+            intent = ""
+            array = ""
+            observation = ""
+            scan = ""
         if (flagbackup):
             if (preview):
                 casalog.post(
