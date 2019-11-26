@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 from scipy import fftpack
 import numpy as np
 import shutil
@@ -6,12 +9,13 @@ import time
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import image, quanta, table
+    from casatools import image, quanta, table, imager
     from casatasks import casalog, imsubimage, feather
 else:
     from taskinit import *
     from tasks import *
     image = iatool
+    imager = imtool
     quanta = qatool
     casalog = casac.logsink()
 
@@ -78,10 +82,9 @@ class SDINT_helper:
         TODO : Add the effdishdia  usage to get freq-indep feathering.
 
         """
-
+         
         ### Do the feathering.
         if usedata=='sdint':
-
             ## Feather runs in a loop on chans internally, but there are issues with open tablecache images
             ## Also, no way to set effective dish dia separately for each channel.
             #feather(imagename = jointcube, highres = intcube, lowres = sdcube, sdfactor = sdgain, effdishdiam=-1)
@@ -102,7 +105,20 @@ class SDINT_helper:
                 os.system('rm -rf tmp_*')
                 imsubimage(imagename = sdcube, outfile = 'tmp_sdplane', chans = str(i));
                 imsubimage(imagename = intcube, outfile = 'tmp_intplane', chans = str(i));
-                feather(imagename = 'tmp_jointplane', highres = 'tmp_intplane', lowres = 'tmp_sdplane', sdfactor = sdgain, effdishdiam=freqdishdia)
+
+                #feather(imagename = 'tmp_jointplane', highres = 'tmp_intplane', lowres = 'tmp_sdplane', sdfactor = sdgain, effdishdiam=freqdishdia)
+                # feathering via toolkit
+                try: 
+                    imFea=imager( )
+                    imFea.setvp(dovp=True)
+                    imFea.setsdoptions(scale=sdgain)
+                    imFea.feather(image='tmp_jointplane',highres='tmp_intplane',lowres='tmp_sdplane', effdishdiam=freqdishdia)
+                    imFea.done( )
+                    del imFea
+                except Exception as instance:
+                    print('*** Error *** %s' % instance)
+                    raise 
+
                 _ib.open('tmp_jointplane')
                 pixjoint = _ib.getchunk()
                 _ib.close()
