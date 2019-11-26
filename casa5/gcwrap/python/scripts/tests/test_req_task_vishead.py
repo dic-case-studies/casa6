@@ -36,6 +36,25 @@ import os
 import unittest
 import shutil
 
+def copyDirectory(src, dest):
+    try:
+        shutil.copytree(src, dest)
+    # Directories are the same
+    except shutil.Error as e:
+        print('Directory not copied. Error: %s' % e)
+    # Any error saying that the directory doesn't exist
+    except OSError as e:
+        print('Directory not copied. Error: %s' % e)
+
+def chmod_recursive(path, mode):
+
+    os.chmod(path, mode)
+    for root, dirs, files in os.walk(path):
+        for d in dirs:
+            os.chmod(os.path.join(root, d), mode)
+        for f in files:
+            os.chmod(os.path.join(root, f), mode)
+
 if CASA6:
     casaimagepath = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms')
 else:
@@ -56,6 +75,9 @@ class vishead_test(unittest.TestCase):
         casalog.setlogfile(logpath)
         if os.path.exists('testlog.log'):
             os.remove('testlog.log')
+
+        if os.path.exists('ngc5921.ms'):
+            shutil.rmtree('ngc5921.ms', ignore_errors=True)
 
     def test_takesMeasurementSet(self):
         ''' 1. test_takesMeasurementSet: Check that vishead takes a MeasurementSet (*.ms)'''
@@ -84,25 +106,29 @@ class vishead_test(unittest.TestCase):
         self.assertTrue(success)
 
     def test_getModeDefaultIndex(self):
-        ''' 4. test_getModeDefaultIndex: Check that vishead in get mode returns the entire array of values for a keyword 
-        if no hdindex is specified '''
+        ''' 4. test_getModeDefaultIndex: Check that vishead in get mode returns the entire array of values for a keyword  if no hdindex is specified '''
         keywordValue = vishead(vis=casaimagepath, mode='get', hdkey='field')
         success = len(keywordValue[0]) == 3
         self.assertTrue(success)
 
     def test_getModeSpecifiedIndex(self):
-        ''' 5. test_getModeSpecifiedIndex: Check that vishead in get mode returns a single value for a keyword if
-        an hdindex is specified '''
+        ''' 5. test_getModeSpecifiedIndex: Check that vishead in get mode returns a single value for a keyword if an hdindex is specified '''
         keywordValue = vishead(vis=casaimagepath, mode='get', hdkey='field', hdindex='1')
         success = ('1445+09900002_0' in keywordValue)
         self.assertTrue(success)
 
     def test_putMode(self):
         ''' 6. test_putMode: Check that vishead in put mode changes the value of a keyword '''
-        vishead(vis=casaimagepath, mode='put', hdkey='field', hdindex='1', hdvalue='TEST')
-        testKeywordValue = vishead(vis=casaimagepath, mode='get', hdkey='field', hdindex='1')
+        shutil.copytree(casaimagepath, os.path.join(os.getcwd(), 'ngc5921.ms'))
+        # Python 2 vs python 2
+        if sys.version_info[0] < 3:
+            import stat
+            chmod_recursive('ngc5921.ms', stat.S_IRWXU )
+        else:
+            chmod_recursive('ngc5921.ms', 0o777)
+        vishead(vis='ngc5921.ms', mode='put', hdkey='field', hdindex='1', hdvalue='TEST')
+        testKeywordValue = vishead(vis='ngc5921.ms', mode='get', hdkey='field', hdindex='1')
         success = ('TEST' in testKeywordValue)
-        vishead(vis=casaimagepath, mode='put', hdkey='field', hdindex='1', hdvalue='1445+09900002_0')
         self.assertTrue(success)
 
 def suite():
