@@ -78,7 +78,7 @@ unless ( $doing_something ) { print "parameters indicate a no-op...\n" }
 push(@args,@flags);
 push(@args,@inputs);
 exec { $java } @args;
-#print join(' ',@args),"\n";
+die "failed to start XML compiler: $!";
 
 sub usage {
     print "$name [-help]\n";
