@@ -535,7 +535,11 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 
 		////Darn not implemented  
 		//static_cast<VisibilityIteratorImpl2 *>(viloc->getImpl())->writeModel(rec, //iscomp, true);
-		      const_cast<VisibilityIterator2*>(vb.getVi())->writeModel(rec, iscomp, true);
+                
+                VisibilityIterator2* vi=const_cast<VisibilityIterator2*>(vb.getVi());
+                const_cast<MeasurementSet& >(vi->ms()).lock();
+                vi->writeModel(rec, iscomp, true);
+                const_cast<MeasurementSet& >(vi->ms()).unlock();
 				  //				  VisModelData::listModel(vb.getVisibilityIterator()->ms());
 			  }
 

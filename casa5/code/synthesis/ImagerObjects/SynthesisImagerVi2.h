@@ -55,6 +55,10 @@ public:
   //Define image via a predefined SIImageStore object and ftmachines
   virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, 
                                      const casacore::Record& ftmachine, const casacore::Record& invftmachine);
+  //This version is for premade imstor but passing extra parameters that may be needed to 
+  //make facets 
+  virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, 
+                                     SynthesisParamsImage& impars, const SynthesisParamsGrid& gridpars);
   virtual casacore::Bool weight(const casacore::String& type="natural", 
 	      const casacore::String& rmode="norm",
 	      const casacore::Quantity& noise=casacore::Quantity(0.0, "Jy"), 

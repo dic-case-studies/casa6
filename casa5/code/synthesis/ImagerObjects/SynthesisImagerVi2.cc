@@ -138,7 +138,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  Bool retval=True;
 
     SynthesisUtilMethods::getResource("Start Run");
-
+    
     try
       {
 
@@ -382,9 +382,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
     dataSel_p.resize(dataSel_p.nelements()+1, true);
-
     dataSel_p[dataSel_p.nelements()-1]=selpars;
-
+	//cerr << "AT THE end of DATASEL " << selpars.toRecord() << endl;
 
     unlockMSs();
       }
@@ -568,22 +567,22 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 	os << "Define image coordinates for [" << impars.imageName << "] : " << LogIO::POST;
 
 	
-	csys = impars.buildCoordinateSystem( *vi_p, channelSelections_p, mss_p );
+	csys = impars_p.buildCoordinateSystem( *vi_p, channelSelections_p, mss_p );
 	//use the location defined for coordinates frame;
-	mLocation_p=impars.obslocation;
-	IPosition imshape = impars.shp();
+	mLocation_p=impars_p.obslocation;
+	IPosition imshape = impars_p.shp();
 
-	os << "Impars : start " << impars.start << LogIO::POST;
+	os << "Impars : start " << impars_p.start << LogIO::POST;
 	os << "Shape : " << imshape << "Spectral : " << csys.spectralCoordinate().referenceValue() << " at " << csys.spectralCoordinate().referencePixel() << " with increment " << csys.spectralCoordinate().increment() << LogIO::POST;
 
 	if( (itsMappers.nMappers()==0) || 
-	    (impars.imsize[0]*impars.imsize[1] > itsMaxShape[0]*itsMaxShape[1]))
+	    (impars_p.imsize[0]*impars_p.imsize[1] > itsMaxShape[0]*itsMaxShape[1]))
 	  {
 	    itsMaxShape=imshape;
 	    itsMaxCoordSys=csys;
 	  }
         itsNchan = imshape[3];
-        itsCsysRec = impars.getcsys();
+        itsCsysRec = impars_p.getcsys();
 	/*
 	os << "Define image  [" << impars.imageName << "] : nchan : " << impars.nchan 
 	   //<< ", freqstart:" << impars.freqStart.getValue() << impars.freqStart.getUnit() 
@@ -594,14 +593,14 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 	   << LogIO::POST;
 	*/
         // phasecenter
-        if (impars.phaseCenterFieldId == -1) {
+        if (impars_p.phaseCenterFieldId == -1) {
           // user-specified
-          phaseCenter_p = impars.phaseCenter;
-        } else if (impars.phaseCenterFieldId >= 0) {
+          phaseCenter_p = impars_p.phaseCenter;
+        } else if (impars_p.phaseCenterFieldId >= 0) {
           // FIELD_ID
           auto const msobj = mss_p[0];
           MSFieldColumns msfield(msobj->field());
-          phaseCenter_p=msfield.phaseDirMeas(impars.phaseCenterFieldId);
+          phaseCenter_p=msfield.phaseDirMeas(impars_p.phaseCenterFieldId);
         } else {
           // use default FIELD_ID (0)
           auto const msobj = mss_p[0];
@@ -618,13 +617,15 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 	
     try
       {
-	os << "Set Gridding options for [" << impars.imageName << "] with ftmachine : " << gridpars.ftmachine << LogIO::POST;
+	os << "Set Gridding options for [" << impars_p.imageName << "] with ftmachine : " << gridpars.ftmachine << LogIO::POST;
 
 	itsVpTable=gridpars.vpTable;
 	itsMakeVP= ( gridpars.ftmachine.contains("mosaicft") ||
 		             gridpars.ftmachine.contains("awprojectft") )?False:True;
 
-	createFTMachine(ftm, iftm, gridpars.ftmachine, impars.nTaylorTerms, gridpars.mType, 
+	//cerr << "DEFINEimage " << impars_p.toRecord() << endl; 				 
+					 
+	createFTMachine(ftm, iftm, gridpars.ftmachine, impars_p.nTaylorTerms, gridpars.mType, 
 			gridpars.facets, gridpars.wprojplanes,
 			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
 			gridpars.convFunc,
@@ -632,10 +633,10 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,
 			gridpars.doPBCorr,gridpars.conjBeams,
 			gridpars.computePAStep,gridpars.rotatePAStep,
-			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
-			impars.imageName, gridpars.pointingDirCol, gridpars.skyPosThreshold,
+			gridpars.interpolation, impars_p.freqFrameValid, 1000000000,  16, impars_p.stokes,
+			impars_p.imageName, gridpars.pointingDirCol, gridpars.skyPosThreshold,
 			gridpars.convSupport, gridpars.truncateSize, gridpars.gwidth, gridpars.jwidth,
-			gridpars.minWeight, gridpars.clipMinMax, impars.pseudoi);
+			gridpars.minWeight, gridpars.clipMinMax, impars_p.pseudoi);
 
       }
     catch(AipsError &x)
@@ -646,10 +647,10 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
     try
       {
 
-		appendToMapperList(impars.imageName,  csys,  impars.shp(),
+		appendToMapperList(impars_p.imageName,  csys,  impars_p.shp(),
 			   ftm, iftm,
-			   gridpars.distance, gridpars.facets, gridpars.chanchunks,impars.overwrite,
-			   gridpars.mType, gridpars.padding, impars.nTaylorTerms, impars.startModel);
+			   gridpars.distance, gridpars.facets, gridpars.chanchunks,impars_p.overwrite,
+			   gridpars.mType, gridpars.padding, impars_p.nTaylorTerms, impars_p.startModel);
 	
 	imageDefined_p=true;
       }
@@ -666,7 +667,68 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 	gridparsVec_p[imparsVec_p.nelements()-1]=gridpars_p;
     return true;
   }
-
+Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, SynthesisParamsImage& impars, 
+			   const SynthesisParamsGrid& gridpars){
+	
+	Int id=itsMappers.nMappers();
+    CoordinateSystem csys =imstor->getCSys();
+    IPosition imshape=imstor->getShape();
+    Int nx=imshape[0], ny=imshape[1];
+    if( (id==0) || (nx*ny > itsMaxShape[0]*itsMaxShape[1]))
+      {
+	itsMaxShape=imshape;
+	itsMaxCoordSys=csys;
+      }
+	// phasecenter
+        if (impars.phaseCenterFieldId == -1) {
+          // user-specified
+          phaseCenter_p = impars.phaseCenter;
+        } else if (impars.phaseCenterFieldId >= 0) {
+          // FIELD_ID
+          auto const msobj = mss_p[0];
+          MSFieldColumns msfield(msobj->field());
+          phaseCenter_p=msfield.phaseDirMeas(impars.phaseCenterFieldId);
+        } else {
+          // use default FIELD_ID (0)
+          auto const msobj = mss_p[0];
+          MSFieldColumns msfield(msobj->field());
+          phaseCenter_p=msfield.phaseDirMeas(0);
+        }
+	itsVpTable=gridpars.vpTable;
+	itsMakeVP= ( gridpars.ftmachine.contains("mosaicft") ||
+		             gridpars.ftmachine.contains("awprojectft") )?False:True;
+	CountedPtr<refim::FTMachine> ftm, iftm;
+	createFTMachine(ftm, iftm, gridpars.ftmachine, impars.nTaylorTerms, gridpars.mType, 
+			gridpars.facets, gridpars.wprojplanes,
+			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
+			gridpars.convFunc,
+			gridpars.aTermOn,gridpars.psTermOn, gridpars.mTermOn,
+			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,
+			gridpars.doPBCorr,gridpars.conjBeams,
+			gridpars.computePAStep,gridpars.rotatePAStep,
+			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
+			impars.imageName, gridpars.pointingDirCol, gridpars.skyPosThreshold,
+			gridpars.convSupport, gridpars.truncateSize, gridpars.gwidth, gridpars.jwidth,
+			gridpars.minWeight, gridpars.clipMinMax, impars.pseudoi);  
+	
+	if(gridpars.facets >1)
+	{
+	      // Make and connect the list.
+		Block<CountedPtr<SIImageStore> > imstorList = createFacetImageStoreList( imstor, gridpars.facets );
+		for( uInt facet=0; facet<imstorList.nelements(); facet++)
+		{
+		  CountedPtr<refim::FTMachine> new_ftm, new_iftm;
+		  if(facet==0){ new_ftm = ftm;  new_iftm = iftm; }
+		  else{ new_ftm=ftm->cloneFTM();  new_iftm=iftm->cloneFTM(); }
+		  itsMappers.addMapper(createSIMapper( gridpars.mType, imstorList[facet], new_ftm, new_iftm));
+		}
+	}
+	else{
+		itsMappers.addMapper(  createSIMapper( gridpars.mType, imstor, ftm, iftm ) );	
+	}
+	imageDefined_p=true;
+	return true;
+}
 Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, 
 				    const String& ftmachine)
   {
@@ -690,7 +752,7 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
 	itsMaxCoordSys=csys;
       }
 
-    itsMappers.addMapper(  createSIMapper( "default", imstor, ftm, iftm, id ) );
+    itsMappers.addMapper(  createSIMapper( "default", imstor, ftm, iftm ) );
     imageDefined_p=true;
     return true;
   }
@@ -951,7 +1013,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                  << "Setting chanchunks to " << chanchunks << LogIO::POST;
 		*/
 	}
-
+	//record this in gridpars_p
+	gridpars_p.chanchunks=chanchunks;
       if( imshape.nelements()==4 && imshape[3]<chanchunks )
 	{
 	  log_l << LogIO::WARN << "An image with " << imshape[3] << " channel(s) cannot be divided into " << chanchunks << " chunks. Please set chanchunks=1 or choose chanchunks<nchan." << LogIO::EXCEPTION;
@@ -1466,7 +1529,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			fudge_factor = 9;
 		}
 		std::tie(numchunks, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
-		cerr << "NUMCHUNKS " << numchunks << " start " <<  startchan << " end " << endchan << endl;
+		//cerr << "NUMCHUNKS " << numchunks << " start " <<  startchan << " end " << endchan << endl;
 		Record controlRecord;
 		//For now just field 0 but should loop over all
 		///This is to pass in explicit model, residual names etc
@@ -1478,8 +1541,15 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			controlRecord.define("lastcycle",  savemodel);
 			controlRecord.define("nmajorcycles", nMajorCycles);
 			Vector<String> modelnames(Int(imparsVec_p.nelements()),"");
-			for(Int k=0; k < itsMappers.nMappers(); ++k){
-				if((itsMappers.imageStore(k))->hasModel()){
+			for(uInt k=0; k < imparsVec_p.nelements(); ++k){
+				Int imageStoreId=k;
+				if(k>0){
+					if(gridparsVec_p[0].chanchunks >1 && uInt(itsMappers.nMappers()) >=    (gridparsVec_p[0].chanchunks + gridparsVec_p.nelements()))
+						imageStoreId+=gridparsVec_p[0].chanchunks-1;
+					if(gridparsVec_p[0].facets >1)
+						imageStoreId+=gridparsVec_p[0].facets*gridparsVec_p[0].facets-1;
+				}
+				if((itsMappers.imageStore(imageStoreId))->hasModel()){
 					modelnames(k)=imparsVec_p[k].imageName+".model";
 					(itsMappers.imageStore(k))->model()->unlock();
 					controlRecord.define("modelnames", modelnames);
@@ -1488,17 +1558,28 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			
 		}
 		Vector<String> weightnames(Int(imparsVec_p.nelements()),"");
-		for(Int k=0; k < itsMappers.nMappers(); ++k){
-			cerr << "FTMachine name " << (itsMappers.getFTM2(k))->name() << endl;
-			if((itsMappers.getFTM2(k))->useWeightImage()){
+		for(uInt k=0; k < imparsVec_p.nelements(); ++k){
+			Int imageStoreId=k;
+			if(k>0){
+					if(gridparsVec_p[0].chanchunks >1 && uInt(itsMappers.nMappers()) >=    (gridparsVec_p[0].chanchunks + gridparsVec_p.nelements()))
+						imageStoreId+=gridparsVec_p[0].chanchunks-1;
+					if(gridparsVec_p[0].facets >1)
+						imageStoreId+=gridparsVec_p[0].facets*gridparsVec_p[0].facets-1;
+				}
+			cerr << "FTMachine name " << (itsMappers.getFTM2(imageStoreId))->name() << endl;
+			if((itsMappers.getFTM2(imageStoreId))->useWeightImage()){
 				cerr << "Mosaic weight image " << itsMappers.imageStore(k)->weight(k)->name() << endl;
-				weightnames(k)=itsMappers.imageStore(k)->weight(k)->name();
+				weightnames(k)=itsMappers.imageStore(imageStoreId)->weight(k)->name();
 			}
 		}
 		controlRecord.define("weightnames", weightnames);
         // Tell the child processes not to do the dividebyweight process as this is done
 		// right now in imager_base.py runMajorCycle
 		controlRecord.define("dividebyweight",  False);
+		///Let's see if no per chan weight density was chosen
+		String weightdensityimage=getWeightDensity();
+		if(weightdensityimage != "")
+			controlRecord.define("weightdensity", weightdensityimage);
         
 		Record vecSelParsRec, vecImParsRec, vecGridParsRec;
 		Vector<Int>vecRange(2);
@@ -1511,12 +1592,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			//need to send polrep
 			imparsRec.define("polrep", Int((itsMappers.imageStore(k))->getDataPolFrame()));
 			Record gridparsRec = gridparsVec_p[k].toRecord();
+			/* Might need this to pass the state of the global ftmachines...test for parallel when needed
 			String err;
 			Record ftmrec, iftmrec;
 			if(!( (itsMappers.getFTM2(k)->toRecord(err, iftmrec,False)) && (itsMappers.getFTM2(k, false)->toRecord(err, ftmrec,False))))
 				throw(AipsError("FTMachines serialization failed"));
 			gridparsRec.defineRecord("ftmachine", ftmrec);
 			gridparsRec.defineRecord("iftmachine", iftmrec);
+			*/
 			vecImParsRec.defineRecord(String::toString(k), imparsRec);
 			vecGridParsRec.defineRecord(String::toString(k), gridparsRec);
 		}

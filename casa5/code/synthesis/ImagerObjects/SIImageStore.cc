@@ -1122,8 +1122,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  Matrix<Double> pc(1,1);      pc = 1.0;
 	  LinearCoordinate zc(Vector<String>(1, "FIELD_ORDER"), Vector<String>(1, ""), Vector<Double>(1, 0.0), Vector<Double>(1,1.0), pc, Vector<Double>(1,0.0));
 	  newcoordsys.addCoordinate(zc);
+        }
 	  itsGridWt.reset(new PagedImage<Float>(newshape, newcoordsys, itsImageName+ imageExts(GRIDWT)));
-	}
+	
 
       }
     }

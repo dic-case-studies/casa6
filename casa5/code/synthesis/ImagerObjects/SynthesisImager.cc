@@ -977,8 +977,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     os << "Major Cycle " << nMajorCycles << " -------------------------------------" << LogIO::POST;
 
     try
-      {    
-		
+      {
 	if( itsMaxShape[3] > 1 && doingCubeGridding_p ){/// and valid ftmachines
 		runMajorCycleCube(false, lastcycle);
 	}
@@ -1209,12 +1208,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os(LogOrigin("SynthesisImager", "getWeightDensity()", WHERE));
     try
       {
-	
+        //if 
+	if(imwgt_p.getType() != "uniform"){
+          return outname;
+        }
 	IPosition newshape;
 	Vector<Int> shpOfGrid=imwgt_p.shapeOfdensityGrid();
+        cerr << "shpOfGrid " << shpOfGrid << endl;
 	if(shpOfGrid(2) > 1){
 	  newshape=IPosition(5,shpOfGrid[0], shpOfGrid[1],1,1,shpOfGrid[2]);
 	}
+        else{
+          newshape=IPosition(4,shpOfGrid[0], shpOfGrid[1],1,1);
+        }
 	IPosition where=	IPosition(Vector<Int>((itsMappers.imageStore(0)->gridwt(newshape))->shape().nelements(),0));
 	if ( shpOfGrid[2] > 0 )
 	  {

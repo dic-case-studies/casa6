@@ -455,8 +455,9 @@ class PySynthesisImager:
         ##moved the tuneselect after weighting so that
         ##the weight densities use all the data selected CAS-11687
         ###For cube imaging:  align the data selections and image setup
-        if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
-            self.SItool.tuneselectdata()
+        ### the tuneSelect is now done in C++ CubeMajorCycleAlgorith.cc
+        #if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
+        #    self.SItool.tuneselectdata()
         
  #       print("get set density from python")
  #       self.SItool.getweightdensity()

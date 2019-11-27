@@ -1207,6 +1207,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     selpar.define("freqbeg",freqbeg);
     selpar.define("freqend",freqend);
     selpar.define("freqframe", MFrequency::showType(freqframe)); // Convert MFrequency::Types to String
+    //looks like fromRecord looks for outframe !
+    selpar.define("outframe", MFrequency::showType(freqframe)); 
     selpar.define("field",field);
     selpar.define("antenna",antenna);
     selpar.define("timestr",timestr);
@@ -1724,7 +1726,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  { err += "Invalid Frequency Frame " + freqframestr ; }
 	err += readVal( inrec, String("restart"), overwrite );
 
-	
+	err += readVal(inrec, String("freqframevalid"), freqFrameValid);
 	// startmodel parsing copied in SynthesisParamDeconv. Clean this up !!! 
         if( inrec.isDefined("startmodel") ) 
           {
@@ -1895,8 +1897,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     projection=Projection::SIN;
     useNCP=false;
     startModel=Vector<String>(0);
+    freqFrameValid=True;
     overwrite=false;
-
     // PseudoI
     pseudoi=false;
 
@@ -2024,6 +2026,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     impar.define("sysvelframe", sysvelframe );
 
     impar.define("restart",overwrite );
+    impar.define("freqframevalid", freqFrameValid);
     impar.define("startmodel", startModel );
 
     if( csysRecord.nfields() != 0 )

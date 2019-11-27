@@ -68,6 +68,7 @@ void CubeMajorCycleAlgorithm::get() {
 	/// Fill the private variables
 	for (Int k=0; k < Int(dataSel_p.nelements()); ++k){
 		(dataSel_p[k]).fromRecord(vecSelParsRec.asRecord(String::toString(k)));
+		//cerr << k << "datasel " << vecSelParsRec.asRecord(String::toString(k)) << endl;
 	}
 	//imsel and gridsel should be the same numbers (number of image fields)
 	Int nmajorcycles=0;
@@ -83,6 +84,7 @@ void CubeMajorCycleAlgorithm::get() {
 	startmodel_p.set(Vector<String>(0));
 	for (uInt k=0; k < imSel_p.nelements(); ++k){
 		Record imSelRec=vecImParsRec.asRecord(String::toString(k));
+		//cerr << k << " imsel " << imSelRec << endl;
 		if(imSelRec.isDefined("polrep"))
 			imSelRec.get("polrep", polRep_p[k]);
 		//Only first major cycle we need to reset model
@@ -146,7 +148,7 @@ void CubeMajorCycleAlgorithm::task(){
 			if(ftmRec_p.nelements()>0){
 				subImgr.defineImage(subImStor[k], ftmRec_p[k], iftmRec_p[k]);	
 			}else{
-				subImgr.defineImage(subImStor[k],  gridSel_p[k].ftmachine);
+				subImgr.defineImage(subImStor[k],  imSel_p[k], gridSel_p[k]);
 			}
 		}
 	}else{
@@ -155,7 +157,7 @@ void CubeMajorCycleAlgorithm::task(){
 		if(ftmRec_p.nelements()>0){
 				subImgr.defineImage(subImStor[0], ftmRec_p[0], iftmRec_p[0]);
 		}else{
-			subImgr.defineImage(subImStor[0],  gridSel_p[0].ftmachine);
+			subImgr.defineImage(subImStor[0],  imSel_p[0], gridSel_p[0]);
 		}
 	}
 	subImgr.setCubeGridding(False);
@@ -164,6 +166,17 @@ void CubeMajorCycleAlgorithm::task(){
 		subImgr.weight("natural");
 	else
 		subImgr.weight(weightParams_p);
+	///Now do the selection tuning if needed
+	if(imSel_p[0].mode !="cubedata"){
+		//cerr << "IN RETUNING " << endl;
+		subImgr.tuneSelectData();
+	}
+	//set common weightdensity when perchanweightdensity=false
+	if(controlRecord_p.isDefined("weightdensity")){
+		String densName=controlRecord_p.asString("weightdensity");
+		if(Table::isReadable(densName))
+			subImgr.setWeightDensity(densName);
+	}
 	if (!dopsf_p){
 		subImgr.executeMajorCycle(controlRecord_p);
 		if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight"))
