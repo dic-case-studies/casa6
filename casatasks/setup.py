@@ -268,6 +268,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/cleanhelper.py',
                     'src/tasks/task_sdimaging.py',
                     'src/tasks/task_sdsmooth.py',
+                    'src/tasks/task_tsdimaging.py',
                     'src/scripts/simutil.py',
                     'src/tasks/task_simalma.py',
                     'src/tasks/task_simobserve.py',
@@ -380,6 +381,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdgaincal.xml': 'xml/sdgaincal.xml',
               'casa-source/gcwrap/tasks/sdimaging.xml': 'xml/sdimaging.xml',
               'casa-source/gcwrap/tasks/sdsmooth.xml': 'xml/sdsmooth.xml',
+              'casa-source/gcwrap/tasks/tsdimaging.xml': 'xml/tsdimaging.xml',
               'casa-source/gcwrap/tasks/simalma.xml': 'xml/simalma.xml',
               'casa-source/gcwrap/tasks/simobserve.xml': 'xml/simobserve.xml',
               'casa-source/gcwrap/tasks/simanalyze.xml': 'xml/simanalyze.xml',
@@ -487,6 +489,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdgaincal.xml',
               'xml/sdimaging.xml',
               'xml/sdsmooth.xml',
+              'xml/tsdimaging.xml',
               'xml/simalma.xml',
               'xml/simobserve.xml',
               'xml/simanalyze.xml',
@@ -606,13 +609,19 @@ def generate_pyinit(moduledir,tasks):
         fd.write("\n")
         fd.write("def xml_interface_defs( ): return { %s }\n" % ", ".join(task_files_dict))
         fd.write("\n")
-        fd.write("# When in MPI mode, this will put servers into their serve() loop.\n")
-        fd.write("# From this point on user scripts can use tclean parallelization, Tier0 parallelization,\n")
-        fd.write("# and MMS-parallel tasks\n")
-        fd.write("try:\n")
-        fd.write("    import casampi.private.start_mpi\n")
-        fd.write("except ImportError:\n")
-        fd.write("    pass\n")
+        mpi_import_str = '\n'.join((
+            "# When in MPI mode, this will put servers into their serve() loop.",
+            "# From this point on user scripts can use tclean parallelization, Tier0 parallelization,",
+            "# and MMS-parallel tasks",
+            "try:",
+            "    import importlib",
+            "    _clith_spec = importlib.util.find_spec('casalith')",
+            "    # Defer to later if in casalith",
+            "    if _clith_spec is None:",
+            "        import casampi.private.start_mpi",
+            "except ImportError:",
+            "    pass\n"))
+        fd.write(mpi_import_str)
 
 class BuildCasa(build):
     description = "Description of the command"
