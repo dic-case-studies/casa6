@@ -93,7 +93,7 @@
 
 #include <ms_cmpt.h>
 #include <msmetadata_cmpt.h>
-#include <tools/ms/Statistics.h>
+#include <tools/table/Statistics.h>
 
 #include <casa/namespace.h>
 #include <cassert>
@@ -3647,8 +3647,8 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int
             // Keep table before increment selection, restore later
             MeasurementSet origSelMS = *itsSelectedMS;
             if ((increment>1) && (uInt(increment)<=nrows)) {
-                Vector<uInt> rows(nrows/increment);
-                indgen(rows, uInt(0), uInt(increment));
+                Vector<casacore::rownr_t> rows(nrows/increment);
+                indgen(rows, casacore::rownr_t(0), casacore::rownr_t(increment));
                 Table selTable = (*itsSelectedMS)(rows);
                 *itsSelectedMS = selTable;
             }
