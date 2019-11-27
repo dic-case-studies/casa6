@@ -9,14 +9,14 @@ import unittest
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import ctsys, image, ms, msmd, quanta, atmosphere
+    from casatools import ctsys, image, ms, msmetadata, quanta, atmosphere
     from casatasks import simobserve
     from casatasks.private.simutil import *
 
     # CASA5 uses the global versions of these tools
     _ia = image()
     _ms = ms()
-    _msmd = msmd()
+    _msmd = msmetadata()
     _qa = quanta()
     _at = atmosphere()
 else:
