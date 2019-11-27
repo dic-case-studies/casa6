@@ -1237,6 +1237,69 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
   }
 
+  SynthesisParamsImage& SynthesisParamsImage::operator=(const SynthesisParamsImage& other){
+    if(this != &other){
+      imageName=other.imageName;
+      stokes=other.stokes;
+      startModel.resize(); startModel=other.startModel;
+      imsize.resize(); imsize=other.imsize;
+      cellsize.resize(); cellsize=other.cellsize;
+      projection=other.projection;
+      useNCP=other.useNCP;
+      phaseCenter=other.phaseCenter;
+      phaseCenterFieldId=other.phaseCenterFieldId;
+      obslocation=other.obslocation;
+      pseudoi=other.pseudoi;
+      nchan=other.nchan;
+      nTaylorTerms=other.nTaylorTerms;
+      chanStart=other.chanStart;
+      chanStep=other.chanStep;
+      freqStart=other.freqStart;
+      freqStep=other.freqStep;
+      refFreq=other.refFreq;
+      velStart=other.velStart;
+      velStep=other.velStep;
+      freqFrame=other.freqFrame;
+      mFreqStart=other.mFreqStart;
+      mFreqStep=other.mFreqStep;
+      mVelStart=other.mVelStart;
+      mVelStep=other.mVelStep;
+      restFreq.resize(); restFreq=other.restFreq;
+      start=other.start;
+      step=other.step;
+      frame=other.frame;
+      veltype=other.veltype;
+      mode=other.mode;
+      reffreq=other.reffreq;
+      sysvel=other.sysvel;
+      sysvelframe=other.sysvelframe;
+      sysvelvalue=other.sysvelvalue;
+      qmframe=other.qmframe;
+      mveltype=other.mveltype;
+      tststr=other.tststr;
+      startRecord=other.startRecord;
+      stepRecord=other.stepRecord;
+      reffreqRecord=other.reffreqRecord;
+      sysvelRecord=other.sysvelRecord;
+      restfreqRecord=other.restfreqRecord;
+      csysRecord=other.csysRecord;
+      csys=other.csys;
+      imshape.resize(); imshape=other.imshape;
+      freqFrameValid=other.freqFrameValid;
+      overwrite=other.overwrite;
+      deconvolver=other.deconvolver;
+      distance=other.distance;
+      trackDir=other.trackDir;
+      trackSource=other.trackSource;
+      movingSource=other.movingSource;
+
+
+
+    }
+
+    return *this;
+
+  }
 
   void SynthesisParamsImage::fromRecord(const Record &inrec)
   {

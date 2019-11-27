@@ -238,9 +238,14 @@ public:
 
   void fromRecord(const casacore::Record &inrec);
   void setDefaults();
+
+  //need to explicitly declare an = operator if private variables contains arrays
+  SynthesisParamsImage& operator=(const SynthesisParamsImage& other);
+  
   casacore::String verify() const;
   casacore::Record toRecord()const ;
 
+  
   // Generate casacore::Coordinate System 
   casacore::CoordinateSystem buildCoordinateSystem(ROVisibilityIterator* rvi);
 

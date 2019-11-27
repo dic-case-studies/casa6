@@ -58,9 +58,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			itsSumWt=sumwtim;
 			itsMask=maskim;
 			itsImagePBcor=restoredpbcorim;
-			
+			itsPB=pbim;
+                        itsGridWt=gridwtim;
 			itsUseWeight=useweightimage;
-			
+                        
 		
 		
 		
