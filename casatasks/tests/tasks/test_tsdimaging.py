@@ -2621,6 +2621,28 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         self.run_test(restfreq, beam_ref, cell_ref, stats,
                       restfreq='', imsize=[11,11])
 
+    def test_capital_outframe(self):
+        """test outframe='LSRK'"""
+        restfreq='200GHz'
+        beam_ref = dict(major='30.276442arcsec',minor='30.276442arcsec')
+        cell_ref = '10.091393059432447arcsec'
+        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
+                                          [7 , 7 ,  0,  9])
+        self.run_test(restfreq, beam_ref, cell_ref, stats,
+                      restfreq=restfreq,imsize=[8,8], outframe='LSRK')
+
+    def test_unallowed_outframe(self):
+        """test outframe='lSrK' (will fail)"""
+        restfreq='200GHz'
+        beam_ref = dict(major='30.276442arcsec',minor='30.276442arcsec')
+        cell_ref = '10.091393059432447arcsec'
+        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
+                                          [7 , 7 ,  0,  9])
+        with self.assertRaises(AssertionError):
+            self.run_test(restfreq, beam_ref, cell_ref, stats,
+                          restfreq=restfreq,imsize=[8,8], outframe='lSrK')
+        print('test_unallowed_outframe: failed as expected')
+
 ###
 #
 # Test case for automatic phasecenter calculation
