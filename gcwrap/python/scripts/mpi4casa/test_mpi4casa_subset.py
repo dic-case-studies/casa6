@@ -300,7 +300,7 @@ class test_MPIInterface(unittest.TestCase):
             except:
                 rethrow = True
                 break
-        self.assertEqual(rethrow,True,"Exception not retrown")
+        self.assertEqual(rethrow,True,"Exception not retrown, res={}".format(res))
         self.assertEqual(str(sys.exc_info()[1]).find("ZeroDivisionError:")>=0, True, "Trace-back should contain ZeroDivisionError")      
         
         # Check queue status
@@ -371,49 +371,56 @@ class test_mpi4casa_flagdata(unittest.TestCase):
         self.assertTrue(ret_dict['spw']['12']['flagged'] == 131896.0)
         self.assertTrue(ret_dict['spw']['13']['flagged'] == 125074.0)
         self.assertTrue(ret_dict['spw']['14']['flagged'] == 118039.0)
-        
+
     def test_mpi4casa_flagdata_list_return_async(self):
         """Test flagdata summary in async mode"""
-        
+
+        # Do not make a copy of the input MMS for each flagdata command
+        # os.system("cp -r {} {}".format(self.vis, self.vis2))
+        # os.system("cp -r {} {}".format(self.vis, self.vis3))
+        os.system("ln -s {} {}".format(self.vis, self.vis2))
+        os.system("ln -s {} {}".format(self.vis, self.vis3))
+
         # First run flagdata sequentially
         bypassParallelProcessing = ParallelTaskHelper.getBypassParallelProcessing()
         ParallelTaskHelper.bypassParallelProcessing(2)
         res = flagdata(vis=self.vis, mode='summary')
         ParallelTaskHelper.bypassParallelProcessing(bypassParallelProcessing)
-        
-        # Make a copy of the input MMS for each flagdata instance
-        os.system("cp -r %s %s" % (self.vis,self.vis2))
-        os.system("cp -r %s %s" % (self.vis,self.vis3))
-        
+
         # Set async mode in ParallelTaskHelper
         ParallelTaskHelper.setAsyncMode(True)
-        
-        # Run applycal in MMS mode with the first set
-        request_id_1 = flagdata(vis=self.vis, mode='summary')    
-        
-        # Run applycal in MMS mode with the second set
-        request_id_2 = flagdata(vis=self.vis2, mode='summary')
-        
-        # Run applycal in MMS mode with the third set
-        request_id_3 = flagdata(vis=self.vis3, mode='summary')
-        
-        # Get response in block mode
-        reques_id_list = request_id_1 + request_id_2 + request_id_3
-        command_response_list = self.client.get_command_response(reques_id_list,True,True)        
-        
-        # Get result
+
+        try:
+            # Run flagdata in MMS mode with the first set
+            request_id_1 = flagdata(vis=self.vis, mode='summary')
+            request_id_list = list(request_id_1)
+
+            # Run flagdata in MMS mode with the second set
+            request_id_2 = flagdata(vis=self.vis2, mode='summary') #, cmdreason='bla bla')
+            request_id_list.extend(request_id_2)
+
+            # Run flagdata in MMS mode with the third set
+            request_id_3 = flagdata(vis=self.vis3, mode='summary')
+            request_id_list.extend(request_id_3)
+        finally:
+            # Get response in block mode
+            request_id_list = request_id_1 + request_id_2 + request_id_3
+            command_response_list = self.client.get_command_response(request_id_list,
+                                                                     True, True)
+
+        # Get result. Block waiting for responses.
         res1 = ParallelTaskHelper.getResult(request_id_1,'flagdata')
         res2 = ParallelTaskHelper.getResult(request_id_2,'flagdata')
         res3 = ParallelTaskHelper.getResult(request_id_3,'flagdata')   
-        
+
         # Unset async mode in ParallelTaskHelper
-        ParallelTaskHelper.setAsyncMode(False)         
-        
+        ParallelTaskHelper.setAsyncMode(False)
+
+        self.maxDiff = None
         self.assertEqual(res1,res, "flagdata dictionary does not match for the first flagdata run")
         self.assertEqual(res2,res, "flagdata dictionary does not match for the second flagdata run")
-        self.assertEqual(res3,res, "flagdata dictionary does not match for the third flagdata run")       
-        
-        
+        self.assertEqual(res3,res, "flagdata dictionary does not match for the third flagdata run")
+
     def test_mpi4casa_flagdata_list_return_multithreading(self):
         """Test flagdata summary in multithreading mode"""
         
