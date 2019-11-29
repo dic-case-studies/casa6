@@ -34,6 +34,7 @@ gaincal.xml
 gencal.xml
 hanningsmooth.xml
 #hanningsmooth2.xml
+phaseshift.xml
 imcollapse.xml
 imcontsub.xml
 imdev.xml
