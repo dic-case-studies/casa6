@@ -26,6 +26,9 @@
 // Base class
 #include <mstransform/TVI/FreqAxisTVI.h>
 
+// To handle variant parameters
+#include <stdcasa/StdCasa/CasacSupport.h>
+
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -56,6 +59,7 @@ protected:
     void initialize();
 
 	casacore::Double dx_p, dy_p;
+	casac::variant *phaseCenterPar_p = new casac::variant("");
 };
 
 //////////////////////////////////////////////////////////////////////////

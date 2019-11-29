@@ -38,6 +38,10 @@ PhaseShiftingTVI::PhaseShiftingTVI(	ViImplementation2 * inputVii,
 								const Record &configuration):
 								FreqAxisTVI (inputVii)
 {
+	dx_p = 0;
+	dy_p = 0;
+	phaseCenterPar_p = new casac::variant("");
+
 	// Parse and check configuration parameters
 	// Note: if a constructor finishes by throwing an exception, the memory
 	// associated with the object itself is cleaned up — there is no memory leak.
@@ -71,6 +75,33 @@ Bool PhaseShiftingTVI::parseConfiguration(const Record &configuration)
 	if (exists >= 0)
 	{
 		configuration.get (exists, dy_p);
+	}
+
+	// CAS-12706 Add support for shifting across large offset/angles
+	exists = -1;
+	exists = configuration.fieldNumber ("phasecenter");
+	if (exists >= 0)
+	{
+		//If phase center is a simple numeric value then it is taken
+		// as a FIELD_ID otherwise it is converted to a MDirection
+        if( configuration.type(exists) == TpInt )
+        {
+        	int fieldIdForPhaseCenter = -1;
+    		configuration.get (exists, fieldIdForPhaseCenter);
+    		logger_p << LogIO::NORMAL << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
+    				<< "Field Id for phase center is " << fieldIdForPhaseCenter << LogIO::POST;
+    		if (phaseCenterPar_p) delete phaseCenterPar_p;
+    		phaseCenterPar_p = new casac::variant(fieldIdForPhaseCenter);
+        }
+        else
+        {
+        	String phaseCenter("");
+    		configuration.get (exists, phaseCenter);
+    		logger_p << LogIO::NORMAL << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
+    				<< "Phase center is " << phaseCenter << LogIO::POST;
+    		if (phaseCenterPar_p) delete phaseCenterPar_p;
+    		phaseCenterPar_p = new casac::variant(phaseCenter);
+        }
 	}
 
 	if (abs(dx_p) > 0 or abs(dy_p) > 0)
