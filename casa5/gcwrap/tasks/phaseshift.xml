@@ -255,6 +255,12 @@ Multi-MS.
             <value>lag_data,data</value>
         </allowed>
     </param>
+    
+    <param type="any" name="phasecenter">
+    	<description>Desired phase center given either as a field index or as a direction measure</description>
+    	<any type="variant"/>
+    	<value type="string"></value>
+    </param>
 
     </input>
 

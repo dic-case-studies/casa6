@@ -38,6 +38,7 @@ def phaseshift(vis=None,
                observation=None,
                feed=None,
                datacolumn=None, 
+               phasecenter=None,
                ):
 
     """Changes the phase center for either short or large offsets/angles w.r.t. the original
@@ -104,8 +105,11 @@ def phaseshift(vis=None,
         casalog.post('Will use datacolumn = %s'%datacolumn, 'DEBUG')
         config['datacolumn'] = datacolumn
         
-        # Call MSTransform framework with phaseshift=True
-        config['phaseshift'] = True
+        # Call MSTransform framework with tviphaseshift=True
+        config['tviphaseshift'] = True
+        tviphaseshift_config = {}
+        tviphaseshift_config['phasecenter'] = phasecenter
+        config['tviphaseshiftlib'] = dict(tviphaseshift_config)
 
         # Configure the tool 
         casalog.post('%s'%config, 'DEBUG1')
