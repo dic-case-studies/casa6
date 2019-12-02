@@ -120,7 +120,7 @@ def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
         (major, minor, patch, feature) = args.version.split(".")
-        return(int(major), int(minor), int(patch), int(feature))
+        return(int(major), int(minor), int(patch), int(feature),"","","")
     else:
         proc = Popen( [ "./version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
