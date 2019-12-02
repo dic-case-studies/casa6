@@ -1607,7 +1607,7 @@ Int VisibilityIteratorImpl2::nRowsInChunk() const
 	return msIter_p->table().nrow();
 }
 
-Int VisibilityIteratorImpl2::nSubChunks() const {
+Int VisibilityIteratorImpl2::nTimes() const {
     static const auto timeName = MeasurementSet::columnName(MSMainEnums::TIME);
     auto times = ScalarColumn<Double>(msIter_p->table(), timeName).getColumn();
     std::set<Double> uniqueTimes(times.cbegin(), times.cend());

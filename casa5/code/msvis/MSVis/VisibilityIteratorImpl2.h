@@ -516,8 +516,8 @@ public:
 	virtual casacore::Int
 	nRowsInChunk() const override;
 
-    // number of of subchunks, as indicated by unique time stamps, in chunk
-    virtual casacore::Int nSubChunks() const override;
+    // number of unique time stamps in chunk
+    virtual casacore::Int nTimes() const override;
  
 	// Return the number of sub-intervals in the current chunk
 

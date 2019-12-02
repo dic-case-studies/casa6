@@ -2,13 +2,42 @@ import os
 import sys
 import shutil
 import unittest
-import numpy
+import numpy as np
+import numpy.ma as ma
 
 from casatools import ctsys, table, ms
 from casatasks import statwt
 
 datadir = ctsys.resolve('regression/unittest/statwt')
 src = os.path.join(datadir,'ngc5921.split_2.ms')
+
+def get_weights(data, flags, exposures, combine_corr, target_exposure):  
+    shape = data.shape
+    ncorr_groups = 1 if combine_corr else shape[0]
+    ncorr = shape[0]
+    weights = np.zeros([shape[0], shape[1]])
+    nrows = data.shape[2]
+    for corr in range(ncorr_groups):
+        end = corr + 1 if ncorr_groups > 1 else ncorr + 1
+        var = variance(data[corr:end, :, :], flags[corr:end, :, :], exposures)
+        if var == 0:
+            weights[corr:end, :] = 0 
+        else:
+            weights[corr:end, :] = target_exposure/var
+    return weights
+
+def variance(data, flags, exposures):
+    if flags.all():
+        return 0
+    expo = ma.masked_array(np.resize(exposures, data.shape), mask=flags)
+    d = ma.array(data, mask=flags)
+    myreal = np.real(d)
+    myimag = np.imag(d)
+    mean_r = np.sum(expo*myreal)/np.sum(expo)
+    mean_i = np.sum(expo*myimag)/np.sum(expo)
+    var_r = np.sum(expo * (myreal - mean_r)*(myreal - mean_r))/d.count()
+    var_i = np.sum(expo * (myimag - mean_i)*(myimag - mean_i))/d.count()
+    return (var_r + var_i)/2
 
 def _get_dst_cols(dst, other="", dodata=True):
     mytb = table()
@@ -71,9 +100,90 @@ def _variance2(dr, di, flag, corr, row):
 
 
 class statwt_test(unittest.TestCase):
-
+    def _check_weights(
+        self, msname, mode, data_column, chan_flags, combine_corr
+    ):
+        if data_column.startswith('c'):
+            colname = 'CORRECTED_DATA'
+        elif data_column.startswith('d'):
+            colname = 'DATA'
+        else:
+            raise Exception("Unhandled column spec " + data_column)
+        if not mode.startswith('one'):
+            raise Exception("Unhandled mode")
+        tb = table()
+        for ant1 in range(10):
+            for ant2 in range((ant1 + 1), 10):
+                query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
+                tb.open(msname)
+                subt = tb.query(query_str)
+                data = subt.getcol(colname)
+                flags = subt.getcol('FLAG')
+                exposures = subt.getcol('EXPOSURE')
+                wt = subt.getcol('WEIGHT')
+                wtsp = subt.getcol('WEIGHT_SPECTRUM')
+                wt = subt.getcol('WEIGHT')
+                subt.done()
+                tb.done()
+                if type(chan_flags) != type(None):
+                    t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
+                    flags = np.logical_or(flags, t_flags)
+                nrows = data.shape[2]
+                for row in range(nrows):
+                    if mode.startswith('one'):
+                        start = row
+                        end = row+1
+                    if mode.startswith('one'):
+                        start = row
+                        end = row+1
+                    # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
+                    weights = get_weights(
+                        data[:,:,start:end], flags[:, :, start:end],
+                        exposures[start: end], combine_corr, exposures[row]
+                    )
+                    self.assertTrue(
+                        np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
+                        + str(wtsp[:, :, row]) + '\nexpected ' + str(weights)
+                        + '\nbaseline ' + str([ant1, ant2])
+                        + '\nrow ' + str(row)
+                    )
+                    self.assertTrue(
+                        np.allclose(np.median(weights, 1), wt[:, row]),
+                        'Failed weight, got ' + str(wt[:, row])
+                        + '\nexpected ' + str(np.median(weights, 1))
+                        + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
+                        + str(row)
+                    )
     def test_algorithm(self):
-        """ Test the algorithm, includes fitspw, excludechans tests"""
+        """ Test the algorithm, includes excludechans tests"""
+        mytb = table()
+        mytb.open(src)
+        expflag = mytb.getcol("FLAG")
+        expfrow = mytb.getcol("FLAG_ROW")
+        mytb.done()
+        dst = "ngc5921.split.ms"
+        rtol = 1e-7
+        cflags = np.array(63 * [False])
+        cflags[10:21] = True
+        for combine in ["", "corr"]:
+            c = 0
+            for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
+                shutil.copytree(src, dst) 
+                excludechans = c == 2
+                statwt(
+                    vis=dst, combine=combine, fitspw=fitspw,
+                    excludechans=excludechans
+                )
+                chan_flags = cflags if fitspw else None
+                self._check_weights(
+                    dst, mode='one_to_one', data_column='c',
+                    chan_flags=chan_flags, combine_corr=bool(combine)
+                )
+                shutil.rmtree(dst)
+                c += 1 
+    """
+    def test_algorithm(self):
+        "" Test the algorithm, includes fitspw, excludechans tests""
         mytb = table()
         mytb.open(src)
         expflag = mytb.getcol("FLAG")
@@ -155,7 +265,8 @@ class statwt_test(unittest.TestCase):
                             self.assertFalse(frow[row], "FLAG_ROW is not false")
                 shutil.rmtree(dst) 
                 c += 1
-               
+    """
+              
     def test_timebin(self):
         """ Test time binning"""
         dst = "ngc5921.split.timebin.ms"

@@ -10,10 +10,10 @@ import numpy as np
 import numpy.ma as ma
 import numbers
 
-from multiprocessing.pool import ThreadPool as Pool
+# from multiprocessing.pool import ThreadPool as Pool
 # from multiprocessing import Pool
 
-pool_size = 20  # your "parallelness"
+# pool_size = 20  # your "parallelness"
 
 datadir = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/statwt/'
 src = datadir + 'ngc5921.split_2.ms'
@@ -23,69 +23,21 @@ src = datadir + 'ngc5921.split_2.ms'
 # In the chan_flags, a value of False means the channel is good (not flagged)
 # so should be used. It follows the convention of the FLAGS column in the MS.
 def get_weights(data, flags, exposures, combine_corr, target_exposure):  
-    # print "enter get_weights"      
-    """
-    tb.open(ms)
-    if data_column.startswith('c'):
-        colname = 'CORRECTED_DATA'
-    elif data_column.startswith('d'):
-        colname = 'DATA'
-    else:
-        raise Exception("Unhandled column spec " + data_column)
-    subt = tb.query(
-        'ANTENNA1=' + str(baseline[0]) + ' AND ANTENNA2=' + str(baseline[1])
-    )
-    data_all = subt.getcol(colname)
-    print('data_all.shape',data_all.shape)
-    flags_all = subt.getcol('FLAG')
-    exposures_all = subt.getcol('EXPOSURE')
-    tb.done()
-    """
-    # data = None
-    # flags = None
-    # exposures = None
     shape = data.shape
     ncorr_groups = 1 if combine_corr else shape[0]
     ncorr = shape[0]
     weights = np.zeros([shape[0], shape[1]])
     nrows = data.shape[2]
-    # print ("combine_corr", combine_corr, "ncorr_groups", ncorr_groups)
-
     for corr in range(ncorr_groups):
-        """
-        for row in range(nrows):   
-            if combine_corr:
-                new_data = np.expand_dims(data_all[:,:,row], 2)
-                new_flags = np.expand_dims(flags_all[:,:,row], 2)
-            else:
-                new_data = np.expand_dims(data_all[corr:corr+1,:,row], 2)
-                new_flags = np.expand_dims(flags_all[corr:corr+1,:,row], 2)
-            new_exp = np.expand_dims(exposures_all[row], 0)
-            if data == None:
-                data = new_data
-                flags = new_flags
-                exposures = new_exp
-            else:
-                data = np.append(data, new_data, axis=2)
-                flags = np.append(flags, new_flags, axis=2)
-                exposures = np.append(exposures, new_exp, axis=0)
-            if chan_flags != None:
-                t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
-                flags = np.logical_or(flags, t_flags)
-        """
         end = corr + 1 if ncorr_groups > 1 else ncorr + 1
         var = variance(data[corr:end, :, :], flags[corr:end, :, :], exposures)
         if var == 0:
             weights[corr:end, :] = 0 
         else:
-            # print 'var' + str(var)
             weights[corr:end, :] = target_exposure/var
-        # weights.append(target_exposure/var)
     return weights
-        
 
 def variance(data, flags, exposures):
-    # print "enter variance"
     if flags.all():
         return 0
     expo = ma.masked_array(np.resize(exposures, data.shape), mask=flags)
@@ -97,12 +49,6 @@ def variance(data, flags, exposures):
     var_r = np.sum(expo * (myreal - mean_r)*(myreal - mean_r))/d.count()
     var_i = np.sum(expo * (myimag - mean_i)*(myimag - mean_i))/d.count()
     return (var_r + var_i)/2
-    
-
-                
-    
-
-
 
 def _get_dst_cols(dst, other="", dodata=True):
     mytb = tbtool()
@@ -169,35 +115,21 @@ class statwt_test(unittest.TestCase):
         self, row, ant1, ant2, data, flags, exposures, wtsp, combine_corr,
         target_exposure
     ):
-        # print "enter do_row"
-        # print 'aa'
-        # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
-        # print 'data ' + str(data.shape)
-        # print 'flags ' + str(flags.shape)
-        # print 'exposures ' + str(exposures.shape)
-        # print 'wtsp ' + str(wtsp.shape)
         weights = get_weights(
             data, flags,
             exposures, combine_corr, target_exposure
         )
-        # print("before", weights.shape)
         new_weights = np.expand_dims(weights, 2)
-        # print 'bb'
-        # print "after " + str(new_weights.shape)
-        # print "wtsp " + str(wtsp.shape)
-        # print "allclose " + str(np.allclose(new_weights, wtsp))
         self.assertTrue(
             np.allclose(new_weights, wtsp), 'Failed wtsp, got '
             + str(wtsp) + '\nexpected ' + str(new_weights)
             + '\nbaseline ' + str([ant1, ant2])
             + '\nrow ' + str(row)
         )
-        # print 'cc'
     
     def _check_weights(
         self, msname, mode, data_column, chan_flags, combine_corr
     ):
-        # print("combine_corr", combine_corr)
         if data_column.startswith('c'):
             colname = 'CORRECTED_DATA'
         elif data_column.startswith('d'):
@@ -206,8 +138,6 @@ class statwt_test(unittest.TestCase):
             raise Exception("Unhandled column spec " + data_column)
         if not mode.startswith('one'):
             raise Exception("Unhandled mode")
-        # pool = Pool(pool_size)
-
         for ant1 in range(10):
             for ant2 in range((ant1 + 1), 10):
                 query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
@@ -229,19 +159,6 @@ class statwt_test(unittest.TestCase):
                     if mode.startswith('one'):
                         start = row
                         end = row+1
-                    """
-                    x = pool.apply_async(
-                        self.do_row,
-                        (
-                            row, ant1, ant2, data[:, :, start:end],
-                            flags[:, :, start:end], exposures[start:end],
-                            wtsp[:, :, start:end], combine_corr, exposures[row]
-                        )
-                    )
-                    # print "ff"
-                    x.get()
-                    # print "gg"
-                    """
                     if mode.startswith('one'):
                         start = row
                         end = row+1
@@ -263,8 +180,6 @@ class statwt_test(unittest.TestCase):
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                         + str(row)
                     )
-        # pool.close()
-        # pool.join()
 
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
@@ -298,112 +213,12 @@ class statwt_test(unittest.TestCase):
                             dst, combine=combine, fitspw=fitspw,
                             excludechans=excludechans
                         )
-                    # [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
                     chan_flags = cflags if fitspw else None
-                    # print(
-                    #    "combine", combine, "c", c, "fitspw", fitspw, "i", i,
-                    #    "cflags", cflags
-                    # )
-
                     self._check_weights(
                         dst, mode='one_to_one', data_column='c',
                         chan_flags=chan_flags, combine_corr=bool(combine)
                     )
-
-                    
-                    """
-                    actflag = flag.copy()
-                    if fitspw != "":
-                        actflag[:, 10:21, :] = True
-                    dr = np.real(data)
-                    di = np.imag(data)
-                    myshape = wtsp.shape
-                    ncorr = myshape[0]
-                    nrow = myshape[2]
-                    if (combine == "corr"):
-                        for row in range(nrow):
-                            expec = _variance(dr, di, actflag, row)
-                            self.assertTrue(
-                                np.all(
-                                    np.isclose(wt[:, row], expec, rtol=rtol)
-                                ), "WEIGHT fail at row" + str(row) + ". got: "
-                                + str(wt[:, row]) + " expec " + str(expec)
-                            )
-                            self.assertTrue(
-                                len(np.unique(wtsp[:,:,row])) == 1,
-                                "Weight values are not the same"
-                            )
-                            self.assertTrue(
-                                np.all(
-                                    np.isclose(wtsp[:,:,row], expec, rtol)
-                                ), "Incorrect weights"
-                            )
-                            if expec == 0:
-                                self.assertTrue(
-                                    np.all(flag[:,:,row]),
-                                    "Not all flags are true"
-                                )
-                                self.assertTrue(
-                                    frow[row], "FLAG_ROW is not true"
-                                )
-                            else:
-                                self.assertTrue(
-                                    np.all(
-                                        flag[:,:,row] == expflag[:,:,row]
-                                    ), "FLAGs don't match"
-                                )
-                                self.assertTrue(
-                                    frow[row] == expfrow[row],
-                                    "FLAG_ROW doesn't match"
-                                )
-                    else:
-                        for row in range(nrow):
-                            for corr in range(ncorr):
-                                expec = _variance2(dr, di, actflag, corr, row)
-                                self.assertTrue(
-                                    np.isclose(
-                                        wt[corr, row], expec, rtol=rtol
-                                    ), "WEIGHT fail at row" + str(row)
-                                    + ". got: " + str(wt[corr, row])
-                                    + " expec " + str(expec)
-                                )
-                                self.assertTrue(
-                                    len(np.unique(wtsp[corr,:,row])) == 1,
-                                    "Weight values are not the same"
-                                )
-                                self.assertTrue(
-                                    np.all(
-                                        np.isclose(
-                                            wtsp[corr,:,row], expec, rtol)
-                                        ), "Incorrect weights"
-                                )
-                                if expec == 0:
-                                    self.assertTrue(
-                                        np.all(flag[corr,:,row]),
-                                        "Not all flags are true"
-                                    )
-                                else:
-                                    self.assertTrue(
-                                        np.all(
-                                            flag[corr,:,row]
-                                            == expflag[corr,:,row]
-                                        ),
-                                        "FLAGs don't match at row " + str(row)
-                                        + ".\nExpected: "
-                                        + str(expflag[corr,:,row]) + "\n"
-                                        "Got     : " + str(flag[corr,:,row])
-                                    )
-                            if (np.all(flag[:,:,row])):
-                                self.assertTrue(
-                                    frow[row], "FLAG_ROW is not true"
-                                )
-                            else:
-                                self.assertFalse(
-                                    frow[row], "FLAG_ROW is not false"
-                                )
-                    """
                     shutil.rmtree(dst)
-                    
                 c += 1               
 
     def test_timebin(self):

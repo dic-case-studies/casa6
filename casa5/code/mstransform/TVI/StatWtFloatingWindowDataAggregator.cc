@@ -429,25 +429,25 @@ void StatWtFloatingWindowDataAggregator::_limits(
     // auto* vii = getVii();
     auto* vb = _vii->getVisBuffer();
     pair<uInt, uInt> p, q;
-    uInt nSubChunks = _vii->nSubChunks();
+    uInt nTimes = _vii->nTimes();
     if (_nTimeStampsInBin) {
         // fixed number of time stamps specified
         if (_timeBlockProcessing) {
             // integer division
-            uInt nBlocks = nSubChunks/(*_nTimeStampsInBin);
-            if (nSubChunks % *_nTimeStampsInBin > 0) {
+            uInt nBlocks = nTimes/(*_nTimeStampsInBin);
+            if (nTimes % *_nTimeStampsInBin > 0) {
                 ++nBlocks;
             }
             uInt subChunkCount = 0;
             for (uInt blockCount = 0; blockCount < nBlocks; ++blockCount) {
-                if ((subChunkCount + *_nTimeStampsInBin <= nSubChunks)) {
+                if ((subChunkCount + *_nTimeStampsInBin <= nTimes)) {
                     p.first = subChunkCount;
                     p.second = subChunkCount + *_nTimeStampsInBin - 1;
                 }
                 else {
                     // chunk edge
-                    p.first = nSubChunks - *_nTimeStampsInBin;
-                    p.second = nSubChunks - 1;
+                    p.first = nTimes - *_nTimeStampsInBin;
+                    p.second = nTimes - 1;
                 }
                 q = p;
                 for (uInt i=subChunkCount; i<=p.second; ++i, ++subChunkCount) {
@@ -468,18 +468,18 @@ void StatWtFloatingWindowDataAggregator::_limits(
             // integer division
             // p.first is the first sub chunk needed by the current index.
             // p.second is the first sub chunk that needs the current index
-            for (uInt i=0; i<nSubChunks; ++i) {
+            for (uInt i=0; i<nTimes; ++i) {
                 if (i <= nBefore) {
                     p.first = 0;
                 }
-                else if (i >= nSubChunks - nAfter) {
-                    p.first = nSubChunks - *_nTimeStampsInBin;
+                else if (i >= nTimes - nAfter) {
+                    p.first = nTimes - *_nTimeStampsInBin;
                 }
                 else {
                     p.first = i - nBefore;
                 }
-                if ((uInt)i >= nSubChunks - nAfter) {
-                    p.second = nSubChunks - 1;
+                if ((uInt)i >= nTimes - nAfter) {
+                    p.second = nTimes - 1;
                 }
                 else {
                     p.second = i + nAfter;
@@ -490,11 +490,11 @@ void StatWtFloatingWindowDataAggregator::_limits(
                 else {
                     q.first = i - nAfter;
                 }
-                if (i + nAfter < nSubChunks) {
+                if (i + nAfter < nTimes) {
                     q.second = i + nAfter;
                 }
                 else {
-                    q.second = nSubChunks - 1;
+                    q.second = nTimes - 1;
                 }
                 idToChunksNeededByIDMap.push_back(p);
                 chunkNeededToIDsThatNeedChunkIDMap.push_back(q);
