@@ -151,7 +151,7 @@ def compute_version( ):
 (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, devbranchversion, devbranchrevision, dirty) = compute_version( )
 casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, dirty)
 if devbranchversion !="":
-    casatasks_version = '%d.%d.%d.%da%sdev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
+    casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
 public_scripts = [ 'src/scripts/config.py' ]
 

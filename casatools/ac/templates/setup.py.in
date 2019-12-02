@@ -168,7 +168,7 @@ def compute_version( ):
         dirty=""
         if (len(out.split(" ")) == 3):
             print("Latest commit doesn't have a tag. Adding -dirty flag to version string.")
-            dirty="+" + out.split(" ")[2].strip() # "+" denotes local version identifier as described in PEP440  	
+            dirty="+" + out.split(" ")[2].strip() # "+" denotes local version identifier as described in PEP440
         print(releasetag)
         devbranchversion = ""
         devbranchrevision = ""
@@ -189,7 +189,7 @@ def compute_version( ):
 print(casatools_major, casatools_minor, casatools_patch, casatools_feature, devbranchversion, devbranchrevision, dirty)
 casatools_version = '%d.%d.%d.%d%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,dirty)
 if devbranchversion !="":
-    casatools_version = '%d.%d.%d.%da%sdev%s%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,devbranchversion,devbranchrevision,dirty)
+    casatools_version = '%d.%d.%d.%da%s.dev%s%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,devbranchversion,devbranchrevision,dirty)
 print(casatools_version)
 
 ###
@@ -301,7 +301,7 @@ def source_files(
     find all of the source files to compile beneath path
     """
     result = [ ]
-    my_apriori_exclusions = a_priori_exclusions if do_apriori_exclusions else [] 
+    my_apriori_exclusions = a_priori_exclusions if do_apriori_exclusions else []
     for root, dirs, files in os.walk(path):
         if root in root_filter or any(map(lambda x: root.endswith(x),a_priori_directory_exclusions)):
             continue
@@ -1751,7 +1751,7 @@ def compile_casacore_tests():
         ],
         do_apriori_exclusions=False
     )
-    CASACORE_TESTS = list(filter(lambda x: '/test/' in x, CASACORE_CC)) 
+    CASACORE_TESTS = list(filter(lambda x: '/test/' in x, CASACORE_CC))
     tmp = []
     for f in CASACORE_TESTS:
         if re.search("^[td].*cc$", os.path.basename(f)):
@@ -1815,13 +1815,13 @@ def compile_casacore_tests():
                 + "-Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include "
                 # -shared causes a segfault
                 + "-lpython3.6m " + dflags + " "
-                + "-o " + exefile + " " + wflags + " " 
+                + "-o " + exefile + " " + wflags + " "
                 + f + " "
             )
             # ommitting POSTCOMPILE for now
             #  + '\n\t$(POSTCOMPILE)')
             # mk.write(
-            #     "\n\n" + test_targ.format(src=f, base=base) 
+            #     "\n\n" + test_targ.format(src=f, base=base)
             # )
             # mk.write("\n" + g_dep_targ.format(base=base))
             # mk.write("\n" + g_dep_targ.format(base=base))
@@ -1831,7 +1831,7 @@ def compile_casacore_tests():
         r = re.compile(os.sep + 'test\.')
         substr = os.sep + 'temp.'
         mydirs = sep.join(
-            list(targdirs) + ["$(DEPDIR)" + os.sep + r.sub(substr, s, 1) 
+            list(targdirs) + ["$(DEPDIR)" + os.sep + r.sub(substr, s, 1)
             for s in targdirs]
         )
         mk.write("\n" + make_test_dirs + ":\n\t@mkdir -p " + mydirs + "\n")
@@ -1863,13 +1863,13 @@ def compile_casacore_tests():
             "\n" + make_tests_targ + ": " + make_test_dirs + " " \
             + make_links_targ + " " + sep.join(exe_list) + "\n"
         )
-        
+
 def location_info(handle, frameinfo):
     handle.write(
         "\n# written from " + str(frameinfo.filename) + " line "
         + str(frameinfo.lineno)
     )
-    
+
 def write_miriad():
     # miriad c files
     MIR_SRC =  source_files( "casacore/mirlib",file_suffix_filter=".c" )
