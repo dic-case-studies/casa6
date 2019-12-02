@@ -45,6 +45,7 @@ configure_file( ${CMAKE_SOURCE_DIR}/python/scripts/init_telemetry.py.in ${CMAKE_
 
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/install )
 
+add_definitions(-DIMPLICIT_CTDS_32BIT)
 add_definitions ("-DUseCasacoreNamespace")
 add_definitions ("-DWITHOUT_BOOST")
 add_definitions(-DUSE_THREADS)                 # new casacore requirement:
