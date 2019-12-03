@@ -2940,6 +2940,14 @@ class simutil:
                 interactive,niter,threshold,weighting,
                 outertaper,pbcor,stokes,sourcefieldlist="",
                 modelimage="",mask=[],dryrun=False):
+        """
+        Wrapper function to call standard CASA imaging task.
+        cleanmode parameter expects the path to a MeasurementSet
+        imsize parameter expects a length-2 list of integers
+        cell parameter expects a length-2 list containing qa.quantity objects
+        interactive and dryrun parameters expect boolean type input
+        other parameters expect input in format compatible with task 'clean'
+        """
 
         # determine channelization from (first) ms:
         if is_array_type(mstoimage):
