@@ -1995,6 +1995,7 @@ class create_makefile(Command):
         # necessary, but it's so quick it's easiest to just do it using the existing
         # python functionality for now
         install_version_header(casatools_major, casatools_minor, casatools_patch, casatools_feature, casatools_version)
+        install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
         generate_config(moduledir, props)
 
         # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files
