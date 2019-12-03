@@ -128,7 +128,7 @@ class statwt_test(unittest.TestCase):
         )
     
     def _check_weights(
-        self, msname, mode, data_column, chan_flags, combine_corr
+        self, msname, row_to_rows, data_column, chan_flags, combine_corr
     ):
         if data_column.startswith('c'):
             colname = 'CORRECTED_DATA'
@@ -136,8 +136,8 @@ class statwt_test(unittest.TestCase):
             colname = 'DATA'
         else:
             raise Exception("Unhandled column spec " + data_column)
-        if not mode.startswith('one'):
-            raise Exception("Unhandled mode")
+        # if not mode.startswith('one'):
+        #    raise Exception("Unhandled mode")
         for ant1 in range(10):
             for ant2 in range((ant1 + 1), 10):
                 query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
@@ -156,13 +156,15 @@ class statwt_test(unittest.TestCase):
                     flags = np.logical_or(flags, t_flags)
                 nrows = data.shape[2]
                 for row in range(nrows):
-                    if mode.startswith('one'):
-                        start = row
-                        end = row+1
-                    if mode.startswith('one'):
-                        start = row
-                        end = row+1
+                    #if mode.startswith('one'):
+                    #    start = row
+                    #    end = row+1
+                    #if mode.startswith('one'):
+                    #    start = row
+                    #    end = row+1
                     # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
+                    start = row_to_rows[row][0]
+                    end = row_to_rows[row][1]
                     weights = get_weights(
                         data[:,:,start:end], flags[:, :, start:end],
                         exposures[start: end], combine_corr, exposures[row]
@@ -193,6 +195,9 @@ class statwt_test(unittest.TestCase):
         cflags = np.array(63 * [False])
         cflags[10:21] = True
         myms = mstool()
+        row_to_rows = []
+        for row in range(60):
+            row_to_rows.append((row, row+1))
         for combine in ["", "corr"]:
             c = 0
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
@@ -215,7 +220,7 @@ class statwt_test(unittest.TestCase):
                         )
                     chan_flags = cflags if fitspw else None
                     self._check_weights(
-                        dst, mode='one_to_one', data_column='c',
+                        dst, row_to_rows=row_to_rows, data_column='c',
                         chan_flags=chan_flags, combine_corr=bool(combine)
                     )
                     shutil.rmtree(dst)
@@ -228,21 +233,86 @@ class statwt_test(unittest.TestCase):
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
         rtol = 1e-7
         combine = "corr"
+        r2r_300 = []
+        for i in range(10):
+            r2r_300.append((0, 10))
+        for i in range(10, 12):
+            r2r_300.append((10, 12))
+        for i in range(12, 17):
+            r2r_300.append((12, 17))
+        for i in range(17, 22):
+            r2r_300.append((17, 22))
+        for i in range(22, 27):
+            r2r_300.append((22, 27))
+        for i in range(27, 32):
+            r2r_300.append((27, 32))
+        r2r_300.append((32, 33))
+        for i in range(33, 35):
+            r2r_300.append((33, 35))
+        for i in range(35, 38):
+            r2r_300.append((35, 38))
+        for i in range(38, 43):
+            r2r_300.append((38, 43))
+        for i in range(43, 48):
+            r2r_300.append((43, 48))
+        for i in range(48, 53):
+            r2r_300.append((48, 53))
+        for i in range(53,56):
+            r2r_300.append((53, 56))
+        for i in range(56, 60):
+            r2r_300.append((56, 60))
+            
+        r2r_10 = []
+        for i in range(10):
+            r2r_10.append((0, 10))
+        for i in range(10, 12):
+            r2r_10.append((2, 12))
+        for i in range(12, 17):
+            r2r_10.append((12, 17))
+        for i in range(17, 27):
+            r2r_10.append((17, 27))
+        for i in range(27, 33):
+            r2r_10.append((23, 33))
+        for i in range(33, 35):
+            r2r_10.append((33, 35))
+        for i in range(35, 38):
+            r2r_10.append((35, 38))
+        for i in range(38, 48):
+            r2r_10.append((38, 48))
+        for i in range(48, 56):
+            r2r_10.append((46, 56))
+        for i in range(56, 60):
+            r2r_10.append((56, 60))
+
         for timebin in ["300s", 10]:
             for i in [0, 1]:
                 shutil.copytree(src, dst) 
                 myms = mstool()
                 if i == 0:
                     myms.open(dst, nomodify=False)
+                    print "aa"
                     myms.statwt(timebin=timebin, combine=combine)
+                    print "ab"
                     myms.done()
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
-                [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
-                self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
-                self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-                self.assertTrue(np.all(np.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
-                self.assertTrue(np.all(np.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
+                if timebin == "300s":
+                    row_to_rows = r2r_300
+                else:
+                    row_to_rows = r2r_10
+                print("row_to_rows", row_to_rows)
+                self._check_weights(
+                    dst, row_to_rows=row_to_rows, data_column='c',
+                    chan_flags=None, combine_corr=True
+                )
+                
+                
+                # [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
+                # self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+                # self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+                # self.assertTrue(np.all(np.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
+                # self.assertTrue(np.all(np.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
+                
                 shutil.rmtree(dst)
 
     def test_chanbin(self):

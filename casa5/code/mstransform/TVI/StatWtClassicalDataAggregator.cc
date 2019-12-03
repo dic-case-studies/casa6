@@ -151,6 +151,10 @@ void StatWtClassicalDataAggregator::aggregate() {
                     flags[blcb](blc, trc) = flagSlice;
                     exposures[blcb][trc[2]] = exposureVector[row];
                 }
+                if (ant1[row] == 0 && ant2[row] == 1) {
+                    cout << "row " << row << endl;
+                    cout << "nrows " << data[blcb].shape()[2] << endl;
+                }
             }
         }
         // cout << __FILE__ << " " << __LINE__ << endl;

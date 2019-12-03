@@ -93,6 +93,66 @@ def _variance2(dr, di, flag, corr, row):
 
 
 class statwt_test(unittest.TestCase):
+    
+    def _check_weights(
+        self, msname, row_to_rows, data_column, chan_flags, combine_corr
+    ):
+        if data_column.startswith('c'):
+            colname = 'CORRECTED_DATA'
+        elif data_column.startswith('d'):
+            colname = 'DATA'
+        else:
+            raise Exception("Unhandled column spec " + data_column)
+        # if not mode.startswith('one'):
+        #    raise Exception("Unhandled mode")
+        for ant1 in range(10):
+            for ant2 in range((ant1 + 1), 10):
+                query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
+                tb = table()
+                tb.open(msname)
+                subt = tb.query(query_str)
+                data = subt.getcol(colname)
+                flags = subt.getcol('FLAG')
+                exposures = subt.getcol('EXPOSURE')
+                wt = subt.getcol('WEIGHT')
+                wtsp = subt.getcol('WEIGHT_SPECTRUM')
+                wt = subt.getcol('WEIGHT')
+                subt.done()
+                tb.done()
+                if type(chan_flags) != type(None):
+                    t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
+                    flags = np.logical_or(flags, t_flags)
+                nrows = data.shape[2]
+                for row in range(nrows):
+                    #if mode.startswith('one'):
+                    #    start = row
+                    #    end = row+1
+                    #if mode.startswith('one'):
+                    #    start = row
+                    #    end = row+1
+                    # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
+                    start = row_to_rows[row][0]
+                    end = row_to_rows[row][1]
+                    weights = get_weights(
+                        data[:,:,start:end], flags[:, :, start:end],
+                        exposures[start: end], combine_corr, exposures[row]
+                    )
+                    self.assertTrue(
+                        np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
+                        + str(wtsp[:, :, row]) + '\nexpected ' + str(weights)
+                        + '\nbaseline ' + str([ant1, ant2])
+                        + '\nrow ' + str(row)
+                    )
+                    self.assertTrue(
+                        np.allclose(np.median(weights, 1), wt[:, row]),
+                        'Failed weight, got ' + str(wt[:, row])
+                        + '\nexpected ' + str(np.median(weights, 1))
+                        + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
+                        + str(row)
+                    )
+
+    
+    """
     def _check_weights(
         self, msname, mode, data_column, chan_flags, combine_corr
     ):
@@ -147,7 +207,7 @@ class statwt_test(unittest.TestCase):
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                         + str(row)
                     )
-
+        """
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
         mytb = table()
@@ -269,8 +329,93 @@ class statwt_test(unittest.TestCase):
                 shutil.rmtree(dst)
                 c += 1
     """           
+    
     def test_timebin(self):
         """ Test time binning"""
+        dst = "ngc5921.split.timebin.ms"
+        ref = datadir + "ngc5921.timebin300s_2.ms.ref"
+        [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
+        rtol = 1e-7
+        combine = "corr"
+        r2r_300 = []
+        for i in range(10):
+            r2r_300.append((0, 10))
+        for i in range(10, 12):
+            r2r_300.append((10, 12))
+        for i in range(12, 17):
+            r2r_300.append((12, 17))
+        for i in range(17, 22):
+            r2r_300.append((17, 22))
+        for i in range(22, 27):
+            r2r_300.append((22, 27))
+        for i in range(27, 32):
+            r2r_300.append((27, 32))
+        r2r_300.append((32, 33))
+        for i in range(33, 35):
+            r2r_300.append((33, 35))
+        for i in range(35, 38):
+            r2r_300.append((35, 38))
+        for i in range(38, 43):
+            r2r_300.append((38, 43))
+        for i in range(43, 48):
+            r2r_300.append((43, 48))
+        for i in range(48, 53):
+            r2r_300.append((48, 53))
+        for i in range(53,56):
+            r2r_300.append((53, 56))
+        for i in range(56, 60):
+            r2r_300.append((56, 60))
+            
+        r2r_10 = []
+        for i in range(10):
+            r2r_10.append((0, 10))
+        for i in range(10, 12):
+            r2r_10.append((2, 12))
+        for i in range(12, 17):
+            r2r_10.append((12, 17))
+        for i in range(17, 27):
+            r2r_10.append((17, 27))
+        for i in range(27, 33):
+            r2r_10.append((23, 33))
+        for i in range(33, 35):
+            r2r_10.append((33, 35))
+        for i in range(35, 38):
+            r2r_10.append((35, 38))
+        for i in range(38, 48):
+            r2r_10.append((38, 48))
+        for i in range(48, 56):
+            r2r_10.append((46, 56))
+        for i in range(56, 60):
+            r2r_10.append((56, 60))
+        for timebin in ["300s", 10]:
+            shutil.copytree(src, dst) 
+            myms = ms()
+            if i == 0:
+                myms.open(dst, nomodify=False)
+                myms.statwt(timebin=timebin, combine=combine)
+                myms.done()
+            if timebin == "300s":
+                row_to_rows = r2r_300
+            else:
+                row_to_rows = r2r_10
+            self._check_weights(
+                dst, row_to_rows=row_to_rows, data_column='c',
+                chan_flags=None, combine_corr=True
+            )
+            
+            
+            # [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
+            # self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+            # self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            # self.assertTrue(np.all(np.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
+            # self.assertTrue(np.all(np.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
+            
+            shutil.rmtree(dst)
+
+    
+    """
+    def test_timebin(self):
+        "" Test time binning""
         dst = "ngc5921.split.timebin.ms"
         ref = os.path.join(datadir,"ngc5921.timebin300s_2.ms.ref")
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
@@ -288,7 +433,7 @@ class statwt_test(unittest.TestCase):
             self.assertTrue(numpy.all(numpy.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
             self.assertTrue(numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
             shutil.rmtree(dst)
-
+    """
     def test_chanbin(self):
         """Test channel binning"""
         dst = "ngc5921.split.chanbin_0.ms"

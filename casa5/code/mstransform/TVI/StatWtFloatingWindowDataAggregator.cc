@@ -110,10 +110,13 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
     std::vector<std::pair<uInt, uInt>> idToChunksNeededByIDMap,
         chunkNeededToIDsThatNeedChunkIDMap;
     _limits(idToChunksNeededByIDMap, chunkNeededToIDsThatNeedChunkIDMap);
+    cout << "idToChunksNeededByIDMap " << idToChunksNeededByIDMap << endl;
+    cout << "chunkNeededToIDsThatNeedChunkIDMap " << chunkNeededToIDsThatNeedChunkIDMap << endl;
     uInt subChunkID = 0;
     // cout << __FILE__ << " " << __LINE__ << endl;
 
     for (_vii->origin(); _vii->more(); _vii->next(), ++subChunkID) {
+        // cout << "subChunkID " << subChunkID << endl;
         // cout << __FILE__ << " " << __LINE__ << endl;
 
         if (_checkFirstSubChunk(spw, firstTime, vb)) {
@@ -142,49 +145,123 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
         // eg if the timewidth is small enough
         // This is the first subchunk ID that should be used for averaging
         // grouping data for weight computation of the current subchunk ID.
-        auto firstChunkNeededByCurrentID = idToChunksNeededByIDMap[subChunkID].first;
-        auto firstChunkThatNeedsCurrentID = chunkNeededToIDsThatNeedChunkIDMap[subChunkID].first;
+        const auto firstChunkNeededByCurrentID = idToChunksNeededByIDMap[subChunkID].first;
+        const auto lastChunkNeededByCurrentID = idToChunksNeededByIDMap[subChunkID].second;
+        const auto firstChunkThatNeedsCurrentID = chunkNeededToIDsThatNeedChunkIDMap[subChunkID].first;
+        //const auto lastChunkThatNeedsCurrentID = chunkNeededToIDsThatNeedChunkIDMap[subChunkID].second;
+        /*
+        cout << "firstChunkNeededByCurrentID " << firstChunkNeededByCurrentID << endl;
+        cout << "firstChunkThatNeedsCurrentID " << firstChunkThatNeedsCurrentID << endl;
+        cout << "idToChunksNeededByIDMap " << idToChunksNeededByIDMap << endl;
+        cout << "chunkNeededToIDsThatNeedChunkIDMap " << chunkNeededToIDsThatNeedChunkIDMap << endl;
+        */
         auto subchunkTime = vb->time()[0];
         auto rowInChunk = subchunkStartRowNum;
         pair<StatWtTypes::Baseline, uInt> mypair;
         mypair.second = subChunkID;
+
         // cout << __FILE__ << " " << __LINE__ << endl;
 
         for (Int row=0; row<nrows; ++row, ++rowInChunk) {
+            // cout << __FILE__ << " " << __LINE__ << endl;
+
             // loop over rows in sub chunk, grouping baseline specific data
             // together
             const auto baseline = _baseline(ant1[row], ant2[row]);
             mypair.first = baseline;
             baselineSubChunkToIndex[mypair] = rowInChunk;
-            std::set<uInt> myRowNums;
-            myRowNums.insert(rowInChunk);
+            std::set<uInt> neededRowNums;
+            neededRowNums.insert(rowInChunk);
+            // cout << __FILE__ << " " << __LINE__ << endl;
             if (subChunkID > 0) {
-                auto subchunk = min(
+
+                auto s = min(
                     firstChunkNeededByCurrentID, firstChunkThatNeedsCurrentID
                 );
-                for (; subchunk < subChunkID; ++subchunk) {
+                // cout << "subchunk start " << subchunk << endl;
+                auto tpair = mypair;
+                for (; s < subChunkID; ++s) {
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
                     const auto myend = baselineSubChunkToIndex.end();
-                    mypair.second = subchunk;
-                    auto testFound = baselineSubChunkToIndex.find(mypair);
-                    if (testFound != myend) {
-                        const auto existingRowNum = testFound->second;
-                        if (subchunk >= firstChunkNeededByCurrentID) {
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
+                    tpair.second = s;
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
+                    const auto iter = baselineSubChunkToIndex.find(tpair);
+                    auto found = iter != myend;
+                    /*
+                    if (ant1[row] == 0 && ant2[row] == 1) {
+                        cout << "s=" << s << " found " << found << endl;
+                    }
+                    */
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
+                    if (found) {
+                        // cout << "map " << baselineSubChunkToIndex << endl;
+                        // cout << "test found " << *testFound << endl;
+                        // cout << __FILE__ << " " << __LINE__ << endl;
+
+                        const auto existingRowNum = iter->second;
+                        // cout << __FILE__ << " " << __LINE__ << endl;
+
+                        if (
+                            s >= firstChunkNeededByCurrentID
+                            && s <= lastChunkNeededByCurrentID
+                        ) {
+                           // cout << __FILE__ << " " << __LINE__ << endl;
+
                             // The subchunk data is needed for computation
                             // of the current subchunkID's weights
-                            myRowNums.insert(existingRowNum);
+                            neededRowNums.insert(existingRowNum);
+                            // cout << __FILE__ << " " << __LINE__ << endl;
+
                         }
-                        if (subchunk >= firstChunkThatNeedsCurrentID) {
+                        // cout << "subchunk " << subchunk << endl;
+                        // cout << "firstChunkThatNeedsCurrentID " << firstChunkThatNeedsCurrentID << endl;
+                        if (
+                            idToChunksNeededByIDMap[s].first <= subChunkID
+                            && idToChunksNeededByIDMap[s].second >= subChunkID
+                        ) {
+                            // cout << __FILE__ << " " << __LINE__ << endl;
+                            // cout << "rowMap size " << rowMap.size() << endl;
+                            // cout << "existingRowNum " << existingRowNum << endl;
+                            // cout << "rowInChunk " << rowInChunk << endl;
+                            // if (rowMap.size() <= existingRowNum) {
+                                // rowMap.resize
+                            // }
                             rowMap[existingRowNum].insert(rowInChunk);
+                            // cout << __FILE__ << " " << __LINE__ << endl;
+
                         }
                     }
+                    // cout << __FILE__ << " " << __LINE__ << endl;
+
                 }
             }
-            rowMap.push_back(myRowNums);
+            // cout << __FILE__ << " " << __LINE__ << endl;
+            rowMap.push_back(neededRowNums);
             // debug
             /*
             if (baseline == Baseline(4, 6)) {
                 auto myrow = rowMap.size() - 1;
                 cout << "row num " << myrow << " included rows " << rowMap[myrow] << endl;
+            }
+            */
+            // cout << __FILE__ << " " << __LINE__ << endl;
+            /*
+            {
+                if (baseline == StatWtTypes::Baseline(0,1)) {
+                    auto debugPair = mypair;
+                    for (uInt pp=0; pp<=subChunkID; ++pp) {
+                        debugPair.second = pp;
+                        auto myrownum = baselineSubChunkToIndex[debugPair];
+                        cout << "pp " << pp << " pair " << debugPair << " myrownum "
+                            << myrownum << endl;
+                        cout << "rowMap[myrownum] " << rowMap[myrownum] << endl;
+                    }
+                }
             }
             */
         }
@@ -242,10 +319,18 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
         }
         subChunkToTimeStamp.push_back(subchunkTime);
         subchunkStartRowNum += nrows;
+
+
+    }
+    /*
+    cout << "rowMap[0] " << rowMap[0] << endl;
+    if (subChunkID > 9) {
+        cout << "rowMap size " << rowMap.size() << endl;
+        cout << "rowMap[550] " << rowMap[550] << endl;
     }
     // cout << "chunkexposres shape " << chunkExposures.shape() << endl;
-    //cout << __FILE__ << " " << __LINE__ << endl;
-
+    cout << __FILE__ << " " << __LINE__ << endl;
+    */
     _computeWeightsMultiLoopProcessing(
         chunkData, chunkFlags, Vector<Double>(exposures), rowMap, spw
     );
@@ -273,12 +358,9 @@ void StatWtFloatingWindowDataAggregator::_computeWeightsMultiLoopProcessing(
         False
     );
     const auto nRows = rowMap.size();
-    /*
-     * DEBUG
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-*/
     for (size_t iRow=0; iRow<nRows; ++iRow) {
         IPosition chunkSliceStart(3, 0);
         auto chunkSliceLength = chunkShape;
@@ -433,11 +515,15 @@ void StatWtFloatingWindowDataAggregator::_limits(
     if (_nTimeStampsInBin) {
         // fixed number of time stamps specified
         if (_timeBlockProcessing) {
+            // cout << "_nTimeStampsInBin && _timeBlockProcessing is True" << endl;
             // integer division
             uInt nBlocks = nTimes/(*_nTimeStampsInBin);
+            // cout << "nTimes " << nTimes << endl;
+            // cout << "*_nTimeStampsInBin " <<  *_nTimeStampsInBin << endl;
             if (nTimes % *_nTimeStampsInBin > 0) {
                 ++nBlocks;
             }
+            // cout << "nBlocks " << nBlocks << endl;
             uInt subChunkCount = 0;
             for (uInt blockCount = 0; blockCount < nBlocks; ++blockCount) {
                 if ((subChunkCount + *_nTimeStampsInBin <= nTimes)) {
@@ -445,8 +531,9 @@ void StatWtFloatingWindowDataAggregator::_limits(
                     p.second = subChunkCount + *_nTimeStampsInBin - 1;
                 }
                 else {
-                    // chunk edge
-                    p.first = nTimes - *_nTimeStampsInBin;
+                    // chunk upper edge
+                    p.first = nTimes < (uInt)*_nTimeStampsInBin
+                        ? 0 : nTimes - *_nTimeStampsInBin;
                     p.second = nTimes - 1;
                 }
                 q = p;
