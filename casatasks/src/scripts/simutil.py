@@ -2965,6 +2965,7 @@ class simutil:
         
         psfmode="clark"
         ftmachine="ft"
+        imagermode="clark" # set default to prevent UnboundLocalError
 
         if cleanmode=="csclean":
             imagermode='csclean'
