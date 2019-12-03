@@ -1127,6 +1127,10 @@ class casa_build_ext(build_ext):
         build_ext.build_extensions(self)
 
     def run(self):
+        print("generating version header...")
+        install_version_header(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+        install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+        
         global a_priori_directory_exclusions
         global a_priori_exclusions
         do_wheel_closure = doing_wheel_build
@@ -1141,9 +1145,6 @@ class casa_build_ext(build_ext):
 
         print("copying xml-casa...")
         install_xml_casa( )
-        print("generating version header...")
-        install_version_header(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
-        install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
 
         build_ext.run(self)
         """
