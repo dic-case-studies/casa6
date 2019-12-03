@@ -36,7 +36,6 @@ else:
     from taskinit import *
     from cleanhelper import cleanhelper
     from tclean import tclean
-    from simutil import is_array_type
 
     # qa doesn't hold state.
     #qatool = casac.homefinder.find_home_by_name('quantaHome')
