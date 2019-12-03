@@ -366,8 +366,7 @@ def install_version_cc( major, minor, patch, feature,  verstr ):
                     .replace("@CASA_VERSION_PATCH@",str(patch))\
                     .replace("@CASA_VERSION_FEATURE@",str(feature))\
                     .replace("@CASA_VARIANT@","")\
-                    .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")\
-                    .replace("@CASATOOLS_VERSION_STRING@",verstr)
+                    .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")
             out.write(l)
 
 def install_xml_casa( ):
