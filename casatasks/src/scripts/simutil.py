@@ -6,11 +6,17 @@ from __future__ import print_function
 import os
 import shutil
 import pylab as pl
+import glob
+import re
+from scipy.stats import scoreatpercentile
+import scipy.special as spspec
+import scipy.signal as spsig
+import scipy.interpolate as spintrp
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
-    from casatasks import casalog
+    from casatasks import casalog, tclean
     tb = table( )
     ia = image( )
     po = imagepol( )
@@ -21,11 +27,16 @@ if is_CASA6:
     cs = coordsys( )
     cl = componentlist( )
     sm = simulator( )
+    from casatasks.private.cleanhelper import cleanhelper
+    from casatasks.private.simutil import is_array_type
 
 else:
     #import casac
     # all I really need is casalog, but how to get it:?
     from taskinit import *
+    from cleanhelper import cleanhelper
+    from tclean import tclean
+    from simutil import is_array_type
 
     # qa doesn't hold state.
     #qatool = casac.homefinder.find_home_by_name('quantaHome')
@@ -868,7 +879,6 @@ class simutil:
         if absent, or '%s ' % epoch if present.  x and y will be angle qa's in
         degrees.
         """
-        import re
         if direction == None:
             direction=self.direction
         if type(direction) == type([]):
@@ -1129,7 +1139,6 @@ class simutil:
             self.msg("Elevation < ALMA limit of 3 deg",priority="error")
             return False
 
-        import glob
         tmpname="tmp"+str(os.getpid())
         i=0
         while i<10 and len(glob.glob(tmpname+"*"))>0:
@@ -2928,11 +2937,10 @@ class simutil:
     # image/clean subtask
 
     def imclean(self,mstoimage,imagename,
-                cleanmode,cell,imsize,imcenter,interactive,niter,threshold,weighting,
-                outertaper,pbcor,stokes,sourcefieldlist="",modelimage="",mask=[],dryrun=False):
-        from clean import clean
-
-        from simutil import is_array_type
+                cleanmode,psfmode,cell,imsize,imcenter,
+                interactive,niter,threshold,weighting,
+                outertaper,pbcor,stokes,sourcefieldlist="",
+                modelimage="",mask=[],dryrun=False):
 
         # determine channelization from (first) ms:
         if is_array_type(mstoimage):
@@ -2969,7 +2977,6 @@ class simutil:
             ftmachine="mosaic" 
 
         # in 3.4 clean doesn't accept just any imsize
-        from cleanhelper import cleanhelper
         optsize=[0,0]
         optsize[0]=cleanhelper.getOptimumSize(imsize[0])
         nksize=len(imsize)
@@ -3551,7 +3558,6 @@ class simutil:
         # freq must be in GHz
         mylengths=self.baselineLengths(configfile)
         rmslength = pl.sqrt(pl.mean(mylengths.flatten()**2))
-        from scipy.stats import scoreatpercentile
         ninety = scoreatpercentile(mylengths, 90)
 
         return 0.2997924/freq/ninety*3600.*180/pl.pi # lambda/b converted to arcsec
@@ -3575,9 +3581,6 @@ class simutil:
         Returns:
            Estimated PSF of image (quantity).
         """
-        import scipy.special as spspec
-        import scipy.signal as spsig
-        import scipy.interpolate as spintrp
         
         if not qa.compare(beam, "rad"):
             raise ValueError("beam should be a quantity of antenna primary beam size (angle)")
