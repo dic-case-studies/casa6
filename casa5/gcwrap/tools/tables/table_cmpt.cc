@@ -33,10 +33,10 @@
 #include <casa/Logging/LogIO.h>
 #include <casa/OS/File.h>
 #include <tools/utils/stdBaseInterface.h>
-#include <tools/table/Statistics.h>
+#include <tools/ms/Statistics.h>
 //begin modification
 //july 4 2007
-#include <tools/table/asdmCasaXMLUtil.h>
+#include <tools/xerces/asdmCasaXMLUtil.h>
 #include <tables/Tables/TableDesc.h>
 #include <tables/Tables/TableIter.h>
 #include <tables/Tables/TableRow.h>

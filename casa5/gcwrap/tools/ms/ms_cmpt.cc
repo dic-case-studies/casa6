@@ -93,7 +93,7 @@
 
 #include <ms_cmpt.h>
 #include <msmetadata_cmpt.h>
-#include <tools/table/Statistics.h>
+#include <tools/ms/Statistics.h>
 
 #include <casa/namespace.h>
 #include <cassert>
