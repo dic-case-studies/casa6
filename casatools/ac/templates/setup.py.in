@@ -192,6 +192,27 @@ if devbranchversion !="":
     casatools_version = '%d.%d.%d.%da%s.dev%s%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,devbranchversion,devbranchrevision,dirty)
 print(casatools_version)
 
+
+def install_version_header( major, minor, patch, feature, verstr ):
+    with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
+        for line in f:
+            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_FEATURE@",str(feature)).replace("@CASATOOLS_VERSION_STRING@",verstr)
+            out.write(l)
+
+def install_version_cc( major, minor, patch, feature,  verstr ):
+    with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
+        for line in f:
+            l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
+                    .replace("@CASA_VERSION_MINOR@",str(minor))\
+                    .replace("@CASA_VERSION_PATCH@",str(patch))\
+                    .replace("@CASA_VERSION_FEATURE@",str(feature))\
+                    .replace("@CASA_VARIANT@","")\
+                    .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")
+            out.write(l)
+
+print("generating version header...")
+install_version_header(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
 ###
 ###  return string discription of the current operating system, e.g.
 ###
@@ -351,23 +372,6 @@ def so_version( ):
     y=(delta>>8)&0xff
     x=(delta>>16)&0xffff
     return "%d.%d.%d" % (x,y,z)
-
-def install_version_header( major, minor, patch, feature, verstr ):
-    with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
-        for line in f:
-            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_FEATURE@",str(feature)).replace("@CASATOOLS_VERSION_STRING@",verstr)
-            out.write(l)
-
-def install_version_cc( major, minor, patch, feature,  verstr ):
-    with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
-        for line in f:
-            l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
-                    .replace("@CASA_VERSION_MINOR@",str(minor))\
-                    .replace("@CASA_VERSION_PATCH@",str(patch))\
-                    .replace("@CASA_VERSION_FEATURE@",str(feature))\
-                    .replace("@CASA_VARIANT@","")\
-                    .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")
-            out.write(l)
 
 def install_xml_casa( ):
     script = os.path.join('scripts','xml-casa')
@@ -1127,9 +1131,6 @@ class casa_build_ext(build_ext):
         build_ext.build_extensions(self)
 
     def run(self):
-        print("generating version header...")
-        install_version_header(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
-        install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
         
         global a_priori_directory_exclusions
         global a_priori_exclusions
@@ -1995,8 +1996,8 @@ class create_makefile(Command):
         # Generation of various files. This can probably be done in make, if really
         # necessary, but it's so quick it's easiest to just do it using the existing
         # python functionality for now
-        install_version_header(casatools_major, casatools_minor, casatools_patch, casatools_feature, casatools_version)
-        install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+        #install_version_header(casatools_major, casatools_minor, casatools_patch, casatools_feature, casatools_version)
+        #install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
         generate_config(moduledir, props)
 
         # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files
