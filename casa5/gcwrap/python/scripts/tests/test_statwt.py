@@ -22,19 +22,30 @@ src = datadir + 'ngc5921.split_2.ms'
 # by the baseline query
 # In the chan_flags, a value of False means the channel is good (not flagged)
 # so should be used. It follows the convention of the FLAGS column in the MS.
-def get_weights(data, flags, exposures, combine_corr, target_exposure):  
+def get_weights(
+        data, flags, exposures, combine_corr, target_exposure,
+        chanbins
+    ):  
     shape = data.shape
     ncorr_groups = 1 if combine_corr else shape[0]
+    nchanbins = 1 if chanbins is None else len(chanbins)
+    tchanbins = chanbins
+    if nchanbins == 1:
+        tchanbins = [[0, shape[1]]]
     ncorr = shape[0]
     weights = np.zeros([shape[0], shape[1]])
     nrows = data.shape[2]
     for corr in range(ncorr_groups):
-        end = corr + 1 if ncorr_groups > 1 else ncorr + 1
-        var = variance(data[corr:end, :, :], flags[corr:end, :, :], exposures)
-        if var == 0:
-            weights[corr:end, :] = 0 
-        else:
-            weights[corr:end, :] = target_exposure/var
+        end_corr = corr + 1 if ncorr_groups > 1 else ncorr + 1
+        for cb in tchanbins:
+            var = variance(
+                data[corr:end_corr, cb[0]:cb[1], :],
+                flags[corr:end_corr, cb[0]:cb[1], :], exposures
+            )
+            if var == 0:
+                weights[corr:end_corr, cb[0]:cb[1]] = 0 
+            else:
+                weights[corr:end_corr, cb[0]:cb[1]] = target_exposure/var
     return weights
 
 def variance(data, flags, exposures):
@@ -128,7 +139,8 @@ class statwt_test(unittest.TestCase):
         )
     
     def _check_weights(
-        self, msname, row_to_rows, data_column, chan_flags, combine_corr
+        self, msname, row_to_rows, data_column, chan_flags,
+        combine_corr, chanbins
     ):
         if data_column.startswith('c'):
             colname = 'CORRECTED_DATA'
@@ -167,7 +179,8 @@ class statwt_test(unittest.TestCase):
                     end = row_to_rows[row][1]
                     weights = get_weights(
                         data[:,:,start:end], flags[:, :, start:end],
-                        exposures[start: end], combine_corr, exposures[row]
+                        exposures[start: end], combine_corr, exposures[row],
+                        chanbins
                     )
                     self.assertTrue(
                         np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
@@ -221,7 +234,8 @@ class statwt_test(unittest.TestCase):
                     chan_flags = cflags if fitspw else None
                     self._check_weights(
                         dst, row_to_rows=row_to_rows, data_column='c',
-                        chan_flags=chan_flags, combine_corr=bool(combine)
+                        chan_flags=chan_flags, combine_corr=bool(combine),
+                        chanbins=None
                     )
                     shutil.rmtree(dst)
                 c += 1               
@@ -229,9 +243,9 @@ class statwt_test(unittest.TestCase):
     def test_timebin(self):
         """ Test time binning"""
         dst = "ngc5921.split.timebin.ms"
-        ref = datadir + "ngc5921.timebin300s_2.ms.ref"
-        [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
-        rtol = 1e-7
+        # ref = datadir + "ngc5921.timebin300s_2.ms.ref"
+        # [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
+        # rtol = 1e-7
         combine = "corr"
         r2r_300 = []
         for i in range(10):
@@ -303,7 +317,7 @@ class statwt_test(unittest.TestCase):
                 print("row_to_rows", row_to_rows)
                 self._check_weights(
                     dst, row_to_rows=row_to_rows, data_column='c',
-                    chan_flags=None, combine_corr=True
+                    chan_flags=None, combine_corr=True, chanbins=None
                 )
                 
                 

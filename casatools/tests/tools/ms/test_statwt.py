@@ -220,6 +220,9 @@ class statwt_test(unittest.TestCase):
         cflags = np.array(63 * [False])
         cflags[10:21] = True
         myms = ms()
+        row_to_rows = []
+        for row in range(60):
+            row_to_rows.append((row, row+1))
         for combine in ["", "corr"]:
             c = 0
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
@@ -234,9 +237,15 @@ class statwt_test(unittest.TestCase):
                 myms.done()
                 chan_flags = cflags if fitspw else None
                 self._check_weights(
+                    dst, row_to_rows=row_to_rows, data_column='c',
+                    chan_flags=chan_flags, combine_corr=bool(combine)
+                )
+                """
+                self._check_weights(
                     dst, mode='one_to_one', data_column='c',
                     chan_flags=chan_flags, combine_corr=bool(combine)
                 )
+                """
                 shutil.rmtree(dst)
                 c += 1               
 
@@ -333,9 +342,9 @@ class statwt_test(unittest.TestCase):
     def test_timebin(self):
         """ Test time binning"""
         dst = "ngc5921.split.timebin.ms"
-        ref = datadir + "ngc5921.timebin300s_2.ms.ref"
-        [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
-        rtol = 1e-7
+        # ref = datadir + "ngc5921.timebin300s_2.ms.ref"
+        # [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
+        # rtol = 1e-7
         combine = "corr"
         r2r_300 = []
         for i in range(10):
@@ -390,10 +399,9 @@ class statwt_test(unittest.TestCase):
         for timebin in ["300s", 10]:
             shutil.copytree(src, dst) 
             myms = ms()
-            if i == 0:
-                myms.open(dst, nomodify=False)
-                myms.statwt(timebin=timebin, combine=combine)
-                myms.done()
+            myms.open(dst, nomodify=False)
+            myms.statwt(timebin=timebin, combine=combine)
+            myms.done()
             if timebin == "300s":
                 row_to_rows = r2r_300
             else:
