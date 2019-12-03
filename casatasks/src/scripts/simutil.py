@@ -2940,12 +2940,15 @@ class simutil:
                 outertaper,pbcor,stokes,sourcefieldlist="",
                 modelimage="",mask=[],dryrun=False):
         """
-        Wrapper function to call standard CASA imaging task.
-        cleanmode parameter expects the path to a MeasurementSet
+        Wrapper function to call CASA imaging task 'clean' on a MeasurementSet
+        mstoimage parameter expects the path to a MeasurementSet
         imsize parameter expects a length-2 list of integers
         cell parameter expects a length-2 list containing qa.quantity objects
         interactive and dryrun parameters expect boolean type input
-        other parameters expect input in format compatible with task 'clean'
+        Other parameters expect input in format compatible with 'clean'
+
+        No returns
+        Creates a 'clean.last' file in addition to outputs of task 'clean'
         """
 
         # determine channelization from (first) ms:
@@ -3141,6 +3144,30 @@ class simutil:
             del freq,nchan # something is holding onto the ms in table cache
 
 
+
+
+
+    ##################################################################
+    # image/tclean subtask
+
+    def imtclean(self, ms_to_image, image_name,
+                 gridder, deconvolver,
+                 cell, imsize, imdirection,
+                 interactive, niter, threshold, weighting,
+                 outertaper, pbcor, stokes, sourcefieldlist="",
+                 modelimage="", mask=[], dryrun=False):
+        """
+        Wrapper function for Radio Interferometric Image Reconstruction from
+        input MeasurementSet using standard CASA imaging task ('tclean'). 
+
+        Duplicates the method "imclean" but with non-deprecated task call.
+
+        ms_to_image parameter expects the path to a MeasurementSet
+        image_name parameter expects string for output image file
+
+        Just like imclean, does not yield return object
+        Creates a 'tclean.last' file in addition to normal outputs of that task
+        """
 
 
 
