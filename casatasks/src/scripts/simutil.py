@@ -3152,7 +3152,7 @@ class simutil:
     # image/tclean subtask
 
     def imtclean(self, ms_to_image, image_name,
-                 gridder, deconvolver="clark",
+                 gridder, deconvolver,
                  cell, imsize, imdirection,
                  interactive, niter, threshold, weighting,
                  outertaper, pbcor, stokes,
