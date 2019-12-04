@@ -3290,7 +3290,7 @@ class simutil:
                 if i.startswith('<') and s.endswith('>'):
                     f.write("{:<20!s} = {!s}\n".format(i, "None"))
                 else:
-                    f.write("{:<20!s} = {name!r}\n".format(i, invocation_parameti]))
+                    f.write("{:<20!s} = {name!r}\n".format(i, invocation_parameters[i]))
             # next, open and fill the task call
             f.write("#tclean( ")
             count = 0

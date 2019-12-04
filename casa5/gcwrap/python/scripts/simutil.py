@@ -3298,7 +3298,7 @@ class simutil:
                 if i.startswith('<') and s.endswith('>'):
                     f.write("{!s}={!s}".format(i, "None"))
                 else:
-                    f.write("{!s}={!r}".format(i, invocation_parameters[i]))
+                    f.write("{:<20!s} = {name!r}\n".format(i, invocation_parameters[i]))
                 count += 1
                 if count < len(invocation_parameters): f.write(",")
             # finally close the task call
