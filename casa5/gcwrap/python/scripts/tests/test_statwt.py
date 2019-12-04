@@ -129,25 +129,9 @@ def _variance2(dr, di, flag, corr, row):
         return 2/(vr + vi)
 """
 
+
+
 class statwt_test(unittest.TestCase):
-    
-    """
-    def do_row(
-        self, row, ant1, ant2, data, flags, exposures, wtsp, combine_corr,
-        target_exposure
-    ):
-        weights = get_weights(
-            data, flags,
-            exposures, combine_corr, target_exposure
-        )
-        new_weights = np.expand_dims(weights, 2)
-        self.assertTrue(
-            np.allclose(new_weights, wtsp), 'Failed wtsp, got '
-            + str(wtsp) + '\nexpected ' + str(new_weights)
-            + '\nbaseline ' + str([ant1, ant2])
-            + '\nrow ' + str(row)
-        )
-    """
     
     def _check_weights(
         self, msname, row_to_rows, data_column, chan_flags,
@@ -179,13 +163,6 @@ class statwt_test(unittest.TestCase):
                     flags = np.logical_or(flags, t_flags)
                 nrows = data.shape[2]
                 for row in range(nrows):
-                    #if mode.startswith('one'):
-                    #    start = row
-                    #    end = row+1
-                    #if mode.startswith('one'):
-                    #    start = row
-                    #    end = row+1
-                    # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
                     start = row_to_rows[row][0]
                     end = row_to_rows[row][1]
                     weights = get_weights(
@@ -206,6 +183,22 @@ class statwt_test(unittest.TestCase):
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                         + str(row)
                     )
+
+    def compare(self, dst, ref):
+        mytb = tbtool()
+        mytb.open(dst)
+        [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
+        mytb.done()
+        mytb.open(ref)
+        [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
+        mytb.done()
+        self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
+        self.assertTrue(
+            np.allclose(gwtsp, ewtsp),
+            'WEIGHT_SPECTRUM comparison failed'
+        )
+        self.assertTrue((gflag == eflag).all(), 'FLAG comparison failed')
+        self.assertTrue((gfrow == efrow).all(), 'FLAG_ROW comparison failed')
 
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
@@ -243,24 +236,6 @@ class statwt_test(unittest.TestCase):
                             excludechans=excludechans
                         )
                     chan_flags = cflags if fitspw else None
-                    # self._check_weights(
-                    #    dst, row_to_rows=row_to_rows, data_column='c',
-                    #    chan_flags=chan_flags, combine_corr=bool(combine),
-                    #    chanbins=None
-                    #)
-                    mytb.open(dst)
-                    print(mytb.name())
-                    # gotflag = mytb.getcol("FLAG")
-                    # gotfrow = mytb.getcol("FLAG_ROW")
-                    [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
-                    mytb.done()
-                    #self.assertTrue(
-                    #    (gotflag == expflag).all(), "FLAG comparison failed"
-                    #)
-                    #self.assertTrue(
-                    #    (gotfrow == expfrow).all(),
-                    #    "FLAG_ROW comparison failed"
-                    #)
                     if combine == '':
                         if fitspw == '':
                             ref = datadir + 'ref_test_algorithm_sep_corr_no_fitspw.ms'
@@ -271,128 +246,42 @@ class statwt_test(unittest.TestCase):
                             ref = datadir + 'ref_test_algorithm_combine_corr_no_fitspw.ms'
                         else:
                             ref = datadir + 'ref_test_algorithm_combine_corr_has_fitspw.ms'
-                    mytb.open(ref)
-                    [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
-                    mytb.done()
-                    self.assertTrue(
-                        np.allclose(gwt, ewt), 'WEIGHT comparison failed'
-                    )
-                    self.assertTrue(
-                        np.allclose(gwtsp, ewtsp),
-                        'WEIGHT_SPECTRUM comparison failed'
-                    )
-                    self.assertTrue(
-                        (gflag == eflag).all(), 'FLAG comparison failed'
-                    )
-                    self.assertTrue(
-                        (gfrow == efrow).all(), 'FLAG_ROW comparison failed'
-                    )
+                    self.compare(dst, ref)
                     shutil.rmtree(dst)
                 c += 1               
 
     def test_timebin(self):
         """ Test time binning"""
         dst = "ngc5921.split.timebin.ms"
-        # ref = datadir + "ngc5921.timebin300s_2.ms.ref"
-        # [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
-        # rtol = 1e-7
         combine = "corr"
-        r2r_300 = []
-        for i in range(10):
-            r2r_300.append((0, 10))
-        for i in range(10, 12):
-            r2r_300.append((10, 12))
-        for i in range(12, 17):
-            r2r_300.append((12, 17))
-        for i in range(17, 22):
-            r2r_300.append((17, 22))
-        for i in range(22, 27):
-            r2r_300.append((22, 27))
-        for i in range(27, 32):
-            r2r_300.append((27, 32))
-        r2r_300.append((32, 33))
-        for i in range(33, 35):
-            r2r_300.append((33, 35))
-        for i in range(35, 38):
-            r2r_300.append((35, 38))
-        for i in range(38, 43):
-            r2r_300.append((38, 43))
-        for i in range(43, 48):
-            r2r_300.append((43, 48))
-        for i in range(48, 53):
-            r2r_300.append((48, 53))
-        for i in range(53,56):
-            r2r_300.append((53, 56))
-        for i in range(56, 60):
-            r2r_300.append((56, 60))
-            
-        r2r_10 = []
-        for i in range(10):
-            r2r_10.append((0, 10))
-        for i in range(10, 12):
-            r2r_10.append((2, 12))
-        for i in range(12, 17):
-            r2r_10.append((12, 17))
-        for i in range(17, 27):
-            r2r_10.append((17, 27))
-        for i in range(27, 33):
-            r2r_10.append((23, 33))
-        for i in range(33, 35):
-            r2r_10.append((33, 35))
-        for i in range(35, 38):
-            r2r_10.append((35, 38))
-        for i in range(38, 48):
-            r2r_10.append((38, 48))
-        for i in range(48, 56):
-            r2r_10.append((46, 56))
-        for i in range(56, 60):
-            r2r_10.append((56, 60))
-
         for timebin in ["300s", 10]:
             for i in [0, 1]:
                 shutil.copytree(src, dst) 
                 myms = mstool()
                 if i == 0:
                     myms.open(dst, nomodify=False)
-                    print "aa"
                     myms.statwt(timebin=timebin, combine=combine)
-                    print "ab"
                     myms.done()
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
-                if timebin == "300s":
-                    row_to_rows = r2r_300
-                else:
-                    row_to_rows = r2r_10
-                print("row_to_rows", row_to_rows)
-                self._check_weights(
-                    dst, row_to_rows=row_to_rows, data_column='c',
-                    chan_flags=None, combine_corr=True, chanbins=None
-                )
-                
-                
-                # [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
-                # self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
-                # self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-                # self.assertTrue(np.all(np.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
-                # self.assertTrue(np.all(np.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
-                
+                ref = datadir + 'ref_test_timebin_' + str(timebin) + '.ms'
+                self.compare(dst, ref)
                 shutil.rmtree(dst)
 
     def test_chanbin(self):
         """Test channel binning"""
         dst = "ngc5921.split.chanbin_0.ms"
-        rtol = 1e-7
+        # rtol = 1e-7
+        row_to_rows = []
+        for i in range(60):
+            row_to_rows.append([i, i+1])
+        bins = [
+            [0, 8], [8, 16], [16, 24], [24, 32], [32, 40], [40, 48],
+            [48, 56], [56,63]
+        ]
         for combine in ["", "corr"]:
-            if combine == "":
-                ref = datadir + "ngc5921.chanbin_sepcorr_2.ms.ref"
-            else:
-                ref = datadir + "ngc5921.chanbin_combcorr_2.ms.ref"
-            [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
             for i in [0, 1, 2]:
                 for chanbin in ["195.312kHz", 8]:
-                    if i == 2 and (combine == "corr" or chanbin == 8):
-                        continue
                     shutil.copytree(src, dst)
                     if i == 0:
                         myms = mstool()
@@ -405,22 +294,22 @@ class statwt_test(unittest.TestCase):
                         # check WEIGHT_SPECTRUM is created, only check once,
                         # this test is long as it is
                         # shutil.copytree(src, dst)
-                        mytb = tbtool()
-                        mytb.open(dst, nomodify=False)
-                        x = mytb.ncols()
-                        self.assertTrue(mytb.removecols("WEIGHT_SPECTRUM"), "column not removed")
-                        y = mytb.ncols()
-                        self.assertTrue(y == x-1, "wrong number of columns")
-                        mytb.done()
-                        myms = mstool()
-                        myms.open(dst, nomodify=False)
-                        myms.statwt(chanbin=chanbin, combine=combine)
-                        myms.done()
-                    [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
-                    self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
-                    self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-                    self.assertTrue(np.all(np.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match")
-                    self.assertTrue(np.all(np.isclose(tstwtsp, refwtsp, rtol)), "WEIGHT_SPECTRUMs don't match")
+                        if combine == '' and chanbin == 8:
+                            mytb = tbtool()
+                            mytb.open(dst, nomodify=False)
+                            x = mytb.ncols()
+                            self.assertTrue(mytb.removecols("WEIGHT_SPECTRUM"), "column not removed")
+                            y = mytb.ncols()
+                            self.assertTrue(y == x-1, "wrong number of columns")
+                            mytb.done()
+                            myms = mstool()
+                            myms.open(dst, nomodify=False)
+                            myms.statwt(chanbin=chanbin, combine=combine)
+                            myms.done()
+                    if combine == '':
+                        ref = datadir + 'ref_test_chanbin_sep_corr.ms'
+                    else:
+                        ref = datadir + 'ref_test_chanbin_combine_corr.ms'
                     shutil.rmtree(dst)
 
     def test_minsamp(self):
