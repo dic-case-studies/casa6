@@ -588,8 +588,10 @@ def simanalyze(
             # set cleanmode automatically (for interfm)
             if nfld == 1:
                 cleanmode = "csclean"
+                gridder = "standard"
             else:
                 cleanmode = "mosaic"
+                gridder = "mosaic"
 
 
 
@@ -607,6 +609,7 @@ def simanalyze(
             if not myutil.isdirection(imdirection,halt=False):
                 imdirection=model_refdir
         
+            #myutil.imtclean(mstoimage,imagename,gridder,deconvolver,cell,imsize,imdirection,interactive,niter,threshold,weighting,outertaper,pbcor,stokes,modelimage=modelimage,mask=mask,dryrun=dryrun)
             myutil.imclean(mstoimage,imagename,
                          cleanmode,cell,imsize,imdirection,
                          interactive,niter,threshold,weighting,
