@@ -3152,19 +3152,26 @@ class simutil:
     # image/tclean subtask
 
     def imtclean(self, ms_to_image, image_name,
-                 gridder, deconvolver,
+                 gridder, deconvolver="clark",
                  cell, imsize, imdirection,
                  interactive, niter, threshold, weighting,
-                 outertaper, pbcor, stokes, sourcefieldlist="",
+                 outertaper, pbcor, stokes,
                  modelimage="", mask=[], dryrun=False):
         """
         Wrapper function for Radio Interferometric Image Reconstruction from
         input MeasurementSet using standard CASA imaging task ('tclean'). 
 
         Duplicates the method "imclean" but with non-deprecated task call.
+        Selecting individual fields for imaging is not supported
 
-        ms_to_image parameter expects the path to a MeasurementSet
+        ms_to_image parameter expects the path to a MeasurementSet, 
+        or list of MeasurementSets
+        
         image_name parameter expects string for output image file
+
+        imsize parameter expects a length-1 or length-2 list of integers
+
+        cell parameter expects a length-2 list containing qa.quantity objects
 
         Just like imclean, does not yield return object
         Creates a 'tclean.last' file in addition to normal outputs of that task
@@ -3172,41 +3179,90 @@ class simutil:
         
         invocation_parameters = OrderedDict( )
 
-        # determine channelization
+        # use the first provided MS to determine channelization for output
+        if is_array_type(ms_to_image):
+            ms0 = ms_to_image[0]
+            if len(ms_to_image) == 1:
+                ms_to_image = ms_to_image[0]
+        else:
+            ms0 = ms_to_image
 
-        # define tclean call defaults for simanalyze
-        # top-level parameters (no parent nodes)
+        if os.path.exists(ms0):
+            tb.open(ms0 + "/SPECTRAL_WINDOW")
+            if tb.nrows() > 1:
+                self.msg("Detected more than one SPW in " + ms0,
+                         priority="info", origin="simutil")
+                self.msg("Determining output cube parameters using " +
+                         "first SPW present in " + ms0,
+                         priority="info", origin="simutil")
+            freq=tb.getvarcol("CHAN_FREQ")['r1']
+            nchan=freq.size
+            tb.done()
+        elif dryrun:
+            nchan=1 # duplicate imclean method
+            self.msg("nchan > 1 is not supported for dryrun = True",
+                         priority="info", origin="simutil")
+
+        if nchan == 1:
+            chanmode = 'mfs'
+        else:
+            chanmode = 'cube'
+
+        # next, define tclean call defaults
+
+        # legacy comparison of image size input against heuristic
+        optsize = [0,0]
+        optsize[0] = cleanhelper.getOptimumSize(imsize[0])
+        if len(imsize) == 1: # user expects square output images
+            optsize[1]=optsize[0]
+        else:
+            optsize[1]=cleanhelper.getOptimumSize(imsize[1])
+        if((optsize[0] != imsize[0]) or 
+           (len(imsize) != 1 and optsize[1] != imsize[1])):
+            imsize = optsize
+            self.msg(str(imsize)+" is not an acceptable imagesize, " +
+                     " using imsize=" + str(optsize) + " instead",
+                     priority="warn", origin="simutil")
+
+        # since the cell parameter expects a list of qa.quantity objects,
+        # it must be converted to a string for storage in the tclean.last file
+        cellstr = ("['" + 
+                   str(cell[0]['value']) + str(cell[0]['unit']) + "','" + 
+                   str(cell[1]['value']) + str(cell[1]['unit']) + 
+                   "']")
+
+        # set tclean top-level parameters (no parent nodes)
         invocation_parameters['vis'] = ms_to_image
         invocation_parameters['selectdata'] = False
         invocation_parameters['imagename'] = image_name
-        invocation_parameters['imsize'] = []
-        invocation_parameters['cell'] = []
+        invocation_parameters['imsize'] = imsize
+        invocation_parameters['cell'] = cellstr
         invocation_parameters['phasecenter'] = imdirection
-        invocation_parameters['stokes'] = 'I'
+        invocation_parameters['stokes'] = stokes
         invocation_parameters['startmodel'] = modelimage
-        invocation_parameters['specmode'] = ''
-        invocation_parameters['gridder'] = 'standard'
-        invocation_parameters['deconvolver'] = 'hogbom'
+        invocation_parameters['specmode'] = chanmode
+        invocation_parameters['gridder'] = gridder
+        invocation_parameters['deconvolver'] = deconvolver
         invocation_parameters['restoration'] = True
         invocation_parameters['outlierfile'] = ''
-        invocation_parameters['weighting'] = 'natural'
-        invocation_parameters['niter'] = 0
+        invocation_parameters['weighting'] = weighting
+        invocation_parameters['niter'] = niter
         invocation_parameters['usemask'] = 'user'
-        invocation_parameters['fastnoise'] = 
-        invocation_parameters['restart'] = 
-        invocation_parameters['savemodel'] = 
+        invocation_parameters['fastnoise'] = True
+        invocation_parameters['restart'] = True
+        invocation_parameters['savemodel'] = 'none'
         invocation_parameters['calcres'] = True
         invocation_parameters['calcpsf'] = True
         invocation_parameters['parallel'] = False
 
         # subparameters
-        invocation_parameters['field'] = sourcefieldlist
         invocation_parameters['restoringbeam'] = []
         invocation_parameters['pbcor'] = True
-        invocation_parameters['uvtaper'] = [] # outertaper 
-        invocation_parameters['threshold'] = 0.0
-        invocation_parameters['interactive'] = True
-        invocation_parameters['mask'] = ''
+        invocation_parameters['uvtaper'] = outertaper 
+        if niter > 0:
+            invocation_parameters['threshold'] = threshold
+            invocation_parameters['interactive'] = interactive
+        invocation_parameters['mask'] = mask
         invocation_parameters['pbmask'] = 0.0
 
         # write the tclean.last file (template in case of dryrun=True)
@@ -3250,7 +3306,15 @@ class simutil:
                 f.write(" )\n")
         except:
             self.msg("Error writing 'tclean.last' file",
-                     priority="warn",origin="simutil")
+                     priority="warn", origin="simutil")
+
+        # gather tclean task call by attempting to parse the file just created
+        if self.verbose:
+            self.msg('tclean task call',
+                     priority="warn", origin="simutil")
+        else:
+            self.msg('tclean task call',
+                     priority="info", origin="simutil")
 
         # now that the tclean call is specified, it may be executed
         if not dryrun:
