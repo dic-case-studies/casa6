@@ -739,7 +739,11 @@ public:
                 }
                 j++;
             }
-            nParams = i;
+            if (i==0) {
+                throw(AipsError("No parameters specified!"));
+            }
+            nParams = i; // There's always at least one parameter!
+            
             // cerr << "AuxParamBundle reftime " << reftime << " t0 " << t0 <<" dt " << tlast - t0 << endl;
         }
 
@@ -1243,8 +1247,6 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
     Double sumwt = 0;
     size_t numant3 = param->size;
 
-    std::cerr << "Starting hessian" << std::endl;
-    
     for (Int ibuf=0; ibuf < sdbs.nSDB(); ibuf++)
     {
         SolveDataBuffer& s (sdbs(ibuf));
@@ -1664,6 +1666,8 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
         size_t n = 2 * bundle.get_num_data_points();
 
         if (DEVDEBUG) {
+            cerr << "bundle.nParameters() " << bundle.nParameters()
+                 << " bundle.get_num_antennas() " <<bundle.get_num_antennas() << endl;
             cerr << "p " << p << " n " << n << endl;
         }
         // Parameters for the least-squares solver.
