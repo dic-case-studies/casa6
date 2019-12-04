@@ -76,6 +76,7 @@ def _get_table_cols(mytb):
     data = mytb.getcol("CORRECTED_DATA")
     return [times, wt, wtsp, flag, frow, data]
 
+"""
 # combine correlations
 def _variance(dr, di, flag, row):
     fr = numpy.extract(numpy.logical_not(flag[:,:,row]), dr[:,:,row])
@@ -97,7 +98,7 @@ def _variance2(dr, di, flag, corr, row):
         vr = numpy.var(fr, ddof=1)
         vi = numpy.var(fi, ddof=1)
         return 2/(vr + vi)
-
+"""
 
 class statwt_test(unittest.TestCase):
     def _check_weights(
@@ -214,8 +215,88 @@ class statwt_test(unittest.TestCase):
                         + str(row)
                     )
     """
+    
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
+        mytb = table()
+        mytb.open(src)
+        expflag = mytb.getcol("FLAG")
+        expfrow = mytb.getcol("FLAG_ROW")
+        mytb.done()
+        dst = "ngc5921.split.ms"
+        # rtol = 1e-7
+        cflags = np.array(63 * [False])
+        cflags[10:21] = True
+        myms = ms()
+        row_to_rows = []
+        for row in range(60):
+            row_to_rows.append((row, row+1))
+        for combine in ["", "corr"]:
+            c = 0
+            for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
+                # for i in [0,1]:
+                shutil.copytree(ctsys.resolve(src), dst)
+                # shutil.copytree(src, dst) 
+                excludechans = c == 2
+                # myms.open(dst, nomodify=False)
+                statwt(
+                    dst, combine=combine, fitspw=fitspw,
+                    excludechans=excludechans
+                )
+                # myms.done()
+                chan_flags = cflags if fitspw else None
+                # self._check_weights(
+                #    dst, row_to_rows=row_to_rows, data_column='c',
+                #    chan_flags=chan_flags, combine_corr=bool(combine),
+                #    chanbins=None
+                #)
+                mytb.open(dst)
+                # gotflag = mytb.getcol("FLAG")
+                # gotfrow = mytb.getcol("FLAG_ROW")
+                [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
+                mytb.done()
+                #self.assertTrue(
+                #    (gotflag == expflag).all(), "FLAG comparison failed"
+                #)
+                #self.assertTrue(
+                #    (gotfrow == expfrow).all(),
+                #    "FLAG_ROW comparison failed"
+                #)
+                if combine == '':
+                    if fitspw == '':
+                        ref = 'ref_test_algorithm_sep_corr_no_fitspw.ms'
+                    else: 
+                        ref = 'ref_test_algorithm_sep_corr_fitspw.ms'
+                else:
+                    if fitspw == '':
+                        ref = 'ref_test_algorithm_combine_corr_no_fitspw.ms'
+                    else:
+                        ref = 'ref_test_algorithm_combine_corr_has_fitspw.ms'
+                ref = os.path.join(datadir, ref)
+                print ('ref', ref)
+                mytb.open(ref)
+                [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
+                mytb.done()
+                self.assertTrue(
+                    np.allclose(gwt, ewt), 'WEIGHT comparison failed'
+                )
+                self.assertTrue(
+                    np.allclose(gwtsp, ewtsp),
+                    'WEIGHT_SPECTRUM comparison failed'
+                )
+                self.assertTrue(
+                    (gflag == eflag).all(), 'FLAG comparison failed'
+                )
+                self.assertTrue(
+                    (gfrow == efrow).all(), 'FLAG_ROW comparison failed'
+                )
+                shutil.rmtree(dst)
+                c += 1               
+
+    
+    """
+    def test_algorithm(self):
+        "" Test the algorithm, includes excludechans tests""
         mytb = table()
         mytb.open(src)
         expflag = mytb.getcol("FLAG")
@@ -242,14 +323,21 @@ class statwt_test(unittest.TestCase):
                     dst, row_to_rows=row_to_rows, data_column='c',
                     chan_flags=chan_flags, combine_corr=bool(combine)
                 )
-                """
-                self._check_weights(
-                    dst, mode='one_to_one', data_column='c',
-                    chan_flags=chan_flags, combine_corr=bool(combine)
+                mytb.open(dst)
+                gotflag = mytb.getcol("FLAG")
+                gotfrow = mytb.getcol("FLAG_ROW")
+                mytb.done()
+                self.assertTrue(
+                    (gotflag == expflag).all(), "FLAG comparison failed"
                 )
-                """
+                self.assertTrue(
+                    (gotfrow == expfrow).all(),
+                    "FLAG_ROW comparison failed"
+                )
                 shutil.rmtree(dst)
                 c += 1 
+    """            
+    
     """
     def test_algorithm(self):
         "" Test the algorithm, includes fitspw, excludechans tests""

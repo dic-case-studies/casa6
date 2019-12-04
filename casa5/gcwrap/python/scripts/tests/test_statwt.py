@@ -22,6 +22,9 @@ src = datadir + 'ngc5921.split_2.ms'
 # by the baseline query
 # In the chan_flags, a value of False means the channel is good (not flagged)
 # so should be used. It follows the convention of the FLAGS column in the MS.
+
+# EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
+# IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
 def get_weights(
         data, flags, exposures, combine_corr, target_exposure,
         chanbins
@@ -48,6 +51,8 @@ def get_weights(
                 weights[corr:end_corr, cb[0]:cb[1]] = target_exposure/var
     return weights
 
+# EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
+# IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
 def variance(data, flags, exposures):
     if flags.all():
         return 0
@@ -98,6 +103,7 @@ def _get_table_cols(mytb):
     data = mytb.getcol("CORRECTED_DATA")
     return [times, wt, wtsp, flag, frow, data]
 
+"""
 # combine correlations
 def _variance(dr, di, flag, row):
     fr = np.extract(np.logical_not(flag[:,:,row]), dr[:,:,row])
@@ -108,7 +114,9 @@ def _variance(dr, di, flag, row):
         vr = np.var(fr, ddof=1)
         vi = np.var(fi, ddof=1)
         return 2/(vr + vi)
+"""
 
+"""
 # per correlation
 def _variance2(dr, di, flag, corr, row):
     fr = np.extract(np.logical_not(flag[corr,:,row]), dr[corr,:,row])
@@ -119,9 +127,11 @@ def _variance2(dr, di, flag, corr, row):
         vr = np.var(fr, ddof=1)
         vi = np.var(fi, ddof=1)
         return 2/(vr + vi)
+"""
 
 class statwt_test(unittest.TestCase):
     
+    """
     def do_row(
         self, row, ant1, ant2, data, flags, exposures, wtsp, combine_corr,
         target_exposure
@@ -137,6 +147,7 @@ class statwt_test(unittest.TestCase):
             + '\nbaseline ' + str([ant1, ant2])
             + '\nrow ' + str(row)
         )
+    """
     
     def _check_weights(
         self, msname, row_to_rows, data_column, chan_flags,
@@ -204,7 +215,7 @@ class statwt_test(unittest.TestCase):
         expfrow = mytb.getcol("FLAG_ROW")
         mytb.done()
         dst = "ngc5921.split.ms"
-        rtol = 1e-7
+        # rtol = 1e-7
         cflags = np.array(63 * [False])
         cflags[10:21] = True
         myms = mstool()
@@ -232,10 +243,49 @@ class statwt_test(unittest.TestCase):
                             excludechans=excludechans
                         )
                     chan_flags = cflags if fitspw else None
-                    self._check_weights(
-                        dst, row_to_rows=row_to_rows, data_column='c',
-                        chan_flags=chan_flags, combine_corr=bool(combine),
-                        chanbins=None
+                    # self._check_weights(
+                    #    dst, row_to_rows=row_to_rows, data_column='c',
+                    #    chan_flags=chan_flags, combine_corr=bool(combine),
+                    #    chanbins=None
+                    #)
+                    mytb.open(dst)
+                    print(mytb.name())
+                    # gotflag = mytb.getcol("FLAG")
+                    # gotfrow = mytb.getcol("FLAG_ROW")
+                    [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
+                    mytb.done()
+                    #self.assertTrue(
+                    #    (gotflag == expflag).all(), "FLAG comparison failed"
+                    #)
+                    #self.assertTrue(
+                    #    (gotfrow == expfrow).all(),
+                    #    "FLAG_ROW comparison failed"
+                    #)
+                    if combine == '':
+                        if fitspw == '':
+                            ref = datadir + 'ref_test_algorithm_sep_corr_no_fitspw.ms'
+                        else: 
+                            ref = datadir + 'ref_test_algorithm_sep_corr_fitspw.ms'
+                    else:
+                        if fitspw == '':
+                            ref = datadir + 'ref_test_algorithm_combine_corr_no_fitspw.ms'
+                        else:
+                            ref = datadir + 'ref_test_algorithm_combine_corr_has_fitspw.ms'
+                    mytb.open(ref)
+                    [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
+                    mytb.done()
+                    self.assertTrue(
+                        np.allclose(gwt, ewt), 'WEIGHT comparison failed'
+                    )
+                    self.assertTrue(
+                        np.allclose(gwtsp, ewtsp),
+                        'WEIGHT_SPECTRUM comparison failed'
+                    )
+                    self.assertTrue(
+                        (gflag == eflag).all(), 'FLAG comparison failed'
+                    )
+                    self.assertTrue(
+                        (gfrow == efrow).all(), 'FLAG_ROW comparison failed'
                     )
                     shutil.rmtree(dst)
                 c += 1               
