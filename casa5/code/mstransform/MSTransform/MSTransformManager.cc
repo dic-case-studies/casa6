@@ -2296,7 +2296,7 @@ void MSTransformManager::initDataSelectionParams()
                         logger_p << LogIO::WARN << LogOrigin("MSTransformManager", __FUNCTION__)
 							             << "Number of selected channels " << numOfSelChanMap_p[spwList(spw_i)]
 							                                                                    << " for SPW " << spwList(spw_i)
-							                                                                    << " is smaller than specified chanbin " << freqbin_p(0) << endl
+							                                                                    << " is smaller than specified chanbin " << freqbin_p(spw_i) << endl
 							                                                                    << "Setting chanbin to " << numOfSelChanMap_p[spwList(spw_i)]
 							                                                                                                                  << " for SPW " << spwList(spw_i)
 							                                                                                                                  << LogIO::POST;
@@ -2307,7 +2307,7 @@ void MSTransformManager::initDataSelectionParams()
                     }
                     else
                     {
-                        newWeightFactorMap_p[spwList(spw_i)] = freqbin_p(0);
+                        newWeightFactorMap_p[spwList(spw_i)] = freqbin_p(spw_i);
                     }
                 }
             }
