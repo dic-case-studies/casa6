@@ -2948,8 +2948,10 @@ class simutil:
         interactive and dryrun parameters expect boolean type input
         Other parameters expect input in format compatible with 'clean'
 
-        No returns
-        Creates a 'clean.last' file in addition to outputs of task 'clean'
+        No return
+
+        Creates a template '[imagename].clean.last' file in addition to 
+        outputs of task 'clean'
         """
 
         # determine channelization from (first) ms:
@@ -3173,8 +3175,9 @@ class simutil:
 
         cell parameter expects a length-2 list containing qa.quantity objects
 
-        Just like imclean, does not yield return object
-        Creates a 'tclean.last' file in addition to normal outputs of that task
+        Just like imclean, does not yield return
+        Creates a template '[imagename].tclean.last' file in addition to 
+        normal tclean task outputs
         """
         
         invocation_parameters = OrderedDict( )
@@ -3270,10 +3273,11 @@ class simutil:
         # it would be preferable to have a helper function do _this_,
         # then just call tclean right from simanalyze, but precedent.
 
-        filename = os.path.join(os.getcwd(),'tclean.last')
-        if os.path.isfile('filename'):
+        filename = os.path.join(os.getcwd(),imagename+'.tclean.last')
+        if os.path.isfile(filename):
             self.msg("Overwriting existing 'tclean.last' file",
                      priority="info",origin="simutil")
+            os.remove(filename)
         else:
             with open(filename, 'w'): pass
 
@@ -3288,18 +3292,18 @@ class simutil:
             for i in invocation_parameters:
                 # catch None type objects returned by repr function
                 if i.startswith('<') and s.endswith('>'):
-                    f.write("{:<20} = {!s}\n".format(i, None))
+                    f.write("{:<20}={!s}\n".format(i, None))
                 else:
-                    f.write("{:<20} = {!r}\n".format(i, 
+                    f.write("{:<20}={!r}\n".format(i, 
                                                      invocation_parameters[i]))
             # next, open and fill the task call
             f.write("#tclean( ")
             count = 0
             for i in invocation_parameters:
                 if i.startswith('<') and s.endswith('>'):
-                    f.write("{!s} = {!s}".format(i, None))
+                    f.write("{!s}={!s}".format(i, None))
                 else:
-                    f.write("{!s} = {!r}".format(i, 
+                    f.write("{!s}={!r}".format(i, 
                                                  invocation_parameters[i]))
                 count += 1
                 if count < len(invocation_parameters): f.write(",")
