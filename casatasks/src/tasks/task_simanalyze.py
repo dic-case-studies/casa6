@@ -593,6 +593,9 @@ def simanalyze(
                 cleanmode = "mosaic"
                 gridder = "mosaic"
 
+            # keep the same default minor cycle algorithm for imtclean
+            # as previously used in imclean
+            deconvolver = "clark"
 
 
 
@@ -609,12 +612,20 @@ def simanalyze(
             if not myutil.isdirection(imdirection,halt=False):
                 imdirection=model_refdir
         
-            #myutil.imtclean(mstoimage,imagename,gridder,deconvolver,cell,imsize,imdirection,interactive,niter,threshold,weighting,outertaper,pbcor,stokes,modelimage=modelimage,mask=mask,dryrun=dryrun)
-            myutil.imclean(mstoimage,imagename,
-                         cleanmode,cell,imsize,imdirection,
-                         interactive,niter,threshold,weighting,
-                         outertaper,pbcor,stokes, #sourcefieldlist=sourcefieldlist,
-                         modelimage=modelimage,mask=mask,dryrun=dryrun)
+            myutil.imtclean(mstoimage,imagename,
+                            gridder,deconvolver,
+                            cell,imsize,imdirection,
+                            interactive,niter,threshold,
+                            weighting,outertaper,pbcor,stokes,
+                            modelimage=modelimage,mask=mask,
+                            dryrun=dryrun)
+            ## Disabled as part of CAS-12502
+            #myutil.imclean(mstoimage,imagename,
+            #             cleanmode,cell,imsize,imdirection,
+            #             interactive,niter,threshold,weighting,
+            #             outertaper,pbcor,stokes, 
+            #             #sourcefieldlist=sourcefieldlist,
+            #             modelimage=modelimage,mask=mask,dryrun=dryrun)
 
 
             # create imagename.flat and imagename.residual.flat:

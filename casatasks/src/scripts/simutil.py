@@ -3319,11 +3319,11 @@ class simutil:
             f.write(" )\n")
 
         # gather tclean task call by attempting to parse the file just created
+        with open(filename, 'r') as _f:
+            for line in _f:
+                if line.startswith('#tclean( '):
+                    task_call = line[1:-1]
         if self.verbose:
-            with open(filename, 'r') as _f:
-                for line in _f:
-                    if line.startswith('#tclean( '):
-                        task_call = line[1:]
             self.msg(task_call, priority="warn", origin="simutil")
         else:
             self.msg(task_call, priority="info", origin="simutil")
