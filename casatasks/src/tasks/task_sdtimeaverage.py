@@ -69,6 +69,10 @@ def sdtimeaverage(
                field=field, spw=spw, timerange=timerange, scan=scan, 
                timebin='0s', outfile=tmpfile)
 
+#+
+#  disable BEAM arg.
+#-
+        '''
         #open tmpfile and rewrite antenna column of the ON spectra using beam
         idx_on = None
         with open_table(os.path.join(tmpfile, 'STATE')) as tb:
@@ -91,6 +95,7 @@ def sdtimeaverage(
                     acol[i] = min_beamid
             tb.putcol('ANTENNA1', acol)
             tb.putcol('ANTENNA2', acol)
+        '''
 
         #time averaging
         do_mst(infile=tmpfile, datacolumn=datacolumn, 
@@ -107,7 +112,7 @@ def sdtimeaverage(
         #delete tmpfile
         if os.path.isdir(tmpfile): shutil.rmtree(tmpfile)
 
-
+'''
 def get_beamid(beam, num_beams):
     _beam = beam
     try:
@@ -130,7 +135,7 @@ def get_beamid(beam, num_beams):
         if _beam[i] < min_beamid: min_beamid = _beam[i]
 
     return _beam, min_beamid
-    
+'''    
 
 
 def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
@@ -139,7 +144,11 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
     tileshape = [0]
+
+    # When the arg is chnaged from 'beam' to 'antenna', 
+    #  use the arg variable instead of this local var.
     antenna = ""
+
     intent = ""
     correlation = ""
     array = ""
@@ -199,6 +208,11 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
 
         # Only parse timeaverage parameters when timebin > 0s
         qa = quanta( )
+
+        #+
+        # (Not Yet)Instead of the original code
+        #  defaut value (timebin=all) is to be handled.
+        #-
         """
         if timeaverage:
             tb = qa.convert(qa.quantity(timebin), 's')['value']
