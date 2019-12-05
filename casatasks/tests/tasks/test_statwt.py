@@ -19,7 +19,8 @@ src = os.path.join(datadir,'ngc5921.split_2.ms')
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
 # IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
 def get_weights(
-    data, flags, exposures, combine_corr, target_exposure, chanbins
+    data, flags, exposures, combine_corr, target_exposure, chanbins,
+    target_flags
 ):  
     shape = data.shape
     ncorr_groups = 1 if combine_corr else shape[0]
@@ -31,6 +32,7 @@ def get_weights(
     weights = np.zeros([shape[0], shape[1]])
     wt = np.zeros(shape[0])
     nrows = data.shape[2]
+    median_axis = 1 if ncorr_groups > 1 else None
     for corr in range(ncorr_groups):
         end_corr = corr + 1 if ncorr_groups > 1 else ncorr + 1
         for cb in tchanbins:
@@ -47,9 +49,9 @@ def get_weights(
             else:
                 mweights = ma.array(
                     weights[corr:end_corr, cb[0]:cb[1]],
-                    mask=flags[corr:end_corr, cb[0]:cb[1], :]
+                    mask=target_flags[corr:end_corr, cb[0]:cb[1]]
                 )
-                wt[corr:end_corr] = np.median(mweights, 1)
+                wt[corr:end_corr] = np.median(mweights, median_axis)
     return (weights, wt)
 
 def variance(data, flags, exposures):
@@ -116,7 +118,8 @@ def _variance2(dr, di, flag, corr, row):
 class statwt_test(unittest.TestCase):
     
     def _check_weights(
-        self, msname, row_to_rows, data_column, chan_flags, combine_corr
+        self, msname, row_to_rows, data_column, chan_flags, combine_corr,
+        chanbins
     ):
         if data_column.startswith('c'):
             colname = 'CORRECTED_DATA'
@@ -124,10 +127,11 @@ class statwt_test(unittest.TestCase):
             colname = 'DATA'
         else:
             raise Exception("Unhandled column spec " + data_column)
+        # if not mode.startswith('one'):
+        #    raise Exception("Unhandled mode")
         for ant1 in range(10):
             for ant2 in range((ant1 + 1), 10):
                 query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
-                tb = table()
                 tb.open(msname)
                 subt = tb.query(query_str)
                 data = subt.getcol(colname)
@@ -135,7 +139,6 @@ class statwt_test(unittest.TestCase):
                 exposures = subt.getcol('EXPOSURE')
                 wt = subt.getcol('WEIGHT')
                 wtsp = subt.getcol('WEIGHT_SPECTRUM')
-                wt = subt.getcol('WEIGHT')
                 subt.done()
                 tb.done()
                 if type(chan_flags) != type(None):
@@ -147,7 +150,8 @@ class statwt_test(unittest.TestCase):
                     end = row_to_rows[row][1]
                     (weights, ewt) = get_weights(
                         data[:,:,start:end], flags[:, :, start:end],
-                        exposures[start: end], combine_corr, exposures[row]
+                        exposures[start: end], combine_corr, exposures[row],
+                        chanbins, flags[:, :, row:row+1]
                     )
                     self.assertTrue(
                         np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
@@ -162,7 +166,7 @@ class statwt_test(unittest.TestCase):
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                         + str(row)
                     )
-    
+                    
     def compare(self, dst, ref):
         ref = os.path.join(datadir, ref)
         mytb = table()
@@ -322,21 +326,30 @@ class statwt_test(unittest.TestCase):
     def test_default_boundaries(self):
         """Test default scan, field, etc boundaries"""
         dst = "ngc5921.split.normalbounds.ms"
+        ref = 'ref_test_default_boundaries.ms'
         timebin = "6000s"
-        ref = os.path.join(datadir,"ngc5921.normal_bounds_2.ms.ref")
-        rtol = 1e-7
-        [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
         # there are three field_ids, and there is a change in field_id when
         # there is a change in scan number, so specifying combine="field" in the
         # absence of "scan" will give the same result as combine=""
+        row_to_rows = []
+        for i in range(12):
+            row_to_rows.append([0, 12])
+        for i in range(12, 17):
+            row_to_rows.append([12, 17])
+        for i in range(17, 33):
+            row_to_rows.append([17, 33])
+        for i in range(33, 35):
+            row_to_rows.append([33, 35])
+        for i in range(35, 38):
+            row_to_rows.append([35, 38])
+        for i in range(38, 56):
+            row_to_rows.append([38, 56])
+        for i in range(56, 60):
+            row_to_rows.append([56, 60])
         for combine in ["corr", "corr,field"]:
             shutil.copytree(src, dst)
             statwt(dst, timebin=timebin, combine=combine)
-            [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
-            self.assertTrue(numpy.all(numpy.isclose(gotwt, expwt, rtol)))
-            self.assertTrue(numpy.all(numpy.isclose(gotwtsp, expwtsp, rtol)))
-            self.assertTrue(numpy.all(gotflag == expflag))
-            self.assertTrue(numpy.all(gotfrow == expfrow))
+            self.compare(dst, ref)
             shutil.rmtree(dst)
         
     def test_no_scan_boundaries(self):

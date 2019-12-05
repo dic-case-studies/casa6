@@ -26,7 +26,8 @@ src = datadir + 'ngc5921.split_2.ms'
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
 # IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
 def get_weights(
-    data, flags, exposures, combine_corr, target_exposure, chanbins
+    data, flags, exposures, combine_corr, target_exposure, chanbins,
+    target_flags
 ):  
     shape = data.shape
     ncorr_groups = 1 if combine_corr else shape[0]
@@ -38,6 +39,7 @@ def get_weights(
     weights = np.zeros([shape[0], shape[1]])
     wt = np.zeros(shape[0])
     nrows = data.shape[2]
+    median_axis = 1 if ncorr_groups > 1 else None
     for corr in range(ncorr_groups):
         end_corr = corr + 1 if ncorr_groups > 1 else ncorr + 1
         for cb in tchanbins:
@@ -54,9 +56,9 @@ def get_weights(
             else:
                 mweights = ma.array(
                     weights[corr:end_corr, cb[0]:cb[1]],
-                    mask=flags[corr:end_corr, cb[0]:cb[1], :]
+                    mask=target_flags[corr:end_corr, cb[0]:cb[1]]
                 )
-                wt[corr:end_corr] = np.median(mweights, 1)
+                wt[corr:end_corr] = np.median(mweights, median_axis)
     return (weights, wt)
 
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
@@ -114,8 +116,8 @@ def _get_table_cols(mytb):
 class statwt_test(unittest.TestCase):
     
     def _check_weights(
-        self, msname, row_to_rows, data_column, chan_flags,
-        combine_corr, chanbins
+        self, msname, row_to_rows, data_column, chan_flags, combine_corr,
+        chanbins
     ):
         if data_column.startswith('c'):
             colname = 'CORRECTED_DATA'
@@ -147,7 +149,7 @@ class statwt_test(unittest.TestCase):
                     (weights, ewt) = get_weights(
                         data[:,:,start:end], flags[:, :, start:end],
                         exposures[start: end], combine_corr, exposures[row],
-                        chanbins
+                        chanbins, flags[:, :, row:row+1]
                     )
                     self.assertTrue(
                         np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
@@ -362,13 +364,27 @@ class statwt_test(unittest.TestCase):
     def test_default_boundaries(self):
         """Test default scan, field, etc boundaries"""
         dst = "ngc5921.split.normalbounds.ms"
+        ref = 'ref_test_default_boundaries.ms'
         timebin = "6000s"
-        ref = datadir + "ngc5921.normal_bounds_2.ms.ref"
-        rtol = 1e-7
-        [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
+        # [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
         # there are three field_ids, and there is a change in field_id when
         # there is a change in scan number, so specifying combine="field" in the
         # absence of "scan" will give the same result as combine=""
+        row_to_rows = []
+        for i in range(12):
+            row_to_rows.append([0, 12])
+        for i in range(12, 17):
+            row_to_rows.append([12, 17])
+        for i in range(17, 33):
+            row_to_rows.append([17, 33])
+        for i in range(33, 35):
+            row_to_rows.append([33, 35])
+        for i in range(35, 38):
+            row_to_rows.append([35, 38])
+        for i in range(38, 56):
+            row_to_rows.append([38, 56])
+        for i in range(56, 60):
+            row_to_rows.append([56, 60])
         for combine in ["corr", "corr,field"]:
             for i in [0, 1]:
                 shutil.copytree(src, dst)
@@ -379,13 +395,9 @@ class statwt_test(unittest.TestCase):
                     myms.done()
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
-                [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
-                self.assertTrue(np.all(np.isclose(gotwt, expwt, rtol)))
-                self.assertTrue(np.all(np.isclose(gotwtsp, expwtsp, rtol)))
-                self.assertTrue(np.all(gotflag == expflag))
-                self.assertTrue(np.all(gotfrow == expfrow))
+                self.compare(dst, ref)
                 shutil.rmtree(dst)
-        
+    
     def test_no_scan_boundaries(self):
         """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
