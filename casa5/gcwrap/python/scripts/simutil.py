@@ -3288,17 +3288,19 @@ class simutil:
             for i in invocation_parameters:
                 # catch None type objects returned by repr function
                 if i.startswith('<') and s.endswith('>'):
-                    f.write("{:<20!s} = {!s}\n".format(i, "None"))
+                    f.write("{:<20} = {!s}\n".format(i, None))
                 else:
-                    f.write("{:<20!s} = {name!r}\n".format(i, invocation_parameti]))
+                    f.write("{:<20} = {!r}\n".format(i, 
+                                                     invocation_parameters[i]))
             # next, open and fill the task call
             f.write("#tclean( ")
             count = 0
             for i in invocation_parameters:
                 if i.startswith('<') and s.endswith('>'):
-                    f.write("{!s}={!s}".format(i, "None"))
+                    f.write("{!s} = {!s}".format(i, None))
                 else:
-                    f.write("{:<20!s} = {name!r}\n".format(i, invocation_parameters[i]))
+                    f.write("{!s} = {!r}".format(i, 
+                                                 invocation_parameters[i]))
                 count += 1
                 if count < len(invocation_parameters): f.write(",")
             # finally close the task call
