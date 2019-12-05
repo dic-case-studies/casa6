@@ -5,14 +5,29 @@ import copy
 import math
 import time
 import datetime
-import sdutil
 import contextlib
-from taskinit import mttool, mstool, tbtool, casalog, qa, gentools
-from mstools import write_history
-from parallel.parallel_data_helper import ParallelDataHelper
-import flaghelper as fh
-from update_spw import update_spwchan
-from callibrary import callibrary
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from . import sdutil
+    from casatasks import casalog
+    from casatools import quanta, ms, table, mstransformer
+    from .mstools import write_history
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from . import flaghelper as fh
+    from .update_spw import update_spwchan
+    from .callibrary import callibrary
+else:
+    import sdutil
+    from taskinit import mttool as mstransformer
+    from taskinit import mstool as ms
+    from taskinit import tbtool as table
+    from taskinit import qatool as quanta
+    from mstools import write_history
+    from parallel.parallel_data_helper import ParallelDataHelper
+    import flaghelper as fh
+    from update_spw import update_spwchan
+    from callibrary import callibrary
 
 """
 The following code is based on the mstransform code, with 
@@ -25,15 +40,15 @@ to them.
 """
 
 @contextlib.contextmanager
-def open_table(table, nomodify=True):
-    (tb,) = gentools(['tb'])
-    tb.open(table, nomodify=nomodify)
+def open_table(path, nomodify=True):
+    tb = table( )
+    tb.open(path, nomodify=nomodify)
     try:
         yield tb
     finally:
         tb.close()
 
-def nrobeamaverage(
+def sdtimeaverage(
              infile,
              datacolumn,
              field,
@@ -43,24 +58,19 @@ def nrobeamaverage(
              beam,
              timebin,
              outfile):
-    print 'NISHIE::Entered'  
-    casalog.origin('nrobeamaverage')
+
+    casalog.origin('sdtimeaverage')
     try:
         #set temporary data name
-        tmpfile = 'tmp-nrobeamaverage-' + os.path.basename(infile.rstrip('/')) + '-' + "{0:%Y%m%d%H%M%S.%f}".format(datetime.datetime.now()) + '.ms'
+        tmpfile = 'tmp-sdtimeaverage-' + os.path.basename(infile.rstrip('/')) + '-' + "{0:%Y%m%d%H%M%S.%f}".format(datetime.datetime.now()) + '.ms'
 
         #data selection
-        print 'NISHIE::calling do_mst()'
         do_mst(infile=infile, datacolumn=datacolumn, 
                field=field, spw=spw, timerange=timerange, scan=scan, 
                timebin='0s', outfile=tmpfile)
-#+
-# CAS-12721 removed Beam operation
-#- 
-        '''
+
         #open tmpfile and rewrite antenna column of the ON spectra using beam
         idx_on = None
-        print 'NISHIE::open_table( STATE ) '
         with open_table(os.path.join(tmpfile, 'STATE')) as tb:
             ocol = tb.getcol('OBS_MODE')
             for i in range(len(ocol)):
@@ -69,12 +79,10 @@ def nrobeamaverage(
                     break
         if idx_on is None: raise Exception('ON_SOURCE data not found.')
 
-        print 'NISHIE::open_table(ANTENNA) '
         with open_table(os.path.join(tmpfile, 'ANTENNA')) as tb:
             num_beams = len(tb.getcol('NAME'))
             _beam, min_beamid = get_beamid(beam, num_beams)
 
-        print 'NISHIE::open_table( main ) writing  ANNTENNA1, STATE_ID '
         with open_table(tmpfile, nomodify=False) as tb:
             acol = tb.getcol('ANTENNA1')
             scol = tb.getcol('STATE_ID')
@@ -83,11 +91,8 @@ def nrobeamaverage(
                     acol[i] = min_beamid
             tb.putcol('ANTENNA1', acol)
             tb.putcol('ANTENNA2', acol)
-        '''
 
         #time averaging
-        print 'NISHIE:: calling do_mst() Execute TimeAveraging.'
-        print 'NISHIE:: timebin=',timebin
         do_mst(infile=tmpfile, datacolumn=datacolumn, 
                field='', spw='', timerange='', scan='', 
                timebin=timebin, outfile=outfile)
@@ -97,18 +102,13 @@ def nrobeamaverage(
                     timebin=timebin, beam=beam, outfile=outfile)
 
     except Exception as e:
-        casalog.post('Exception from task_nrobeamaverage : ' + str(e), "SEVERE", origin=origin)
+        casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
     finally:
-        print 'NISHIE:: deleting temp file.'
         #delete tmpfile
         if os.path.isdir(tmpfile): shutil.rmtree(tmpfile)
-#+
-# No more needed
-#-
 
-'''
+
 def get_beamid(beam, num_beams):
-    print 'NISHIE::get_beamid() starts.'
     _beam = beam
     try:
         if isinstance(_beam, str):
@@ -122,22 +122,20 @@ def get_beamid(beam, num_beams):
             for i in range(num_beams): _beam.append(i)
         else:
             for i in range(len(_beam)): _beam[i] = int(_beam[i])
-    except Exception, e:
+    except Exception as e:
         casalog.post("Error \'%s\' input beam ID is invalid" % (e))
     
     min_beamid = _beam[0]
     for i in range(len(_beam)):
         if _beam[i] < min_beamid: min_beamid = _beam[i]
 
-    print 'NISHIE::get_beamid() returns.'
     return _beam, min_beamid
-'''
+    
 
 
 def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
-    # followings are parameters of mstransform but not used by nrobeamaverage.
+    # followings are parameters of mstransform but not used by THIS.
     # just putting default values
-    print 'NISHIE::do_mst() starts.'
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
     tileshape = [0]
@@ -161,23 +159,21 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
     reindex = True
     
     # Initialize the helper class
-    pdh = ParallelDataHelper('nrobeamaverage', locals())
+    pdh = ParallelDataHelper('sdtimeaverage', locals())
     pdh.bypassParallelProcessing(0)
     
     # Validate input and output parameters
     try:
-        print 'NISHIE:: calling pdh.setupIO().'
         pdh.setupIO()
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('%s'%instance,'ERROR')
         return False
 
     # Create a local copy of the MSTransform tool
-    mtlocal = mttool()
-    mslocal = mstool()
+    mtlocal = mstransformer( )
+    mslocal = ms( )
     
     try:
-        print 'NISHIE:: calling pdh.setupParameters().'
         # Gather all the parameters in a dictionary.
         config = {}
         
@@ -202,16 +198,16 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
         config['tileshape'] = tileshape
 
         # Only parse timeaverage parameters when timebin > 0s
+        qa = quanta( )
         """
         if timeaverage:
             tb = qa.convert(qa.quantity(timebin), 's')['value']
             if not tb > 0:
-                raise Exception, "Parameter timebin must be > '0s' to do time averaging"
+                raise Exception("Parameter timebin must be > '0s' to do time averaging")
         """
-        print 'NISHIE:: checking timebin (tbin > 0).'
         tbin = qa.convert(qa.quantity(timebin), 's')['value']
         if tbin < 0:
-            raise Exception, "Parameter timebin must be > '0s' to do time averaging"
+            raise Exception("Parameter timebin must be > '0s' to do time averaging")
         timeaverage = (tbin > 0)
                        
         if timeaverage:
@@ -222,38 +218,31 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
             config['maxuvwdistance'] = maxuvwdistance
             
         # Configure the tool and all the parameters
-        print 'NISHIE::calling mtlocal.config(config).'
         casalog.post('%s'%config, 'DEBUG')
         mtlocal.config(config)
         
         # Open the MS, select the data and configure the output
-        print 'NISHIE::calling mtlocal.open(config).'
         mtlocal.open()
         
         # Run the tool
-        print 'NISHIE::calling mtlocal.run(config).'
         casalog.post('Apply the transformations')
         mtlocal.run()        
 
-        print 'NISHIE::calling mtlocal.done(config).'
         mtlocal.done()
                     
-    except Exception, instance:
+    except Exception as instance:
         mtlocal.done()
         casalog.post('%s'%instance,'ERROR')
         return False
 
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
     # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating    
-    print 'NISHIE:: checking FLAG_CMD by spw.'
-    print 'NISHIE:: spw =',spw
+    
     if (spw != '') and (spw != '*'):
-        print 'NISHIE:: if (spw) TRUE'
         isopen = False
 
         try:
-            print 'NISHIE:: checking FLAG_CMD (try) came in'
-            mytb = tbtool()
+            mytb = table( )
             mytb.open(outfile + '/FLAG_CMD', nomodify=False)
             isopen = True
             nflgcmds = mytb.nrows()
@@ -278,25 +267,25 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print "width =", width
+                    #print("width =", width)
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
                         if hasattr(chanbin, '__iter__') and len(chanbin) > 1:
-                            for i in xrange(len(chanbin)):
+                            for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-    #                        print 'using ms.msseltoindex + a scalar width'
+    #                        print('using ms.msseltoindex + a scalar width')
                             numspw = len(mslocal.msseltoindex(vis=infile,
                                                          spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
                                 w = chanbin[0]
                             else:
                                 w = chanbin
-                            for i in xrange(numspw):
+                            for i in range(numspw):
                                 widths[i] = w
-    #                print 'widths =', widths 
-                    for rownum in xrange(nflgcmds):
+    #                print('widths =', widths)
+                    for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
                         if spwmatch:
@@ -307,18 +296,18 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
                             # in that case.
                             cmd = ''
                             try:
-                                #print 'sch1 =', sch1
+                                #print('sch1 =', sch1)
                                 sch2 = update_spwchan(infile, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #print 'sch2 =', sch2
-                                ##print 'spwmatch.group() =', spwmatch.group()
+                                #print('sch2 =', sch2)
+                                ##print('spwmatch.group() =', spwmatch.group())
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
                                         repl = "spw='" + sch2 + "'"
                                     cmd = cmds[rownum].replace(spwmatch.group(), repl)
                             #except: # cmd[rownum] no longer applies.
-                            except Exception, e:
+                            except Exception as e:
                                 casalog.post(
                                     "Error %s updating row %d of FLAG_CMD" % (e,
                                                                               rownum),
@@ -337,8 +326,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
                 
             mytb.close()
             
-        except Exception, instance:
-            print 'NISHIE:: checking FLAG_CMD (except)'
+        except Exception as instance:
             if isopen:
                 mytb.close()
             mslocal = None
@@ -346,23 +334,22 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
             casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
                          'SEVERE')
             return False
-    print 'NISHIE:: if (spw) FALSE(skipped) '
+
     mytb = None
     mslocal = None
-    print 'NISHIE::do_mst() retruns.'
+
     return True
 
 
 def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, beam, outfile):
-    print 'NISHIE::add_history starts.'
-    mslocal = mstool()
+    mslocal = ms( )
     # Write history to output MS, not the input ms.
     try:
-        param_names = nrobeamaverage.func_code.co_varnames[:nrobeamaverage.func_code.co_argcount]
+        param_names = sdtimeaverage.func_code.co_varnames[:sdtimeaverage.func_code.co_argcount]
         param_vals = [eval(p) for p in param_names]
-        write_history(mslocal, outfile, 'nrobeamaverage', param_names,
+        write_history(mslocal, outfile, 'sdtimeaverage', param_names,
                       param_vals, casalog)
-    except Exception, instance:
+    except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')
         return False
