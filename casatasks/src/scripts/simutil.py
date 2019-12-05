@@ -3179,7 +3179,7 @@ class simutil:
         Creates a template '[imagename].tclean.last' file in addition to 
         normal tclean task outputs
         """
-        
+
         invocation_parameters = OrderedDict( )
 
         # use the first provided MS to determine channelization for output
@@ -3228,18 +3228,23 @@ class simutil:
                      priority="warn", origin="simutil")
 
         # since the cell parameter expects a list of qa.quantity objects,
-        # it must be converted to a string for storage in the tclean.last file
-        cellstr = ("['" + 
-                   str(cell[0]['value']) + str(cell[0]['unit']) + "','" + 
-                   str(cell[1]['value']) + str(cell[1]['unit']) + 
-                   "']")
+        # it must be converted for storage in the tclean.last file
+        cellparam = [str(cell[0]['value']) + str(cell[0]['unit']),
+                     str(cell[1]['value']) + str(cell[1]['unit'])]
+
+        if os.path.exists(modelimage):
+            pass
+        else:
+            modelimage = ""
+            self.msg("Could not find modelimage, proceeding without",
+                     priority="warn", origin="simutil")
 
         # set tclean top-level parameters (no parent nodes)
         invocation_parameters['vis'] = mstoimage
         invocation_parameters['selectdata'] = False
         invocation_parameters['imagename'] = imagename
         invocation_parameters['imsize'] = imsize
-        invocation_parameters['cell'] = cellstr
+        invocation_parameters['cell'] = cellparam
         invocation_parameters['phasecenter'] = imdirection
         invocation_parameters['stokes'] = stokes
         invocation_parameters['startmodel'] = modelimage
@@ -3265,6 +3270,9 @@ class simutil:
         if niter > 0:
             invocation_parameters['threshold'] = threshold
             invocation_parameters['interactive'] = interactive
+        else:
+            invocation_parameters['threshold'] = ''
+            invocation_parameters['interactive'] = False
         invocation_parameters['mask'] = mask
         invocation_parameters['pbmask'] = 0.0
 
@@ -3312,16 +3320,46 @@ class simutil:
 
         # gather tclean task call by attempting to parse the file just created
         if self.verbose:
-            self.msg('tclean task call',
-                     priority="warn", origin="simutil")
+            with open(filename, 'r') as _f:
+                for line in _f:
+                    if line.startswith('#tclean( '):
+                        task_call = line[1:]
+            self.msg(task_call, priority="warn", origin="simutil")
         else:
-            self.msg('tclean task call',
-                     priority="info", origin="simutil")
+            self.msg(task_call, priority="info", origin="simutil")
 
         # now that the tclean call is specified, it may be executed
         if not dryrun:
             casalog.filter("ERROR")
-            #tclean()
+            tclean( vis = invocation_parameters['vis'],
+                    selectdata = invocation_parameters['selectdata'],
+                    imagename=invocation_parameters['imagename'],
+                    imsize=invocation_parameters['imsize'],
+                    cell=invocation_parameters['cell'],
+                    phasecenter=invocation_parameters['phasecenter'],
+                    stokes=invocation_parameters['stokes'],
+                    startmodel=invocation_parameters['startmodel'],
+                    specmode=invocation_parameters['specmode'],
+                    gridder=invocation_parameters['gridder'],
+                    deconvolver=invocation_parameters['deconvolver'],
+                    restoration=invocation_parameters['restoration'],
+                    outlierfile=invocation_parameters['outlierfile'],
+                    weighting=invocation_parameters['weighting'],
+                    niter=invocation_parameters['niter'],
+                    usemask=invocation_parameters['usemask'],
+                    fastnoise=invocation_parameters['fastnoise'],
+                    restart=invocation_parameters['restart'],
+                    savemodel=invocation_parameters['savemodel'],
+                    calcres=invocation_parameters['calcres'],
+                    calcpsf=invocation_parameters['calcpsf'],
+                    parallel=invocation_parameters['parallel'],
+                    restoringbeam=invocation_parameters['restoringbeam'],
+                    pbcor=invocation_parameters['pbcor'],
+                    uvtaper=invocation_parameters['uvtaper'],
+                    threshold=invocation_parameters['threshold'],
+                    interactive=invocation_parameters['interactive'],
+                    mask=invocation_parameters['mask'],
+                    pbmask=invocation_parameters['pbmask'] )
             casalog.filter()
 
 
