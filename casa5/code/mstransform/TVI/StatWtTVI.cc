@@ -300,9 +300,8 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
     if (_doOneShot) {
         _dataAggregator.reset(
             new StatWtClassicalDataAggregator(
-                getVii(), _chanBins, _samples, _column,
-                _noModel, _chanSelFlags, _wtStats, _wtrange, _combineCorr,
-                _statAlg
+                getVii(), _chanBins, _samples, _column, _noModel, _chanSelFlags,
+                _wtStats, _wtrange, _combineCorr, _statAlg, _minSamp
             )
         );
     }
@@ -313,10 +312,9 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
         // cout << "_timeBlockProcessing is set to " << _timeBlockProcessing << endl;
         _dataAggregator.reset(
                new StatWtFloatingWindowDataAggregator(
-                getVii(), _chanBins, _samples, _column,
-                _noModel, _chanSelFlags, _combineCorr, _wtStats, _wtrange,
-                _binWidthInSeconds, _nTimeStampsInBin, _timeBlockProcessing,
-                _statAlg
+                getVii(), _chanBins, _samples, _column, _noModel, _chanSelFlags,
+                _combineCorr, _wtStats, _wtrange, _binWidthInSeconds,
+                _nTimeStampsInBin, _timeBlockProcessing, _statAlg, _minSamp
             )
         );
     }

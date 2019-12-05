@@ -42,8 +42,8 @@ StatWtVarianceAndWeightCalculator::StatWtVarianceAndWeightCalculator(
             Array<Double>::const_iterator
         >
     > statAlg,
-    shared_ptr<map<uInt, pair<uInt, uInt>>> samples
-) : _statAlg(statAlg->clone()), _samples(samples) {
+    shared_ptr<map<uInt, pair<uInt, uInt>>> samples, Int minSamp
+) : _statAlg(statAlg->clone()), _samples(samples), _minSamp(minSamp) {
     // cout << "using stat algorithm " << _statAlg->algorithm() << endl;
 }
 
@@ -55,6 +55,7 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     casacore::uInt spw
 ) const {
    //  cout << "exposures " << exposures << endl;
+    // cout << "_minSamp " << _minSamp << endl;
     const auto npts = data.size();
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
         // not enough points, trivial
@@ -140,8 +141,10 @@ Vector<Double> StatWtVarianceAndWeightCalculator::computeWeights(
     return varEq == 0 ? Vector<Double>(exposures.size(), 0) : exposures/varEq;
 }
 
+/*
 void StatWtVarianceAndWeightCalculator::setMinSamp(Int minSamp) {
     _minSamp = minSamp;
 }
+*/
 
 }

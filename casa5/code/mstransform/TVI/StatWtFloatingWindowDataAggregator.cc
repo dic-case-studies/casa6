@@ -57,10 +57,10 @@ StatWtFloatingWindowDataAggregator::StatWtFloatingWindowDataAggregator(
             Double, Array<Float>::const_iterator,
             Array<Bool>::const_iterator, Array<Double>::const_iterator
         >
-    >& statAlg
+    >& statAlg, Int minSamp
 ) : StatWtDataAggregator(
        vii, chanBins, samples, column, noModel, chanSelFlags, /* mustComputeWtSp,*/
-       wtStats, wtrange, combineCorr, statAlg
+       wtStats, wtrange, combineCorr, statAlg, minSamp
     ), _binWidthInSeconds(binWidthInSeconds),
     _nTimeStampsInBin(nTimeStampsInBin),
     _timeBlockProcessing(timeBlockProcessing) {

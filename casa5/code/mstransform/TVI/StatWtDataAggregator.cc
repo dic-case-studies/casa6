@@ -52,9 +52,11 @@ StatWtDataAggregator::StatWtDataAggregator(
             Double, Array<Float>::const_iterator,
             Array<Bool>::const_iterator, Array<Double>::const_iterator
         >
-    >& statAlg
+    >& statAlg, Int minSamp
 ) : _vii(vii), _chanBins(chanBins), _samples(samples),
-    _varianceComputer(new StatWtVarianceAndWeightCalculator(statAlg, _samples)),
+    _varianceComputer(
+        new StatWtVarianceAndWeightCalculator(statAlg, samples, minSamp)
+    ),
     _column(column),_noModel(noModel), _chanSelFlags(chanSelFlags),
     /*_mustComputeWtSp(mustComputeWtSp),*/ _wtStats(wtStats), _wtrange(wtrange),
     /*_statAlg(statAlg)*/

@@ -74,7 +74,7 @@ public:
                 casacore::Array<casacore::Bool>::const_iterator,
                 casacore::Array<casacore::Double>::const_iterator
             >
-        >& statAlg
+        >& statAlg, casacore::Int minSamp
     );
 
     ~StatWtFloatingWindowDataAggregator();

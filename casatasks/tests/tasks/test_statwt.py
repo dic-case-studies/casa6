@@ -316,8 +316,6 @@ class statwt_test(unittest.TestCase):
                         ref = datadir + 'ref_test_chanbin_combine_corr.ms'
                     shutil.rmtree(dst)
 
-
-   
     def test_minsamp(self):
         """Test minimum number of points"""
         dst = "ngc5921.split.minsamp.ms"

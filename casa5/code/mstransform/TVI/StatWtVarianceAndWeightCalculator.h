@@ -59,7 +59,7 @@ public:
         > statAlg,
         std::shared_ptr<
             std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
-        > samples
+        > samples, casacore::Int minSamp
     );
 
     ~StatWtVarianceAndWeightCalculator();
@@ -89,7 +89,7 @@ public:
         const casacore::Vector<casacore::Double>& exposures, casacore::uInt spw
     ) const;
 
-    void setMinSamp(casacore::Int minSamp);
+    // void setMinSamp(casacore::Int minSamp);
 
 private:
 
@@ -106,7 +106,7 @@ private:
         std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
     > _samples {};
 
-    casacore::Int _minSamp = 2;
+    casacore::Int _minSamp;
 
 };
 

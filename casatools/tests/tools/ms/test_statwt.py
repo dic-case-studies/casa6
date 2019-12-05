@@ -269,7 +269,7 @@ class statwt_test(unittest.TestCase):
         trow = 12
         for minsamp in [60, 80]:
             shutil.copytree(ctsys.resolve(src), dst)
-            myms = ms( )
+            myms = ms()
             myms.open(dst, nomodify=False)
             myms.statwt(minsamp=minsamp, combine=combine)
             myms.done()
