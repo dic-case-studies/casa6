@@ -6,7 +6,6 @@ import math
 import time
 import datetime
 import contextlib
-import inspect
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -346,9 +345,7 @@ def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebi
     mslocal = ms( )
     # Write history to output MS, not the input ms.
     try:
-        _members = inspect.getmembers(nrobeamaverage, predicate=lambda x: hasattr(x, 'co_varnames'))
-        assert len(_members) == 1
-        code_object = _members[0][1]
+        code_object = nrobeamaverage.__code__
         param_names = code_object.co_varnames[:code_object.co_argcount]
         local_vals = locals()
         param_vals = [local_vals.get(p, None) for p in param_names]
