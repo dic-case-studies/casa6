@@ -24,7 +24,11 @@ def get_weights(data, flags, exposures, combine_corr, target_exposure):
             weights[corr:end, :] = 0 
         else:
             weights[corr:end, :] = target_exposure/var
-    return weights
+        mweights = ma.array(
+            weights[corr:end_corr, cb[0]:cb[1]],
+            mask=flags[corr:end_corr, cb[0]:cb[1], :]
+        )
+    return (weights, np.median(mweights, 1))
 
 def variance(data, flags, exposures):
     if flags.all():
@@ -76,18 +80,6 @@ def _get_table_cols(mytb):
     data = mytb.getcol("CORRECTED_DATA")
     return [times, wt, wtsp, flag, frow, data]
 
-"""
-# combine correlations
-def _variance(dr, di, flag, row):
-    fr = numpy.extract(numpy.logical_not(flag[:,:,row]), dr[:,:,row])
-    fi = numpy.extract(numpy.logical_not(flag[:,:,row]), di[:,:,row])
-    if len(fr) <= 1:
-        return 0
-    else:
-        vr = numpy.var(fr, ddof=1)
-        vi = numpy.var(fi, ddof=1)
-        return 2/(vr + vi)
-
 # per correlation
 def _variance2(dr, di, flag, corr, row):
     fr = numpy.extract(numpy.logical_not(flag[corr,:,row]), dr[corr,:,row])
@@ -98,9 +90,9 @@ def _variance2(dr, di, flag, corr, row):
         vr = numpy.var(fr, ddof=1)
         vi = numpy.var(fi, ddof=1)
         return 2/(vr + vi)
-"""
 
 class statwt_test(unittest.TestCase):
+    
     def _check_weights(
         self, msname, row_to_rows, data_column, chan_flags, combine_corr
     ):
@@ -110,8 +102,6 @@ class statwt_test(unittest.TestCase):
             colname = 'DATA'
         else:
             raise Exception("Unhandled column spec " + data_column)
-        # if not mode.startswith('one'):
-        #    raise Exception("Unhandled mode")
         for ant1 in range(10):
             for ant2 in range((ant1 + 1), 10):
                 query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
@@ -131,16 +121,9 @@ class statwt_test(unittest.TestCase):
                     flags = np.logical_or(flags, t_flags)
                 nrows = data.shape[2]
                 for row in range(nrows):
-                    #if mode.startswith('one'):
-                    #    start = row
-                    #    end = row+1
-                    #if mode.startswith('one'):
-                    #    start = row
-                    #    end = row+1
-                    # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
                     start = row_to_rows[row][0]
                     end = row_to_rows[row][1]
-                    weights = get_weights(
+                    (weights, ewt) = get_weights(
                         data[:,:,start:end], flags[:, :, start:end],
                         exposures[start: end], combine_corr, exposures[row]
                     )
@@ -151,84 +134,25 @@ class statwt_test(unittest.TestCase):
                         + '\nrow ' + str(row)
                     )
                     self.assertTrue(
-                        np.allclose(np.median(weights, 1), wt[:, row]),
+                        np.allclose(ewt, wt[:, row]),
                         'Failed weight, got ' + str(wt[:, row])
                         + '\nexpected ' + str(np.median(weights, 1))
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                         + str(row)
                     )
-
-    
-    """
-    def _check_weights(
-        self, msname, mode, data_column, chan_flags, combine_corr
-    ):
-        if data_column.startswith('c'):
-            colname = 'CORRECTED_DATA'
-        elif data_column.startswith('d'):
-            colname = 'DATA'
-        else:
-            raise Exception("Unhandled column spec " + data_column)
-        if not mode.startswith('one'):
-            raise Exception("Unhandled mode")
-        tb = table()
-        for ant1 in range(10):
-            for ant2 in range((ant1 + 1), 10):
-                query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
-                tb.open(msname)
-                subt = tb.query(query_str)
-                data = subt.getcol(colname)
-                flags = subt.getcol('FLAG')
-                exposures = subt.getcol('EXPOSURE')
-                wt = subt.getcol('WEIGHT')
-                wtsp = subt.getcol('WEIGHT_SPECTRUM')
-                wt = subt.getcol('WEIGHT')
-                subt.done()
-                tb.done()
-                if type(chan_flags) != type(None):
-                    t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
-                    flags = np.logical_or(flags, t_flags)
-                nrows = data.shape[2]
-                for row in range(nrows):
-                    if mode.startswith('one'):
-                        start = row
-                        end = row+1
-                    if mode.startswith('one'):
-                        start = row
-                        end = row+1
-                    # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
-                    weights = get_weights(
-                        data[:,:,start:end], flags[:, :, start:end],
-                        exposures[start: end], combine_corr, exposures[row]
-                    )
-                    self.assertTrue(
-                        np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
-                        + str(wtsp[:, :, row]) + '\nexpected ' + str(weights)
-                        + '\nbaseline ' + str([ant1, ant2])
-                        + '\nrow ' + str(row)
-                    )
-                    self.assertTrue(
-                        np.allclose(np.median(weights, 1), wt[:, row]),
-                        'Failed weight, got ' + str(wt[:, row])
-                        + '\nexpected ' + str(np.median(weights, 1))
-                        + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
-                        + str(row)
-                    )
-    """
     
     def compare(self, dst, ref):
         ref = os.path.join(datadir, ref)
         mytb = table()
-        mytb.open(dst)
+        self.assertTrue(mytb.open(dst), "Failed to open table " + dst)
         [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
         mytb.done()
-        mytb.open(ref)
+        self.assertTrue(mytb.open(ref), "Failed to open table " + ref)
         [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
         mytb.done()
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
         self.assertTrue(
-            np.allclose(gwtsp, ewtsp),
-            'WEIGHT_SPECTRUM comparison failed'
+            np.allclose(gwtsp, ewtsp), 'WEIGHT_SPECTRUM comparison failed'
         )
         self.assertTrue((gflag == eflag).all(), 'FLAG comparison failed')
         self.assertTrue((gfrow == efrow).all(), 'FLAG_ROW comparison failed')
@@ -291,25 +215,26 @@ class statwt_test(unittest.TestCase):
         for combine in ["", "corr"]:
             for i in [0, 2]:
                 for chanbin in ["195.312kHz", 8]:
+                    if i == 2 and combine != '' and chanbin != 8:
+                        # only run the check for i == 2 once
+                        continue
                     shutil.copytree(src, dst)
                     if i == 0:
                         statwt(dst, chanbin=chanbin, combine=combine)
                     elif i == 2:
                         # check WEIGHT_SPECTRUM is created, only check once,
                         # this test is long as it is
-                        # shutil.copytree(src, dst)
-                        if combine == '' and chanbin == 8:
-                            mytb = table()
-                            mytb.open(dst, nomodify=False)
-                            x = mytb.ncols()
-                            self.assertTrue(
-                                mytb.removecols("WEIGHT_SPECTRUM"),
-                                "column not removed"
-                            )
-                            y = mytb.ncols()
-                            self.assertTrue(y == x-1, "wrong number of columns")
-                            mytb.done()
-                            statwt(dst, chanbin=chanbin, combine=combine)
+                        mytb = table()
+                        mytb.open(dst, nomodify=False)
+                        x = mytb.ncols()
+                        self.assertTrue(
+                            mytb.removecols("WEIGHT_SPECTRUM"),
+                            "column not removed"
+                        )
+                        y = mytb.ncols()
+                        self.assertTrue(y == x-1, "wrong number of columns")
+                        mytb.done()
+                        statwt(dst, chanbin=chanbin, combine=combine)
                     if combine == '':
                         ref = datadir + 'ref_test_chanbin_sep_corr.ms'
                     else:
@@ -341,64 +266,23 @@ class statwt_test(unittest.TestCase):
         """Test field selection"""
         dst = "ngc5921.split.fieldsel.ms"
         combine = "corr"
-        [origwt, origwtsp, origflag, origfrow, origdata] = _get_dst_cols(src)
-        rtol = 1e-7
+        ref = 'ref_test_fieldsel.ms'
         for field in ["2", "N5921_2"]:
             shutil.copytree(src, dst)
             statwt(dst, field=field, combine=combine)
-            [wt, wtsp, flag, frow, data, field_id] = _get_dst_cols(dst, "FIELD_ID")
-            nrow = len(frow)
-            dr = numpy.real(data)
-            di = numpy.imag(data)
-            for row in range(nrow):
-                if field_id[row] == 2:
-                    expec = _variance(dr, di, flag, row)
-                    self.assertTrue(
-                        numpy.all(numpy.isclose(wt[:, row], expec, rtol=rtol)),
-                        "WEIGHT fail at row" + str(row) + ". got: "
-                        + str(wt[:, row]) + " expec " + str(expec)
-                    )
-                    self.assertTrue(
-                        numpy.all(numpy.isclose(wtsp[:,:,row], expec, rtol)),
-                        "Incorrect weight spectrum"   
-                    )
-                else:
-                    self.assertTrue(
-                        numpy.all(numpy.isclose(wt[:, row], origwt[:, row], rtol=rtol)),
-                        "WEIGHT fail at row" + str(row) + ". got: " + str(wt[:, row])
-                        + " expec " + str(origwt[:, row])
-                    )
-                    self.assertTrue(
-                        numpy.all(numpy.isclose(wtsp[:,:,row], origwtsp[:,:,row], rtol)),
-                        "Incorrect weight spectrum"   
-                    )
+            self.compare(dst, ref)
             shutil.rmtree(dst)
-            
+          
     def test_spwsel(self):
         """Test spw selection"""
         dst = "ngc5921.split.spwsel.ms"
+        ref = 'ref_test_algorithm_combine_corr_no_fitspw.ms'
         combine = "corr"
-        [origwt, origwtsp, origflag, origfrow, origdata] = _get_dst_cols(src)
-        rtol = 1e-7
         spw="0"
         # data set only has one spw
         shutil.copytree(src, dst)
         statwt(dst, spw=spw, combine=combine)
-        [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
-        nrow = len(frow)
-        dr = numpy.real(data)
-        di = numpy.imag(data)
-        for row in range(nrow):
-            expec = _variance(dr, di, flag, row)
-            self.assertTrue(
-                numpy.all(numpy.isclose(wt[:, row], expec, rtol=rtol)),
-                "WEIGHT fail at row" + str(row) + ". got: "
-                + str(wt[:, row]) + " expec " + str(expec)
-            )
-            self.assertTrue(
-                numpy.all(numpy.isclose(wtsp[:,:,row], expec, rtol)),
-                "Incorrect weight spectrum"   
-            )
+        self.compare(dst, ref)
         shutil.rmtree(dst)
 
     def test_scansel(self):

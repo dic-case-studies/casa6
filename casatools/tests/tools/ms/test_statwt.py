@@ -25,7 +25,11 @@ def get_weights(data, flags, exposures, combine_corr, target_exposure):
             weights[corr:end, :] = 0 
         else:
             weights[corr:end, :] = target_exposure/var
-    return weights
+            mweights = ma.array(
+                weights[corr:end_corr, cb[0]:cb[1]],
+                mask=flags[corr:end_corr, cb[0]:cb[1], :]
+            )
+    return (weights, np.median(mweights, 1))
 
 def variance(data, flags, exposures):
     if flags.all():
@@ -69,30 +73,6 @@ def _get_table_cols(mytb):
     data = mytb.getcol("CORRECTED_DATA")
     return [times, wt, wtsp, flag, frow, data]
 
-"""
-# combine correlations
-def _variance(dr, di, flag, row):
-    fr = numpy.extract(numpy.logical_not(flag[:,:,row]), dr[:,:,row])
-    fi = numpy.extract(numpy.logical_not(flag[:,:,row]), di[:,:,row])
-    if len(fr) <= 1:
-        return 0
-    else:
-        vr = numpy.var(fr, ddof=1)
-        vi = numpy.var(fi, ddof=1)
-        return 2/(vr + vi)
-
-# per correlation
-def _variance2(dr, di, flag, corr, row):
-    fr = numpy.extract(numpy.logical_not(flag[corr,:,row]), dr[corr,:,row])
-    fi = numpy.extract(numpy.logical_not(flag[corr,:,row]), di[corr,:,row])
-    if len(fr) <= 1:
-        return 0
-    else:
-        vr = numpy.var(fr, ddof=1)
-        vi = numpy.var(fi, ddof=1)
-        return 2/(vr + vi)
-"""
-
 class statwt_test(unittest.TestCase):
     
     def _check_weights(
@@ -134,7 +114,7 @@ class statwt_test(unittest.TestCase):
                     # print 'baseline ' + str([ant1, ant2]) + ' row ' + str(row)
                     start = row_to_rows[row][0]
                     end = row_to_rows[row][1]
-                    weights = get_weights(
+                    (weights, ewt) = get_weights(
                         data[:,:,start:end], flags[:, :, start:end],
                         exposures[start: end], combine_corr, exposures[row]
                     )
@@ -145,7 +125,7 @@ class statwt_test(unittest.TestCase):
                         + '\nrow ' + str(row)
                     )
                     self.assertTrue(
-                        np.allclose(np.median(weights, 1), wt[:, row]),
+                        np.allclose(ewt, wt[:, row]),
                         'Failed weight, got ' + str(wt[:, row])
                         + '\nexpected ' + str(np.median(weights, 1))
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
@@ -155,10 +135,10 @@ class statwt_test(unittest.TestCase):
     def compare(self, dst, ref):
         ref = os.path.join(datadir, ref)
         mytb = table()
-        mytb.open(dst)
+        self.assertTrue(mytb.open(dst), "Failed to open table " + dst)
         [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
         mytb.done()
-        mytb.open(ref)
+        self.assertTrue(mytb.open(ref), "Failed to open table " + ref)
         [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
         mytb.done()
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
@@ -233,6 +213,9 @@ class statwt_test(unittest.TestCase):
         for combine in ["", "corr"]:
             for i in [0, 2]:
                 for chanbin in ["195.312kHz", 8]:
+                    if i == 2 and combine != '' and chanbin != 8:
+                        # only run the check for i == 2 once
+                        continue
                     shutil.copytree(src, dst)
                     if i == 0:
                         myms.open(dst, nomodify=False)
@@ -241,21 +224,19 @@ class statwt_test(unittest.TestCase):
                     elif i == 2:
                         # check WEIGHT_SPECTRUM is created, only check once,
                         # this test is long as it is
-                        # shutil.copytree(src, dst)
-                        if combine == '' and chanbin == 8:
-                            mytb = table()
-                            mytb.open(dst, nomodify=False)
-                            x = mytb.ncols()
-                            self.assertTrue(
-                                mytb.removecols("WEIGHT_SPECTRUM"),
-                                "column not removed"
-                            )
-                            y = mytb.ncols()
-                            self.assertTrue(y == x-1, "wrong number of columns")
-                            mytb.done()
-                            myms.open(dst, nomodify=False)
-                            myms.statwt(chanbin=chanbin, combine=combine)
-                            myms.done()
+                        mytb = table()
+                        mytb.open(dst, nomodify=False)
+                        x = mytb.ncols()
+                        self.assertTrue(
+                            mytb.removecols("WEIGHT_SPECTRUM"),
+                            "column not removed"
+                        )
+                        y = mytb.ncols()
+                        self.assertTrue(y == x-1, "wrong number of columns")
+                        mytb.done()
+                        myms.open(dst, nomodify=False)
+                        myms.statwt(chanbin=chanbin, combine=combine)
+                        myms.done()
                     if combine == '':
                         ref = datadir + 'ref_test_chanbin_sep_corr.ms'
                     else:

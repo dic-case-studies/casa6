@@ -37,6 +37,7 @@ def get_weights(
         tchanbins = [[0, shape[1]]]
     ncorr = shape[0]
     weights = np.zeros([shape[0], shape[1]])
+    wt = np.zeros(shape[0])
     nrows = data.shape[2]
     for corr in range(ncorr_groups):
         end_corr = corr + 1 if ncorr_groups > 1 else ncorr + 1
@@ -49,7 +50,11 @@ def get_weights(
                 weights[corr:end_corr, cb[0]:cb[1]] = 0 
             else:
                 weights[corr:end_corr, cb[0]:cb[1]] = target_exposure/var
-    return weights
+            mweights = ma.array(
+                weights[corr:end_corr, cb[0]:cb[1]],
+                mask=flags[corr:end_corr, cb[0]:cb[1], :]
+            )
+    return (weights, np.median(mweights, 1))
 
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
 # IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
@@ -103,34 +108,6 @@ def _get_table_cols(mytb):
     data = mytb.getcol("CORRECTED_DATA")
     return [times, wt, wtsp, flag, frow, data]
 
-"""
-# combine correlations
-def _variance(dr, di, flag, row):
-    fr = np.extract(np.logical_not(flag[:,:,row]), dr[:,:,row])
-    fi = np.extract(np.logical_not(flag[:,:,row]), di[:,:,row])
-    if len(fr) <= 1:
-        return 0
-    else:
-        vr = np.var(fr, ddof=1)
-        vi = np.var(fi, ddof=1)
-        return 2/(vr + vi)
-"""
-
-"""
-# per correlation
-def _variance2(dr, di, flag, corr, row):
-    fr = np.extract(np.logical_not(flag[corr,:,row]), dr[corr,:,row])
-    fi = np.extract(np.logical_not(flag[corr,:,row]), di[corr,:,row])
-    if len(fr) <= 1:
-        return 0
-    else:
-        vr = np.var(fr, ddof=1)
-        vi = np.var(fi, ddof=1)
-        return 2/(vr + vi)
-"""
-
-
-
 class statwt_test(unittest.TestCase):
     
     def _check_weights(
@@ -155,7 +132,6 @@ class statwt_test(unittest.TestCase):
                 exposures = subt.getcol('EXPOSURE')
                 wt = subt.getcol('WEIGHT')
                 wtsp = subt.getcol('WEIGHT_SPECTRUM')
-                wt = subt.getcol('WEIGHT')
                 subt.done()
                 tb.done()
                 if type(chan_flags) != type(None):
@@ -165,7 +141,7 @@ class statwt_test(unittest.TestCase):
                 for row in range(nrows):
                     start = row_to_rows[row][0]
                     end = row_to_rows[row][1]
-                    weights = get_weights(
+                    (weights, ewt) = get_weights(
                         data[:,:,start:end], flags[:, :, start:end],
                         exposures[start: end], combine_corr, exposures[row],
                         chanbins
@@ -177,7 +153,7 @@ class statwt_test(unittest.TestCase):
                         + '\nrow ' + str(row)
                     )
                     self.assertTrue(
-                        np.allclose(np.median(weights, 1), wt[:, row]),
+                        np.allclose(ewt, wt[:, row]),
                         'Failed weight, got ' + str(wt[:, row])
                         + '\nexpected ' + str(np.median(weights, 1))
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
@@ -186,10 +162,11 @@ class statwt_test(unittest.TestCase):
 
     def compare(self, dst, ref):
         mytb = tbtool()
-        mytb.open(dst)
+        self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
         [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
         mytb.done()
-        mytb.open(ref)
+        ref = datadir + ref
+        self.assertTrue(mytb.open(ref), "Table open failed for " + ref)
         [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
         mytb.done()
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
@@ -238,14 +215,14 @@ class statwt_test(unittest.TestCase):
                     chan_flags = cflags if fitspw else None
                     if combine == '':
                         if fitspw == '':
-                            ref = datadir + 'ref_test_algorithm_sep_corr_no_fitspw.ms'
+                            ref = 'ref_test_algorithm_sep_corr_no_fitspw.ms'
                         else: 
-                            ref = datadir + 'ref_test_algorithm_sep_corr_fitspw.ms'
+                            ref = 'ref_test_algorithm_sep_corr_fitspw.ms'
                     else:
                         if fitspw == '':
-                            ref = datadir + 'ref_test_algorithm_combine_corr_no_fitspw.ms'
+                            ref = 'ref_test_algorithm_combine_corr_no_fitspw.ms'
                         else:
-                            ref = datadir + 'ref_test_algorithm_combine_corr_has_fitspw.ms'
+                            ref = 'ref_test_algorithm_combine_corr_has_fitspw.ms'
                     self.compare(dst, ref)
                     shutil.rmtree(dst)
                 c += 1               
@@ -264,7 +241,7 @@ class statwt_test(unittest.TestCase):
                     myms.done()
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
-                ref = datadir + 'ref_test_timebin_' + str(timebin) + '.ms'
+                ref = 'ref_test_timebin_' + str(timebin) + '.ms'
                 self.compare(dst, ref)
                 shutil.rmtree(dst)
 
@@ -282,6 +259,9 @@ class statwt_test(unittest.TestCase):
         for combine in ["", "corr"]:
             for i in [0, 1, 2]:
                 for chanbin in ["195.312kHz", 8]:
+                    if i == 2 and combine != '' and chanbin != 8:
+                        # only run the check for i == 2 once
+                        continue
                     shutil.copytree(src, dst)
                     if i == 0:
                         myms = mstool()
@@ -293,23 +273,24 @@ class statwt_test(unittest.TestCase):
                     elif i == 2:
                         # check WEIGHT_SPECTRUM is created, only check once,
                         # this test is long as it is
-                        # shutil.copytree(src, dst)
-                        if combine == '' and chanbin == 8:
-                            mytb = tbtool()
-                            mytb.open(dst, nomodify=False)
-                            x = mytb.ncols()
-                            self.assertTrue(mytb.removecols("WEIGHT_SPECTRUM"), "column not removed")
-                            y = mytb.ncols()
-                            self.assertTrue(y == x-1, "wrong number of columns")
-                            mytb.done()
-                            myms = mstool()
-                            myms.open(dst, nomodify=False)
-                            myms.statwt(chanbin=chanbin, combine=combine)
-                            myms.done()
+                        mytb = tbtool()
+                        mytb.open(dst, nomodify=False)
+                        x = mytb.ncols()
+                        self.assertTrue(mytb.removecols(
+                            "WEIGHT_SPECTRUM"), "column not removed"
+                        )
+                        y = mytb.ncols()
+                        self.assertTrue(y == x-1, "wrong number of columns")
+                        mytb.done()
+                        myms = mstool()
+                        myms.open(dst, nomodify=False)
+                        myms.statwt(chanbin=chanbin, combine=combine)
+                        myms.done()
                     if combine == '':
-                        ref = datadir + 'ref_test_chanbin_sep_corr.ms'
+                        ref = 'ref_test_chanbin_sep_corr.ms'
                     else:
-                        ref = datadir + 'ref_test_chanbin_combine_corr.ms'
+                        ref = 'ref_test_chanbin_combine_corr.ms'
+                    self.compare(dst, ref)
                     shutil.rmtree(dst)
 
     def test_minsamp(self):
@@ -344,64 +325,23 @@ class statwt_test(unittest.TestCase):
         """Test field selection"""
         dst = "ngc5921.split.fieldsel.ms"
         combine = "corr"
-        [origwt, origwtsp, origflag, origfrow, origdata] = _get_dst_cols(src)
-        rtol = 1e-7
+        ref = 'ref_test_fieldsel.ms'
         for field in ["2", "N5921_2"]:
             shutil.copytree(src, dst)
             statwt(dst, field=field, combine=combine)
-            [wt, wtsp, flag, frow, data, field_id] = _get_dst_cols(dst, "FIELD_ID")
-            nrow = len(frow)
-            dr = np.real(data)
-            di = np.imag(data)
-            for row in range(nrow):
-                if field_id[row] == 2:
-                    expec = _variance(dr, di, flag, row)
-                    self.assertTrue(
-                        np.all(np.isclose(wt[:, row], expec, rtol=rtol)),
-                        "WEIGHT fail at row" + str(row) + ". got: "
-                        + str(wt[:, row]) + " expec " + str(expec)
-                    )
-                    self.assertTrue(
-                        np.all(np.isclose(wtsp[:,:,row], expec, rtol)),
-                        "Incorrect weight spectrum"   
-                    )
-                else:
-                    self.assertTrue(
-                        np.all(np.isclose(wt[:, row], origwt[:, row], rtol=rtol)),
-                        "WEIGHT fail at row" + str(row) + ". got: " + str(wt[:, row])
-                        + " expec " + str(origwt[:, row])
-                    )
-                    self.assertTrue(
-                        np.all(np.isclose(wtsp[:,:,row], origwtsp[:,:,row], rtol)),
-                        "Incorrect weight spectrum"   
-                    )
+            self.compare(dst, ref)
             shutil.rmtree(dst)
-            
+                     
     def test_spwsel(self):
         """Test spw selection"""
         dst = "ngc5921.split.spwsel.ms"
+        ref = 'ref_test_algorithm_combine_corr_no_fitspw.ms'
         combine = "corr"
-        [origwt, origwtsp, origflag, origfrow, origdata] = _get_dst_cols(src)
-        rtol = 1e-7
         spw="0"
         # data set only has one spw
         shutil.copytree(src, dst)
         statwt(dst, spw=spw, combine=combine)
-        [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
-        nrow = len(frow)
-        dr = np.real(data)
-        di = np.imag(data)
-        for row in range(nrow):
-            expec = _variance(dr, di, flag, row)
-            self.assertTrue(
-                np.all(np.isclose(wt[:, row], expec, rtol=rtol)),
-                "WEIGHT fail at row" + str(row) + ". got: "
-                + str(wt[:, row]) + " expec " + str(expec)
-            )
-            self.assertTrue(
-                np.all(np.isclose(wtsp[:,:,row], expec, rtol)),
-                "Incorrect weight spectrum"   
-            )
+        self.compare(dst, ref)
         shutil.rmtree(dst)
         
     def test_scansel(self):
