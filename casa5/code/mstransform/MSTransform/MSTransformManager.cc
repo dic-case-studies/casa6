@@ -2337,6 +2337,7 @@ void MSTransformManager::initDataSelectionParams()
 								                                                               << "Setting chanbin to " << numOfSelChanMap_p[spwList(spw_i)]
 								                                                                                                             << " for SPW " << spwList(spw_i)
 								                                                                                                             << LogIO::POST;
+                        freqbinMap_p[spwList(spw_i)] = numOfSelChanMap_p[spwList(spw_i)];
                         newWeightFactorMap_p[spwList(spw_i)] = numOfSelChanMap_p[spwList(spw_i)];
                         // jagonzal (CAS-8018): Update chanbin, otherwise there is a problem with dropped channels
                         freqbin_p(spw_i) = numOfSelChanMap_p[spwList(spw_i)];
