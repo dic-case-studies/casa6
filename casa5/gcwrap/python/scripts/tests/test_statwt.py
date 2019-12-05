@@ -26,9 +26,8 @@ src = datadir + 'ngc5921.split_2.ms'
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
 # IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
 def get_weights(
-        data, flags, exposures, combine_corr, target_exposure,
-        chanbins
-    ):  
+    data, flags, exposures, combine_corr, target_exposure, chanbins
+):  
     shape = data.shape
     ncorr_groups = 1 if combine_corr else shape[0]
     nchanbins = 1 if chanbins is None else len(chanbins)
@@ -50,11 +49,15 @@ def get_weights(
                 weights[corr:end_corr, cb[0]:cb[1]] = 0 
             else:
                 weights[corr:end_corr, cb[0]:cb[1]] = target_exposure/var
-            mweights = ma.array(
-                weights[corr:end_corr, cb[0]:cb[1]],
-                mask=flags[corr:end_corr, cb[0]:cb[1], :]
-            )
-    return (weights, np.median(mweights, 1))
+            if flags.all():
+                wt[corr:end_corr] = 0
+            else:
+                mweights = ma.array(
+                    weights[corr:end_corr, cb[0]:cb[1]],
+                    mask=flags[corr:end_corr, cb[0]:cb[1], :]
+                )
+                wt[corr:end_corr] = np.median(mweights, 1)
+    return (weights, wt)
 
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
 # IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
@@ -347,38 +350,13 @@ class statwt_test(unittest.TestCase):
     def test_scansel(self):
         """CAS-11858 Test scan selection"""
         dst = "ngc5921.split.scansel.ms"
+        ref = 'ref_test_scansel.ms'
         combine = "corr"
         [origwt, origwtsp, origflag, origfrow, origdata] = _get_dst_cols(src)
-        rtol = 1e-7
         scan = "5"
         shutil.copytree(src, dst)
         statwt(dst, scan=scan, combine=combine)
-        [wt, wtsp, flag, frow, data, scan_id] = _get_dst_cols(dst, "SCAN_NUMBER")
-        nrow = len(frow)
-        dr = np.real(data)
-        di = np.imag(data)
-        for row in range(nrow):
-            if str(scan_id[row]) == scan:
-                expec = _variance(dr, di, flag, row)
-                self.assertTrue(
-                    np.all(np.isclose(wt[:, row], expec, rtol=rtol)),
-                    "WEIGHT fail at row" + str(row) + ". got: "
-                    + str(wt[:, row]) + " expec " + str(expec)
-                )
-                self.assertTrue(
-                    np.all(np.isclose(wtsp[:,:,row], expec, rtol)),
-                    "Incorrect weight spectrum"   
-                )
-            else:
-                self.assertTrue(
-                    np.all(np.isclose(wt[:, row], origwt[:, row], rtol=rtol)),
-                    "WEIGHT fail at row" + str(row) + ". got: " + str(wt[:, row])
-                    + " expec " + str(origwt[:, row])
-                )
-                self.assertTrue(
-                    np.all(np.isclose(wtsp[:,:,row], origwtsp[:,:,row], rtol)),
-                    "Incorrect weight spectrum"   
-                )
+        self.compare(dst, ref)
         shutil.rmtree(dst)
 
     def test_default_boundaries(self):

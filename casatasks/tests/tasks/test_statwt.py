@@ -11,24 +11,46 @@ from casatasks import statwt
 datadir = ctsys.resolve('regression/unittest/statwt')
 src = os.path.join(datadir,'ngc5921.split_2.ms')
 
-def get_weights(data, flags, exposures, combine_corr, target_exposure):  
+# rows and target_row are the row numbers from the subtable formed
+# by the baseline query
+# In the chan_flags, a value of False means the channel is good (not flagged)
+# so should be used. It follows the convention of the FLAGS column in the MS.
+
+# EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
+# IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
+def get_weights(
+    data, flags, exposures, combine_corr, target_exposure, chanbins
+):  
     shape = data.shape
     ncorr_groups = 1 if combine_corr else shape[0]
+    nchanbins = 1 if chanbins is None else len(chanbins)
+    tchanbins = chanbins
+    if nchanbins == 1:
+        tchanbins = [[0, shape[1]]]
     ncorr = shape[0]
     weights = np.zeros([shape[0], shape[1]])
+    wt = np.zeros(shape[0])
     nrows = data.shape[2]
     for corr in range(ncorr_groups):
-        end = corr + 1 if ncorr_groups > 1 else ncorr + 1
-        var = variance(data[corr:end, :, :], flags[corr:end, :, :], exposures)
-        if var == 0:
-            weights[corr:end, :] = 0 
-        else:
-            weights[corr:end, :] = target_exposure/var
-        mweights = ma.array(
-            weights[corr:end_corr, cb[0]:cb[1]],
-            mask=flags[corr:end_corr, cb[0]:cb[1], :]
-        )
-    return (weights, np.median(mweights, 1))
+        end_corr = corr + 1 if ncorr_groups > 1 else ncorr + 1
+        for cb in tchanbins:
+            var = variance(
+                data[corr:end_corr, cb[0]:cb[1], :],
+                flags[corr:end_corr, cb[0]:cb[1], :], exposures
+            )
+            if var == 0:
+                weights[corr:end_corr, cb[0]:cb[1]] = 0 
+            else:
+                weights[corr:end_corr, cb[0]:cb[1]] = target_exposure/var
+            if flags.all():
+                wt[corr:end_corr] = 0
+            else:
+                mweights = ma.array(
+                    weights[corr:end_corr, cb[0]:cb[1]],
+                    mask=flags[corr:end_corr, cb[0]:cb[1], :]
+                )
+                wt[corr:end_corr] = np.median(mweights, 1)
+    return (weights, wt)
 
 def variance(data, flags, exposures):
     if flags.all():
@@ -288,38 +310,13 @@ class statwt_test(unittest.TestCase):
     def test_scansel(self):
         """CAS-11858 Test scan selection"""
         dst = "ngc5921.split.scansel.ms"
+        ref = 'ref_test_scansel.ms'
         combine = "corr"
         [origwt, origwtsp, origflag, origfrow, origdata] = _get_dst_cols(src)
-        rtol = 1e-7
         scan = "5"
         shutil.copytree(src, dst)
         statwt(dst, scan=scan, combine=combine)
-        [wt, wtsp, flag, frow, data, scan_id] = _get_dst_cols(dst, "SCAN_NUMBER")
-        nrow = len(frow)
-        dr = numpy.real(data)
-        di = numpy.imag(data)
-        for row in range(nrow):
-            if str(scan_id[row]) == scan:
-                expec = _variance(dr, di, flag, row)
-                self.assertTrue(
-                    numpy.all(numpy.isclose(wt[:, row], expec, rtol=rtol)),
-                    "WEIGHT fail at row" + str(row) + ". got: "
-                    + str(wt[:, row]) + " expec " + str(expec)
-                )
-                self.assertTrue(
-                    numpy.all(numpy.isclose(wtsp[:,:,row], expec, rtol)),
-                    "Incorrect weight spectrum"   
-                )
-            else:
-                self.assertTrue(
-                    numpy.all(numpy.isclose(wt[:, row], origwt[:, row], rtol=rtol)),
-                    "WEIGHT fail at row" + str(row) + ". got: " + str(wt[:, row])
-                    + " expec " + str(origwt[:, row])
-                )
-                self.assertTrue(
-                    numpy.all(numpy.isclose(wtsp[:,:,row], origwtsp[:,:,row], rtol)),
-                    "Incorrect weight spectrum"   
-                )
+        self.compare(dst, ref)
         shutil.rmtree(dst)
         
     def test_default_boundaries(self):
