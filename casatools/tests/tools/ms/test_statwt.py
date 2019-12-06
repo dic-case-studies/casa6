@@ -329,27 +329,21 @@ class statwt_test(unittest.TestCase):
         myms.done()
         self.compare(dst, ref)
         shutil.rmtree(dst)
-    
+        
     def test_no_scan_nor_field_boundaries(self):
         """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir,"ngc5921.no_scan_nor_field_bounds_2.ms.ref")
-        rtol = 1e-7
-        [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
+        ref = os.path.join(datadir, 'ref_test_no_scan_nor_field_bounds.ms')
         for combine in ["corr,scan,field", "corr,field,scan"]:
-            shutil.copytree(ctsys.resolve(src), dst)
-            myms = ms( )
+            shutil.copytree(src, dst)
+            myms = ms()
             myms.open(dst, nomodify=False)
             myms.statwt(timebin=timebin, combine=combine)
             myms.done()
-            [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
-            self.assertTrue(numpy.all(numpy.isclose(gotwt, expwt, rtol)))
-            self.assertTrue(numpy.all(numpy.isclose(gotwtsp, expwtsp, rtol)))
-            self.assertTrue(numpy.all(gotflag == expflag))
-            self.assertTrue(numpy.all(gotfrow == expfrow))
+            self.compare(dst, ref)
             shutil.rmtree(dst)
-                
+
     def test_statalg(self):
         """Test statalg"""
         # just testing inputs

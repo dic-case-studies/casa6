@@ -419,9 +419,7 @@ class statwt_test(unittest.TestCase):
         """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
-        ref = datadir + "ngc5921.no_scan_nor_field_bounds_2.ms.ref"
-        rtol = 1e-7
-        [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
+        ref = 'ref_test_no_scan_nor_field_bounds.ms'
         for combine in ["corr,scan,field", "corr,field,scan"]:
             for i in [0, 1]:
                 shutil.copytree(src, dst)
@@ -432,11 +430,7 @@ class statwt_test(unittest.TestCase):
                     myms.done()
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
-                [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
-                self.assertTrue(np.all(np.isclose(gotwt, expwt, rtol)))
-                self.assertTrue(np.all(np.isclose(gotwtsp, expwtsp, rtol)))
-                self.assertTrue(np.all(gotflag == expflag))
-                self.assertTrue(np.all(gotfrow == expfrow))
+                self.compare(dst, ref)
                 shutil.rmtree(dst)
                 
     def test_statalg(self):
