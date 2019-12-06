@@ -55,7 +55,7 @@ def sdtimeaverage(
              spw, 
              timerange, 
              scan,
-             beam,
+             antenna,   # changed CAS-12721
              timebin,
              outfile):
 
@@ -104,7 +104,7 @@ def sdtimeaverage(
 
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan,
-                    timebin=timebin, beam=beam, outfile=outfile)
+                    timebin=timebin, antenna=antenna, outfile=outfile)
 
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
@@ -355,7 +355,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
     return True
 
 
-def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, beam, outfile):
+def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, antenna, outfile):
     mslocal = ms( )
     # Write history to output MS, not the input ms.
     try:

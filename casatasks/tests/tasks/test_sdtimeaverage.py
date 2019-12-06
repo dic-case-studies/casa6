@@ -148,7 +148,7 @@ class test_sdtimeaverage(unittest.TestCase):
                     num_others += 1
             return num_onsource, num_others
 
-    def check_values(self, num_ave=None, beam=None):
+    def check_values(self, num_ave=None, antenna=None):
         if num_ave is None:
             for iidx in range(len(self.i_tm)):
                 with tbmanager(self.i_ms) as tb:
@@ -156,7 +156,7 @@ class test_sdtimeaverage(unittest.TestCase):
                 oidx = self._get_index_outdata(iidx)
                 with tbmanager(self.o_ms) as tb:
                     self.o_dat = tb.getcell('FLOAT_DATA', oidx)
-                self._do_check_values(iidx, oidx, beam)
+                self._do_check_values(iidx, oidx, antenna)
             return
 
 #       self.assertTrue(num_ave == 2)
@@ -196,7 +196,7 @@ class test_sdtimeaverage(unittest.TestCase):
         if res is None: raise Exception('Output data not found.')
         return res
 
-    def _do_check_values(self, iidx, oidx, beam=None):
+    def _do_check_values(self, iidx, oidx, antenna=None):
         # spectrum shape
         o_npol = len(self.o_dat)
 #        check_eq(o_npol, len(self.i_dat))
@@ -209,18 +209,18 @@ class test_sdtimeaverage(unittest.TestCase):
 #                check_eq(self.o_dat[ipol][ichan], self.i_dat[ipol][ichan])
 #        check_eq(self.o_tm[oidx], self.i_tm[iidx])
         # antenna ID
-        if beam is None:
-            lst_beam = self.antid
-        else:
-            lst_beam = beam.strip().split(',')
-            for i in range(len(lst_beam)): lst_beam[i] = int(lst_beam[i])
-            min_beam = lst_beam[0]
-            for i in range(len(lst_beam)):
-                if lst_beam[i] < min_beam: min_beam = lst_beam[i]
-            self.min_antid = min_beam
-
-        if (self.o_st[oidx] == self.st_onsrc) and (self.o_a1[oidx] in lst_beam):
-            None
+#        if beam is None:
+#            lst_beam = self.antid
+#        else:
+#            lst_beam = beam.strip().split(',')
+#            for i in range(len(lst_beam)): lst_beam[i] = int(lst_beam[i])
+#            min_beam = lst_beam[0]
+#            for i in range(len(lst_beam)):
+#                if lst_beam[i] < min_beam: min_beam = lst_beam[i]
+#            self.min_antid = min_beam
+#
+#        if (self.o_st[oidx] == self.st_onsrc) and (self.o_a1[oidx] in lst_beam):
+#            None
 #            check_eq(self.o_a1[oidx], self.min_antid)
 #            check_eq(self.o_a2[oidx], self.min_antid)
 
@@ -274,6 +274,7 @@ class test_sdtimeaverage(unittest.TestCase):
         return time1, time2
 
     def test_default(self): # no time averaging(timebin='0s'), rewriting beam IDs only
+        print( "NISHIE:test_default runs.")
         self.run_task()
         self.check_num_data()
         self.check_values()

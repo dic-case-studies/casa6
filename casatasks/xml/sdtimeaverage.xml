@@ -41,8 +41,8 @@
         <value/>
     </param>
 
-    <param name="beam" type="string">
-        <description>beam IDs to be averaged over, e.g. &quot;1,3&quot; (&quot;&quot;=all)</description>
+    <param name="antenna" type="string">
+        <description>Antenna IDs (originally this was beam), e.g. &quot;1,3&quot; (&quot;&quot;=all)</description>
         <value/>
     </param>
 
