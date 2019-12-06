@@ -8,16 +8,18 @@ import unittest
 # is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
 if is_CASA6:
-    from casatools import ms, ctsys
+    from casatools import ms, ctsys, table
     from casatasks import fringefit
 
+    tblocal = table()
     ctsys_resolve = ctsys.resolve
 else:
     from __main__ import default
     from tasks import *
-    from taskinit import *
+    from taskinit import tbtool
 
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    tblocal = tbtool()
 
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
@@ -75,8 +77,9 @@ class Fringefit_single_tests(unittest.TestCase):
     def test_single(self):
         sbdcal = self.prefix + '.sbdcal'
         fringefit(vis=self.msfile, caltable=sbdcal, refant='EF')
-        tb.open(sbdcal)
-        flag = tb.getcol('FLAG')
+        tblocal.open(sbdcal)
+        flag = tblocal.getcol('FLAG')
+        tblocal.close()
         # CAS-12693: Check that the right parameters are flagged
         self.assertFalse(flag[0, 0, 0])
         self.assertFalse(flag[0, 0, 1])

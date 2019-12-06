@@ -13,6 +13,10 @@
 #
 # To test:  see plotbandpass_regression.py
 #
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves import range
+from six.moves import input
 PLOTBANDPASS_REVISION_STRING = "$Id: task_plotbandpass.py,v 1.102 2018/01/21 14:45:41 thunter Exp $" 
 import pylab as pb
 import math, os, sys, re
@@ -152,8 +156,8 @@ def makeplot(figfile,msFound,msAnt,overlayAntennas,pages,pagectr,density,
                 casalogPost(debug,"Making directory = %s" % (directory))
                 os.system("mkdir -p %s" % directory)
     if (debug):
-        print("makeplot(%d): pagectr=%d, len(pages)=%d, len(spwsToPlot)=%d, pages=" % (locationCalledFrom,
-                                                              pagectr, len(pages),len(spwsToPlot)), pages)
+        print(("makeplot(%d): pagectr=%d, len(pages)=%d, len(spwsToPlot)=%d, pages=" % (locationCalledFrom,
+                                                              pagectr, len(pages),len(spwsToPlot)), pages))
     if (pages[pagectr][PAGE_SPW] >= len(spwsToPlot)):
         # necessary for test86: overlay='spw' of spectral scan dataset.  to avoid indexing beyond the
         # end of the array in the the case that the final frame is of a baseband with n spw, and
@@ -379,14 +383,14 @@ def getCorrType(msName, spwsToPlot, mymsmd, debug=False):
         elif (corr_type[0] in [9,10,11,12]):
             corr_type = [9,12]
         else:
-            print("Unsupported polarization types = ", corr_type)
+            print(("Unsupported polarization types = ", corr_type))
             return(corr_type, corr_type_string)
     # This overrides the len(gain_table) because it can have length=2 even when only 1 pol present
     nPolarizations = len(corr_type)
     for ct in corr_type:
         corr_type_string.append(corrTypeToString(ct))
     if (debug):
-        print("corr_types = ", corr_type,  " = ", corr_type_string)
+        print(("corr_types = ", corr_type,  " = ", corr_type_string))
     return(corr_type, corr_type_string, nPolarizations)
 
 def writeArgument(f,name,arg):
@@ -689,7 +693,30 @@ def computeHighestSpwIndexInSpwsToPlotThatHasCurrentScan(spwsToPlot, scansToPlot
             highestSpwIndex = i
     return(highestSpwIndex)
 
+def run_with_old_pyplot_style(func):
+    """
+    CAS-12786: this decorator is introduced here to have a single entry point before/after
+    which the style sheet of matplotlib/pylab can be tuned and restored before returning.
+
+    The motivation is that plotbandpass plots are heavily dependent on default image size,
+    grid style, ticks frequency, etc., as it used to be in matplotlib 1.1.0 (used in
+    CASA 5.x). In more recent matplotlib (3.1.1 is currently used in CASA 6.x) that style
+    can be reproduced using the style sheet 'classic'. This is the quickest and simplest way
+    to produce plotbandpass plots that look like those of CASA 5
+    # https://matplotlib.org/3.1.1/users/dflt_style_changes.html
+    """
+
+    def func_old_style(*args, **kwargs):
+        if is_CASA6:
+            with pb.style.context('classic'):
+                return func(*args, **kwargs)
+        else:
+            return func(*args, **kwargs)
+
+    return func_old_style
+
 DEFAULT_PLATFORMING_THRESHOLD = 10.0 # unused if platformingSigma != 0
+@run_with_old_pyplot_style
 def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                  xaxis='chan', figfile='', plotrange=[0,0,0,0], 
                  caltable2='', overlay='', showflagged=False, timeranges='',
@@ -714,6 +741,18 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     http://casaguides.nrao.edu/index.php?title=Plotbandpass
     -- Todd Hunter
     """
+
+    def safe_pb_subplot(xframe):
+        """
+        CAS-12786: old pyplots (up to CASA 5.6.1 used to accept "220" in the pos parameter
+        Newer pyplots won't. Assume the index effectively used was 1 ("221")
+        """
+        if str(xframe).endswith('0'):
+            adesc = pb.subplot(xframe + 1)
+        else:
+            adesc = pb.subplot(xframe)
+        return adesc
+
     casalog.origin('plotbandpass')
     casalogPost(debug,"%s" % (PLOTBANDPASS_REVISION_STRING))
     DEBUG = debug
@@ -961,6 +1000,11 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         
     if (pwv==''):
         pwv = 1.0
+
+    # CAS-12786: from a command that sets  poln='' we'll get poln as ['']
+    if isinstance(poln, list) and 1 == len(poln):
+        poln = poln[0]
+
     if (type(poln) != list):
           poln = poln.upper()
     if (poln == 'X'):
@@ -1243,7 +1287,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
             refFreq = mytb.getcol('REF_FREQUENCY')    
             net_sideband = mytb.getcol('NET_SIDEBAND')
             measFreqRef = mytb.getcol('MEAS_FREQ_REF')
-            originalSpw_casa33 = range(len(measFreqRef))
+            originalSpw_casa33 = list(range(len(measFreqRef)))
             chanFreqGHz_casa33 = []     # used by showFDM
             for i in originalSpw_casa33:
                 # They array shapes can vary.
@@ -1271,7 +1315,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         mytb.close()
         mytb.open(spectralWindowTable)
         chanFreqGHz = []
-        originalSpws = range(len(mytb.getcol('MEAS_FREQ_REF')))
+        originalSpws = list(range(len(mytb.getcol('MEAS_FREQ_REF'))))
         originalSpw = originalSpws  # may need to do a global replace of this
         originalSpwNames = mytb.getcol('NAME')
         for i in originalSpws:
@@ -1310,7 +1354,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
             if (debug): print("%.1f sec elapsed" % (donetime-mytimestamp))
             mytimestamp = timeUtilities.time()
             if (debug): print("time = %s" % (str(mytimestamp)))
-            msAnt = mymsmd.antennanames(range(mymsmd.nantennas()))
+            msAnt = mymsmd.antennanames(list(range(mymsmd.nantennas())))
             if (debug): print("msAnt = %s" % (str(msAnt)))
 #            msFields = mymsmd.namesforfields(range(mymsmd.nfields())) # bombs if split has been run on subset of fields
             msFields = mymsmd.namesforfields()
@@ -1333,7 +1377,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                 donetime = timeUtilities.time()
                 if (debug): print("%.1f sec elapsed" % (donetime-mytimestamp))
                 mytimestamp = timeUtilities.time()
-                msAnt = mymsmd.antennanames(range(mymsmd.nantennas()))
+                msAnt = mymsmd.antennanames(list(range(mymsmd.nantennas())))
 #                msFields = mymsmd.namesforfields(range(mymsmd.nfields())) # bombs if split has been run on subset of fields
                 msFields = mymsmd.namesforfields()
                 observatoryName = mymsmd.observatorynames()[0]
@@ -1443,7 +1487,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                break
                          elif (token.find('~')>0):
                                (start,finish) = token.split('~')
-                               spwsToPlot +=  range(int(start),int(finish)+1)
+                               spwsToPlot +=  list(range(int(start),int(finish)+1))
                          else:
                                spwsToPlot.append(int(token))
        elif (type(spw) == list):
@@ -1460,7 +1504,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
             keepSpwsToPlot.remove(myspw)
             if (compare_version('>=',[4,1,0]) and mymsmd != ''):
 # #              nonwvrspws = list(set(range(mymsmd.nspw())).difference(set(mymsmd.wvrspws())))
-                if (myspw not in range(mymsmd.nspw())):
+                if (myspw not in list(range(mymsmd.nspw()))):
                     print("FATAL: spw %d is not even in the ms.  There might be a bug in your script." % (myspw))
                     return
                 elif (myspw in mymsmd.wvrspws()):
@@ -1717,11 +1761,11 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
               mytb.close()
               mytb.open(spectralWindowTable2)
               chanFreqGHz2 = []
-              originalSpws2 = range(len(mytb.getcol('MEAS_FREQ_REF')))
+              originalSpws2 = list(range(len(mytb.getcol('MEAS_FREQ_REF'))))
               for i in originalSpws2:
                   # The array shapes can vary.
                   chanFreqGHz2.append(1e-9 * mytb.getcell('CHAN_FREQ',i))
-              originalSpws2 = range(len(mytb.getcol('MEAS_FREQ_REF')))
+              originalSpws2 = list(range(len(mytb.getcol('MEAS_FREQ_REF'))))
               originalSpw2 = originalSpws2  # may want to do a global replace of this <----------------------------------
   
           uniqueSpwsInCalTable2 = np.unique(cal_desc_id2)
@@ -1780,11 +1824,11 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         for token in tokens:
             if (len(token) > 0):
                 if (token.find('!')==0):
-                    timerangeList = range(len(uniqueTimes))
+                    timerangeList = list(range(len(uniqueTimes)))
                     removeTime.append(int(token[1:]))
                 elif (token.find('~')>0):
                     (start,finish) = token.split('~')
-                    timerangeList +=  range(int(start),int(finish)+1)
+                    timerangeList +=  list(range(int(start),int(finish)+1))
                 else:
                     timerangeList.append(int(token))
         timerangeList = np.array(timerangeList)
@@ -1797,7 +1841,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                 return
             else:
                 # then a blank list was specified
-                timerangeList = range(len(uniqueTimes))
+                timerangeList = list(range(len(uniqueTimes)))
     elif (type(timeranges) == list):
         # it's already a list of integers
         timerangeList = timeranges
@@ -1811,11 +1855,11 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         else:
             myscan = int(str(scans).split(',')[0])
         if (myscan not in scansForUniqueTimes):
-            print("No rows for scan %d, only " % (myscan), np.unique(scansForUniqueTimes))
+            print(("No rows for scan %d, only " % (myscan), np.unique(scansForUniqueTimes)))
             return
         timerangeOffset = scansForUniqueTimes.index(myscan)
         timerangeList = np.array(timerangeList) + timerangeOffset
-        if (debug): print("Since both timeranges and scans was specified, generated new effective timerangeList: ", timerangeList)
+        if (debug): print(("Since both timeranges and scans was specified, generated new effective timerangeList: ", timerangeList))
     if (max(timerangeList) >= len(uniqueTimes)):
         print("Invalid timerange.  Solution has %d times (%d~%d)" % (len(uniqueTimes),0,len(uniqueTimes)-1))
         return
@@ -1865,7 +1909,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                 indexDelete = np.where(spwsToPlot==myspw)[0]
                 if (len(indexDelete) > 0):
                     spwsToPlot = np.delete(spwsToPlot, indexDelete[0])
-        print("spwsToPlot = ", spwsToPlot)
+        print(("spwsToPlot = ", spwsToPlot))
     casalogPost(debug,"scans to plot: %s" % (str(scansToPlot)))
     casalogPost(debug,"UT times to plot: %s" % (timerangeListTimesString))
     casalogPost(debug,"Corresponding time IDs (0-based): %s" % (str(timerangeList)))
@@ -1917,7 +1961,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                        removeAntenna.append(int(token[1:]))
                    elif (token.find('~')>0):
                        (start,finish) = token.split('~')
-                       antlist +=  range(int(start),int(finish)+1)
+                       antlist +=  list(range(int(start),int(finish)+1))
                    else:
                        antlist.append(int(token))
            antlist = np.array(antlist)
@@ -1946,10 +1990,10 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
 #                           removeAntenna.append(mymsmd.antennaids(token[1:])[0])
                            removeAntenna.append(list(msAnt).index(token[1:]))                       
                        else:
-                           print("Antenna %s is not in the ms. It contains: " % (token), mymsmd.antennanames(range(mymsmd.nantennas())))
+                           print("Antenna %s is not in the ms. It contains: " % (token), mymsmd.antennanames(list(range(mymsmd.nantennas()))))
                            return()
                    else:
-                       print("Antenna %s is not in the ms. It contains: " % (token), mymsmd.antennanames(range(mymsmd.nantennas())))
+                       print("Antenna %s is not in the ms. It contains: " % (token), mymsmd.antennanames(list(range(mymsmd.nantennas()))))
                        return()
                antlist = np.array(antlist)
                for rm in removeAntenna:
@@ -1995,7 +2039,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                elif (len(token) > 0):
                    if (token.find('~')>0):
                        (start,finish) = token.split('~')
-                       fieldlist +=  range(int(start),int(finish)+1)
+                       fieldlist +=  list(range(int(start),int(finish)+1))
                    else:
                        fieldlist.append(int(token))
            fieldlist = np.array(fieldlist)
@@ -2292,7 +2336,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                        if (interactive):
                           pb.draw()
 # #                        myinput = raw_input("(%.1f sec) Press return for next page (b for backwards, q to quit): "%(donetime-mytimestamp))
-                          myinput = raw_input("Press return for next page (b for backwards, q to quit): ")
+                          myinput = input("Press return for next page (b for backwards, q to quit): ")
                        else:
                           myinput = ''
                        skippingSpwMessageSent = 0
@@ -2380,7 +2424,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
               if (interactive):
                  pb.draw()
 # #               myinput = raw_input("(%.1f sec) Press return for next page (b for backwards, q to quit): "%(donetime-mytimestamp))
-                 myinput = raw_input("Press return for next page (b for backwards, q to quit): ")
+                 myinput = input("Press return for next page (b for backwards, q to quit): ")
               else:
                  myinput = ''
               skippingSpwMessageSent = 0
@@ -2680,19 +2724,19 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
             madstats = dict.fromkeys(['Ant '+str(i) for i in range(len(uniqueAntennaIds))])
 
         for i in range(len(madstats)):
-            madstats[madstats.keys()[i]] = dict.fromkeys(spwsToPlot)
+            madstats[list(madstats.keys())[i]] = dict.fromkeys(spwsToPlot)
             for j in range(len(spwsToPlot)):
-                madstats[madstats.keys()[i]][spwsToPlot[j]] = dict.fromkeys(timerangeList) # dict.fromkeys(range(len(uniqueTimes)))
+                madstats[list(madstats.keys())[i]][spwsToPlot[j]] = dict.fromkeys(timerangeList) # dict.fromkeys(range(len(uniqueTimes)))
                 for k in timerangeList: # range(len(uniqueTimes)):
-                    madstats[madstats.keys()[i]][spwsToPlot[j]][k] = dict.fromkeys(range(nPolarizations))
+                    madstats[list(madstats.keys())[i]][spwsToPlot[j]][k] = dict.fromkeys(list(range(nPolarizations)))
                     for l in range(nPolarizations):
                         if (yaxis == 'both'):
-                            madstats[madstats.keys()[i]][spwsToPlot[j]][k][l] = {'amp': None, 'phase': None}
+                            madstats[list(madstats.keys())[i]][spwsToPlot[j]][k][l] = {'amp': None, 'phase': None}
                         elif (yaxis == 'phase'):
-                            madstats[madstats.keys()[i]][spwsToPlot[j]][k][l] = {'phase': None}
+                            madstats[list(madstats.keys())[i]][spwsToPlot[j]][k][l] = {'phase': None}
                         else:
                             # this includes tsys and amp
-                            madstats[madstats.keys()[i]][spwsToPlot[j]][k][l] = {'amp': None}
+                            madstats[list(madstats.keys())[i]][spwsToPlot[j]][k][l] = {'amp': None}
         madstats['platforming'] = {}
 # #      print("madstats = ", madstats)
     myinput = ''
@@ -2841,7 +2885,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       print("timerangeList = %s" % (str(timerangeList)))
                       print("timerangeListTimes = %s" % (str(timerangeListTimes)))
                       print("debugSloppyMatch = %s" % (str(debugSloppyMatch)))
-                      print("solutionTimeThresholdSeconds = %s" % (str(solutionTimeThresholdSeconds)))
+                      print(("solutionTimeThresholdSeconds = %s" % (str(solutionTimeThresholdSeconds))))
                   if (len(timerangeList) > 0 and (sloppyMatch(uniqueTimes[mytime],timerangeListTimes,solutionTimeThresholdSeconds,
                                                               mytime, scansToPlot, scansForUniqueTimes, myprint=debugSloppyMatch)==False)): # task version
 #                                                              mytime, scansToPlotPerSpw[ispw], scansForUniqueTimes, myprint=debugSloppyMatch)==False)):  # causes infinite loop on test 85
@@ -3075,7 +3119,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                   showimage = False
                                   LO1 = ''
                               else:
-                                if (originalSpw[ispw] not in lo1s.keys()):
+                                if (originalSpw[ispw] not in list(lo1s.keys())):
                                     print("There is a problem in reading the LO1 values, cannot showimage for this dataset.")
                                     showimage = False
                                     LO1 = ''
@@ -3402,7 +3446,9 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       if (debug):
                           print("$$$$$$$$$$$$$$$$$$$$$$$  ready to plot amp on xframe %d" % (xframe))
 # #     # #            print(",,,,,,,,,,,,,,,, Starting with newylimits = ", newylimits)
-                      adesc = pb.subplot(xframe)
+
+                      adesc = safe_pb_subplot(xframe)
+
                       if (previousSubplot != xframe):
                           drewAtmosphere = False
                       previousSubplot = xframe
@@ -3450,11 +3496,11 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                       madstats[Antstring][ispw][mytime][p]['amp'] = gamp_mad[p]['mad']
                                       madstats[Antstring][ispw][mytime][p]['ampstd'] = gamp_std[p]['std']
                                       if (gamp_platforming[p]):
-                                          if (Antstring not in madstats['platforming'].keys()):
+                                          if (Antstring not in list(madstats['platforming'].keys())):
                                               madstats['platforming'][Antstring] = {}
-                                          if (ispw not in madstats['platforming'][Antstring].keys()):
+                                          if (ispw not in list(madstats['platforming'][Antstring].keys())):
                                               madstats['platforming'][Antstring][ispw] = {}
-                                          if (p not in madstats['platforming'][Antstring][ispw].keys()):
+                                          if (p not in list(madstats['platforming'][Antstring][ispw].keys())):
                                               madstats['platforming'][Antstring][ispw][p] = []
                                           madstats['platforming'][Antstring][ispw][p].append(uniqueTimes[mytime])
                                       if (gamp_mad[p]['nchan'] > 0):
@@ -3492,11 +3538,11 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                   madstats[Antstring][ispw][mytime][p]['amp'] = gamp_mad[p]['mad']
                                   madstats[Antstring][ispw][mytime][p]['ampstd'] = gamp_std[p]['std']
                                   if (gamp_platforming[p]):
-                                      if (Antstring not in madstats['platforming'].keys()):
+                                      if (Antstring not in list(madstats['platforming'].keys())):
                                           madstats['platforming'][Antstring] = {}
-                                      if (ispw not in madstats['platforming'][Antstring].keys()):
+                                      if (ispw not in list(madstats['platforming'][Antstring].keys())):
                                           madstats['platforming'][Antstring][ispw] = {}
-                                      if (p not in madstats['platforming'][Antstring][ispw].keys()):
+                                      if (p not in list(madstats['platforming'][Antstring][ispw].keys())):
                                           madstats['platforming'][Antstring][ispw][p] = []
                                       madstats['platforming'][Antstring][ispw][p].append(mytime)
                                   if (gamp_mad[p]['nchan'] > 0):
@@ -3927,7 +3973,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       ylim = pb.ylim()
                       myxrange = xlim[1]-xlim[0]
                       yrange = ylim[1]-ylim[0]
-                      if (debug): print("amp: ylim, yrange = ",  ylim, yrange)
+                      if (debug): print(("amp: ylim, yrange = ",  ylim, yrange))
                       if (overlayAntennas == False and overlayTimes == False and bOverlay == False and
                           ((overlaySpws == False and overlayBasebands == False) or spwctr==spwctrFirstToPlot)):
                           # draw polarization labels for no overlay
@@ -4207,7 +4253,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                if (interactive):
                                   pb.draw()
 # #     # #                        myinput = raw_input(":(%.1f sec) Press return for next page (b for backwards, q to quit): "%(donetime-mytimestamp))
-                                  myinput = raw_input("Press return for next page (b for backwards, q to quit): ")
+                                  myinput = input("Press return for next page (b for backwards, q to quit): ")
                                else:
                                   myinput = ''
                                skippingSpwMessageSent = 0
@@ -4291,7 +4337,9 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                       newylimits = phase
                       if (debug):
                           print("$$$$$$$$$$$$$$$$$$$$$$$  ready to plot phase on xframe %d" % (xframe))
-                      adesc = pb.subplot(xframe)
+
+                      adesc = safe_pb_subplot(xframe)
+
                       if (previousSubplot != xframe):
                           drewAtmosphere = False
                       previousSubplot = xframe
@@ -5047,7 +5095,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                       if (interactive):
                           pb.draw()
 # #     # #                myinput = raw_input("(%.1f sec) Press return for next screen (b for backwards, q to quit): "%(donetime-mytimestamp))
-                          myinput = raw_input("Press return for next page (b for backwards, q to quit): ")
+                          myinput = input("Press return for next page (b for backwards, q to quit): ")
                       else:
                           myinput = ''
                       skippingSpwMessageSent = 0
@@ -5206,7 +5254,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         for j in spwsToPlot:
             madstats['median'][j] = dict.fromkeys(timerangeList) # dict.fromkeys(range(len(uniqueTimes)))
             for k in timerangeList: # range(len(uniqueTimes)):
-                madstats['median'][j][k] = dict.fromkeys(range(nPolarizations))
+                madstats['median'][j][k] = dict.fromkeys(list(range(nPolarizations)))
                 for l in range(nPolarizations):
                     if (yaxis == 'both'):
                         madstats['median'][j][k][l] = {'amp': None, 'phase': None}
@@ -5220,7 +5268,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                         for i in madstats.keys():  # loop over antennas
                             if (i != 'median' and i != 'platforming'):
                                 if (madstats[i][j][k][l][m] != None):
-                                    if (debug): print("madstats[%s][%d][%d][%d][%s] = " % (i,j,k,l,m), madstats[i][j][k][l][m])
+                                    if (debug): print(("madstats[%s][%d][%d][%d][%s] = " % (i,j,k,l,m), madstats[i][j][k][l][m]))
                                     value.append(madstats[i][j][k][l][m])
                                     spwvalue[m].append(madstats[i][j][k][l][m])
                         madstats['median'][j][k][l][m] = np.median(value)
@@ -5497,7 +5545,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
             print("Looking for scans for field integer = %d" % (field))
         scans = mymsmd.scansforfield(field)
         if (verbose):
-            print("For field %s, Got scans = " % str(field),scans)
+            print(("For field %s, Got scans = " % str(field),scans))
         for myscan in scans:
             roundedScanTimes.append(np.unique(np.round(mymsmd.timesforscan(myscan))))
 #   This method was much slower and not necessary.  Removed for CAS-8065
@@ -5532,7 +5580,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
     else:
         conditions = {}
     if (type(mymsmd) != str):
-      if ('elevation' not in conditions.keys()):
+      if ('elevation' not in list(conditions.keys())):
         # Someone cleared the POINTING table, so calculate elevation from Ra/Dec/MJD
 #        myfieldId =  mymsmd.fieldsforname(mymsmd.fieldsforscan(bestscan))
         myfieldId =  mymsmd.fieldsforscan(bestscan)[0]
@@ -5573,7 +5621,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
     while (numchan > MAX_ATM_CALC_CHANNELS):
         numchan //= 2
 #        print("Reducing numchan to ", numchan)
-        chans = range(0,originalnumchan,(originalnumchan//numchan))
+        chans = list(range(0,originalnumchan,(originalnumchan//numchan)))
 
     chansep = (freqs[-1]-freqs[0])/(numchan-1)
     nbands = 1
@@ -5645,7 +5693,7 @@ def CalcAtmTransmission(chans,freqs,xaxis,pwv,vm, mymsmd,vis,asdm,antenna,timest
         
     # Be sure that number of frequencies matched number of transmission values - CAS-10123
     numchan = len(transmission)
-    chans = range(len(transmission))
+    chans = list(range(len(transmission)))
     # Note that getChanFreq returns units of GHz, but use convert to be sure.
     startFreq = myqa.convert(myat.getChanFreq(0),'GHz')['value']
     endFreq = myqa.convert(myat.getChanFreq(numchan-1),'GHz')['value']
@@ -5782,7 +5830,7 @@ def recalcYlimitsFreq(chanrange, ylimits, amp, sideband,plotrange,xchannels,
             newmax = np.max([ylimits[1],newmax])
             ylimits = [newmin, newmax]
     elif ((abs(chanrange[0]) > 0 or abs(chanrange[1]) > 0)):
-        plottedChannels = np.intersect1d(xchannels, range(chanrange[0],chanrange[1]+1))
+        plottedChannels = np.intersect1d(xchannels, list(range(chanrange[0],chanrange[1]+1)))
         if (len(plottedChannels) < 1):
             return(ylimits)
         mylist = np.arange(xchannels.index(plottedChannels[0]), 1+xchannels.index(plottedChannels[-1]))
@@ -5810,7 +5858,7 @@ def recalcYlimitsFreq(chanrange, ylimits, amp, sideband,plotrange,xchannels,
           return(ylimits)
       cr0 = int(np.round(np.max(xchannels)*startFraction))
       cr1 = int(np.round(np.max(xchannels)*stopFraction))
-      plottedChannels = np.intersect1d(xchannels, range(cr0, cr1+1))
+      plottedChannels = np.intersect1d(xchannels, list(range(cr0, cr1+1)))
       if (len(plottedChannels) < 1):
           return(ylimits)
       mylist = np.arange(xchannels.index(plottedChannels[0]), 1+xchannels.index(plottedChannels[-1]))
@@ -5837,8 +5885,8 @@ def recalcYlimits(plotrange, ylimits, amp):
     if (len(amp) < 1):
         return(pb.ylim())
     if ((abs(plotrange[0]) > 0 or abs(plotrange[1]) > 0) and (plotrange[2] == 0 and plotrange[3] == 0)):
-        x0 = plotrange[0]
-        x1 = plotrange[1]
+        x0 = int(plotrange[0])
+        x1 = int(plotrange[1])
         if (x0 < 0):
             x0 = 0
         if (x1 > len(amp)-1):
@@ -5989,7 +6037,7 @@ def showFDM(originalSpw, chanFreqGHz, baseband, showBasebandNumber, basebandDict
 
     sdebug = False
     if (sdebug):
-        print("Showing FDM (%d)" % (len(originalSpw)), originalSpw)
+        print(("Showing FDM (%d)" % (len(originalSpw)), originalSpw))
         print("baseband = %d, basebandDict = %s" % (baseband, str(basebandDict)))
     fdmctr = -1
     x0,x1 = pb.xlim()
@@ -6320,8 +6368,8 @@ def platformingCheck(a, threshold=DEFAULT_PLATFORMING_THRESHOLD):
     if (startChan <= 0 or endChan >= len(a)):
         return
     middleChan = (startChan+endChan)//2
-    channelRange1 = range(startChan,middleChan+1)
-    channelRange2 = range(endChan,middleChan,-1)
+    channelRange1 = list(range(startChan,middleChan+1))
+    channelRange2 = list(range(endChan,middleChan,-1))
     platforming = False
     awayFromEdge = False
     for i in channelRange1:
@@ -6389,7 +6437,7 @@ def callFrequencyRangeForSpws(mymsmd, spwlist, vm, caltable=None):
                 mytb.open(caltable+'/SPECTRAL_WINDOW')
                 chanfreq = []
                 if (len(spwlist) == 0): # CAS-8489b
-                    originalSpws = range(len(mytb.getcol('MEAS_FREQ_REF')))
+                    originalSpws = list(range(len(mytb.getcol('MEAS_FREQ_REF'))))
                     spwlist = originalSpws
                 for i in spwlist:  # CAS-8489b
                     # The array shapes can vary.
@@ -6485,10 +6533,10 @@ def getBasebandDict(vis=None, spwlist=[], caltable=None, mymsmd=None):
                 mymsmd.open(vis)
             if (spwlist == []):
                 nspws = mymsmd.nspw()
-                spwlist = range(nspws)
+                spwlist = list(range(nspws))
             for spw in spwlist:
                 bbc_no = mymsmd.baseband(spw)
-                if (bbc_no not in bbdict.keys()):
+                if (bbc_no not in list(bbdict.keys())):
                     bbdict[bbc_no] = [spw]
                 else:
                     bbdict[bbc_no].append(spw)
@@ -6891,7 +6939,7 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
       matches2 = np.where(npat<myTimes[-1])[0]
       if (len(matches2) > 0 and len(matches) > 0):
           if verbose: print("matches[0]=%d, matches2[-1]=%d" % (matches[0],matches[-1]))
-          matchingIndices = range(matches[0],matches2[-1]+1)
+          matchingIndices = list(range(matches[0],matches2[-1]+1))
       else:
           matchingIndices = []
       if (len(matchingIndices) > 0):  # CAS-8440
@@ -7050,7 +7098,7 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
         noWeatherData = False
         if (len(matches)>0 and len(matches2) > 0):
             # average the weather points enclosed by the scan time range
-            selectedValues = range(matches[0], matches2[-1]+1)
+            selectedValues = list(range(matches[0], matches2[-1]+1))
             if (selectedValues == []):
                 # there was a either gap in the weather data, or an incredibly short scan duration
                 if (verbose):
@@ -7217,7 +7265,7 @@ def interpretLOs(vis, parentms='', showWVR=False,
     names = np.array(names)[indices]
     sidebands = np.array(sidebands)[indices]
     receiverIds = np.array(receiverIds)[indices]
-    index = range(len(spws))
+    index = list(range(len(spws)))
     mytb = createCasaTool(tbtool)
     mytb.open(vis+'/SPECTRAL_WINDOW')
     # If the data have been split into an ms with fewer spws, then this 

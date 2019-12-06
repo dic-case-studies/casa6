@@ -74,6 +74,9 @@ public:
   void save(std::string const &name);
 
 private:
+  // optional table generator
+  using OptionalTables = typename Reader::OptionalTables;
+
   // initialization
   void initialize();
 
