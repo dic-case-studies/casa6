@@ -366,7 +366,6 @@ class statwt_test(unittest.TestCase):
         dst = "ngc5921.split.normalbounds.ms"
         ref = 'ref_test_default_boundaries.ms'
         timebin = "6000s"
-        # [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
         # there are three field_ids, and there is a change in field_id when
         # there is a change in scan number, so specifying combine="field" in the
         # absence of "scan" will give the same result as combine=""
@@ -402,9 +401,7 @@ class statwt_test(unittest.TestCase):
         """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
         timebin = "6000s"
-        ref = datadir + "ngc5921.no_scan_bounds_2.ms.ref"
-        rtol = 1e-7
-        [expwt, expwtsp, expflag, expfrow, expdata] = _get_dst_cols(ref)
+        ref = 'ref_test_no_scan_bounds.ms'
         combine = "corr, scan"
         for i in [0, 1]:
             shutil.copytree(src, dst)
@@ -415,11 +412,7 @@ class statwt_test(unittest.TestCase):
                 myms.done()
             else:
                 statwt(dst, timebin=timebin, combine=combine)
-            [gotwt, gotwtsp, gotflag, gotfrow, gotdata] = _get_dst_cols(dst)
-            self.assertTrue(np.all(np.isclose(gotwt, expwt, rtol)))
-            self.assertTrue(np.all(np.isclose(gotwtsp, expwtsp, rtol)))
-            self.assertTrue(np.all(gotflag == expflag))
-            self.assertTrue(np.all(gotfrow == expfrow))
+            self.compare(dst, ref)
             shutil.rmtree(dst)
     
     def test_no_scan_nor_field_boundaries(self):

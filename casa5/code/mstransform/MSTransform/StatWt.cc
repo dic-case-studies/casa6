@@ -192,6 +192,7 @@ void StatWt::_constructVi(
     // I'm adding scan and state because, according to the statwt requirements, by default, scan
     // and state changes should mark boundaries in the weights computation
     std::vector<Int> scs;
+    scs.push_back(MS::TIME);
     scs.push_back(MS::ARRAY_ID);
     if (! _combine.contains("scan")) {
         scs.push_back(MS::SCAN_NUMBER);
@@ -203,13 +204,21 @@ void StatWt::_constructVi(
         scs.push_back(MS::FIELD_ID);
     }
     scs.push_back(MS::DATA_DESC_ID);
-    scs.push_back(MS::TIME);
     Block<int> sort(scs.size());
     uInt i = 0;
     for (const auto& col: scs) {
         sort[i] = col;
         ++i;
     }
+    /*
+    {
+        cout << "combine " << _combine << endl;
+        cout << "scs " << scs << endl;
+        for (auto it=sort.begin(); it != sort.end(); ++it) {
+            cout << "sort " << *it << endl;
+        }
+    }
+    */
     vi::SortColumns sc(sort, False);
     // cout << "configuring TVI with timebinwidth " << _timeBinWidth << endl;
     vi::IteratingParameters ipar(_timeBinWidth, sc);

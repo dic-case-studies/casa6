@@ -93,6 +93,7 @@ void StatWtClassicalDataAggregator::aggregate() {
                 )
             );
         }
+        // cout << "nTimes " << _vii->nTimes() << endl;
         // cout << __FILE__ << " " << __LINE__ << endl;
 
         const auto& ant1 = vb->antenna1();
