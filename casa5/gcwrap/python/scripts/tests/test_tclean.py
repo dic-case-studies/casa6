@@ -2782,7 +2782,14 @@ class test_widefield(testref_base):
           self.checkfinal(report)
 
           #do stokes V too..
-
+     def test_mosaicft_newpsfphasecenter(self):
+          """
+          test_mosaicft_newpsfphasecenter : different phasecenter for psf
+          """
+          self.prepData("refim_mawproject.ms")
+          ret=tclean(vis="refim_mawproject.ms",field="*",spw="1",datacolumn="corrected",imagename=self.img,imsize=512,cell="10.0arcsec",phasecenter="J2000 19:59:28.500 +40.44.01.50",stokes="I",specmode="mfs",gridder="mosaic",psfphasecenter="J2000 19:59:28.520 +40.44.01.51",vptable="",pblimit=0.3,normtype="flatnoise",deconvolver="hogbom",restoration=True,weighting="natural", niter=30,gain=0.1, usemask="user",mask="",restart=True,savemodel="none",calcres=True,calcpsf=True)
+          report=self.th.checkall(imexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'] )
+          self.checkfinal(report)
      
 ##############################################
 ##############################################

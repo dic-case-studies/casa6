@@ -1,4 +1,4 @@
-//# SpectralImageUtil.h: Definitions for casacore::Stokes Image utilities
+//# SpectralImageUtil.cc: Spectral Image Utilities
 //# Copyright (C) 2013
 //# Associated Universities, Inc. Washington DC, USA.
 //#
@@ -25,28 +25,33 @@
 //#
 //#
 //# $Id$
-#ifndef SYNTHESIS_SPECTRALIMAGEUTIL_H
-#define SYNTHESIS_SPECTRALIMAGEUTIL_H
 
-#include <images/Images/ImageInterface.h>
-#include <images/Images/SubImage.h>
 
-namespace casa { //# NAMESPACE CASA - BEGIN
 
-class SpectralImageUtil {
+template <typename T>  casacore::SubImage<T>* SpectralImageUtil::getChannel(casacore::ImageInterface<T>& theIm, casacore::Int beginchannel, casacore::Int endchannel, casacore::Bool writeAccess){
+    casacore::CoordinateSystem csys=theIm.coordinates();
+    if(endchannel<0 )
+      endchannel=beginchannel;
+    if(beginchannel > endchannel){ 
+      casacore::Int temp=endchannel;
+      endchannel=beginchannel;
+      beginchannel=temp;
+    }
+    casacore::Int spectralIndex=casacore::CoordinateUtil::findSpectralAxis(csys);
+    casacore::IPosition blc(theIm.shape());
+    casacore::IPosition trc(theIm.shape());
+    blc-=blc; //set all values to 0
+    trc=theIm.shape();
+    trc-=1; // set trc to image size -1
+    if(beginchannel > trc[spectralIndex] || beginchannel <0 || endchannel >  trc[spectralIndex] )
+      throw(casacore::AipsError("Channel requested does not exist"));
+    blc[spectralIndex]=beginchannel;
+    trc[spectralIndex]=endchannel;
+    casacore::Slicer sl(blc, trc, casacore::Slicer::endIsLast);
+    casacore::SubImage<T> * imageSub=new casacore::SubImage<T>(theIm, sl, writeAccess);
+    return imageSub;
+  };
 
- public:
-  //Returns a pointer to a subimage of the requested plane
-  //Note caller is responsible for deleting the subimage object
-  // If writeaccess is true ...modification on the subimage will get recorded on the original image if it is writeable
-  template <typename T> static casacore::SubImage<T>* getChannel(casacore::ImageInterface<T>& theIm, casacore::Int begchannel=0,  casacore::Int endchannel=-1, casacore::Bool writeAccess=false);
-  //Frequency at a given pixel along the spectral axis (value returned is in Hz)
-  static casacore::Double worldFreq(const casacore::CoordinateSystem& cs, casacore::Double spectralpix=0.0);
 
-};//end of class
-
-#include <imageanalysis/Utilities/SpectralImageUtil.tcc>
-} //# NAMESPACE CASA - END
-
-#endif
+ 
 

@@ -40,6 +40,7 @@ try:
     mpi_available = True
 except ImportError:
     mpi_available = False
+table=casac.table
 def tclean(
     ####### Data Selection
     vis,#='', 
@@ -236,14 +237,18 @@ def tclean(
     if pointingoffsetsigdev!=0.0 and usepointing==False:
         casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
 
-    pcube=False
+
+    ##pcube may still need to be set to True for some combination of ftmachine etc...
+    #=========================================================
     concattype=''
-    #if parallel==True and specmode!='mfs':
-    #    pcube=True
-    #    parallel=False
+    pcube=False
+    if parallel==True and specmode!='mfs':
+        pcube=False
+        parallel=False
+    #=========================================================
     ####set the children to load c++ libraries and applicator
-    ### need to NO do when ftmachine is not supported
-    if mpi_available and MPIEnvironment.is_mpi_enabled and specmode!='mfs':
+    ### need to NOT do this when ftmachine is not supported
+    if mpi_available and MPIEnvironment.is_mpi_enabled and specmode!='mfs' and not pcube:
         mint=MPIInterface.MPIInterface()
         cl=mint.getCluster()
         cl._cluster.pgc("from casac import casac", False)
@@ -312,8 +317,14 @@ def tclean(
         if calcpsf==True:
             t0=time.time();
              
-            imager.makePSF()
-            if((psfphasecenter != '') and (gridder=='mosaic')):
+            imager.makePSF()            
+            if((psfphasecenter != '') and ('mosaic' in gridder)):
+                mytb=table()
+                mytb.open(bparm['imagename']+'.psf')
+                miscinf=mytb.getkeyword('miscinfo')
+                iminf=mytb.getkeyword('imageinfo')
+                #print ('miscinfo {} {}'.format(miscinf, iminf))
+                mytb.done()
                 print("doing with different phasecenter psf")
                 imager.unlockimages(0)
                 psfParameters=paramList.getAllPars()
@@ -323,6 +334,10 @@ def tclean(
                 psfimager.initializeImagers()
                 psfimager.setWeighting()
                 psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
+                mytb.open(bparm['imagename']+'.psf', nomodify=False)
+                mytb.putkeyword('imageinfo',iminf)
+                mytb.putkeyword('miscinfo',miscinf)
+                mytb.done()
             t1=time.time();
             casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 

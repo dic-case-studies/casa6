@@ -835,6 +835,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SIImageStore::releaseImage( std::shared_ptr<ImageInterface<Float> > &im )
   {
+    //cerr << this << " releaseimage " << im.get() << endl;
     //LogIO os( LogOrigin("SIImageStore","releaseLocks",WHERE) );
     im->flush();
     //os << LogIO::WARN << "clear cache" << LogIO::POST;
@@ -844,7 +845,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //os << LogIO::WARN << "tempClose" << LogIO::POST;
     im->tempClose();
     //os << LogIO::WARN << "NULL" << LogIO::POST;
-    im = NULL;  // This was added to allow modification by modules independently
+    im.reset();  // This was added to allow modification by modules independently
   }
   
   void SIImageStore::releaseImage( std::shared_ptr<ImageInterface<Complex> > &im )
@@ -1012,6 +1013,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     // if ptr is not null, assume it's OK. Perhaps add more checks.
 
+    //cerr << "ACCIM itsptr" << ptr.get() << " parent " << parentptr.get() << " label " << label << endl;
+    
     Bool sw=False;
     if( label.contains(imageExts(SUMWT)) ) sw=True;
     
@@ -1050,7 +1053,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    //cout << "Opening image : " << itsImageName+label << " of shape " << ptr->shape() << endl;
 	  }
       }
-    //cerr << "ptr " << ptr.get() << " lock " << itsReadLock.get() << endl;
+    
+    //cerr << "ACCIM2 ptr " << ptr.get() << " lock " << itsReadLock.get() << endl;
     //itsReadLock.reset(new LatticeLocker(*ptr, FileLocker::Read));
     
   }

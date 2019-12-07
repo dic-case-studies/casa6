@@ -127,6 +127,8 @@ int main(int argc, char **argv)
 	Record weightRecord=SynthesisUtilMethods::fillWeightRecord();
 	
 	controlRecord.define("dividebyweight", True);
+	Vector<String>weightnames(1,"");
+	controlRecord.define("weightnames", weightnames);
 	Int rank(0);
 	Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
 	Bool allDone(false);

@@ -1284,7 +1284,7 @@ ImageInterface<Complex>& GridFT::getImage(Matrix<Float>& weights, Bool normalize
 	}
       }
     }
-
+    LatticeLocker lock1 (*(image), FileLocker::Write);
     if(!isTiled) {
       // Check the section from the image BEFORE converting to a lattice 
       IPosition blc(4, (nx-image->shape()(0)+(nx%2==0))/2, (ny-image->shape()(1)+(ny%2==0))/2, 0, 0);
@@ -1292,6 +1292,7 @@ ImageInterface<Complex>& GridFT::getImage(Matrix<Float>& weights, Bool normalize
       IPosition trc(blc+image->shape()-stride);
       // Do the copy
       IPosition start(4, 0);
+      
       image->put(griddedData(blc, trc));
     }
   }

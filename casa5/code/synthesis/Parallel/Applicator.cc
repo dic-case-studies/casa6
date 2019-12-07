@@ -37,6 +37,7 @@
 #include <synthesis/MeasurementComponents/PredictAlgorithm.h>
 #include <synthesis/MeasurementComponents/ResidualAlgorithm.h>
 #include <synthesis/ImagerObjects/CubeMajorCycleAlgorithm.h>
+#include <synthesis/ImagerObjects/CubeMakeImageAlgorithm.h>
 #include <synthesis/Parallel/MPIError.h>
 #ifdef PABLO_IO
 #include <synthesis/Parallel/PabloIO.h>
@@ -395,6 +396,10 @@ void Applicator::defineAlgorithms()
   Algorithm *a6 = new CubeMajorCycleAlgorithm;
   knownAlgorithms.insert( std::pair<casacore::Int, Algorithm*>(LastID, a6) );
   algorithmIds.insert( std::pair<casacore::String, casacore::Int>(a6->name(), LastID) );
+  LastID++;
+  Algorithm *a7 = new CubeMakeImageAlgorithm;
+  knownAlgorithms.insert( std::pair<casacore::Int, Algorithm*>(LastID, a7) );
+  algorithmIds.insert( std::pair<casacore::String, casacore::Int>(a7->name(), LastID) );
   LastID++;
   return;
 }

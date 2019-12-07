@@ -186,7 +186,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     // Normalize by the weight image.
     //    divideResidualByWeight();
-
+    itsImages->releaseLocks();
+    
   }// end of gatherImages
 
   void SynthesisNormalizer::gatherPB()
@@ -301,17 +302,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisNormalizer::dividePSFByWeight()
   {
     LogIO os( LogOrigin("SynthesisNormalizer", "dividePSFByWeight",WHERE) );
-    LatticeLocker lock1 (*(itsImages->psf()), FileLocker::Write);
+    {
+      LatticeLocker lock1 (*(itsImages->psf()), FileLocker::Write);
     
-    if( itsNFacets==1) {
-      itsImages->dividePSFByWeight(itsPBLimit);
-    }
-    else {
-      // Since PSFs are normed just by their max, this sequence is OK.
-      setPsfFromOneFacet();
-      itsImages->dividePSFByWeight(itsPBLimit);
-    }
-
+      if( itsNFacets==1) {
+        itsImages->dividePSFByWeight(itsPBLimit);
+      }
+      else {
+        // Since PSFs are normed just by their max, this sequence is OK.
+        setPsfFromOneFacet();
+        itsImages->dividePSFByWeight(itsPBLimit);
+      }
+    }// release of lock1 otherwise releaselock below will cause it to core
+    //dump as the psf pointer goes dangling
       // Check PSF quality by fitting beams
     {
       itsImages->calcSensitivity();
@@ -321,6 +324,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       if (itsUseBeam=="common") verbose=True;
       itsImages->printBeamSet(verbose);
     }
+    itsImages->releaseLocks();
 
   }
 

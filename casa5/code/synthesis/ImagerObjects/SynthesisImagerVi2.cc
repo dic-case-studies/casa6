@@ -70,7 +70,7 @@
 #include <synthesis/ImagerObjects/SIImageStore.h>
 #include <synthesis/ImagerObjects/SIImageStoreMultiTerm.h>
 #include <synthesis/ImagerObjects/CubeMajorCycleAlgorithm.h>
-
+#include <synthesis/ImagerObjects/CubeMakeImageAlgorithm.h>
 #include <synthesis/MeasurementEquations/VPManager.h>
 #include <imageanalysis/Utilities/SpectralImageUtil.h>
 #include <msvis/MSVis/MSUtil.h>
@@ -156,7 +156,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       VisSetUtil::addScrCols(thisms, true, false, true, false);
       refim::VisModelData::clearModel(thisms);
     }
-
+    ////TESTOO
+    //Int CPUID;
+	//MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
+	//cerr << CPUID << " SELPARS " << !selpars.incrmodel << "   " << !selpars.usescratch << "  "<< !selpars.readonly << endl;
     if(!selpars.incrmodel && !selpars.usescratch && !selpars.readonly)
       refim::VisModelData::clearModel(thisms, selpars.field, selpars.spw);
 
@@ -558,7 +561,6 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
     CountedPtr<refim::FTMachine> ftm, iftm;
     impars_p = impars;
     gridpars_p = gridpars; 
-    
 
     try
       {
@@ -1122,10 +1124,19 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
               // TODO make chanchunks a divisor of nchannels?
 	}
 	nsubcube = nsubcube < 1 ? 1 : nsubcube;
-	 if(nsubcube < (applicator.numProcs()-1))
+	 if( (imshape[3] >= (applicator.numProcs()-1)) && (nsubcube < (applicator.numProcs()-1)))
 		 nsubcube=(applicator.numProcs()-1);
+	 else if(imshape[3] < (applicator.numProcs()-1)){
+		nsubcube=imshape[3]; 
+	 }
 	Int chunksize=imshape[3]/nsubcube;
 	Int rem=imshape[3] % nsubcube;
+	//case of nchan < numprocs
+	if(chunksize==0 && rem > 0){
+		nsubcube=rem;
+		chunksize=1;
+		rem=0;
+	}
 	///Avoid an extra chunk with 1 channel as it cause bumps in linear interpolation
 	///See CAS-12625
 	while((rem==1) && (chunksize >1)){
@@ -1141,6 +1152,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		start(k)=end(k-1)+1;
 		end(k)=((k !=nsubcube-1) || rem==0)? (start(k)+chunksize-1) : (start(k)+rem-1);
 	}
+	 
 	 
 	return make_tuple(nsubcube, start, end); 
   }
@@ -1402,107 +1414,13 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
   }// end runMajorCycle2
 
-
-  ////////////////////////////////////////////////////////////////////////////////////////////////
-  bool SynthesisImagerVi2::runCubePSFGridding(){
-	  int argc=1;
-        char **argv;
-        casa::applicator.init ( argc, argv );
-	//For serial or master only
-	cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  endl;
-	if (  applicator.isController() ) {
-		CubeMajorCycleAlgorithm *cmc =  new CubeMajorCycleAlgorithm();
-		//casa::applicator.defineAlgorithm(cmc);
-        ///For now just field 0 but should loop over all
-        CountedPtr<SIImageStore> imstor = imageStore ( 0 );
-        // checking that psf,  residual and sumwt is allDone
-        cerr << "PSF shapes "  <<  imstor->psf()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
-		Record vecSelParsRec;
-		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
-			Record selparsRec = dataSel_p[k].toRecord();
-			vecSelParsRec.defineRecord(String::toString(k), selparsRec);
-		}
-		Record imparsRec = impars_p.toRecord();
-		Record gridparsRec = gridpars_p.toRecord();
-		// Tell the child processes not to do the dividebyweight process as this is done
-		// right now in imager_base.py runMajorCycle
-		gridparsRec.define("dividebyweight",  False);
-        Int numchan=imstor->psf()->shape() [3];
-        imstor->psf()->unlock();
-        imstor->sumwt()->unlock();
-        //There is no control for PSFs
-        Record controlRecord;
-        // Tell the child processes not to do the dividebyweight process as this is done
-		// right now in imager_base.py runMajorCycle
-		controlRecord.define("dividebyweight",  False);
-        Int numprocs = applicator.numProcs();
-        cerr << "Number of procs: " << numprocs << endl;
-        Int rank ( 0 );
-        Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
-        Bool dopsf=True; // need to keep in context for serial bug
-        Bool allDone ( false );
-        for ( Int k=0; k < numchan; ++k ) {
-            assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
-            //cerr << "assigned "<< assigned << endl;
-            while ( !assigned ) {
-                rank = casa::applicator.nextProcessDone ( *cmc, allDone );
-                //cerr << "while rank " << rank << endl;
-                Bool status;
-                casa::applicator.get ( status );
-                if ( status )
-                    cerr << k << " rank " << rank << " successful " << endl;
-                else
-                    cerr << k << " rank " << rank << " failed " << endl;
-                assigned = casa::applicator.nextAvailProcess ( *cmc, rank );
-
-            }
-
-            ///send process info
-            // put data sel params #1
-            applicator.put ( vecSelParsRec );
-            // put image sel params #2
-            applicator.put ( imparsRec );
-            // put gridders params #3
-            applicator.put ( gridparsRec );
-            // put which channel to process #4
-            applicator.put ( k );
-            // psf or residual CubeMajorCycleAlgorithm #5
-            applicator.put ( dopsf );
-            // store modelvis and other controls #6
-            applicator.put ( controlRecord );
-            /// Tell worker to process it
-            applicator.apply ( *cmc );
-
-        }
-        // Wait for all outstanding processes to return
-        rank = casa::applicator.nextProcessDone ( *cmc, allDone );
-        while ( !allDone ) {
-			Int serialBug;
-			if(casa::applicator.isSerial())
-				casa::applicator.get(serialBug);// get that extra put
-            Bool status;
-            casa::applicator.get ( status );
-            if ( status )
-                cerr << "remainder rank " << rank << " successful " << endl;
-            else
-                cerr << "remainder rank " << rank << " failed " << endl;
-
-            rank = casa::applicator.nextProcessDone ( *cmc, allDone );
-			if(casa::applicator.isSerial())
-				allDone=true;
-        }
-
-
-
-    }
-	
-	return true;  
-  }
+//////////////////////////////
+ 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, Bool savemodel){
 	  //dummy for now as init is overloaded on this signature
         int argc=1;
-        char **argv;
+        char **argv=nullptr;
         casa::applicator.init ( argc, argv );
 	  //For serial or master only
 	if ( applicator.isController() ) {
@@ -1566,9 +1484,9 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 					if(gridparsVec_p[0].facets >1)
 						imageStoreId+=gridparsVec_p[0].facets*gridparsVec_p[0].facets-1;
 				}
-			cerr << "FTMachine name " << (itsMappers.getFTM2(imageStoreId))->name() << endl;
+			//cerr << "FTMachine name " << (itsMappers.getFTM2(imageStoreId))->name() << endl;
 			if((itsMappers.getFTM2(imageStoreId))->useWeightImage()){
-				cerr << "Mosaic weight image " << itsMappers.imageStore(k)->weight(k)->name() << endl;
+				//cerr << "Mosaic weight image " << itsMappers.imageStore(k)->weight(k)->name() << endl;
 				weightnames(k)=itsMappers.imageStore(imageStoreId)->weight(k)->name();
 			}
 		}
@@ -1603,6 +1521,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			vecImParsRec.defineRecord(String::toString(k), imparsRec);
 			vecGridParsRec.defineRecord(String::toString(k), gridparsRec);
 		}
+		String workingdir="";
         //Int numchan=(dopsf) ? imstor->psf()->shape()[3] : imstor->residual()->shape() [3];
         for(Int k=0; k < itsMappers.nMappers(); ++k){
 			if(dopsf){
@@ -1617,9 +1536,17 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			}
 			for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
 			//cerr << k << " type " << (itsMappers.imageStore(k))->sumwt(j)->imageType() << " name " << (itsMappers.imageStore(k))->sumwt(j)->name() << endl;
+				
+				/////////////////////TESTOO
+				Path namewgt( (itsMappers.imageStore(k))->sumwt(j)->name());
+				workingdir=namewgt.dirName();
 				(itsMappers.imageStore(k))->sumwt(j)->unlock();
+				(itsMappers.imageStore(k))->releaseLocks();
 			}
 		}		
+		//Send the working directory as the child and master may be at different places
+		
+		controlRecord.define("workingdirectory", workingdir);
 		// For now this contains lastcycle if necessary in the future this
 		// should come from the master control record
         
@@ -1668,9 +1595,6 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         // Wait for all outstanding processes to return
         rank = casa::applicator.nextProcessDone ( *cmc, allDone );
         while ( !allDone ) {
-			Int serialBug;
-			//if(casa::applicator.isSerial())
-			//	casa::applicator.get(serialBug);// get that extra put
             Bool status;
             casa::applicator.get ( status );
             if ( status )
@@ -1860,7 +1784,16 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     //cerr << "name " << (itsMappers.getFTM2(whichModel))->name() << endl;
  if(((itsMappers.getFTM2(whichModel))->name())!="MultiTermFTNew"){
    ////Non multiterm case    
-    PagedImage<Float> theImage((itsMappers.imageStore(whichModel))->getShape(), (itsMappers.imageStore(whichModel))->getCSys(), imagename);
+	//cerr << "whichModel " << whichModel << " itsMappers num " << itsMappers.nMappers() << " shape " << (itsMappers.imageStore(whichModel))->getShape() << endl;
+	///the SIImageStore sometimes return 0 shape...
+	CoordinateSystem csys=itsMaxCoordSys;
+	IPosition shp=itsMaxShape;
+	if((itsMappers.imageStore(whichModel))->getShape().product()!=0 ){
+		csys=	(itsMappers.imageStore(whichModel))->getCSys();
+		shp=(itsMappers.imageStore(whichModel))->getShape();
+	}
+		
+    PagedImage<Float> theImage( shp, csys, imagename);
     PagedImage<Complex> cImageImage(theImage.shape(),
 				    theImage.coordinates(),
 				    cImageName);
@@ -1869,9 +1802,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
 
     Matrix<Float> weight;
-    
+    if(cImageImage.shape()[3] > 1){
+		cImageImage.set(Complex(0.0));
+		cImageImage.tempClose();
+		makeComplexCubeImage(cImageName, seType, whichModel);
+	}
+	else{
     (itsMappers.getFTM2(whichModel))->makeImage(seType, *vi_p, cImageImage, weight);
-
+	}
     if(seType==refim::FTMachine::PSF){
        StokesImageUtil::ToStokesPSF(theImage, cImageImage);
        StokesImageUtil::normalizePSF(theImage);
@@ -1926,7 +1864,90 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
   }// end makeImage
   /////////////////////////////////////////////////////
 
+void SynthesisImagerVi2::makeComplexCubeImage(const String& cimage, const refim::FTMachine::Type imtype, const Int whichmodel){
+	CubeMakeImageAlgorithm *cmi=new CubeMakeImageAlgorithm();
+	// Dummies for using the right signature for init
+	Path cimpath(cimage);
+	String cimname=cimpath.absoluteName();
+	//cerr << "ABSOLUTE path " << cimname << endl;
+	Int argc = 1;
+	char **argv = nullptr;
+	casa::applicator.init(argc, argv);
+	if(applicator.isController())
+    {
+		Record vecSelParsRec;
+		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
+			Record selparsRec = dataSel_p[k].toRecord();
+			vecSelParsRec.defineRecord(String::toString(k), selparsRec);
+		}
+		Record imparsRec = imparsVec_p[whichmodel].toRecord();
+		//cerr << "which model " << whichmodel << " record " << imparsRec << endl;
+		Record gridparsRec = gridparsVec_p[whichmodel].toRecord();
+        ///Break things into chunks for parallelization or memory availabbility
+        Vector<Int> startchan;
+        Vector<Int> endchan;
+        Int numchunks;
+        Int fudge_factor = 15;
+        if ((itsMappers.getFTM2(0))->name()=="MosaicFTNew") {
+            fudge_factor = 20;
+        }
+        else if ((itsMappers.getFTM2(0))->name()=="GridFT") {
+            fudge_factor = 9;
+        }
+        std::tie(numchunks, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
+		
+		Int imageType=Int(imtype);
+		Int rank(0);
+		Bool assigned; 
+		Bool allDone(false);
+		Vector<Int> chanRange(2);
+		for (Int k=0; k < numchunks; ++k) {
+			assigned=casa::applicator.nextAvailProcess ( *cmi, rank );
+            //cerr << "assigned "<< assigned << endl;
+            while ( !assigned ) {
+                rank = casa::applicator.nextProcessDone ( *cmi, allDone );
+                //cerr << "while rank " << rank << endl;
+                Bool status;
+                casa::applicator.get ( status );
+                if ( status )
+                    cerr << k << " rank " << rank << " successful " << endl;
+                else
+                    cerr << k << " rank " << rank << " failed " << endl;
+                assigned = casa::applicator.nextAvailProcess ( *cmi, rank );
 
+            }
+            applicator.put(vecSelParsRec);
+			// put image sel params #2
+			applicator.put(imparsRec);
+			// put gridder params #3
+			applicator.put(gridparsRec);
+			// put which channel to process #4
+			chanRange(0)=startchan(k);
+			chanRange(1)=endchan(k);
+			applicator.put(chanRange);
+			//Type of image #5
+			applicator.put(imageType);
+			// weighting parameters #6
+			applicator.put( weightParams_p);
+			// complex imagename #7
+			applicator.put(cimname);
+			applicator.apply(*cmi);
+		}
+		// Wait for all outstanding processes to return
+        rank = casa::applicator.nextProcessDone(*cmi, allDone);
+        while (!allDone) {
+            Bool status;
+            casa::applicator.get(status);
+            if(status)
+                cerr << "remainder rank " << rank << " successful " << endl;
+            else
+                cerr << "remainder rank " << rank << " failed " << endl;
+            rank = casa::applicator.nextProcessDone(*cmi, allDone);
+			if(casa::applicator.isSerial())
+				allDone=true;
+        }
+    }//applicator controller section
+}
 
 
 
@@ -3073,7 +3094,15 @@ void SynthesisImagerVi2::unlockMSs()
       return trackBeam;
 
   }
-
+  CountedPtr<vi::VisibilityIterator2> SynthesisImagerVi2::getVi(){
+	return vi_p;  
+  }
+  CountedPtr<refim::FTMachine> SynthesisImagerVi2::getFTM(const Int fid, Bool ift){
+	if(itsMappers.nMappers() <=fid)
+		throw(AipsError("Mappers have not been set for field "+String::toString(fid)));
+	return (itsMappers.getFTM2(fid, ift));
+	  
+  }
 
 } //# NAMESPACE CASA - END
 

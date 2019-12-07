@@ -698,6 +698,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         throw(AipsError(msg));
       }
     }
+    itsImages->releaseLocks();
   }
     
   // This is for interactive-clean.

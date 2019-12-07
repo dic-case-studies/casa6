@@ -357,6 +357,7 @@ casa_add_library( synthesis
  ImagerObjects/SynthesisImager.cc
  ImagerObjects/SynthesisImagerVi2.cc
  ImagerObjects/CubeMajorCycleAlgorithm.cc
+ ImagerObjects/CubeMakeImageAlgorithm.cc
  ImagerObjects/SIImageStore.cc
  ImagerObjects/SIImageStoreMultiTerm.cc
  ImagerObjects/SimpleSIImageStore.cc
@@ -638,6 +639,7 @@ install (FILES
 	ImagerObjects/SynthesisImager.h
 	ImagerObjects/SynthesisImagerVi2.h
         ImagerObjects/CubeMajorCycleAlgorithm.h
+        ImagerObjects/CubeMakeImageAlgorithm.h
 	ImagerObjects/SIImageStore.h
 	ImagerObjects/SIImageStoreMultiTerm.h
         ImagerObjects/SimpleSIImageStore.h
@@ -834,7 +836,8 @@ install (FILES
 	)
 casa_add_executable( synthesis casasplit apps/casasplit/casasplit.cc )
 casa_add_executable( synthesis imageconcat apps/utils/imageconcat.cc )
-casa_add_demo( synthesis ImagerObjects/test/dMPICubeImager.cc TransformMachines2/test/MakeMS.cc ) 
+casa_add_demo( synthesis ImagerObjects/test/dMPICubeImager.cc TransformMachines2/test/MakeMS.cc )
+casa_add_demo( synthesis ImagerObjects/test/dMPIMakeCube.cc TransformMachines2/test/MakeMS.cc ) 
 casa_add_assay( synthesis ImagerObjects/test/tSIIterBot.cc )
 casa_add_assay( synthesis ImagerObjects/test/tSynthesisUtils.cc )
 casa_add_assay( synthesis TransformMachines2/test/tVisModelDataRefim.cc )
@@ -894,6 +897,7 @@ casa_add_unit_test( MODULES synthesis SOURCES TransformMachines/test/tPBMath1DEV
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tSynthesisImager.cc  TransformMachines2/test/MakeMS.cc )
 casa_add_unit_test( MODULES synthesis SOURCES Parallel/test/tApplicator.cc )
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tSynthesisImagerVi2.cc  TransformMachines2/test/MakeMS.cc )
+casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tSIMakeImage.cc  TransformMachines2/test/MakeMS.cc )
 casa_add_unit_test( MODULES synthesis SOURCES Utilities/test/tFFT2D.cc  ) 
 casa_add_unit_test( MODULES synthesis SOURCES CalTables/test/tCTPatchedInterp.cc )
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tLabelandFindRegions.cc )

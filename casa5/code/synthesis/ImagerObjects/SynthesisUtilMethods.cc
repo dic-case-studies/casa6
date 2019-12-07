@@ -2092,10 +2092,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     impar.define("freqframevalid", freqFrameValid);
     impar.define("startmodel", startModel );
 
-    if( csysRecord.nfields() != 0 )
+    if( csysRecord.isDefined("coordsys") )
       {
 	//        cout <<" HAS CSYS INFO.... writing to output record"<<endl;
-        impar.defineRecord("csys", csys);
+        impar.defineRecord("csys", csysRecord.subRecord("coordsys"));
         impar.define("imshape", imshape);
       } 
     //    else cout << " NO CSYS INFO to write to output record " << endl;
@@ -2593,6 +2593,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //store back csys to impars record
     //cerr<<"save csys to csysRecord..."<<endl;
+    if(csysRecord.isDefined("coordsys"))
+      csysRecord.removeField("coordsys");
     csys.save(csysRecord,"coordsys");
     //cerr<<"BUILDCOORDSYS:: new csysRecord ="<<csysRecord<<endl;
     // imshape

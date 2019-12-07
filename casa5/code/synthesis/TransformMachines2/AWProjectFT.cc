@@ -2037,6 +2037,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    //
 	    // Check the section from the image BEFORE converting to a lattice 
 	    //
+            LatticeLocker lock1 (*(image), FileLocker::Write);
 	    IPosition blc(4, (nx-image->shape()(0)+(nx%2==0))/2,
 			  (ny-image->shape()(1)+(ny%2==0))/2, 0, 0);
 	    IPosition stride(4, 1);

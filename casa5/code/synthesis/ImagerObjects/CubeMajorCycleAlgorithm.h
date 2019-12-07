@@ -31,6 +31,15 @@
 #include <synthesis/Parallel/Algorithm.h>
 #include <synthesis/Parallel/Applicator.h>
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
+/*ControlRecord_p : necessary keys
+ * dividebyweight : True or False
+ * weightnames : Vector of Empty string or names of sensitivity images
+ * Optional keys:
+ * nmajorcycles : number printed in the logger 
+ * weightdensity: weightdensity image for non per chan briggs weighting
+ * modelnames: Vector of string for possible model images to use to grid residual visibilities 
+ * 
+ */
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 	class SIImageStore;

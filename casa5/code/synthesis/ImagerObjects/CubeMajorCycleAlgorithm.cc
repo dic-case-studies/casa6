@@ -137,6 +137,8 @@ void CubeMajorCycleAlgorithm::task(){
 	
 	SynthesisImagerVi2 subImgr;
 	for (Int k=0; k < Int(dataSel_p.nelements()); ++k){
+		//The original SynthesisImager would have cleared the model if it was requested
+		dataSel_p[k].incrmodel=True;
 		subImgr.selectData(dataSel_p[k]);
 	}
 	Vector<CountedPtr<SIImageStore> > subImStor(imSel_p.nelements());
@@ -226,9 +228,22 @@ CountedPtr<SIImageStore> CubeMajorCycleAlgorithm::subImageStore(const int imId){
 	shared_ptr<ImageInterface<Float> >subresid=nullptr;
 	shared_ptr<ImageInterface<Float> >submodel=nullptr;
 	shared_ptr<ImageInterface<Float> > subweight=nullptr;
-	cerr << imId << " sumwt name " << sumwgtname << endl;
-	if(!Table::isReadable(sumwgtname))
+	//cerr << imId << " sumwt name " << sumwgtname << endl;
+	String workingdir="";
+	if(controlRecord_p.isDefined("workingdirectory"))
+		controlRecord_p.get("workingdirectory", workingdir);
+	//cerr <<"WORKINGDIR " << workingdir << endl;
+	if(Table::isReadable(workingdir+"/"+sumwgtname)){
+		workingdir=workingdir+"/";
+		residname=workingdir+residname;
+		psfname=workingdir+psfname;
+		sumwgtname=workingdir+sumwgtname;
+		
+	}
+	else if(!Table::isReadable(sumwgtname) )
 		throw(AipsError("Programmer error: sumwt disk image is non existant")); 
+	else
+		workingdir="";
 	PagedImage<Float> sumwt(sumwgtname, TableLock::UserNoReadLocking);
 	//Should be partitioning for main image only
 	//chanRange
@@ -243,7 +258,7 @@ CountedPtr<SIImageStore> CubeMajorCycleAlgorithm::subImageStore(const int imId){
 		chanEnd=sumwt.shape()[3]-1;
 	}
 	
-	cerr << "chanBeg " << chanBeg << " chanEnd " << chanEnd << " imId " << imId << endl;
+	//cerr << "chanBeg " << chanBeg << " chanEnd " << chanEnd << " imId " << imId << endl;
 	if(dopsf_p){
 		PagedImage<Float> psf(psfname, TableLock::UserNoReadLocking);
 		subpsf.reset(SpectralImageUtil::getChannel(psf, chanBeg, chanEnd, true));
@@ -257,6 +272,9 @@ CountedPtr<SIImageStore> CubeMajorCycleAlgorithm::subImageStore(const int imId){
 			Vector<String> modelnames(controlRecord_p.asArrayString("modelnames"));
 			if(imId >= int(modelnames.nelements()))
 				throw(AipsError("Number of model images does not match number of image fields defined"));
+			if(Table::isReadable(workingdir+modelnames[imId])){
+				modelnames[imId]=workingdir+modelnames[imId];
+			}
 			if(Table::isReadable(modelnames[imId])){
 				PagedImage<Float> model(modelnames[imId], TableLock::UserNoReadLocking);
 				//Darn has to lock it as writable because overlap in SIMapperCollection code 
@@ -272,6 +290,9 @@ CountedPtr<SIImageStore> CubeMajorCycleAlgorithm::subImageStore(const int imId){
 	Vector<String> weightnames(controlRecord_p.asArrayString("weightnames"));
 	if(imId >= int(weightnames.nelements()))
 		throw(AipsError("Number of model images does not match number of image fields defined"));
+	if(Table::isReadable(workingdir+weightnames[imId])){
+		weightnames[imId]=workingdir+weightnames[imId];
+	}
 	if(Table::isReadable(weightnames[imId])){
 		PagedImage<Float> weight(weightnames[imId], TableLock::UserNoReadLocking);
 		subweight.reset(SpectralImageUtil::getChannel(weight, chanBeg, chanEnd, true));

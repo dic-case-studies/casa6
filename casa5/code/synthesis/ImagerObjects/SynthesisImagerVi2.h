@@ -96,8 +96,13 @@ public:
 		   const casacore::Bool& aTermOn,
 		   const casacore::Bool& conjBeams);
   void reloadCFCache();
+  //Some access methods
+  casacore::CountedPtr<vi::VisibilityIterator2> getVi();
+  casacore::CountedPtr<refim::FTMachine> getFTM(const casacore::Int whichfield=0,
+												casacore::Bool ift=true);
 
  protected:
+  virtual void makeComplexCubeImage(const casacore::String& cimage, const refim::FTMachine::Type imtype, const Int whichModel=0);
   void appendToMapperList(casacore::String imagename, 
 			  casacore::CoordinateSystem& csys, 
 			  casacore::IPosition imshape,
@@ -201,8 +206,6 @@ public:
   virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
   // Version of major cycle code with mappers in a loop outside vi/vb.
   virtual void runMajorCycle2(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
-  
-  virtual bool runCubePSFGridding();
   
   virtual bool runCubeGridding(casacore::Bool dopsf=false, casacore::Bool savemodel=false);
   

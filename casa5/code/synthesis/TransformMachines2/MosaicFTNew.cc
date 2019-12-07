@@ -208,6 +208,7 @@ ImageInterface<Complex>& MosaicFTNew::getImage(Matrix<Float>& weights,
 
     //if(!isTiled) 
     {
+      LatticeLocker lock1 (*(image), FileLocker::Write);
       // Check the section from the image BEFORE converting to a lattice 
       IPosition blc(4, (nx-image->shape()(0)+(nx%2==0))/2,
 		    (ny-image->shape()(1)+(ny%2==0))/2, 0, 0);
