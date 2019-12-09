@@ -17,7 +17,7 @@ from collections import OrderedDict
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
-    from casatasks import casalog, clean, tclean
+    from casatasks import casalog, tclean
     from casatasks.private.cleanhelper import cleanhelper
     tb = table( )
     ia = image( )
