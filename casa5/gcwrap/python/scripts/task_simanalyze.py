@@ -79,7 +79,7 @@ def simanalyze(
         saveinputs('simanalyze',fileroot+"/"+project+".simanalyze.last")
         #               myparams=in_params)
     else:
-        casalog.post("saveinputs not available in casatasks, skipping saving simanalyze inputs", priority='WARN')
+        casalog.post("saveinputs not available in casatasks, skipping saving simanalyze inputs", priority='INFO')
 
     if (not image) and (not analyze):
         casalog.post("No operation to be done. Exiting from task.", "WARN")

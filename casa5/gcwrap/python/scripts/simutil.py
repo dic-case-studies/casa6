@@ -3235,9 +3235,9 @@ class simutil:
 
         if os.path.exists(modelimage):
             pass
-        else:
+        elif len(modelimage) > 0:
             modelimage = ""
-            self.msg("Could not find modelimage, proceeding without",
+            self.msg("Could not find modelimage, proceeding without one",
                      priority="warn", origin="simutil")
 
         # set tclean top-level parameters (no parent nodes)
