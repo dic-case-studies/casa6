@@ -3228,8 +3228,11 @@ class simutil:
                      " using imsize=" + str(optsize) + " instead",
                      priority="warn", origin="simutil")
 
-        # since the cell parameter expects a list of qa.quantity objects,
-        # it must be converted for storage in the tclean.last file
+        # the cell parameter expects a list of qa.quantity objects,
+        formatted_correctly = [qa.isquantity(cell[i]) for i in range(len(cell))]
+        assert False not in formatted_correctly, "simutil function imtclean expects cell parameter input to be comprised of quantity objects"
+
+        # convert the first two elements for storage in the tclean.last file
         cellparam = [str(cell[0]['value']) + str(cell[0]['unit']),
                      str(cell[1]['value']) + str(cell[1]['unit'])]
 
