@@ -585,6 +585,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           }
       }
   os << LogIO::DEBUG2 << "Need to Gather ? " << needToGatherImages << LogIO::POST;
+  itsImages->releaseLocks();
   return needToGatherImages;
   }// end of setupImagesOnDisk
 
@@ -595,6 +596,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { return std::shared_ptr<SIImageStore>(new SIImageStoreMultiTerm( imagename, itsNTaylorTerms, true ));   }
     else
       { return std::shared_ptr<SIImageStore>(new SIImageStore( imagename, true ));   }
+    itsImages->releaseLocks();
   }
 
 

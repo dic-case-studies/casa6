@@ -225,7 +225,7 @@ class SynthesisImager
   virtual void setCubeGridding(const casacore::Bool val){doingCubeGridding_p=val;};
   virtual casacore::Bool getCubeGridding(){return doingCubeGridding_p;};
 
-    
+  virtual bool unlockImages();
 protected:
  
   /////////////// Internal Functions

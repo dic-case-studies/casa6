@@ -124,6 +124,7 @@ ImageInterface<Complex>& MosaicFTNew::getImage(Matrix<Float>& weights,
     else {
       logIO() << LogIO::WARN << "No useful data in MosaicFTNew: weights all zero"
 	      << LogIO::POST;
+      image->set(0.0);
     }
   }
   else {

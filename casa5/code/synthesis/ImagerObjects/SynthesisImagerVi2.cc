@@ -1792,7 +1792,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		csys=	(itsMappers.imageStore(whichModel))->getCSys();
 		shp=(itsMappers.imageStore(whichModel))->getShape();
 	}
-		
+	cerr << "IMGAE opned " << Table::isOpened(imagename)<< endl;
+	itsMappers.releaseImageLocks();
     PagedImage<Float> theImage( shp, csys, imagename);
     PagedImage<Complex> cImageImage(theImage.shape(),
 				    theImage.coordinates(),
