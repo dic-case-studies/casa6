@@ -22,7 +22,6 @@ if is_CASA6:
     import testhelper as th
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
-#   datapath=ctsys.resolve('regression/unittest/nrobeamaverage')
     datapath=ctsys.resolve('regression/unittest/sdimaging')
 
 else:
@@ -36,7 +35,6 @@ else:
     from sdutil import tbmanager
 
     # Define the root for the data files
-#   datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/nrobeamaverage/"
     datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/sdimaging/"
 
 # MS name for this test
@@ -44,7 +42,7 @@ inputMs  = "sdimaging.ms"
 outputMs = "bave.ms"
 
 interval = 2.99827  # same as the MAIN in sdimaging.ms
-num_ave  = 4000
+num_ave  = 3684
 
 errLimit = 1e-05
 
@@ -97,8 +95,11 @@ class test_sdtimeaverage(unittest.TestCase):
         self.tol = errLimit
 
     def tearDown(self):
+
         os.system('rm -rf ' + self.i_ms)
-        os.system('rm -rf ' + self.o_ms)
+
+#for DEBUG
+#       os.system('rm -rf ' + self.o_ms)
 
 #    def _get_antid(self):
 #        with tbmanager(self.i_ms + '/ANTENNA') as tb:
@@ -106,6 +107,7 @@ class test_sdtimeaverage(unittest.TestCase):
 #        return range(len(acol))
 
     def run_task(self, aux_args=None):
+        print( "run_task() in" )
         if aux_args is not None:
             for k in aux_args: self.args[k] = aux_args[k]
         sdtimeaverage(**self.args)
@@ -150,13 +152,13 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def check_values(self, num_ave=None, antenna=None):
         if num_ave is None:
-            for iidx in range(len(self.i_tm)):
-                with tbmanager(self.i_ms) as tb:
-                    self.i_dat = tb.getcell('FLOAT_DATA', iidx)
-                oidx = self._get_index_outdata(iidx)
-                with tbmanager(self.o_ms) as tb:
-                    self.o_dat = tb.getcell('FLOAT_DATA', oidx)
-                self._do_check_values(iidx, oidx, antenna)
+ #           for iidx in range(len(self.i_tm)):
+ #               with tbmanager(self.i_ms) as tb:
+ #                   self.i_dat = tb.getcell('FLOAT_DATA', iidx)
+ #               oidx = self._get_index_outdata(iidx)
+ #               with tbmanager(self.o_ms) as tb:
+ #                   self.o_dat = tb.getcell('FLOAT_DATA', oidx)
+ #               self._do_check_values(iidx, oidx, antenna)
             return
 
 #       self.assertTrue(num_ave == 2)
@@ -273,18 +275,43 @@ class test_sdtimeaverage(unittest.TestCase):
                             time2 = self.i_tm[i]
         return time1, time2
 
+    def test_param(self): # no time averaging(timebin='0s'), rewriting beam IDs only
+        print( "XXXXXXXX test_param XXXXXXXX")
+        self.run_task( {'timebin': '100'} )
+#       self.check_num_data()
+#       self.check_values()
+
+    '''
     def test_default(self): # no time averaging(timebin='0s'), rewriting beam IDs only
-        print( "NISHIE:test_default runs.")
+        print( "XXXXXXXX test_default XXXXXXXX")
         self.run_task()
         self.check_num_data()
         self.check_values()
+    '''
 
+
+    '''
     def test_time_averaging(self): # every two on-spectra are averaged into one specrum
-      
+        print( "XXXXXXXX test_time_averaging XXXXXXXX")
         self.run_task({'timebin': self.get_timebin(num_ave)})
+
         self.check_num_data(num_ave)
         self.check_values(num_ave=num_ave) # for the first data with state=on-source, spw=0
 
+    def test_time_averaging2(self): # every two on-spectra are averaged into one specrum
+        print( "XXXXXXXX test_time_averaging2 XXXXXXXX")
+        self.run_task({'timebin': 'all'} )
+
+        self.check_num_data(num_ave)
+        self.check_values(num_ave=num_ave) # for the first data with state=on-source, spw=0
+
+    def test_time_averaging3(self): # every two on-spectra are averaged into one specrum
+        print( "XXXXXXXX test_time_averaging3 XXXXXXXX")
+        self.run_task({'timebin': '100000s'} )
+
+        self.check_num_data(num_ave)
+        self.check_values(num_ave=num_ave) # for the first data with state=on-source, spw=0
+    '''
 
 def suite():
     return [test_sdtimeaverage]

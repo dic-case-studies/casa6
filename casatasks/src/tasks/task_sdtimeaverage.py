@@ -17,6 +17,9 @@ if is_CASA6:
     from . import flaghelper as fh
     from .update_spw import update_spwchan
     from .callibrary import callibrary
+    # CAS-12721
+    from casatasks.private.sdutil import tbmanager   #, toolmanager, table_selector
+
 else:
     import sdutil
     from taskinit import mttool as mstransformer
@@ -59,43 +62,42 @@ def sdtimeaverage(
              timebin,
              outfile):
 
+    #+
+    # DEBUG ARGS
+    #-
+    print( "ARG::infile      =",infile)
+    print( "ARG::datacolumn  =",datacolumn)
+    print( "ARG::field       =",field)
+    print( "ARG::spw         =",spw)
+    print( "ARG::timerange   =",timerange)
+    print( "ARG::scan        =",scan)
+    print( "ARG::antenna     =",antenna)
+    print( "ARG::timebin     =",timebin)
+    print( "ARG::outfile     =",outfile)
+
+
+    #+
+    #  defaut value (timebin=all) is to be handled.
+    #-
+
+    if timebin is 'all':
+        timebin =  get_time(infile)+'s'
+        print ("DBG::timebin==all;timebin set to = ", timebin)
+
+    # Original part.
     casalog.origin('sdtimeaverage')
     try:
+# Review #1448
+# ORIGINAL
+        
         #set temporary data name
         tmpfile = 'tmp-sdtimeaverage-' + os.path.basename(infile.rstrip('/')) + '-' + "{0:%Y%m%d%H%M%S.%f}".format(datetime.datetime.now()) + '.ms'
 
         #data selection
         do_mst(infile=infile, datacolumn=datacolumn, 
                field=field, spw=spw, timerange=timerange, scan=scan, 
-               timebin='0s', outfile=tmpfile)
+               timebin=timebin, outfile=tmpfile)
 
-#+
-#  disable BEAM arg.
-#-
-        '''
-        #open tmpfile and rewrite antenna column of the ON spectra using beam
-        idx_on = None
-        with open_table(os.path.join(tmpfile, 'STATE')) as tb:
-            ocol = tb.getcol('OBS_MODE')
-            for i in range(len(ocol)):
-                if ocol[i] == 'OBSERVE_TARGET#ON_SOURCE':
-                    idx_on = i
-                    break
-        if idx_on is None: raise Exception('ON_SOURCE data not found.')
-
-        with open_table(os.path.join(tmpfile, 'ANTENNA')) as tb:
-            num_beams = len(tb.getcol('NAME'))
-            _beam, min_beamid = get_beamid(beam, num_beams)
-
-        with open_table(tmpfile, nomodify=False) as tb:
-            acol = tb.getcol('ANTENNA1')
-            scol = tb.getcol('STATE_ID')
-            for i in range(len(acol)):
-                if (acol[i] in _beam) and (scol[i] == idx_on):
-                    acol[i] = min_beamid
-            tb.putcol('ANTENNA1', acol)
-            tb.putcol('ANTENNA2', acol)
-        '''
 
         #time averaging
         do_mst(infile=tmpfile, datacolumn=datacolumn, 
@@ -105,38 +107,43 @@ def sdtimeaverage(
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan,
                     timebin=timebin, antenna=antenna, outfile=outfile)
+        
+#REVISED
+        '''
+        # seelect and time averaging (at same time)
 
+        do_mst(infile=infile, datacolumn=datacolumn,
+               field=field, spw=spw, timerange=timerange, scan=scan,
+               timebin=timebin, outfile=outfile)
+
+        add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
+                    field=field, spw=spw, timerange=timerange, scan=scan,
+                    timebin=timebin, antenna=antenna, outfile=outfile)
+
+
+        '''
+
+#END
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
     finally:
+        None
+# Review #1448
+        '''
         #delete tmpfile
         if os.path.isdir(tmpfile): shutil.rmtree(tmpfile)
+　　　　'''
 
-'''
-def get_beamid(beam, num_beams):
-    _beam = beam
-    try:
-        if isinstance(_beam, str):
-            _beam = _beam.strip().split(",")
-        elif not isinstance(_beam, list):
-            raise ValueError('the parameter beam must be list or string.')
+#  CASA-12721 NEW
+def get_time(msname):
+    with tbmanager(msname) as tb:
+        tm = tb.getcol('TIME')
 
-        #the default case (beam='')
-        if (len(_beam) == 1) and (_beam[0] == ''):
-            _beam = []
-            for i in range(num_beams): _beam.append(i)
-        else:
-            for i in range(len(_beam)): _beam[i] = int(_beam[i])
-    except Exception as e:
-        casalog.post("Error \'%s\' input beam ID is invalid" % (e))
-    
-    min_beamid = _beam[0]
-    for i in range(len(_beam)):
-        if _beam[i] < min_beamid: min_beamid = _beam[i]
-
-    return _beam, min_beamid
-'''    
-
+    Leng = len( tm)
+    time_first = tm[0]
+    time_last = tm[Leng-1]
+    timebin = time_last - time_first;
+    return str(timebin)
 
 def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
     # followings are parameters of mstransform but not used by THIS.
@@ -183,6 +190,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
     mslocal = ms( )
     
     try:
+        print( "DBG::do_mst::start try ")
         # Gather all the parameters in a dictionary.
         config = {}
         
@@ -207,23 +215,13 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
         config['tileshape'] = tileshape
 
         # Only parse timeaverage parameters when timebin > 0s
-        qa = quanta( )
-
-        #+
-        # (Not Yet)Instead of the original code
-        #  defaut value (timebin=all) is to be handled.
-        #-
-        """
-        if timeaverage:
-            tb = qa.convert(qa.quantity(timebin), 's')['value']
-            if not tb > 0:
-                raise Exception("Parameter timebin must be > '0s' to do time averaging")
-        """
+        qa = quanta( ) 
         tbin = qa.convert(qa.quantity(timebin), 's')['value']
         if tbin < 0:
             raise Exception("Parameter timebin must be > '0s' to do time averaging")
+  
+        # set config
         timeaverage = (tbin > 0)
-                       
         if timeaverage:
             casalog.post('Parse time averaging parameters')
             config['timeaverage'] = True
@@ -354,13 +352,15 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
 
     return True
 
-
+#CASA6 feature
 def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, antenna, outfile):
     mslocal = ms( )
     # Write history to output MS, not the input ms.
     try:
-        param_names = sdtimeaverage.func_code.co_varnames[:sdtimeaverage.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        code_object = sdtimeaverage.__code__                             #CASA6
+        param_names = code_object.co_varnames[:code_object.co_argcount]  #CASA6
+        local_vals = locals()                                            #CASA6
+        param_vals = [local_vals.get(p, None) for p in param_names]      #CASA6
         write_history(mslocal, outfile, 'sdtimeaverage', param_names,
                       param_vals, casalog)
     except Exception as instance:
@@ -371,6 +371,4 @@ def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebi
     mslocal = None
     
     return True
-    
- 
     
