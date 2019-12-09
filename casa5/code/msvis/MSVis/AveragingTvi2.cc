@@ -378,7 +378,7 @@ public:
 
     friend class MsRowAvg;
 
-    VbAvg (const AveragingParameters & averagingParameters, const ViImplementation2 * vi);
+    VbAvg (const AveragingParameters & averagingParameters, ViImplementation2 * vi);
 
     void accumulate (const VisBuffer2 * vb, const Subchunk & subchunk);
     const Cube<Int> & counts () const;
@@ -898,8 +898,8 @@ void MsRowAvg::accumulateNormalizationFactor(Double normalizationFactor)
 	vbAvg_p->normalizationFactor_p (row ()) += normalizationFactor;
 }
 
-VbAvg::VbAvg (const AveragingParameters & averagingParameters, const ViImplementation2 * vii)
-: VisBufferImpl2 (VbRekeyable),
+VbAvg::VbAvg (const AveragingParameters & averagingParameters, ViImplementation2 * vii)
+: VisBufferImpl2 (vii, VbRekeyable),
   averagingInterval_p (averagingParameters.getAveragingInterval ()),
   averagingOptions_p (averagingParameters.getOptions()),
   averagingVii_p (vii),
@@ -1492,7 +1492,10 @@ VbAvg::finalizeCubeData (MsRowAvg * msRow)
     if (doing_p.correctedData_p)
     {
         Matrix<Complex> corrected = msRow->correctedMutable();
-        arrayTransformInPlace<Complex, Float, DivideOp > (corrected,msRow->weightSpectrum (), op);
+        if(existsColumn(VisBufferComponent2::WeightSpectrum))
+            arrayTransformInPlace<Complex, Float, DivideOp > (corrected,msRow->weightSpectrum (), op);
+        else
+            arrayTransformInPlace<Complex, Int, DivideOp > (corrected,msRow->counts (), op);
     }
 
     if (doing_p.observedData_p)
@@ -1500,31 +1503,44 @@ VbAvg::finalizeCubeData (MsRowAvg * msRow)
         Matrix<Complex> observed = msRow->observedMutable();
         if (not doing_p.correctedData_p)
         {
-        	arrayTransformInPlace<Complex, Float, DivideOp > (observed,msRow->weightSpectrum (), op);
+            if(existsColumn(VisBufferComponent2::WeightSpectrum))
+                arrayTransformInPlace<Complex, Float, DivideOp > (observed,msRow->weightSpectrum (), op);
+            else
+                arrayTransformInPlace<Complex, Int, DivideOp > (observed,msRow->counts (), op);
         }
         else
         {
-        	arrayTransformInPlace<Complex, Float, DivideOp > (observed,msRow->sigmaSpectrum (), op);
+            if(existsColumn(VisBufferComponent2::SigmaSpectrum))
+                arrayTransformInPlace<Complex, Float, DivideOp > (observed,msRow->sigmaSpectrum (), op);
+            else
+                arrayTransformInPlace<Complex, Int, DivideOp > (observed,msRow->counts (), op);
         }
     }
 
-	if (doing_p.modelData_p)
-	{
-		Matrix<Complex> model = msRow->modelMutable();
+    if (doing_p.modelData_p)
+    {
+        Matrix<Complex> model = msRow->modelMutable();
 
-		if (doing_p.correctedData_p)
-		{
-			arrayTransformInPlace<Complex, Float, DivideOp > (model,msRow->weightSpectrum (), op);
-		}
-		else if (doing_p.observedData_p)
-		{
-			arrayTransformInPlace<Complex, Float, DivideOp > (model,msRow->sigmaSpectrum (), op);
-		}
-		else
-		{
-			arrayTransformInPlace<Complex, Int, DivideOp > (model,msRow->counts (), op);
-		}
-	}
+        if (doing_p.correctedData_p)
+        {
+            if(existsColumn(VisBufferComponent2::WeightSpectrum))
+                arrayTransformInPlace<Complex, Float, DivideOp > (model,msRow->weightSpectrum (), op);
+            else
+                arrayTransformInPlace<Complex, Int, DivideOp > (model,msRow->counts (), op);
+        }
+        else if (doing_p.observedData_p)
+        {
+            cout<<"2in else"<<endl;
+            if(existsColumn(VisBufferComponent2::SigmaSpectrum))
+                arrayTransformInPlace<Complex, Float, DivideOp > (model,msRow->sigmaSpectrum (), op);
+            else
+                arrayTransformInPlace<Complex, Int, DivideOp > (model,msRow->counts (), op);
+        }
+        else
+        {
+            arrayTransformInPlace<Complex, Int, DivideOp > (model,msRow->counts (), op);
+        }
+    }
 
     if (doing_p.floatData_p)
     {
@@ -1532,7 +1548,10 @@ VbAvg::finalizeCubeData (MsRowAvg * msRow)
         DivideOpFloat opFloat;
 
         Matrix<Float> visCubeFloat = msRow->singleDishDataMutable();
-        arrayTransformInPlace<Float, Float, DivideOpFloat > (visCubeFloat,msRow->weightSpectrum (), opFloat);
+        if(existsColumn(VisBufferComponent2::WeightSpectrum))
+            arrayTransformInPlace<Float, Float, DivideOpFloat > (visCubeFloat,msRow->weightSpectrum (), opFloat);
+        else
+            arrayTransformInPlace<Float, Int, DivideOpFloat > (visCubeFloat,msRow->counts (), opFloat);
     }
 
 
