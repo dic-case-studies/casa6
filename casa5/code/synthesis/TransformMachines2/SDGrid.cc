@@ -1565,7 +1565,6 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
     // Set the frame
     lastAntID_p = vb.antenna1()(row);
     MPosition pos = vb.subtableColumns().antenna().positionMeas()(lastAntID_p);
-    //mFrame_p = MeasFrame(epoch, pos);
     (!mFrame_p.epoch()) ?  mFrame_p.set(epoch) : mFrame_p.resetEpoch(epoch);
     (!mFrame_p.position()) ? mFrame_p.set(pos) : mFrame_p.resetPosition(pos);
     if (!nullPointingTable) {
