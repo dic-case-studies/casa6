@@ -17,7 +17,8 @@ from collections import OrderedDict
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
-    from casatasks import casalog, tclean
+    from casatasks import casalog, clean, tclean
+    from casatasks.private.cleanhelper import cleanhelper
     tb = table( )
     ia = image( )
     po = imagepol( )
@@ -28,7 +29,6 @@ if is_CASA6:
     cs = coordsys( )
     cl = componentlist( )
     sm = simulator( )
-    from casatasks.private.cleanhelper import cleanhelper
 
 else:
     #import casac
@@ -36,6 +36,7 @@ else:
     from taskinit import *
     from cleanhelper import cleanhelper
     from tclean import tclean
+    from clean import clean
 
     # qa doesn't hold state.
     #qatool = casac.homefinder.find_home_by_name('quantaHome')
