@@ -61,7 +61,7 @@
 #include <ms/MSSel/MSSelection.h>
 
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <synthesis/ImagerObjects/SIIterBot.h>
 #endif
 #include <synthesis/ImagerObjects/SynthesisImagerVi2.h>
@@ -92,7 +92,7 @@
 #include <synthesis/TransformMachines2/SDGrid.h>
 #include <synthesis/TransformMachines/WProjectFT.h>
 #include <synthesis/TransformMachines2/BriggsCubeWeightor.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/viewer/ViewerProxy.h>
 #include <casadbus/plotserver/PlotServerProxy.h>
 #endif

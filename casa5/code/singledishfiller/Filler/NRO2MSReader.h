@@ -19,118 +19,91 @@
 #include <singledishfiller/Filler/NROData.h>
 #include <string>
 #include <memory>
+#include <functional>
 
 using namespace std;
 
 namespace casa { //# NAMESPACE CASA - BEGIN
-  
+
 // forward declaration
 class NROOptionalTables;
 
-class NRO2MSReader: public ReaderInterface {
+class NRO2MSReader final : public ReaderInterface {
 public:
-  typedef NROOptionalTables OptionalTables;
-  
+  // NROOptionalTables generates optional tables
+  // required for NRO data
+  using OptionalTables = NROOptionalTables;
+
   NRO2MSReader(std::string const &scantable_name);
   virtual ~NRO2MSReader();
 
   // get number of rows
-  virtual size_t getNumberOfRows();
+  size_t getNumberOfRows() const override;
 
-  virtual casacore::MDirection::Types getDirectionFrame() const;
-  
-  virtual casacore::Bool isFloatData() const {
+  casacore::MDirection::Types getDirectionFrame() const override;
+
+  casacore::Bool isFloatData() const override {
     return true;
   }
 
-  virtual casacore::String getDataUnit() const {
+  casacore::String getDataUnit() const override {
     return "K";
   }
 
   // to get OBSERVATION table
-  virtual casacore::Bool getObservationRow(sdfiller::ObservationRecord &record) {
+  casacore::Bool getObservationRow(sdfiller::ObservationRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_observation_row_)(record);
+    casacore::Bool return_value = get_observation_row_(record);
     POST_END;
     return return_value;
   }
 
   // to get ANTENNA table
-  virtual casacore::Bool getAntennaRow(sdfiller::AntennaRecord &record) {
+  casacore::Bool getAntennaRow(sdfiller::AntennaRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_antenna_row_)(record);
+    casacore::Bool return_value = get_antenna_row_(record);
     POST_END;
     return return_value;
   }
 
   // to get PROCESSOR table
-  virtual casacore::Bool getProcessorRow(sdfiller::ProcessorRecord &record) {
+  casacore::Bool getProcessorRow(sdfiller::ProcessorRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_processor_row_)(record);
+    casacore::Bool return_value = get_processor_row_(record);
     POST_END;
     return return_value;
   }
 
   // to get SOURCE table
-  virtual casacore::Bool getSourceRow(sdfiller::SourceRecord &record) {
+  casacore::Bool getSourceRow(sdfiller::SourceRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_source_row_)(record);
+    casacore::Bool return_value = get_source_row_(record);
     POST_END;
     return return_value;
   }
 
   // to get FIELD table
-  virtual casacore::Bool getFieldRow(sdfiller::FieldRecord &record) {
+  casacore::Bool getFieldRow(sdfiller::FieldRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_field_row_)(record);
+    casacore::Bool return_value = get_field_row_(record);
     POST_END;
     return return_value;
   }
 
   // to get SOURCE table
-  virtual casacore::Bool getSpectralWindowRow(sdfiller::SpectralWindowRecord &record) {
+  casacore::Bool getSpectralWindowRow(sdfiller::SpectralWindowRecord &record) override {
     POST_START;
-    casacore::Bool return_value = (*this.*get_spw_row_)(record);
+    casacore::Bool return_value = get_spw_row_(record);
     POST_END;
     return return_value;
   }
 
   // for DataAccumulator
-  virtual casacore::Bool getData(size_t irow, sdfiller::DataRecord &record);
-
-  int getNROArraySize() const {
-//    return obs_header_.ARYNM0; //obs_header_.NBEAM * obs_header_.NPOL * obs_header_.NSPWIN;
-    return NRO_ARYMAX;
-  }
-  int getNRONumBeam() const {
-    return obs_header_.NBEAM;
-  }
-  int getNRONumPol() const {
-    return obs_header_.NPOL;
-  }
-  int getNRONumSpw() const {
-    return obs_header_.NSPWIN;
-  }
-
-  bool isNROArrayUsed(int array_id) const {
-    return array_mapper_[array_id].isUsed();
-  }
-  int getNROArrayBeamId(int array_id) const {
-//	  assert(array_id >= 0 && array_id < getNROArraySize());
-    return array_mapper_[array_id].getBeamId();
-  }
-  casacore::Stokes::StokesTypes getNROArrayPol(int array_id) const {
-//	  assert(array_id >= 0 && array_id < getNROArraySize());
-    return array_mapper_[array_id].getPol();
-  }
-  int getNROArraySpwId(int array_id) const {
-//	  assert(array_id >= 0 && array_id < getNROArraySize());
-    return array_mapper_[array_id].getSpwId();
-  }
+  casacore::Bool getData(size_t irow, sdfiller::DataRecord &record) override;
 
 protected:
-  void initializeSpecific();
-  void finalizeSpecific();
+  void initializeSpecific() override;
+  void finalizeSpecific() override;
 
 private:
   FILE *fp_;
@@ -265,12 +238,12 @@ private:
   std::vector<double> getSpectrum(int const irow, sdfiller::NRODataScanData const &data);
 //  casacore::Int getPolNo(string const &rx);
 
-  casacore::Bool (NRO2MSReader::*get_antenna_row_)(sdfiller::AntennaRecord &);
-  casacore::Bool (NRO2MSReader::*get_field_row_)(sdfiller::FieldRecord &);
-  casacore::Bool (NRO2MSReader::*get_observation_row_)(sdfiller::ObservationRecord &);
-  casacore::Bool (NRO2MSReader::*get_processor_row_)(sdfiller::ProcessorRecord &);
-  casacore::Bool (NRO2MSReader::*get_source_row_)(sdfiller::SourceRecord &);
-  casacore::Bool (NRO2MSReader::*get_spw_row_)(sdfiller::SpectralWindowRecord &);
+  std::function<casacore::Bool(sdfiller::AntennaRecord &)> get_antenna_row_;
+  std::function<casacore::Bool(sdfiller::FieldRecord &)> get_field_row_;
+  std::function<casacore::Bool(sdfiller::ObservationRecord &)> get_observation_row_;
+  std::function<casacore::Bool(sdfiller::ProcessorRecord &)> get_processor_row_;
+  std::function<casacore::Bool(sdfiller::SourceRecord &)> get_source_row_;
+  std::function<casacore::Bool(sdfiller::SpectralWindowRecord &)> get_spw_row_;
 
   casacore::Bool getAntennaRowImpl(sdfiller::AntennaRecord &record);
   casacore::Bool getFieldRowImpl(sdfiller::FieldRecord &record);
@@ -284,6 +257,40 @@ private:
     POST_START;POST_END;
     return false;
   }
+
+  // methods that are only accessible from NROOptionalTables
+  int getNROArraySize() const {
+//    return obs_header_.ARYNM0; //obs_header_.NBEAM * obs_header_.NPOL * obs_header_.NSPWIN;
+    return NRO_ARYMAX;
+  }
+  int getNRONumBeam() const {
+    return obs_header_.NBEAM;
+  }
+  int getNRONumPol() const {
+    return obs_header_.NPOL;
+  }
+  int getNRONumSpw() const {
+    return obs_header_.NSPWIN;
+  }
+
+  bool isNROArrayUsed(int array_id) const {
+    return array_mapper_[array_id].isUsed();
+  }
+  int getNROArrayBeamId(int array_id) const {
+//	  assert(array_id >= 0 && array_id < getNROArraySize());
+    return array_mapper_[array_id].getBeamId();
+  }
+  casacore::Stokes::StokesTypes getNROArrayPol(int array_id) const {
+//	  assert(array_id >= 0 && array_id < getNROArraySize());
+    return array_mapper_[array_id].getPol();
+  }
+  int getNROArraySpwId(int array_id) const {
+//	  assert(array_id >= 0 && array_id < getNROArraySize());
+    return array_mapper_[array_id].getSpwId();
+  }
+
+  // friend: NROOptionalTables
+  friend NROOptionalTables;
 };
 
 // OptionalTables class for NRO data

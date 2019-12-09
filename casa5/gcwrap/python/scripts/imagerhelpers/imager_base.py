@@ -559,7 +559,7 @@ class PySynthesisImager:
 
         pl.ioff()
 
-        pl.figure(fignum)
+        fig, ax = pl.subplots(nrows=1,ncols=1,num=fignum)
         pl.clf();
         minarr = summ['summaryminor']
         if minarr.size==0:
@@ -616,7 +616,6 @@ class PySynthesisImager:
             pl.xlabel( 'Iteration Count' )
             pl.ylabel( 'Peak Residual (red), Model Flux (blue)' )
 
-            ax = pl.axes()
             box = ax.get_position()
             ax.set_position([box.x0, box.y0, box.width, box.height*0.8])
 

@@ -30,7 +30,7 @@
 
 #include <casa/Containers/Record.h>
 #include <synthesis/ImagerObjects/MPIGlue.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <synthesis/ImagerObjects/DistributedSynthesisIterBot.h>
 #endif
 #include <synthesis/ImagerObjects/ParallelImager.h>
@@ -42,7 +42,7 @@ namespace casa {
 class IterationControl {
 
 private:
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 	std::unique_ptr<DistributedSynthesisIterBot> it;
 #endif
 protected:
@@ -52,7 +52,7 @@ protected:
 		// Instantiate an iterbot. Use DistributedSynthesisIterBot when
 		// interaction with new GUI works; for now,
 		// DistributedSynthesisIterBotWithOldGUI works.
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		it = std::unique_ptr<DistributedSynthesisIterBot>(
 			new DistributedSynthesisIterBotWithOldGUI(comm));
 		it->setupIteration(iter_pars);
@@ -61,7 +61,7 @@ protected:
 
 	void
 	teardown_iteration_controller() {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		it.reset();
 #endif
 	}
@@ -69,14 +69,14 @@ protected:
 public:
 	void
 	end_major_cycle() {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		it->endMajorCycle();
 #endif
 	};
 
 	casacore::Record
 	get_minor_cycle_controls() {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		return it->getSubIterBot();
 #else
         return casacore::Record( );
@@ -85,21 +85,21 @@ public:
 
 	void
 	merge_execution_records(const casacore::Vector<casacore::Record> &recs) {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		it->endMinorCycle(recs);
 #endif
 	};
 
 	void
 	merge_initialization_records(const casacore::Vector<casacore::Record> &recs) {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		it->startMinorCycle(recs);
 #endif
 	};
 
 	bool
 	is_clean_complete() {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		return it->cleanComplete() > 0;
 #else
         return false;
@@ -108,7 +108,7 @@ public:
 
 	casacore::Record
 	get_summary() {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 		return it->getIterationSummary();
 #else
         return casacore::Record( );
