@@ -216,7 +216,7 @@ TEST_F(FringeJonesTest, FringeJonesApplyState) {
   ASSERT_EQ(VisCalEnum::JONES,ff.matrixType());
   ASSERT_EQ(VisCal::K,ff.type());
   ASSERT_EQ(String("Fringe Jones"),ff.typeName());
-  //ASSERT_EQ(6,ff.nPar());
+  // ASSERT_EQ(8,ff.nPar());
   ASSERT_FALSE(ff.freqDepPar());
   ASSERT_TRUE(ff.freqDepMat());
   ASSERT_FALSE(ff.freqDepCalWt());
@@ -271,7 +271,14 @@ TEST_F(FringeJonesTest, FringeJones_selfSolveOneTest) {
   rateWindow(IPosition(1, 1)) = +100.0;
   solvePar.define("delaywindow", delayWindow);
   solvePar.define("ratewindow", rateWindow);
-
+  Array<Bool> paramActive(IPosition(1,4));
+  paramActive(IPosition(1, 0)) = true;
+  paramActive(IPosition(1, 1)) = true;
+  paramActive(IPosition(1, 2)) = true;
+  paramActive(IPosition(1, 3)) = false;
+  
+  solvePar.define("paramactive", paramActive);
+  
   FJsol.setSolve(solvePar);
 
 
