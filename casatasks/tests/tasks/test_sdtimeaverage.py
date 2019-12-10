@@ -97,14 +97,9 @@ class test_sdtimeaverage(unittest.TestCase):
     def tearDown(self):
 
         os.system('rm -rf ' + self.i_ms)
+#       os.system('rm -rf ' + "bave*.ms") 
 
-#for DEBUG
-#       os.system('rm -rf ' + self.o_ms)
-
-#    def _get_antid(self):
-#        with tbmanager(self.i_ms + '/ANTENNA') as tb:
-#            acol = tb.getcol('NAME')
-#        return range(len(acol))
+        return
 
     def run_task(self, aux_args=None):
         print( "run_task() in" )
@@ -112,8 +107,8 @@ class test_sdtimeaverage(unittest.TestCase):
             for k in aux_args: self.args[k] = aux_args[k]
         sdtimeaverage(**self.args)
 #
+# ORIGINAL:
 # NEED to relocate / revise
-# //        self._get_data()
 #
     def _get_data(self):
         self.i_tm, self.i_a1, self.i_a2, self.i_dd, self.i_sc, self.i_st = self._do_get_data(self.i_ms)
@@ -277,14 +272,32 @@ class test_sdtimeaverage(unittest.TestCase):
                             time2 = self.i_tm[i]
         return time1, time2
 
-    def test_param(self): # no time averaging(timebin='0s'), rewriting beam IDs only
-        print( "XXXXXXXX test_param XXXXXXXX")
+    def test_param1(self): 
+        print( "XXXXXXXX test_param(1) XXXXXXXX")
 
-        prm =  {'timebin' : 'all', 'antenna':'PM03'  }
+        prm =  {'timebin' : 'all', 
+                'antenna':'GBT'  }
         self.run_task( prm )
-#       self.check_num_data()
-#       self.check_values()
 
+    def test_param2(self): 
+        print( "XXXXXXXX test_param(2) XXXXXXXX")
+
+        prm =  {'timebin' : 'all', 
+                'antenna' : 'GBT',
+                'outfile' : 'bave-2.ms'  }
+        self.run_task( prm )
+
+    def test_param3(self):
+        print( "XXXXXXXX test_param(3) XXXXXXXX")
+
+        prm =  {
+                'antenna' : 'GBT',
+                'outfile' : 'bave-3.ms'  }
+        self.run_task( prm )
+
+#
+# ORIGINAL
+#
     '''
     def test_default(self): # no time averaging(timebin='0s'), rewriting beam IDs only
         print( "XXXXXXXX test_default XXXXXXXX")
@@ -292,7 +305,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.check_num_data()
         self.check_values()
     '''
-
+# 
 
     '''
     def test_time_averaging(self): # every two on-spectra are averaged into one specrum

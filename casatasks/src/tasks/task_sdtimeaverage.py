@@ -80,11 +80,20 @@ def sdtimeaverage(
     #  defaut value (timebin=all) is to be handled.
     #-
 
-    if timebin is 'all':
+    if (timebin is 'all') or (timebin is None):
         timebin =  calc_timebin(infile)+'s'
-        print ("DBG::timebin==all;timebin set to = ", timebin)
+        print ("DBG::timebin compensated with time records. ", timebin)
+
+    #+
+    # Antanna ID (add extra &&& if needed) This is Single Dish specific 
+    #-
+
+    if (len(antenna) != 0) and (antenna.find('&') == -1):
+        antenna = antenna + '&&&'
+        print("DBG::corrected Antena ID with &&&") 
 
     casalog.origin('sdtimeaverage')
+
     try:
         # CAS-128212 revised: seelect and time averaging (at same time)
 
@@ -109,8 +118,9 @@ def calc_timebin(msname):
         tm = tb.getcol('TIME')
 
     Leng = len( tm)
-    time_first = tm[0]
-    time_last = tm[Leng-1]
+    time_first = min(tm)
+    time_last =  max(tm)
+
     timebin = time_last - time_first ;
     return str(timebin)
 
@@ -118,7 +128,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
     # followings are parameters of mstransform but not used by THIS.
     # just putting default values
   
-    # CAS-12721: annd antenna arg . removed local var. (S.N)
+    # CAS-12721: Added 'antenna' arg . removed local var. (S.N)
 
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
@@ -165,6 +175,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         # Gather all the parameters in a dictionary.
         config = {}
         
+        # CAS-12710 (note) antenna arg now contains specified param.
         config = pdh.setupParameters(inputms=infile, outputms=outfile, field=field, 
                     spw=spw, array=array, scan=scan, antenna=antenna, correlation=correlation,
                     uvrange=uvrange, timerange=timerange, intent=intent, observation=str(observation),
