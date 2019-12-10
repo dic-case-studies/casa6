@@ -658,58 +658,7 @@ class statwt_test(unittest.TestCase):
             #    dst, row_to_rows, 'c', None, True, None, wtrange
             # )
             shutil.rmtree(dst)
-    """
-    def test_wtrange(self):
-        "" Test weight range""
-        dst = "ngc5921.split.timebin.ms"
-        ref = datadir + "ngc5921.timebin300s_2.ms.ref"
-        [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
-        rtol = 1e-7
-        combine = "corr"
-        timebin = "300s"
-        wtrange = [1, 2]
-        for i in [0, 1]:
-            shutil.copytree(src, dst) 
-            myms = mstool()
-            if i == 0:
-                myms.open(dst, nomodify=False)
-                myms.statwt(timebin=timebin, combine=combine, wtrange=wtrange)
-                myms.done()
-            else:
-                statwt(dst, timebin=timebin, combine=combine, wtrange=wtrange)
-            [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
-            self.assertTrue(
-                np.all(
-                    tstflag == np.logical_or(
-                        refflag, np.logical_not(
-                            np.logical_and(tstwtsp >= 1, tstwtsp <= 2)
-                        )
-                    )
-                ),
-                "FLAGs don't match"
-            )
-            self.assertTrue(
-                np.all(np.all(tstflag, axis=(0,1)) == tstfrow),
-                "FLAG_ROWs don't match"
-            )
-            nrows = tstwtsp.shape[2]
-            for row in range(nrows):
-                rowwtsp = tstwtsp[:,:,row][np.logical_not(tstflag[:,:,row])]
-                if (len(rowwtsp) == 0):
-                    expec = 0
-                else:
-                    expec = rowwtsp[0]
-                self.assertTrue(
-                    np.all(np.isclose(tstwt[:, row], expec, rtol)),
-                    "WEIGHTs don't match"
-                )
-            self.assertTrue(
-                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
-                "WEIGHT_SPECTRUMs don't match"
-            )
-            shutil.rmtree(dst)
-    """
-    
+
     def test_preview(self):
         """ Test preview mode"""
         dst = "ngc5921.split.preview.ms"

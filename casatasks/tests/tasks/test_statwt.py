@@ -221,7 +221,6 @@ class statwt_test(unittest.TestCase):
         # all flags must be True where wtsp = 0
         self.assertTrue(np.extract(gwtsp == 0, gflag).all())
 
-
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
         mytb = table()
@@ -316,15 +315,34 @@ class statwt_test(unittest.TestCase):
             statwt(dst, minsamp=minsamp, combine=combine)
             [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
             if minsamp == 60:
-                self.assertTrue((wt[:, trow] > 0).all(), "Incorrect weight row " + str(trow))
-                self.assertTrue((wtsp[:, :, trow] > 0).all(), "Incorrect weight spectrum row " + str(trow))
-                self.assertFalse(flag[:,:,trow].all(), "Incorrect flag row " + str(trow))
-                self.assertFalse(frow[trow], "Incorrect flagrow row " + str(trow))
+                self.assertTrue(
+                    (wt[:, trow] > 0).all(), "Incorrect weight row " + str(trow)
+                )
+                self.assertTrue(
+                    (wtsp[:, :, trow] > 0).all(),
+                    "Incorrect weight spectrum row " + str(trow)
+                )
+                self.assertFalse(
+                    flag[:,:,trow].all(), "Incorrect flag row " + str(trow)
+                )
+                self.assertFalse(
+                    frow[trow], "Incorrect flagrow row " + str(trow)
+                )
             else:
-                self.assertTrue((wt[:, trow] == 0).all(), "Incorrect weight row " + str(trow))
-                self.assertTrue((wtsp[:, :, trow] == 0).all(), "Incorrect weight spectrum row " + str(trow))
-                self.assertTrue(flag[:,:,trow].all(), "Incorrect flag row " + str(trow))
-                self.assertTrue(frow[trow], "Incorrect flagrow row " + str(trow))
+                self.assertTrue(
+                    (wt[:, trow] == 0).all(),
+                    "Incorrect weight row " + str(trow)
+                )
+                self.assertTrue(
+                    (wtsp[:, :, trow] == 0).all(),
+                    "Incorrect weight spectrum row " + str(trow)
+                )
+                self.assertTrue(
+                    flag[:,:,trow].all(), "Incorrect flag row " + str(trow)
+                )
+                self.assertTrue(
+                    frow[trow], "Incorrect flagrow row " + str(trow)
+                )
             shutil.rmtree(dst)
             
     def test_fieldsel(self):
@@ -422,11 +440,16 @@ class statwt_test(unittest.TestCase):
             if statalg == "cl":
                 statwt(vis=dst, statalg=statalg)
             elif statalg == "ch":
-                self.assertTrue(statwt(vis=dst, statalg=statalg, zscore=5, maxiter=3))
+                self.assertTrue(
+                    statwt(vis=dst, statalg=statalg, zscore=5, maxiter=3)
+                )
             elif statalg == "h":
                 self.assertTrue(statwt(vis=dst, statalg=statalg, fence=0.2))
             elif statalg == "f":
-                self.assertTrue(statwt(vis=dst, statalg=statalg, center="median", lside=False))
+                self.assertTrue(
+                    statwt(vis=dst, statalg=statalg, center="median",
+                    lside=False)
+                )
             elif statalg == "bogus":
                 self.assertRaises(Exception, statwt, vis=dst, statalg=statalg)
             shutil.rmtree(dst)
@@ -482,24 +505,23 @@ class statwt_test(unittest.TestCase):
         """ Test preview mode"""
         dst = "ngc5921.split.preview.ms"
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(src)
-        rtol = 1e-7
         combine = "corr"
         timebin = "300s"
         wtrange = [1, 2]
         preview = True
         shutil.copytree(src, dst)
         statwt(
-            dst, timebin=timebin, combine=combine, wtrange=wtrange, preview=preview
+            dst, timebin=timebin, combine=combine, wtrange=wtrange,
+            preview=preview
         )
         [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
-        self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-        self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+        self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
+        self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
         self.assertTrue(
-            numpy.all(numpy.isclose(tstwt, refwt, rtol)), "WEIGHTs don't match"
+            np.all(np.isclose(tstwt, refwt)), "WEIGHTs don't match"
         )
         self.assertTrue(
-            numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
-            "WEIGHT_SPECTRUMs don't match"
+            np.all(np.isclose(tstwtsp, refwtsp)), "WEIGHT_SPECTRUMs don't match"
         )
         shutil.rmtree(dst)
 
