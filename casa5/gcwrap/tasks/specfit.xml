@@ -317,13 +317,13 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                     <value type="string"/>
                 </default>
                 <default param="gmampest">
-                    <value>0.0</value>
+                    <value><value>0.0</value></value>
                 </default>
                 <default param="gmcenterest">
-                    <value>0.0</value>
+                    <value><value>0.0</value></value>
                 </default>
                 <default param="gmfwhmest">
-                    <value>0.0</value>
+                    <value><value>0.0</value></value>
                 </default>
                 <default param="gmfix">
                     <value type="string"/>
