@@ -15,7 +15,8 @@ import numbers
 
 # pool_size = 20  # your "parallelness"
 
-datadir = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/statwt/'
+datadir = os.environ.get('CASAPATH').split()[0] \
+    + '/data/regression/unittest/statwt/'
 src = datadir + 'ngc5921.split_2.ms'
 
 # rows and target_row are the row numbers from the subtable formed
@@ -26,8 +27,8 @@ src = datadir + 'ngc5921.split_2.ms'
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
 # IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
 def get_weights(
-    data, flags, exposures, combine_corr, target_exposure, chanbins,
-    target_flags
+    data, flags, chan_flags, exposures, combine_corr, target_exposure, chanbins,
+    target_flags, wtrange
 ):  
     shape = data.shape
     ncorr_groups = 1 if combine_corr else shape[0]
@@ -40,26 +41,50 @@ def get_weights(
     wt = np.zeros(shape[0])
     nrows = data.shape[2]
     median_axis = 1 if ncorr_groups > 1 else None
+    mod_flags = target_flags[:]
+    if type(chan_flags) == type(None):
+        myflags = flags[:]
+    else:
+        t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
+        myflags = np.logical_or(flags, t_flags)
     for corr in range(ncorr_groups):
         end_corr = corr + 1 if ncorr_groups > 1 else ncorr + 1
         for cb in tchanbins:
             var = variance(
                 data[corr:end_corr, cb[0]:cb[1], :],
-                flags[corr:end_corr, cb[0]:cb[1], :], exposures
+                myflags[corr:end_corr, cb[0]:cb[1], :], exposures
             )
+            if flags[corr:end_corr, cb[0]:cb[1]].all():
+                weights[corr:end_corr, cb[0]:cb[1]] = 0
+                mod_flags[corr:end_corr, cb[0]:cb[1]] = True
             if var == 0:
                 weights[corr:end_corr, cb[0]:cb[1]] = 0 
+                mod_flags[corr:end_corr, cb[0]:cb[1]] = True
             else:
                 weights[corr:end_corr, cb[0]:cb[1]] = target_exposure/var
-            if flags.all():
-                wt[corr:end_corr] = 0
-            else:
-                mweights = ma.array(
-                    weights[corr:end_corr, cb[0]:cb[1]],
-                    mask=target_flags[corr:end_corr, cb[0]:cb[1]]
+            if type(wtrange) != type(None):
+                condition = np.logical_or(
+                    np.less(
+                        weights[corr:end_corr, cb[0]:cb[1]], wtrange[0]
+                    ),
+                    np.greater(
+                        weights[corr:end_corr, cb[0]:cb[1]], wtrange[1]
+                    )
                 )
-                wt[corr:end_corr] = np.median(mweights, median_axis)
-    return (weights, wt)
+                exp_condition = np.expand_dims(condition, 2)
+                weights[corr:end_corr, cb[0]:cb[1]] = np.where(
+                    condition, 0, weights[corr:end_corr, cb[0]:cb[1]]
+                )
+                mod_flags[corr:end_corr, cb[0]:cb[1]] = np.where(
+                    exp_condition, True, mod_flags[corr:end_corr, cb[0]:cb[1]]
+                )
+            mweights = ma.array(
+                weights[corr:end_corr, :],
+                mask=mod_flags[corr:end_corr, :]
+            )
+            wt[corr:end_corr] = np.median(mweights, median_axis)
+    mod_flags = np.where(np.expand_dims(weights, 2) == 0, True, mod_flags)
+    return (weights, wt, mod_flags)
 
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
 # IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
@@ -117,7 +142,7 @@ class statwt_test(unittest.TestCase):
     
     def _check_weights(
         self, msname, row_to_rows, data_column, chan_flags, combine_corr,
-        chanbins
+        chanbins, wtrange
     ):
         if data_column.startswith('c'):
             colname = 'CORRECTED_DATA'
@@ -125,11 +150,10 @@ class statwt_test(unittest.TestCase):
             colname = 'DATA'
         else:
             raise Exception("Unhandled column spec " + data_column)
-        # if not mode.startswith('one'):
-        #    raise Exception("Unhandled mode")
         for ant1 in range(10):
             for ant2 in range((ant1 + 1), 10):
-                query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
+                query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' \
+                     + str(ant2)
                 tb.open(msname)
                 subt = tb.query(query_str)
                 data = subt.getcol(colname)
@@ -137,25 +161,23 @@ class statwt_test(unittest.TestCase):
                 exposures = subt.getcol('EXPOSURE')
                 wt = subt.getcol('WEIGHT')
                 wtsp = subt.getcol('WEIGHT_SPECTRUM')
+                flag_row = subt.getcol('FLAG_ROW')
                 subt.done()
                 tb.done()
-                if type(chan_flags) != type(None):
-                    t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
-                    flags = np.logical_or(flags, t_flags)
                 nrows = data.shape[2]
                 for row in range(nrows):
                     start = row_to_rows[row][0]
                     end = row_to_rows[row][1]
-                    (weights, ewt) = get_weights(
-                        data[:,:,start:end], flags[:, :, start:end],
+                    (weights, ewt, mod_flags) = get_weights(
+                        data[:,:,start:end], flags[:, :, start:end], chan_flags,
                         exposures[start: end], combine_corr, exposures[row],
-                        chanbins, flags[:, :, row:row+1]
+                        chanbins, flags[:, :, row:row+1], wtrange
                     )
                     self.assertTrue(
-                        np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
-                        + str(wtsp[:, :, row]) + '\nexpected ' + str(weights)
-                        + '\nbaseline ' + str([ant1, ant2])
-                        + '\nrow ' + str(row)
+                        np.allclose(weights, wtsp[:, :, row]),
+                        'Failed wtsp, got ' + str(wtsp[:, :, row])
+                        + '\nexpected ' + str(weights) + '\nbaseline '
+                        + str([ant1, ant2]) + '\nrow ' + str(row)
                     )
                     self.assertTrue(
                         np.allclose(ewt, wt[:, row]),
@@ -164,6 +186,21 @@ class statwt_test(unittest.TestCase):
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                         + str(row)
                     )
+                    self.assertTrue(
+                        (mod_flags == np.expand_dims(flags[:, :, row], 2)).all(),
+                        'Failed flag, got ' + str(flags[:, :, row])
+                        + '\nexpected ' + str(mod_flags) + '\nbaseline '
+                        + str([ant1, ant2]) + '\nrow ' + str(row)
+                    )
+                    eflag_row = mod_flags.all()
+                    self.assertTrue(
+                        (eflag_row == flag_row[row]).all(),
+                        'Failed flag_row, got ' + str(flag_row[row])
+                        + '\nexpected ' + str(eflag_row) + '\nbaseline '
+                        + str([ant1, ant2]) + '\nrow ' + str(row)
+                    )
+                    # all flags must be True where wtsp = 0
+                    self.assertTrue(np.extract(weights == 0, mod_flags).all())
 
     def compare(self, dst, ref):
         mytb = tbtool()
@@ -176,11 +213,12 @@ class statwt_test(unittest.TestCase):
         mytb.done()
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
         self.assertTrue(
-            np.allclose(gwtsp, ewtsp),
-            'WEIGHT_SPECTRUM comparison failed'
+            np.allclose(gwtsp, ewtsp), 'WEIGHT_SPECTRUM comparison failed'
         )
         self.assertTrue((gflag == eflag).all(), 'FLAG comparison failed')
         self.assertTrue((gfrow == efrow).all(), 'FLAG_ROW comparison failed')
+        # all flags must be True where wtsp = 0
+        self.assertTrue(np.extract(gwtsp == 0, gflag).all())
 
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
@@ -236,6 +274,38 @@ class statwt_test(unittest.TestCase):
         """ Test time binning"""
         dst = "ngc5921.split.timebin.ms"
         combine = "corr"
+        """
+        # for timebin = '300s'
+        row_to_rows = []
+        for i in range(10):
+            row_to_rows.append([0, 10])
+        for i in range(2):
+            row_to_rows.append([10, 12])
+        for i in range(5):
+            row_to_rows.append([12, 17])
+        for i in range(5):
+            row_to_rows.append([17, 22])
+        for i in range(5):
+            row_to_rows.append([22, 27])
+        for i in range(5):
+            row_to_rows.append([27, 32])
+        for i in range(1):
+            row_to_rows.append([32, 33])
+        for i in range(2):
+            row_to_rows.append([33, 35])
+        for i in range(3):
+            row_to_rows.append([35, 38])
+        for i in range(5):
+            row_to_rows.append([38, 43])
+        for i in range(5):
+            row_to_rows.append([43, 48])
+        for i in range(5):
+            row_to_rows.append([48, 53])
+        for i in range(3):
+            row_to_rows.append([53, 56])
+        for i in range(4):
+            row_to_rows.append([56, 60])
+        """
         for timebin in ["300s", 10]:
             for i in [0, 1]:
                 shutil.copytree(src, dst) 
@@ -249,7 +319,7 @@ class statwt_test(unittest.TestCase):
                 ref = 'ref_test_timebin_' + str(timebin) + '.ms'
                 self.compare(dst, ref)
                 shutil.rmtree(dst)
-
+        
     def test_chanbin(self):
         """Test channel binning"""
         dst = "ngc5921.split.chanbin_0.ms"
@@ -315,15 +385,35 @@ class statwt_test(unittest.TestCase):
                     statwt(dst, minsamp=minsamp, combine=combine)
                 [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
                 if minsamp == 60:
-                    self.assertTrue((wt[:, trow] > 0).all(), "Incorrect weight row " + str(trow))
-                    self.assertTrue((wtsp[:, :, trow] > 0).all(), "Incorrect weight spectrum row " + str(trow))
-                    self.assertFalse(flag[:,:,trow].all(), "Incorrect flag row " + str(trow))
-                    self.assertFalse(frow[trow], "Incorrect flagrow row " + str(trow))
+                    self.assertTrue(
+                        (wt[:, trow] > 0).all(),
+                        "Incorrect weight row " + str(trow)
+                    )
+                    self.assertTrue(
+                        (wtsp[:, :, trow] > 0).all(),
+                        "Incorrect weight spectrum row " + str(trow)
+                    )
+                    self.assertFalse(
+                        flag[:,:,trow].all(), "Incorrect flag row " + str(trow)
+                    )
+                    self.assertFalse(
+                        frow[trow], "Incorrect flagrow row " + str(trow)
+                    )
                 else:
-                    self.assertTrue((wt[:, trow] == 0).all(), "Incorrect weight row " + str(trow))
-                    self.assertTrue((wtsp[:, :, trow] == 0).all(), "Incorrect weight spectrum row " + str(trow))
-                    self.assertTrue(flag[:,:,trow].all(), "Incorrect flag row " + str(trow))
-                    self.assertTrue(frow[trow], "Incorrect flagrow row " + str(trow))
+                    self.assertTrue(
+                        (wt[:, trow] == 0).all(),
+                        "Incorrect weight row " + str(trow)
+                    )
+                    self.assertTrue(
+                        (wtsp[:, :, trow] == 0).all(),
+                        "Incorrect weight spectrum row " + str(trow)
+                    )
+                    self.assertTrue(
+                        flag[:,:,trow].all(), "Incorrect flag row " + str(trow)
+                    )
+                    self.assertTrue(
+                        frow[trow], "Incorrect flagrow row " + str(trow)
+                    )
                 shutil.rmtree(dst)
             
     def test_fieldsel(self):
@@ -369,6 +459,7 @@ class statwt_test(unittest.TestCase):
         # there are three field_ids, and there is a change in field_id when
         # there is a change in scan number, so specifying combine="field" in the
         # absence of "scan" will give the same result as combine=""
+        """
         row_to_rows = []
         for i in range(12):
             row_to_rows.append([0, 12])
@@ -384,6 +475,7 @@ class statwt_test(unittest.TestCase):
             row_to_rows.append([38, 56])
         for i in range(56, 60):
             row_to_rows.append([56, 60])
+        """
         for combine in ["corr", "corr,field"]:
             for i in [0, 1]:
                 shutil.copytree(src, dst)
@@ -394,6 +486,9 @@ class statwt_test(unittest.TestCase):
                     myms.done()
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
+                #self._check_weights(
+                #    dst, row_to_rows, 'c', None, True, None, None
+                #)
                 self.compare(dst, ref)
                 shutil.rmtree(dst)
     
@@ -403,6 +498,21 @@ class statwt_test(unittest.TestCase):
         timebin = "6000s"
         ref = 'ref_test_no_scan_bounds.ms'
         combine = "corr, scan"
+        """
+        row_to_rows = []
+        for i in range(12):
+            row_to_rows.append([0, 12])
+        for i in range(12, 17):
+            row_to_rows.append([12, 17])
+        for i in range(17, 33):
+            row_to_rows.append([17, 33])
+        for i in range(33, 38):
+            row_to_rows.append([33, 38])
+        for i in range(38, 56):
+            row_to_rows.append([38, 56])
+        for i in range(56, 60):
+            row_to_rows.append([56, 60])
+        """
         for i in [0, 1]:
             shutil.copytree(src, dst)
             if i == 0:
@@ -412,6 +522,9 @@ class statwt_test(unittest.TestCase):
                 myms.done()
             else:
                 statwt(dst, timebin=timebin, combine=combine)
+            #self._check_weights(
+            #    dst, row_to_rows, 'c', None, True, None, None
+            #)
             self.compare(dst, ref)
             shutil.rmtree(dst)
     
@@ -420,7 +533,12 @@ class statwt_test(unittest.TestCase):
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
         ref = 'ref_test_no_scan_nor_field_bounds.ms'
-        for combine in ["corr,scan,field", "corr,field,scan"]:
+        """
+        row_to_rows = []
+        for i in range(60):
+            row_to_rows.append([0, 60])
+        """
+        for combine in ["corr, scan, field", "corr, field, scan"]:
             for i in [0, 1]:
                 shutil.copytree(src, dst)
                 if i == 0:
@@ -430,6 +548,9 @@ class statwt_test(unittest.TestCase):
                     myms.done()
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
+                #self._check_weights(
+                #    dst, row_to_rows, 'c', None, True, None, None
+                #)
                 self.compare(dst, ref)
                 shutil.rmtree(dst)
                 
@@ -446,29 +567,100 @@ class statwt_test(unittest.TestCase):
                     if statalg == "cl":
                         self.assertTrue(myms.statwt(statalg=statalg))
                     elif statalg == "ch":
-                        self.assertTrue(myms.statwt(statalg=statalg, zscore=5, maxiter=3))
+                        self.assertTrue(
+                            myms.statwt(statalg=statalg, zscore=5, maxiter=3)
+                        )
                     elif statalg == "h":
                         self.assertTrue(myms.statwt(statalg=statalg, fence=0.2))
                     elif statalg == "f":
-                        self.assertTrue(myms.statwt(statalg=statalg, center="median", lside=False))
+                        self.assertTrue(
+                            myms.statwt(statalg=statalg, center="median",
+                            lside=False)
+                        )
                     elif statalg == "bogus":
-                        self.assertRaises(Exception, myms.statwt, statalg=statalg)
+                        self.assertRaises(
+                            Exception, myms.statwt, statalg=statalg
+                        )
                     myms.done()
                 else:
                     if statalg == "cl":
                         statwt(vis=dst, statalg=statalg)
                     elif statalg == "ch":
-                        self.assertTrue(statwt(vis=dst, statalg=statalg, zscore=5, maxiter=3))
+                        self.assertTrue(
+                            statwt(
+                                vis=dst, statalg=statalg, zscore=5, maxiter=3
+                            )
+                        )
                     elif statalg == "h":
-                        self.assertTrue(statwt(vis=dst, statalg=statalg, fence=0.2))
+                        self.assertTrue(
+                            statwt(vis=dst, statalg=statalg, fence=0.2)
+                        )
                     elif statalg == "f":
-                        self.assertTrue(statwt(vis=dst, statalg=statalg, center="median", lside=False))
+                        self.assertTrue(
+                            statwt(
+                                vis=dst, statalg=statalg, center="median",
+                                lside=False
+                            )
+                        )
                     elif statalg == "bogus":
                         self.assertFalse(statwt(vis=dst, statalg=statalg))
                 shutil.rmtree(dst)
-                
+    
     def test_wtrange(self):
-        """ Test weight range"""
+        """Test weight range"""
+        dst = "ngc5921.split.timebin.ms"
+        ref = "ref_test_wtrange_300s.ms"
+        combine = "corr"
+        timebin = "300s"
+        wtrange = [1, 2]
+        """
+        row_to_rows = []
+        for i in range(10):
+            row_to_rows.append([0, 10])
+        for i in range(2):
+            row_to_rows.append([10, 12])
+        for i in range(5):
+            row_to_rows.append([12, 17])
+        for i in range(5):
+            row_to_rows.append([17, 22])
+        for i in range(5):
+            row_to_rows.append([22, 27])
+        for i in range(5):
+            row_to_rows.append([27, 32])
+        for i in range(1):
+            row_to_rows.append([32, 33])
+        for i in range(2):
+            row_to_rows.append([33, 35])
+        for i in range(3):
+            row_to_rows.append([35, 38])
+        for i in range(5):
+            row_to_rows.append([38, 43])
+        for i in range(5):
+            row_to_rows.append([43, 48])
+        for i in range(5):
+            row_to_rows.append([48, 53])
+        for i in range(3):
+            row_to_rows.append([53, 56])
+        for i in range(4):
+            row_to_rows.append([56, 60])
+        """
+        for i in [0, 1]:
+            shutil.copytree(src, dst) 
+            myms = mstool()
+            if i == 0:
+                myms.open(dst, nomodify=False)
+                myms.statwt(timebin=timebin, combine=combine, wtrange=wtrange)
+                myms.done()
+            else:
+                statwt(dst, timebin=timebin, combine=combine, wtrange=wtrange)
+            self.compare(dst, ref)
+            # self._check_weights(
+            #    dst, row_to_rows, 'c', None, True, None, wtrange
+            # )
+            shutil.rmtree(dst)
+    """
+    def test_wtrange(self):
+        "" Test weight range""
         dst = "ngc5921.split.timebin.ms"
         ref = datadir + "ngc5921.timebin300s_2.ms.ref"
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
@@ -516,7 +708,8 @@ class statwt_test(unittest.TestCase):
                 "WEIGHT_SPECTRUMs don't match"
             )
             shutil.rmtree(dst)
-
+    """
+    
     def test_preview(self):
         """ Test preview mode"""
         dst = "ngc5921.split.preview.ms"
@@ -532,12 +725,14 @@ class statwt_test(unittest.TestCase):
             if i == 0:
                 myms.open(dst, nomodify=False)
                 myms.statwt(
-                    timebin=timebin, combine=combine, wtrange=wtrange, preview=preview
+                    timebin=timebin, combine=combine, wtrange=wtrange,
+                    preview=preview
                 )
                 myms.done()
             else:
                 statwt(
-                    dst, timebin=timebin, combine=combine, wtrange=wtrange, preview=preview
+                    dst, timebin=timebin, combine=combine, wtrange=wtrange,
+                    preview=preview
                 )
             [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
             self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")

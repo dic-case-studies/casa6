@@ -20,8 +20,8 @@ src = os.path.join(datadir,'ngc5921.split_2.ms')
 # EVEN IF THIS IS NO LONGER USED BY THE TESTS, IT SHOULDN'T BE DELETED BECAUSE
 # IT IS USEFUL IN SANTIFY CHECKING NEW TESTS
 def get_weights(
-    data, flags, exposures, combine_corr, target_exposure, chanbins,
-    target_flags
+    data, flags, chan_flags, exposures, combine_corr, target_exposure, chanbins,
+    target_flags, wtrange
 ):  
     shape = data.shape
     ncorr_groups = 1 if combine_corr else shape[0]
@@ -34,26 +34,50 @@ def get_weights(
     wt = np.zeros(shape[0])
     nrows = data.shape[2]
     median_axis = 1 if ncorr_groups > 1 else None
+    mod_flags = target_flags[:]
+    if type(chan_flags) == type(None):
+        myflags = flags[:]
+    else:
+        t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
+        myflags = np.logical_or(flags, t_flags)
     for corr in range(ncorr_groups):
         end_corr = corr + 1 if ncorr_groups > 1 else ncorr + 1
         for cb in tchanbins:
             var = variance(
                 data[corr:end_corr, cb[0]:cb[1], :],
-                flags[corr:end_corr, cb[0]:cb[1], :], exposures
+                myflags[corr:end_corr, cb[0]:cb[1], :], exposures
             )
+            if flags[corr:end_corr, cb[0]:cb[1]].all():
+                weights[corr:end_corr, cb[0]:cb[1]] = 0
+                mod_flags[corr:end_corr, cb[0]:cb[1]] = True
             if var == 0:
                 weights[corr:end_corr, cb[0]:cb[1]] = 0 
+                mod_flags[corr:end_corr, cb[0]:cb[1]] = True
             else:
                 weights[corr:end_corr, cb[0]:cb[1]] = target_exposure/var
-            if flags.all():
-                wt[corr:end_corr] = 0
-            else:
-                mweights = ma.array(
-                    weights[corr:end_corr, cb[0]:cb[1]],
-                    mask=target_flags[corr:end_corr, cb[0]:cb[1]]
+            if type(wtrange) != type(None):
+                condition = np.logical_or(
+                    np.less(
+                        weights[corr:end_corr, cb[0]:cb[1]], wtrange[0]
+                    ),
+                    np.greater(
+                        weights[corr:end_corr, cb[0]:cb[1]], wtrange[1]
+                    )
                 )
-                wt[corr:end_corr] = np.median(mweights, median_axis)
-    return (weights, wt)
+                exp_condition = np.expand_dims(condition, 2)
+                weights[corr:end_corr, cb[0]:cb[1]] = np.where(
+                    condition, 0, weights[corr:end_corr, cb[0]:cb[1]]
+                )
+                mod_flags[corr:end_corr, cb[0]:cb[1]] = np.where(
+                    exp_condition, True, mod_flags[corr:end_corr, cb[0]:cb[1]]
+                )
+            mweights = ma.array(
+                weights[corr:end_corr, :],
+                mask=mod_flags[corr:end_corr, :]
+            )
+            wt[corr:end_corr] = np.median(mweights, median_axis)
+    mod_flags = np.where(np.expand_dims(weights, 2) == 0, True, mod_flags)
+    return (weights, wt, mod_flags)
 
 def variance(data, flags, exposures):
     if flags.all():
@@ -101,7 +125,7 @@ class statwt_test(unittest.TestCase):
     
     def _check_weights(
         self, msname, row_to_rows, data_column, chan_flags, combine_corr,
-        chanbins
+        chanbins, wtrange
     ):
         if data_column.startswith('c'):
             colname = 'CORRECTED_DATA'
@@ -109,11 +133,10 @@ class statwt_test(unittest.TestCase):
             colname = 'DATA'
         else:
             raise Exception("Unhandled column spec " + data_column)
-        # if not mode.startswith('one'):
-        #    raise Exception("Unhandled mode")
         for ant1 in range(10):
             for ant2 in range((ant1 + 1), 10):
-                query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' + str(ant2)
+                query_str = 'ANTENNA1=' + str(ant1) + ' AND ANTENNA2=' \
+                     + str(ant2)
                 tb.open(msname)
                 subt = tb.query(query_str)
                 data = subt.getcol(colname)
@@ -121,25 +144,23 @@ class statwt_test(unittest.TestCase):
                 exposures = subt.getcol('EXPOSURE')
                 wt = subt.getcol('WEIGHT')
                 wtsp = subt.getcol('WEIGHT_SPECTRUM')
+                flag_row = subt.getcol('FLAG_ROW')
                 subt.done()
                 tb.done()
-                if type(chan_flags) != type(None):
-                    t_flags = np.expand_dims(np.expand_dims(chan_flags, 0), 2)
-                    flags = np.logical_or(flags, t_flags)
                 nrows = data.shape[2]
                 for row in range(nrows):
                     start = row_to_rows[row][0]
                     end = row_to_rows[row][1]
-                    (weights, ewt) = get_weights(
-                        data[:,:,start:end], flags[:, :, start:end],
+                    (weights, ewt, mod_flags) = get_weights(
+                        data[:,:,start:end], flags[:, :, start:end], chan_flags,
                         exposures[start: end], combine_corr, exposures[row],
-                        chanbins, flags[:, :, row:row+1]
+                        chanbins, flags[:, :, row:row+1], wtrange
                     )
                     self.assertTrue(
-                        np.allclose(weights, wtsp[:, :, row]), 'Failed wtsp, got '
-                        + str(wtsp[:, :, row]) + '\nexpected ' + str(weights)
-                        + '\nbaseline ' + str([ant1, ant2])
-                        + '\nrow ' + str(row)
+                        np.allclose(weights, wtsp[:, :, row]),
+                        'Failed wtsp, got ' + str(wtsp[:, :, row])
+                        + '\nexpected ' + str(weights) + '\nbaseline '
+                        + str([ant1, ant2]) + '\nrow ' + str(row)
                     )
                     self.assertTrue(
                         np.allclose(ewt, wt[:, row]),
@@ -148,24 +169,42 @@ class statwt_test(unittest.TestCase):
                         + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                         + str(row)
                     )
-        
+                    self.assertTrue(
+                        (mod_flags == np.expand_dims(flags[:, :, row], 2)).all(),
+                        'Failed flag, got ' + str(flags[:, :, row])
+                        + '\nexpected ' + str(mod_flags) + '\nbaseline '
+                        + str([ant1, ant2]) + '\nrow ' + str(row)
+                    )
+                    eflag_row = mod_flags.all()
+                    self.assertTrue(
+                        (eflag_row == flag_row[row]).all(),
+                        'Failed flag_row, got ' + str(flag_row[row])
+                        + '\nexpected ' + str(eflag_row) + '\nbaseline '
+                        + str([ant1, ant2]) + '\nrow ' + str(row)
+                    )
+                    # all flags must be True where wtsp = 0
+                    self.assertTrue(np.extract(weights == 0, mod_flags).all())
+
     def compare(self, dst, ref):
-        ref = os.path.join(datadir, ref)
         mytb = table()
-        self.assertTrue(mytb.open(dst), "Failed to open table " + dst)
+        self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
         [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
         mytb.done()
-        self.assertTrue(mytb.open(ref), "Failed to open table " + ref)
+        ref = os.path.join(datadir, ref)
+        print("ref in compare", ref)
+        self.assertTrue(mytb.open(ref), "Table open failed for " + ref)
         [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
         mytb.done()
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
         self.assertTrue(
-            np.allclose(gwtsp, ewtsp),
-            'WEIGHT_SPECTRUM comparison failed'
+            np.allclose(gwtsp, ewtsp), 'WEIGHT_SPECTRUM comparison failed'
         )
         self.assertTrue((gflag == eflag).all(), 'FLAG comparison failed')
         self.assertTrue((gfrow == efrow).all(), 'FLAG_ROW comparison failed')
-        
+        # all flags must be True where wtsp = 0
+        self.assertTrue(np.extract(gwtsp == 0, gflag).all())
+
+
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
         mytb = table()
@@ -320,7 +359,8 @@ class statwt_test(unittest.TestCase):
         """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir, 'ref_test_no_scan_bounds.ms')
+        # ref = os.path.join(datadir, 'ref_test_no_scan_bounds.ms')
+        ref = 'ref_test_no_scan_bounds.ms'
         combine = "corr, scan"
         shutil.copytree(ctsys.resolve(src), dst)
         myms = ms()
@@ -334,7 +374,8 @@ class statwt_test(unittest.TestCase):
         """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir, 'ref_test_no_scan_nor_field_bounds.ms')
+        # ref = os.path.join(datadir, 'ref_test_no_scan_nor_field_bounds.ms')
+        ref = 'ref_test_no_scan_nor_field_bounds.ms'
         for combine in ["corr,scan,field", "corr,field,scan"]:
             shutil.copytree(src, dst)
             myms = ms()
@@ -364,9 +405,59 @@ class statwt_test(unittest.TestCase):
                 self.assertRaises(Exception, myms.statwt, statalg=statalg)
             myms.done()
             shutil.rmtree(dst)
-                
+
     def test_wtrange(self):
-        """ Test weight range"""
+        """Test weight range"""
+        dst = "ngc5921.split.timebin.ms"
+        ref = "ref_test_wtrange_300s.ms"
+        combine = "corr"
+        timebin = "300s"
+        wtrange = [1, 2]
+        """
+        row_to_rows = []
+        for i in range(10):
+            row_to_rows.append([0, 10])
+        for i in range(2):
+            row_to_rows.append([10, 12])
+        for i in range(5):
+            row_to_rows.append([12, 17])
+        for i in range(5):
+            row_to_rows.append([17, 22])
+        for i in range(5):
+            row_to_rows.append([22, 27])
+        for i in range(5):
+            row_to_rows.append([27, 32])
+        for i in range(1):
+            row_to_rows.append([32, 33])
+        for i in range(2):
+            row_to_rows.append([33, 35])
+        for i in range(3):
+            row_to_rows.append([35, 38])
+        for i in range(5):
+            row_to_rows.append([38, 43])
+        for i in range(5):
+            row_to_rows.append([43, 48])
+        for i in range(5):
+            row_to_rows.append([48, 53])
+        for i in range(3):
+            row_to_rows.append([53, 56])
+        for i in range(4):
+            row_to_rows.append([56, 60])
+        """
+        myms = ms()
+        for i in [0, 1]:
+            shutil.copytree(src, dst) 
+            myms.open(dst, nomodify=False)
+            myms.statwt(timebin=timebin, combine=combine, wtrange=wtrange)
+            myms.done()
+            self.compare(dst, ref)
+            # self._check_weights(
+            #    dst, row_to_rows, 'c', None, True, None, wtrange
+            # )
+            shutil.rmtree(dst)
+    """
+    def test_wtrange(self):
+        ""Test weight range""
         dst = "ngc5921.split.timebin.ms"
         ref = os.path.join(datadir,"ngc5921.timebin300s_2.ms.ref")
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(ref)
@@ -410,6 +501,7 @@ class statwt_test(unittest.TestCase):
             "WEIGHT_SPECTRUMs don't match"
         )
         shutil.rmtree(dst)
+    """
 
     def test_preview(self):
         """ Test preview mode"""

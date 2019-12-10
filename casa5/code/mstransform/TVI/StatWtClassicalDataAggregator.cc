@@ -81,7 +81,7 @@ void StatWtClassicalDataAggregator::aggregate() {
     Int spw = -1;
     // Vector<Double> exposureVector;
     // cout << __FILE__ << " " << __LINE__ << endl;
-
+    cout << "nTimes " << _vii->nTimes() << endl;
     for (_vii->origin(); _vii->more(); _vii->next()) {
         if (_checkFirstSubChunk(spw, firstTime, vb)) {
             return;
@@ -265,14 +265,17 @@ void StatWtClassicalDataAggregator::weightSpectrumFlags(
             blcb.chanBin = bin;
             auto variances = _variancesOneShotProcessing.find(blcb)->second;
             auto ncorr = variances.size();
-            Vector<Double> weights = exposures[i]/variances;
+            Vector<Double> weights(ncorr);
             for (uInt corr=0; corr<ncorr; ++corr) {
                 if (! _combineCorr) {
                     sliceStart[0] = corr;
                     sliceEnd[0] = corr;
                 }
+                weights[corr] = variances[corr] == 0
+                    ? 0 : exposures[i]/variances[corr];
                 slice.setStart(sliceStart);
                 slice.setEnd(sliceEnd);
+                // cout << "wt " << weights[corr] << endl;
                 _updateWtSpFlags(
                     wtsp, flagCube, checkFlags, slice, weights[corr]
                 );

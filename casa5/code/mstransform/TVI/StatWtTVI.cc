@@ -170,6 +170,11 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
             );
             auto iter = rangeset.begin();
             _wtrange.reset(new std::pair<Double, Double>(*iter, *(++iter)));
+            /*
+            if (_wtrange) {
+                cout << "_wtrange " << *_wtrange << endl;
+            }
+            */
         }
     }
     auto excludeChans = False;

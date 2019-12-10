@@ -21,6 +21,9 @@
 
 #include <casacore/casa/Arrays/ArrayMath.h>
 #include <casacore/casa/Arrays/Cube.h>
+// debug
+#include <casacore/casa/Arrays/ArrayIO.h>
+
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -205,13 +208,27 @@ void StatWtDataAggregator::_updateWtSpFlags(
         // entirely flagged, so we need to update the WEIGHT column stats
         _wtStats->addData(Array<Float>(IPosition(1, 1), wt).begin(), 1);
     }
+    /*
+    if (_wtrange) {
+        cout << "_wtrange " << *_wtrange << endl;
+    }
+    else {
+        cout << "_wtrange not set" << endl;
+    }
+
+    cout << "wtsp  before " << wtsp << endl;
+    */
     if (
         wt == 0
         || (_wtrange && (wt < _wtrange->first || wt > _wtrange->second))
     ) {
+        if (*_mustComputeWtSp) {
+            wtsp(slice) = 0;
+        }
         checkFlags = True;
         flagSlice = True;
     }
+
 }
 
 }
