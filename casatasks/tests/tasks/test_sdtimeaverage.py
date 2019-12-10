@@ -111,8 +111,10 @@ class test_sdtimeaverage(unittest.TestCase):
         if aux_args is not None:
             for k in aux_args: self.args[k] = aux_args[k]
         sdtimeaverage(**self.args)
-        self._get_data()
-
+#
+# NEED to relocate / revise
+# //        self._get_data()
+#
     def _get_data(self):
         self.i_tm, self.i_a1, self.i_a2, self.i_dd, self.i_sc, self.i_st = self._do_get_data(self.i_ms)
         self.o_tm, self.o_a1, self.o_a2, self.o_dd, self.o_sc, self.o_st = self._do_get_data(self.o_ms)
@@ -277,7 +279,9 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param(self): # no time averaging(timebin='0s'), rewriting beam IDs only
         print( "XXXXXXXX test_param XXXXXXXX")
-        self.run_task( {'timebin': '100'} )
+
+        prm =  {'timebin' : 'all', 'antenna':'PM03'  }
+        self.run_task( prm )
 #       self.check_num_data()
 #       self.check_values()
 

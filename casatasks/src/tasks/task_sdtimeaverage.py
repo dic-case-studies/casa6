@@ -81,39 +81,15 @@ def sdtimeaverage(
     #-
 
     if timebin is 'all':
-        timebin =  get_time(infile)+'s'
+        timebin =  calc_timebin(infile)+'s'
         print ("DBG::timebin==all;timebin set to = ", timebin)
 
-    # Original part.
     casalog.origin('sdtimeaverage')
     try:
-# Review #1448
-# ORIGINAL
-        
-        #set temporary data name
-        tmpfile = 'tmp-sdtimeaverage-' + os.path.basename(infile.rstrip('/')) + '-' + "{0:%Y%m%d%H%M%S.%f}".format(datetime.datetime.now()) + '.ms'
-
-        #data selection
-        do_mst(infile=infile, datacolumn=datacolumn, 
-               field=field, spw=spw, timerange=timerange, scan=scan, 
-               timebin=timebin, outfile=tmpfile)
-
-
-        #time averaging
-        do_mst(infile=tmpfile, datacolumn=datacolumn, 
-               field='', spw='', timerange='', scan='', 
-               timebin=timebin, outfile=outfile)
-
-        add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
-                    field=field, spw=spw, timerange=timerange, scan=scan,
-                    timebin=timebin, antenna=antenna, outfile=outfile)
-        
-#REVISED
-        '''
-        # seelect and time averaging (at same time)
+        # CAS-128212 revised: seelect and time averaging (at same time)
 
         do_mst(infile=infile, datacolumn=datacolumn,
-               field=field, spw=spw, timerange=timerange, scan=scan,
+               field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna, 
                timebin=timebin, outfile=outfile)
 
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
@@ -121,40 +97,32 @@ def sdtimeaverage(
                     timebin=timebin, antenna=antenna, outfile=outfile)
 
 
-        '''
-
-#END
+  
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
     finally:
         None
-# Review #1448
-        '''
-        #delete tmpfile
-        if os.path.isdir(tmpfile): shutil.rmtree(tmpfile)
-　　　　'''
 
 #  CASA-12721 NEW
-def get_time(msname):
+def calc_timebin(msname):
     with tbmanager(msname) as tb:
         tm = tb.getcol('TIME')
 
     Leng = len( tm)
     time_first = tm[0]
     time_last = tm[Leng-1]
-    timebin = time_last - time_first;
+    timebin = time_last - time_first ;
     return str(timebin)
 
-def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
+def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, outfile):
     # followings are parameters of mstransform but not used by THIS.
     # just putting default values
+  
+    # CAS-12721: annd antenna arg . removed local var. (S.N)
+
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
     tileshape = [0]
-
-    # When the arg is chnaged from 'beam' to 'antenna', 
-    #  use the arg variable instead of this local var.
-    antenna = ""
 
     intent = ""
     correlation = ""
@@ -162,15 +130,18 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
     uvrange = ""
     observation = ""
     feed = ""
+
     realmodelcol = False
     usewtspectrum = False
     chanbin = 1
     mode = "channel"
     start = 0
     width = 1
+
     timeaverage = False
     timespan = "scan"
     maxuvwdistance = 0.0
+
     ddistart = -1
     reindex = True
     
