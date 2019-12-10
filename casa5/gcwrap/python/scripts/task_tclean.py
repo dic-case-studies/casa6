@@ -225,9 +225,7 @@ def tclean(
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
         bparm['mosweight']=False
 
-    #print('parameters {}'.format(bparm))    
-    paramList=ImagerParameters(**bparm)
-
+    
     # deprecation message
     if usemask=='auto-thresh' or usemask=='auto-thresh2':
         casalog.post(usemask+" is deprecated, will be removed in CASA 5.4.  It is recommended to use auto-multithresh instead", "WARN") 
@@ -254,12 +252,16 @@ def tclean(
         cl._cluster.pgc("from casac import casac", False)
         cl._cluster.pgc("si=casac.synthesisimager()", False)
         cl._cluster.pgc("si.initmpi()", False)
+        ###ignore chanchunk
+        bparm['chanchunks']=1
 
     # catch non operational case (parallel cube tclean with interative=T)
     if pcube and interactive:
         casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
         return False
-   
+    #print('parameters {}'.format(bparm))    
+    paramList=ImagerParameters(**bparm)
+
     ## Setup Imager objects, for different parallelization schemes.
     imagerInst=PySynthesisImager
     if parallel==False and pcube==False:
@@ -312,13 +314,15 @@ def tclean(
             imager.initializeIterationControl()
             t1=time.time();
             casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-            
+        
         ## Make PSF
         if calcpsf==True:
             t0=time.time();
              
             imager.makePSF()            
             if((psfphasecenter != '') and ('mosaic' in gridder)):
+                ###for some reason imager keeps the psf open delete it and recreate it afterwards
+                imager.deleteTools()
                 mytb=table()
                 mytb.open(bparm['imagename']+'.psf')
                 miscinf=mytb.getkeyword('miscinfo')
@@ -338,8 +342,30 @@ def tclean(
                 mytb.putkeyword('imageinfo',iminf)
                 mytb.putkeyword('miscinfo',miscinf)
                 mytb.done()
+                imager = PySynthesisImager(params=paramList)
+                imager.initializeImagers()
+                imager.initializeNormalizers()
+                imager.setWeighting()
+                
             t1=time.time();
             casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+
+        ## Init minor cycle elements
+        if niter>0 or restoration==True:
+            t0=time.time();
+            imager.initializeDeconvolvers()
+            t1=time.time();
+            casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+
+        ####now is the time to check estimated memory
+        imager.estimatememory()
+            
+        if niter>0:
+            t0=time.time();
+            imager.initializeIterationControl()
+            t1=time.time();
+            casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+            
 
             imager.makePB()
 

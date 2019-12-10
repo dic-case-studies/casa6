@@ -1108,7 +1108,7 @@ if( CMAKE_SYSTEM_NAME STREQUAL Linux )
     )
 endif()
 
-option(USE_MPI "Use MPI compiler" NO)
+option(USE_MPI "Use MPI compiler" YES)
 set( CASAMPI "" )
 if (USE_MPI)
   message("Looking for MPI...")

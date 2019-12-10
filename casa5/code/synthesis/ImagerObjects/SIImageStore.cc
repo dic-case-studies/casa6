@@ -3143,6 +3143,7 @@ Bool SIImageStore::findMinMaxLattice(const Lattice<Float>& lattice,
 
     itsPSFSideLobeLevel=0.0;
     itsReadLock=nullptr;
+    itsDataPolRep=StokesImageUtil::UNKNOWN; //Should throw an exception if it is not initialized properly
   }
 
 

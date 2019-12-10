@@ -1054,6 +1054,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		  CountedPtr<refim::FTMachine> new_ftm, new_iftm;
 		  if(facet==0){ new_ftm = ftm;  new_iftm = iftm; }
 		  else{ new_ftm=ftm->cloneFTM();  new_iftm=iftm->cloneFTM(); }
+// 		  imstorList[facet]->setDataPolFrame(imstor->getDataPolFrame());
 		  itsMappers.addMapper(createSIMapper( mappertype, imstorList[facet], new_ftm, new_iftm, ntaylorterms));
 		}
 	    }// facets
@@ -1071,7 +1072,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		  else{ 
 		    new_ftm=ftm->cloneFTM();  
 		    new_iftm=iftm->cloneFTM(); }
-		 
+		  imstorList[chunk]->setDataPolFrame(imstor->getDataPolFrame());
 		  itsMappers.addMapper(createSIMapper( mappertype, imstorList[chunk], new_ftm, new_iftm, ntaylorterms));
 		}
 	    }// chanchunks
@@ -1508,6 +1509,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		for (uInt k=0; k < imparsVec_p.nelements(); ++k){
 			Record imparsRec = imparsVec_p[k].toRecord();
 			//need to send polrep
+			//cerr << "PUSHPOLREP " << ((itsMappers.imageStore(k))->getDataPolFrame()) << "   "<< Int(((itsMappers.imageStore(k))->getDataPolFrame())) << endl;
 			imparsRec.define("polrep", Int((itsMappers.imageStore(k))->getDataPolFrame()));
 			Record gridparsRec = gridparsVec_p[k].toRecord();
 			/* Might need this to pass the state of the global ftmachines...test for parallel when needed
@@ -1986,7 +1988,7 @@ CountedPtr<SIMapper> SynthesisImagerVi2::createSIMapper(String mappertype,
   }
   
 void SynthesisImagerVi2::lockMS(MeasurementSet& thisms){
-	thisms.lock(true);
+	thisms.lock(!readOnly_p);
     thisms.antenna().lock(false);
 	thisms.dataDescription().lock(false);
     thisms.feed().lock(false);
@@ -2004,12 +2006,12 @@ void SynthesisImagerVi2::lockMS(MeasurementSet& thisms){
       thisms.freqOffset().lock(false);
 	//True here as we can write in that
     if(!thisms.history().isNull())
-      thisms.history().lock(true);
+      thisms.history().lock(!readOnly_p);
     if(!thisms.pointing().isNull())
       thisms.pointing().lock(false);
 	//we write virtual model here
     if(!thisms.source().isNull())
-      thisms.source().lock(true);
+      thisms.source().lock(!readOnly_p);
     if(!thisms.sysCal().isNull())
       thisms.sysCal().lock(false);
     if(!thisms.weather().isNull())

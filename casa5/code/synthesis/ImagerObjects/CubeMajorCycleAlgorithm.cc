@@ -82,11 +82,16 @@ void CubeMajorCycleAlgorithm::get() {
 	polRep_p.set(-1);
 	startmodel_p.resize(vecImParsRec.nfields());
 	startmodel_p.set(Vector<String>(0));
+	//TESTOO 
+	//Int CPUID;
+	//MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
+	//////////////////
 	for (uInt k=0; k < imSel_p.nelements(); ++k){
 		Record imSelRec=vecImParsRec.asRecord(String::toString(k));
 		//cerr << k << " imsel " << imSelRec << endl;
 		if(imSelRec.isDefined("polrep"))
 			imSelRec.get("polrep", polRep_p[k]);
+		//cerr << CPUID << " POLREP " << polRep_p << endl;
 		//Only first major cycle we need to reset model
 		if(nmajorcycles==1)
 			imSelRec.get("startmodel", startmodel_p[k]);

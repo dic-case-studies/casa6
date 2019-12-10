@@ -215,7 +215,7 @@ class SIImageStore
 
 
   void setDataPolFrame(StokesImageUtil::PolRep datapolrep) {itsDataPolRep = datapolrep;};
-  StokesImageUtil::PolRep getDataPolFrame(){return itsDataPolRep;};
+  StokesImageUtil::PolRep getDataPolFrame(){ return itsDataPolRep;};
   virtual void calcSensitivity();
 
   casacore::CoordinateSystem getCSys(){return itsCoordSys;}
