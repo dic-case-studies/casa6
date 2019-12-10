@@ -135,8 +135,12 @@ def _get_table_cols(mytb):
     wtsp = mytb.getcol("WEIGHT_SPECTRUM")
     flag = mytb.getcol("FLAG")
     frow = mytb.getcol("FLAG_ROW")
-    data = mytb.getcol("CORRECTED_DATA")
-    return [times, wt, wtsp, flag, frow, data]
+    data_col_name = 'CORRECTED_DATA' \
+        if mytb.colnames().count('CORRECTED_DATA') > 0 else 'DATA'
+    data = mytb.getcol(data_col_name)
+    sigma = mytb.getcol("SIGMA")
+    sisp = mytb.getcol("SIGMA_SPECTRUM")
+    return [times, wt, wtsp, flag, frow, data, sigma, sisp]
 
 class statwt_test(unittest.TestCase):
     
@@ -145,9 +149,11 @@ class statwt_test(unittest.TestCase):
         chanbins, wtrange
     ):
         if data_column.startswith('c'):
-            colname = 'CORRECTED_DATA'
+            col_data = 'CORRECTED_DATA'
+            check_sigma = False
         elif data_column.startswith('d'):
-            colname = 'DATA'
+            col_data = 'DATA'
+            check_sigma = True
         else:
             raise Exception("Unhandled column spec " + data_column)
         for ant1 in range(10):
@@ -156,12 +162,15 @@ class statwt_test(unittest.TestCase):
                      + str(ant2)
                 tb.open(msname)
                 subt = tb.query(query_str)
-                data = subt.getcol(colname)
+                data = subt.getcol(col_data)
                 flags = subt.getcol('FLAG')
                 exposures = subt.getcol('EXPOSURE')
                 wt = subt.getcol('WEIGHT')
                 wtsp = subt.getcol('WEIGHT_SPECTRUM')
                 flag_row = subt.getcol('FLAG_ROW')
+                if check_sigma:
+                    sigma = subt.getcol('SIGMA')
+                    sisp = subt.getcol('SIGMA_SPECTRUM')
                 subt.done()
                 tb.done()
                 nrows = data.shape[2]
@@ -201,15 +210,36 @@ class statwt_test(unittest.TestCase):
                     )
                     # all flags must be True where wtsp = 0
                     self.assertTrue(np.extract(weights == 0, mod_flags).all())
+                    if check_sigma:
+                        esigma = np.where(ewt == 0, -1, 1/np.sqrt(ewt))
+                        self.assertTrue(
+                            np.allclose(esigma, sigma[:, row]),
+                            'Failed sigma, got ' + str(sigma[:, row])
+                            + '\nexpected ' + str(esigma)
+                            + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
+                            + str(row)
+                        )
+                        esisp = np.where(weights == 0, -1, 1/np.sqrt(weights))
+                        self.assertTrue(
+                            np.allclose(esisp, sisp[:, :, row]),
+                            'Failed sigma_spectrum, got ' + str(sisp[:, :, row])
+                            + '\nexpected ' + str(esisp)
+                            + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
+                            + str(row)
+                        )
 
     def compare(self, dst, ref):
         mytb = tbtool()
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
-        [gtimes, gwt, gwtsp, gflag, gfrow, gdata] = _get_table_cols(mytb)
+        [
+            gtimes, gwt, gwtsp, gflag, gfrow, gdata, gsigma, gsisp
+        ] = _get_table_cols(mytb)
         mytb.done()
         ref = datadir + ref
         self.assertTrue(mytb.open(ref), "Table open failed for " + ref)
-        [etimes, ewt, ewtsp, eflag, efrow, edata] = _get_table_cols(mytb)
+        [
+            etimes, ewt, ewtsp, eflag, efrow, edata, esigma, esisp
+        ] = _get_table_cols(mytb)
         mytb.done()
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
         self.assertTrue(
@@ -219,6 +249,10 @@ class statwt_test(unittest.TestCase):
         self.assertTrue((gfrow == efrow).all(), 'FLAG_ROW comparison failed')
         # all flags must be True where wtsp = 0
         self.assertTrue(np.extract(gwtsp == 0, gflag).all())
+        self.assertTrue(np.allclose(gsigma, esigma), 'SIGMA comparison failed')
+        self.assertTrue(np.allclose(
+            gsisp, esisp), 'SIGMA_SPECTRUM comparison failed'
+        )  
 
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
@@ -695,8 +729,39 @@ class statwt_test(unittest.TestCase):
             )
             shutil.rmtree(dst)
 
+    def test_data_col(self):
+        """Test using data column"""
+        dst = "ngc5921.split.data.ms"
+        ref = 'ref_test_data_col.ms'
+        combine = "corr"
+        timebin = 1
+        data = "data"
+        mytb = tbtool()
+        """
+        row_to_rows = []
+        for i in range(60):
+            row_to_rows.append([i, i+1])
+        """
+        for i in [0, 1]:
+            shutil.copytree(src, dst)
+            self.assertTrue(mytb.open(dst, nomodify=False))
+            self.assertTrue(mytb.removecols("DATA"))
+            self.assertTrue(mytb.renamecol("CORRECTED_DATA", "DATA"))
+            mytb.done()
+            if i == 0:
+                myms = mstool()
+                myms.open(dst, nomodify=False)
+                myms.statwt(timebin=timebin, combine=combine, datacolumn=data)
+                myms.done()
+            else:
+                statwt(dst, timebin=timebin, combine=combine, datacolumn=data)
+            # self._check_weights(dst, row_to_rows, 'd', None, True, None, None)
+            self.compare(dst, ref)
+            shutil.rmtree(dst)
+        
+    """
     def test_data(self):
-        """ Test using data column"""
+        ""Test using data column""
         dst = "ngc5921.split.data.ms"
         ref = datadir + "ngc5921.data_col.ms.ref"
         [refwt, refwtsp, refflag, reffrow, refsig, refsigsp] = _get_dst_cols(
@@ -742,6 +807,7 @@ class statwt_test(unittest.TestCase):
                 "SIGMA_SPECTRUM is incorrect"
             )
             shutil.rmtree(dst)
+        """
 
     def test_sliding_time_window(self):
         """ Test sliding time window"""
