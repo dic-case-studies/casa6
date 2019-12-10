@@ -743,7 +743,6 @@ public:
                 throw(AipsError("No parameters specified!"));
             }
             nParams = i; // There's always at least one parameter!
-            
             // cerr << "AuxParamBundle reftime " << reftime << " t0 " << t0 <<" dt " << tlast - t0 << endl;
         }
 
@@ -1749,19 +1748,53 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
             if (!bundle.isActive(iant)) continue;
             Int iparam = bundle.get_param_corr_param_index(iant, 0);
             if (iparam<0) continue;
+            if (1) {
+                // flag unused
+                // bool flag = false;
+                // if (fabs(gsl_vector_get(diff, iparam + 0) > FLT_EPSILON)) {
+                //     flag = true;
+                // }
+                // if (fabs(gsl_vector_get(diff, iparam + 1) > FLT_EPSILON)) {
+                //     flag = true;
+                // }
+                // if (fabs(gsl_vector_get(diff, iparam + 2) > 1e-30)) {
+                //     flag = true;
+                // }
+                
+                if (DEVDEBUG) {
+                    int i;
+                    logSink << "Old values for ant " << iant << " correlation " << icor 
+                            << ": Angle " << casa_param(4*icor + 0, iant)
+                            << " delay " << casa_param(4*icor + 1, iant) << " ns "
+                            << " rate " << casa_param(4*icor + 2, iant) << "."
+                            << endl;
+                    logSink << "New values for ant " << iant << " correlation " << icor << ":";
+                    if ((i=bundle.get_param_corr_param_index(iant, 0))>=0) {
+                        logSink << " Angle " << gsl_vector_get(res, i);
+                    }
+                    if ((i=bundle.get_param_corr_param_index(iant, 1))>=0) {
+                        logSink << " delay " << gsl_vector_get(res, i) << " ns ";
+                    }
+                    if ((i=bundle.get_param_corr_param_index(iant, 2))>=0) {
+                        logSink << " rate " << gsl_vector_get(res, i);
+                    }
+                    logSink << "." << LogIO::POST;
+                }
+            }
             if (status==GSL_SUCCESS || status==GSL_EMAXITER) {
                 // Current policy is to assume that exceeding max
                 // number of iterations is not a deal-breaker, leave it
                 // to SNR calculation to decide if the results are
                 // useful.
                 for (size_t di=0; di<4; di++) {
-                    int i;
-                    if ((i=bundle.get_param_corr_param_index(iant, di))>=0) {
+                    int i=bundle.get_param_corr_param_index(iant, di);
+                    int i0 = bundle.get_param_corr_param_index(iant, 0);
+                    if (i>=0) {
                         casa_param(4*icor + di, iant) = gsl_vector_get(res, i);
-                        casa_snr(4*icor + di, iant) = gsl_vector_get(snr_vector, i);
+                        casa_snr(4*icor + di, iant) = gsl_vector_get(snr_vector, i0);
                     } else {
                         casa_param(4*icor + di, iant) = 0.0;
-                        casa_snr(4*icor + di, iant) = 0.0;
+                        casa_snr(4*icor + di, iant) = gsl_vector_get(snr_vector, i0);
                     }
                 }
             } else { // gsl solver failed; flag data
@@ -2080,7 +2113,6 @@ void FringeJones::setSolve(const Record& solve) {
     }
     if (solve.isDefined("paramactive")) {
         paramActive() = solve.asArrayBool("paramactive");
-        cerr << "paramActive: " << paramActive() << endl;
     }
     
 }
@@ -2245,13 +2277,13 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
     // transcribe fft results to sRP
     Int ncol = drf.param().ncolumn();
     Int nrow = drf.param().nrow();
-    
     if (DEVDEBUG) {
         std::cerr << "nrow " << nrow << ", ncol " << ncol << endl; 
         std::cerr << "drf.flag() " << drf.flag() << endl; 
     }
-    for (Int i=0; i!=ncol; i++) {
-        for (Int j=0; j!=nrow; j++) {
+
+    for (Int i=0; i!=ncol; i++) { // i==iant
+        for (Int j=0; j!=nrow; j++) { // j is parameter number
             Int oj = (j>=3) ? j+1 : j;
             sRP(IPosition(2, oj, i)) = drf.param()(IPosition(2, j, i));
             sPok(IPosition(2, oj, i)) = !(drf.flag()(IPosition(2, j, i)));

@@ -62,9 +62,10 @@ def fringefit(vis=None,caltable=None,
                 paramactive=[True, True, False]
             else:
                 if len(paramactive)!=3:
-                    raise Exception('Error: paramactive vector must have exactly three entries')
-                # Have to solve for peculiar phase!
-                paramactive.insert(0, True)
+                    print >>sys.stderr, "paramactive", paramactive
+                    raise Exception( 'Error: paramactive vector must have exactly three entries' )
+            # Have to solve for peculiar phase!
+            paramactive.insert(0, True)
 
             # by traditional parameters
 
