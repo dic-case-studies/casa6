@@ -19,7 +19,7 @@
 ##########################################################################
 CASA6=False
 try:
-    # import casatools
+    import casatools
     from casatasks import listcal #, casalog
     CASA6 = True
 except ImportError:
