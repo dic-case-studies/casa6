@@ -2,6 +2,7 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
+import "img.proto";
 
 package rpc.img;
 
@@ -11,10 +12,6 @@ service iclean {
     rpc get (google.protobuf.Empty) returns (State);
     rpc put (State) returns (google.protobuf.Empty);
 
-}
-
-message Id {
-    int32 id = 1;
 }
 
 message State {
