@@ -758,56 +758,6 @@ class statwt_test(unittest.TestCase):
             # self._check_weights(dst, row_to_rows, 'd', None, True, None, None)
             self.compare(dst, ref)
             shutil.rmtree(dst)
-        
-    """
-    def test_data(self):
-        ""Test using data column""
-        dst = "ngc5921.split.data.ms"
-        ref = datadir + "ngc5921.data_col.ms.ref"
-        [refwt, refwtsp, refflag, reffrow, refsig, refsigsp] = _get_dst_cols(
-            ref, ["SIGMA", "SIGMA_SPECTRUM"], dodata=False
-        )
-        rtol = 1e-7
-        combine = "corr"
-        timebin = 10
-        data = "data"
-        mytb = tbtool()
-        myms = mstool()
-        for i in [0, 1]:
-            shutil.copytree(src, dst)
-            self.assertTrue(mytb.open(dst, nomodify=False))
-            self.assertTrue(mytb.removecols("DATA"))
-            self.assertTrue(mytb.renamecol("CORRECTED_DATA", "DATA"))
-            mytb.done()
-            if i == 0:
-                myms.open(dst, nomodify=False)
-                myms.statwt(timebin=timebin, combine=combine, datacolumn=data)
-                myms.done()
-            else:
-                statwt(dst, timebin=timebin, combine=combine, datacolumn=data)
-            [tstwt, tstwtsp, tstflag, tstfrow, tstsig, tstsigsp] = _get_dst_cols(
-                dst, ["SIGMA", "SIGMA_SPECTRUM"], False
-            )
-            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-            self.assertTrue(
-                np.all(np.isclose(tstwt, refwt, rtol)),
-                "WEIGHTs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
-                "WEIGHT_SPECTRUMs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstsig, refsig)),
-                "SIGMA is incorrect"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstsigsp, refsigsp)),
-                "SIGMA_SPECTRUM is incorrect"
-            )
-            shutil.rmtree(dst)
-        """
 
     def test_sliding_time_window(self):
         """ Test sliding time window"""
