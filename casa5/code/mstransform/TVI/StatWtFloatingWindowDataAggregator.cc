@@ -29,6 +29,10 @@
 #include <omp.h>
 #endif
 
+// debug
+#include <casacore/casa/BasicSL/STLIO.h>
+
+
 using namespace casacore;
 using namespace std;
 
@@ -110,8 +114,8 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
     std::vector<std::pair<uInt, uInt>> idToChunksNeededByIDMap,
         chunkNeededToIDsThatNeedChunkIDMap;
     _limits(idToChunksNeededByIDMap, chunkNeededToIDsThatNeedChunkIDMap);
-    cout << "idToChunksNeededByIDMap " << idToChunksNeededByIDMap << endl;
-    cout << "chunkNeededToIDsThatNeedChunkIDMap " << chunkNeededToIDsThatNeedChunkIDMap << endl;
+    // cout << "idToChunksNeededByIDMap " << idToChunksNeededByIDMap << endl;
+    // cout << "chunkNeededToIDsThatNeedChunkIDMap " << chunkNeededToIDsThatNeedChunkIDMap << endl;
     uInt subChunkID = 0;
     // cout << __FILE__ << " " << __LINE__ << endl;
 
@@ -131,23 +135,34 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
                     vb->existsColumn(VisBufferComponent2::WeightSpectrum)
                 )
             );
+            /*
             cout << "has set _mustComputeWtSp to " << _mustComputeWtSp
                     << " value " << *_mustComputeWtSp << endl;
+            */
         }
         // cout << __FILE__ << " " << __LINE__ << endl;
 
         _rowIDInMSToRowIndexInChunk[*vb->rowIds().begin()] = subchunkStartRowNum;
         const auto& ant1 = vb->antenna1();
         const auto& ant2 = vb->antenna2();
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         // [nCorrs, nFreqs, nRows)
         const auto nrows = vb->nRows();
         // there is no guarantee a previous subchunk will be included,
         // eg if the timewidth is small enough
         // This is the first subchunk ID that should be used for averaging
         // grouping data for weight computation of the current subchunk ID.
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         const auto firstChunkNeededByCurrentID = idToChunksNeededByIDMap[subChunkID].first;
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         const auto lastChunkNeededByCurrentID = idToChunksNeededByIDMap[subChunkID].second;
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         const auto firstChunkThatNeedsCurrentID = chunkNeededToIDsThatNeedChunkIDMap[subChunkID].first;
+
         //const auto lastChunkThatNeedsCurrentID = chunkNeededToIDsThatNeedChunkIDMap[subChunkID].second;
         /*
         cout << "firstChunkNeededByCurrentID " << firstChunkNeededByCurrentID << endl;
@@ -155,6 +170,8 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
         cout << "idToChunksNeededByIDMap " << idToChunksNeededByIDMap << endl;
         cout << "chunkNeededToIDsThatNeedChunkIDMap " << chunkNeededToIDsThatNeedChunkIDMap << endl;
         */
+        // cout << __FILE__ << " " << __LINE__ << endl;
+
         auto subchunkTime = vb->time()[0];
         auto rowInChunk = subchunkStartRowNum;
         pair<StatWtTypes::Baseline, uInt> mypair;
@@ -178,7 +195,6 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
                 auto s = min(
                     firstChunkNeededByCurrentID, firstChunkThatNeedsCurrentID
                 );
-                // cout << "subchunk start " << subchunk << endl;
                 auto tpair = mypair;
                 for (; s < subChunkID; ++s) {
                     // cout << __FILE__ << " " << __LINE__ << endl;
@@ -509,9 +525,18 @@ void StatWtFloatingWindowDataAggregator::_limits(
     std::vector<std::pair<uInt, uInt>>& chunkNeededToIDsThatNeedChunkIDMap
 ) const {
     // auto* vii = getVii();
-    auto* vb = _vii->getVisBuffer();
+    // auto* vb = _vii->getVisBuffer();
     pair<uInt, uInt> p, q;
-    uInt nTimes = _vii->nTimes();
+    /*
+    cout << "_timeBlockProcessing set to " << _timeBlockProcessing << endl;
+    if (_nTimeStampsInBin) {
+        cout << "_nTimeStampsInBin " << (*_nTimeStampsInBin) << endl;
+    }
+    else {
+        cout << "_nTimeStampsInBin is not set" << endl;
+    }
+    */
+    const uInt nTimes = _vii->nTimes();
     if (_nTimeStampsInBin) {
         // fixed number of time stamps specified
         if (_timeBlockProcessing) {
@@ -598,9 +623,37 @@ void StatWtFloatingWindowDataAggregator::_limits(
                 ! _binWidthInSeconds,
                 "Logic error: _binWidthInSeconds not defined"
             );
-            auto halfBinWidth = *_binWidthInSeconds/2;
-            vector<Double> subChunkTimes;
-            uInt subChunkCount = 0;
+            const auto halfBinWidth = *_binWidthInSeconds/2;
+            auto vb = _vii->getVisBuffer();
+            //vector<Double> subChunkTimes;
+            // uInt subChunkCount = 0;
+            vector<Double> times;
+            for (_vii->origin(); _vii->more(); _vii->next()) {
+                times.push_back(vb->time()[0]);
+            }
+            for (uInt i=0; i<nTimes; ++i) {
+                auto mytime = times[i];
+                // cout << "mytime " << mytime << endl;
+                auto loit = std::lower_bound(
+                    times.begin(), times.end(), mytime - halfBinWidth
+                );
+                ThrowIf(
+                    loit == times.end(),
+                    "Logic Error for std::lower_bound()"
+                );
+                p.first = std::distance(times.begin(), loit);
+                auto upit = std::upper_bound(
+                    times.begin(), times.end(), mytime + halfBinWidth
+                );
+                p.second = upit == times.end()
+                    ? nTimes - 1 : std::distance(times.begin(), upit) - 1;
+               // cout << "i " << i << " p " << p << endl;
+                q = p;
+                idToChunksNeededByIDMap.push_back(p);
+                chunkNeededToIDsThatNeedChunkIDMap.push_back(q);
+            }
+
+            /*
             for (_vii->origin(); _vii->more(); _vii->next(), ++subChunkCount) {
                 // all times in a subchunk are the same
                 auto mytime = vb->time()[0];
@@ -622,18 +675,22 @@ void StatWtFloatingWindowDataAggregator::_limits(
                     );
                     p.first = std::distance(subChunkTimes.cbegin(), it);
                 }
-            }
+            //}
             for (uInt subChunk=0; subChunk<=subChunkCount; ++subChunk) {
                 // get upper bound
                 auto upit = std::upper_bound(
                     subChunkTimes.cbegin(), subChunkTimes.cend(),
-                    subChunkTimes[subChunk] - halfBinWidth
+                    subChunkTimes[subChunk] + halfBinWidth
                 );
                 p.second = std::distance(subChunkTimes.cbegin(), upit);
             }
+            cout << "count " << subChunkCount << " p " << p << endl;
             q = p;
             idToChunksNeededByIDMap.push_back(p);
             chunkNeededToIDsThatNeedChunkIDMap.push_back(q);
+            }
+            */
+            // cout << "n times " << subChunkCount << endl;
         }
     }
 }

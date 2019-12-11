@@ -563,29 +563,83 @@ class statwt_test(unittest.TestCase):
         self.compare(dst, ref)
         shutil.rmtree(dst)
         
-    def test_slding_time_window(self):
-        """ Test sliding time window"""
+    def test_sliding_time_window(self):
+        """Test sliding time window"""
         dst = "ngc5921.split.sliding_time_window.ms"
-        ref = os.path.join(datadir,"ngc5921.slidingtimebin300s_2.ms.ref")
-        [refwt, refwtsp, refflag, reffrow] = _get_dst_cols(ref, "", dodata=False)
-        rtol = 1e-7
+        ref = 'ref_test_sliding_time_window.ms'
         timebin = "300s"
-        myms = ms( )
-        shutil.copytree(ctsys.resolve(src), dst)
+        """
+        row_to_rows = []
+        row_to_rows.append([0, 6])
+        row_to_rows.append([0, 7])
+        row_to_rows.append([0, 8])
+        row_to_rows.append([0, 9])
+        row_to_rows.append([0, 9])
+        row_to_rows.append([0, 10])
+        row_to_rows.append([1, 12])
+        row_to_rows.append([2, 12])
+        row_to_rows.append([3, 12])
+        row_to_rows.append([5, 12])
+        row_to_rows.append([6, 12])
+        row_to_rows.append([6, 12])
+        row_to_rows.append([12, 17])
+        row_to_rows.append([12, 17])
+        row_to_rows.append([12, 17])
+        row_to_rows.append([12, 17])
+        row_to_rows.append([12, 17])
+        row_to_rows.append([17, 20])
+        row_to_rows.append([17, 21])
+        row_to_rows.append([17, 22])
+        row_to_rows.append([18, 23])
+        row_to_rows.append([19, 24])
+        row_to_rows.append([20, 25])
+        row_to_rows.append([21, 26])
+        row_to_rows.append([22, 27])
+        row_to_rows.append([23, 28])
+        row_to_rows.append([24, 29])
+        row_to_rows.append([25, 30])
+        row_to_rows.append([26, 31])
+        row_to_rows.append([27, 32])
+        row_to_rows.append([28, 33])
+        row_to_rows.append([29, 33])
+        row_to_rows.append([30, 33])
+        row_to_rows.append([33, 35])
+        row_to_rows.append([33, 35])
+        row_to_rows.append([35, 38])
+        row_to_rows.append([35, 38])
+        row_to_rows.append([35, 38])
+        row_to_rows.append([38, 41])
+        row_to_rows.append([38, 42])
+        row_to_rows.append([38, 43])
+        row_to_rows.append([39, 44])
+        row_to_rows.append([40, 45])
+        row_to_rows.append([41, 46])
+        row_to_rows.append([42, 47])
+        row_to_rows.append([43, 48])
+        row_to_rows.append([44, 49])
+        row_to_rows.append([45, 50])
+        row_to_rows.append([46, 51])
+        row_to_rows.append([47, 52])
+        row_to_rows.append([48, 53])
+        row_to_rows.append([49, 54])
+        row_to_rows.append([50, 55])
+        row_to_rows.append([51, 56])
+        row_to_rows.append([52, 56])
+        row_to_rows.append([53, 56])
+        row_to_rows.append([56, 60])
+        row_to_rows.append([56, 60])
+        row_to_rows.append([56, 60])
+        row_to_rows.append([56, 60])
+        """
+        shutil.copytree(src, dst)
+        myms = ms()
         myms.open(dst, nomodify=False)
         myms.statwt(timebin=timebin, slidetimebin=True)
         myms.done()
-        [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
-        self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-        self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstwt, refwt, rtol)),
-            "WEIGHTs don't match"
-        )
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
-            "WEIGHT_SPECTRUMs don't match"
-        )
+        # self._check_weights(
+        #    dst, row_to_rows, 'c', None, False, None, None
+        # )
+        self.compare(dst, ref)
         shutil.rmtree(dst)
 
 def suite():
