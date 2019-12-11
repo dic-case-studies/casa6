@@ -70,6 +70,7 @@
 // DEVDEBUG gates the development debugging information to standard
 // error; it should be set to 0 for production.
 #define DEVDEBUG false
+#define KDISPSCALE 1e6
 
 using namespace casa::vi;
 using namespace casacore;
@@ -915,9 +916,9 @@ expb_f(const gsl_vector *param, void *d, gsl_vector *f)
             for (size_t ichan = 0; ichan != v.ncolumn(); ichan++) {
                 if (fl(dcorr, ichan, irow)) continue;
 
-                Float df = freqs(ichan) - fmin;
-                Float k_disp = 1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin;
-                    
+                Float freq = freqs(ichan);
+                Float k_disp = KDISPSCALE*C::_2pi*(1.0/freq + (freq-fmin-fmax)/(fmin*fmax));
+
                 Complex vis = v(dcorr, ichan, irow);
                 Double w0 = weights(dcorr, ichan, irow);
                 // FIXME: what should we use to scale the weights?
@@ -1055,8 +1056,8 @@ expb_df(CBLAS_TRANSPOSE_t TransJ, const gsl_vector* param, const gsl_vector *u, 
                 if (fabs(w) < FLT_EPSILON) continue;
                 found_data = true;
 
-                Float df = freqs(ichan) - fmin;
-                Float k_disp = 1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin;
+                Float freq = freqs(ichan);
+                Float k_disp = KDISPSCALE*C::_2pi*(1.0/freq + (freq-fmin-fmax)/(fmin*fmax));
                     
                 // Add a 1e-9 factor because tau parameter is in nanoseconds.
                 //Double wDf = C::_2pi*(freqs(ichan) - freqs(0))*1e-9;
@@ -1319,10 +1320,10 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
 
                 //Double ref_freq = freqs(0);
                 //Double wDt = C::_2pi*(t1 - refTime) * ref_freq;
-                Float df = freqs(ichan) - fmin;
-
                 Double wDt = C::_2pi*(t1 - refTime) * reffreq0; 
-                Float k_disp = 1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin;
+
+                Float freq = freqs(ichan);
+                Float k_disp = KDISPSCALE*C::_2pi*(1.0/freq + (freq-fmin-fmax)/(fmin*fmax));
 
                 Double mtheta = -(phi0 + tau*wDf + r*wDt + disp*k_disp); 
                 Double vtheta = arg(vis);
@@ -1527,7 +1528,7 @@ print_gsl_vector(gsl_vector *v)
     const size_t n = v->size;
     for (size_t i=0; i!=n; i++) {
         cerr << gsl_vector_get(v, i) << " ";
-        if (i>0 && (i % 4)==0) cerr << endl;
+        if (i>0 && (i % 4)==3) cerr << endl;
     }
     cerr << endl;
 }
@@ -1582,7 +1583,8 @@ GSL_ENOPROG if no accepted step found on first iteration
 
 int
 least_squares_inner_driver (const size_t maxiter,
-                                   gsl_multilarge_nlinear_workspace * w)
+                            gsl_multilarge_nlinear_workspace * w,
+                            AuxParamBundle *bundle)
 {
   int status;
   size_t iter = 0;
@@ -1609,10 +1611,10 @@ least_squares_inner_driver (const size_t maxiter,
 
       Double fnorm = gsl_blas_dnrm2(w->f);      
       s = 0.5 * fnorm * fnorm;
-      if ((iter > 0) && DEVDEBUG) {
-          // cerr << "Parameters: " << endl;
-          // print_gsl_vector(w->x);
+      if ((iter >= 0) && DEVDEBUG) {
           cerr << "Iter: " << iter << " ";
+          cerr << "Parameters: " << endl;
+          print_gsl_vector(w->x);
           print_max_gsl3(w->dx);
           cerr << "1 - s/last_s=" << 1 - s/last_s << endl;
       }
@@ -1682,6 +1684,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
 
         const gsl_multilarge_nlinear_type *T = gsl_multilarge_nlinear_trust;
         gsl_multilarge_nlinear_parameters params = gsl_multilarge_nlinear_default_parameters();
+        // the Moré scaling is the best equipped to handle very different scales; it should be the best choice to accommodate dispersive terms of O(f)
         params.scale = gsl_multilarge_nlinear_scale_more;
         params.trs = gsl_multilarge_nlinear_trs_lm;
         params.solver = gsl_multilarge_nlinear_solver_cholesky;
@@ -1724,7 +1727,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
         gsl_vector *res_f = gsl_multilarge_nlinear_residual(w);
 
         int info;
-        int status = least_squares_inner_driver(max_iter, w);
+        int status = least_squares_inner_driver(max_iter, w, &bundle);
         double chi1 = gsl_blas_dnrm2(res_f);
         
         gsl_vector_sub(gp_orig, w->x);
@@ -2156,17 +2159,17 @@ void FringeJones::calcAllJones() {
 
       for (Int ipar=0;ipar<nPar();ipar+=4) {
 	if (onePOK(ipar)) {
-          Float df = currFreq()(ich) - fmin;
-          Float k_disp = 1e-9*(1.0/(fmin+df) + 1.0/(fmin*fmax)*df+ 1.0/fmin);
-
+          Float freq = currFreq()(ich);
+          Float k_disp = 1e-9*KDISPSCALE*C::_2pi*(1.0/freq + (freq-fmin-fmax)/(fmin*fmax));
+                          
 	  phase=onePar(ipar);
 	  phase+=2.0*C::pi*onePar(ipar+1)*
 	    (currFreq()(ich)-KrefFreqs_(currSpw()));
 	  phase+=2.0*C::pi*onePar(ipar+2)*KrefFreqs_(currSpw())*1e9*
 	    (currTime() - refTime());
           Float dph_d = onePar(ipar+3) * k_disp;
-          if (DEVDEBUG) {
-              cerr << "fmin " << fmin << " fmax " << fmax << " df " << df << " k_disp " << k_disp
+          if (DEVDEBUG && 0) {
+              cerr << "fmin " << fmin << " fmax " << fmax << " k_disp " << k_disp
                    << " param " << onePar(ipar+3) << " dph_d " << dph_d << endl;
           }
           phase+=dph_d;
