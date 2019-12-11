@@ -48,7 +48,7 @@
 
     <param name="timebin" type="string">
         <description>bin width for time averaging.</description>     
-        <value type="string">0s</value>
+        <value type="string">all</value>
     </param>
 
     <param name="outfile" type="string">

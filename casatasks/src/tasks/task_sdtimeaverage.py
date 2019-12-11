@@ -65,22 +65,22 @@ def sdtimeaverage(
     #+
     # DEBUG ARGS
     #-
-    print( "ARG::infile      =",infile)
-    print( "ARG::datacolumn  =",datacolumn)
-    print( "ARG::field       =",field)
-    print( "ARG::spw         =",spw)
-    print( "ARG::timerange   =",timerange)
-    print( "ARG::scan        =",scan)
-    print( "ARG::antenna     =",antenna)
-    print( "ARG::timebin     =",timebin)
-    print( "ARG::outfile     =",outfile)
+    print( "  ARG::infile      =",infile)
+    print( "  ARG::datacolumn  =",datacolumn)
+    print( "  ARG::field       =",field)
+    print( "  ARG::spw         =",spw)
+    print( "  ARG::timerange   =",timerange)
+    print( "  ARG::scan        =",scan)
+    print( "  ARG::antenna     =",antenna)
+    print( "  ARG::timebin     =",timebin)
+    print( "  ARG::outfile     =",outfile)
 
 
     #+
     #  defaut value (timebin=all) is to be handled.
     #-
 
-    if (timebin is 'all') or (timebin is None):
+    if (timebin is 'all') or (timebin == ''):
         timebin =  calc_timebin(infile)+'s'
         print ("DBG::timebin compensated with time records. ", timebin)
 
@@ -117,7 +117,7 @@ def calc_timebin(msname):
     with tbmanager(msname) as tb:
         tm = tb.getcol('TIME')
 
-    Leng = len( tm)
+    leng_ = len(tm)
     time_first = min(tm)
     time_last =  max(tm)
 
