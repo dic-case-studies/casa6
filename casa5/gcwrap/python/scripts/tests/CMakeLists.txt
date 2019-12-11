@@ -206,6 +206,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   ###
 
+  test_req_task_listcal.py
   test_req_task_accor.py
   test_req_task_applycal.py
   test_req_task_calstat.py
