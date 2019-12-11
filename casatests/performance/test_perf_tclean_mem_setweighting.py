@@ -1,5 +1,5 @@
 ##########################################################################
-# Test Name
+# test_perf_tclean_mem_setweighting.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -18,7 +18,6 @@
 #
 #
 ##########################################################################
-#from matplotlib.sphinxext.plot_directive import out_of_date
  
 '''
     Background info for this performance test:
@@ -118,7 +117,7 @@ class TestTcleanMemProf1(unittest.TestCase):
     ### Teardown
     def tearDown(self):
         '''Method called immediately after the test method has been called and the result recorded'''
-        # Be careful not to use traling slash or it will delete the directory
+        # Be careful not to use forward slash or it will delete the directory
         os.unlink(input_ms)        
         casalog.setlogfile(str(logpath))
 
