@@ -41,9 +41,16 @@ elsif ($gitbranch =~ "release/"){
 }
 print ("$last_branch_tag $last_release_tag");
 my $headcommit=`git rev-parse HEAD`;
-my $tagcommit=`git rev-list -n 1 $last_branch_tag`;
-if ($headcommit ne $tagcommit) {
+
+# No tag at all for branch
+if ($last_branch_tag eq "") {
     print (" dirty");
+# Check if the latest tag is the latest commit
+} else {
+    my $tagcommit=`git rev-list -n 1 $last_branch_tag`;
+    if ($headcommit ne $tagcommit) {
+        print (" dirty");
+    }
 }
 
 print ("\n");
