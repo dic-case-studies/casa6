@@ -185,16 +185,25 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
             // loop over rows in sub chunk, grouping baseline specific data
             // together
             const auto baseline = _baseline(ant1[row], ant2[row]);
+            // auto debug = ant1[row] == 0 && ant2[row] == 1;
+            // if (debug) {
+            //    cout << "rowInChunk " << rowInChunk << endl;
+            // }
             mypair.first = baseline;
             baselineSubChunkToIndex[mypair] = rowInChunk;
             std::set<uInt> neededRowNums;
             neededRowNums.insert(rowInChunk);
             // cout << __FILE__ << " " << __LINE__ << endl;
             if (subChunkID > 0) {
-
+                // if (debug) {
+                //    cout << "subChunkID " << subChunkID << endl;
+                // }
                 auto s = min(
                     firstChunkNeededByCurrentID, firstChunkThatNeedsCurrentID
                 );
+                // if (debug) {
+                //    cout << "start at subchunk " << s << endl;
+                // }
                 auto tpair = mypair;
                 for (; s < subChunkID; ++s) {
                     // cout << __FILE__ << " " << __LINE__ << endl;
@@ -281,6 +290,7 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
             }
             */
         }
+        // cout << "rows needed by row 17 " << rowMap[17] << endl << endl;
         // cout << __FILE__ << " " << __LINE__ << endl;
         const auto dataCube = _dataCube(vb);
         const auto resultantFlags = _getResultantFlags(
@@ -575,42 +585,54 @@ void StatWtFloatingWindowDataAggregator::_limits(
             // integer division
             const uInt halfTimeBin = *_nTimeStampsInBin/2;
             const auto nBefore = isEven
-                ? (halfTimeBin) : (*_nTimeStampsInBin - 1)/2;
-            const auto nAfter = isEven ? nBefore + 1 : nBefore;
+                ? (halfTimeBin - 1) : (*_nTimeStampsInBin - 1)/2;
+            const auto nAfter = isEven ? halfTimeBin : nBefore;
             // integer division
             // p.first is the first sub chunk needed by the current index.
             // p.second is the first sub chunk that needs the current index
+            // cout << "nbefore, nafter " << nBefore << " " << nAfter << endl;
             for (uInt i=0; i<nTimes; ++i) {
-                if (i <= nBefore) {
-                    p.first = 0;
+                Int begin = i - nBefore;
+                if (begin < 0) {
+                    begin = 0;
                 }
-                else if (i >= nTimes - nAfter) {
-                    p.first = nTimes - *_nTimeStampsInBin;
-                }
-                else {
-                    p.first = i - nBefore;
-                }
-                if ((uInt)i >= nTimes - nAfter) {
+                p.second = begin + *_nTimeStampsInBin - 1;
+                if (p.second >= nTimes) {
                     p.second = nTimes - 1;
+                    begin = p.second - *_nTimeStampsInBin + 1;
+                    if (begin < 0) {
+                        begin = 0;
+                    }
+                }
+                ThrowIf(begin < 0, "Logic Error: begin < 0");
+                p.first = begin;
+                if ((Int)nTimes <= *_nTimeStampsInBin) {
+                    q = p;
                 }
                 else {
-                    p.second = i + nAfter;
+                    if ((Int)i < *_nTimeStampsInBin) {
+                        q.first = 0;
+                    }
+                    else if (i > nTimes - *_nTimeStampsInBin) {
+                        q.second = nTimes - 1;
+                    }
+                    else if (isEven) {
+                        begin = i - nAfter;
+                        q.first = begin;
+                        q.second = i + nBefore;
+                    }
+                    else {
+                        // isOdd
+                        q = p;
+                    }
                 }
-                if (i <= nAfter) {
-                    q.first = 0;
-                }
-                else {
-                    q.first = i - nAfter;
-                }
-                if (i + nAfter < nTimes) {
-                    q.second = i + nAfter;
-                }
-                else {
-                    q.second = nTimes - 1;
-                }
+
+                // cout << "p " << p << endl;
+                // cout << "q " << q << endl;
                 idToChunksNeededByIDMap.push_back(p);
                 chunkNeededToIDsThatNeedChunkIDMap.push_back(q);
             }
+            // cout << endl;
         }
     }
     else {
