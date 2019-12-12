@@ -1,8 +1,135 @@
 #!/usr/bin/perl
 
-open( $gitver, "git tag -l '[0-9]*' 2> /dev/null |" );
-chomp( @versions = <$gitver> );
-close( $gitver );
-@versions = grep(/^\d+.\d+$/, @versions);
-sort @versions;
-print( $versions[$#versions], "\n" );
+# This script has to be run within the Git repository. It will inspect the
+# state of the current tree/branch in the workspace.
+
+# Version type is used to select the appropriate grep pattern.
+# The idea is to look for either the latest master/release type tag "\d+.\d+.\d+.\d+"
+# or CAS-<number>-x tags. Both are required to construct a meaningful number for
+# the casatools/tasks wheels
+
+# Algorithm:
+
+# 0.1 Get the branch type name
+# 1. If branch==master, return the last tag that matches \d+.\d+.\d+.\d+
+# 2. If branch=~release/* return last tag that matches ^a.b.c.(N) if branch is release/a.b.c
+# 3. Else return last tag that matches the branch (f.e. CAS-123-1)
+#    and the last tag in the branch that conforms to \d+\.\d+\.\d+\.\d (release/master) tag.
+# 4. Return -dirty if the latest commit doesn't have a matching tag. This can be
+#    then used in the version description.
+
+#$versiontype=$ARGV[0];
+
+my $gitbranch=`git rev-parse --abbrev-ref HEAD`;
+chomp($gitbranch);
+my $last_branch_tag="";
+my $last_release_tag="";
+if ($gitbranch eq "master"){
+    #print("Resolving master tag\n");
+    $last_release_tag=get_last_master_tag ($gitbranch);
+    $last_branch_tag=$last_release_tag;
+}
+elsif ($gitbranch =~ "release/"){
+    #print("Resolving release tag\n");
+    $last_release_tag=get_last_release_tag ($gitbranch);
+    $last_branch_tag=$last_release_tag;
+} else {
+    #print("Resolving release tag\n");
+    $last_release_tag=get_last_release_tag_for_branch ($gitbranch);
+    $last_branch_tag=get_last_branch_tag ($gitbranch);
+
+}
+print ("$last_branch_tag $last_release_tag");
+my $headcommit=`git rev-parse HEAD`;
+my $tagcommit=`git rev-list -n 1 $last_branch_tag`;
+if ($headcommit ne $tagcommit) {
+    print (" dirty");
+}
+
+print ("\n");
+
+sub get_last_branch_tag () {
+    my $gitbranch = shift;
+    my @versions;
+    open( $tags, "git tag -l | grep $gitbranch | " );
+    chomp( @tags = <$tags> );
+    close( @tags );
+    @versions = grep(/^$gitbranch-\d+$/, @tags);
+    print(@versions,"\n");
+    my @sorted =
+        map { $_->[0] }
+        sort { $a->[1] cmp $b->[1] }
+        map { [$_, join '', map { sprintf "%8d", $_ } split /\-/, $_] }
+        @versions;
+
+    return($sorted[$#sorted]);
+}
+
+sub get_last_master_tag () {
+    my $gitbranch = shift;
+    my @versions;
+    open( $tags, "git tag -l | " );
+    chomp( @tags = <$tags> );
+    close( @tags );
+    @versions = grep(/^\d+\.\d+\.\d+\.\d+$/, @tags);
+    #print(@versions,"\n");
+
+    #https://rosettacode.org/wiki/Sort_a_list_of_object_identifiers#Perl
+    my @sorted =
+        map { $_->[0] }
+        sort { $a->[1] cmp $b->[1] }
+        map { [$_, join '', map { sprintf "%8d", $_ } split /\./, $_] }
+        @versions;
+
+    return($sorted[$#sorted]);
+}
+
+sub get_last_release_tag () {
+    my $gitbranch = shift;
+    my @versions;
+    $releaseid=(split('/',$gitbranch))[-1];
+    $grep_cmd = "git tag -l | grep \"" . "^" .$releaseid . "\" | ";
+    open( $tags, $grep_cmd);
+    chomp( @tags = <$tags> );
+    close( @tags );
+    @versions = grep(/^\d+\.\d+\.\d+\.\d+$/, @tags);
+
+    #https://rosettacode.org/wiki/Sort_a_list_of_object_identifiers#Perl
+    my @sorted =
+        map { $_->[0] }
+        sort { $a->[1] cmp $b->[1] }
+        map { [$_, join '', map { sprintf "%8d", $_ } split /\./, $_] }
+        @versions;
+
+    return($sorted[$#sorted]);
+
+}
+
+sub get_last_release_tag_for_branch () {
+    my $gitbranch = shift;
+    my @versions;
+    open( $githashes, "git log --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
+    chomp( @hashes = <$githashes> );
+    close( $githashes );
+    foreach ( @hashes ) {
+    	#print "$_\n";
+        open( $gitver, "git show-ref --tags -d | grep ^" . $_ . " | sed -e 's,.* refs/tags/,,' | sed -e 's/\\^{}//' 2> /dev/null |" );
+        chomp( @tags = <$gitver> );
+        #print ( $tags[$#tags], "\n" );
+        push @versions, @tags;
+        close( $gitver );
+    }
+    #print ($versions);
+
+    @versions = grep(/^\d+\.\d+\.\d+\.\d+$/, @versions);
+    #print(@versions,"\n");
+
+    #https://rosettacode.org/wiki/Sort_a_list_of_object_identifiers#Perl
+    my @sorted =
+        map { $_->[0] }
+        sort { $a->[1] cmp $b->[1] }
+        map { [$_, join '', map { sprintf "%8d", $_ } split /\./, $_] }
+        @versions;
+
+    return($sorted[$#sorted]);
+}
