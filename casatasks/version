@@ -108,7 +108,7 @@ sub get_last_release_tag () {
 sub get_last_release_tag_for_branch () {
     my $gitbranch = shift;
     my @versions;
-    open( $githashes, "git log --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
+    open( $githashes, "git log --since 2019-10-01 --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
     chomp( @hashes = <$githashes> );
     close( $githashes );
     foreach ( @hashes ) {
