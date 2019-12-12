@@ -62,7 +62,7 @@ sub get_last_branch_tag () {
     chomp( @tags = <$tags> );
     close( @tags );
     @versions = grep(/^$gitbranch-\d+$/, @tags);
-    print(@versions,"\n");
+    #print(@versions,"\n");
     my @sorted =
         map { $_->[0] }
         sort { $a->[1] cmp $b->[1] }
