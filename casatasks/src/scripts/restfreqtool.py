@@ -52,7 +52,7 @@ def debug_print(msg):
 
 def inspect_ms(vis, fieldid, spwid, chanstart=0, nchan=-1):
     """Inspect MS
-    
+
     Arguments:
         vis {str} -- name of MS
         fieldid {int} -- FIELD_ID for target
@@ -60,7 +60,7 @@ def inspect_ms(vis, fieldid, spwid, chanstart=0, nchan=-1):
         chanstart {int} -- start channel (default: 0)
         nchan {int} -- number of channels
                        (default: -1 => from chanstart to end channel of spw)
-    
+
     Returns:
         MsMeta -- namedtuple containing metadata
                       positions: list of antenna positions
@@ -72,7 +72,6 @@ def inspect_ms(vis, fieldid, spwid, chanstart=0, nchan=-1):
     msmd.open(vis)
     try:
         positions = list(map(msmd.antennaposition, msmd.antennaids()))
-        #times = numpy.unique(msmd.timesforfield(fieldid))
         chanfreqs = msmd.chanfreqs(spwid)
         chanwidths = msmd.chanwidths(spwid)
     finally:
@@ -92,7 +91,7 @@ def inspect_ms(vis, fieldid, spwid, chanstart=0, nchan=-1):
     ms = mstool()
     ms.open(vis)
     try:
-        ms.msselect({'spw':str(spwid), 'field':str(fieldid), 'scanintent':'OBSERVE_TARGET#ON_SOURCE'})
+        ms.msselect({'spw': str(spwid), 'field': str(fieldid), 'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
         data = ms.getdata(['time'])
         times = data['time']
     finally:
@@ -127,11 +126,11 @@ def inspect_ms(vis, fieldid, spwid, chanstart=0, nchan=-1):
 
 def get_ephem_table(vis, fieldid):
     """Return a name of the Ephemeris table corresponding to given FIELD_ID
-    
+
     Arguments:
         vis {str} -- name of the MS
         fieldid {int} -- FIELD_ID
-    
+
     Returns:
         str -- name of the Ephemeris table
     """
@@ -142,7 +141,7 @@ def get_ephem_table(vis, fieldid):
         ephem_id = tb.getcell('EPHEMERIS_ID', fieldid)
     finally:
         tb.close()
-    
+
     pattern = os.path.join(field_table, 'EPHEM{}*'.format(ephem_id))
     candidates = glob.glob(pattern)
     assert len(candidates) == 1
@@ -153,10 +152,10 @@ def get_ephem_table(vis, fieldid):
 
 def inspect_ephem(name):
     """inspect Ephemeris table
-    
+
     Arguments:
         name {str} -- name of Ephemeris table
-    
+
     Returns:
         EphemMeta -- data of Ephemeris table
                          time: time list
@@ -170,8 +169,6 @@ def inspect_ephem(name):
     try:
         eph_time = tb.getcol('MJD')
         eph_time_unit = tb.getcolkeyword('MJD', 'UNIT')
-        #eph_ra = tb.getcol('RA')
-        #eph_dec = tb.getcol('DEC')
         eph_radvel = tb.getcol('RadVel')
         eph_radvel_unit = tb.getcolkeyword('RadVel', 'UNIT')
         eph_geo_dist = tb.getkeyword('GeoDist')
@@ -219,7 +216,6 @@ def get_doppler(measure_instance, radial_velocity, velocity_unit, velocity_frame
     vel = qa.convert(qa.quantity(radial_velocity, velocity_unit), COMMON_VELOCITY_UNIT)
     if velocity_frame == 'GEO':
         # relative velocity between GEO and TOPO must be subtracted
-        #measure_instance.showframe()
         radvel_zero = measure_instance.measure(v=measure_instance.radialvelocity(rf='TOPO', v0=qa.quantity(0, COMMON_VELOCITY_UNIT)), rf='GEO')
         qzero = qa.convert(radvel_zero['m0'], COMMON_VELOCITY_UNIT)
         debug_print('velocity in GEO frame. Require conversion to TOPO.')
@@ -233,12 +229,6 @@ def get_doppler(measure_instance, radial_velocity, velocity_unit, velocity_frame
 
 
 def ms_freq_range(metadataset):
-    # msmeta = inspect_ms(vis, fieldid, spwid, chanstart, nchan)
-
-    # ephem_table = get_ephem_table(vis, fieldid)
-
-    # ephem_data = inspect_ephem(ephem_table)
-
     msmeta = metadataset.msmeta
     ephem_data = metadataset.ephemmeta
     ephem_table = ephem_data.table
@@ -253,8 +243,6 @@ def ms_freq_range(metadataset):
         position = item[0]
         timestamp = item[1][0]
         velocity = item[1][1]
-        #debug_print(position)
-        #debug_print(timestamp)
         me = measures()
         me.done()
         epoch = me.epoch('UTC', qa.quantity(timestamp, 's'))
@@ -299,12 +287,6 @@ def image_freq_range(imagename):
 
 
 def get_lorentz_factor(metadataset):
-    # msmeta = inspect_ms(vis, fieldid, spwid)
-
-    # ephem_table = get_ephem_table(vis, fieldid)
-
-    # ephem_data = inspect_ephem(ephem_table)
-
     msmeta = metadataset.msmeta
     ephem_data = metadataset.ephemmeta
     ephem_table = ephem_data.table
