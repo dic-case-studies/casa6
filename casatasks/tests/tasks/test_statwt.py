@@ -961,44 +961,24 @@ class statwt_test(unittest.TestCase):
             "SIGMA_SPECTRUMs don't match"
         )
 
-    def test_residual_data_no_model(self):
-        """ Test using data - default model """
-        dst = "ngc5921.split.residualdatawoutmodel.ms"
-        ref = os.path.join(datadir,"ngc5921.residdata_without_model_2.ms.ref")
-        [refwt, refwtsp, refflag, reffrow, refsig, refsigsp] = _get_dst_cols(
-            ref, ["SIGMA", "SIGMA_SPECTRUM"], dodata=False
-        )
-        rtol = 1e-7
-        data = "residual_data"
+    def test_residual_no_model(self):
+        """Test datacolumn='residual' in the absence of a MODEL_DATA column"""
+        dst = "ngc5921.split.residualwoutmodel.ms"
+        ref = 'ref_test_residual_no_model.ms'
+        data = "residual"
+        myms = ms()
         mytb = table()
         shutil.copytree(src, dst)
         self.assertTrue(mytb.open(dst, nomodify=False))
         self.assertTrue(mytb.removecols("MODEL_DATA"))
         mytb.done()
-        statwt(dst, datacolumn=data)
-        [tstwt, tstwtsp, tstflag, tstfrow, tstsigma, tstsigsp] = _get_dst_cols(
-            dst, ["SIGMA", "SIGMA_SPECTRUM"], False
-        )
-        self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-        self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-        refsigma = 1/numpy.sqrt(refwt);
-        numpy.place(refsigma, refwt == 0, -1)
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstwt, refwt, rtol)),
-            "WEIGHTs don't match"
-        )
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
-            "WEIGHT_SPECTRUMs don't match"
-        )
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstsigma, refsig, rtol)),
-            "SIGMAs don't match"
-        )
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstsigsp, refsigsp, rtol)),
-            "SIGMA_SPECTRUMs don't match"
-        )
+        myms.open(dst, nomodify=False)
+        myms.statwt(datacolumn=data)
+        myms.done()
+        # self._check_weights(
+        #    dst, row_to_rows, data, None, False, None, None
+        # )
+        self.compare(dst, ref)
         shutil.rmtree(dst)
 
     def test_returned_stats(self):

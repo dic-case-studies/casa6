@@ -163,8 +163,9 @@ class statwt_test(unittest.TestCase):
                 tb.open(msname)
                 subt = tb.query(query_str)
                 if (data_column == 'residual'):
-                    data = subt.getcol('CORRECTED_DATA') \
-                        - subt.getcol('MODEL_DATA')
+                    data = subt.getcol('CORRECTED_DATA')
+                    if subt.colnames().count('MODEL_DATA') == 1:
+                        data -= subt.getcol('MODEL_DATA')
                 else:
                     data = subt.getcol(col_data)
                 flags = subt.getcol('FLAG')
@@ -1005,7 +1006,7 @@ class statwt_test(unittest.TestCase):
                 #    dst, row_to_rows, 'c', None, False, None, None
                 #)
                 self.compare(dst, ref)
-                shutil.rmtree(dst
+                shutil.rmtree(dst)
 
     def test_residual(self):
         """ Test using corrected_data - model_data column"""
@@ -1031,14 +1032,15 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
             
     def test_residual_no_model(self):
-        """ Test using corrected_data - model_data column"""
+        """Test datacolumn='residual' in the absence of a MODEL_DATA column"""
         dst = "ngc5921.split.residualwoutmodel.ms"
-        ref = datadir + "ngc5921.resid_without_model.ms.ref"
-        [refwt, refwtsp, refflag, reffrow] = _get_dst_cols(ref, "", dodata=False)
-        rtol = 1e-6
+        ref = 'ref_test_residual_no_model.ms'
         data = "residual"
-        mytb = tbtool()
+        row_to_rows = []
+        for i in range(60):
+            row_to_rows.append([i, i+1])
         myms = mstool()
+        mytb = tbtool()
         for i in [0, 1]:
             shutil.copytree(src, dst)
             self.assertTrue(mytb.open(dst, nomodify=False))
@@ -1050,17 +1052,10 @@ class statwt_test(unittest.TestCase):
                 myms.done()
             else:
                 statwt(dst, datacolumn=data)
-            [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
-            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-            self.assertTrue(
-                np.all(np.isclose(tstwt, refwt, rtol)),
-                "WEIGHTs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
-                "WEIGHT_SPECTRUMs don't match"
-            )
+            # self._check_weights(
+            #    dst, row_to_rows, data, None, False, None, None
+            # )
+            self.compare(dst, ref)
             shutil.rmtree(dst)
 
     def test_residual_data(self):

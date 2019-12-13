@@ -817,6 +817,26 @@ class statwt_test(unittest.TestCase):
         self.compare(dst, ref)
         shutil.rmtree(dst)
 
+    def test_residual_no_model(self):
+        """Test datacolumn='residual' in the absence of a MODEL_DATA column"""
+        dst = "ngc5921.split.residualwoutmodel.ms"
+        ref = 'ref_test_residual_no_model.ms'
+        data = "residual"
+        myms = ms()
+        mytb = table()
+        shutil.copytree(src, dst)
+        self.assertTrue(mytb.open(dst, nomodify=False))
+        self.assertTrue(mytb.removecols("MODEL_DATA"))
+        mytb.done()
+        myms.open(dst, nomodify=False)
+        myms.statwt(datacolumn=data)
+        myms.done()
+        # self._check_weights(
+        #    dst, row_to_rows, data, None, False, None, None
+        # )
+        self.compare(dst, ref)
+        shutil.rmtree(dst)
+
 def suite():
     return [statwt_test]
 
