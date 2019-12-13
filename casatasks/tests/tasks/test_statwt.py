@@ -887,24 +887,17 @@ class statwt_test(unittest.TestCase):
     def test_residual(self):
         """ Test using corrected_data - model_data column"""
         dst = "ngc5921.split.residualwmodel.ms"
-        ref = os.path.join(datadir,"ngc5921.resid_with_model.ms.ref")
-        [refwt, refwtsp, refflag, reffrow] = _get_dst_cols(ref, "", dodata=False)
-        rtol = 1e-7
+        ref = 'ref_test_residual.ms'
         data = "residual"
-        mytb = table()
+        # row_to_rows = []
+        # for i in range(60):
+        #    row_to_rows.append([i, i+1])
         shutil.copytree(src, dst)
         statwt(dst, datacolumn=data)
-        [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
-        self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-        self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstwt, refwt, rtol)),
-            "WEIGHTs don't match"
-        )
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
-            "WEIGHT_SPECTRUMs don't match"
-        )
+        # self._check_weights(
+        #    dst, row_to_rows, data, None, False, None, None
+        # )
+        self.compare(dst, ref)
         shutil.rmtree(dst)
             
     def test_residual_no_model(self):

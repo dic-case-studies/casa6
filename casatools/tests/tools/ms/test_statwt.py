@@ -798,7 +798,24 @@ class statwt_test(unittest.TestCase):
             self.compare(dst, ref)
             shutil.rmtree(dst)
 
-        
+    def test_residual(self):
+        """ Test using corrected_data - model_data column"""
+        dst = "ngc5921.split.residualwmodel.ms"
+        ref = 'ref_test_residual.ms'
+        data = "residual"
+        # row_to_rows = []
+        # for i in range(60):
+        #    row_to_rows.append([i, i+1])
+        myms = ms()
+        shutil.copytree(src, dst)
+        myms.open(dst, nomodify=False)
+        myms.statwt(datacolumn=data)
+        myms.done()
+        # self._check_weights(
+        #    dst, row_to_rows, data, None, False, None, None
+        # )
+        self.compare(dst, ref)
+        shutil.rmtree(dst)
 
 def suite():
     return [statwt_test]

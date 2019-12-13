@@ -148,13 +148,13 @@ class statwt_test(unittest.TestCase):
         self, msname, row_to_rows, data_column, chan_flags, combine_corr,
         chanbins, wtrange
     ):
+        check_sigma = False
         if data_column.startswith('c'):
             col_data = 'CORRECTED_DATA'
-            check_sigma = False
         elif data_column.startswith('d'):
             col_data = 'DATA'
             check_sigma = True
-        else:
+        elif data_column != 'residual':
             raise Exception("Unhandled column spec " + data_column)
         for ant1 in range(10):
             for ant2 in range((ant1 + 1), 10):
@@ -162,7 +162,11 @@ class statwt_test(unittest.TestCase):
                      + str(ant2)
                 tb.open(msname)
                 subt = tb.query(query_str)
-                data = subt.getcol(col_data)
+                if (data_column == 'residual'):
+                    data = subt.getcol('CORRECTED_DATA') \
+                        - subt.getcol('MODEL_DATA')
+                else:
+                    data = subt.getcol(col_data)
                 flags = subt.getcol('FLAG')
                 exposures = subt.getcol('EXPOSURE')
                 wt = subt.getcol('WEIGHT')
@@ -846,7 +850,7 @@ class statwt_test(unittest.TestCase):
     def test_sliding_window_timebin_int(self):
         """Test sliding window with timebin as int specified"""
         dst = "ngc5921.split.sliding_time_window.ms"
-        row_to_rows = []
+        # row_to_rows = []
         """
         # odd int, timebin = 5
         row_to_rows.append([0, 5])
@@ -1001,19 +1005,16 @@ class statwt_test(unittest.TestCase):
                 #    dst, row_to_rows, 'c', None, False, None, None
                 #)
                 self.compare(dst, ref)
-                shutil.rmtree(dst)
-
-        
-        
+                shutil.rmtree(dst
 
     def test_residual(self):
         """ Test using corrected_data - model_data column"""
         dst = "ngc5921.split.residualwmodel.ms"
-        ref = datadir + "ngc5921.resid_with_model.ms.ref"
-        [refwt, refwtsp, refflag, reffrow] = _get_dst_cols(ref, "", dodata=False)
-        rtol = 1e-7
+        ref = 'ref_test_residual.ms'
         data = "residual"
-        mytb = tbtool()
+        # row_to_rows = []
+        # for i in range(60):
+        #    row_to_rows.append([i, i+1])
         myms = mstool()
         for i in [0, 1]:
             shutil.copytree(src, dst)
@@ -1023,17 +1024,10 @@ class statwt_test(unittest.TestCase):
                 myms.done()
             else:
                 statwt(dst, datacolumn=data)
-            [tstwt, tstwtsp, tstflag, tstfrow] = _get_dst_cols(dst, "", False)
-            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-            self.assertTrue(
-                np.all(np.isclose(tstwt, refwt, rtol)),
-                "WEIGHTs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
-                "WEIGHT_SPECTRUMs don't match"
-            )
+            # self._check_weights(
+            #    dst, row_to_rows, data, None, False, None, None
+            # )
+            self.compare(dst, ref)
             shutil.rmtree(dst)
             
     def test_residual_no_model(self):
