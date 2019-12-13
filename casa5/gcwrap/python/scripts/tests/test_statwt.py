@@ -1092,16 +1092,15 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
 
     def test_residual_data_no_model(self):
-        """ Test using data - default model """
+        """Test using residual data in absence of MODEL_DATA"""
         dst = "ngc5921.split.residualdatawoutmodel.ms"
-        ref = datadir + "ngc5921.residdata_without_model_2.ms.ref"
-        [refwt, refwtsp, refflag, reffrow, refsig, refsigsp] = _get_dst_cols(
-            ref, ["SIGMA", "SIGMA_SPECTRUM"], dodata=False
-        )
-        rtol = 1e-7
+        ref = 'ref_test_residual_data_no_model.ms'
         data = "residual_data"
         mytb = tbtool()
         myms = mstool()
+        # row_to_rows = []
+        # for i in range(60):
+        #     row_to_rows.append([i, i+1])
         for i in [0, 1]:
             shutil.copytree(src, dst)
             self.assertTrue(mytb.open(dst, nomodify=False))
@@ -1113,29 +1112,10 @@ class statwt_test(unittest.TestCase):
                 myms.done()
             else:
                 statwt(dst, datacolumn=data)
-            [tstwt, tstwtsp, tstflag, tstfrow, tstsigma, tstsigsp] = _get_dst_cols(
-                dst, ["SIGMA", "SIGMA_SPECTRUM"], False
-            )
-            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
-            refsigma = 1/np.sqrt(refwt);
-            np.place(refsigma, refwt == 0, -1)
-            self.assertTrue(
-                np.all(np.isclose(tstwt, refwt, rtol)),
-                "WEIGHTs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
-                "WEIGHT_SPECTRUMs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstsigma, refsig, rtol)),
-                "SIGMAs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstsigsp, refsigsp, rtol)),
-                "SIGMA_SPECTRUMs don't match"
-            )
+            # self._check_weights(
+            #     dst, row_to_rows, data, None, False, None, None
+            # )
+            self.compare(dst, ref)
             shutil.rmtree(dst)
 
     def test_returned_stats(self):
