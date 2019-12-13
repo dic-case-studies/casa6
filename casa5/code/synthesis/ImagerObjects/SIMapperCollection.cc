@@ -539,9 +539,9 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
                 VisibilityIterator2* vi=const_cast<VisibilityIterator2*>(vb.getVi());
                 const_cast<MeasurementSet& >(vi->ms()).lock();
                 /////TESTOO
-                Int CPUID;
-                MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
-                cerr << CPUID << " writing " << modImage << endl;
+                //Int CPUID;
+                //MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
+                //cerr << CPUID << " writing " << modImage << endl;
                 /////////////////
                 vi->writeModel(rec, iscomp, true);
                 const_cast<MeasurementSet& >(vi->ms()).unlock();
