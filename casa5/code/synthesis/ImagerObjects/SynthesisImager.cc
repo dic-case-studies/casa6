@@ -857,9 +857,9 @@ bool SynthesisImager::unlockImages()
 	     cs.setSpectralConversion("LSRK");
 	   Vector<Double> pix(4);
            //increase edge part a bit for interpolation
-	   pix[0]=0; pix[1]=0; pix[2]=0; pix[3]=-3.5;
+	   pix[0]=0; pix[1]=0; pix[2]=0; pix[3]=-0.5;
 	   Double freq1=cs.toWorld(pix)[3];
-	   pix[3]=Double(nchannel)+2.5;
+	   pix[3]=Double(nchannel)-0.5;
 	   Double freq2=cs.toWorld(pix)[3];
 	   String units=cs.worldAxisUnits()[3];
 	   if(freq2 < freq1){
