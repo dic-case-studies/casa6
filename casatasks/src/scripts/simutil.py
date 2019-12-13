@@ -16,7 +16,7 @@ from collections import OrderedDict
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
+    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator, synthesisutils
     from casatasks import casalog, tclean
     from casatasks.private.cleanhelper import cleanhelper
     tb = table( )
@@ -29,12 +29,12 @@ if is_CASA6:
     cs = coordsys( )
     cl = componentlist( )
     sm = simulator( )
+    _su = synthesisutils( )
 
 else:
     #import casac
     # all I really need is casalog, but how to get it:?
     from taskinit import *
-    from cleanhelper import cleanhelper
     from tclean import tclean
     from clean import clean
 
@@ -42,6 +42,7 @@ else:
     #qatool = casac.homefinder.find_home_by_name('quantaHome')
     #qa = qatool.create()
     im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+    _su = casac.synthesisutils( )
 
     # 4.2.2:
     #im, cb, ms, tb, fl, me, ia, po, sm, cl, cs, rg, sl, dc, vp, msmd, fi, fn, imd = gentools()
@@ -2992,12 +2993,12 @@ class simutil:
 
         # in 3.4 clean doesn't accept just any imsize
         optsize=[0,0]
-        optsize[0]=cleanhelper.getOptimumSize(imsize[0])
+        optsize[0]=_su.getOptimumSize(imsize[0])
         nksize=len(imsize)
         if nksize==1: # imsize can be a single element or array
             optsize[1]=optsize[0]
         else:
-            optsize[1]=cleanhelper.getOptimumSize(imsize[1])
+            optsize[1]=_su.getOptimumSize(imsize[1])
         if((optsize[0] != imsize[0]) or (nksize!=1 and optsize[1] != imsize[1])):
             self.msg(str(imsize)+' is not an acceptable imagesize, will use '+str(optsize)+" instead",priority="warn")
             imsize=optsize
@@ -3216,11 +3217,11 @@ class simutil:
 
         # legacy comparison of image size input against heuristic
         optsize = [0,0]
-        optsize[0] = cleanhelper.getOptimumSize(imsize[0])
+        optsize[0] = _su.getOptimumSize(imsize[0])
         if len(imsize) == 1: # user expects square output images
             optsize[1]=optsize[0]
         else:
-            optsize[1]=cleanhelper.getOptimumSize(imsize[1])
+            optsize[1]=_su.getOptimumSize(imsize[1])
         if((optsize[0] != imsize[0]) or 
            (len(imsize) != 1 and optsize[1] != imsize[1])):
             imsize = optsize
