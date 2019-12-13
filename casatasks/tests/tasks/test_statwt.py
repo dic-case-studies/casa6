@@ -927,40 +927,21 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
 
     def test_residual_data(self):
-        """ Test using _data - model_data column"""
+        """Test using data - model_data column"""
         dst = "ngc5921.split.residualdatawmodel.ms"
-        ref = os.path.join(datadir,"ngc5921.residdata_with_model_2.ms.ref")
-        [refwt, refwtsp, refflag, reffrow, refsig, refsigsp] = _get_dst_cols(
-            ref, ["SIGMA", "SIGMA_SPECTRUM"], dodata=False
-        )
-        rtol = 1e-7
+        ref = 'ref_test_residual_data.ms'
         data = "residual_data"
-        mytb = table()
+        # row_to_rows = []
+        # for i in range(60):
+        #     row_to_rows.append([i, i+1])
         shutil.copytree(src, dst)
         statwt(dst, datacolumn=data)
-        [tstwt, tstwtsp, tstflag, tstfrow, tstsig, tstsigsp] = _get_dst_cols(
-            dst, ["SIGMA", "SIGMA_SPECTRUM"], False
-        )
-        self.assertTrue(numpy.all(tstflag == refflag), "FLAGs don't match")
-        self.assertTrue(numpy.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+        # self._check_weights(
+        #    dst, row_to_rows, data, None, False, None, None
+        # )
+        self.compare(dst, ref)
         shutil.rmtree(dst)
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstwt, refwt, rtol)),
-            "WEIGHTs don't match"
-        )
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstwtsp, refwtsp, rtol)),
-            "WEIGHT_SPECTRUMs don't match"
-        )
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstsig, refsig, rtol)),
-            "SIGMAs don't match"
-        )
-        self.assertTrue(
-            numpy.all(numpy.isclose(tstsigsp, refsigsp, rtol)),
-            "SIGMA_SPECTRUMs don't match"
-        )
-
+        
     def test_residual_no_model(self):
         """Test datacolumn='residual' in the absence of a MODEL_DATA column"""
         dst = "ngc5921.split.residualwoutmodel.ms"

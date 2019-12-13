@@ -148,13 +148,14 @@ class statwt_test(unittest.TestCase):
         self, msname, row_to_rows, data_column, chan_flags, combine_corr,
         chanbins, wtrange
     ):
+        check_weights = True
         check_sigma = False
         if data_column.startswith('c'):
             col_data = 'CORRECTED_DATA'
         elif data_column.startswith('d'):
             col_data = 'DATA'
             check_sigma = True
-        elif data_column != 'residual':
+        elif not data_column.startswith('residual'):
             raise Exception("Unhandled column spec " + data_column)
         for ant1 in range(10):
             for ant2 in range((ant1 + 1), 10):
@@ -162,10 +163,17 @@ class statwt_test(unittest.TestCase):
                      + str(ant2)
                 tb.open(msname)
                 subt = tb.query(query_str)
-                if (data_column == 'residual'):
-                    data = subt.getcol('CORRECTED_DATA')
+                if data_column == 'residual':
+                    data = subt.getcol('C0RRECTED_DATA')
                     if subt.colnames().count('MODEL_DATA') == 1:
                         data -= subt.getcol('MODEL_DATA')
+                elif data_column == 'residual_data':
+                    check_weights = False
+                    check_sigma = True
+                    data = subt.getcol('DATA')
+                    if subt.colnames().count('MODEL_DATA') == 1:
+                        data -= subt.getcol('MODEL_DATA')
+                    
                 else:
                     data = subt.getcol(col_data)
                 flags = subt.getcol('FLAG')
@@ -187,19 +195,20 @@ class statwt_test(unittest.TestCase):
                         exposures[start: end], combine_corr, exposures[row],
                         chanbins, flags[:, :, row:row+1], wtrange
                     )
-                    self.assertTrue(
-                        np.allclose(weights, wtsp[:, :, row]),
-                        'Failed wtsp, got ' + str(wtsp[:, :, row])
-                        + '\nexpected ' + str(weights) + '\nbaseline '
-                        + str([ant1, ant2]) + '\nrow ' + str(row)
-                    )
-                    self.assertTrue(
-                        np.allclose(ewt, wt[:, row]),
-                        'Failed weight, got ' + str(wt[:, row])
-                        + '\nexpected ' + str(np.median(weights, 1))
-                        + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
-                        + str(row)
-                    )
+                    if check_weights:
+                        self.assertTrue(
+                            np.allclose(weights, wtsp[:, :, row]),
+                            'Failed wtsp, got ' + str(wtsp[:, :, row])
+                            + '\nexpected ' + str(weights) + '\nbaseline '
+                            + str([ant1, ant2]) + '\nrow ' + str(row)
+                        )
+                        self.assertTrue(
+                            np.allclose(ewt, wt[:, row]),
+                            'Failed weight, got ' + str(wt[:, row])
+                            + '\nexpected ' + str(np.median(weights, 1))
+                            + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
+                            + str(row)
+                        )
                     self.assertTrue(
                         (mod_flags == np.expand_dims(flags[:, :, row], 2)).all(),
                         'Failed flag, got ' + str(flags[:, :, row])
@@ -1037,8 +1046,8 @@ class statwt_test(unittest.TestCase):
         ref = 'ref_test_residual_no_model.ms'
         data = "residual"
         row_to_rows = []
-        for i in range(60):
-            row_to_rows.append([i, i+1])
+        # for i in range(60):
+        #    row_to_rows.append([i, i+1])
         myms = mstool()
         mytb = tbtool()
         for i in [0, 1]:
@@ -1059,16 +1068,15 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
 
     def test_residual_data(self):
-        """ Test using _data - model_data column"""
+        """Test using data - model_data column"""
         dst = "ngc5921.split.residualdatawmodel.ms"
-        ref = datadir + "ngc5921.residdata_with_model_2.ms.ref"
-        [refwt, refwtsp, refflag, reffrow, refsig, refsigsp] = _get_dst_cols(
-            ref, ["SIGMA", "SIGMA_SPECTRUM"], dodata=False
-        )
-        rtol = 1e-7
+        ref = 'ref_test_residual_data.ms'
         data = "residual_data"
         mytb = tbtool()
         myms = mstool()
+        # row_to_rows = []
+        # for i in range(60):
+        #    row_to_rows.append([i, i+1])
         for i in [0, 1]:
             shutil.copytree(src, dst)
             if i == 0:
@@ -1077,28 +1085,11 @@ class statwt_test(unittest.TestCase):
                 myms.done()
             else:
                 statwt(dst, datacolumn=data)
-            [tstwt, tstwtsp, tstflag, tstfrow, tstsig, tstsigsp] = _get_dst_cols(
-                dst, ["SIGMA", "SIGMA_SPECTRUM"], False
-            )
-            self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
-            self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
+            # self._check_weights(
+            #    dst, row_to_rows, data, None, False, None, None
+            # )
+            self.compare(dst, ref)
             shutil.rmtree(dst)
-            self.assertTrue(
-                np.all(np.isclose(tstwt, refwt, rtol)),
-                "WEIGHTs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstwtsp, refwtsp, rtol)),
-                "WEIGHT_SPECTRUMs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstsig, refsig, rtol)),
-                "SIGMAs don't match"
-            )
-            self.assertTrue(
-                np.all(np.isclose(tstsigsp, refsigsp, rtol)),
-                "SIGMA_SPECTRUMs don't match"
-            )
 
     def test_residual_data_no_model(self):
         """ Test using data - default model """
