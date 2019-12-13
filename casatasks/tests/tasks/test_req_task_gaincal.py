@@ -38,6 +38,7 @@ import unittest
 import shutil
 import numpy as np
 import pylab as pl
+import casaTestHelper as ch
 
 if CASA6:
     datapath = casatools.ctsys.resolve('visibilities/vla/gaincaltest2.ms')
@@ -127,7 +128,7 @@ def getparam(caltable, colname='CPARAM'):
     return outtable
 
 
-def tableComp(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
+def tableComp(table1, table2, cols=[], rtol=8e-5, atol=1e-6):
     ''' Compare two caltables '''
 
     tableVal1 = {}
@@ -247,6 +248,7 @@ class gaincal_test(unittest.TestCase):
         '''
 
         self.assertTrue(np.all(tableComp(fullRangeCal, combinedRef)[:,1] == 'True'))
+        #self.assertTrue(ch.Compare.compare_CASA_tables(fullRangeCal, combinedRef))
 
 
     def test_intervalSNR(self):
