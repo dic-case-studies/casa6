@@ -1,6 +1,7 @@
 //#
 //#  CASA - Common Astronomy Software Applications (http://casa.nrao.edu/)
-//#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All rights reserved.
+//#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All
+//#  rights reserved.
 //#  Copyright (C) European Southern Observatory, 2011, All rights reserved.
 //#
 //#  This library is free software; you can redistribute it and/or
@@ -58,33 +59,12 @@ void StatWt::setOutputMS(const casacore::String& outname) {
 
 void StatWt::setTimeBinWidth(const casacore::Quantity& binWidth) {
     _timeBinWidth = vi::StatWtTVI::getTimeBinWidthInSec(binWidth);
-    // cout << __func__ << endl;
-    // cout << "set _timeBinWidth to " << _timeBinWidth << endl;
-
-
 }
 
 void StatWt::setTimeBinWidth(Double binWidth) {
-    // cout << "passed in binWidth " << binWidth << endl;
     vi::StatWtTVI::checkTimeBinWidth(binWidth);
     _timeBinWidth = binWidth;
-    // cout << __FILE__ << " " << __func__ << endl;
-     // cout << "set _timeBinWidth to " << _timeBinWidth << endl;
-
 }
-
-/*
-void StatWt::setTimeBinWidthUsingInterval(uInt n) {
-    _timeBinWidth = vi::StatWtTVI::getTimeBinWidthUsingInterval(_ms, n);
-    _log << LogOrigin("StatWt", __func__) << LogIO::NORMAL
-        << "Determined representative integration time of "
-        << (_timeBinWidth/(Double)n) << "s. Setting time bin width to "
-        << _timeBinWidth << "s" << LogIO::POST;
-    // cout << __func__ << endl;
-     // cout << "set _timeBinWidth to " << _timeBinWidth << endl;
-
-}
-*/
 
 void StatWt::setCombine(const String& combine) {
     _combine = downcase(combine);
@@ -112,24 +92,16 @@ Record StatWt::writeWeights() {
     vi::VisBuffer2 *vb = vi->getVisBuffer();
     ProgressMeter pm(0, _ms->nrow(), "StatWt Progress");
     uInt64 count = 0;
-    // cout << "begin outer loop" << endl;
     for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
-        // cout << "inside outer loop" << endl;
         for (vi->origin(); vi->more(); vi->next()) {
-            // cout << "inside inner loop" << endl;
             auto nrow = vb->nRows();
-            // cout << __FILE__ << " " << __LINE__ << endl;
             if (_preview) {
                 // just need to run the flags to accumulate
                 // flagging info
                 vb->flagCube();
             }
             else {
-                // cout << __FILE__ << " " << __LINE__ << endl;
-
                 if (mustWriteWtSp) {
-                    // cout << __FILE__ << " " << __LINE__ << endl;
-
                     auto& x = vb->weightSpectrum();
                     ThrowIf(
                         x.empty(),
@@ -139,8 +111,6 @@ Record StatWt::writeWeights() {
                     vb->setWeightSpectrum(x);
                 }
                 if (mustWriteSigSp) {
-                    // cout << __FILE__ << " " << __LINE__ << endl;
-
                     auto& x = vb->sigmaSpectrum();
                     ThrowIf(
                         x.empty(),
@@ -150,17 +120,11 @@ Record StatWt::writeWeights() {
                     vb->setSigmaSpectrum(x);
                 }
                 if (mustWriteWt) {
-                    // cout << __FILE__ << " " << __LINE__ << endl;
-
                     vb->setWeight(vb->weight());
                 }
                 if (mustWriteSig) {
-                    // cout << __FILE__ << " " << __LINE__ << endl;
-
                     vb->setSigma(vb->sigma());
                 }
-                // cout << __FILE__ << " " << __LINE__ << endl;
-
                 vb->setFlagCube(vb->flagCube());
                 vb->setFlagRow(vb->flagRow());
                 vb->writeChangesBack();
@@ -188,9 +152,11 @@ void StatWt::_constructVi(
     std::shared_ptr<vi::VisibilityIterator2>& vi,
     std::shared_ptr<vi::StatWtTVILayerFactory>& factory
 ) const {
-    // default sort columns are from MSIter and are ARRAY_ID, FIELD_ID, DATA_DESC_ID, and TIME
-    // I'm adding scan and state because, according to the statwt requirements, by default, scan
-    // and state changes should mark boundaries in the weights computation
+    // default sort columns are from MSIter and are ARRAY_ID, FIELD_ID,
+    // DATA_DESC_ID, and TIME. I'm adding scan and state because, according to
+    // the statwt requirements, by default, scan and state changes should mark
+    // boundaries in the weights computation.
+    // ORDER MATTERS. Columns are sorted in the order they appear in the vector.
     std::vector<Int> scs;
     scs.push_back(MS::TIME);
     scs.push_back(MS::ARRAY_ID);
@@ -210,17 +176,7 @@ void StatWt::_constructVi(
         sort[i] = col;
         ++i;
     }
-    /*
-    {
-        cout << "combine " << _combine << endl;
-        cout << "scs " << scs << endl;
-        for (auto it=sort.begin(); it != sort.end(); ++it) {
-            cout << "sort " << *it << endl;
-        }
-    }
-    */
     vi::SortColumns sc(sort, False);
-    // cout << "configuring TVI with timebinwidth " << _timeBinWidth << endl;
     vi::IteratingParameters ipar(_timeBinWidth, sc);
     vi::VisIterImpl2LayerFactory data(_ms, ipar, True);
     std::unique_ptr<Record> config(dynamic_cast<Record*>(_tviConfig.clone()));
