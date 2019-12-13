@@ -189,22 +189,26 @@ class test_sdtimeaverage(unittest.TestCase):
            for pos in range(1024):
                print (  row, pos, data_tmp[0][pos], data_tmp[1][pos] )
 
+#+
+# Generate DATa on FLOAT_DATA
+#-
     def generate_data( self, MsName ):
 
         self. get_main( def_inputMs )
-        data_row0 = self. get_spectra( MsName, 0 )  # data (row 0)
+        data_array = [[0]*1024]*2  
 
-        # fill const #
-
-        for i in range(2):
-            for j in range(1024):
-                data_row0[i][j] = 0.1
-
+        # write to cells #
         for row in range(len(self.tm) ):
-            #print( "- generating rec=", row);
+            x = row - 1500
+            amp = numpy.exp( -0.00001 * x * x ) 
+            # make const #
+            for j in range(1024):
+                data_array[0][j] = j * 0.001 * amp
+                data_array[1][j] = j * 0.001 * amp
+
             with tbmanager(MsName,nomodify=False) as tb:
                 # write as an Array[2,1024] 
-                tb.putcell("FLOAT_DATA", row,  data_row0 ) 
+                tb.putcell("FLOAT_DATA", row,  data_array  ) 
         return   
           
 #+
