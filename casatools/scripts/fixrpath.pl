@@ -15,7 +15,7 @@ opendir(DIR, $solibdir) or die "Could not open $solibdir\n";
 while (my $filename = readdir(DIR)) {
     if ( $filename =~ /.so$/) {
       print ("$filename\n");
-      fixlibpaths($solibdir. "/" .$filename,"/opt/casa/02", "\@rpath");
+      fixlibpaths($solibdir. "/" .$filename,"/opt/casa/0.?", "\@rpath");
   }
 }
 closedir(DIR);
@@ -27,7 +27,7 @@ opendir(DIR, $dylibdir) or die "Could not open $dylibdir\n";
 while (my $filename = readdir(DIR)) {
   if ( $filename =~ /.dylib$/) {
       print ("$filename\n");
-      fixlibpaths($dylibdir. "/" .$filename,"/opt/casa/02", "\@rpath");
+      fixlibpaths($dylibdir. "/" .$filename,"/opt/casa/0.?", "\@rpath");
   }
 }
 closedir(DIR);
