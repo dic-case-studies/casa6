@@ -497,7 +497,6 @@ public:
     virtual casacore::Int nSpectralWindows () const override;
     virtual casacore::Int nTimes() const override;
 
-
     //   +-------------------+
     //   |                   |
     //   | Writeback Methods |

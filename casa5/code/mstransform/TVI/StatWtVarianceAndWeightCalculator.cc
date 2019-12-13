@@ -43,9 +43,7 @@ StatWtVarianceAndWeightCalculator::StatWtVarianceAndWeightCalculator(
         >
     > statAlg,
     shared_ptr<map<uInt, pair<uInt, uInt>>> samples, Int minSamp
-) : _statAlg(statAlg->clone()), _samples(samples), _minSamp(minSamp) {
-    // cout << "using stat algorithm " << _statAlg->algorithm() << endl;
-}
+) : _statAlg(statAlg->clone()), _samples(samples), _minSamp(minSamp) {}
 
 StatWtVarianceAndWeightCalculator::~StatWtVarianceAndWeightCalculator() {}
 
@@ -54,8 +52,6 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     const Cube<Bool>& flags, const Vector<Double>& exposures,
     casacore::uInt spw
 ) const {
-   //  cout << "exposures " << exposures << endl;
-    // cout << "_minSamp " << _minSamp << endl;
     const auto npts = data.size();
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
         // not enough points, trivial
@@ -81,14 +77,8 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     auto iiter = imagPart.begin();
     auto miter = mask.begin();
     auto eiter = exposureCube.begin();
-    // cout << "realPart " << realPart << endl;
-    // cout << "exposureCube " << exposureCube << endl;
-    // cout << "mask " << mask << endl;
-    // cout << "npts " << npts << endl;
-
     statAlg->setData(riter, eiter, miter, npts);
     auto realStats = statAlg->getStatistics();
-    // cout << "var " << realStats.variance << endl;
     auto realVar = realStats.nvariance/realStats.npts;
     // reset data to imaginary parts
     statAlg->setData(iiter, eiter, miter, npts);
@@ -119,9 +109,6 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
             ++((*_samples)[spw].second);
         }
     }
-//DEBUG
-
-    // cout << "var sum " << varSum << endl;
     return varSum/2;
 }
 
@@ -140,11 +127,5 @@ Vector<Double> StatWtVarianceAndWeightCalculator::computeWeights(
     auto varEq = computeVariance(data, flags, exposures, spw);
     return varEq == 0 ? Vector<Double>(exposures.size(), 0) : exposures/varEq;
 }
-
-/*
-void StatWtVarianceAndWeightCalculator::setMinSamp(Int minSamp) {
-    _minSamp = minSamp;
-}
-*/
 
 }

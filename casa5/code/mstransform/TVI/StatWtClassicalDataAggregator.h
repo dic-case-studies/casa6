@@ -78,6 +78,10 @@ public:
     // aggregates the data and computes the weights
     void aggregate();
 
+    void weightSingleChanBin(
+        casacore::Matrix<casacore::Float>& wtmat, casacore::Int nrows
+    ) const;
+
     void weightSpectrumFlags(
         casacore::Cube<casacore::Float>& wtsp,
         casacore::Cube<casacore::Bool>& flagCube, casacore::Bool& checkFlags,
@@ -92,9 +96,9 @@ private:
 
     mutable std::map<
         StatWtTypes::BaselineChanBin, casacore::Vector<casacore::Double>
-    > _variancesOneShotProcessing {};
+    > _variances {};
 
-    void _computeVariancesOneShotProcessing(
+    void _computeVariances(
         const std::map<
             StatWtTypes::BaselineChanBin, casacore::Cube<casacore::Complex>
         >& data,

@@ -9,18 +9,6 @@ def statwt(
     wtrange, flagbackup, preview, datacolumn
 ):
     try:
-        print(
-            'vis', vis, 'selectdata', selectdata, 'field', field, 'spw', spw,
-            'intent', intent, 'array', array, 'observation', observation, 'scan', scan,
-            'combine', combine, 'timebin', timebin, 'slidetimebin', slidetimebin,
-            'chanbin', chanbin, 'minsamp', minsamp, 'statalg', statalg,
-            'fence', fence, 'center', center, 'lside', lside, 'zscore', zscore,
-            'maxiter', maxiter, 'fitspw', fitspw, 'excludechans', excludechans,
-            'wtrnage', wtrange, 'flagbackup', flagbackup, 'preview', preview,
-            'datacolumn', datacolumn
-        )
-
-
         casalog.origin('statwt')
         casalog.post(
             "vis " + vis + " selectdata " + str(selectdata) + " field " + str(field) + " spw "

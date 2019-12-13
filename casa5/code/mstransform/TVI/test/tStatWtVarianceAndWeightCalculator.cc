@@ -64,7 +64,7 @@ TEST (StatWtVarianceAndWeightCalculatorTest, testComputeVariance) {
     );
     uInt spw = 5;
     (*samples)[spw] = make_pair(0, 0);
-    StatWtVarianceAndWeightCalculator calc(statAlg, samples);
+    StatWtVarianceAndWeightCalculator calc(statAlg, samples, 2);
     uInt npol = 2;
     uInt nchan = 3;
     uInt nrow = 4;
@@ -109,7 +109,7 @@ TEST (StatWtVarianceAndWeightCalculatorTest, testComputeVariance) {
     for (auto spw: spws) {
         (*samples)[spw] = make_pair(0, 0);
     }
-    StatWtVarianceAndWeightCalculator calc_t(statAlg, samples);
+    StatWtVarianceAndWeightCalculator calc_t(statAlg, samples, 2);
     vector<Double> allVars(2);
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -140,7 +140,7 @@ TEST (StatWtVarianceAndWeightCalculatorTest, testComputeWeight) {
     );
     uInt spw = 5;
     (*samples)[spw] = make_pair(0, 0);
-    StatWtVarianceAndWeightCalculator calc(statAlg, samples);
+    StatWtVarianceAndWeightCalculator calc(statAlg, samples, 2);
     uInt npol = 2;
     uInt nchan = 3;
     uInt nrow = 4;
@@ -181,7 +181,7 @@ TEST (StatWtVarianceAndWeightCalculatorTest, testComputeWeights) {
     );
     uInt spw = 5;
     (*samples)[spw] = make_pair(0, 0);
-    StatWtVarianceAndWeightCalculator calc(statAlg, samples);
+    StatWtVarianceAndWeightCalculator calc(statAlg, samples, 2);
     uInt npol = 2;
     uInt nchan = 3;
     uInt nrow = 4;

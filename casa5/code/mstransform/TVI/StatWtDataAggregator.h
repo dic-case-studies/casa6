@@ -92,11 +92,14 @@ public:
         const casacore::Vector<casacore::uInt>& rowIDs
     ) const = 0;
 
+    virtual void weightSingleChanBin(
+        casacore::Matrix<casacore::Float>& wtmat, casacore::Int nrows
+    ) const = 0;
+
 protected:
 
     ViImplementation2 *const _vii;
     const std::map<casacore::Int, std::vector<StatWtTypes::ChanBin>> _chanBins;
-    // TODO you can probably get rid of this in StatWtTVI
     mutable std::set<casacore::uInt> _processedRowIDs {};
     mutable std::shared_ptr<
         std::map<casacore::uInt, std::pair<casacore::uInt, casacore::uInt>>
@@ -112,7 +115,6 @@ protected:
     // indicates that the channel is "flagged", ie should not be used.
     const std::map<casacore::uInt, casacore::Cube<casacore::Bool>>
         _chanSelFlags;
-    // TODO you can probably get rid of this in StatWtTVI
     std::shared_ptr<casacore::Bool> _mustComputeWtSp {};
     std::shared_ptr<
         casacore::ClassicalStatistics<casacore::Double,
@@ -123,23 +125,12 @@ protected:
     std::shared_ptr<const std::pair<casacore::Double, casacore::Double>>
         _wtrange;
     const casacore::Bool _combineCorr;
-    /*
-    std::shared_ptr<
-        casacore::StatisticsAlgorithm<
-            casacore::Double, casacore::Array<casacore::Float>::const_iterator,
-            casacore::Array<casacore::Bool>::const_iterator,
-            casacore::Array<casacore::Double>::const_iterator
-        >
-    > _statAlg;
-    */
 
-    // TODO you can probably get rid of this in StatWtTVI
     // swaps ant1/ant2 if necessary
     static StatWtTypes::Baseline _baseline(
         casacore::uInt ant1, casacore::uInt ant2
     );
 
-    // TODO you can probably get rid of this in StatWtTVI
     // returns True if this chunk has already been processed. This can happen
     // for the last chunk.
     casacore::Bool _checkFirstSubChunk(
@@ -147,12 +138,10 @@ protected:
         const vi::VisBuffer2 * const vb
     ) const;
 
-    // TODO you can probably get rid of this in StatWtTVI
     const casacore::Cube<casacore::Complex> _dataCube(
         const VisBuffer2 *const vb
     ) const;
 
-    // TODO you can probably get rid of this in StatWtTVI
     // combines the flag cube with the channel selection flags (if any)
     casacore::Cube<casacore::Bool> _getResultantFlags(
         casacore::Cube<casacore::Bool>& chanSelFlagTemplate,
@@ -161,7 +150,6 @@ protected:
         const casacore::Cube<casacore::Bool>& flagCube
     ) const;
 
-    // TODO you can probably get rid of this in StatWtTVI
     void _updateWtSpFlags(
         casacore::Cube<casacore::Float>& wtsp,
         casacore::Cube<casacore::Bool>& flags, casacore::Bool& checkFlags,

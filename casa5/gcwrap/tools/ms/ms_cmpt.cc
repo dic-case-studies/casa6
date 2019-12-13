@@ -6342,7 +6342,6 @@ record* ms::statwt(
         );
         StatWt statwt(itsMS, &statwtColConfig);
         const auto tbtype = timebin.type();
-        cout << "timebin " << timebin.toString() << endl;
         // first group in conditional requires all data in a chunk to be
         // loaded at once. The second does as well and represents the default
         // setting since a CASA 5 variant always comes in as a boolvec even if a
@@ -6372,38 +6371,6 @@ record* ms::statwt(
         else {
             ThrowCc("Unsupported type for timebin, must be int or string");
         }
-        /*
-        else {
-            // block time processing with raw time (eg seconds) timebin
-            if (
-                tbtype == casac::variant::BOOLVEC && timebin.toBoolVec().empty()
-            ) {
-                // default for tool method since a variant always comes in as
-                // boolvecs even if a different default type is specified in the
-                // XML,
-                // FIXME needs to be uInt(1) for current ticket default
-                // requirements
-                statwt.setTimeBinWidth(casacore::Quantity(0.001, "s"));
-            }
-            else if (tbtype == casac::variant::INT) {
-                ThrowIf(timebin.toInt() <= 0, "timebin must be positive");
-                statwt.setTimeBinWidthUsingInterval(timebin.touInt());
-            }
-            else if (tbtype == casac::variant::STRING){
-                casacore::Quantity myTimeBin = casaQuantity(timebin);
-                if (myTimeBin.getUnit().empty()) {
-                    myTimeBin.setUnit("s");
-                }
-                if (myTimeBin.getValue() <= 0) {
-                    myTimeBin.setValue(1e-5);
-                }
-                statwt.setTimeBinWidth(myTimeBin);
-            }
-            else {
-                ThrowCc("Unsupported type for timebin, must be int or string");
-            }
-        }
-        */
         statwt.setCombine(combine);
         statwt.setPreview(preview);
         casac::record tviConfig;
@@ -6424,8 +6391,6 @@ record* ms::statwt(
         tviConfig["wtrange"] = wtrange;
         tviConfig["datacolumn"] = datacolumn;
         unique_ptr<Record> rec(toRecord(tviConfig));
-        cout << "tviConfig " << *rec << endl;
-
         statwt.setTVIConfig(*rec);
         return fromRecord(statwt.writeWeights());
     }

@@ -41,11 +41,10 @@ public:
     
     StatWtFloatingWindowDataAggregator() = delete;
 
-    // out of necessity, the passed in pointer  like variables are shared with
+    // out of necessity, the passed in pointer-like variables are shared with
     // the caller.
     StatWtFloatingWindowDataAggregator(
         ViImplementation2 *const vii,
-        // std::shared_ptr<casacore::Bool>& mustComputeWtSp,
         const std::map<
             casacore::Int, std::vector<StatWtTypes::ChanBin>
         >& chanBins,
@@ -82,6 +81,10 @@ public:
     // aggregates the data and computes the weights
     void aggregate();
 
+    void weightSingleChanBin(
+        casacore::Matrix<casacore::Float>& wtmat, casacore::Int nrows
+    ) const;
+
     void weightSpectrumFlags(
         casacore::Cube<casacore::Float>& wtsp,
         casacore::Cube<casacore::Bool>& flagCube, casacore::Bool& checkFlags,
@@ -96,8 +99,7 @@ private:
 
     std::shared_ptr<const casacore::Double> _binWidthInSeconds {};
 
-    // TODO can probably get rid of this in StatWtTVI
-    mutable casacore::Cube<casacore::Double> _multiLoopWeights {};
+    mutable casacore::Cube<casacore::Double> _weights {};
 
     std::shared_ptr<const casacore::Int> _nTimeStampsInBin {};
 
@@ -110,52 +112,26 @@ private:
     const casacore::Bool _timeBlockProcessing;
 
     // TODO can probably get rid of this in StatWtTVI
-    void _computeWeightsMultiLoopProcessing(
+    void _computeWeights(
         const casacore::Cube<casacore::Complex>& data,
         const casacore::Cube<casacore::Bool>& flags,
         const casacore::Vector<casacore::Double>& exposures,
         const std::vector<std::set<casacore::uInt>>& rowMap, casacore::uInt spw
     ) const;
 
-    // TODO can probably get rid of this in StatWtTVI
     // idToChunksNeededByIDMap maps subchunkIDs to the range of subchunk IDs
     // they need. chunkNeededToIDsThatNeedChunkIDMap maps subchunk IDs that are
     // needed to the subchunkIDs that need them. min/max IDs (.first/.second)
     // in both cases
     void _limits(
-        std::vector<std::pair<casacore::uInt, casacore::uInt>>& idToChunksNeededByIDMap,
-        std::vector<std::pair<casacore::uInt, casacore::uInt>>& chunkNeededToIDsThatNeedChunkIDMap
+        std::vector<
+            std::pair<casacore::uInt, casacore::uInt>
+        >& idToChunksNeededByIDMap,
+        std::vector<
+            std::pair<casacore::uInt, casacore::uInt>
+        >& chunkNeededToIDsThatNeedChunkIDMap
     ) const;
 
-    /*
-    struct BaselineChanBin {
-        vi::StatWtTVI::Baseline baseline = std::make_pair(0, 0);
-        casacore::uInt spw = 0;
-        vi::StatWtTypes::ChanBin chanBin;
-        bool operator<(const BaselineChanBin& other) const {
-            if (baseline < other.baseline) {
-                return true;
-            }
-            if (baseline == other.baseline && spw < other.spw) {
-                return true;
-            }
-            return baseline == other.baseline && spw == other.spw
-                && chanBin < other.chanBin;
-        };
-    };
-
-    mutable std::map<BaselineChanBin, casacore::Vector<casacore::Double>>
-            _variancesOneShotProcessing {};
-
-    ViImplementation2 *const _vii;
-    const casacore::Bool _combineCorr;
-
-    void _computeVariancesOneShotProcessing(
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Complex>>& data,
-        const std::map<BaselineChanBin, casacore::Cube<casacore::Bool>>& flags,
-        const std::map<BaselineChanBin, casacore::Vector<casacore::Double>>& exposures
-    ) const;
-    */
 };
 
 }

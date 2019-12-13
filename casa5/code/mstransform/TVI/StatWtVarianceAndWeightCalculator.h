@@ -89,8 +89,6 @@ public:
         const casacore::Vector<casacore::Double>& exposures, casacore::uInt spw
     ) const;
 
-    // void setMinSamp(casacore::Int minSamp);
-
 private:
 
     std::unique_ptr<

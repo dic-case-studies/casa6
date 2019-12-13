@@ -1,5 +1,6 @@
 //#  CASA - Common Astronomy Software Applications (http://casa.nrao.edu/)
-//#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All rights reserved.
+//#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All
+//# rights reserved.
 //#  Copyright (C) European Southern Observatory, 2011, All rights reserved.
 //#
 //#  This library is free software; you can redistribute it and/or
@@ -24,7 +25,6 @@
 // debug
 #include <casacore/casa/Arrays/ArrayIO.h>
 
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -42,7 +42,6 @@ StatWtDataAggregator::StatWtDataAggregator(
     std::shared_ptr<map<uInt, pair<uInt, uInt>>>& samples,
     StatWtTypes::Column column, Bool noModel,
     const map<uInt, Cube<Bool>>& chanSelFlags,
-    // std::shared_ptr<casacore::Bool>& mustComputeWtSp,
     std::shared_ptr<
         casacore::ClassicalStatistics<casacore::Double,
         casacore::Array<casacore::Float>::const_iterator,
@@ -61,9 +60,7 @@ StatWtDataAggregator::StatWtDataAggregator(
         new StatWtVarianceAndWeightCalculator(statAlg, samples, minSamp)
     ),
     _column(column),_noModel(noModel), _chanSelFlags(chanSelFlags),
-    /*_mustComputeWtSp(mustComputeWtSp),*/ _wtStats(wtStats), _wtrange(wtrange),
-    /*_statAlg(statAlg)*/
-    _combineCorr(combineCorr) {}
+    _wtStats(wtStats), _wtrange(wtrange), _combineCorr(combineCorr) {}
 
 
 StatWtDataAggregator::~StatWtDataAggregator() {}
@@ -78,7 +75,6 @@ void StatWtDataAggregator::setMustComputeWtSp(
     _mustComputeWtSp = mcwp;
 }
 
-
 StatWtTypes::Baseline StatWtDataAggregator::_baseline(
     uInt ant1, uInt ant2
 ) {
@@ -88,8 +84,6 @@ StatWtTypes::Baseline StatWtDataAggregator::_baseline(
 Bool StatWtDataAggregator::_checkFirstSubChunk(
     Int& spw, Bool& firstTime, const VisBuffer2 * const vb
 ) const {
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
     if (! firstTime) {
         // this chunk has already been checked, it has not
         // been processed previously
@@ -97,17 +91,11 @@ Bool StatWtDataAggregator::_checkFirstSubChunk(
     }
     const auto& rowIDs = vb->rowIds();
     if (_processedRowIDs.find(rowIDs[0]) == _processedRowIDs.end()) {
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         // haven't processed this chunk
         _processedRowIDs.insert(rowIDs[0]);
         // the spw is the same for all subchunks, so it only needs to
         // be set once
         spw = *vb->spectralWindows().begin();
-        // cout << __FILE__ << " " << __LINE__ << endl;
-        if (! _samples) {
-            // cout << "_samples is not set" << endl;
-        }
         if (_samples->find(spw) == _samples->end()) {
             (*_samples)[spw].first = 0;
             (*_samples)[spw].second = 0;
@@ -116,8 +104,6 @@ Bool StatWtDataAggregator::_checkFirstSubChunk(
         return False;
     }
     else {
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         // this chunk has been processed, this can happen at the end
         // when the last chunk is processed twice
         return True;
@@ -127,7 +113,6 @@ Bool StatWtDataAggregator::_checkFirstSubChunk(
 const Cube<Complex> StatWtDataAggregator::_dataCube(
     const VisBuffer2 *const vb
 ) const {
-    // cout << __func__ << endl;
     switch (_column) {
     case StatWtTypes::CORRECTED:
         return vb->visCubeCorrected();
@@ -208,16 +193,6 @@ void StatWtDataAggregator::_updateWtSpFlags(
         // entirely flagged, so we need to update the WEIGHT column stats
         _wtStats->addData(Array<Float>(IPosition(1, 1), wt).begin(), 1);
     }
-    /*
-    if (_wtrange) {
-        cout << "_wtrange " << *_wtrange << endl;
-    }
-    else {
-        cout << "_wtrange not set" << endl;
-    }
-
-    cout << "wtsp  before " << wtsp << endl;
-    */
     if (
         wt == 0
         || (_wtrange && (wt < _wtrange->first || wt > _wtrange->second))

@@ -1,5 +1,6 @@
 //#  CASA - Common Astronomy Software Applications (http://casa.nrao.edu/)
-//#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All rights reserved.
+//#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All
+//#  rights reserved.
 //#  Copyright (C) European Southern Observatory, 2011, All rights reserved.
 //#
 //#  This library is free software; you can redistribute it and/or
@@ -62,12 +63,11 @@ StatWtClassicalDataAggregator::~StatWtClassicalDataAggregator() {}
 
 void StatWtClassicalDataAggregator::aggregate() {
     // Drive NEXT LOWER layer's ViImpl to gather data into allvis:
-    //  Assumes all sub-chunks in the current chunk are to be used
-    //   for the variance calculation
-    //  Essentially, we are sorting the incoming data into
-    //   allvis, to enable a convenient variance calculation
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    _variancesOneShotProcessing.clear();
+    // Assumes all sub-chunks in the current chunk are to be used
+    // for the variance calculation
+    // Essentially, we are sorting the incoming data into
+    // allvis, to enable a convenient variance calculation
+    _variances.clear();
     auto* vb = _vii->getVisBuffer();
     std::map<StatWtTypes::BaselineChanBin, Cube<Complex>> data;
     std::map<StatWtTypes::BaselineChanBin, Cube<Bool>> flags;
@@ -79,9 +79,6 @@ void StatWtClassicalDataAggregator::aggregate() {
     auto firstTime = True;
     // we cannot know the spw until we are in the subchunks loop
     Int spw = -1;
-    // Vector<Double> exposureVector;
-    // cout << __FILE__ << " " << __LINE__ << endl;
-    cout << "nTimes " << _vii->nTimes() << endl;
     for (_vii->origin(); _vii->more(); _vii->next()) {
         if (_checkFirstSubChunk(spw, firstTime, vb)) {
             return;
@@ -93,9 +90,6 @@ void StatWtClassicalDataAggregator::aggregate() {
                 )
             );
         }
-        // cout << "nTimes " << _vii->nTimes() << endl;
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         const auto& ant1 = vb->antenna1();
         const auto& ant2 = vb->antenna2();
         // [nCorr, nFreq, nRows)
@@ -109,15 +103,11 @@ void StatWtClassicalDataAggregator::aggregate() {
             chanSelFlagTemplate, chanSelFlags, initChanSelTemplate,
             spw, flagCube
         );
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         auto bins = _chanBins.find(spw)->second;
         StatWtTypes::BaselineChanBin blcb;
         blcb.spw = spw;
         IPosition dataCubeBLC(3, 0);
         auto dataCubeTRC = dataCube.shape() - 1;
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         for (Int row=0; row<nrows; ++row) {
             dataCubeBLC[2] = row;
             dataCubeTRC[2] = row;
@@ -152,32 +142,48 @@ void StatWtClassicalDataAggregator::aggregate() {
                     flags[blcb](blc, trc) = flagSlice;
                     exposures[blcb][trc[2]] = exposureVector[row];
                 }
-                /*
-                if (ant1[row] == 0 && ant2[row] == 1) {
-                    cout << "row " << row << endl;
-                    cout << "nrows " << data[blcb].shape()[2] << endl;
-                }
-                */
             }
         }
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
-    _computeVariancesOneShotProcessing(data, flags, exposures);
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
+    _computeVariances(data, flags, exposures);
 }
 
-void StatWtClassicalDataAggregator::_computeVariancesOneShotProcessing(
+void StatWtClassicalDataAggregator::weightSingleChanBin(
+    Matrix<Float>& wtmat, Int nrows
+) const {
+    Vector<Int> ant1, ant2, spws;
+    Vector<Double> exposures;
+    _vii->antenna1(ant1);
+    _vii->antenna2(ant2);
+    _vii->spectralWindows(spws);
+    _vii->exposure(exposures);
+    // There is only one spw in a chunk
+    auto spw = *spws.begin();
+    StatWtTypes::BaselineChanBin blcb;
+    blcb.spw = spw;
+    for (Int i=0; i<nrows; ++i) {
+        auto bins = _chanBins.find(spw)->second;
+        blcb.baseline = _baseline(ant1[i], ant2[i]);
+        blcb.chanBin = bins[0];
+        auto variances = _variances.find(blcb)->second;
+        if (_combineCorr) {
+            wtmat.column(i) = exposures[i]/variances[0];
+        }
+        else {
+            auto corr = 0;
+            for (const auto variance: variances) {
+                wtmat(corr, i) = exposures[i]/variance;
+                ++corr;
+            }
+        }
+    }
+}
+
+void StatWtClassicalDataAggregator::_computeVariances(
     const map<StatWtTypes::BaselineChanBin, Cube<Complex>>& data,
     const map<StatWtTypes::BaselineChanBin, Cube<Bool>>& flags,
     const map<StatWtTypes::BaselineChanBin, Vector<Double>>& exposures
 ) const {
-    //cout << "exposures size " << exposures.size() << endl;
-    //cout << "flags size " << flags.size() << endl;
-    //cout << "data size " << data.size() << endl;
     auto diter = data.cbegin();
     auto dend = data.cend();
     const auto nActCorr = diter->second.shape()[0];
@@ -186,34 +192,20 @@ void StatWtClassicalDataAggregator::_computeVariancesOneShotProcessing(
     const auto& spw = data.begin()->first.spw;
     vector<StatWtTypes::BaselineChanBin> keys(data.size());
     auto idx = 0;
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
     for (; diter!=dend; ++diter, ++idx) {
         const auto& blcb = diter->first;
         keys[idx] = blcb;
-        _variancesOneShotProcessing[blcb].resize(ncorr);
+        _variances[blcb].resize(ncorr);
     }
-    // cout << __FILE__ << " " << __LINE__ << endl;
-
     auto n = keys.size();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (size_t i=0; i<n; ++i) {
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         auto blcb = keys[i];
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         auto dataForBLCB = data.find(blcb)->second;
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         auto flagsForBLCB = flags.find(blcb)->second;
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         auto exposuresForBLCB = exposures.find(blcb)->second;
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
         for (uInt corr=0; corr<ncorr; ++corr) {
             IPosition start(3, 0);
             auto end = dataForBLCB.shape() - 1;
@@ -222,34 +214,23 @@ void StatWtClassicalDataAggregator::_computeVariancesOneShotProcessing(
                 end[0] = corr;
             }
             Slicer slice(start, end, Slicer::endIsLast);
-            _variancesOneShotProcessing[blcb][corr]
+            _variances[blcb][corr]
                 = _varianceComputer->computeVariance(
                     dataForBLCB(slice), flagsForBLCB(slice),
                     exposuresForBLCB, spw
                 );
         }
-        // cout << __FILE__ << " " << __LINE__ << endl;
-
     }
-    //cout << __FILE__ << " " << __LINE__ << endl;
-
 }
 
 void StatWtClassicalDataAggregator::weightSpectrumFlags(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags,
     const Vector<Int>& ant1, const Vector<Int>& ant2, const Vector<Int>& spws,
-    const Vector<Double>& exposures, const Vector<uInt>& /*rowIDs*/
+    const Vector<Double>& exposures, const Vector<uInt>&
 ) const {
-    //Vector<Int> ant1, ant2, spws;
-    //Vector<Double> exposures;
-    //antenna1(ant1);
-    //antenna2(ant2);
-    //spectralWindows(spws);
-    //exposure(exposures);
     Slicer slice(IPosition(3, 0), flagCube.shape(), Slicer::endIsLength);
     auto sliceStart = slice.start();
     auto sliceEnd = slice.end();
-    //auto nrows = nRows();
     auto nrows = ant1.size();
     for (uInt i=0; i<nrows; ++i) {
         sliceStart[2] = i;
@@ -263,7 +244,7 @@ void StatWtClassicalDataAggregator::weightSpectrumFlags(
             sliceStart[1] = bin.start;
             sliceEnd[1] = bin.end;
             blcb.chanBin = bin;
-            auto variances = _variancesOneShotProcessing.find(blcb)->second;
+            auto variances = _variances.find(blcb)->second;
             auto ncorr = variances.size();
             Vector<Double> weights(ncorr);
             for (uInt corr=0; corr<ncorr; ++corr) {
