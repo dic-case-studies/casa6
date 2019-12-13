@@ -878,6 +878,24 @@ class statwt_test(unittest.TestCase):
         # )
         self.compare(dst, ref)
         shutil.rmtree(dst)
+        
+    def test_returned_stats(self):
+        """ Test returned stats, CAS-10881"""
+        dst = "ngc5921.split.statstest.ms"
+        myms = ms()
+        shutil.copytree(src, dst)
+        myms.open(dst, nomodify=False)
+        res = myms.statwt()
+        myms.done()
+        self.assertTrue(
+            np.isclose(res['mean'], 3.691224144843796),
+            "mean is incorrect"
+        )
+        self.assertTrue(
+            np.isclose(res['variance'], 6.860972180192186),
+            "variance is incorrect"
+        )
+        shutil.rmtree(dst)
 
 def suite():
     return [statwt_test]

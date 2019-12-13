@@ -1121,8 +1121,6 @@ class statwt_test(unittest.TestCase):
     def test_returned_stats(self):
         """ Test returned stats, CAS-10881"""
         dst = "ngc5921.split.statstest.ms"
-        ref = datadir + "ngc5921.residdata_without_model_2.ms.ref"
-        rtol = 1e-7
         myms = mstool()
         for i in [0, 1]:
             shutil.copytree(src, dst)
@@ -1133,11 +1131,11 @@ class statwt_test(unittest.TestCase):
             else:
                 res = statwt(dst)
             self.assertTrue(
-                np.isclose(res['mean'], 3.6326332, rtol),
+                np.isclose(res['mean'], 3.691224144843796),
                 "mean is incorrect"
             )
             self.assertTrue(
-                np.isclose(res['variance'], 6.6448922, rtol),
+                np.isclose(res['variance'], 6.860972180192186),
                 "variance is incorrect"
             )
             shutil.rmtree(dst)
