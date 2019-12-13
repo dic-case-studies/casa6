@@ -49,6 +49,8 @@ namespace casa{
       {
 	imageDC_p = other.imageDC_p;
 	imageObsInfo_p = other.imageObsInfo_p;
+	cachedPointingOffsets_p = other.cachedPointingOffsets_p;
+	cachedAntGridPointingOffsets_p = other.cachedAntGridPointingOffsets_p;
       }
     return *this;
   }
@@ -124,17 +126,17 @@ namespace casa{
   //
   //----------------------------------------------------------------------
   //
-  Vector< Vector<Double> > PointingOffsets::findPointingOffset(const ImageInterface<Complex>& image,
-							       const VisBuffer2& vb, const Bool doPointing)
+  void PointingOffsets::fetchPointingOffset(const ImageInterface<Complex>& image,
+					   const VisBuffer2& vb, const Bool doPointing)
   {
     setDoPointing(doPointing);
     if (!doPointing) 
       { 
-	return findMosaicPointingOffset(image,vb,doPointing);
+	cachedPointingOffsets_p.assign(findMosaicPointingOffset(image,vb,doPointing));
       }
     else 
       {
-	return findAntennaPointingOffset(image,vb,doPointing);
+	cachedPointingOffsets_p.assign(findAntennaPointingOffset(image,vb,doPointing));
       }
   }
   //
@@ -185,6 +187,46 @@ namespace casa{
     // at the place of the call.
     return thePix_p;
   };
+
+  //
+  //----------------------------------------------------------------------
+  //
+
+  vector<vector<double> > PointingOffsets::fetchAntOffsetToPix(const VisBuffer2& vb, const Bool doPointing)
+  {
+    // Int numRow_p = vb.nRows();
+    vector<vector<double> > pix_l;
+
+    vector<int> ant1, ant2;
+    ant1 = (vb.antenna1()).tovector();
+    ant2 = (vb.antenna2()).tovector();
+    ant1.insert(ant1.end(),ant2.begin(),ant2.end());
+    sort(ant1.begin(),ant1.end());
+    auto itr = unique(ant1.begin(),ant1.end());
+    ant1.resize(distance(ant1.begin(),itr));
+
+    // cerr <<"ant1.size()" << ant1.size() << endl;
+    pix_l.resize(2);
+    pix_l[0].resize(ant1.size(),0);
+    pix_l[1].resize(ant1.size(),0);
+
+    MVDirection vbdir=vb.direction1()(0).getValue();
+    for (unsigned int nant=0; nant< ant1.size();nant++)
+      {
+
+	MDirection antDir1 =vbUtils_p.getPointingDir(vb, nant, 0, dc_p.directionType(), doPointing); 
+	// MDirection antDir2 =vbUtils_p.getPointingDir(vb, vb.antenna2()[irow], irow, dc_p.directionType(), doPointing);        
+	Vector<double> tmp = toPix(vb, antDir1, vbdir);
+	pix_l[0][nant]=tmp[0];
+	pix_l[1][nant]=tmp[1];
+	// cerr<< "Ant : "<< ant1[nant]<< " Offsets : "<< pix_l[0][nant] << " " << pix_l[1][nant]<<endl;
+	// tmp = toPix(vb, antDir2, vbdir);
+	// pix_l[2][irow]=tmp[0];
+	// pix_l[3][irow]=tmp[1];
+      }
+    return pix_l;
+  }
+
 
   //
   //----------------------------------------------------------------------

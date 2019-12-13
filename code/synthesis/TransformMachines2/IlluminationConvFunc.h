@@ -119,9 +119,9 @@ namespace casa{
       {throw(casacore::AipsError("IlluminationConvFunc::makeAverageRes() called"));};
 
 		  
-    virtual casacore::Vector< casacore::Vector<casacore::Double> > findPointingOffset(const casacore::ImageInterface<casacore::Complex>& /*image*/,
-								  const VisBuffer2& /*vb*/, const casacore::Bool& /*doPointing*/)
-    {throw(casacore::AipsError("IlluminationConvFunc::findPointingOffset() not implemented"));};
+    // virtual casacore::Vector< casacore::Vector<casacore::Double> > findPointingOffset(const casacore::ImageInterface<casacore::Complex>& /*image*/,
+    // 								  const VisBuffer2& /*vb*/, const casacore::Bool& /*doPointing*/)
+    // {throw(casacore::AipsError("IlluminationConvFunc::findPointingOffset() not implemented"));};
 
   private:
     ExpCache<CF_TYPE> ExpTable;

@@ -3115,7 +3115,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
  /////////////////////// Grid/FTMachine Parameters
 
-  SynthesisParamsGrid::SynthesisParamsGrid():SynthesisParams()
+  SynthesisParamsGrid::SynthesisParamsGrid():SynthesisParams(),pointingOffsetSigDev()
   {
     setDefaults();
   }
@@ -3191,6 +3191,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  	err += readVal( inrec, String("wbawp"), wbAWP );
 	err += readVal( inrec, String("cfcache"), cfCache );
 	err += readVal( inrec, String("usepointing"), usePointing );
+	err += readVal( inrec, String("pointingoffsetsigdev"), pointingOffsetSigDev );
 	err += readVal( inrec, String("dopbcorr"), doPBCorr );
 	err += readVal( inrec, String("conjbeams"), conjBeams );
 	err += readVal( inrec, String("computepastep"), computePAStep );
@@ -3311,6 +3312,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     wbAWP      = true;
     cfCache  = "";
     usePointing = false;
+    pointingOffsetSigDev.resize(2,10.0);
     doPBCorr   = true;
     conjBeams  = true;
     computePAStep=360.0;
@@ -3358,6 +3360,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     gridpar.define("wbawp", wbAWP);
     gridpar.define("cfcache", cfCache);
     gridpar.define("usepointing",usePointing );
+    gridpar.define("pointingoffsetsigdev", pointingOffsetSigDev);
     gridpar.define("dopbcorr", doPBCorr);
     gridpar.define("conjbeams",conjBeams );
     gridpar.define("computepastep", computePAStep);
