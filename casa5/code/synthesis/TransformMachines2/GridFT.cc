@@ -1025,7 +1025,7 @@ void GridFT::get(vi::VisBuffer2& vb, Int row)
     matchChannel(vb);
   
   
-  //cerr << "chanMap " << chanMap << endl;
+    //cerr << "GETchanMap " << chanMap << endl;
   //No point in reading data if its not matching in frequency
   if(max(chanMap)==-1)
     return;

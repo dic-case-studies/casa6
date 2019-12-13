@@ -761,12 +761,12 @@ synthesisimager::initmpi()
 
   try 
     {
-      cerr << "is applicator initialized " << applicator.initialized() << endl;
+      //cerr << "is applicator initialized " << applicator.initialized() << endl;
 	if(!applicator.initialized()){
 	  int argc=1;
-          char **argv;
+          char * *argv=nullptr;
           casa::applicator.init ( argc, argv );
-          cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
+          //cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
         rstat=true;
 	}
 	else{

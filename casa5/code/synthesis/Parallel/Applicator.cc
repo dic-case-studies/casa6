@@ -182,7 +182,7 @@ void Applicator::loop()
   while(!die){
     comm->connectToController();
     comm->setAnyTag();
-    cerr << "in loop get" << endl;
+    //cerr << "in loop get" << endl;
     comm->get(what);
     if (debug_p) {
         cerr << "worker, got what (algID/stop): " << what << endl;
@@ -229,7 +229,7 @@ Bool Applicator::nextAvailProcess(Algorithm &a, Int &rank)
       // the assigned worker process to activate it (see loop()).
       comm->connect(rank);
       comm->setTag(tag);
-      cerr << "nextAvailproc settag " << tag << " rank " << rank << " name " << a.name() << endl;
+      //cerr << "nextAvailproc settag " << tag << " rank " << rank << " name " << a.name() << endl;
       put(tag);
       /*
       if (not isWorker() and numProcs() <= 1){
@@ -250,7 +250,7 @@ Bool Applicator::nextAvailProcess(Algorithm &a, Int &rank)
       assigned = false;
     }
   }
-  cerr << "nextAvailproc controller assigned " << assigned << endl;
+  //cerr << "nextAvailproc controller assigned " << assigned << endl;
   
   if ((!isWorker()) && (numProcs() <= 1) && assigned){
       // the first int, algID, is consumed in the loop for the workers when running
@@ -299,11 +299,11 @@ Int Applicator::nextProcessDone(Algorithm &a, Bool &allDone)
     // Wait for a process to finish with the correct algorithm tag
     comm->connectAnySource();
     Int tag = algorithmIds.find(a.name()) == algorithmIds.end( ) ? 0 : algorithmIds.at(a.name());
-    cerr <<"procdone name" << a.name() << " id " << tag << endl;
+    //cerr <<"procdone name" << a.name() << " id " << tag << endl;
     comm->setTag(tag);
     Int doneSignal;
     rank = get(doneSignal);
-    cerr <<" procdone rank " << rank << " donesig " << doneSignal << endl;
+    //cerr <<" procdone rank " << rank << " donesig " << doneSignal << endl;
     // Consistency check; should return a DONE signal to contoller
     // on completion.
     if (doneSignal != DONE) {
@@ -437,7 +437,7 @@ Int Applicator::findFreeProc(Bool &lastOne)
     }
   }
   lastOne = (nfree==1);
-  cerr <<"FreeProc procstat "<< procStatus << " nfree " << nfree << endl; 
+  //cerr <<"FreeProc procstat "<< procStatus << " nfree " << nfree << endl; 
   return freeProc;
 }
 

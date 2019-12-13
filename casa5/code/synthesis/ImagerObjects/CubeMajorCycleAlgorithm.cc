@@ -282,10 +282,19 @@ CountedPtr<SIImageStore> CubeMajorCycleAlgorithm::subImageStore(const int imId){
 			}
 			if(Table::isReadable(modelnames[imId])){
 				PagedImage<Float> model(modelnames[imId], TableLock::UserNoReadLocking);
+				Int nchannels=model.shape()[3];
+				///Pass some extra channels for interpolation while degridding
+				Int startmodchan=(chanBeg-2) >0 ? chanBeg-2 : 0;
+				Int endmodchan=(chanEnd+2) < nchannels ? chanEnd+2 : nchannels-1 ;
+				//cerr << "START END mod " << startmodchan << "  " << endmodchan << endl;
 				//Darn has to lock it as writable because overlap in SIMapperCollection code 
 				//wants that...though we are not really modifying it here
 				Bool writeisneeded=(imSel_p.nelements()!=1 || startmodel_p[imId].nelements() >0);
-				submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, writeisneeded));
+				submodel.reset(SpectralImageUtil::getChannel(model, startmodchan, endmodchan, writeisneeded));
+				
+				//ImageInterface<Float>* modim=new PagedImage<Float>(modelnames[imId], TableLock::UserNoReadLocking);
+				//submodel.reset(modim);
+				
 			}
 			
 		}

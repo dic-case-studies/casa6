@@ -179,9 +179,7 @@ int main(int argc, char **argv)
         // Wait for all outstanding processes to return
         rank = casa::applicator.nextProcessDone(*cmc, allDone);
         while (!allDone) {
-			Int serialbug;
-			//if(casa::applicator.isSerial())
-				//casa::applicator.get(serialbug);// get that extra put
+		      
             Bool status;
             casa::applicator.get(status);
             if(status)

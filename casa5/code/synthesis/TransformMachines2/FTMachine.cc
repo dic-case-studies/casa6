@@ -945,7 +945,7 @@ using namespace casa::vi;
     
 	
 	  
-      if((imageFreq_p.nelements()==1) || (freqInterpMethod_p== InterpolateArray1D<Double, Complex>::nearestNeighbour)||  (vb.nChannels()==1)){
+      if((imageFreq_p.nelements()==1) || (freqInterpMethod_p== InterpolateArray1D<Double, Complex>::nearestNeighbour)||  (vb.nChannels()==1) ){
         Cube<Bool> modflagCube;
         setSpectralFlag(vb,modflagCube);
 	
@@ -1021,7 +1021,7 @@ using namespace casa::vi;
 	
     if((imageFreq_p.nelements()==1) || 
        (vb.nChannels()==1) || 
-       (freqInterpMethod_p== InterpolateArray1D<Double, Complex>::nearestNeighbour)){
+       (freqInterpMethod_p== InterpolateArray1D<Double, Complex>::nearestNeighbour) ){
         origdata->reference(data);
         return false;
       }
@@ -1043,6 +1043,7 @@ using namespace casa::vi;
 			Double newIncr= (imageFreq_p[1]-imageFreq_p[0])/std::floor(width);
 			Double newStart=imageFreq_p[0]-(imageFreq_p[1]-imageFreq_p[0])/2.0+newIncr/2.0;
 			Cube<Complex> newflipgrid(flipgrid.shape()[0], flipgrid.shape()[1], newNchan);
+                        
 			for (Int k=0; k < newNchan; ++k){
 				newImFreq[k]=newStart+k*newIncr;
 				Int oldchan=k/Int(std::floor(width));
@@ -1060,6 +1061,16 @@ using namespace casa::vi;
       Cube<Complex> flipdata((origdata->shape())(0),(origdata->shape())(2),
   			   (origdata->shape())(1)) ;
       flipdata.set(Complex(0.0));
+
+      ///TESTOO  
+      //Cube<Bool> inflag(flipgrid.shape());
+      //inflag.set(False);
+      //Cube<Bool> outflag(flipdata.shape());
+      //InterpolateArray1D<Double,Complex>::
+      //  interpolate(flipdata,outflag,visFreq,newImFreq,flipgrid,inflag,freqInterpMethod_p, False, True);
+
+      //cerr << "OUTFLAG " << anyEQ(True, outflag) << " chanmap " << chanMap << endl;
+      /////End TESTOO
       InterpolateArray1D<Double,Complex>::
         interpolate(flipdata,visFreq, newImFreq, flipgrid,freqInterpMethod_p);
       
@@ -1067,6 +1078,7 @@ using namespace casa::vi;
       
       Cube<Bool>  copyOfFlag;
       //Vector<Int> mychanmap=multiChanMap_p[vb.spectralWindows()[0]];
+      matchChannel(vb);
       copyOfFlag.assign(vb.flagCube());
       for (uInt k=0; k< chanMap.nelements(); ++ k)
 	if(chanMap(k) == -1)
@@ -1914,8 +1926,18 @@ using namespace casa::vi;
       c=0.0;
       Vector<Double> f(1);
       Int nFound=0;
-
-
+      
+      Double minFreq;
+      Double maxFreq;
+      spectralCoord_p.toWorld(minFreq, Double(0));
+      spectralCoord_p.toWorld(maxFreq, Double(nchan));
+      if(maxFreq < minFreq){
+        f(0)=minFreq;
+        minFreq=maxFreq;
+        maxFreq=f(0);      
+      }
+        
+      
       //cout.precision(10);
       for (Int chan=0;chan<nvischan;chan++) {
         f(0)=lsrFreq[chan];
@@ -1944,11 +1966,13 @@ using namespace casa::vi;
 	  if(nvischan > 1){
 	    Double fwidth=lsrFreq[1]-lsrFreq[0];
 	    Double limit=0;
-	    Double where=c(0)*fabs(spectralCoord_p.increment()(0));
+	    //Double where=c(0)*fabs(spectralCoord_p.increment()(0));
 	    if( freqInterpMethod_p==InterpolateArray1D<Double,Complex>::linear)
 	      limit=2;
 	    else if( freqInterpMethod_p==InterpolateArray1D<Double,Complex>::cubic ||  freqInterpMethod_p==InterpolateArray1D<Double,Complex>::spline)
 	      limit=4;
+            //cerr<< "where " << where << " pixel " << pixel << " fwidth " << fwidth << endl;
+            /*
 	    if(((pixel<0) && (where >= (0-limit*fabs(fwidth)))) )
 	      chanMap(chan)=-2;
 	    if((pixel>=nchan) ) {
@@ -1958,6 +1982,14 @@ using namespace casa::vi;
 	      if( ( (fwidth >0) &&where < (fend+limit*fwidth))  || ( (fwidth <0) &&where > (fend+limit*fwidth)) )
 		chanMap(chan)=-2;
 	    }
+            */
+            
+            if((f(0) <  (maxFreq + limit*fabs(fwidth))) && (f(0) >(maxFreq-0.5*fabs(fwidth)))){
+              chanMap(chan)=-2;
+            }
+            if((f(0) < minFreq+0.5*fabs(fwidth)) &&  (f(0) > (minFreq-limit*fabs(fwidth)))){
+              chanMap(chan)=-2;
+            }
 	  }
 
 

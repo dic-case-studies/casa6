@@ -815,6 +815,10 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
     TableRecord outRec; 
     Bool addtorec=false;
     MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
+    newTab.lock(True);
+    if(Table::isReadable(newTab.sourceTableName())){
+      newTab.source().lock(True);   
+    }
     if(isModelDefined(elkey, newTab)){ 
       getModelRecord(elkey, outRec, thems);
       //if incremental no need to check & remove what is in the record
@@ -892,10 +896,14 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
     //  }
     //  MSSourceColumns srcCol(mss);
     //  srcCol.sourceModel().put(0, outRec);
+    newTab.unlock();
+    if(Table::isReadable(newTab.sourceTableName())){
+      newTab.source().unlock();   
+    }
   }
   catch(...){
     logio << "Could not save virtual model data column due to an artificial virtual model size limit. \nYou may need to use the scratch column if you need model visibilities" << LogIO::WARN << LogIO::POST ;
-    
+   const_cast<MeasurementSet& >(thems).unlock(); 
   }
 
 }

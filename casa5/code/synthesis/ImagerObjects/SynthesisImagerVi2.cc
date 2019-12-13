@@ -159,7 +159,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ////TESTOO
     //Int CPUID;
 	//MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
-	//cerr << CPUID << " SELPARS " << !selpars.incrmodel << "   " << !selpars.usescratch << "  "<< !selpars.readonly << endl;
+	//cerr  << " SELPARS " << selpars.toRecord()  << endl;
     if(!selpars.incrmodel && !selpars.usescratch && !selpars.readonly)
       refim::VisModelData::clearModel(thisms, selpars.field, selpars.spw);
 
@@ -1448,6 +1448,12 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			fudge_factor = 9;
 		}
 		std::tie(numchunks, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
+		////TESTOO
+		//numchunks=2;
+		//startchan.resize(2);startchan[0]=0; startchan[1]=10;
+		//endchan.resize(2); endchan[0]=9; endchan[1]=19;
+		
+		/////END TESTOO
 		//cerr << "NUMCHUNKS " << numchunks << " start " <<  startchan << " end " << endchan << endl;
 		Record controlRecord;
 		//For now just field 0 but should loop over all

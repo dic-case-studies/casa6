@@ -23,6 +23,7 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
+    from casatools import table
 else:
     from taskinit import *
 
@@ -30,6 +31,7 @@ else:
     from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
+    table=casac.table
 try:
     if is_CASA6:
         from casampi.MPIEnvironment import MPIEnvironment
@@ -40,7 +42,7 @@ try:
     mpi_available = True
 except ImportError:
     mpi_available = False
-table=casac.table
+
 def tclean(
     ####### Data Selection
     vis,#='', 
@@ -324,7 +326,8 @@ def tclean(
                 ###for some reason imager keeps the psf open delete it and recreate it afterwards
                 imager.deleteTools()
                 mytb=table()
-                mytb.open(bparm['imagename']+'.psf')
+                psfname=bparm['imagename']+'.psf.tt0' if(os.path.exists( bparm['imagename']+'.psf.tt0')) else bparm['imagename']+'.psf'
+                mytb.open(psfname)
                 miscinf=mytb.getkeyword('miscinfo')
                 iminf=mytb.getkeyword('imageinfo')
                 #print ('miscinfo {} {}'.format(miscinf, iminf))
@@ -338,7 +341,7 @@ def tclean(
                 psfimager.initializeImagers()
                 psfimager.setWeighting()
                 psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
-                mytb.open(bparm['imagename']+'.psf', nomodify=False)
+                mytb.open(psfname, nomodify=False)
                 mytb.putkeyword('imageinfo',iminf)
                 mytb.putkeyword('miscinfo',miscinf)
                 mytb.done()

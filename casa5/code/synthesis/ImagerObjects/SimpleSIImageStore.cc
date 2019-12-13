@@ -101,13 +101,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		if ( !itsForwardGrid ) {
 			Vector<Int> whichStokes ( 0 );
 			IPosition cimageShape;
-			cimageShape=itsImageShape;
-			MFrequency::Types freqframe = itsCoordSys.spectralCoordinate ( itsCoordSys.findCoordinate ( Coordinate::SPECTRAL ) ).frequencySystem ( True );
+                        //			cimageShape=itsImageShape;
+                        if(!itsModel)
+                          throw(AipsError("have to have model to predict"));
+                        cimageShape=itsModel->shape();
+                        CoordinateSystem cs=itsModel->coordinates();
+			MFrequency::Types freqframe = cs.spectralCoordinate ( cs.findCoordinate ( Coordinate::SPECTRAL ) ).frequencySystem ( True );
 			// No need to set a conversion layer if image is in LSRK already or it is 'Undefined'
 			if ( freqframe != MFrequency::LSRK && freqframe!=MFrequency::Undefined && freqframe!=MFrequency::REST ) {
 				itsCoordSys.setSpectralConversion ( "LSRK" );
+                                cs.setSpectralConversion("LSRK");
 			}
-			CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord ( itsCoordSys,
+			CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord ( cs,
                                        whichStokes, itsDataPolRep );
 			cimageShape ( 2 ) =whichStokes.nelements();
 
