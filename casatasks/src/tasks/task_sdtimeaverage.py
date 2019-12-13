@@ -79,15 +79,15 @@ def sdtimeaverage(
     #+
     #  defaut value (timebin=all) is to be handled.
     #-
-
-    if (timebin is 'all') or (timebin == ''):
+    print ("checking timebin")
+    if (timebin == 'all') or (timebin == ''):
         timebin =  calc_timebin(infile)+'s'
         print ("DBG::timebin compensated with time records. ", timebin)
 
     #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
     #-
-
+    print ("checking antenna")
     if (len(antenna) != 0) and (antenna.find('&') == -1):
         antenna = antenna + '&&&'
         print("DBG::corrected Antena ID with &&&") 
@@ -114,7 +114,8 @@ def sdtimeaverage(
 
 #  CASA-12721 NEW
 def calc_timebin(msname):
-    with tbmanager(msname) as tb:
+#   with tbmanager(msname) as tb:
+    with open_table(msname) as tb:
         tm = tb.getcol('TIME')
 
     leng_ = len(tm)

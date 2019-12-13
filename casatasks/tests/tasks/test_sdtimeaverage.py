@@ -39,7 +39,8 @@ else:
 
 # MS name for this test
 def_inputMs  = "sdimaging.ms"
-def_outputMS = "bave.ms"
+def_workMs   = "sdimaging-t.ms"
+def_outputMs = "bave.ms"
 
 # Important parameter
 interval = 2.99827  # same as the MAIN in sdimaging.ms
@@ -65,6 +66,7 @@ class test_sdtimeaverage(unittest.TestCase):
         # copy from master
         self.i_ms = def_inputMs
         os.system('cp -RL '+ os.path.join(datapath,self.i_ms) +' '+ self.i_ms)
+        os.system('cp -RL '+ os.path.join(datapath,self.i_ms) +' '+ def_workMs)
 
         # output MS 
         self.o_ms = ""
@@ -74,14 +76,18 @@ class test_sdtimeaverage(unittest.TestCase):
         self.tol = errLimit
 
         # default Args (minimum)
-        self.args = {'infile'  :  def_inputMs,  
-                     'outfile' :  def_outputMS  } 
+        self.args = {'infile'     :  def_inputMs,
+                     'outfile'    :  def_outputMs,
+                     'datacolumn' :  'float_data'    # CASR-474 (float ->data) 
+                    }
     def tearDown(self):
 
         # delete copied in-MS and out-MS
         print( "tearDown::deleting MSs")
-        os.system('rm -rf ' + self.i_ms)
-        os.system('rm -rf ' + "bave*.ms")   ## Comment out , for DEBUG ##
+
+#       os.system('rm -rf ' + self.i_ms )
+#       os.system('rm -rf ' + def_workMs )
+        os.system('rm -rf ' + def_outputMs )   ## Comment out , for DEBUG ##
 
         return
 
@@ -156,7 +162,7 @@ class test_sdtimeaverage(unittest.TestCase):
             self.wgt  = tb.getcell('WEIGHT', row)
             self.sig  = tb.getcell('SIGMA', row)           
         
-        return 
+        return self.data 
 #+
 # Write Data (Scalar)
 #-
@@ -168,7 +174,39 @@ class test_sdtimeaverage(unittest.TestCase):
                 tb.putcell("TIME", irow,  val )
 
         return
+#+
+# Dump float_data
+#-
 
+    def dump_data( self, MsName):
+       self. get_main( def_inputMs )
+
+       # get (float)data from each row 
+       for row in range(len(self.tm) ):
+           print( "row=",row)
+           data_tmp = self. get_spectra( def_inputMs, row )
+
+           for pos in range(1024):
+               print (  row, pos, data_tmp[0][pos], data_tmp[1][pos] )
+
+    def generate_data( self, MsName ):
+
+        self. get_main( def_inputMs )
+        data_row0 = self. get_spectra( MsName, 0 )  # data (row 0)
+
+        # fill const #
+
+        for i in range(2):
+            for j in range(1024):
+                data_row0[i][j] = 0.1
+
+        for row in range(len(self.tm) ):
+            #print( "- generating rec=", row);
+            with tbmanager(MsName,nomodify=False) as tb:
+                # write as an Array[2,1024] 
+                tb.putcell("FLOAT_DATA", row,  data_row0 ) 
+        return   
+          
 #+
 # Prepare variable on self context.
 #-
@@ -180,46 +218,64 @@ class test_sdtimeaverage(unittest.TestCase):
 # TEST FIXTURE
 #==================================================
 
-    def test_param0(self):
-        print( "XXXXXXXX test_param( edit MS) XXXXXXXX")
-  
-        # Experiment #
-        self. declar() 
-        self. get_main( def_inputMs )
-                
-        for row in range(1024):
-            self. get_spectra( def_inputMs, row )
-            print ( "DATA[", row, "] =(",self.data[0][row], self.data[1][row], ")")
- 
     def test_param1(self): 
-
         print( "XXXXXXXX test_param(1) XXXXXXXX")
 
-        prm =  {'timebin' : '14400s', 
+        print ( "- reading MAIN table" )
+        self. get_main( def_inputMs )
+
+        print ( "- generationg DATA " )
+        self. generate_data( def_workMs )
+
+        prm =  {'infile'  : def_inputMs,
+                'timebin' : 'all', 
                 'antenna':'GBT'  }
         self.run_task( prm )
 
 
+    def test_param20(self):
+        print( "XXXXXXXX test_param(20: timebin=all) XXXXXXXX")
+
+        prm =  {'timebin' : '6128s',
+                'infile'  : def_workMs,
+                'outfile' : 'bave-20-6128.ms'  }
+        self.run_task( prm )
+
+    def test_param21(self):
+        print( "XXXXXXXX test_param(20: timebin=all) XXXXXXXX")
+
+        prm =  {'timebin' : '12256s',
+                'infile'  : def_workMs,
+                'outfile' : 'bave-20-12256.ms'  }
+        self.run_task( prm )
+
+
+
+    '''
+
     def test_param30(self): 
-        print( "XXXXXXXX test_param(3-0: timebin=all) XXXXXXXX")
+        print( "XXXXXXXX test_param(30: timebin=all) XXXXXXXX")
 
         prm =  {'timebin' : 'all', 
                 'antenna' : 'GBT',
-                'outfile' : 'bave-2.ms'  }
+                'outfile' : 'bave-30.ms'  }
         self.run_task( prm )
    
      
     def test_param31(self):
-        print( "XXXXXXXX test_param(3-1: timebin Nospecified) XXXXXXXX")
+        print( "XXXXXXXX test_param(31: timebin Nospecified) XXXXXXXX")
 
         prm =  {'outfile' : 'bave-31.ms'  }
         self.run_task( prm )
+
 
     def test_param32(self):
         print( "XXXXXXXX test_param(3-2: timebin='' ) XXXXXXXX")
         prm =  {'timebin' : '',
                 'outfile' : 'bave-32.ms'  }
         self.run_task( prm )
+
+   '''
 
     #
     # ORIGINAL
