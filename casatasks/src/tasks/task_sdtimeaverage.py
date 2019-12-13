@@ -95,7 +95,7 @@ def sdtimeaverage(
     casalog.origin('sdtimeaverage')
 
     try:
-        # CAS-128212 revised: seelect and time averaging (at same time)
+        # CAS-12721 revised: seelect and time averaging (at same time)
 
         do_mst(infile=infile, datacolumn=datacolumn,
                field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna, 
@@ -110,11 +110,10 @@ def sdtimeaverage(
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
     finally:
-        None
+        pass
 
 #  CASA-12721 NEW
 def calc_timebin(msname):
-#   with tbmanager(msname) as tb:
     with open_table(msname) as tb:
         tm = tb.getcol('TIME')
 
@@ -168,8 +167,8 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         return False
 
     # Create a local copy of the MSTransform tool
-    mtlocal = mstransformer( )
-    mslocal = ms( )
+    mtlocal = mstransformer()  # CASA6 changed.
+    mslocal = ms( )            # CASA6 changed.
     
     try:
         print( "DBG::do_mst::start try ")
@@ -198,7 +197,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         config['tileshape'] = tileshape
 
         # Only parse timeaverage parameters when timebin > 0s
-        qa = quanta( ) 
+        qa = quanta( ) # CASA6 needed
         tbin = qa.convert(qa.quantity(timebin), 's')['value']
         if tbin < 0:
             raise Exception("Parameter timebin must be > '0s' to do time averaging")
