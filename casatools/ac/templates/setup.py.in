@@ -110,7 +110,7 @@ for arg in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.31.jar'
+xml_jar_file = 'xml-casa-assembly-1.34.jar'
 real_gnu = None
 
 if pyversion < 3:
@@ -156,18 +156,63 @@ else:
 def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
-        (major, minor) = args.version.split(".")
-        return(int(major), int(minor))
+        (major, minor, patch, feature) = args.version.split(".")
+        return(int(major), int(minor), int(patch), int(feature),"","","")
     else:
         proc = Popen( [ "scripts/version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
-        (major, minor) = out.split( )[0].split(".")
-        print((major,minor))
-        return(int(major), int(minor))
+        print(out)
+        devbranchtag = out.split(" ")[0].strip()
+        print(devbranchtag)
+        releasetag = out.split(" ")[1].strip()
+        dirty=""
+        if (len(out.split(" ")) == 3):
+            print("Latest commit doesn't have a tag. Adding -dirty flag to version string.")
+            dirty="+" + out.split(" ")[2].strip() # "+" denotes local version identifier as described in PEP440
+        print(releasetag)
+        devbranchversion = ""
+        devbranchrevision = ""
+        if (devbranchtag != releasetag):
+            devbranchrevision = devbranchtag.split("-")[-1]
+            if (devbranchtag.startswith("CAS-")):
+                devbranchversion=devbranchtag.split("-")[1]
+            else:
+                devbranchversion=100
+            devbranchrevision = devbranchtag.split("-")[-1]
+        else:
+            isDevBranch = False
+        (major, minor, patch, feature) = releasetag.split(".")
+        #print(major, minor, patch, feature, devbranchversion, devbranchrevision, dirty)
+        return(int(major), int(minor), int(patch), int(feature), devbranchversion, devbranchrevision, dirty)
 
-(casatools_major,casatools_minor) = compute_version( )
-casatools_version = '%d.%d' % (casatools_major,casatools_minor)
+(casatools_major,casatools_minor,casatools_patch,casatools_feature, devbranchversion, devbranchrevision, dirty) = compute_version( )
+print(casatools_major, casatools_minor, casatools_patch, casatools_feature, devbranchversion, devbranchrevision, dirty)
+casatools_version = '%d.%d.%d.%d%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,dirty)
+if devbranchversion !="":
+    casatools_version = '%d.%d.%d.%da%s.dev%s%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,devbranchversion,devbranchrevision,dirty)
+print(casatools_version)
 
+
+def install_version_header( major, minor, patch, feature, verstr ):
+    with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
+        for line in f:
+            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_FEATURE@",str(feature)).replace("@CASATOOLS_VERSION_STRING@",verstr)
+            out.write(l)
+
+def install_version_cc( major, minor, patch, feature,  verstr ):
+    with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
+        for line in f:
+            l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
+                    .replace("@CASA_VERSION_MINOR@",str(minor))\
+                    .replace("@CASA_VERSION_PATCH@",str(patch))\
+                    .replace("@CASA_VERSION_FEATURE@",str(feature))\
+                    .replace("@CASA_VARIANT@","")\
+                    .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")
+            out.write(l)
+
+print("generating version header...")
+install_version_header(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
 ###
 ###  return string discription of the current operating system, e.g.
 ###
@@ -277,7 +322,7 @@ def source_files(
     find all of the source files to compile beneath path
     """
     result = [ ]
-    my_apriori_exclusions = a_priori_exclusions if do_apriori_exclusions else [] 
+    my_apriori_exclusions = a_priori_exclusions if do_apriori_exclusions else []
     for root, dirs, files in os.walk(path):
         if root in root_filter or any(map(lambda x: root.endswith(x),a_priori_directory_exclusions)):
             continue
@@ -327,12 +372,6 @@ def so_version( ):
     y=(delta>>8)&0xff
     x=(delta>>16)&0xffff
     return "%d.%d.%d" % (x,y,z)
-
-def install_version_header( major, minor, verstr ):
-    with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
-        for line in f:
-            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_VERSION_STRING@",verstr)
-            out.write(l)
 
 def install_xml_casa( ):
     script = os.path.join('scripts','xml-casa')
@@ -1092,6 +1131,7 @@ class casa_build_ext(build_ext):
         build_ext.build_extensions(self)
 
     def run(self):
+        
         global a_priori_directory_exclusions
         global a_priori_exclusions
         do_wheel_closure = doing_wheel_build
@@ -1106,8 +1146,6 @@ class casa_build_ext(build_ext):
 
         print("copying xml-casa...")
         install_xml_casa( )
-        print("generating version header...")
-        install_version_header(casatools_major,casatools_minor,casatools_version)
 
         build_ext.run(self)
         """
@@ -1714,7 +1752,7 @@ def compile_casacore_tests():
         ],
         do_apriori_exclusions=False
     )
-    CASACORE_TESTS = list(filter(lambda x: '/test/' in x, CASACORE_CC)) 
+    CASACORE_TESTS = list(filter(lambda x: '/test/' in x, CASACORE_CC))
     tmp = []
     for f in CASACORE_TESTS:
         if re.search("^[td].*cc$", os.path.basename(f)):
@@ -1778,13 +1816,13 @@ def compile_casacore_tests():
                 + "-Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include "
                 # -shared causes a segfault
                 + "-lpython3.6m " + dflags + " "
-                + "-o " + exefile + " " + wflags + " " 
+                + "-o " + exefile + " " + wflags + " "
                 + f + " "
             )
             # ommitting POSTCOMPILE for now
             #  + '\n\t$(POSTCOMPILE)')
             # mk.write(
-            #     "\n\n" + test_targ.format(src=f, base=base) 
+            #     "\n\n" + test_targ.format(src=f, base=base)
             # )
             # mk.write("\n" + g_dep_targ.format(base=base))
             # mk.write("\n" + g_dep_targ.format(base=base))
@@ -1794,7 +1832,7 @@ def compile_casacore_tests():
         r = re.compile(os.sep + 'test\.')
         substr = os.sep + 'temp.'
         mydirs = sep.join(
-            list(targdirs) + ["$(DEPDIR)" + os.sep + r.sub(substr, s, 1) 
+            list(targdirs) + ["$(DEPDIR)" + os.sep + r.sub(substr, s, 1)
             for s in targdirs]
         )
         mk.write("\n" + make_test_dirs + ":\n\t@mkdir -p " + mydirs + "\n")
@@ -1826,13 +1864,13 @@ def compile_casacore_tests():
             "\n" + make_tests_targ + ": " + make_test_dirs + " " \
             + make_links_targ + " " + sep.join(exe_list) + "\n"
         )
-        
+
 def location_info(handle, frameinfo):
     handle.write(
         "\n# written from " + str(frameinfo.filename) + " line "
         + str(frameinfo.lineno)
     )
-    
+
 def write_miriad():
     # miriad c files
     MIR_SRC =  source_files( "casacore/mirlib",file_suffix_filter=".c" )
@@ -1958,7 +1996,8 @@ class create_makefile(Command):
         # Generation of various files. This can probably be done in make, if really
         # necessary, but it's so quick it's easiest to just do it using the existing
         # python functionality for now
-        install_version_header(casatools_major,casatools_minor,casatools_version)
+        #install_version_header(casatools_major, casatools_minor, casatools_patch, casatools_feature, casatools_version)
+        #install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
         generate_config(moduledir, props)
 
         # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files
@@ -2118,7 +2157,7 @@ class create_makefile(Command):
         copy_to_dirs = {}
         files_to_copy.append(xml_casa)
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
-        assembly_jar = "xml-casa-assembly-1.31.jar"
+        assembly_jar = "xml-casa-assembly-1.34.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
         copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
         copy_to_list = []

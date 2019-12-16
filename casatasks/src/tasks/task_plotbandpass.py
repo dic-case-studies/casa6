@@ -7126,8 +7126,8 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
               type(selectedValues) == np.int):
               conditions['readings'] = 1
               if (verbose):
-                  print("selectedValues=%d, myTimes[0]=%.0f, myTimes[1]=%.0f, len(matches)=%d, len(matches2)=%d" % (selectedValues,
-                     myTimes[0],myTimes[1], len(matches), len(matches2)))
+                  print("selectedValues=%d, myTimes[0]=%.0f, len(matches)=%d, len(matches2)=%d" % (selectedValues,
+                     myTimes[0], len(matches), len(matches2)))
                   if (len(matches) > 0):
                       print("matches[0]=%f, matches[-1]=%f" % (matches[0], matches[-1]))
                   if (len(matches2) > 0):

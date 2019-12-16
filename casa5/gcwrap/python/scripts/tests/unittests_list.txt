@@ -31,7 +31,6 @@ test_flaghelper                 scastro@eso.org
 test_flagmanager                scastro@eso.org
 test_fluxscale                  ttsutsum@nrao.edu
 test_fringefit			kettenis@jive.eu
-test_gaincal                    gmoellen@aoc.nrao.edu
 test_gencal                     ttsutsum@nrao.edu
 test_getchunk                   dmehring@nrao.edu
 test_hanningsmooth              scastro@eso.org
@@ -158,6 +157,7 @@ test_vishead                    jkern@nrao.edu
 test_visstat                    jkern@nrao.edu
 test_vpmanager                  dpetry@eso.org
 test_wvrgcal                    dpetry@eso.org
+test_req_task_listcal           fpouzols@eso.org
 test_req_task_listobs           nschweig@nrao.edu
 test_req_task_listobs           nschweig@nrao.edu
 test_req_task_listhistory       nschweig@nrao.edu
