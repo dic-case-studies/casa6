@@ -18,7 +18,7 @@ except ImportError:
     logging.debug("Import casa6 errors. Trying CASA5...")
     from taskinit import tbtool
     tb = tbtool()
-    tb2 = casatools.table()
+    tb2 = tbtool()
     casa5 = True
 
 class Compare:
