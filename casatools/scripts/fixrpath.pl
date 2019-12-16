@@ -2,9 +2,13 @@
 use strict;
 use warnings;
 
+(my $major, my $minor, my $micro) = split(/\./, `sw_vers -productVersion`);
+my $os_ver=$major . "." .$minor;
+
 # Read libs
 
-my $solibdir = "./build/lib.macosx-10.14-x86_64-3.6/casatools/__casac__/";
+my $solibdir = "./build/lib.macosx-" . $os_ver . "-x86_64-3.6/casatools/__casac__/";
+print ("libdir: $solibdir\n");
 my $dylibdir = $solibdir . "/lib/";
 
 # Fix .so
