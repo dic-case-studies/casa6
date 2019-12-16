@@ -41,9 +41,16 @@ elsif ($gitbranch =~ "release/"){
 }
 print ("$last_branch_tag $last_release_tag");
 my $headcommit=`git rev-parse HEAD`;
-my $tagcommit=`git rev-list -n 1 $last_branch_tag`;
-if ($headcommit ne $tagcommit) {
+
+# No tag at all for branch
+if ($last_branch_tag eq "") {
     print (" dirty");
+# Check if the latest tag is the latest commit
+} else {
+    my $tagcommit=`git rev-list -n 1 $last_branch_tag`;
+    if ($headcommit ne $tagcommit) {
+        print (" dirty");
+    }
 }
 
 print ("\n");
@@ -55,7 +62,7 @@ sub get_last_branch_tag () {
     chomp( @tags = <$tags> );
     close( @tags );
     @versions = grep(/^$gitbranch-\d+$/, @tags);
-    print(@versions,"\n");
+    #print(@versions,"\n");
     my @sorted =
         map { $_->[0] }
         sort { $a->[1] cmp $b->[1] }
@@ -108,7 +115,7 @@ sub get_last_release_tag () {
 sub get_last_release_tag_for_branch () {
     my $gitbranch = shift;
     my @versions;
-    open( $githashes, "git log --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
+    open( $githashes, "git log --since 2019-10-01 --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
     chomp( @hashes = <$githashes> );
     close( $githashes );
     foreach ( @hashes ) {
