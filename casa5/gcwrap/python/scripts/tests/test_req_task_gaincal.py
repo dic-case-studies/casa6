@@ -28,12 +28,16 @@ try:
     from casatasks import gaincal, casalog
     CASA6 = True
     tb = casatools.table()
+    import sys
+    import os
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    import sys
+    import os
 import testhelper as th
-import os
 import unittest
 import shutil
 import numpy as np
