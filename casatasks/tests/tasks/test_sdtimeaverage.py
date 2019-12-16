@@ -42,19 +42,10 @@ def_inputMs  = "sdimaging.ms"
 def_workMs   = "sdimaging-t.ms"
 def_outputMs = "bave.ms"
 
-# Important parameter
-interval = 2.99827  # same as the MAIN in sdimaging.ms
-num_ave  = 3684
-errLimit = 1e-05
-
-
-
-def check_eq(val, expval, errLimit=None):
-    """Checks that val matches expval within tol."""
-
-    pass
-    return
-
+# Compare err limit , ideally vector(1024 x 2) is the best
+nRow     = 3843
+errLimit = 5e-8
+interval_0 = 1.0
 
 ##############
 # Test Entry
@@ -72,7 +63,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.o_ms = ""
 
         # params
-        self.interval = interval
+        self.interval = interval_0
         self.tol = errLimit
 
         # default Args (minimum)
@@ -80,13 +71,13 @@ class test_sdtimeaverage(unittest.TestCase):
                      'outfile'    :  def_outputMs,
                      'datacolumn' :  'float_data'    # CASR-474 (float ->data) 
                     }
+
     def tearDown(self):
 
         # delete copied in-MS and out-MS
         print( "tearDown::deleting MSs")
 
-#       os.system('rm -rf ' + self.i_ms )
-#       os.system('rm -rf ' + def_workMs )
+        os.system('rm -rf ' + self.i_ms )
         os.system('rm -rf ' + def_outputMs )   ## Comment out , for DEBUG ##
 
         return
@@ -102,37 +93,28 @@ class test_sdtimeaverage(unittest.TestCase):
         sdtimeaverage(**self.args)
 
 
-#+
-# Get number of data (record count)
-#-
-    def check_num_data(self, num_ave=1):
-        pass     
-        return 
+#################
+# Check Result
+#################
 
-    def get_num_data(self, stcol=None):
-        pass
-        return
+    def checkZero(self, data):
+        print ("-- checking Zero.")
+        for n in range(len(data)):
+            if data[0][n] >  errLimit:
+                return False
+            if data[1][n] >  errLimit:
+                return False
+        return True
 
-#+
-# Check Values
-#-
-    def check_values(self, num_ave):
+    def checkZeroSum(self, data1,data2):
+        print("-- checking Equal." )
+        for n in range(len(data1)):
+            if abs(data1[0][n] + data2[0][n]) >  errLimit:
+                return False
+            if abs(data1[1][n] + data2[1][n]) >  errLimit:
+                return False
+        return True
 
-        # time
-
-        # antenna ID
-
-        # spectrum
-
-        # weight and sigma
-
-        pass
-        return
-
-
-    def _do_check_values(self, iidx, oidx):
-        pass
-        return
 
 #########################
 # Generating Test Data 
@@ -163,31 +145,6 @@ class test_sdtimeaverage(unittest.TestCase):
             self.sig  = tb.getcell('SIGMA', row)           
         
         return self.data 
-#+
-# Write Data (Scalar)
-#-
-    def put_scalar_data(self, MsName):
-        with tbmanager(MsName,nomodify=False) as tb:
-            # write value 
-            val = 999.8888
-            for irow in range(10):
-                tb.putcell("TIME", irow,  val )
-
-        return
-#+
-# Dump float_data
-#-
-
-    def dump_data( self, MsName):
-       self. get_main( def_inputMs )
-
-       # get (float)data from each row 
-       for row in range(len(self.tm) ):
-           print( "row=",row)
-           data_tmp = self. get_spectra( def_inputMs, row )
-
-           for pos in range(1024):
-               print (  row, pos, data_tmp[0][pos], data_tmp[1][pos] )
 
 #+
 # Generate DATa on FLOAT_DATA
@@ -195,41 +152,46 @@ class test_sdtimeaverage(unittest.TestCase):
     def generate_data( self, MsName ):
 
         self. get_main( def_inputMs )
-        data_array = [[0]*1024]*2  
 
-        # write to cells #
-        for row in range(len(self.tm) ):
-            x = row - 1500
-            amp = numpy.exp( -0.00001 * x * x ) 
-            # make const #
-            for j in range(1024):
-                data_array[0][j] = j * 0.001 * amp
-                data_array[1][j] = j * 0.001 * amp
-
-            with tbmanager(MsName,nomodify=False) as tb:
+        # Test Slope
+        offset = 0.0
+        slope  = 0.0001
+        # Time
+        baseTime   = 0
+        # Table Access
+        with tbmanager(MsName,nomodify=False) as tb:
+            # write to cells #
+            for row in range(len(self.tm) ):
+                # data array [1024 x 2 ]
+# [NG]          data_array = [[0]*1024]*2 
+                data_array = [[i for i in range(1024) ],[i for i in range(1024) ]]
+                # make const #i
+                N = len(self.tm)
+                for n in range(1024):
+                    x = row - numpy.floor(N/2)
+                    data_array[0][n] =  offset + slope * x
+                    data_array[1][n] =  offset + slope * x
                 # write as an Array[2,1024] 
-                tb.putcell("FLOAT_DATA", row,  data_array  ) 
-        return   
+                tb.putcell("FLOAT_DATA", row,  data_array  )
+                # Time and Interval  
+                tb.putcell("TIME",       row,  baseTime + row  )
+                tb.putcell("INTERVAL",   row,  interval_0  )
+            #endfor
+        return          
           
-#+
-# Prepare variable on self context.
-#-
-    def declar(self):
-        self.name = None     # test var.
-        self.address = None  # test var.
- 
 #=================================================
 # TEST FIXTURE
 #==================================================
 
-    def test_param1(self): 
-        print( "XXXXXXXX test_param(1) XXXXXXXX")
-
-        print ( "- reading MAIN table" )
+# TestMS 
+    def test_param0(self):
+        print( "test_param0:: generating Test MS. ") 
+        # test MS generation
         self. get_main( def_inputMs )
-
-        print ( "- generationg DATA " )
         self. generate_data( def_workMs )
+# 'all'    
+    def test_param1(self): 
+        print( "XXXXXXXX test_param(1: antenna=GBT ) XXXXXXXX")
 
         prm =  {'infile'  : def_inputMs,
                 'timebin' : 'all', 
@@ -237,22 +199,35 @@ class test_sdtimeaverage(unittest.TestCase):
         self.run_task( prm )
 
 
+# N=2
     def test_param20(self):
         print( "XXXXXXXX test_param(20: timebin=all) XXXXXXXX")
 
-        prm =  {'timebin' : '6128s',
+        prm =  {'timebin' : '1282s',
                 'infile'  : def_workMs,
-                'outfile' : 'bave-20-6128.ms'  }
+                'outfile' : 'bave-20-1282.ms'  }
         self.run_task( prm )
 
+        # get the result and inspect # 
+        f_data0 = self.get_spectra('bave-20-1282.ms', 0 )        # use row=0
+        f_data1 = self.get_spectra('bave-20-1282.ms', 1 )        # 
+        f_data2 = self.get_spectra('bave-20-1282.ms', 2 )        # 
+
+        self.assertTrue(self.checkZero( f_data1 ))               # assert (must be zero)
+        self.assertTrue(self.checkZeroSum( f_data0, f_data2 ))   # assert (must be different sign)
+  
+# N=1
     def test_param21(self):
-        print( "XXXXXXXX test_param(20: timebin=all) XXXXXXXX")
+        print( "XXXXXXXX test_param(21: timebin=all) XXXXXXXX")
 
-        prm =  {'timebin' : '12256s',
+        prm =  {'timebin' : '3846s',
                 'infile'  : def_workMs,
-                'outfile' : 'bave-20-12256.ms'  }
+                'outfile' : 'bave-20-3846.ms'  }
         self.run_task( prm )
 
+        # get the result and inspect # 
+        f_data = self.get_spectra('bave-20-3846.ms', 0 )   # use row=0 from RESULT
+        self.assertTrue(self.checkZero( f_data ))          # assert
 
 
     '''
@@ -261,58 +236,31 @@ class test_sdtimeaverage(unittest.TestCase):
         print( "XXXXXXXX test_param(30: timebin=all) XXXXXXXX")
 
         prm =  {'timebin' : 'all', 
-                'antenna' : 'GBT',
-                'outfile' : 'bave-30.ms'  }
+                'antenna' : 'GBT'    }
         self.run_task( prm )
    
-     
+
     def test_param31(self):
-        print( "XXXXXXXX test_param(31: timebin Nospecified) XXXXXXXX")
+        print( "XXXXXXXX test_param(31: timebin = ALL (Capital) XXXXXXXX")
 
-        prm =  {'outfile' : 'bave-31.ms'  }
+        prm =  {'timebin' : 'ALL', 
+                'antenna' : 'GBT',
+                'outfile' : 'bave-31.ms'  }
         self.run_task( prm )
-
+  
 
     def test_param32(self):
-        print( "XXXXXXXX test_param(3-2: timebin='' ) XXXXXXXX")
-        prm =  {'timebin' : '',
-                'outfile' : 'bave-32.ms'  }
+        print( "XXXXXXXX test_param(32: timebin='' ) XXXXXXXX")
+        prm =  {'timebin' : ''  }
         self.run_task( prm )
 
-   '''
+    '''  
+ 
+    def test_param99(self):
+        print( "test_param99:: deleting Test MS. ")
+##        os.system('rm -rf ' + def_workMs )
+##        os.system('rm -rf ' + "bave*.ms" )
 
-    #
-    # ORIGINAL
-    #
-
-    '''
-    def test_default(self): # no time averaging(timebin='0s'), rewriting beam IDs only
-        print( "XXXXXXXX test_default XXXXXXXX")
-        self.run_task()
-        self.check_num_data()
-        self.check_values()
-   
-    def test_time_averaging(self): # every two on-spectra are averaged into one specrum
-        print( "XXXXXXXX test_time_averaging XXXXXXXX")
-        self.run_task({'timebin': self.get_timebin(num_ave)})
-
-        self.check_num_data(num_ave)
-        self.check_values(num_ave=num_ave) # for the first data with state=on-source, spw=0
-
-    def test_time_averaging2(self): # every two on-spectra are averaged into one specrum
-        print( "XXXXXXXX test_time_averaging2 XXXXXXXX")
-        self.run_task({'timebin': 'all'} )
-
-        self.check_num_data(num_ave)
-        self.check_values(num_ave=num_ave) # for the first data with state=on-source, spw=0
-
-    def test_time_averaging3(self): # every two on-spectra are averaged into one specrum
-        print( "XXXXXXXX test_time_averaging3 XXXXXXXX")
-        self.run_task({'timebin': '100000s'} )
-
-        self.check_num_data(num_ave)
-        self.check_values(num_ave=num_ave) # for the first data with state=on-source, spw=0
-    '''
 
 #### Controled ######
 
