@@ -95,14 +95,16 @@ def sdtimeaverage(
 #  CASA-12721 NEW func.
 def calc_timebin(msname):
     with open_table(msname) as tb:
-        tm = tb.getcol('TIME')
+        tm    = tb.getcol('TIME')
 
     leng_ = len(tm)
+    interval_ = tm[1] - tm[0]
     time_first = min(tm)
     time_last =  max(tm)
 
     timebin = time_last - time_first ;
-    timebin += 4.0
+    timebin += 4.0 * interval_
+
     return str(timebin)
 
 # CAS-12721: Added 'antenna' arg . removed local var. (S.N)
