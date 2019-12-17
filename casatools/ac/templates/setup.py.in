@@ -1139,7 +1139,7 @@ class casa_build_ext(build_ext):
         build_ext.build_extensions(self)
 
     def run(self):
-        
+
         global a_priori_directory_exclusions
         global a_priori_exclusions
         do_wheel_closure = doing_wheel_build
@@ -1193,7 +1193,7 @@ class casa_build_ext(build_ext):
         if do_wheel_closure:
             module_path = os.path.join('build', distutils_dir_name('lib'), module_name)
             if isexe("scripts/mod-closure"):
-                if os.path.isfile(".created.closure"):
+                if not os.path.isfile(".created.closure"):
                     print("generating module closure...")
                     if Proc([ "scripts/mod-closure", module_path ]) != 0:
                         sys.exit("\tclosure generation failed...")
