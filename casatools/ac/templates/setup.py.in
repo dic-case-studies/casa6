@@ -1131,7 +1131,7 @@ class casa_build_ext(build_ext):
         build_ext.build_extensions(self)
 
     def run(self):
-        
+
         global a_priori_directory_exclusions
         global a_priori_exclusions
         do_wheel_closure = doing_wheel_build
@@ -1147,7 +1147,9 @@ class casa_build_ext(build_ext):
         print("copying xml-casa...")
         install_xml_casa( )
 
+
         build_ext.run(self)
+
         """
         if os.path.exists(cerberusdir):
             remove_tree(cerberusdir)
@@ -1189,6 +1191,13 @@ class casa_build_ext(build_ext):
                 if Proc([ "scripts/mod-closure", module_path ]) != 0:
                     sys.exit("\tclosure generation failed...")
                 open(".created.closure",'a').close( )
+
+        if sys.platform == 'darwin':
+            print("Fixing rpaths")
+            result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
+            print(result.stdout.decode('utf-8'))
+
+
 
 class casa_test(Command):
     user_options = [
