@@ -1,6 +1,10 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use POSIX qw(uname);
+
+my $osname = lc((uname( ))[0]);
+die "This script is for Macos only." unless ($osname eq "darwin");
 
 (my $major, my $minor, my $micro) = split(/\./, `sw_vers -productVersion`);
 my $os_ver=$major . "." .$minor;
