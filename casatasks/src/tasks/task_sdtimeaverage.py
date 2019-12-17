@@ -58,39 +58,21 @@ def sdtimeaverage(
              spw, 
              timerange, 
              scan,
-             antenna,   # changed CAS-12721
+             antenna,   # changed CAS-12721 ( beam -> antenna)
              timebin,
              outfile):
-
-    #+
-    # DEBUG ARGS
-    #-
-    print( "  ARG::infile      =",infile)
-    print( "  ARG::datacolumn  =",datacolumn)
-    print( "  ARG::field       =",field)
-    print( "  ARG::spw         =",spw)
-    print( "  ARG::timerange   =",timerange)
-    print( "  ARG::scan        =",scan)
-    print( "  ARG::antenna     =",antenna)
-    print( "  ARG::timebin     =",timebin)
-    print( "  ARG::outfile     =",outfile)
-
-
     #+
     #  defaut value (timebin=all) is to be handled.
     #-
-    print ("checking timebin")
-    if (timebin == 'all') or (timebin == ''):
+    timebin_c = timebin.upper()
+    if (timebin_c == 'ALL') or (timebin_c == ''):
         timebin =  calc_timebin(infile)+'s'
-        print ("DBG::timebin compensated with time records. ", timebin)
 
     #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
     #-
-    print ("checking antenna")
     if (len(antenna) != 0) and (antenna.find('&') == -1):
         antenna = antenna + '&&&'
-        print("DBG::corrected Antena ID with &&&") 
 
     casalog.origin('sdtimeaverage')
 
@@ -105,14 +87,12 @@ def sdtimeaverage(
                     field=field, spw=spw, timerange=timerange, scan=scan,
                     timebin=timebin, antenna=antenna, outfile=outfile)
 
-
-  
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
     finally:
         pass
 
-#  CASA-12721 NEW
+#  CASA-12721 NEW func.
 def calc_timebin(msname):
     with open_table(msname) as tb:
         tm = tb.getcol('TIME')
@@ -122,14 +102,14 @@ def calc_timebin(msname):
     time_last =  max(tm)
 
     timebin = time_last - time_first ;
+    timebin += 4.0
     return str(timebin)
 
+# CAS-12721: Added 'antenna' arg . removed local var. (S.N)
 def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, outfile):
     # followings are parameters of mstransform but not used by THIS.
     # just putting default values
   
-    # CAS-12721: Added 'antenna' arg . removed local var. (S.N)
-
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
     tileshape = [0]
@@ -148,7 +128,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
     start = 0
     width = 1
 
-    timeaverage = False
+    timeaverageAct = False
     timespan = "scan"
     maxuvwdistance = 0.0
 
@@ -171,7 +151,6 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
     mslocal = ms( )            # CASA6 changed.
     
     try:
-        print( "DBG::do_mst::start try ")
         # Gather all the parameters in a dictionary.
         config = {}
         
@@ -203,8 +182,8 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
             raise Exception("Parameter timebin must be > '0s' to do time averaging")
   
         # set config
-        timeaverage = (tbin > 0)
-        if timeaverage:
+        timeaverageAct = (tbin > 0)
+        if timeaverageAct:
             casalog.post('Parse time averaging parameters')
             config['timeaverage'] = True
             config['timebin'] = timebin
@@ -228,6 +207,12 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         mtlocal.done()
         casalog.post('%s'%instance,'ERROR')
         return False
+
+    #+
+    # CAS-12721:
+    # Note: Following section were witrten concerning  CAS-7751 or other(s)
+    #       Program logic is copied and used. 
+    #-
 
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
     # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating    
@@ -334,7 +319,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
 
     return True
 
-#CASA6 feature
+# revised in CASA6 
 def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, antenna, outfile):
     mslocal = ms( )
     # Write history to output MS, not the input ms.
