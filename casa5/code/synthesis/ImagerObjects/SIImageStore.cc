@@ -3304,7 +3304,47 @@ void SIImageStore::regridToModelImage( ImageInterface<Float> &inputimage, Int te
       }
 
   }
+//////////////
+  Bool SIImageStore::intersectComplexImage(const String& ComplexImageName){
+        Vector<Int> whichStokes(0);
+	CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
+								  whichStokes, itsDataPolRep);
 
+
+        //cerr <<"itsDataPolRep " << itsDataPolRep << endl;
+        
+        CountedPtr<PagedImage<Complex> > compliantImage =nullptr;
+        {
+          PagedImage<Complex>inputImage(ComplexImageName);
+          IPosition theShape=itsImageShape;
+          theShape(0)=inputImage.shape()(0);
+          theShape(1)=inputImage.shape()(1);
+          CoordinateSystem inpcsys=inputImage.coordinates();
+          Vector<Double> refpix=cimageCoord.referencePixel();
+          refpix(0)+=(theShape(0)-itsImageShape(0))/2.0;
+          refpix(1)+=(theShape(1)-itsImageShape(1))/2.0;
+          cimageCoord.setReferencePixel(refpix);
+          String tmpImage=File::newUniqueName(".", "TempImage").absoluteName();
+          compliantImage=new PagedImage<Complex>(theShape, cimageCoord, tmpImage);
+          compliantImage->set(0.0);
+          IPosition iblc(theShape.nelements(),0);
+          IPosition itrc=theShape-1;
+          //cerr << "blc "  << iblc << " trc " << itrc  << " shape " << theShape << endl;
+          LCBox lbox(iblc, itrc, theShape);
+          ImageRegion imagreg(WCBox(lbox, cimageCoord));
+		
+          
+          SubImage<Complex> subim(inputImage, imagreg, false);
+          //cerr << "shapes " << inputImage.shape() << "  sub " << subim.shape() << " compl " << compliantImage->shape() << endl;
+          compliantImage->copyData(subim);
+			
+        }
+        Table::deleteTable(ComplexImageName);
+        compliantImage->rename(ComplexImageName);
+        return True;
+		
+  }
+	
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////

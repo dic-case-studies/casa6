@@ -115,7 +115,28 @@ void Applicator::initThreads(){
      // Initialize the process status list
   setupProcStatus();
 }
+void Applicator::destroyThreads(){
+  if(initialized_p){
+    if (comm) {
+    // If controller, then stop all worker processes
+      if (isController() && !isSerial()) {
+      comm->setTag(STOP);
+      for (Int i=0; i<nProcs; i++) {
+	if (i != comm->controllerRank()) {
+	  comm->connect(i);
+	  put(STOP);
+	}
+      }
+    }
+      //delete comm; ///leaking this for now as if initialized from python..it brings down the whole house
+    comm=nullptr;
+  }
 
+  }
+
+  initialized_p=False;
+
+}
 void Applicator::init(Int argc, Char *argv[])
 {
 // Initialize the process and parallel transport layer

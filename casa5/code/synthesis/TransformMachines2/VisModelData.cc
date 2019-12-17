@@ -935,6 +935,10 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
       TableRecord outRec; 
       Bool addtorec=false;
       MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
+      newTab.lock(True);
+      if(Table::isReadable(newTab.sourceTableName())){
+        newTab.source().lock(True);   
+      }
       //cerr << elkey << " incr " << incremental << endl;
       if(isModelDefined(elkey, newTab)){ 
 	getModelRecord(elkey, outRec, thems);
@@ -984,11 +988,14 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
       if(!incremental) 
 	deleteDiskImage(newTab, elkey);
       putModelRecord(validfieldids, outRec, newTab);  
-    
+      newTab.unlock();
+      if(Table::isReadable(newTab.sourceTableName())){
+        newTab.source().unlock();   
+    }
     }
     catch(...){
       logio << "Could not save virtual model data for some reason \nYou may need clear the model and redo or  use the scratch column if you need model visibilities" << LogIO::WARN << LogIO::POST ;
-      
+      const_cast<MeasurementSet& >(thems).unlock(); 
     }
     
   }

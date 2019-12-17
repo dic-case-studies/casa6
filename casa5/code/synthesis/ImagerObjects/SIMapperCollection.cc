@@ -535,7 +535,12 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 
 		////Darn not implemented  
 		//static_cast<VisibilityIteratorImpl2 *>(viloc->getImpl())->writeModel(rec, //iscomp, true);
-                
+
+                if(!iscomp && Table::isReadable(modImage)){
+                  //make sure complex image is of compliant size/shape
+                  (itsMappers[k]->imageStore())->intersectComplexImage(modImage);
+
+                }
                 VisibilityIterator2* vi=const_cast<VisibilityIterator2*>(vb.getVi());
                 const_cast<MeasurementSet& >(vi->ms()).lock();
                 /////TESTOO

@@ -912,7 +912,15 @@ void VisModelData::putModel(const MeasurementSet& thems,const RecordInterface& r
     TableRecord outRec; 
     Bool addtorec=false;
     MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
-    //cerr << elkey << " incr " << incremental << endl;
+    newTab.lock(True);
+    if(Table::isReadable(newTab.sourceTableName())){
+      newTab.source().lock(True);   
+    }
+    ////TESTOO
+    //Int CPUID;
+    //MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
+    //cerr  <<"VISMOD-ftm1 ver2 " << CPUID << " ELKEY " << elkey << "has lock "<< newTab.hasLock(True) << endl;
+    //
     if(isModelDefined(elkey, newTab)){ 
       getModelRecord(elkey, outRec, thems);
       //if incremental no need to check & remove what is in the record
@@ -961,11 +969,15 @@ void VisModelData::putModel(const MeasurementSet& thems,const RecordInterface& r
     if(!incremental) 
       deleteDiskImage(newTab, elkey);
     putModelRecord(validfieldids, outRec, newTab);  
+    newTab.unlock();
+    if(Table::isReadable(newTab.sourceTableName())){
+      newTab.source().unlock();   
+    }
     
   }
   catch(...){
     logio << "Could not save virtual model data for some reason \nYou may need clear the model and redo or  use the scratch column if you need model visibilities" << LogIO::WARN << LogIO::POST ;
-    
+    const_cast<MeasurementSet& >(thems).unlock(); 
   }
 	
 }

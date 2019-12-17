@@ -101,7 +101,8 @@ class Applicator {
   void init(casacore::Int argc, casacore::Char *argv[]);
   void initThreads(casacore::Int argc, casacore::Char *argv[]);
   void initThreads();
-
+  // release workers from loop
+  void destroyThreads();
   // tells you if initThreads(argc,  argv) version has been called already
   // MPI does not like more than 1 call to MPI_Init or MPI_InitThread
   bool initialized();

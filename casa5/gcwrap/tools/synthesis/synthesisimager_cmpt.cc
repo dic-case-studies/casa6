@@ -790,6 +790,10 @@ synthesisimager::done()
 
   try 
     {
+      if(applicator.initialized()){
+
+        applicator.destroyThreads();
+      }
       if (itsImager)
 	{
 	  delete itsImager;
