@@ -23,6 +23,7 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
+    from casatools import table
 else:
     from taskinit import *
 
@@ -30,6 +31,17 @@ else:
     from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
+    table=casac.table
+try:
+    if is_CASA6:
+        from casampi.MPIEnvironment import MPIEnvironment
+        from casampi import MPIInterface
+    else:
+        from mpi4casa.MPIEnvironment import MPIEnvironment
+        from mpi4casa import MPIInterface
+    mpi_available = True
+except ImportError:
+    mpi_available = False
 
 def tclean(
     ####### Data Selection
@@ -214,8 +226,8 @@ def tclean(
     ###expecting it to be true
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
         bparm['mosweight']=False
-    paramList=ImagerParameters(**bparm)
 
+    
     # deprecation message
     if usemask=='auto-thresh' or usemask=='auto-thresh2':
         casalog.post(usemask+" is deprecated, will be removed in CASA 5.4.  It is recommended to use auto-multithresh instead", "WARN") 
@@ -225,17 +237,33 @@ def tclean(
     if pointingoffsetsigdev!=0.0 and usepointing==False:
         casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
 
-    pcube=False
+
+    ##pcube may still need to be set to True for some combination of ftmachine etc...
+    #=========================================================
     concattype=''
+    pcube=False
     if parallel==True and specmode!='mfs':
-        pcube=True
+        pcube=False
         parallel=False
+    #=========================================================
+    ####set the children to load c++ libraries and applicator
+    ### need to NOT do this when ftmachine is not supported
+    if mpi_available and MPIEnvironment.is_mpi_enabled and specmode!='mfs' and not pcube:
+        mint=MPIInterface.MPIInterface()
+        cl=mint.getCluster()
+        cl._cluster.pgc("from casac import casac", False)
+        cl._cluster.pgc("si=casac.synthesisimager()", False)
+        cl._cluster.pgc("si.initmpi()", False)
+        ###ignore chanchunk
+        bparm['chanchunks']=1
 
     # catch non operational case (parallel cube tclean with interative=T)
     if pcube and interactive:
         casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
         return False
-   
+    #print('parameters {}'.format(bparm))    
+    paramList=ImagerParameters(**bparm)
+
     ## Setup Imager objects, for different parallelization schemes.
     imagerInst=PySynthesisImager
     if parallel==False and pcube==False:
@@ -288,13 +316,22 @@ def tclean(
             imager.initializeIterationControl()
             t1=time.time();
             casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-            
+        
         ## Make PSF
         if calcpsf==True:
             t0=time.time();
              
-            imager.makePSF()
-            if((psfphasecenter != '') and (gridder=='mosaic')):
+            imager.makePSF()            
+            if((psfphasecenter != '') and ('mosaic' in gridder)):
+                ###for some reason imager keeps the psf open delete it and recreate it afterwards
+                imager.deleteTools()
+                mytb=table()
+                psfname=bparm['imagename']+'.psf.tt0' if(os.path.exists( bparm['imagename']+'.psf.tt0')) else bparm['imagename']+'.psf'
+                mytb.open(psfname)
+                miscinf=mytb.getkeyword('miscinfo')
+                iminf=mytb.getkeyword('imageinfo')
+                #print ('miscinfo {} {}'.format(miscinf, iminf))
+                mytb.done()
                 print("doing with different phasecenter psf")
                 imager.unlockimages(0)
                 psfParameters=paramList.getAllPars()
@@ -304,8 +341,34 @@ def tclean(
                 psfimager.initializeImagers()
                 psfimager.setWeighting()
                 psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
+                mytb.open(psfname, nomodify=False)
+                mytb.putkeyword('imageinfo',iminf)
+                mytb.putkeyword('miscinfo',miscinf)
+                mytb.done()
+                imager = PySynthesisImager(params=paramList)
+                imager.initializeImagers()
+                imager.initializeNormalizers()
+                imager.setWeighting()
+                
             t1=time.time();
             casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+
+        ## Init minor cycle elements
+        if niter>0 or restoration==True:
+            t0=time.time();
+            imager.initializeDeconvolvers()
+            t1=time.time();
+            casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+
+        ####now is the time to check estimated memory
+        imager.estimatememory()
+            
+        if niter>0:
+            t0=time.time();
+            imager.initializeIterationControl()
+            t1=time.time();
+            casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+            
 
             imager.makePB()
 
