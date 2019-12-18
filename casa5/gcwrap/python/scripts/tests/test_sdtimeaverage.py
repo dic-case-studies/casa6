@@ -4,38 +4,18 @@ import os
 import numpy
 import math
 import sys
+import exceptions
 import filecmp
 import glob
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-#   from casatasks import nrobeamaverage
-    from casatasks import sdtimeaverage
-    from casatools import ms
-    from casatools import table
+# from tasks import nrobeamaverage
+from tasks import sdtimeaverage
+from taskinit import mstool, tbtool
+from __main__ import default
+import testhelper as th
+from sdutil import tbmanager, toolmanager, table_selector
 
-    # default isn't used in casatasks
-    def default(atask):
-        pass
-
-    ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
-    from casatasks.private.sdutil import tbmanager
-    from casatools import ctsys
-    datapath=ctsys.resolve('regression/unittest/sdimaging')
-
-else:
-#   from tasks import nrobeamaverage
-    from tasks import sdtimeaverage
-    from taskinit import mstool as ms
-    from taskinit import tbtool as table
-
-    from __main__ import default
-    import testhelper as th
-    from sdutil import tbmanager
-
-    # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/sdimaging/"
+# Define the root for the data files
+datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/sdimaging/"
 
 # MS name for this test
 def_inputMs  = "sdimaging.ms"
@@ -73,13 +53,14 @@ class test_sdtimeaverage(unittest.TestCase):
                      'outfile'    :  def_outputMs,
                      'datacolumn' :  'float_data'    # CASR-474 (float ->data) 
                     }
-        # Generate Test-MS
+
+        self. get_main( def_inputMs )
         self. generate_data( def_workMs )
 
     def tearDown(self):
 
         # delete copied in-MS and out-MS
-        print( "tearDown::deleting MSs.")
+        print( "tearDown::deleting MSs")
 
         os.system('rm -rf ' + self.i_ms )
         os.system('rm -rf ' + def_outputMs )   ## Comment out , for DEBUG ##
@@ -92,11 +73,10 @@ class test_sdtimeaverage(unittest.TestCase):
 # Run Task
 ##############
     def run_task(self, aux_args=None):
-        print( "run_task::starts" )
+        print( "run_task::stars" )
 
         if aux_args is not None:
             for k in aux_args: self.args[k] = aux_args[k]
-
         sdtimeaverage(**self.args)
 
 #################
@@ -106,12 +86,13 @@ class test_sdtimeaverage(unittest.TestCase):
     def checkZero(self,data):
         print("-- checking Zero --")
 
-        check = numpy.abs(data) < zeroData 
+        check = numpy.abs(data) < zeroData
         if check.all()==False:
             print ( "## Zero check Failed ##" )
+            print ( data )
             return False
         print("-- checking Zero OK.--")
-        return  True 
+        return  True
 
     def checkZeroSum(self, data1,data2):
         print("-- checking ZeroSum." )
@@ -120,7 +101,7 @@ class test_sdtimeaverage(unittest.TestCase):
         print(asum_data)
 
         check = asum_data < zeroData
-        if check.all()==False: 
+        if check.all()==False:
             print ( "## Zero Sum check Failed ##" )
             return False
         print("-- checking ZeroSum. OK" )
@@ -170,9 +151,9 @@ class test_sdtimeaverage(unittest.TestCase):
             # Spectra 
             self.data = tb.getcell('FLOAT_DATA',row)
             self.wgt  = tb.getcell('WEIGHT', row)
-            self.sgm  = tb.getcell('SIGMA', row)           
-        
-        return self.data 
+            self.sgm  = tb.getcell('SIGMA', row)
+
+        return self.data
 
     # Chck Wait and Sigma
     def checkWeightSigma(self, msname, row, weight_ref ):
@@ -180,16 +161,16 @@ class test_sdtimeaverage(unittest.TestCase):
 
         self.get_spectra(msname, row )
 
-        print( "Weight Ref", weight_ref)
-        print( "Weight ",self.wgt )
-        print( "Gigma  ",self.sgm )
+        print "Weight Ref", weight_ref
+        print "Weight ",self.wgt 
+        print "Gigma  ",self.sgm 
 
         # check #
         check =  (self.wgt[0] == weight_ref) and \
                  (self.wgt[1] == weight_ref) and \
                  ( (1.0/self.wgt[0])  - (self.sgm[0] * self.sgm[0])  < errLimit2 ) and \
-                 ( (1.0/self.wgt[1])  - (self.sgm[1] * self.sgm[1])  < errLimit2 ) 
-        if check:   
+                 ( (1.0/self.wgt[1])  - (self.sgm[1] * self.sgm[1])  < errLimit2 )
+        if check:
             print( "-- checking Weight and Sigma OK --")
 
         self.assertTrue(check)
@@ -197,7 +178,7 @@ class test_sdtimeaverage(unittest.TestCase):
 # Generate DATa on FLOAT_DATA
 #-
     def generate_data( self, MsName ):
-        print( "-- Generating MS." )
+
         self. get_main( def_inputMs )
 
         # Test Slope
@@ -222,26 +203,26 @@ class test_sdtimeaverage(unittest.TestCase):
                 tb.putcell("TIME",       row,  baseTime + (interval_0 * row)  )
                 tb.putcell("INTERVAL",   row,  interval_0  )
             #endfor
-        print( "-- Generating MS. End." )
-        return          
-          
+        return
+
+
 #=================================================
 # TEST FIXTURE
 #==================================================
 
 # Generating TestMS only 
 #    def test_param0(self):
-#        print( "test_param0:: generating Test MS. ") 
+#        print( "test_param0:: generating Test MS. ")
 #        # test MS generation
 #        self. get_main( def_inputMs )
 #        self. generate_data( def_workMs )
 
 # 'all' + Antenna Name
-    def test_param1(self): 
+    def test_param1(self):
         print( "XXXXXXXX test_param(1: timebin=all, antenna=GBT ) XXXXXXXX")
 
         prm =  {'infile'  : def_inputMs,
-                'timebin' : 'all', 
+                'timebin' : 'all',
                 'antenna' : 'GBT'  }
         # Run Task
         self.run_task( prm )
@@ -253,7 +234,7 @@ class test_sdtimeaverage(unittest.TestCase):
 
         timebin_str = str(1282 * interval_0)+'s'
         privateOutfile = 'bave-20-1282.ms'
-        prm =  {'timebin' : timebin_str,          
+        prm =  {'timebin' : timebin_str,
                 'infile'  : def_workMs,
                 'outfile' : privateOutfile  }
         # Run Task
@@ -329,19 +310,19 @@ class test_sdtimeaverage(unittest.TestCase):
         # Weight, Sigma 
         self.checkWeightSigma(privateOutfile, 0, nRow )
 
-    def test_param30(self): 
+    def test_param30(self):
         print( "XXXXXXXX test_param(30: timebin=all) XXXXXXXX")
 
         prm =  {'timebin' : 'all'   }
         self.run_task( prm )
-   
+
     def test_param31(self):
         print( "XXXXXXXX test_param(31: timebin = ALL (Capital) XXXXXXXX")
 
         # Run Task
         prm =  {'timebin' : 'ALL'   }
         self.run_task( prm )
-  
+
     def test_param32(self):
         print( "XXXXXXXX test_param(32: timebin='' ) XXXXXXXX")
 
@@ -353,7 +334,7 @@ class test_sdtimeaverage(unittest.TestCase):
         print( "XXXXXXXX test_param(40: timebin='', scan=1 ) XXXXXXXX")
 
         # Run Task
-        prm =  {'timebin' : '', 
+        prm =  {'timebin' : '',
                 'scan'    : '2'   }
         self.run_task( prm )
 
@@ -362,7 +343,7 @@ class test_sdtimeaverage(unittest.TestCase):
         # one output
         scan = self.sc[0]
         # check scan ID
-        self.assertTrue(len(self.sc)==1 ) 
+        self.assertTrue(len(self.sc)==1 )
         self.assertTrue (scan == 2 )
 #+
 # The Last Fixture
@@ -374,12 +355,6 @@ class test_sdtimeaverage(unittest.TestCase):
 #            os.system('rm -rf ' + def_workMs )
 #            os.system('rm -rf ' + "bave*.ms" )
 
-
-#### Control ######
-
+# CASA5 featre 
 def suite():
     return [test_sdtimeaverage]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
