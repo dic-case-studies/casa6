@@ -155,6 +155,13 @@ void PhaseShiftingTVI::initialize()
 		spw_idx++;
 	}
 
+	// CAS-12706 Add support for shifting across large offset/angles
+	// Access observatory position and observation start (reference) time.
+	selectedInputMsCols_p = new MSColumns(getVii()->ms());
+    observatoryPosition_p = selectedInputMsCols_p->antenna().positionMeas()(0);
+    referenceTime_p  = selectedInputMsCols_p->timeMeas()(0);
+    referenceTimeUnits_p = selectedInputMsCols_p->timeQuant()(0).getUnit();
+
 	return;
 }
 

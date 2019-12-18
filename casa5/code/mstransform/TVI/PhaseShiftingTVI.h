@@ -29,6 +29,9 @@
 // To handle variant parameters
 #include <stdcasa/StdCasa/CasacSupport.h>
 
+// To access directly the MS columns
+#include <casacore/ms/MeasurementSets/MSColumns.h>
+
 // For wide-field phase shifting algorithm
 #include <measures/Measures/UVWMachine.h>
 #include <casacore/measures/Measures/MeasFrame.h>
@@ -72,7 +75,10 @@ protected:
 	// Members wide-field phase shifting algorithm
 	casacore::String phaseCenterName_p;
 	casacore::MDirection phaseCenter_p;
-	casacore::MeasFrame measFrame_p;
+	casacore::MSColumns *selectedInputMsCols_p;
+	casacore::MPosition observatoryPosition_p;
+	casacore::MEpoch referenceTime_p;
+	casacore::String referenceTimeUnits_p;
 };
 
 //////////////////////////////////////////////////////////////////////////
