@@ -29,6 +29,10 @@
 // To handle variant parameters
 #include <stdcasa/StdCasa/CasacSupport.h>
 
+// For wide-field phase shifting algorithm
+#include <measures/Measures/UVWMachine.h>
+#include <casacore/measures/Measures/MeasFrame.h>
+
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -49,6 +53,10 @@ public:
 	// Report the the ViImplementation type
 	virtual casacore::String ViiType() const { return casacore::String("PhaseShifting( ")+getVii()->ViiType()+" )"; };
 
+	// Navigation methods
+	virtual void origin ();
+	virtual void next ();
+
     virtual void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const;
     virtual void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const;
     virtual void visibilityModel (casacore::Cube<casacore::Complex> & vis) const;
@@ -58,8 +66,13 @@ protected:
     casacore::Bool parseConfiguration(const casacore::Record &configuration);
     void initialize();
 
+    bool wideFieldMode_p;
 	casacore::Double dx_p, dy_p;
-	casac::variant *phaseCenterPar_p = new casac::variant("");
+
+	// Members wide-field phase shifting algorithm
+	casacore::String phaseCenterName_p;
+	casacore::MDirection phaseCenter_p;
+	casacore::MeasFrame measFrame_p;
 };
 
 //////////////////////////////////////////////////////////////////////////

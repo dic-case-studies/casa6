@@ -40,7 +40,8 @@ PhaseShiftingTVI::PhaseShiftingTVI(	ViImplementation2 * inputVii,
 {
 	dx_p = 0;
 	dy_p = 0;
-	phaseCenterPar_p = new casac::variant("");
+	wideFieldMode_p = false;
+	phaseCenterName_p = "";
 
 	// Parse and check configuration parameters
 	// Note: if a constructor finishes by throwing an exception, the memory
@@ -51,6 +52,34 @@ PhaseShiftingTVI::PhaseShiftingTVI(	ViImplementation2 * inputVii,
 	}
 
 	initialize();
+
+	return;
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+void PhaseShiftingTVI::origin()
+{
+	// Drive underlying ViImplementation2
+	getVii()->origin();
+
+	// Synchronize own VisBuffer
+	configureNewSubchunk();
+
+	return;
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+void PhaseShiftingTVI::next()
+{
+	// Drive underlying ViImplementation2
+	getVii()->next();
+
+	// Synchronize own VisBuffer
+	configureNewSubchunk();
 
 	return;
 }
@@ -77,37 +106,33 @@ Bool PhaseShiftingTVI::parseConfiguration(const Record &configuration)
 		configuration.get (exists, dy_p);
 	}
 
+	if (abs(dx_p) > 0 or abs(dy_p) > 0)
+	{
+		logger_p 	<< LogIO::NORMAL << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
+					<< "Phase shift is dx="<< dx_p << " dy=" << dy_p << LogIO::POST;
+	}
+
 	// CAS-12706 Add support for shifting across large offset/angles
 	exists = -1;
 	exists = configuration.fieldNumber ("phasecenter");
 	if (exists >= 0)
 	{
-		//If phase center is a simple numeric value then it is taken
-		// as a FIELD_ID otherwise it is converted to a MDirection
-        if( configuration.type(exists) == TpInt )
-        {
-        	int fieldIdForPhaseCenter = -1;
-    		configuration.get (exists, fieldIdForPhaseCenter);
-    		logger_p << LogIO::NORMAL << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
-    				<< "Field Id for phase center is " << fieldIdForPhaseCenter << LogIO::POST;
-    		if (phaseCenterPar_p) delete phaseCenterPar_p;
-    		phaseCenterPar_p = new casac::variant(fieldIdForPhaseCenter);
-        }
-        else
-        {
-        	String phaseCenter("");
-    		configuration.get (exists, phaseCenter);
-    		logger_p << LogIO::NORMAL << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
-    				<< "Phase center is " << phaseCenter << LogIO::POST;
-    		if (phaseCenterPar_p) delete phaseCenterPar_p;
-    		phaseCenterPar_p = new casac::variant(phaseCenter);
-        }
-	}
+		configuration.get (exists, phaseCenterName_p);
+		// casaMDirection requires a variant
+		casac::variant phaseCenterVar(phaseCenterName_p);
 
-	if (abs(dx_p) > 0 or abs(dy_p) > 0)
-	{
-		logger_p 	<< LogIO::NORMAL << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
-					<< "Phase shift is dx="<< dx_p << " dy=" << dy_p << LogIO::POST;
+		if(!casaMDirection(phaseCenterVar, phaseCenter_p))
+		{
+    		logger_p << LogIO::SEVERE << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
+    				<< "Cannot interpret phase center " << phaseCenterName_p << LogIO::POST;
+    		ret = false;
+		}
+		else
+		{
+			wideFieldMode_p = true;
+			logger_p << LogIO::NORMAL << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
+					<< "Phase center " << phaseCenterName_p << " successfully parsed"<< LogIO::POST;
+		}
 	}
 
 	return ret;
