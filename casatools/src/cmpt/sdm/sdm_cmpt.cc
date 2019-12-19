@@ -35,6 +35,7 @@
 #include <alma/Enumerations/CAntennaMake.h>
 #include <alma/Enumerations/CAtmPhaseCorrection.h>
 #include <alma/Enumerations/CCorrelationMode.h>
+#include <alma/Enumerations/CCorrelatorName.h>
 #include <alma/Enumerations/CStokesParameter.h>
 #include <alma/Enumerations/CFrequencyReferenceCode.h>
 #include <alma/Enumerations/CScanIntent.h>
@@ -2343,6 +2344,9 @@ namespace casac {
             ProcessorRow* r = 0;
             int nProcessor = processorT.size();
 
+            CorrelatorModeTable & correlatorModeT = ds->getCorrelatorMode();
+            CorrelatorModeRow* cmrow = 0;
+
             infostream.str("");
             infostream << "The dataset has " << nProcessor << " processor(s)...";
             info(infostream.str());
@@ -2356,12 +2360,25 @@ namespace casac {
 
                 string processorType    = CProcessorType::name(r->getProcessorType());
                 string processorSubType = CProcessorSubType::name(r->getProcessorSubType());
-      
+
+                // fetch correlator name where appropriate and possible
+                // default to an empty string
+                string correlatorName("");
+
+                if (r->getProcessorType() == ProcessorTypeMod::CORRELATOR) {
+                    // modeId is a correlator mode id
+                    if ((cmrow=correlatorModeT.getRowByKey(r->getModeId())) != 0) {
+                        // a row has been found
+                        correlatorName = CCorrelatorName::name(cmrow->getCorrelatorName());
+                    }
+                }
+
                 for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addProcessor( processorType, processorSubType,
                                                 -1,    // Since there is no typeId in the ASDM.
-                                                r->getModeId().getTagValue() );
+                                                r->getModeId().getTagValue(),
+                                                correlatorName );
                 }  
             }
             if (nProcessor) {
