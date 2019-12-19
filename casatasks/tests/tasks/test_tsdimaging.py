@@ -2556,6 +2556,20 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
                       phasecenter='J2000 00:00:00 00.00.00',
                       restfreq='',overwrite=True)
     unifval = 5.98155
+    refset = {
+        '200GHz': {
+            'beam': dict(major='30.276442arcsec',minor='30.276442arcsec'),
+            'cell': '10.091393059432447arcsec',
+        },
+        '300GHz': {
+            'beam': dict(major='20.339973arcsec',minor='20.339973arcsec'),
+            'cell': '6.727595372954963arcsec',
+        },
+        '300.5GHz': {
+            'beam': dict(major='20.303418arcsec', minor='20.303418arcsec'),
+            'cell': '6.716401370670513arcsec',
+        },
+    }
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2586,11 +2600,25 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         self._checkdirax(outfile, self.param['phasecenter'],
                          cell_ref, self.param['imsize'])
 
+    def get_reference_from_restfreq(self, restfreq):
+        """Return a set of reference data associated with given rest frequency.
+        
+        Arguments:
+            restfreq {string} -- rest frequency as a string composed of value and unit
+                
+        Returns:
+           dict  -- reference data associated with given rest frequency
+        """
+        return self.refset.get(restfreq, {})
+
     def test_restfreq_param(self):
         """Rest frequency from restfreq parameter"""
         restfreq='200GHz'
-        beam_ref = dict(major='30.276442arcsec',minor='30.276442arcsec')
-        cell_ref = '10.091393059432447arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [7 , 7 ,  0,  9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
@@ -2599,8 +2627,11 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def test_restfreq_source(self):
         """Rest Frequency from SOURCE table"""
         restfreq='300GHz'
-        beam_ref = dict(major='20.339973arcsec',minor='20.339973arcsec')
-        cell_ref = '6.727595372954963arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [10, 10,  0,  9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
@@ -2609,8 +2640,11 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def test_restfreq_mean(self):
         """Rest frequency from mean of SPW frequencies"""
         restfreq='300.5GHz'
-        beam_ref = dict(major='20.303418arcsec', minor='20.303418arcsec')
-        cell_ref = '6.716401370670513arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [10, 10,  0,  9])
         # remove REST_REQUENCY in SOURCE TABLE
@@ -2624,6 +2658,34 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         tb.close()
         self.run_test(restfreq, beam_ref, cell_ref, stats,
                       restfreq='', imsize=[11,11])
+
+    def test_capital_outframe(self):
+        """test outframe='LSRK'"""
+        restfreq='200GHz'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
+        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
+                                          [7 , 7 ,  0,  9])
+        self.run_test(restfreq, beam_ref, cell_ref, stats,
+                      restfreq=restfreq,imsize=[8,8], outframe='LSRK')
+
+    def test_unallowed_outframe(self):
+        """test outframe='lSrK' (will fail)"""
+        restfreq='200GHz'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
+        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
+                                          [7 , 7 ,  0,  9])
+        with self.assertRaises(AssertionError):
+            self.run_test(restfreq, beam_ref, cell_ref, stats,
+                          restfreq=restfreq,imsize=[8,8], outframe='lSrK')
+        print('test_unallowed_outframe: failed as expected')
 
 ###
 #
