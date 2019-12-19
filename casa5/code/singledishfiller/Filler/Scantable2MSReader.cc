@@ -235,12 +235,12 @@ Scantable2MSReader::Scantable2MSReader(std::string const &scantable_name) :
     interval_column_(), srctype_column_(), data_column_(), flag_column_(),
     direction_column_(), scanrate_column_(), fieldname_column_(),
     tsys_column_(), tcal_id_column_(), sorted_rows_(),
-    get_antenna_row_(&Scantable2MSReader::getAntennaRowImpl),
-    get_field_row_(&Scantable2MSReader::getFieldRowImpl),
-    get_observation_row_(&Scantable2MSReader::getObservationRowImpl),
-    get_processor_row_(&Scantable2MSReader::getProcessorRowImpl),
-    get_source_row_(&Scantable2MSReader::getSourceRowImpl),
-    get_spw_row_(&Scantable2MSReader::getSpectralWindowRowImpl),
+    get_antenna_row_([&](sdfiller::AntennaRecord &r) {return Scantable2MSReader::getAntennaRowImpl(r);}),
+    get_field_row_([&](sdfiller::FieldRecord &r) {return Scantable2MSReader::getFieldRowImpl(r);}),
+    get_observation_row_([&](sdfiller::ObservationRecord &r) {return Scantable2MSReader::getObservationRowImpl(r);}),
+    get_processor_row_([&](sdfiller::ProcessorRecord &r) {return Scantable2MSReader::getProcessorRowImpl(r);}),
+    get_source_row_([&](sdfiller::SourceRecord &r) {return Scantable2MSReader::getSourceRowImpl(r);}),
+    get_spw_row_([&](sdfiller::SpectralWindowRecord &r) {return Scantable2MSReader::getSpectralWindowRowImpl(r);}),
     field_iter_(nullptr), freq_iter_(nullptr), source_iter_(nullptr) {
 //  std::cout << "Scantabl2MSReader::Scantable2MSReader" << std::endl;
 }
@@ -366,7 +366,7 @@ Bool Scantable2MSReader::getAntennaRowImpl(AntennaRecord &record) {
       MPosition::ITRF);
 
   // only one entry so redirect function pointer to noMoreRowImpl
-  get_antenna_row_ = &Scantable2MSReader::noMoreRowImpl<AntennaRecord>;
+  get_antenna_row_ = [&](sdfiller::AntennaRecord &r) {return Scantable2MSReader::noMoreRowImpl<AntennaRecord>(r);};
 
   return true;
 }
@@ -394,7 +394,7 @@ Bool Scantable2MSReader::getObservationRowImpl(ObservationRecord &record) {
   }
 
   // only one entry so redirect function pointer to noMoreRowImpl
-  get_observation_row_ = &Scantable2MSReader::noMoreRowImpl<ObservationRecord>;
+  get_observation_row_ = [&](sdfiller::ObservationRecord &r) {return Scantable2MSReader::noMoreRowImpl<ObservationRecord>(r);};
 
   return true;
 }
@@ -405,7 +405,7 @@ Bool Scantable2MSReader::getProcessorRowImpl(ProcessorRecord &/*record*/) {
   // just add empty row once
 
   // only one entry so redirect function pointer to noMoreRowImpl
-  get_processor_row_ = &Scantable2MSReader::noMoreRowImpl<ProcessorRecord>;
+  get_processor_row_ = [&](sdfiller::ProcessorRecord &r) {return Scantable2MSReader::noMoreRowImpl<ProcessorRecord>(r);};
 
   return true;
 }
@@ -442,7 +442,7 @@ Bool Scantable2MSReader::getData(size_t irow, DataRecord &record) {
   Int srctype = srctype_column_(index);
   record.intent = getIntent(srctype);
   record.scan = (Int) scan_column_(index);
-  record.subscan = getSubscan(srctype); 
+  record.subscan = getSubscan(srctype);
   String field_name = fieldname_column_.get(index);
   record.field_id = field_map_[field_name];
   record.antenna_id = (Int) 0;

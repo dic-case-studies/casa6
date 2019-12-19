@@ -65,6 +65,9 @@ def getParam(data):
     
     return datamean
     
+datacopy = 'fluxScaleData.ms'
+datacopy2 = 'fluxScaleData2.ms'
+    
 fluxout = 'fluxout.cal'
 fluxout2 = 'fluxout2.cal'
 
@@ -74,7 +77,8 @@ class fluxscale_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        pass
+        shutil.copytree(datapath, datacopy)
+        shutil.copytree(datapath2, datacopy2)
         
     def setUp(self):
         
@@ -95,7 +99,8 @@ class fluxscale_test(unittest.TestCase):
         
     @classmethod
     def tearDownClass(cls):
-        pass
+        shutil.rmtree(datacopy)
+        shutil.rmtree(datacopy2)
         
     
     def test_vis(self):
@@ -106,7 +111,7 @@ class fluxscale_test(unittest.TestCase):
             Check that the task takes a MS and creates a file
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'])
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'])
         
         self.assertTrue(os.path.exists(fluxout))
         
@@ -119,8 +124,8 @@ class fluxscale_test(unittest.TestCase):
             Check that changing the referenced field will generate a different output
         '''
         
-        res1 = fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'])
-        res2 = fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout2, reference=['1'])
+        res1 = fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'])
+        res2 = fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout2, reference=['1'])
         
         self.assertFalse(res1 == res2)
         
@@ -133,8 +138,8 @@ class fluxscale_test(unittest.TestCase):
             Check that specifying transfer gives the field name to transfer the flux scale to
         '''
         
-        res1 = fluxscale(vis=datapath2, caltable=nepCal, fluxtable=fluxout, reference=['0'])
-        res2 = fluxscale(vis=datapath2, caltable=nepCal, fluxtable=fluxout2, reference=['0'], transfer=['4'])
+        res1 = fluxscale(vis=datacopy2, caltable=nepCal, fluxtable=fluxout, reference=['0'])
+        res2 = fluxscale(vis=datacopy2, caltable=nepCal, fluxtable=fluxout2, reference=['0'], transfer=['4'])
         
         self.assertFalse(res1 == res2)
         
@@ -145,7 +150,7 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], listfile=listtext)
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], listfile=listtext)
         
         self.assertTrue(os.path.exists(listtext))
         
@@ -156,12 +161,12 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], append=False)
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], append=False)
         tb.open(fluxout)
         length1 = len(tb.getcol('TIME'))
         tb.close()
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], append=True)
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], append=True)
         tb.open(fluxout)
         length2 = len(tb.getcol('TIME'))
         tb.close()
@@ -175,8 +180,8 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], refspwmap=[1,1,1,1])
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout2, reference=['0'], refspwmap=[2,2,2,2])
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], refspwmap=[1,1,1,1])
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout2, reference=['0'], refspwmap=[2,2,2,2])
         
         res1 = getParam(fluxout)
         res2 = getParam(fluxout2)
@@ -190,8 +195,8 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], gainthreshold=0.01)
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout2, reference=['0'])
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], gainthreshold=0.01)
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout2, reference=['0'])
         
         res1 = getParam(fluxout)
         res2 = getParam(fluxout2)
@@ -205,8 +210,8 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], antenna='0~7')
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout2, reference=['0'])
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], antenna='0~7')
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout2, reference=['0'])
         
         res1 = getParam(fluxout)
         res2 = getParam(fluxout2)
@@ -220,8 +225,8 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], timerange='04:33:23~05:35:17')
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout2, reference=['0'])
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], timerange='04:33:23~05:35:17')
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout2, reference=['0'])
         
         res1 = getParam(fluxout)
         res2 = getParam(fluxout2)
@@ -235,8 +240,8 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], scan='0~4')
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout2, reference=['0'])
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], scan='0~4')
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout2, reference=['0'])
         
         res1 = getParam(fluxout)
         res2 = getParam(fluxout2)
@@ -250,8 +255,8 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], incremental=True)
-        fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout2, reference=['0'])
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], incremental=True)
+        fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout2, reference=['0'])
         
         res1 = getParam(fluxout)
         res2 = getParam(fluxout2)
@@ -265,8 +270,8 @@ class fluxscale_test(unittest.TestCase):
             ------------------------
         '''
         
-        res1 = fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout, reference=['0'], fitorder=40)
-        res2 = fluxscale(vis=datapath, caltable=gCal, fluxtable=fluxout2, reference=['0'])
+        res1 = fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout, reference=['0'], fitorder=40)
+        res2 = fluxscale(vis=datacopy, caltable=gCal, fluxtable=fluxout2, reference=['0'])
         
         self.assertFalse(np.all(res1['1']['spidx'] == res2['1']['spidx']))
         
