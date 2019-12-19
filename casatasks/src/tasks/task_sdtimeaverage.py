@@ -32,15 +32,6 @@ else:
     from update_spw import update_spwchan
     from callibrary import callibrary
 
-"""
-The following code is based on the mstransform code, with 
-task name and some task parameters modified. 
-To minimise code modification, the parameters used by 
-mstransform but not by nrobeamaverage are kept as much as 
-possible, and the default values for mstransform are given 
-to them.
-(CAS-12475, 2019/6/7 WK)
-"""
 
 @contextlib.contextmanager
 def open_table(path, nomodify=True):
@@ -64,8 +55,8 @@ def sdtimeaverage(
     #+
     #  defaut value (timebin=all) is to be handled.
     #-
-    timebin_c = timebin.upper()
-    if (timebin_c == 'ALL') or (timebin_c == ''):
+    capTimebin = timebin.upper()
+    if (capTimebin == 'ALL') or (capTimebin == ''):
         timebin =  calc_timebin(infile)+'s'
 
     #+
@@ -93,17 +84,18 @@ def sdtimeaverage(
         pass
 
 #  CASA-12721 NEW func.
-def calc_timebin(msname):
-    with open_table(msname) as tb:
+def calc_timebin(msName):
+    with open_table(msName) as tb:
         tm    = tb.getcol('TIME')
+        iv    = tb.getcol('INTERVAL')
 
-    leng_ = len(tm)
-    interval_ = tm[1] - tm[0]
+    interval = iv[0]  # interval
+
     time_first = min(tm)
     time_last =  max(tm)
 
     timebin = time_last - time_first ;
-    timebin += 4.0 * interval_
+    timebin += 4.0 * interval
 
     return str(timebin)
 
