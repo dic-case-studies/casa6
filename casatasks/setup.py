@@ -613,7 +613,7 @@ def generate_pyinit(moduledir,tasks):
         fd.write("def xml_interface_defs( ): return { %s }\n" % ", ".join(task_files_dict))
         fd.write("\n")
         fd.write("try:\n")
-        fd.write('    casalog.post("CASA Version %d.%d.%d-%d")\n' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature))
+        fd.write('    casalog.post("CASA Version %s")\n' % casatasks_version)
         fd.write("except:\n")
         fd.write('    print("Error: the logfile is not writable")\n')
         fd.write("\n")
