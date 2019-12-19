@@ -40,8 +40,14 @@ PhaseShiftingTVI::PhaseShiftingTVI(	ViImplementation2 * inputVii,
 {
 	dx_p = 0;
 	dy_p = 0;
+
+	// CAS-12706 Zero initialization for wide-field phase shifting algorithm
 	wideFieldMode_p = false;
 	phaseCenterName_p = "";
+	selectedInputMsCols_p = NULL;
+	epoch_p = NULL;
+	measFrame_p = NULL;
+	uvwMachine_p = NULL;
 
 	// Parse and check configuration parameters
 	// Note: if a constructor finishes by throwing an exception, the memory
@@ -52,34 +58,6 @@ PhaseShiftingTVI::PhaseShiftingTVI(	ViImplementation2 * inputVii,
 	}
 
 	initialize();
-
-	return;
-}
-
-// -----------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------
-void PhaseShiftingTVI::origin()
-{
-	// Drive underlying ViImplementation2
-	getVii()->origin();
-
-	// Synchronize own VisBuffer
-	configureNewSubchunk();
-
-	return;
-}
-
-// -----------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------
-void PhaseShiftingTVI::next()
-{
-	// Drive underlying ViImplementation2
-	getVii()->next();
-
-	// Synchronize own VisBuffer
-	configureNewSubchunk();
 
 	return;
 }
@@ -157,13 +135,86 @@ void PhaseShiftingTVI::initialize()
 
 	// CAS-12706 Add support for shifting across large offset/angles
 	// Access observatory position and observation start (reference) time.
-	selectedInputMsCols_p = new MSColumns(getVii()->ms());
-    observatoryPosition_p = selectedInputMsCols_p->antenna().positionMeas()(0);
-    referenceTime_p  = selectedInputMsCols_p->timeMeas()(0);
-    referenceTimeUnits_p = selectedInputMsCols_p->timeQuant()(0).getUnit();
+	if (wideFieldMode_p)
+	{
+		selectedInputMsCols_p = new MSColumns(getVii()->ms());
+	    observatoryPosition_p = selectedInputMsCols_p->antenna().positionMeas()(0);
+	    referenceTime_p  = selectedInputMsCols_p->timeMeas()(0);
+	    referenceTimeUnits_p = selectedInputMsCols_p->timeQuant()(0).getUnit();
+	}
 
 	return;
 }
+
+// -----------------------------------------------------------------------
+// CAS-12706 Initialization of UVWMachine for wide-field phase shifting algorithm
+// -----------------------------------------------------------------------
+void PhaseShiftingTVI::initializeUWVMachine()
+{
+	// Get input VisBuffer
+	VisBuffer2 *vb = getVii()->getVisBuffer();
+
+	// Initialize epoch corresponding to current buffer
+	// with time reference to the first row in the MS
+	epoch_p = new MEpoch(Quantity(vb->time()(0),referenceTimeUnits_p),
+			referenceTime_p.getRef());
+
+	// Initialize reference frame
+	measFrame_p = new MeasFrame(*epoch_p,observatoryPosition_p);
+
+	// Initialize UVW machine
+	uvwMachine_p = new UVWMachine(phaseCenter_p, vb->phaseCenter(), *measFrame_p,false,true);
+
+	return;
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+void PhaseShiftingTVI::origin()
+{
+	// Drive underlying ViImplementation2
+	getVii()->origin();
+
+	// CAS-12706 Add support for shifting across large offset/angles
+	// This initialization has to be here because of the constness of
+	// visibilityObserved/Corrected/Model etc
+	if (wideFieldMode_p)
+	{
+		if (epoch_p != NULL) delete epoch_p; epoch_p=NULL;
+		if (measFrame_p != NULL) delete measFrame_p; measFrame_p=NULL;
+		if (uvwMachine_p != NULL) delete uvwMachine_p; uvwMachine_p=NULL;
+		initializeUWVMachine();
+	}
+
+	// Synchronize own VisBuffer
+	configureNewSubchunk();
+
+	return;
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+void PhaseShiftingTVI::next()
+{
+	// Drive underlying ViImplementation2
+	getVii()->next();
+
+	if (wideFieldMode_p)
+	{
+		if (epoch_p != NULL) delete epoch_p; epoch_p=NULL;
+		if (measFrame_p != NULL) delete measFrame_p; measFrame_p=NULL;
+		if (uvwMachine_p != NULL) delete uvwMachine_p; uvwMachine_p=NULL;
+		initializeUWVMachine();
+	}
+
+	// Synchronize own VisBuffer
+	configureNewSubchunk();
+
+	return;
+}
+
 
 // -----------------------------------------------------------------------
 //

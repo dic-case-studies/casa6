@@ -29,10 +29,11 @@
 // To handle variant parameters
 #include <stdcasa/StdCasa/CasacSupport.h>
 
-// To access directly the MS columns
+// CAS-12706 To access directly the MS columns to get initial
+// time and position for wide-field phase shifting algorithm
 #include <casacore/ms/MeasurementSets/MSColumns.h>
 
-// For wide-field phase shifting algorithm
+// CAS-12706 UVWMachine for wide-field phase shifting algorithm
 #include <measures/Measures/UVWMachine.h>
 #include <casacore/measures/Measures/MeasFrame.h>
 
@@ -68,17 +69,22 @@ protected:
 
     casacore::Bool parseConfiguration(const casacore::Record &configuration);
     void initialize();
+    void initializeUWVMachine();
 
-    bool wideFieldMode_p;
 	casacore::Double dx_p, dy_p;
 
-	// Members wide-field phase shifting algorithm
+	// CAS-12706 Members wide-field phase shifting algorithm
+	bool wideFieldMode_p;
+	bool uvwMachineInitialized_p;
 	casacore::String phaseCenterName_p;
 	casacore::MDirection phaseCenter_p;
 	casacore::MSColumns *selectedInputMsCols_p;
 	casacore::MPosition observatoryPosition_p;
 	casacore::MEpoch referenceTime_p;
 	casacore::String referenceTimeUnits_p;
+	casacore::MEpoch *epoch_p;
+	casacore::MeasFrame *measFrame_p;
+	casacore::UVWMachine *uvwMachine_p;
 };
 
 //////////////////////////////////////////////////////////////////////////
