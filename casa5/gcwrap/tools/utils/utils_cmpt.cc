@@ -530,6 +530,8 @@ utils::toolversion( ) {
 #ifdef CASATOOLS
         ToolVersionInfo::major( ),
         ToolVersionInfo::minor( ),
+        ToolVersionInfo::patch( ),
+        ToolVersionInfo::feature( ),
 #endif
     };
     return result;

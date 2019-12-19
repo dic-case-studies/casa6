@@ -435,16 +435,16 @@ struct ComplexDataStorage {
 };
 
 template<class DataStorage>
-class TestReader: public casa::ReaderInterface {
+class TestReader final : public casa::ReaderInterface {
 public:
   TestReader(std::string const &name) :
       casa::ReaderInterface(name), source_iterator_(nullptr),
-      get_observation_row_(&::TestReader<DataStorage>::getObservationRowImpl),
-      get_antenna_row_(&::TestReader<DataStorage>::getAntennaRowImpl),
-      get_processor_row_(&::TestReader<DataStorage>::getProcessorRowImpl),
-      get_source_row_(&::TestReader<DataStorage>::getSourceRowWithInitImpl),
-      get_field_row_(&::TestReader<DataStorage>::getFieldRowWithInitImpl),
-      get_spw_row_(&::TestReader<DataStorage>::getSpwRowWithInitImpl),
+      get_observation_row_([&](ObservationRecord &r) {return ::TestReader<DataStorage>::getObservationRowImpl(r);}),
+      get_antenna_row_([&](AntennaRecord &r) {return ::TestReader<DataStorage>::getAntennaRowImpl(r);}),
+      get_processor_row_([&](ProcessorRecord &r) {return ::TestReader<DataStorage>::getProcessorRowImpl(r);}),
+      get_source_row_([&](SourceRecord &r) {return ::TestReader<DataStorage>::getSourceRowWithInitImpl(r);}),
+      get_field_row_([&](FieldRecord &r) {return ::TestReader<DataStorage>::getFieldRowWithInitImpl(r);}),
+      get_spw_row_([&](SpectralWindowRecord &r) {return ::TestReader<DataStorage>::getSpwRowWithInitImpl(r);}),
       storage_(), antenna_count_(0) {
     POST_START;POST_END;
   }
@@ -454,30 +454,40 @@ public:
   }
 
   // get number of rows
-  virtual size_t getNumberOfRows() {
+  size_t getNumberOfRows() const override {
     return storage_.nrow();
   }
 
+  // data unit
+  virtual casacore::String getDataUnit() const override {
+    return "";
+  }
+
   // query for data type
-  virtual casacore::Bool isFloatData() const {
+  casacore::Bool isFloatData() const override {
     return true;
   }
 
+  // direction frame
+  virtual casacore::MDirection::Types getDirectionFrame() const override {
+    return casacore::MDirection::J2000;
+  }
+
   // to get OBSERVATION table
-  virtual casacore::Bool getObservationRow(ObservationRecord &record) {
+  casacore::Bool getObservationRow(ObservationRecord &record) override {
     POST_START;
 
-    casacore::Bool return_value = (*this.*get_observation_row_)(record);
+    casacore::Bool return_value = get_observation_row_(record);
 
     POST_END;
     return return_value;
   }
 
   // to get ANTENNA table
-  virtual casacore::Bool getAntennaRow(AntennaRecord &record) {
+  casacore::Bool getAntennaRow(AntennaRecord &record) override {
     POST_START;
 
-    casacore::Bool return_value = (*this.*get_antenna_row_)(record);
+    casacore::Bool return_value = get_antenna_row_(record);
 
     POST_END;
 
@@ -485,20 +495,20 @@ public:
   }
 
   // to get PROCESSOR table
-  virtual casacore::Bool getProcessorRow(ProcessorRecord &record) {
+  casacore::Bool getProcessorRow(ProcessorRecord &record) override {
     POST_START;
 
-    casacore::Bool return_value = (*this.*get_processor_row_)(record);
+    casacore::Bool return_value = get_processor_row_(record);
 
     POST_END;
     return return_value;
   }
 
   // to get SOURCE table
-  virtual casacore::Bool getSourceRow(SourceRecord &record) {
+  casacore::Bool getSourceRow(SourceRecord &record) override {
     POST_START;
 
-    casacore::Bool return_value = (*this.*get_source_row_)(record);
+    casacore::Bool return_value = get_source_row_(record);
 
     POST_END;
 
@@ -506,10 +516,10 @@ public:
   }
 
   // to get FIELD table
-  virtual casacore::Bool getFieldRow(FieldRecord &record) {
+  casacore::Bool getFieldRow(FieldRecord &record) override {
     POST_START;
 
-    casacore::Bool return_value = (*this.*get_field_row_)(record);
+    casacore::Bool return_value = get_field_row_(record);
 
     POST_END;
 
@@ -517,10 +527,10 @@ public:
   }
 
   // to get SPECTRAL WINDOW table
-  virtual casacore::Bool getSpectralWindowRow(SpectralWindowRecord &record) {
+  casacore::Bool getSpectralWindowRow(SpectralWindowRecord &record) override {
     POST_START;
 
-    casacore::Bool return_value = (*this.*get_spw_row_)(record);
+    casacore::Bool return_value = get_spw_row_(record);
 
     POST_END;
 
@@ -528,7 +538,7 @@ public:
   }
 
   // for DataAccumulator
-  virtual casacore::Bool getData(size_t irow, DataRecord &record) {
+  casacore::Bool getData(size_t irow, DataRecord &record) override {
     POST_START;
 
     casacore::Bool status = storage_.getData(irow, record);
@@ -549,11 +559,11 @@ public:
   std::map<casacore::uInt, DataRecord> main_record_;
 
 protected:
-  void initializeSpecific() {
+  void initializeSpecific() override {
     POST_START;POST_END;
   }
 
-  void finalizeSpecific() {
+  void finalizeSpecific() override {
     POST_START;POST_END;
   }
 
@@ -561,12 +571,12 @@ private:
   std::unique_ptr<SourceIterator> source_iterator_;
   std::unique_ptr<FieldIterator> field_iterator_;
   std::unique_ptr<SpwIterator> spw_iterator_;
-  casacore::Bool (::TestReader<DataStorage>::*get_observation_row_)(ObservationRecord &);
-  casacore::Bool (::TestReader<DataStorage>::*get_antenna_row_)(AntennaRecord &);
-  casacore::Bool (::TestReader<DataStorage>::*get_processor_row_)(ProcessorRecord &);
-  casacore::Bool (::TestReader<DataStorage>::*get_source_row_)(SourceRecord &);
-  casacore::Bool (::TestReader<DataStorage>::*get_field_row_)(FieldRecord &);
-  casacore::Bool (::TestReader<DataStorage>::*get_spw_row_)(SpectralWindowRecord &);
+  std::function<casacore::Bool(ObservationRecord &)> get_observation_row_;
+  std::function<casacore::Bool(AntennaRecord &)> get_antenna_row_;
+  std::function<casacore::Bool(ProcessorRecord &)> get_processor_row_;
+  std::function<casacore::Bool(SourceRecord &)> get_source_row_;
+  std::function<casacore::Bool(FieldRecord &)> get_field_row_;
+  std::function<casacore::Bool(SpectralWindowRecord &)> get_spw_row_;
   DataStorage storage_;
   size_t antenna_count_;
 
@@ -604,8 +614,9 @@ private:
     observation_record_.define("SCHEDULE", strvec);
 
     // redirect function pointer to noMoreRowImpl
-    get_observation_row_ = &::TestReader<DataStorage>::noMoreRowImplTemplate<
-        ObservationRecord>;
+    get_observation_row_ = [&](ObservationRecord &r) {
+      return ::TestReader<DataStorage>::noMoreRowImplTemplate<ObservationRecord>(r);
+    };
 
     POST_END;
 
@@ -650,8 +661,9 @@ private:
     constexpr size_t kNumAntenna = 2;
 
     if (antenna_count_ >= kNumAntenna) {
-      get_antenna_row_ = &::TestReader<DataStorage>::noMoreRowImplTemplate<
-          AntennaRecord>;
+      get_antenna_row_ = [&](AntennaRecord &r) {
+        return ::TestReader<DataStorage>::noMoreRowImplTemplate<AntennaRecord>(r);
+      };
     }
 
     POST_END;
@@ -676,8 +688,9 @@ private:
     processor_record_.define("MODE_ID", mode_id);
 
     // redirect function pointer to noMoreRowImpl
-    get_processor_row_ = &::TestReader<DataStorage>::noMoreRowImplTemplate<
-        ProcessorRecord>;
+    get_processor_row_ = [&](ProcessorRecord &r) {
+        return ::TestReader<DataStorage>::noMoreRowImplTemplate<ProcessorRecord>(r);
+    };
 
     POST_END;
     return true;
@@ -687,7 +700,9 @@ private:
     POST_START;
 
     source_iterator_.reset(new ::SourceIterator());
-    get_source_row_ = &::TestReader<DataStorage>::getSourceRowImpl;
+    get_source_row_ = [&](SourceRecord &r) {
+      return ::TestReader<DataStorage>::getSourceRowImpl(r);
+    };
 
     casacore::Bool more_rows = getSourceRowImpl(record);
 
@@ -705,7 +720,9 @@ private:
     POST_START;
 
     field_iterator_.reset(new ::FieldIterator());
-    get_field_row_ = &::TestReader<DataStorage>::getFieldRowImpl;
+    get_field_row_ = [&](FieldRecord &r) {
+      return ::TestReader<DataStorage>::getFieldRowImpl(r);
+    };
 
     casacore::Bool more_rows = getFieldRowImpl(record);
 
@@ -723,7 +740,9 @@ private:
     POST_START;
 
     spw_iterator_.reset(new ::SpwIterator());
-    get_spw_row_ = &::TestReader<DataStorage>::getSpwRowImpl;
+    get_spw_row_ = [&](SpectralWindowRecord &r) {
+      return ::TestReader<DataStorage>::getSpwRowImpl(r);
+    };
 
     casacore::Bool more_rows = getSpwRowImpl(record);
 
@@ -754,7 +773,9 @@ private:
       internal_record[i] = record;
     } else {
       iter.reset(nullptr);
-      func = &::TestReader<DataStorage>::noMoreRowImplTemplate<_Record>;
+      func = [&](_Record &r) {
+        return ::TestReader<DataStorage>::noMoreRowImplTemplate<_Record>(r);
+      };
     }
 
     POST_END;

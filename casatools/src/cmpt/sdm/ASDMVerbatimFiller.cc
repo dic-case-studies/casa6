@@ -10,7 +10,12 @@ namespace casac {
             (*iter)->buildAndAttachTable(ms_p);  
     }
 
-    ASDMVerbatimFiller::~ASDMVerbatimFiller() {;}
+    ASDMVerbatimFiller::~ASDMVerbatimFiller() {
+        for (std::set<asdm::ASDM_TABLE_BASE*>::iterator iter=table_.begin();
+             iter != table_.end(); ++iter)
+            (*iter)->close();
+        table_.clear();
+    }
 
     void ASDMVerbatimFiller::fill(const asdm::ASDM& asdm) {
         for (std::set<asdm::ASDM_TABLE_BASE*>::const_iterator iter = table_.begin(); iter!=table_.end(); ++iter)
