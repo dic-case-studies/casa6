@@ -28,11 +28,15 @@ try:
     from casatasks import gaincal, casalog
     CASA6 = True
     tb = casatools.table()
+
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+
+import sys
 import os
+import testhelper as th
 import unittest
 import shutil
 import numpy as np
@@ -51,6 +55,13 @@ if CASA6:
     typeCalK = casatools.ctsys.resolve('caltables/gaintypek.G0')
     typeCalSpline = casatools.ctsys.resolve('caltables/gaintypeSpline.G0')
     spwMapCal = casatools.ctsys.resolve('caltables/spwMap.G0')
+    # From merged test
+    merged_dataset1 = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms')
+    merged_refcal1 = casatools.ctsys.resolve('caltables/ngc5921.ref1a.gcal')
+    merged_refcal2 = casatools.ctsys.resolve('caltables/ngc5921.ref2a.gcal')
+    merged_dataset2 = casatools.ctsys.resolve('visibilities/vla/ngc4826.ms')
+    merged_refcal3 = casatools.ctsys.resolve('caltables/ngc4826.ref1b.gcal')
+    
     
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
@@ -66,6 +77,12 @@ else:
         typeCalK = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaintypek.G0'
         typeCalSpline = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaintypeSpline.G0'
         spwMapCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/spwMap.G0'
+        # From merged test
+        merged_dataset1 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms'
+        merged_refcal1 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref1a.gcal'
+        merged_refcal2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref2a.gcal'
+        merged_dataset2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc4826.ms'
+        merged_refcal3 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc4826.ref1b.gcal'
         
         
     else:
@@ -81,6 +98,13 @@ else:
         typeCalK = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaintypek.G0'
         typeCalSpline = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaintypeSpline.G0'
         spwMapCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/spwMap.G0'
+        # From merged test
+        merged_dataset1 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
+        merged_refcal1 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref1a.gcal'
+        merged_refcal2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref2a.gcal'
+        merged_dataset2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc4826.ms'
+        merged_refcal3 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc4826.ref1b.gcal'
+        
         
 fullRangeCal = 'testgaincal.cal'
 maxScanCal = 'testScan.cal'
@@ -92,6 +116,8 @@ tempCal2 = 'temp2.cal'
 selectCal = 'select.cal'
 
 datacopy = 'gaincalTestCopy.ms'
+merged_copy1 = 'merged_copy1.ms'
+merged_copy2 = 'merged_copy2.ms'
 
 
 def getparam(caltable, colname='CPARAM'):
@@ -104,7 +130,7 @@ def getparam(caltable, colname='CPARAM'):
     return outtable
 
 
-def tableComp(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
+def tableComp(table1, table2, cols=[], rtol=8e-5, atol=1e-6):
     ''' Compare two caltables '''
 
     tableVal1 = {}
@@ -150,12 +176,27 @@ def tableComp(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
 
     return np.array(truths)
 
+def change_perms(path):
+    os.chmod(path, 0o777)
+    for root, dirs, files in os.walk(path):
+        for d in dirs:
+            os.chmod(os.path.join(root,d), 0o777)
+        for f in files:
+            os.chmod(os.path.join(root,f), 0o777)
+
 
 class gaincal_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
         shutil.copytree(datapath, datacopy)
+        shutil.copytree(merged_dataset1, merged_copy1)
+        shutil.copytree(merged_dataset2, merged_copy2)
+        #change permissions
+        change_perms(datacopy)
+        change_perms(merged_copy1)
+        change_perms(merged_copy2)
+
         
         gaincal(vis=datacopy, caltable=fullRangeCal, combine='scan', solint='inf', field='0', refant='0',
                 smodel=[1, 0, 0, 0], scan='0~9')
@@ -182,6 +223,8 @@ class gaincal_test(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(datacopy)
+        shutil.rmtree(merged_copy1)
+        shutil.rmtree(merged_copy2)
         
         if os.path.exists(fullRangeCal):
             shutil.rmtree(fullRangeCal)
@@ -207,6 +250,7 @@ class gaincal_test(unittest.TestCase):
         '''
 
         self.assertTrue(np.all(tableComp(fullRangeCal, combinedRef)[:,1] == 'True'))
+        #self.assertTrue(ch.Compare.compare_CASA_tables(fullRangeCal, combinedRef))
 
 
     def test_intervalSNR(self):
@@ -436,6 +480,31 @@ class gaincal_test(unittest.TestCase):
         
         self.assertTrue(np.all(tableComp(tempCal, spwMapCal)[:,1] == 'True'))
         
+    
+    def test_mergedCreatesGainTable(self):
+        ''' Gaincal 1a: Default values to create a gain table '''
+        
+        gaincal(vis=merged_copy1, caltable=tempCal, uvrange='>0.0')
+        self.assertTrue(os.path.exists(tempCal))
+        
+        self.assertTrue(th.compTables(tempCal, merged_refcal1, ['WEIGHT']))
+        
+    def test_mergedFieldSelect(self):
+        ''' Gaincal 2a: Create a gain table using field selection '''
+        
+        gaincal(vis=merged_copy1, caltable=tempCal, uvrange='>0.0', field='0', gaintype='G', solint='int', combine='', refant='VA02')
+        self.assertTrue(os.path.exists(tempCal))
+        
+        self.assertTrue(th.compTables(tempCal, merged_refcal2, ['WEIGHT']))
+        
+    def test_mergedSpwSelect(self):
+        ''' Gaincal 1b: Create a gain table for an MS with many spws '''
+        
+        
+        gaincal(vis=merged_copy2, caltable=tempCal, uvrange='>0.0', field='0,1', spw='0', gaintype='G', minsnr=2.0, refant='ANT5', solint='inf', combine='')
+        self.assertTrue(os.path.exists(tempCal))
+        
+        self.assertTrue(th.compTables(tempCal, merged_refcal3, ['WEIGHT']))
 
 
 def suite():

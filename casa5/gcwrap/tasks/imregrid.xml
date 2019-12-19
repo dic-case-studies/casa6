@@ -61,7 +61,7 @@ template images must have the same coordinate structure.
      <constraints>
         <when param="template">
             <notequals type="string" value="get">
-                <default param="shape"><value type="intArray">-1</value></default>
+                <default param="shape"><value type="intArray"><value>-1</value></value></default>
             </notequals>
         </when>
      </constraints>
