@@ -159,6 +159,37 @@ protected:
 	casacore::Vector<casacore::Double> *frequencies_p;
 };
 
+//////////////////////////////////////////////////////////////////////////
+// WideFieldPhaseShiftingTransformEngine class
+//////////////////////////////////////////////////////////////////////////
+
+template<class T> class WideFieldPhaseShiftingTransformEngine : public FreqAxisTransformEngine2<T>
+{
+	using FreqAxisTransformEngine2<T>::inputData_p;
+	using FreqAxisTransformEngine2<T>::outputData_p;
+	using FreqAxisTransformEngine2<T>::rowIndex_p;
+	using FreqAxisTransformEngine2<T>::corrIndex_p;
+
+public:
+
+	WideFieldPhaseShiftingTransformEngine(casacore::UVWMachine *uvwMachine,
+								casacore::Matrix<casacore::Double> *uvw,
+								casacore::Vector<casacore::Double> *frequencies,
+								DataCubeMap *inputData,
+								DataCubeMap *outputData);
+
+	void transform();
+
+	void transformCore(DataCubeMap *inputData,DataCubeMap *outputData);
+
+protected:
+
+	casacore::UVWMachine *uvwMachine_p;
+	casacore::Matrix<casacore::Double> *uvw_p;
+	casacore::Vector<casacore::Double> *frequencies_p;
+};
+
+
 
 } //# NAMESPACE VI - END
 

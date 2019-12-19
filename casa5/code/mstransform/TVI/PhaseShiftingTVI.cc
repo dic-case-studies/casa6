@@ -177,8 +177,8 @@ void PhaseShiftingTVI::origin()
 	getVii()->origin();
 
 	// CAS-12706 Add support for shifting across large offset/angles
-	// This initialization has to be here because of the constness of
-	// visibilityObserved/Corrected/Model etc
+	// NOTE: This initialization has to be here because of the
+	// constness of visibilityObserved/Corrected/Model etc
 	if (wideFieldMode_p)
 	{
 		if (epoch_p != NULL) delete epoch_p; epoch_p=NULL;
@@ -201,6 +201,9 @@ void PhaseShiftingTVI::next()
 	// Drive underlying ViImplementation2
 	getVii()->next();
 
+	// CAS-12706 Add support for shifting across large offset/angles
+	// NOTE: This initialization has to be here because of the
+	// constness of visibilityObserved/Corrected/Model etc
 	if (wideFieldMode_p)
 	{
 		if (epoch_p != NULL) delete epoch_p; epoch_p=NULL;
@@ -239,11 +242,22 @@ void PhaseShiftingTVI::visibilityObserved (Cube<Complex> & vis) const
 	DataCubeHolder<Complex> outputVisCubeHolder(vis);
 	outputData.add(MS::DATA,outputVisCubeHolder);
 
-	// Configure Transformation Engine
-	PhaseShiftingTransformEngine<Complex> transformer(dx_p,dy_p,&uvw,&frequencies,&inputData,&outputData);
+	if (wideFieldMode_p)
+	{
+		// Configure Transformation Engine
+		WideFieldPhaseShiftingTransformEngine<Complex> transformer(uvwMachine_p,&uvw,&frequencies,&inputData,&outputData);
 
-	// Transform data
-	transformFreqAxis2(vb->getShape(),transformer);
+		// Transform data
+		transformFreqAxis2(vb->getShape(),transformer);
+	}
+	else
+	{
+		// Configure Transformation Engine
+		PhaseShiftingTransformEngine<Complex> transformer(dx_p,dy_p,&uvw,&frequencies,&inputData,&outputData);
+
+		// Transform data
+		transformFreqAxis2(vb->getShape(),transformer);
+	}
 
 	return;
 }
@@ -271,11 +285,22 @@ void PhaseShiftingTVI::visibilityCorrected (Cube<Complex> & vis) const
 	DataCubeHolder<Complex> outputVisCubeHolder(vis);
 	outputData.add(MS::DATA,outputVisCubeHolder);
 
-	// Configure Transformation Engine
-	PhaseShiftingTransformEngine<Complex> transformer(dx_p,dy_p,&uvw,&frequencies,&inputData,&outputData);
+	if (wideFieldMode_p)
+	{
+		// Configure Transformation Engine
+		WideFieldPhaseShiftingTransformEngine<Complex> transformer(uvwMachine_p,&uvw,&frequencies,&inputData,&outputData);
 
-	// Transform data
-	transformFreqAxis2(vb->getShape(),transformer);
+		// Transform data
+		transformFreqAxis2(vb->getShape(),transformer);
+	}
+	else
+	{
+		// Configure Transformation Engine
+		PhaseShiftingTransformEngine<Complex> transformer(dx_p,dy_p,&uvw,&frequencies,&inputData,&outputData);
+
+		// Transform data
+		transformFreqAxis2(vb->getShape(),transformer);
+	}
 
 	return;
 }
@@ -303,11 +328,22 @@ void PhaseShiftingTVI::visibilityModel (Cube<Complex> & vis) const
 	DataCubeHolder<Complex> outputVisCubeHolder(vis);
 	outputData.add(MS::DATA,outputVisCubeHolder);
 
-	// Configure Transformation Engine
-	PhaseShiftingTransformEngine<Complex> transformer(dx_p,dy_p,&uvw,&frequencies,&inputData,&outputData);
+	if (wideFieldMode_p)
+	{
+		// Configure Transformation Engine
+		WideFieldPhaseShiftingTransformEngine<Complex> transformer(uvwMachine_p,&uvw,&frequencies,&inputData,&outputData);
 
-	// Transform data
-	transformFreqAxis2(vb->getShape(),transformer);
+		// Transform data
+		transformFreqAxis2(vb->getShape(),transformer);
+	}
+	else
+	{
+		// Configure Transformation Engine
+		PhaseShiftingTransformEngine<Complex> transformer(dx_p,dy_p,&uvw,&frequencies,&inputData,&outputData);
+
+		// Transform data
+		transformFreqAxis2(vb->getShape(),transformer);
+	}
 
 	return;
 }
@@ -404,6 +440,66 @@ template<class T> void PhaseShiftingTransformEngine<T>::transformCore(	DataCubeM
 	Double phase = dx_p*(*uvw_p)(0,rowIndex_p) + dy_p*(*uvw_p)(1,rowIndex_p);
 
 	// In radian/Hz
+	phase *= -2.0 * C::pi / C::c;
+
+	// Main loop
+	Double phase_i;
+	Complex factor;
+	for (uInt chan_i=0;chan_i<inputVector.size();chan_i++)
+	{
+		phase_i = phase * (*frequencies_p)(chan_i);
+		factor = Complex(cos(phase_i), sin(phase_i));
+		outputVector(chan_i) = factor*inputVector(chan_i);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// WideFieldPhaseShiftingTransformEngine class
+//////////////////////////////////////////////////////////////////////////
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+template<class T> WideFieldPhaseShiftingTransformEngine<T>::WideFieldPhaseShiftingTransformEngine(
+															UVWMachine *uvwMachine,
+															Matrix<Double> *uvw,
+															Vector<Double> *frequencies,
+															DataCubeMap *inputData,
+															DataCubeMap *outputData):
+															FreqAxisTransformEngine2<T>(inputData,outputData)
+{
+	uvw_p = uvw;
+	frequencies_p = frequencies;
+	uvwMachine_p = uvwMachine;
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+template<class T> void WideFieldPhaseShiftingTransformEngine<T>::transform(	)
+{
+	transformCore(inputData_p,outputData_p);
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+template<class T> void WideFieldPhaseShiftingTransformEngine<T>::transformCore(	DataCubeMap *inputData,
+																		DataCubeMap *outputData)
+{
+	// Get input/output data
+	Vector<T> &inputVector = inputData->getVector<T>(MS::DATA);
+	Vector<T> &outputVector = outputData->getVector<T>(MS::DATA);
+
+	// Obtain phase shift from UVWMachine
+	Double phase = 0;
+	Vector<Double> uvw(3);
+	uvw[0] = (*uvw_p)(0,rowIndex_p);
+	uvw[1] = (*uvw_p)(1,rowIndex_p);
+	uvw[2] = (*uvw_p)(2,rowIndex_p);
+	uvwMachine_p->convertUVW(phase,uvw);
+
+	// Convert phase to radian/Hz
 	phase *= -2.0 * C::pi / C::c;
 
 	// Main loop
