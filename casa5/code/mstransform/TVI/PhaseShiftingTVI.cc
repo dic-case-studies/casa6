@@ -348,6 +348,24 @@ void PhaseShiftingTVI::visibilityModel (Cube<Complex> & vis) const
 	return;
 }
 
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+void PhaseShiftingTVI::uvw (casacore::Matrix<double> & uvw) const
+{
+	if (wideFieldMode_p)
+	{
+		uvw.resize(newUVW_p.shape(),false);
+		uvw = newUVW_p;
+	}
+	else
+	{
+		getVii()->uvw (uvw);
+	}
+
+	return;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // PhaseShiftingTVIFactory class
 //////////////////////////////////////////////////////////////////////////

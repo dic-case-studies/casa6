@@ -64,6 +64,7 @@ public:
     virtual void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const;
     virtual void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const;
     virtual void visibilityModel (casacore::Cube<casacore::Complex> & vis) const;
+    virtual void uvw (casacore::Matrix<double> & uvw) const;
 
 protected:
 
