@@ -5,29 +5,38 @@ import copy
 import math
 import time
 import datetime
-import sdutil
 import contextlib
-from taskinit import mttool, mstool, tbtool, casalog, qa, gentools
-from mstools import write_history
-from parallel.parallel_data_helper import ParallelDataHelper
-import flaghelper as fh
-from update_spw import update_spwchan
-from callibrary import callibrary
 
-"""
-The following code is based on the mstransform code, with 
-task name and some task parameters modified. 
-To minimise code modification, the parameters used by 
-mstransform but not by nrobeamaverage are kept as much as 
-possible, and the default values for mstransform are given 
-to them.
-(CAS-12475, 2019/6/7 WK)
-"""
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from . import sdutil
+    from casatasks import casalog
+    from casatools import quanta, ms, table, mstransformer
+    from .mstools import write_history
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from . import flaghelper as fh
+    from .update_spw import update_spwchan
+    from .callibrary import callibrary
+    # CAS-12721
+    from casatasks.private.sdutil import tbmanager   #, toolmanager, table_selector
+
+else:
+    import sdutil
+    from taskinit import mttool as mstransformer
+    from taskinit import mstool as ms
+    from taskinit import tbtool as table
+    from taskinit import qatool as quanta
+    from mstools import write_history
+    from parallel.parallel_data_helper import ParallelDataHelper
+    import flaghelper as fh
+    from update_spw import update_spwchan
+    from callibrary import callibrary
+
 
 @contextlib.contextmanager
-def open_table(table, nomodify=True):
-    (tb,) = gentools(['tb'])
-    tb.open(table, nomodify=nomodify)
+def open_table(path, nomodify=True):
+    tb = table( )
+    tb.open(path, nomodify=nomodify)
     try:
         yield tb
     finally:
@@ -40,14 +49,14 @@ def sdtimeaverage(
              spw, 
              timerange, 
              scan,
-             antenna,   # changed CAS-12721
+             antenna,   # changed CAS-12721 ( beam -> antenna)
              timebin,
              outfile):
     #+
     #  defaut value (timebin=all) is to be handled.
     #-
-    timebin_c = timebin.upper()
-    if (timebin_c == 'ALL') or (timebin_c == ''):
+    capTimebin = timebin.upper()
+    if (capTimebin == 'ALL') or (capTimebin == ''):
         timebin =  calc_timebin(infile)+'s'
 
     #+
@@ -56,36 +65,40 @@ def sdtimeaverage(
     if (len(antenna) != 0) and (antenna.find('&') == -1):
         antenna = antenna + '&&&'
 
-    casalog.origin('sdtimeaverage')  # 
+    casalog.origin('sdtimeaverage')
 
     try:
         # CAS-12721 revised: seelect and time averaging (at same time)
 
-        do_mst(infile=infile, datacolumn=datacolumn,
-               field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna,
-               timebin=timebin, outfile=outfile)
+        st =do_mst(infile=infile, datacolumn=datacolumn,
+                   field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna, 
+                   timebin=timebin, outfile=outfile)
 
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan,
                     timebin=timebin, antenna=antenna, outfile=outfile)
-        
+
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
+        return False
     finally:
         pass
 
-#  CASA-12721 NEW
-def calc_timebin(msname):
-    with open_table(msname) as tb:
-        tm = tb.getcol('TIME')
+    return st
 
-    leng_ = len(tm)
-    interval_ = tm[1] - tm[0]
+#  CASA-12721 NEW func.
+def calc_timebin(msName):
+    with open_table(msName) as tb:
+        tm    = tb.getcol('TIME')
+        iv    = tb.getcol('INTERVAL')
+
+    interval = iv[0]  # interval
+
     time_first = min(tm)
     time_last =  max(tm)
 
     timebin = time_last - time_first ;
-    timebin += 4.0 * interval_
+    timebin += 4.0 * interval
 
     return str(timebin)
 
@@ -93,9 +106,7 @@ def calc_timebin(msname):
 def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, outfile):
     # followings are parameters of mstransform but not used by THIS.
     # just putting default values
-
-    # CAS-12721: Added 'antenna' arg . removed local var. (S.N)
-
+  
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
     tileshape = [0]
@@ -128,13 +139,13 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
     # Validate input and output parameters
     try:
         pdh.setupIO()
-    except Exception, instance:
+    except Exception as instance:
         casalog.post('%s'%instance,'ERROR')
         return False
 
     # Create a local copy of the MSTransform tool
-    mtlocal = mttool()  # CASA5 feature
-    mslocal = mstool()  # CASA5 feature 
+    mtlocal = mstransformer()  # CASA6 changed.
+    mslocal = ms( )            # CASA6 changed.
     
     try:
         # Gather all the parameters in a dictionary.
@@ -162,13 +173,13 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         config['tileshape'] = tileshape
 
         # Only parse timeaverage parameters when timebin > 0s
-        # qa = quanta( ) --- CASA6
+        qa = quanta( ) # CASA6 needed
         tbin = qa.convert(qa.quantity(timebin), 's')['value']
         if tbin < 0:
-            raise Exception, "Parameter timebin must be > '0s' to do time averaging"
-
+            raise Exception("Parameter timebin must be > '0s' to do time averaging")
+  
         # set config
-        timeaverageAct = (tbin > 0)   
+        timeaverageAct = (tbin > 0)
         if timeaverageAct:
             casalog.post('Parse time averaging parameters')
             config['timeaverage'] = True
@@ -189,7 +200,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
 
         mtlocal.done()
                     
-    except Exception, instance:
+    except Exception as instance:
         mtlocal.done()
         casalog.post('%s'%instance,'ERROR')
         return False
@@ -207,7 +218,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         isopen = False
 
         try:
-            mytb = tbtool()
+            mytb = table( )
             mytb.open(outfile + '/FLAG_CMD', nomodify=False)
             isopen = True
             nflgcmds = mytb.nrows()
@@ -232,25 +243,25 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print "width =", width
+                    #print("width =", width)
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
                         if hasattr(chanbin, '__iter__') and len(chanbin) > 1:
-                            for i in xrange(len(chanbin)):
+                            for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-    #                        print 'using ms.msseltoindex + a scalar width'
+    #                        print('using ms.msseltoindex + a scalar width')
                             numspw = len(mslocal.msseltoindex(vis=infile,
                                                          spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
                                 w = chanbin[0]
                             else:
                                 w = chanbin
-                            for i in xrange(numspw):
+                            for i in range(numspw):
                                 widths[i] = w
-    #                print 'widths =', widths 
-                    for rownum in xrange(nflgcmds):
+    #                print('widths =', widths)
+                    for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
                         if spwmatch:
@@ -261,18 +272,18 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
                             # in that case.
                             cmd = ''
                             try:
-                                #print 'sch1 =', sch1
+                                #print('sch1 =', sch1)
                                 sch2 = update_spwchan(infile, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #print 'sch2 =', sch2
-                                ##print 'spwmatch.group() =', spwmatch.group()
+                                #print('sch2 =', sch2)
+                                ##print('spwmatch.group() =', spwmatch.group())
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
                                         repl = "spw='" + sch2 + "'"
                                     cmd = cmds[rownum].replace(spwmatch.group(), repl)
                             #except: # cmd[rownum] no longer applies.
-                            except Exception, e:
+                            except Exception as e:
                                 casalog.post(
                                     "Error %s updating row %d of FLAG_CMD" % (e,
                                                                               rownum),
@@ -291,7 +302,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
                 
             mytb.close()
             
-        except Exception, instance:
+        except Exception as instance:
             if isopen:
                 mytb.close()
             mslocal = None
@@ -305,16 +316,18 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
 
     return True
 
-# CASA5 / CASA6 different (see CASA6 code)
+# revised in CASA6 
 def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, antenna, outfile):
-    mslocal = mstool()
+    mslocal = ms( )
     # Write history to output MS, not the input ms.
     try:
-        param_names = sdtimeaverage.func_code.co_varnames[:sdtimeaverage.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]
+        code_object = sdtimeaverage.__code__                             #CASA6
+        param_names = code_object.co_varnames[:code_object.co_argcount]  #CASA6
+        local_vals = locals()                                            #CASA6
+        param_vals = [local_vals.get(p, None) for p in param_names]      #CASA6
         write_history(mslocal, outfile, 'sdtimeaverage', param_names,
                       param_vals, casalog)
-    except Exception, instance:
+    except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')
         return False
@@ -322,6 +335,4 @@ def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebi
     mslocal = None
     
     return True
-    
- 
     

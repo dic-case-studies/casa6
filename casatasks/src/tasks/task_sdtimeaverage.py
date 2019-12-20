@@ -70,9 +70,9 @@ def sdtimeaverage(
     try:
         # CAS-12721 revised: seelect and time averaging (at same time)
 
-        do_mst(infile=infile, datacolumn=datacolumn,
-               field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna, 
-               timebin=timebin, outfile=outfile)
+        st =do_mst(infile=infile, datacolumn=datacolumn,
+                   field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna, 
+                   timebin=timebin, outfile=outfile)
 
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan,
@@ -80,8 +80,11 @@ def sdtimeaverage(
 
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
+        return False
     finally:
         pass
+
+    return st
 
 #  CASA-12721 NEW func.
 def calc_timebin(msName):
