@@ -3603,7 +3603,7 @@ in spectral window 1.
 
        is the mean of the exposure times. The associated weight of
        visibility V_i is e_i/v_eq. The weight will have unit of (data
-       unit)^(−2), e.g.,Jy^(−2). The visibility weights are what this
+       unit)^(-2), e.g., Jy^(-2). The visibility weights are what this
        application computes and writes.
 
     Data are aggregated on a per-baseline, per-data description ID
@@ -3700,7 +3700,7 @@ in spectral window 1.
             
     In the sliding time window case, in the case where timebin is a time
     quantity, the time window is always centered on the timestamp of the
-    row in question and extends ± timebin/2 around that timestamp, subject
+    row in question and extends +/-timebin/2 around that timestamp, subject
     the the time block boundaries.
     
     In the case where timebin is an integer, there are two cases to

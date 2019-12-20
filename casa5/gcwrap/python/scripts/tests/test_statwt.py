@@ -3,21 +3,37 @@ import sys
 import shutil
 from __main__ import default
 from tasks import *
-from taskinit import *
 import unittest
 import math
 import numpy as np
 import numpy.ma as ma
 import numbers
+import testhelper as th
+
+subdir = 'visibilities/vla/'
+if th.is_casa6():
+    from casatools import ctsys, table, ms
+    datadir = casatools.ctsys.resolve(subdir)
+else:
+    from taskinit import *
+    datadir = (
+        os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/' + subdir
+    )
+    if not os.path.exists(datadir):
+        datadir = (
+            os.environ.get('CASAPATH').split()[0] + '/casa-data-req/' + subdir
+        )
 
 # from multiprocessing.pool import ThreadPool as Pool
 # from multiprocessing import Pool
 
 # pool_size = 20  # your "parallelness"
 
-datadir = os.environ.get('CASAPATH').split()[0] \
-    + '/data/regression/unittest/statwt/'
-src = datadir + 'ngc5921.split_2.ms'
+# datadir = os.environ.get('CASAPATH').split()[0] \
+#    + '/data/regression/unittest/statwt/'
+src = datadir + 'ngc5921_small.statwt.ms'
+if not os.path.exists(src):
+    raise Exception('Cannot find ' + src)
 
 # rows and target_row are the row numbers from the subtable formed
 # by the baseline query
@@ -306,14 +322,14 @@ class statwt_test(unittest.TestCase):
                     chan_flags = cflags if fitspw else None
                     if combine == '':
                         if fitspw == '':
-                            ref = 'ref_test_algorithm_sep_corr_no_fitspw.ms'
+                            ref = 'ngc5921_statwt_ref_test_algorithm_sep_corr_no_fitspw.ms'
                         else: 
-                            ref = 'ref_test_algorithm_sep_corr_fitspw.ms'
+                            ref = 'ngc5921_statwt_ref_test_algorithm_sep_corr_fitspw.ms'
                     else:
                         if fitspw == '':
-                            ref = 'ref_test_algorithm_combine_corr_no_fitspw.ms'
+                            ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_no_fitspw.ms'
                         else:
-                            ref = 'ref_test_algorithm_combine_corr_has_fitspw.ms'
+                            ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_has_fitspw.ms'
                     self.compare(dst, ref)
                     shutil.rmtree(dst)
                 c += 1               
@@ -364,7 +380,7 @@ class statwt_test(unittest.TestCase):
                     myms.done()
                 else:
                     statwt(dst, timebin=timebin, combine=combine)
-                ref = 'ref_test_timebin_' + str(timebin) + '.ms'
+                ref = 'ngc5921_statwt_ref_test_timebin_' + str(timebin) + '.ms'
                 self.compare(dst, ref)
                 shutil.rmtree(dst)
         
@@ -410,9 +426,9 @@ class statwt_test(unittest.TestCase):
                         myms.statwt(chanbin=chanbin, combine=combine)
                         myms.done()
                     if combine == '':
-                        ref = 'ref_test_chanbin_sep_corr.ms'
+                        ref = 'ngc5921_statwt_ref_test_chanbin_sep_corr.ms'
                     else:
-                        ref = 'ref_test_chanbin_combine_corr.ms'
+                        ref = 'ngc5921_statwt_ref_test_chanbin_combine_corr.ms'
                     self.compare(dst, ref)
                     shutil.rmtree(dst)
 
@@ -468,7 +484,7 @@ class statwt_test(unittest.TestCase):
         """Test field selection"""
         dst = "ngc5921.split.fieldsel.ms"
         combine = "corr"
-        ref = 'ref_test_fieldsel.ms'
+        ref = 'ngc5921_statwt_ref_test_fieldsel.ms'
         for field in ["2", "N5921_2"]:
             shutil.copytree(src, dst)
             statwt(dst, field=field, combine=combine)
@@ -478,7 +494,7 @@ class statwt_test(unittest.TestCase):
     def test_spwsel(self):
         """Test spw selection"""
         dst = "ngc5921.split.spwsel.ms"
-        ref = 'ref_test_algorithm_combine_corr_no_fitspw.ms'
+        ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_no_fitspw.ms'
         combine = "corr"
         spw="0"
         # data set only has one spw
@@ -490,7 +506,7 @@ class statwt_test(unittest.TestCase):
     def test_scansel(self):
         """CAS-11858 Test scan selection"""
         dst = "ngc5921.split.scansel.ms"
-        ref = 'ref_test_scansel.ms'
+        ref = 'ngc5921_statwt_ref_test_scansel.ms'
         combine = "corr"
         [origwt, origwtsp, origflag, origfrow, origdata] = _get_dst_cols(src)
         scan = "5"
@@ -502,7 +518,7 @@ class statwt_test(unittest.TestCase):
     def test_default_boundaries(self):
         """Test default scan, field, etc boundaries"""
         dst = "ngc5921.split.normalbounds.ms"
-        ref = 'ref_test_default_boundaries.ms'
+        ref = 'ngc5921_statwt_ref_test_default_boundaries.ms'
         timebin = "6000s"
         # there are three field_ids, and there is a change in field_id when
         # there is a change in scan number, so specifying combine="field" in the
@@ -544,7 +560,7 @@ class statwt_test(unittest.TestCase):
         """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
         timebin = "6000s"
-        ref = 'ref_test_no_scan_bounds.ms'
+        ref = 'ngc5921_statwt_ref_test_no_scan_bounds.ms'
         combine = "corr, scan"
         """
         row_to_rows = []
@@ -580,7 +596,7 @@ class statwt_test(unittest.TestCase):
         """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
-        ref = 'ref_test_no_scan_nor_field_bounds.ms'
+        ref = 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms'
         """
         row_to_rows = []
         for i in range(60):
@@ -657,7 +673,7 @@ class statwt_test(unittest.TestCase):
     def test_wtrange(self):
         """Test weight range"""
         dst = "ngc5921.split.timebin.ms"
-        ref = "ref_test_wtrange_300s.ms"
+        ref = "ngc5921_statwt_ref_test_wtrange_300s.ms"
         combine = "corr"
         timebin = "300s"
         wtrange = [1, 2]
@@ -709,7 +725,7 @@ class statwt_test(unittest.TestCase):
 
     def test_preview(self):
         """ Test preview mode"""
-        dst = "ngc5921.split.preview.ms"
+        dst = "ngc5921_statwt_ngc5921.split.preview.ms"
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(src)
         rtol = 1e-7
         combine = "corr"
@@ -746,7 +762,7 @@ class statwt_test(unittest.TestCase):
     def test_data_col(self):
         """Test using data column"""
         dst = "ngc5921.split.data.ms"
-        ref = 'ref_test_data_col.ms'
+        ref = 'ngc5921_statwt_ref_test_data_col.ms'
         combine = "corr"
         timebin = 1
         data = "data"
@@ -776,7 +792,7 @@ class statwt_test(unittest.TestCase):
     def test_sliding_time_window(self):
         """Test sliding time window"""
         dst = "ngc5921.split.sliding_time_window.ms"
-        ref = 'ref_test_sliding_time_window.ms'
+        ref = 'ngc5921_statwt_ref_test_sliding_time_window.ms'
         timebin = "300s"
         myms = mstool()
         """
@@ -1002,7 +1018,7 @@ class statwt_test(unittest.TestCase):
 
         myms = mstool()
         for timebin in [5, 6]:
-            ref = 'ref_test_sliding_time_window_' + str(timebin) + '.ms'
+            ref = 'ngc5921_statwt_ref_test_sliding_time_window_' + str(timebin) + '.ms'
             for i in [0, 1]:
                 shutil.copytree(src, dst)
                 if i == 0:
@@ -1020,7 +1036,7 @@ class statwt_test(unittest.TestCase):
     def test_residual(self):
         """ Test using corrected_data - model_data column"""
         dst = "ngc5921.split.residualwmodel.ms"
-        ref = 'ref_test_residual.ms'
+        ref = 'ngc5921_statwt_ref_test_residual.ms'
         data = "residual"
         # row_to_rows = []
         # for i in range(60):
@@ -1043,7 +1059,7 @@ class statwt_test(unittest.TestCase):
     def test_residual_no_model(self):
         """Test datacolumn='residual' in the absence of a MODEL_DATA column"""
         dst = "ngc5921.split.residualwoutmodel.ms"
-        ref = 'ref_test_residual_no_model.ms'
+        ref = 'ngc5921_statwt_ref_test_residual_no_model.ms'
         data = "residual"
         row_to_rows = []
         # for i in range(60):
@@ -1070,7 +1086,7 @@ class statwt_test(unittest.TestCase):
     def test_residual_data(self):
         """Test using data - model_data column"""
         dst = "ngc5921.split.residualdatawmodel.ms"
-        ref = 'ref_test_residual_data.ms'
+        ref = 'ngc5921_statwt_ref_test_residual_data.ms'
         data = "residual_data"
         mytb = tbtool()
         myms = mstool()
@@ -1094,7 +1110,7 @@ class statwt_test(unittest.TestCase):
     def test_residual_data_no_model(self):
         """Test using residual data in absence of MODEL_DATA"""
         dst = "ngc5921.split.residualdatawoutmodel.ms"
-        ref = 'ref_test_residual_data_no_model.ms'
+        ref = 'ngc5921_statwt_ref_test_residual_data_no_model.ms'
         data = "residual_data"
         mytb = tbtool()
         myms = mstool()

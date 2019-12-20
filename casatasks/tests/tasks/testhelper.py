@@ -735,6 +735,18 @@ def get_table_cache():
     # print('cache = {}'.format(cache))
     return cache
 
+def is_casa6():
+    try:
+        # CASA 6
+        from casatools import table
+        return True
+    except ImportError:
+        try:
+            # CASA 5
+            from taskinit import tbtool
+            return False
+        except ImportError:
+            raise Exception('Neither CASA5 nor CASA6')
 
 class TableCacheValidator(object):
     def __init__(self):
