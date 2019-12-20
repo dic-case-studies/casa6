@@ -550,7 +550,7 @@ HPX HEALPix grid.  -->
       <value type="string"></value>
     </param>
 
-    <param type="int" name="nchan" subparam="true">
+    <param type="int" name="nchan">
      <shortdescription>Number of channels in the output image</shortdescription>
 <description>Number of channels in the output image
                        For default (=-1), the number of channels will be automatically determined
@@ -562,7 +562,7 @@ HPX HEALPix grid.  -->
       <value type="int">-1</value>
     </param>
 
-    <param type="any" name="start" subparam="true">
+    <param type="any" name="start">
      <shortdescription>First channel (e.g. start=3,start=\'1.1GHz\',start=\'15343km/s\')</shortdescription>
 <description>First channel (e.g. start=3,start=\'1.1GHz\',start=\'15343km/s\')
                        of output cube images specified by data channel number (integer),
@@ -585,7 +585,7 @@ HPX HEALPix grid.  -->
       <value type="string"></value>
     </param>
 
-    <param type="any" name="width" subparam="true">
+    <param type="any" name="width">
      <shortdescription>Channel width (e.g. width=2,width=\'0.1MHz\',width=\'10km/s\')</shortdescription>
 <description>Channel width (e.g. width=2,width=\'0.1MHz\',width=\'10km/s\') of output cube images
                       specified by data channel number (integer), velocity (string with a unit), or
@@ -606,7 +606,7 @@ HPX HEALPix grid.  -->
       <value type="string"></value>
     </param>
 
-    <param type="string" name="outframe" subparam="true">
+    <param type="string" name="outframe">
      <shortdescription>Spectral reference frame in which to interpret \'start\' and \'width\'</shortdescription>
 <description>Spectral reference frame in which to interpret \'start\' and \'width\'
                       Options: '','LSRK','LSRD','BARY','GEO','TOPO','GALACTO','LGROUP','CMB'
@@ -629,7 +629,7 @@ HPX HEALPix grid.  -->
       <value type="string">LSRK</value>
     </param>
 
-    <param type="string" name="veltype" subparam="true">
+    <param type="string" name="veltype">
      <shortdescription>Velocity type (radio, z, ratio, beta, gamma, optical)</shortdescription>
 <description>Velocity type (radio, z, ratio, beta, gamma, optical)
                       For start and/or width specified in velocity, specifies the velocity definition
@@ -654,7 +654,7 @@ HPX HEALPix grid.  -->
       <value type="string">radio</value>
     </param>
 
-    <param type="any" name="restfreq" subparam="true">
+    <param type="any" name="restfreq">
      <shortdescription>List of rest frequencies</shortdescription>
 <description>List of rest frequencies or a rest frequency in a string.
                       Specify rest frequency to use for output image.
@@ -683,7 +683,7 @@ HPX HEALPix grid.  -->
       <value type="string"></value>
     </param>
 -->
-    <param type="string" name="interpolation" subparam="true">
+    <param type="string" name="interpolation">
      <shortdescription>Spectral interpolation (nearest,linear,cubic)</shortdescription>
 <description>Spectral interpolation (nearest,linear,cubic)
 
@@ -705,7 +705,7 @@ HPX HEALPix grid.  -->
               <value>cubic</value>
       </allowed>
     </param>
-<param type="bool" name="perchanweightdensity" subparam="true">
+<param type="bool" name="perchanweightdensity">
            <shortdescription>whether to calculate weight density per channel in Briggs style weighting or not</shortdescription>
            <description>
                          When calculating weight density for Briggs
@@ -2594,13 +2594,13 @@ to use the correct direction in which the antenna is pointing with respect to th
         <default param="sdimage"><value>""</value></default>
         <default param="sdpsf"><value>""</value></default>
         <default param="sdgain"><value>1.0</value></default>
-        <default param="dishdiam"><value>100.0</value></default>
+        <default param="dishdia"><value>100.0</value></default>
       </equals>
       <equals value="sdint" type="string">
         <default param="sdimage"><value>""</value></default>
         <default param="sdpsf"><value>""</value></default>
         <default param="sdgain"><value>1.0</value></default>
-        <default param="dishdiam"><value>100.0</value></default>
+        <default param="dishdia"><value>100.0</value></default>
       </equals>
       </when>
 
@@ -2635,7 +2635,8 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="reffreq"><value>""</value></default>
 <!--         <default param="nterms"><value>1</value></default> -->
        </equals>
-       <equals type="string" value="cube">
+
+<!--       <equals type="string" value="cube">
          <default param="nchan"><value>-1</value></default>
          <default param="start"><value>""</value></default>
          <default param="width"><value>""</value></default>
@@ -2667,7 +2668,7 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="interpolation"><value>"linear"</value></default>
          <default param="chanchunks"><value>1</value></default>
          <default param="perchanweightdensity"><value>False</value></default>
-       </equals>
+       </equals>-->
      </when>
 
      <when param="gridder">

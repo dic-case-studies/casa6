@@ -206,20 +206,27 @@ def setup_sdimaging(template='',output='', inparms=None, sdparms=None):
         raise RuntimeError("Internal Error: missing sdimage parameter") 
     if 'pblimit' in inparms:
         pblimit = inparms['pblimit']
+    ## check the coordinates of psf with int psf
+    sdintlib.checkpsf(sdpsf, template+'.psf') 
 
     ## Regrid the input SD image and PSF cubes to the target coordinate system. 
-    imregrid(imagename=sdpsf, template=template+'.psf',
-             output=output+'.psf',overwrite=True,axes=[0,1])
-    imregrid(imagename=sdimage, template=template+'.residual',
-             output=output+'.residual',overwrite=True,axes=[0,1])
-    imregrid(imagename=sdimage, template=template+'.residual',
-             output=output+'.image',overwrite=True,axes=[0,1])
+    #imregrid(imagename=sdpsf, template=template+'.psf',
+    #         output=output+'.psf',overwrite=True,axes=[0,1])
+
+    sdintlib.regridimage(imagename=sdpsf, template=template+'.psf', outfile=output+'.psf')
+    #imregrid(imagename=sdimage, template=template+'.residual',
+    #         output=output+'.residual',overwrite=True,axes=[0,1])
+    sdintlib.regridimage(imagename=sdimage, template=template+'.residual', outfile=output+'.residual')
+    #imregrid(imagename=sdimage, template=template+'.residual',
+    #         output=output+'.image',overwrite=True,axes=[0,1])
+    sdintlib.regridimage(imagename=sdimage, template=template+'.residual', outfile=output+'.image')
 
     ## Apply the pbmask from the INT image cube, to the SD cubes.
     #TTB: Create *.mask cube  
 
     sdintlib.addmask(inpimage=output+'.residual', pbimage=template+'.pb', pblimit=pblimit)
     sdintlib.addmask(inpimage=output+'.image', pbimage=template+'.pb', pblimit=pblimit)
+
 
 
 def feather_residual(int_cube, sd_cube, joint_cube, applypb, inparm):
@@ -247,6 +254,16 @@ def feather_residual(int_cube, sd_cube, joint_cube, applypb, inparm):
                                 action='mult',
                                 pblimit=inparm['pblimit'],
                                 freqdep=False)
+
+def deleteTmpFiles():
+    if os.path.exists('tmp_intplane'):
+       os.system('rm -rf tmp_intplane')
+    if os.path.exists('tmp_sdplane'):
+       os.system('rm -rf tmp_sdplane')
+    if os.path.exists('tmp_jointplane'):
+       os.system('rm -rf tmp_jointplane')
+
+
 def sdintimaging(
     usedata,
     ####### Single dish input data
@@ -405,15 +422,15 @@ def sdintimaging(
     ### Move these checks elsewhere ? 
     inpparams=locals().copy()
     ###now deal with parameters which are not the same name 
-    print("current inpparams=",inpparams)
-    print("inpparams.keys()=",inpparams.keys())
+    #print("current inpparams=",inpparams)
+    #print("inpparams.keys()=",inpparams.keys())
     locvis=inpparams.pop('vis')
-    print("LOCVIS====",locvis)
-    print("type(LOCVIS)====",type(locvis))
+    #print("LOCVIS====",locvis)
+    #print("type(LOCVIS)====",type(locvis))
      
     inpparams['msname']=locvis.lstrip()
     #inpparams['msname']=inpparams.pop('vis')
-    print("msname====",inpparams['msname'])
+    #print("msname====",inpparams['msname'])
     inpparams['timestr']= inpparams.pop('timerange')
     inpparams['uvdist']= inpparams.pop('uvrange')
     inpparams['obs']= inpparams.pop('observation')
@@ -608,7 +625,8 @@ def sdintimaging(
                                 dishdia=dishdia,
                                 usedata=usedata)
 
-        
+        #print("feather_int_sd DONE")
+ 
         if specmode=='mfs':
             ## Calculate Spectral PSFs and Taylor Residuals
             casalog.post("Calculate spectral PSFs and Taylor Residuals...")
@@ -652,7 +670,7 @@ def sdintimaging(
                     shutil.rmtree(int_cube+'.model',ignore_errors=True)
                     shutil.copytree(joint_cube+'.model', int_cube+'.model')
                     hasfile=os.path.exists(joint_cube+'.model')
-                    print("has joint cube .image===",hasfile)
+                    print("DEBUG: has joint cube .image===",hasfile)
 
                 if applypb==True:
                     ## Take the int_cube.model to flat sky. 
@@ -751,6 +769,10 @@ def sdintimaging(
         e.args = tuple(larg)
         raise
 
+    finally:
+        #clean up tmp files
+        deleteTmpFiles()
+       
     return retrec
 
 ##################################################
