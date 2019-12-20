@@ -164,7 +164,7 @@ void PhaseShiftingTVI::shiftUVWPhases()
 
 	// Obtain phase shift and new uvw coordinates
 	Vector<Double> dummy(3,0.0);
-	double phase2radPerHz = 2.0 * C::pi / C::c;
+	double phase2radPerHz = -2.0 * C::pi / C::c;
 	for (uInt row=0;row<vb->nRows();row++)
 	{
 		// Copy current uvw coordinates so that they are not modified
