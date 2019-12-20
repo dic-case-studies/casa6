@@ -410,13 +410,14 @@ class SDINT_helper:
         """    
         print("OK")
         tol=0.001
+        allowshift=False
         _ia.open(inpsf)
         incsys  = _ia.coordsys().torecord()
         _ia.done()
         _tmpia = image()
         _tmpia.open(refpsf)
         refcsys = _tmpia.coordsys().torecord()
-       
+        _tmpia.done() 
         # check the field center
         ramismatch = False
         decmismatch = False
@@ -432,9 +433,23 @@ class SDINT_helper:
         if diff_dec/refdir['crval'][1] > tol:
             decmismatch = True
         if ramismatch or decmismatch:
-            casalog.post(" the center of psf different from the int psf by (diffRA,diffDec)=( %s, %s)" % (diff_ra, diff_dec)
-,'WARN')            
-            raise Exception("the center of the psf different from the int psf by (diffRA, diffDec)=(%s,%s)" % (diff_ra, diff_dec))
+            casalog.post("The position of psf different from the int psf by (diffRA,diffDec)=( %s, %s)." % (diff_ra, diff_dec)
+,'WARN')    
+            if allowshift:
+                modsdpsf=inpsf+'_mod'
+                casalog.post("Modifying the input SD psf, "+sdpsf+" by shifting the field center of sd psf to that of int psf. Modified SD psf image:"+modsdpsf)
+                shutil.copytree(inpsf, inpsf+'_mod')
+                _ia.open(modsdpsf)
+                thecsys = _ia.coordsys()
+                themodcsysrec = thecsys.torecord()
+                #repalcing ra, dec of the sd psf to those of the int psf
+                themodcsysrec['direction0']['crval'][0] = refdir['crval'][0]
+                themodcsysrec['direction0']['crval'][1] = refdir['crval'][1]
+                thecsys.fromrecord(themodcsysrec)
+                _ia.setcoordsys(thecsys)
+                _ia.done()
+            else:
+                raise Exception("the center of the psf different from the int psf by (diffRA, diffDec)=(%s,%s)" % (diff_ra, diff_dec))
 
         else:
             print(" the center of psf coincide with int psf: (diffRA,diffDec)=( %s, %s)" % (diff_ra, diff_dec))            

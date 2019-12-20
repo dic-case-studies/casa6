@@ -9,7 +9,7 @@ import time
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import image, quanta, table, imager
+    from casatools import image, quanta, table, image, regionmanager
     from casatasks import casalog, imsubimage, feather
 else:
     from taskinit import *
@@ -17,10 +17,12 @@ else:
     image = iatool
     imager = imtool
     quanta = qatool
+    regionmanager = rgtool
     casalog = casac.logsink()
 
 _ia = image()
 _qa = quanta()
+_rg = regionmanager()
 
 class SDINT_helper:
 
@@ -30,7 +32,6 @@ class SDINT_helper:
 ################################################
     def getFreqList(self,imname=''):
 
-      print("imname=",imname)
       _ia.open(imname)
       csys =_ia.coordsys()
       shp = _ia.shape()
@@ -97,18 +98,20 @@ class SDINT_helper:
             _ib = image()
             
             _ia.open(jointcube)
-            
+           
             for i in range(len(freqlist)):	
-
                 freqdishdia = dishdia ## * (freqlist[0] / freqlist[i]) # * 0.5
                 
                 os.system('rm -rf tmp_*')
-                imsubimage(imagename = sdcube, outfile = 'tmp_sdplane', chans = str(i));
-                imsubimage(imagename = intcube, outfile = 'tmp_intplane', chans = str(i));
+                #imsubimage(imagename = sdcube, outfile = 'tmp_sdplane', chans = str(i));
+                #imsubimage(imagename = intcube, outfile = 'tmp_intplane', chans = str(i));
+                self.createplaneimage(imagename=sdcube, outfile='tmp_sdplane', chanid = str(i));
+                self.createplaneimage(imagename=intcube, outfile='tmp_intplane', chanid = str(i));
 
                 #feather(imagename = 'tmp_jointplane', highres = 'tmp_intplane', lowres = 'tmp_sdplane', sdfactor = sdgain, effdishdiam=freqdishdia)
                 # feathering via toolkit
                 try: 
+                    print("start Feathering.....")
                     imFea=imager( )
                     imFea.setvp(dovp=True)
                     imFea.setsdoptions(scale=sdgain)
@@ -355,3 +358,100 @@ class SDINT_helper:
         return smoothedim
 
 ##########################################
+
+    def regridimage(self, imagename, template, outfile):
+        _ia.open(template)
+        csys = _ia.coordsys()
+        shape = _ia.shape()
+        _ia.close()
+
+        _iaout = image()
+        _iaout.open(imagename)
+        try:
+            _iaout.regrid(outfile=outfile, 
+                   shape=shape,
+                   csys=csys.torecord(),
+                   axes=[0,1],
+                   overwrite=True,
+                   asvelocity=False)
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' in regridding image" % (instance), 'WARN')
+
+        _iaout.done()
+
+ 
+##########################################
+
+    def createplaneimage(self,imagename, outfile, chanid):
+        """
+        extract a channel plane image 
+        """
+        _tmpia=image()
+        _tmprg=regionmanager()
+        _outia=None
+
+        _tmpia.open(imagename)
+        theregion = _tmprg.frombcs(csys=_ia.coordsys().torecord(), shape=_ia.shape(), chans=chanid) 
+        try:
+            _outia=_tmpia.subimage(outfile=outfile, region=theregion)
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' in creating subimage" % (instance), 'WARN')
+
+        _tmpia.done()
+        _tmprg.done()
+        _outia.done()
+     
+
+    def checkpsf(self, inpsf, refpsf):
+        """
+        check the center of psf if diffent for 
+        refpsf center and (shift to refpsf position)
+        in returned psf
+        """    
+        print("OK")
+        tol=0.001
+        allowshift=False
+        _ia.open(inpsf)
+        incsys  = _ia.coordsys().torecord()
+        _ia.done()
+        _tmpia = image()
+        _tmpia.open(refpsf)
+        refcsys = _tmpia.coordsys().torecord()
+        _tmpia.done() 
+        # check the field center
+        ramismatch = False
+        decmismatch = False
+
+        indir = incsys['direction0']
+        refdir = refcsys['direction0']
+
+        diff_ra = indir['crval'][0] - refdir['crval'][0]
+        diff_dec = indir['crval'][1] - refdir['crval'][1]
+
+        if diff_ra/refdir['crval'][0] > tol:
+            ramismatch = True
+        if diff_dec/refdir['crval'][1] > tol:
+            decmismatch = True
+        if ramismatch or decmismatch:
+            casalog.post("The position of psf different from the int psf by (diffRA,diffDec)=( %s, %s)." % (diff_ra, diff_dec)
+,'WARN')    
+            if allowshift:
+                modsdpsf=inpsf+'_mod'
+                casalog.post("Modifying the input SD psf, "+sdpsf+" by shifting the field center of sd psf to that of int psf. Modified SD psf image:"+modsdpsf)
+                shutil.copytree(inpsf, inpsf+'_mod')
+                _ia.open(modsdpsf)
+                thecsys = _ia.coordsys()
+                themodcsysrec = thecsys.torecord()
+                #repalcing ra, dec of the sd psf to those of the int psf
+                themodcsysrec['direction0']['crval'][0] = refdir['crval'][0]
+                themodcsysrec['direction0']['crval'][1] = refdir['crval'][1]
+                thecsys.fromrecord(themodcsysrec)
+                _ia.setcoordsys(thecsys)
+                _ia.done()
+            else:
+                raise Exception("the center of the psf different from the int psf by (diffRA, diffDec)=(%s,%s)" % (diff_ra, diff_dec))
+
+        else:
+            print(" the center of psf coincide with int psf: (diffRA,diffDec)=( %s, %s)" % (diff_ra, diff_dec))            
+
+        #return modpsf 

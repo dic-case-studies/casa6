@@ -705,6 +705,27 @@ HPX HEALPix grid.  -->
               <value>cubic</value>
       </allowed>
     </param>
+    <param type="int" name="chanchunks">
+     <shortdescription>Number of channel chunks</shortdescription>
+<description>Number of channel chunks to grid separately
+
+                       For large image cubes, the gridders can run into memory limits
+                       as they loop over all available image planes for each row of data
+                       accessed. To prevent this problem, we can grid subsets of channels
+                       in sequence so that at any given time only part of the image cube
+                       needs to be loaded into memory. This parameter controls the
+                       number of chunks to split the cube into.
+
+                       Example :  chanchunks = 4
+
+                       [ This feature is experimental and may have restrictions on how
+                          chanchunks is to be chosen. For now, please pick chanchunks so
+                          that nchan/chanchunks is an integer. ]
+
+</description>
+      <value type="int">1</value>
+    </param>
+
 <param type="bool" name="perchanweightdensity">
            <shortdescription>whether to calculate weight density per channel in Briggs style weighting or not</shortdescription>
            <description>
@@ -950,26 +971,6 @@ HPX HEALPix grid.  -->
       <value type="string"></value>
     </param>
 
-    <param type="int" name="chanchunks" subparam="true">
-     <shortdescription>Number of channel chunks</shortdescription>
-<description>Number of channel chunks to grid separately
-
-                       For large image cubes, the gridders can run into memory limits
-                       as they loop over all available image planes for each row of data
-                       accessed. To prevent this problem, we can grid subsets of channels
-                       in sequence so that at any given time only part of the image cube
-                       needs to be loaded into memory. This parameter controls the
-                       number of chunks to split the cube into.
-
-                       Example :  chanchunks = 4
-
-                       [ This feature is experimental and may have restrictions on how
-                          chanchunks is to be chosen. For now, please pick chanchunks so
-                          that nchan/chanchunks is an integer. ]
-
-</description>
-      <value type="int">1</value>
-    </param>
 
     <param type="int" name="wprojplanes" subparam="true">
      <shortdescription>Number of distinct w-values for convolution functions</shortdescription>

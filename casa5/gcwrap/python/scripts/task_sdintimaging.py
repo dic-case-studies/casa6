@@ -84,7 +84,7 @@ def setup_imager(imagename,pcube,calcres,calpsf,inparams):
     locparams['niter']=0
     locparams['deconvolver']='hogbom'
 
-    print("local inparams(msname) in setup_imager==",locparams['msname']) 
+    #print("local inparams(msname) in setup_imager==",locparams['msname']) 
     params = ImagerParameters(**locparams)
     #params = ImagerParameters(msname=self.vis, field=self.field,spw=self.spw,
     #                              imagename=imagename,
@@ -306,13 +306,13 @@ def sdintimaging(
 #    sysvel,#='',
 #    sysvelframe,#='',
     interpolation,#='',
+    chanchunks,#=1,
     perchanweightdensity, #=''
     ## 
     ####### Gridding parameters
     gridder,#='ft',
     facets,#=1,
     psfphasecenter,#='',
-    chanchunks,#=1,
 
     wprojplanes,#=1,
 
