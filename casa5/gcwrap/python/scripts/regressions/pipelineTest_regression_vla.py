@@ -5,6 +5,7 @@ import regression_utility as regutl
 import sys, traceback
 import numpy as np
 import pipeline
+import platform
 
 pathname = os.environ.get('CASAPATH').split()[0]
 rootdatapath = pathname+'/data/regression/pipeline/vla/'
@@ -18,6 +19,7 @@ rootdatapath = pathname+'/data/regression/pipeline/vla/'
    Update Feb   22, 2019   Added imaging statistics
    Update March 18, 2019   Switched to new data directory
    Update March 28, 2019   Updated VLA imaging test
+   Update Dec   04, 2019   RH6, RH7, OSX imaging RMS versions
 '''
 
 THISHOME  = "working/"
@@ -144,8 +146,8 @@ def stats():
         # value_compare =  0.717434107414 # CASA-prerelease 5.4.0-3,   pipeline r41527
         # value_compare = 0.7174272925736047 # CASA-prerelease 5.5.0-94, pipeline r42309
         value_compare = 0.717436873734 # CASA-prerelease 5.5.0-125, pipeline r42354
-        casaversion = 'CASA-prerelease 5.5.0-125'
-        pipelinerevision = 'pipeline r42354 (trunk)'
+        casaversion = 'CASA-prerelease 5.7.0-56'
+        pipelinerevision = 'Pipeline version 43117 (trunk)'
         
         result_bool = np.isclose(fluxlist[0][0], value_compare, rtol=rtol, atol=atol, equal_nan=False)
         
@@ -174,8 +176,21 @@ def stats():
         imlist = context.results[19].read().results
         
         # Test image RMS
-        # value_compare = [0.00094563270676711257, 0.0066069063559208024]  # RHEL6
-        value_compare = [0.0009229987336365489, 0.0071342379411150824] # RHEl7
+        value_compare_RH6 = [0.00055023165675943426, 0.0043416644461425008]  # RHEL6
+        value_compare_RH7 = [0.00054450011642744869, 0.0042516989119070255]  # RHEL7
+        value_compare_OSX = [0.00055849805079542238, 0.0044044822068195861]  # OSX
+        
+        opersys = platform.platform()
+        
+        if 'el6' in opersys:
+            value_compare = value_compare_RH6
+        elif 'el7' in opersys:
+            value_compare = value_compare_RH7
+        elif 'Darwin' in opersys:
+            value_compare = value_compare_OSX
+        else:
+            value_compare = value_compare_RH7
+        
         result_bool = [(np.isclose(imlist[i].image_rms, value_compare[i], rtol=rtol, atol=atol, equal_nan=False), os.path.basename(imlist[i].image)) for i in [0,1]]
 
         printmsg(logfile, "Accepted test RMS values are: {!s} from {!s}, {!s}".format(str(value_compare), casaversion, pipelinerevision))
