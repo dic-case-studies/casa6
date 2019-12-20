@@ -70,6 +70,7 @@ protected:
     casacore::Bool parseConfiguration(const casacore::Record &configuration);
     void initialize();
     void initializeUWVMachine();
+    void shiftUVWPhases();
 
 	casacore::Double dx_p, dy_p;
 
@@ -82,9 +83,8 @@ protected:
 	casacore::MPosition observatoryPosition_p;
 	casacore::MEpoch referenceTime_p;
 	casacore::String referenceTimeUnits_p;
-	casacore::MEpoch *epoch_p;
-	casacore::MeasFrame *measFrame_p;
-	casacore::UVWMachine *uvwMachine_p;
+	casacore::Matrix<casacore::Double> newUVW_p;
+	casacore::Vector<casacore::Double> phaseShift_p;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -172,7 +172,7 @@ template<class T> class WideFieldPhaseShiftingTransformEngine : public FreqAxisT
 
 public:
 
-	WideFieldPhaseShiftingTransformEngine(casacore::UVWMachine *uvwMachine,
+	WideFieldPhaseShiftingTransformEngine(const casacore::Vector<casacore::Double> &phaseShift,
 								casacore::Matrix<casacore::Double> *uvw,
 								casacore::Vector<casacore::Double> *frequencies,
 								DataCubeMap *inputData,
@@ -184,7 +184,7 @@ public:
 
 protected:
 
-	casacore::UVWMachine *uvwMachine_p;
+	casacore::Vector<casacore::Double> phaseShift_p;
 	casacore::Matrix<casacore::Double> *uvw_p;
 	casacore::Vector<casacore::Double> *frequencies_p;
 };

@@ -45,9 +45,6 @@ PhaseShiftingTVI::PhaseShiftingTVI(	ViImplementation2 * inputVii,
 	wideFieldMode_p = false;
 	phaseCenterName_p = "";
 	selectedInputMsCols_p = NULL;
-	epoch_p = NULL;
-	measFrame_p = NULL;
-	uvwMachine_p = NULL;
 
 	// Parse and check configuration parameters
 	// Note: if a constructor finishes by throwing an exception, the memory
@@ -147,23 +144,42 @@ void PhaseShiftingTVI::initialize()
 }
 
 // -----------------------------------------------------------------------
-// CAS-12706 Initialization of UVWMachine for wide-field phase shifting algorithm
+// CAS-12706 Recalculate UVW and Phases according to wide-field phase shifting
+// algorithm. This method should do the same as ComponentFTMachine::rotateUVW
 // -----------------------------------------------------------------------
-void PhaseShiftingTVI::initializeUWVMachine()
+void PhaseShiftingTVI::shiftUVWPhases()
 {
 	// Get input VisBuffer
 	VisBuffer2 *vb = getVii()->getVisBuffer();
 
 	// Initialize epoch corresponding to current buffer
 	// with time reference to the first row in the MS
-	epoch_p = new MEpoch(Quantity(vb->time()(0),referenceTimeUnits_p),
-			referenceTime_p.getRef());
+	MEpoch epoch(Quantity(vb->time()(0),referenceTimeUnits_p),referenceTime_p.getRef());
+	MeasFrame refFrame(epoch,observatoryPosition_p);
+	UVWMachine uvwMachine(phaseCenter_p, vb->phaseCenter(), refFrame,false,true);
 
-	// Initialize reference frame
-	measFrame_p = new MeasFrame(*epoch_p,observatoryPosition_p);
+	// Initialize phase array and uvw matrix
+	phaseShift_p.resize(vb->nRows(),false);
+	newUVW_p.resize(vb->uvw().shape(),false);
 
-	// Initialize UVW machine
-	uvwMachine_p = new UVWMachine(phaseCenter_p, vb->phaseCenter(), *measFrame_p,false,true);
+	// Obtain phase shift and new uvw coordinates
+	Vector<Double> dummy(3,0.0);
+	double phase2radPerHz = 2.0 * C::pi / C::c;
+	for (uInt row=0;row<vb->nRows();row++)
+	{
+		// Copy current uvw coordinates so that they are not modified
+		// Note: Columns in uvw correspond to rows in the main table/VisBuffer!
+		dummy = vb->uvw().column(row);
+
+		// Transform uvw coordinates and obtain corresponding phase shift
+		uvwMachine.convertUVW(phaseShift_p(row), dummy);
+
+		// Store new uvw coordinates
+		newUVW_p.column(row) = dummy;
+
+		// Convert phase shift to radian/Hz
+		phaseShift_p(row) = phase2radPerHz*phaseShift_p(row);
+	}
 
 	return;
 }
@@ -177,15 +193,7 @@ void PhaseShiftingTVI::origin()
 	getVii()->origin();
 
 	// CAS-12706 Add support for shifting across large offset/angles
-	// NOTE: This initialization has to be here because of the
-	// constness of visibilityObserved/Corrected/Model etc
-	if (wideFieldMode_p)
-	{
-		if (epoch_p != NULL) delete epoch_p; epoch_p=NULL;
-		if (measFrame_p != NULL) delete measFrame_p; measFrame_p=NULL;
-		if (uvwMachine_p != NULL) delete uvwMachine_p; uvwMachine_p=NULL;
-		initializeUWVMachine();
-	}
+	if (wideFieldMode_p) shiftUVWPhases();
 
 	// Synchronize own VisBuffer
 	configureNewSubchunk();
@@ -202,15 +210,7 @@ void PhaseShiftingTVI::next()
 	getVii()->next();
 
 	// CAS-12706 Add support for shifting across large offset/angles
-	// NOTE: This initialization has to be here because of the
-	// constness of visibilityObserved/Corrected/Model etc
-	if (wideFieldMode_p)
-	{
-		if (epoch_p != NULL) delete epoch_p; epoch_p=NULL;
-		if (measFrame_p != NULL) delete measFrame_p; measFrame_p=NULL;
-		if (uvwMachine_p != NULL) delete uvwMachine_p; uvwMachine_p=NULL;
-		initializeUWVMachine();
-	}
+	if (wideFieldMode_p) shiftUVWPhases();
 
 	// Synchronize own VisBuffer
 	configureNewSubchunk();
@@ -245,7 +245,7 @@ void PhaseShiftingTVI::visibilityObserved (Cube<Complex> & vis) const
 	if (wideFieldMode_p)
 	{
 		// Configure Transformation Engine
-		WideFieldPhaseShiftingTransformEngine<Complex> transformer(uvwMachine_p,&uvw,&frequencies,&inputData,&outputData);
+		WideFieldPhaseShiftingTransformEngine<Complex> transformer(phaseShift_p,&uvw,&frequencies,&inputData,&outputData);
 
 		// Transform data
 		transformFreqAxis2(vb->getShape(),transformer);
@@ -288,7 +288,7 @@ void PhaseShiftingTVI::visibilityCorrected (Cube<Complex> & vis) const
 	if (wideFieldMode_p)
 	{
 		// Configure Transformation Engine
-		WideFieldPhaseShiftingTransformEngine<Complex> transformer(uvwMachine_p,&uvw,&frequencies,&inputData,&outputData);
+		WideFieldPhaseShiftingTransformEngine<Complex> transformer(phaseShift_p,&uvw,&frequencies,&inputData,&outputData);
 
 		// Transform data
 		transformFreqAxis2(vb->getShape(),transformer);
@@ -331,7 +331,7 @@ void PhaseShiftingTVI::visibilityModel (Cube<Complex> & vis) const
 	if (wideFieldMode_p)
 	{
 		// Configure Transformation Engine
-		WideFieldPhaseShiftingTransformEngine<Complex> transformer(uvwMachine_p,&uvw,&frequencies,&inputData,&outputData);
+		WideFieldPhaseShiftingTransformEngine<Complex> transformer(phaseShift_p,&uvw,&frequencies,&inputData,&outputData);
 
 		// Transform data
 		transformFreqAxis2(vb->getShape(),transformer);
@@ -461,7 +461,7 @@ template<class T> void PhaseShiftingTransformEngine<T>::transformCore(	DataCubeM
 //
 // -----------------------------------------------------------------------
 template<class T> WideFieldPhaseShiftingTransformEngine<T>::WideFieldPhaseShiftingTransformEngine(
-															UVWMachine *uvwMachine,
+															const Vector<Double> &phaseShift,
 															Matrix<Double> *uvw,
 															Vector<Double> *frequencies,
 															DataCubeMap *inputData,
@@ -470,7 +470,7 @@ template<class T> WideFieldPhaseShiftingTransformEngine<T>::WideFieldPhaseShifti
 {
 	uvw_p = uvw;
 	frequencies_p = frequencies;
-	uvwMachine_p = uvwMachine;
+	phaseShift_p = phaseShift;
 }
 
 // -----------------------------------------------------------------------
@@ -491,23 +491,12 @@ template<class T> void WideFieldPhaseShiftingTransformEngine<T>::transformCore(	
 	Vector<T> &inputVector = inputData->getVector<T>(MS::DATA);
 	Vector<T> &outputVector = outputData->getVector<T>(MS::DATA);
 
-	// Obtain phase shift from UVWMachine
-	Double phase = 0;
-	Vector<Double> uvw(3);
-	uvw[0] = (*uvw_p)(0,rowIndex_p);
-	uvw[1] = (*uvw_p)(1,rowIndex_p);
-	uvw[2] = (*uvw_p)(2,rowIndex_p);
-	uvwMachine_p->convertUVW(phase,uvw);
-
-	// Convert phase to radian/Hz
-	phase *= -2.0 * C::pi / C::c;
-
 	// Main loop
 	Double phase_i;
 	Complex factor;
 	for (uInt chan_i=0;chan_i<inputVector.size();chan_i++)
 	{
-		phase_i = phase * (*frequencies_p)(chan_i);
+		phase_i = phaseShift_p(rowIndex_p) * (*frequencies_p)(chan_i);
 		factor = Complex(cos(phase_i), sin(phase_i));
 		outputVector(chan_i) = factor*inputVector(chan_i);
 	}
