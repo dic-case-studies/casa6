@@ -809,7 +809,7 @@ CORRECTED\_DATA and MODEL\_DATA columns
 <!-- ===================================== -->
 
    <method type="function" name="initmpi">
-   <shortdescription>init c++ based mpy</shortdescription>
+   <shortdescription>init c++ based mpi</shortdescription>
 
 <description>
 </description>
@@ -820,6 +820,21 @@ CORRECTED\_DATA and MODEL\_DATA columns
 </method>
 
 <!-- ===================================== -->
+<!-- ===================================== -->
+
+   <method type="function" name="releasempi">
+   <shortdescription>release c++ based mpi back to python</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+<!-- ===================================== -->
+
 <!-- ===================================== -->
 
    <method type="function" name="done">
