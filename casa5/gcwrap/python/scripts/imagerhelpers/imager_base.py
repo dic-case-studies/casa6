@@ -194,6 +194,7 @@ class PySynthesisImager:
     def deleteImagers(self):
         if self.SItool != None:
             self.SItool.done()
+            self.SItool=None
 
     def deleteDeconvolvers(self):
          for immod in range(0,len(self.SDtools)):

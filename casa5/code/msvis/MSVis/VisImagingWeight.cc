@@ -518,11 +518,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	f2_p.resize();
 	rec.get("f2", f2_p);
 	multiFieldMap_p.clear();
-	for(Int k=0; k < nplanes; ++k){
+        Int mapsize;
+        rec.get("multimapsize", mapsize);
+	for(Int k=0; k < mapsize; ++k){
 	  String key;
 	  Int val;
 	  rec.get("key"+String::toString(k), key);
 	  rec.get("val"+String::toString(k), val);
+          //cerr << "key and id " << key << "   "<< val << endl;
 	  multiFieldMap_p.insert(std::pair<casacore::String, casacore::Int>(key, val));
 	}
 	
@@ -576,6 +579,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	rec.define("key"+String::toString(keycount), iter->first);
 	rec.define("val"+String::toString(keycount), iter->second);
       }
+      rec.define("multimapsize",keycount);
       im.setMiscInfo(rec);
 
     }
@@ -673,7 +677,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //cout << " WEIG " << nx_p << "  " << ny_p << "   " << gwt_p[0].shape() << endl;
       //cout << "f2 " << f2_p[0] << " d2 " << d2_p[0] << " uscale " << uscale_p << " vscal " << vscale_p << " origs " << uorigin_p << "  " << vorigin_p << endl; 
       String mapid=String::toString(msId)+String("_")+String::toString(fieldId);
-      //cout << "min max gwt " << min(gwt_p[0]) << "    " << max(gwt_p[0]) << " mapid " << mapid <<endl; 
+      //cout << "min max gwt " << min(gwt_p[0]) << "    " << max(gwt_p[0]) << " mapid " << mapid <<endl;
+
       if( multiFieldMap_p.find(mapid) == multiFieldMap_p.end( ) )
 	throw(AipsError("Imaging weight calculation is requested for a data that was not selected"));
       

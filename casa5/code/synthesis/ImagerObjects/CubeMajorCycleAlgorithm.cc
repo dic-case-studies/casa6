@@ -144,6 +144,7 @@ void CubeMajorCycleAlgorithm::task(){
 	for (Int k=0; k < Int(dataSel_p.nelements()); ++k){
 		//The original SynthesisImager would have cleared the model if it was requested
 		dataSel_p[k].incrmodel=True;
+                dataSel_p[k].freqbeg="";
 		subImgr.selectData(dataSel_p[k]);
 	}
 	Vector<CountedPtr<SIImageStore> > subImStor(imSel_p.nelements());

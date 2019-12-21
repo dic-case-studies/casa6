@@ -120,21 +120,21 @@ void Applicator::destroyThreads(){
     if (comm) {
     // If controller, then stop all worker processes
       if (isController() && !isSerial()) {
-      comm->setTag(STOP);
+        //comm->setTag(STOP);
       for (Int i=0; i<nProcs; i++) {
 	if (i != comm->controllerRank()) {
 	  comm->connect(i);
+          comm->setTag(STOP);
 	  put(STOP);
+
 	}
       }
     }
       //delete comm; ///leaking this for now as if initialized from python..it brings down the whole house
-    comm=nullptr;
+      //comm=nullptr;
   }
 
   }
-
-  initialized_p=False;
 
 }
 void Applicator::init(Int argc, Char *argv[])
@@ -142,7 +142,12 @@ void Applicator::init(Int argc, Char *argv[])
 // Initialize the process and parallel transport layer
 //
   //cerr <<"Applicatorinit " << initialized_p << endl;
-  if(comm) return;
+  if(comm){
+    //if worker  was released from loop...want it back now
+    if(comm && isWorker() && !isSerial())
+      loop();
+    return;
+  }
   // Fill the map of known algorithms
   //cerr << "APPINIT defining algorithms " << endl;
   defineAlgorithms();
@@ -226,6 +231,7 @@ void Applicator::loop()
       break;
     }
   }
+  //cerr <<"getting out of loop " <<endl;
   return;
 }
 

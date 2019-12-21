@@ -837,8 +837,7 @@ bool SynthesisImager::unlockImages()
            LogIO os( LogOrigin("SynthesisImager","tuneSelectData",WHERE) );
 	   if(itsMappers.nMappers() < 1)
 		   ThrowCc("defineimage has to be run before tuneSelectData");
-
-	   if(impars_p.mode=="cubesource")
+	   if(impars_p.mode=="cubesource" || impars_p.mode=="cubedata")
 	     return dataSel_p;
 	   os << "Tuning frequency data selection to match image spectral coordinates" << LogIO::POST;
 
@@ -1220,7 +1219,6 @@ bool SynthesisImager::unlockImages()
         }
 	IPosition newshape;
 	Vector<Int> shpOfGrid=imwgt_p.shapeOfdensityGrid();
-        cerr << "shpOfGrid " << shpOfGrid << endl;
 	if(shpOfGrid(2) > 1){
 	  newshape=IPosition(5,shpOfGrid[0], shpOfGrid[1],1,1,shpOfGrid[2]);
 	}

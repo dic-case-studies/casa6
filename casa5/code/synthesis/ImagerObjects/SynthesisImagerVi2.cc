@@ -728,6 +728,8 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, SynthesisP
 	else{
 		itsMappers.addMapper(  createSIMapper( gridpars.mType, imstor, ftm, iftm ) );	
 	}
+        impars_p=impars;
+        gridpars_p=gridpars;
 	imageDefined_p=true;
 	return true;
 }
@@ -1800,7 +1802,6 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		csys=	(itsMappers.imageStore(whichModel))->getCSys();
 		shp=(itsMappers.imageStore(whichModel))->getShape();
 	}
-	cerr << "IMGAE opned " << Table::isOpened(imagename)<< endl;
 	itsMappers.releaseImageLocks();
     PagedImage<Float> theImage( shp, csys, imagename);
     PagedImage<Complex> cImageImage(theImage.shape(),

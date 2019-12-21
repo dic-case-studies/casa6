@@ -762,17 +762,18 @@ synthesisimager::initmpi()
   try 
     {
       //cerr << "is applicator initialized " << applicator.initialized() << endl;
-	if(!applicator.initialized()){
-	  int argc=1;
+      //if(!applicator.initialized()){
+
+      {int argc=1;
           char * *argv=nullptr;
           casa::applicator.init ( argc, argv );
           //cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
         rstat=true;
 	}
-	else{
-          rstat=false;
-          cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
-        }
+      //else{
+      //  rstat=false;
+      //  cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
+      // }
       
     } 
   catch  (AipsError x) 
@@ -783,6 +784,22 @@ synthesisimager::initmpi()
   return rstat;
 }
 
+bool synthesisimager::releasempi(){
+  try{
+  cerr <<"master "<< applicator.isController() << " init "<< applicator.initialized() << endl;
+      if(applicator.initialized() &&  applicator.isController()){
+
+        applicator.destroyThreads();
+      }
+ } 
+  catch  (AipsError x) 
+    {
+      RETHROW(x);
+    }
+  
+      return true;
+}
+
 bool
 synthesisimager::done()
 {
@@ -790,10 +807,7 @@ synthesisimager::done()
 
   try 
     {
-      if(applicator.initialized()){
-
-        applicator.destroyThreads();
-      }
+    
       if (itsImager)
 	{
 	  delete itsImager;
