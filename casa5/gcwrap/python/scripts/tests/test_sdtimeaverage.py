@@ -90,12 +90,12 @@ class test_sdtimeaverage(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
 
-        print( "setUpclass::copying master MS, generating Test-MS.(RESERVED)")
+        print( "<TENTATIVE> setUpclass::copying master MS, generating Test-MS",defWorkMs)
  
         # copy sdtimaging.ms as a work-MS.
-        # os.system('cp -RL '+ os.path.join(datapath,self.inpMs) +' '+ defWorkMs)
+        # os.system('cp -RL '+ os.path.join(datapath, defInputMs) +' '+ defWorkMs)
         # Generate Test-MS
-        # generate_data( defWorkMs )
+        # cls.generate_data(cls, defWorkMs )
        
 
 ##############
@@ -162,6 +162,31 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue (len(self.sc)==1 , msg='## unexpected number of output##\n {}'.format(len(self.sc)) )
         self.assertTrue (scan == refValue, msg='## unexpected scan no. in output.##\n {}'.format(scan) )
 
+########################
+# check Weight/Spectra
+########################
+
+    # Chck Wait and Sigma
+    def checkWeightSigma(self, msName, row, weight_ref ):
+        print( "-- checking Weight and Sigma --")
+
+        self.get_spectra(msName, row )
+
+        print( "Weight Ref", weight_ref)
+        print( "Weight ",self.wgt )
+        print( "Sigma  ",self.sgm )
+
+        # check #
+        check1 =  (self.wgt[0] == weight_ref)
+        check2 =  (self.wgt[1] == weight_ref)
+        check3 =  ( (1.0/self.wgt[0])  - (self.sgm[0] * self.sgm[0])  < errLimit2 )
+        check4 =  ( (1.0/self.wgt[1])  - (self.sgm[1] * self.sgm[1])  < errLimit2 )
+
+        self.assertTrue(check1, msg='## Weight[0] is unexpected.##\n {}'.format(self.wgt[0]) )
+        self.assertTrue(check2, msg='## Weight[1] is unexpected.##\n {}'.format(self.wgt[1]) )
+        self.assertTrue(check3, msg='## Sigma [0] is unexpected.##\n {}'.format(self.sgm[0]) )
+        self.assertTrue(check4, msg='## Sigma [1] is unexpected.##\n {}'.format(self.sgm[1]) )
+
 #########################
 # Generating Test Data 
 #########################
@@ -191,27 +216,6 @@ class test_sdtimeaverage(unittest.TestCase):
             self.sgm  = tb.getcell('SIGMA', row)           
         
         return self.data 
-
-    # Chck Wait and Sigma
-    def checkWeightSigma(self, msName, row, weight_ref ):
-        print( "-- checking Weight and Sigma --")
-
-        self.get_spectra(msName, row )
-
-        print( "Weight Ref", weight_ref)
-        print( "Weight ",self.wgt )
-        print( "Sigma  ",self.sgm )
-
-        # check #
-        check1 =  (self.wgt[0] == weight_ref) 
-        check2 =  (self.wgt[1] == weight_ref) 
-        check3 =  ( (1.0/self.wgt[0])  - (self.sgm[0] * self.sgm[0])  < errLimit2 ) 
-        check4 =  ( (1.0/self.wgt[1])  - (self.sgm[1] * self.sgm[1])  < errLimit2 ) 
-
-        self.assertTrue(check1, msg='## Weight[0] is unexpected.##\n {}'.format(self.wgt[0]) )   
-        self.assertTrue(check2, msg='## Weight[1] is unexpected.##\n {}'.format(self.wgt[1]) )
-        self.assertTrue(check3, msg='## Sigma [0] is unexpected.##\n {}'.format(self.sgm[0]) )
-        self.assertTrue(check4, msg='## Sigma [1] is unexpected.##\n {}'.format(self.sgm[1]) )
 
 #+
 # Generate DATa on FLOAT_DATA
@@ -322,9 +326,9 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param1E(self):
         '''sdtimeaverage:: antenna = 'gBT' (Error) '''
 
-        prm =  {'antenna' : 'gBT'  }
+        prm =  {'antenna'    : 'gBT' }
         # Run Task and check
-        self.assertFalse(self.run_task( prm ))
+        self.assertFalse(self.run_task( prm )) # must be false
 
 ##
     def test_param20(self):
@@ -417,6 +421,21 @@ class test_sdtimeaverage(unittest.TestCase):
 
         # check scan 
         self.check_scan (defOutputMs, 2)
+
+##
+    def test_param50(self):
+        '''sdtimeaverage:: datacolumn = 'float_data' '''
+
+        prm =  {'datacolumn' : 'float_data'  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
+
+    def test_param50E(self):
+        '''sdtimeaverage:: datacolumn = 'data' (Error) '''
+
+        prm =  {'datacolumn' : 'data' }
+        # Run Task and check
+        self.assertFalse(self.run_task( prm )) # must be false
 
 
 #### Control ######
