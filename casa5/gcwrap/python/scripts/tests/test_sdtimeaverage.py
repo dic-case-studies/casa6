@@ -430,13 +430,19 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task( prm ))
 
-    def test_param50E(self):
+    def test_param51E(self):
         '''sdtimeaverage:: datacolumn = 'data' (Error) '''
 
         prm =  {'datacolumn' : 'data' }
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # must be false
 
+    def test_param52E(self):
+        '''sdtimeaverage:: datacolumn = '' default=data is applied, makes Error. '''
+
+        prm =  {'datacolumn' : '' }
+        # Run Task and check
+        self.assertFalse(self.run_task( prm )) # must be false
 
 #### Control ######
 
