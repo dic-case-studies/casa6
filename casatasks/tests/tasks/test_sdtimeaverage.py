@@ -72,7 +72,11 @@ class test_sdtimeaverage(unittest.TestCase):
                      'datacolumn' :  'float_data'    # CASR-474 (float ->data) 
                     }
 
-        # Generate Test-MS
+        # TEST-MS  Existence check
+        if  not os.path.exists( os.path.join(datapath,self.inpMs) ):
+            print ( "- Create TestMS."    ) 
+            # Generate Test-MS
+            # os.system('cp -RL '+ os.path.join(datapath,self.inpMs) +' '+ defWorkMs)
         self. generate_data( defWorkMs )
 
     def tearDown(self):
@@ -86,17 +90,6 @@ class test_sdtimeaverage(unittest.TestCase):
         os.system('rm -rf ' + defWorkMs )
         os.system('rm -rf ' + "bave*.ms" )
         return
-
-    @classmethod
-    def setUpClass(cls):
-
-        print( "<TENTATIVE> setUpclass::copying master MS, generating Test-MS",defWorkMs)
- 
-        # copy sdtimaging.ms as a work-MS.
-        # os.system('cp -RL '+ os.path.join(datapath, defInputMs) +' '+ defWorkMs)
-        # Generate Test-MS
-        # cls.generate_data(cls, defWorkMs )
-       
 
 ##############
 # Run Task
@@ -172,9 +165,9 @@ class test_sdtimeaverage(unittest.TestCase):
 
         self.get_spectra(msName, row )
 
-        print( "Weight Ref", weight_ref)
-        print( "Weight ",self.wgt )
-        print( "Sigma  ",self.sgm )
+        print( "Weight Ref :{0}".format(weight_ref) )
+        print( "Weight     :{0}".format(self.wgt)   )
+        print( "Sigma      :{0}".format(self.sgm)  )
 
         # check #
         check1 =  (self.wgt[0] == weight_ref)
@@ -203,9 +196,9 @@ class test_sdtimeaverage(unittest.TestCase):
             self.tm = tb.getcol('TIME')
             self.a1 = tb.getcol('ANTENNA1')
             self.a2 = tb.getcol('ANTENNA2')
-            self.dd = tb.getcol('DATA_DESC_ID')
+###            self.dd = tb.getcol('DATA_DESC_ID')
             self.sc = tb.getcol('SCAN_NUMBER')
-            self.st = tb.getcol('STATE_ID')
+###            self.st = tb.getcol('STATE_ID')
 
     # DATA (spectra) #
     def get_spectra(self,msName, row ):
@@ -222,7 +215,7 @@ class test_sdtimeaverage(unittest.TestCase):
 #-
     def generate_data( self, msName ):
         print( "-- Generating MS." )
-        self. get_main( defInputMs )
+        self. get_main(defInputMs )
         # Test Slope
         offset = 0.0        # if specified non-zero, intensive fail can be cauesed.
         slope  = 0.0001
