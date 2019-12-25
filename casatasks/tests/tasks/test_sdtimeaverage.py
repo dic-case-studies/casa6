@@ -58,7 +58,6 @@ class test_sdtimeaverage(unittest.TestCase):
         # copy from master
         self.inpMs = defInputMs
         os.system('cp -RL '+ os.path.join(datapath,self.inpMs) +' '+ self.inpMs)
-        os.system('cp -RL '+ os.path.join(datapath,self.inpMs) +' '+ defWorkMs)
 
         # output MS 
         '''  none '''
@@ -72,12 +71,17 @@ class test_sdtimeaverage(unittest.TestCase):
                      'datacolumn' :  'float_data'    # CASR-474 (float ->data) 
                     }
 
-        # TEST-MS  Existence check
-        if  not os.path.exists( os.path.join(datapath,self.inpMs) ):
-            print ( "- Create TestMS."    ) 
-            # Generate Test-MS
-            # os.system('cp -RL '+ os.path.join(datapath,self.inpMs) +' '+ defWorkMs)
-        self. generate_data( defWorkMs )
+        # create TEST-MS only for the first time.  
+        filePath=os.path.join( "./", defWorkMs)
+        if  not os.path.exists(filePath):
+            print ( "- TestMS.[{}] being created.".format(filePath)    ) 
+
+            # Copy template and generate Test-MS
+            os.system('cp -RL '+ os.path.join(datapath, defInputMs) +' '+ defWorkMs)
+            self. generate_data( defWorkMs )
+
+        else:
+            print( "- TestMS already exists.")
 
     def tearDown(self):
 
@@ -87,9 +91,22 @@ class test_sdtimeaverage(unittest.TestCase):
         os.system('rm -rf ' + self.inpMs )
         os.system('rm -rf ' + defOutputMs )   ## Comment out , for DEBUG ##
 
-        os.system('rm -rf ' + defWorkMs )
+#        os.system('rm -rf ' + defWorkMs )
         os.system('rm -rf ' + "bave*.ms" )
         return
+
+#
+# Class Method
+#
+    @classmethod
+    def setUpClass(cls):
+        print( "setUpClass::deleting work-MS.")
+        os.system('rm -rf ' + defWorkMs ) # in case, the MS already exist.
+
+    @classmethod
+    def tearDownClass(cls):
+        print( "tearDownClass::deleting work-MS.")
+        os.system('rm -rf ' + defWorkMs )
 
 ##############
 # Run Task
@@ -196,9 +213,8 @@ class test_sdtimeaverage(unittest.TestCase):
             self.tm = tb.getcol('TIME')
             self.a1 = tb.getcol('ANTENNA1')
             self.a2 = tb.getcol('ANTENNA2')
-###            self.dd = tb.getcol('DATA_DESC_ID')
             self.sc = tb.getcol('SCAN_NUMBER')
-###            self.st = tb.getcol('STATE_ID')
+            self.fd = tb.getcol('FIELD_ID')
 
     # DATA (spectra) #
     def get_spectra(self,msName, row ):
@@ -308,13 +324,13 @@ class test_sdtimeaverage(unittest.TestCase):
 # TEST FIXTURE
 #==================================================
 
-##
+## ANTENNA ###
     def test_param1(self): 
         '''sdtimeaverage:: antenna = 'GBT' ''' 
 
         prm =  {'antenna' : 'GBT'  }
         # Run Task and check
-        self.assertTrue(self.run_task( prm ))
+        self.assertTrue(self.run_task( prm), msg="Error in test_param1")
 
     def test_param1E(self):
         '''sdtimeaverage:: antenna = 'gBT' (Error) '''
@@ -323,7 +339,7 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # must be false
 
-##
+## TIMEBIN ,make Average ###
     def test_param20(self):
         '''sdtimeaverage::20:: timebin=1282(N=3)  '''
         # set timebin string and private outputMS name.
@@ -338,7 +354,6 @@ class test_sdtimeaverage(unittest.TestCase):
         # Check Result (zerosum check)
         self.check_averaged_result_N3(privateOutfile)
 
-##
     def test_param21(self):
         '''sdtimeaverage::21: timebin=3846(N=1), timebin=''  '''
 
@@ -354,7 +369,6 @@ class test_sdtimeaverage(unittest.TestCase):
         # Check Result (zerosum check)
         self.check_averaged_result_N1(privateOutfile) 
 
-## 
     def test_param22(self):
         '''sdtimeaverage::22: timebin=3846(N=1), timebin='all'  '''
 
@@ -370,15 +384,14 @@ class test_sdtimeaverage(unittest.TestCase):
         # Check Result (zerosum check)
         self.check_averaged_result_N1(privateOutfile)
 
-##
+## TIMEBIN ###
     def test_param30(self): 
         '''sdtimeagerage::30:: timebin='all' ''' 
 
         prm =  {'timebin' : 'all'   }
         # Run Task and check
         self.assertTrue(self.run_task( prm ))
-
-## 
+ 
     def test_param31(self):
         '''sdtimeagerage::30:: timebin='ALL' '''
 
@@ -387,7 +400,6 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task( prm ))
 
-##
     def test_param32(self):
         '''sdtimeagerage::30:: timebin=''    '''
 
@@ -404,18 +416,54 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # Error expected #  
 
+## SCAN ###
     def test_param40(self):
-        '''sdtimeagerage::30:: scan=2 '''
+        '''sdtimeagerage::40:: scan=2 '''
 
         # Run Task
         prm =  {'timebin' : '', 
                 'scan'    : '2'   }
         self.run_task( prm )
-
         # check scan 
         self.check_scan (defOutputMs, 2)
 
-##
+    def test_param41a(self):
+        '''sdtimeagerage::41a:: scan=61  '''
+
+        # Run Task
+        prm =  {'timebin' : '',
+                'scan'    : '61'   }i # Normal. In range. #
+        self.assertTrue(self.run_task( prm ))
+        # check scan 
+        self.check_scan (defOutputMs, 61)
+
+    def test_param41b(self):
+        '''sdtimeagerage::41b:: scan=62  '''
+
+        # Run Task
+        prm =  {'timebin' : '',
+                'scan'    : '62'   } # ERROR : out of range in MS #
+        self.assertFalse(self.run_task( prm ))
+        # check scan 
+        #    no check ...
+
+    def test_param42(self):
+        '''sdtimeagerage::42:: scan='' N=1  '''
+
+        # set timebin string and private outputMS name.
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 42, 3846 )
+
+        prm =  {'timebin' : '' ,
+                'scan'    : '' ,
+                'infile'  : defWorkMs,
+                'outfile' : privateOutfile  }
+        # Run Task
+        self.run_task( prm )
+
+        # Check Result (zerosum check)
+        self.check_averaged_result_N1(privateOutfile)
+
+## DATACOLUMN ###
     def test_param50(self):
         '''sdtimeaverage:: datacolumn = 'float_data' '''
 
@@ -436,6 +484,28 @@ class test_sdtimeaverage(unittest.TestCase):
         prm =  {'datacolumn' : '' }
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # must be false
+
+## FIELD ###
+    def test_param60(self):
+        '''sdtimeaverage:: field = 'FLS3a*' (EXACT NAME)'''
+
+        prm =  {'field' : 'FLS3a*'  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
+
+    def test_param61E(self):
+        '''sdtimeaverage:: field = 'hoge*' (NG NAME)'''
+
+        prm =  {'field' : 'hoge'  }
+        # Run Task and check
+        self.assertFalse(self.run_task( prm ))
+
+    def test_param62(self):
+        '''sdtimeaverage:: field = '' (OK :use default)'''
+
+        prm =  {'field' : '*'  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
 
 #### Control ######
 
