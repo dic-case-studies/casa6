@@ -54,6 +54,10 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             return python_path;
         }
 
+        virtual std::string logPath( ) const {
+            return log_path;
+        }
+
         void clearDataPath( ) {
             // protect critical section...
             std::lock_guard<std::mutex> guard(data_path_mutex);
@@ -93,6 +97,12 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             python_path = pypath;
         }
 
+        void setLogPath(const std::string &logpath) {
+            // protect critical section...
+            std::lock_guard<std::mutex> guard(data_path_mutex);
+            log_path = logpath;
+        }
+
         // get map of registrations
         std::list<ServiceId> services( ) { return registrar.services( ); }
         // returns true if a registration for 'id' was found
@@ -117,6 +127,7 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
         std::mutex data_path_mutex;
         std::list<std::string> data_path;
         std::string python_path;
+        std::string log_path;
         Registrar registrar;
     };
 
