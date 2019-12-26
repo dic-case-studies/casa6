@@ -175,7 +175,15 @@ def inspect_ephem(name):
     finally:
         tb.close()
 
-    if eph_geo_dist > 1e-3:
+    # Logic borrowed from FTMachine::initSourceFreqConv
+    # The eph_geo_dist is a distrance from the GEOCENTER in km.
+    # If eph_geo_dist > 1e-3 km (=1m), velocity reference
+    # frame is regarded as TOPO (TOPOCENTRIC).
+    # Otherwise, the frame should be GEO (GEOCENTRIC).
+    qa = quanta()
+    eph_geo_dist = qa.quantity(eph_geo_dist, 'km')
+    eph_geo_threshold = qa.quantity(1.0e-3, 'km')
+    if qa.gt(eph_geo_dist, eph_geo_threshold):
         eph_vel_frame = 'TOPO'
     else:
         eph_vel_frame = 'GEO'
