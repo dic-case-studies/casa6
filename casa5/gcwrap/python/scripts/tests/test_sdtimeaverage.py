@@ -345,10 +345,10 @@ class test_sdtimeaverage(unittest.TestCase):
         self.checkZero (self.data )
 
     def test_param81E(self):
-        '''sdtimeagerage::81":: timerange = 00:00:00~01:00:00 ERROR case(3600s INSUFFUCIENT)'''
+        '''sdtimeagerage::81":: timerange = 00:00:00~01:00:00 ERROR case(3600s INSUFFICIENT)'''
 
         # set timebin string and private outputMS name.
-        privateOutfile, dmy  = self.setOutfile_Timebin( 80, 3600 )
+        privateOutfile, dmy  = self.setOutfile_Timebin( 81, 3600 )
         # Run Task
         prm =  {'timerange' : '00:00:00~01:00:00',
                 'timebin'   : '',
@@ -360,7 +360,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.checkNonZero (self.data )
 
     def test_param82(self):
-        '''sdtimeagerage::81":: timerange = ""   (dafault) '''
+        '''sdtimeagerage::82":: timerange = ""   (dafault) '''
 
         # set timebin string and private outputMS name.
         privateOutfile, dmy  = self.setOutfile_Timebin( 80, 3600 )
