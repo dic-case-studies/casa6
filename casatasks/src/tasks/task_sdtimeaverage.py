@@ -32,7 +32,6 @@ else:
     from update_spw import update_spwchan
     from callibrary import callibrary
 
-
 @contextlib.contextmanager
 def open_table(path, nomodify=True):
     tb = table( )
@@ -49,7 +48,7 @@ def sdtimeaverage(
              spw, 
              timerange, 
              scan,
-             antenna,   # changed CAS-12721 ( beam -> antenna)
+             antenna,  
              timebin,
              outfile):
     #+
@@ -68,12 +67,11 @@ def sdtimeaverage(
     casalog.origin('sdtimeaverage')
 
     try:
-        # CAS-12721 revised: seelect and time averaging (at same time)
-
+        # Select Data and make Average. 
         st =do_mst(infile=infile, datacolumn=datacolumn,
                    field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna, 
                    timebin=timebin, outfile=outfile)
-
+        # History 
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan,
                     timebin=timebin, antenna=antenna, outfile=outfile)
@@ -86,7 +84,7 @@ def sdtimeaverage(
 
     return st
 
-#  CASA-12721 NEW func.
+#  Calculation range time in input MS.  
 def calc_timebin(msName):
     with open_table(msName) as tb:
         tm    = tb.getcol('TIME')
@@ -98,11 +96,11 @@ def calc_timebin(msName):
     time_last =  max(tm)
 
     timebin = time_last - time_first ;
-    timebin += 4.0 * interval
+    timebin += 4.0 * interval   + 1.0  # expand range. 
 
     return str(timebin)
 
-# CAS-12721: Added 'antenna' arg . removed local var. (S.N)
+# call mstransform by provided procedure #
 def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, outfile):
     # followings are parameters of mstransform but not used by THIS.
     # just putting default values
@@ -151,7 +149,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         # Gather all the parameters in a dictionary.
         config = {}
         
-        # CAS-12710 (note) antenna arg now contains specified param.
+        # set config param.
         config = pdh.setupParameters(inputms=infile, outputms=outfile, field=field, 
                     spw=spw, array=array, scan=scan, antenna=antenna, correlation=correlation,
                     uvrange=uvrange, timerange=timerange, intent=intent, observation=str(observation),
@@ -178,7 +176,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         if tbin < 0:
             raise Exception("Parameter timebin must be > '0s' to do time averaging")
   
-        # set config
+        # set config for Averaging
         timeaverageAct = (tbin > 0)
         if timeaverageAct:
             casalog.post('Parse time averaging parameters')
@@ -207,8 +205,8 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
 
     #+
     # CAS-12721:
-    # Note: Following section were witrten concerning  CAS-7751 or other(s)
-    #       Program logic is copied and used. 
+    # Note: Following section were written concerning with CAS-7751 or other(s)
+    #       Program logic is copied and used without change. 
     #-
 
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection

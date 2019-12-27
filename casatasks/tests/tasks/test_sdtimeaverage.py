@@ -44,9 +44,9 @@ defOutputMs = "bave.ms"
 
 # Compare err limit , ideally vector(1024 x 2) is the best
 nRow     = 3843  ## DO NOT CHANGE ## 
-errLimit  = 5e-08   # numerical error Limit of ZeroSum
-errLimit2 = 5e-08   # numerical error Limit of Sigma and Weight
-interval_0 = 1.0    # fundamental INTERVAL in TEST-MS
+errLimit  = 2.0e-08   # numerical error Limit of ZeroSum
+errLimit2 = 5e-08     # numerical error Limit of Sigma and Weight
+interval_0 = 1.0      # fundamental INTERVAL in TEST-MS
 
 ##############
 # Test Entry
@@ -90,8 +90,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
         os.system('rm -rf ' + self.inpMs )
         os.system('rm -rf ' + defOutputMs )   ## Comment out , for DEBUG ##
-
-#        os.system('rm -rf ' + defWorkMs )
         os.system('rm -rf ' + "bave*.ms" )
         return
 
@@ -106,7 +104,7 @@ class test_sdtimeaverage(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         print( "tearDownClass::deleting work-MS.")
-        os.system('rm -rf ' + defWorkMs )
+#        os.system('rm -rf ' + defWorkMs )
 
 ##############
 # Run Task
@@ -133,6 +131,13 @@ class test_sdtimeaverage(unittest.TestCase):
 
         check = numpy.all(numpy.abs(data) < errLimit)
         self.assertTrue(check, msg='## Zero check Failed ##\n{}'.format(data)   )
+        return True;
+
+    def checkNonZero(self,data):
+        print("-- checking Not Zero --")
+
+        check = numpy.all(numpy.abs(data) >= errLimit)
+        self.assertTrue(check, msg='## Non Zero check Failed ##\n{}'.format(data)   )
         return True;
 
     def checkZeroSum(self, data1,data2):
@@ -239,32 +244,31 @@ class test_sdtimeaverage(unittest.TestCase):
         baseTime   = 0
         # Table Access
         with tbmanager(msName,nomodify=False) as tb:
-
+            # Data Buffer
+            arrayData2 = tb.getcol('FLOAT_DATA')
             # create array (time, interval)
             NN = len(self.tm)
             arrayTime     = list(range(NN))
             arrayInterval = list(range(NN))
+            # create time and interval
             for row in range(NN): 
                 arrayTime    [row] = baseTime + (interval_0 * row)  
                 arrayInterval[row] = interval_0
-
-            # Put Time and Interval from the array  
+            # put to column  
             tb.putcol("TIME",       arrayTime  )
             tb.putcol("INTERVAL",   arrayInterval  )
 
-            # Put DATA 
-            # Float_data 
-            arrayData = [list(range(1024)), list(range(1024))]
+            # create Test-Data
             for row in range(NN):
                 for n in range(1024):
                     # values
                     x = row - numpy.floor(nRow/2)
                     val = offset + slope * x
-                    arrayData[0][n] = val
-                    arrayData[1][n] = val
-                # write as an Array[2,1024] 
-                tb.putcell("FLOAT_DATA", row,   arrayData  )
-            #
+                    # set to Buffer 
+                    arrayData2[0][n][row] = val
+                    arrayData2[1][n][row] = val
+            # write to the column at once
+            tb.putcol("FLOAT_DATA",   arrayData2  )
           
         return True          
 
@@ -323,6 +327,150 @@ class test_sdtimeaverage(unittest.TestCase):
 #=================================================
 # TEST FIXTURE
 #==================================================
+
+## TIMESPAN ###
+    def test_param80(self):
+        '''sdtimeagerage::80:: timerange = 00:00:00~01:04:03 NORMAL (3843s same as in MS)'''
+
+        # set timebin string and private outputMS name.
+        privateOutfile, dmy  = self.setOutfile_Timebin( 80, 3844 )
+        # Run Task
+        prm =  {'timerange' : '00:00:00~01:04:03',
+                'timebin'   : '',
+                'infile'    : defWorkMs,
+                'outfile'   : privateOutfile    } # Specify Full-Range #
+        self.run_task( prm )
+        # Check Result (zerosum check)
+        self.get_spectra(privateOutfile, 0 )   # row=0
+        self.checkZero (self.data )
+
+    def test_param81E(self):
+        '''sdtimeagerage::81":: timerange = 00:00:00~01:00:00 ERROR case(3600s INSUFFUCIENT)'''
+
+        # set timebin string and private outputMS name.
+        privateOutfile, dmy  = self.setOutfile_Timebin( 80, 3600 )
+        # Run Task
+        prm =  {'timerange' : '00:00:00~01:00:00',
+                'timebin'   : '',
+                'infile'    : defWorkMs,
+                'outfile'   : privateOutfile    } # Specify Full-Range #
+        self.run_task( prm )
+        # Check Result (zerosum check)
+        self.get_spectra(privateOutfile, 0 )   # row=0
+        self.checkNonZero (self.data )
+
+    def test_param82(self):
+        '''sdtimeagerage::81":: timerange = ""   (dafault) '''
+
+        # set timebin string and private outputMS name.
+        privateOutfile, dmy  = self.setOutfile_Timebin( 80, 3600 )
+        # Run Task
+        prm =  {'timerange' : '',
+                'timebin'   : '',
+                'infile'    : defWorkMs,
+                'outfile'   : privateOutfile    } # Specify Full-Range #
+        self.run_task( prm )
+        # Check Result (zerosum check)
+        self.get_spectra(privateOutfile, 0 )   # row=0
+        self.checkZero (self.data )
+
+## SCAN ###
+    def test_param40(self):
+        '''sdtimeagerage::40:: scan=2 '''
+
+        # Run Task
+        prm =  {'timebin' : '',
+                'scan'    : '2'   }
+        self.run_task( prm )
+        # check scan 
+        self.check_scan (defOutputMs, 2)
+
+    def test_param41a(self):
+        '''sdtimeagerage::41a:: scan=61  '''
+
+        # Run Task
+        prm =  {'timebin' : '',
+                'scan'    : '61'   } # Normal. In range. #
+        self.assertTrue(self.run_task( prm ))
+        # check scan 
+        self.check_scan (defOutputMs, 61)
+
+    def test_param41b(self):
+        '''sdtimeagerage::41b:: scan=62  '''
+
+        # Run Task
+        prm =  {'timebin' : '',
+                'scan'    : '62'   } # ERROR : out of range in MS #
+        self.assertFalse(self.run_task( prm ))
+        # check scan 
+        #    no check ...
+
+    def test_param42(self):
+        '''sdtimeagerage::42:: scan='' N=1  '''
+
+        # set timebin string and private outputMS name.
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 42, 3846 )
+
+        prm =  {'timebin' : '' ,
+                'scan'    : '' ,
+                'infile'  : defWorkMs,
+                'outfile' : privateOutfile  }
+        # Run Task
+        self.run_task( prm )
+
+        # Check Result (zerosum check)
+        self.check_averaged_result_N1(privateOutfile)
+
+## FIELD ###
+    def test_param60(self):
+        '''sdtimeaverage:: field = 'FLS3a*' (EXACT NAME)'''
+
+        prm =  {'field' : 'FLS3a*'  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
+
+    def test_param61E(self):
+        '''sdtimeaverage:: field = 'hoge*' (NG NAME)'''
+
+        prm =  {'field' : 'hoge'  }
+        # Run Task and check
+        self.assertFalse(self.run_task( prm ))
+
+    def test_param62(self):
+        '''sdtimeaverage:: field = '' (OK :use default)'''
+
+        prm =  {'field' : '*'  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
+
+## SPW ###
+    def test_param70(self):
+        '''sdtimeaverage:: spw = '1' (exist)'''
+
+        prm =  {'spw' : '0'  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
+
+    def test_param71E(self):
+        '''sdtimeaverage:: spw = '9' (Not Exist)'''
+
+        prm =  {'spw' : '9'  }
+        # Run Task and check
+        self.assertFalse(self.run_task( prm ))
+
+    def test_param72(self):
+        '''sdtimeaverage:: spw = '' (default)'''
+
+        prm =  {'spw' : ''  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
+
+    def test_param72(self):
+        '''sdtimeaverage:: spw = '*' (Wildcard)'''
+
+        prm =  {'spw' : ''  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
 
 ## ANTENNA ###
     def test_param1(self): 
@@ -416,53 +564,6 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # Error expected #  
 
-## SCAN ###
-    def test_param40(self):
-        '''sdtimeagerage::40:: scan=2 '''
-
-        # Run Task
-        prm =  {'timebin' : '', 
-                'scan'    : '2'   }
-        self.run_task( prm )
-        # check scan 
-        self.check_scan (defOutputMs, 2)
-
-    def test_param41a(self):
-        '''sdtimeagerage::41a:: scan=61  '''
-
-        # Run Task
-        prm =  {'timebin' : '',
-                'scan'    : '61'   }i # Normal. In range. #
-        self.assertTrue(self.run_task( prm ))
-        # check scan 
-        self.check_scan (defOutputMs, 61)
-
-    def test_param41b(self):
-        '''sdtimeagerage::41b:: scan=62  '''
-
-        # Run Task
-        prm =  {'timebin' : '',
-                'scan'    : '62'   } # ERROR : out of range in MS #
-        self.assertFalse(self.run_task( prm ))
-        # check scan 
-        #    no check ...
-
-    def test_param42(self):
-        '''sdtimeagerage::42:: scan='' N=1  '''
-
-        # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 42, 3846 )
-
-        prm =  {'timebin' : '' ,
-                'scan'    : '' ,
-                'infile'  : defWorkMs,
-                'outfile' : privateOutfile  }
-        # Run Task
-        self.run_task( prm )
-
-        # Check Result (zerosum check)
-        self.check_averaged_result_N1(privateOutfile)
-
 ## DATACOLUMN ###
     def test_param50(self):
         '''sdtimeaverage:: datacolumn = 'float_data' '''
@@ -484,28 +585,6 @@ class test_sdtimeaverage(unittest.TestCase):
         prm =  {'datacolumn' : '' }
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # must be false
-
-## FIELD ###
-    def test_param60(self):
-        '''sdtimeaverage:: field = 'FLS3a*' (EXACT NAME)'''
-
-        prm =  {'field' : 'FLS3a*'  }
-        # Run Task and check
-        self.assertTrue(self.run_task( prm ))
-
-    def test_param61E(self):
-        '''sdtimeaverage:: field = 'hoge*' (NG NAME)'''
-
-        prm =  {'field' : 'hoge'  }
-        # Run Task and check
-        self.assertFalse(self.run_task( prm ))
-
-    def test_param62(self):
-        '''sdtimeaverage:: field = '' (OK :use default)'''
-
-        prm =  {'field' : '*'  }
-        # Run Task and check
-        self.assertTrue(self.run_task( prm ))
 
 #### Control ######
 
