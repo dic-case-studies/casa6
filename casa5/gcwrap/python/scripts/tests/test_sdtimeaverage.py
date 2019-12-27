@@ -104,7 +104,7 @@ class test_sdtimeaverage(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         print( "tearDownClass::deleting work-MS.")
-#        os.system('rm -rf ' + defWorkMs )
+        os.system('rm -rf ' + defWorkMs )
 
 ##############
 # Run Task
