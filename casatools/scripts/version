@@ -38,23 +38,19 @@ print ("\n");
 
 sub get_last_branch_tag () {
     my $gitbranch = shift;
-    my @versions;
-    open( $tags, "git tag -l | grep $gitbranch | " );
-    chomp( @tags = <$tags> );
-    close( @tags );
-    @versions = grep(/^$gitbranch-\d+$/, @tags);
-    #print(@versions,"\n");
-    my @sorted =
-        map { $_->[0] }
-        sort { $a->[1] cmp $b->[1] }
-        map { [$_, join '', map { sprintf "%8d", $_ } split /\-/, $_] }
-        @versions;
-
-    return($sorted[$#sorted]);
+    my $branchpattern = qr/^$gitbranch-\d+/;
+    return get_last_tag($gitbranch,$branchpattern)
 }
 
 sub get_last_release_tag () {
     my $gitbranch = shift;
+    my $branchpattern = qr/^\d+\.\d+\.\d+\.\d+$/;
+    return get_last_tag($gitbranch,$branchpattern)
+}
+
+sub get_last_tag () {
+    my $gitbranch = shift;
+    my $branchpattern = shift;
     my @versions;
     my @tags;
     open( $githashes, "git log --since 2019-10-01 --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
@@ -79,7 +75,10 @@ sub get_last_release_tag () {
 
         #print(@tags);
         foreach my $tag (@tags) {
-            if(grep(/^\d+\.\d+\.\d+\.\d+$/, $tag)) {
+            #print("$branchpattern\n");
+            if(grep(/$branchpattern/, $tag)) {
+                #print(grep($branchpattern, $tag). "\n");
+                #print("Pushing $tag\n");
                 push @versions, $tag;
             }
         }
