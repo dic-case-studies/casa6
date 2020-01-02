@@ -39,18 +39,21 @@ print ("\n");
 sub get_last_branch_tag () {
     my $gitbranch = shift;
     my $branchpattern = qr/^$gitbranch-\d+/;
-    return get_last_tag($gitbranch,$branchpattern)
+    my $delim="-";
+    return get_last_tag($gitbranch,$branchpattern,$delim)
 }
 
 sub get_last_release_tag () {
     my $gitbranch = shift;
     my $branchpattern = qr/^\d+\.\d+\.\d+\.\d+$/;
-    return get_last_tag($gitbranch,$branchpattern)
+    my $delim="\\.";
+    return get_last_tag($gitbranch,$branchpattern,$delim)
 }
 
 sub get_last_tag () {
     my $gitbranch = shift;
     my $branchpattern = shift;
+    my $delim = shift;
     my @versions;
     my @tags;
     open( $githashes, "git log --since 2019-10-01 --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
@@ -88,7 +91,7 @@ sub get_last_tag () {
     my @sorted =
         map { $_->[0] }
         sort { $a->[1] cmp $b->[1] }
-        map { [$_, join '', map { sprintf "%8d", $_ } split /\-/, $_] }
+        map { [$_, join '', map { sprintf "%8d", $_ } split $delim, $_] }
         @versions;
 
     return($sorted[$#sorted]);
