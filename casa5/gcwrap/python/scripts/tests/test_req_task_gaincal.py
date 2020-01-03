@@ -28,12 +28,15 @@ try:
     from casatasks import gaincal, casalog
     CASA6 = True
     tb = casatools.table()
+
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-import testhelper as th
+
+import sys
 import os
+import testhelper as th
 import unittest
 import shutil
 import numpy as np
@@ -127,7 +130,7 @@ def getparam(caltable, colname='CPARAM'):
     return outtable
 
 
-def tableComp(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
+def tableComp(table1, table2, cols=[], rtol=8e-5, atol=1e-6):
     ''' Compare two caltables '''
 
     tableVal1 = {}
@@ -247,6 +250,7 @@ class gaincal_test(unittest.TestCase):
         '''
 
         self.assertTrue(np.all(tableComp(fullRangeCal, combinedRef)[:,1] == 'True'))
+        #self.assertTrue(ch.Compare.compare_CASA_tables(fullRangeCal, combinedRef))
 
 
     def test_intervalSNR(self):
@@ -477,7 +481,7 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(np.all(tableComp(tempCal, spwMapCal)[:,1] == 'True'))
         
     
-    def test_merged1a(self):
+    def test_mergedCreatesGainTable(self):
         ''' Gaincal 1a: Default values to create a gain table '''
         
         gaincal(vis=merged_copy1, caltable=tempCal, uvrange='>0.0')
@@ -485,7 +489,7 @@ class gaincal_test(unittest.TestCase):
         
         self.assertTrue(th.compTables(tempCal, merged_refcal1, ['WEIGHT']))
         
-    def test_merged2a(self):
+    def test_mergedFieldSelect(self):
         ''' Gaincal 2a: Create a gain table using field selection '''
         
         gaincal(vis=merged_copy1, caltable=tempCal, uvrange='>0.0', field='0', gaintype='G', solint='int', combine='', refant='VA02')
@@ -493,7 +497,7 @@ class gaincal_test(unittest.TestCase):
         
         self.assertTrue(th.compTables(tempCal, merged_refcal2, ['WEIGHT']))
         
-    def test_merged1b(self):
+    def test_mergedSpwSelect(self):
         ''' Gaincal 1b: Create a gain table for an MS with many spws '''
         
         

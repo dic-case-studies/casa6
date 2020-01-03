@@ -69,6 +69,10 @@ public:
   }
 };
 
+
+
+
+
 TEST_F(DelayRateFFTTest, BasicDelayRateFFTTest) {
   Int nPadfactor(4);
   Int nchan(32), nt(20), nelem(2);
@@ -173,6 +177,8 @@ class FringeJonesTest : public VisCalTestBase {
 public:
   // test values for solutions
   Cube<Float> fpar;
+  SDBList sdbs;
+  Double reftime;
 
   FringeJonesTest() :
     VisCalTestBase(1,  // nfield
@@ -205,6 +211,52 @@ public:
     // uncomment to see data shape summary from
     //VisCalTestBase::summary("FringeJonesTest");  
   }
+    
+    void corruptData() {
+        // Apply-able FringeJones
+        FringeJones FJapp(msmc); // "<noms>",nAnt,nSpw);
+        // FJapp.setPrtlev(7);        
+        FJapp.setApply();
+        // Fill FJapp with actual parameters
+        for (Int ispw=0;ispw<nSpw;++ispw) {
+            FJapp.setMeta(0,1,0.0,
+                          ispw,ssvp.freqs(ispw),
+                          nChan);
+            FJapp.sizeApplyParCurrSpw(nChan);
+            // Enabled now phase model implemented...
+            FJapp.setApplyParCurrSpw(fpar,true,false);  // don't invert
+        }
+        Bool isFirst = true;
+        for (vi2.originChunks();vi2.moreChunks();vi2.nextChunk()) {
+            for (vi2.origin();vi2.more();vi2.next()) {
+                if (isFirst) {
+                    reftime = vb2->time()(0);
+                    isFirst = false;
+                }
+                Int ispw=vb2->spectralWindows()(0);
+                Int obsid(vb2->observationId()(0));
+                Int scan(vb2->scan()(0));
+                Int fldid(vb2->fieldId()(0));
+                Vector<Double> freqs(vb2->getFrequencies(0));
+                Vector<Int> a1(vb2->antenna1());
+                Vector<Int> a2(vb2->antenna2());
+                
+                vb2->resetWeightsUsingSigma();
+                vb2->setVisCubeCorrected(vb2->visCube());
+                vb2->setFlagCube(vb2->flagCube());
+                
+                // Corrupt with FJapp
+                // cerr << "Corrupting..." << endl;
+                FJapp.setMeta(obsid,scan,reftime,
+                              ispw,freqs,
+                              fldid);
+                FJapp.correct2(*vb2,false,false,false); // (trial?, doWtSp?, dosync)
+                
+                // Add vb2 to the SDBList
+                sdbs.add(*vb2);
+            }
+        }
+    }
 };
 
 
@@ -231,20 +283,8 @@ TEST_F(FringeJonesTest, FringeJonesApplyState) {
 
 
 TEST_F(FringeJonesTest, FringeJones_selfSolveOneTest) {
-  // Apply-able FringeJones
-  FringeJones FJapp(msmc); // "<noms>",nAnt,nSpw);
-  FJapp.setApply();
-  // FJapp.setPrtlev(7);
-  
-  // Fill FJapp with actual parameters
-  for (Int ispw=0;ispw<nSpw;++ispw) {
-    FJapp.setMeta(0,1,0.0,
-                 ispw,ssvp.freqs(ispw),
-                 nChan);
-    FJapp.sizeApplyParCurrSpw(nChan);
-    // Enabled now phase model implemented...
-    FJapp.setApplyParCurrSpw(fpar,true,false);  // don't invert
-  }
+  corruptData();
+
   FringeJones FJsol(VisCalTestBase::msmc);
   // FJsol.setPrtlev(7);
   Record solvePar;
@@ -281,43 +321,6 @@ TEST_F(FringeJonesTest, FringeJones_selfSolveOneTest) {
   
   FJsol.setSolve(solvePar);
 
-
-  SDBList sdbs;
-  Double reftime;
-
-  Bool isFirst = true;
-  for (vi2.originChunks();vi2.moreChunks();vi2.nextChunk()) {
-    for (vi2.origin();vi2.more();vi2.next()) {
-      if (isFirst) {
-          reftime = vb2->time()(0);
-          isFirst = false;
-      }
-      Int ispw=vb2->spectralWindows()(0);
-      Int obsid(vb2->observationId()(0));
-      Int scan(vb2->scan()(0));
-      Int fldid(vb2->fieldId()(0));
-      Vector<Double> freqs(vb2->getFrequencies(0));
-      Vector<Int> a1(vb2->antenna1());
-      Vector<Int> a2(vb2->antenna2());
-
-      vb2->resetWeightsUsingSigma();
-      vb2->setVisCubeCorrected(vb2->visCube());
-      vb2->setFlagCube(vb2->flagCube());
-
-      // Corrupt with FJapp
-      // cerr << "Corrupting..." << endl;
-      FJapp.setMeta(obsid,scan,reftime,
-		    ispw,freqs,
-		    fldid);
-      FJapp.correct2(*vb2,false,false,false); // (trial?, doWtSp?, dosync)
-      
-      // Add vb2 to the SDBList
-      sdbs.add(*vb2);
-    }
-  }
-
-
-  
   // Setup meta & sizes for the solve
   FJsol.setMeta(sdbs.aggregateObsId(),
 		sdbs.aggregateScan(),
@@ -330,9 +333,82 @@ TEST_F(FringeJonesTest, FringeJones_selfSolveOneTest) {
 
   // Add comparison tests here
   Matrix<Float> p = FJsol.solveRPar().nonDegenerate();
-  cerr << p.shape() << endl;
   Float delay1 = 2.3;
   Float delay2 = -1.7;
+  Float rate1 = 0.0;
+  Float rate2 = 0.0;    
+
+  if (FRINGEJONES_TEST_VERBOSE) {
+    cerr << "delay1 results " << p(1,1) << endl;
+    cerr << "delay2 results " << p(4,1) << endl;
+    cerr << "rate1 results " << p(2,1) << endl;
+    cerr << "rate2 results " << p(5,1) << endl;
+    cerr << "Parameters out: " << p << endl;
+  }
+
+  ASSERT_TRUE(allNearAbs(p(1, 1), delay1, 2e-2));
+  ASSERT_TRUE(allNearAbs(p(5, 1), delay2, 2e-2));
+  
+  ASSERT_TRUE(allNearAbs(p(2, 1), rate1, 1e-5));
+  ASSERT_TRUE(allNearAbs(p(6, 1), rate2, 1e-5));
+
+  ASSERT_TRUE(FJsol.refant()==0);
+}
+
+
+TEST_F(FringeJonesTest, FringeJones_paramActiveTest) {
+  corruptData();
+
+  FringeJones FJsol(VisCalTestBase::msmc);
+  // FJsol.setPrtlev(7);
+  Record solvePar;
+  solvePar.define("table",String("test.Fringe"));  // not used
+  solvePar.define("solint",String("inf"));
+  solvePar.define("combine",String(""));
+  Array<Int> refant(IPosition(1,3));
+  refant(IPosition(1, 0)) = 12;
+  refant(IPosition(1, 1)) = 0;
+  refant(IPosition(1, 2)) = 1;
+  if (FRINGEJONES_TEST_VERBOSE) {
+      cerr << "Refant " << refant << endl;
+  }
+  solvePar.define("refant",refant);
+  solvePar.define("globalsolve", true);
+  solvePar.define("weightfactor", 2);
+  solvePar.define("niter", 20);
+  solvePar.define("zerorates", true);
+  Array<Double> delayWindow(IPosition(1, 2));
+  Array<Double> rateWindow(IPosition(1, 2));
+  delayWindow(IPosition(1, 0)) = -100.0;
+  delayWindow(IPosition(1, 1)) = +100.0;
+  rateWindow(IPosition(1, 0)) = -100.0;
+  rateWindow(IPosition(1, 1)) = +100.0;
+  solvePar.define("delaywindow", delayWindow);
+  solvePar.define("ratewindow", rateWindow);
+  Array<Bool> paramActive(IPosition(1,4));
+  paramActive(IPosition(1, 0)) = true;
+  paramActive(IPosition(1, 1)) = false;
+  paramActive(IPosition(1, 2)) = true;
+  paramActive(IPosition(1, 3)) = false;
+  
+  solvePar.define("paramactive", paramActive);
+  
+  FJsol.setSolve(solvePar);
+
+  // Setup meta & sizes for the solve
+  FJsol.setMeta(sdbs.aggregateObsId(),
+		sdbs.aggregateScan(),
+		sdbs.aggregateTime(),
+		sdbs.aggregateSpw(),
+		sdbs.freqs(),
+		sdbs.aggregateFld());
+  FJsol.sizeSolveParCurrSpw(sdbs.nChannels()); 
+  FJsol.selfSolveOne(sdbs);
+
+  // Add comparison tests here
+  Matrix<Float> p = FJsol.solveRPar().nonDegenerate();
+  Float delay1 = 0.0;
+  Float delay2 = 0.0;
   Float rate1 = 0.0;
   Float rate2 = 0.0;    
 
@@ -343,6 +419,7 @@ TEST_F(FringeJonesTest, FringeJones_selfSolveOneTest) {
     cerr << "rate2 results " << p(4+1,1) << endl;
     cerr << "Parameters out: " << p << endl;
   }
+
   ASSERT_TRUE(allNearAbs(p(1, 1), delay1, 2e-2));
   ASSERT_TRUE(allNearAbs(p(4+1, 1), delay2, 2e-2));
   
@@ -350,5 +427,4 @@ TEST_F(FringeJonesTest, FringeJones_selfSolveOneTest) {
   ASSERT_TRUE(allNearAbs(p(4+2, 1), rate2, 1e-5));
 
   ASSERT_TRUE(FJsol.refant()==0);
-  
 }

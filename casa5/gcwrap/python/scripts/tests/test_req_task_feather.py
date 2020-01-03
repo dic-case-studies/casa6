@@ -26,6 +26,7 @@ CASA6 = False
 try:
     import casatools
     from casatasks import feather, casalog
+    tb = casatools.table()
     CASA6 = True
 except ImportError:
     from __main__ import default
@@ -36,7 +37,6 @@ import os
 import unittest
 import shutil
 import numpy as np
-from filecmp import dircmp
 
 ### DATA ###
 
@@ -58,6 +58,14 @@ output2 = 'feathered2.im'
 
 logpath = casalog.logfile()
 logname = 'testlog.log'
+
+def get_map(infile):
+
+    tb.open(infile)
+    res = tb.getcol('map')
+    tb.close()
+    
+    return res
 
 class feather_test(unittest.TestCase):
     
@@ -157,8 +165,10 @@ class feather_test(unittest.TestCase):
         feather(imagename=output, highres=interpath, lowres=sdpath)
         feather(imagename=output2, highres=interpath, lowres=sdpath, sdfactor=0.5)
         
-        dcmp = dircmp(output, output2)
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_map(output)
+        res2 = get_map(output2)
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
     def test_effdishdiam(self):
         '''
@@ -171,8 +181,10 @@ class feather_test(unittest.TestCase):
         feather(imagename=output, highres=interpath, lowres=sdpath)
         feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1)
         
-        dcmp = dircmp(output, output2)
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_map(output)
+        res2 = get_map(output2)
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
         if CASA6:
             with self.assertRaises(RuntimeError):
@@ -193,8 +205,10 @@ class feather_test(unittest.TestCase):
         feather(imagename=output, highres=interpath, lowres=sdpath)
         feather(imagename=output2, highres=interpath, lowres=sdpath, lowpassfiltersd=True)
         
-        dcmp = dircmp(output, output2)
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_map(output)
+        res2 = get_map(output2)
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
     
     
 def suite():
