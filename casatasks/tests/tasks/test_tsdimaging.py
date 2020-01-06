@@ -12,7 +12,9 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
     from casatools import ms as mstool
-    from casatasks import sdimaging, flagdata
+    from casatasks import casalog
+    from casatasks import flagdata
+    from casatasks import tsdimaging as sdimaging
     from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
 
     ### for selection_syntax import
@@ -25,6 +27,9 @@ if is_CASA6:
         pass
 
     ctsys_resolve = ctsys.resolve
+
+    from casatasks.private.task_tsdimaging import image_suffix
+
 else:
     from __main__ import default
     from tasks import *
@@ -47,12 +52,14 @@ else:
     except:
         from tests.testutils import copytree_ignore_subversion, TableCacheValidator
 
-    from sdimaging import sdimaging
+    from tsdimaging import tsdimaging as sdimaging
     from sdutil import tbmanager, toolmanager, table_selector
 
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
+
+    from task_tsdimaging import image_suffix
 
 _ia = image()
 _rg = regionmanager()
@@ -60,6 +67,7 @@ me = measures()
 qa = quanta()
 tb = table()
 ms = mstool()
+
 
 #
 # Unit test of sdimaging task.
@@ -97,10 +105,23 @@ def merge_dict(d1, d2):
     d12.update(d2)
     return d12
 
+
 ###
 # Base class for sdimaging unit test
 ###
-class sdimaging_unittest_base(unittest.TestCase):
+class sdimaging_standard_paramset(object):
+    rawfile='sdimaging.ms'
+    phasecenter='J2000 17:18:29 +59.31.23'
+    imsize=[75,75]
+    cell=['3.0arcmin','3.0arcmin']
+    gridfunction='PB'
+    minweight0 = 0.
+    mode='channel'
+    nchan=40
+    start=400
+    width=10    
+
+class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
     """
     Base class for sdimaging unit test
 
@@ -131,14 +152,14 @@ class sdimaging_unittest_base(unittest.TestCase):
     """
     taskname='sdimaging'
     datapath=ctsys_resolve('regression/unittest/sdimaging')
-    rawfile='sdimaging.ms'
+    #rawfile='sdimaging.ms'
     postfix='.im'
     ms_nchan = 1024
-    phasecenter='J2000 17:18:29 +59.31.23'
-    imsize=[75,75]
-    cell=['3.0arcmin','3.0arcmin']
-    gridfunction='PB'
-    minweight0 = 0.
+#     phasecenter='J2000 17:18:29 +59.31.23'
+#     imsize=[75,75]
+#     cell=['3.0arcmin','3.0arcmin']
+#     gridfunction='PB'
+#     minweight0 = 0.
     statsinteg={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
                 'blcf': '17:32:18.690, +57.37.28.536, I, 1.42064e+09Hz',
                 'max': numpy.array([ 0.6109162]),
@@ -169,32 +190,34 @@ class sdimaging_unittest_base(unittest.TestCase):
         (5) reference beam of image (optional)
         """
         res=sdimaging(**task_param)
-        outfile = task_param['outfile']
+        outprefix = task_param['outfile']
+        outfile = outprefix + image_suffix
         # Tests
         self.assertEqual(res,None,
                          msg='Any error occurred during imaging')
         self._checkfile(outfile)
-        self._checkfile(outfile+".weight")
-        self._checkshape(outfile,shape[0], shape[1],shape[2],shape[3])
+        self._checkfile(outprefix+".weight")
+        self._checkframe(outfile)
+        self._checkshape(outfile, shape[0], shape[1],shape[2],shape[3])
         self._checkstats(outfile, refstats, compstats=compstats,
                          atol=atol, rtol=rtol, ignoremask=ignoremask)
         if refbeam is not None:
             self._check_beam(outfile, refbeam)
-        # CAS-8248 (duplicated keywords)
-        _ia.open(outfile)
-        misc = _ia.miscinfo()
-        _ia.close()
-        for kw in ['TELESCOPE', 'OBJECT']:
-            self.assertFalse(kw in misc, 'Miscinfo should not have %s' % kw)
-        for kw in ['INSTRUME', 'distance']:
-            self.assertTrue(kw in misc, 'Miscinfo should have %s' % kw)
-            
-        
 
     def _checkfile( self, name ):
         isthere=os.path.exists(name)
         self.assertEqual(isthere,True,
                          msg='output file %s was not created because of the task failure'%(name))
+        
+    def _checkframe(self, name):
+        _ia.open(name)
+        csys = _ia.coordsys()
+        _ia.close()
+        spectral_frames = csys.referencecode('spectral')
+        csys.done()
+        self.assertEqual(1, len(spectral_frames))
+        spectral_frame = spectral_frames[0]
+        self.assertEqual('LSRK', spectral_frame)
 
     def _checkshape(self,name,nx,ny,npol,nchan):
         self._checkfile(name)
@@ -313,10 +336,10 @@ class sdimaging_unittest_base(unittest.TestCase):
         _ia.open(image)
         beam = _ia.restoringbeam()
         _ia.close()
-        maj_asec = numpy.asscalar(qa.getvalue(qa.convert(beam['major'], 'arcsec')))
-        min_asec = numpy.asscalar(qa.getvalue(qa.convert(beam['minor'], 'arcsec')))
-        maj_asec_ref = numpy.asscalar(qa.getvalue(qa.convert(ref_beam['major'], 'arcsec')))
-        min_asec_ref = numpy.asscalar(qa.getvalue(qa.convert(ref_beam['minor'], 'arcsec')))
+        maj_asec = qa.getvalue(qa.convert(beam['major'], 'arcsec'))[0]
+        min_asec = qa.getvalue(qa.convert(beam['minor'], 'arcsec'))[0]
+        maj_asec_ref = qa.getvalue(qa.convert(ref_beam['major'], 'arcsec'))[0]
+        min_asec_ref = qa.getvalue(qa.convert(ref_beam['minor'], 'arcsec'))[0]
         self.assertAlmostEqual(abs(maj_asec-maj_asec_ref)/max(maj_asec_ref,1.e-12), 0., places=3, msg="major axis = %f arcsec (expected: %f)" % (maj_asec, maj_asec_ref))
         self.assertAlmostEqual(abs(min_asec-min_asec_ref)/max(min_asec_ref,1.e-12), 0., places=3, msg="minor axis = %f arcsec (expected: %f)" % (min_asec, min_asec_ref))
     
@@ -332,6 +355,14 @@ class sdimaging_unittest_base(unittest.TestCase):
         csys.done()
         ret=numpy.allclose(testval,refval, atol=1.e-5, rtol=1.e-5)
         self.assertTrue(ret)
+        
+    def run_exception_case(self, task_param, expected_msg, expected_type=RuntimeError):
+        with self.assertRaises(expected_type) as cm:
+            res=sdimaging(**task_param)
+        the_exception = cm.exception
+        pos=str(the_exception).find(expected_msg)
+        self.assertNotEqual(pos,-1,
+                            msg='Unexpected exception was thrown: {0}'.format(str(the_exception)))
         
         
 ###
@@ -354,6 +385,14 @@ class sdimaging_test0(sdimaging_unittest_base):
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
 
         default(sdimaging)
+        self.task_param = dict(infiles=self.rawfile,mode='channel',
+                               outfile=self.outfile,intent='',
+                               cell=self.cell,imsize=self.imsize,
+                               phasecenter=self.phasecenter,
+                               gridfunction=self.gridfunction,
+                               nchan=40,start=400,
+                               width=10,
+                               minweight=self.minweight0)
 
     def tearDown(self):
         if (os.path.exists(self.rawfile)):
@@ -361,175 +400,132 @@ class sdimaging_test0(sdimaging_unittest_base):
         os.system( 'rm -rf '+self.prefix+'*' )
         
         self.assertTrue(self.cache_validator.validate())
-
+        
     def test000(self):
         """Test 000: Default parameters"""
         # argument verification error
-        # casatasks throws an exception, CASA5 return False
-        if is_CASA6:
-            self.assertRaises(Exception,sdimaging)
-        else:
-            res = sdimaging()
-            self.assertFalse(res)
-
+        task_param = {}
+        msg = 'list index out of range'
+        self.run_exception_case(task_param, msg, expected_type=IndexError)
+    
     def test001(self):
         """Test001: Bad mode"""
         # argument verification error
-        # casatasks throws an exception, CASA5 return False
-        if is_CASA6:
-            self.assertRaises(Exception, sdimaging, infiles=self.rawfile,mode='badmode',intent='',outfile=self.outfile)
-        else:
-            res=sdimaging(infiles=self.rawfile,mode='badmode',intent='',outfile=self.outfile)
-            self.assertFalse(res)
+        task_param = dict(infiles=self.rawfile,mode='badmode',intent='',outfile=self.outfile)
+        msg = 'unallowed'
+        self.run_exception_case(task_param, msg, expected_type=AssertionError)
 
     def test002(self):
         """Test002: Bad field id"""
-        outfile=self.prefix+self.postfix
-        self.assertRaises(Exception, sdimaging, infiles=self.rawfile,field=self.badid,intent='',outfile=self.outfile)
+        self.task_param['field'] = self.badid
+        msg = 'Field Expression: Partial or no match for Field ID list [{0}]'.format(self.badid)
+        self.run_exception_case(self.task_param, msg)
 
     def test003(self):
         """Test003: Bad spectral window id"""
-        try:
-            res=sdimaging(infiles=self.rawfile,spw=self.badid,intent='',outfile=self.outfile)
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('Spw Expression: No match found for %s' % self.badid)
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        self.task_param['spw'] = self.badid
+        msg = 'Spw Expression: No match found for {0}'.format(self.badid)
+        self.run_exception_case(self.task_param, msg)
 
     def test004(self):
         """Test004: Bad antenna id"""
-        try:
-            res=sdimaging(infiles=self.rawfile,antenna=self.badid,intent='',
-                          imsize=self.imsize,cell=self.cell,outfile=self.outfile)
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('No match found for the antenna specificion')
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        self.task_param['antenna'] = self.badid
+        msg = 'No match found for the antenna specificion'
+        self.run_exception_case(self.task_param, msg)
         
     def test005(self):
         """Test005: Bad stokes parameter"""
-        try:
-            res=sdimaging(infiles=self.rawfile,stokes='BAD',intent='',outfile=self.outfile)
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('Stokes selection BAD is currently not supported.')
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        # argument verification error
+        self.task_param['stokes'] = 'BAD'
+        msg = 'unallowed'
+        self.run_exception_case(self.task_param, msg, expected_type=AssertionError)
         
     def test006(self):
         """Test006: Bad gridfunction"""
         # argument verification error
-        # casatasks throws an exception, CASA5 return False
-        if is_CASA6:
-            self.assertRaises(Exception, sdimaging, infiles=self.rawfile,gridfunction='BAD',intent='',outfile=self.outfile)
-        else:
-            res=sdimaging(infiles=self.rawfile,gridfunction='BAD',intent='',outfile=self.outfile)
-            self.assertFalse(res)
+        task_param = dict(infiles=self.rawfile,gridfunction='BAD',intent='',outfile=self.outfile)
+        msg = 'unallowed'
+        self.run_exception_case(task_param, msg, expected_type=AssertionError)
 
     def test007(self):
         """Test007: Bad scanlist"""
-        try:
-            res=sdimaging(infiles=self.rawfile,scan=self.badid,intent='',outfile=self.outfile)
-        except Exception as e:
-            pos=str(e).find('Selection is empty')
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        self.task_param['scan'] = self.badid
+        msg = 'Data selection ended with 0 rows'
+        self.run_exception_case(self.task_param, msg)
 
     def test008(self):
         """Test008: Existing outfile with overwrite=False"""
-        f=open(self.outfile,'w')
-        print('existing file', file=f)
+        outfile = self.outfile + image_suffix
+        f=open(outfile, 'w')
+        print('existing file',file=f)
         f.close()
-        try:
-            res=sdimaging(infiles=self.rawfile,intent='',outfile=self.outfile)
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('Output file \'%s\' exists.'%(self.outfile))
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        self.task_param['overwrite'] = False
+        msg = 'Output file \'{0}\' exists.'.format(outfile)
+        self.run_exception_case(self.task_param, msg)
 
     def test009(self):
         """Test009: Bad phasecenter string"""
-        try:
-            res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter='This is bad')
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('Empty QuantumHolder argument for asQuantumDouble')
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        self.task_param['phasecenter'] = 'This is bad'
+        msg = 'Error in converting \'{0}\' to MDirection.'.format(self.task_param['phasecenter'])
+        self.run_exception_case(self.task_param, msg)
 
     def test010(self):
-        """Test010: Bad phasecenter reference (J2000 is assumed)"""
-        # default for unknown direction frame is J2000 
-        refimage=self.outfile+'2'
-        sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter.replace('J2000','J3000'),minweight=self.minweight0)
-        sdimaging(infiles=self.rawfile,outfile=refimage,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=self.minweight0)
-        tb.open(self.outfile)
-        chunk=tb.getcol('map')
-        tb.close()
-        tb.open(refimage)
-        refchunk=tb.getcol('map')
-        tb.close()
-        ret=all(chunk.flatten()==refchunk.flatten())
-        #print ret
-        self.assertTrue(ret)
+        """Test010: Bad phasecenter reference (CHANGED: raise an error)"""
+        # older sdimaging was so kind that it assumed J2000 when unrecognized direction frame was given
+        # in the new tsdimaging raises an error in such case
+        false_phasecenter = self.phasecenter.replace('J2000', 'J3000')
+        self.task_param['phasecenter'] = false_phasecenter
+        msg = 'Invalid Image Parameter set : Error in converting \'{0}\' to MDirection.'.format(false_phasecenter)
+        self.run_exception_case(self.task_param, msg)
+#         # default for unknown direction frame is J2000 
+#         refimage=self.outfile+'2'
+#         sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter.replace('J2000','J3000'),minweight=self.minweight0)
+#         sdimaging(infiles=self.rawfile,outfile=refimage,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=self.minweight0)
+#         tb.open(self.outfile)
+#         chunk=tb.getcol('map')
+#         tb.close()
+#         tb.open(refimage)
+#         refchunk=tb.getcol('map')
+#         tb.close()
+#         ret=all(chunk.flatten()==refchunk.flatten())
+#         #print ret
+#         self.assertTrue(ret)
 
     def test011(self):
         """Test011: Bad pointingcolumn name"""
         # argument verification error
-        # casatasks throws an exception, CASA5 return False
-        if is_CASA6:
-            self.assertRaises(Exception, sdimaging, infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,pointingcolumn='non_exist')
-        else:
-            res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,pointingcolumn='non_exist')
-            self.assertFalse(res)
+        task_param = dict(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,pointingcolumn='non_exist')
+        msg = 'unallowed'
+        self.run_exception_case(task_param, msg, expected_type=AssertionError)
 
     def test012(self):
         """Test012: Bad imsize"""
-        # This does not raise error anymore.
-        res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=[1,0],phasecenter=self.phasecenter)
-        self.assertFalse(res)
+        self.task_param['imsize'] = [1,0]
+        msg = 'Error in building Coordinate System and Image Shape : Internal Error : Image shape is invalid :'
+        self.run_exception_case(self.task_param, msg)
 
     def test013(self):
         """Test013: Bad cell size"""
-        # empty image will be created
-        try:
-            res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=[0.,0.],imsize=self.imsize,phasecenter=self.phasecenter)
-            self.assertFail(msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('Infinite resolution not possible.')
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        self.task_param['cell'] = [0., 0.]
+        msg = 'Error in building Coordinate System and Image Shape : wcs wcsset_error: Linear transformation matrix is singular'
+        self.run_exception_case(self.task_param, msg)
 
     def test014(self):
         """Test014: Too fine resolution (smaller than original channel width"""
-        try:
-            specunit = 'GHz'
-            start = '%f%s' % (1.4202, specunit)
-            width = '%e%s' % (1.0e-10, specunit)
-            res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,gridfunction=self.gridfunction,mode='frequency',nchan=10,start=start,width=width)
-            self.assertTrue(False,
-                            msg='The task must throw exception')
-        except Exception as e:
-            pos=str(e).find('Output frequency grid cannot be calculated:  please check start and width parameters')
-            #pos=str(e).find('calcChanFreqs failed, check input start and width parameters')
-            self.assertNotEqual(pos,-1,
-                                msg='Unexpected exception was thrown: %s'%(str(e)))
+        specunit = 'GHz'
+        start = '%f%s' % (1.4202, specunit)
+        width = '%e%s' % (1.0e-10, specunit)
+        self.task_param['mode'] = 'frequency'
+        self.task_param['start'] = start
+        self.task_param['width'] = width
+        msg = 'calcChanFreqs failed, check input start and width parameters'
+        self.run_exception_case(self.task_param, msg)
 
     def test015(self):
         """Test015: negative minweight"""
-        success = False
-        try:
-            sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
-        except: success = True
-        self.assertTrue(success)
+        task_param = dict(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
+        msg = 'min value is 0'
+        self.run_exception_case(task_param, msg, expected_type=AssertionError)
 
 
 ###
@@ -551,19 +547,20 @@ class sdimaging_test1(sdimaging_unittest_base):
     # Input and output names
     prefix=sdimaging_unittest_base.taskname+'Test1'
     outfile=prefix+sdimaging_unittest_base.postfix
-    mode='channel'
-    nchan=40
-    start=400
-    width=10
+#     mode='channel'
+#     nchan=40
+#     start=400
+#     width=10
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
+                               spw='0',
                                outfile=self.outfile,intent='',
                                cell=self.cell,imsize=self.imsize,
                                phasecenter=self.phasecenter,
@@ -621,6 +618,10 @@ class sdimaging_test1(sdimaging_unittest_base):
             nchan=tb.getcell('DATA').shape[1]
         tb.close()
         self.task_param.update(dict(nchan=nchan,start=0,width=1))
+        # for testing 
+        #self.task_param['gridfunction'] = 'BOX'
+        for (k,v) in self.task_param.items():
+            casalog.post('test102: {0} = \'{1}\' (type {2})'.format(k,v,type(v)))
         outshape = (self.imsize[0],self.imsize[1],1,nchan)
         refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
                   'blcf': '17:32:18.690, +57.37.28.536, I, 1.419395e+09Hz',
@@ -882,7 +883,7 @@ class sdimaging_test2(sdimaging_unittest_base):
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
@@ -920,6 +921,13 @@ class sdimaging_test2(sdimaging_unittest_base):
     def test201(self):
         """Test 201: Full channel image (mode='frequency', nchan = -1)"""
         self.task_param.update(dict(nchan = -1, start = '', width = ''))
+        # workaround for new imager framework
+        # New imager looks SPECTRAL_WINDOW table to get whole frequency range 
+        # regardless of whether associating data exist in the MAIN table or not.
+        # As a result, resulting image has 2048 channels instead of 1024.
+        # To proceed this test, spw is explicitly specified here.
+        spw = '0'
+        self.task_param.update(dict(spw=spw))
         outshape = (self.imsize[0],self.imsize[1],1,self.ms_nchan)
         refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
                   'blcf': '17:32:18.690, +57.37.28.536, I, 1.419395e+09Hz',
@@ -1012,7 +1020,7 @@ class sdimaging_test3(sdimaging_unittest_base):
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
@@ -1119,7 +1127,7 @@ class sdimaging_test3(sdimaging_unittest_base):
 ###
 # Test auto-resolution of spatial gridding parameters
 ###
-class sdimaging_autocoord(sdimaging_unittest_base):
+class sdimaging_test_autocoord(sdimaging_unittest_base):
     """
     Test auto-resolution of spatial gridding parameters
 
@@ -1145,7 +1153,7 @@ class sdimaging_autocoord(sdimaging_unittest_base):
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
@@ -1175,12 +1183,14 @@ class sdimaging_autocoord(sdimaging_unittest_base):
         (4) image direction axis
         """
         res=sdimaging(**task_param)
-        outfile = task_param['outfile']
+        #outfile = task_param['outfile']
+        outprefix = task_param['outfile']
+        outfile = outprefix + image_suffix
         # Tests
         self.assertEqual(res,None,
                          msg='Any error occurred during imaging')
         self._checkfile(outfile)
-        self._checkfile(outfile+".weight")
+        self._checkfile(outprefix+".weight")
         self._checkshape(outfile,shape[0],shape[1],shape[2],shape[3])
         self._checkdirax(outfile,dirax[0], dirax[1], dirax[2])
 
@@ -1290,7 +1300,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         for name in self.rawfiles:
             if os.path.exists(name):
                 shutil.rmtree(name)
@@ -1319,11 +1329,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         self.res=self.run_task(**task_param)
         # Tests
         imsize = [shape[0], shape[1]]
-        self._checkshape(self.outfile,shape[0], shape[1],shape[2],shape[3])
-        self._checkdirax(self.outfile,self.phasecenter_auto,self.cell_auto,imsize)
-        self._checkstats(self.outfile,refstats,atol=atol,rtol=rtol)
+        outfile = self.outfile + image_suffix
+        self._checkshape(outfile,shape[0], shape[1],shape[2],shape[3])
+        self._checkdirax(outfile,self.phasecenter_auto,self.cell_auto,imsize)
+        self._checkstats(outfile,refstats,atol=atol,rtol=rtol)
         if box is not None:
-            self._checkstats_box(self.outfile,refstats,box=box,
+            self._checkstats_box(outfile,refstats,box=box,
                                  atol=atol,rtol=rtol)
         
 
@@ -1345,7 +1356,8 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
         # Tests
         self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
-        self._checkstats(self.outfile,refstats,atol=1.e-5)
+        outfile = self.outfile + image_suffix
+        self._checkstats(outfile,refstats,atol=1.e-5)
 
     def test_scan_id_exact(self):
         """test scan selection (scan='16')"""
@@ -1426,7 +1438,8 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
         # Tests
         self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
-        self._checkstats(self.outfile,refstats,atol=1.e-5)
+        outfile = self.outfile + image_suffix
+        self._checkstats(outfile,refstats,atol=1.e-5)
         
     def test_intent_value_exact(self):
         """test intent selection (intent='OBSERVE_TARGET.ON_SOURCE')"""
@@ -1438,7 +1451,8 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
         # Tests
         self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
-        self._checkstats(self.outfile,refstats,atol=1.e-5)
+        outfile = self.outfile + image_suffix
+        self._checkstats(outfile,refstats,atol=1.e-5)
 
     def test_intent_value_pattern(self):
         """test intent selection (intent='*CALIBRATE_PHASE*')"""
@@ -1450,7 +1464,8 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
         # Tests
         self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
-        self._checkstats(self.outfile,refstats,atol=1.e-5)
+        outfile = self.outfile + image_suffix
+        self._checkstats(outfile,refstats,atol=1.e-5)
 
     ####################
     # field
@@ -2087,7 +2102,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     rawfile='sdimaging_flagtest.ms'
     prefix=sdimaging_unittest_base.taskname+'TestFlag'
     outfile=prefix+sdimaging_unittest_base.postfix
-    maskfile = outfile + '/mask0'
+    maskfile = outfile + image_suffix + '/mask0'
     weightfile = outfile + '.weight'
     
     gridfunction = "BOX"
@@ -2100,7 +2115,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
@@ -2109,6 +2124,9 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         default(sdimaging)
         with tbmanager(self.rawfile) as tb:
             self.nchan = len(tb.getcell('DATA', 0)[0])
+            
+        # fix timestamp issue
+        self.fix_timestamp()
 
     def tearDown(self):
         if os.path.exists(self.rawfile):
@@ -2116,13 +2134,38 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         os.system( 'rm -rf '+self.prefix+'*' )
 
         self.assertTrue(self.cache_validator.validate())
+       
+    def fix_timestamp(self):
+        # fix duplicated timestamp issue
+        # data taken by three spws have essentially same timestamp 
+        # but they are intended to be allocated to different pointing 
+        # directions. to enable it, timestamps are artificially shifted 
+        # by a value significantly larger than integration time.
+        with tbmanager(self.rawfile, nomodify=False) as tb:
+            nrow = tb.nrows()
+            ddid = numpy.unique(tb.getcol('DATA_DESC_ID'))
+            nchunk = len(ddid)
+            nrow_chunk = nrow // nchunk
+            torig = tb.getcol('TIME')
+            interval = tb.getcol('INTERVAL')
+            max_interval = interval.max()
+            tshift = numpy.empty_like(torig)
+            for ichunk in range(nchunk):
+                ifrom = ichunk * nrow_chunk
+                ito = (ichunk+1) * nrow_chunk
+                tshift[ifrom:ito] = torig[ifrom:ito] + ichunk * max_interval
+            tb.putcol('TIME', tshift)
+            
+        with tbmanager(os.path.join(self.rawfile, 'POINTING'), nomodify=False) as tb:
+            tb.putcol('TIME', tshift) 
 
     def testFlag01(self):
         """testFlag01: """
         res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent="",gridfunction=self.gridfunction,cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=self.minweight0)
         self.assertEqual(res,None,
                          msg='Any error occurred during imaging')
-        self._checkshape(self.outfile,self.imsize[0],self.imsize[1],1,self.nchan)
+        outfile = self.outfile + image_suffix
+        self._checkshape(outfile,self.imsize[0],self.imsize[1],1,self.nchan)
         self._set_data_ranges()
         self._check_data()
         self._check_mask()
@@ -2132,7 +2175,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent="",width=10,gridfunction=self.gridfunction,cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=self.minweight0)
         self.assertEqual(res,None,
                          msg='Any error occurred during imaging')
-        self._checkshape(self.outfile,self.imsize[0],self.imsize[1],1,1)
+        outfile = self.outfile + image_suffix
+        self._checkshape(outfile,self.imsize[0],self.imsize[1],1,1)
         self._set_data_ranges(True)
         self._check_data(True)
         self._check_mask(True)
@@ -2154,10 +2198,11 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _check_data(self, chanmerge=False):
         val = self._get_refvalues(self.rawfile, chanmerge)
         idx = 0
+        outfile = self.outfile + image_suffix
         for i in range(len(self.x_range)):
             for j in range(len(self.y_range)):
                 for k in range(len(self.f_range)):
-                    self._checkvalue(self.outfile, False, self.x_range[i], self.y_range[j], self.f_range[k],  val[idx], chanmerge)
+                    self._checkvalue(outfile, False, self.x_range[i], self.y_range[j], self.f_range[k],  val[idx], chanmerge)
                     idx += 1
 
     def _check_mask(self, chanmerge=False):
@@ -2237,7 +2282,6 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                         diff_value = abs(val[i][j][0][k]-ref_value)
                         self.assertTrue(diff_value < tol)
 
-
 class sdimaging_test_polflag(sdimaging_unittest_base):
     """
     Test imaging of an MS one of polarization (XX) is completely flagged.
@@ -2268,7 +2312,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.infiles):
             shutil.rmtree(self.infiles)
         shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
@@ -2306,17 +2350,30 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         self.res=sdimaging(**task_param)
         # Tests
         imsize = [shape[0], shape[1]]
-        self._checkshape(self.outfile,shape[0], shape[1],shape[2],shape[3])
-        self._checkdirax(self.outfile,self.phasecenter_auto,self.cell_auto,imsize)
-        self._checkstats(self.outfile,refstats,atol=atol,rtol=rtol)
+        outfile = self.outfile + image_suffix
+        self._checkshape(outfile,shape[0], shape[1],shape[2],shape[3])
+        self._checkdirax(outfile,self.phasecenter_auto,self.cell_auto,imsize)
+        self._checkstats(outfile,refstats,atol=atol,rtol=rtol)
 
     def test_i(self):
-        """test stokes='I': image constructed by unflagged YY pol"""
+        """test stokes='I': image constructed by unflagged YY pol (NB after imager migration: image weights all zero)"""
         self.task_param['stokes'] = 'I'
+        # Tests
+        # In true Stokes mode, all correlation components are flagged when any of them is flagged
+        # Stokes value consistent with older imager based implementation is pseudo-Stokes
+        #refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(0.0, self.region_all['blc'], self.region_all['trc']) )
+        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        
+    def test_pseudo_i(self):
+        """test pseudo stokes I: image constructed by unflagged YY pol"""
+        self.task_param['stokes'] = 'pseudoI'
         # Tests
         refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
         out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
         self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+       
 
     def test_xx(self):
         """test stokes='XX' (flagged): image weights all zero"""
@@ -2354,7 +2411,8 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         refstats['blc'][2] = 1
         for key in ['blcf', 'trcf']: refstats.pop(key)
         box = _rg.box(blc=refstats['blc'],trc=refstats['trc'])
-        self._checkstats(self.outfile,refstats,atol=1.e-5,region=box)
+        outfile = self.outfile + image_suffix
+        self._checkstats(outfile,refstats,atol=1.e-5,region=box)
 
 class sdimaging_test_mslist(sdimaging_unittest_base):
     """
@@ -2397,7 +2455,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.outfile):
             os.system('rm -rf %s*' % self.outfile)
         for name in self.infiles:
@@ -2418,7 +2476,8 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
 
     def tearDown(self):
         if self.clearup:
-            if os.path.exists(self.outfile):
+            outfile = self.outfile + image_suffix
+            if os.path.exists(outfile):
                 os.system('rm -rf %s*' % self.outfile)
             for name in self.infiles:
                 if os.path.exists(name):
@@ -2432,9 +2491,10 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
         if refstats is None:
             refstats = self.refstats
         res=sdimaging(**task_param)
-        self._checkshape(self.outfile,self.imsize[0],self.imsize[1],1,1)
-        self._checkdirax(self.outfile,self.phasecenter,self.cell,self.imsize)
-        self._checkstats(self.outfile,refstats,atol=1.e-5)
+        outfile = self.outfile + image_suffix
+        self._checkshape(outfile,self.imsize[0],self.imsize[1],1,1)
+        self._checkdirax(outfile,self.phasecenter,self.cell,self.imsize)
+        self._checkstats(outfile,refstats,atol=1.e-5)
 
     ###########################
     # Tests
@@ -2509,7 +2569,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.infiles):
             shutil.rmtree(self.infiles)
         shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
@@ -2527,12 +2587,13 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         self.param.update(**kwargs)
         sdimaging(**self.param)
         stats.pop('sumsq')
-        self._checkstats(self.outfile, stats, atol=1.e-3, rtol=1.e-3)
-        self._check_beam(self.outfile, beam_ref)
+        outfile = self.outfile + image_suffix
+        self._checkstats(outfile, stats, atol=1.e-3, rtol=1.e-3)
+        self._check_beam(outfile, beam_ref)
         # check restfreq
-        self._check_restfreq(self.outfile,restfreq_ref)
+        self._check_restfreq(outfile,restfreq_ref)
         # check cell size
-        self._checkdirax(self.outfile, self.param['phasecenter'],
+        self._checkdirax(outfile, self.param['phasecenter'],
                          cell_ref, self.param['imsize'])
 
     def get_reference_from_restfreq(self, restfreq):
@@ -2670,7 +2731,7 @@ class sdimaging_test_mapextent(unittest.TestCase):
         
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         default(sdimaging)
         self.param = self.param_base.copy()
         
@@ -2688,11 +2749,13 @@ class sdimaging_test_mapextent(unittest.TestCase):
         self.param.update(**kwargs)
         status = sdimaging(**self.param)
         self.assertIsNone(status, msg='sdimaging failed to execute')
-        self.assertTrue(os.path.exists(self.outfile), msg='output image is not created.')
+        outfile = self.outfile + image_suffix
+        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
         
     def verify_mapextent(self, npix_ref, blc_ref, trc_ref):
-        self.assertTrue(os.path.exists(self.outfile), msg='output image is not created.')
-        stats = calc_statistics(self.outfile)
+        outfile = self.outfile + image_suffix
+        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+        stats = calc_statistics(outfile)
         map_property = calc_mapproperty(stats)
         npix = map_property['npix']
         blc = map_property['blc']
@@ -2708,7 +2771,7 @@ class sdimaging_test_mapextent(unittest.TestCase):
         # resulting map contain reference position
         print('npix', npix, 'npix_ref', npix_ref)
         print('blc', blc, 'blc_ref', blc_ref)
-        print('trc', trc, 'trc_ref', trc_ref) 
+        print('trc', trc, 'trc_ref', trc_ref)
         print('extent', extent)
         # check if map area covers whole pointing data
         # this is done by comparing blc and trc with their references 
@@ -2728,7 +2791,7 @@ class sdimaging_test_mapextent(unittest.TestCase):
         self.assertTrue(trc[1] < trc_ref[1] + margin * extent[1], msg='Unexpected coordinate (trc DEC is too wide)')              
         
     def test_azel_pointing(self):
-        """test_azel_pointing: Verify phasecenter in J2000 is properly calculated from AZELGEO pointing direction"""
+        # test_azel_pointing: Verify phasecenter in J2000 is properly calculated from AZELGEO pointing direction
         self.__copy_table(self.infiles_azel)
         self.run_test(infiles=self.infiles_azel)
         npix_ref = numpy.array([27,37])
@@ -2755,16 +2818,150 @@ class sdimaging_test_mapextent(unittest.TestCase):
     def test_ephemeris(self):
         for infile in self.infiles_ephem:
             self.__copy_table(infile)
-        self.run_test(infiles=self.infiles_ephem, ephemsrcname='Uranus', restfreq='230GHz')
+        #self.run_test(infiles=self.infiles_ephem, ephemsrcname='Uranus', restfreq='230GHz')
+        self.run_test(infiles=self.infiles_ephem, phasecenter='URANUS', restfreq='230GHz') #CAS-11955
         npix_ref = numpy.array([37,26])
         # set reference value manually since expected map area for 
         # ephemeris object is difficult to calculate 
-        blcf_ref = '00:46:43.672 +04.14.51.504'
-        trcf_ref = '00:46:27.547 +04.17.39.004'
-        blc_ref = numpy.array(list(map(lambda x: qa.quantity(x)['value'], blcf_ref.split())))
-        trc_ref = numpy.array(list(map(lambda x: qa.quantity(x)['value'], trcf_ref.split())))
+        #blcf_ref = '00:46:43.672 +04.14.51.504'
+        #trcf_ref = '00:46:27.547 +04.17.39.004'
+        blcf_ref = '00:47:09.795 +04.17.10.435' #CAS-11955
+        trcf_ref = '00:46:53.670 +04.19.57.935' #CAS-11955
+        blc_ref = numpy.fromiter(map(lambda x: qa.quantity(x)['value'], blcf_ref.split()), dtype=float)
+        trc_ref = numpy.fromiter(map(lambda x: qa.quantity(x)['value'], trcf_ref.split()), dtype=float)
         #blc_ref, trc_ref = get_mapextent_ephemeris(self.infiles_ephem)
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
+    
+###
+#
+# Test case for moving object
+#
+###
+class sdimaging_test_ephemeris(unittest.TestCase):
+    """
+    Tests if tracking moving object works correctly
+    
+        test_ephemeris_notset -- Verify scanned area in the output image is 
+                                 distorted from rectangle
+        test_ephemeris_sun -- Verify image center is fixed to the center of the 
+                              Sun and the scanned area is off the image center
+        test_ephemeris_trackf -- Verify image center is fixed to the positions
+                                 written in ephemeris table attached to the input MS
+                                 without explicitly specifying ephemeris table name
+        test_ephemeris_table -- Verify image center is fixed to the positions
+                                 written in ephemeris table by explicitly specifying 
+                                 its name
+
+    Data:
+        The test data 'Sun.spw18.ms' is a raster-scanned dataset of the Sun, with an 
+        ephemeris table 'EPHEM0_Sol_58327.6.tab' attached (in the FIELD directory). 
+        The data is taken so that the scanned points are enclosed in a rectangle 
+        region if the moving target position (off the solar center) is fixed in the 
+        output image. If moving object tracking does not work, the data points will 
+        be distributed in a parallelogram-like region. FYI, the data is generated 
+        using the following command:
+        mstransform(vis='uid___A002_Xd01cd7_X3f35.ms', outputvis='ephemtest.spw18.ms', 
+                    reindex=False, spw='18', intent='OBSERVE_TARGET#ON_SOURCE', 
+                    datacolumn='float_data')
+    """
+
+    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    infiles = 'ephemtest.spw18.ms'
+    ephtab  = infiles + '/FIELD/EPHEM0_Sol_58327.6.tab'
+    outfile = 'sdimaging_test_ephemeris.im'
+    
+    param_base = {'infiles': infiles,
+                  'field': 'Sol',
+                  'spw': '18',
+                  'mode': 'channel',
+                  'start': 0,
+                  'nchan': 1,
+                  'width': 1, 
+                  'cell': '4arcsec',
+                  'imsize': 1000,
+                  'gridfunction': 'BOX',
+                  'outfile': outfile,
+                  'intent': ""}
+    
+    def __remove_table(self, f):
+        if os.path.exists(f):
+            shutil.rmtree(f)
+    
+    def __copy_table(self, f):
+        self.__remove_table(f)
+        copytree_ignore_subversion(self.datapath, f)
+        
+    def setUp(self):
+        self.cache_validator = TableCacheValidator()
+
+        default(sdimaging)
+        self.param = self.param_base.copy()
+        self.__copy_table(self.infiles)
+        
+    def tearDown(self):
+        self.__remove_table(self.infiles)
+        os.system('rm -rf %s*'%(self.outfile))
+        
+        self.assertTrue(self.cache_validator.validate())
+
+    def run_test(self, **kwargs):
+        self.param.update(**kwargs)
+        status = sdimaging(**self.param)
+        self.assertIsNone(status, msg='sdimaging failed to execute')
+        outfile = self.outfile + image_suffix
+        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+        
+    def verify_scanned_region(self, phasecenter):
+        _phasecenter = phasecenter.strip().upper()
+        outfile = self.outfile + image_suffix
+        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+
+        with tbmanager(outfile) as tb:
+            imdata = tb.getcell('map', 0)
+            imsize = self.param_base['imsize']
+            for y in range(imsize):
+                # get min and max of non-zero pixels for each raster-scan row
+                xmin = imsize
+                xmax = 0
+                for x in range(imsize):
+                    if imdata[x][y][0][0] > 0.0:
+                        if x < xmin: xmin = x
+                        if xmax < x: xmax = x
+
+                # set reference border
+                if _phasecenter == '':
+                    xmin_ref = 436.0 - (y - 500.0) / 15.0
+                elif _phasecenter == 'SUN':
+                    xmin_ref = 649.0
+                else: # for table name or 'TRACKFIELD'
+                    xmin_ref = 438.0
+                xmax_ref = xmin_ref + 129.0
+
+                # check if (xmin, xmax) inside (xmin_ref, xmax_ref) 
+                # for each y (=raster-scan row)
+                # but ignore the lowest raw in the phasecenter=='' case
+                ignore_case = (_phasecenter == '') and (y == 436)
+                if not ignore_case:
+                    inside_border = (xmin_ref <= xmin) and (xmax <= xmax_ref)
+                    message = 'Data x-range(' + str(xmin) + ', ' + str(xmax) + ') outside the reference border(' + str(xmin_ref) + ', ' + str(xmax_ref) + ') at y=' + str(y)
+                    self.assertTrue(inside_border, msg=message)
+
+    def execute(self, phasecenter):
+        self.run_test(phasecenter=phasecenter)
+        self.verify_scanned_region(phasecenter=phasecenter)
+        
+    def test_ephemeris_notset(self):
+        self.execute('')
+
+    def test_ephemeris_sun(self):
+        self.execute('SUN')
+
+    def test_ephemeris_trackf(self):
+        self.execute('TRACKFIELD')
+
+    def test_ephemeris_table(self):
+        self.execute(self.ephtab)
+
     
 ###
 #
@@ -2788,7 +2985,7 @@ class sdimaging_test_interp(unittest.TestCase):
     applied.
     Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'. 
     """
-    datapath = ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('regression/unittest/sdimaging')
     params = dict(antenna = "0",
                   intent  = "*ON_SOURCE*",
                   gridfunction = "SF",
@@ -2796,8 +2993,8 @@ class sdimaging_test_interp(unittest.TestCase):
                   imsize = [512, 512],
                   cell = "2arcsec",
                   phasecenter = "J2000 0:00:00.0 00.00.00.0",
-                  ephemsrcname = '',
-                  pointingcolumn = "direction")
+                  pointingcolumn = "direction",
+                  stokes = 'I')
     infiles = []
     outfiles = [] # have a list of outfiles as multiple task execution may occur in a test
 
@@ -2811,7 +3008,7 @@ class sdimaging_test_interp(unittest.TestCase):
         
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         self.infiles = []
         self.outfiles = []
         default(sdimaging)
@@ -2837,7 +3034,7 @@ class sdimaging_test_interp(unittest.TestCase):
 
         status = sdimaging(infiles=infiles, outfile=outfile, **self.params)
         self.assertIsNone(status, msg = 'sdimaging failed to execute')
-        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+        self.assertTrue(os.path.exists(outfile+'.image'), msg='output image is not created.')
         
     def check_spline_works(self, outfile, multiple_ms=False):
         weightfile = outfile + '.weight'
@@ -2893,11 +3090,9 @@ class sdimaging_test_interp(unittest.TestCase):
 
 
     def check_images_identical(self, image1, image2, weight_image=False):
-        img1 = image1
-        img2 = image2
-        if weight_image:
-            img1 += '.weight'
-            img2 += '.weight'
+        suffix = '.weight' if weight_image else '.image'
+        img1 = image1 + suffix
+        img2 = image2 + suffix
 
         with tbmanager(img1) as tb:
             mapdata1 = tb.getcell('map', 0)
@@ -2911,7 +3106,6 @@ class sdimaging_test_interp(unittest.TestCase):
         """test_spline_interp_single_infiles: Check if spline interpolation works for single fast-scan data."""
         outfile = 'pointing6.out'
         self.run_task(infiles=['pointing6.ms'], outfile=outfile)
-
         self.check_spline_works(outfile)
 
     def test_spline_interp_multiple_infiles(self):
@@ -2928,6 +3122,100 @@ class sdimaging_test_interp(unittest.TestCase):
         self.check_images_identical(outfile12, outfile21, True)
 
 
+class sdimaging_test_interp_old(unittest.TestCase):
+    """
+    The test data 'pointing6.ms' contains 1000 rows for TP data, while only 10 rows given
+    for POINTING data. The pointing data is given as corner points of a hexagon centered at
+    (RA, Dec) = (0h00m00s, 0d00m00s) and with side of 0.001 radian.
+    The resulting pattern of weight image should be nearly circular if spline interpolation
+    does work, while it should be hexagonal if linear interpolation, the old algorithm, is
+    applied.
+    """
+    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    params = dict(infiles = ['pointing6.ms'],
+                  outfile = "pointing6.out",
+                  antenna = "0",
+                  intent  = "*ON_SOURCE*",
+                  gridfunction = "SF",
+                  convsupport = 6,
+                  imsize = [512, 512],
+                  cell = "2arcsec",
+                  phasecenter = "J2000 0:00:00.0 00.00.00.0",
+                  pointingcolumn = "direction")
+    outfile = params['outfile']
+
+    def __remove_table(self, f):
+        if os.path.exists(f):
+            shutil.rmtree(f)
+    
+    def __copy_table(self, f):
+        self.__remove_table(f)
+        copytree_ignore_subversion(self.datapath, f)
+        
+    def setUp(self):
+        self.cache_validator = TableCacheValidator()
+
+        for infile in self.params['infiles']:
+            self.__copy_table(infile)
+        default(sdimaging)
+        
+    def tearDown(self):
+        for infile in self.params['infiles']:
+            self.__remove_table(infile)
+        os.system('rm -rf %s*'%(self.outfile))
+        
+        self.assertTrue(self.cache_validator.validate())
+
+    def run_test(self, **kwargs):
+        self.params.update(**kwargs)
+        status = sdimaging(**self.params)
+        self.assertIsNone(status, msg = 'sdimaging failed to execute')
+        outfile = self.outfile + image_suffix
+        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+        
+    def test_spline_interp(self):
+        """test_spline_interp: Check if spline interpolation works for fast scan data."""
+        
+        self.run_test()
+
+        weightfile = self.outfile + '.weight'
+        with tbmanager(weightfile) as tb:
+            mapdata = tb.getcell('map', 0)
+        # for pixels with strong weight value(>14), collect their distance from the image
+        # center and then compute the mean and sigma of their distribution.
+        dist_list = []
+        for i in range(self.params['imsize'][0]):
+            for j in range(self.params['imsize'][1]):
+                if mapdata[i][j][0][0] > 14.0:
+                    cenx = float(self.params['imsize'][0])/2.0
+                    ceny = float(self.params['imsize'][1])/2.0
+                    dx = float(i) - cenx
+                    dy = float(j) - ceny
+                    dist_list.append(numpy.sqrt(dx*dx + dy*dy))
+        dist_mean = 0.0
+        dist_mean2 = 0.0
+        for i in range(len(dist_list)):
+            dist_mean += dist_list[i]
+            dist_mean2 += dist_list[i] * dist_list[i]
+        dist_mean = dist_mean / float(len(dist_list))
+        dist_mean2 = dist_mean2 / float(len(dist_list))
+        dist_sigma = numpy.sqrt(dist_mean2 - dist_mean * dist_mean)
+
+        dist_llim = dist_mean - dist_sigma
+        dist_ulim = dist_mean + dist_sigma
+        dist_answer = 0.001*180.0/numpy.pi*3600.0/float(self.params['cell'][0])
+
+        """
+        if spline interpolation is done, the range [dist_llim, dist_ulim]
+        will be a narrow range (102.683 ~ 103.318) and encloses the answer
+        value (103.132), while linear interpolation will result in a wider
+        range (94.240 +- 4.281) and depart from the answer value at 2-sigma
+        level.
+        """
+        self.assertTrue(((dist_llim < dist_answer) and (dist_answer < dist_ulim)),
+                        msg = 'spline interpolation seems not working.')
+    
+    
 class sdimaging_test_clipping(sdimaging_unittest_base):
     """
     test_1row: check if clipping is not activated (1 spectrum)
@@ -2945,7 +3233,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
     outfile_ref = 'sdimaging_test_clipping.ref.im'
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         default(sdimaging)
         
         # clear up test data
@@ -2961,12 +3249,18 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         for data in self.data_list:
             if os.path.exists(data):
                 shutil.rmtree(data)
-        if os.path.exists(self.outfile):
-            shutil.rmtree(self.outfile)
+        outfile = self.outfile + image_suffix
+        if os.path.exists(outfile):
+            shutil.rmtree(outfile)
             shutil.rmtree(self.outfile + '.weight')
-        if os.path.exists(self.outfile_ref):
-            shutil.rmtree(self.outfile_ref)
+            shutil.rmtree(self.outfile + '.sumwt')
+            shutil.rmtree(self.outfile + '.psf')
+        outfile_ref = self.outfile_ref + image_suffix
+        if os.path.exists(outfile_ref):
+            shutil.rmtree(outfile_ref)
             shutil.rmtree(self.outfile_ref + '.weight')
+            shutil.rmtree(self.outfile_ref + '.sumwt')
+            shutil.rmtree(self.outfile_ref + '.psf')
     
     def _test_clipping(self, infiles, is_clip_effective=True):
         if isinstance(infiles, str):
@@ -2993,14 +3287,15 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                   mode=mode, nchan=nchan, start=start, width=width, 
                   gridfunction=gridfunction, imsize=imsize, cell=cell,
                   phasecenter=phasecenter, clipminmax=True)
-        self.assertTrue(os.path.exists(self.outfile))
+        _outfile = outfile + image_suffix
+        self.assertTrue(os.path.exists(_outfile))
         
         if is_clip_effective == True:
             # pre-flag the data to be clipped
             myme = measures()
             mymsmd = msmetadata()
             mytb = table()
-            myqa = quanta()
+            myqa = qa
             center = myme.direction('J2000', myqa.quantity(0, 'rad'), myqa.quantity(0, 'rad'))
             offset_plus = myqa.convert(myqa.quantity('1arcmin'), 'rad')
             offset_minus = myqa.mul(offset_plus, -1)
@@ -3078,16 +3373,17 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                   mode=mode, nchan=nchan, start=start, width=width, 
                   gridfunction=gridfunction, imsize=imsize, cell=cell,
                   phasecenter=phasecenter, clipminmax=False)
-        self.assertTrue(os.path.exists(self.outfile_ref))
+        _outfile_ref = outfile + image_suffix
+        self.assertTrue(os.path.exists(_outfile_ref))
             
         # compare
         myia = image()
-        myia.open(self.outfile)
+        myia.open(_outfile)
         result = myia.getchunk()
         result_mask = myia.getchunk(getmask=True)
         myia.close()
         
-        myia.open(self.outfile_ref)
+        myia.open(_outfile_ref)
         reference = myia.getchunk()
         reference_mask = myia.getchunk(getmask=True)
         myia.close()
@@ -3193,7 +3489,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
     
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
@@ -3223,7 +3519,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
                                                                atol, rtol, compstats, ignoremask)
 
         # check projection
-        _ia.open(task_param['outfile'])
+        outfile = task_param['outfile'] + image_suffix
+        _ia.open(outfile)
         try:
             result_projection = _ia.coordsys().projection()['type']
         finally:
@@ -3233,19 +3530,17 @@ class sdimaging_test_projection(sdimaging_unittest_base):
     def test_projection_GSL(self):
         """test_projection_GSL: unsupported projection type"""
         projection = 'GSL'
-        self.task_param.update(dict(projection=projection))
-        # casatasks throws and exception, CASA5 returns False
-        if is_CASA6:
-            self.assertRaises(Exception, sdimaging, **self.task_param)
-        else:
-            res=sdimaging(**self.task_param)
-            self.assertFalse(res)
-            self.assertFalse(os.path.exists(self.outfile))
+        spw = '0'
+        self.task_param.update(dict(projection=projection, spw=spw))
+        msg = 'unallowed'
+        self.run_exception_case(self.task_param, msg, expected_type=AssertionError)
+        self.assertFalse(os.path.exists(self.outfile))
 
     def test_projection_SIN(self):
         """test_projection_SIN: create image with SIN (Slant Orthographic) projection"""
         projection = 'SIN'
-        self.task_param.update(dict(projection=projection))
+        spw = '0'
+        self.task_param.update(dict(projection=projection, spw=spw))
         outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
         refstats = {
             'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -3272,7 +3567,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
     def test_projection_TAN(self):
         """test_projection_TAN: create image with TAN (Gnomonic) projection"""
         projection = 'TAN'
-        self.task_param.update(dict(projection=projection))
+        spw = '0'
+        self.task_param.update(dict(projection=projection, spw=spw))
         outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
         refstats = {
             'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -3299,7 +3595,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
     def test_projection_CAR(self):
         """test_projection_CAR: create image with CAR (Plate Caree) projection"""
         projection = 'CAR'
-        self.task_param.update(dict(projection=projection))
+        spw = '0'
+        self.task_param.update(dict(projection=projection, spw=spw))
         outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
         refstats = {
             'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -3326,7 +3623,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
     def test_projection_SFL(self):
         """test_projection_SFL: create image with SFL (Sanson-Flamsteed) projection"""
         projection = 'SFL'
-        self.task_param.update(dict(projection=projection))
+        spw = '0'
+        self.task_param.update(dict(projection=projection, spw=spw))
         outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
         refstats = {
             'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -3432,13 +3730,17 @@ def calc_mapproperty(statistics):
 
 
 def suite():
-    return [sdimaging_test0,sdimaging_test1,
+    return [
+            sdimaging_test0,sdimaging_test1,
             sdimaging_test2,sdimaging_test3,
-            sdimaging_autocoord,sdimaging_test_selection,
-            sdimaging_test_flag,sdimaging_test_polflag,
+            sdimaging_test_autocoord,
+            sdimaging_test_selection,
+            sdimaging_test_flag,
+            sdimaging_test_polflag,
             sdimaging_test_mslist,
             sdimaging_test_restfreq, 
             sdimaging_test_mapextent,
+            sdimaging_test_ephemeris,
             sdimaging_test_interp,
             sdimaging_test_clipping,
             sdimaging_test_projection
