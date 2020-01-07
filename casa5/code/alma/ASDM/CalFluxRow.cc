@@ -1136,7 +1136,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalFlux");
 		}
 	}
@@ -1584,7 +1584,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalFlux");
 		}
 	}
@@ -1658,7 +1658,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CFluxCalibrationMethod::name(fluxMethod));
+		eoss.writeString(CFluxCalibrationMethod::name(fluxMethod));
 			/* eoss.writeInt(fluxMethod); */
 				
 		
@@ -1736,7 +1736,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDirectionReferenceCode::name(directionCode));
+		eoss.writeString(CDirectionReferenceCode::name(directionCode));
 			/* eoss.writeInt(directionCode); */
 				
 		
@@ -1811,7 +1811,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CSourceModel::name(sourceModel));
+		eoss.writeString(CSourceModel::name(sourceModel));
 			/* eoss.writeInt(sourceModel); */
 				
 		

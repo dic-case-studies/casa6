@@ -501,7 +501,7 @@ StationRow* StationTable::lookup(std::string name, std::vector<Length > position
 		for (unsigned int i = 0; i < v.size(); ++i) {
 			try {
 				buf.append(v[i]->toXML());
-			} catch (NoSuchRow e) {
+			} catch (const NoSuchRow &e) {
 			}
 			buf.append("  ");
 		}		
@@ -568,10 +568,10 @@ StationRow* StationTable::lookup(std::string name, std::vector<Length > position
 				}
 				
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"StationTable");
 			} 
-			catch (UniquenessViolationException e1) {
+			catch (const UniquenessViolationException &e1) {
 				throw ConversionException(e1.getMessage(),"StationTable");	
 			}
 			catch (...) {
@@ -587,7 +587,7 @@ StationRow* StationTable::lookup(std::string name, std::vector<Length > position
 					s = xml.getElementContent("<row>","</row>");
 				}
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"StationTable");
 			} 
 			catch (...) {
@@ -842,11 +842,11 @@ StationRow* StationTable::lookup(std::string name, std::vector<Length > position
 				checkAndAdd(aRow);
       		}
     	}
-    	catch (DuplicateKey e) {
+    	catch (const DuplicateKey &e) {
       		throw ConversionException("Error while writing binary data , the message was "
 				+ e.getMessage(), "Station");
     	}
-    	catch (TagFormatException e) {
+    	catch (const TagFormatException &e) {
      		 throw ConversionException("Error while reading binary data , the message was "
 				+ e.getMessage(), "Station");
     	}
@@ -1121,7 +1121,7 @@ void StationTable::setFromXMLFile(const string& directory) {
     	xmlDocument = getContainer().getXSLTransformer()(tablePath);
     	if (getenv("ASDM_DEBUG")) cout << "About to read " << tablePath << endl;
     }
-    catch (XSLTransformerException e) {
+    catch (const XSLTransformerException &e) {
     	throw ConversionException("Caugth an exception whose message is '" + e.getMessage() + "'.", "Station");
     }
     
