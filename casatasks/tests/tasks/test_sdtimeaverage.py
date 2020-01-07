@@ -39,6 +39,7 @@ else:
 '''''''''''''''''''''''''''
 sdtimeaverage begins
 '''''''''''''''''''''''''''
+import time	# For intenal Evaluation.
 # MS name for this test
 defInputMs  = "sdimaging.ms"
 defWorkMs   = "sdimaging-t.ms"
@@ -237,7 +238,7 @@ class test_sdtimeaverage(unittest.TestCase):
 # Generate DATa on FLOAT_DATA
 ################################
     def generate_data( self, msName ):
-        print( "-- Generating MS." )
+        print( "----- [{}]Generating MS.".format(time.time()) )
         self. get_main(defInputMs )
         # Test Slope
         offset = 0.0        # if specified non-zero, intensive fail can be cauesed.
@@ -256,10 +257,12 @@ class test_sdtimeaverage(unittest.TestCase):
             arrayInterval = testInterval * numpy.ones(NN,dtype=numpy.float64)
         
             # put to column
+            print( "----- [{}]Putting Time,INTERVAL.".format(time.time())  )
             tb.putcol("TIME",       arrayTime  )
             tb.putcol("INTERVAL",   arrayInterval  )
 
             # create Test-Data
+            print( "----- [{}]Calculating Curve.".format(time.time()) )
             for row in range(NN):
                 for n in range(1024):
                     # values
@@ -269,8 +272,9 @@ class test_sdtimeaverage(unittest.TestCase):
                     arrayData2[0][n][row] = val
                     arrayData2[1][n][row] = val
             # write to the column at once
+            print( "----- [{}]Putting Curve.".format(time.time())  )
             tb.putcol("FLOAT_DATA",   arrayData2  )
-          
+        print( "----- [{}]Done.".format(time.time())  )  
         return True          
 
 ##################################
