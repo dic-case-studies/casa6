@@ -9,7 +9,7 @@ import time
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import image, quanta, table, image, regionmanager
+    from casatools import image, quanta, table, image, regionmanager, imager
     from casatasks import casalog, imsubimage, feather
 else:
     from taskinit import *
@@ -19,10 +19,12 @@ else:
     quanta = qatool
     regionmanager = rgtool
     casalog = casac.logsink()
-
+    table = tbtool
 _ia = image()
 _qa = quanta()
 _rg = regionmanager()
+
+_mytb = table()
 
 class SDINT_helper:
 
@@ -49,12 +51,13 @@ class SDINT_helper:
            casalog.post('Unknown frequency axis. Exiting.','SEVERE');
            return False;
 
+      csys.done()
       return freqlist
 
 ################################################
 
     def copy_restoringbeam(self,fromthis='',tothis=''):
-        _ib = image()
+#        _ib = image()
 #        ia.open(fromthis);
 #        ib.open(tothis)
         freqlist = self.getFreqList(fromthis)
@@ -360,15 +363,18 @@ class SDINT_helper:
 ##########################################
 
     def regridimage(self, imagename, template, outfile):
-        _ia.open(template)
-        csys = _ia.coordsys()
-        shape = _ia.shape()
-        _ia.close()
+        casalog.post("template="+template)
+        _myia = image()
+        _myia.open(template)
+        csys = _myia.coordsys()
+        shape = _myia.shape()
+        _myia.done()
 
-        _iaout = image()
-        _iaout.open(imagename)
+        _myia.open(imagename)
+        casalog.post("imagename="+imagename)
+        
         try:
-            _iaout.regrid(outfile=outfile, 
+            outia=_myia.regrid(outfile=outfile, 
                    shape=shape,
                    csys=csys.torecord(),
                    axes=[0,1],
@@ -376,8 +382,12 @@ class SDINT_helper:
                    asvelocity=False)
         except Exception as instance:
             casalog.post("*** Error \'%s\' in regridding image" % (instance), 'WARN')
+            raise
 
-        _iaout.done()
+        finally:
+            csys.done()
+            outia.done()
+            _myia.done()
 
  
 ##########################################
@@ -397,6 +407,7 @@ class SDINT_helper:
         except Exception as instance:
             casalog.post("*** Error \'%s\' in creating subimage" % (instance), 'WARN')
 
+        _tmpia.close()
         _tmpia.done()
         _tmprg.done()
         _outia.done()
@@ -413,11 +424,13 @@ class SDINT_helper:
         allowshift=False
         _ia.open(inpsf)
         incsys  = _ia.coordsys().torecord()
-        _ia.done()
+        _ia.close()
+        #_ia.done()
         _tmpia = image()
         _tmpia.open(refpsf)
         refcsys = _tmpia.coordsys().torecord()
-        _tmpia.done() 
+        _tmpia.close() 
+        #_tmpia.done() 
         # check the field center
         ramismatch = False
         decmismatch = False
@@ -447,7 +460,8 @@ class SDINT_helper:
                 themodcsysrec['direction0']['crval'][1] = refdir['crval'][1]
                 thecsys.fromrecord(themodcsysrec)
                 _ia.setcoordsys(thecsys)
-                _ia.done()
+                _ia.close()
+                #_ia.done()
             else:
                 raise Exception("the center of the psf different from the int psf by (diffRA, diffDec)=(%s,%s)" % (diff_ra, diff_dec))
 

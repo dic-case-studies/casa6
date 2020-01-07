@@ -85,7 +85,7 @@ class testref_base(unittest.TestCase):
                   if (os.path.exists(self.msfile)):
                       os.system('rm -rf ' + self.msfile)
                   shutil.copytree(os.path.join(refdatapath,self.msfile), self.msfile)
-              if 'simage' in inputdata:
+              if 'sdimage' in inputdata:
                   self.sdimage=inputdata['sdimage']
                   if (os.path.exists(self.sdimage)):
                       os.system('rm -rf ' + self.sdimage)

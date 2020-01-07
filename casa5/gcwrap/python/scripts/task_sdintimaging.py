@@ -212,7 +212,6 @@ def setup_sdimaging(template='',output='', inparms=None, sdparms=None):
     ## Regrid the input SD image and PSF cubes to the target coordinate system. 
     #imregrid(imagename=sdpsf, template=template+'.psf',
     #         output=output+'.psf',overwrite=True,axes=[0,1])
-
     sdintlib.regridimage(imagename=sdpsf, template=template+'.psf', outfile=output+'.psf')
     #imregrid(imagename=sdimage, template=template+'.residual',
     #         output=output+'.residual',overwrite=True,axes=[0,1])
@@ -562,6 +561,7 @@ def sdintimaging(
             ### debug (remove it later) 
             casalog.post("SD cube setup ....")
             setup_sdimaging(template=int_cube, output=sd_cube, inparms=bparm, sdparms=sdparms ) 
+            
 
         ####now is the time to check estimated memory
         # need to move to somewhere below???
