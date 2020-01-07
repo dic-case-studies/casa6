@@ -171,7 +171,9 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
         config['tileshape'] = tileshape
 
         # Only parse timeaverage parameters when timebin > 0s
-        qa = quanta( ) # CASA6 needed
+        if is_CASA6:
+                qa = quanta( ) # CASA6 needed
+
         tbin = qa.convert(qa.quantity(timebin), 's')['value']
         if tbin < 0:
             raise Exception("Parameter timebin must be > '0s' to do time averaging")
@@ -331,6 +333,7 @@ def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebi
         return False
 
     mslocal = None
-    
+
     return True
-    
+#END
+   

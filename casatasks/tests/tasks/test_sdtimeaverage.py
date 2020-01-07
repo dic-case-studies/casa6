@@ -337,7 +337,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeagerage::00:: timerange = 00:00:00~01:04:03 NORMAL (3843s same as in MS)'''
 
         # set timebin string and private outputMS name.
-        privateOutfile, dmy  = self.setOutfile_Timebin( 80, 3844 )
+        privateOutfile, dmy  = self.setOutfile_Timebin( 0, 3844 )
         # Run Task
         prm =  {'timerange' : '00:00:00~01:04:03',
                 'timebin'   : '',
@@ -352,7 +352,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeagerage::01E:: timerange = 00:00:00~01:00:00 ERROR case(3600s INSUFFICIENT)'''
 
         # set timebin string and private outputMS name.
-        privateOutfile, dmy  = self.setOutfile_Timebin( 81, 3600 )
+        privateOutfile, dmy  = self.setOutfile_Timebin( 1, 3600 )
         # Run Task
         prm =  {'timerange' : '00:00:00~01:00:00',
                 'timebin'   : '',
@@ -367,7 +367,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeagerage::02":: timerange = ""   (dafault) '''
 
         # set timebin string and private outputMS name.
-        privateOutfile, dmy  = self.setOutfile_Timebin( 80, 3600 )
+        privateOutfile, dmy  = self.setOutfile_Timebin( 2, 3844 )
         # Run Task
         prm =  {'timerange' : '',
                 'timebin'   : '',
@@ -567,6 +567,14 @@ class test_sdtimeaverage(unittest.TestCase):
         prm =  {'timebin' : 'Alles'  }
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # Error expected #  
+
+    def test_param114(self):
+        '''sdtimeagerage::114:: timebin='aLL' (Capital mixed)=OK    '''
+
+        # Run Task
+        prm =  {'timebin' : 'aLL'  }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
 
 ## DATACOLUMN ###
     def test_param50(self):
