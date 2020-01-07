@@ -401,7 +401,8 @@ TEST_F(FringeJonesTest, FringeJones_paramActiveTest) {
 		sdbs.aggregateSpw(),
 		sdbs.freqs(),
 		sdbs.aggregateFld());
-  FJsol.sizeSolveParCurrSpw(sdbs.nChannels()); 
+  FJsol.sizeSolveParCurrSpw(sdbs.nChannels());
+  
   FJsol.selfSolveOne(sdbs);
 
   // Add comparison tests here
