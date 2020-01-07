@@ -390,7 +390,6 @@ TEST_F(FringeJonesTest, FringeJones_paramActiveTest) {
   paramActive(IPosition(1, 1)) = false;
   paramActive(IPosition(1, 2)) = true;
   paramActive(IPosition(1, 3)) = false;
-  
   solvePar.define("paramactive", paramActive);
   
   FJsol.setSolve(solvePar);
