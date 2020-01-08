@@ -18,7 +18,7 @@
 #include <ms/MeasurementSets/MSHistoryHandler.h>
 #include <casa/Logging/LogIO.h>
 
-#include <synthesis/ImagerObjects/SIIterBot.h>
+#include <synthesis/ImagerObjects/grpcInteractiveClean.h>
 
 #include <iterbotsink_cmpt.h>
 
@@ -30,79 +30,85 @@ using namespace casa;
 using namespace casacore;
 namespace casac {
 
-    iterbotsink::iterbotsink( ): state(NULL) {
-        cb.reset(new SIIterBot_callback( ));
-        state = new SIIterBot_state( cb );
+    iterbotsink::iterbotsink( ): state(grpcInteractiveClean::getManager( )) {
+        fprintf( stderr, ">>>>>--------->> iterbotsink::iterbotsink( )\n" );
     }
 
     iterbotsink::~iterbotsink( ) {
-        if ( state ) {
-            delete state;
-        }
+        fprintf( stderr, ">>>>>--------->> iterbotsink::~iterbotsink( )\n" );
     }
 
     casac::record* iterbotsink::setupiteration(const casac::record& iterpars) {
-        // ****memory leak here???****
-        casacore::Record recpars = *toRecord( iterpars );
-        state->setControlsFromRecord( recpars );
+        fprintf( stderr, ">>>>>--------->> iterbotsink::setupiteration( )\n" );
+        state.setIterationDetails( iterpars );
         return getiterationdetails();
     }
 
 
     casac::record* iterbotsink::getiterationdetails( ) {
-        return fromRecord(state->getDetailsRecord( ));
+        fprintf( stderr, ">>>>>--------->> iterbotsink::getiterationdetails( )\n" );
+        return fromRecord(state.getDetailsRecord( ));
     }
 
     casac::record* iterbotsink::pauseforinteraction( ) {
-        return getiterationdetails( );
+        
+        fprintf( stderr, ">>>>>--------->> iterbotsink::pauseforinteraction( )\n" );
+        return fromRecord( state.pauseForUserInteraction() );
     }
 
     casac::record* iterbotsink::getiterationsummary( ) {
-        return fromRecord(state->getSummaryRecord( ));
+        fprintf( stderr, ">>>>>--------->> iterbotsink::getiterationsummary( )\n" );
+        return fromRecord(state.getSummaryRecord( ));
     }
 
     int iterbotsink::cleanComplete(const bool lastcyclecheck) {
-        return state->cleanComplete(lastcyclecheck);
+        fprintf( stderr, ">>>>>--------->> iterbotsink::cleanComplete(const bool lastcyclecheck)\n" );
+        return state.cleanComplete(lastcyclecheck);
     }
 
     bool iterbotsink::endmajorcycle( ) {
-        state->incrementMajorCycleCount( );
-        state->addSummaryMajor( );
+        fprintf( stderr, ">>>>>--------->> iterbotsink::endmajorcycle( )\n" );
+        state.incrementMajorCycleCount( );
+        state.addSummaryMajor( );
         return false;
     }
 
     bool iterbotsink::resetminorcycleinfo( ) {
-        state->resetMinorCycleInitInfo( );
+        fprintf( stderr, ">>>>>--------->> iterbotsink::resetminorcycleinfo( )\n" );
+        state.resetMinorCycleInitInfo( );
         return false;
     }
 
     casac::record* iterbotsink::getminorcyclecontrols( ) {
-        return fromRecord(state->getMinorCycleControls( ));
+        fprintf( stderr, ">>>>>--------->> iterbotsink::getminorcyclecontrols( )\n" );
+        return fromRecord(state.getMinorCycleControls( ));
     }  
 
     bool iterbotsink::mergeinitrecord(const casac::record& initrecord) {
+        fprintf( stderr, ">>>>>--------->> iterbotsink::mergeinitrecord(const casac::record& initrecord)\n" );
         // ****memory leak here???****
         casacore::Record recpars = *toRecord( initrecord );
-        state->mergeCycleInitializationRecord(recpars);
+        state.mergeCycleInitializationRecord(recpars);
         return false;
     }
 
     bool iterbotsink::mergeexecrecord(const casac::record& execrecord) {
+        fprintf( stderr, ">>>>>--------->> iterbotsink::mergeexecrecord(const casac::record& execrecord)\n" );
         // ****memory leak here???****
         casacore::Record recpars = *toRecord(execrecord);
-        state->mergeCycleExecutionRecord(recpars);
+        state.mergeCycleExecutionRecord(recpars);
         return false;
     }
 
     bool iterbotsink::changestopflag(const bool stopflag) {
-        state->changeStopFlag(stopflag);
+        fprintf( stderr, ">>>>>--------->> iterbotsink::changestopflag(const bool stopflag)\n" );
+        state.changeStopFlag(stopflag);
         return true;
     }
 
     bool iterbotsink::done( ) {
-	  delete state;
-      state = 0;
-      return false;
+        fprintf( stderr, ">>>>>--------->> iterbotsink::done( )\n" );
+        return false;
     }
 
 } // casac namespace
