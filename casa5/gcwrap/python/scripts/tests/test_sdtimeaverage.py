@@ -39,6 +39,7 @@ else:
 '''''''''''''''''''''''''''
 sdtimeaverage begins
 '''''''''''''''''''''''''''
+import time	# For intenal Evaluation.
 # MS name for this test
 defInputMs  = "sdimaging.ms"
 defWorkMs   = "sdimaging-t.ms"
@@ -47,7 +48,7 @@ defOutputMs = "bave.ms"
 # Compare err limit , ideally vector(1024 x 2) is the best
 nRow     = 3843  ## DO NOT CHANGE ## 
 errLimit  = 2.0e-08   # numerical error Limit of ZeroSum
-errLimit2 = 5.0e-08   # numerical error Limit of Sigma and Weight
+errLimit2 = 2.0e-08   # numerical error Limit of Sigma and Weight
 testInterval = 1.0      # fundamental INTERVAL in TEST-MS
 
 ##############
@@ -237,7 +238,7 @@ class test_sdtimeaverage(unittest.TestCase):
 # Generate DATa on FLOAT_DATA
 ################################
     def generate_data( self, msName ):
-        print( "-- Generating MS." )
+        print( "----- Generating MS." )
         self. get_main(defInputMs )
         # Test Slope
         offset = 0.0        # if specified non-zero, intensive fail can be cauesed.
@@ -246,31 +247,30 @@ class test_sdtimeaverage(unittest.TestCase):
         baseTime   = 0.0
         # Table Access
         with tbmanager(msName,nomodify=False) as tb:
-            # Data Buffer
-            arrayData2 = tb.getcol('FLOAT_DATA')
-            # create array (time, interval)
+            # get Sizes.
             NN = len(self.tm)
+            nData = 1024 # leng of 'Data','FLOAT_DATA' column. Use tb.getcolshapestring('FLOAT_DATA', nrow=1) for more.  
 
-            ''' Revised to Array operation '''
+            # create array (time, interval)
             arrayTime = testInterval * numpy.arange(0,NN,dtype=numpy.float64) + baseTime
             arrayInterval = testInterval * numpy.ones(NN,dtype=numpy.float64)
         
             # put to column
+            print( "----- Putting Time,INTERVAL." )
             tb.putcol("TIME",       arrayTime  )
             tb.putcol("INTERVAL",   arrayInterval  )
 
-            # create Test-Data
-            for row in range(NN):
-                for n in range(1024):
-                    # values
-                    x = row - numpy.floor(nRow/2)
-                    val = offset + slope * x
-                    # set to Buffer 
-                    arrayData2[0][n][row] = val
-                    arrayData2[1][n][row] = val
+            # create Test-Data [use numpy.array]
+            print( "----- Calculating Curve." )
+            NN1 = (NN-1)/2
+            L = numpy.linspace(-NN1,NN1, NN)* slope + offset 
+            VAL = numpy.tile(L, [nData, 1])
+            arrayData3 = numpy.array( [VAL,VAL] )
+
             # write to the column at once
-            tb.putcol("FLOAT_DATA",   arrayData2  )
-          
+            print( "----- Putting Curve."  )
+            tb.putcol("FLOAT_DATA",   arrayData3  )
+        print( "----- Done."  )  
         return True          
 
 ##################################

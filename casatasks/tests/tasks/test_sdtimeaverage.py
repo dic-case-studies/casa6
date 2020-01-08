@@ -107,7 +107,7 @@ class test_sdtimeaverage(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         print( "tearDownClass::deleting work-MS.")
-#        os.system('rm -rf ' + defWorkMs )
+        os.system('rm -rf ' + defWorkMs )
 
 ##############
 # Run Task
@@ -238,7 +238,7 @@ class test_sdtimeaverage(unittest.TestCase):
 # Generate DATa on FLOAT_DATA
 ################################
     def generate_data( self, msName ):
-        print( "----- [{}]Generating MS.".format(time.time()) )
+        print( "----- Generating MS." )
         self. get_main(defInputMs )
         # Test Slope
         offset = 0.0        # if specified non-zero, intensive fail can be cauesed.
@@ -247,28 +247,30 @@ class test_sdtimeaverage(unittest.TestCase):
         baseTime   = 0.0
         # Table Access
         with tbmanager(msName,nomodify=False) as tb:
-            # create array (time, interval)
+            # get Sizes.
             NN = len(self.tm)
-            ''' Revised to Array operation '''
+            nData = 1024 # leng of 'Data','FLOAT_DATA' column. Use tb.getcolshapestring('FLOAT_DATA', nrow=1) for more.  
+
+            # create array (time, interval)
             arrayTime = testInterval * numpy.arange(0,NN,dtype=numpy.float64) + baseTime
             arrayInterval = testInterval * numpy.ones(NN,dtype=numpy.float64)
         
             # put to column
-            print( "----- [{}]Putting Time,INTERVAL.".format(time.time())  )
+            print( "----- Putting Time,INTERVAL." )
             tb.putcol("TIME",       arrayTime  )
             tb.putcol("INTERVAL",   arrayInterval  )
 
             # create Test-Data [use numpy.array]
-            print( "----- [{}]Calculating Curve.".format(time.time()) )
+            print( "----- Calculating Curve." )
             NN1 = (NN-1)/2
             L = numpy.linspace(-NN1,NN1, NN)* slope + offset 
-            VAL = numpy.tile(L, [1024,1])
+            VAL = numpy.tile(L, [nData, 1])
             arrayData3 = numpy.array( [VAL,VAL] )
 
             # write to the column at once
-            print( "----- [{}]Putting Curve.".format(time.time())  )
+            print( "----- Putting Curve."  )
             tb.putcol("FLOAT_DATA",   arrayData3  )
-        print( "----- [{}]Done.".format(time.time())  )  
+        print( "----- Done."  )  
         return True          
 
 ##################################
