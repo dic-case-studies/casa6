@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Length Length::getLength(StringTokenizer &t) throw(NumberFormatException) {
+Length Length::getLength(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return Length (value);
 }
