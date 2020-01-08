@@ -535,7 +535,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Subscan");
 		}
 	}
@@ -783,7 +783,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Subscan");
 		}
 	}
@@ -843,7 +843,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CSubscanIntent::name(subscanIntent));
+		eoss.writeString(CSubscanIntent::name(subscanIntent));
 			/* eoss.writeInt(subscanIntent); */
 				
 		
@@ -883,7 +883,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CSwitchingMode::name(subscanMode));
+		eoss.writeString(CSwitchingMode::name(subscanMode));
 			/* eoss.writeInt(subscanMode); */
 				
 		
@@ -898,7 +898,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CCorrelatorCalibration::name(correlatorCalibration));
+		eoss.writeString(CCorrelatorCalibration::name(correlatorCalibration));
 			/* eoss.writeInt(correlatorCalibration); */
 				
 		

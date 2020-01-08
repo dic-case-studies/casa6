@@ -48,14 +48,14 @@ public:
 
 	PartId();
 	PartId(const PartId &);
-	PartId(const std::string &id) throw (InvalidArgumentException);
+	PartId(const std::string &id);
 	virtual ~PartId();
 
 	bool equals(const PartId &) const;
 
 	std::string toString() const;
 	
-	void setId(const std::string &s) throw (InvalidArgumentException);
+	void setId(const std::string &s);
 
 	/**
 	 * Write the binary representation of this to a EndianOSStream.
