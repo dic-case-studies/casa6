@@ -43,14 +43,7 @@ service view {
     rpc cwd (Path) returns (Path);
     rpc done (google.protobuf.Empty) returns (google.protobuf.Empty);
 
-/***********************************************************************************************
-************************************************************************************************
-****  interactive clean functions                                                           ****
-************************************************************************************************
-************************************************************************************************
-    //To change certain things so the panel
-	QDBusVariant setoptions( const QDBusVariant &input, int panel);
-************************************************************************************************/
+    rpc interactivemask (InteractiveMaskOptions) returns (InteractiveMaskResult);
 
 }
 
@@ -169,4 +162,16 @@ message ColorMap {
 message Toggle {
     Id id = 1;
     bool state = 2;
+}
+
+message InteractiveMaskOptions {
+    int32 niter = 1;
+    int32 cycleniter = 2;
+    string threshold = 3;
+    string cyclethreshold = 4;
+}
+
+message InteractiveMaskResult {
+    string action = 1;
+    InteractiveMaskOptions state = 2;
 }
