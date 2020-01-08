@@ -48,7 +48,7 @@ defOutputMs = "bave.ms"
 # Compare err limit , ideally vector(1024 x 2) is the best
 nRow     = 3843  ## DO NOT CHANGE ## 
 errLimit  = 2.0e-08   # numerical error Limit of ZeroSum
-errLimit2 = 5.0e-08   # numerical error Limit of Sigma and Weight
+errLimit2 = 2.0e-08   # numerical error Limit of Sigma and Weight
 testInterval = 1.0      # fundamental INTERVAL in TEST-MS
 
 ##############
@@ -107,7 +107,7 @@ class test_sdtimeaverage(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         print( "tearDownClass::deleting work-MS.")
-        os.system('rm -rf ' + defWorkMs )
+#        os.system('rm -rf ' + defWorkMs )
 
 ##############
 # Run Task
@@ -247,11 +247,8 @@ class test_sdtimeaverage(unittest.TestCase):
         baseTime   = 0.0
         # Table Access
         with tbmanager(msName,nomodify=False) as tb:
-            # Data Buffer
-            arrayData2 = tb.getcol('FLOAT_DATA')
             # create array (time, interval)
             NN = len(self.tm)
-
             ''' Revised to Array operation '''
             arrayTime = testInterval * numpy.arange(0,NN,dtype=numpy.float64) + baseTime
             arrayInterval = testInterval * numpy.ones(NN,dtype=numpy.float64)
@@ -261,19 +258,16 @@ class test_sdtimeaverage(unittest.TestCase):
             tb.putcol("TIME",       arrayTime  )
             tb.putcol("INTERVAL",   arrayInterval  )
 
-            # create Test-Data
+            # create Test-Data [use numpy.array]
             print( "----- [{}]Calculating Curve.".format(time.time()) )
-            for row in range(NN):
-                for n in range(1024):
-                    # values
-                    x = row - numpy.floor(nRow/2)
-                    val = offset + slope * x
-                    # set to Buffer 
-                    arrayData2[0][n][row] = val
-                    arrayData2[1][n][row] = val
+            NN1 = (NN-1)/2
+            L = numpy.linspace(-NN1,NN1, NN)* slope + offset 
+            VAL = numpy.tile(L, [1024,1])
+            arrayData3 = numpy.array( [VAL,VAL] )
+
             # write to the column at once
             print( "----- [{}]Putting Curve.".format(time.time())  )
-            tb.putcol("FLOAT_DATA",   arrayData2  )
+            tb.putcol("FLOAT_DATA",   arrayData3  )
         print( "----- [{}]Done.".format(time.time())  )  
         return True          
 
