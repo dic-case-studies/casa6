@@ -32,13 +32,13 @@ using namespace std;
 
 namespace asdm {
 
-Complex Complex::getComplex(StringTokenizer &t) throw(NumberFormatException) {
+Complex Complex::getComplex(StringTokenizer &t) {
 	double r = Double::parseDouble(t.nextToken());
 	double i = Double::parseDouble(t.nextToken());
 	return Complex (r,i);
 }
 
-Complex Complex::fromString(const string& s) throw(NumberFormatException) {
+Complex Complex::fromString(const string& s) {
 	string::size_type n = s.find(' ');
 	if (n == string::npos)
 		throw NumberFormatException("Not a complex number.");
