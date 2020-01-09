@@ -6,6 +6,9 @@ import math
 import numpy as np
 import numpy.ma as ma
 import numbers
+
+### for testhelper import
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th
 
 subdir = 'visibilities/vla/'
