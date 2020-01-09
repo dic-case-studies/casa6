@@ -56,7 +56,11 @@
     Criteria for success and failure
     
     Compare the MemRSS_(VmRSS)_MB values taken by steps [Set Weighting] and [End SynthesisNormalizer].
-    The thresholds used for comparison are
+    The tolerances used for comparison are:
+
+    |  Maximum 300 MB of memory at Set Weighting step.
+    |  Maximum 500 MB of memory at last step, End SynthesisNormalizer (more than this would indicate memory leaks)
+    |  Maximum of 1.5 GB of memory used in whole tclean run.
 
 '''
 ####    Imports     ####
@@ -64,7 +68,6 @@ import os
 import unittest
 import re
 
-# TODO: update once new casaTestHelper is finalised
 import casaTestHelper as th
 
 CASA6 = False
@@ -88,13 +91,12 @@ if 'TEST_DATADIR' in os.environ:
         print('WARN: Directory {} does not exist'.format(dataroot))
 else:
     if CASA6:
-        dataroot = ctsys.resolve('casa-perf/')
+        dataroot = ctsys.resolve('performance/')
  
     else:
-        # TODO
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/'
+        # Note that this directory does not exist
+        dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/performance/'
 
-#input_ms = 'uid___A002_Xb9dfa4_X4724_target.ms'
 input_ms = 'uid___A002_Xb9dfa4_X4724_target_spw16.ms'
 datapath = dataroot + input_ms
 
@@ -151,8 +153,8 @@ class TestTcleanMemProf1(unittest.TestCase):
                width='0.0610478663509MHz', gridder='mosaic', interactive=False, parallel=False)
 
         # Check that memory profile file is created
-        # Usual name of file casa.synthesis.imager.memprofile.50431.casa-el7-ts3-dev01.20191022_100639.txt
-        # casa.synthesis.imager.memprofile.PID.HOSTNAME.DATE.TIME_when_test_STARTED.txt
+        # Usual name of profile file is composed of: casa.synthesis.imager.memprofile.PID.HOSTNAME.DATE_TIME_when_test_started.txt
+        # e.g.: casa.synthesis.imager.memprofile.50431.casa-el7-ts3-dev01.20191022_100639.txt
         # Check if mem profile was created by checking the casa log
         with open(templogfile) as mylog:
             for line in mylog:
@@ -190,7 +192,7 @@ class TestTcleanMemProf1(unittest.TestCase):
         # print out memory profile for information
         self.assertTrue(out, msg)
         
-        # Compare memory at [End SynthesisNormalizer[ step
+        # Compare memory at [End SynthesisNormalizer] step
         # It will check for leaked memory in last step
         max_ref_memory = 500
         (out, msg) = th.check_val_less_than(memdict['End SynthesisNormalizer'], max_ref_memory, valname='Memory at [End SynthesisNormalizer] step')        
