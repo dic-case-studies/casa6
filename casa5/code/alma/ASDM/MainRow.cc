@@ -603,7 +603,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Main");
 		}
 	}
@@ -869,7 +869,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Main");
 		}
 	}
@@ -911,7 +911,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CTimeSampling::name(timeSampling));
+		eoss.writeString(CTimeSampling::name(timeSampling));
 			/* eoss.writeInt(timeSampling); */
 				
 		

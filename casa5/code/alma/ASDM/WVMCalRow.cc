@@ -614,7 +614,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"WVMCal");
 		}
 	}
@@ -850,7 +850,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"WVMCal");
 		}
 	}
@@ -883,7 +883,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CWVRMethod::name(wvrMethod));
+		eoss.writeString(CWVRMethod::name(wvrMethod));
 			/* eoss.writeInt(wvrMethod); */
 				
 		

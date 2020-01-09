@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Interval Interval::getInterval(StringTokenizer &t) throw(NumberFormatException) {
+Interval Interval::getInterval(StringTokenizer &t) {
 	int64_t value = Long::parseLong(t.nextToken());
 	return Interval (value);
 }

@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Speed Speed::getSpeed(StringTokenizer &t) throw(NumberFormatException) {
+Speed Speed::getSpeed(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return Speed (value);
 }
