@@ -2,8 +2,6 @@
 
 CASAtests is a self-contained python module that provides special test scripts for CASA. Many of the tests in this package depend on the [casaTestHelper](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse) python module being pre-installed in your system....
 
-## Running CASAtests
-
 #### Install Dependencies
 
 First make sure you have installed the CASAtasks and/or the CASAtools before you run the tests. Below is a quick guide on how to install
@@ -19,7 +17,7 @@ them from the Python wheels.
 
 Download from ...
 
-Add to .casa/toolrc.py the following line, pointing to the locations of your datasets
+Add to $HOME/.casa/toolrc.py the following line, pointing to the locations of your datasets
 ```
 -bash-4.2# cat $HOME/.casa/toolrc.py
 datapath=[ "/casadata/user/casa-data/" , "/casadata/user/casa-data-req/","/casadata/user/mydata/"]
@@ -27,12 +25,20 @@ datapath=[ "/casadata/user/casa-data/" , "/casadata/user/casa-data-req/","/casad
 
 #### Run a single test using Python
 
-This performance test will need a dataset located in .....perf/Pillars....
+This performance test will need a dataset located in <your_data_dir>/casa-perf/
+Make sure your toolrc.py datapath has an entry pointing to <your_data_dir>. The script expects to find
+a directory called casa-perf inside your_data_dir, where it will look for the files needed
+to run the tests.
+
+
 ```
 -bash-4.2# python3 casatests/performance/test_perf_tclean_mem_setweighting.py
 ```
+
 #### Run a test using pytest
-.......
+```
+-bash-4.2# pytest casatests/performance/test_perf_tclean_mem_setweighting.py 
+```
 
 #### Run all stakeholders tests
 
