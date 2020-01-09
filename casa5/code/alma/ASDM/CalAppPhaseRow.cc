@@ -1235,7 +1235,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalAppPhase");
 		}
 	}
@@ -1767,7 +1767,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalAppPhase");
 		}
 	}
@@ -1779,7 +1779,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CBasebandName::name(basebandName));
+		eoss.writeString(CBasebandName::name(basebandName));
 			/* eoss.writeInt(basebandName); */
 				
 		

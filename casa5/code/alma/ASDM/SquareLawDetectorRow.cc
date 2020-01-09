@@ -218,7 +218,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"SquareLawDetector");
 		}
 	}
@@ -306,7 +306,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"SquareLawDetector");
 		}
 	}
@@ -334,7 +334,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDetectorBandType::name(bandType));
+		eoss.writeString(CDetectorBandType::name(bandType));
 			/* eoss.writeInt(bandType); */
 				
 		

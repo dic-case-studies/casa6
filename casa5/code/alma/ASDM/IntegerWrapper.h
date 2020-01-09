@@ -43,7 +43,7 @@ public:
 	 * @return an int.
 	 * @throws NumberFormatException.
 	 */
-	static int parseInt(const std::string &s) throw (NumberFormatException);
+	static int parseInt(const std::string &s);
 
 	/**
 	 * Encode an integer value into its string representation.
