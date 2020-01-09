@@ -202,6 +202,7 @@ ASDM2MSFiller::ASDM2MSFiller(const string& name_,
   itsMSCol		= 0;
   itsWinFuncCol         = 0;
   itsNumBinCol          = 0;
+  itsCorrNameCol        = 0;
   itsNumAntenna		= 0;
   itsScanNumber         = 0;
 
@@ -220,7 +221,7 @@ ASDM2MSFiller::ASDM2MSFiller(const string& name_,
 
 // The destructor
 ASDM2MSFiller::~ASDM2MSFiller() {
-  // end flushes to the MS and deletes itsMS and itsMSCol and itsWinFuncCol and itsNumBinCol
+  // end flushes to the MS and deletes itsMS and itsMSCol and itsWinFuncCol and itsNumBinCol and itsCorrNameCol
   end();
 }
 
@@ -354,6 +355,17 @@ int ASDM2MSFiller::createMS(const string& msName,
     MSPointing::addColumnToDesc (td, MSPointing::OVER_THE_TOP);
     SetupNewTable tabSetup(itsMS->pointingTableName(), td, Table::New);    
     itsMS->rwKeywordSet().defineTable(MS::keywordName(MS::POINTING), Table(tabSetup));
+  }
+
+  // Processor
+  // need to update with correlator name column
+  {
+      TableDesc td;
+      StandardStMan procStMan("Proc optional column Standard Manager");
+      ScalarColumnDesc<String> sdmCorrNameDesc("SDM_CORRELATOR_NAME","correlatorName value found in SDM");
+      sdmCorrNameDesc.setDefault("");
+      td.addColumn(sdmCorrNameDesc);
+      itsMS->processor().addColumn(td,procStMan);
   }
 
   // Source
@@ -533,6 +545,10 @@ int ASDM2MSFiller::createMS(const string& msName,
   // get the SPECTRAL_WINDOW::SDM_NUM_BIN column here so it doesn't need to be
   // constructed each time a value is written to it
   itsNumBinCol = new ScalarColumn<Int>(itsMS->spectralWindow(), "SDM_NUM_BIN");
+
+  // get the PROCESSOR::SDM_CORRELATOR_NAME column here so it doesn'tt need to be
+  // constructed each time a value is written to it
+  itsCorrNameCol = new ScalarColumn<String>(itsMS->processor(), "SDM_CORRELATOR_NAME");
 
   //cout << "\n";
   {
@@ -1575,7 +1591,8 @@ int ASDM2MSFiller::addUniquePolarization(int num_corr_,
 void ASDM2MSFiller::addProcessor(string& type_,
 				 string& sub_type_,
 				 int  type_id_,
-				 int  mode_id_) {
+				 int  mode_id_,
+                                 string& correlator_name_ ) {
   uInt crow;
   MSProcessor msproc = itsMS -> processor();
   MSProcessorColumns msprocCol(msproc);
@@ -1589,6 +1606,9 @@ void ASDM2MSFiller::addProcessor(string& type_,
   msprocCol.modeId().put(crow, mode_id_);
   
   msprocCol.flagRow().put(crow, false);
+
+  // non-standard SDM_CORRELATOR_NAME column
+  itsCorrNameCol->put(crow, correlator_name_);
 
   //msproc.flush();
   // cout << "\n";
@@ -2197,6 +2217,10 @@ void ASDM2MSFiller::end() {
   if (itsNumBinCol) {
     delete itsNumBinCol;
     itsNumBinCol = 0;
+  }
+  if (itsCorrNameCol) {
+      delete itsCorrNameCol;
+      itsCorrNameCol = 0;
   }
   if (itsMS) {
     itsMS->flush();

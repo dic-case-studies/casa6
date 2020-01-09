@@ -97,23 +97,30 @@ def checktable(themsname, thename, theexpectation):
     for mycell in theexpectation:
         print("%s: comparing %s" % (myname, mycell))
         value = tblocal.getcell(mycell[0], mycell[1])
-        # see if value is array
-        try:
-            isarray = value.__len__
-        except:
-            # it's not an array
-            # zero tolerance?
-            if mycell[3] == 0:
-                in_agreement = (value == mycell[2])
-            else:
-                in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
+        in_agreement = False
+
+        # bool and str cases
+        if type(value)is bool or type(value) is str:
+            # must be equal
+            in_agreement = (value == mycell[2])
         else:
-            # it's an array
-            # zero tolerance?
-            if mycell[3] == 0:
-                in_agreement =  (value == mycell[2]).all() 
+            # see if value is array
+            try:
+                isarray = value.__len__
+            except:
+                # it's not an array
+                # zero tolerance?
+                if mycell[3] == 0:
+                    in_agreement = (value == mycell[2])
+                else:
+                    in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
             else:
-                in_agreement = (abs(value - mycell[2]) < mycell[3]).all() 
+                # it's an array
+                # zero tolerance?
+                if mycell[3] == 0:
+                    in_agreement =  (value == mycell[2]).all() 
+                else:
+                    in_agreement = (abs(value - mycell[2]) < mycell[3]).all() 
         if not in_agreement:
             print("%s:  Error in MS subtable %s:" % (myname, thename))
             print("     column %s row %s contains %s" % (mycell[0], mycell[1], value))
@@ -402,6 +409,19 @@ class asdm_import1(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table POINTING failed'
+
+            name = "PROCESSOR"
+            expected = [ ['FLAG_ROW',            0, False, 0],
+                         ['MODE_ID',             0, 0, 0],
+                         ['TYPE',                0, 'CORRELATOR', 0],
+                         ['TYPE_ID',             0, -1, 0],
+                         ['SUB_TYPE',            0, 'ALMA_CORRELATOR_MODE', 0],
+                         ['SDM_CORRELATOR_NAME', 0, 'ALMA_BASELINE', 0]
+                       ]
+            results = checktable(msname, name, expected)
+            if not results:
+                retValue['success'] = False
+                retValue['error_msgs'] = retValue['error_msgs']+'Check of table PROCESSOR failed'
                 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
                 
@@ -539,8 +559,6 @@ class asdm_import2(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table MAIN failed'
-            else:
-                retValue['success']=True
     
             expected = [
     # old values using TAI     ['UVW',       638, [-65.07623467,   1.05534109, -33.65801386], 1E-8],
@@ -552,8 +570,6 @@ class asdm_import2(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table MAIN failed'
-            else:
-                retValue['success']=True
             
             name = "ANTENNA"
             expected = [ ['OFFSET',       1, [ 0.,  0.,  0.], 0],
@@ -564,8 +580,6 @@ class asdm_import2(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table ANTENNA failed'
-            else:
-                retValue['success']=True
             
             name = "POINTING"
             expected = [ ['DIRECTION',       10, [[ 1.94681283],[ 1.19702955]], 1E-8],
@@ -580,8 +594,19 @@ class asdm_import2(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table POINTING failed'
-            else:
-                retValue['success']=True
+                
+            name = "PROCESSOR"
+            expected = [ ['FLAG_ROW',            0, False, 0],
+                         ['MODE_ID',             0, 0, 0],
+                         ['TYPE',                0, 'CORRELATOR', 0],
+                         ['TYPE_ID',             0, -1, 0],
+                         ['SUB_TYPE',            0, 'ALMA_CORRELATOR_MODE', 0],
+                         ['SDM_CORRELATOR_NAME', 0, 'ALMA_BASELINE', 0]
+                       ]
+            results = checktable(msname, name, expected)
+            if not results:
+                retValue['success'] = False
+                retValue['error_msgs'] = retValue['error_msgs']+'Check of table PROCESSOR failed'
                 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
                 
@@ -864,26 +889,22 @@ class asdm_import3(test_base):
             name = ""
             #             col name, row number, expected value, tolerance
             expected = [
-                         ['UVW',       42, [  1607.50778695, -1241.40287976 , 584.50368163], 1E-8],
+                         ['UVW',       42, [  1607.46416559, -1241.44101203 , 584.54265781], 1E-8],
                          ['EXPOSURE',  42, 1.0, 0]
                        ]
             results = checktable(msname, name, expected)
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table MAIN failed'
-            else:
-                retValue['success']=True
     
             expected = [
-                         ['UVW',       638, [14.20193237, 722.59606805 , 57.57988905], 1E-8],
+                         ['UVW',       638, [14.21738626, 722.5956813 , 57.58092887], 1E-8],
                          ['EXPOSURE',  638, 1.0, 0]
                        ]
             results = checktable(msname, name, expected)
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table MAIN failed'
-            else:
-                retValue['success']=True
             
             name = "ANTENNA"
             expected = [ ['OFFSET',       1, [ -4.80000000e-12,  0.,  0.], 0],
@@ -894,9 +915,20 @@ class asdm_import3(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table ANTENNA failed'
-            else:
-                retValue['success']=True
             
+            name = "PROCESSOR"
+            expected = [ ['FLAG_ROW',            0, False, 0],
+                         ['MODE_ID',             0, 0, 0],
+                         ['TYPE',                0, 'CORRELATOR', 0],
+                         ['TYPE_ID',             0, -1, 0],
+                         ['SUB_TYPE',            0, 'ALMA_CORRELATOR_MODE', 0],
+                         ['SDM_CORRELATOR_NAME', 0, 'NRAO_WIDAR', 0]
+                       ]
+            results = checktable(msname, name, expected)
+            if not results:
+                retValue['success'] = False
+                retValue['error_msgs'] = retValue['error_msgs']+'Check of table PROCESSOR failed'
+                
         self.assertTrue(retValue['success'])
 
     def test_evlatest2(self):
@@ -1062,7 +1094,6 @@ class asdm_import3(test_base):
         # importasdm can everything importevla did in this case
         self.res  = importasdm(asdm=self.asdm, vis=msname, scans='2',ocorr_mode='co', with_pointing_correction=True,
                                process_flags=True, applyflags=True, savecmds=False, flagbackup=False)
-        
         # Check flags
         res = flagdata(vis=msname, mode='summary')
         self.assertEqual(res['flagged'],2446080)
@@ -1243,7 +1274,6 @@ class asdm_import3(test_base):
 
         self.res = importasdm(asdm=self.asdm, vis=msname,scans='11~13', ocorr_mode='co', with_pointing_correction=True,
                               process_flags=True, applyflags=False, savecmds=True, flagbackup=False)
-
         print("%s: importasdm success. Checking that filled MS can be opened as MS ..." % myname)
         try:
             mslocal.open(msname)
@@ -1313,7 +1343,6 @@ class asdm_import3(test_base):
         # note that there is no ephemeris data here so those arguments are not used in this call
         self.res = importasdm(asdm=self.asdm, vis=msname, scans='2', ocorr_mode='co', with_pointing_correction=True,
                               process_flags=True, applyflags=True, savecmds=True, outfile=cmdfile, flagbackup=False)
-
         print("%s: importasdm success. Checking that filled MS can be opened as MS ..." % myname)
         try:
             mslocal.open(msname)
@@ -1382,7 +1411,6 @@ class asdm_import3(test_base):
         # do NOT use the online flags here
         self.res = importasdm(asdm=self.asdm, vis=msname, scans='2,13', ocorr_mode='co', with_pointing_correction=True,
                               process_flags=False,flagbackup=False)
-
         print("%s: importasdm success. Checking that filled MS can be opened as MS ..." % myname)
         try:
             mslocal.open(msname)
@@ -1480,7 +1508,6 @@ class asdm_import3(test_base):
 
         self.res = importasdm(asdm=self.asdm, vis=msname,scans='11~13', ocorr_mode='co', with_pointing_correction=True,
                               process_flags=True, applyflags=False, savecmds=True, outfile=cmdfile, flagbackup=False)
-
         print("%s: importasdm success. Checking that filled MS can be opened as MS ..." % myname)
         try:
             mslocal.open(msname)
@@ -1604,8 +1631,7 @@ class asdm_import4(test_base):
         outputms = 'autocorr.ms'       
         importasdm(asdm=self.asdm, vis=outputms, scans='3', process_flags=False,
                    flagbackup=False)
-        
-        # Applys with flagdata. Because all the data has PROCESSOR TYPE RADIOMETER
+         # Applys with flagdata. Because all the data has PROCESSOR TYPE RADIOMETER
         # none of the auto-correlations should be flagged
         flagdata(vis=outputms, mode='manual', autocorr=True, flagbackup=False)
         res = flagdata(vis=outputms, mode='summary', basecnt=True)
@@ -1621,7 +1647,6 @@ class asdm_import4(test_base):
         # Do not create a flagbackup
         importasdm(asdm=self.asdm, vis=outputms, scans='3', flagbackup=False)
         self.assertFalse(os.path.exists(fbackup))
-
         # Create a backup by default
         importasdm(asdm=self.asdm, vis=outputms, scans='3', overwrite=True)
         self.assertTrue(os.path.exists(fbackup))
@@ -1630,7 +1655,6 @@ class asdm_import4(test_base):
         os.system('rm -rf '+outputms+'*')
         importasdm(asdm=self.asdm, vis=outputms, scans='3', flagbackup=True)
         self.assertTrue(os.path.exists(fbackup))
-        
 
 class asdm_import5(test_base):
     
@@ -1777,7 +1801,6 @@ class asdm_import6(test_base):
 
         self.res = importasdm(myasdmname, vis=themsname, lazy=True, scans='0:1~3') # only the first 3 scans to save time
         self.assertEqual(self.res, None)
-
         #test that scratch columns can be created from lazy import
         cblocal = calibrater()
         cblocal.open(themsname)
@@ -2063,9 +2086,9 @@ class asdm_import7(test_base):
 
                 try:
                     # test that the SDM_NUM_BIN column exists and has the exepcted values
-                    numBinOK = tblocal.open(themsname+'/SPECTRAL_WINDOW');
+                    numBinOK = tblocal.open(themsname+'/SPECTRAL_WINDOW')
                     if numBinOK:
-                        numBinCol = tblocal.getcol('SDM_NUM_BIN');
+                        numBinCol = tblocal.getcol('SDM_NUM_BIN')
                         tblocal.close()
                         # all values are 1
                         numBinOK = numpy.all(numBinCol==1)
@@ -2076,6 +2099,22 @@ class asdm_import7(test_base):
                 except:
                     retValue['success'] = False
                     print("ERROR checking the value of the SDM_NUM_BIN column in the SPECTRAL_WINDOW table.")
+
+                try:
+                    # test that the PROCESSOR table SDM_CORRELATOR_NAME has the expected values
+                    corrNameOK = tblocal.open(themsname+'/PROCESSOR')
+                    if corrNameOK:
+                        corrNameCol = tblocal.getcol('SDM_CORRELATOR_NAME')
+                        tblocal.close()
+                        corrNameOK = (len(corrNameCol)==3) and (corrNameCol[0]=='ALMA_BASELINE') and (corrNameCol[1]=='') and (corrNameCol[2]==corrNameCol[0])
+
+                    retValue['success'] = corrNameOK and retValue['success']
+                    if not corrNameOK:
+                        print("SDM_CORRELATOR_NAME column in the PROCESSOR table is missing or has incorrect values")
+                except:
+                    retValue['success'] = False
+                    print("ERROR checking the value of the SDM_CORRELATOR_NAME column in the PROCESSOR table.")
+                        
 
         os.system("mv moved_"+myasdmname+" "+myasdmname)
                 
@@ -2211,7 +2250,7 @@ class asdm_import7(test_base):
         themsname = myasdmname+".ms"
 
         self.res = importasdm(myasdmname, vis=themsname, lazy=True, convert_ephem2geo=True, 
-                              process_pointing=False, flagbackup=False) 
+                              process_pointing=False, flagbackup=False)
         self.assertEqual(self.res, None)
         print("%s: Success! Now checking output ..." % myname)
         mscomponents = set(["FIELD/table.dat",
@@ -3089,7 +3128,6 @@ class asdm_import8(test_base):
             shutil.copyfile(execBlock_path,os.path.join(asdm_name,'ExecBlock.xml'))
  
         self.res = importasdm(asdm_name, vis=ms_name, lazy=True, process_syspower=False, process_caldevice=False, process_pointing=False, process_flags=False)
-
         # the only table this test cares about is SPECTRAL_WINDOW
         spwName = os.path.join(ms_name,"SPECTRAL_WINDOW")
         if not os.access(spwName,os.F_OK):

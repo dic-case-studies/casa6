@@ -2370,6 +2370,11 @@ namespace casac {
                     if ((cmrow=correlatorModeT.getRowByKey(r->getModeId())) != 0) {
                         // a row has been found
                         correlatorName = CCorrelatorName::name(cmrow->getCorrelatorName());
+                    } else {
+                        // a row should have been found but was not, warn
+                        infostream.str("");
+                        infostream << "Problem while reading the CorrelatorMode table, the row with key = " << r->getModeId() << " does not exist, SDM_CORRELATOR_MODE will remain unset for this PROCESSOR row" << endl;
+                        warning(infostream.str());
                     }
                 }
 
@@ -3555,7 +3560,7 @@ namespace casac {
     }
 
     void sdm::error(const string& message, int status) const {
-        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::NORMAL));
+        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::SEVERE));
         //os << LogIO::POST;
         // cout << message << endl;
         throw casacore::AipsError(message);
@@ -3569,7 +3574,7 @@ namespace casac {
     }
 
     void sdm::warning (const string& message) const {
-        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::NORMAL));
+        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::WARN));
     }
 
     /** 
