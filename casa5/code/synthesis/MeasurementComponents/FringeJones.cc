@@ -1797,7 +1797,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
                         casa_snr(4*icor + di, iant) = gsl_vector_get(snr_vector, i0);
                     } else {
                         casa_param(4*icor + di, iant) = 0.0;
-                        casa_snr(4*icor + di, iant) = gsl_vector_get(snr_vector, i0);
+                        casa_snr(4*icor + di, iant) = 0.0;
                     }
                 }
             } else { // gsl solver failed; flag data
