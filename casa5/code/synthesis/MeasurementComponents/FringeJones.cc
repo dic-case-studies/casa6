@@ -1245,7 +1245,7 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
 
     size_t nobs = 0;
     Double sumwt = 0;
-    size_t numant3 = param->size;
+    size_t numpar = param->size;
 
     for (Int ibuf=0; ibuf < sdbs.nSDB(); ibuf++)
     {
@@ -1415,7 +1415,7 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
     if ((fabs(det) < GSL_DBL_EPSILON) || std::isnan(det)) {
         logSink << "Hessian matrix singular (determinant=" << det << "); setting signal-to-noise ratio to zero." << LogIO::POST;
        // Singular matrix; fill snrs with zero.
-        for (size_t i=0; i < hess->size1; i+=4) {
+        for (size_t i=0; i < hess->size1; i+=bundle->nParameters()) {
             Double snr = 0;
             gsl_vector_set(snr_vector, i, snr);
         }
@@ -1423,9 +1423,9 @@ expb_hess(gsl_vector *param, AuxParamBundle *bundle, gsl_matrix *hess, Double xi
     else {
         gsl_linalg_LU_invert(hess, perm, inv_hess);
     
-        Double sigma2 = xi_squared / (nobs - numant3) * nobs / sumwt;
+        Double sigma2 = xi_squared / (nobs - numpar) * nobs / sumwt;
         // cerr << "xi_squared " << xi_squared << " Nobs " << nobs << " sumwt " << sumwt << " sigma2 " << sigma2 << endl;
-        for (size_t i=0; i < hess->size1; i+=4) {
+        for (size_t i=0; i < hess->size1; i+=bundle->nParameters()) {
             Double h = gsl_matrix_get(inv_hess, i, i);
             Double snr0 = sqrt(sigma2*h*0.5);
             snr0 = min(snr0, 9999.999);
