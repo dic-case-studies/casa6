@@ -1,86 +1,128 @@
-from __future__ import absolute_import
-from __future__ import print_function
-import os
-import io
-import sys
-import shutil
-import unittest
-
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
+##########################################################################
+# test_req_task_listhistory.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_listhistory/about
+#
+#
+##########################################################################
+CASA6 = False
+try:
+    print("Importing CASAtools")
+    import casatools
     from casatools import ctsys
     from casatools.platform import bytes2str
-    from casatasks import casalog, listhistory
-    import subprocess
-
-    datapath = ctsys.resolve('regression/unittest/listhistory')
-else:
+    from casatasks import listhistory, casalog
+    CASA6 = True
+except ImportError:
+    print ("Cannot import CASAtools using taskinit")
     import commands
     from __main__ import default
     from tasks import *
     from taskinit import *
+import sys
+import os
+import subprocess
+import unittest
+import shutil
 
-    datapath = os.environ.get('CASAPATH').split()[0] +\
-        '/data/regression/unittest/listhistory/'
+logpath = casalog.logfile()
 
-testmms = False
-if 'TEST_DATADIR' in os.environ:   
-    DATADIR = str(os.environ.get('TEST_DATADIR'))+'/listhistory/'
-    if os.path.isdir(DATADIR):
-        testmms = True
-        datapath = DATADIR
+if CASA6:
+    datapath = casatools.ctsys.resolve('visibilities/alma/Itziar.ms')
+    fakepath = casatools.ctsys.resolve('visibilities/')
+    #filepath = casatools.ctsys.resolve('testlog.log')
+else:
+    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+        dataroot = os.environ.get('CASAPATH').split()[0] + '/'
+        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/Itziar.ms'
+        fakepath = dataroot + 'data/casa-data-req/visibilities/'
     else:
-        print('WARN: directory %s does not exist' % DATADIR)
-
-print('listhistory tests will use data from %s' % datapath)
-
+        dataroot = os.environ.get('CASAPATH').split()[0] + '/'
+        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/Itziar.ms'
+        fakepath = dataroot + 'casa-data-req/visibilities/'
+    #filepath = 'testlog.log'
+    
 class listhistory_test(unittest.TestCase):
-
-    # Input and output names
-    msfile = 'Itziar.ms'
-    itismms = testmms
-
+    
     def setUp(self):
-        fpath = os.path.join(datapath,self.msfile)
-        if os.path.lexists(fpath):
-            os.symlink(fpath, self.msfile)
+        if not CASA6:
+            default(listhistory)
         else:
-            self.fail('Data does not exist -> '+fpath)
-            
+            pass
+    
     def tearDown(self):
-        if os.path.lexists(self.msfile):
-            os.unlink(self.msfile)
+        casalog.setlogfile(logpath)
+        if os.path.exists('testlog.log'):
+            os.remove('testlog.log')
+    
+    def test_takesMS(self):
+        '''test takesMS: Check that list history takes a valid MS and refuses incorrect inputs'''
+        casalog.setlogfile('testlog.log')
+        listhistory(datapath)
+        self.assertFalse('SEVERE' in open('testlog.log').read())
+        listhistory(fakepath)
+        self.assertTrue('SEVERE' in open('testlog.log').read())
+        if CASA6:
+            with self.assertRaises(AssertionError):
+                listhistory('fake')
+        else:
+            listhistory('fake')
+            self.assertTrue('Argument vis failed to verify' in open('testlog.log').read())
         
-    def test1(self):
+    
+    def test_logfile(self):
+        '''test logfile: Checks to see that a log file is written and populated'''
+        casalog.setlogfile('testlog.log')
+        listhistory(datapath)
+        self.assertTrue('History table entries' in open('testlog.log').read())
+        
+    # Here is the start of the merged test cases
+    # -----------------------------------------------
+    
+    def test_emptyInput(self):
         '''Test 1: Empty input should return False'''
         # CASA5 tasks return False, casatasks throw exceptions
         myms = ''
-        if is_CASA6:
+        if CASA6:
             self.assertRaises(Exception,listhistory,myms)
         else:
             res = listhistory(myms)
             self.assertFalse(res)
             
-    def test2(self):
+    def test_returnNone(self):
         '''Test 2: Good input should return None'''
-        res = listhistory(self.msfile)
+        res = listhistory(datapath)
         self.assertEqual(res,None)
         
-    def test3(self):
+    def test_listLen(self):
         '''Test 3: Compare length of reference and new lists'''
-        logfile= "mylisth.log"
+        logfile= "testlog.log"
 
         open(logfile,"w").close( )
         casalog.setlogfile(logfile)
-        res = listhistory(self.msfile)
+        res = listhistory(datapath)
 
         # Get the number of lines in file
         # the number of expected lines differs
-        if is_CASA6:
+        if CASA6:
             refnum=17
-            if self.itismms:
-                # this is a guess, not tested
-                refnum = 40
+            
         else:
             # for CASA5, get only the relevant lines in the logfile
             newfile= "newlisth.log"
@@ -90,10 +132,9 @@ class listhistory_test(unittest.TestCase):
             logfile = newfile
 
             refnum = 13
-            if self.itismms:
-                refnum = 36
+            
 
-        if is_CASA6:
+        if CASA6:
             cmd=['wc', '-l', logfile]
             print(cmd)
             output = bytes2str(subprocess.check_output(cmd))
@@ -104,20 +145,10 @@ class listhistory_test(unittest.TestCase):
 
         num = int(output.split()[0])
         self.assertEqual(refnum,num)
-
-
-class listhistory_cleanup(unittest.TestCase):
     
-    def tearDown(self):
-        os.system('rm -rf *Itziar.*')
-
-    def test_cleanup(self):
-        '''listhistory: Cleanup'''
-        pass
-        
 def suite():
-    return [listhistory_test, listhistory_cleanup]
+    return[listhistory_test]
 
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
+
