@@ -363,7 +363,6 @@ class SDINT_helper:
 ##########################################
 
     def regridimage(self, imagename, template, outfile):
-        casalog.post("template="+template)
         _myia = image()
         _myia.open(template)
         csys = _myia.coordsys()
@@ -398,28 +397,45 @@ class SDINT_helper:
         """
         _tmpia=image()
         _tmprg=regionmanager()
-        _outia=None
+        outia=None
 
         _tmpia.open(imagename)
-        theregion = _tmprg.frombcs(csys=_ia.coordsys().torecord(), shape=_ia.shape(), chans=chanid) 
+        theregion = _tmprg.frombcs(csys=_tmpia.coordsys().torecord(), shape=_tmpia.shape(), chans=chanid) 
         try:
-            _outia=_tmpia.subimage(outfile=outfile, region=theregion)
+            outia=_tmpia.subimage(outfile=outfile, region=theregion)
         except Exception as instance:
             casalog.post("*** Error \'%s\' in creating subimage" % (instance), 'WARN')
 
         _tmpia.close()
         _tmpia.done()
         _tmprg.done()
-        _outia.done()
+        outia.done()
      
+    def pbcor(self, imagename, pbimage, cutoff, outfile):
+        """
+        pb-correction 
+        """  
+        outia=None
+        _myia=image()
+        _myia.open(imagename)
 
+        try:
+            outia = _myia.pbcor(pbimage=pbimage, outfile=outfile, overwrite=True,
+                          mode='divide', cutoff=cutoff)
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' in creating pb-corrected image" % (instance), 'WARN')
+
+        finally:
+            _myia.done()
+            outia.done()
+
+ 
     def checkpsf(self, inpsf, refpsf):
         """
         check the center of psf if diffent for 
         refpsf center and (shift to refpsf position)
         in returned psf
         """    
-        print("OK")
         tol=0.001
         allowshift=False
         _ia.open(inpsf)

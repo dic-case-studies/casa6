@@ -22,7 +22,7 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
-    from casatasks import imregrid
+    #from casatasks import imregrid
     from .sdint_helper import *
 else:
     from taskinit import *
@@ -731,7 +731,8 @@ def sdintimaging(
                 if applypb==True:
                     t0=time.time();
                     if specmode=='mfs':
-                        impbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , mode='divide', cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
+                        #impbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , mode='divide', cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
+                        sdintlib.pbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
                     else:
                         sdintlib.modify_with_pb(inpcube=joint_cube+'.image',
                                         pbcube=int_cube+'.pb',

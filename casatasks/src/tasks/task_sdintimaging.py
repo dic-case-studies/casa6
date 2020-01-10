@@ -731,7 +731,7 @@ def sdintimaging(
                 if applypb==True:
                     t0=time.time();
                     if specmode=='mfs':
-                        impbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , mode='divide', cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
+                        sdintlib.pbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0', cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
                     else:
                         sdintlib.modify_with_pb(inpcube=joint_cube+'.image',
                                         pbcube=int_cube+'.pb',
