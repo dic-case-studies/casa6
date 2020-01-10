@@ -194,7 +194,7 @@ class uvmodelfit_test(unittest.TestCase):
             test_uvrangeSelect
             --------------------
             
-            Check that the urange parameter properly select the uvranges
+            Check that the uvrange parameter properly select the uvranges
         '''
         
         # Can't select a range? It seems this requires being able to select a number of multiple fields.
@@ -258,7 +258,7 @@ class uvmodelfit_test(unittest.TestCase):
             test_niter
             -----------
             
-            Check that the number of niter parameter selects the number of iterations uvmodlefit runs
+            Check that the number of niter parameter selects the number of iterations uvmodelfit runs
         '''
         
         uvmodelfit(vis=datacopy, niter=1, field='1', outfile='test1.cl')
@@ -275,7 +275,7 @@ class uvmodelfit_test(unittest.TestCase):
             test_comptype
             ---------------
             
-            Check that the comptype parameter changes the compnent model type
+            Check that the comptype parameter changes the component model type
         '''
         
         uvmodelfit(vis=datacopy, comptype='D', field='1', sourcepar=[1.0,1.0,1.0,1.0,1.0,1.0], outfile='test1.cl')
@@ -292,7 +292,7 @@ class uvmodelfit_test(unittest.TestCase):
             test_sourcepar
             ----------------
             
-            Check that sourcepar selects starting guess for compnent parameters
+            Check that sourcepar selects starting guess for component parameters
         '''
         
         uvmodelfit(vis=datacopy, field='1', sourcepar=[1.0,0.0,0.0], outfile='test1.cl')
