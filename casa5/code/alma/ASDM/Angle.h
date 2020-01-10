@@ -120,7 +120,7 @@ public:
 	 * @param st a reference to a StringTokenizer.
 	 * @return an Angle.
 	 */
-	static Angle getAngle(StringTokenizer &st) throw(NumberFormatException);
+	static Angle getAngle(StringTokenizer &st);
 			
 	/**
 	 * Write the binary representation of this to an EndianOSStream .

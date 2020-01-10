@@ -523,7 +523,7 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, std::string issue, std::s
 		for (unsigned int i = 0; i < v.size(); ++i) {
 			try {
 				buf.append(v[i]->toXML());
-			} catch (NoSuchRow e) {
+			} catch (const NoSuchRow &e) {
 			}
 			buf.append("  ");
 		}		
@@ -590,10 +590,10 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, std::string issue, std::s
 				}
 				
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"AnnotationTable");
 			} 
-			catch (UniquenessViolationException e1) {
+			catch (const UniquenessViolationException &e1) {
 				throw ConversionException(e1.getMessage(),"AnnotationTable");	
 			}
 			catch (...) {
@@ -609,7 +609,7 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, std::string issue, std::s
 					s = xml.getElementContent("<row>","</row>");
 				}
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"AnnotationTable");
 			} 
 			catch (...) {
@@ -897,11 +897,11 @@ AnnotationRow* AnnotationTable::lookup(ArrayTime time, std::string issue, std::s
 				checkAndAdd(aRow);
       		}
     	}
-    	catch (DuplicateKey e) {
+    	catch (const DuplicateKey &e) {
       		throw ConversionException("Error while writing binary data , the message was "
 				+ e.getMessage(), "Annotation");
     	}
-    	catch (TagFormatException e) {
+    	catch (const TagFormatException &e) {
      		 throw ConversionException("Error while reading binary data , the message was "
 				+ e.getMessage(), "Annotation");
     	}
@@ -1176,7 +1176,7 @@ void AnnotationTable::setFromXMLFile(const string& directory) {
     	xmlDocument = getContainer().getXSLTransformer()(tablePath);
     	if (getenv("ASDM_DEBUG")) cout << "About to read " << tablePath << endl;
     }
-    catch (XSLTransformerException e) {
+    catch (const XSLTransformerException &e) {
     	throw ConversionException("Caugth an exception whose message is '" + e.getMessage() + "'.", "Annotation");
     }
     

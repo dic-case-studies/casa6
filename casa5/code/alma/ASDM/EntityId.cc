@@ -40,12 +40,11 @@ namespace asdm {
 
   static bool EntityIdVerbose = getenv("ASDM_DEBUG") != NULL;
 
-  EntityId EntityId::getEntityId(StringTokenizer &t) 
-    throw (InvalidArgumentException) {
+  EntityId EntityId::getEntityId(StringTokenizer &t) {
     try {
       string value = t.nextToken();
       return EntityId (value);
-    } catch (OutOfBoundsException err) {
+    } catch (const OutOfBoundsException &err) {
       throw InvalidArgumentException("Unexpected end-of-string!");
     }
   }
@@ -115,7 +114,7 @@ namespace asdm {
     */		
   }
 
-  EntityId::EntityId(const string &id) throw (InvalidArgumentException) {
+  EntityId::EntityId(const string &id) {
     string msg = validate(id);
     if (msg.length() != 0)
       throw InvalidArgumentException(msg);
@@ -123,7 +122,7 @@ namespace asdm {
   }
 
 #ifndef WITHOUT_ACS
-  EntityId::EntityId(asdmIDLTypes::IDLEntityId &x) throw (InvalidArgumentException) {
+  EntityId::EntityId(asdmIDLTypes::IDLEntityId &x) {
     string tmp(x.value);
     string msg = validate(tmp);
     if (msg.length() != 0)

@@ -1857,7 +1857,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalAtmosphere");
 		}
 	}
@@ -2569,7 +2569,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalAtmosphere");
 		}
 	}
@@ -2590,7 +2590,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverBand::name(receiverBand));
+		eoss.writeString(CReceiverBand::name(receiverBand));
 			/* eoss.writeInt(receiverBand); */
 				
 		
@@ -2600,7 +2600,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CBasebandName::name(basebandName));
+		eoss.writeString(CBasebandName::name(basebandName));
 			/* eoss.writeInt(basebandName); */
 				
 		
@@ -2768,7 +2768,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CSyscalMethod::name(syscalType));
+		eoss.writeString(CSyscalMethod::name(syscalType));
 			/* eoss.writeInt(syscalType); */
 				
 		

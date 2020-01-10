@@ -705,7 +705,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalData");
 		}
 	}
@@ -1025,7 +1025,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalData");
 		}
 	}
@@ -1065,7 +1065,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CCalDataOrigin::name(calDataType));
+		eoss.writeString(CCalDataOrigin::name(calDataType));
 			/* eoss.writeInt(calDataType); */
 				
 		
@@ -1075,7 +1075,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CCalType::name(calType));
+		eoss.writeString(CCalType::name(calType));
 			/* eoss.writeInt(calType); */
 				
 		
@@ -1127,7 +1127,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAssociatedCalNature::name(assocCalNature));
+		eoss.writeString(CAssociatedCalNature::name(assocCalNature));
 			/* eoss.writeInt(assocCalNature); */
 				
 		
