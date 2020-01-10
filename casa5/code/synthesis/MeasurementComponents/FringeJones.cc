@@ -1753,7 +1753,7 @@ least_squares_driver(SDBList& sdbs, Matrix<Float>& casa_param, Matrix<Bool>& cas
                     } else {
                         casa_param(4*icor + di, iant) = 0.0;
                         casa_snr(4*icor + di, iant) = 0.0; 
-                   }
+                    }
                 }
             } else { // gsl solver failed; flag data
                 logSink << "Least-squares solver failed to converge; flagging" << endl;
