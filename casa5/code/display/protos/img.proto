@@ -165,10 +165,11 @@ message Toggle {
 }
 
 message InteractiveMaskOptions {
-    int32 niter = 1;
-    int32 cycleniter = 2;
-    string threshold = 3;
-    string cyclethreshold = 4;
+    Id id = 1;
+    int32 niter = 2;
+    int32 cycleniter = 3;
+    string threshold = 4;
+    string cyclethreshold = 5;
 }
 
 message InteractiveMaskResult {

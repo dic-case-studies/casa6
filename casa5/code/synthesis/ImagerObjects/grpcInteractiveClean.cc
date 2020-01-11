@@ -753,7 +753,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         int result = resp.id( );
 
         // state for interactive masking in the new viewer panel
-        clean_state.insert( std::pair<int,CleanState>( ) );
+        clean_state.insert( std::pair<int,CleanState>(result, CleanState( )) );
 
         if ( debug ) {
             std::cerr << "created panel " << result <<
@@ -804,7 +804,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                                   int &niter, int &cycleniter, std::string &thresh,
                                                   std::string &cyclethresh, const bool forceReload ) {
 
+        static const auto debug = getenv("GRPC_DEBUG");
         LogIO os( LogOrigin("grpcInteractiveCleanGui",__FUNCTION__,WHERE) );
+
+        if ( debug ) {
+            std::cerr << "starting interactivemask( " <<
+                                 panel << ", " << image << ", " << mask << ", " <<
+                                 niter << ", " << cycleniter << ", " << thresh << ", " <<
+                                 cyclethresh << ", " << (forceReload ? "true" : "false") << ")" << 
+                                 " (process " << getpid( ) << ", thread " << 
+                                 std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
 
         if ( viewer_started == false ) {
             // viewer should be started before calling interactivemask(...)
@@ -850,22 +861,28 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             state->second.prev_image_id = 0;
             state->second.prev_mask_id = 0;
 
-            grpc::ClientContext context;
-            ::rpc::img::NewData nd;
-            rpc::img::Id resp;
-            nd.mutable_panel( )->set_id(panel);
-            nd.set_path(image);
-            nd.set_type("raster");
-            nd.set_scale(0);
-            viewer_proxy->load( &context, nd, &resp );
-            state->second.image_id = resp.id( );
-
-            nd.mutable_panel( )->set_id(panel);
-            nd.set_path(mask);
-            nd.set_type("contour");
-            nd.set_scale(0);
-            viewer_proxy->load( &context, nd, &resp );
-            state->second.mask_id = resp.id( );
+            {
+                grpc::ClientContext context;
+                ::rpc::img::NewData nd;
+                rpc::img::Id resp;
+                nd.mutable_panel( )->set_id(panel);
+                nd.set_path(image);
+                nd.set_type("raster");
+                nd.set_scale(0);
+                viewer_proxy->load( &context, nd, &resp );
+                state->second.image_id = resp.id( );
+            }
+            {
+                grpc::ClientContext context;
+                ::rpc::img::NewData nd;
+                rpc::img::Id resp;
+                nd.mutable_panel( )->set_id(panel);
+                nd.set_path(mask);
+                nd.set_type("contour");
+                nd.set_scale(0);
+                viewer_proxy->load( &context, nd, &resp );
+                state->second.mask_id = resp.id( );
+            }
 
         } else {
             grpc::ClientContext context;
@@ -879,12 +896,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
         grpc::ClientContext context;
         ::rpc::img::InteractiveMaskOptions options;
+        options.mutable_id( )->set_id(state->first);
         options.set_niter(niter);
         options.set_cycleniter(cycleniter);
         options.set_threshold(thresh);
         options.set_cyclethreshold(cyclethresh);
         ::rpc::img::InteractiveMaskResult imresult;
-        viewer_proxy->interactivemask( &context, options, &imresult );
+        ::grpc::Status s = viewer_proxy->interactivemask( &context, options, &imresult );
+
+        if ( ! s.ok( ) ) {
+            std::cerr << "interactive mask failed: " << s.error_details( ) << std::endl;
+            fflush(stderr);
+        }
 
         int result = 1;
         std::string action = imresult.action( );
@@ -892,7 +915,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         else if ( action == "no more" ) result = 2;
         else if ( action == "continue" ) result = 1;
         else {
-            os << "ill-formed action result" << LogIO::WARN << LogIO::POST;
+            os << "ill-formed action result (" << action << ")" << LogIO::WARN << LogIO::POST;
             return 0;
         }
 
