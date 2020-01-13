@@ -50,7 +50,7 @@ class Fringefit_tests(unittest.TestCase):
         sbdcal = self.prefix + '.sbdcal'
         fringefit(vis=self.msfile, caltable=sbdcal, refant='EF')
         reference = os.path.join(datapath, sbdcal)
-        self.assertTrue(th.compTables(sbdcal, reference, ['WEIGHT']))
+        self.assertTrue(th.compTables(sbdcal, reference, ['WEIGHT', 'SNR']))
 
     def test_mbd(self):
         sbdcal = self.prefix + '-zerorates.sbdcal'
@@ -60,7 +60,7 @@ class Fringefit_tests(unittest.TestCase):
         fringefit(vis=self.msfile, caltable=mbdcal, field='J0916+3854',
                    combine='spw', gaintable=[sbdcal], refant='EF')
         reference = os.path.join(datapath, mbdcal)
-        self.assertTrue(th.compTables(mbdcal, reference, ['WEIGHT']))
+        self.assertTrue(th.compTables(mbdcal, reference, ['WEIGHT', 'SNR']))
 
 
 class Fringefit_single_tests(unittest.TestCase):
