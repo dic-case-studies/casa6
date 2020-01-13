@@ -198,6 +198,22 @@ FieldCalMap::FieldCalMap(const String fieldcalmap,
 
 }
 
+FieldCalMap::FieldCalMap(const String fieldcalmap, 
+			 const MeasurementSet& ms, const NewCalTable& ct,
+			 String& extfldsel) :
+  CalMap(),
+  fieldcalmap_(fieldcalmap)
+{
+
+  if (fieldcalmap_=="nearest") 
+    // Calculate nearest map
+    setNearestFieldMap(ms,ct);
+  else 
+    // Attempt field selection
+    setSelectedFieldMap(fieldcalmap,ms,ct,extfldsel);
+
+}
+
 void FieldCalMap::setNearestFieldMap(const MeasurementSet& ms, const NewCalTable& ct) {
   // Access MS and CT columns
   MSFieldColumns msfc(ms.field());
@@ -286,6 +302,51 @@ void FieldCalMap::setSelectedFieldMap(const String& fieldsel,
 
 }
 
+void FieldCalMap::setSelectedFieldMap(const String& fieldsel,
+				      const MeasurementSet& ms,
+				      const NewCalTable& ct,
+				      String& extfldsel) {
+
+  
+  try {
+
+    CTInterface cti(ct);
+    MSSelection mss;
+    mss.setFieldExpr(fieldsel);
+    TableExprNode ten=mss.toTableExprNode(&cti);
+    Vector<Int> fieldlist=mss.getFieldList();
+
+    // Nominally, don't apply selection externally
+    extfldsel="";
+
+    if (fieldlist.nelements()>1)
+      // trigger external selection (multi-field case; see old gainfield)
+      extfldsel=fieldsel;
+    else if (fieldlist.nelements()==1) {
+      // exactly 1 means fldmap=[f]*nfld
+
+      // Nominally, this many fields need a map
+      Int nMSFlds=ms.field().nrow();
+      vcalmap_.resize(nMSFlds);
+      vcalmap_.set(fieldlist[0]);
+    }
+    else
+      // Field selection found no indices
+      throw(AipsError(fieldsel+" matches no fields."));
+
+  }
+  catch ( AipsError err ) {
+
+    throw(AipsError("Field mapping by selection failure: "+err.getMesg()));
+
+  }
+
+
+  //  cout << "FCM::setSelectedFieldMap:***************  vcalmap_ = " << vcalmap_ << endl;
+
+  return;
+}
+
 
 CalLibSlice::CalLibSlice(String obs,String fld, String ent, String spw,
 			 String tinterp,String finterp,
@@ -293,7 +354,7 @@ CalLibSlice::CalLibSlice(String obs,String fld, String ent, String spw,
 			 Vector<Int> spwmap, Vector<Int> antmap) :
   obs(obs),fld(fld),ent(ent),spw(spw),
   tinterp(tinterp),finterp(finterp),
-  obsmap(obsmap),fldmap(fldmap),spwmap(spwmap),antmap(antmap)
+  obsmap(obsmap),fldmap(fldmap),spwmap(spwmap),antmap(antmap),extfldsel("")
 {}
 
 // Construct from a Record
@@ -302,7 +363,8 @@ CalLibSlice::CalLibSlice(const Record& clslice,
 			 const NewCalTable& ct) :
   obs(),fld(),ent(),spw(),
   tinterp(),finterp(),
-  obsmap(),fldmap(),spwmap(),antmap()
+  obsmap(),fldmap(),spwmap(),antmap(),
+  extfldsel("")
 {
 
   if (clslice.isDefined("obs")) {
@@ -334,11 +396,10 @@ CalLibSlice::CalLibSlice(const Record& clslice,
       obsmap=CalMap(Vector<Int>(clslice.asArrayInt("obsmap")));
   }
   if (clslice.isDefined("fldmap")) {
-    //    cout << "fldmap.dataType() = " << clslice.dataType("fldmap") << endl;
     if (clslice.dataType("fldmap")==TpArrayInt)
       fldmap=FieldCalMap(clslice.asArrayInt("fldmap"));
     if (clslice.dataType("fldmap")==TpString)
-      fldmap=FieldCalMap(clslice.asString("fldmap"),ms,ct);
+      fldmap=FieldCalMap(clslice.asString("fldmap"),ms,ct,extfldsel);
   }
   if (clslice.isDefined("spwmap")) { 
     //    cout << "spwmap.dataType() = " << clslice.dataType("spwmap") << endl;
@@ -416,7 +477,14 @@ String CalLibSlice::state() {
   o << "     MS: obs="+obs+" fld="+fld+" intent="+ent+" spw="+spw << endl
     << "     CT: tinterp="+tinterp << " finterp="+finterp << endl
     << "         obsmap=" << obsmap.vmap()
-    << "         fldmap=" << fldmap.vmap() << endl
+    << "         fldmap=";
+
+  if (extfldsel=="")
+    o << fldmap.vmap();
+  else
+    o << extfldsel+" (by selection)";
+
+  o << endl
     << "         spwmap=" << spwmap.vmap()
     << "         antmap=" << antmap.vmap()
     << endl;
@@ -756,6 +824,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
   //  ia1dmethod_=ftype(freqType_);
   //  cout << "ia1dmethod_ = " << ia1dmethod_ << endl;
 
+    
   switch(mtype_) {
   case VisCalEnum::GLOBAL: {
 
@@ -802,6 +871,9 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
   Int icls=-1;
   for (uInt ikey=0;ikey<nkey;++ikey) {
 
+    // CalTable name might be needed below (eg, for log messages)
+    String ctname=Path(ct_.getPartNames()[0]).baseName().before(".tempMemCalTable");
+
     // Ignore non-Record members in the callib
     if (callib.type(ikey)!=TpRecord)
       continue;
@@ -810,6 +882,20 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 
     // The current callib slice
     CalLibSlice cls(callib.asRecord(ikey),ms_,ct_);
+
+
+    // Reference to the cal table that we'll use below
+    NewCalTable ct0(ct_);
+    if (cls.extfldsel!="") {
+      // Select on the reference table
+      try {
+	this->selectOnCT(ct0,ct_,"",cls.extfldsel,"","");
+      } catch ( MSSelectionError err ) {
+	// Selection failed somehow:
+	throw(AipsError("Problem selecting for multi-field field mapping ('"+cls.extfldsel+"') in caltable="+ctname+":  "+err.getMesg()));
+      }
+
+    }
 
     // Apply callib instance MS selection to the incoming (selected MS)
     MeasurementSet clsms(ms_);
@@ -885,10 +971,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 
     // WE DO TIME-ISH (OBS,FLD) AXES IN OUTER LOOPS
 
-    // CalTable name might be needed below
-    String ctname=Path(ct_.getPartNames()[0]).baseName().before(".tempMemCalTable");
-    
-    NewCalTable obsselCT(ct_);
+    NewCalTable obsselCT(ct0);
     // The net CT obs required for the MS obs according to the obsmap
     //   We will create separate interpolator groups for each
     Vector<Int> reqCTobs=cls.obsmap.ctids(reqMSobs);
@@ -908,7 +991,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
       //   (only if a meaningful obsid is specified)
       try {
 	if (thisCTobs!=-1) 
-	  this->selectOnCT(obsselCT,ct_,String::toString(thisCTobs),"","","");
+	  this->selectOnCT(obsselCT,ct0,String::toString(thisCTobs),"","","");
       }
       catch (...) {  //  MSSelectionNullSelection x ) {
 	
