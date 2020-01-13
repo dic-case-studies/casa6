@@ -53,7 +53,7 @@ to run the tests.
 The following is the naming convention for tests added to the directories inside casatests. 
 
 ##### performance
-   * test_perf_<taskname>_<description>_<description>_<...>.py
+   * test_perf_[tasknames]_[description]_[description]_[...].py
    * e.g. test_perf_tclean_memory_setweighting.py
    * e.g. test_perf_tclean_runtime_cube_model_write.py   
 
