@@ -53,26 +53,26 @@ to run the tests.
 The following is the naming convention for tests added to the directories inside casatests. 
 
 ##### performance
-   * test_perf_[tasknames]_[description]_[description]_[...].py
+   * test_perf_[taskname]_[description]_[...].py
    * e.g. test_perf_tclean_memory_setweighting.py
    * e.g. test_perf_tclean_runtime_cube_model_write.py   
 
 ##### stakeholders
-   * test_stk_<taskname>_<description><...>.py
+   * test_stk_[taskname]_[description]_[...].py
    * test_stk_tclean_alma_pipeline.py
 
 ##### e2e: End-to-End
-   * test_e2e_<description><...>.py
+   * test_e2e_[description]_[...].py
    * test_e2e_alma_m100_if.py
    * test_e2e_alma_m100_sd.py
 
 #### pipeline
-   * test_pipe_<telescope>_<use-case>_<description><...>.py
+   * test_pipe_[telescope]_[use-case]_[description]_[...].py
    * test_pipe_vlass_calib_<...>.py
    * test_pipe_alma_full_ephem.py
 
 #### benchmarks
-   * test_bench_<description>_<...>.py
+   * test_bench_[description]_[...].py
    
 
 
