@@ -59,17 +59,17 @@ The following is the naming convention for tests added to the directories inside
 
 ##### stakeholders
    * test_stk_[taskname]_[description]_[...].py
-   * test_stk_tclean_alma_pipeline.py
+   * e.g. test_stk_tclean_alma_pipeline.py
 
 ##### e2e: End-to-End
    * test_e2e_[description]_[...].py
-   * test_e2e_alma_m100_if.py
-   * test_e2e_alma_m100_sd.py
+   * e.g. test_e2e_alma_m100_if.py
+   * e.g. test_e2e_alma_m100_sd.py
 
 #### pipeline
    * test_pipe_[telescope]_[use-case]_[description]_[...].py
-   * test_pipe_vlass_calib_<...>.py
-   * test_pipe_alma_full_ephem.py
+   * e.g. test_pipe_vlass_calib_[...].py
+   * e.g. test_pipe_alma_full_ephem.py
 
 #### benchmarks
    * test_bench_[description]_[...].py
