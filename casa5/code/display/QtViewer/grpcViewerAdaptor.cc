@@ -1378,6 +1378,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
+    ::grpc::Status grpcImageViewer::interactivemask( ::grpc::ServerContext *c,
+                                                     const ::rpc::img::InteractiveMaskOptions *opt,
+                                                     ::rpc::img::InteractiveMaskResult *reply ) {
+        FILE *dbg = fopen("dumb-crap.txt", "w");
+        fprintf( dbg, "ok we are in the function\n" );
+        fclose(dbg);
+        return grpc::Status::OK;
+    }
+
+    // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     bool grpcImageViewer::printraster( QtDisplayPanel *panel, const QString &type,
                                            const QString &file, double scale ) {
         QSize s = panel->canvasSize();
