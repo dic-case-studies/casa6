@@ -281,15 +281,15 @@ namespace casa {
         }
         auto rows = req->rows( );
         auto cols = req->cols( );
-		clear_parameters( );
         std::promise<bool> prom;
-		qtGO( [&]( ){
-				itsPlotms_->getParameters().setGridSize( rows, cols );
-				update_parameters( );
-                prom.set_value(true);
-			} );
+        qtGO( [&]( ){
+                bool changed = itsPlotms_->getParameters().setGridSize( rows, cols );
+                prom.set_value(changed);
+            } );
         auto fut = prom.get_future( );
-        fut.get( );
+        if (fut.get( )) {
+            clear_parameters( );
+        }
         return grpc::Status::OK;
     }
 
@@ -1009,10 +1009,10 @@ namespace casa {
 
         auto canvas = ppcan(index);
         auto title = req->value( );
-		PlotMSLabelFormat f = canvas->titleFormat();
-		if ( title.size( ) == 0 ) f = PlotMSLabelFormat(PMS::DEFAULT_TITLE_FORMAT);
-		else f.format = title;
-		canvas->setTitleFormat(f);
+        PlotMSLabelFormat f = canvas->titleFormat();
+        if ( title.size( ) == 0 ) f = PlotMSLabelFormat(PMS::DEFAULT_TITLE_FORMAT);
+        else f.format = title;
+        canvas->setTitleFormat(f);
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
@@ -1046,7 +1046,7 @@ namespace casa {
         bool update = req->update( );                                                                          \
                                                                                                                \
         auto canvas = ppcan(index);                                                                            \
-		int size = req->value( );                                                                              \
+        int size = req->value( );                                                                              \
         canvas->set ## SETNAME ## FontSet(size > 0);                                                           \
         canvas->set ## NAME ## Font(size);                                                                     \
                                                                                                                \
@@ -1185,16 +1185,18 @@ namespace casa {
         }                                                                                                      \
                                                                                                                \
         bool update = req->update( );                                                                          \
-                                                                                                               \
+        bool autorange = req->automatic();                                                                     \
         prange_t  minmax = prange_t(0.0, 0.0);   /* this signals auto-ranging */                               \
         /* Override default with specific numbers only if manual ranging requested, */                         \
         /* and given max is greater than the min. */                                                           \
-        if ( ! req->automatic( ) )   {                                                                         \
+        if ( !autorange )   {                                                                                  \
             double min = req->min( );                                                                          \
             double max = req->max( );                                                                          \
-            if (max>min) minmax = prange_t(min, max);                                                          \
+            if (max > min) {                                                                                   \
+				minmax = prange_t(min, max);                                                                   \
+            }                                                                                                  \
         }                                                                                                      \
-        ppaxes(index)->set ## TYPE ## Range( false , minmax );                                                 \
+        ppaxes(index)->set ## TYPE ## Range( !autorange , minmax );                                             \
                                                                                                                \
         std::promise<bool> prom;                                                                               \
         qtGO( [&]( ) {                                                                                         \
@@ -1255,6 +1257,10 @@ namespace casa {
               } );
         auto ufut = uprom.get_future( );
         ufut.get( );
+
+        if (!itsPlotms_->isOperationCompleted()) {
+            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "plot parameters failed");
+        }
 
         auto path = req->path( );
         if ( path.size( ) == 0 ) return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "path must be provided");
