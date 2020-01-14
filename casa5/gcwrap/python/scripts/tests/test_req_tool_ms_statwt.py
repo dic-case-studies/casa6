@@ -2,8 +2,11 @@ import os
 import sys
 import shutil
 import unittest
+import math
 import numpy as np
 import numpy.ma as ma
+import numbers
+
 ### for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th
@@ -11,12 +14,10 @@ import testhelper as th
 subdir = 'visibilities/vla/'
 if th.is_casa6():
     from casatools import ctsys, table, ms
-    from casatasks import statwt
     datadir = ctsys.resolve(subdir)
-    mytb = table()
     myms = ms()
+    mytb = table()
 else:
-    from tasks import *
     from taskinit import *
     datadir = (
         os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/' + subdir
@@ -25,10 +26,12 @@ else:
         datadir = (
             os.environ.get('CASAPATH').split()[0] + '/casa-data-req/' + subdir
         )
-    mytb = tbtool()
     myms = mstool()
+    mytb = tbtool()
 
-src = os.path.join(datadir, 'ngc5921_small.statwt.ms')
+src = datadir + 'ngc5921_small.statwt.ms'
+if not os.path.exists(src):
+    raise Exception('Cannot find ' + src)
 
 # rows and target_row are the row numbers from the subtable formed
 # by the baseline query
@@ -110,6 +113,7 @@ def variance(data, flags, exposures):
     var_i = np.sum(expo * (myimag - mean_i)*(myimag - mean_i))/d.count()
     return (var_r + var_i)/2
 
+
 def _get_dst_cols(dst, other="", dodata=True):
     mytb.open(dst)
     wt = mytb.getcol("WEIGHT")
@@ -119,22 +123,13 @@ def _get_dst_cols(dst, other="", dodata=True):
     if dodata:
         data = mytb.getcol("CORRECTED_DATA")
     if len(other) > 0:
-        if type(other) == type([]):
-            othercol = []
-            for x in other:
-                othercol.append(mytb.getcol(x))
-        else:
-            othercol = mytb.getcol(other)
+        othercol = mytb.getcol(other)
     mytb.close()
     cols = [wt, wtsp, flag, frow]
     if dodata:
         cols.append(data)
     if len(other) > 0:
-        if type(other) == type([]):
-            for x in othercol:
-                cols.append(x)
-        else:
-            cols.append(othercol)
+        cols.append(othercol)
     return cols
 
 def _get_table_cols(mytb):
@@ -149,17 +144,6 @@ def _get_table_cols(mytb):
     sigma = mytb.getcol("SIGMA")
     sisp = mytb.getcol("SIGMA_SPECTRUM")
     return [times, wt, wtsp, flag, frow, data, sigma, sisp]
-
-# per correlation
-def _variance2(dr, di, flag, corr, row):
-    fr = numpy.extract(numpy.logical_not(flag[corr,:,row]), dr[corr,:,row])
-    fi = numpy.extract(numpy.logical_not(flag[corr,:,row]), di[corr,:,row])
-    if len(fr) <= 1:
-        return 0
-    else:
-        vr = numpy.var(fr, ddof=1)
-        vi = numpy.var(fi, ddof=1)
-        return 2/(vr + vi)
 
 class statwt_test(unittest.TestCase):
     
@@ -246,7 +230,7 @@ class statwt_test(unittest.TestCase):
                             + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                             + str(row)
                         )
-                        
+
     def compare(self, dst, ref):
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
         [
@@ -285,10 +269,12 @@ class statwt_test(unittest.TestCase):
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
                 shutil.copytree(src, dst)
                 excludechans = c == 2
-                statwt(
-                    dst, combine=combine, fitspw=fitspw,
+                myms.open(dst, nomodify=False)
+                myms.statwt(
+                    combine=combine, fitspw=fitspw,
                     excludechans=excludechans
                 )
+                myms.done()
                 chan_flags = cflags if fitspw else None
                 if combine == '':
                     if fitspw == '':
@@ -310,11 +296,13 @@ class statwt_test(unittest.TestCase):
         combine = "corr"
         for timebin in ["300s", 10]:
             shutil.copytree(src, dst) 
-            statwt(dst, timebin=timebin, combine=combine)
+            myms.open(dst, nomodify=False)
+            myms.statwt(timebin=timebin, combine=combine)
+            myms.done()
             ref = 'ngc5921_statwt_ref_test_timebin_' + str(timebin) + '.ms'
             self.compare(dst, ref)
             shutil.rmtree(dst)
-
+            
     def test_chanbin(self):
         """Test channel binning"""
         dst = "ngc5921.split.chanbin_0.ms"
@@ -333,7 +321,9 @@ class statwt_test(unittest.TestCase):
                         continue
                     shutil.copytree(src, dst)
                     if i == 0:
-                        statwt(dst, chanbin=chanbin, combine=combine)
+                        myms.open(dst, nomodify=False)
+                        myms.statwt(chanbin=chanbin, combine=combine)
+                        myms.done()
                     elif i == 2:
                         # check WEIGHT_SPECTRUM is created, only check once,
                         # this test is long as it is
@@ -346,7 +336,9 @@ class statwt_test(unittest.TestCase):
                         y = mytb.ncols()
                         self.assertTrue(y == x-1, "wrong number of columns")
                         mytb.done()
-                        statwt(dst, chanbin=chanbin, combine=combine)
+                        myms.open(dst, nomodify=False)
+                        myms.statwt(chanbin=chanbin, combine=combine)
+                        myms.done()
                     if combine == '':
                         ref = datadir + 'ngc5921_statwt_ref_test_chanbin_sep_corr.ms'
                     else:
@@ -360,7 +352,9 @@ class statwt_test(unittest.TestCase):
         trow = 12
         for minsamp in [60, 80]:
             shutil.copytree(src, dst)
-            statwt(dst, minsamp=minsamp, combine=combine)
+            myms.open(dst, nomodify=False)
+            myms.statwt(minsamp=minsamp, combine=combine)
+            myms.done()
             [wt, wtsp, flag, frow, data] = _get_dst_cols(dst)
             if minsamp == 60:
                 self.assertTrue(
@@ -392,42 +386,7 @@ class statwt_test(unittest.TestCase):
                     frow[trow], "Incorrect flagrow row " + str(trow)
                 )
             shutil.rmtree(dst)
-            
-    def test_fieldsel(self):
-        """Test field selection"""
-        dst = "ngc5921.split.fieldsel.ms"
-        combine = "corr"
-        ref = 'ngc5921_statwt_ref_test_fieldsel.ms'
-        for field in ["2", "N5921_2"]:
-            shutil.copytree(src, dst)
-            statwt(dst, field=field, combine=combine)
-            self.compare(dst, ref)
-            shutil.rmtree(dst)
-          
-    def test_spwsel(self):
-        """Test spw selection"""
-        dst = "ngc5921.split.spwsel.ms"
-        ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_no_fitspw.ms'
-        combine = "corr"
-        spw="0"
-        # data set only has one spw
-        shutil.copytree(src, dst)
-        statwt(dst, spw=spw, combine=combine)
-        self.compare(dst, ref)
-        shutil.rmtree(dst)
 
-    def test_scansel(self):
-        """CAS-11858 Test scan selection"""
-        dst = "ngc5921.split.scansel.ms"
-        ref = 'ngc5921_statwt_ref_test_scansel.ms'
-        combine = "corr"
-        [origwt, origwtsp, origflag, origfrow, origdata] = _get_dst_cols(src)
-        scan = "5"
-        shutil.copytree(src, dst)
-        statwt(dst, scan=scan, combine=combine)
-        self.compare(dst, ref)
-        shutil.rmtree(dst)
-        
     def test_default_boundaries(self):
         """Test default scan, field, etc boundaries"""
         dst = "ngc5921.split.normalbounds.ms"
@@ -453,55 +412,64 @@ class statwt_test(unittest.TestCase):
             row_to_rows.append([56, 60])
         for combine in ["corr", "corr,field"]:
             shutil.copytree(src, dst)
-            statwt(dst, timebin=timebin, combine=combine)
+            myms.open(dst, nomodify=False)
+            myms.statwt(timebin=timebin, combine=combine)
+            myms.done()
             self.compare(dst, ref)
             shutil.rmtree(dst)
-            
+        
     def test_no_scan_boundaries(self):
         """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_bounds.ms')
+        # ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_bounds.ms')
+        ref = 'ngc5921_statwt_ref_test_no_scan_bounds.ms'
         combine = "corr, scan"
         shutil.copytree(src, dst)
-        statwt(dst, timebin=timebin, combine=combine)
+        myms.open(dst, nomodify=False)
+        myms.statwt(timebin=timebin, combine=combine)
+        myms.done()
         self.compare(dst, ref)
         shutil.rmtree(dst)
-    
+        
     def test_no_scan_nor_field_boundaries(self):
         """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms')
+        # ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms')
+        ref = 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms'
         for combine in ["corr,scan,field", "corr,field,scan"]:
             shutil.copytree(src, dst)
-            statwt(dst, timebin=timebin, combine=combine)
+            myms.open(dst, nomodify=False)
+            myms.statwt(timebin=timebin, combine=combine)
+            myms.done()
             self.compare(dst, ref)
             shutil.rmtree(dst)
-                
+
     def test_statalg(self):
         """Test statalg"""
         # just testing inputs
         dst = "ngc5921.split.statalg.ms"
         for statalg in ["cl", "ch", "h", "f", "bogus"]:
             shutil.copytree(src, dst)
+            myms.open(dst, nomodify=False)
             if statalg == "cl":
-                statwt(vis=dst, statalg=statalg)
+                self.assertTrue(myms.statwt(statalg=statalg))
             elif statalg == "ch":
                 self.assertTrue(
-                    statwt(vis=dst, statalg=statalg, zscore=5, maxiter=3)
+                    myms.statwt(statalg=statalg, zscore=5, maxiter=3)
                 )
             elif statalg == "h":
-                self.assertTrue(statwt(vis=dst, statalg=statalg, fence=0.2))
+                self.assertTrue(myms.statwt(statalg=statalg, fence=0.2))
             elif statalg == "f":
                 self.assertTrue(
-                    statwt(vis=dst, statalg=statalg, center="median",
-                    lside=False)
+                    myms.statwt(statalg=statalg, center="median", lside=False)
                 )
             elif statalg == "bogus":
-                self.assertFalse(statwt(vis=dst, statalg=statalg))
+                self.assertRaises(Exception, myms.statwt, statalg=statalg)
+            myms.done()
             shutil.rmtree(dst)
-                
+
     def test_wtrange(self):
         """Test weight range"""
         dst = "ngc5921.split.timebin.ms"
@@ -542,7 +510,9 @@ class statwt_test(unittest.TestCase):
         """
         for i in [0, 1]:
             shutil.copytree(src, dst) 
-            statwt(dst, timebin=timebin, combine=combine, wtrange=wtrange)
+            myms.open(dst, nomodify=False)
+            myms.statwt(timebin=timebin, combine=combine, wtrange=wtrange)
+            myms.done()
             self.compare(dst, ref)
             # self._check_weights(
             #    dst, row_to_rows, 'c', None, True, None, wtrange
@@ -558,10 +528,11 @@ class statwt_test(unittest.TestCase):
         wtrange = [1, 2]
         preview = True
         shutil.copytree(src, dst)
-        statwt(
-            dst, timebin=timebin, combine=combine, wtrange=wtrange,
-            preview=preview
+        myms.open(dst, nomodify=False)
+        myms.statwt(
+            timebin=timebin, combine=combine, wtrange=wtrange, preview=preview
         )
+        myms.done()
         [tstwt, tstwtsp, tstflag, tstfrow, tstdata] = _get_dst_cols(dst)
         self.assertTrue(np.all(tstflag == refflag), "FLAGs don't match")
         self.assertTrue(np.all(tstfrow == reffrow), "FLAG_ROWs don't match")
@@ -572,7 +543,7 @@ class statwt_test(unittest.TestCase):
             np.all(np.isclose(tstwtsp, refwtsp)), "WEIGHT_SPECTRUMs don't match"
         )
         shutil.rmtree(dst)
-
+        
     def test_data_col(self):
         """Test using data column"""
         dst = "ngc5921.split.data.ms"
@@ -590,11 +561,13 @@ class statwt_test(unittest.TestCase):
         self.assertTrue(mytb.removecols("DATA"))
         self.assertTrue(mytb.renamecol("CORRECTED_DATA", "DATA"))
         mytb.done()
-        statwt(dst, timebin=timebin, combine=combine, datacolumn=data)
+        myms.open(dst, nomodify=False)
+        myms.statwt(timebin=timebin, combine=combine, datacolumn=data)
+        myms.done()
         # self._check_weights(dst, row_to_rows, 'd', None, True, None, None)
         self.compare(dst, ref)
         shutil.rmtree(dst)
-
+        
     def test_sliding_time_window(self):
         """Test sliding time window"""
         dst = "ngc5921.split.sliding_time_window.ms"
@@ -664,86 +637,15 @@ class statwt_test(unittest.TestCase):
         row_to_rows.append([56, 60])
         """
         shutil.copytree(src, dst)
-        statwt(dst, timebin=timebin, slidetimebin=True)
+        myms.open(dst, nomodify=False)
+        myms.statwt(timebin=timebin, slidetimebin=True)
+        myms.done()
         # self._check_weights(
         #    dst, row_to_rows, 'c', None, False, None, None
         # )
         self.compare(dst, ref)
         shutil.rmtree(dst)
         
-    def test_sliding_window_timebin_int(self):
-        """Test sliding window with timebin as int specified"""
-        dst = "ngc5921.split.sliding_time_window.ms"
-        ref = 'ngc5921_statwt_ref_test_sliding_time_window.ms'
-        row_to_rows = []
-        # odd int, timebin = 5
-        row_to_rows.append([0, 5])
-        row_to_rows.append([0, 5])
-        row_to_rows.append([0, 5])
-        row_to_rows.append([1, 6])
-        row_to_rows.append([2, 7])
-        row_to_rows.append([3, 8])
-        row_to_rows.append([4, 9])
-        row_to_rows.append([5, 10])
-        row_to_rows.append([6, 11])
-        row_to_rows.append([7, 12])
-        row_to_rows.append([7, 12])
-        row_to_rows.append([7, 12])
-        
-        row_to_rows.append([12, 17])
-        row_to_rows.append([12, 17])
-        row_to_rows.append([12, 17])
-        row_to_rows.append([12, 17])
-        row_to_rows.append([12, 17])
-        
-        row_to_rows.append([17, 22])
-        row_to_rows.append([17, 22])
-        row_to_rows.append([17, 22])
-        row_to_rows.append([18, 23])
-        row_to_rows.append([19, 24])
-        row_to_rows.append([20, 25])
-        row_to_rows.append([21, 26])
-        row_to_rows.append([22, 27])
-        row_to_rows.append([23, 28])
-        row_to_rows.append([24, 29])
-        row_to_rows.append([25, 30])
-        row_to_rows.append([26, 31])
-        row_to_rows.append([27, 32])
-        row_to_rows.append([28, 33])
-        row_to_rows.append([28, 33])
-        row_to_rows.append([28, 33])
-        
-        row_to_rows.append([33, 35])
-        row_to_rows.append([33, 35])
-        
-        row_to_rows.append([35, 38])
-        row_to_rows.append([35, 38])
-        row_to_rows.append([35, 38])
-        
-        row_to_rows.append([38, 43])
-        row_to_rows.append([38, 43])
-        row_to_rows.append([38, 43])
-        row_to_rows.append([39, 44])
-        row_to_rows.append([40, 45])
-        row_to_rows.append([41, 46])
-        row_to_rows.append([42, 47])
-        row_to_rows.append([43, 48])
-        row_to_rows.append([44, 49])
-        row_to_rows.append([45, 50])
-        row_to_rows.append([46, 51])
-        row_to_rows.append([47, 52])
-        row_to_rows.append([48, 53])
-        row_to_rows.append([49, 54])
-        row_to_rows.append([50, 55])
-        row_to_rows.append([51, 56])
-        row_to_rows.append([51, 56])
-        row_to_rows.append([51, 56])
-        
-        row_to_rows.append([56, 60])
-        row_to_rows.append([56, 60])
-        row_to_rows.append([56, 60])
-        row_to_rows.append([56, 60])
-
     def test_sliding_window_timebin_int(self):
         """Test sliding window with timebin as int specified"""
         dst = "ngc5921.split.sliding_time_window.ms"
@@ -890,7 +792,9 @@ class statwt_test(unittest.TestCase):
         for timebin in [5, 6]:
             ref = 'ngc5921_statwt_ref_test_sliding_time_window_' + str(timebin) + '.ms'
             shutil.copytree(src, dst)
-            statwt(dst, timebin=timebin, slidetimebin=True)
+            myms.open(dst, nomodify=False)
+            myms.statwt(timebin=timebin, slidetimebin=True)
+            myms.done()
             #self._check_weights(
             #    dst, row_to_rows, 'c', None, False, None, None
             #)
@@ -906,13 +810,15 @@ class statwt_test(unittest.TestCase):
         # for i in range(60):
         #    row_to_rows.append([i, i+1])
         shutil.copytree(src, dst)
-        statwt(dst, datacolumn=data)
+        myms.open(dst, nomodify=False)
+        myms.statwt(datacolumn=data)
+        myms.done()
         # self._check_weights(
         #    dst, row_to_rows, data, None, False, None, None
         # )
         self.compare(dst, ref)
         shutil.rmtree(dst)
-            
+
     def test_residual_no_model(self):
         """Test datacolumn='residual' in the absence of a MODEL_DATA column"""
         dst = "ngc5921.split.residualwoutmodel.ms"
@@ -922,7 +828,9 @@ class statwt_test(unittest.TestCase):
         self.assertTrue(mytb.open(dst, nomodify=False))
         self.assertTrue(mytb.removecols("MODEL_DATA"))
         mytb.done()
-        statwt(dst, datacolumn=data)
+        myms.open(dst, nomodify=False)
+        myms.statwt(datacolumn=data)
+        myms.done()
         # self._check_weights(
         #    dst, row_to_rows, data, None, False, None, None
         # )
@@ -938,13 +846,15 @@ class statwt_test(unittest.TestCase):
         # for i in range(60):
         #     row_to_rows.append([i, i+1])
         shutil.copytree(src, dst)
-        statwt(dst, datacolumn=data)
+        myms.open(dst, nomodify=False)
+        myms.statwt(datacolumn=data)
+        myms.done()
         # self._check_weights(
         #    dst, row_to_rows, data, None, False, None, None
         # )
         self.compare(dst, ref)
         shutil.rmtree(dst)
-        
+
     def test_residual_data_no_model(self):
         """Test using residual data in absence of MODEL_DATA"""
         dst = "ngc5921.split.residualdatawoutmodel.ms"
@@ -957,19 +867,21 @@ class statwt_test(unittest.TestCase):
         self.assertTrue(mytb.open(dst, nomodify=False))
         self.assertTrue(mytb.removecols("MODEL_DATA"))
         mytb.done()
-        statwt(dst, datacolumn=data)
+        myms.open(dst, nomodify=False)
+        myms.statwt(datacolumn=data)
+        myms.done()
         # self._check_weights(
         #     dst, row_to_rows, data, None, False, None, None
         # )
         self.compare(dst, ref)
         shutil.rmtree(dst)
-
+        
     def test_returned_stats(self):
         """ Test returned stats, CAS-10881"""
         dst = "ngc5921.split.statstest.ms"
         shutil.copytree(src, dst)
         myms.open(dst, nomodify=False)
-        res = statwt(dst)
+        res = myms.statwt()
         myms.done()
         self.assertTrue(
             np.isclose(res['mean'], 3.691224144843796),
