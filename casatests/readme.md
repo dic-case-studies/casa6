@@ -2,7 +2,7 @@
 
 CASAtests is a self-contained python module that provides special test scripts for CASA. Many of the tests in this package depend on the [casatestutils](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse) python module being pre-installed in your system.
 
-### Install Dependencies
+### Install dependencies
 
 First make sure you have installed the CASAtasks and/or the CASAtools before you run the tests. Below is a quick guide on how to install
 them from the Python wheels.
@@ -34,7 +34,6 @@ Make sure your toolrc.py datapath has an entry pointing to <your_data_dir>. The 
 a directory called casa-perf inside your_data_dir, where it will look for the files needed
 to run the tests.
 
-
 ```
 -bash-4.2# python3 casatests/performance/test_perf_tclean_mem_setweighting.py
 ```
@@ -52,27 +51,27 @@ to run the tests.
 
 The following is the naming convention for tests added to the directories inside casatests. 
 
-##### performance
-   * test_perf_[taskname]_[description]_[...].py
-   * e.g. test_perf_tclean_memory_setweighting.py
-   * e.g. test_perf_tclean_runtime_cube_model_write.py   
+#### performance
+   * test\_perf\_[taskname]\_[description]\_[...].py
+   * e.g. test\_perf\_tclean\_memory\_setweighting.py
+   * e.g. test\_perf\_tclean\_runtime\_cube\_model\_write.py   
 
-##### stakeholders
-   * test_stk_[taskname]_[description]_[...].py
-   * e.g. test_stk_tclean_alma_pipeline.py
+#### stakeholders
+   * test\_stk\_[stakeholder]\_[taskname]\_[description].py
+   * e.g. test\_stk\_alma\_pipeline\_tclean\_cycle8.py
 
-##### e2e: End-to-End
-   * test_e2e_[description]_[...].py
-   * e.g. test_e2e_alma_m100_if.py
-   * e.g. test_e2e_alma_m100_sd.py
+#### e2e: End-to-End
+   * test\_e2e\_[description]\_[...].py
+   * e.g. test\_e2e\_alma\_m100\_if.py
+   * e.g. test\_e2e\_alma\_m100\_sd.py
 
 #### pipeline
-   * test_pipe_[telescope]_[use-case]_[description]_[...].py
-   * e.g. test_pipe_vlass_calib_[...].py
-   * e.g. test_pipe_alma_full_ephem.py
+   * test\_pipe\_[telescope]\_[use-case]\_[description]\_[...].py
+   * e.g. test\_pipe\_vlass\_calib\_[...].py
+   * e.g. test\_pipe\_alma\_full\_ephem.py
 
 #### benchmarks
-   * test_bench_[description]_[...].py
+   * test\_bench\_[description]\_[...].py
    
 
 
