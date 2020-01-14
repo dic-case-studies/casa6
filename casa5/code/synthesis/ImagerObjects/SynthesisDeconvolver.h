@@ -78,6 +78,7 @@ class SynthesisDeconvolver
   //  void setupDeconvolution(casacore::Record recpars);
 
   casacore::Record initMinorCycle();
+  casacore::Record initMinorCycle(std::shared_ptr<SIImageStore> imstor); 
   casacore::Record executeMinorCycle(casacore::Record& subIterBot);
 
   casacore::Record interactiveGUI(casacore::Record& iterRec);

@@ -77,10 +77,14 @@ public:
   virtual casacore::Bool hasSumWt() {return (bool) itsSumWt;}
   ///So far no need for overloading this
   //virtual casacore::Bool hasRestored() {return doesImageExist(itsImageName+imageExts(IMAGE));}
+  virtual std::shared_ptr<SIImageStore> getSubImageStore(const casacore::Int facet=0, const casacore::Int nfacets=1, 
+						    const casacore::Int chan=0, const casacore::Int nchanchunks=1, 
+						    const casacore::Int pol=0, const casacore::Int npolchunks=1);
+  virtual casacore::Bool releaseLocks();
 
 private:
-	std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB;
-	std::shared_ptr<casacore::ImageInterface<casacore::Complex> > itsForwardGrid, itsBackwardGrid;
+  	std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB;
+  	std::shared_ptr<casacore::ImageInterface<casacore::Complex> > itsForwardGrid, itsBackwardGrid;
 
 
 	

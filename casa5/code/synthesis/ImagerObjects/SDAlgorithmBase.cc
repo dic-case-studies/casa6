@@ -116,7 +116,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  {
 	    //	    itsImages = imagestore->getSubImageStoreOld( chanid, onechan, polid, onepol );
 	    itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
-	    
+
 	    Int startiteration = loopcontrols.getIterDone(); // TODO : CAS-8767 key off subimage index
 	    Float peakresidual=0.0;
 	    Float modelflux=0.0;
@@ -211,8 +211,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	    if( validMask && stopCode==0 )
 	      {
-
-                LatticeLocker lockpsf (*(itsImages->psf()), FileLocker::Read);
                 
 		
 		// Record info about the start of the minor cycle iterations
@@ -224,9 +222,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                  //where we write in model and residual may be
                 {
 
-                  LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Write);
-                  LatticeLocker lock2 (*(itsImages->model()), FileLocker::Write);
-		initializeDeconvolver();
+                  LatticeLocker lockresid (*(itsImages->residual()), FileLocker::Write);
+                  LatticeLocker lockmodel (*(itsImages->model()), FileLocker::Write);
+                  LatticeLocker lockmask (*(itsImages->mask()), FileLocker::Read);
+                  LatticeLocker lockpsf (*(itsImages->psf()), FileLocker::Read);
+		  
+                  initializeDeconvolver();
                 }
                 
 		while ( stopCode==0 )

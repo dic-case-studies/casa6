@@ -357,6 +357,7 @@ casa_add_library( synthesis
  ImagerObjects/SynthesisImager.cc
  ImagerObjects/SynthesisImagerVi2.cc
  ImagerObjects/CubeMajorCycleAlgorithm.cc
+ ImagerObjects/CubeMinorCycleAlgorithm.cc
  ImagerObjects/CubeMakeImageAlgorithm.cc
  ImagerObjects/SIImageStore.cc
  ImagerObjects/SIImageStoreMultiTerm.cc
@@ -639,6 +640,7 @@ install (FILES
 	ImagerObjects/SynthesisImager.h
 	ImagerObjects/SynthesisImagerVi2.h
         ImagerObjects/CubeMajorCycleAlgorithm.h
+	ImagerObjects/CubeMinorCycleAlgorithm.h
         ImagerObjects/CubeMakeImageAlgorithm.h
 	ImagerObjects/SIImageStore.h
 	ImagerObjects/SIImageStoreMultiTerm.h
@@ -837,6 +839,7 @@ install (FILES
 casa_add_executable( synthesis casasplit apps/casasplit/casasplit.cc )
 casa_add_executable( synthesis imageconcat apps/utils/imageconcat.cc )
 casa_add_demo( synthesis ImagerObjects/test/dMPICubeImager.cc TransformMachines2/test/MakeMS.cc )
+casa_add_demo( synthesis ImagerObjects/test/dMPICubeDeconvolver.cc )
 casa_add_demo( synthesis ImagerObjects/test/dMPIMakeCube.cc TransformMachines2/test/MakeMS.cc ) 
 casa_add_assay( synthesis ImagerObjects/test/tSIIterBot.cc )
 casa_add_assay( synthesis ImagerObjects/test/tSynthesisUtils.cc )

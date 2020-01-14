@@ -228,8 +228,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       mem=itsDeconvolver->estimateRAM(imsize);
     return mem;
   }
-  
-   Record SynthesisDeconvolver::initMinorCycle( )
+  Record SynthesisDeconvolver::initMinorCycle(){
+    return initMinorCycle(makeImageStore(itsImageName));
+  }
+  Record SynthesisDeconvolver::initMinorCycle(std::shared_ptr<SIImageStore> imstor )
   { 
     LogIO os( LogOrigin("SynthesisDeconvolver","initMinorCycle",WHERE) );
     Record returnRecord;
@@ -239,7 +241,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       
       //os << "---------------------------------------------------- Init (?) Minor Cycles ---------------------------------------------" << LogIO::POST;
 
-      itsImages = makeImageStore( itsImageName );
+      itsImages = imstor;
 
       // If a starting model exists, this will initialize the ImageStore with it. Will do this only once.
       setStartingModel();

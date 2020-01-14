@@ -47,6 +47,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				shared_ptr<ImageInterface<Float> > theim= psfim ? psfim : residim;
 				itsCoordSys=theim->coordinates();
 				itsImageShape=theim->shape();
+				itsParentImageShape=itsImageShape; //validate looks for that
 			}
 			if(useweightimage && !weightim)
 				throw(AipsError("SimpleSIImagestore has to have a valid weightimage for this kind of weighting scheme"));
@@ -142,7 +143,44 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		return itsBackwardGrid;
 		
 	}
-	
+	shared_ptr<SIImageStore> SimpleSIImageStore::getSubImageStore(const Int facet, const Int nfacets, const Int chan, const Int nchanchunks, const Int pol, const Int npolchunks){
+		vector<shared_ptr<ImageInterface<Float> > >myImages={itsModel, itsResidual, itsPsf, itsWeight, itsImage, itsMask, itsSumWt, itsGridWt, itsPB, itsImagePBcor};
+		if(itsSumWt){
+			setUseWeightImage(*itsSumWt, itsUseWeight);
+		}
+		vector<shared_ptr<ImageInterface<Float> >  > subimPtrs(myImages.size(), nullptr);
+		for (auto it=myImages.begin(); it != myImages.end() ; ++it){
+			if((*it))
+				subimPtrs[it-myImages.begin()]=makeSubImage(facet, nfacets, chan, nchanchunks, pol, npolchunks, *(*it));
+		}
+		shared_ptr<SIImageStore> retval(new SimpleSIImageStore(subimPtrs[0], subimPtrs[1], subimPtrs[2], subimPtrs[3], subimPtrs[4], subimPtrs[5], subimPtrs[6], subimPtrs[7], subimPtrs[8], subimPtrs[9], itsUseWeight));
+		
+		
+		return retval;
+		/*
+	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &weightim,
+	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &restoredim,
+	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &maskim,
+	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &sumwtim,
+	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &gridwtim,
+	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &pbim,
+	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &restoredpbcorim,
+		*/
+	}
+	Bool SimpleSIImageStore::releaseLocks(){
+		if( itsPsf ) itsPsf->unlock();
+		if( itsModel ) itsModel->unlock(); 
+		if( itsResidual ) itsResidual->unlock() ;
+		if( itsImage ) itsImage->unlock();
+		if( itsWeight ) itsWeight->unlock();
+		if( itsMask ) itsMask->unlock();
+		if( itsSumWt ) itsSumWt->unlock() ;
+		if( itsGridWt ) itsGridWt->unlock();
+		if( itsPB ) itsPB->unlock() ;
+		if( itsImagePBcor ) itsImagePBcor->unlock();
+		
+		return True;
+	}
 	
 	
 	

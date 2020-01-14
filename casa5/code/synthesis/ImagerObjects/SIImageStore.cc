@@ -313,6 +313,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsPsf=psfim;
     itsModel=modelim;
     itsResidual=residim;
+    /* if(residim){
+     LatticeLocker lock1(*itsResidual, FileLocker::Read);
+     cerr << "RESIDMAX " << max(itsResidual->get()) <<  "   " << max(residim->get()) << endl;
+     }*/
     itsWeight=weightim;
     itsImage=restoredim;
     itsMask=maskim;
@@ -425,6 +429,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 							  const Int chan, const Int nchanchunks, 
 							  const Int pol, const Int npolchunks)
   {
+   
     return std::make_shared<SIImageStore>(itsModel, itsResidual, itsPsf, itsWeight, itsImage, itsMask, itsSumWt, itsGridWt, itsPB, itsImagePBcor, itsCoordSys, itsImageShape, itsImageName, itsObjectName, itsMiscInfo, facet, nfacets, chan, nchanchunks, pol, npolchunks, itsUseWeight);
   }
 
@@ -605,12 +610,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //For some reason cannot open a new paged image with UserNoread directly
     {
       PagedImage<Float> godot(shape, csys, name);
-
+      godot.unlock();
     }
     TableLock::LockOption locktype=TableLock::AutoNoReadLocking;
-    if((name.contains(imageExts(PSF)) && !name.contains(imageExts(PSF)+".tt"))|| (name.contains(imageExts(RESIDUAL))&& !name.contains(imageExts(RESIDUAL)+".tt")) || (name.contains(imageExts(SUMWT)) && !name.contains(imageExts(SUMWT)+".tt"))){
-      locktype=TableLock::AutoNoReadLocking;
-    }
+    /*if((name.contains(imageExts(PSF)) && !name.contains(imageExts(PSF)+".tt"))|| (name.contains(imageExts(RESIDUAL))&& !name.contains(imageExts(RESIDUAL)+".tt")) || (name.contains(imageExts(SUMWT)) && !name.contains(imageExts(SUMWT)+".tt"))){
+      locktype=TableLock::UserNoReadLocking;
+      }*/
     imptr.reset( new PagedImage<Float> (name, locktype) );
     {
       LatticeLocker lock1(*imptr, FileLocker::Write);
@@ -640,14 +645,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsOpened++;
     if(Table::isReadable(name)){
       TableLock::LockOption locktype=TableLock::AutoNoReadLocking;
-      if((name.contains(imageExts(PSF)) && !name.contains(imageExts(PSF)+".tt"))|| (name.contains(imageExts(RESIDUAL))&& !name.contains(imageExts(RESIDUAL)+".tt")) || (name.contains(imageExts(SUMWT)) && !name.contains(imageExts(SUMWT)+".tt"))){
-        locktype=TableLock::AutoNoReadLocking;
-      }
+      /*if((name.contains(imageExts(PSF)) && !name.contains(imageExts(PSF)+".tt"))|| (name.contains(imageExts(RESIDUAL))&& !name.contains(imageExts(RESIDUAL)+".tt")) || (name.contains(imageExts(SUMWT)) && !name.contains(imageExts(SUMWT)+".tt"))){
+        locktype=TableLock::UserNoReadLocking;
+        }*/
       Table table(name, locktype);
       String type = table.tableInfo().type();
       if (type != TableInfo::type(TableInfo::PAGEDIMAGE)) {
 
         imptr.reset( new PagedImage<Float>( table ) );
+        imptr->unlock();
         return;
       }
     }
@@ -1047,9 +1053,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
 	  }
 	else
-	  {
+	  { //no facets of chanchunks
+	    if(!parentptr){
 	    ///coordsys for psf can be different ...shape should be the same.
-	    ptr = openImage(itsImageName+label , itsOverWrite, sw, 1, !(label.contains(imageExts(PSF)))); 
+	      ptr = openImage(itsImageName+label , itsOverWrite, sw, 1, !(label.contains(imageExts(PSF)))); }
+	    else{
+	      ptr=parentptr;
+	    }
 	    //cout << "Opening image : " << itsImageName+label << " of shape " << ptr->shape() << endl;
 	  }
       }
@@ -1971,9 +1981,9 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     //    cout << "makeImBeamSet : imshape : " << itsImageShape << endl;
 
     String blankpsfs="";
-    LatticeLocker lock2 (*(psf()), FileLocker::Read);
     for( Int chanid=0; chanid<nchan;chanid++) {
       for( Int polid=0; polid<npol; polid++ ) {
+    LatticeLocker lock2 (*(psf()), FileLocker::Read);
 
 	IPosition substart(4,0,0,polid,chanid);
 	IPosition substop(4,nx-1,ny-1,polid,chanid);
@@ -2059,9 +2069,11 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     /// For lack of a better place, store this inside the PSF image. To be read later and used to restore
     ImageInfo ii = psf()->imageInfo();
     ii.setBeams( itsPSFBeams );
-    LatticeLocker lock1(*(psf()), FileLocker::Write);
-    psf()->setImageInfo(ii);
-    
+    {
+      LatticeLocker lock1(*(psf()), FileLocker::Write);
+      psf()->setImageInfo(ii);
+      psf()->unlock();
+    }
   }// end of make beam set
 
 
