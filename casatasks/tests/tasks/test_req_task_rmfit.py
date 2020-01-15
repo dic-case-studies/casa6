@@ -29,10 +29,15 @@ try:
     CASA6 = True
     myia = casatools.image()
     tb = casatools.table()
+    # TODO: Check if the toolname is the same in casa5 and casa6
+    mypo = casatools.imagepol()
+    myia = casatools.image()
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    # not sure what the tool is in casa5 (need to check)
+    mypo = imagepol()
     myia = iatool()
 import sys
 import os
@@ -40,17 +45,24 @@ import numpy
 import unittest
 import shutil
 from filecmp import dircmp
+import math
 
 
 ## DATA ## 
 
 if CASA6:
     casaim = casatools.ctsys.resolve('image/ngc5921.clean.image/')
+    eq_beams = casatools.ctsys.resolve('fits/pol_eq_beams.fits')
+    neq_beams = casatools.ctsys.resolve('fits/pol_neq_beams.fits')
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
         casaim = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
+        eq_beams = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/fits/pol_eq_beams.fits'
+        neq_beams = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/fits/pol_eq_beams.fits'
     else:
         casaim = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
+        eq_beams = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/fits/pol_eq_beams.fits'
+        neq_beams = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/fits/pol_eq_beams.fits'
     
 outfile = 'out.im'
 
@@ -79,6 +91,8 @@ class rmfit_test(unittest.TestCase):
     
     def tearDown(self):
         
+        mypo.done()
+        
         shutil.rmtree(outfile)
         
         if os.path.exists('rm.im'):
@@ -89,6 +103,18 @@ class rmfit_test(unittest.TestCase):
             
         if os.path.exists('rm2.im'):
             shutil.rmtree('rm2.im')
+            
+        if os.path.exists('rm1.im'):
+            shutil.rmtree('rm1.im')
+            
+        if os.path.exists('rm_input.im'):
+            shutil.rmtree('rm_input.im')
+            
+        if os.path.exists('xx.im'):
+            shutil.rmtree('xx.im')
+            
+        if os.path.exists('yy.im'):
+            shutil.rmtree('yy.im')
     
     
     def test_makesImage(self):
@@ -237,6 +263,84 @@ class rmfit_test(unittest.TestCase):
         tb.close()
         
         self.assertFalse(numpy.all(rmCol == rm2Col))
+
+    # Merged in test cases
+    def test_rmfit_basics(self):
+        """Sanity tests for task rmfit"""
+        #myia = iatool()
+        outfile = "xx.im"
+        myia.fromshape(outfile, [20, 20, 4, 20])
+        myia.addnoise()
+        myia.done()
+        myrm = "rm1.im"
+        self.assertTrue(rmfit(imagename=outfile, rm=myrm))
+        myia.open(myrm)
+        self.assertTrue((myia.shape() == [20, 20]).all())
+        got1 = myia.statistics(list=True, verbose=True)['sumsq']
+        myia.done()
+        
+        # test concatenation of images
+        outfile = "yy.im"
+        myia.fromshape(outfile, [20, 20, 4, 20])
+        myia.addnoise()
+        csys = myia.coordsys()
+        refval = csys.referencevalue()['numeric']
+        refval[3] = 1.5e9
+        csys.setreferencevalue(refval)
+        myia.setcoordsys(csys.torecord())
+        myia.done()
+        images = ["xx.im", "yy.im"]
+        myrm = "rm2.im"
+        self.assertTrue(rmfit(imagename=images, rm=myrm))
+        myia.open(myrm)
+        self.assertTrue((myia.shape() == [20, 20]).all())
+        got2 = myia.statistics(list=True, verbose=True)['sumsq']
+        myia.done()
+        self.assertTrue(abs(got1 - got2) > 0.1)
+        tb.done()
+        self.assertTrue(len(tb.showcache()) == 0)
+    
+    def test_algorithm(self):
+        """Test rotation measure computation algorithm"""
+        #myia = iatool()
+        imagename = "rm_input.im"
+        myia.fromshape(imagename, [20, 20, 4, 20])
+        csys = myia.coordsys()
+        incr = csys.increment()['numeric']
+        incr[3] = 1000*incr[3]
+        csys.setincrement(incr)
+        myia.setcoordsys(csys.torecord())
+        pixvals = myia.getchunk()
+        # U values all 1
+        U = 1
+        pixvals[:,:,2,:] = U
+        c = 29979245800.0/100
+        RM = 9.6
+        pa0deg = 22.5
+        pa0 = pa0deg/180*math.pi
+        for chan in range(myia.shape()[3]):
+            freq = myia.toworld([0,0,0,chan])['numeric'][3]
+            lam = c/freq
+            Q = U/math.tan(2*(pa0 + RM*lam*lam))
+            pixvals[:,:,1,chan] = Q
+        myia.putchunk(pixvals)
+        myia.done()
+        rmim = "rm.im"
+        pa0im = "pa0.im"
+        sigma = 10e-8
+        rmfit(imagename=imagename, rm=rmim, pa0=pa0im, sigma=sigma)
+        myia.open(rmim)
+        stats = myia.statistics(list=True, verbose=True)
+        self.assertTrue((abs(stats['min'][0] - RM)) < 1e-4)
+        self.assertTrue((abs(stats['max'][0] - RM)) < 1e-4)
+        myia.done(remove=True)
+        myia.open(pa0im)
+        stats = myia.statistics(list=True, verbose=True)
+        self.assertTrue((abs(stats['min'][0] - pa0deg)) < 1e-4)
+        self.assertTrue((abs(stats['max'][0] - pa0deg)) < 1e-4)
+        myia.done(remove=True)
+        tb.done()
+        self.assertTrue(len(tb.showcache()) == 0)
         
         
         

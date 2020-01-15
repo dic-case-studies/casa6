@@ -467,7 +467,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"SwitchCycle");
 		}
 	}
@@ -658,7 +658,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"SwitchCycle");
 		}
 	}
@@ -728,7 +728,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDirectionReferenceCode::name(directionCode));
+		eoss.writeString(CDirectionReferenceCode::name(directionCode));
 			/* eoss.writeInt(directionCode); */
 				
 		
