@@ -20,8 +20,10 @@
 //#  MA 02111-1307  USA
 //# $Id: $
 
-
 #include <mstransform/TVI/test/tStatWtTVI.h>
+
+#include <../casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/OS/EnvVar.h>
 
 #include <mstransform/MSTransform/MSTransformIteratorFactory.h>
 #include <mstransform/TVI/StatWtTVIFactory.h>
@@ -33,9 +35,30 @@ using namespace casacore;
 using namespace casa::vi;
 
 StatWtTVITest::StatWtTVITest(): FreqAxisTVITest () {
-    inpFile_p = "ngc5921.split.ms";
+    auto casapath = EnvironmentVariable::get("CASAPATH");
+    ThrowIf(casapath.empty(), "Only works for CASA 5");
+    String *parts = new String[2];
+    split(EnvironmentVariable::get("CASAPATH"), parts, 2, String(" "));
+    auto x = parts[0];
+    delete [] parts;
+    String data = "/data//data/casa-data-req/visibilities/vla";
+    casacore::File f(x + data);
+    if (f.exists()) {
+        _dataDir = data;
+    }
+    else {
+        data = "/casa-data-req/visibilities/vla";
+        f = File(x + data);
+        if (f.exists()) {
+            _dataDir = data;
+        }
+        else {
+            ThrowCc("Cannot find data directory");
+        }
+    }
+    inpFile_p = "ngc5921_small.statwt.ms";
     testFile_p = "ngc5921.split.ms.test";
-    referenceFile_p = "ngc5921.split.ms.ref";
+    referenceFile_p = "ngc5921_statwt_ref_test_algorithm_combine_corr_no_fitspw.ms";
     Record configuration;
 	init(configuration);
 }
@@ -45,12 +68,12 @@ StatWtTVITest::StatWtTVITest(Record configuration): FreqAxisTVITest(configuratio
 }
 
 void StatWtTVITest::generateTestFile() {
-    String path = autoMode_p ? "/data/regression/unittest/simplecluster" : "";
+    String path = autoMode_p ? _dataDir : "";
     copyTestFile(path, inpFile_p, testFile_p);
 }
 
 void StatWtTVITest::generateReferenceFile() {
-    String path = autoMode_p ? "/data/regression/unittest/statwt" : "";
+    String path = autoMode_p ? _dataDir : "";
     copyTestFile(path, referenceFile_p, referenceFile_p);
 }
 
@@ -101,6 +124,8 @@ void StatWtTVITest::testCompareTransformedData() {
     vi::VisIterImpl2LayerFactory data(&mstest, ipar, True);
     Record config;
     config.define("combine", "corr");
+    config.define("slidetimebin", False);
+    config.define("timebin", 1);
     vi::StatWtTVILayerFactory statWtLayerFactory(config);
     Vector<vi::ViiLayerFactory*> factsTest(2);
     factsTest[0] = &data;
