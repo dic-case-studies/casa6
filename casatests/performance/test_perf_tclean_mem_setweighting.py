@@ -68,7 +68,9 @@ import os
 import unittest
 import re
 
-import casaTestHelper as th
+#import casatestutils.TestHelpers as th
+import casatestutils.TestHelpers
+th = casatestutils.TestHelpers()
 
 CASA6 = False
  
@@ -104,7 +106,7 @@ datapath = dataroot + input_ms
 logpath = casalog.logfile()
  
 ####    Tests     ####
-class TestTcleanMemProf1(unittest.TestCase):
+class TestTcleanMemProf(unittest.TestCase):
     ### Set Up
     @classmethod
     def setUpClass(cls):
@@ -164,11 +166,13 @@ class TestTcleanMemProf1(unittest.TestCase):
                     break
                 
         mylog.close()
+        self.assertTrue(match, 'Memory profile name from tclean is not found in casa log {0}. Please, check if ~/.casa/rc has a setting synthesis.imager.memprofile.enable: 1'.format(templogfile))
+        
+        # Get name of memprofile created by tclean    
         (start,middle,end)=str_match.partition('casa.synthesis.imager.memprofile')
-                
-        # Get name of memprofile created by tclean
         mem_profile = middle + end.rstrip()
-        self.assertTrue(th.exists(mem_profile), 'Memory profile file {0} is not found'.format(mem_profile))
+        #self.assertTrue(th.exists(mem_profile), 'Memory profile file {0} is not found'.format(mem_profile))
+        self.assertTrue(os.path.exists(mem_profile), 'Memory profile file {0} is not found'.format(mem_profile))
         
         # Get the memory values of the second column named MemRSS_(VmRSS)_MB, for each row
         from collections import OrderedDict
@@ -186,7 +190,7 @@ class TestTcleanMemProf1(unittest.TestCase):
         # Compare memory at [Set Weighting] step
         mfile.close()
         max_ref_memory = 300
-        (out, msg) = th.check_val_less_than(memdict['Set Weighting'], max_ref_memory, valname='Memory at [Set Weigthing] step',
+        (out, msg) = th.check_val_less_than(val=memdict['Set Weighting'], bound=max_ref_memory, valname='Memory at [Set Weigthing] step',
                                testname ="check_val_less_than")    
         
         # print out memory profile for information
@@ -195,7 +199,7 @@ class TestTcleanMemProf1(unittest.TestCase):
         # Compare memory at [End SynthesisNormalizer] step
         # It will check for leaked memory in last step
         max_ref_memory = 500
-        (out, msg) = th.check_val_less_than(memdict['End SynthesisNormalizer'], max_ref_memory, valname='Memory at [End SynthesisNormalizer] step')        
+        (out, msg) = th.check_val_less_than(val=memdict['End SynthesisNormalizer'], bound=max_ref_memory, valname='Memory at [End SynthesisNormalizer] step')        
         self.assertTrue(out, msg)
         
         # Compare maximum memory in whole tclean run
@@ -203,13 +207,13 @@ class TestTcleanMemProf1(unittest.TestCase):
         step_max_mem = max(memdict.items(), key=operator.itemgetter(1))[1]
         step_name = max(memdict.items(), key=operator.itemgetter(1))[0]
         max_ref_memory = 1500
-        (out, msg) = th.check_val_less_than(step_max_mem, max_ref_memory, valname='Memory at ['+step_name+'] step')        
+        (out, msg) = th.check_val_less_than(val=step_max_mem, bound=max_ref_memory, valname='Memory at ['+step_name+'] step')        
         self.assertTrue(out, msg)
         
  
 ####    Suite: Required for CASA5     ####
 def suite():
-    return[TestTcleanMemProf1]
+    return[TestTcleanMemProf]
   
 ####    Imports     ####
 if __name__ == '__main__':
