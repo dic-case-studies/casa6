@@ -129,7 +129,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imtrans.py
   test_imval.py
   test_initweights.py
-  test_listhistory.py
   test_listfits.py
   test_listobs.py
   test_listpartition.py
@@ -230,6 +229,9 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
+
+  ### stakeholders
+  test_stk_alma_pipeline_imaging.py
 
   ###
   test_setjy.py

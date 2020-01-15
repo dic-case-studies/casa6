@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Flux Flux::getFlux(StringTokenizer &t) throw(NumberFormatException) {
+Flux Flux::getFlux(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return Flux (value);
 }

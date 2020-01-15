@@ -573,10 +573,9 @@ MS Selection parameters
       <value />
     </param>
     
-    <param type="any" name="observation" subparam="true">
+    <param type="string" name="observation" subparam="true">
       <description>Observation IDs (blank for all)</description>
-      <any type="variant" limittypes="string int"/>
-      <value type="string"></value>
+      <value />
     </param>
 
     <param type="string" name="intent" subparam="true">
@@ -868,11 +867,10 @@ Display Parameters
         <value type="bool">False</value>
     </param>
 
-    <param type="any" name="coloraxis">
+    <param type="string" name="coloraxis">
         <description>Selects data axis for colorizing</description>
-        <any type="variant" limittype="string stringArray"/>
-        <value type="string" />
-        <allowed kind="enum" type="string">
+        <value />
+        <allowed kind="enum">
             <value />
             <value>scan</value>
             <value>Scan</value>
@@ -963,10 +961,9 @@ Display Parameters
             <value>step</value>
         </allowed>
     </param>
-    <param type="any" name="timeconnector" subparam="true">
+    <param type="bool" name="timeconnector" subparam="true">
         <description>Connect points by time rather than x-axis</description>
-        <any type="variant" limittype="bool boolArray"/>
-        <value type="bool">False</value>
+        <value>False</value>
     </param>
 
 
