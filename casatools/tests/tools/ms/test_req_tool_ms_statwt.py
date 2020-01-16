@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -6,6 +7,10 @@ import math
 import numpy as np
 import numpy.ma as ma
 import numbers
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 ### for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
@@ -880,12 +885,20 @@ class statwt_test(unittest.TestCase):
         data = "residual_data"
         mytb = table()
         myms = ms()
+        eprint("datadir is", datadir)
         # row_to_rows = []
         # for i in range(60):
         #     row_to_rows.append([i, i+1])
-        shutil.copytree(src, dst)
-        self.assertTrue(mytb.open(dst, nomodify=False))
-        self.assertTrue(mytb.removecols("MODEL_DATA"))
+        self.assertTrue(
+            shutil.copytree(src, dst),
+            "unable to copy " + src + " to " + dst
+        )
+        self.assertTrue(mytb.open(
+            dst, nomodify=False), "unable to open table " + dst
+        )
+        self.assertTrue(
+            mytb.removecols("MODEL_DATA"), "unable to remove MODEL_DATA column"
+        )
         mytb.done()
         myms.open(dst, nomodify=False)
         myms.statwt(datacolumn=data)
