@@ -507,7 +507,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Antenna");
 		}
 	}
@@ -731,7 +731,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Antenna");
 		}
 	}
@@ -759,7 +759,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAntennaMake::name(antennaMake));
+		eoss.writeString(CAntennaMake::name(antennaMake));
 			/* eoss.writeInt(antennaMake); */
 				
 		
@@ -769,7 +769,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAntennaType::name(antennaType));
+		eoss.writeString(CAntennaType::name(antennaType));
 			/* eoss.writeInt(antennaType); */
 				
 		

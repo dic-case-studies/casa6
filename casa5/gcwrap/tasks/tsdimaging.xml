@@ -132,11 +132,15 @@ values. See description below for details of gridfunction available.
             <shortdescription>velocity definition [\'radio\', \'optical\', \'true\' or \'relativistic\'] </shortdescription>
             <description>velocity definition</description>
             <value>radio</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                     <value>radio</value>
                     <value>optical</value>
                     <value>true</value>
                     <value>relativistic</value>
+                    <value>RADIO</value>
+                    <value>OPTICAL</value>
+                    <value>TRUE</value>
+                    <value>RELATIVISTIC</value>
            </allowed>
     </param>
 
@@ -144,7 +148,7 @@ values. See description below for details of gridfunction available.
             <shortdescription>velocity frame of output image [\'lsrk\', \'lsrd\', \'bary\', \'geo\', \'topo\', \'galacto\', \'lgroup\', \'cmb\'] (\'\'=current frame or LSRK for multiple-MS inputs) </shortdescription>
             <description>velocity frame of output image (''=current frame or LSRK for multiple-MS inputs)</description>
             <value></value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                     <value>lsrk</value>
                     <value>lsrd</value>
                     <value>bary</value>
@@ -153,6 +157,14 @@ values. See description below for details of gridfunction available.
                     <value>galacto</value>
                     <value>lgroup</value>
                     <value>cmb</value>
+                    <value>LSRK</value>
+                    <value>LSRD</value>
+                    <value>BARY</value>
+                    <value>GEO</value>
+                    <value>TOPO</value>
+                    <value>GALACTO</value>
+                    <value>LGROUP</value>
+                    <value>CMB</value>
                     <value></value>
            </allowed>
     </param>
@@ -161,12 +173,17 @@ values. See description below for details of gridfunction available.
             <shortdescription>gridding function for imaging [\'BOX\', \'SF\', \'PB\', \'GAUSS\' or \'GJINC\'] (see description in help)</shortdescription>
             <description>gridding function for imaging (see description in help)</description>
             <value>BOX</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value>BOX</value>
                 <value>PB</value>
                 <value>SF</value>
                 <value>GAUSS</value>
                 <value>GJINC</value>
+                <value>box</value>
+                <value>pb</value>
+                <value>sf</value>
+                <value>gauss</value>
+                <value>gjinc</value>
             </allowed>
     </param>
 
@@ -214,11 +231,15 @@ values. See description below for details of gridfunction available.
         <param type="string" name="projection">
             <description>map projection type</description>
             <value>SIN</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value>SIN</value>
                 <value>CAR</value>
                 <value>TAN</value>
                 <value>SFL</value>
+                <value>sin</value>
+                <value>car</value>
+                <value>tan</value>
+                <value>sfl</value>
             </allowed>
         </param>
 
@@ -226,12 +247,17 @@ values. See description below for details of gridfunction available.
             <shortdescription>pointing data column to use [\'direction\', \'target\', \'pointing_offset\', \'source_offset\' or \'encoder\']</shortdescription>
             <description>pointing data column to use</description>
             <value>direction</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value>target</value>
                 <value>pointing_offset</value>
                 <value>source_offset</value>
                 <value>encoder</value>
                 <value>direction</value>
+                <value>TARGET</value>
+                <value>POINTING_OFFSET</value>
+                <value>SOURCE_OFFSET</value>
+                <value>ENCODER</value>
+                <value>DIRECTION</value>
             </allowed>
     </param>
 
@@ -274,7 +300,7 @@ values. See description below for details of gridfunction available.
     <param type="string" name="brightnessunit">
             <description>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</description>
             <value></value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value></value>
                 <value>K</value>
                 <value>Jy/beam</value>

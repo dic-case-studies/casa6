@@ -331,6 +331,20 @@ namespace asdm {
 	
 
 	
+  		
+		
+		x->tauBaselineExists = tauBaselineExists;
+		
+		
+			
+				
+		x->tauBaseline = tauBaseline;
+ 				
+ 			
+		
+	
+
+	
 	
 		
 	
@@ -602,6 +616,20 @@ namespace asdm {
 	
 
 	
+  		
+		
+		x.tauBaselineExists = tauBaselineExists;
+		
+		
+			
+				
+		x.tauBaseline = tauBaseline;
+ 				
+ 			
+		
+	
+
+	
 	
 		
 	
@@ -866,6 +894,21 @@ namespace asdm {
 	
 
 	
+		
+		tauBaselineExists = x.tauBaselineExists;
+		if (x.tauBaselineExists) {
+		
+		
+			
+		setTauBaseline(x.tauBaseline);
+  			
+ 		
+		
+		}
+		
+	
+
+	
 	
 		
 	
@@ -894,7 +937,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalWVR");
 		}
 	}
@@ -1035,6 +1078,18 @@ namespace asdm {
 		
 		Parser::toXML(water, "water", buf);
 		
+		
+	
+
+  	
+ 		
+		if (tauBaselineExists) {
+		
+		
+		Parser::toXML(tauBaseline, "tauBaseline", buf);
+		
+		
+		}
 		
 	
 
@@ -1226,6 +1281,16 @@ namespace asdm {
 	
 
 	
+  		
+        if (row.isStr("<tauBaseline>")) {
+			
+	  		setTauBaseline(Parser::getFloat("tauBaseline","CalWVR",rowDoc));
+			
+		}
+ 		
+	
+
+	
 	
 		
 	
@@ -1250,7 +1315,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalWVR");
 		}
 	}
@@ -1299,7 +1364,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CWVRMethod::name(wvrMethod));
+		eoss.writeString(CWVRMethod::name(wvrMethod));
 			/* eoss.writeInt(wvrMethod); */
 				
 		
@@ -1433,6 +1498,20 @@ namespace asdm {
 
 	
 	
+	eoss.writeBoolean(tauBaselineExists);
+	if (tauBaselineExists) {
+	
+	
+	
+		
+						
+			eoss.writeFloat(tauBaseline);
+				
+		
+	
+
+	}
+
 	}
 	
 void CalWVRRow::antennaNameFromBin(EndianIStream& eis) {
@@ -1695,7 +1774,24 @@ void CalWVRRow::waterFromBin(EndianIStream& eis) {
 	
 }
 
+void CalWVRRow::tauBaselineFromBin(EndianIStream& eis) {
 		
+	tauBaselineExists = eis.readBoolean();
+	if (tauBaselineExists) {
+		
+	
+	
+		
+			
+		tauBaseline =  eis.readFloat();
+			
+		
+	
+
+	}
+	
+}
+	
 	
 	CalWVRRow* CalWVRRow::fromBin(EndianIStream& eis, CalWVRTable& table, const vector<string>& attributesSeq) {
 		CalWVRRow* row = new  CalWVRRow(table);
@@ -1903,7 +1999,18 @@ void CalWVRRow::waterFromBin(EndianIStream& eis) {
 	}
 	
 
+	
+	// Convert a string into an float 
+	void CalWVRRow::tauBaselineFromText(const string & s) {
+		tauBaselineExists = true;
+		 
+          
+		tauBaseline = ASDMValuesParser::parse<float>(s);
+          
 		
+	}
+	
+	
 	
 	void CalWVRRow::fromText(const std::string& attributeName, const std::string&  t) {
 		map<string, CalWVRAttributeFromText>::iterator iter;
@@ -2433,6 +2540,53 @@ void CalWVRRow::waterFromBin(EndianIStream& eis) {
 	
 
 	
+	/**
+	 * The attribute tauBaseline is optional. Return true if this attribute exists.
+	 * @return true if and only if the tauBaseline attribute exists. 
+	 */
+	bool CalWVRRow::isTauBaselineExists() const {
+		return tauBaselineExists;
+	}
+	
+
+	
+ 	/**
+ 	 * Get tauBaseline, which is optional.
+ 	 * @return tauBaseline as float
+ 	 * @throw IllegalAccessException If tauBaseline does not exist.
+ 	 */
+ 	float CalWVRRow::getTauBaseline() const  {
+		if (!tauBaselineExists) {
+			throw IllegalAccessException("tauBaseline", "CalWVR");
+		}
+	
+  		return tauBaseline;
+ 	}
+
+ 	/**
+ 	 * Set tauBaseline with the specified float.
+ 	 * @param tauBaseline The float value to which tauBaseline is to be set.
+ 	 
+ 	
+ 	 */
+ 	void CalWVRRow::setTauBaseline (float tauBaseline) {
+	
+ 		this->tauBaseline = tauBaseline;
+	
+		tauBaselineExists = true;
+	
+ 	}
+	
+	
+	/**
+	 * Mark tauBaseline, which is an optional field, as non-existent.
+	 */
+	void CalWVRRow::clearTauBaseline () {
+		tauBaselineExists = false;
+	}
+	
+
+	
 	///////////////////////////////////////////////
 	// Extrinsic Table Attributes getters/setters//
 	///////////////////////////////////////////////
@@ -2598,6 +2752,10 @@ void CalWVRRow::waterFromBin(EndianIStream& eis) {
 	
 
 	
+		tauBaselineExists = false;
+	
+
+	
 	
 
 	
@@ -2612,6 +2770,8 @@ void CalWVRRow::waterFromBin(EndianIStream& eis) {
 	
 // This attribute is scalar and has an enumeration type. Let's initialize it to some valid value (the 1st of the enumeration).		
 wvrMethod = CWVRMethod::from_int(0);
+	
+
 	
 
 	
@@ -2662,6 +2822,7 @@ wvrMethod = CWVRMethod::from_int(0);
 	 fromBinMethods["water"] = &CalWVRRow::waterFromBin; 
 		
 	
+	 fromBinMethods["tauBaseline"] = &CalWVRRow::tauBaselineFromBin; 
 	
 	
 	
@@ -2739,6 +2900,10 @@ wvrMethod = CWVRMethod::from_int(0);
 		 
 	
 
+	 
+				
+	fromTextMethods["tauBaseline"] = &CalWVRRow::tauBaselineFromText;
+		 	
 		
 	}
 	
@@ -2778,6 +2943,10 @@ wvrMethod = CWVRMethod::from_int(0);
 
 	
 
+	
+
+	
+		tauBaselineExists = false;
 	
 
 	
@@ -2831,6 +3000,13 @@ wvrMethod = CWVRMethod::from_int(0);
 		
 		
 		
+		if (row->tauBaselineExists) {
+			tauBaseline = row->tauBaseline;		
+			tauBaselineExists = true;
+		}
+		else
+			tauBaselineExists = false;
+		
 		}
 		
 		 fromBinMethods["antennaName"] = &CalWVRRow::antennaNameFromBin; 
@@ -2853,6 +3029,7 @@ wvrMethod = CWVRMethod::from_int(0);
 		 fromBinMethods["water"] = &CalWVRRow::waterFromBin; 
 			
 	
+		 fromBinMethods["tauBaseline"] = &CalWVRRow::tauBaselineFromBin; 
 			
 	}
 
@@ -3131,6 +3308,7 @@ wvrMethod = CWVRMethod::from_int(0);
 		result["water"] = &CalWVRRow::waterFromBin;
 		
 		
+		result["tauBaseline"] = &CalWVRRow::tauBaselineFromBin;
 			
 		
 		return result;	

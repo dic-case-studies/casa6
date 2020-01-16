@@ -33,8 +33,7 @@ using namespace std;
 
 namespace asdm {
 
-	EntityRef EntityRef::getEntityRef(StringTokenizer &t) 
-		throw (InvalidArgumentException) {
+	EntityRef EntityRef::getEntityRef(StringTokenizer &t) {
 		try {
 			string s = t.nextToken("<>");
 			if (s == " ")
@@ -42,7 +41,7 @@ namespace asdm {
 			EntityRef e;
 			e.setFromXML(s);
 			return e;
-		} catch (OutOfBoundsException err) {
+		} catch (const OutOfBoundsException &err) {
 			throw InvalidArgumentException("Unexpected end-of-string!");
 		}
 	}
@@ -125,7 +124,7 @@ namespace asdm {
 	 * 
 	 * @return The values of this EntityRef as an XML-formated string.
 	 */
-	string EntityRef::toXML() const throw(InvalidDataException) {
+	string EntityRef::toXML() const {
 		string msg = validXML();
 		if (msg.length() != 0) 
 			throw InvalidDataException(msg);

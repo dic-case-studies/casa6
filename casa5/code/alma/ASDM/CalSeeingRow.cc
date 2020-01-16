@@ -688,7 +688,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalSeeing");
 		}
 	}
@@ -1004,7 +1004,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalSeeing");
 		}
 	}
@@ -1016,7 +1016,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAtmPhaseCorrection::name(atmPhaseCorrection));
+		eoss.writeString(CAtmPhaseCorrection::name(atmPhaseCorrection));
 			/* eoss.writeInt(atmPhaseCorrection); */
 				
 		
