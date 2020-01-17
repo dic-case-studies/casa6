@@ -1530,7 +1530,6 @@ VbAvg::finalizeCubeData (MsRowAvg * msRow)
         }
         else if (doing_p.observedData_p)
         {
-            cout<<"2in else"<<endl;
             if(existsColumn(VisBufferComponent2::SigmaSpectrum))
                 arrayTransformInPlace<Complex, Float, DivideOp > (model,msRow->sigmaSpectrum (), op);
             else
