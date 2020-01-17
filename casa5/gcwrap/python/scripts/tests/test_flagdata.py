@@ -2385,34 +2385,58 @@ class test_clip(test_base):
 
         
     def test_timeavg_list_mode1(self):
-        '''flagdata: timeavg=True should not be accepted in list mode'''
-        
+        '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
+
         inplist = ["mode='manual' spw='7'",
                    "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]"]
 
         # CAS-12294: should raise exception when trying to use timeavg and forbidden modes
         # although task_flagdata will catch the exception and simply return {}
-        flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        res = flagdata(vis=self.vis, mode='summary', spw='7,9')
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
         self.assertEqual(res, {})
+        res = flagdata(vis=self.vis, mode='summary', spw='7,9')
+        self.assertEqual(res['total'], 549888)
+        self.assertEqual(res['flagged'], 0)
+        self.assertEqual(res['spw']['7']['flagged'], 0)
         # This is what it would flag if clip+timeavg+manual was accepted:
         # self.assertEqual(res['spw']['7']['flagged'], 274944)
         # self.assertEqual(res['spw']['9']['flagged'], 0)
         # self.assertEqual(res['flagged'], 274944)
 
     def test_timeavg_list_mode2(self):
-        '''flagdata: timeavg=True should not be accepted in list mode'''
-        
+        '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
+
         inplist = ["mode='manual' spw='7'",
                    "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]",
                    "mode='clip' spw='8' clipzeros=True"]
-        
-        flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
+        # CAS-12294: as above, should not be accepted
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
         res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
-        self.assertEqual(res['spw']['7']['flagged'], 274944)
-        self.assertEqual(res['spw']['8']['flagged'], 274944)
-        self.assertEqual(res['spw']['9']['flagged'], 0)
-        self.assertEqual(res['flagged'], 274944*2)
+        self.assertEqual(res['total'], 824832)
+        self.assertEqual(res['flagged'], 0)
+        self.assertEqual(res['spw']['7']['flagged'], 0)
+        # This is what it would flag if clip+timeavg+manual was accepted:
+        # self.assertEqual(res['spw']['7']['flagged'], 274944)
+        # self.assertEqual(res['spw']['8']['flagged'], 274944)
+        # self.assertEqual(res['spw']['9']['flagged'], 0)
+        # self.assertEqual(res['flagged'], 274944*2)
+
+    def test_chanavg_list_mode1(self):
+        '''flagdata: chanavg=True should not be accepted in list mode, with +manual'''
+        
+        inplist = ["mode='manual' spw='8'",
+                   "mode='clip' spw='9' chanavg=True chanbin=2 clipminmax=[0.0, 0.8]",
+                   "mode='clip' spw='7' clipzeros=True"]
+
+        # CAS-12294: as above, should not be accepted
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+        res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
+        self.assertEqual(res['total'], 824832)
+        self.assertEqual(res['flagged'], 0)
+        self.assertEqual(res['spw']['7']['flagged'], 0)
 
     def test_clip_no_model_col(self):
         "flagdata: Should fail when MODEL or virtual MODEL columns do not exist"
