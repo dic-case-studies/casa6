@@ -56,9 +56,9 @@ namespace asdm {
 class Complex : public std::complex<double> {
 
 public:
-	static Complex fromString(const std::string&) throw(NumberFormatException);
+	static Complex fromString(const std::string&);
 	static std::string toString(const Complex&);
-	static Complex getComplex(StringTokenizer &t) throw(NumberFormatException);
+	static Complex getComplex(StringTokenizer &t);
 
 	Complex();                              		// default constructor
 	Complex(const Complex &);						// X const X& constructor

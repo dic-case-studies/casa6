@@ -44,7 +44,7 @@ public:
 	 * @return a int64_t.
 	 * @throws NumberFormatException.
 	 */
-	static int64_t parseLong(const std::string &s) throw (NumberFormatException);
+	static int64_t parseLong(const std::string &s);
 
 	/**
 	 * Encode a int64_t value into its string representation.
