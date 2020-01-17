@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <stdexcept>
-
+#include <string>
 #include <boost/smart_ptr.hpp>
 
 namespace LibAIR2 {
@@ -114,7 +114,8 @@ namespace LibAIR2 {
     {
       if ( nchannels()  > 1 )
       {
-	throw RadiometerError("More than one channel but asking for single result");
+        std::string err("More than one channel but asking for single result");
+	throw RadiometerError(err);
       }
 
       return eval( skyTb, 0);

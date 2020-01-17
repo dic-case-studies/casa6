@@ -134,7 +134,7 @@ class CalAntennaSolutionsRow;
  * <BR>
  * 
  * \par Role
- * Results of atmosphere calibration by TelCal. This calibration determines the system temperatures corrected for atmospheric absorption. Ionospheric effects are not dealt with in the Table. Note: spectralWindowId was added here after SDMs with this table were produced by ALMA. No xml versions of this table were produced prior to that change, only bin versions.
+ * Results of atmosphere calibration by TelCal. This calibration determines the system temperatures corrected for atmospheric absorption. Ionospheric effects are not dealt with in the Table.
  * <BR>
  
  * Generated from model's revision "-1", branch ""
@@ -205,7 +205,7 @@ class CalAntennaSolutionsRow;
  		 
  * <TD> Tag</TD>
  * <TD> &nbsp; </TD>
- * <TD> &nbsp;Identifies a unique row in the SpectralWindow table. </TD>
+ * <TD> &nbsp; </TD>
  * </TR>
 	
 
@@ -237,7 +237,10 @@ class CalAntennaSolutionsRow;
  * <TD> refAntennaName </TD> 
  * <TD> std::string </TD>
  * <TD>  &nbsp;  </TD> 
- * <TD> &nbsp;The reference anntenna name.  </TD>
+ * <TD> &nbsp;the name of the antenna used as a
+reference to get the antenna-based
+phases.
+ </TD>
  * </TR>
 	
  * <TR>
@@ -279,28 +282,28 @@ class CalAntennaSolutionsRow;
  * <TD> phaseAnt </TD> 
  * <TD> std::vector<float > </TD>
  * <TD>  numReceptor </TD> 
- * <TD> &nbsp;the anntenna based phase solution averaged over the scan. </TD>
+ * <TD> &nbsp;the antenna based phase solution averaged over the scan (one value per receptor per antenna). See refAntennaName for the association of the values of this array with the antennas. </TD>
  * </TR>
 	
  * <TR>
  * <TD> phaseAntRMS </TD> 
  * <TD> std::vector<float > </TD>
  * <TD>  numReceptor </TD> 
- * <TD> &nbsp;the RMS of the phase fluctuations relative to the antenna based average phase. </TD>
+ * <TD> &nbsp;the RMS of the phase fluctuations relative to the antenna based average phase (one value per receptor per antenna). See refAntennaName for the association of the values of this array with the antennas. </TD>
  * </TR>
 	
  * <TR>
  * <TD> amplitudeAnt </TD> 
  * <TD> std::vector<float > </TD>
  * <TD>  numReceptor </TD> 
- * <TD> &nbsp;the antennna based amplitude solution averaged over the scan. </TD>
+ * <TD> &nbsp;the antenna based amplitude solution averaged over the scan (one value per receptor per antenna). See refAntennaName for the association of the values of this array with the antennas. </TD>
  * </TR>
 	
  * <TR>
  * <TD> amplitudeAntRMS </TD> 
  * <TD> std::vector<float > </TD>
  * <TD>  numReceptor </TD> 
- * <TD> &nbsp;the RMS of the amplitude fluctuations relattive to the antenna based average amplitude (one value per receptor per antenna). </TD>
+ * <TD> &nbsp;the antenna based amplitude solution averaged over the scan (one value per receptor per antenna). See refAntennaName for the association of the values of this array with the antennas. </TD>
  * </TR>
 	
 

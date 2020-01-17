@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Temperature Temperature::getTemperature(StringTokenizer &t) throw(NumberFormatException) {
+Temperature Temperature::getTemperature(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return Temperature (value);
 }
