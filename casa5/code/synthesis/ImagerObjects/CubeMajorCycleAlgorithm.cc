@@ -35,7 +35,7 @@ using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 extern Applicator applicator;
 
-CubeMajorCycleAlgorithm::CubeMajorCycleAlgorithm() : myName_p("CubeMajorCycleAlgorithm"),  ftmRec_p(0), iftmRec_p(0), polRep_p(0),startmodel_p(0), status_p(False){
+  CubeMajorCycleAlgorithm::CubeMajorCycleAlgorithm() : myName_p("CubeMajorCycleAlgorithm"),  ftmRec_p(0), iftmRec_p(0), polRep_p(0),startmodel_p(0), movingSource_p(""),status_p(False){
 	
 }
 CubeMajorCycleAlgorithm::~CubeMajorCycleAlgorithm() {
@@ -91,6 +91,10 @@ void CubeMajorCycleAlgorithm::get() {
 		//cerr << k << " imsel " << imSelRec << endl;
 		if(imSelRec.isDefined("polrep"))
 			imSelRec.get("polrep", polRep_p[k]);
+                ///Get moving source name
+                if(imSelRec.isDefined("movingsource") && imSelRec.asString("movingsource") != ""){
+                  imSelRec.get("movingsource", movingSource_p);
+                }
 		//cerr << CPUID << " POLREP " << polRep_p << endl;
 		//Only first major cycle we need to reset model
 		if(nmajorcycles==1)
@@ -147,6 +151,7 @@ void CubeMajorCycleAlgorithm::task(){
                 dataSel_p[k].freqbeg="";
 		subImgr.selectData(dataSel_p[k]);
 	}
+        subImgr.setMovingSource(movingSource_p);
 	Vector<CountedPtr<SIImageStore> > subImStor(imSel_p.nelements());
 	//Do multifield in one process only for now 
 	//TODO if all fields have same nchan then partition all on all subcalls

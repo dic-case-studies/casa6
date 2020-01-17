@@ -358,26 +358,16 @@ def tclean(
                 imager.initializeImagers()
                 imager.initializeNormalizers()
                 imager.setWeighting()
-                
+                ###redo these as we destroyed things for lock issues
+                ## Init minor cycle elements
+                if niter>0 or restoration==True:
+                    imager.initializeDeconvolvers() 
+                if niter>0:
+                    imager.initializeIterationControl()
+
             t1=time.time();
             casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-
-        ## Init minor cycle elements
-        if niter>0 or restoration==True:
-            t0=time.time();
-            imager.initializeDeconvolvers()
-            t1=time.time();
-            casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-
-        ####now is the time to check estimated memory
-        imager.estimatememory()
-            
-        if niter>0:
-            t0=time.time();
-            imager.initializeIterationControl()
-            t1=time.time();
-            casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-            
+        
 
             imager.makePB()
 

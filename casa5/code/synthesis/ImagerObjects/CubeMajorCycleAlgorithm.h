@@ -74,6 +74,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		casacore::Record controlRecord_p;
 		casacore::Record weightParams_p;
 		casacore::Vector<casacore::Vector<casacore::String> > startmodel_p;
+          casacore::String movingSource_p;
 		casacore::Bool status_p;
 		casacore::Int serialBug_p; //have to send a private variable in serial case
 	};

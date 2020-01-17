@@ -681,8 +681,9 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, SynthesisP
 	itsMaxShape=imshape;
 	itsMaxCoordSys=csys;
       }
-	// phasecenter
-        if (impars.phaseCenterFieldId == -1) {
+    mLocation_p=impars.obslocation;
+    // phasecenter
+    if (impars.phaseCenterFieldId == -1) {
           // user-specified
           phaseCenter_p = impars.phaseCenter;
         } else if (impars.phaseCenterFieldId >= 0) {
@@ -1517,8 +1518,9 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		for (uInt k=0; k < imparsVec_p.nelements(); ++k){
 			Record imparsRec = imparsVec_p[k].toRecord();
 			//need to send polrep
-			//cerr << "PUSHPOLREP " << ((itsMappers.imageStore(k))->getDataPolFrame()) << "   "<< Int(((itsMappers.imageStore(k))->getDataPolFrame())) << endl;
 			imparsRec.define("polrep", Int((itsMappers.imageStore(k))->getDataPolFrame()));
+                        //need to send movingSourceName if any
+                        imparsRec.define("movingsource", movingSource_p);
 			Record gridparsRec = gridparsVec_p[k].toRecord();
 			/* Might need this to pass the state of the global ftmachines...test for parallel when needed
 			String err;
@@ -1617,9 +1619,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 				allDone=true;
         }
 
-
-
-    }
+        
+        }
 	  
 	  
   

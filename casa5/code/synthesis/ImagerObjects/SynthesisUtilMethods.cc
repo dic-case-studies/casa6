@@ -1819,6 +1819,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	// Force nchan=1 for anything other than cube modes...
 	if(mode=="mfs") nchan=1;
+        //read obslocation
+        if(inrec.isDefined("obslocation_rec")){
+          String errorobs;
+          const Record obsrec=inrec.asRecord("obslocation_rec");
+          MeasureHolder mh;
+          if(!mh.fromRecord(errorobs, obsrec)){
+            err+=errorobs;
+          }
+          obslocation=mh.asMPosition();
+
+        }
+       
+        
 
 	err += verify();
 	
@@ -2099,8 +2112,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         impar.define("imshape", imshape);
       } 
     //    else cout << " NO CSYS INFO to write to output record " << endl;
-
-
+    ///Now save obslocation
+    Record tmprec;
+    String err;
+    MeasureHolder mh(obslocation);
+    if(mh.toRecord(err, tmprec)){
+      impar.defineRecord("obslocation_rec", tmprec);
+    }
+    else{
+      throw(AipsError("failed to save obslocation to record"));
+    }
     return impar;
   }
 
