@@ -2584,7 +2584,7 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 						}
 					} else {
 						yLabel = yFormat.getLabel(yaxis, yHasRef, yRefVal, ycol, polnRatio);
-						if (yaxis == PMS::FREQUENCY) {
+						if ((yaxis == PMS::FREQUENCY) && (dataParams[plotindex]->cacheType() == PlotMSCacheBase::MS)) {
 							yLabel += " " + MFrequency::showType(plots[plotindex]->cache().getFreqFrame());
 						}
 						addAxisDescription(yLabel, yaxis, cacheType, averaged);
@@ -2623,9 +2623,12 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 						if (yLabelRight.empty()) {
 							yLabelRight = yLabel;
 						} else if (yLabel != yLabelRightLast) {
-							// do not repeat for overplots
-							if ((yLabel.contains("Atm") && !yLabelRight.contains("Atm")) ||
-							    (yLabel.contains("Tsky") && !yLabelRight.contains("Tsky")) ||
+							// do not repeat overlays for overplots (handled below)
+							if (!yLabel.contains("Atm") && !yLabel.contains("Tsky") && !yLabel.contains("Sideband")) {
+								yLabelRight.append( ", ");
+								yLabelRight.append(yLabel);
+							} else if ((yLabel.contains("Atm") && !yLabelRight.contains("Atm")) ||
+								(yLabel.contains("Tsky") && !yLabelRight.contains("Tsky")) ||
 								(yLabel.contains("Sideband") && !yLabelRight.contains("Sideband"))) {
 								yLabelRight.append( ", ");
 								yLabelRight.append(yLabel);
