@@ -46,7 +46,7 @@ else:
 # Test of flagdata modes
 #
 
-def test_eq(result, total, flagged):
+def check_eq(result, total, flagged):
 
     print("%s of %s data was flagged, expected %s of %s" % \
     (result['flagged'], result['total'], flagged, total))
@@ -552,7 +552,7 @@ class test_tfcrop(test_base):
         self.assertEqual(res['correlation']['RR']['flagged'], 43)
         self.assertEqual(res['correlation']['LL']['flagged'], 0)
         flagdata(vis=self.vis, mode='extend', extendpols=True, savepars=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', correlation='Ll'), 1099776, 43)
+        check_eq(flagdata(vis=self.vis, mode='summary', correlation='Ll'), 1099776, 43)
         
     def test_extendtime(self):
         '''flagdata:: Extend the flags created by tfcrop'''
@@ -1274,7 +1274,7 @@ class test_statistics_queries(test_base):
 #        print("Test of mode = 'quack'")
 #        print("parallel quack")
 #        flagdata(vis=self.vis, mode='quack', quackinterval=[1.0, 5.0], antenna=['2', '3'], correlation='RR')
-#        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 22365)
+#        check_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 22365)
 #
     def test9(self):
         '''flagdata: quack mode'''
@@ -1307,19 +1307,19 @@ class test_statistics_queries(test_base):
         '''flagdata: quack mode, quackincrement'''
         flagdata(vis=self.vis, mode='quack', quackinterval=50, quackmode='endb', quackincrement=True,
                  savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 571536)
+        check_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 571536)
 
         flagdata(vis=self.vis, mode='quack', quackinterval=20, quackmode='endb', quackincrement=True,
                  savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 857304)
+        check_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 857304)
         
         flagdata(vis=self.vis, mode='quack', quackinterval=150, quackmode='endb', quackincrement=True,
                  savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 1571724)
+        check_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 1571724)
         
         flagdata(vis=self.vis, mode='quack', quackinterval=50, quackmode='endb', quackincrement=True,
                  savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 1762236)
+        check_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 1762236)
 #        flagdata(vis=self.vis, mode='unflag', savepars=False, flagbackup=False)
 
     def test_quackincrement_list(self):
@@ -1379,12 +1379,12 @@ class test_selections(test_base):
     def test_antenna(self):
         '''flagdata: antenna selection'''
         flagdata(vis=self.vis, antenna='VA02', savepars=False,flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='VA02'), 196434, 196434)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='VA02'), 196434, 196434)
 
     def test_spw(self):
         '''flagdata: spw selection'''
         flagdata(vis=self.vis, spw='0', savepars=False,flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
 
     def test_spw_list(self):
         '''flagdata: spw selection in list mode''' 
@@ -1424,12 +1424,12 @@ class test_selections(test_base):
 
     def test_correlation(self):
         flagdata(vis=self.vis, correlation='LL', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 98217)
-        test_eq(flagdata(vis=self.vis, mode='summary', correlation='RR'), 1427139, 0)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 98217)
+        check_eq(flagdata(vis=self.vis, mode='summary', correlation='RR'), 1427139, 0)
 #        flagdata(vis=self.vis, mode='unflag', savepars=False, flagbackup=False)
         self.unflag_ms()
         flagdata(vis=self.vis, correlation='LL,RR', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
         
 #        flagdata(vis=self.vis, mode='unflag', savepars=False, flagbackup=False)
         self.unflag_ms()
@@ -1439,28 +1439,28 @@ class test_selections(test_base):
         self.assertEqual(res['flagged'], 204979)
 #        flagdata(vis=self.vis, correlation='LL RR')
 #        flagdata(vis=self.vis, correlation='LL ,, ,  ,RR')
-#        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+#        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
 
     def test_field(self):
         '''flagdata: field selection'''
         flagdata(vis=self.vis, field='0', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 39186)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 39186)
 
     def test_uvrange(self):
         '''flagdata: uvrange selection'''
         flagdata(vis=self.vis, uvrange='200~400m', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='VA02'), 196434, 55944)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='VA02'), 196434, 55944)
 
     def test_timerange(self):
         '''flagdata: timerange selection'''
         flagdata(vis=self.vis, timerange='09:50:00~10:20:00', savepars=False,
                  flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 6552)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 6552)
 
     def test_array(self):
         '''flagdata: array selection'''
         flagdata(vis=self.vis, array='0', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
                 
     def test_action(self):
         '''flagdata: action = calculate'''
@@ -1474,12 +1474,12 @@ class test_selections(test_base):
         self.assertEqual(flagdata(vis=self.vis, mode='summary', antenna='2')['flagged'],98217)
         self.assertEqual(flagdata(vis=self.vis, mode='summary', correlation='RR')['flagged'], 0)
 
-#        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 98217)
-#        test_eq(flagdata(vis=self.vis, mode='summary', correlation='RR'), 1427139, 0)
+#        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 98217)
+#        check_eq(flagdata(vis=self.vis, mode='summary', correlation='RR'), 1427139, 0)
 #        flagdata(vis=self.vis, mode='unflag', savepars=False, flagbackup=False)
         self.unflag_ms()
         flagdata(vis=self.vis, correlation='LL,RR,RL', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+        check_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
         
     def test_multi_timerange(self):
         '''flagdata: CAS-5300, in list mode, flag multiple timerange intervals'''
@@ -1512,7 +1512,7 @@ class test_alma(test_base):
     def test_wvr(self):
         '''flagdata: flag WVR correlation'''
         flagdata(vis=self.vis, correlation='I', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', spw='0'),608, 608)
+        check_eq(flagdata(vis=self.vis, mode='summary', spw='0'),608, 608)
 
     def test_abs_wvr(self):
         '''flagdata: clip ABS_WVR'''
@@ -1682,40 +1682,40 @@ class test_elevation(test_base):
     def test_lower(self):
         flagdata(vis = self.vis, mode = 'elevation', savepars=False)
         
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, 0)
+        check_eq(flagdata(vis=self.vis, mode='summary'), self.all, 0)
 
         flagdata(vis = self.vis, mode = 'elevation', lowerlimit = 50, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, 0)
+        check_eq(flagdata(vis=self.vis, mode='summary'), self.all, 0)
 
         flagdata(vis = self.vis, mode = 'elevation', lowerlimit = 55, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x55)
+        check_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x55)
 
         flagdata(vis = self.vis, mode = 'elevation', lowerlimit = 60, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x60)
+        check_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x60)
 
         flagdata(vis = self.vis, mode = 'elevation', lowerlimit = 65, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x65)
+        check_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x65)
 
     def test_upper(self):
         flagdata(vis = self.vis, mode = 'elevation', upperlimit = 60, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.all - self.x60)
+        check_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.all - self.x60)
 
 
     def test_interval(self):
         flagdata(vis = self.vis,mode = 'elevation',lowerlimit = 55,upperlimit = 60,
                   savepars=False,flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.all - (self.x60 - self.x55))
+        check_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.all - (self.x60 - self.x55))
 
 
 class test_list_file(test_base):
@@ -2385,30 +2385,58 @@ class test_clip(test_base):
 
         
     def test_timeavg_list_mode1(self):
-        '''flagdata: timeavg=True should not be accepted in list mode'''
-        
+        '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
+
         inplist = ["mode='manual' spw='7'",
                    "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]"]
-        
-        flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
+        # CAS-12294: should raise exception when trying to use timeavg and forbidden modes
+        # although task_flagdata will catch the exception and simply return {}
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
         res = flagdata(vis=self.vis, mode='summary', spw='7,9')
-        self.assertEqual(res['spw']['7']['flagged'], 274944)
-        self.assertEqual(res['spw']['9']['flagged'], 0)
-        self.assertEqual(res['flagged'], 274944)
+        self.assertEqual(res['total'], 549888)
+        self.assertEqual(res['flagged'], 0)
+        self.assertEqual(res['spw']['7']['flagged'], 0)
+        # This is what it would flag if clip+timeavg+manual was accepted:
+        # self.assertEqual(res['spw']['7']['flagged'], 274944)
+        # self.assertEqual(res['spw']['9']['flagged'], 0)
+        # self.assertEqual(res['flagged'], 274944)
 
     def test_timeavg_list_mode2(self):
-        '''flagdata: timeavg=True should not be accepted in list mode'''
-        
+        '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
+
         inplist = ["mode='manual' spw='7'",
                    "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]",
                    "mode='clip' spw='8' clipzeros=True"]
-        
-        flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
+        # CAS-12294: as above, should not be accepted
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
         res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
-        self.assertEqual(res['spw']['7']['flagged'], 274944)
-        self.assertEqual(res['spw']['8']['flagged'], 274944)
-        self.assertEqual(res['spw']['9']['flagged'], 0)
-        self.assertEqual(res['flagged'], 274944*2)
+        self.assertEqual(res['total'], 824832)
+        self.assertEqual(res['flagged'], 0)
+        self.assertEqual(res['spw']['7']['flagged'], 0)
+        # This is what it would flag if clip+timeavg+manual was accepted:
+        # self.assertEqual(res['spw']['7']['flagged'], 274944)
+        # self.assertEqual(res['spw']['8']['flagged'], 274944)
+        # self.assertEqual(res['spw']['9']['flagged'], 0)
+        # self.assertEqual(res['flagged'], 274944*2)
+
+    def test_chanavg_list_mode1(self):
+        '''flagdata: chanavg=True should not be accepted in list mode, with +manual'''
+        
+        inplist = ["mode='manual' spw='8'",
+                   "mode='clip' spw='9' chanavg=True chanbin=2 clipminmax=[0.0, 0.8]",
+                   "mode='clip' spw='7' clipzeros=True"]
+
+        # CAS-12294: as above, should not be accepted
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+        res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
+        self.assertEqual(res['total'], 824832)
+        self.assertEqual(res['flagged'], 0)
+        self.assertEqual(res['spw']['7']['flagged'], 0)
 
     def test_clip_no_model_col(self):
         "flagdata: Should fail when MODEL or virtual MODEL columns do not exist"
@@ -3931,7 +3959,7 @@ class test_preaveraging(test_base):
 
         # Check results
         self.assertEqual(res1['flagged'], 36)
-        self.assertEqual(res2['flagged'], 0)
+        self.assertEqual(res2['flagged'], 60)
         
     def test_tfcrop_chanavg(self):
         '''flagdata: tfcrop with chan average and compare vs mstransform'''
