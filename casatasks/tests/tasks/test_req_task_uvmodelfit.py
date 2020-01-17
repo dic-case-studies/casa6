@@ -26,6 +26,7 @@ CASA6 = False
 try:
     import casatools
     from casatasks import uvmodelfit, casalog
+    tb = casatools.table()
     CASA6 = True
 except ImportError:
     from __main__ import default
@@ -36,7 +37,6 @@ import os
 import unittest
 import shutil
 import numpy as np
-from filecmp import dircmp
 
 ### DATA ###
 
@@ -76,7 +76,13 @@ def makecopy():
         for f in files:
             os.chmod(os.path.join(root, f), 493)
     
+def get_col(data, col='Flux'):
+
+    tb.open(data)
+    res = tb.getcol(col)
+    tb.close()
     
+    return res
        
 class uvmodelfit_test(unittest.TestCase):
 
@@ -127,10 +133,10 @@ class uvmodelfit_test(unittest.TestCase):
         uvmodelfit(vis=datacopy, field='0', outfile='test1.cl')
         uvmodelfit(vis=datacopy, field='1', outfile='test2.cl')
         
-        #uvmodelfit(vis=datacopy, field='')
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
         
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
     def test_spwSelect(self):
         '''
@@ -143,8 +149,10 @@ class uvmodelfit_test(unittest.TestCase):
         uvmodelfit(vis=spwcopy, spw='0', outfile='test1.cl')
         uvmodelfit(vis=spwcopy, spw='1', outfile='test2.cl')
         
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
     
     def test_selectData(self):
@@ -158,9 +166,11 @@ class uvmodelfit_test(unittest.TestCase):
         uvmodelfit(vis=datacopy, antenna='0~5&', field='1', selectdata=False, outfile='test1.cl')
         uvmodelfit(vis=datacopy, antenna='0~5&', field='1', selectdata=True, outfile='test2.cl')
         
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
-    
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
+        
     
     def test_timerangeSelect(self):
         '''
@@ -173,10 +183,10 @@ class uvmodelfit_test(unittest.TestCase):
         uvmodelfit(vis=datacopy, timerange='10:40:46~10:41:36', outfile='test1.cl')
         uvmodelfit(vis=datacopy, timerange='10:45:46~10:46:36', outfile='test2.cl')
         
-        dcmp = dircmp('test1.cl', 'test2.cl')
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
         
-        self.assertTrue(len(dcmp.diff_files) > 0)
-        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
         
     def test_uvrangeSelect(self):
@@ -184,7 +194,7 @@ class uvmodelfit_test(unittest.TestCase):
             test_uvrangeSelect
             --------------------
             
-            Check that the urange parameter properly select the uvranges
+            Check that the uvrange parameter properly select the uvranges
         '''
         
         # Can't select a range? It seems this requires being able to select a number of multiple fields.
@@ -192,8 +202,10 @@ class uvmodelfit_test(unittest.TestCase):
         uvmodelfit(vis=datacopy, uvrange='0~50', field='1', outfile='test1.cl')
         uvmodelfit(vis=datacopy, uvrange='50~100', field='1', outfile='test2.cl')
         
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
         
     def test_scanSelect(self):
@@ -207,8 +219,11 @@ class uvmodelfit_test(unittest.TestCase):
         uvmodelfit(vis=datacopy, scan='1', outfile='test1.cl')
         uvmodelfit(vis=datacopy, scan='2', outfile='test2.cl')
         
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
+        
         
     def test_antennaSelect(self):
         '''
@@ -222,8 +237,11 @@ class uvmodelfit_test(unittest.TestCase):
         uvmodelfit(vis=datacopy, antenna='1', field='1', outfile='test1.cl')
         uvmodelfit(vis=datacopy, antenna='2', field='1',outfile='test2.cl')
         
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
+        
         
     """
     def test_msSelect(self):
@@ -240,14 +258,16 @@ class uvmodelfit_test(unittest.TestCase):
             test_niter
             -----------
             
-            Check that the number of niter parameter selects the number of iterations uvmodlefit runs
+            Check that the number of niter parameter selects the number of iterations uvmodelfit runs
         '''
         
         uvmodelfit(vis=datacopy, niter=1, field='1', outfile='test1.cl')
         uvmodelfit(vis=datacopy, niter=5, field='1', outfile='test2.cl')
         
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
         
     def test_comptype(self):
@@ -255,14 +275,16 @@ class uvmodelfit_test(unittest.TestCase):
             test_comptype
             ---------------
             
-            Check that the comptype parameter changes the compnent model type
+            Check that the comptype parameter changes the component model type
         '''
         
         uvmodelfit(vis=datacopy, comptype='D', field='1', sourcepar=[1.0,1.0,1.0,1.0,1.0,1.0], outfile='test1.cl')
         uvmodelfit(vis=datacopy, comptype='G', field='1', sourcepar=[1.0,1.0,1.0,1.0,1.0,1.0], outfile='test2.cl')
 
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
         
     def test_sourcepar(self):
@@ -270,14 +292,16 @@ class uvmodelfit_test(unittest.TestCase):
             test_sourcepar
             ----------------
             
-            Check that sourcepar selects starting guess for compnent parameters
+            Check that sourcepar selects starting guess for component parameters
         '''
         
         uvmodelfit(vis=datacopy, field='1', sourcepar=[1.0,0.0,0.0], outfile='test1.cl')
         uvmodelfit(vis=datacopy, field='1', sourcepar=[1.0,1.0,1.0], outfile='test2.cl')
-
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
         
     def test_varypar(self):
@@ -290,9 +314,11 @@ class uvmodelfit_test(unittest.TestCase):
         
         uvmodelfit(vis=datacopy, field='1', sourcepar=[1.0,1.0,1.0], varypar=[True,True,True],outfile='test1.cl')
         uvmodelfit(vis=datacopy, field='1', sourcepar=[1.0,1.0,1.0], varypar=[True,False,False],outfile='test2.cl')
-
-        dcmp = dircmp('test1.cl', 'test2.cl')
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        
+        res1 = get_col('test1.cl')
+        res2 = get_col('test2.cl')
+        
+        self.assertFalse(np.all(np.isclose(res1, res2)))
         
         
     def test_outfile(self):

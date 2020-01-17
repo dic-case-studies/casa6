@@ -110,7 +110,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imcontsub.py
   test_imfit.py
   test_imhead.py
-  test_imhistory.py
   test_immath.py
   test_immoments.py
   test_impbcor.py
@@ -129,7 +128,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imtrans.py
   test_imval.py
   test_initweights.py
-  test_listhistory.py
   test_listfits.py
   test_listobs.py
   test_listpartition.py
@@ -207,6 +205,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   ###
 
+  test_req_task_imhistory.py
   test_req_task_listcal.py
   test_req_task_accor.py
   test_req_task_applycal.py
