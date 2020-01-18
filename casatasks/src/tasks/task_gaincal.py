@@ -21,7 +21,8 @@ def gaincal(vis=None,caltable=None,
             solint=None,combine=None,preavg=None,
             refant=None,refantmode=None,minblperant=None,
             minsnr=None,solnorm=None,normtype=None,
-            gaintype=None,smodel=None,calmode=None,solmode=None,rmsthresh=None,append=None,
+            gaintype=None,smodel=None,calmode=None,solmode=None,rmsthresh=None,corrdepflags=None,
+            append=None,
             splinetime=None,npointaver=None,phasewrap=None,
             docallib=None,callib=None,
             gaintable=None,gainfield=None,interp=None,spwmap=None,
@@ -63,6 +64,11 @@ def gaincal(vis=None,caltable=None,
             mycb.selectvis(time='',spw=spw,scan='',field=field,intent=intent,
                            observation='', baseline='', uvrange='',
                            chanmode='none', msselect='ANTENNA1!=ANTENNA2')
+
+        # signal use of correlation-dependent flags, if requested                                                                                                                             
+        if corrdepflags:
+            mycb.setcorrdepflags(True)
+
 
         # set the model, if specified
         if (len(smodel)>0):

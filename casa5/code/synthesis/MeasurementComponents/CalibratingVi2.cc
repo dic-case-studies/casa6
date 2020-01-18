@@ -480,8 +480,8 @@ ViImplementation2 * CalVi2LayerFactory::createInstance (ViImplementation2* vii0)
 // -----------------------------------------------------------------------
 CalSolvingVi2::CalSolvingVi2(	vi::ViImplementation2 * inputVii,
 				const CalibratingParameters& calpar) :
-  CalibratingVi2 (inputVii,calpar)
-
+  CalibratingVi2 (inputVii,calpar),
+  corrDepFlags_(false)
 {
   corrFactor_p=sqrt(corrFactor_p);
 }
@@ -490,15 +490,18 @@ CalSolvingVi2::CalSolvingVi2(	vi::ViImplementation2 * inputVii,
 CalSolvingVi2::CalSolvingVi2( vi::ViImplementation2 * inputVii,
                                 const CalibratingParameters& calpar,
                                 String msname) :
-  CalibratingVi2 (inputVii,calpar,msname)
+  CalibratingVi2 (inputVii,calpar,msname),
+  corrDepFlags_(false)
 {
   // Nothing specialized to do here (except ctor parent, above)
 }
 
 // -----------------------------------------------------------------------
 CalSolvingVi2::CalSolvingVi2( vi::ViImplementation2 * inputVii,
-			      VisEquation *ve) :
-  CalibratingVi2 (inputVii,ve)
+			      VisEquation *ve,
+			      const Bool& corrDepFlags) :
+  CalibratingVi2 (inputVii,ve),
+  corrDepFlags_(corrDepFlags)
 {
   // Nothing specialized to do here (except ctor parent, above)
 }
@@ -728,8 +731,9 @@ void CalSolvingVi2::calibrateCurrentVB() const
 #endif
 
     // Set old-style flags, FOR NOW
-    corrIndepFlags(vb);
-
+    if (!corrDepFlags_)
+      corrIndepFlags(vb);
+    
 #ifdef _OPENMP
     Double time2=omp_get_wtime();
 #endif
@@ -897,11 +901,11 @@ ViImplementation2 * CalSolvingVi2LayerFactory::createInstance (ViImplementation2
 
 
 
-CalSolvingVi2LayerFactoryByVE::CalSolvingVi2LayerFactoryByVE(VisEquation *ve)
+CalSolvingVi2LayerFactoryByVE::CalSolvingVi2LayerFactoryByVE(VisEquation *ve,const casacore::Bool& corrDepFlags)
   : ViiLayerFactory(),
-    ve_p(ve)
+    ve_p(ve),
+    corrDepFlags_(corrDepFlags)
 {
-  
   //  ve_p->state();
 
 }
@@ -909,7 +913,7 @@ CalSolvingVi2LayerFactoryByVE::CalSolvingVi2LayerFactoryByVE(VisEquation *ve)
 // CalSolvingVi2-specific layer-creater
 ViImplementation2 * CalSolvingVi2LayerFactoryByVE::createInstance (ViImplementation2* vii0) const {
   // Make the CalibratingVi2, using supplied ViImplementation2, and return it
-  ViImplementation2 *vii = new CalSolvingVi2(vii0,ve_p);
+  ViImplementation2 *vii = new CalSolvingVi2(vii0,ve_p,corrDepFlags_);
   return vii;
 }
 
