@@ -136,7 +136,7 @@ class TestHelpers:
         _ia.close()
         return numpy.alltrue(op(beam1, beam2))
 
-    def exists(self, imname):
+    def image_exists(self, imname):
         """ Image exists """
         return os.path.exists(imname)
 
@@ -276,7 +276,7 @@ class TestHelpers:
         imex = []
         out = True
         for imname in imlist:
-            ondisk = TestHelpers().exists(imname)
+            ondisk = TestHelpers().image_exists(imname)
             imex.append(ondisk)
             if ondisk != truth:
                 out = False

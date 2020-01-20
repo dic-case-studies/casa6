@@ -1,8 +1,10 @@
-from .Weblog import Weblog
-from .Check import Check
-from .Compare import Compare
-from .TestHelpers import TestHelpers
-
+from .weblog import Weblog
+from .check import Check
+from .compare import *
+#from .extractcasascript import main
+#from .testhelpers import TestHelpers
+#import imagehelpers.imagetesthelpers
+#from imagehelpers import imagetesthelpers
 
 import os
 import sys
@@ -19,8 +21,8 @@ import subprocess
 import numpy
 import six
 
-casa5 = False
-casa6 = False
+_casa5 = False
+_casa6 = False
 __bypass_parallel_processing = 0
 
 try:
@@ -29,17 +31,13 @@ try:
     import casatools
     logging.debug("Importing CASAtasks")
     import casatasks
-    tb = casatools.table()
-    tb2 = casatools.table()
-    tbt = casatools.table()
-    ms = casatools.ms()
-    ia  = casatools.image()
     from casatasks import casalog
-    casa6 = True
+
+    _casa6 = True
 
 except ImportError:
     # CASA 5
-    logging.debug("Import casa6 errors. Trying CASA5...")
+    logging.debug("Import casa6 errors. Trying casa5...")
     from __main__ import default
     from taskinit import tbtool, mstool, iatool
     from taskinit import *
@@ -50,26 +48,22 @@ except ImportError:
             __bypass_parallel_processing = 1
     except ImportError:
         print("MPIEnvironment not Enabled")
-    tb = tbtool()
-    tb2 = tbtool()
-    tbt = tbtool()
-    ms = mstool()
-    ia = iatool()
+
     casa = find_casa()
     if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
         casaglobals=True
         casac = stack_find("casac")
         casalog = stack_find("casalog")
-    casa5 = True
+    _casa5 = True
 
-casa6tools = set([
+_casa6tools = set([
     "agentflagger", "atcafiller", "atmosphere", "calanalysis", "calibrater", "coercetype", "componentlist", "config", "constants", "coordsys", "ctuser", "functional", "image",
     "imagemetadata", "imagepol", "imager", "iterbotsink", "logsink", "measures", "miriadfiller", "ms", "msmetadata", "mstransformer", "platform", "quanta", "regionmanager", "sakura",
     "sdm", "simulator", "singledishms", "spectralline", "synthesisdeconvolver", "synthesisimager", "synthesisimstore", "synthesisnormalizer", "synthesisutils", "table", "typecheck", "utils",
     "vlafiller", "vpmanager"])
 
 
-casa6tasks = set([
+_casa6tasks = set([
     "accor", "accum", "applycal", "asdmsummary", "bandpass", "blcal", "calstat", "clearcal", "clearstat", "concat", "conjugatevis", "cvel", "cvel2",
     "delmod", "exportasdm", "exportfits", "exportuvfits", "feather", "fixplanets", "fixvis", "flagcmd", "flagdata", "flagmanager", "fluxscale", "ft", "gaincal",
     "gencal", "hanningsmooth", "imcollapse", "imcontsub", "imdev", "imfit", "imhead", "imhistory", "immath", "immoments", "impbcor", "importasap", "importasdm",
@@ -79,23 +73,25 @@ casa6tasks = set([
     "sdfit", "sdfixscan", "sdgaincal", "sdimaging", "sdsmooth", "setjy", "simalma", "simanalyze", "simobserve", "slsearch", "smoothcal", "specfit",
     "specflux", "specsmooth", "splattotable", "split", "spxfit", "statwt", "tclean", "uvcontsub", "uvmodelfit", "uvsub", "virtualconcat", "vishead", "visstat", "widebandpbcor"])
 
-miscellaneous_tasks = set(['wvrgcal','plotms'])
+_miscellaneous_tasks = set(['wvrgcal','plotms'])
 
+ 
 ############################################################################################
 ##################################       General Functions       ###########################
 ############################################################################################
+
 __bypass_parallel_processing = 0
 def getNumberOfServers( __bypass_parallel_processing ):
     """
     Return the number of engines (iPython cluster) or the number of servers (MPI cluster)
     """
-    if casa5:
+    if _casa5:
         if (__bypass_parallel_processing == 0):
             return len(MPIEnvironment.mpi_server_rank_list()) + 1
         else:
             return None
-    # TODO Wait For MPI in CASA6
-    if casa6:
+    # TODO Wait For MPI in casa6
+    if _casa6:
         return None
 
 def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
@@ -136,8 +132,8 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
                     current_case = test_case
                 else:
                     current_case = None
-                    #casa6tasks, miscellaneous_tasks
-            for i in casa6tasks.union(miscellaneous_tasks):
+                    #_casa6tasks, _miscellaneous_tasks
+            for i in _casa6tasks.union(_miscellaneous_tasks):
                 if current_case == test_case:
                     if "{}(".format(i) in line:
                         print(line)
@@ -172,7 +168,7 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
     #print("Test Case: {}".format(test_case))
     #print("{} : {}".format(test_case,output[test_case]))
 
-def topickle(input_dict, picklefile):
+def to_pickle(input_dict, picklefile):
     '''
         Add a new dictionary into the existing pickle file
         @param input_dict: The dictionary object to add to the pickle file
@@ -203,13 +199,13 @@ def generate_weblog(task,dictionary,show_passed = True):
 ##################################       Decorators       ##################################
 ############################################################################################
 
-#import casaTestHelper
-#@casaTestHelper.skipIfMissingModule
+#import casatestutils
+#@casatestutils.skipIfMissingModule
 def skipIfMissingModule(required_module, strict=False):
     '''
     Decorator: skip test if specified module is not avaliable
     Example:
-        @casaTestHelper.skipIfMissingModule('astropy')
+        @casatestutils.skipIfMissingModule('astropy')
         def test_test(self):
     '''
     try:
@@ -218,7 +214,7 @@ def skipIfMissingModule(required_module, strict=False):
     except ImportError:
         flag = False
     def deco(function):
-        if not casa6:
+        if not _casa6:
             return deco
         def wrapper(self, *args, **kwargs):
             if not flag:
@@ -234,14 +230,14 @@ def skipIfMissingModule(required_module, strict=False):
         return wrapper
     return deco
 
-#import casaTestHelper
-#@casaTestHelper.time_execution
+#import casatestutils
+#@casatestutils.time_execution
 def time_execution(out_dict):
     def time_decorator(function):
         '''
         Decorator: time execution of test
         Example:
-            @casaTestHelper.time_execution
+            @casatestutils.time_execution
             def test_test(self):
         '''
         @wraps(function)
@@ -319,7 +315,7 @@ def cpu_usage(out_dict):
         return function_usage
     return cpu_decorator
 
-def peakmem(out_dict):
+def peak_mem(out_dict):
     #TODO: https://pytracemalloc.readthedocs.io/examples.html
     ### NOTE: Only for python3.4+
     def mem_decorator(function):
