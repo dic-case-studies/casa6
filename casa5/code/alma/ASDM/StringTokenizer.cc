@@ -31,8 +31,7 @@ using namespace std;
 
 namespace asdm {
 
-StringTokenizer::StringTokenizer(const string &s, const string &delim, bool returnDelims) 
-throw (InvalidArgumentException) {
+StringTokenizer::StringTokenizer(const string &s, const string &delim, bool returnDelims) {
 	currentPosition = 0;
 	newPosition = -1;
 	delimsChanged = false;
@@ -59,8 +58,7 @@ StringTokenizer::~StringTokenizer() {
 	//delete [] delimiter;
 }
 
-void StringTokenizer::setMaxDelimChar() 
-throw (InvalidArgumentException) {
+void StringTokenizer::setMaxDelimChar() {
     if (numDelimiters == 0) {
         throw InvalidArgumentException("Delimiters cannot be null.");
     }
@@ -84,8 +82,7 @@ int StringTokenizer::indexOfDelimiters(char c) {
 	return -1;
 }
 
-int StringTokenizer::skipDelimiters(int startPos) 
-throw (InvalidArgumentException) {
+int StringTokenizer::skipDelimiters(int startPos) {
     if (numDelimiters == 0) {
         throw InvalidArgumentException("Delimiters cannot be null.");
     }
@@ -94,7 +91,7 @@ throw (InvalidArgumentException) {
         char c = str[position];
         if ((c > maxDelimChar) || (indexOfDelimiters(c) < 0))
             break;
-	    position++;
+        position++;
 	}
     return position;
 }
@@ -123,8 +120,7 @@ bool StringTokenizer::hasMoreTokens() {
 	return (newPosition < maxPosition);
 }
 
-string StringTokenizer::nextToken() 
-throw (OutOfBoundsException) { 
+string StringTokenizer::nextToken() {
 	// If next position already computed in hasMoreElements() and
 	// delimiters have changed between the computation and this invocation,
 	// then use the computed value.
@@ -143,8 +139,7 @@ throw (OutOfBoundsException) {
 	return ostr->substr(start, (currentPosition - start));
 }
 
-string StringTokenizer::nextToken(const string delim) 
-throw (OutOfBoundsException) {
+string StringTokenizer::nextToken(const string delim) {
 	numDelimiters = delim.length();
 	strDelimiter = delim;
 	delimiter = strDelimiter.data();

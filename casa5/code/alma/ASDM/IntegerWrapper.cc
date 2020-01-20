@@ -37,7 +37,7 @@ namespace asdm {
     const int Integer::MIN_VALUE = 0x80000000;
     const int Integer::MAX_VALUE = 0x7fffffff;
 
-	int Integer::parseInt(const string &s) throw (NumberFormatException) {
+	int Integer::parseInt(const string &s) {
 		istringstream in;
 		in.str(s);
 		int x;

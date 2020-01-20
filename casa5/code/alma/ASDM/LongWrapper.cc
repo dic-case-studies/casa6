@@ -37,7 +37,7 @@ namespace asdm {
     const int64_t Long::MIN_VALUE = 0x8000000000000000LL;
     const int64_t Long::MAX_VALUE = 0x7fffffffffffffffLL;
 
-	int64_t Long::parseLong(const string &s) throw (NumberFormatException) {
+	int64_t Long::parseLong(const string &s) {
 //		istringstream *in = new istringstream(s.c_str());
 	    istringstream in;
 	    in.str(s.c_str());

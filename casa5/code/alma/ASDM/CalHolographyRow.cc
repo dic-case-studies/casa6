@@ -1215,7 +1215,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalHolography");
 		}
 	}
@@ -1767,7 +1767,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalHolography");
 		}
 	}
@@ -1802,7 +1802,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAntennaMake::name(antennaMake));
+		eoss.writeString(CAntennaMake::name(antennaMake));
 			/* eoss.writeInt(antennaMake); */
 				
 		
@@ -1890,7 +1890,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverBand::name(receiverBand));
+		eoss.writeString(CReceiverBand::name(receiverBand));
 			/* eoss.writeInt(receiverBand); */
 				
 		

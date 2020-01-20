@@ -310,11 +310,16 @@ namespace asdm {
     int min = unit[4];
     int sec = unit[5];
     string s = Integer::toString(yy); s += '-';
-    if (mm < 10) s += '0'; s += Integer::toString(mm); s += '-';
-    if (dd < 10) s += '0'; s += Integer::toString(dd); s += 'T';
-    if (hh < 10) s += '0'; s += Integer::toString(hh); s += ':';
-    if (min < 10) s += '0'; s += Integer::toString(min); s += ':';
-    if (sec < 10) s += '0'; s += Integer::toString(sec);
+    if (mm < 10) s += '0';
+    s += Integer::toString(mm); s += '-';
+    if (dd < 10) s += '0';
+    s += Integer::toString(dd); s += 'T';
+    if (hh < 10) s += '0';
+    s += Integer::toString(hh); s += ':';
+    if (min < 10) s += '0';
+    s += Integer::toString(min); s += ':';
+    if (sec < 10) s += '0';
+    s += Integer::toString(sec);
     // apply fractions of a second
     string frac = Integer::toString(unit[6]);
     s += '.';
@@ -597,7 +602,7 @@ namespace asdm {
       hh   = Integer::parseInt(t.substr(11,2));
       min  = Integer::parseInt(t.substr(14,2));
       sec  = Double::parseDouble(t.substr(17,(t.length() - 17)));
-    } catch (NumberFormatException err) {
+    } catch (const NumberFormatException &err) {
       throw InvalidArgumentException("Invalid time format: " + t);
     }
     return init(yyyy,mm,dd,hh,min,sec);
