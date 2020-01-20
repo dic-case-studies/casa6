@@ -10,7 +10,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 <description>
     
-    The task sdtimeaverage is an SD task for averaging spectra data
+    The task sdtimeaverage is an SD task for averaging spectral data
     over specified time range.    
     
 </description>
