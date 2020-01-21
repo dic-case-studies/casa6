@@ -68,9 +68,8 @@ import os
 import unittest
 import re
 
-#import casatestutils.TestHelpers as th
-import casatestutils.TestHelpers
-th = casatestutils.TestHelpers()
+from casatestutils.imagehelpers import TestHelpers
+th = TestHelpers()
 
 CASA6 = False
  
@@ -84,20 +83,11 @@ except ImportError:
     from tasks import tclean
 
  
-####    Alternative Data     ####
-if 'TEST_DATADIR' in os.environ:
-    DATADIR = str(os.environ.get('TEST_DATADIR'))
-    if os.path.isdir(DATADIR):
-        dataroot = DATADIR
-    else:
-        print('WARN: Directory {} does not exist'.format(dataroot))
+if CASA6:
+    dataroot = ctsys.resolve('performance/')
 else:
-    if CASA6:
-        dataroot = ctsys.resolve('performance/')
- 
-    else:
-        # Note that this directory does not exist
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/performance/'
+    # Note that this directory does not exist
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/performance/'
 
 input_ms = 'uid___A002_Xb9dfa4_X4724_target_spw16.ms'
 datapath = dataroot + input_ms
@@ -124,6 +114,8 @@ class TestTcleanMemProf(unittest.TestCase):
         # Be careful not to use forward slash or it will delete the directory
         os.unlink(input_ms)        
         casalog.setlogfile(str(logpath))
+        os.system('rm -rf tclean_memprofile.log')
+        os.system('rm -rf casa.synthesis.imager.memprofile*') 
 
  
     @classmethod
@@ -166,12 +158,11 @@ class TestTcleanMemProf(unittest.TestCase):
                     break
                 
         mylog.close()
-        self.assertTrue(match, 'Memory profile name from tclean is not found in casa log {0}. Please, check if ~/.casa/rc has a setting synthesis.imager.memprofile.enable: 1'.format(templogfile))
+        self.assertTrue(match, 'Memory profile filename is not found in casalog. Please, check if ~/.casa/rc has a setting synthesis.imager.memprofile.enable: 1')
         
         # Get name of memprofile created by tclean    
         (start,middle,end)=str_match.partition('casa.synthesis.imager.memprofile')
         mem_profile = middle + end.rstrip()
-        #self.assertTrue(th.exists(mem_profile), 'Memory profile file {0} is not found'.format(mem_profile))
         self.assertTrue(os.path.exists(mem_profile), 'Memory profile file {0} is not found'.format(mem_profile))
         
         # Get the memory values of the second column named MemRSS_(VmRSS)_MB, for each row
