@@ -4332,6 +4332,60 @@ class test_virtual_col(test_base):
         self.assertEqual(res_virtual, res, 'Flagging using virtual MODEL column differs from normal MODEL column')
 
 
+@unittest.skipIf(True,
+                 'These tests will open the flagging display GUI -> they are not meant to '
+                 'run together with the usual automated verification tests of test_flagdata')
+class test_auto_methods_display(test_base):
+    """ Test display together with auto-flagging methods and additional methods that can
+    be used together (extendflags and even antint). """
+
+    def setUp(self):
+        """ This MS has 1 field, 2 scans, 16 spws, with 64 channels each. 4 corr"""
+        self.setUp_data4tfcrop()
+
+    def test_display_clip_timeavg_chanavg(self):
+        """ Display data with clip, enabling avg (time and chan)"""
+
+        # Note flagdata with display='data' doesn't return anything (an empty dict)
+        flagdata(vis=self.vis, flagbackup=False, mode='clip', clipminmax=[0.05,10.],
+                 datacolumn='DATA', spw='10,11',
+                 channelavg=True, chanbin=8, timeavg=True, timebin='4s',
+                 display='data')
+
+    def test_display_tfcrop_timeavg_chanavg_extendflags(self):
+        """ Display data with tfcrop, enabling avg (time and chan), extendflags"""
+
+        # SPWs picked to get not too uninteresting outputs (avoid all or almost all
+        # flagged/unflagged)
+        flagdata(vis=self.vis, flagbackup=False, mode='tfcrop',
+                 datacolumn='DATA', spw='5,6',
+                 channelavg=True, chanbin=4, timeavg=True, timebin='4s',
+                 extendflags=True, display='data')
+
+    def test_display_rflag_timeavg_chanavg_extendflags(self):
+        """ Display data with tfcrop, enabling avg (time and chan), extendflags"""
+
+        flagdata(vis=self.vis, flagbackup=False, mode='rflag',
+                 datacolumn='DATA', spw='5,6',
+                 channelavg=True, chanbin=4, timeavg=True, timebin='2s',
+                 extendflags=True, display='data', action='calculate')
+
+    def test_display_all_auto_timeavg_chanavg_extendflags_list_antint(self):
+        """ Display with auto-methods (all), avg (time and chan), extendflags + antint """
+
+        # Note that the only way to enable antint together with one auto-method is to use
+        # the list mode
+        inplist = ["mode='clip' clipminmax=[0.01, 1.] spw='10' timeavg=True timebin='2s' "
+                   "channelavg=True chanbin=4",
+                   "mode='tfcrop'",
+                   "mode='rflag'",
+                   "mode='antint' antint_ref_antenna='ea01' minchanfrac=0.01"
+        ]
+
+        flagdata(vis=self.vis, flagbackup=False, mode='list', inpfile=inplist,
+                 display='data')
+
+
 # Cleanup class
 class cleanup(test_base):
 
@@ -4385,6 +4439,7 @@ def suite():
             test_preaveraging,
             test_preaveraging_rflag_residual,
             test_virtual_col,
+            test_auto_methods_display,
             cleanup]
 
 if is_CASA6:    
