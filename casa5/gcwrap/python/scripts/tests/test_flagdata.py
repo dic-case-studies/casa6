@@ -2389,60 +2389,6 @@ class test_clip(test_base):
         self.assertEqual(res['flagged'], 42370)
 
         
-    def test_timeavg_list_mode1(self):
-        '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
-
-        inplist = ["mode='manual' spw='7'",
-                   "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]"]
-
-        # CAS-12294: should raise exception when trying to use timeavg and forbidden modes
-        # although task_flagdata will catch the exception and simply return {}
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
-        res = flagdata(vis=self.vis, mode='summary', spw='7,9')
-        self.assertEqual(res['total'], 549888)
-        self.assertEqual(res['flagged'], 0)
-        self.assertEqual(res['spw']['7']['flagged'], 0)
-        # This is what it would flag if clip+timeavg+manual was accepted:
-        # self.assertEqual(res['spw']['7']['flagged'], 274944)
-        # self.assertEqual(res['spw']['9']['flagged'], 0)
-        # self.assertEqual(res['flagged'], 274944)
-
-    def test_timeavg_list_mode2(self):
-        '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
-
-        inplist = ["mode='manual' spw='7'",
-                   "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]",
-                   "mode='clip' spw='8' clipzeros=True"]
-
-        # CAS-12294: as above, should not be accepted
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
-        res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
-        self.assertEqual(res['total'], 824832)
-        self.assertEqual(res['flagged'], 0)
-        self.assertEqual(res['spw']['7']['flagged'], 0)
-        # This is what it would flag if clip+timeavg+manual was accepted:
-        # self.assertEqual(res['spw']['7']['flagged'], 274944)
-        # self.assertEqual(res['spw']['8']['flagged'], 274944)
-        # self.assertEqual(res['spw']['9']['flagged'], 0)
-        # self.assertEqual(res['flagged'], 274944*2)
-
-    def test_chanavg_list_mode1(self):
-        '''flagdata: chanavg=True should not be accepted in list mode, with +manual'''
-        
-        inplist = ["mode='manual' spw='8'",
-                   "mode='clip' spw='9' chanavg=True chanbin=2 clipminmax=[0.0, 0.8]",
-                   "mode='clip' spw='7' clipzeros=True"]
-
-        # CAS-12294: as above, should not be accepted
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
-        res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
-        self.assertEqual(res['total'], 824832)
-        self.assertEqual(res['flagged'], 0)
-        self.assertEqual(res['spw']['7']['flagged'], 0)
-
     def test_clip_no_model_col(self):
         "flagdata: Should fail when MODEL or virtual MODEL columns do not exist"
         # Use an MS without MODEL_DATA column
@@ -4332,6 +4278,123 @@ class test_virtual_col(test_base):
         self.assertEqual(res_virtual, res, 'Flagging using virtual MODEL column differs from normal MODEL column')
 
 
+class test_list_modes_forbidden_with_avg(test_base):
+    """
+    CAS-12294: forbid the use of timeavg or chanavg with methods other than the auto-flagging
+    methods (clip, tfcrop, rflag).
+    For now we still allow lists with auto-methods (any or all) + timeavg + chanavg +
+    + extendflags + antint.
+    """
+
+    def setUp(self):
+        self.setUp_data4tfcrop()
+
+    def test_test_forbid_timeavg_list(self):
+        '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
+
+        inplist = ["mode='manual' spw='7'",
+                   "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]"]
+
+        # CAS-12294: should raise exception when trying to use timeavg and forbidden modes
+        # although task_flagdata will catch the exception and simply return {}
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+        res = flagdata(vis=self.vis, mode='summary', spw='7,9')
+        self.assertEqual(res['total'], 549888)
+        self.assertEqual(res['flagged'], 0)
+        # This is what it would flag if clip+timeavg+manual was accepted:
+        # self.assertEqual(res['spw']['7']['flagged'], 274944)
+        # self.assertEqual(res['spw']['9']['flagged'], 0)
+        # self.assertEqual(res['flagged'], 274944)
+
+    def test_forbid_timeavg_list_longer(self):
+        '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
+
+        inplist = ["mode='manual' spw='7'",
+                   "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]",
+                   "mode='clip' spw='8' clipzeros=True"]
+
+        # CAS-12294: as above, should not be accepted
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+        res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
+        self.assertEqual(res['total'], 824832)
+        self.assertEqual(res['flagged'], 0)
+        # This is what it would flag if clip+timeavg+manual was accepted?
+        # self.assertEqual(res['spw']['7']['flagged'], 274944)
+        # self.assertEqual(res['spw']['8']['flagged'], 274944)
+        # self.assertEqual(res['spw']['9']['flagged'], 0)
+        # self.assertEqual(res['flagged'], 274944*2)
+
+    def test_forbid_chanavg_list(self):
+        '''flagdata: chanavg=True should not be accepted in list mode, with +manual'''
+
+        inplist = ["mode='manual' spw='8'",
+                   "mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.8]"]
+
+        # CAS-12294: as above, should not be accepted
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+        res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
+        self.assertEqual(res['total'], 824832)
+        self.assertEqual(res['flagged'], 0)
+
+    def test_forbid_chanavg_list_other_modes(self):
+        '''flagdata: chanavg=True should not be accepted in list mode, with shadow,
+        unflag, elevation, quack'''
+
+        # CAS-12294: as above, should not be accepted. Try to apply several forbidden
+        # methods in a row, and check at the end, to avoid running too many summaries
+        inplist = ["mode='unflag'",
+                   "mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]"]
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+
+        inplist = ["mode='shadow'",
+                   "mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]"]
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+
+        inplist = ["mode='elevation' lowerlimit=89.0 upperlimit=89.5",
+                   "mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]"]
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+
+        inplist = ["mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]",
+                   "mode='quack' quackmode='tail' quackinterval=1.0"]
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+
+        inplist = ["mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]",
+                   "mode='quack' quackmode='end' quackinterval=1.0"]
+        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+
+        # Nothing should have been flagged
+        res = flagdata(vis=self.vis, mode='summary')
+        self.assertEqual(res['total'], 4399104)
+        self.assertEqual(res['flagged'], 0)
+
+    def test_allow_all_auto_methods_timeavg_chanavg_extendflags_antint(self):
+        """ Full list: all auto-methods, avg (time and chan), extendflags and antint """
+
+        # Note that the only way to enable antint together with one auto-method is to use
+        # the list mode
+        inplist = ["mode='clip' clipminmax=[0.01, 1.] spw='10' channelavg=True chanbin=8",
+                   "mode='tfcrop' timeavg=True timebin='2s'",
+                   "mode='rflag' extendflags=True",
+                   "mode='antint' antint_ref_antenna='ea01' minchanfrac=0.01"
+        ]
+
+        res = flagdata(vis=self.vis, flagbackup=False, mode='list', inpfile=inplist)
+        self.assertEqual(res, {})
+        # The return from listmode is not enough to know. Let's see if there are flags
+        res = flagdata(vis=self.vis, mode='summary')
+        print('res: {}'.format(res))
+        self.assertEqual(res['total'], 4399104)
+        self.assertEqual(res['flagged'], 254912)
+
+
 @unittest.skipIf(True,
                  'These tests will open the flagging display GUI -> they are not meant to '
                  'run together with the usual automated verification tests of test_flagdata')
@@ -4439,6 +4502,7 @@ def suite():
             test_preaveraging,
             test_preaveraging_rflag_residual,
             test_virtual_col,
+            test_list_modes_forbidden_with_avg,
             test_auto_methods_display,
             cleanup]
 
