@@ -246,11 +246,11 @@ class statwt_test(unittest.TestCase):
             etimes, ewt, ewtsp, eflag, efrow, edata, esigma, esisp
         ] = _get_table_cols(mytb)
         mytb.done()
-        print("gwt", gwt)
-        print("ewt", ewt)
+        eprint("gwt", gwt)
+        eprint("ewt", ewt)
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
-        print("gwtsp", gwtsp)
-        print("ewtsp", ewtsp)
+        eprint("gwtsp", gwtsp)
+        eprint("ewtsp", ewtsp)
         self.assertTrue(
             np.allclose(gwtsp, ewtsp), 'WEIGHT_SPECTRUM comparison failed'
         )
