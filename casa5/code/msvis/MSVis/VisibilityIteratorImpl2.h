@@ -119,12 +119,21 @@ public:
 //                                const casacore::Block<casacore::Int> & sortColumns,
 //                                casacore::Double timeInterval = 0);
 
-	VisibilityIteratorImpl2(
-		const casacore::Block<const casacore::MeasurementSet *> & mss,
-		const SortColumns & sortColumns,
-		casacore::Double timeInterval,
-		casacore::Bool isWritable,
-		casacore::Bool useMSIter2=false);
+    VisibilityIteratorImpl2(
+        const casacore::Block<const casacore::MeasurementSet *> & mss,
+        const SortColumns & sortColumns,
+        casacore::Double timeInterval,
+        casacore::Bool isWritable,
+        casacore::Bool useMSIter2=false);
+
+    // This constructor is imilar to previous one but it allows to explicitely
+    // define the sorting criteria used for chunk iteration and for subchunk
+    // iteration.
+    VisibilityIteratorImpl2(
+        const casacore::Block<const casacore::MeasurementSet *> & mss,
+        const SortColumns & chunkSortColumns,
+        const SortColumns & subchunkSortColumns,
+        bool isWritable);
 
 	VisibilityIteratorImpl2(const VisibilityIteratorImpl2& vii);
 
@@ -171,12 +180,13 @@ public:
 	virtual void
 	setInterval(casacore::Double timeInterval) override;
 
-	// Set the 'blocking' size for returning data.  With the default (0) only a
-	// single integration is returned at a time, this is what is currently
-	// required for the calibration software. With blocking set, up to nRows can
-	// be returned in one go. The chunk size determines the actual maximum.
-	virtual void
-	setRowBlocking(casacore::Int nRows = 0) override;
+    // Set the 'blocking' size for returning data. If set to 0 (the default),
+    // the chunk will be grouped in subchunks using the subchunk sorting functions
+    // (which default to group by unique timestamp.
+    // With blocking set, up to nRows can be returned in one go.
+    // The chunk size determines the actual maximum.
+    virtual void
+    setRowBlocking(casacore::Int nRows = 0) override;
 
 	virtual casacore::Bool
 	existsColumn(VisBufferComponent2 id) const override;
@@ -1240,11 +1250,10 @@ protected:
 	casacore::CountedPtr<WeightScaling> weightScaling_p;
 	casacore::Bool writable_p;
 
-    // Variables for the handling of the inner loop
-    std::shared_ptr<casacore::MeasurementSet> msInner_p;
-    std::shared_ptr<casacore::MSIter> msIterInner_p;
-    std::vector<std::pair<casacore::String, casacore::CountedPtr<casacore::BaseCompare>>> innerLoopSortColumns_p;
-
+    // Variables for the handling of the subchunk  loop
+    std::shared_ptr<casacore::MeasurementSet> msSubchunk_p;
+    std::shared_ptr<casacore::MSIter> msIterSubchunk_p;
+    SortColumns subchunkSortColumns_p;
 };
 
 } // end namespace vi
