@@ -1381,10 +1381,112 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ::grpc::Status grpcImageViewer::interactivemask( ::grpc::ServerContext *c,
                                                      const ::rpc::img::InteractiveMaskOptions *opt,
                                                      ::rpc::img::InteractiveMaskResult *reply ) {
-        FILE *dbg = fopen("dumb-crap.txt", "w");
-        fprintf( dbg, "ok we are in the function\n" );
-        fclose(dbg);
-        return grpc::Status::OK;
+
+        static const auto debug = getenv("GRPC_DEBUG");
+        if (debug) {
+            std::cerr << "received grpc interactivemask( ) event... (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+
+        int id = opt->panel( ).id( );
+
+        QMap<QString,QVariant> options;
+        options["niter"] = opt->niter( );
+        options["cycleniter"] = opt->cycleniter( );
+        options["threshold"] = QString(opt->threshold( ).c_str( ));
+        options["cyclethreshold"] = QString(opt->cyclethreshold( ).c_str( ));
+        
+        QtDisplayPanelGui *panel = 0;
+
+        managed_panels_mutex.lock( );
+        panelmap::iterator dpiter = managed_panels.find( id );
+        if ( dpiter != managed_panels.end( ) ) {
+            panel = dpiter->second->panel( );
+            managed_panels_mutex.unlock( );
+        } else {
+            managed_panels_mutex.unlock( );
+            std::lock_guard<std::recursive_mutex> d_guard(managed_datas_mutex);
+
+            datamap::iterator dmiter = managed_datas.find( id );
+            if ( dmiter != managed_datas.end( ) ) {
+                panel = dmiter->second->panel();
+                id = get_id(panel);
+            }
+        }
+
+        if (debug) {
+            std::cerr << "grpc interactivemask( ) found panel " << panel << " (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+
+
+        std::promise<QVariant> prom;
+        auto fut = prom.get_future( );
+        if ( panel ) {
+
+            qtGO( [&]( ) {
+                    if (debug) {
+                        std::cerr << "interactivemask begin start_interact... (thread " <<
+                            std::this_thread::get_id() << ")" << std::endl;
+                        fflush(stderr);
+                    }
+                    // start_interact accepts prom rvalue and sets future value
+                    panel->start_interact( std::move(prom), options, id );
+                    if (debug) {
+                        std::cerr << "interactivemask running... (thread " <<
+                            std::this_thread::get_id() << ")" << std::endl;
+                        fflush(stderr);
+                    }
+                } );
+
+            if (debug) {
+                std::cerr << "awaiting interactivemask completion... (thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+            // must wait otherwise our stack state (upon which the lambda depends) will disappear...
+            fut.wait( );
+            auto ret = fut.get( );
+
+            if (debug) {
+                std::cerr << "interactivemask completed... (thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+
+            if ( ret.canConvert(QVariant::Map) ) {
+                auto m = ret.toMap( );
+                if ( m.contains("panel") && m["panel"].canConvert(QVariant::Int) )
+                    reply->mutable_state( )->mutable_panel( )->set_id(m["panel"].toInt( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no panel returned");
+                if ( m.contains("action") && m["action"].canConvert(QVariant::String) )
+                    reply->set_action(m["action"].toString( ).toUtf8( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no action returned");
+                if ( m.contains("niter") && m["niter"].canConvert(QVariant::Int) )
+                    reply->mutable_state( )->set_niter(m["niter"].toInt( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no niter returned");
+                if ( m.contains("cycleniter") && m["cycleniter"].canConvert(QVariant::Int) )
+                    reply->mutable_state( )->set_cycleniter(m["cycleniter"].toInt( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no cycleniter returned");
+                if ( m.contains("threshold") && m["threshold"].canConvert(QVariant::String) )
+                    reply->mutable_state( )->set_threshold(m["threshold"].toString( ).toUtf8( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no threshold returned");
+                if ( m.contains("cyclethreshold") && m["cyclethreshold"].canConvert(QVariant::String) )
+                    reply->mutable_state( )->set_cyclethreshold(m["cyclethreshold"].toString( ).toUtf8( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no cyclethreshold returned");
+            } else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no map returned");
+
+            return grpc::Status::OK;
+
+        } else {
+
+            reply->set_action("OK WE GOT THERE");
+            return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such panel id");
+
+        }
+
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----

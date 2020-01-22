@@ -165,7 +165,7 @@ message Toggle {
 }
 
 message InteractiveMaskOptions {
-    Id id = 1;
+    Id panel = 1;
     int32 niter = 2;
     int32 cycleniter = 3;
     string threshold = 4;

@@ -79,7 +79,14 @@ namespace casa {
 
 	QtCleanPanelGui2::QtCleanPanelGui2( QtViewer *v, QWidget *parent, const std::list<std::string> &args ) :
 		QtDisplayPanelGui( v, parent, "iclean", args ), in_interact_mode(false), interact_id(0), imagedd_(0), maskdd_(0) {
-
+#if defined(CASA6)
+        static const auto debug = getenv("GRPC_DEBUG");
+        if (debug) {
+            std::cerr << "entering QtCleanPanelGui2 ctor... (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+#endif
 		std::string tmp;
 		if ( rc.get("viewer.iclean.dimensions",tmp) == false ) resize(700,900);
 
@@ -363,8 +370,14 @@ namespace casa {
 
 	QtCleanPanelGui2::~QtCleanPanelGui2() { }
 
-#define EXIT_FUNC(NAME,STR,EXTRA)						\
+#define EXIT_FUNC(NAME,STR,ACTION,EXTRA)                \
     void QtCleanPanelGui2::NAME() {						\
+    static const auto debug = getenv("GRPC_DEBUG");     \
+    if (debug) {			\
+        std::cerr << "entering " << #NAME << " [" << STR << "] ... (thread " <<	\
+            std::this_thread::get_id() << ")" << std::endl;	\
+        fflush(stderr);			\
+    }			\
 	QMap<QString,QVariant> state;						\
 	state["action"] = STR;							\
 	state["niter"] = niterED_->text().toInt();				\
@@ -382,14 +395,25 @@ namespace casa {
 	}									\
 	in_interact_mode = false;						\
 	if ( maskdd_ != 0 ) maskdd_->unlock( );					\
-	emit interact( QVariant(state) );					\
+    if (debug) {			\
+        std::cerr << "completing interaction with " << #NAME << " [" << STR << "] ... (thread " <<	\
+            std::this_thread::get_id() << ")" << std::endl;	\
+        fflush(stderr);			\
+    }			\
+	ACTION					\
 	EXTRA									\
     }
 
 
-	EXIT_FUNC(exitDone,"continue",)
-	EXIT_FUNC(exitNoMore,"no more",)
-	EXIT_FUNC(exitStop,"stop",)
+#if defined(CASA6)
+	EXIT_FUNC(exitDone,"continue",interact_promise.set_value(QVariant(state));,)
+	EXIT_FUNC(exitNoMore,"no more",interact_promise.set_value(QVariant(state));,)
+	EXIT_FUNC(exitStop,"stop",interact_promise.set_value(QVariant(state));,)
+#else
+	EXIT_FUNC(exitDone,"continue",emit interact( QVariant(state) );,)
+	EXIT_FUNC(exitNoMore,"no more",emit interact( QVariant(state) );,)
+	EXIT_FUNC(exitStop,"stop",emit interact( QVariant(state) );,)
+#endif
 	//	EXIT_FUNC(exitStop,"stop",hide( );)
 
 	bool QtCleanPanelGui2::supports( SCRIPTING_OPTION option ) const {
@@ -409,8 +433,22 @@ namespace casa {
 		return QVariant(true);
 	}
 
+#if defined(CASA6)
+	QVariant QtCleanPanelGui2::start_interact( std::promise<QVariant> &&prom, const QVariant &/*input*/, int id ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+#else
 	QVariant QtCleanPanelGui2::start_interact( const QVariant &/*input*/, int id ) {
+#endif
 		if ( ! in_interact_mode ) {
+#if defined(CASA6)
+            if (debug) {
+                std::cerr << "initiating QtCleanPanelGui::start_interact( )... (thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+            
+            interact_promise = std::move(prom);
+#endif
 			in_interact_mode = true;
 			interact_id = id;
 			if(maskdd_ && (maskdd_->imageInterface())!=0) {
@@ -428,6 +466,14 @@ namespace casa {
 			raise( );
 			return QVariant(true);
 		} else {
+#if defined(CASA6)
+            if (debug) {
+                std::cerr << "QtCleanPanelGui::start_interact( ) interaction already in progress... (thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+            prom.set_value(QVariant(false));
+#endif
 			return QVariant(false);
 		}
 	}
@@ -601,6 +647,14 @@ void QtCleanPanelGui2::NAME( String x, String y, String z, std::vector<int> hidd
 		// To do: use the more-complete (true Region) info returned
 		// by the specific image DD of interest instead.
 
+#if defined(CASA6)
+        static const auto debug = getenv("GRPC_DEBUG");
+        if (debug) {
+            std::cerr << "entering QtCleanPanelGui2::newMouseRegion... (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+#endif
 		Float value=addRB_->isChecked()? 1.0 : 0.0;
 
 		if( maskdd_ && imagedd_ && maskdd_->imageInterface() != 0 ) {
