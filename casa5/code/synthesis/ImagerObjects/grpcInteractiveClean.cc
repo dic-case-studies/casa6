@@ -23,8 +23,6 @@
 #include "shutdown.grpc.pb.h"
 #include "img.grpc.pb.h"
 
-extern "C" void stop_here_now(int v);
-
 using namespace casacore;
 
 // https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
@@ -221,8 +219,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	void grpcInteractiveCleanManager::setIterationDetails(const casac::record &iterpars) {
 		LogIO os( LogOrigin("grpcInteractiveCleanManager",__FUNCTION__,WHERE) );
         static const auto debug = getenv("GRPC_DEBUG");
-
-        stop_here_now(10);
 
         // Setup interactive masking : list of image names.
         if ( clean_images.size( ) == 0 ) {
@@ -743,7 +739,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
-        // send shutdown message to viewer...
         grpc::ClientContext context;
         ::rpc::img::NewPanel np;
         rpc::img::Id resp;
@@ -751,6 +746,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         np.set_hidden(false);
         viewer_proxy->panel( &context, np, &resp );
         int result = resp.id( );
+
+        if ( debug ) {
+            std::cerr << "opened viewer panel " << result <<
+                " (process " << getpid( ) << ", thread " << 
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
 
         // state for interactive masking in the new viewer panel
         clean_state.insert( std::pair<int,CleanState>(result, CleanState( )) );
@@ -768,6 +770,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         grpc::ClientContext context;
         ::rpc::img::Id data;
         ::google::protobuf::Empty resp;
+        data.set_id(id);
         viewer_proxy->unload( &context, data, &resp );
     }
 
@@ -841,8 +844,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
         double startmask = maskSum(mask);
 
-        stop_here_now(22);
-
         if ( state->second.image_id == 0 || state->second.mask_id == 0 || forceReload ) {
 
             //Make sure image left after a "no more" is pressed is cleared
@@ -852,9 +853,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 state->second.prev_mask_id = state->second.mask_id;
 
             if ( state->second.prev_image_id ){
+                if ( debug ) {
+                    std::cerr << "preparing to unload prev_image_id " << state->second.prev_image_id << " (panel " << panel << ")" <<
+                        " (process " << getpid( ) << ", thread " << 
+                        std::this_thread::get_id() << ")" << std::endl;
+                    fflush(stderr);
+                }
                 unload( state->second.prev_image_id );
             }
             if ( state->second.prev_mask_id ) {
+                if ( debug ) {
+                    std::cerr << "preparing to unload prev_mask_id " << state->second.prev_mask_id << " (panel " << panel << ")" <<
+                        " (process " << getpid( ) << ", thread " << 
+                        std::this_thread::get_id() << ")" << std::endl;
+                    fflush(stderr);
+                }
                 unload( state->second.prev_mask_id );
             }
 
@@ -896,7 +909,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
         grpc::ClientContext context;
         ::rpc::img::InteractiveMaskOptions options;
-        options.mutable_id( )->set_id(state->first);
+        options.mutable_panel( )->set_id(state->first);
         options.set_niter(niter);
         options.set_cycleniter(cycleniter);
         options.set_threshold(thresh);
@@ -908,6 +921,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             std::cerr << "interactive mask failed: " << s.error_details( ) << std::endl;
             fflush(stderr);
         }
+
+
+        std::cout << "---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----" << std::endl;
+        std::cout << "        action: " << imresult.action( ) << std::endl;
+        std::cout << "         panel: " << imresult.state( ).panel( ).id( ) << std::endl;
+        std::cout << "         niter: " << imresult.state( ).niter( ) << std::endl;
+        std::cout << "    cycleniter: " << imresult.state( ).cycleniter( ) << std::endl;
+        std::cout << "cyclethreshold: " << imresult.state( ).cyclethreshold( ) << std::endl;
+        std::cout << "---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----" << std::endl;
 
         int result = 1;
         std::string action = imresult.action( );
@@ -929,6 +951,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
         state->second.image_id = 0;
         state->second.mask_id = 0;
+
+        if ( debug ) {
+            std::cerr << "set prev_image_id to " << state->second.prev_image_id << " (panel " << panel << ")" <<
+                " (process " << getpid( ) << ", thread " << 
+                std::this_thread::get_id() << ")" << std::endl;
+            std::cerr << "set prev_mask_id to " << state->second.prev_mask_id << " (panel " << panel << ")" <<
+                " (process " << getpid( ) << ", thread " << 
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
 
         double endmask = maskSum(mask);
 
@@ -1020,7 +1052,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // it could be that this should be done in the future, but for now we
         // will adopt the simple...
 
-        int argc = 2;
+        int argc = 3;
+        int logarg = argc;    // if a log file is specfied it comes last...
         std::string log_path = casatools::get_state( ).logPath( );
         if ( log_path.size( ) > 0 ) ++argc;
 
@@ -1029,9 +1062,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         arguments[0] = strdup(viewer_path.c_str( ));
         arguments[1] = (char*) malloc(sizeof(char) * (fifo.size( ) + 12));
         sprintf( arguments[1], "--server=%s", fifo.c_str( ) );
+        arguments[2] = strdup("--oldregions");
         if ( log_path.size( ) > 0 ) {
-            arguments[2] = (char*) malloc(sizeof(char) * (log_path.size( ) + 17));
-            sprintf( arguments[2], "--casalogfile=%s", log_path.c_str( ) );
+            arguments[logarg] = (char*) malloc(sizeof(char) * (log_path.size( ) + 17));
+            sprintf( arguments[logarg], "--casalogfile=%s", log_path.c_str( ) );
         }
 
         if ( debug ) {
