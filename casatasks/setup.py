@@ -613,10 +613,12 @@ def generate_pyinit(moduledir,tasks):
         fd.write("\n")
         fd.write("def xml_interface_defs( ): return { %s }\n" % ", ".join(task_files_dict))
         fd.write("\n")
-        fd.write("try:\n")
-        fd.write('    casalog.post("CASA Version %s")\n' % casatasks_version)
-        fd.write("except:\n")
-        fd.write('    print("Error: the logfile is not writable")\n')
+        fd.write("from casampi.MPIEnvironment import MPIEnvironment\n")
+        fd.write("if not MPIEnvironment.is_mpi_enabled or (MPIEnvironment.is_mpi_enabled and MPIEnvironment.is_mpi_client):\n")
+        fd.write("    try:\n")
+        fd.write('        casalog.post("CASA Version %s")\n' % casatasks_version)
+        fd.write("    except:\n")
+        fd.write('        print("Error: the logfile is not writable")\n')
         fd.write("\n")
         mpi_import_str = '\n'.join((
             "# When in MPI mode, this will put servers into their serve() loop.",
