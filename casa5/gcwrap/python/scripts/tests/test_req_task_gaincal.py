@@ -345,7 +345,7 @@ class gaincal_test(unittest.TestCase):
         gAmp = getparam(tempCal)
         refs = [[np.mean(gAmp.imag[j,0,i::10]) for i in range(10)] for j in range(2)]
 
-        self.assertTrue(refs[0][1] == 0 and refs[1][1] == 0)
+        self.assertTrue(np.isclose(refs[0][1], 0) and np.isclose(refs[1][1], 0))
 
     def test_preapplyT0(self):
         '''

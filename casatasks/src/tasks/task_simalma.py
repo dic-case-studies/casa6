@@ -403,7 +403,7 @@ def simalma(
                    # Now make sure the configfile exists
                     if not os.path.exists(configfile):
                         msg("Couldn't find configfile: %s" % configfile, priority="error")
-                    stnx, stny, stnz, stnd, padnames, telescopename, posobs = myutil.readantenna(configfile)
+                    stnx, stny, stnz, stnd, padnames, antnames, telescopename, posobs = myutil.readantenna(configfile)
                     if telescopename=="ALMASD":
                         resols.append(qa.convert(PB12,'arcsec')['value'])
                     else:
@@ -453,9 +453,13 @@ def simalma(
             if qa.compare(tptime,'s'):
                 tptime_min=qa.convert(tptime,'min')['value']
             else:
-                msg("Can't interpret tptime='"+tptime+"' as a time quantity e.g. '3h'",priority="error")
+                msg("Can't interpret tptime='"
+                    +tptime+"' as a time quantity e.g. '3h'",
+                    priority="error")
         else:
-            msg("Can't interpret tptime='"+tptime+"' as a time quantity e.g. '3h'",priority="error")
+            msg("Can't interpret tptime='"
+                +tptime+"' as a time quantity e.g. '3h'",
+                priority="error")
 
 
         #-----------------------------
