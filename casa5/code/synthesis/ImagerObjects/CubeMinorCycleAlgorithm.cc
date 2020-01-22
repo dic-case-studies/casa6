@@ -69,9 +69,11 @@ void CubeMinorCycleAlgorithm::get() {
 }
 void CubeMinorCycleAlgorithm::put() {
 	
-	
+  ///# 1  chanrange processed 
+  applicator.put(chanRange_p);
 	//cerr << "in put " << status_p << endl;
-	applicator.put(returnRec_p);	
+  ///#2 return record of deconvolver
+  applicator.put(returnRec_p);	
 	
 }
 	

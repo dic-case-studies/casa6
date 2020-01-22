@@ -111,6 +111,8 @@ int main(int argc, char **argv)
 	  cerr << "SErial ? " << casa::applicator.isSerial() << endl;
 	  rank = casa::applicator.nextProcessDone(*cmc, allDone);
 	  cerr << "while rank " << rank << endl;
+          Vector<Int> chanprocessed;
+          casa::applicator.get(chanprocessed);
 	  Record status;
 	  casa::applicator.get(status);
 	  if(status.nfields())
@@ -145,9 +147,10 @@ int main(int argc, char **argv)
         // Wait for all outstanding processes to return
         rank = casa::applicator.nextProcessDone(*cmc, allDone);
         while (!allDone) {
-		      
-            Record status;
-            casa::applicator.get(status);
+          Vector<Int> chanprocessed;
+          casa::applicator.get(chanprocessed);
+          Record status;
+          casa::applicator.get(status);
             if(status.nfields() >0)
                 cerr << "remainder rank " << rank << " successful " << endl;
             else

@@ -49,7 +49,7 @@
 #include <images/Images/SubImage.h>
 #include <images/Regions/ImageRegion.h>
 #include <lattices/Lattices/LatticeLocker.h>
-
+#include <synthesis/ImagerObjects/CubeMinorCycleAlgorithm.h>
 #include <imageanalysis/ImageAnalysis/CasaImageBeamSet.h>
 #include <synthesis/ImagerObjects/SynthesisDeconvolver.h>
 
@@ -58,7 +58,9 @@
 using namespace std;
 
 using namespace casacore;
+extern casa::Applicator casa::applicator;
 namespace casa { //# NAMESPACE CASA - BEGIN
+
   
   SynthesisDeconvolver::SynthesisDeconvolver() : 
 				       itsDeconvolver( ), 
@@ -92,6 +94,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     LogIO os( LogOrigin("SynthesisDeconvolver","setupDeconvolution",WHERE) );
 
+    //Copy this decpars into a private variable that can be used elsewhere
+    //there is no proper copy operator (as public casa::Arrays members = operator fails) 
+    itsDecPars.fromRecord(decpars.toRecord());
     itsImageName = decpars.imageName;
     itsStartingModelNames = decpars.startModel;
     itsDeconvolverId = decpars.deconvolverId;
@@ -452,6 +457,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //    itsImages->printImageStats();
 
+    ///if cube execute cube deconvolution...check on residual shape as itsimagestore return 0 shape sometimes
+    if(itsImages->residual()->shape()[3]> 1){
+     return  executeCubeMinorCycle(minorCycleControlRec);
+    }
     os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
 
     SynthesisUtilMethods::getResource("Start Deconvolver");
@@ -468,6 +477,140 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsDeconvolver->deconvolve( itsLoopController, itsImages, itsDeconvolverId, automaskon, itsFastNoise, itsRobustStats );
       returnRecord = itsLoopController.getCycleExecutionRecord();
 
+      //scatterModel(); // This is a no-op for the single-node case.
+
+      itsImages->releaseLocks();
+
+    } catch(AipsError &x) {
+      throw( AipsError("Error in running Minor Cycle : "+x.getMesg()) );
+    }
+
+    SynthesisUtilMethods::getResource("End Deconvolver");
+
+    return returnRecord;
+  }
+  Record SynthesisDeconvolver::executeCubeMinorCycle(Record& minorCycleControlRec)
+  {
+    LogIO os( LogOrigin("SynthesisDeconvolver","executeMinorCycle",WHERE) );
+    Record returnRecord;
+
+    os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
+
+    
+    SynthesisUtilMethods::getResource("Start Deconvolver");
+
+    try {
+      //      if ( !itsIsInteractive ) setAutoMask();
+      itsLoopController.setCycleControls(minorCycleControlRec);
+      CubeMinorCycleAlgorithm *cmc=new CubeMinorCycleAlgorithm();
+      //casa::applicator.defineAlgorithm(cmc);
+      ///argv and argc are needed just to callthe right overloaded init
+      Int argc=1;
+      char **argv=nullptr;
+      applicator.init(argc, argv);
+      if(applicator.isController()){
+          
+          Int numprocs = applicator.numProcs(); 
+          cerr << "Number of procs: " << numprocs << endl;
+          
+          Int numchan=itsImages->residual()->shape()[3];
+          String psfname=itsImages->psf()->name();
+          String residualname=itsImages->residual()->name();
+          String maskname=itsImages->mask()->name();
+          String modelname=itsImages->model()->name();
+          itsImages->releaseLocks();
+          ///in lieu of = operator go via record
+          // need to create a proper = operator for SynthesisParamsDeconv
+          SynthesisParamsDeconv decpars;
+          decpars.fromRecord(itsDecPars.toRecord());
+          ///remove starting model as already dealt with in this deconvolver
+          decpars.startModel="";
+          ///masking is dealt already by this deconvolver so mask image
+          //is all that is needed which is sent as maskname to subdeconvolver
+          decpars.maskString="";
+          (decpars.maskList).resize();
+          Record decParsRec = decpars.toRecord();
+
+          /////Now we loop over channels and deconvolve each
+          ///If we do want to do block of channels rather than 1 channel
+          ///at a time chanRange can take that and the trigger to call this
+          ///function in executeMinorCycle has to change.
+          Int rank(0);
+          Bool assigned; 
+          Bool allDone(false);
+          Vector<Int> chanRange(2);
+          for (Int k=0; k < numchan; ++k) {
+            assigned=casa::applicator.nextAvailProcess(*cmc, rank);
+            cerr << "assigned "<< assigned << endl;
+            while(!assigned) {
+              //cerr << "SErial ? " << casa::applicator.isSerial() << endl;
+              rank = casa::applicator.nextProcessDone(*cmc, allDone);
+              //cerr << "while rank " << rank << endl;
+              //receiving output of CubeMinorCycleAlgorithm::put
+              //#1
+              Vector<Int> chanRangeProcessed;
+              casa::applicator.get(chanRangeProcessed);
+              //#2
+              Record retval;
+              casa::applicator.get(retval);
+              ///might need to merge these retval
+              mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
+              if(retval.nfields())
+                cerr << k << "deconv rank " << rank << " successful " << endl;
+              else
+                cerr << k << "deconv rank " << rank << " failed " << endl;
+              //cerr <<"rank " << rank << " return rec "<< retval << endl;
+              assigned = casa::applicator.nextAvailProcess(*cmc, rank);
+	  
+            }
+
+            ///send process info
+            // put dec sel params #1
+            applicator.put(decParsRec);
+            // put itercontrol  params #2
+            applicator.put(minorCycleControlRec);
+            // put which channel to process #3
+            chanRange.set(k);
+            applicator.put(chanRange);
+            // psf  #4
+            applicator.put(psfname);
+            // residual #5
+            applicator.put(residualname);
+            // model #6
+            applicator.put(modelname);
+            // mask #7
+            applicator.put(maskname);
+            /// Tell worker to process it 
+            applicator.apply(*cmc);
+            
+          }
+          // Wait for all outstanding processes to return
+          rank = casa::applicator.nextProcessDone(*cmc, allDone);
+          while (!allDone) {
+
+            Vector<Int> chanRangeProcessed;
+            casa::applicator.get(chanRangeProcessed);
+            Record retval;
+            casa::applicator.get(retval);
+            mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
+            if(retval.nfields() >0)
+              cerr << "deconv remainder rank " << rank << " successful " << endl;
+            else
+              cerr << "deconv remainder rank " << rank << " failed " << endl;
+            
+            rank = casa::applicator.nextProcessDone(*cmc, allDone);
+			if(casa::applicator.isSerial())
+                          allDone=true;
+          }
+
+        
+
+
+          
+
+        }///end of if controller
+      /////////////////////////////////////////////////
+  
       //scatterModel(); // This is a no-op for the single-node case.
 
       itsImages->releaseLocks();
@@ -498,6 +641,44 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   }
 
+  void SynthesisDeconvolver::mergeReturnRecord(const::Record& inRec, Record& outRec, const Int chan){
+
+    ///Something has to be done about what is done in SIIterBot_state::mergeMinorCycleSummary if it is needed
+    Matrix<Double> summaryminor;
+    if(outRec.isDefined("summaryminor"))
+      summaryminor=Matrix<Double>(outRec.asArrayDouble("summaryminor"));
+    Matrix<Double> subsummaryminor;
+    if(inRec.isDefined("summaryminor"))
+      subsummaryminor=Matrix<Double>(inRec.asArrayDouble("summaryminor"));
+    if(subsummaryminor.nelements() !=0){
+      ///The 6th element is supposed to be the subimage id
+      subsummaryminor.row(5).set(Double(chan));
+      Matrix<Double> newsummary(6, summaryminor.shape()[1]+subsummaryminor.shape()[1]);
+      Int ocol=0;
+      for (Int col=0; col< summaryminor.shape()[1]; ++col, ++ocol)
+        newsummary.column(ocol)=summaryminor.column(col);
+      for (Int col=0; col< subsummaryminor.shape()[1]; ++col, ++ocol)
+        newsummary.column(ocol)=subsummaryminor.column(col);
+      summaryminor.resize(newsummary.shape());
+      summaryminor=newsummary;
+    }
+    outRec.define("summaryminor", summaryminor);
+    //cerr << "inRec summ minor " << inRec.asArrayDouble("summaryminor") << endl;
+    //cerr << "outRec summ minor " << summaryminor << endl;
+    outRec.define("iterdone", inRec.asInt("iterdone")+ (outRec.isDefined("iterdone") ? outRec.asInt("iterdone"): Int(0)));
+    outRec.define("maxcycleiterdone", outRec.isDefined("maxcycleiterdone") ? max(inRec.asInt("maxcycleiterdone"), outRec.asInt("maxcycleiterdone")) :inRec.asInt("maxcycleiterdone")) ;
+    
+    outRec.define("peakresidual", outRec.isDefined("peakresidual") ? max(inRec.asFloat("peakresidual"), outRec.asFloat("peakresidual")) :inRec.asFloat("peakresidual")) ;
+
+    ///is not necessarily defined it seems
+    Bool updatedmodelflag=False;
+    if(inRec.isDefined("updatedmodelflag"))
+      inRec.get("updatedmodelflag", updatedmodelflag);
+    outRec.define("updatedmodelflag", outRec.isDefined("updatedmodelflag") ? updatedmodelflag || outRec.asBool("updatedmodelflag") : updatedmodelflag) ;
+
+
+
+  }
   // Restore Image.
   void SynthesisDeconvolver::pbcor()
   {

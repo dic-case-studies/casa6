@@ -80,6 +80,8 @@ class SynthesisDeconvolver
   casacore::Record initMinorCycle();
   casacore::Record initMinorCycle(std::shared_ptr<SIImageStore> imstor); 
   casacore::Record executeMinorCycle(casacore::Record& subIterBot);
+  //minor cycle for cubes
+  casacore::Record executeCubeMinorCycle(casacore::Record& minorCycleControlRec);
 
   casacore::Record interactiveGUI(casacore::Record& iterRec);
 
@@ -106,6 +108,8 @@ class SynthesisDeconvolver
 protected:
 
   std::shared_ptr<SIImageStore> makeImageStore( casacore::String imagename );
+  //Merge the outputRecord from channels into one that looks like the cube one
+  void mergeReturnRecord(const casacore::Record& chanRec, casacore::Record& outRec, const casacore::Int chan);
   /*
   void findMinMax(const casacore::Array<casacore::Float>& lattice,
 					const casacore::Array<casacore::Float>& mask,
@@ -190,6 +194,7 @@ protected:
   casacore::Float itsMaskSum;
 
   casacore::Float itsNsigma;
+  SynthesisParamsDeconv itsDecPars;
 };
 
 
