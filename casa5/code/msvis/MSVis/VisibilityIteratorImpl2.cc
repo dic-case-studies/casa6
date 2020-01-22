@@ -1949,23 +1949,31 @@ VisibilityIteratorImpl2::positionMsIterToASelectedSpectralWindow()
 void
 VisibilityIteratorImpl2::next()
 {
-	ThrowIf(!more_p, "Attempt to advance subchunk past end of chunk");
+    ThrowIf(!more_p, "Attempt to advance subchunk past end of chunk");
 
-	throwIfPendingChanges(); // throw if unapplied changes exist
+    throwIfPendingChanges(); // throw if unapplied changes exist
 
-	// Attempt to advance to the next subchunk
+    measurementFrame_p = VisBuffer2::FrameNotSpecified; // flush cached value
 
-	rowBounds_p.subchunkBegin_p = rowBounds_p.subchunkEnd_p + 1;
-	measurementFrame_p = VisBuffer2::FrameNotSpecified; // flush cached value
+    if(nRowBlocking_p > 0)
+    {
+        // Attempt to advance to the next subchunk
+        rowBounds_p.subchunkBegin_p = rowBounds_p.subchunkEnd_p + 1;
+        more_p = rowBounds_p.subchunkBegin_p < rowBounds_p.chunkNRows_p;
+    }
+    else
+    {
+        //Increment the inner msIter
+        (*msIterInner_p)++;
+        more_p = msIterInner_p->more();
+    }
 
-	more_p = rowBounds_p.subchunkBegin_p < rowBounds_p.chunkNRows_p;
+    if (more_p) {
 
-	if (more_p) {
+        subchunk_p.incrementSubChunk();
 
-		subchunk_p.incrementSubChunk();
-
-		configureNewSubchunk();
-	}
+        configureNewSubchunk();
+    }
 }
 
 Subchunk
@@ -2840,31 +2848,55 @@ VisibilityIteratorImpl2::getReceptor0Angle()
 void
 VisibilityIteratorImpl2::getRowIds(Vector<uInt> & rowIds) const
 {
-	// Resize the rowIds vector and fill it with the row numbers contained in
-	// the current subchunk.  These row numbers are relative to the reference
-	// table used by MSIter to define a chunk; thus rowId 0 is the first row in
-	// the chunk.
+    if(nRowBlocking_p >0)
+    {
+        // Resize the rowIds vector and fill it with the row numbers contained in
+        // the current subchunk. These row numbers are relative to the reference
+        // table used by MSIter to define a chunk; thus rowId 0 is the first row in
+        // the chunk.
+        rowIds.resize(rowBounds_p.subchunkNRows_p);
+        rowIds = rowBounds_p.subchunkRows_p.convert();
 
-	rowIds.resize(rowBounds_p.subchunkNRows_p);
-	rowIds = rowBounds_p.subchunkRows_p.convert();
+        if (cache_p.chunkRowIds_p.nelements() == 0) {
+            // Create chunkRowIds_p as a "map" from chunk rows to MS rows. This
+            // needs to be created once per chunk since a new reference table is
+            // created each time the MSIter moves to the next chunk.
+            cache_p.chunkRowIds_p = msIter_p->table().rowNumbers(msIter_p->ms());
+        }
 
-	if (cache_p.chunkRowIds_p.nelements() == 0) {
+        // Using chunkRowIds_p as a map from chunk rows to MS rows replace the
+        // chunk-relative row numbers with the actual row number from the MS.
+        for (uInt i = 0; i < rowIds.nelements(); i++) {
+            rowIds(i) = cache_p.chunkRowIds_p(rowIds(i));
+        }
+    }
+    else
+    {
+        // Resize the rowIds vector and fill it with the row numbers contained in
+        // the current subchunk.
+        rowIds.resize(rowBounds_p.subchunkNRows_p);
 
-		// Create chunkRowIds_p as a "map" from chunk rows to MS rows.  This
-		// needs to be created once per chunk since a new reference table is
-		// created each time the MSIter moves to the next chunk.
+        // Initialize the cache it if not yet done
+        // (it is reset each time nextChunk() is called).
+        // The cache contains the mapping between chunk rows and MS rows.
+        // This needs to be created once per chunk since a new reference table is
+        // created each time the MSIter moves to the next chunk.
+        if (cache_p.chunkRowIds_p.size() == 0)
+            cache_p.chunkRowIds_p = msIter_p->table().rowNumbers(msIter_p->ms());
 
-		cache_p.chunkRowIds_p = msIter_p->table().rowNumbers(msIter_p->ms());
+        // Now create the map from subchunk rows to chunk rows. This
+        // needs to be created for each subchunk since a new reference table
+        // in the msIterInner_p iterator is created each time the MSIter moves.
+        // Note that what we get are row Ids for msIter_p->table(), which is itself
+        // a reference table.
+        auto subchunkRowIds  = msIterInner_p->table().rowNumbers(msIter_p->table(), true);
 
-	}
-
-	// Using chunkRowIds_p as a map from chunk rows to MS rows replace the
-	// chunk-relative row numbers with the actual row number from the MS.
-
-	for (uInt i = 0; i < rowIds.nelements(); i++) {
-
-		rowIds(i) = cache_p.chunkRowIds_p(rowIds(i));
-	}
+        // Now, for each row in the subchunk (i), get the row in the outer loop
+        // table (subchunkRowId(i)) and use cache_p.chunkRowIds_p to get the row
+        // in the original MS.
+        for (uInt i = 0; i < rowIds.size(); i++)
+            rowIds(i) = cache_p.chunkRowIds_p(subchunkRowIds(i));
+    }
 }
 
 void
@@ -3402,7 +3434,7 @@ VisibilityIteratorImpl2::nRowsViWillSweep() const
 const Table
 VisibilityIteratorImpl2::attachTable() const
 {
-	return msIter_p->table();
+	return msIterInner_p->table();
 }
 
 void

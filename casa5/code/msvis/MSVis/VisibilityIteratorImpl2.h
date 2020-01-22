@@ -1158,33 +1158,28 @@ protected:
 
 	typedef casacore::Block <casacore::MeasurementSet> MeasurementSets;
 
-	class RowBounds {
-	public:
+    class RowBounds
+    {
+    public:
 
-		RowBounds()
-			: chunkNRows_p(-1), subchunkBegin_p(-1), subchunkEnd_p(-1),
-			  subchunkNRows_p(-1), subchunkRows_p(0, 0), timeMax_p(-1),
-			  timeMin_p(-1)
-			{}
+        RowBounds() :
+            chunkNRows_p(-1), subchunkBegin_p(-1), subchunkEnd_p(-1),
+            subchunkNRows_p(-1), subchunkRows_p(0, 0)
+        {}
 
-		// last row in current chunk
-		casacore::Int chunkNRows_p;
-		// first row in current subchunk
-		casacore::Int subchunkBegin_p;
-		// last row in current subchunk
-		casacore::Int subchunkEnd_p;
-		// # rows in subchunk
-		casacore::Int subchunkNRows_p;
-		// subchunk's table row numbers
-		casacore::RefRows subchunkRows_p;
-		// times for each row in the chunk
-		casacore::Vector<casacore::Double> times_p;
-		// max timestamp in the chunk
-		casacore::Double timeMax_p;
-		// min timechunk in the chunk
-		casacore::Double timeMin_p;
-
-	};
+        // last row in current chunk
+        casacore::Int chunkNRows_p;
+        // first row in current subchunk
+        casacore::Int subchunkBegin_p;
+        // last row in current subchunk
+        casacore::Int subchunkEnd_p;
+        // # rows in subchunk
+        casacore::Int subchunkNRows_p;
+        // subchunk's table row numbers
+        casacore::RefRows subchunkRows_p;
+        // times for each row in the chunk
+        casacore::Vector<casacore::Double> times_p;
+    };
 
 	casacore::Bool autoTileCacheSizing_p;
 	std::map <VisBufferComponent2, BackWriter *> backWriters_p;
@@ -1244,6 +1239,12 @@ protected:
 	VisBuffer2 * vb_p;
 	casacore::CountedPtr<WeightScaling> weightScaling_p;
 	casacore::Bool writable_p;
+
+    // Variables for the handling of the inner loop
+    std::shared_ptr<casacore::MeasurementSet> msInner_p;
+    std::shared_ptr<casacore::MSIter> msIterInner_p;
+    std::vector<std::pair<casacore::String, casacore::CountedPtr<casacore::BaseCompare>>> innerLoopSortColumns_p;
+
 };
 
 } // end namespace vi
