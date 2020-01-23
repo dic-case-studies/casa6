@@ -22,84 +22,51 @@ except ImportError:
     _tb2 = tbtool()
     # _casa5 = True
 
-ignore_subversion = shutil.ignore_patterns('.svn')
+#ignore_subversion = shutil.ignore_patterns('.svn')
 ################        ##################
 ################        ##################
 ################        ##################
 
 
-class TableCacheValidator(object):
-    def __init__(self):
-        self.original_cache = get_table_cache()
+#class TableCacheValidator(object):
+#    def __init__(self):
+#        self.original_cache = get_table_cache()
+#
+#    def validate(self):
+#        cache = get_table_cache()
+#        #print 'original {} current {}'.format(self.original_cache, cache)
+#        return len(cache) == 0 or cache == self.original_cache
 
-    def validate(self):
-        cache = get_table_cache()
-        #print 'original {} current {}'.format(self.original_cache, cache)
-        return len(cache) == 0 or cache == self.original_cache
-
-class DictDiffer(object):
-    """
-    Calculate the difference between two dictionaries as:
-    (1) items added
-    (2) items removed
-    (3) keys same in both but changed values
-    (4) keys same in both and unchanged values
-    Example:
-            mydiff = DictDiffer(dict1, dict2)
-            mydiff.changed()  # to show what has changed
-    """
-    def __init__(self, current_dict, past_dict):
-        self.current_dict, self.past_dict = current_dict, past_dict
-        self.set_current, self.set_past = set(current_dict.keys()), set(past_dict.keys())
-        self.intersect = self.set_current.intersection(self.set_past)
-    def added(self):
-        return self.set_current - self.intersect 
-    def removed(self):
-        return self.set_past - self.intersect 
-    def changed(self):
-        return set(o for o in self.intersect if self.past_dict[o] != self.current_dict[o])            
-    def unchanged(self):
-        return set(o for o in self.intersect if self.past_dict[o] == self.current_dict[o])
+#class DictDiffer(object):
+#    """
+#    Calculate the difference between two dictionaries as:
+#    (1) items added
+#    (2) items removed
+#    (3) keys same in both but changed values
+#    (4) keys same in both and unchanged values
+#    Example:
+#            mydiff = DictDiffer(dict1, dict2)
+#            mydiff.changed()  # to show what has changed
+#    """
+#    def __init__(self, current_dict, past_dict):
+#        self.current_dict, self.past_dict = current_dict, past_dict
+#        self.set_current, self.set_past = set(current_dict.keys()), set(past_dict.keys())
+#        self.intersect = self.set_current.intersection(self.set_past)
+#    def added(self):
+#        return self.set_current - self.intersect 
+#    def removed(self):
+#        return self.set_past - self.intersect 
+#    def changed(self):
+#        return set(o for o in self.intersect if self.past_dict[o] != self.current_dict[o])            
+#    def unchanged(self):
+#        return set(o for o in self.intersect if self.past_dict[o] == self.current_dict[o])
 
 
 
 ################        ##################
 ################        ##################
 ################        ##################
-def phase_diff_abs_deg(c1, c2):
-    '''originally: testhelper.phasediffabsdeg(c1, c2)'''
-    try:
-        a = c1.imag
-        a = c2.imag
-    except:
-        print("Phase difference of real numbers is always zero.")
-        return 0.
 
-    a = math.atan2(c1.imag, c1.real)
-    b = math.atan2(c2.imag, c2.real)
-    diff = abs(a-b)
-    if diff > numpy.pi:
-        diff = 2.0*numpy.pi - diff
-    return diff/numpy.pi*180. # (degrees)
-
-def copytree_ignore_subversion(datadir, name, outname=None):
-    if outname is None:
-        outname = name
-    if not os.path.exists(name):
-        shutil.copytree(os.path.join(datadir, name), outname, ignore=ignore_subversion)
-
-def get_table_cache():
-    cache = _tb.showcache()
-    # print('cache = {}'.format(cache))
-    return cache
-
-def calculate_hanning(dataB,data,dataA):
-    '''Calculate the Hanning smoothing of each element'''
-    const0 = 0.25
-    const1 = 0.5
-    const2 = 0.25
-    S = const0*dataB + const1*data + const2*dataA
-    return S
 
 def compare_CASA_var_col_tables(referencetab, testtab, varcol, tolerance=0.0):
     '''

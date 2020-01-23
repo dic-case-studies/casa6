@@ -1,6 +1,7 @@
 from .weblog import Weblog
 from .check import Check
 from .compare import *
+from .testhelper import *
 #from .extractcasascript import main
 #from .testhelpers import TestHelpers
 #import imagehelpers.imagetesthelpers
