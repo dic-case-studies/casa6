@@ -618,7 +618,7 @@ def generate_pyinit(moduledir,tasks):
         fd.write("    if MPIEnvironment.is_mpi_enabled and MPIEnvironment.is_mpi_client:\n")
         fd.write("        try:\n")
         fd.write('            casalog.post("CASA Version %s")\n' % casatasks_version)
-        fd.write('            casalog.post("MPI Enabled)\n')
+        fd.write('            casalog.post("MPI Enabled")\n')
         fd.write("        except:\n")
         fd.write('            print("Error: the logfile is not writable")\n')
         fd.write('except:\n')
