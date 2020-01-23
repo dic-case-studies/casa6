@@ -2652,6 +2652,12 @@ VisibilityIteratorImpl2::configureNewChunk()
     }
     else
     {
+        // Columns are attached to the msIter chunk iteration.
+        // This is needed for the call the setTIleCahce() below, which
+        // performs some tests on the attached columns
+        // Later, in configureNewSubchunk the columns are reset to
+        // the subchunk msIterSubchunk_p columns.
+        attachColumns(msIter_p->table());
         // Create a MeasurementSet which points
         // to the current iteration with msIter
         msSubchunk_p.reset(new casacore::MeasurementSet(msIter_p->table(),
