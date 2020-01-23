@@ -248,6 +248,11 @@ class statwt_test(unittest.TestCase):
         mytb.done()
         eprint("gwt", gwt)
         eprint("ewt", ewt)
+        eprint('gwt shape', gwt.shape)
+        eprint('ewt shape', ewt.shape)
+        eprint('gwt all zero', (gwt == 0).all())
+        eprint('ewt all zero', (ewt == 0).all())
+
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
         eprint("gwtsp", gwtsp)
         eprint("ewtsp", ewtsp)
@@ -302,7 +307,9 @@ class statwt_test(unittest.TestCase):
                         ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_has_fitspw.ms'
                 eprint(
                     "combine", combine, "c", c, "fitspw", fitspw, "excludechans", excludechans
-                ) 
+                )
+                eprint('dst', dst)
+                eprint('ref', ref) 
                 self.compare(dst, ref)
                 shutil.rmtree(dst)
                 c += 1               
