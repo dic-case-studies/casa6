@@ -615,7 +615,7 @@ def generate_pyinit(moduledir,tasks):
         fd.write("\n")
         fd.write("try:\n")
         fd.write("    from casampi.MPIEnvironment import MPIEnvironment\n")
-        fd.write("    if MPIEnvironment.is_mpi_enabled and MPIEnvironment.is_mpi_client):\n")
+        fd.write("    if MPIEnvironment.is_mpi_enabled and MPIEnvironment.is_mpi_client:\n")
         fd.write("        try:\n")
         fd.write('            casalog.post("CASA Version %s")\n' % casatasks_version)
         fd.write('            casalog.post("MPI Enabled)\n')
