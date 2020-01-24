@@ -1,0 +1,2464 @@
+#!@PYTHON@
+# Copyright (C) 2017,2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This library is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Library General Public License
+# along with this library; if not, write to the Free Software Foundation,
+# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+#
+# Correspondence concerning AIPS++ should be addressed as follows:
+#        Internet email: aips2-request@nrao.edu.
+#        Postal address: AIPS++ Project Office
+#                        National Radio Astronomy Observatory
+#                        520 Edgemont Road
+#                        Charlottesville, VA 22903-2475 USA
+
+##############################################################################################
+##############################################################################################
+####
+####  (1) move generated files beneath build
+####
+##############################################################################################
+##############################################################################################
+
+
+"""CASA Python Module
+
+This is a standard python module that provides CASA tools and tasks
+without regular CASA's bespoke CLI.
+"""
+from __future__ import division, print_function
+
+classifiers = """\
+Development Status :: 3 - Alpha
+Intended Audience :: Developers
+License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
+Programming Language :: Python :: 2.7
+Programming Language :: C++
+Topic :: Software Development
+Topic :: Scientific/Engineering :: Astronomy
+Topic :: Software Development :: Libraries :: Python Modules
+Operating System :: MacOS :: MacOS X
+Operating System :: POSIX
+"""
+
+from setuptools import setup
+from distutils.ccompiler import new_compiler, CCompiler
+from distutils.sysconfig import customize_compiler
+from distutils.core import Extension, Distribution
+from distutils.ccompiler import get_default_compiler
+from distutils.ccompiler import show_compilers
+from distutils.command.build_ext import build_ext
+from distutils.errors import DistutilsExecError, CompileError
+from distutils.dir_util import copy_tree, remove_tree
+from distutils.core import Command
+from distutils.util import spawn, get_platform
+
+from functools import reduce
+from itertools import dropwhile,takewhile
+from collections import defaultdict
+from subprocess import call as Proc
+from subprocess import Popen, PIPE
+from datetime import datetime
+from inspect import currentframe, getframeinfo
+from textwrap import dedent
+from shutil import copy2
+import subprocess
+import sysconfig
+import platform
+import pickle
+import errno
+import time
+import sys
+import re
+import os
+import io
+
+from os import listdir
+from os.path import isfile, join, islink
+from itertools import chain
+import argparse
+
+parser=argparse.ArgumentParser()
+
+parser.add_argument('--version', help='version')
+parser.add_argument('--debug', help='debug', action='store_true')
+parser.add_argument('bdist_wheel', help='bdist_wheel')
+
+args=parser.parse_args()
+_debug_build_ = args.debug
+print("_debug_build_: " + str(_debug_build_))
+
+# Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
+for arg in sys.argv:
+    if (arg.startswith("--version")):
+        sys.argv.remove(arg)
+    if (arg.startswith("--debug")):
+        sys.argv.remove(arg)
+
+
+module_name = 'casatools'
+
+pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
+xml_jar_file = 'xml-casa-assembly-1.35.jar'
+real_gnu = None
+
+if pyversion < 3:
+    str_encode = str
+    str_decode = str
+    def pipe_decode(output):
+        return output
+else:
+    def str_encode(s):
+        return bytes(s,sys.getdefaultencoding())
+    def str_decode(bs):
+        return bs.decode(sys.getdefaultencoding(),"strict")
+    def pipe_decode(output):
+        if isinstance(output,bytes) or isinstance(output,bytearray):
+            return str_decode(output)
+        elif isinstance(output,tuple):
+            return (str_decode(output[0]),str_decode(output[1]))
+        else:
+            return ("","")
+
+lib_dirs = ["/opt/casa/03", "/opt/casa/02", "/opt/casa/01", "/opt/local"]
+
+third_party_lib_path = ""
+
+for d in lib_dirs:
+    if os.path.isdir(d):
+        third_party_lib_path = d
+        break
+
+print ("Using " + third_party_lib_path + " for third party libraries")
+
+
+if sys.platform == 'darwin':
+    def islib(l):
+        return l.endswith('.dylib')
+elif sys.platform == 'linux2' or sys.platform == 'linux':
+    def islib(l):
+        # 'lib_....so
+        return l.find('.so') > 3
+else:
+    sys.exit("oops, had not planned on building on %s" % sys.platform)
+
+def compute_version( ):
+    if (args.version != None ):
+        print (args.version.split("."))
+        (major, minor, patch, feature) = args.version.split(".")
+        return(int(major), int(minor), int(patch), int(feature),"","","")
+    else:
+        proc = Popen( [ "scripts/version" ], stdout=PIPE, stderr=PIPE )
+        out,err = pipe_decode(proc.communicate( ))
+        print(out)
+        devbranchtag = out.split(" ")[0].strip()
+        print(devbranchtag)
+        releasetag = out.split(" ")[1].strip()
+        dirty=""
+        if (len(out.split(" ")) == 3):
+            print("Latest commit doesn't have a tag. Adding -dirty flag to version string.")
+            dirty="+" + out.split(" ")[2].strip() # "+" denotes local version identifier as described in PEP440
+        print(releasetag)
+        devbranchversion = ""
+        devbranchrevision = ""
+        if (devbranchtag != releasetag):
+            devbranchrevision = devbranchtag.split("-")[-1]
+            if (devbranchtag.startswith("CAS-")):
+                devbranchversion=devbranchtag.split("-")[1]
+            else:
+                devbranchversion=100
+            devbranchrevision = devbranchtag.split("-")[-1]
+        else:
+            isDevBranch = False
+        (major, minor, patch, feature) = releasetag.split(".")
+        #print(major, minor, patch, feature, devbranchversion, devbranchrevision, dirty)
+        return(int(major), int(minor), int(patch), int(feature), devbranchversion, devbranchrevision, dirty)
+
+(casatools_major,casatools_minor,casatools_patch,casatools_feature, devbranchversion, devbranchrevision, dirty) = compute_version( )
+print(casatools_major, casatools_minor, casatools_patch, casatools_feature, devbranchversion, devbranchrevision, dirty)
+casatools_version = '%d.%d.%d.%d%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,dirty)
+if devbranchversion !="":
+    casatools_version = '%d.%d.%d.%da%s.dev%s%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,devbranchversion,devbranchrevision,dirty)
+print(casatools_version)
+
+
+def install_version_header( major, minor, patch, feature, verstr ):
+    with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
+        for line in f:
+            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_FEATURE@",str(feature)).replace("@CASATOOLS_VERSION_STRING@",verstr)
+            out.write(l)
+
+def install_version_cc( major, minor, patch, feature,  verstr ):
+    with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
+        for line in f:
+            l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
+                    .replace("@CASA_VERSION_MINOR@",str(minor))\
+                    .replace("@CASA_VERSION_PATCH@",str(patch))\
+                    .replace("@CASA_VERSION_FEATURE@",str(feature))\
+                    .replace("@CASA_VARIANT@","")\
+                    .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")
+            out.write(l)
+
+print("generating version header...")
+install_version_header(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+###
+###  return string discription of the current operating system, e.g.
+###
+###        el6 -- RedHat/SuSE/Centos/Scientific Enterprise Linux 6
+###        el7 -- RedHat/SuSE/Centos/Scientific Enterprise Linux 7
+###
+def os_description( ):
+    def process_os_details( result, file_proc ):
+        def description_line(result, path):
+            if result is None:
+                if os.path.isfile(path):
+                    with open(path) as f:
+                        return f.readline( )
+            return result
+
+        def match_line(result, match_func):
+            os_desc = match_func(result)
+            ret = os_desc if os_desc != result else result
+            return ret
+
+        if result is None:
+            desc = reduce( description_line, file_proc[0], None )
+            if desc is not None:
+                return reduce( match_line, file_proc[1], desc )
+
+        return result
+
+    # need description string template for SuSE
+    description_selection = [ ( [ "/etc/redhat-release", "/etc/SuSE-release" ],
+                                [ lambda str: "el6" if (str.startswith("Red Hat Enterprise Linux Workstation") and "release 6" in str) else str,
+                                  lambda str: "el6" if (str.startswith("CentOS") and "release 6" in str) else str,
+                                  lambda str: "el7" if (str.startswith("Red Hat Enterprise Linux Workstation") and "release 7" in str) else str,
+                                  lambda str: "el7" if (str.startswith("CentOS") and "release 7" in str) else str ] ) ]
+
+    return reduce( process_os_details, description_selection, None )
+
+###
+### python is lame, this is what is necessary to get a dictionary that is defined for
+### every key, but all keys except the 'specified' ones will get the default value
+### (an empty list)...
+###
+### see: https://stackoverflow.com/questions/9139897/how-to-set-default-value-to-all-keys-of-a-dict-object-in-python
+###
+os_desc = os_description( )
+specified_closure_library_dictionary = { 'el6': ( [ '-L/usr/lib64/atlas' ],
+                                                  [ 'cblas', 'f77blas', 'atlas' ] ) }
+closure_library_dictionary = defaultdict(lambda: ([ ], [ ]), specified_closure_library_dictionary)
+closure_ldflags, closure_libraries = closure_library_dictionary[os_desc]
+
+boost_exclusions = [ 'Merger.cc', 'PycValueHolder.cc', 'PycBasicData.cc', 'PycRecord.cc', 'PycArray.cc', 'PycExcp.cc', 'PycArrayNP.cc', 'PycImport.cc' ]
+
+a_priori_exclusions = ['tTableRecord.cc','tXMLToRecord.cc','tArrayIteratorSTL.cc','tStokesConverter.cc','value_variant.cc','tSymLink.cc','tImageExpr2.cc','tRefTable.cc','tPBMath1DEVLA.cc','SingleDishMS_GTest.cc','dRGBTestPattern.cc','tMSReader.cc','tChoice.cc','tCFCache.cc','tImageAnalysis.cc','tPBTable.cc','tLatticeExprNode.cc','tRecursiveVi2LayersWithCal_GT.cc','tCopy.cc','tKJones.cc','tFlagAgentDisplay.cc','tArrayIO3.cc','tTime.cc','tBeamSquint.cc','tImageDecomposer.cc','tStatWtTVI.cc','tCalSolVi2Organizer_GT.cc','tReadBigBDF.cc','tComponentType.cc','tFITSErrorImage.cc','tStatisticsUtilities.cc','tAppInfo.cc','LineFinder_GTest.cc','tMSDataDescBuffer.cc','tMFrequency.cc','tLockFile.cc','tWCBox.cc','tLatConvEquation.cc','tList.cc','dDataSelection.cc','tmeas.cc','tPrimes.cc','VisibilityIteratorImplAsync2.cc','tReadAsciiTable.cc','tImageUtilities.cc','FillMetadata.cc','tSimpleSimVi2_GT.cc','MSCheckerTest.cc','tMSScanGram.cc','tStdLogical.cc','tImageRegrid.cc','tObjectPool.cc','tCoordinateSystem.cc','tLatticePerf.cc','SingleDishMSFiller_GTest.cc','tFFTServer2.cc','tUnit.cc','tRegex2.cc','tFlagAgentTimeFreqCrop.cc','tCTIter.cc','tRegionHandler.cc','tRecordTransformable.cc','tFitGaussian.cc','tPrecision.cc','tVirtColEng.cc','tTableLock.cc','tRecordDesc.cc','tHashMapIter.cc','dVarRefMdirCol.cc','tLatticeApply2.cc','dAveragingTime.cc','tStokesImageUtil.cc','tImageExprParse_addDir.cc','tLEL.cc','tVLADiskInput.cc','tfitsskip_hdu.cc','tLatticeRegion.cc','tMSAntennaGram3.cc','tMatrixMath.cc','tVLATapeInput.cc','tfits_ascTbl2.cc','AtmosphereTest.cc','dPagedArray.cc','tFluxStandard4.cc','tFlagger.cc','tFluxStandard3.cc','tMaskArrExcp.cc','tAttribute_Gtest.cc','tMultiHDF5.cc','tError.cc','tVisCal_GT.cc','tImageFFT.cc','asdm2msfillertask_cmpt.cc','dGridPlacementMultipleRuns.cc','tSIIterBot.cc','tRegionTextParser.cc','tSynthesisUtils.cc','tMeasureHolder.cc','tImager.cc','tHanningSmooth.cc','tIDL.cc','tByteSinkSource.cc','tfits_binTbl1.cc','tAipsrcValue.cc','tDataType.cc','tImagePolarimetry.cc','makeAsdmIndex.cc','dTimeIteration.cc','tLatticeIterator.cc','tFunctionHolder.cc','tCalStats7.cc','tTiledShape.cc','tLCRegion.cc','tMArrayUtil.cc','tArrayBase.cc','tSort_1.cc','tTiledDataStMan.cc','tBucketCache.cc','tPtrHolder.cc','tLinearXform.cc','tSynthesisImager.cc','tIAU2000.cc','dAutoDiff.cc','SDMaskHandler_GTest.cc','3DWindow.cc','tFitter5689.cc','tLatticeExpr2Node.cc','tComponentList.cc','ascii2Table.cc','tUVContSubTVI.cc','tExtendSpecifier.cc','dPanelDisplay.cc','tLCMask.cc','tMSTimeGram.cc','tMutex.cc','tExprUnitNode.cc','tNutation.cc','tFluxStandard.cc','tLatticeExpr3Node.cc','QtParamGUI.cc','tfits2.cc','tTblAsRaster.cc','tArrayOpsDiffShapes.cc','casadrawer.cc','tAsdmStMan.cc','tSlice.cc','tTiledBool.cc','tLCExtension.cc','tMSSummary.cc','tStatWt2.cc','dLatticeAsVector.cc','tChannelAverageTVI.cc','tLCPolygon.cc','tImageExprGram.cc','dAveragingChannel.cc','tHyperPlane.cc','dSymbol.cc','tIPosition.cc','tTapeIO.cc','tTabularCoordinate.cc','dVSCEngine.cc','tMeasurementSet.cc','tSpectralCoordinate.cc','VisBufferImplAsync2.cc','tImageConvolver.cc','tBinTable.cc','tSpectralIndex.cc','tfits3.cc','tStack.cc','VLAT2.cc','tExtendImage.cc','tLinearFitSVD.cc','tSSMStringHandler.cc','tMaskArrMath2.cc','tMDirection.cc','tArrayLogical.cc','tFITSKeywordUtil.cc','tfits2ms.cc','dInterpolate1D.cc','tHashMapIO.cc','tGaussianND.cc','tTSMShape.cc','tFeather.cc','tRecursiveVi2Layers_GT.cc','tTableQuantum.cc','tSmooth.cc','tMMapIO.cc','dCoordinates.cc','tSakuraArrayConverter.cc','tfits_binTbl2.cc','ParamPanel.cc','dImageStatistics.cc','tHDF5DataSet.cc','CrashReportPoster.cc','tString.cc','tArrayAsRaster.cc','tPrecTimer.cc','tEarthMagneticMachine.cc','Subtable.cc','tCTTimeInterp1.cc','tTiledCellStMan.cc','dImageSummary.cc','tVisModelData.cc','tTiledStMan.cc','tCalibraterSolve_GT.cc','tTable_2.cc','tCoordinateUtil.cc','tTableIter.cc','tGaussianShape.cc','SlideEditor.cc','tBitVector.cc','tGaussianDeconvolver.cc','dTwoSidedShape.cc','tDisplayOptions.cc','tVisModelDataRefim.cc','tfits_imgExt2.cc','Subtables.cc','dImageInterface.cc','tGenSort.cc','tPBMath2D.cc','tTypes.cc','tTrVI2.cc','tMEarthMagnetic.cc','tMSDerivedValues.cc','dMeasure.cc','dDBusViewerProxy.cc','tCOWPtr.cc','type_record.cc','dImageHistograms.cc','tArrayIter.cc','parasdm2MS.cc','dRegionFile.cc','SampleReaderDemo.cc','PointingDirectionCache_Test.cc','tValueHolder.cc','dRemoveAxes.cc','tLatticeConvolver.cc','tCEMemModel.cc','tMSTransformIterator.cc','tTableInfo.cc','tAipsrc.cc','tLogTransformedPolynomialSpectralElement.cc','tStatWt.cc','tMVAngle.cc','tCanonicalConversion.cc','tHashMap.cc','tMSFieldGram.cc','tLogging.cc','tCalInterpolation.cc','MatrixMath.cc','tSkyComponentFactory.cc','tSpectralFit.cc','ImageMaskHandler_Gtest.cc','tFITSExtImage.cc','tUVSub.cc','tAnnRotBox.cc','tZScoreCalculator.cc','flagger_cmpt.cc','dQtDataManager.cc','tPoolStack.cc','ValuePanel.cc','tImageRegion.cc','dSparseDiff.cc','tQueue.cc','tImageFitter.cc','tGaussianConvert.cc','tVisVectorJonesMueller_GT.cc','tImageCollapser.cc','tVPSkyJones.cc','tImageStatistics.cc','dGLDemo.cc','tScalarRecordColumn.cc','tRecordGram.cc','tFFT2D.cc','tRegex_1.cc','tLatticeAddNoise.cc','tMArray.cc','tArrayMath.cc','tLatticeCache.cc','tLatticeIndexer.cc','VisBufferAsyncWrapper2.cc','tAWPFTM.cc','tVectorSTLIterator.cc','tScaledComplexData.cc','tEnvVar.cc','tMBaseline.cc','MirTypeAssert.cc','tOrdMap.cc','tAttribute.cc','tCoordinate.cc','dConstraints.cc','tAttValPoi.cc','tFit2D.cc','tSampledFunctional.cc','tImageFit1D.cc','dWorldMap.cc','tConversion.cc','tBitFlagsEngine.cc','tLCPixelSet.cc','tRebinImage.cc','nISMBucket.cc','tExprGroup.cc','tFFTServer.cc','tRIorAPArray.cc','tHDF5Lattice.cc','tArray.cc','tCompoundFunction.cc','tMArrayMath.cc','tHDF5Image.cc','tFunctors.cc','tAnnRectBox.cc','tMath.cc','tfits_priGrp.cc','dExportRangeRightBottom.cc','tUDFMSCal.cc','tfitsread_data.cc','tSort.cc','Colorbar.cc','tMSColumns.cc','tLatticeApply.cc','use_EditlineGuiProxy.cc','tFlagAgentClipping.cc','tStokes.cc','FluxStandard2_GTest.cc','tHDF5Iterator.cc','tRowCopier.cc','tStokesUtil.cc','tVisCalGlobals_GT.cc','tCompare.cc','tFlagAgentBase.cc','tAnnText.cc','tBucketMapped.cc','tLatticeFractile.cc','tLatticeStatistics.cc','tParam.cc','dM1950_2000.cc','tImageProxy.cc','tWCExtension.cc','tMeasMath.cc','tMSSpwGram.cc','dLSQFit.cc','Antennas.cc','tTableVector.cc','tCalStats3.cc','tRecordExpr.cc','dCEMemModel.cc','AveragingTvi2_Test.cc','tImageStatistics2.cc','tTableLockSync.cc','tImageSourceFinder.cc','tPowerLogarithmicPolynomial.cc','tMappedIO.cc','dPSWorldCanvasApp.cc','AlignMemory.cc','tLSQaips.cc','tConstants.cc','tUVWMachine.cc','tNewCalTable.cc','tSakuraAlignedArray.cc','dExportRangeRightTop.cc','dExportRangePipeline.cc','tStArrayFile.cc','tBucketBuffered.cc','tRegionManager.cc','PythonInterpreter.cc','tArrayUtilPerf.cc','tConvertArray.cc','dExportRangeInternal.cc','tRegularFile.cc','dAveraging.cc','tfitsskip_all.cc','tQuantum.cc','tVAXConversion.cc','tArrayMath2.cc','tCombinatorics.cc','tViff.cc','tRebinLattice.cc','tAntennaResponses.cc','tSkyCompRep.cc','harvestrr.cc','tRFCubeLattice.cc','tTableLockSync_2.cc','tFITSImage.cc','tTiledShapeStMan.cc','tPJones_GT.cc','tExprNodeSet.cc','tMemory.cc','tVector.cc','tViiLayerFactory_GT.cc','tTableTrace.cc','tMSMetaData.cc','tfitsskip.cc','tFitterEstimatesFileParser.cc','tHDF5Record.cc','CrashReporter.cc','tLELAttribute.cc','tKJones_GT.cc','tVelocityMachine.cc','tQVector.cc','tLCUnion.cc','tSPolynomial.cc','tLCConcatenation.cc','tMSFITSInput.cc','tMSMetaInfoForCal_GT.cc','tDlHandle.cc','tArrayUtil.cc','tAgentFlagger.cc','3DController.cc','tAnnLine.cc','tCombiFunction.cc','LineFindingUtils_GTest.cc','tImageConcat.cc','tImageTransposer.cc','tCountedPtr.cc','dLogging2.cc','dLattice.cc','tEarthField.cc','tArrayIter1.cc','tTempImage.cc','DemoDummy.cc','tSubLattice.cc','tMVPosition.cc','SofaTest.cc','tTiledEmpty.cc','tTileStepper.cc','tLCLELMask.cc','tGaussianMultipletSpectralElement.cc','FluxStandard_GTest.cc','tImageExpr3Gram.cc','tSparseDiff.cc','tCompositeNumber.cc','tTable.cc','tLCIntersection.cc','dPagedImage.cc','tSTLMath.cc','tCTGenericFill.cc','tArrayAccessor.cc','tMaskArrLogi.cc','tJsonValue.cc','dOverPlot.cc','tLatticeHistograms.cc','tFITSQualityImage.cc','tImageInputProcessor.cc','dExportRangeLeftTop.cc','tImageAnalysis2.cc','tLatticeUtilities.cc','tTblAsXY.cc','tMedianSlider.cc','tMSPolBuffer.cc','tStatAcc.cc','tCalStats0.cc','tArrayColumnCellSlices.cc','tGlinXphJones_GT.cc','tDataConversion.cc','tBinarySearch.cc','tFlagAgentElevation.cc','tAlgoPClark.cc','tFlagAgentExtension.cc','tLCPolygon2.cc','tGaussianBeam.cc','tTiledCellStM_1.cc','ProtoVR.cc','tTaQLNode.cc','tAnnVector.cc','VisBufferImpl.cc','tBoxedArrayMath.cc','LUdecomp.cc','dLogging.cc','synthesisparsync_cmpt.cc','tAnnCircle.cc','tTiledShapeStM_1.cc','tExprNodeUDF.cc','AWConvFunc2.cc','tTableExprData.cc','tByteSink.cc','tImagePrimaryBeamCorrector.cc','tImageExpr2Gram.cc','tMultiFile.cc','tJsonOut.cc','tMeasJPL.cc','MirExceptions.cc','tDiagonal.cc','tChannelAverageTransformEngine_GT.cc','tTableDesc.cc','dQtPlotter.cc','tMMueller_GT.cc','tqlayout.cc','tPolynomial.cc','tCTPatchedInterp.cc','tProfileFit1D.cc','tLCEllipsoid.cc','tHanningSmoothTVI.cc','dLegend.cc','tFitToHalfStatistics.cc','tSakuraUtils.cc','tApplicator.cc','tPointComponent.cc','tInterpolate2D.cc','tConcatTable3.cc','tQualityCoordinate.cc','tVanVleck.cc','tGridFT.cc','dOverPlot2Files.cc','tLinearCoordinate.cc','MirVisReader.cc','tCalLibraryParse.cc','tTempLattice.cc','tClarkCleanLatModel.cc','tMSFieldEphem.cc','tTableDescHyper.cc','tMaskArrIO.cc','dVirtColEng.cc','tRegex.cc','tTiledLineStepper.cc','SDPosInterpolator_GTest.cc','tTable_3.cc','tPowerLogPolynomialSpectralElement.cc','tMathNaN.cc','t2xReadASDM.cc','tImageExprParse.cc','tSlidingArrayMath.cc','tLargeFilebufIO.cc','tCTSelection.cc','tFITSImgParser.cc','tGeometry.cc','tJsonKVMap.cc','tVSCEngine.cc','tCurvedLattice2D.cc','tGaussian1D.cc','tLatticeConcat.cc','tInterpolate1D.cc','tfits_ascTbl.cc','tTypeIO.cc','tDerivedMSCal.cc','MsFactory.cc','tMeasure.cc','tComponentImager.cc','tSinusoid1D.cc','tLogSink.cc','tFITS.cc','tConvolver.cc','tForwardCol.cc','tMSSelection.cc','tArrayMathPerf.cc','tRegister.cc','dOverIterationPlot.cc','tStMan.cc','tAipsIOCarray.cc','tBucketFile.cc','tComplex.cc','AsynchronousInterface2.cc','tInput.cc','tConversionPerf.cc','tFile.cc','TestUtilsTVI.cc','tCasacRegionManager.cc','tLineFinder.cc','tfitsreader.cc','tTableGram.cc','tImageStatsCalculator.cc','casaparamgui.cc','tGaussianComponent.cc','PolAverageTVI_GTest.cc','tPagedImage2.cc','tConstantSpectrum.cc','3v.cc','tLatticeExpr3.cc','3DDisplayData.cc','tVLALogicalRecord.cc','dGridPlacementMultiplePlots.cc','tConvert.cc','tCalibraterSolveSimData_GT.cc','tIncrementalStMan2.cc','tTableRow.cc','tModcompConversion.cc','tCompareBoxedPartial.cc','IDIndex.cc','tMemoryStMan.cc','tCasaImageBeamSet.cc','accumulateFromGrid.cc','tTiledFileAccess.cc','tALMAAperture.cc','tLECanonicalConversion.cc','tMSConcat.cc','tMatrixMathLA.cc','tMathFunc.cc','tFuncExpression.cc','tWCEllipsoid.cc','tNonLinearFitLM.cc','tCLPatchPanel.cc','Viff.cc','tStandardStMan.cc','tFunctionOrder.cc','tFrequencyAligner.cc','tTableStreamReader.cc','tAttVal.cc','tDiskShape.cc','tHostInfo.cc','tAutoDiff.cc','dGaussianND.cc','tDirectionCoordinate.cc','tcal_cmpt2.cc','tMSCalEnums.cc','tAxesSpecifier.cc','tRecordGramTable.cc','tAutoflag.cc','tCasarc01.cc','dExportRangeLeftBottom.cc','tHingesFencesStatistics.cc','harvestrn.cc','tImageInfo.cc','tMemoryTrace.cc','tBlock.cc','tParAngleMachine.cc','tCasaImageOpener.cc','tTable_4.cc','tWCLELMask.cc','tSTLIO.cc','tDJones_GT.cc','tFringeJones_GT.cc','FortranizedLoopsFromGrid.cc','tImage2DConvolver.cc','tMappedArrayEngine.cc','dLatticeAsRaster.cc','tSimButterworthBandpass.cc','tMuvw.cc','tByteIO.cc','tTiledColumnStMan.cc','tPixelCurve1D.cc','DataLoadingBuf.cc','tForwardColRow.cc','tMSUvDistGram.cc','tMSIter.cc','tLatticeTwoPtCorr.cc','tRegionTextList.cc','tCalStats6.cc','tReadAsciiTable2.cc','tCalStats1.cc','tPhaseShiftingTVI.cc','tPBMath.cc','tConvolutionEquation.cc','tLatticeStatsDataProvider.cc','tLattStatsSpecialize.cc','tInterpolateArray1D.cc','tLimbDarkenedDiskShape.cc','dMultiplePlotTypes.cc','dRetypedArrayEngine.cc','tTableCopy.cc','tConcatTable2.cc','dArrayAccessor.cc','dRGBWCRaster.cc','tFlagDataHandler.cc','tExtendLattice.cc','dProfile2dDD.cc','tDynBuffer.cc','tFJones.cc','tVectorKernel.cc','tSubImage.cc','tProfileFitterEstimatesFileParser.cc','tLatticeFit.cc','tColumnsIndexArray.cc','tClassicalStatistics.cc','tArrayAndDrawing.cc','tTiledDataStM_1.cc','tHistAcc.cc','tAnnAnnulus.cc','MakeMS.cc','tMSAntennaGram2.cc','tSolveDataBuffer_GT.cc','dTimeColorization.cc','tSimOrdMap.cc','tArrayIO2.cc','dPointShape.cc','tFITSExtImageII.cc','tBlockTrace.cc','tVisibilityIterator.cc','tCalibrater.cc','tVisibilityIteratorAsync.cc','tFITSSpectralUtil.cc','tStringDistance.cc','tfits5.cc','tLabelandFindRegions.cc','dMUString.cc','importmiriad.cc','dSpectralModel.cc','dExportRange.cc','tTable_1.cc','tArrayColumnSlices.cc','tLELSpectralIndex.cc','tTimer.cc','tCalStats5.cc','tStatisticsAlgorithmFactory.cc','tShadow.cc','tObjectStack.cc','tExprGroupArray.cc','tPath.cc','tSlicer.cc','tLCComplement.cc','tLCDifference.cc','tClarkCleanModel.cc','tStMan1.cc','tConcatRows.cc','tMSFitsSelection.cc','tMeasIERS.cc','tLUdecomp.cc','dImagingWeightViaGridFT.cc','tTableCopyPerf.cc','tOrdMap2.cc','tMSKeys.cc','tLELMedian.cc','tFileIO.cc','tIncrementalStMan.cc','tArrayIO.cc','ImageMaskHandlerTest.cc','tMSCorrGram.cc','tFilebufIO.cc','tStringArray.cc','paramgui_python.cc','tCompressComplex.cc','tConcatTable.cc','tMSMainBuffer.cc','tFlagAgentSummary.cc','FortranizedLoopsToGrid.cc','tPointShape.cc','tObjectID.cc','dTimeColorizationAveraging.cc','tAipsIO.cc','tPerfTransform.cc','CalTableFromAIPS.cc','tFlagAgentQuack.cc','tCalStats4.cc','dPSLatticeAsRaster.cc','dFunction.cc','dCOWptr.cc','tSepImageConvolver.cc','tMSFITSOutput.cc','tGaussian3D.cc','tMaskedArray.cc','tImageExpr.cc','dVLAArchiveInput.cc','tRNG.cc','tMSFieldBuffer.cc','tReadSeqBDFs.cc','tEVLAAperture.cc','tLatticeFFT.cc','SDAlgorithmTest.cc','tArrayPosIter.cc','tDirectoryIterator.cc','tFITSDateUtil.cc','tVirtualTaQLColumn.cc','tReadAllBDFs.cc','interrupt_python.cc','tDirectory.cc','tcal_cmpt.cc','tCalIntpMatch.cc','tTblAsContour.cc','tSumPerformance.cc','tImageMetaData.cc','VisibilityIterator_Test.cc','tTableAccess.cc','tTableKeywords.cc','SDDoubleCircleGainCalImpl_GTest.cc','tStokesCoordinate.cc','tMVTime.cc','tFunctionWrapper.cc','tFallible.cc','FluxStandardTest.cc','tVisIter.cc','tFlagAgentManual.cc','EphemObjFluxStandard_GTest.cc','dSkyCompBase.cc','tVisVectorJonesMueller.cc','tImageAttrHandler.cc','tFITSHistoryUtil.cc','dImageMoments.cc','MirFiller.cc','tIBMConversion.cc','tTabularSpectrum.cc','tSSMAddRemove.cc','tCompressFloat.cc','tPagedArray.cc','dDBus.cc','tPagedImage.cc','version2.cc','tfits1.cc','tObsInfo.cc','dExportPlot.cc','tMeasComet.cc','dGridPlacement.cc','tHDF5File.cc','VisibilityProcessing_Test.cc','dTimeAveragingIteration.cc','bimafiller.cc','tPixonProcessor.cc','tStatisticsTypes.cc','tMemoryTable.cc','tVLABuffer.cc','tFlagAgentShadow.cc','tMSFeedGram.cc','tIncCEMemModel.cc','tMSAntennaGram.cc','tAnnEllipse.cc','value_record.cc','tChebyshev.cc','tScaledArrayEngine.cc','tCalStats2.cc','tLCStretch.cc','tMaskArrMath1.cc','tfits4.cc','tAnnCenterBox.cc','tMIRIADImage.cc','tLoggerHolder.cc','tColumnsIndex.cc','tProjection.cc','tDisplayEvent.cc','dOverLeftRightPlot.cc','tCCList.cc','tMaskArrMath0.cc','tAnnSymbol.cc','tImageProfileFitter.cc','tWCUnion.cc','tFlagAgentRFlag.cc','SingleDishSkyCal_GTest.cc','tMSBin.cc','tPoisson.cc','tFTMachine.cc','tMFFileIO.cc','tSpectralFitter.cc','tConstantND.cc','tLinearSearch.cc','dMultichannelRaster.cc','tLinAlgebra.cc','t_priArr_imgExt.cc','tQuality.cc','tRefRows.cc','tFluxStandard2.cc','tRFASelector.cc','tLatticeExpr2.cc','MSChecker_Gtest.cc','tSubImageFactory.cc','dDBusSession.cc','tMsPlot.cc','tSynthesisImagerVi2.cc','tGaussian2D.cc','tExprNode.cc','tLatticeStepper.cc','conversions.cc','tImageMoments.cc','tHDF5.cc','tRegriddingTVI.cc','tFlagIndex.cc','VisibilityIterator_Gtest.cc','tChauvenetCriterionStatistics.cc','tPixelValueManipulator.cc','tLSQFit.cc','type_variant.cc','tReadParBDFs.cc','dNBody.cc','tImageEmpty.cc','tLCPagedMask.cc','tArrayMathTransform.cc','tLatticeLocker.cc','tLatticeSlice1D.cc','tLargeFileIO.cc','tRecord.cc','tTableMeasures.cc','tLatticeExpr.cc','tQuantumHolder.cc','tDisplayTool.cc','tNewCalTableIterNick.cc','tImageBeamSet.cc','DOmirfiller.cc','tDefaultValue.cc','tCalStatsTab.cc','tLorentzianSpectralElement.cc','CTSelection.cc','tLCSlicer.cc','tLatticeMathUtil.cc','tAnnPolygon.cc','tMedianSmooth.cc','tArrayLattice.cc','dProgressMeter.cc','PGPlotterLocal.cc',
+'Adios2StManColumn.cc', 'tAdios2StMan.cc', 'Adios2StMan.cc',
+'HashMap2.cc', 'List2.cc', 'Map2.cc', 'StackError.cc', 'Stack2.cc',
+]
+
+a_priori_directory_exclusions = [ ]
+
+def flatmap(f, items):
+    return chain.from_iterable(map(f, items))
+
+def isexe(f):
+    return os.path.isfile(f) and os.access(f, os.X_OK)
+
+def clean_args(l):
+    return [a for a in l if len(a) > 0]
+
+def mkpath(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+## https://stackoverflow.com/questions/14320220/testing-python-c-libraries-get-build-path
+def distutils_dir_name(dname):
+    """Returns the name of a distutils build directory"""
+    f = "{dirname}.{platform}-{version[0]}.{version[1]}"
+    return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
+
+def distutils_shared_library_name(base):
+    shared_ext = "dylib" if sys.platform == 'darwin' else "so"
+    f = "lib{name}.{abi}.{ext}"
+    return f.format(name=base, abi=sysconfig.get_config_var('SOABI'), ext=shared_ext)
+
+def distutils_loadable_object(base):
+    f = "_{name}{so}"
+    return f.format(name=base,so=sysconfig.get_config_var('SO'))
+
+def sakura_files( ):
+    return [ 'sakura-source/src/baseline.cc', 'sakura-source/src/bit_operation.cc',
+             'sakura-source/src/bool_filter_collection.cc', 'sakura-source/src/concurrent.cc',
+             'sakura-source/src/convolution.cc', 'sakura-source/src/fft.cc',
+             'sakura-source/src/gen_util.cc', 'sakura-source/src/gridding.cc',
+             'sakura-source/src/interpolation.cc', 'sakura-source/src/mask_edge.cc',
+             'sakura-source/src/normalization.cc', 'sakura-source/src/numeric_operation.cc',
+             'sakura-source/src/statistics.cc' ]
+
+def source_files(
+    path,root_filter=[ ],path_filter=[ ],
+    subdir_filter=['tests','test','apps','demo'], file_filter=[ ],
+    file_suffix_filter="", do_apriori_exclusions=True
+):
+    """
+    find all of the source files to compile beneath path
+    """
+    result = [ ]
+    my_apriori_exclusions = a_priori_exclusions if do_apriori_exclusions else []
+    for root, dirs, files in os.walk(path):
+        if root in root_filter or any(map(lambda x: root.endswith(x),a_priori_directory_exclusions)):
+            continue
+        subdir = os.path.basename(root)
+        if subdir in subdir_filter or any(map(lambda x: (os.sep + x + os.sep) in root,subdir_filter)):
+            continue
+        path = root.split(os.sep)
+        for file in files:
+            if any(map(lambda x: x in root+os.sep+file, path_filter)):
+                continue
+            if file.endswith(file_suffix_filter) and not any(map(lambda s: (root + os.sep + file).endswith(s),file_filter)) and not file in my_apriori_exclusions and not file in boost_exclusions:
+                result.append(root + os.sep + file)
+    return result
+
+###
+### see Roberto's comment in:
+### https://stackoverflow.com/questions/3595363/properties-file-in-python-similar-to-java-properties
+###
+def load_properties(filepath, sep='=', comment_char='#'):
+    """
+    Read the file passed as parameter as a properties file.
+    """
+    props = {}
+    with open(filepath, "rt") as f:
+        for line in f:
+            l = line.strip()
+            if l and not l.startswith(comment_char):
+                key_value = l.split(sep)
+                key = key_value[0].strip()
+                value = sep.join(key_value[1:]).strip().strip('"')
+                props[key] = value.split(' ') if key.startswith('build.flags') else value
+
+    global real_gnu
+    real_gnu = False
+    proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
+    out,err = pipe_decode(proc.communicate( ))
+    if len([s for s in (out + err).split('\n') if s.startswith("gcc version ")]) > 0 :
+        if sys.platform == 'darwin':
+            print('using real GNU compiler on OSX...')
+        real_gnu = True
+
+    return props
+
+def so_version( ):
+    delta=int(time.time()-1385614800)
+    z=delta & 0xff
+    y=(delta>>8)&0xff
+    x=(delta>>16)&0xffff
+    return "%d.%d.%d" % (x,y,z)
+
+def install_xml_casa( ):
+    script = os.path.join('scripts','xml-casa')
+    jar = os.path.join('scripts','java',xml_jar_file)
+    bindir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin")
+    javadir = os.path.join(bindir,'java')
+    mkpath(javadir)
+    copy2(script,bindir)
+    copy2(jar,javadir)
+
+def get_grpc_srcdir():
+    return os.path.join('build', distutils_dir_name('binding'),'grpc')
+
+def generate_grpc(protos):
+    protoc = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "protoc")
+    grpc_plugin = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "grpc_cpp_plugin")
+    proto_export_dir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "proto")
+    assert os.path.exists(grpc_plugin), 'gRPC plugin not found'
+    #outdir=os.path.join('build', distutils_dir_name('binding'),'grpc')
+    outdir=get_grpc_srcdir()
+    mkpath(outdir)
+    mkpath(proto_export_dir)
+    for p in protos:
+        copy2(p,proto_export_dir)
+        assert os.path.isfile(p), "could not find gRPC proto '%s'" % p
+        print('generating protocol for %s...' % os.path.basename(p))
+        genprotocol = [protoc, '-I%s' % os.path.dirname(p), '--cpp_out=%s' % outdir, p]
+        genrpc = [protoc, '-I%s' % os.path.dirname(p), '--grpc_out=%s' % outdir, '--plugin=protoc-gen-grpc=%s' % grpc_plugin, p]
+        print("\t%s" % " ".join(genprotocol))
+        run_process( genprotocol, err='could not generate protobuf bindings for %s' % p )
+        print("\t%s" % " ".join(genrpc))
+        run_process( genrpc, err='could not generate protobuf bindings for %s' % p )
+    return outdir
+
+def generate_pyinit(moduledir,tools):
+    """Generate __init__.py for the module
+    """
+    outfile = os.path.join(moduledir,'__init__.py')
+    mkpath(moduledir)
+    with open(outfile, "w") as fd:
+        fd.write("""###########################################################################\n""")
+        fd.write("""########################## generated by setup.py ##########################\n""")
+        fd.write("""###########################################################################\n""")
+        fd.write("from __future__ import absolute_import\n")
+        fd.write("__name__ = '%s'\n" % module_name)
+        fd.write("__all__ = [ \"ctsys\", \"version\", \"version_string\",\n")
+        for tool in tools:
+            if tool != "utils":
+                fd.write("            '%s',\n" % tool)
+        fd.write("          ]\n")
+        for tool in tools:
+            if tool != "utils":
+                fd.write("from .%s import %s\n" % (tool,tool))
+
+        config='''\
+
+               import casatools.ctuser as __user
+               from .utils import utils as __utils
+               import os as __os
+               import sys as __sys
+               def __find_data_path( ):
+
+                   def find_mount_point(path):
+                       path = __os.path.abspath(path)
+                       while not __os.path.ismount(path):
+                           path = __os.path.dirname(path)
+                       return path
+
+                   #potential_data_paths = ['/opt/casa/data', '/home/casa/data/master', '/home/casa/data', '/export/data_1/casa/data']
+                   potential_data_paths = [ ]
+                   casadata = [ d for d in (__os.environ['CASADATA'].split(':') if 'CASADATA' in __os.environ else [ ]) if __os.path.isdir(d) ]
+                   potential = [ d for d in potential_data_paths if __os.path.isdir(d) ]
+                   potential_local = [ d for d in potential if find_mount_point(d) == '/' ]
+                   potential_remote = [ d for d in potential if find_mount_point(d) != '/' ]
+                   used = set( )
+                   return [ x for x in casadata + potential_local + potential_remote if x not in used and (used.add(x) or True)]
+
+               def __find_user_data_path( ):
+                   def is_iter_container(v):
+                       try:
+                           _iter = iter(v)
+                           return not isinstance(v,str)
+                       except TypeError:
+                           return False
+
+                   if hasattr(__user,'datapath') and is_iter_container(__user.datapath):
+                       return list(filter(__os.path.isdir, list(map(__os.path.expanduser,__user.datapath))))
+                   else:
+                       return [ ]
+
+               sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
+
+               ctsys = __utils( )
+               ctsys.initialize( __sys.executable, __find_user_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] + __find_data_path( ) )
+               from .coercetype import coerce as __coerce
+
+               __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
+
+               def version( ): return list(ctsys.toolversion( ))
+               def version_string( ): return ctsys.toolversion_string( )
+
+               import atexit as __atexit
+               __atexit.register(ctsys.shutdown) ## c++ shutdown
+              '''
+        fd.write(dedent(config))
+
+def generate_config(moduledir,propdict):
+    """Generate config.py
+    """
+    outfile = os.path.join(moduledir,"config.py")
+    with open(outfile, "w") as fd:
+        fd.write("""###########################################################################
+########################## generated by setup.py ##########################
+###########################################################################
+###
+### see Roberto's comment in:
+### https://stackoverflow.com/questions/3595363/properties-file-in-python-similar-to-java-properties
+###
+import os as __os
+
+def __load_properties(filepath, sep='=', comment_char='#'):
+    props = {}
+    with open(filepath, "rt") as f:
+        for line in f:
+            l = line.strip()
+            if l and not l.startswith(comment_char):
+                key_value = l.split(sep)
+                key = key_value[0].strip()
+                value = sep.join(key_value[1:]).strip().strip('"')
+                props[key] = value.split(' ') if key.startswith('build.flags') else value
+    return props
+
+build = __load_properties(__os.path.join(__os.path.dirname(__file__),'build.properties'))
+build['build.compiler.xml-casa'] = __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','bin','xml-casa')
+
+build['build.flags.compile.grpc'] = [ '-I' + __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','include') ]
+build['build.flags.link.grpc'] = [ '-L' + __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','lib'), '-lgrpc++', '-lgrpc', '-lgpr', '-lprotobuf' ]
+build['build.compiler.protoc'] = __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','bin','protocpp')
+build['build.compiler.protocpp'] = __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','bin','protocpp')
+build['build.compiler.protopy'] = __os.path.join(__os.path.dirname(__os.path.abspath(__file__)),'__casac__','bin','protopy')
+
+""")
+
+
+def generate_lex(sources,output_dir='libcasatools/generated/include'):
+    """Generate lex compilation files...
+    """
+    mkpath(output_dir)
+    for file in sources:
+        name = os.path.basename(file)
+        base = os.path.splitext(name)[0]
+        if Proc([props['build.compiler.flex'], "-P%s" % base, "-o", "%s%s%s.lcc" % (output_dir,os.sep,base), file]) != 0:
+            sys.exit('lex generation of %s%s%s.lcc failed' % (output_dir,os.sep,base))
+
+def generate_yacc(sources,output_dir='libcasatools/generated/include'):
+    """Generate yacc compilation files...
+    """
+    for file in sources:
+        name = os.path.basename(file)
+        base = os.path.splitext(name)[0]
+        if Proc([props['build.compiler.bison'], "-y", "-p", base, "-o", "%s%s%s.ycc" % (output_dir,os.sep,base), file]) != 0:
+            sys.exit('lex generation of %s%s%s.ycc failed' % (output_dir,os.sep,base))
+
+def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='binding/generated/tools',source_dir='binding/generated/tools', tool_dir=''):
+    """Generate swig binding code from CASA XML files...
+    """
+    xml_casa = props['build.compiler.xml_casa']
+    assert os.path.isfile(xml_casa) and os.access(xml_casa,os.X_OK), "casa xml generation script not found..."
+    proc = Popen([xml_casa, '-all', '-output-tool-subdir','output-i=%s' % swig_dir, 'output-h=%s' % header_dir, 'output-c=%s' % source_dir, 'output-tool=%s' % tool_dir ] + sources, stdout=PIPE, stderr=PIPE)
+    out,err = pipe_decode(proc.communicate( ))
+    if proc.returncode != 0:
+        print(err)
+        sys.exit('casa xml generation failed')
+    print(out)
+    lines = out.split('\n')
+    needed = [ tool.strip( ) for line in lines  for tool in line[5:].split(',') if line.startswith('<inc>') ]
+    tool_lines = [ line[5:].strip( ) for line in lines if line.startswith('<tgt>') and ':' in line[5:] ]
+    lib_lines = [ line[5:].strip( ) for line in lines if line.startswith('<tgt>') and '<' in line[5:] ]
+
+    libs = { }
+    for l in lib_lines:
+        x = [i.strip( ) for i in l.split('<')]
+        if len(x) != 2:
+            sys.exit( "error in library target: %s" % l )
+        libs[x[0]] = [ t.strip( ) for t in x[1].split( ) ]
+
+    tools = { }
+    for l in tool_lines:
+        x = [i.strip( ) for i in l.split(':')]
+        if len(x) != 2:
+            sys.exit( "error in tool target: %s" % l )
+        tools[x[0]] = [ t.strip( ) for t in x[1].split( ) ]
+
+    ##  needed  -  tools that are used (returned, accepted as parameters, etc.) by other tools
+    ##  libs    -  libraries to be created for building the tools (i.e. shared tool object modules)
+    ##  tools   -  all tools along with what they need to be built against
+    return (needed,libs,tools)
+
+def run_process( cmd, err, dir=".", stdin=None, env=None ):
+    print("\t]=> %s (cwd: %s)" % (cmd,os.path.abspath(dir)))
+    sys.stdout.flush( )
+    proc = Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=None if env is None else dict(os.environ,**env) ) if stdin is None else Popen( cmd, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=stdin, env=None if env is None else dict(os.environ, **env) )
+    out,err = pipe_decode(proc.communicate( ))
+    exit_code = proc.wait( )
+    if proc.returncode != 0:
+        print("failure...")
+        print(err)
+        sys.stdout.flush( )
+        sys.exit(err)
+    print(out)
+    return proc.returncode
+
+def write_wrapper( dir, ccache, compiler ):
+    ccache_wrapper='''#!/usr/bin/perl
+#open(LOG,">> /tmp/wrapper-log-file.txt");
+#print LOG '%s', ' ', join(' ',@ARGV), "\\n";
+#close(LOG);
+exec { '%s' } '%s', '%s', @ARGV;
+'''
+    ###
+    ### when the user uses /usr/lib64/ccache/gcc et al. writing any
+    ### wrappers results in an infinite loop...
+    ###
+    if len(ccache) > 0:
+        with open(join(dir,os.path.basename(compiler)), "w") as f:
+            f.write(ccache_wrapper % (compiler,ccache,ccache,compiler))
+
+    os.chmod(join(dir,os.path.basename(compiler)), 0o0755)
+
+######################################################################################################
+## gRPC depends on a few other packages, some of which use libtool and automake. The problem
+## with automake and libtool is that they were designed as if there is only one way to build
+## and link libraries and applications. They permit not configuration, they ignore compiler
+## specifications. It is just a inflexible and brittle system. To ensure that ccache is used
+## by these extra packages, we create a wrapper library and add it to the beginning of our
+## PATH. (BTW, gRPC's makefile is very nice)
+######################################################################################################
+broken_autoconf_compiler_dir=os.path.realpath(join('build',distutils_dir_name('compilers')))
+def create_ccache_bin( ):
+    """gRPC and protobuf don't seem to honor CC and CXX
+    """
+    mkpath(broken_autoconf_compiler_dir)
+    for c in [props['build.compiler.cc'], props['build.compiler.cxx']]:
+        if not os.path.exists(join(broken_autoconf_compiler_dir,os.path.basename(c))):
+            write_wrapper( broken_autoconf_compiler_dir, props['build.compiler.ccache'], c )
+
+def gen_proto_binary( prefix, grpc_desc, wrapper_desc ):
+    starting_dir=os.getcwd( )
+    bindir = join(prefix, "bin")
+    grpc_plugin = join(bindir, "grpc_%s_plugin" % grpc_desc)
+    assert os.path.exists(grpc_plugin), 'grpc %s plugin not found' % grpc_desc
+    plugindir_name = "grpc_%s" % wrapper_desc
+    grpc_plugin_dir = join(bindir,plugindir_name)
+    mkpath(grpc_plugin_dir)
+    os.chdir(grpc_plugin_dir)
+    if os.path.exists("protoc-gen-grpc"):
+        os.remove("protoc-gen-grpc")
+    os.symlink("../grpc_%s_plugin" % grpc_desc,"protoc-gen-grpc")
+    os.chdir("..")
+    with open( "proto%s" % wrapper_desc, "w" ) as fd:
+        fd.write("""#!/usr/bin/perl\n""")
+        fd.write("""###########################################################################\n""")
+        fd.write("""########################## generated by setup.py ##########################\n""")
+        fd.write("""###########################################################################\n""")
+        fd.write("""use File::Basename;\n""")
+        fd.write("""use Cwd 'abs_path';\n""")
+        fd.write("""use Cwd 'getcwd';\n\n""")
+        fd.write("""$plugindir = abs_path(dirname(abs_path($0)) . "/%s");\n""" % plugindir_name)
+        fd.write("""$bindir    = abs_path(dirname(abs_path($0)));\n""")
+        fd.write("""$ENV{PATH} = "$plugindir:$ENV{PATH}";\n""")
+        fd.write("""exec("$bindir/protoc", @ARGV);\n""")
+        os.chmod("proto%s" % wrapper_desc,0o755)
+    os.chdir(starting_dir)
+
+def build_grpc( prefix, srcdir, collectdir ):
+    """Build grpc (https://github.com/grpc/grpc/blob/master/):
+           (1) do a straight build of grpc to get the C/C++ libraries and protoc compiler
+           (2) rebuild protobuf to install and then cherry pick the include files
+    """
+    extra_env = { 'PATH': "%s:%s:%s" % ( broken_autoconf_compiler_dir, os.path.join(collectdir,'bin'), os.environ['PATH']),
+                  'CC': os.path.basename(props['build.compiler.cc']), 'CXX': os.path.basename(props['build.compiler.cxx']),
+                  'DOLLAR': '$$',
+                  'ORIGIN': '$ORIGIN',
+                  'LDFLAGS': '-Wl,-rpath,@loader_path' if sys.platform == 'darwin' else '-Wl,-rpath,${DOLLAR}ORIGIN:${DOLLAR}ORIGIN/lib' }
+
+    if os.path.isdir("grpc-source"):
+
+        if not os.path.isdir(srcdir):
+            print("copying the grpc source directory...")
+            run_process( ["rsync","-aq","grpc-source/",srcdir], err='could not copy the grpc source tree' )
+            #### need to set @rpath/ prefix for install name...
+            makefile = "%s/Makefile" % srcdir
+            if os.path.isfile(makefile):
+                with open(makefile) as fd:
+                    s = fd.read()
+                s = s.replace('-install_name ', '-install_name $(RPATH_DIR)')
+                if sys.platform == 'darwin' and real_gnu:
+                    s = s.replace('CXXFLAGS += -stdlib=libc++','')
+                    ### it could be that replacing DEFAULT_CXX should be done in all cases
+                    s = s.replace('$(DEFAULT_CXX)',props['build.compiler.cxx'])
+                if sysconfig.get_platform() == 'macosx-10.15-x86_64':
+                    s = s.replace('CPPFLAGS += -g -Wall -Wextra -Werror','CPPFLAGS += -g -Wall -Wextra')
+
+                with open(makefile, "w") as fd:
+                    fd.write(s)
+
+        mkpath(prefix)
+        create_ccache_bin( )
+        if os.path.isdir(prefix):
+            if not os.path.exists("grpc-source/third_party/protobuf/LICENSE"):
+                print("checking out google protobuf...")
+                run_process( ["git", "submodule", "update", "--init", "--recursive", "grpc-source"], err='git protobuf checkout failed' )
+
+            srcdir_arg = os.path.realpath(srcdir)
+            prefix_arg = os.path.realpath(prefix)
+            collectdir_arg = os.path.realpath(collectdir)
+            mkpath(collectdir_arg)
+
+            print("building google grpc...")
+            run_process( [ "make", "RPATH_DIR=@rpath/", "prefix=%s" % prefix_arg, "HAS_SYSTEM_PROTOBUF=false",
+                           "PROTOBUF_CONFIG_OPTS=--prefix=%s" % collectdir_arg, "VERBOSE=1", "install"],
+                         err='build of grpc failed', dir=srcdir_arg, env=extra_env )
+
+            print("installing google protobuf...")
+            run_process( ["make", "install"], err='building google protobuf failed', dir="%s/third_party/protobuf" % srcdir_arg, env=extra_env )
+
+            print("copying the protobuf includes...")
+            run_process( ["rsync","-aq","%s/include/" % collectdir_arg,"%s/include" % prefix], err='could not copy the protobuf include tree' )
+
+            print("copying the protobuf libs...")
+            run_process( ["rsync","-aq","%s/lib/" % collectdir_arg,"%s/lib" % prefix], err='could not copy the protobuf lib tree' )
+
+            print("copying the protobuf compiler...")
+            run_process( ["rsync","-aq","%s/bin/" % collectdir_arg,"%s/bin" % prefix], err='could not copy the protobuf bin tree' )
+
+            ##
+            ## grpc "make install" seems to generate a symlink from '...so.5' instead of '...so.1'
+            ##
+            libdir = join(prefix,"lib")
+            if os.path.exists(join(libdir,"libgrpc++.so.1.8.7")) and os.path.exists(join(libdir,"libgrpc++.so.5")):
+                os.rename(join(libdir,"libgrpc++.so.5"),join(libdir,"libgrpc++.so.1"))
+            ## on linux grpc's "make install" seems to create a 'libgrpc++.so.5' symlink to 'libgrpc++.so.1.8.5'
+            ## instead of a 'libgrpc++.so.1' symlink
+            if os.path.exists(join(libdir,"libgrpc++_unsecure.so.1.8.7")) and os.path.exists(join(libdir,"libgrpc++_unsecure.so.5")):
+                os.rename(join(libdir,"libgrpc++_unsecure.so.5"),join(libdir,"libgrpc++_unsecure.so.1"))
+            ###
+            ### grpc uses "plugins" to generate the different flavors of bindings (e.g. c++)...
+            ### this "plugin" must be found in $PATH as a different name and executable...
+            ### it can be explicitly specified on the command line, but we create the name
+            ### in a subdirectory and generate a script that adds the subdirectory to $PATH
+            ### before execing the actual proto compiler. This allows our C++ plugin to
+            ### act as a default which can be overridden by the user on the command line.
+            ###
+            gen_proto_binary(prefix, "cpp", "cpp")
+            gen_proto_binary(prefix, "python", "py")
+
+            ## remove 'libtool' droppings
+            for root,subdirs,files in os.walk(prefix):
+                for f in files:
+                    p = join(root,f)
+                    if not islink(p) and p.endswith(".la"):
+                        os.remove(p)
+
+
+def build_protobuf( prefix, srcdir, collectdir ):
+    """Build grpc (https://github.com/grpc/grpc/blob/master/):
+           (1) do a straight build of grpc to get the C/C++ libraries and protoc compiler
+           (2) rebuild protobuf to install and then cherry pick the include files
+    """
+    if os.path.isdir("grpc-source"):
+
+        if not os.path.isdir(srcdir):
+            print("copying the source directory...")
+            run_process( ["rsync","-aq","grpc-source/third_party/protobuf/",srcdir], err='could not copy the protobuf source tree' )
+            ## here we would really like to patch protobuf's Makefile.am to create libraries as we would like right off the
+            ## bat (e.g. "-install_name @rpath/libprotobuf.14.dylib"), but 'libtool' is a britte cludge
+
+        mkpath(prefix)
+        create_ccache_bin( )
+        if os.path.isdir(prefix):
+
+            srcdir_arg = os.path.realpath(srcdir)
+            prefix_arg = os.path.realpath(prefix)
+            collectdir_arg = os.path.realpath(collectdir)
+            mkpath(collectdir_arg)
+
+            extra_env = { 'PATH': "%s:%s:%s" % (broken_autoconf_compiler_dir, os.path.join(collectdir,'bin'), os.environ['PATH']),
+                          'CC': os.path.basename(props['build.compiler.cc']), 'CXX': os.path.basename(props['build.compiler.cxx']) }
+            print("autogen for google protobuf...")
+            run_process( ["autoreconf","-f", "-i", "-Wall,no-obsolete"], err='autogen of protobuf failed', dir=srcdir_arg, env=extra_env )
+            print("configuring google protobuf...")
+            run_process( ["./configure", "--prefix=%s" % prefix_arg], err='build of grpc failed', dir=srcdir_arg, env=extra_env )
+
+            print("compiling google protobuf...")
+            run_process( ["make"], err='building google protobuf failed', dir=srcdir_arg, env=extra_env )
+
+            found=[ ]
+            searchdir=join(srcdir_arg,"src",".libs")
+            for f in listdir(searchdir):
+                if f.startswith("libprotobuf") and islib(f):
+                    file = join(searchdir,f)
+                    found.append(file)
+
+            if len(found) < 4:
+                sys.exit("build of dynamic protobuf libraries failed")
+
+            tgtdir = "%s/lib" % prefix_arg
+            for f in found:
+                fname = os.path.basename(f)
+                if islink(f):
+                    if not os.path.exists(join(tgtdir,fname)):
+                        linkto = os.readlink(f)
+                        os.symlink(linkto,join(tgtdir,fname))
+                elif isfile(f):
+                    copy2(f,tgtdir)
+                    if sys.platform == 'darwin':
+                        run_process( ["install_name_tool", "-id", "@rpath/%s" % fname, join(tgtdir,fname) ], err='could not update install_name for %s' % fname )
+
+
+def tool_files(tool):
+    src = ['binding/tools/%s/%s' % (tool,f) for f in listdir('binding/tools/%s' % tool) if f.endswith(".cc")]
+    src += ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".cc")]
+    src += ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".i")]
+
+    inc = [ ]
+    incs = ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".h")]
+    if len(incs) > 0:
+        inc.append('binding/generated/tools/%s' % tool)
+
+    incs = ['binding/tools/%s/%s' % (tool,f) for f in listdir('binding/tools/%s' % tool) if f.endswith(".h")]
+    if len(incs) > 0:
+        inc.append('binding/tools/%s' % tool)
+    return (inc,src)
+
+
+platform_cflags = { 'darwin': [ ],
+                    'linux2': [ '-fcx-fortran-rules' ],
+                    'linux': [ '-fcx-fortran-rules' ],
+#####
+#####  these cause a segmentation violation in test_setjy
+#####
+#                    'linux2': [ '-fopenmp', '-fcx-fortran-rules' ],
+#                    'linux': [ '-fopenmp', '-fcx-fortran-rules' ],
+};
+
+props = load_properties('build.properties')
+
+module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', '-DCASA_BUILD=1'\
+                                 '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
+                                 '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
+                                 '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST',
+                                 '-DCASATOOLS', '-Dcasacore=casa6core' ] + platform_cflags[sys.platform],
+                       '/code/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
+                                      '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
+                                      '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
+                                      '-DQWT6', '-DUseCasacoreNamespace', \
+                                      '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
+                                      '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
+                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core' ] \
+                                      + platform_cflags[sys.platform],
+                       'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
+                                        '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
+                                        '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
+                                        '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
+                                        '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
+                                        '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core' ] \
+                                        + platform_cflags[sys.platform] }
+
+def get_ccache():
+    return [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
+
+def get_cflags():
+    cflags = map(
+        lambda pair: pair[1],
+        filter(lambda pair: pair[0].startswith('build.flags.compile') and "boost" not in pair[0],props.items())
+    )
+    cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
+    if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
+        cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
+                                                                      ###     /usr/include (e.g. rhel6)
+    return cflags
+
+def debug_build():
+    return _debug_build_
+
+def get_optimization_flags():
+    return ['-g'] if debug_build( ) else ['-O2']
+
+def get_new_cxx_compiler_flags():
+    return get_optimization_flags() + ['-std=c++11']
+
+def get_new_cxx_compiler_includes():
+    return [
+        '-Ibuild/%s/include' % distutils_dir_name('grpc-install'),
+        '-Ibinding/include', '-Ibinding/generated/include', '-Ilibcasatools/generated/include',
+        '-Icasa-source/code', '-Icasa-source', '-Icasacore', '-Iinclude',
+        '-Isakura-source/src'
+    ]
+
+def get_new_c_compiler_flags():
+    return get_optimization_flags()
+
+def get_use_grpc():
+   return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )
+
+
+def get_fortran_compiler_flags(ext):
+    arch = platform.architecture()[0].lower()
+    if (ext == ".f90"):
+        cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+    if (ext == ".f"):
+        cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+    if real_gnu and len(props['build.flags.compile.openmp']) > 0:
+        ### we'll assume our fortran compiler is gfortran and set the openmp
+        ### flags for gfortran if our main C++ compiler is really GNU and the
+        ### openmp flags are set...
+        cc_args = list(filter( lambda x: x != "-fno-automatic", cc_args )) + ['-fopenmp']
+    # Force architecture of shared library.
+    if arch == "32bit":
+        cc_args.append("-m32")
+    elif arch == "64bit":
+        cc_args.append("-m64")
+    else:
+        print(
+            "\nPlatform has architecture '%s' which is unknown to "
+            "the setup script. Proceed with caution\n" % arch
+        )
+    return cc_args
+
+def customize_compiler(self):
+    """inject customization into distutils.
+
+    Getting distutils to use a specfic compiler with a fully-quaified
+    path and specfic flags is difficult. By default, it seems to just
+    use 'gcc', i.e. whichever compiler happens to be in the user's
+    path. I want to select a specific compiler using autoconf.
+
+    I found this reference useful:
+    https://github.com/rmcgibbo/npcuda-example/blob/master/cython/setup.py
+    """
+
+    self.compiler_cxx = [ props['build.compiler.cxx'] ]
+
+    # make it swallow fortran files....
+    self.src_extensions.extend( [".f",".f90"] )
+
+    # save references to the default compiler_so and _comple methods
+    default_compiler_so = self.compiler_so
+    default_linker_so = self.linker_so
+    supercc = self._compile
+    superld = self.link
+    ccache = get_ccache()
+    cflags = get_cflags()                                                                 ###     /usr/include (e.g. rhel6)
+    new_compiler_cxx = (
+        ccache + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags()
+        + get_new_cxx_compiler_includes() + cflags + default_compiler_so[1:]
+    )
+    new_compiler_cc = ccache + [props['build.compiler.cc']] + get_optimization_flags() + ['-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include', '-Icasa-source/code','-Icasacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
+    new_compiler_fortran = [props['build.compiler.fortran']]
+
+    if debug_build( ):
+        new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
+        new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cc))
+    else:
+        new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cxx))
+        new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cc))
+
+    local_path_file = ".lib-path.%d" % sys.hexversion
+    local_mangle_file = ".lib-mangle.%d" % sys.hexversion
+
+    if os.path.isfile(local_path_file):
+        with open(local_path_file,'rb') as f:
+            local_library_path = pickle.load(f)
+    else:
+        local_library_path = [ ]
+
+    if os.path.isfile(local_mangle_file):
+        with open(local_mangle_file,'rb') as f:
+            library_mangle = pickle.load(f)
+    else:
+        library_mangle = { }
+
+    def _link(target_desc, objects, output_filename, output_dir=None,
+              libraries=None, library_dirs=None, runtime_library_dirs=None,
+              export_symbols=None, debug=0, extra_preargs=None,
+              extra_postargs=None, build_temp=None, target_lang=None):
+        fn = os.path.basename(output_filename)
+        if fn.startswith('lib') and fn.endswith(".so"):
+            print("linking shared library...")
+            self.linker_so = list(map(lambda f: "-dynamiclib" if f == "-bundle" else f,self.linker_so))
+            if sys.platform == 'darwin':
+                if output_filename.endswith(".so"):
+                    output_filename = output_filename[:-3] + ".dylib"
+                subname = os.path.basename(output_filename)
+                extra_postargs=list(map( lambda arg: arg % subname if '%s' in arg else arg, extra_postargs ))
+            dir = os.path.dirname(output_filename)
+            target_desc=CCompiler.SHARED_LIBRARY
+            if dir not in local_library_path:
+                local_library_path.insert(0,dir)
+                with open(local_path_file,'wb') as f:
+                    pickle.dump(local_library_path,f)
+
+            bfn = (fn[3:])[:-3]
+            library_mangle[bfn.split('.')[0]] = bfn
+            with open(local_mangle_file,'wb') as f:
+                pickle.dump(library_mangle,f)
+
+
+        ## allowing pthread library path (e.g. /opt/local/lib for macos) to be first results
+        ## in any macports (or other) protobuf library being used in preference to the one
+        ## we built...
+        self.linker_so = list(takewhile(lambda x: not x.startswith('-L'),self.linker_so)) + \
+            ['-L' + get_casac_dir() + os.sep + 'lib'] + \
+            list(dropwhile(lambda x: not x.startswith('-L'),self.linker_so))
+
+        superld(target_desc, objects, output_filename, output_dir,
+                [library_mangle[l] if l in library_mangle else l for l in libraries],
+                library_dirs+local_library_path, runtime_library_dirs, export_symbols,
+                debug, extra_preargs, extra_postargs, build_temp, target_lang)
+
+        self.linker_so = default_linker_so
+
+    # now redefine the _compile method. This gets executed for each
+    # object but distutils doesn't have the ability to change compilers
+    # based on source extension: we add it.
+    def _compile(obj, src, ext, cc_args, postargs, pp_opts):
+        if ext == ".f" or ext == ".f90" :
+            print("fortran compile...")
+            if sys.platform == 'darwin' or sys.platform.startswith('linux'):
+                compiler_so = new_compiler_fortran
+                """
+                if (ext == ".f90"):
+                    cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+                if (ext == ".f"):
+                    cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+                if real_gnu and len(props['build.flags.compile.openmp']) > 0:
+                    ### we'll assume our fortran compiler is gfortran and set the openmp
+                    ### flags for gfortran if our main C++ compiler is really GNU and the
+                    ### openmp flags are set...
+                    cc_args = cc_args + ['-fopenmp']
+                # Force architecture of shared library.
+                if arch == "32bit":
+                    cc_args.append("-m32")
+                elif arch == "64bit":
+                    cc_args.append("-m64")
+                else:
+                    print("\nPlatform has architecture '%s' which is unknown to "
+                          "the setup script. Proceed with caution\n" % arch)
+                """
+                cc_args = get_fortran_compiler_flags(ext)
+            try:
+                self.spawn(compiler_so + cc_args + [src, '-o', obj] + postargs)
+            except DistutilsExecError as msg:
+                raise CompileError(msg)
+        else:
+            if ext == ".c" :
+                print("c compile...")
+                new_compiler = new_compiler_cc
+            else:
+                print("c++ compile...")
+                new_compiler = new_compiler_cxx
+            ## get the cflags for the module being built; key is a subdir, value are flags
+            m_cflags = map(lambda x: x[1] if x[0] in src else [], module_cflags.items())
+            m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
+            #self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )))
+            self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + get_use_grpc()))
+            supercc(obj, src, ext, clean_args(cc_args), clean_args(postargs), clean_args(pp_opts))
+
+        # reset the default compiler_so (may not be necessary)
+        self.compiler_so = default_compiler_so
+
+    # inject our redefined _compile method into the class
+    self._compile = _compile
+    self.link = _link
+
+
+def customize_swig(self):
+    swig_exe = props['build.compiler.swig'] if len(props['build.compiler.swig']) > 0 else "swig"
+    self.swig = swig_exe
+
+
+doing_wheel_build = False
+wheel_build = None
+try:
+    from wheel.bdist_wheel import bdist_wheel
+
+    class casa_binary_wheel(bdist_wheel):
+        user_options = bdist_wheel.user_options + [
+            # The format is (long option, short option, description).
+            ('debug', None, 'build a debugging version'),
+            ('version=', None, 'Silence distutils when passing version for bdist_wheel from the command line'),
+        ]
+
+        def initialize_options(self):
+            self.version = None
+            bdist_wheel.initialize_options(self)
+            global _debug_build_
+            if _debug_build_:
+                self.debug = 1
+            else:
+                self.debug = 0
+
+        def run(self):
+            global doing_wheel_build
+            doing_wheel_build = True
+            bdist_wheel.run(self)
+            doing_wheel_build = False
+
+    wheel_build = casa_binary_wheel
+
+except ImportError:
+    pass  # custom command not needed if wheel is not installed
+
+def do_cerberus():
+    moduledir = get_module_dir()
+    cerberusdir = os.path.join(moduledir, '__cerberus__')
+    if os.path.exists(cerberusdir):
+        remove_tree(cerberusdir)
+    copy_tree("cerberus/cerberus",cerberusdir)
+    for root, dirs, files in os.walk(cerberusdir):
+        for file in files:
+            if file.endswith('.py'):
+                fpath = os.path.join(root, file)
+                with io.open(fpath,'r',encoding='utf8',newline='\n') as fd:
+                    s = fd.read()
+                s = s.replace("from cerberus", "from casatools.__cerberus__")
+                with io.open(fpath,'w',encoding='utf8',newline='\n') as fd:
+                    fd.write(s)
+
+def generate_casac_init_py():
+    ### this generates the __init__.py for the __casac__ submodule...
+    imports = "\n".join([ "from %s.__casac__.%s import %s" % (module_name,t,t) for t in TOOLS ])
+    alllist = ",\n            ".join([ "'%s'" % t for t in TOOLS ])
+    with open(os.path.join(casacdir,'__init__.py'),"w") as fd:
+        fd.write("from __future__ import absolute_import\n")
+        fd.write("__name__ = '__casac__'\n")
+        fd.write("__all__ = [ %s ]\n\n" % alllist)
+        fd.write("%s\n" % imports)
+
+# run the customize_compiler
+class casa_build_ext(build_ext):
+    user_options = build_ext.user_options + [
+        # The format is (long option, short option, description).
+        ('debug', None, 'build a debugging version'),
+        ('version=', None, 'Silence distutils when passing version for bdist_wheel from the command line'),
+    ]
+
+    def initialize_options(self):
+        self.version = None
+        build_ext.initialize_options(self)
+        global _debug_build_
+        if _debug_build_:
+            self.debug = 1
+        else:
+            self.debug = 0
+
+    def build_extensions(self):
+        customize_compiler(self.compiler)
+        customize_swig(self)
+        build_ext.build_extensions(self)
+
+    def run(self):
+
+        global a_priori_directory_exclusions
+        global a_priori_exclusions
+        do_wheel_closure = doing_wheel_build
+        moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
+        # cerberusdir = os.path.join(moduledir, '__cerberus__')
+        casacdir = os.path.join(moduledir, '__casac__')
+
+        mkpath(moduledir)
+        copy_tree("src/python",moduledir)
+        copy2('build.properties',moduledir)
+        generate_config(moduledir,props)
+
+        print("copying xml-casa...")
+        install_xml_casa( )
+
+
+        build_ext.run(self)
+
+        """
+        if os.path.exists(cerberusdir):
+            remove_tree(cerberusdir)
+        copy_tree("cerberus/cerberus",cerberusdir)
+        for root, dirs, files in os.walk(cerberusdir):
+            for file in files:
+                if file.endswith('.py'):
+                    fpath = os.path.join(root, file)
+                    with io.open(fpath,'r',encoding='utf8',newline='\n') as fd:
+                        s = fd.read()
+                    s = s.replace("from cerberus", "from casatools.__cerberus__")
+                    with io.open(fpath,'w',encoding='utf8',newline='\n') as fd:
+                        fd.write(s)
+        """
+        do_cerberus()
+        """
+        ###
+        ### this generates the __init__.py for the __casac__ submodule...
+        ###
+        imports = "\n".join([ "from %s.__casac__.%s import %s" % (module_name,t,t) for t in TOOLS ])
+        alllist = ",\n            ".join([ "'%s'" % t for t in TOOLS ])
+        with open(os.path.join(casacdir,'__init__.py'),"w") as fd:
+            fd.write("from __future__ import absolute_import\n")
+            fd.write("__name__ = '__casac__'\n")
+            fd.write("__all__ = [ %s ]\n\n" % alllist)
+            fd.write("%s\n" % imports)
+        """
+        generate_casac_init_py()
+
+        try:
+            spawn(["rsync", "-avz", "rsync://casa-rsync.nrao.edu/casa-data", "%s/__data__" % moduledir])
+        except:
+            print("RSYNC OF CASA DATA FROM 'rsync://casa-rsync.nrao.edu/casa-data' FAILED!")
+
+        if do_wheel_closure:
+            module_path = os.path.join('build', distutils_dir_name('lib'), module_name)
+            if isexe("scripts/mod-closure") and not os.path.isfile(".created.closure"):
+                print("generating module closure...")
+                if Proc([ "scripts/mod-closure", module_path ]) != 0:
+                    sys.exit("\tclosure generation failed...")
+                open(".created.closure",'a').close( )
+
+        if sys.platform == 'darwin':
+            print("Fixing rpaths")
+            result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
+            print(result.stdout.decode('utf-8'))
+
+
+
+class casa_test(Command):
+    user_options = [
+      # The format is (long option, short option, description).
+      ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
+    ]
+
+    def initialize_options(self):
+        self.__test_dir = "build/%s" % distutils_dir_name('testing')
+        self.__lib_dir = os.path.abspath("build/%s" % distutils_dir_name('lib'))
+        self.__env = os.environ.copy( )
+        if 'PYTHONPATH' in self.__env:
+            self.__env['PYTHONPATH'] = ("%s:%s" % (self.__env['PYTHONPATH'],self.__lib_dir))
+        else:
+            self.__env['PYTHONPATH'] = self.__lib_dir
+        self.__regression_dir = "build/%s" % distutils_dir_name('regression')
+        #self.__regression_ref_dir = "tests/output-regression/reference-%d.%d" % (sys.version_info[0],sys.version_info[1])
+        self.__regression_ref_dir = "tests/output-regression/reference"
+        self.__regression_sample_gen = "scripts/output-snapshot"
+        self.__regression_sample_dir = "%s/%s" % (self.__regression_dir,"output")
+        self.output_regression = 0
+
+    def finalize_options(self):
+        pass
+
+    def __dump_output(self, working_dir, bname, out, err):
+        stdout_path = "%s/%s-stdout.txt" % (working_dir,bname)
+        stdout_fd = open(stdout_path, 'w')
+        stdout_fd.write(out)
+        stdout_fd.close( )
+        stderr_path = "%s/%s-stderr.txt" % (working_dir,bname)
+        stderr_fd = open(stderr_path, 'w')
+        stderr_fd.write(err)
+        stderr_fd.close( )
+        return (stdout_path,stderr_path)
+
+    def __run_test(self,tabwidth,test_path,working_dir):
+        label = '.'.join(os.path.basename(test_path).split('.')[:-1])
+        sys.stdout.write(label + '.' * (tabwidth - len(label)))
+        sys.stdout.flush( )
+        proc = Popen( [sys.executable,test_path], cwd=working_dir, env=self.__env,
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        (output, error) = pipe_decode(proc.communicate( ))
+        exit_code = proc.wait( )
+        (stdout_path,stderr_path) = self.__dump_output(working_dir,"log",output,error)
+        print(" ok" if exit_code == 0 else " fail")
+        return (exit_code, label, stdout_path, stderr_path)
+
+    def __generate_sample(self):
+        if os.path.exists(self.__regression_dir):
+            remove_tree(self.__regression_dir)
+        mkpath(self.__regression_sample_dir)
+        proc = Popen( [self.__regression_sample_gen,"out=%s" % self.__regression_sample_dir],
+                      env=self.__env, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        (output, error) = pipe_decode(proc.communicate( ))
+        exit_code = proc.wait( )
+        self.__dump_output(self.__regression_dir,"sample-generation",output,error)
+        return exit_code
+
+    def __compare_reg(self, tabwidth, label, refpath, samplepath):
+        sys.stdout.write(label + '.' * (tabwidth - len(label)))
+        sys.stdout.flush( )
+        proc = Popen( ["/usr/bin/diff",refpath,samplepath], env=self.__env,
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        (output, error) = pipe_decode(proc.communicate( ))
+        exit_code = proc.wait( )
+        print(" ok" if exit_code == 0 else " fail")
+        (op,ep) = self.__dump_output(os.path.dirname(samplepath),label,output,error)
+        return (exit_code, label, op, ep)
+
+    def __collect_tests(self, testdir):
+        tests = [ ]
+        for dir, subdirs, files in os.walk(testdir):
+            for f in files:
+                if f.endswith(".py") and f.startswith("test_"):
+                    workingdir = "%s/%s" % (self.__test_dir,f[:-3])
+                    mkpath(workingdir)
+                    tests.append((os.path.abspath("%s/%s" % (dir,f)),workingdir))
+        return tests
+
+    def __collect_regression_files(self, regdir):
+        regression = { }
+        for dir, subdirs, files in os.walk(regdir):
+            for f in files:
+                if f != "log.txt":
+                    regression[f] = "%s/%s" % (dir,f)
+        return regression
+
+    def __collect_regression(self):
+        regression_ref = { }
+        regression_sample = { }
+        if os.path.isdir(self.__regression_ref_dir):
+            if isexe(self.__regression_sample_gen):
+                if self.__generate_sample( ) == 0:
+                    regression_ref = self.__collect_regression_files(self.__regression_ref_dir)
+                    regression_sample = self.__collect_regression_files(self.__regression_sample_dir)
+                else:
+                    print("warning, generation of regression sample failed; skipping regression test")
+            else:
+                print( "warning, regression sample generator (%s) does not exist; skipping regression test" %
+                       self.__regression_sample_gen)
+        else:
+            print("warning, regression reference (%s) does not exist; skipping regression test" % self.__regression_ref_dir)
+        return (regression_ref, regression_sample)
+
+    def run(self):
+        if os.path.exists(self.__test_dir):
+            remove_tree(self.__test_dir)
+        mkpath(self.__test_dir)
+        tests = self.__collect_tests("tests/tools")
+
+        (regression_ref, regression_sample) = self.__collect_regression( )
+
+        testwidth = 0 if len(tests) == 0 else max(map(lambda x: len(os.path.basename(x[0]))+3,tests))
+        regressionwidth = 0 if len(regression_ref) == 0 else max(map(lambda x: len(x)+3,regression_ref.keys( )))
+        tabwidth = max(testwidth,regressionwidth,45)
+
+        start_time = time.time()
+        testresults = list(map(lambda params: self.__run_test(tabwidth,*params),tests))
+
+        len_message = "regression file count"
+        print( len_message + '.' * (tabwidth - len(len_message)) +
+               (" ok" if len(regression_ref) == len(regression_sample) else " fail") )
+
+        regressionresults = []
+        if self.output_regression:
+            regression_keys = filter(lambda k: k in regression_sample, regression_ref.keys( ))
+            regressionresults = list(map(lambda k: self.__compare_reg(tabwidth,k,regression_ref[k],regression_sample[k]), regression_keys))
+
+        end_time = time.time()
+
+        results = testresults + regressionresults
+        print('-' * (tabwidth + 8))
+        passed = list(filter(lambda v: v[0] == 0,results))
+        failed = list(filter(lambda v: v[0] != 0,results))
+        print("ran %s tests in %.02f minutes, %d passed, %d failed" % (len(results),(end_time-start_time) / 60.0,len(passed),len(failed)))
+        print("OK" if len(failed) == 0 else "FAIL")
+        sys.exit(0 if len(failed) == 0 else 1)
+
+
+class casa_binary_dist(Distribution):
+    def finalize_options(self):
+        self.plat_name = get_platform( )
+        Distribution.finalize_options(self)
+
+    def initialize_options (self):
+        self.plat_name = get_platform( )
+    def run(self):
+        Distribution.run(self)
+    def is_pure(self):
+        return False
+
+
+def get_casac_dir():
+    return os.path.join(get_module_dir(), '__casac__')
+
+def get_module_dir():
+    return os.path.join('build', distutils_dir_name('lib'), module_name)
+
+# includes and libs for linking from build.properties
+def get_link_props():
+    prop_linking = list(
+        filter(
+            lambda x:
+                len(x) > 0, list(
+                    chain.from_iterable(
+                        map(
+                            lambda pair:
+                                pair[1], filter(
+                                    lambda pair: pair[0].startswith('build.flags.link'),props.items()
+                                )
+                        )
+                    )
+                )
+        )
+    )
+
+    ldflags = list(filter(lambda x:  not x.startswith('-l'),prop_linking))
+    prop_libs = list(map(lambda x: x[2:],list(filter(lambda x: x.startswith('-l'),prop_linking))))
+    return (ldflags, prop_libs)
+
+def get_grpc_libs():
+    return [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
+
+# third party libs for linking
+def get_tp_libs():
+    return [
+            'sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f', 'fftw3_threads',
+            'fftw3','lapack','wcs','cfitsio','rpfits','blas'
+        ] + get_grpc_libs() + ['readline', 'gfortran', 'dl']
+
+# get architecture specific data used for linking
+def get_arch_link():
+    if sys.platform == 'darwin':
+        archflags = ['-L' + third_party_lib_path + '/lib/gcc5']
+        archlibs = [ ]
+    else:
+        archflags = [ ]
+        archlibs = ['gomp']
+    return (archflags, archlibs)
+
+def get_casatools_rpath(escape_for_make=False):
+    if sys.platform == 'darwin':
+        ### need to get '/opt/local/lib/gcc5' from gfortran directly
+        return [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
+    else:
+        myorigin = '\$$ORIGIN/lib' if escape_for_make else '$ORIGIN/lib'
+        return [ '-Wl,-rpath,' + ":".join([myorigin] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'), gldflags)))) ]
+
+(arch_flags, arch_libs) = get_arch_link()
+
+# declare some .PHONY targets
+cpp_target = "cpp_compile"
+yacc_target = "yacc_compile"
+lex_target = "lex_compile"
+c_target = "c_compile"
+# test_target = "test_compile"
+fortran_target = "f_compile"
+soabi = sysconfig.get_config_var('SOABI')
+lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
+casac_dir = get_casac_dir()
+output_lib = os.sep.join([casac_dir, "lib", "lib{libname}." + soabi + "." + lib_ext])
+libcasatools = output_lib.format(libname='casatools')
+gen_tool_dep_target = 'generate_tool_dependencies'
+swig_target = "swig_compile"
+statics_wrap_target = "statics_wrap_cc_compile"
+tool_libs_target = "tool_libs_link"
+straight_copies_target = "straight_file_copies"
+all_target = "all"
+build_distutils_temp = os.path.join('build',distutils_dir_name('temp'))
+depdir = '.d'
+sep = ' '
+cpp = sep.join(get_ccache() + [props['build.compiler.cxx']])
+cc = sep.join(get_ccache() + [props['build.compiler.cc']])
+f77 = props['build.compiler.fortran']
+casatools_obj_list = []
+sys_cflags = sep.join(
+    list(
+        filter(lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split())
+    )
+)
+
+python_inc = props['build.python.include']
+sepl = " -l"
+(gldflags, gprop_libs) = get_link_props()
+# gldflags = g1
+# gprop_libs = g2
+link_libs = list(dict.fromkeys((gprop_libs + get_tp_libs() + arch_libs)))
+# casatools link
+linker = props['build.compiler.cxx']
+ldflags1 = sep.join(props['build.flags.compile.pthread'] + arch_flags)
+# FIXME hardcoded because I don't know where it comes from
+ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64 -Wl,-z,relro -Wl,-rpath,'
+ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
+grpath = get_casatools_rpath(True)
+ldflags3 = sep.join(gldflags + grpath)
+# ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
+
+def write_makefile_begin(targets, mode="genmake"):
+    clean_target = "clean"
+    with open("makefile", "w") as mk:
+        mk.write(
+            "# THIS MAKEFILE IS AUTO GENERATED BY setup.py "
+            + mode + ". EDIT AT YOUR OWN PERIL!\n"
+        )
+        mk.write("\nCXX := " + cpp)
+        mk.write("\nCC := " + cc)
+        mk.write("\nF77 := " + f77)
+        mk.write("\nOPTIM_FLAGS := -O2 -Wp,-D_FORTIFY_SOURCE=2")
+
+        #mk.write("\nOPTIM_FLAGS := -O2 \n")
+        mk.write("\nDEPDIR := " + depdir + "\n")
+        mk.write("# override optimization for debug builds")
+        mk.write("\ndebug: OPTIM_FLAGS := -g \n")
+        mk.write("\n.PHONY: " + all_target + "\n")
+        mk.write(all_target + ": " + sep.join(targets) + "\n")
+        mk.write('\ndebug: ' + all_target)
+        mk.write(
+            sep.join([
+                "\n", clean_target, ": "
+                "\n\t @rm -rf " + build_distutils_temp + " $(DEPDIR)",
+                "\n.PHONY: ", clean_target, "\n"
+            ])
+        )
+
+def filter_optim_debug(cmd):
+    # take out explicit optimization/debugging flags
+    cmd = cmd.replace('-g ', '')
+    cmd = re.sub('-Wp,-D_FORTIFY_SOURCE=\d+', '', cmd)
+    return re.sub('-O\d+','', cmd)
+
+def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
+    # c++ casacore and casacode + others but not gcwrap
+    CODE_SRC = source_files(
+        "casa-source/code", file_suffix_filter=".cc",
+        subdir_filter=[
+            'tests', 'test', 'apps', 'display', 'plotms', 'guitools', 'display3d',
+            'demo', 'casaqt', 'convert', 'Filling', 'ImagerObjects2'
+        ] + additional_subdir_filters,
+        file_filter=['MeasurementComponents/rGridFT.cc'],
+        path_filter=[
+            'MeasurementComponents/WOnlyConvFunc.cc',
+            'TransformMachines2/EVLAConvFunc.cc',
+            'TransformMachines2/AWConvFuncEPJones.cc'
+        ]
+    )
+    CORE_SRC = source_files("casacore", file_suffix_filter=".cc")
+    #, subdir_filter=additional_subdir_filters)
+    SAKURA_SRC = sakura_files() if use_sakura else []
+    CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp") if use_atm else []
+    # the gprc registrar files may not be present when this code gets run
+    duse_grpc = get_use_grpc()
+    GRPC_REGISTRAR = []
+    if duse_grpc:
+        grpc_registrar_dir = 'build' + os.sep + distutils_dir_name("binding") + os.sep + "grpc"
+        GRPC_REGISTRAR = source_files(grpc_registrar_dir, file_suffix_filter=".cc")
+    # the binding/source files need to be put into the casatools library, so compile
+    # them here
+    SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
+    obj_name = os.path.join(build_distutils_temp, "{base}.o")
+    g_dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
+    g_dep_targ = g_dep_name + ": ;\nPRECIOUS: " + g_dep_name
+    # use makefile as a dependency
+    cpp_obj = (
+        obj_name + ': {src} ' + g_dep_name + ' makefile'\
+            + '\n\t$(CXX) $(OPTIM_FLAGS) {flags} {includes} {cflags} ' \
+            + '{dflags} -c $< -o $@' \
+            + '\n\t$(POSTCOMPILE)'
+    )
+    src = [
+        CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING
+    ]
+    cflags = [
+        module_cflags['/code/'], module_cflags['casacore/'],
+        platform_cflags[sys.platform], module_cflags['/code/'],
+        platform_cflags[sys.platform], module_cflags['binding/']
+    ]
+    includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
+    flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
+    # add_cflags = sysconfig.get_config_var('CFLAGS')
+    # filter out the optimization flags which Darrell has done for C and C++ compiles for setup.py build
+    global sys_cflags
+    sys_cflags = sep.join(
+        list(
+            filter(
+                lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split()
+            )
+        )
+    )
+    grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()] if duse_grpc else []
+    mkdirs_cc_target = "mk_cc_obj_dirs"
+    targdirs = set()
+    cpp_list = []
+    with open("makefile", "a") as mk:
+        for (mysrc, myflags) in zip(src, cflags):
+            dflags = sep.join(myflags + duse_grpc + grpc_dirs)
+            myinc = includes
+            if mysrc == SOURCE_BINDING:
+                myinc += " -I" + python_inc
+            for s in mysrc:
+                b = os.path.splitext(s)[0]
+                objfile = obj_name.format(base=b)
+                cpp_list.append(objfile)
+                targdirs.add(os.path.dirname(objfile))
+                targ_entry = filter_optim_debug(
+                    cpp_obj.format(
+                        base=b,src=s, flags=flags, includes=myinc,
+                        cflags=sys_cflags, dflags=dflags
+                    )
+                )
+                # mk.write(
+                #    "\n\n" + cpp_obj.format(
+                #        base=b,src=s, flags=flags, includes=myinc,
+                #        cflags=sys_cflags, dflags=dflags
+                #    )
+                #)
+                mk.write('\n' + targ_entry)
+                mk.write('\n' + g_dep_targ.format(base=b))
+        mk.write("\n# make directories for C++ object files\n")
+        mk.write(".PHONY: " + mkdirs_cc_target + "\n")
+        mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+        mk.write(mkdirs_cc_target + ":\n\t@mkdir -p " + mydirs + "\n")
+        mk.write("\n# targets to compile C++ code to object files\n")
+        mk.write(".PHONY: " + cpp_target + "\n")
+        mk.write(cpp_target + ": " + mkdirs_cc_target + " " + sep.join(cpp_list) + "\n")
+        global casatools_obj_list
+        casatools_obj_list = cpp_list
+
+def write_yacc(additional_casacore_filtered_dirs=[], additional_casacode_filtered_dirs=[]):
+    # yacc
+    CASACORE_YACC = source_files(
+        "casacore", file_suffix_filter=".yy",
+        subdir_filter=additional_casacore_filtered_dirs
+    ) if additional_casacore_filtered_dirs else source_files(
+        "casacore", file_suffix_filter=".yy"
+    )
+    CODE_YACC = source_files(
+        "casa-source/code", file_suffix_filter=".yy",
+        subdir_filter=[
+            'tests','test', 'apps', 'display', 'plotms', 'guitools',
+            'display3d', 'demo', 'casaqt', 'Filling'
+        ] + additional_casacode_filtered_dirs
+    )
+    output_dir="libcasatools/generated/include"
+    obj_name = os.path.join(output_dir,'{base}.ycc')
+    yacc_obj_targ = (
+        obj_name + ": {src}\n\t" + props["build.compiler.bison"] + " -y -p {base} -o $@ $<\n"
+    )
+    yacc_list = []
+    with open("makefile", "a") as mk:
+        for f in CASACORE_YACC + CODE_YACC:
+            #for f in mysrc:
+            name = os.path.basename(f)
+            base = os.path.splitext(name)[0]
+            objfile = obj_name.format(base=base)
+            yacc_list.append(objfile)
+            mk.write('\n\n' + yacc_obj_targ.format(src=f, base=base))
+        mk.write("\n# targets to compile yacc code to object files\n")
+        mk.write(".PHONY: " + yacc_target + "\n")
+        mk.write(yacc_target + ": " + sep.join(yacc_list) + "\n")
+
+def write_lex(additional_casacore_filtered_dirs=[], additional_casacode_filtered_dirs=[]):
+    # lex
+    CASACORE_LEX = source_files(
+        "casacore", file_suffix_filter=".ll",
+        subdir_filter=additional_casacore_filtered_dirs
+    ) if additional_casacore_filtered_dirs else source_files(
+        "casacore",file_suffix_filter=".ll"
+    )
+    CODE_LEX = source_files(
+        "casa-source/code",file_suffix_filter=".ll",
+        subdir_filter=[ 'tests','test','apps','display','plotms','guitools',
+        'display3d','demo','casaqt','Filling' ] + additional_casacode_filtered_dirs
+    )
+    output_dir="libcasatools/generated/include"
+    obj_name = os.path.join(output_dir,'{base}.lcc')
+    lex_obj_targ = (
+        obj_name + ": {src}\n\t" + props["build.compiler.flex"] + " -P{base} -o $@ $<\n"
+    )
+    lex_list = []
+    with open("makefile", "a") as mk:
+        for f in CASACORE_LEX + CODE_LEX:
+            name = os.path.basename(f)
+            base = os.path.splitext(name)[0]
+            objfile = obj_name.format(base=base)
+            lex_list.append(objfile)
+            mk.write(lex_obj_targ.format(src=f, base=base))
+        mk.write("\n# targets to compile lex code to object files\n")
+        mk.write(".PHONY: " + lex_target + "\n")
+        mk.write(lex_target + ": " + sep.join(lex_list) + "\n")
+
+def write_fortran(do_code=True):
+    # fortran files
+    CORE_F77 = source_files(
+        "casacore",file_suffix_filter=".f",
+        file_filter=[
+            'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f',
+            'atmroutines.f','fmosft.f', 'fwproj.f', 'phasol.f'
+        ]
+    )
+    CODE_F77 = source_files(
+        "casa-source/code/synthesis/fortran",file_suffix_filter=".f"
+    ) if do_code else []
+    obj_name = build_distutils_temp + os.sep + '{base}.o'
+    mkdirs_f77_target = "mk_f77_obj_dirs"
+    f_obj = (
+        obj_name + ': {src} {dir} makefile' + \
+        '\n\t{f77} {flags} $< -o $@'
+    )
+    f_list = []
+    targdirs = set()
+    with open("makefile", "a") as mk:
+        for f in CORE_F77 + CODE_F77:
+            (base, ext) = os.path.splitext(f)
+            flags = sep.join(get_fortran_compiler_flags(ext))
+            objfile = obj_name.format(base=base)
+            dir = os.path.dirname(objfile)
+            targdirs.add(dir)
+            f_list.append(objfile)
+            mk.write(
+                "\n\n"
+                + f_obj.format(base=base, src=f, f77=f77, flags=flags, dir=dir)
+            )
+        for x in targdirs:
+            mk.write(
+                '\n' + x + ': ;'
+                + '\n\tif [ ! -d ' + x + ' ]; then mkdir -p ' + x + '; fi'
+        )
+        mk.write("\n# make directories for fortran object files\n")
+        mk.write(".PHONY: " + mkdirs_f77_target + "\n")
+        mydirs = sep.join(list(targdirs))
+        mk.write(mkdirs_f77_target + ': ' + sep.join(targdirs))
+        mk.write("\n# targets to compile fortran code to object files\n")
+        mk.write(".PHONY: " + fortran_target + "\n")
+        mk.write(fortran_target + ": " + sep.join(f_list) + "\n")
+    # update casatools_obj_list
+    global casatools_obj_list
+    casatools_obj_list += f_list
+
+def write_casacode_linker():
+    # casatools link
+    # linker = props['build.compiler.cxx']
+    #(prop_ldflags, prop_libs) = get_link_props()
+    # remove duplicates, preserving order
+    global link_libs
+
+    # ldflags1 = sep.join(props['build.flags.compile.pthread'] + arch_flags)
+    # FIXME hardcoded because I don't know where it comes from
+    # ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64 -Wl,-z,relro -Wl,-rpath,'
+    # ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
+    modulelib = os.sep.join([moduledir, "__casac__", "lib"])
+    ldflags2 = '-L/opt/rh/rh-python36/root/usr/lib64 -L' + modulelib
+    # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
+    # the libcasatools link
+    # -lcasatools.cpython-36m-x86_64-linux-gnu '
+    global sepl
+    ldflags2 += sepl + sepl.join(link_libs)
+
+    # The ORIGIN bit may be needed for the gcwrap tool libs, as may be the __casac__ path
+    # $$ escapes the literal $ from make, the \ escapes the literal $ from the shell
+    # ldflags3 = sep.join(prop_ldflags + ['-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'])
+    # rpath = get_casatools_rpath(True)
+    # ldflags3 = sep.join(gldflags + rpath)
+    # ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
+    ld_cmd = linker + ' ' + ldflags1 + ' $^ ' + ldflags2 + ' -o $@ ' + ldflags3
+    with open("makefile", "a") as mk:
+        mk.write('\n\n' + libcasatools + ': ' + sep.join(casatools_obj_list))
+        mk.write('\n\t@mkdir -p ' + modulelib)
+        mk.write('\n\t' + ld_cmd)
+
+def write_dependency_tracking():
+    # C++ and C dependency tracking to makefile
+    with open("makefile", "a") as mk:
+        mk.write("""
+$(shell mkdir -p $(DEPDIR) >/dev/null)
+# IMPORTANT: These dependency flags are for gcc. clang may use different flags for this purpose
+# DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
+# the include of the dependencies must come after the first target
+# so just put it at the end of the file
+MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
+include $(MY_DEPS)
+        """)
+
+def do_testing():
+    compile_casacore_tests()
+
+def compile_casacore_tests():
+    sep = " "
+    includes = sep.join(get_new_cxx_compiler_includes())
+    # compile tests
+    CASACORE_CC = source_files(
+        "casacore", subdir_filter=['python'], file_suffix_filter='cc',
+        file_filter=[
+            'tIAU2000.cc', 'tAdios2StMan.cc', 'tLargeFilebufIO.cc',
+            'tHashMapIter.cc', 'tHashMap.cc', 'tHashMapIO.cc', 'tOrdMap.cc',
+            'tOrdMap2.cc', 'tSimOrdMap.cc', 'tStack.cc', 'tList.cc',
+            'tQueue.cc', 'tRegionManager.cc'
+        ],
+        do_apriori_exclusions=False
+    )
+    CASACORE_TESTS = list(filter(lambda x: '/test/' in x, CASACORE_CC))
+    tmp = []
+    for f in CASACORE_TESTS:
+        if re.search("^[td].*cc$", os.path.basename(f)):
+            tmp.append(f)
+    CASACORE_TESTS = tmp
+    # flags = "$(DEPFLAGS) " + sep.join(get_new_cxx_compiler_flags())
+    flags = sep.join(get_new_cxx_compiler_flags())
+    dflags = sep + sep.join(module_cflags['casacore/'])
+    libdir = casac_dir + "/lib"
+    libs = "-L" + libdir + " -lcasatools.cpython-36m-x86_64-linux-gnu "\
+        + "-lprotobuf -lgrpc -lgrpc++ -lgpr"
+    libs += " " + ldflags1
+    # remove -shared from libs because it causes a segfault
+    libs = libs.replace("-shared", "")
+    libs += ' -l' + ' -l'.join(link_libs)
+    rellibdir = libdir.replace('build', '../../../../..')
+    wflags = "-Wl,-rpath," + rellibdir
+    targdirs = set()
+    dirmap = {}
+    # test_exec_dirs_targ = "test_exe_dirs"
+    exe_list = []
+    make_tests_targ = "build_casacore_tests"
+    make_test_dirs = "make_casacore_test_dirs"
+    print("sys_cflags", sys_cflags)
+    print("dflags", dflags)
+    print("libs", libs)
+    print("wflags", wflags)
+    with open("makefile", "a") as mk:
+        for f in CASACORE_TESTS:
+            name = os.path.basename(f)
+            base = os.path.splitext(f)[0]
+            # it's just easier to keep track of if the strings are created in
+            # the loop rather than outside and then using format inside
+            exefile = build_distutils_temp + os.sep + base
+            # exefile = exe_name.format(base=base)
+            exe_list.append(exefile)
+            targdir = os.path.dirname(exefile)
+            targdirs.add(targdir)
+            dirmap[targdir] = os.path.dirname(f)
+            # dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
+            location_info(mk, getframeinfo(currentframe()))
+            # excluding depname for now
+            # mk.write("\n\n" + test_targ.format(src=f, base=base))
+            mk.write("\n" + exefile + ": " + f + " makefile " + libcasatools)
+            mk.write(
+                "\n\t $(CXX) " + flags + " " + includes + " " + sys_cflags + " "
+                + libs + " "
+                # custom include to get header files in test directories
+                + '-I./' + os.path.dirname(f) + " "
+                + "-D_REENTRANT -I/usr/include/cfitsio -I/usr/include/eigen3 "
+                + "-I/opt/casa/03/include -DWITHOUT_DBUS " \
+                + "-I/usr/include/libxml2 -I/usr/include -I/usr/include/wcslib "
+                + "-fopenmp -I/opt/rh/rh-python36/root/usr/include -Wall " \
+                + "--param=ssp-buffer-size=4 -DAIPS_64B -DAIPS_AUTO_STL " \
+                + "-DAIPS_DEBUG -DAIPS_HAS_QWT -DAIPS_LINUX " \
+                + "-DAIPS_LITTLE_ENDIAN -DAIPS_STDLIB " \
+                + "-DCASACORE_NEEDS_RETHROW -DCASA_USECASAPATH -DQWT6 " \
+                + "-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE " \
+                + "-DNO_CRASH_REPORTER -fno-omit-frame-pointer -DWITHOUT_ACS " \
+                + "-DUSE_GRPC -Ibuild/binding.linux-x86_64-3.6/grpc " \
+                + "-Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include "
+                # -shared causes a segfault
+                + "-lpython3.6m " + dflags + " "
+                + "-o " + exefile + " " + wflags + " "
+                + f + " "
+            )
+            # ommitting POSTCOMPILE for now
+            #  + '\n\t$(POSTCOMPILE)')
+            # mk.write(
+            #     "\n\n" + test_targ.format(src=f, base=base)
+            # )
+            # mk.write("\n" + g_dep_targ.format(base=base))
+            # mk.write("\n" + g_dep_targ.format(base=base))
+        location_info(mk, getframeinfo(currentframe()))
+        mk.write("\n# make directories for test executables\n")
+        mk.write("\n.PHONY: " + make_test_dirs)
+        r = re.compile(os.sep + 'test\.')
+        substr = os.sep + 'temp.'
+        mydirs = sep.join(
+            list(targdirs) + ["$(DEPDIR)" + os.sep + r.sub(substr, s, 1)
+            for s in targdirs]
+        )
+        mk.write("\n" + make_test_dirs + ":\n\t@mkdir -p " + mydirs + "\n")
+        cmd = []
+        make_links_targ = "create_casacore_test_links"
+        all_links = []
+        for build, orig in dirmap.items():
+            myfiles = [
+                f for f in listdir(orig)
+                if not re.search("^CMakeLists|cc$|h$", os.path.basename(f))
+            ]
+            links = [build + os.sep + f for f in myfiles]
+            all_links.extend(links)
+            n = build.count(os.sep) + 1
+            relpath = n * ('..' + os.sep) + orig + os.sep
+            cmd.extend([
+                (
+                    link + ": ;"
+                    + "\n\t if [ ! -L " + link + " ]; then ln -s " + relpath + o
+                    + " " + link + "; fi"
+                ) for (link, o) in zip(links, myfiles)
+            ])
+        mk.write('\n' + '\n\n'.join(cmd))
+        mk.write(
+            '\n' + make_links_targ + ': ' + sep.join(all_links) + ' '
+            + make_test_dirs
+        )
+        mk.write(
+            "\n" + make_tests_targ + ": " + make_test_dirs + " " \
+            + make_links_targ + " " + sep.join(exe_list) + "\n"
+        )
+
+def location_info(handle, frameinfo):
+    handle.write(
+        "\n# written from " + str(frameinfo.filename) + " line "
+        + str(frameinfo.lineno)
+    )
+
+def write_miriad():
+    # miriad c files
+    MIR_SRC =  source_files( "casacore/mirlib",file_suffix_filter=".c" )
+    includes = sep.join(get_new_cxx_compiler_includes())
+    flags = sep.join(["$(DEPFLAGS)"] + get_new_c_compiler_flags())
+    obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+    dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
+    dflags = sep.join(module_cflags['casacore/'])
+    c_obj = (
+        obj_name + ': {src} ' + dep_name + ' makefile '
+        + '\n\t$(CC) $(OPTIM_FLAGS) {includes} {flags} {cflags} {dflags} -c $< -o $@'
+        + '\n\t$(POSTCOMPILE)'
+    )
+    c_list = []
+    mkdirs_c_target = "mk_c_obj_dirs"
+    global sys_cflags
+    g_dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
+    g_dep_targ = g_dep_name + ": ;\nPRECIOUS: " + g_dep_name
+    with open("makefile", "a") as mk:
+        targdirs = set()
+        for f in MIR_SRC:
+            name = os.path.basename(f)
+            base = os.path.splitext(f)[0]
+            objfile = obj_name.format(base=base)
+            c_list.append(objfile)
+            targdirs.add(os.path.dirname(objfile))
+            # sys_cflags same as C++
+            cmd = "\n\n" + c_obj.format(
+                base=base, src=f, includes=includes, flags=flags,
+                cflags=sys_cflags, dflags=dflags
+            )
+            cmd = filter_optim_debug(cmd)
+            mk.write(cmd)
+            #mk.write(
+            #    "\n\n" + c_obj.format(
+            #        base=base, src=f, cc=cc, includes=includes, flags=flags,
+            #        cflags=sys_cflags, dflags=dflags
+            #    )
+            #)
+            mk.write("\n" + g_dep_targ.format(base=base))
+        mk.write("\n# targets to compile C code to object files\n")
+        mk.write(".PHONY: " + c_target + "\n")
+        mk.write(c_target + ": " + mkdirs_c_target + " " + sep.join(c_list) + "\n")
+        mk.write("\n# make directories for C object files\n")
+        mk.write(".PHONY: " + mkdirs_c_target + "\n")
+        mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+        mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
+    global casatools_obj_list
+    casatools_obj_list += c_list
+
+class create_makefile(Command):
+    """
+    user_options = [
+      # The format is (long option, short option, description).
+#     ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
+      #('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
+    ]
+
+    def initialize_options(self):
+        global _debug_build_
+        _debug_build_ = '--debug' in sys.argv
+        self.debug = 1 if _debug_build_ else 0
+        print("create debug build is ", _debug_build_)
+    """
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def __build_developer_grpc(self):
+        if not os.path.exists('.built.grpc'):
+            # hopefully this will replace dbus
+            build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                        os.path.join('build', distutils_dir_name('grpc')),
+                        os.path.join('build', distutils_dir_name('grpc-install')) )
+            build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                            os.path.join('build', distutils_dir_name('protobuf')),
+                            os.path.join('build', distutils_dir_name('grpc-install')) )
+            open(".built.grpc",'a').close( )
+
+    def __generate_casa_makefile(self):
+        rsync_data_target = "rsync_data"
+        my_targets = [
+            yacc_target, lex_target, cpp_target, c_target,
+            fortran_target, libcasatools, swig_target, statics_wrap_target,
+            tool_libs_target, straight_copies_target, rsync_data_target
+        ]
+        write_makefile_begin(my_targets)
+        write_make_cpp()
+        write_yacc()
+        write_lex()
+        write_miriad()
+        write_fortran()
+        write_casacode_linker()
+        # swig *.i -> *_wrap.cpp
+        BINDING_I = source_files("binding/generated/tools", file_suffix_filter=".i")
+        wrap_cpp_name = '{base}_wrap.cpp'
+        customize_swig(self)
+        swig = self.swig
+        flags = sep.join(['-python'] + get_swig_flags())
+        xml_casa = 'scripts' + os.sep + 'xml-casa'
+        xml_tool_dir = os.sep.join(["xml", "tools"])
+        wrap_cpp_create = (
+            wrap_cpp_name + ': {base}.i ' + xml_tool_dir + os.sep + '{toolname}.xml '
+            + xml_casa + '\n\t' + swig + ' ' + flags + ' -o $@ $<'
+        )
+        i_list = []
+        with open("makefile", "a") as mk:
+            for ifile in BINDING_I:
+                (base, ext) = os.path.splitext(ifile)
+                toolname = base.split(os.sep)[-2]
+                wrapcpp_file = wrap_cpp_name.format(base=base)
+                i_list.append(wrapcpp_file)
+                mk.write("\n\n" + wrap_cpp_create.format(base=base, toolname=toolname))
+            mk.write("\n# targets to compile swig .i files to _wrap.cpp files\n")
+            mk.write(".PHONY: " + swig_target + "\n")
+            mk.write(swig_target + ": " + sep.join(i_list) + "\n")
+
+        # Generation of various files. This can probably be done in make, if really
+        # necessary, but it's so quick it's easiest to just do it using the existing
+        # python functionality for now
+        #install_version_header(casatools_major, casatools_minor, casatools_patch, casatools_feature, casatools_version)
+        #install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+        generate_config(moduledir, props)
+
+        # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files
+        # some of this is copied and pasted from the C++ section above, so can be
+        # refactored
+        # NOTE: If changes to xml files modify tool interdependencies, setup.py must
+        # be run again. The makefile can't check for and modify these (yet).
+        STATICS_CC = source_files("binding/generated/tools", file_suffix_filter=".cc")
+        # the wrap files won't be there for the initial run of this script, so we
+        # cannot use source_files() to find them
+        WRAP_CPP = [filename.replace('_statics.cc', '_wrap.cpp') for filename in STATICS_CC]
+        CODE_BINDING = source_files("binding/tools", file_suffix_filter=".cc")
+        obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+        dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
+        obj_create = (
+            obj_name + ': {src} ' + dep_name + ' makefile'
+            + '\n\t$(CXX) $(OPTIM_FLAGS) {flags} {includes} {cflags} {dflags} -c $< -o $@'
+            + '\n\t$(POSTCOMPILE)'
+        )
+        dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
+        cflags = module_cflags['binding/'] + platform_cflags[sys.platform]
+        includes = sep.join(get_new_cxx_compiler_includes() + get_cflags() + ["-Ibinding"])
+        tool_inc = "-Ibinding/generated/tools/{toolname} -Ibinding/tools/{toolname}"
+        flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
+        add_cflags = sysconfig.get_config_var('CFLAGS')
+        duse_grpc = get_use_grpc()
+        grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()]
+        dflags = sep.join(cflags + duse_grpc + grpc_dirs)
+        cpp_list = []
+        mkdirs_statics_wrap_target = "mk_static_cc_obj_dirs"
+        targdirs = set()
+        with open("makefile", "a") as mk:
+            for s in STATICS_CC + WRAP_CPP + CODE_BINDING:
+                base = os.path.splitext(s)[0]
+                myinc = includes
+                toolname = base.split(os.sep)[-2]
+                if s in WRAP_CPP:
+                    myinc += " -I" + python_inc
+                # for tn in tool_deps[toolname]:
+                mylibs = set([toolname] + g_tools[toolname] if toolname in g_tools else [])
+                dependencies = set()
+                for mylib in g_tools[toolname]:
+                    if mylib in g_tool_shared_libs:
+                        dependencies.update(g_tool_shared_libs[mylib])
+                    else:
+                        dependencies.add(mylib)
+                for dependency in dependencies:
+                    myinc += " " + tool_inc.format(toolname=dependency)
+                objfile = obj_name.format(base=base)
+                cpp_list.append(objfile)
+                targdirs.add(os.path.dirname(objfile))
+                cmd = obj_create.format(
+                    base=base, src=s, flags=flags, includes=myinc,
+                    cflags=add_cflags, dflags=dflags
+                )
+                cmd = filter_optim_debug(cmd)
+                mk.write('\n\n' + cmd)
+                #mk.write(
+                #    "\n\n" + obj_create.format(
+                #        base=base, src=s, flags=flags, includes=myinc,
+                #        cflags=add_cflags, dflags=dflags
+                #    )
+                # )
+                mk.write("\n" + dep_targ.format(base=base))
+            mk.write("\n# make directories for statics C++ object files\n")
+            mk.write(".PHONY: " + mkdirs_statics_wrap_target + "\n")
+            mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+            mk.write(mkdirs_statics_wrap_target + ":\n\t@mkdir -p " + mydirs + "\n")
+            mk.write("\n# targets to compile statics C++ code to object files\n")
+            mk.write(".PHONY: " + statics_wrap_target + "\n")
+            mk.write(statics_wrap_target + ": " + mkdirs_statics_wrap_target + " " + sep.join(cpp_list) + "\n")
+
+            mk.write("\n\n# Create tool shared libraries")
+            # update ldflags2 to add libcasatools
+            ldflags2 = '-L' + casac_dir + os.sep + 'lib '
+            ldflags2 += '-L/opt/rh/rh-python36/root/usr/lib64 '
+            global sepl
+            global link_libs
+            ldflags2 += sepl + sepl.join([os.path.basename(libcasatools)[3:][:-3]] + link_libs)
+
+            tool_bind_dir = os.sep.join(["binding", "tools", "{toolname}"])
+            tool_gen_dir = os.sep.join(["binding", "generated", "tools", "{toolname}"])
+            # make targets for libraries on which tool libraries depend
+            tool_shared_lib = os.sep.join([casac_dir, "lib", "{libname}." + soabi + "." + lib_ext])
+            tool_libs_targ_deps = []
+            mk.write("\n\n# rules for tool libraries on which other tools depend\n")
+            prepend_dir = os.sep.join([build_distutils_temp]) + os.sep
+            wrap_obj = tool_gen_dir + os.sep + "{toolname}_wrap.o"
+            for mylib in g_tool_shared_libs.keys():
+                dep_cmpt_statics_wrap = []
+                tsl = tool_shared_lib.format(libname=mylib)
+                tool_libs_targ_deps.append(tsl)
+                needed_objs = []
+                for tn in g_tool_shared_libs[mylib]:
+                    for mydir in (tool_bind_dir, tool_gen_dir):
+                        # for myext in (".cc", ".cpp"):
+                        needed_objs += (
+                            source_files(mydir.format(toolname=tn), file_suffix_filter=".cc")
+                        )
+                    # The *_wrap.cc files are generated when running make, they won't exist
+                    # after the first time setup.py genmake is run, so the _wrap.o dependency
+                    # needs to be explicitly added here
+                    needed_objs += [wrap_obj.format(toolname=tn)]
+
+                needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
+                # needed_objs = [o.replace('.cpp', '.o') for o in needed_objs]
+                needed_objs = [prepend_dir + o for o in needed_objs]
+                ld_cmd = linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2 + ' -o $@ ' + ldflags3
+                mk.write(tsl + ": " + libcasatools + " " + sep.join(needed_objs) + "\n\t" + ld_cmd+ "\n")
+
+            # make rules for tool libraries
+            all_tool_names = g_tools.keys()
+            tool_lib_name = os.sep.join([casac_dir, "_{libname}." + soabi + "." + lib_ext])
+            sh_lib_flag = "{libname}." + soabi
+            mk.write("\n\n# rules for tool libraries\n")
+            for tn in (all_tool_names):
+                dep_libs = g_tools[tn]
+                tln = tool_lib_name.format(libname=tn)
+                tool_libs_targ_deps.append(tln)
+                tool_lib_create = tln + ": " + libcasatools
+                needed_objs = []
+                needed_libs = []
+                for mydl in dep_libs:
+                    if tn == mydl:
+                        for mydir in (tool_bind_dir, tool_gen_dir):
+                            # need to make it .cc rather than cc to avoid tcc files
+                            needed_objs += (
+                                source_files(mydir.format(toolname=tn), file_suffix_filter=".cc")
+                            )
+                    else:
+                        tool_lib_create += " " + tool_shared_lib.format(libname=mydl)
+                        needed_libs.append(sh_lib_flag.format(libname=mydl[3:]))
+                needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
+                # The *_wrap.cc files are generated when running make, they won't exist
+                # after the first time setup.py genmake is run, so the _wrap.o dependency
+                # needs to be explicitly added here
+                needed_objs += [wrap_obj.format(toolname=tn)]
+                needed_objs = [prepend_dir + o for o in needed_objs]
+                tool_lib_create += " " + sep.join(needed_objs)
+                ld_cmd = (
+                    linker + ' ' + ldflags1 + " " + sep.join(needed_objs) + " " + ldflags2
+                    + (sepl + sepl.join(needed_libs) if len(needed_libs) > 0 else "") + ' -o $@ ' + ldflags3
+                )
+                mk.write("\n" + tool_lib_create)
+                mk.write('\n\t' + ld_cmd + '\n')
+
+            mk.write("\n\n# Create all tool libraries\n")
+            mk.write(".PHONY: " + tool_libs_target + "\n")
+            mk.write(tool_libs_target + ": " + sep.join(tool_libs_targ_deps) + "\n")
+
+        # straight file copies
+        mkpath(moduledir)
+        run_process( ["rsync","-aq","src/python/",moduledir], err='could not copy python module files' )
+        files_to_copy = [ ]
+        files_to_copy.append("build.properties")
+        bindir = os.sep.join([moduledir, "__casac__", "bin"])
+        copy_to_dirs = {}
+        files_to_copy.append(xml_casa)
+        copy_to_dirs[os.path.basename(xml_casa)] = bindir
+        assembly_jar = "xml-casa-assembly-1.35.jar"
+        files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
+        copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
+        copy_to_list = []
+        with open("makefile", "a") as mk:
+            mk.write("\n\n# straight file copies\n")
+            for f in files_to_copy:
+                filename = os.path.basename(f)
+                copy_to_dir = copy_to_dirs[filename] if filename in copy_to_dirs else moduledir
+                copy_to = copy_to_dir + os.sep + filename
+                mk.write(
+                    "\n" + copy_to + ": " +f
+                    + "\n\tmkdir -p " + copy_to_dir + " && cp -f $< $@\n"
+                )
+                copy_to_list.append(copy_to)
+            mk.write("\n\n.PHONY: " + straight_copies_target + "\n")
+            mk.write(straight_copies_target + ": " + sep.join(copy_to_list))
+        # cerberus, just use the python implementation for now, no make target yet
+        do_cerberus()
+        # casac __init__.py generation, just use the python implmentation for now, no make target yet
+        generate_casac_init_py()
+        # testing
+        do_testing()
+        # rsync
+        with open("makefile", "a") as mk:
+            mk.write("\n# targets to rsync data repos\n")
+            mk.write(".PHONY: " + rsync_data_target + "\n")
+            mk.write(
+                rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
+                + moduledir + "/__data__"
+            )
+        write_dependency_tracking()
+        print(
+            "Successfully generated makefile! Now, run 'make [-j<n>]' "
+            "(eg 'make -j8' or just 'make') to complete your build"
+        )
+
+    def run(self):
+        self.__build_developer_grpc( )
+        self.__generate_casa_makefile( )
+
+class create_makefile_ia(Command):
+    """
+    user_options = [
+        # The format is (long option, short option, description).
+        # ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
+        #('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
+    ]
+
+    def initialize_options(self):
+        print("setting up options for CARTA ia only build")
+        global _debug_build_
+        self.debug = 1 if _debug_build_ else 0
+        print("create debug build is ", str(_debug_build_))
+    """
+    def finalize_options(self):
+        pass
+
+    def __build_developer_grpc(self):
+        if not os.path.exists('.built.grpc'):
+            # hopefully this will replace dbus
+            build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                        os.path.join('build', distutils_dir_name('grpc')),
+                        os.path.join('build', distutils_dir_name('grpc-install')) )
+            build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                            os.path.join('build', distutils_dir_name('protobuf')),
+                            os.path.join('build', distutils_dir_name('grpc-install')) )
+            open(".built.grpc",'a').close( )
+
+    def __generate_casa_ia_makefile(self):
+        """
+        my_targets = [
+                yacc_target, lex_target, cpp_target, c_target, fortran_target,
+                libcasatools, swig_target, statics_wrap_target, tool_libs_target,
+                straight_copies_target
+            ]
+        """
+        my_targets = [yacc_target, lex_target, cpp_target, fortran_target, libcasatools]
+        write_makefile_begin(my_targets, "ia")
+        casacore_filters = ["derivedmscal", "ms", "msfits"]
+        casacode_filters = [
+            "asdmstman", "alma", "atca", "calanalysis", "casa_sakura", "casadbus", "flagging", "graphics", "mstransform", "msvis", "nrao",
+            "parallel", "singledish", "singledishfiller", "spectrallines", "synthesis"
+        ]
+        additional_subdir_filters = casacore_filters + casacode_filters
+        write_make_cpp(additional_subdir_filters, False, False)
+        write_yacc(["ms"], ["synthesis"])
+        write_lex(["ms"], ["synthesis"])
+        write_fortran(False)
+        write_casacode_linker()
+        write_dependency_tracking()
+        # don't need gcwrap files to make ia library
+
+    def run(self):
+        self.__build_developer_grpc( )
+        self.__generate_casa_ia_makefile( )
+
+def get_swig_flags():
+    swig_flags = ['-outdir', get_casac_dir(), '-c++', '-threads', "-Ibinding/include" ]
+    if pyversion >= 3:
+        print('generating python3 bindings...')
+        swig_flags.insert(0,"-py3")
+    return swig_flags
+
+def get_grpc_incdir():
+    return os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
+
+# set these globals so we don't have to run generate_binding() twice for genmake
+g_tools_using_shared_libs = None
+g_tool_shared_libs = None
+g_tools = None
+
+def generate_casacore_version_header():
+    with open("casacore/CMakeLists.txt") as f:
+        for line in f:
+            r = re.match(".*set\(PROJECT_VERSION_MAJOR (\d+)\)",line)
+            if r is not None:
+                casacore_version_major = r.group(1)
+
+            r = re.match(".*set\(PROJECT_VERSION_MINOR (\d+)\)",line)
+            if r is not None:
+                casacore_version_minor = r.group(1)
+
+            r = re.match(".*set\(PROJECT_VERSION_PATCH (\d+)\)",line)
+            if r is not None:
+                casacore_version_patch = r.group(1)
+
+    print("Casacore version " + casacore_version_major + "." + casacore_version_minor + "." + casacore_version_patch)
+
+    with open("include/casacore/casa/version.h","w") as out, open("casacore/casa/version.h.in") as f:
+        for line in f:
+            l = line.replace("@PROJECT_VERSION_MAJOR@",str(casacore_version_major)) \
+                     .replace("@PROJECT_VERSION_MINOR@",str(casacore_version_minor)) \
+                     .replace("@PROJECT_VERSION_PATCH@",casacore_version_patch)
+            out.write(l)
+
+
+if __name__ == '__main__':
+    ## ensure that we use the version of python selected by configure...
+    targetexecutable=pipe_decode(subprocess.check_output(["@PYTHON@", "-c", "import sys; print(sys.executable)"])).split('\n')[0]
+    if sys.executable != targetexecutable:
+        if not os.path.exists('.restarted'):
+            open('.restarted','w').close()
+            os.execvp( '@PYTHON@', ['@PYTHON@'] + sys.argv )
+        else:
+            print("cannot configure with @PYTHON@")
+            sys.stdout.flush( )
+            os._exit(1)
+    if os.path.exists('.restarted'):
+        os.remove('.restarted')
+    if not os.path.isfile('build.properties'):
+        sys.exit('Run configure to create build properties, then try again...')
+    if 'build.compiler.cxx' not in props:
+        sys.exit('Configuration error, not compiler found... try again...')
+    if not os.path.exists('scripts/java'):
+        sys.exit('Run scripts/gcw-pick first...')
+
+    TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
+    tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]
+    # moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
+    moduledir = get_module_dir()
+    generate_pyinit(moduledir,tools)
+
+    a_priori_directory_exclusions += [ 'casadbus/session', 'casadbus/plotserver', 'casadbus/synthesis', 'casadbus/utilities', 'casadbus/viewer' ]
+    a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SynthesisIterBot.cc' ]
+
+    CASACORE_YACC = source_files("casacore",file_suffix_filter=".yy")
+    CODE_YACC = source_files("casa-source/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
+    CASACORE_LEX = source_files("casacore",file_suffix_filter=".ll")
+    CODE_LEX = source_files("casa-source/code",file_suffix_filter=".ll",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
+
+    generate_lex(CASACORE_LEX + CODE_LEX)
+    generate_yacc(CASACORE_YACC + CODE_YACC)
+    (NEEDED,LIBS,TOOLS) = generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
+    # stuff in globals for genmake
+    (g_tools_using_shared_libs, g_tool_shared_libs, g_tools) = (NEEDED, LIBS, TOOLS)
+
+    CORE_SRC = source_files("casacore",file_suffix_filter=".cc")
+    MIR_SRC =  source_files("casacore/mirlib",file_suffix_filter=".c")
+    SAKURA_SRC = sakura_files( )
+    CORE_F77 = source_files("casacore",file_suffix_filter=".f",
+                            file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
+                                          'fmosft.f', 'fwproj.f', 'phasol.f' ]
+    )
+
+    generate_casacore_version_header()
+
+    if not os.path.exists('.built.grpc'):
+        build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                    os.path.join('build', distutils_dir_name('grpc')),
+                    os.path.join('build', distutils_dir_name('grpc-install')) )
+        build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
+                        os.path.join('build', distutils_dir_name('protobuf')),
+                        os.path.join('build', distutils_dir_name('grpc-install')) )
+        open(".built.grpc",'a').close( )
+
+    # grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
+    grpc_incdir = get_grpc_incdir()
+    grpc_srcdir = generate_grpc( [ os.path.join('casa-source','code','casatools','protos','registrar.proto'),
+                                   os.path.join('casa-source','code','casatools','protos','shutdown.proto'),
+                                   os.path.join('casa-source','code','casatools','protos','ping.proto')  ] )
+    GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
+    BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
+    CODE_SRC = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
+                            path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc','TransformMachines2/AWConvFuncEPJones.cc'])
+    CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
+    #CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",file_filter=['fgridsdclip.f'])
+    CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",
+                            #file_filter=['fgridsdclip.f']
+    )
+    #(ldflags, prop_libs) = get_link_props()
+    # global gldflags
+    # global gprop_libs
+    """
+    if sys.platform == 'darwin':
+        ### need to get '{third_party_lib_path}/lib/gcc5' from gfortran directly
+        rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
+        archflags = ['-L{third_party_lib_path}/lib/gcc5']
+        archlibs = [ ]
+    else:
+        rpath = [ '-Wl,-rpath,' + ":".join(['$ORIGIN/lib'] + list(map(lambda s: s[2:],filter(lambda s: s.startswith('-L'),ldflags)))) ]
+        archflags = [ ]
+        archlibs = ['gomp']
+    """.format(third_party_lib_path=third_party_lib_path)
+    rpath = get_casatools_rpath()
+    (archflags, archlibs) = get_arch_link()
+
+    # grpc_libs  = [ 'grpc++','grpc','gpr','protobuf' ] if props['option.grpc'] != "0" else [ ]
+    # grpc_libs = get_grpc_libs()
+    # ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
+    tp_libs = get_tp_libs()
+    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=gldflags+rpath+archflags, libraries=gprop_libs + tp_libs + archlibs ) ]
+
+    # casacdir = os.path.join(moduledir, '__casac__')
+    casacdir = get_casac_dir()
+    libdir = os.path.join(casacdir, 'lib')
+    # swig_opt = [ '-outdir', casacdir, '-c++', '-threads', "-Ibinding/include" ]
+    # if pyversion >= 3:
+    #    print('generating python3 bindings...')
+    #    swig_opt.insert(0,"-py3")
+    swig_opt = get_swig_flags()
+    incdirs = { }
+    libsrc = { }
+    for t in TOOLS:
+        (I,L) = tool_files(t)
+        incdirs[t] = I
+        libsrc[t] = L
+    for lb in LIBS:
+        incdirs[lb] = [ i for t in LIBS[lb] for i in incdirs[t] ]
+        libsrc[lb] = [ l for t in LIBS[lb] for l in libsrc[t] ]
+
+    for lb in LIBS:
+        if sys.platform == 'darwin':
+            rpath = [ '-install_name', '@rpath/%s', '-Wl,-rpath,@loader_path' ]
+        # ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+
+        # ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
+        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + archlibs ))
+
+    for t in TOOLS:
+        inc = [ ]; lib = [ ]; src = [ ]
+        for dep in TOOLS[t]:
+            inc += incdirs[dep]
+            if dep.startswith('lib'):
+                lib += [ dep[3:] ]
+            else:
+                src += libsrc[dep]
+
+        if sys.platform == 'darwin':
+            rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
+        # ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
+        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + lib + archlibs + closure_libraries ))
+
+    setup( name="casatools",version=casatools_version,
+           maintainer="Darrell Schiebel",
+           maintainer_email="drs@nrao.edu",
+           author="CASA development team",
+           author_email="aips2-request@nrao.edu",
+           url="https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse",
+           download_url="https://casa.nrao.edu/download/",
+           license="GNU Library or Lesser General Public License (LGPL)",
+           platforms=["posix"],
+           distclass=casa_binary_dist,
+           description = __doc__.split("\n")[0],
+           long_description="\n".join(__doc__.split("\n")[2:]),
+           classifiers=filter(None, classifiers.split("\n")),
+           package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
+           packages=[ module_name ],
+           cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build, 'genmake': create_makefile, 'ia': create_makefile_ia } \
+                                   if wheel_build \
+                                   else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
+           ext_modules=ext,
+           install_requires=[ 'numpy' ] )
