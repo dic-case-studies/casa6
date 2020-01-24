@@ -52,6 +52,14 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
     const Cube<Bool>& flags, const Vector<Double>& exposures,
     casacore::uInt spw
 ) const {
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+    {
+    cout << "data " << data << endl;
+    cout << "flags " << flags << endl;
+    cout << "exposures " << exposures << endl;
+    }
     const auto npts = data.size();
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
         // not enough points, trivial
