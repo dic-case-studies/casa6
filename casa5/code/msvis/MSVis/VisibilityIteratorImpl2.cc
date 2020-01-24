@@ -1897,16 +1897,20 @@ VisibilityIteratorImpl2::useImagingWeight(const VisImagingWeight & imWgt)
 void
 VisibilityIteratorImpl2::origin()
 {
-	ThrowIf(rowBounds_p.chunkNRows_p < 0,
-	        "Call to origin without first initializing chunk");
+    ThrowIf(rowBounds_p.chunkNRows_p < 0,
+        "Call to origin without first initializing chunk");
 
-	throwIfPendingChanges();
+    throwIfPendingChanges();
 
-	rowBounds_p.subchunkBegin_p = 0; // begin at the beginning
-	more_p = true;
-	subchunk_p.resetSubChunk();
+    rowBounds_p.subchunkBegin_p = 0; // begin at the beginning
+    more_p = true;
+    subchunk_p.resetSubChunk();
 
-	configureNewSubchunk();
+
+    if( ! (nRowBlocking_p > 0) )
+        msIterSubchunk_p->origin();
+
+    configureNewSubchunk();
 }
 
 void
