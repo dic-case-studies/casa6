@@ -2077,7 +2077,26 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
   }// end of make beam set
 
 
+  ImageBeamSet SIImageStore::getChannelBeamSet(const Int channel){
 
+    ImageBeamSet bs=getBeamSet();
+    if(bs.shape()[0]==1)
+      return bs;
+    if(bs.shape()[0] < (channel-1))
+      throw(AipsError("beam of channel "+String::toString(channel)+" does not exist"));
+    IPosition blc(2, channel, 0);
+    IPosition trc(2, channel, bs.shape()[1]-1);
+    Matrix<GaussianBeam> sliceBeam=bs.getBeams()(blc, trc);
+    ImageBeamSet subBeamSet(sliceBeam);
+    return subBeamSet;
+
+
+  }
+  void SIImageStore::setBeamSet(const ImageBeamSet& bs){
+
+    itsPSFBeams=bs;
+  }
+  
   ImageBeamSet SIImageStore::getBeamSet()
   { 
     IPosition beamshp = itsPSFBeams.shape();
@@ -2843,6 +2862,11 @@ Bool SIImageStore::isModelEmpty()
     else return  ( fabs( getModelFlux(0) ) < 1e-08 );
   }
 
+
+void SIImageStore::setPSFSidelobeLevel(const Float level){
+
+  itsPSFSideLobeLevel=level;
+}
   // Calculate the PSF sidelobe level...
   Float SIImageStore::getPSFSidelobeLevel()
   {

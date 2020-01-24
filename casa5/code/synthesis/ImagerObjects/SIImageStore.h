@@ -157,7 +157,10 @@ class SIImageStore
 
   ////////// Restoring Beams
   virtual void makeImageBeamSet();
-  casacore::ImageBeamSet getBeamSet();
+  virtual casacore::ImageBeamSet getBeamSet();
+  virtual void setBeamSet(const casacore::ImageBeamSet& bs);
+  //get the beamSet of a given channel only
+  virtual casacore::ImageBeamSet getChannelBeamSet(const casacore::Int chan);
   virtual void printBeamSet(casacore::Bool verbose=casacore::False);
   casacore::GaussianBeam findGoodBeam();
   void lineFit(casacore::Vector<casacore::Float> &data, casacore::Vector<casacore::Bool> &flag, casacore::Vector<casacore::Float> &fit, casacore::uInt lim1, casacore::uInt lim2);
@@ -195,7 +198,8 @@ class SIImageStore
   casacore::Float getPeakResidualWithinMask();
   casacore::Float getModelFlux(casacore::uInt term=0);
   virtual casacore::Bool isModelEmpty();
-  casacore::Float getPSFSidelobeLevel();
+  virtual casacore::Float getPSFSidelobeLevel();
+  virtual void setPSFSidelobeLevel(const casacore::Float lev);
   void findMinMax(const casacore::Array<casacore::Float>& lattice,
 		  const casacore::Array<casacore::Float>& mask,
 		  casacore::Float& minVal, casacore::Float& maxVal,

@@ -61,7 +61,12 @@ void CubeMinorCycleAlgorithm::get() {
 	applicator.get(modelName_p);
 	//get mask name #7
 	applicator.get(maskName_p);
-	cerr <<"GET chanRange " << chanRange_p << endl;
+        //get beamsetrec #8
+        applicator.get(beamsetRec_p);
+        //get psfsidelobelev #9
+        applicator.get(psfSidelobeLevel_p);
+       
+	//cerr <<"GET chanRange " << chanRange_p << endl;
 	decPars_p.fromRecord(decParsRec);
 	
 	
@@ -83,6 +88,9 @@ void CubeMinorCycleAlgorithm::task(){
 	SynthesisDeconvolver subDeconv;
 	subDeconv.setupDeconvolution(decPars_p);
 	std::shared_ptr<SIImageStore> subimstor=subImageStore();
+        ImageBeamSet bs=ImageBeamSet::fromRecord(beamsetRec_p);
+        subimstor->setBeamSet(bs);
+        subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
 	subDeconv.initMinorCycle(subimstor);
 	returnRec_p=subDeconv.executeMinorCycle(iterBotRec_p);
        	status_p = True;
@@ -105,7 +113,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
 	
         PagedImage<Float> psf(psfName_p, TableLock::UserNoReadLocking);
         // darn makeBeamSet wants to write in the psf ! So accessing it writable
-        subpsf.reset(SpectralImageUtil::getChannel(psf, chanBeg, chanEnd, true));
+        subpsf.reset(SpectralImageUtil::getChannel(psf, chanBeg, chanEnd, false));
         
         
 	PagedImage<Float> resid(residualName_p, TableLock::UserNoReadLocking);

@@ -87,6 +87,13 @@ int main(int argc, char **argv)
       cerr << "shapes " <<  imstor->residual()->shape() <<  " " <<  imstor->psf()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
       Int numchan=imstor->residual()->shape()[3];
       String psfname=imstor->psf()->name();
+      Vector<ImageBeamSet> chanBeams(numchan);
+      ImageBeamSet fullBeamSet=imstor->getBeamSet();
+      cerr << "fullBeamSet shp " << fullBeamSet.shape() << "    " << fullBeamSet.getBeams() << endl;
+      for (Int k =0 ; k <numchan; ++k){
+        chanBeams[k]=imstor->getChannelBeamSet(k);
+      }
+      Float psl=imstor->getPSFSidelobeLevel();
       String residualname=imstor->residual()->name();
       String maskname=imstor->mask()->name();
       String modelname=imstor->model()->name();
@@ -104,6 +111,7 @@ int main(int argc, char **argv)
       Bool assigned; 
       Bool allDone(false);
       Vector<Int> chanRange(2);
+      Record beamsetRec;
       for (Int k=0; k < numchan; ++k) {
 	assigned=casa::applicator.nextAvailProcess(*cmc, rank);
 	cerr << "assigned "<< assigned << endl;
@@ -140,6 +148,13 @@ int main(int argc, char **argv)
 			applicator.put(modelname);
 			// mask #7
 			applicator.put(maskname);
+                        //#8 beamset
+                        //need to use local variable for serial case
+                        beamsetRec=chanBeams[k].toRecord();
+                        //cerr << "beamsetRec " << beamsetRec << endl;
+                        applicator.put(beamsetRec);
+                        //#9 psf lobe level
+                        applicator.put(psl);
 			/// Tell worker to process it 
             applicator.apply(*cmc);
 

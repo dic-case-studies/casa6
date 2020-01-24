@@ -378,7 +378,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       returnRecord = itsLoopController.getCycleInitializationRecord();
 
-      itsImages->printImageStats(); 
+      itsImages->printImageStats();
+      itsImages->releaseLocks();
 
       os << LogIO::DEBUG2 << "Initialized minor cycle. Returning returnRec" << LogIO::POST;
 
@@ -491,7 +492,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
   Record SynthesisDeconvolver::executeCubeMinorCycle(Record& minorCycleControlRec)
   {
-    LogIO os( LogOrigin("SynthesisDeconvolver","executeMinorCycle",WHERE) );
+    LogIO os( LogOrigin("SynthesisDeconvolver","executeCubeMinorCycle",WHERE) );
     Record returnRecord;
 
     os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
@@ -515,6 +516,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           
           Int numchan=itsImages->residual()->shape()[3];
           String psfname=itsImages->psf()->name();
+          Vector<ImageBeamSet> chanBeams(numchan);
+          for (Int k =0 ; k <numchan; ++k){
+            chanBeams[k]=itsImages->getChannelBeamSet(k);
+          }
+          Float psfsidelobelevel=itsImages->getPSFSidelobeLevel();
           String residualname=itsImages->residual()->name();
           String maskname=itsImages->mask()->name();
           String modelname=itsImages->model()->name();
@@ -539,7 +545,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Bool assigned; 
           Bool allDone(false);
           Vector<Int> chanRange(2);
+          Record beamsetRec;
           for (Int k=0; k < numchan; ++k) {
+            os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
             assigned=casa::applicator.nextAvailProcess(*cmc, rank);
             cerr << "assigned "<< assigned << endl;
             while(!assigned) {
@@ -580,7 +588,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             applicator.put(modelname);
             // mask #7
             applicator.put(maskname);
-            /// Tell worker to process it 
+            // beamset #8
+            //need to use local variable for serial case
+            beamsetRec=chanBeams[k].toRecord();
+            applicator.put(beamsetRec);
+            //#9 psf side lobe
+            applicator.put(psfsidelobelevel);
+            /// Tell worker to process it
             applicator.apply(*cmc);
             
           }

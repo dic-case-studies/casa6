@@ -60,6 +60,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  casacore::String maskName_p;
 	  casacore::Vector<casacore::Int> chanRange_p;
 	  casacore::Record returnRec_p;
+          casacore::Record beamsetRec_p;
+          casacore::Float psfSidelobeLevel_p;
 	  casacore::Bool status_p;
 	};
 	
