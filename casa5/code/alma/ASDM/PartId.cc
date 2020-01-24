@@ -51,14 +51,14 @@ namespace asdm {
 		return "";				
 	}
 
-	PartId::PartId(const string &id) throw (InvalidArgumentException) {
+	PartId::PartId(const string &id) {
 		string msg = validate(id);
 		if (msg.length() != 0)
 			throw InvalidArgumentException(msg);
 		this->id = id;		
 	}
 
-	void PartId::setId(const string &id) throw (InvalidArgumentException) {
+	void PartId::setId(const string &id) {
 		string msg = validate(id);
 		if (msg.length() != 0)
 			throw InvalidArgumentException(msg);

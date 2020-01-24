@@ -917,7 +917,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalPosition");
 		}
 	}
@@ -1331,7 +1331,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalPosition");
 		}
 	}
@@ -1352,7 +1352,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAtmPhaseCorrection::name(atmPhaseCorrection));
+		eoss.writeString(CAtmPhaseCorrection::name(atmPhaseCorrection));
 			/* eoss.writeInt(atmPhaseCorrection); */
 				
 		
@@ -1413,7 +1413,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CPositionMethod::name(positionMethod));
+		eoss.writeString(CPositionMethod::name(positionMethod));
 			/* eoss.writeInt(positionMethod); */
 				
 		
@@ -1423,7 +1423,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverBand::name(receiverBand));
+		eoss.writeString(CReceiverBand::name(receiverBand));
 			/* eoss.writeInt(receiverBand); */
 				
 		

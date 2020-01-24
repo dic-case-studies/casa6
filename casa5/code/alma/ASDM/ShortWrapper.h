@@ -41,7 +41,7 @@ public:
  	 * A collection of static methods to perform conversions
  	 * between strings and short integer values.
 	 */
-	static short parseShort(const std::string &s) throw (NumberFormatException);
+	static short parseShort(const std::string &s);
 
 	/**
 	 * Encode a short integer value into its string representation.

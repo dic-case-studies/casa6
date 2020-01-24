@@ -255,6 +255,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_polfromgain.py',
                     'src/tasks/task_predictcomp.py',
                     'src/tasks/task_rerefant.py',
+                    'src/scripts/restfreqtool.py',
                     'src/tasks/task_rmfit.py',
                     'src/tasks/task_rmtables.py',
                     'src/scripts/sdutil.py',
@@ -611,6 +612,11 @@ def generate_pyinit(moduledir,tasks):
         fd.write("casalog.setglobal(True)\n")
         fd.write("\n")
         fd.write("def xml_interface_defs( ): return { %s }\n" % ", ".join(task_files_dict))
+        fd.write("\n")
+        fd.write("try:\n")
+        fd.write('    casalog.post("CASA Version %s")\n' % casatasks_version)
+        fd.write("except:\n")
+        fd.write('    print("Error: the logfile is not writable")\n')
         fd.write("\n")
         mpi_import_str = '\n'.join((
             "# When in MPI mode, this will put servers into their serve() loop.",

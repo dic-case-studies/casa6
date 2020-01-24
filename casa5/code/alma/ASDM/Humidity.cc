@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Humidity Humidity::getHumidity(StringTokenizer &t) throw(NumberFormatException) {
+Humidity Humidity::getHumidity(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return Humidity (value);
 }

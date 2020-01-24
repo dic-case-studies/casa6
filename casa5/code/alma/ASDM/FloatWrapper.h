@@ -43,7 +43,7 @@ public:
 	 * @return a float.
 	 * @throws NumberFormatException.
 	 */
-	static float parseFloat(const std::string &s) throw (NumberFormatException);
+	static float parseFloat(const std::string &s);
 
 	/**
 	 * Encode a float value into its string representation.
