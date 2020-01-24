@@ -81,7 +81,8 @@ namespace casa {
 
     PlotMSPlotParameters *grpcPlotMS::get_sysparams(int index) {
         PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
-        if ( sp == NULL && index == itsPlotms_->getPlotManager( ).numPlots( ) ) {
+		int num_plots(itsPlotms_->getPlotManager().numPlots());
+        if ( (sp == NULL) && (index == num_plots) ) {
             std::promise<bool> prom;
             qtGO( [&]( ) {
                       itsPlotms_->getPlotManager( ).addOverPlot( );
@@ -129,7 +130,7 @@ namespace casa {
         if ( param_groups.size( ) <= 0 ) return;
 
         // -----  hold all notifications
-        for ( int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
+        for ( unsigned int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
             PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
             if ( sp == NULL ) continue;
             sp->holdNotification( );
@@ -145,7 +146,7 @@ namespace casa {
         }
 
         // -----  release all notifications
-        for ( int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
+        for ( unsigned int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
             PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
             if ( sp == NULL ) continue;
             sp->releaseNotification();
@@ -474,6 +475,9 @@ namespace casa {
         bool show = req->state( );
         bool update = req->update( );
         ppcache(index)->setShowAtm(show);
+        if (show) {
+            add_overlay_axis(PMS::ATM, index);
+        }
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
@@ -506,6 +510,9 @@ namespace casa {
         bool show = req->state( );
         bool update = req->update( );
         ppcache(index)->setShowTsky(show);
+        if (show) {
+            add_overlay_axis(PMS::TSKY, index);
+        }
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
@@ -538,6 +545,9 @@ namespace casa {
         bool show = req->state( );
         bool update = req->update( );
         ppcache(index)->setShowImage(show);
+        if (show) {
+            add_overlay_axis(PMS::IMAGESB, index);
+        }
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
@@ -549,6 +559,37 @@ namespace casa {
 
         return grpc::Status::OK;
     }
+
+    void grpcPlotMS::add_overlay_axis(const PMS::Axis& overlay, int index) {
+        auto cache = ppcache(index);
+        auto axes = ppaxes(index);
+        auto display = ppdisp(index);
+
+        // index of axes sets
+        unsigned int new_index = cache->numXAxes();
+        unsigned int current_index = new_index - 1;
+
+        // add overlay axis vs x-axis
+        cache->setAxes(cache->xAxis(), overlay, cache->xDataColumn(0), PMS::DEFAULT_DATACOLUMN, new_index);
+
+        // set axis positions; use last x-axis position, overlay y-axis position is right
+        axes->resize(new_index + 1, true); // does not add index
+        axes->setAxes(axes->xAxis(current_index), Y_RIGHT, new_index);
+
+        // keep x-axis range setting
+        axes->setXRange(axes->xRangeSet(current_index), axes->xRange(current_index), new_index);
+
+        // set new unflagged symbol color magenta (atm, tsky) or black (image sideband)
+        std::string symbol_color = (overlay == PMS::IMAGESB ? "#000000" : "#FF00FF");
+        PlotSymbolPtr unflagged_symbol = display->unflaggedSymbol(new_index); // adds index
+        unflagged_symbol->setSymbol("circle");
+        unflagged_symbol->setSize(2,2);
+        unflagged_symbol->setColor(symbol_color);
+        display->setUnflaggedSymbol(unflagged_symbol, new_index);
+        // set new flagged symbol same as current
+        PlotSymbolPtr flagged_symbol = display->flaggedSymbol(current_index);
+        display->setFlaggedSymbol(flagged_symbol, new_index);
+    } 
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     void grpcPlotMS::populate_selection( const ::rpc::plotms::SetSelection &req, PlotMSSelection &sel ) {
@@ -1193,7 +1234,7 @@ namespace casa {
             double min = req->min( );                                                                          \
             double max = req->max( );                                                                          \
             if (max > min) {                                                                                   \
-				minmax = prange_t(min, max);                                                                   \
+                minmax = prange_t(min, max);                                                                   \
             }                                                                                                  \
         }                                                                                                      \
         ppaxes(index)->set ## TYPE ## Range( !autorange , minmax );                                             \
