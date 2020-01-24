@@ -222,8 +222,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                  //where we write in model and residual may be
                 {
 
-                  LatticeLocker lockresid (*(itsImages->residual()), FileLocker::Write);
-                  LatticeLocker lockmodel (*(itsImages->model()), FileLocker::Write);
+                  LatticeLocker lockresid (*(itsImages->residual()), FileLocker::Read);
+                  LatticeLocker lockmodel (*(itsImages->model()), FileLocker::Read);
                   LatticeLocker lockmask (*(itsImages->mask()), FileLocker::Read);
                   LatticeLocker lockpsf (*(itsImages->psf()), FileLocker::Read);
 		  
@@ -243,9 +243,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
                      //where we write in model and residual may be
                     {
+                      //no need to lock here as only arrays are used
 
-                      LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Write);
-                      LatticeLocker lock2 (*(itsImages->model()), FileLocker::Write);
+                      //LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Write);
+                      //LatticeLocker lock2 (*(itsImages->model()), FileLocker::Write);
 		    takeOneStep( loopcontrols.getLoopGain(), 
 				 //				 loopcontrols.getCycleNiter(),
 				 thisniter,

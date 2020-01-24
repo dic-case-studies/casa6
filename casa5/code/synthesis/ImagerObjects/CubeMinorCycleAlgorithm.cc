@@ -116,9 +116,9 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
         subpsf.reset(SpectralImageUtil::getChannel(psf, chanBeg, chanEnd, false));
         
         
-	PagedImage<Float> resid(residualName_p, TableLock::UserNoReadLocking);
+	PagedImage<Float> resid(residualName_p, TableLock::UserLocking);
 	subresid.reset(SpectralImageUtil::getChannel(resid, chanBeg, chanEnd, true));
-	PagedImage<Float> model(modelName_p, TableLock::UserNoReadLocking);
+	PagedImage<Float> model(modelName_p, TableLock::UserLocking);
 	submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, true));
 
 	PagedImage<Float> mask(maskName_p, TableLock::UserNoReadLocking);
