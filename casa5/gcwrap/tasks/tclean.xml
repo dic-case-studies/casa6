@@ -1140,13 +1140,52 @@ to use the correct direction in which the antenna is pointing with respect to th
     
     
     <param type="any" name="pointingoffsetsigdev" subparam="true">
-     <shortdescription> Heterogenous pointing functionality for the AWProject gridder</shortdescription>
-<description> Heterogenous pointing functionality is controlled by the use of this single pointing offset deviation
-variable. Smaller the value more heterogenous the array. There are serious consequences to the imaging memory requirements
-that come from playing with this parameter value. Do not change from the default value unless you know what you are doing.
+     <shortdescription> Pointing offset threshold to determine heterogeneity of pointing corrections for the AWProject gridder</shortdescription>
+<description> Corrections for heterogenous and time-dependent pointing 
+                         offsets via AWProjection are controlled by this parameter. 
+                         It is a vector of 2 ints or doubles each of which is interpreted 
+                         in units of arcsec. Based on the first thresold, a clustering 
+                         algorithm is applied to entries from the POINTING subtable 
+                         of the MS to determine how distinct antenna groups for which
+                         the pointing offset must be computed separately.  The second 
+                         number controls how much a pointing change across time can 
+                         be ignored and after which an antenna rebinning is required.   
+
+                        [100.0,100.0] : Pointing offsets of 100 arcsec or less are considered 
+                                                small enough to be ignored.  Using large values for both
+                                                indicates a homogeneous array.
+                                
+
+                        [10.0, 100.0] : Based on entries in the POINTING subtable, antennas 
+                                               are grouped into clusters based on a 10arcsec bin size. 
+                                               All antennas in a bin are given a pointing offset calculated
+                                               as the average of the offsets of all antennas in the bin.
+                                               On the time axis, offset changes upto 100 arcsec will be ignored.
+
+                        [10.0,10.0] : Calculate separate pointing offsets for each antenna group
+                                             (with a 10 arcsec bin size). As a function of time, recalculate 
+                                             the antenna binning if the POINTING table entries change by
+                                             more than 10 arcsec w.r.to the previously computed binning.
+                                              
+                        [1.0, 1.0] :  Tight tolerances will imply a fully heterogenous situation where 
+                                           each antenna gets its own pointing offset. Also, time-dependent 
+                                           offset changes greater than 1 arcsec will trigger recomputes of 
+                                           the phase gradients. This is the most general situation and is also 
+                                           the most expensive option as it constructs and uses separate 
+                                           phase gradients for all baselines and timesteps. 
+
+                        For VLASS 1.1 data with two kinds of pointing offsets, the recommended
+                        setting is [ 30.0, 30.0 ].
+
+                        For VLASS 1.2 data with only the time-dependent pointing offsets, the
+                        recommended setting is [ 300.0, 30.0 ] to turn off the antenna grouping
+                        but to retain the time dependent corrections required from one timestep
+                        to the next. 
+
+
 </description>
       <any type="variant" limittypes="intArray doubleArray"/>
-      <value type="doubleArray">[10.0]</value>
+      <value type="doubleArray">30.0,30.0</value>
     </param>   
     
     
@@ -2691,7 +2730,7 @@ that come from playing with this parameter value. Do not change from the default
 	 <default param="cfcache"><value>""</value></default>
 	 <default param="computepastep"><value>360.0</value></default>
 	 <default param="rotatepastep"><value>360.0</value></default>
-	 <default param="pointingoffsetsigdev"><value>[10.0]</value></default>
+	 <default param="pointingoffsetsigdev"><value>[30.0,30.0]</value></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
 <!--	 <default param="vptable"><value>""</value></default> -->

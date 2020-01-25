@@ -288,7 +288,9 @@ namespace casa{
 	      if (cfb_l != cachedCFBPtr_p)
 		{
 		  maxCFShape_p[0] = maxCFShape_p[1] = cfb_l->getMaxCFSize();
-		  cerr << "CFBShape changed " << maxCFShape_p <<endl;
+		  LogIO alog(LogOrigin("VB2CFBMap", "makeVBRow2CFBMap[R&D]"));
+		  alog << "CFBShape changed " << maxCFShape_p << LogIO::DEBUG2 << LogIO::POST;
+		  
 		}
 	      cachedCFBPtr_p = cfb_l;
 	    }
