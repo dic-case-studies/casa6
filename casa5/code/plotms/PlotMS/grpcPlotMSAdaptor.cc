@@ -81,7 +81,7 @@ namespace casa {
 
     PlotMSPlotParameters *grpcPlotMS::get_sysparams(int index) {
         PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
-		int num_plots(itsPlotms_->getPlotManager().numPlots());
+        int num_plots(itsPlotms_->getPlotManager().numPlots());
         if ( (sp == NULL) && (index == num_plots) ) {
             std::promise<bool> prom;
             qtGO( [&]( ) {
@@ -475,12 +475,12 @@ namespace casa {
         bool show = req->state( );
         bool update = req->update( );
         ppcache(index)->setShowAtm(show);
-        if (show) {
-            add_overlay_axis(PMS::ATM, index);
-        }
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  // must go here else "QPixmap: It is not safe to use pixmaps outside the GUI thread"
+                  if (show) add_overlay_axis(PMS::ATM, index);
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -510,12 +510,12 @@ namespace casa {
         bool show = req->state( );
         bool update = req->update( );
         ppcache(index)->setShowTsky(show);
-        if (show) {
-            add_overlay_axis(PMS::TSKY, index);
-        }
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  // must go here else "QPixmap: It is not safe to use pixmaps outside the GUI thread"
+                  if (show) add_overlay_axis(PMS::TSKY, index);
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -545,12 +545,12 @@ namespace casa {
         bool show = req->state( );
         bool update = req->update( );
         ppcache(index)->setShowImage(show);
-        if (show) {
-            add_overlay_axis(PMS::IMAGESB, index);
-        }
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  // must go here else "QPixmap: It is not safe to use pixmaps outside the GUI thread"
+                  if (show) add_overlay_axis(PMS::IMAGESB, index);
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -983,9 +983,11 @@ namespace casa {
                   // #8  0x000000000175b07f in casa::PMS_PP_Display::PMS_PP_Display (this=0x7f9cb800ddc0, factory=...)
                   //     at casa-source/code/plotms/Plots/PlotMSPlotParameterGroups.cc:1262
                   // #9  0x00000000016d66fd in casa::grpcPlotMS::ppdisp (this=0x393efd0, index=0) at casa-source/code/plotms/PlotMS/grpcPlotMSAdaptor.cc:174
+                  // must go here else "QPixmap: It is not safe to use pixmaps outside the GUI thread"
                   auto sp = ppdisp(index);
                   sp->setXConnect(req->xconnector( ));
                   sp->setTimeConnect(req->timeconnector( ));
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -1344,7 +1346,7 @@ namespace casa {
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     bool grpcPlotMS::invalid_index(int index) {
-        return index < 0 || index > itsPlotms_->getPlotManager().numPlots( );
+        return (index < 0) || (index > itsPlotms_->getPlotManager().numPlots( ));
     }
 
 }
