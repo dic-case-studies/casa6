@@ -246,16 +246,16 @@ class statwt_test(unittest.TestCase):
             etimes, ewt, ewtsp, eflag, efrow, edata, esigma, esisp
         ] = _get_table_cols(mytb)
         mytb.done()
-        eprint("gwt", gwt)
-        eprint("ewt", ewt)
-        eprint('gwt shape', gwt.shape)
-        eprint('ewt shape', ewt.shape)
-        eprint('gwt all zero', (gwt == 0).all())
-        eprint('ewt all zero', (ewt == 0).all())
+        print("gwt", gwt)
+        print("ewt", ewt)
+        print('gwt shape', gwt.shape)
+        print('ewt shape', ewt.shape)
+        print('gwt all zero', (gwt == 0).all())
+        print('ewt all zero', (ewt == 0).all())
 
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
-        eprint("gwtsp", gwtsp)
-        eprint("ewtsp", ewtsp)
+        print("gwtsp", gwtsp)
+        print("ewtsp", ewtsp)
         self.assertTrue(
             np.allclose(gwtsp, ewtsp), 'WEIGHT_SPECTRUM comparison failed'
         )
@@ -282,7 +282,7 @@ class statwt_test(unittest.TestCase):
         """
         for combine in ["", "corr"]:
             c = 0
-            for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
+            for fitspw in ["","0:0~9;21~62",  "0:10~20"]:
                 self.assertTrue(
                     shutil.copytree(ctsys.resolve(src), dst),
                     "Unable to copy " + src + " to " + dst
@@ -305,12 +305,13 @@ class statwt_test(unittest.TestCase):
                         ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_no_fitspw.ms'
                     else:
                         ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_has_fitspw.ms'
-                eprint(
+                print(
                     "combine", combine, "c", c, "fitspw", fitspw, "excludechans", excludechans
                 )
-                eprint('dst', dst)
-                eprint('ref', ref) 
+                print('dst', dst)
+                print('ref', ref) 
                 self.compare(dst, ref)
+                return
                 shutil.rmtree(dst)
                 c += 1               
 
@@ -905,7 +906,7 @@ class statwt_test(unittest.TestCase):
         data = "residual_data"
         mytb = table()
         myms = ms()
-        eprint("datadir is", datadir)
+        print("datadir is", datadir)
         # row_to_rows = []
         # for i in range(60):
         #     row_to_rows.append([i, i+1])

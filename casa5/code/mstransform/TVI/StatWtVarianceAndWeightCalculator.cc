@@ -56,9 +56,9 @@ Double StatWtVarianceAndWeightCalculator::computeVariance(
 #pragma omp critical
 #endif
     {
-    cerr << "data " << data << endl;
-    cerr << "flags " << flags << endl;
-    cerr << "exposures " << exposures << endl;
+    cout << "data " << data << endl;
+    cout << "flags " << flags << endl;
+    cout << "exposures " << exposures << endl;
     }
     const auto npts = data.size();
     if ((Int)npts < _minSamp || (Int)nfalse(flags) < _minSamp) {
