@@ -20,6 +20,11 @@
     <param ignorecase="true" name="datacolumn" type="string">
         <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
         <value>data</value>
+        <allowed kind="enum">
+                <value>data</value>
+                <value>float_data</value>
+                <value>corrected</value>
+        </allowed>
     </param>
 
     <param name="field" type="string">
@@ -99,26 +104,26 @@ antenna -- select data by antenna name or ID
         default: '' (use all antennas)
         example: 'PM03'
 timebin -- bin width for time averaging
-           default: '' (use all )
-           example: timebin='100s' (time averaging performed over 100 second bins)
-                    timebin='all&quot;  (use all)
+        default: '' (use all )
+        example: timebin='100s' (time averaging performed over 100 second bins)
+                 timebin='all&quot;  (use all)
 
 timespan -- Let the timebin span across scan, state or both.
-           State is equivalent to sub-scans. One scan may have several
-           state ids. For ALMA MSs, the sub-scans are limited to about
-           30s duration each. In these cases, the task will automatically
-           add state to the timespan parameter. To see the number of states
-           in an MS, use the msmd tool. See help msmd.
+            State is equivalent to sub-scans. One scan may have several
+            state ids. For ALMA MSs, the sub-scans are limited to about
+            30s duration each. In these cases, the task will automatically
+            add state to the timespan parameter. To see the number of states
+            in an MS, use the msmd tool. See help msmd.
 
-           default: '' (separate time bins by both of the above)
-           options: 'scan', 'state', 'state,scan'
+        default: '' (separate time bins by both of the above)
+        options: 'scan', 'state', 'state,scan'
 
-           examples:
-                timespan = 'scan'; can be useful when the scan number
-                goes up with each integration as in many WSRT MSs.
-                timespan = ['scan', 'state']: disregard scan and state
-                numbers when time averaging.
-                timespan = 'state,scan'; same as above.
+        examples:
+             timespan = 'scan'; can be useful when the scan number
+             goes up with each integration as in many WSRT MSs.
+             timespan = ['scan', 'state']: disregard scan and state
+             numbers when time averaging.
+             timespan = 'state,scan'; same as above.
 
 outfile -- name of output file
 

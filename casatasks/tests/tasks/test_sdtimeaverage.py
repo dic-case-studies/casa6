@@ -635,7 +635,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertFalse(self.run_task( prm )) # must be false
 
     def test_param52E(self):
-        '''sdtimeaverage::51E:: datacolumn = 'corrected' (Error) '''
+        '''sdtimeaverage::52E:: datacolumn = 'corrected' (Error) '''
 
         prm =  {'datacolumn' : 'corrected' }
         # Run Task and check
@@ -652,7 +652,9 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param60(self):
         '''sdtimeaverage::60:: timespan="scan"  '''
 
-        prm =  {'timespan' : 'scan' }
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 60, 3846 )
+        prm =  {'timespan' : 'scan',
+                'outfile' : privateOutfile }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # 
@@ -661,7 +663,9 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param61(self):
         '''sdtimeaverage::61:: timespan="state"  '''
 
-        prm =  {'timespan' : 'state' }
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 61, 3846 )
+        prm =  {'timespan' : 'state', 
+                'outfile' : privateOutfile }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # 
@@ -670,7 +674,20 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param62(self):
         '''sdtimeaverage::62:: timespan="scan,state"  '''
 
-        prm =  {'timespan' : 'scan,state' }
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 62, 3846 )
+        prm =  {'timespan' : 'scan,state', 
+                'outfile' : privateOutfile }
+
+        # Run Task and check
+        self.assertTrue(self.run_task( prm )) # 
+        self.checkOutputRec(defOutputMs, 1 )
+
+    def test_param63E(self):
+        '''sdtimeaverage::62:: timespan="hoge"  '''
+
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 63, 3846 )
+        prm =  {'timespan' : 'hoge',
+                'outfile' : privateOutfile }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # 
