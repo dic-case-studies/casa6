@@ -688,9 +688,6 @@ DATA keywords: [UNIT=, MEASURE_TYPE=]
 SIGMA keywords: [UNIT=, MEASURE_TYPE=]
 WEIGHT_SPECTRUM keywords: [UNIT=, MEASURE_TYPE=]
 FLAG keywords: [UNIT=, MEASURE_TYPE=]
-MODEL_DATA keywords: [CHANNEL_SELECTION=[[1:2,]
-    0
-    30]]
 \end{verbatim}
 }
 
