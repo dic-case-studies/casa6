@@ -76,6 +76,9 @@ CASA6 = False
 try:
     from casatools import ctsys
     from casatasks import casalog, tclean
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+    from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+
     CASA6 = True
 except ImportError:
     from __main__ import default
@@ -84,7 +87,7 @@ except ImportError:
 
  
 if CASA6:
-    dataroot = ctsys.resolve('performance/')
+    dataroot = ctsys.resolve('visibilities/alma/')
 else:
     # Note that this directory does not exist
     dataroot = os.environ.get('CASAPATH').split()[0] + 'regression/performance/'
@@ -105,6 +108,10 @@ class TestTcleanMemProf(unittest.TestCase):
   
     def setUp(self):
         '''Method called to prepare the test fixture.  This is called immediately before calling the test method'''
+        # This test is currently disabled in parallel from the parameter in tclean
+        self.parallel = False
+        if ParallelTaskHelper.isMPIEnabled():
+            self.parallel = True
         # Tclean opens this MS in read-only mode
         os.symlink(datapath, input_ms)
  
@@ -122,7 +129,6 @@ class TestTcleanMemProf(unittest.TestCase):
     def tearDownClass(cls):
         '''A class method called after tests in an individual class have run'''
         # remove all the generated data
-        # TODO remove also the memprofile ascii file?!?!?
         os.system('rm -rf memtest_*')
  
     def test_tclean_alma_mem_cubemode_mosaic_briggs(self):
