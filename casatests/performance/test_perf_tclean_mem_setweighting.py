@@ -87,7 +87,7 @@ if CASA6:
     dataroot = ctsys.resolve('performance/')
 else:
     # Note that this directory does not exist
-    dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/performance/'
+    dataroot = os.environ.get('CASAPATH').split()[0] + 'regression/performance/'
 
 input_ms = 'uid___A002_Xb9dfa4_X4724_target_spw16.ms'
 datapath = dataroot + input_ms
