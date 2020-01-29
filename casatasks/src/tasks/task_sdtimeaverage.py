@@ -125,7 +125,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
     width = 1
 
     timeaverageAct = False
-#   print( "SDTIMEAVERQAGE() arg::timespan = {}".format(timespan)) 
+#   print "SDTIMEAVERQAGE() arg::timespan = {}".format(timespan) 
 #   timespan = "scan" 
     maxuvwdistance = 0.0
 
