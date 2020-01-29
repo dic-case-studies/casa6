@@ -237,10 +237,10 @@ namespace asdm {
 						name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 					name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw ConversionException("Error: Field \"" + 
 					name + "\": Unexpected end of string", tableName);
 		}
@@ -283,10 +283,10 @@ namespace asdm {
 						name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 					name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw ConversionException("Error: Field \"" + 
 					name + "\": Unexpected end of string", tableName);
 		}
@@ -334,10 +334,10 @@ namespace asdm {
 						name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 					name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw ConversionException("Error: Field \"" + 
 					name + "\": Unexpected end of string", tableName);
 		}
@@ -471,7 +471,7 @@ namespace asdm {
 			try {
 				int data = Integer::parseInt(xmlField);
 				result.insert(data);
-			} catch (NumberFormatException e) {
+			} catch (const NumberFormatException &e) {
 				throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
 			}
@@ -491,7 +491,7 @@ namespace asdm {
 		try {
 			int data = Integer::parseInt(xmlField);
 			return data;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
 		}
@@ -526,13 +526,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -574,13 +574,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -627,13 +627,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -686,13 +686,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -810,7 +810,7 @@ namespace asdm {
 		try {
 			short data = Short::parseShort(xmlField);
 			return data;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
 		}
@@ -845,13 +845,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -893,13 +893,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -946,13 +946,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1005,13 +1005,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1129,7 +1129,7 @@ namespace asdm {
 		try {
 			int64_t data = Long::parseLong(xmlField);
 			return data;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
 		}
@@ -1164,13 +1164,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1212,13 +1212,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1265,13 +1265,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1324,13 +1324,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1448,7 +1448,7 @@ namespace asdm {
 		try {
 			char data = Byte::parseByte(xmlField);
 			return data;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
 		}
@@ -1483,13 +1483,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1531,13 +1531,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1584,13 +1584,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1643,13 +1643,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1767,7 +1767,7 @@ namespace asdm {
 		try {
 			float data = Float::parseFloat(xmlField);
 			return data;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
 		}
@@ -1802,13 +1802,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1850,13 +1850,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1903,13 +1903,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -1962,13 +1962,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2086,7 +2086,7 @@ namespace asdm {
 		try {
 			double data = Double::parseDouble(xmlField);
 			return data;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
 		}
@@ -2121,13 +2121,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2169,13 +2169,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2222,13 +2222,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2281,13 +2281,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2434,13 +2434,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2482,13 +2482,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2535,13 +2535,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2594,13 +2594,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2718,7 +2718,7 @@ namespace asdm {
 		try {
 			bool data = Boolean::parseBoolean(xmlField);
 			return data;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
 		}
@@ -2753,13 +2753,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2801,13 +2801,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2854,13 +2854,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -2913,13 +2913,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3148,7 +3148,7 @@ namespace asdm {
         try {	
 			return Angle (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -3185,13 +3185,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3233,13 +3233,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3286,13 +3286,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3345,13 +3345,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3469,7 +3469,7 @@ namespace asdm {
         try {	
 			return AngularRate (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -3506,13 +3506,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3554,13 +3554,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3607,13 +3607,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3666,13 +3666,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3790,7 +3790,7 @@ namespace asdm {
         try {	
 			return ArrayTime (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -3827,13 +3827,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3875,13 +3875,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3928,13 +3928,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -3987,13 +3987,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4158,13 +4158,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4212,13 +4212,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4270,13 +4270,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4334,13 +4334,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4458,7 +4458,7 @@ namespace asdm {
         try {	
 			return Complex (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -4495,13 +4495,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4543,13 +4543,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4596,13 +4596,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4655,13 +4655,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4779,7 +4779,7 @@ namespace asdm {
         try {	
 			return Entity (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -4816,13 +4816,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4864,13 +4864,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4917,13 +4917,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -4976,13 +4976,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5100,7 +5100,7 @@ namespace asdm {
         try {	
 			return EntityId (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -5137,13 +5137,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5185,13 +5185,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5238,13 +5238,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5297,13 +5297,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5421,7 +5421,7 @@ namespace asdm {
         try {	
 			return EntityRef (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -5458,13 +5458,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5506,13 +5506,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5559,13 +5559,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5618,13 +5618,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5742,7 +5742,7 @@ namespace asdm {
         try {	
 			return Flux (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -5779,13 +5779,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5827,13 +5827,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5880,13 +5880,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -5939,13 +5939,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6063,7 +6063,7 @@ namespace asdm {
         try {	
 			return Frequency (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -6100,13 +6100,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6148,13 +6148,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6201,13 +6201,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6260,13 +6260,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6384,7 +6384,7 @@ namespace asdm {
         try {	
 			return Humidity (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -6421,13 +6421,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6469,13 +6469,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6522,13 +6522,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6581,13 +6581,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6705,7 +6705,7 @@ namespace asdm {
         try {	
 			return Interval (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -6742,13 +6742,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6790,13 +6790,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6843,13 +6843,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -6902,13 +6902,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7026,7 +7026,7 @@ namespace asdm {
         try {	
 			return Length (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -7063,13 +7063,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7111,13 +7111,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7164,13 +7164,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7223,13 +7223,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7347,7 +7347,7 @@ namespace asdm {
         try {	
 			return Pressure (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -7384,13 +7384,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7432,13 +7432,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7485,13 +7485,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7544,13 +7544,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7668,7 +7668,7 @@ namespace asdm {
         try {	
 			return Speed (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -7705,13 +7705,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7753,13 +7753,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7806,13 +7806,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -7865,13 +7865,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -8002,7 +8002,7 @@ namespace asdm {
 			try {
 				result.insert(Tag::parseTag(t.nextToken()));
 			}
-			catch (TagFormatException e) {
+			catch (const TagFormatException &e) {
 				throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 			}	
@@ -8022,7 +8022,7 @@ namespace asdm {
 		try {
 			return Tag::parseTag(xmlField);
 		}
-		catch (TagFormatException e) {
+		catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 			name + "\": " + e.getMessage(), tableName);				
 		}
@@ -8057,13 +8057,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -8105,13 +8105,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -8158,13 +8158,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -8217,13 +8217,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -8341,7 +8341,7 @@ namespace asdm {
         try {	
 			return Temperature (xmlField);
 		}
-		catch (InvalidArgumentException e) {
+		catch (const InvalidArgumentException &e) {
 			throw ConversionException("Error: message was '"+ 
 			                           e.getMessage()+
 			                           "'",
@@ -8378,13 +8378,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -8426,13 +8426,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -8479,13 +8479,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		
@@ -8538,13 +8538,13 @@ namespace asdm {
 					name + "\": Syntax error.", tableName);
 			}
 			return value;
-		} catch (NumberFormatException e) {
+		} catch (const NumberFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);
-		} catch (OutOfBoundsException e) {
+		} catch (const OutOfBoundsException &e) {
 			throw  ConversionException("Error: Field \"" + 
 				name + "\": Unexpected end of string", tableName);
-		} catch (TagFormatException e) {
+		} catch (const TagFormatException &e) {
 			throw ConversionException("Error: Field \"" + 
 				name + "\": " + e.getMessage(), tableName);				
 		}		

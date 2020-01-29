@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Angle Angle::getAngle(StringTokenizer &t) throw(NumberFormatException) {
+Angle Angle::getAngle(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return Angle (value);
 }

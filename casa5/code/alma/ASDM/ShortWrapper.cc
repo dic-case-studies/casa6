@@ -37,7 +37,7 @@ namespace asdm {
     const short Short::MIN_VALUE = -32768;
     const short Short::MAX_VALUE = 32767;
 
-	short Short::parseShort(const string &s) throw (NumberFormatException) {
+	short Short::parseShort(const string &s) {
 		istringstream in;
 		in.str(s);
 		short x;

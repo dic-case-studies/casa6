@@ -58,15 +58,14 @@ class EntityId {
 	friend std::istream & operator >> ( std::istream &, EntityId&);
 
 public:
-	static EntityId getEntityId(StringTokenizer &t) 
-		throw (InvalidArgumentException) ;
+	static EntityId getEntityId(StringTokenizer &t);
 	static std::string validate(std::string x);
 
 	EntityId();
 	EntityId(const EntityId &);
-	EntityId(const std::string &id) throw (InvalidArgumentException);
+	EntityId(const std::string &id);
 #ifndef WITHOUT_ACS
-	EntityId(asdmIDLTypes::IDLEntityId &) throw (InvalidArgumentException);
+	EntityId(asdmIDLTypes::IDLEntityId &);
 #endif
 	virtual ~EntityId();
 
