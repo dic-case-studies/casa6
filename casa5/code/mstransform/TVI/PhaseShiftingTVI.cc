@@ -156,7 +156,7 @@ void PhaseShiftingTVI::shiftUVWPhases()
 	// with time reference to the first row in the MS
 	MEpoch epoch(Quantity(vb->time()(0),referenceTimeUnits_p),referenceTime_p.getRef());
 	MeasFrame refFrame(epoch,observatoryPosition_p);
-	UVWMachine uvwMachine(phaseCenter_p, vb->phaseCenter(), refFrame,false,true);
+	UVWMachine uvwMachine(phaseCenter_p, vb->phaseCenter(), refFrame,false,false);
 
 	// Initialize phase array and uvw matrix
 	phaseShift_p.resize(vb->nRows(),false);
@@ -171,10 +171,17 @@ void PhaseShiftingTVI::shiftUVWPhases()
 		// Note: Columns in uvw correspond to rows in the main table/VisBuffer!
 		dummy = vb->uvw().column(row);
 
+		// Have to change (u,v,w) to (-u,-v,w) because is the convention used by uvwMachine
+		dummy(0) = -1*dummy(0);
+		dummy(1) = -1*dummy(1);
+
 		// Transform uvw coordinates and obtain corresponding phase shift
 		uvwMachine.convertUVW(phaseShift_p(row), dummy);
 
 		// Store new uvw coordinates
+		// Have to change back (-u,-v,w) to (u,v,w) because is the convention used by the MS
+		dummy(0) = -1*dummy(0);
+		dummy(1) = -1*dummy(1);
 		newUVW_p.column(row) = dummy;
 
 		// Convert phase shift to radian/Hz
