@@ -194,11 +194,11 @@ VisIterImpl2LayerFactory::VisIterImpl2LayerFactory(casacore::MeasurementSet * ms
                                                    bool writable)
 : ViiLayerFactory(),
   ms_(ms),
-  chunkSortColumns_p(chunkSortColumns),
-  subchunkSortColumns_p(subchunkSortColumns),
   writable_(writable),
   useMSIter2_(false),
-  fullSortingSpecification_p(true)
+  fullSortingSpecification_p(true),
+  chunkSortColumns_p(chunkSortColumns),
+  subchunkSortColumns_p(subchunkSortColumns)
 {}
 
 void VisIterImpl2LayerFactory::setFrequencySelections(std::shared_ptr<FrequencySelections> selections)

@@ -1098,7 +1098,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   writable_p(isWritable),
   subchunkSortColumns_p(subchunkSortColumns)
 {
-    initialize(mss, false);
+    initialize(mss);
 
     VisBufferOptions options = writable_p ? VbWritable : VbNoOptions;
 
@@ -1389,6 +1389,39 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss,
                 timeInterval_p,
                 sortColumns_p.shouldAddDefaultColumns(),
                 false);
+
+    subtableColumns_p = new SubtableColumns(msIter_p);
+
+
+    // Install default frequency selections.  This will select all
+    // channels in all windows.
+
+    casacore::AipsrcValue<Bool>::find(
+            autoTileCacheSizing_p,
+            VisibilityIterator2::getAipsRcBase() + ".AutoTileCacheSizing", false);
+}
+
+void
+VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss)
+{
+    cache_p.flush();
+
+    msIndex_p = 0;
+
+    frequencySelections_p = new FrequencySelections();
+
+    Int nMs = mss.nelements();
+    measurementSets_p.resize(nMs);
+    tileCacheIsSet_p->resize(nMs);
+
+    for (Int k = 0; k < nMs; ++k) {
+        measurementSets_p[k] = * mss[k];
+        addDataSelection(measurementSets_p[k]);
+        (*tileCacheIsSet_p)[k] = false;
+    }
+
+    msIter_p = new MSIter(measurementSets_p,
+                sortColumns_p.sortingDefinition());
 
     subtableColumns_p = new SubtableColumns(msIter_p);
 

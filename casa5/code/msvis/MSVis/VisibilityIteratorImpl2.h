@@ -126,9 +126,9 @@ public:
         casacore::Bool isWritable,
         casacore::Bool useMSIter2=false);
 
-    // This constructor is imilar to previous one but it allows to explicitely
+    // This constructor is similar to previous one but it allows to explicitely
     // define the sorting criteria used for chunk iteration and for subchunk
-    // iteration.
+    // iteration. Also the criteria can be generic functions
     VisibilityIteratorImpl2(
         const casacore::Block<const casacore::MeasurementSet *> & mss,
         const SortColumns & chunkSortColumns,
@@ -882,7 +882,11 @@ protected:
 	virtual void
 	initialize(
 		const casacore::Block<const casacore::MeasurementSet *> & mss,
-		casacore::Bool useMSIter2=false);
+		casacore::Bool useMSIter2);
+
+    // Initialize using only the generic sorting criteria
+    void
+    initialize(const casacore::Block<const casacore::MeasurementSet *> &mss);
 
 	// Returns true if casacore::MS Iterator is currently pointing to a selected
 	// spectral window
