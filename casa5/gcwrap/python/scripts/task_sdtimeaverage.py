@@ -32,6 +32,7 @@ def sdtimeaverage(
              scan,
              antenna,  
              timebin,
+             timespan,
              outfile):
     #+
     #  defaut value (timebin=all) is to be handled.
@@ -52,11 +53,11 @@ def sdtimeaverage(
         # Select Data and make Average. 
         st = do_mst(infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna,
-                    timebin=timebin, outfile=outfile)
+                    timebin=timebin, timespan=timespan, outfile=outfile)
         # History 
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan,
-                    timebin=timebin, antenna=antenna, outfile=outfile)
+                    timebin=timebin, timespan=timespan, antenna=antenna, outfile=outfile)
         
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
@@ -82,7 +83,7 @@ def calc_timebin(msName):
     return str(timebin)
 
 # call mstransform by provided procedure #
-def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, outfile):
+def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, timespan, outfile):
     # followings are parameters of mstransform but not used by THIS.
     # just putting default values
 
@@ -107,7 +108,8 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
     width = 1
 
     timeaverageAct = False
-    timespan = "scan"
+#   print "SDTIMEAVERQAGE() arg::timespan = {}".format(timespan) 
+#   timespan = "scan" 
     maxuvwdistance = 0.0
 
     ddistart = -1
@@ -298,7 +300,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ou
     return True
 
 # CASA5 / CASA6 different (see CASA6 code)
-def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, antenna, outfile):
+def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, timespan, antenna, outfile):
     mslocal = mstool()
     # Write history to output MS, not the input ms.
     try:

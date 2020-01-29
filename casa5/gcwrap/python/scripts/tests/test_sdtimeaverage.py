@@ -41,7 +41,10 @@ import time	# Measure used time.
 # MS name for this test
 defInputMs  = "sdimaging.ms"     # template MS
 defWorkMs   = "sdimaging-t.ms"   # testing MS (modified here)
+defWorkMs2  = "sdimaging-t2.ms"  # testing MS (modified for TimeSpan)
 defOutputMs = "sdave.ms"         # (internal) output MS
+defPrivateMs       = "sdave-*.ms"       # private  output MS form.
+defPrivateMsForm   = 'sdave-{}-{}.ms'
 
 # Test Conditio , Numerical error limit.
 nRow     = 3843  ## DO NOT CHANGE ## 
@@ -69,17 +72,34 @@ class test_sdtimeaverage(unittest.TestCase):
         # default Args (minimum)
         self.args = {'infile'     :  defInputMs,
                      'outfile'    :  defOutputMs,
-                     'datacolumn' :  'float_data'    # CASR-474 (float ->data) 
+                     'datacolumn' :  'float_data'   # CASR-474 (float ->data) 
                     }
 
+        #+
         # create TEST-MS only for the first time.  
+        #-
         filePath=os.path.join( "./", defWorkMs)
         if  not os.path.exists(filePath):
             print ( "- TestMS.[{}] being created.".format(filePath)    ) 
 
             # Copy template and generate Test-MS
             os.system('cp -RL '+ os.path.join(datapath, defInputMs) +' '+ defWorkMs)
-            self. generate_data( defWorkMs )
+            self. generate_data( defWorkMs, False )
+
+        else:
+            print( "- TestMS already exists.")
+
+        #+
+        # create TEST-MS only for the first time.  
+        #  (for TimeSpan test)
+        #-
+        filePath=os.path.join( "./", defWorkMs2)
+        if  not os.path.exists(filePath):
+            print ( "- TestMS(for TimeSpan.[{}] being created.".format(filePath)    )
+
+            # Copy template and generate Test-MS
+            os.system('cp -RL '+ os.path.join(datapath, defInputMs) +' '+ defWorkMs2)
+            self. generate_data( defWorkMs2, True )
 
         else:
             print( "- TestMS already exists.")
@@ -91,7 +111,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
         os.system('rm -rf ' + self.inpMs )
         os.system('rm -rf ' + defOutputMs )   ## Comment out , for DEBUG ##
-        os.system('rm -rf ' + "bave*.ms" )
         return
 
 #
@@ -100,12 +119,19 @@ class test_sdtimeaverage(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print( "setUpClass::deleting existing work-MS.")
-        os.system('rm -rf ' + defWorkMs ) # in case, the MS already exist.
+        os.system('rm -rf ' + defWorkMs  ) # in case, the MS already exist.
+        os.system('rm -rf ' + defWorkMs2 ) # 
+        os.system('rm -rf ' + defPrivateMs )
 
     @classmethod
     def tearDownClass(cls):
         print( "tearDownClass::deleting work-MS.")
-        os.system('rm -rf ' + defWorkMs )
+#
+# Comment Out if you reserve MS.
+#
+        os.system('rm -rf ' + defWorkMs  )
+        os.system('rm -rf ' + defWorkMs2 )
+        os.system('rm -rf ' + defPrivateMs )
 
 ##############
 # Run Task
@@ -245,18 +271,24 @@ class test_sdtimeaverage(unittest.TestCase):
 ################################
 # Generate Data on FLOAT_DATA
 ################################
-    def generate_data( self, msName ):
+    def generate_data( self, msName, stateOption=False ):
         print( "----- Generating MS." )
         self. get_main(defInputMs )
         # Test Slope
         offset = 0.0        # if specified non-zero, an Intensive Fail will be activated.
         slope  = 0.0001     # (tunable) 
-        # Time ,any  Date(Julian Day） by seconds  can be set here.
+        # (comment)
         baseTime   = 0.0
         # Table Access (with numPy array operation)
         with tbmanager(msName,nomodify=False) as tb:
             # get Rec size
             NN = len(self.tm)
+
+            # change STATE_ID (option) 
+            if stateOption :
+                arrayState = numpy.mod( numpy.arange(0,NN), 3 )
+                print( arrayState ) 
+                tb.putcol("STATE_ID",  arrayState )
 
             # get array shape of Spectra data, by getcolshapestring(), returning string like:"[2,1024]" via 'list'. 
             tk = re.split(",|\[|\]",tb.getcolshapestring('FLOAT_DATA', nrow=1)[0] ) # delimter = [ , ]
@@ -336,6 +368,31 @@ class test_sdtimeaverage(unittest.TestCase):
         self.checkWeightSigma(outMsName, 1, (nRow/3) )
         self.checkWeightSigma(outMsName, 2, (nRow/3) )
 
+    def check_averaged_result_N3TimeSpan(self, outMsName):
+        '''
+        This is for TimeSpan (num of state=3)
+        '''
+        # get the result  #
+        fData0 = self.get_spectra(outMsName, 0 )        # result on row=0
+        fData1 = self.get_spectra(outMsName, 1 )        # row=1
+        fData2 = self.get_spectra(outMsName, 2 )        # row=2
+
+        # inspection # 
+        self.checkZero( fData0 + fData1 + fData2 )      # must be zero (TimeSpan test particular)
+
+        # Ref Time in 3 sections (becomes centre of the section)
+        Tref0 = testInterval * (nRow /3 -1.0)/2
+        Tref1 = Tref0 + testInterval * (nRow/3)
+        Tref2 = Tref1 + testInterval * (nRow/3)
+
+        # check Time (No action)
+        pass 
+
+        # check Weight, Sigma 
+        self.checkWeightSigma(outMsName, 0, (nRow/3) )
+        self.checkWeightSigma(outMsName, 1, (nRow/3) )
+        self.checkWeightSigma(outMsName, 2, (nRow/3) )
+
 ##############
 # MISC
 ##############
@@ -343,14 +400,14 @@ class test_sdtimeaverage(unittest.TestCase):
     def setOutfile_Timebin(self, testNo, numRec ):
         
         strTimeBin = '{}s'.format(numRec * testInterval)
-        outFile    = 'bave-{}-{}.ms'.format(testNo, numRec)
+        outFile    = defPrivateMsForm.format(testNo, numRec)
         return outFile, strTimeBin;
 
 ############################
 # TEST FIXTURE
 ############################
 
-## TIMESPAN ###
+## TIME RANGE ###
     def test_param00(self):
         '''sdtimeagerage::00:: timerange = 00:00:00~01:04:03 NORMAL (3843s same as in MS)'''
 
@@ -436,7 +493,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeagerage::12:: scan='' (no number) Default action. '''
 
         # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 42, 3846 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 12, 3846 )
 
         prm =  {'timebin' : '' ,
                 'scan'    : '' ,
@@ -446,7 +503,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.run_task( prm )
 
         # Check Result (zerosum check)
-        self.check_averaged_result_N1(privateOutfile)
+#       self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1 )
 
 ## FIELD ###
@@ -525,7 +582,7 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param100(self):
         '''sdtimeaverage::100:: timebin=1282(N=3)  '''
         # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 20, 1282 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 100, 1282 )
  
         prm =  {'timebin' : timebin_str,          
                 'infile'  : defWorkMs,
@@ -541,7 +598,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeaverage::101: timebin=3846(N=1), timebin=''  '''
 
         # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 21, 3846 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 101, 3846 )
 
         prm =  {'timebin' : timebin_str,             # Immediate Value ,
                 'infile'  : defWorkMs,
@@ -557,7 +614,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeaverage::103: timebin=3846(N=1), timebin='all'  '''
 
         # set timebin string and private outputMS name.
-        privateOutfile, dmy  = self.setOutfile_Timebin( 22, 3846 )
+        privateOutfile, dmy  = self.setOutfile_Timebin( 103, 3846 )
 
         prm =  {'timebin' : 'all',                # default = all is applied.
                 'infile'  : defWorkMs,
@@ -629,11 +686,68 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertFalse(self.run_task( prm )) # must be false
 
     def test_param52E(self):
+        '''sdtimeaverage::52E:: datacolumn = 'corrected' (Error) '''
+
+        prm =  {'datacolumn' : 'corrected' }
+        # Run Task and check
+        self.assertFalse(self.run_task( prm )) # must be false
+
+    def test_param53E(self):
         '''sdtimeaverage::52E:: datacolumn = '' default=data is applied, only in this test,makes Error. '''
 
         prm =  {'datacolumn' : '' }
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # must be false
+
+## TIMESPAN (being revised in progress )###
+
+    def test_param60(self):
+        '''sdtimeaverage::60:: timespan="scan"  '''
+
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 60, 3846 )
+        prm =  {'infile'    : defWorkMs2,
+                'timespan' : 'scan',
+                'outfile' : privateOutfile }
+
+        # Run Task and check
+        self.assertTrue(self.run_task( prm )) # 
+        self.check_averaged_result_N3TimeSpan (privateOutfile)
+        self.checkOutputRec(privateOutfile, 3 ) # Averaged by each State={0,1,2} . see generate_data()
+
+    def test_param61(self):
+        '''sdtimeaverage::61:: timespan="state"  '''
+
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 61, 3846 )
+        prm =  {'infile'    : defWorkMs2,
+                'timespan' : 'state', 
+                'outfile' : privateOutfile }
+
+        # Run Task and check
+        self.assertTrue(self.run_task( prm )) # 
+        self.checkOutputRec(privateOutfile, 61 )
+
+    def test_param62(self):
+        '''sdtimeaverage::62:: timespan="scan,state"  '''
+
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 62, 3846 )
+        prm =  {'infile'    : defWorkMs2,
+                'timespan' : 'scan,state', 
+                'outfile' : privateOutfile }
+
+        # Run Task and check
+        self.assertTrue(self.run_task( prm )) # 
+        self.checkOutputRec(privateOutfile, 1 )
+
+    def test_param63E(self):
+        '''sdtimeaverage::63E:: timespan="hoge"  '''
+
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 63, 3846 )
+        prm =  {'infile'    : defWorkMs2,
+                'timespan' : 'hoge',
+                'outfile' : privateOutfile }
+
+        # Run Task and check
+        self.assertTrue(self.run_task( prm )) # 
 
 #### Control ######
 

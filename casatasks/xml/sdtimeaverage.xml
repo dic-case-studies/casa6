@@ -21,9 +21,9 @@
         <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
         <value>data</value>
         <allowed kind="enum">
-                <value>data</value>
-                <value>float_data</value>
-                <value>corrected</value>
+            <value>data</value>
+            <value>float_data</value>
+            <value>corrected</value>
         </allowed>
     </param>
 
@@ -57,7 +57,7 @@
         <value type="string">all</value>
     </param>
 
-    <param name="timespan" type="string">
+    <param type="string" name="timespan">
         <description>span across scan, state or both.</description>
         <value type="string">scan</value>
     </param>
@@ -104,10 +104,9 @@ antenna -- select data by antenna name or ID
         default: '' (use all antennas)
         example: 'PM03'
 timebin -- bin width for time averaging
-        default: '' (use all )
-        example: timebin='100s' (time averaging performed over 100 second bins)
-                 timebin='all&quot;  (use all)
-
+           default: '' (use all )
+           example: timebin='100s' (time averaging performed over 100 second bins)
+                    timebin='all&quot;  (use all)
 timespan -- Let the timebin span across scan, state or both.
             State is equivalent to sub-scans. One scan may have several
             state ids. For ALMA MSs, the sub-scans are limited to about
@@ -123,8 +122,7 @@ timespan -- Let the timebin span across scan, state or both.
              goes up with each integration as in many WSRT MSs.
              timespan = ['scan', 'state']: disregard scan and state
              numbers when time averaging.
-             timespan = 'state,scan'; same as above.
-
+             timespan = 'state,scan'; same as above
 outfile -- name of output file
 
 </example>
