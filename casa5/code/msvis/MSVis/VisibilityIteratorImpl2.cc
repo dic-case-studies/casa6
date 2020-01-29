@@ -918,7 +918,7 @@ VisibilityIteratorImpl2::getColumnRows(const ArrayColumn<T> & column,
                                        Array<T> & array) const
 {
 	ColumnSlicer columnSlicer =
-		channelSelector_p->getSlicer().getColumnSlicer();
+		channelSelectors_p[0]->getSlicer().getColumnSlicer();
 
 	column.getColumnCells(rowBounds_p.subchunkRows_p,
 	                      columnSlicer,
@@ -939,7 +939,7 @@ VisibilityIteratorImpl2::getColumnRowsMatrix(const ArrayColumn<T> & column,
 		// Extract the correlations slices and repackage them for use by
 		// getColumnCells
 
-		const ChannelSlicer & slicer = channelSelector_p->getSlicer();
+		const ChannelSlicer & slicer = channelSelectors_p[0]->getSlicer();
 		// has to be at least one
 		const ChannelSubslicer subslicer = slicer.getSubslicer(0);
 
@@ -993,7 +993,7 @@ VisibilityIteratorImpl2::putColumnRows(
 	const Array<T> & array)
 {
 	ColumnSlicer columnSlicer =
-		channelSelector_p->getSlicer().getColumnSlicer();
+		channelSelectors_p[0]->getSlicer().getColumnSlicer();
 
 	column.putColumnCells(rowBounds_p.subchunkRows_p,
 	                      columnSlicer,
@@ -1029,7 +1029,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
         Bool writable,
         Bool useMSIter2)
 : ViImplementation2(),
-  channelSelector_p(nullptr),
+  channelSelectors_p(),
   channelSelectorCache_p(new ChannelSelectorCache()),
   columns_p(),
   floatDataFound_p(false),
@@ -1072,7 +1072,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
     const SortColumns & subchunkSortColumns,
     bool isWritable)
 : ViImplementation2(),
-  channelSelector_p(nullptr),
+  channelSelectors_p(),
   channelSelectorCache_p(new ChannelSelectorCache()),
   columns_p(),
   floatDataFound_p(false),
@@ -1108,7 +1108,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
 VisibilityIteratorImpl2::VisibilityIteratorImpl2(
 	const VisibilityIteratorImpl2& vii)
 	: ViImplementation2()
-	, channelSelector_p(nullptr)
+	, channelSelectors_p()
 	, channelSelectorCache_p(nullptr)
 	, frequencySelections_p(nullptr)
 	, modelDataGenerator_p(nullptr)
@@ -1122,84 +1122,88 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
 VisibilityIteratorImpl2 &
 VisibilityIteratorImpl2::operator=(const VisibilityIteratorImpl2& vii)
 {
-	// clone msIter_p
-	msIter_p = vii.msIter_p->clone();
+    // clone msIter_p
+    msIter_p = vii.msIter_p->clone();
 
-	// copy cache
-	cache_p = vii.cache_p;
+    // copy cache
+    cache_p = vii.cache_p;
 
-	tileCacheModMtx_p = vii.tileCacheModMtx_p;
-	tileCacheIsSet_p = vii.tileCacheIsSet_p;
+    tileCacheModMtx_p = vii.tileCacheModMtx_p;
+    tileCacheIsSet_p = vii.tileCacheIsSet_p;
 
-	// clone frequencySelections_p
-	if (frequencySelections_p) delete frequencySelections_p;
-	frequencySelections_p = vii.frequencySelections_p->clone();
+    // clone frequencySelections_p
+    if (frequencySelections_p)
+        delete frequencySelections_p;
+    frequencySelections_p = vii.frequencySelections_p->clone();
 
-	// copy channelSelector_p...owned by channelSelectorCache_p, so don't delete
-	// current value before replacing it
-	channelSelector_p =
-		new ChannelSelector(
-			vii.channelSelector_p->timeStamp,
-			vii.channelSelector_p->msId,
-			vii.channelSelector_p->spectralWindowId,
-			vii.channelSelector_p->polarizationId,
-			vii.channelSelector_p->getSlicer());
+    // copy channelSelectors_p. Owned by channelSelectorCache_p, so don't delete
+    // current values before replacing it
+    channelSelectors_p.clear();
+    for (auto chSel : vii.channelSelectors_p)
+    {
+        channelSelectors_p.push_back(new ChannelSelector(chSel->timeStamp,
+                                                         chSel->msId,
+                                                         chSel->spectralWindowId,
+                                                         chSel->polarizationId,
+                                                         chSel->getSlicer()));
+    }
 
-	// get frame of reference for current MS
-	const FrequencySelection &selection =
-		vii.frequencySelections_p->get(vii.msId());
-	Int frameOfReference = selection.getFrameOfReference();
+    // get frame of reference for current MS
+    const FrequencySelection &selection =
+    vii.frequencySelections_p->get(vii.msId());
+    Int frameOfReference = selection.getFrameOfReference();
 
-	// initialize channelSelector_p with current channelSelector_p
-	channelSelectorCache_p->flush();
-	channelSelectorCache_p->add(channelSelector_p, frameOfReference);
+    // initialize channelSelectorCache_p with current channelSelectors_p
+    channelSelectorCache_p->flush();
+    for (auto chSel : channelSelectors_p)
+        channelSelectorCache_p->add(chSel, frameOfReference);
 
-	// copy assign some values
-	columns_p = vii.columns_p;
-	floatDataFound_p = vii.floatDataFound_p;
-	imwgt_p = vii.imwgt_p;
-	measurementFrame_p = vii.measurementFrame_p;
-	more_p = vii.more_p;
-	msIndex_p = vii.msIndex_p;
-	msIterAtOrigin_p = vii.msIterAtOrigin_p;
-	nCorrelations_p = vii.nCorrelations_p;
-	nRowBlocking_p = vii.nRowBlocking_p;
-	reportingFrame_p = vii.reportingFrame_p;
-	rowBounds_p = vii.rowBounds_p;
-	subchunk_p = vii.subchunk_p;
-	timeFrameOfReference_p = vii.timeFrameOfReference_p;
-	timeInterval_p = vii.timeInterval_p;
-	weightScaling_p = vii.weightScaling_p;
-	writable_p = vii.writable_p;
+    // copy assign some values
+    columns_p = vii.columns_p;
+    floatDataFound_p = vii.floatDataFound_p;
+    imwgt_p = vii.imwgt_p;
+    measurementFrame_p = vii.measurementFrame_p;
+    more_p = vii.more_p;
+    msIndex_p = vii.msIndex_p;
+    msIterAtOrigin_p = vii.msIterAtOrigin_p;
+    nCorrelations_p = vii.nCorrelations_p;
+    nRowBlocking_p = vii.nRowBlocking_p;
+    reportingFrame_p = vii.reportingFrame_p;
+    rowBounds_p = vii.rowBounds_p;
+    subchunk_p = vii.subchunk_p;
+    timeFrameOfReference_p = vii.timeFrameOfReference_p;
+    timeInterval_p = vii.timeInterval_p;
+    weightScaling_p = vii.weightScaling_p;
+    writable_p = vii.writable_p;
 
-	// clone modelDataGenerator_p
-	if (modelDataGenerator_p) delete modelDataGenerator_p;
-	modelDataGenerator_p = vii.modelDataGenerator_p->clone();
+    // clone modelDataGenerator_p
+    if (modelDataGenerator_p) delete modelDataGenerator_p;
+    modelDataGenerator_p = vii.modelDataGenerator_p->clone();
 
-	// initialize MSDerivedValues as done in configureNewChunk()
-	msd_p.setAntennas(msIter_p->msColumns().antenna());
-	msd_p.setFieldCenter(msIter_p->phaseCenter());
+    // initialize MSDerivedValues as done in configureNewChunk()
+    msd_p.setAntennas(msIter_p->msColumns().antenna());
+    msd_p.setFieldCenter(msIter_p->phaseCenter());
 
-	// clone pendingChanges_p
-	pendingChanges_p.reset(vii.pendingChanges_p->clone());
+    // clone pendingChanges_p
+    pendingChanges_p.reset(vii.pendingChanges_p->clone());
 
-	// initialize subtableColumns_p
-	if (subtableColumns_p) delete subtableColumns_p;
-	subtableColumns_p = new SubtableColumns(msIter_p);
+    // initialize subtableColumns_p
+    if (subtableColumns_p) delete subtableColumns_p;
+    subtableColumns_p = new SubtableColumns(msIter_p);
 
-	// initialize attached VisBuffer...vii.vb_p does *not* get copied
-	// TODO: it would be better to use a shared_ptr to the attached VisBuffer,
-	// since we don't know if there are any outstanding references, as they can
-	// escape from VisibilityIteratorImpl2...for now, just delete it
-	if (vb_p) delete vb_p;
-	vb_p = createAttachedVisBuffer(writable_p ? VbWritable : VbNoOptions);
+    // initialize attached VisBuffer...vii.vb_p does *not* get copied
+    // TODO: it would be better to use a shared_ptr to the attached VisBuffer,
+    // since we don't know if there are any outstanding references, as they can
+    // escape from VisibilityIteratorImpl2...for now, just delete it
+    if (vb_p) delete vb_p;
+    vb_p = createAttachedVisBuffer(writable_p ? VbWritable : VbNoOptions);
 
-	return *this;
+    return *this;
 }
 
 VisibilityIteratorImpl2::VisibilityIteratorImpl2(VisibilityIteratorImpl2&& vii)
 	: ViImplementation2()
-	, channelSelector_p(nullptr)
+	, channelSelectors_p()
 	, channelSelectorCache_p(nullptr)
 	, frequencySelections_p(nullptr)
 	, modelDataGenerator_p(nullptr)
@@ -1214,80 +1218,85 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(VisibilityIteratorImpl2&& vii)
 VisibilityIteratorImpl2 &
 VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
 {
-	// copy msIter_p
-	msIter_p = vii.msIter_p;
+    // copy msIter_p
+    msIter_p = vii.msIter_p;
 
-	// copy cache
-	cache_p = vii.cache_p;
+    // copy cache
+    cache_p = vii.cache_p;
 
-	tileCacheModMtx_p = std::move(vii.tileCacheModMtx_p);
-	tileCacheIsSet_p = std::move(vii.tileCacheIsSet_p);
+    tileCacheModMtx_p = std::move(vii.tileCacheModMtx_p);
+    tileCacheIsSet_p = std::move(vii.tileCacheIsSet_p);
 
-	// move frequencySelections_p
-	if (frequencySelections_p) delete frequencySelections_p;
-	frequencySelections_p = vii.frequencySelections_p;
-	vii.frequencySelections_p = nullptr;
+    // move frequencySelections_p
+    if (frequencySelections_p) 
+        delete frequencySelections_p;
+    frequencySelections_p = vii.frequencySelections_p;
+    vii.frequencySelections_p = nullptr;
 
-	// move channelSelector_p...owned by channelSelectorCache_p so don't delete
-	// initial destination value or source value
-	channelSelector_p = vii.channelSelector_p;
+    // move channelSelectors_p. Owned by channelSelectorCache_p 
+    // so don't delete initial destination value or source value
+    channelSelectors_p = std::move(vii.channelSelectors_p);
 
-	// move channelSelectorCache_p
-	if (channelSelectorCache_p) delete channelSelectorCache_p;
-	channelSelectorCache_p = vii.channelSelectorCache_p;
-	vii.channelSelectorCache_p = nullptr;
+    // move channelSelectorCache_p
+    if (channelSelectorCache_p) 
+        delete channelSelectorCache_p;
+    channelSelectorCache_p = vii.channelSelectorCache_p;
+    vii.channelSelectorCache_p = nullptr;
 
-	// move backWriters_p
-	backWriters_p = std::move(vii.backWriters_p);
+    // move backWriters_p
+    backWriters_p = std::move(vii.backWriters_p);
 
-	// copy assign some values
-	autoTileCacheSizing_p = vii.autoTileCacheSizing_p;
-	columns_p = vii.columns_p;
-	floatDataFound_p = vii.floatDataFound_p;
-	imwgt_p = vii.imwgt_p;
-	measurementFrame_p = vii.measurementFrame_p;
-	measurementSets_p = vii.measurementSets_p;
-	more_p = vii.more_p;
-	msIndex_p = vii.msIndex_p;
-	msIterAtOrigin_p = vii.msIterAtOrigin_p;
-	nCorrelations_p = vii.nCorrelations_p;
-	nRowBlocking_p = vii.nRowBlocking_p;
-	reportingFrame_p = vii.reportingFrame_p;
-	rowBounds_p = vii.rowBounds_p;
-	sortColumns_p = vii.sortColumns_p;
-	subchunk_p = vii.subchunk_p;
-	timeFrameOfReference_p = vii.timeFrameOfReference_p;
-	timeInterval_p = vii.timeInterval_p;
-	weightScaling_p = vii.weightScaling_p;
-	writable_p = vii.writable_p;
+    // copy assign some values
+    autoTileCacheSizing_p = vii.autoTileCacheSizing_p;
+    columns_p = vii.columns_p;
+    floatDataFound_p = vii.floatDataFound_p;
+    imwgt_p = vii.imwgt_p;
+    measurementFrame_p = vii.measurementFrame_p;
+    measurementSets_p = vii.measurementSets_p;
+    more_p = vii.more_p;
+    msIndex_p = vii.msIndex_p;
+    msIterAtOrigin_p = vii.msIterAtOrigin_p;
+    nCorrelations_p = vii.nCorrelations_p;
+    nRowBlocking_p = vii.nRowBlocking_p;
+    reportingFrame_p = vii.reportingFrame_p;
+    rowBounds_p = vii.rowBounds_p;
+    sortColumns_p = vii.sortColumns_p;
+    subchunk_p = vii.subchunk_p;
+    timeFrameOfReference_p = vii.timeFrameOfReference_p;
+    timeInterval_p = vii.timeInterval_p;
+    weightScaling_p = vii.weightScaling_p;
+    writable_p = vii.writable_p;
 
-	// move modelDataGenerator_p
-	if (modelDataGenerator_p) delete modelDataGenerator_p;
-	modelDataGenerator_p = vii.modelDataGenerator_p;
-	vii.modelDataGenerator_p = nullptr;
+    // move modelDataGenerator_p
+    if (modelDataGenerator_p) 
+        delete modelDataGenerator_p;
+    modelDataGenerator_p = vii.modelDataGenerator_p;
+    vii.modelDataGenerator_p = nullptr;
 
-	// initialize MSDerivedValues as done in configureNewChunk()...moving or
-	// copying the value is not well supported
-	msd_p.setAntennas(msIter_p->msColumns().antenna());
-	msd_p.setFieldCenter(msIter_p->phaseCenter());
+    // initialize MSDerivedValues as done in configureNewChunk()...moving or
+    // copying the value is not well supported
+    msd_p.setAntennas(msIter_p->msColumns().antenna());
+    msd_p.setFieldCenter(msIter_p->phaseCenter());
 
-	// move pendingChanges_p
-	pendingChanges_p = std::move(vii.pendingChanges_p);
+    // move pendingChanges_p
+    pendingChanges_p = std::move(vii.pendingChanges_p);
 
-	// initialize subtableColumns_p
-	if (subtableColumns_p) delete subtableColumns_p;
-	subtableColumns_p = vii.subtableColumns_p;
-	vii.subtableColumns_p = nullptr;
+    // initialize subtableColumns_p
+    if (subtableColumns_p) 
+        delete subtableColumns_p;
+    subtableColumns_p = vii.subtableColumns_p;
+    vii.subtableColumns_p = nullptr;
 
-	// initialize vb_p...can't steal VisBuffer2 instance since it is attached to
-	// vii
-	if (vb_p) delete vb_p;
-	vb_p = createAttachedVisBuffer(writable_p ? VbWritable : VbNoOptions);
-	// TODO: again, it would be better were vb_p a shared_ptr
-	delete vii.vb_p;
-	vii.vb_p = nullptr;
+    // initialize vb_p...can't steal VisBuffer2 instance since it is attached to
+    // vii
+    if (vb_p) 
+        delete vb_p;
+    vb_p = createAttachedVisBuffer(writable_p ? VbWritable : VbNoOptions);
+    // TODO: again, it would be better were vb_p a shared_ptr
+    delete vii.vb_p;
+    vii.vb_p = nullptr;
 
-	return *this;
+    return *this;
 }
 
 void
@@ -1554,47 +1563,47 @@ VisibilityIteratorImpl2::getChannels(Double time, Int /*frameOfReference*/,
 Vector<Int>
 VisibilityIteratorImpl2::getCorrelations() const
 {
-	assert(channelSelector_p != 0);
+    assert(!channelSelectors_p.empty());
 
-	return channelSelector_p->getCorrelations();
+    return channelSelectors_p[0]->getCorrelations();
 }
 
 Vector<Stokes::StokesTypes>
 VisibilityIteratorImpl2::getCorrelationTypesDefined() const
 {
-	assert(channelSelector_p != 0);
+    assert(!channelSelectors_p.empty());
 
-	Vector<Int> typesAsInt;
-	Int polarizationId = channelSelector_p->polarizationId;
-	subtableColumns_p->polarization().corrType().get(
-		polarizationId, typesAsInt, true);
-	Vector<Stokes::StokesTypes> correlationTypesDefined(typesAsInt.size());
+    Vector<Int> typesAsInt;
+    Int polarizationId = channelSelectors_p[0]->polarizationId;
+    subtableColumns_p->polarization().corrType().get(
+    polarizationId, typesAsInt, true);
+    Vector<Stokes::StokesTypes> correlationTypesDefined(typesAsInt.size());
 
-	for (uInt i = 0; i < typesAsInt.size(); i++) {
-		correlationTypesDefined(i) =
-			static_cast<Stokes::StokesTypes>(typesAsInt(i));
-	}
+    for (uInt i = 0; i < typesAsInt.size(); i++) {
+        correlationTypesDefined(i) =
+            static_cast<Stokes::StokesTypes>(typesAsInt(i));
+    }
 
-	return correlationTypesDefined;
+    return correlationTypesDefined;
 }
 
 Vector<Stokes::StokesTypes>
 VisibilityIteratorImpl2::getCorrelationTypesSelected() const
 {
-	assert(channelSelector_p != 0);
+    assert(!channelSelectors_p.empty());
 
-	Vector<Int> correlationIndices = getCorrelations();
-	Vector<Stokes::StokesTypes> correlationTypesDefined =
-		getCorrelationTypesDefined();
-	Vector<Stokes::StokesTypes> correlationTypesSelected(
-		correlationIndices.size());
+    Vector<Int> correlationIndices = getCorrelations();
+    Vector<Stokes::StokesTypes> correlationTypesDefined =
+    getCorrelationTypesDefined();
+    Vector<Stokes::StokesTypes> correlationTypesSelected(
+    correlationIndices.size());
 
-	for (uInt i = 0; i < correlationIndices.size(); i++) {
-		correlationTypesSelected(i) =
-			correlationTypesDefined(correlationIndices(i));
-	}
+    for (uInt i = 0; i < correlationIndices.size(); i++) {
+        correlationTypesSelected(i) =
+            correlationTypesDefined(correlationIndices(i));
+    }
 
-	return correlationTypesSelected;
+    return correlationTypesSelected;
 }
 
 Double
@@ -2114,15 +2123,14 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             rowBounds_p.subchunkEnd_p = rowBounds_p.chunkNRows_p - 1;
         }
 
-
         // Scan the subchunk to see if the same channels are selected in each
         // row.  End the subchunk when a row using different channels is
         // encountered.
         Double previousRowTime =
                 rowBounds_p.times_p(rowBounds_p.subchunkBegin_p);
-        channelSelector_p =
-                determineChannelSelection(previousRowTime, spectralWindow(),
-                        polarizationId(), msId());
+        channelSelectors_p.clear();
+        channelSelectors_p.push_back(determineChannelSelection(previousRowTime,
+            spectralWindow(), polarizationId(), msId()));
 
         for (Int i = rowBounds_p.subchunkBegin_p + 1;
                 i <= rowBounds_p.subchunkEnd_p;
@@ -2140,7 +2148,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             const ChannelSelector * newSelector =
                     determineChannelSelection(rowTime);
 
-            if (newSelector != channelSelector_p) {
+            if (newSelector != channelSelectors_p[0]) {
 
                 // This row uses different channels than the previous row and so
                 // it cannot be included in this subchunk.  Make the previous
@@ -2168,7 +2176,8 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         rowBounds_p.subchunkEnd_p = msIterSubchunk_p->table().nrow() - 1;
 
         Double subchunkTime = columns_p.time_p(0);
-        channelSelector_p = determineChannelSelection(subchunkTime);
+        channelSelectors_p.clear();
+        channelSelectors_p.push_back(determineChannelSelection(subchunkTime));
     }
 
     rowBounds_p.subchunkNRows_p =
@@ -2178,7 +2187,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
 
     // Set flags for current subchunk
 
-    Vector<Int> correlations = channelSelector_p->getCorrelations();
+    Vector<Int> correlations = channelSelectors_p[0]->getCorrelations();
     nCorrelations_p = correlations.nelements();
 
     Vector<Stokes::StokesTypes> correlationsDefined =
@@ -2191,7 +2200,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
     vb_p->configureNewSubchunk(
             msId(), msName, isNewMs(), isNewArrayId(), isNewFieldId(),
             isNewSpectralWindow(), subchunk_p, rowBounds_p.subchunkNRows_p,
-            channelSelector_p->getNFrequencies(), nCorrelations_p,
+            channelSelectors_p[0]->getNFrequencies(), nCorrelations_p,
             correlations, correlationsDefined, correlationsSelected,
             weightScaling_p);
 }
@@ -3061,7 +3070,7 @@ VisibilityIteratorImpl2::flagCategory(Array<Bool> & /*flagCategories*/) const
 //        method.
 //
 //        const ChannelSlicer & channelSlicer =
-//            channelSelector_p->getSlicerForFlagCategories();
+//            channelSelectors_p[0]->getSlicerForFlagCategories();
 //
 //        columns_p.flagCategory_p.getSliceForRows(
 //             rowBounds_p.subchunkRows_p,
@@ -3603,7 +3612,7 @@ VisibilityIteratorImpl2::visibilityShape() const
 
 	IPosition result(3,
 	                 nCorrelations_p,
-	                 channelSelector_p->getNFrequencies(),
+	                 channelSelectors_p[0]->getNFrequencies(),
 	                 rowBounds_p.subchunkNRows_p);
 
 	return result;
@@ -3645,7 +3654,7 @@ VisibilityIteratorImpl2::writeFlagCategory(const Array<Bool>& flagCategory)
 
 	RefRows & rows = rowBounds_p.subchunkRows_p;
 	const ChannelSlicer & channelSlicer =
-		channelSelector_p->getSlicerForFlagCategories();
+		channelSelectors_p[0]->getSlicerForFlagCategories();
 
 	columns_p.flagCategory_p.putSliceFromRows(
 		rows, channelSlicer.getSlicerInCoreRep(), flagCategory);
