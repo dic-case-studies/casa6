@@ -23,8 +23,8 @@ if is_CASA6:
      _cb = calibrater( )
      _qa = quanta( )
      _me = measures( )
-     #refdatapath = ctsys.resolve('regression/unittest/clean/refimager')
-     refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
+     refdatapath = ctsys.resolve('regression/unittest/sdintimaging')
+     #refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
      
 else:
      from __main__ import default
@@ -40,8 +40,8 @@ else:
      # not local tools
      _qa = qa
      _me = me
-     #refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager'
-     refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
+     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdintimaging'
+     #refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
 
      
 ## List to be run
@@ -183,7 +183,7 @@ class test_singlepointing(testref_base):
           deconvolver='mtmfs'
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
 
           outimg = self.img+'.joint.multiterm'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'], imval=[(outimg+'.psf.tt0', 0.991, [400,400,0,0]),(outimg+'.image.tt0', 1.1820, [350,433,0,0])])
@@ -211,7 +211,7 @@ class test_singlepointing(testref_base):
           cycleniter=20
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='int', vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='int', vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
 
           outimg = self.img+'.joint.multiterm'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'], imval=[(outimg+'.psf.tt0', 1.0, [400,400,0,0]),(outimg+'.image.tt0', 1.0932, [350,433,0,0])])
@@ -237,9 +237,9 @@ class test_singlepointing(testref_base):
           deconvolver='mtmfs'
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
 
-          outimg = self.img+'.joint.cube'
+          outimg = self.img+'.joint.multiterm'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'], imval=[(outimg+'.psf.tt0', 1.0, [400,400,0,0]),(outimg+'.image.tt0', 17.199, [311,356,0,0])])
 
      def test_singlepointing_cube_sdint(self):
@@ -263,7 +263,7 @@ class test_singlepointing(testref_base):
           deconvolver='multiscale'
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
 
           outimg = self.img+'.joint.multiterm'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
@@ -291,7 +291,7 @@ class test_singlepointing(testref_base):
           cycleniter=20
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='int', vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='int', vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
 
           outimg = self.img+'.joint.cube'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
@@ -317,7 +317,7 @@ class test_singlepointing(testref_base):
           deconvolver='multiscale'
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
 
           outimg = self.img+'.joint.cube'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
@@ -366,7 +366,7 @@ class test_mosaic(testref_base):
           deconvolver='mtmfs'
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
           outimg = self.img+'.joint.multiterm'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
 
@@ -392,7 +392,7 @@ class test_mosaic(testref_base):
           cycleniter=20
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='int', vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='int', vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
           outimg = self.img+'.joint.multiterm'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
 
@@ -418,7 +418,7 @@ class test_mosaic(testref_base):
           deconvolver='mtmfs'
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
           outimg = self.img+'.joint.multiterm'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
 
@@ -443,7 +443,7 @@ class test_mosaic(testref_base):
           deconvolver='multiscale'
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
           outimg = self.img+'.joint.cube'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
 
@@ -470,7 +470,7 @@ class test_mosaic(testref_base):
           cycleniter=20
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='int', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='int', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
           outimg = self.img+'.joint.cube'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
 
@@ -495,7 +495,7 @@ class test_mosaic(testref_base):
           deconvolver='multiscale'
           # iterations may need to be shorten for the final version of test
           self.prepData(inputdata=inputdata)
-          ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, interactive=0,parallel=self.parallel)
+          ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=self.img,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,parallel=self.parallel)
           outimg = self.img+'.joint.cube'
           report=self.th.checkall(imexist=[outimg+'.psf.tt0', outimg+'.residual.tt0', outimg+'.image.tt0', outimg+'.image.tt1',outimg+'.alpha'])
 
