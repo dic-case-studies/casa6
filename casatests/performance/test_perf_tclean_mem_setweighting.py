@@ -89,8 +89,7 @@ except ImportError:
 if CASA6:
     dataroot = ctsys.resolve('visibilities/alma/')
 else:
-    # Note that this directory does not exist
-    dataroot = os.environ.get('CASAPATH').split()[0] + 'regression/performance/'
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/'
 
 input_ms = 'uid___A002_Xb9dfa4_X4724_target_spw16.ms'
 datapath = dataroot + input_ms
