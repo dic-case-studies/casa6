@@ -1132,11 +1132,13 @@ VisibilityIteratorImpl2::operator=(const VisibilityIteratorImpl2& vii)
     tileCacheIsSet_p = vii.tileCacheIsSet_p;
 
     // clone frequencySelections_p
-    if (frequencySelections_p) delete frequencySelections_p;
+    if (frequencySelections_p)
+        delete frequencySelections_p;
     frequencySelections_p = vii.frequencySelections_p->clone();
 
     // copy channelSelectors_p. Owned by channelSelectorCache_p, so don't delete
     // current values before replacing it
+    channelSelectors_p.clear();
     for (auto chSel : vii.channelSelectors_p)
     {
         channelSelectors_p.push_back(new ChannelSelector(chSel->timeStamp,
@@ -1233,7 +1235,7 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
 
     // move channelSelectors_p. Owned by channelSelectorCache_p 
     // so don't delete initial destination value or source value
-    channelSelectors_p = vii.channelSelectors_p;
+    channelSelectors_p = std::move(vii.channelSelectors_p);
 
     // move channelSelectorCache_p
     if (channelSelectorCache_p) 
@@ -2121,12 +2123,12 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             rowBounds_p.subchunkEnd_p = rowBounds_p.chunkNRows_p - 1;
         }
 
-
         // Scan the subchunk to see if the same channels are selected in each
         // row.  End the subchunk when a row using different channels is
         // encountered.
         Double previousRowTime =
                 rowBounds_p.times_p(rowBounds_p.subchunkBegin_p);
+        channelSelectors_p.clear();
         channelSelectors_p.push_back(determineChannelSelection(previousRowTime,
             spectralWindow(), polarizationId(), msId()));
 
@@ -2174,6 +2176,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         rowBounds_p.subchunkEnd_p = msIterSubchunk_p->table().nrow() - 1;
 
         Double subchunkTime = columns_p.time_p(0);
+        channelSelectors_p.clear();
         channelSelectors_p.push_back(determineChannelSelection(subchunkTime));
     }
 
