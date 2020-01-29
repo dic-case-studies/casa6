@@ -1191,64 +1191,64 @@ protected:
         casacore::Vector<casacore::Double> times_p;
     };
 
-	casacore::Bool autoTileCacheSizing_p;
-	std::map <VisBufferComponent2, BackWriter *> backWriters_p;
-	// general collection of cached values
-	mutable Cache cache_p;
-	// [use] current channel selector for this casacore::MS & Spw
-	const ChannelSelector * channelSelector_p;
-	// [own] cache of recently used channel selectors
-	ChannelSelectorCache * channelSelectorCache_p;
-	// The main columns for the current MS
-	ViColumns2 columns_p;
-	// true if a float data column was found
-	casacore::Bool floatDataFound_p;
-	// [own] Current frequency selection
-	FrequencySelections * frequencySelections_p;
-	// object to calculate imaging weight
-	VisImagingWeight imwgt_p;
-	// cached value of observatory type
-	mutable casacore::Int measurementFrame_p;
-	MeasurementSets measurementSets_p; // [use]
-	VisModelDataI * modelDataGenerator_p; // [own]
-	// true if more data in this chunk
-	casacore::Bool more_p;
-	// array index of current MS
-	casacore::Int msIndex_p;
-	// true if casacore::MS Iter is a start of first MS
-	casacore::Bool msIterAtOrigin_p;
-	// casacore::MS Iter that underlies the VI (sweeps in chunks)
-	casacore::CountedPtr<casacore::MSIter> msIter_p;
-	// Helper class holding casacore::MS derived values.
-	mutable casacore::MSDerivedValues msd_p;
-	casacore::Int nCorrelations_p;
-	// suggested # of rows in a subchunk
-	casacore::Int nRowBlocking_p;
-	// holds pending changes to VI properties
-	std::unique_ptr<PendingChanges> pendingChanges_p;
-	mutable std::unique_ptr<PointingDirectionCache>  pointingDirectionCache_p;
-	mutable std::unique_ptr<PointingSource>  pointingSource_p;
-	// default frequency reporting (not selecting) frame of reference
-	casacore::Int reportingFrame_p;
-	// Subchunk row management object (see above)
-	RowBounds rowBounds_p;
-	// sort columns specified when creating VI
-	SortColumns sortColumns_p;
-	// [own] Info about spectral windows
-	mutable SpectralWindowChannelsCache * spectralWindowChannelsCache_p;
-	// (chunkN #, subchunk #) pair
-	Subchunk subchunk_p;
-	// [own] Allows const access to casacore::MS's subtable columns
-	SubtableColumns * subtableColumns_p;
-	casacore::MeasRef<casacore::MEpoch> timeFrameOfReference_p;
-	std::shared_ptr<std::mutex> tileCacheModMtx_p;
-	std::shared_ptr<std::vector<bool> > tileCacheIsSet_p;
-	casacore::Double timeInterval_p;
-	VisBufferType vbType;
-	// [own] VisBuffer attached to this VI
-	VisBuffer2 * vb_p;
-	casacore::CountedPtr<WeightScaling> weightScaling_p;
-	casacore::Bool writable_p;
+    casacore::Bool autoTileCacheSizing_p;
+    std::map <VisBufferComponent2, BackWriter *> backWriters_p;
+    // general collection of cached values
+    mutable Cache cache_p;
+    // [use] current channel selectors for this chunk 
+    std::vector<const ChannelSelector *>  channelSelectors_p;
+    // [own] cache of recently used channel selectors
+    ChannelSelectorCache * channelSelectorCache_p;
+    // The main columns for the current MS
+    ViColumns2 columns_p;
+    // true if a float data column was found
+    casacore::Bool floatDataFound_p;
+    // [own] Current frequency selection
+    FrequencySelections * frequencySelections_p;
+    // object to calculate imaging weight
+    VisImagingWeight imwgt_p;
+    // cached value of observatory type
+    mutable casacore::Int measurementFrame_p;
+    MeasurementSets measurementSets_p; // [use]
+    VisModelDataI * modelDataGenerator_p; // [own]
+    // true if more data in this chunk
+    casacore::Bool more_p;
+    // array index of current MS
+    casacore::Int msIndex_p;
+    // true if casacore::MS Iter is a start of first MS
+    casacore::Bool msIterAtOrigin_p;
+    // casacore::MS Iter that underlies the VI (sweeps in chunks)
+    casacore::CountedPtr<casacore::MSIter> msIter_p;
+    // Helper class holding casacore::MS derived values.
+    mutable casacore::MSDerivedValues msd_p;
+    casacore::Int nCorrelations_p;
+    // suggested # of rows in a subchunk
+    casacore::Int nRowBlocking_p;
+    // holds pending changes to VI properties
+    std::unique_ptr<PendingChanges> pendingChanges_p;
+    mutable std::unique_ptr<PointingDirectionCache>  pointingDirectionCache_p;
+    mutable std::unique_ptr<PointingSource>  pointingSource_p;
+    // default frequency reporting (not selecting) frame of reference
+    casacore::Int reportingFrame_p;
+    // Subchunk row management object (see above)
+    RowBounds rowBounds_p;
+    // sort columns specified when creating VI
+    SortColumns sortColumns_p;
+    // [own] Info about spectral windows
+    mutable SpectralWindowChannelsCache * spectralWindowChannelsCache_p;
+    // (chunkN #, subchunk #) pair
+    Subchunk subchunk_p;
+    // [own] Allows const access to casacore::MS's subtable columns
+    SubtableColumns * subtableColumns_p;
+    casacore::MeasRef<casacore::MEpoch> timeFrameOfReference_p;
+    std::shared_ptr<std::mutex> tileCacheModMtx_p;
+    std::shared_ptr<std::vector<bool> > tileCacheIsSet_p;
+    casacore::Double timeInterval_p;
+    VisBufferType vbType;
+    // [own] VisBuffer attached to this VI
+    VisBuffer2 * vb_p;
+    casacore::CountedPtr<WeightScaling> weightScaling_p;
+    casacore::Bool writable_p;
 
     // Variables for the handling of the subchunk  loop
     std::shared_ptr<casacore::MeasurementSet> msSubchunk_p;
