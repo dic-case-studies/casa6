@@ -1417,6 +1417,9 @@ c_target = "c_compile"
 # test_target = "test_compile"
 fortran_target = "f_compile"
 soabi = sysconfig.get_config_var('SOABI')
+if soabi is None:
+    ## Python 2.7
+    soabi = "python-27-x86_64"
 lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
 casac_dir = get_casac_dir()
 output_lib = os.sep.join([casac_dir, "lib", "lib{libname}." + soabi + "." + lib_ext])

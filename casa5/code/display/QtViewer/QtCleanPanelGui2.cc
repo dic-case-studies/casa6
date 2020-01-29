@@ -24,7 +24,7 @@
 //#			                    Charlottesville, VA 22903-2475 USA
 //#
 //# $Id$
-
+#include <thread>
 #include <casa/iostream.h>
 
 #include <display/QtViewer/QtCleanPanelGui2.qo.h>
