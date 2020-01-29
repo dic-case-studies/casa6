@@ -1837,6 +1837,7 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 		return;
 	}
 
+
 	canvas->showAllAxes(false);
 	canvas->clearAxesLabels();
 	canvas->setAxesAutoRescale(true);
@@ -2150,7 +2151,7 @@ void PlotMSPlot::setXAxisRange(
 
 	// x range min/max for all plots
 	double xming(DBL_MAX), xmaxg(-DBL_MAX);  // global xmin/xmax
-	for (size_t plotindex=0; plotindex<axesParams.size(); ++plotindex) {
+	for (size_t plotindex=0; plotindex<plots.size(); ++plotindex) {
 		for (unsigned int xindex=0; xindex < axesParams[plotindex]->numXAxes(); ++xindex) {
 			// Set axis scale, direction for Ra/Dec
 			auto xFrame = cacheParams[plotindex]->xFrame();
@@ -2171,22 +2172,20 @@ void PlotMSPlot::setXAxisRange(
 				xmin = axesParams[plotindex]->xRange(xindex).first;
 				xmax = axesParams[plotindex]->xRange(xindex).second;
 			} else if ((xAxis == PMS::TIME) || (xAxis == PMS::RA) || (PMS::axisIsUV(xAxis))) {
-				// set range manually: get min/max from cache indexer
+				// set range manually: get min/max for each plot from cache indexer
 				PlotMSIndexer indexer;
-				if (plots.size() == 1) {
-					indexer = itsCache_->indexer(xindex, iteration);
-				} else {
+				if (plots[plotindex]->cache().cacheReady()) {
 					indexer = plots[plotindex]->cache().indexer(xindex, iteration);
-				}
-				double ymin, ymax;
-				bool displayUnflagged = (displayParams[plotindex]->unflaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
-				bool displayFlagged = (displayParams[plotindex]->flaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
-				if (displayUnflagged && !displayFlagged) {        // get range of unflagged data only
-					indexer.unmaskedMinsMaxes(xmin, xmax, ymin, ymax);
-				} else if (displayFlagged && !displayUnflagged) { // get range of flagged data only
-					indexer.maskedMinsMaxes(xmin, xmax, ymin, ymax);
-				} else {                                          // get range of all data
-					indexer.minsMaxes(xmin, xmax, ymin, ymax);
+					double ymin, ymax;
+					bool displayUnflagged = (displayParams[plotindex]->unflaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
+					bool displayFlagged = (displayParams[plotindex]->flaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
+					if (displayUnflagged && !displayFlagged) {        // get range of unflagged data only
+						indexer.unmaskedMinsMaxes(xmin, xmax, ymin, ymax);
+					} else if (displayFlagged && !displayUnflagged) { // get range of flagged data only
+						indexer.maskedMinsMaxes(xmin, xmax, ymin, ymax);
+					} else {                                          // get range of all data
+						indexer.minsMaxes(xmin, xmax, ymin, ymax);
+					}
 				}
 			}
 
@@ -2394,7 +2393,7 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 	double ymingRight(DBL_MAX), ymaxgRight(-DBL_MAX); // global ymin/ymax for right axis
 	bool hasOverlay(false), hasAtmCurve(false);
 
-	for (size_t plotindex=0; plotindex < axesParams.size(); ++plotindex) {
+	for (size_t plotindex=0; plotindex < plots.size(); ++plotindex) {
 		for (size_t yindex=0; yindex < cacheParams[plotindex]->numYAxes(); ++yindex) {
 			PMS::Axis yaxis = cacheParams[plotindex]->yAxis(yindex);
 			PlotAxis yPlotAxis = axesParams[plotindex]->yAxis(yindex);
@@ -2448,29 +2447,28 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 					   (PMS::axisIsUV(yaxis)) || PMS::axisIsOverlay(yaxis)) {
 				// explicitly set range for these axes; do not autorange
 				PlotMSIndexer indexer;
-				if (plots.size() == 1) {
-					indexer = itsCache_->indexer(yindex, iteration);
-				} else {
+				if (plots[plotindex]->cache().cacheReady()) {
 					indexer = plots[plotindex]->cache().indexer(yindex, iteration);
-				}
-				bool displayUnflagged =
-					(displayParams[plotindex]->unflaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
-				bool displayFlagged =
-					(displayParams[plotindex]->flaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
-				double xmin, xmax;
-				if (displayUnflagged && !displayFlagged) {        // get range of unflagged data only
-					indexer.unmaskedMinsMaxes(xmin, xmax, ymin, ymax);
-				} else if (displayFlagged && !displayUnflagged) { // get range of flagged data only
-					indexer.maskedMinsMaxes(xmin, xmax, ymin, ymax);
-				} else {                                          // get range of all data
-					indexer.minsMaxes(xmin, xmax, ymin, ymax);
-				}
+					bool displayUnflagged =
+						(displayParams[plotindex]->unflaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
+					bool displayFlagged =
+						(displayParams[plotindex]->flaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
+					double xmin, xmax;
+					if (displayUnflagged && !displayFlagged) {        // get range of unflagged data only
+						indexer.unmaskedMinsMaxes(xmin, xmax, ymin, ymax);
+					} else if (displayFlagged && !displayUnflagged) { // get range of flagged data only
+						indexer.maskedMinsMaxes(xmin, xmax, ymin, ymax);
+					} else {                                          // get range of all data
+						indexer.minsMaxes(xmin, xmax, ymin, ymax);
+					}
 
-				if (yaxis == PMS::TIME) {
-					getAxisBoundsForTime(ymin, ymax);
-				} else if (PMS::axisIsUV(yaxis)) {
-					getAxisBoundsForUV(ymin, ymax);
-				} else if (PMS::axisIsOverlay(yaxis)) {
+					if (yaxis == PMS::TIME) {
+						getAxisBoundsForTime(ymin, ymax);
+					} else if (PMS::axisIsUV(yaxis)) {
+						getAxisBoundsForUV(ymin, ymax);
+					}
+				}
+				if (PMS::axisIsOverlay(yaxis)) {
 					hasOverlay = true;
 					hasAtmCurve |= (yaxis == PMS::ATM);
 				}
