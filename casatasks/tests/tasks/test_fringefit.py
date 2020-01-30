@@ -94,21 +94,21 @@ class Fringefit_single_tests(unittest.TestCase):
 
 
 class Fringefit_dispersive_tests(unittest.TestCase):
-    
-    msfile = 'n14p1-reg.ms'
+    prefix = 'n14p1'
+    msfile = prefix+'.ms'
     
     def setUp(self):
         shutil.copytree(os.path.join(datapath, self.msfile), self.msfile)
-        flagdata('n14p1-reg.ms', mode='manual', spw='*:0~2;29~31')
+        flagdata(self.prefix + '.ms', mode='manual', spw='*:0~2;29~31')
 
     def tearDown(self):
         shutil.rmtree(self.msfile)
-        shutil.rmtree('n14p1-reg.ms' + '.flagversions')
-        shutil.rmtree('n14p1-reg.ms' + '.mpc', True)
-        shutil.rmtree('n14p1-reg.ms' + '.disp', True)
+        shutil.rmtree(self.prefix + '.ms' + '.flagversions')
+        shutil.rmtree(self.prefix + '.mpc', True)
+        shutil.rmtree(self.prefix + '.disp', True)
 
     def test_manual_phase_cal(self):
-        fringefit(vis="n14p1-reg.ms", caltable="n14p1.mpc",
+        fringefit(vis="n14p1.ms", caltable="n14p1.mpc",
                   scan="1", solint="300", refant="WB",
                   minsnr=50, zerorates=True,
                   globalsolve=True, niter=100, gaintable=[],
@@ -116,7 +116,7 @@ class Fringefit_dispersive_tests(unittest.TestCase):
         mpcal = self.prefix + '.mpc'
         reference = os.path.join(datapath, mpcal)
         self.assertTrue(th.compTables(mpcal, reference, ['WEIGHT', 'SNR']))
-        fringefit(vis='n14p1-reg.ms',
+        fringefit(vis=self.prefix + '.ms',
                   caltable='n14p1.disp', refant="WB",
                   scan='1', solint='60', spw='0,1,2',
                   paramactive=[True, True, True],
