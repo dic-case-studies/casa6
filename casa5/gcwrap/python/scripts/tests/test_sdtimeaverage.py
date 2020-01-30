@@ -47,7 +47,10 @@ defPrivateMs       = "sdave-*.ms"       # private  output MS form.
 defPrivateMsForm   = 'sdave-{}-{}.ms'
 
 # Test Conditio , Numerical error limit.
-nRow     = 3843  ## DO NOT CHANGE ## 
+nRow       = 3843  ## DO NOT CHANGE ## 
+numOfState =3         # test-MS2 (for timespan)
+numOfScan  =61        # test-MS2 (for timespan)
+
 errLimit  = 2.0e-08   # numerical error Limit of ZeroSum
 errLimit2 = 2.0e-08   # numerical error Limit of Sigma and Weight
 testInterval = 1.0    # fundamental INTERVAL in TEST-MS (tunable)
@@ -286,8 +289,8 @@ class test_sdtimeaverage(unittest.TestCase):
 
             # change STATE_ID (option) 
             if stateOption :
-                arrayState = numpy.mod( numpy.arange(0,NN), 3 )
-                print( arrayState ) 
+                print("----- stateOption Active, using three STATE_IDs on the MS. ")
+                arrayState = numpy.mod( numpy.arange(0,NN), numOfState )
                 tb.putcol("STATE_ID",  arrayState )
 
             # get array shape of Spectra data, by getcolshapestring(), returning string like:"[2,1024]" via 'list'. 
@@ -392,6 +395,19 @@ class test_sdtimeaverage(unittest.TestCase):
         self.checkWeightSigma(outMsName, 0, (nRow/3) )
         self.checkWeightSigma(outMsName, 1, (nRow/3) )
         self.checkWeightSigma(outMsName, 2, (nRow/3) )
+
+    def check_averaged_result_N61(self, outMsName):
+        '''
+        This is for TiimeSpa (scan=state, 61 results are inspected.
+        '''
+        print( "outfile ={} specified.".format(outMsName) )
+        # check Zero Sum 
+        for n in range(numOfScan ):
+            # symmetricaly get the data. These sum must be Zero # 
+            fData_1 = self.get_spectra(outMsName, n )
+            fData_2 = self.get_spectra(outMsName, (numOfScan-1)-n )
+            self.checkZeroSum( fData_1, fData_2 )
+        return
 
 ##############
 # MISC
@@ -503,7 +519,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.run_task( prm )
 
         # Check Result (zerosum check)
-#       self.check_averaged_result_N1(privateOutfile)
+        self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1 )
 
 ## FIELD ###
@@ -724,6 +740,9 @@ class test_sdtimeaverage(unittest.TestCase):
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # 
+
+        # Check Result (zerosum check)
+        self.check_averaged_result_N61(privateOutfile)
         self.checkOutputRec(privateOutfile, 61 )
 
     def test_param62(self):
@@ -748,6 +767,9 @@ class test_sdtimeaverage(unittest.TestCase):
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # 
+
+
+
 
 #### Control ######
 
