@@ -81,9 +81,12 @@ class visstat_test(unittest.TestCase):
         self.msfile2 ="OrionS_rawACSmod_calave.ms"
         self.msfile2_asap="OrionS_rawACSmod_calave.asap"
         self.msfile3="OrionS_rawACSmod_calave_intent_on1_off3.ms"
-        self.msfile4="OrionS_rawACSmod_calave_intent_on1.ms"
+        # Never used:
+        # self.msfile4="OrionS_rawACSmod_calave_intent_on1.ms"
         self.msfile5="OrionS_rawACSmod_calave_intent_on3_off1.ms"
-        self.msfile6="OrionS_rawACSmod_calave_intent_off1.ms"
+        # Never used:
+        # self.msfile6="OrionS_rawACSmod_calave_intent_off1.ms"
+        self.msfile_flagged_spw1='OrionS_rawACSmod_calave_flagged_spw1.ms'
         self.msfile7="visstat2_test6_scan.txt"
         self.msfile8="visstat2_test6_amp.txt"
         self.msfile9="visstat2_test5.txt"
@@ -96,9 +99,11 @@ class visstat_test(unittest.TestCase):
         shutil.copytree(os.path.join(datapath,self.msfile2), self.msfile2)
         shutil.copytree(os.path.join(datapath,self.msfile2_asap), self.msfile2_asap)
         shutil.copytree(os.path.join(datapath,self.msfile3), self.msfile3)
-        shutil.copytree(os.path.join(datapath,self.msfile4), self.msfile4)
+        # shutil.copytree(os.path.join(datapath,self.msfile4), self.msfile4)
         shutil.copytree(os.path.join(datapath,self.msfile5), self.msfile5)
-        shutil.copytree(os.path.join(datapath,self.msfile6), self.msfile6)
+        # shutil.copytree(os.path.join(datapath,self.msfile6), self.msfile6)
+        shutil.copytree(os.path.join(datapath,self.msfile_flagged_spw1),
+                        self.msfile_flagged_spw1)
         shutil.copyfile(os.path.join(datapath,self.msfile7), self.msfile7)
         shutil.copyfile(os.path.join(datapath,self.msfile8), self.msfile8)
         shutil.copyfile(os.path.join(datapath,self.msfile9), self.msfile9)
@@ -115,9 +120,10 @@ class visstat_test(unittest.TestCase):
         shutil.rmtree(self.msfile2)
         shutil.rmtree(self.msfile2_asap)
         shutil.rmtree(self.msfile3)
-        shutil.rmtree(self.msfile4)
+        # shutil.rmtree(self.msfile4)
         shutil.rmtree(self.msfile5)
-        shutil.rmtree(self.msfile6)
+        # shutil.rmtree(self.msfile6)
+        shutil.rmtree(self.msfile_flagged_spw1)
         os.remove(self.msfile7)
         os.remove(self.msfile8)
         os.remove(self.msfile9)
@@ -697,6 +703,27 @@ class visstat_test(unittest.TestCase):
                                           (diff, period)
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
+
+    def test_handle_all_flagged_groups(self):
+        '''visstat 13: handle all-flagged sub-selections in reportingaxes, CAS-12857'''
+
+        # The MS used in this test is the result of flagging spw=1, as follows:
+        # flagdata(vis='OrionS_rawACSmod_calave.ms', mode='manual', spw='1')
+        res = visstat(vis=self.msfile_flagged_spw1, axis='amp', datacolumn='corrected',
+                      useflags=True, reportingaxes='ddid')
+
+        # Check output dict for empty groups/sub-selection across reportingaxes (spw)
+        flagged_spw = 'DATA_DESC_ID=1'
+        self.assertEqual(res[flagged_spw]['npts'], 0)
+        for entry in ['firstquartile', 'mean', 'medabsdevmed', 'median', 'rms', 'stddev',
+                      'sum', 'sumOfWeights', 'sumsq', 'thirdquartile', 'variance']:
+            self.assertTrue(np.isnan(res[flagged_spw][entry]))
+        for entry in ['isMasked', 'isWeighted']:
+            self.assertEqual(res[flagged_spw][entry], False)
+        # Basic check on other SPWs
+        for entry in ['DATA_DESC_ID=0', 'DATA_DESC_ID=2', 'DATA_DESC_ID=3']:
+            self.assertEqual(res[entry]['npts'], 16384)
+
 
 def suite():
     return [visstat_test]
