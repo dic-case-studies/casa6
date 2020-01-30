@@ -479,7 +479,7 @@ namespace casac {
             const vector<SDMDataObject::SpectralWindow>& spws = bab.spectralWindows();
             bool firstSPW = true;
             vector<StokesParameterMod::StokesParameter>::const_iterator ppIter, ppBegin, ppEnd;
-            unsigned int numPolProducts;
+            unsigned int numPolProducts = 0;
             pair<const FLAGSTYPE*, const FLAGSTYPE*> range;
 
             for(SDMDataObject::SpectralWindow spw: spws) {
@@ -600,9 +600,9 @@ namespace casac {
         LOGEXIT("traverseALMARadiometerFlagsAxes");
     }
 
-    static bool isNotNull(char f){
-        return f != 0;
-    }
+    // static bool isNotNull(char f){
+    //     return f != 0;
+    // }
 
     /**
      *
@@ -794,7 +794,6 @@ namespace casac {
         LOGENTER("void loadBDFlags(map<string, unsigned int>& abbrev2bitpos");
 
         string bdflagsFilename = "bdflags.abbrev.txt";
-        char * rootDir_p;
 
         string bdflagsPath = "";
         const std::list<std::string> &state_path = AppStateSource::fetch( ).dataPath( );
