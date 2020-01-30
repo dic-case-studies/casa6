@@ -9,7 +9,7 @@ import unittest
 from casatasks.private.casa_transition import *
 if is_CASA6:
     from casatools import ms, ctsys, table
-    from casatasks import fringefit
+    from casatasks import fringefit, flagmanager, flagdata
 
     tblocal = table()
     ctsys_resolve = ctsys.resolve
@@ -92,6 +92,43 @@ class Fringefit_single_tests(unittest.TestCase):
         self.assertTrue(flag[4, 0, 3])
         self.assertTrue(flag[4, 0, 4])
 
+
+class Fringefit_dispersive_tests(unittest.TestCase):
+    msfile = 'n14p1-reg.ms'
+
+    def setUp(self):
+        shutil.copytree(os.path.join(datapath, self.msfile), self.msfile)
+        flagmanager('n14p1-reg.ms', mode='restore', versionname='applycal_1') 
+        flagdata('n14p1-reg.ms', mode='manual', spw='*:0~2;29~31')
+
+    def tearDown(self):
+        shutil.rmtree(self.msfile)
+        shutil.rmtree(self.prefix + '.mpc', True)
+        shutil.rmtree(self.prefix + '.disp', True)
+
+    def test_manual_phase_cal(self):
+        fringefit(vis="n14p1-reg.ms", caltable="n14p1.mpc",
+                  scan="1", solint="300", refant="WB",
+                  minsnr=50, zerorates=True,
+                  globalsolve=True, niter=100, gaintable=[],
+                  paramactive=[True, True, False],
+                  parang=True)
+        mpcal = self.prefix + '.mpc'
+        reference = os.path.join(datapath, mpcal)
+        self.assertTrue(th.compTables(mpcal, reference, ['WEIGHT', 'SNR']))
+        fringefit(vis='n14p1-reg.ms',
+                  caltable='n14p1.disp', refant="WB",
+                  scan='1', solint='60', spw='0,1,2',
+                  paramactive=[True, True, True],
+                  minsnr=50,
+                  niter=100,
+                  gaintable=['n14p1.mpc'],
+                  parang=True)
+        dispcal = self.prefix + '.disp'
+        reference = os.path.join(datapath, dispcal)
+        self.assertTrue(th.compTables(dispcal, reference, ['WEIGHT', 'SNR']))
+
+    
 def suite():
     return [Fringefit_tests, Fringefit_single_tests]
 
