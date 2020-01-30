@@ -139,7 +139,7 @@ class Calibrater
        const casacore::Int niter=100,
        const casacore::Vector<casacore::Double>& delaywindow=casacore::Vector<casacore::Double>(), 
        const casacore::Vector<casacore::Double>& ratewindow=casacore::Vector<casacore::Double>(),
-       // const casacore::Vector<casacore::Bool>& paramactive=casacore::Vector<casacore::Bool>(),
+       const casacore::Vector<casacore::Bool>& paramactive=casacore::Vector<casacore::Bool>(),
 		 const casacore::String& solmode="",
 		 const casacore::Vector<casacore::Double>& rmsthresh=casacore::Vector<casacore::Double>()
 );

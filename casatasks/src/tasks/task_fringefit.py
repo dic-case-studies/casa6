@@ -22,7 +22,8 @@ def fringefit(vis=None,caltable=None,
               minsnr=None,zerorates=None,globalsolve=None,niter=None,
               delaywindow=None,ratewindow=None,append=None,
               docallib=None,callib=None,gaintable=None,gainfield=None,interp=None,spwmap=None,
-              paramactive=None, parang=None):
+              paramactive=None,
+              parang=None):
 
     #Python script
     casalog.origin('fringefit')
