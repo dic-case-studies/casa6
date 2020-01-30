@@ -147,11 +147,6 @@ void MSCache::loadIt(vector<PMS::Axis>& loadAxes,
 		// Create visibility iterator vi_p
 		setUpVisIter(selection_, calibration_, dataColumn_, 
 			loadAxes, loadData);
-		// set frame
-		freqFrame_ = transformations_.frame();
-		if (freqFrame_ == MFrequency::N_Types) {
-			freqFrame_ = static_cast<MFrequency::Types>(vi_p->getReportingFrameOfReference());
-		}
 		// Set nIterPerAve (number of chunks per average)
 		bool chunksCounted = countChunks(*vi_p, nIterPerAve, loadAxes, loadData, thread);
 		if (chunksCounted) {
@@ -169,11 +164,6 @@ void MSCache::loadIt(vector<PMS::Axis>& loadAxes,
 		try {
 			// setUpVisIter also gets the VB shapes and calls trapExcessVolume:
 			setUpVisIter(selection_, calibration_, dataColumn_, loadAxes, loadData, false, true, thread);
-			// set frame
-			freqFrame_ = transformations_.frame();
-			if (freqFrame_ == MFrequency::N_Types) {
-				freqFrame_ = static_cast<MFrequency::Types>(vi_p->getReportingFrameOfReference());
-			}
 			loadChunks(*vi_p, loadAxes, loadData, thread);
 		} catch(AipsError& log) {
 			loadError(log.getMesg());
@@ -836,6 +826,12 @@ void MSCache::loadChunks(vi::VisibilityIterator2& vi,
 	}
 
 	nAnt_ = vb->nAntennas();  // needed to set up indexer
+	// set frame
+	freqFrame_ = transformations_.frame();
+	if (freqFrame_ == MFrequency::N_Types) {
+		freqFrame_ = static_cast<MFrequency::Types>(vi_p->getReportingFrameOfReference());
+	}
+
 	Int chunk(0), lastscan(0), thisscan(0), lastspw(-1), thisspw(0);
 	chshapes_.resize(4,nChunk_);
 	goodChunk_.resize(nChunk_);
@@ -976,7 +972,11 @@ void MSCache::loadChunks(vi::VisibilityIterator2& vi,
 	vi.originChunks();
 	vi.origin();
 	nAnt_ = vb->nAntennas();  // needed to set up indexer
-
+	// set frame
+	freqFrame_ = transformations_.frame();
+	if (freqFrame_ == MFrequency::N_Types) {
+		freqFrame_ = static_cast<MFrequency::Types>(vi_p->getReportingFrameOfReference());
+	}
 
 	chshapes_.resize(4, nChunk_);
 	goodChunk_.resize(nChunk_);
