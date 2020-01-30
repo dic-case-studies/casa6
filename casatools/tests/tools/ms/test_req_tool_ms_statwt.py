@@ -8,11 +8,12 @@ import numpy as np
 import numpy.ma as ma
 import numbers
 
-
+"""
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+"""
 
-### for testhelper import
+# for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th
 
@@ -246,16 +247,7 @@ class statwt_test(unittest.TestCase):
             etimes, ewt, ewtsp, eflag, efrow, edata, esigma, esisp
         ] = _get_table_cols(mytb)
         mytb.done()
-        print("gwt", gwt)
-        print("ewt", ewt)
-        print('gwt shape', gwt.shape)
-        print('ewt shape', ewt.shape)
-        print('gwt all zero', (gwt == 0).all())
-        print('ewt all zero', (ewt == 0).all())
-
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
-        print("gwtsp", gwtsp)
-        print("ewtsp", ewtsp)
         self.assertTrue(
             np.allclose(gwtsp, ewtsp), 'WEIGHT_SPECTRUM comparison failed'
         )
@@ -305,19 +297,12 @@ class statwt_test(unittest.TestCase):
                         ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_no_fitspw.ms'
                     else:
                         ref = 'ngc5921_statwt_ref_test_algorithm_combine_corr_has_fitspw.ms'
-                print(
-                    "combine", combine, "c", c, "fitspw", fitspw, "excludechans", excludechans
-                )
-                print('dst', dst)
-                print('ref', ref) 
                 self.compare(dst, ref)
-                return
                 shutil.rmtree(dst)
                 c += 1               
 
-    """
     def test_timebin(self):
-        ###Test time binning###
+        """Test time binning"""
         dst = "ngc5921.split.timebin.ms"
         combine = "corr"
         for timebin in ["300s", 10]:
@@ -331,7 +316,7 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
             
     def test_chanbin(self):
-        ###Test channel binning###
+        """Test channel binning"""
         dst = "ngc5921.split.chanbin_0.ms"
         row_to_rows = []
         for i in range(60):
@@ -375,7 +360,7 @@ class statwt_test(unittest.TestCase):
                     shutil.rmtree(dst)
 
     def test_minsamp(self):
-        ###Test minimum number of points###
+        """Test minimum number of points"""
         dst = "ngc5921.split.minsamp.ms"
         combine = "corr"
         trow = 12
@@ -418,7 +403,7 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
 
     def test_default_boundaries(self):
-        ###Test default scan, field, etc boundaries###
+        """Test default scan, field, etc boundaries"""
         dst = "ngc5921.split.normalbounds.ms"
         ref = 'ngc5921_statwt_ref_test_default_boundaries.ms'
         timebin = "6000s"
@@ -450,7 +435,7 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
         
     def test_no_scan_boundaries(self):
-        ###Test no scan boundaries###
+        """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
         timebin = "6000s"
         # ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_bounds.ms')
@@ -465,7 +450,7 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
         
     def test_no_scan_nor_field_boundaries(self):
-        ###Test no scan nor field boundaries###
+        """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
         # ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms')
@@ -480,7 +465,7 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
 
     def test_statalg(self):
-        ###Test statalg###
+        """Test statalg"""
         # just testing inputs
         dst = "ngc5921.split.statalg.ms"
         for statalg in ["cl", "ch", "h", "f", "bogus"]:
@@ -505,13 +490,13 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
 
     def test_wtrange(self):
-        ###Test weight range###
+        """Test weight range"""
         dst = "ngc5921.split.timebin.ms"
         ref = "ngc5921_statwt_ref_test_wtrange_300s.ms"
         combine = "corr"
         timebin = "300s"
         wtrange = [1, 2]
-        ###
+        """
         row_to_rows = []
         for i in range(10):
             row_to_rows.append([0, 10])
@@ -541,7 +526,7 @@ class statwt_test(unittest.TestCase):
             row_to_rows.append([53, 56])
         for i in range(4):
             row_to_rows.append([56, 60])
-        ###
+        """
         myms = ms()
         for i in [0, 1]:
             shutil.copytree(src, dst) 
@@ -555,7 +540,7 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
 
     def test_preview(self):
-        ###Test preview mode###
+        """Test preview mode"""
         dst = "ngc5921.split.preview.ms"
         [refwt, refwtsp, refflag, reffrow, refdata] = _get_dst_cols(src)
         combine = "corr"
@@ -581,18 +566,18 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
         
     def test_data_col(self):
-        ###Test using data column###
+        """Test using data column"""
         dst = "ngc5921.split.data.ms"
         ref = 'ngc5921_statwt_ref_test_data_col.ms'
         combine = "corr"
         timebin = 1
         data = "data"
         mytb = table()
-        ###
+        """
         row_to_rows = []
         for i in range(60):
             row_to_rows.append([i, i+1])
-        ###
+        """
         shutil.copytree(src, dst)
         self.assertTrue(mytb.open(dst, nomodify=False))
         self.assertTrue(mytb.removecols("DATA"))
@@ -607,11 +592,11 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
         
     def test_sliding_time_window(self):
-        ###Test sliding time window###
+        """Test sliding time window"""
         dst = "ngc5921.split.sliding_time_window.ms"
         ref = 'ngc5921_statwt_ref_test_sliding_time_window.ms'
         timebin = "300s"
-        ###
+        """
         row_to_rows = []
         row_to_rows.append([0, 6])
         row_to_rows.append([0, 7])
@@ -673,7 +658,7 @@ class statwt_test(unittest.TestCase):
         row_to_rows.append([56, 60])
         row_to_rows.append([56, 60])
         row_to_rows.append([56, 60])
-        ###
+        """
         shutil.copytree(src, dst)
         myms = ms()
         myms.open(dst, nomodify=False)
@@ -686,10 +671,10 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
         
     def test_sliding_window_timebin_int(self):
-        ###Test sliding window with timebin as int specified###
+        """Test sliding window with timebin as int specified"""
         dst = "ngc5921.split.sliding_time_window.ms"
         # row_to_rows = []
-        ###
+        """
         # odd int, timebin = 5
         row_to_rows.append([0, 5])
         row_to_rows.append([0, 5])
@@ -757,8 +742,8 @@ class statwt_test(unittest.TestCase):
         row_to_rows.append([56, 60])
         row_to_rows.append([56, 60])
         row_to_rows.append([56, 60])
-        ###
-        ###
+        """
+        """
         # even timebin = 6
         row_to_rows.append([0, 6])
         row_to_rows.append([0, 6])
@@ -826,7 +811,7 @@ class statwt_test(unittest.TestCase):
         row_to_rows.append([56, 60])
         row_to_rows.append([56, 60])
         row_to_rows.append([56, 60])
-        ###
+        """
 
         myms = ms()
         for timebin in [5, 6]:
@@ -842,7 +827,7 @@ class statwt_test(unittest.TestCase):
             shutil.rmtree(dst)
 
     def test_residual(self):
-        ###Test using corrected_data - model_data column###
+        """Test using corrected_data - model_data column"""
         dst = "ngc5921.split.residualwmodel.ms"
         ref = 'ngc5921_statwt_ref_test_residual.ms'
         data = "residual"
@@ -861,7 +846,7 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
 
     def test_residual_no_model(self):
-        ###Test datacolumn='residual' in the absence of a MODEL_DATA column###
+        """Test datacolumn='residual' in the absence of a MODEL_DATA column"""
         dst = "ngc5921.split.residualwoutmodel.ms"
         ref = 'ngc5921_statwt_ref_test_residual_no_model.ms'
         data = "residual"
@@ -881,7 +866,7 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
 
     def test_residual_data(self):
-        ###Test using data - model_data column###
+        """Test using data - model_data column"""
         dst = "ngc5921.split.residualdatawmodel.ms"
         ref = 'ngc5921_statwt_ref_test_residual_data.ms'
         data = "residual_data"
@@ -900,13 +885,12 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
 
     def test_residual_data_no_model(self):
-        ###Test using residual data in absence of MODEL_DATA###
+        """Test using residual data in absence of MODEL_DATA"""
         dst = "ngc5921.split.residualdatawoutmodel.ms"
         ref = 'ngc5921_statwt_ref_test_residual_data_no_model.ms'
         data = "residual_data"
         mytb = table()
         myms = ms()
-        print("datadir is", datadir)
         # row_to_rows = []
         # for i in range(60):
         #     row_to_rows.append([i, i+1])
@@ -931,7 +915,7 @@ class statwt_test(unittest.TestCase):
         shutil.rmtree(dst)
         
     def test_returned_stats(self):
-        ###Test returned stats, CAS-10881###
+        """Test returned stats, CAS-10881"""
         dst = "ngc5921.split.statstest.ms"
         myms = ms()
         shutil.copytree(src, dst)
@@ -947,7 +931,7 @@ class statwt_test(unittest.TestCase):
             "variance is incorrect"
         )
         shutil.rmtree(dst)
-    """
+
 def suite():
     return [statwt_test]
 
