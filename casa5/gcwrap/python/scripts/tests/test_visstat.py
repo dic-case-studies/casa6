@@ -76,6 +76,10 @@ if is_python3:
         return K
 
 class visstat_test(unittest.TestCase):
+
+    # TODO: these setUp and tearDown look like setUpClass and tearDownClass (or there
+    # could be separate individual copies). Also, because visstat is read-only, symlinks
+    # could be enough, depending on how these tests are run (in paralllel with others).
     def setUp(self):
         self.msfile = "ngc5921_add_corect_model.ms"
         self.msfile2 ="OrionS_rawACSmod_calave.ms"
