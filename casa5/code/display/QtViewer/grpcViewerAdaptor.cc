@@ -1432,6 +1432,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                             std::this_thread::get_id() << ")" << std::endl;
                         fflush(stderr);
                     }
+                    // must set options separately because 'start_interact(...)'
+                    // ignores the options object...
+                    panel->setoptions(options,0);
                     // start_interact accepts prom rvalue and sets future value
                     panel->start_interact( std::move(prom), options, id );
                     if (debug) {
