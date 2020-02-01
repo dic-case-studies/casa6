@@ -214,7 +214,7 @@ namespace casa{
     for (unsigned int nant=0; nant< ant1.size();nant++)
       {
 
-	MDirection antDir1 =vbUtils_p.getPointingDir(vb, nant, 0, dc_p.directionType(), doPointing); 
+	MDirection antDir1 =vbUtils_p.getPointingDir(vb, ant1[nant], 0, dc_p.directionType(), doPointing); 
 	// MDirection antDir2 =vbUtils_p.getPointingDir(vb, vb.antenna2()[irow], irow, dc_p.directionType(), doPointing);        
 	Vector<double> tmp = toPix(vb, antDir1, vbdir);
 	pix_l[0][nant]=tmp[0];
