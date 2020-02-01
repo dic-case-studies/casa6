@@ -129,7 +129,9 @@ namespace casa {
         grpcInteractiveCleanGui( );
         ~grpcInteractiveCleanGui( );
 
+        bool alive( );
         int open_panel( std::list<std::pair<std::string,bool>> images );
+        void close_panel( int );
         int interactivemask( int panel, const std::string &image, const std::string &mask,
                              int &niter, int &cycleniter, std::string &thresh,
                              std::string &cyclethresh, const bool forceReload=false );
@@ -182,6 +184,7 @@ namespace casa {
         void setControlsFromRecord(const casac::record &);
         void setIterationDetails(const casac::record &);
         casacore::Record pauseForUserInteraction( );
+        void closePanel( );
 
     };
 

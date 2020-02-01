@@ -22,6 +22,7 @@
 #include <grpc++/grpc++.h>
 #include "shutdown.grpc.pb.h"
 #include "img.grpc.pb.h"
+#include "ping.grpc.pb.h"
 
 using namespace casacore;
 
@@ -720,12 +721,75 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
 
 
+    bool grpcInteractiveCleanGui::alive( ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+        if ( debug ) {
+            std::cerr << "pinging viewer (" << viewer_uri << ")" << 
+                " (process " << getpid( ) << ", thread " << 
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+        grpc::ClientContext context;
+        ::google::protobuf::Empty resp;
+        ::google::protobuf::Empty msg;
+        auto ping = casatools::rpc::Ping::NewStub( grpc::CreateChannel( viewer_uri, grpc::InsecureChannelCredentials( ) ) );
+        ::grpc::Status status = ping->now( &context, msg, &resp );
+        bool ping_result = status.ok( );
+        if ( debug ) {
+            std::cerr << "ping result: " << (ping_result ? "OK" : "FAIL")<< 
+                " (process " << getpid( ) << ", thread " << 
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+        if ( ping_result == false ) {
+            int proc_status;
+            waitpid( viewer_pid, &proc_status, WUNTRACED | WCONTINUED | WNOHANG );
+            viewer_pid = 0;
+            viewer_proxy.release( );
+            viewer_started = false;
+            if ( debug ) {
+                std::cerr << "ping failed resetting state" << 
+                    " (process " << getpid( ) << ", thread " << 
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+        }
+        return ping_result;
+    }
+
     bool grpcInteractiveCleanGui::launch( ) {
+        static const auto debug = getenv("GRPC_DEBUG");
         if ( viewer_started == false ) {
             // start the viewer process if it is not already running...
             return spawn_viewer( );
+        } else {
+            if ( alive( ) ) return true;
+            else return launch( );
         }
-        return true;
+        return false;
+    }
+
+    void grpcInteractiveCleanGui::close_panel( int id ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+        if ( debug ) {
+            std::cerr << "close_panel(" << id << ")" <<
+                " (process " << getpid( ) << ", thread " << 
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+        if ( id != -1 && alive( ) ) {
+            if ( debug ) {
+                std::cerr << "close_panel(" << id << ") -- closing panel" <<
+                    " (process " << getpid( ) << ", thread " << 
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+            rpc::img::Id panel;
+            grpc::ClientContext context;
+            ::google::protobuf::Empty resp;
+            panel.set_id(id);
+            viewer_proxy->close( &context, panel, &resp );
+        }
     }
 
     int grpcInteractiveCleanGui::open_panel( std::list<std::pair<std::string,bool>> images ) {
@@ -1223,7 +1287,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             return Record( );
         }
 
-        if ( clean_panel_id == -1 ) {
+        if ( clean_panel_id == -1 || ! gui.alive( ) ) {
             // open panel if it is not already open...
             clean_panel_id = gui.open_panel( clean_images );
         }
@@ -1294,5 +1358,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
           return returnRec;
 	}
+
+    void grpcInteractiveCleanManager::closePanel( ) {
+        gui.close_panel(clean_panel_id);
+    }
 
 } //# NAMESPACE CASA - END

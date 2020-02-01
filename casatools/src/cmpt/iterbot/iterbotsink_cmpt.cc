@@ -108,6 +108,7 @@ namespace casac {
 
     bool iterbotsink::done( ) {
         fprintf( stderr, ">>>>>--------->> iterbotsink::done( )\n" );
+        state.closePanel( );
         return false;
     }
 
