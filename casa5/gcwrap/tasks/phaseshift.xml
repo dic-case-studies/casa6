@@ -257,7 +257,26 @@ Multi-MS.
     </param>
     
     <param type="any" name="phasecenter">
-    	<description>Desired phase center given either as a field index or as a direction measure</description>
+    	<shortdescription>Sky coordinates of the desired center</shortdescription>
+    	<description>
+    	Sky coordinates of the desired center, for example 
+    	
+    		phasecenter='J2000 19h53m50 40d06m00'
+    	
+    	This will change the phase of the baseline visibilities so that the 
+    	final image is centered at the new location. Additionally the uvw 
+    	coordinates and the the PHASE_DIR column from the FIELD sub-table 
+    	will be changed accordingly. 
+    	
+    	Notice that this operation will be done for all selected fields, 
+    	so all fields in the output MS will have as center the new location.
+    	
+    	This task does essentially the same thing as fixvis, but it is valid 
+    	for a longer range of shifts, as long as the new location still falls 
+    	into the field of view of your image. Fixvis was designed for smaller
+    	shifts like pointing errors, but this task is designed to change the 
+    	image center for multi-field images.
+    	</description>
     	<any type="variant"/>
     	<value type="string"></value>
     </param>
