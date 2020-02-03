@@ -119,18 +119,39 @@ else:
 def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
-        (major, minor) = args.version.split(".")
-        return(int(major), int(minor))
+        (major, minor, patch, feature) = args.version.split(".")
+        return(int(major), int(minor), int(patch), int(feature),"","","")
     else:
         proc = Popen( [ "./version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
-        (major, minor) = out.split( )[0].split(".")
-        print((major,minor))
-        return(int(major), int(minor))
+        print(out)
+        devbranchtag = out.split(" ")[0].strip()
+        print(devbranchtag)
+        releasetag = out.split(" ")[1].strip()
+        dirty=""
+        if (len(out.split(" ")) == 3):
+            print("Latest commit doesn't have a tag. Adding -dirty flag to version string.")
+            dirty="+" + out.split(" ")[2].strip() # "+" denotes local version identifier as described in PEP440
+        print(releasetag)
+        devbranchversion = ""
+        devbranchrevision = ""
+        if (devbranchtag != releasetag):
+            devbranchrevision = devbranchtag.split("-")[-1]
+            if (devbranchtag.startswith("CAS-")):
+                devbranchversion=devbranchtag.split("-")[1]
+            else:
+                devbranchversion=100
+            devbranchrevision = devbranchtag.split("-")[-1]
+        else:
+            isDevBranch = False
+        (major, minor, patch, feature) = releasetag.split(".")
+        return(int(major), int(minor), int(patch), int(feature), devbranchversion, devbranchrevision, dirty)
 
 
-(casatasks_major,casatasks_minor) = compute_version( )
-casatasks_version = '%d.%d' % (casatasks_major,casatasks_minor)
+(casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, devbranchversion, devbranchrevision, dirty) = compute_version( )
+casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature, dirty)
+if devbranchversion !="":
+    casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
 public_scripts = [ 'src/scripts/config.py' ]
 
@@ -234,6 +255,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_polfromgain.py',
                     'src/tasks/task_predictcomp.py',
                     'src/tasks/task_rerefant.py',
+                    'src/scripts/restfreqtool.py',
                     'src/tasks/task_rmfit.py',
                     'src/tasks/task_rmtables.py',
                     'src/scripts/sdutil.py',
@@ -247,6 +269,8 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/cleanhelper.py',
                     'src/tasks/task_sdimaging.py',
                     'src/tasks/task_sdsmooth.py',
+                    'src/tasks/task_tsdimaging.py',
+                    'src/tasks/task_nrobeamaverage.py',
                     'src/scripts/simutil.py',
                     'src/tasks/task_simalma.py',
                     'src/tasks/task_simobserve.py',
@@ -359,6 +383,8 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdgaincal.xml': 'xml/sdgaincal.xml',
               'casa-source/gcwrap/tasks/sdimaging.xml': 'xml/sdimaging.xml',
               'casa-source/gcwrap/tasks/sdsmooth.xml': 'xml/sdsmooth.xml',
+              'casa-source/gcwrap/tasks/tsdimaging.xml': 'xml/tsdimaging.xml',
+              'casa-source/gcwrap/tasks/nrobeamaverage.xml': 'xml/nrobeamaverage.xml',
               'casa-source/gcwrap/tasks/simalma.xml': 'xml/simalma.xml',
               'casa-source/gcwrap/tasks/simobserve.xml': 'xml/simobserve.xml',
               'casa-source/gcwrap/tasks/simanalyze.xml': 'xml/simanalyze.xml',
@@ -466,6 +492,8 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdgaincal.xml',
               'xml/sdimaging.xml',
               'xml/sdsmooth.xml',
+              'xml/tsdimaging.xml',
+              'xml/nrobeamaverage.xml',
               'xml/simalma.xml',
               'xml/simobserve.xml',
               'xml/simanalyze.xml',
@@ -579,11 +607,32 @@ def generate_pyinit(moduledir,tasks):
             fd.write("from .%s import %s\n" % (task,task))
 
         fd.write("\n")
-        fd.write("def version( ): return [ %d, %d ]\n" % (casatasks_major,casatasks_minor))
+        fd.write("def version( ): return [ %d, %d, %d, %d ]\n" % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature))
         fd.write("def version_string( ): return \"%s\"\n" % casatasks_version)
         fd.write("casalog.setglobal(True)\n")
         fd.write("\n")
         fd.write("def xml_interface_defs( ): return { %s }\n" % ", ".join(task_files_dict))
+        fd.write("\n")
+        # Check if MPIEnvironment can be imported at all
+        fd.write('mpi_env_found=False\n')
+        fd.write('try:\n')
+        fd.write('    from casampi.MPIEnvironment import MPIEnvironment\n')
+        fd.write('    mpi_env_found=True\n')
+        fd.write('except:\n')
+        fd.write('    mpi_env_found=False\n')
+        # Only the mpi "client" should write the version information (otherwise the logsink will crash)
+        fd.write('if mpi_env_found and MPIEnvironment.is_mpi_enabled:\n')
+        fd.write('    if MPIEnvironment.is_mpi_client:\n')
+        fd.write('        try:\n')
+        fd.write('            casalog.post("CASA Version %s")\n' % casatasks_version)
+        fd.write('            casalog.post("MPI Enabled")\n')
+        fd.write('        except:\n')
+        fd.write('            print("Error: the logfile is not writable")\n')
+        fd.write('else:\n')
+        fd.write('    try:\n')
+        fd.write('        casalog.post("CASA Version %s")\n' % casatasks_version)
+        fd.write('    except:\n')
+        fd.write('        print("Error: the logfile is not writable")\n')  
         fd.write("\n")
         mpi_import_str = '\n'.join((
             "# When in MPI mode, this will put servers into their serve() loop.",

@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-AngularRate AngularRate::getAngularRate(StringTokenizer &t) throw(NumberFormatException) {
+AngularRate AngularRate::getAngularRate(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return AngularRate (value);
 }

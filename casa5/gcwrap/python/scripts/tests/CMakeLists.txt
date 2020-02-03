@@ -49,7 +49,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_flagmanager.py
   test_fluxscale.py
   test_fringefit.py
-  test_gaincal.py
   test_getchunk.py
   test_gencal.py
   test_hanningsmooth.py
@@ -111,7 +110,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imcontsub.py
   test_imfit.py
   test_imhead.py
-  test_imhistory.py
   test_immath.py
   test_immoments.py
   test_impbcor.py
@@ -130,7 +128,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imtrans.py
   test_imval.py
   test_initweights.py
-  test_listhistory.py
   test_listfits.py
   test_listobs.py
   test_listpartition.py
@@ -207,10 +204,13 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   ###
 
+  test_req_task_imhistory.py
+  test_req_task_listcal.py
   test_req_task_accor.py
   test_req_task_applycal.py
   test_req_task_calstat.py
   test_req_task_clearcal.py
+  test_req_task_conjugatevis.py 
   test_req_task_delmod.py
   test_req_task_feather.py
   test_req_task_fixplanets.py
@@ -229,6 +229,9 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
+
+  ### stakeholders
+  test_stk_alma_pipeline_imaging.py
 
   ###
   test_setjy.py

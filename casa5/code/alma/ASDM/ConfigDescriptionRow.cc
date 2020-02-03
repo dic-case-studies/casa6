@@ -916,7 +916,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"ConfigDescription");
 		}
 	}
@@ -1299,7 +1299,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"ConfigDescription");
 		}
 	}
@@ -1345,7 +1345,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CCorrelationMode::name(correlationMode));
+		eoss.writeString(CCorrelationMode::name(correlationMode));
 			/* eoss.writeInt(correlationMode); */
 				
 		
@@ -1380,7 +1380,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CProcessorType::name(processorType));
+		eoss.writeString(CProcessorType::name(processorType));
 			/* eoss.writeInt(processorType); */
 				
 		
@@ -1390,7 +1390,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CSpectralResolutionType::name(spectralType));
+		eoss.writeString(CSpectralResolutionType::name(spectralType));
 			/* eoss.writeInt(spectralType); */
 				
 		

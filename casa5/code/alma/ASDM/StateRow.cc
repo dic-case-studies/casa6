@@ -329,7 +329,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"State");
 		}
 	}
@@ -471,7 +471,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"State");
 		}
 	}
@@ -490,7 +490,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CCalibrationDevice::name(calDeviceName));
+		eoss.writeString(CCalibrationDevice::name(calDeviceName));
 			/* eoss.writeInt(calDeviceName); */
 				
 		

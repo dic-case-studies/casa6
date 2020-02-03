@@ -931,7 +931,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalPrimaryBeam");
 		}
 	}
@@ -1323,7 +1323,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalPrimaryBeam");
 		}
 	}
@@ -1344,7 +1344,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverBand::name(receiverBand));
+		eoss.writeString(CReceiverBand::name(receiverBand));
 			/* eoss.writeInt(receiverBand); */
 				
 		
@@ -1382,7 +1382,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAntennaMake::name(antennaMake));
+		eoss.writeString(CAntennaMake::name(antennaMake));
 			/* eoss.writeInt(antennaMake); */
 				
 		
@@ -1485,7 +1485,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CPrimaryBeamDescription::name(descriptionType));
+		eoss.writeString(CPrimaryBeamDescription::name(descriptionType));
 			/* eoss.writeInt(descriptionType); */
 				
 		

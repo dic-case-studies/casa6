@@ -276,7 +276,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Doppler");
 		}
 	}
@@ -388,7 +388,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Doppler");
 		}
 	}
@@ -427,7 +427,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDopplerReferenceCode::name(velDef));
+		eoss.writeString(CDopplerReferenceCode::name(velDef));
 			/* eoss.writeInt(velDef); */
 				
 		

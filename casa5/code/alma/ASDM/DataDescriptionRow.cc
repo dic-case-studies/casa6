@@ -228,7 +228,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"DataDescription");
 		}
 	}
@@ -338,7 +338,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"DataDescription");
 		}
 	}
@@ -725,7 +725,7 @@ void DataDescriptionRow::pulsarIdFromBin(EndianIStream& eis) {
 	 * to which they belong.
 	 * @param table The table to which this row belongs.
 	 */ 
-    DataDescriptionRow::DataDescriptionRow (DataDescriptionTable &t) : table(t) {
+	DataDescriptionRow::DataDescriptionRow (DataDescriptionTable &t) : table(t) {
 		hasBeenAdded = false;
                 pulsarIdExists = false;
 		
