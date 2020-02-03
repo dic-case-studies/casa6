@@ -76,6 +76,10 @@ if is_python3:
         return K
 
 class visstat_test(unittest.TestCase):
+
+    # TODO: these setUp and tearDown look like setUpClass and tearDownClass (or there
+    # could be separate individual copies). Also, because visstat is read-only, symlinks
+    # could be enough, depending on how these tests are run (in paralllel with others).
     def setUp(self):
         self.msfile = "ngc5921_add_corect_model.ms"
         self.msfile2 ="OrionS_rawACSmod_calave.ms"
@@ -95,15 +99,16 @@ class visstat_test(unittest.TestCase):
         self.msfile13='visstat2_test10_check_on.txt'
         self.msfile14='visstat2_test10_check_off.txt'
 
-        shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
-        shutil.copytree(os.path.join(datapath,self.msfile2), self.msfile2)
-        shutil.copytree(os.path.join(datapath,self.msfile2_asap), self.msfile2_asap)
-        shutil.copytree(os.path.join(datapath,self.msfile3), self.msfile3)
-        # shutil.copytree(os.path.join(datapath,self.msfile4), self.msfile4)
-        shutil.copytree(os.path.join(datapath,self.msfile5), self.msfile5)
-        # shutil.copytree(os.path.join(datapath,self.msfile6), self.msfile6)
+        shutil.copytree(os.path.join(datapath,self.msfile), self.msfile, symlinks=True)
+        shutil.copytree(os.path.join(datapath,self.msfile2), self.msfile2, symlinks=True)
+        shutil.copytree(os.path.join(datapath,self.msfile2_asap), self.msfile2_asap,
+                        symlinks=True)
+        shutil.copytree(os.path.join(datapath,self.msfile3), self.msfile3, symlinks=True)
+        # shutil.copytree(os.path.join(datapath,self.msfile4), self.msfile4, symlinks=True)
+        shutil.copytree(os.path.join(datapath,self.msfile5), self.msfile5, symlinks=True)
+        # shutil.copytree(os.path.join(datapath,self.msfile6), self.msfile6, symlinks=True)
         shutil.copytree(os.path.join(datapath,self.msfile_flagged_spw1),
-                        self.msfile_flagged_spw1)
+                        self.msfile_flagged_spw1, symlinks=True)
         shutil.copyfile(os.path.join(datapath,self.msfile7), self.msfile7)
         shutil.copyfile(os.path.join(datapath,self.msfile8), self.msfile8)
         shutil.copyfile(os.path.join(datapath,self.msfile9), self.msfile9)
