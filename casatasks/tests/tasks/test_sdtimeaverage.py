@@ -755,6 +755,7 @@ class test_sdtimeaverage(unittest.TestCase):
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # 
+        self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1 )
 
     def test_param63E(self):
