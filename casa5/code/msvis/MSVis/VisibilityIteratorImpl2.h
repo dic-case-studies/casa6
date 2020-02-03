@@ -1211,6 +1211,8 @@ protected:
     mutable Cache cache_p;
     // [use] current channel selectors for this chunk 
     std::vector<const ChannelSelector *>  channelSelectors_p;
+    // Number of rows in the VisBuffer for which each of the channel selector applies
+    std::vector<size_t>  channelSelectorsNrows_p;
     // [own] cache of recently used channel selectors
     ChannelSelectorCache * channelSelectorCache_p;
     // The main columns for the current MS
@@ -1268,6 +1270,7 @@ protected:
     // or in the worst case for each row.
     MetadataScope ddIdScope_p;
     MetadataScope timeScope_p;
+    MetadataScope freqSelScope_p;
     MetadataScope antenna1Scope_p;
     MetadataScope antenna2Scope_p;
 
