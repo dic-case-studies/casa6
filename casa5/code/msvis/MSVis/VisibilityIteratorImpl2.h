@@ -151,6 +151,11 @@ public:
 
 	std::unique_ptr<VisibilityIteratorImpl2> clone() const;
 
+    // Set the scope of metadata, i.e., how long a given metadata is valid.
+    // For instance, if ddIDScope = SubchunkScope, the ddId will be unique
+    // within a subchunk.
+    void setMetadataScope();
+
 	// Report the the ViImplementation type
 	//  TBD:  indicate writable?
 	virtual casacore::String
@@ -1198,6 +1203,8 @@ protected:
         casacore::Vector<casacore::Double> times_p;
     };
 
+    typedef enum {UnknownScope = 0, ChunkScope = 1, SubchunkScope = 2, RowScope = 3} MetadataScope;
+
     casacore::Bool autoTileCacheSizing_p;
     std::map <VisBufferComponent2, BackWriter *> backWriters_p;
     // general collection of cached values
@@ -1256,6 +1263,13 @@ protected:
     VisBuffer2 * vb_p;
     casacore::CountedPtr<WeightScaling> weightScaling_p;
     casacore::Bool writable_p;
+    // Determine several metadata uniqueness. For each metadata
+    // the valus could be unique in each chunk or subchunk,
+    // or in the worst case for each row.
+    MetadataScope ddIdScope_p;
+    MetadataScope timeScope_p;
+    MetadataScope antenna1Scope_p;
+    MetadataScope antenna2Scope_p;
 
     // Variables for the handling of the subchunk  loop
     std::shared_ptr<casacore::MeasurementSet> msSubchunk_p;

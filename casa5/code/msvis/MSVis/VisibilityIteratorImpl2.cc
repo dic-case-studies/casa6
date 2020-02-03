@@ -1052,12 +1052,15 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   timeInterval_p(timeInterval),
   vb_p(nullptr),
   weightScaling_p(),
-  writable_p(writable)
+  writable_p(writable),
+  ddIdScope_p(UnknownScope),
+  timeScope_p(UnknownScope)
 {
     // Set the default subchunk iteration sorting scheme, i.e.
     // unique timestamps in each subchunk.
     CountedPtr<BaseCompare> singleTimeCompare(new ObjCompare<Double>());
     subchunkSortColumns_p.addSortingColumn(MS::TIME, singleTimeCompare);
+    timeScope_p = ChunkScope;
 
     initialize(mss, useMSIter2);
 
@@ -1096,6 +1099,8 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   vb_p(nullptr),
   weightScaling_p(),
   writable_p(isWritable),
+  ddIdScope_p(UnknownScope),
+  timeScope_p(UnknownScope),
   subchunkSortColumns_p(subchunkSortColumns)
 {
     initialize(mss);
@@ -1175,6 +1180,8 @@ VisibilityIteratorImpl2::operator=(const VisibilityIteratorImpl2& vii)
     timeInterval_p = vii.timeInterval_p;
     weightScaling_p = vii.weightScaling_p;
     writable_p = vii.writable_p;
+    ddIdScope_p = vii.ddIdScope_p;
+    timeScope_p = vii.timeScope_p;
 
     // clone modelDataGenerator_p
     if (modelDataGenerator_p) delete modelDataGenerator_p;
@@ -1266,6 +1273,8 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     timeInterval_p = vii.timeInterval_p;
     weightScaling_p = vii.weightScaling_p;
     writable_p = vii.writable_p;
+    ddIdScope_p = vii.ddIdScope_p;
+    timeScope_p = vii.timeScope_p;
 
     // move modelDataGenerator_p
     if (modelDataGenerator_p) 
@@ -1401,6 +1410,12 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss,
 
     subtableColumns_p = new SubtableColumns(msIter_p);
 
+    // Check whether DDID is unique within each chunk. Otherwise assume
+    // that it can change for every row.
+    ddIdScope_p = RowScope;
+    for (auto sortCol : sortColumns_p.getColumnIds())
+        if(sortCol == MS::DATA_DESC_ID)
+            ddIdScope_p = ChunkScope;
 
     // Install default frequency selections.  This will select all
     // channels in all windows.
@@ -1434,7 +1449,7 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss)
 
     subtableColumns_p = new SubtableColumns(msIter_p);
 
-
+    setMetadataScope();
     // Install default frequency selections.  This will select all
     // channels in all windows.
 
@@ -1470,6 +1485,49 @@ VisibilityIteratorImpl2::clone() const
 			false));
 	*result = *this;
 	return result;
+}
+
+void VisibilityIteratorImpl2::setMetadataScope()
+{
+    // Check if each chunk will receive a unique DDId.
+    // For that it must be a sorting column and comparison function should
+    // be of the type ObjCompare<Int>
+    bool uniqueDDIdInChunk, uniqueDDIdInSubchunk;
+    for(auto& sortDef : sortColumns_p.sortingDefinition())
+        if(sortDef.first == MS::columnName(MS::DATA_DESC_ID) &&
+           dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
+            uniqueDDIdInChunk = true;
+
+    for(auto& sortDef : subchunkSortColumns_p.sortingDefinition())
+        if(sortDef.first == MS::columnName(MS::DATA_DESC_ID) &&
+           dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
+            uniqueDDIdInSubchunk = true;
+
+    if(uniqueDDIdInChunk)
+        ddIdScope_p = ChunkScope;
+    else if(uniqueDDIdInSubchunk)
+        ddIdScope_p = SubchunkScope;
+    else
+        ddIdScope_p = RowScope;
+
+    // Similar for time
+    bool uniqueTimeInChunk, uniqueTimeInSubchunk;
+    for(auto& sortDef : sortColumns_p.sortingDefinition())
+        if(sortDef.first == MS::columnName(MS::TIME) &&
+           dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
+            uniqueTimeInChunk = true;
+
+    for(auto& sortDef : subchunkSortColumns_p.sortingDefinition())
+        if(sortDef.first == MS::columnName(MS::TIME) &&
+           dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
+            uniqueTimeInSubchunk = true;
+
+    if(uniqueTimeInChunk)
+        timeScope_p = ChunkScope;
+    else if(uniqueTimeInSubchunk)
+        timeScope_p = SubchunkScope;
+    else
+        timeScope_p = RowScope;
 }
 
 VisibilityIteratorImpl2::Cache::Cache()
