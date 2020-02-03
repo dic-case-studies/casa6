@@ -9,19 +9,14 @@ import math
 from casatasks.private.casa_transition import *
 if is_CASA6:
     from .mstools import write_history
-    from casatools import table, ms, mstransformer
+    from casatools import table, ms, mstransformer, me
     from casatasks import casalog
     from .parallel.parallel_data_helper import ParallelDataHelper
-
-    _tb = table()
 else:
-    from taskinit import mttool as mstransformer
-    from taskinit import mstool as ms
-    from taskinit import tbtool, casalog
     from mstools import write_history
+    from taskinit import tbtool,mstool,mttool,metool
+    from taskinit import casalog
     from parallel.parallel_data_helper import ParallelDataHelper
-
-    _tb = tbtool()
 
 def phaseshift(vis=None, 
                outputvis=None,
@@ -76,12 +71,20 @@ def phaseshift(vis=None,
         return True
 
 
-    # Actual task code starts here
-
-    # Create local copies of the MSTransform and ms tools
-    mtlocal = mstransformer()
-    mslocal = ms()
-
+    # Create local copies of tools (has to be here, otherwise 
+    # ParallelDataHelper has a porblem digest the locals
+    if is_CASA6:
+        tblocal = table()
+        mslocal = ms()
+        mtlocal = mstransformer()
+        melocal = me()
+    else:
+        tblocal = tbtool()
+        mslocal = mstool()
+        mtlocal = mttool()
+        melocal = metool()
+        
+    # Actual task code starts here   
     try:
                     
         # Gather all the parameters in a dictionary.        
@@ -96,11 +99,11 @@ def phaseshift(vis=None,
         # Check if CORRECTED column exists, when requested
         datacolumn = datacolumn.upper()
         if datacolumn == 'CORRECTED':
-            _tb.open(vis)
-            if 'CORRECTED_DATA' not in _tb.colnames():
+            tblocal.open(vis)
+            if 'CORRECTED_DATA' not in tblocal.colnames():
                 casalog.post('Input CORRECTED_DATA does not exist. Will use DATA','WARN')
                 datacolumn = 'DATA'
-            _tb.close()
+            tblocal.close()
              
         casalog.post('Will use datacolumn = %s'%datacolumn, 'DEBUG')
         config['datacolumn'] = datacolumn
@@ -143,8 +146,38 @@ def phaseshift(vis=None,
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
         return False
+    
+    # Update field table
+    try:
+        
+        # Parse phase center string to obtain ra/dec
+        dirstr = phasecenter.split(' ')
+        try:
+            thedir = melocal.direction(dirstr[0], dirstr[1], dirstr[2])
+            thenewra_rad = thedir['m0']['value']
+            thenewdec_rad = thedir['m1']['value']
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' when interpreting parameter \'phasecenter\': "
+                         % (instance), 'SEVERE')
+            return False 
+        
+        # modify FIELD table 
+        tblocal.open(outputvis + '/FIELD', nomodify=False)
+        pcol = tblocal.getcol('PHASE_DIR')
+        for row in range(0,tblocal.nrows()):
+            pcol[0][0][row] = thenewra_rad
+            pcol[1][0][row] = thenewdec_rad
+        tblocal.putcol('PHASE_DIR', pcol)
+            
+            
+    except Exception as instance:
+        casalog.post("*** Error \'%s\' updating FIELD" % (instance),'WARN')
+        return False    
 
+    tblocal = None
     mslocal = None
+    mtlocal = None
+    melocal = None
     
     return True
  
