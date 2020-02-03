@@ -41,7 +41,7 @@ StatWtTVITest::StatWtTVITest(): FreqAxisTVITest () {
     split(EnvironmentVariable::get("CASAPATH"), parts, 2, String(" "));
     auto x = parts[0];
     delete [] parts;
-    String data = "/data//data/casa-data-req/visibilities/vla";
+    String data = "/data/casa-data-req/visibilities/vla";
     casacore::File f(x + data);
     if (f.exists()) {
         _dataDir = data;
@@ -53,7 +53,14 @@ StatWtTVITest::StatWtTVITest(): FreqAxisTVITest () {
             _dataDir = data;
         }
         else {
-            ThrowCc("Cannot find data directory");
+            // hard-coded bamboo path for CASA 5
+            f = File("/opt/casa/data/casa-data-req/visibilities/vla");
+            if (f.exists()) {
+                _dataDir = data;
+            }
+            else {
+                ThrowCc("Cannot find data directory");
+            }
         }
     }
     inpFile_p = "ngc5921_small.statwt.ms";
