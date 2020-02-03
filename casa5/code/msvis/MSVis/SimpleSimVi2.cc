@@ -678,6 +678,7 @@ void SimpleSimVi2::stateId (Vector<Int> & stateids) const { stateids.resize(nRow
 
 Int SimpleSimVi2::spectralWindow () const { return thisSpw_; }
 void SimpleSimVi2::spectralWindows (Vector<Int> & spws) const { spws.resize(nRows()); spws.set(thisSpw_); }
+void SimpleSimVi2::polarizationIds (Vector<Int> & polIds) const { polIds.resize(nRows()); polIds.set(0);}
 void SimpleSimVi2::time (Vector<Double> & t) const { t.resize(nRows()); t.set(thisTime_); }
 void SimpleSimVi2::timeCentroid (Vector<Double> & t) const { t.resize(nRows()); t.set(thisTime_); }
 

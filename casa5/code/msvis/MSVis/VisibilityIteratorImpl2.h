@@ -400,6 +400,9 @@ public:
 	virtual void
 	spectralWindows(casacore::Vector<casacore::Int> & spws) const override;
 
+    virtual void
+    polarizationIds(casacore::Vector<casacore::Int> & polIds) const override;
+
 	// Return current Polarization Id
 	virtual casacore::Int
 	polarizationId() const override;

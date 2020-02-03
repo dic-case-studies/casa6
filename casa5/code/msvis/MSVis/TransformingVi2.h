@@ -296,7 +296,11 @@ public:
 
     virtual casacore::Int spectralWindow () const override;
 
+    // Return all the spectral windows ids for each row of the current buffer
     virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const override;
+
+    // Return all the polarizations Ids for each row of the current buffer
+    virtual void polarizationIds (casacore::Vector<casacore::Int> & polIds) const override;
 
     // Return MJD midpoint of interval.
 

@@ -1800,18 +1800,35 @@ VisibilityIteratorImpl2::spectralWindow() const
 void
 VisibilityIteratorImpl2::spectralWindows(Vector<Int> & spws) const
 {
-	// Get's the list of spectral windows for each row in the VB window
+    // Get's the list of spectral windows for each row in the VB window
 
-	Vector<Int> ddis;
-	dataDescriptionIds(ddis);
-	spws.resize(ddis.size());
+    Vector<Int> ddis;
+    dataDescriptionIds(ddis);
+    spws.resize(ddis.size());
 
-	for (uInt idx = 0; idx < ddis.size(); idx++) {
-		spws(idx) = subtableColumns_p->dataDescription().spectralWindowId()(
-			ddis(idx));
-	}
+    for (uInt idx = 0; idx < ddis.size(); idx++) {
+        spws(idx) = subtableColumns_p->dataDescription().spectralWindowId()(
+            ddis(idx));
+    }
 
-	return;
+    return;
+}
+
+void
+VisibilityIteratorImpl2::polarizationIds(Vector<Int> & polIds) const
+{
+    // Get's the list of spectral windows for each row in the VB window
+
+    Vector<Int> ddis;
+    dataDescriptionIds(ddis);
+    polIds.resize(ddis.size());
+
+    for (uInt idx = 0; idx < ddis.size(); idx++) {
+        polIds(idx) = subtableColumns_p->dataDescription().polarizationId()(
+            ddis(idx));
+    }
+
+    return;
 }
 
 // Return current Polarization Id

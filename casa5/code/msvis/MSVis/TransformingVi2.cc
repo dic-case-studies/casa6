@@ -629,6 +629,11 @@ TransformingVi2::spectralWindows (Vector<Int> & spws) const
     getVii()->spectralWindows (spws);
 }
 
+void
+TransformingVi2::polarizationIds (Vector<Int> & spws) const
+{
+    getVii()->polarizationIds (spws);
+}
 
 void
 TransformingVi2::stateId (Vector<Int> & stateids)  const
