@@ -108,7 +108,7 @@ import math
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, image, regionmanager, componentlist, table, quanta
-    from casatasks import imsmooth, casalog
+    from casatasks import imsmooth, casalog, imsubimage
 
     _ia = image()
     _rg = regionmanager()
@@ -1508,6 +1508,45 @@ class imsmooth_test(unittest.TestCase):
         self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")    
         teststr = "imsmooth"
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
+
+    def test_CAS_12904(self):
+        """Test fix of CAS-12904 bug"""
+        imname = 'orig.im'
+        yy = _ia
+        yy.fromshape(imname, [100, 100, 3])
+        pix = yy.getchunk()
+        for i in range(3):
+            pix[:, :, i] = i
+        yy.putchunk(pix)
+        yy.done()
+        outname = 'mysub.im'
+        imsubimage(imagename=imname, outfile=outname, mask=imname + '>0')
+        subi = _ia
+        subi.open(outname)
+        rg = _rg
+        for i in range(3):
+            reg = rg.box([0, 0, i], [99, 99, i])
+            npts = subi.statistics(region=reg)['npts']
+            expec = 0 if i == 0 else 1
+            self.assertEqual(npts.size, expec, 'wrong length npts array')
+            if i>0: 
+                self.assertEqual(npts[0], 10000, 'wrong number of pts')
+        subi.done()
+        imname = outname
+        outname = 'conv.im'
+        imsmooth(
+            imname, major='4arcmin', minor='4arcmin', pa='0deg',
+            mask=imname + '<2', outfile=outname
+        )
+        yy.open(outname)
+        for i in range(3):
+            reg = rg.box([0, 0, i], [99, 99, i])
+            npts = yy.statistics(region=reg)['npts']
+            expec = 1 if i == 1 else 0
+            self.assertEqual(npts.size, expec, 'wrong length npts array')
+            if i==1:
+                self.assertEqual(npts[0], 10000, 'wrong number of pts')
+        yy.done()     
 
 def suite():
     return [imsmooth_test]    

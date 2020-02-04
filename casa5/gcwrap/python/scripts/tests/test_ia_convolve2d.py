@@ -122,6 +122,37 @@ class ia_convolve2d_test(unittest.TestCase):
                     "4arcmin", "4arcmin", "0deg"
                 )
             yy.done()
-            
+
+    def test_CAS_12904(self):
+        """Test fix of CAS-12904 bug"""
+        imname = 'orig.im'
+        yy = iatool()
+        yy.fromshape(imname, [100, 100, 3])
+        pix = yy.getchunk()
+        for i in range(3):
+            pix[:, :, i] = i
+        yy.putchunk(pix)
+        subi = yy.subimage("", mask=imname + '>0')
+        yy.done()
+        for i in range(3):
+            reg = rg.box([0, 0, i], [99, 99, i])
+            npts = subi.statistics(region=reg)['npts']
+            expec = 0 if i == 0 else 1
+            self.assertEqual(npts.size, expec, 'wrong length npts array')
+            if i>0:
+                self.assertEqual(npts[0], 10000, 'wrong number of pts')
+        conv = subi.convolve2d(
+            major='4arcmin', minor='4arcmin', pa='0deg', mask=imname + '<2'
+        )
+        subi.done()
+        for i in range(3):
+            reg = rg.box([0, 0, i], [99, 99, i])
+            npts = conv.statistics(region=reg)['npts']
+            expec = 1 if i == 1 else 0
+            self.assertEqual(npts.size, expec, 'wrong length npts array')
+            if i==1:
+                self.assertEqual(npts[0], 10000, 'wrong number of pts')
+        conv.done()     
+ 
 def suite():
     return [ia_convolve2d_test]
