@@ -47,7 +47,7 @@ defPrivateMs       = "sdave-*.ms"       # private  output MS form.
 defPrivateMsForm   = 'sdave-{}-{}.ms'
 
 # Test Conditio , Numerical error limit.
-nRow       = 3843  ## DO NOT CHANGE ## 
+nRow       = 3843   ## DO NOT CHANGE ## 
 numOfState =3         # test-MS2 (for timespan)
 numOfScan  =61        # test-MS2 (for timespan)
 
@@ -88,7 +88,6 @@ class test_sdtimeaverage(unittest.TestCase):
             # Copy template and generate Test-MS
             os.system('cp -RL '+ os.path.join(datapath, defInputMs) +' '+ defWorkMs)
             self. generate_data( defWorkMs, False )
-
         else:
             print( "- TestMS already exists.")
 
@@ -132,8 +131,8 @@ class test_sdtimeaverage(unittest.TestCase):
 #
 # Comment Out if you reserve MS.
 #
-        os.system('rm -rf ' + defWorkMs  )
-        os.system('rm -rf ' + defWorkMs2 )
+###        os.system('rm -rf ' + defWorkMs  )
+###        os.system('rm -rf ' + defWorkMs2 )
         os.system('rm -rf ' + defPrivateMs )
 
 ##############
@@ -145,7 +144,7 @@ class test_sdtimeaverage(unittest.TestCase):
         if auxArgs is not None:
             for k in auxArgs: self.args[k] = auxArgs[k]
 
-        ## execution ## 
+        ## execution ## open
         try:
             return sdtimeaverage(**self.args)
         except Exception as instance:
@@ -190,7 +189,7 @@ class test_sdtimeaverage(unittest.TestCase):
         time = self.tm[row]
         # check Time
         check = ( time == refTime )
-        self.assertTrue(check, msg='## Time is not equal with expect.##\n{}'.format(time) )
+        self.assertTrue(check, msg='## Time is Invalid.##\n val={} ref={}'.format(time,refTime) )
 
 ######################
 # check Output
@@ -205,7 +204,7 @@ class test_sdtimeaverage(unittest.TestCase):
         nrow = len(self.tm)
         # check
         check = ( nrow == refNRow )
-        self.assertTrue(check, msg='## Unexpected Row Count in Output.##\n{}'.format(nrow) )
+        self.assertTrue(check, msg='## Row Count in Output is Invalid.##\n val={} ref={}'.format(nrow, refNRow) )
 
 ######################
 # check scan
@@ -241,8 +240,8 @@ class test_sdtimeaverage(unittest.TestCase):
         check3 =  ( (1.0/self.wgt[0])  - (self.sgm[0] * self.sgm[0])  < errLimit2 )
         check4 =  ( (1.0/self.wgt[1])  - (self.sgm[1] * self.sgm[1])  < errLimit2 )
 
-        self.assertTrue(check1, msg='## Weight[0] is unexpected.##\n {}'.format(self.wgt[0]) )
-        self.assertTrue(check2, msg='## Weight[1] is unexpected.##\n {}'.format(self.wgt[1]) )
+        self.assertTrue(check1, msg='## Weight[0] is unexpected.##\n {}/{}'.format(self.wgt[0],weight_ref) )
+        self.assertTrue(check2, msg='## Weight[1] is unexpected.##\n {}/{}'.format(self.wgt[1],weight_ref) )
         self.assertTrue(check3, msg='## Sigma [0] is unexpected.##\n {}'.format(self.sgm[0]) )
         self.assertTrue(check4, msg='## Sigma [1] is unexpected.##\n {}'.format(self.sgm[1]) )
 
@@ -276,7 +275,7 @@ class test_sdtimeaverage(unittest.TestCase):
 ################################
     def generate_data( self, msName, stateOption=False ):
         print( "----- Generating MS." )
-        self. get_main(defInputMs )
+
         # Test Slope
         offset = 0.0        # if specified non-zero, an Intensive Fail will be activated.
         slope  = 0.0001     # (tunable) 
@@ -284,12 +283,22 @@ class test_sdtimeaverage(unittest.TestCase):
         baseTime   = 0.0
         # Table Access (with numPy array operation)
         with tbmanager(msName,nomodify=False) as tb:
-            # get Rec size
-            NN = len(self.tm)
+            #+
+            # reduce MS row size 
+            #-
+            rows =list(range(3) ) 
+            if False :
+                tb.removerows(rows)
+            # nRow
+            NN = tb.nrows()
+            nRow= NN
+            numOfScan = nRow /63         #  org: Row = 63(rec) * 61 (scan) 
+            print( "Nrow = {}".format(NN) )
+            #-----
 
             # change STATE_ID (option) 
             if stateOption :
-                print("----- stateOption Active, using three STATE_IDs on the MS. ")
+                print("------ stateOption Active, using three STATE_IDs on the MS. ")
                 arrayState = numpy.mod( numpy.arange(0,NN), numOfState )
                 tb.putcol("STATE_ID",  arrayState )
 
@@ -303,21 +312,21 @@ class test_sdtimeaverage(unittest.TestCase):
             arrayInterval =  numpy.full(NN,testInterval, dtype=numpy.float64)
         
             # put to column
-            print( "----- Putting Time,INTERVAL." )
+            print( "------ Putting Time,INTERVAL." )
             tb.putcol("TIME",       arrayTime  )
             tb.putcol("INTERVAL",   arrayInterval  )
 
             # create Test-Data [use numpy.array]
-            print( "----- Calculating Curve." )
+            print( "------ Calculating Curve." )
             NN1 = (NN-1)/2
             L = numpy.linspace(-NN1,NN1, NN)* slope + offset 
             VAL = numpy.tile(L, [nChan, 1])
             arrayData3 = numpy.array( [VAL,VAL] )
 
             # write to the column at once
-            print( "----- Putting Curve."  )
+            print( "------ Putting Curve."  )
             tb.putcol("FLOAT_DATA",   arrayData3  )
-        print( "----- Done."  )  
+        print( "------ Done."  )  
         return True          
 
 ##################################
@@ -509,7 +518,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeagerage::12:: scan='' (no number) Default action. '''
 
         # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 12, 3846 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 12, nRow+3 )
 
         prm =  {'timebin' : '' ,
                 'scan'    : '' ,
@@ -598,7 +607,7 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param100(self):
         '''sdtimeaverage::100:: timebin=1282(N=3)  '''
         # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 100, 1282 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 100, nRow/3 + 1 )
  
         prm =  {'timebin' : timebin_str,          
                 'infile'  : defWorkMs,
@@ -614,7 +623,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeaverage::101: timebin=3846(N=1), timebin=''  '''
 
         # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 101, 3846 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 101, nRow + 3 )
 
         prm =  {'timebin' : timebin_str,             # Immediate Value ,
                 'infile'  : defWorkMs,
@@ -630,7 +639,7 @@ class test_sdtimeaverage(unittest.TestCase):
         '''sdtimeaverage::103: timebin=3846(N=1), timebin='all'  '''
 
         # set timebin string and private outputMS name.
-        privateOutfile, dmy  = self.setOutfile_Timebin( 103, 3846 )
+        privateOutfile, dmy  = self.setOutfile_Timebin( 103, nRow + 3  )
 
         prm =  {'timebin' : 'all',                # default = all is applied.
                 'infile'  : defWorkMs,
