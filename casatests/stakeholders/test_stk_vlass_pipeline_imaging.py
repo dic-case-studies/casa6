@@ -121,12 +121,13 @@ try:
     from casatools import image as iatool
     from casatasks import tclean, casalog
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+    CASA6 = True
+
     # CASA6 doesn't need default
     def default(atask):
         pass
 
     ctsys_resolve = ctsys.resolve
-    CASA6 = True
 except ImportError:
     from __main__ import default
     from tasks import *
@@ -137,9 +138,9 @@ except ImportError:
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)
 
-import casatestutils
+import casatestutils as ctu
 from casatestutils.imagehelpers import TestHelpers
-th = TestHelpers()
+imh = TestHelpers()
 
 
 # Path to data
@@ -160,7 +161,7 @@ niter=0
 
 ## A flag to run the tclean commands (True) as well as make the reports.
 ## False : Just remake the reports from existing outputs (False, useful for debugging the test scripts).
-do_row=False
+do_row=True
 
 
 #(1)# Image all the fields in the MS to generate the full 'rowplot' plots and show full trends. 
@@ -194,7 +195,7 @@ class TestTcleanBase(unittest.TestCase):
             self.parallel = True
 
     def tearDown(self):
-        casatestutils.generate_weblog("tclean_VLASS_pipeline",test_dict)
+        ctu.generate_weblog("tclean_VLASS_pipeline",test_dict)
         self._myia.done()
         """ don't delete it all """
 #        self.delData()
@@ -244,9 +245,9 @@ class TestTcleanBase(unittest.TestCase):
 
     def image_metrics(self, img, loc):
         # Read intensity, alpha and PB at source location
-        intval = th.get_pix(img+'.image.tt0', loc)
-        spxval = th.get_pix(img+'.alpha', loc)
-        pbval = th.get_pix(img+'.pb.tt0', loc)
+        intval = imh.get_pix(img+'.image.tt0', loc)
+        spxval = imh.get_pix(img+'.alpha', loc)
+        pbval = imh.get_pix(img+'.pb.tt0', loc)
 
         # PB-correction
         if pbval>0.0:
@@ -302,7 +303,7 @@ test_dict = {}
 ####    Tests     ####
 class Test_vlass_1p1_row(TestTcleanBase):
 
-    @casatestutils.stats_dict(test_dict)
+    @ctu.stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr0(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -344,7 +345,7 @@ class Test_vlass_1p1_row(TestTcleanBase):
                        pblimit=0.02,psterm=False, conjbeams=True,\
                        wprojplanes=64,niter=niter,datacolumn='data',\
                        mosweight=False, usepointing=False, 
-                       pointingoffsetsigdev=[300.0, 300.0],\
+                       pointingoffsetsigdev=300.0,\
                        parallel=self.parallel)
 
             intval, spxval, pbval = self.image_metrics(img=img, loc=[5792,4705,0,0])
@@ -363,9 +364,9 @@ class Test_vlass_1p1_row(TestTcleanBase):
             truth_spx = -0.78
             truth_pb = 0.92
         
-        out, report1 = th.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = th.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
-        out, report3 = th.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
+        out, report1 = imh.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = imh.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
+        out, report3 = imh.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
         report = report1 + report2 + report3
         report = report + 'Test values for field '+ fields[valcheck] + ' with name ' + fieldnames[fields[valcheck]] + '\n'
 
@@ -377,12 +378,12 @@ class Test_vlass_1p1_row(TestTcleanBase):
             self.make_rowplot(fields, intvals, spxvals, pbvals, testname+'_rowplot.png')
             test_dict[testname]['Figures'] = [testname+'_rowplot.png']
 
-        casatestutils.add_to_dict(self, output = test_dict, dataset = msname)
+        ctu.add_to_dict(self, output = test_dict, dataset = msname)
         
-        self.assertTrue(th.check_final(pstr = report), msg = report)
+        self.assertTrue(imh.check_final(pstr = report), msg = report)
 
 
-    @casatestutils.stats_dict(test_dict)
+    @ctu.stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr1_oneint(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -445,9 +446,9 @@ class Test_vlass_1p1_row(TestTcleanBase):
             truth_spx = -0.6
             truth_pb = 0.93
         
-        out, report1 = casatestutils.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = casatestutils.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
-        out, report3 = casatestutils.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
+        out, report1 = imh.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = imh.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
+        out, report3 = imh.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
 
         report = report1 + report2 + report3
         report = report + 'Test values for field '+ fields[valcheck] + ' with name ' + fieldnames[fields[valcheck]] + '\n'
@@ -460,13 +461,13 @@ class Test_vlass_1p1_row(TestTcleanBase):
             self.make_rowplot(fields, intvals, spxvals, pbvals, testname+'_rowplot.png')
             test_dict[testname]['Figures'] = [testname+'_rowplot.png']
 
-        casatestutils.add_to_dict(self, output = test_dict, dataset = msname)
+        ctu.add_to_dict(self, output = test_dict, dataset = msname)
         
-        self.assertTrue(casatestutils.check_final(pstr = report), msg = report)
+        self.assertTrue(imh.check_final(pstr = report), msg = report)
 
 
 
-    @casatestutils.stats_dict(test_dict)
+    @ctu.stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr1_twoint(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -532,9 +533,9 @@ class Test_vlass_1p1_row(TestTcleanBase):
             truth_pb = 0.93
 
         
-        out, report1 = casatestutils.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = casatestutils.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
-        out, report3 = casatestutils.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
+        out, report1 = imh.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = imh.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
+        out, report3 = imh.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
         report = report1 + report2 + report3
 
         report = report + 'Test values for field '+ fields[valcheck] + ' with name ' + fieldnames[fields[valcheck]] + '\n'
@@ -547,12 +548,12 @@ class Test_vlass_1p1_row(TestTcleanBase):
             self.make_rowplot(fields, intvals, spxvals, pbvals, testname+'_rowplot.png')
             test_dict[testname]['Figures'] = [testname+'_rowplot.png']
 
-        casatestutils.add_to_dict(self, output = test_dict, dataset = msname)
+        ctu.add_to_dict(self, output = test_dict, dataset = msname)
         
-        self.assertTrue(casatestutils.check_final(pstr = report), msg = report)
+        self.assertTrue(imh.check_final(pstr = report), msg = report)
 
 
-    @casatestutils.stats_dict(test_dict)
+    @ctu.stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr1and2_twoint(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -614,9 +615,9 @@ class Test_vlass_1p1_row(TestTcleanBase):
             truth_pb = 0.84
 
         
-        out, report1 = casatestutils.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = casatestutils.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
-        out, report3 = casatestutils.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
+        out, report1 = imh.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = imh.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
+        out, report3 = imh.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
 
         report = report1 + report2 + report3
         report = report + 'Test values for field '+ fields[valcheck] + ' with name ' + fieldnames[fields[valcheck]] + '\n'
@@ -629,11 +630,11 @@ class Test_vlass_1p1_row(TestTcleanBase):
             self.make_rowplot(fields, intvals, spxvals, pbvals, testname+'_rowplot.png')
             test_dict[testname]['Figures'] = [testname+'_rowplot.png']
 
-        casatestutils.add_to_dict(self, output = test_dict, dataset = msname)
+        ctu.add_to_dict(self, output = test_dict, dataset = msname)
         
-        self.assertTrue(casatestutils.check_final(pstr = report), msg = report)
+        self.assertTrue(imh.check_final(pstr = report), msg = report)
 
-    @casatestutils.stats_dict(test_dict)
+    @ctu.stats_dict(test_dict)
     def test_vlass_1p1_jointmosaic_pcorr1and2(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -684,10 +685,10 @@ class Test_vlass_1p1_row(TestTcleanBase):
             truth_pb = 0.94
 
        
-        #report0 = casatestutils.check_imexist( self.image_list( img, 'niter0') )
-        out, report1 = casatestutils.check_val(  intval, truth_int, valname = 'allants : PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = casatestutils.check_val(  spxval, truth_spx, valname = 'allants : Spectral Index', epsilon = self.epsilon)
-        out, report3 = casatestutils.check_val(  pbval, truth_pb, valname = 'allants : PB gain', epsilon = truth_pb*self.epsilon)
+        #report0 = imh.check_imexist( self.image_list( img, 'niter0') )
+        out, report1 = imh.check_val(  intval, truth_int, valname = 'allants : PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = imh.check_val(  spxval, truth_spx, valname = 'allants : Spectral Index', epsilon = self.epsilon)
+        out, report3 = imh.check_val(  pbval, truth_pb, valname = 'allants : PB gain', epsilon = truth_pb*self.epsilon)
 
 
         report = report1 + report2 +report3
@@ -700,9 +701,9 @@ class Test_vlass_1p1_row(TestTcleanBase):
         self.make_png(img+'.pb.tt0', out = img+'.pb.tt0.png')
         test_dict[testname]['Figures'] = [img+'.pb.tt0.png']
 
-        casatestutils.add_to_dict(self, output = test_dict, dataset = self.dataset1)
+        ctu.add_to_dict(self, output = test_dict, dataset = self.dataset1)
 
-        self.assertTrue(casatestutils.check_final(pstr = report), msg = report)
+        self.assertTrue(imh.check_final(pstr = report), msg = report)
 
 def suite():
      return [Test_vlass_1p1_row, Test_standard] #[Test_tclean_ALMA]
