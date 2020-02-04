@@ -1060,7 +1060,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
     // unique timestamps in each subchunk.
     CountedPtr<BaseCompare> singleTimeCompare(new ObjCompare<Double>());
     subchunkSortColumns_p.addSortingColumn(MS::TIME, singleTimeCompare);
-    timeScope_p = ChunkScope;
+    timeScope_p = SubchunkScope;
 
     initialize(mss, useMSIter2);
 
@@ -1414,9 +1414,17 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss,
     // that it can change for every row.
     ddIdScope_p = RowScope;
     freqSelScope_p = RowScope;
-    for (auto sortCol : sortColumns_p.getColumnIds())
-        if(sortCol == MS::DATA_DESC_ID)
-            ddIdScope_p = ChunkScope;
+    if (sortColumns_p.shouldAddDefaultColumns())
+        ddIdScope_p = ChunkScope;
+    else
+    {
+        for (auto sortCol : sortColumns_p.getColumnIds())
+        {
+            cout << " sort col " << sortCol<<endl;
+            if(sortCol == MS::DATA_DESC_ID)
+                ddIdScope_p = ChunkScope;
+        }
+    }
     if(ddIdScope_p == ChunkScope && frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel)
         freqSelScope_p = ChunkScope;
 
@@ -2345,8 +2353,8 @@ VisibilityIteratorImpl2::configureNewSubchunk()
                     channelSelectorsNrows_p.front()++;
             }
         }
-        else // Scope is chunk but the number of rows refer to the subchunk
-            channelSelectorsNrows_p.front() = (rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
+        else // Scope is chunk but the number of rows should refer to the subchunk
+            channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
     }
 
     rowBounds_p.subchunkNRows_p =
@@ -2865,6 +2873,8 @@ VisibilityIteratorImpl2::configureNewChunk()
         double timeStamp = -1;
         if(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel)
             timeStamp = msIter_p->msColumns().time().asdouble(0);
+        // Note that channelSelectorNRow is not initialized since it should
+        // refer to nunber of subchunk rows. It is properly set in configureNewSubchunk
         channelSelectors_p.push_back(
                 determineChannelSelection(timeStamp,
                                           msIter_p->spectralWindowId(),
