@@ -564,89 +564,81 @@ class ChannelSelectorCache
 {
 public:
 
-	ChannelSelectorCache(Int maxEntries = 20)
-		: frameOfReference_p(FrequencySelection::Unknown)
-		, maxEntries_p(maxEntries)
-		, msId_p(-1)
-		{}
+    ChannelSelectorCache(Int maxEntries = 20)
+        : frameOfReference_p(FrequencySelection::Unknown)
+        , maxEntries_p(maxEntries)
+        , msId_p(-1)
+    {}
 
-	~ChannelSelectorCache()
-		{
-			flush();
-		}
+    ~ChannelSelectorCache() {};
 
-	void add(const ChannelSelector *entry, Int frameOfReference)
-		{
-			if (entry->msId != msId_p
-			    || frameOfReference != frameOfReference_p) {
+    void add(std::shared_ptr<ChannelSelector> entry, Int frameOfReference)
+    {
+        if (entry->msId != msId_p
+            || frameOfReference != frameOfReference_p) {
 
-				// Cache only holds values for a single MS and a single frame of
-				// reference at a time.
+            // Cache only holds values for a single MS and a single frame of
+            // reference at a time.
 
-				flush();
+            flush();
+    
+            msId_p = entry->msId;
+            frameOfReference_p = frameOfReference;
+        }
 
-				msId_p = entry->msId;
-				frameOfReference_p = frameOfReference;
-			}
+        if (cache_p.size() >= maxEntries_p) {
 
-			if (cache_p.size() >= maxEntries_p) {
+            // Boot the first entry out of the cache.
+            // In most situations would have the
+            // lowest timestamp and lowest spectral window id.
 
-				// Boot the first entry out of the cache.  Should have the
-				// lowest timestamp and lowest spectral window id.
+            cache_p.erase(cache_p.begin());
+        }
 
-				delete (cache_p.begin()->second);
-				cache_p.erase(cache_p.begin());
-			}
+        Double time =
+            ((frameOfReference_p == FrequencySelection::ByChannel)
+             ? -1 // channel selection not function of time
+             : entry->timeStamp);
 
-			Double time =
-				((frameOfReference_p == FrequencySelection::ByChannel)
-				 ? -1 // channel selection not function of time
-				 : entry->timeStamp);
+        // take ownership of entry
+        cache_p[Key(time, entry->spectralWindowId)] = entry;
+    }
 
-			// take ownership of entry
-			cache_p[Key(time, entry->spectralWindowId)] = entry;
-		}
+    std::shared_ptr<ChannelSelector> 
+    find(Double time, Int msId, Int frameOfReference,
+         Int spectralWindowId) const {
 
-	const ChannelSelector *
-	find(Double time, Int msId, Int frameOfReference,
-	     Int spectralWindowId) const {
+        std::shared_ptr<ChannelSelector> result = nullptr;
 
-		const ChannelSelector * result = 0;
+        if (msId == msId_p && frameOfReference == frameOfReference_p) {
 
-		if (msId == msId_p && frameOfReference == frameOfReference_p) {
+            if (frameOfReference_p == FrequencySelection::ByChannel) {
+                time = -1; // channel selection is not function of time
+            }
 
-			if (frameOfReference_p == FrequencySelection::ByChannel) {
-				time = -1; // channel selection is not function of time
-			}
+            Cache::const_iterator i = cache_p.find(Key(time, spectralWindowId));
 
-			Cache::const_iterator i = cache_p.find(Key(time, spectralWindowId));
+            if (i != cache_p.end()) {
+                result = i->second;
+            }
+        }
 
-			if (i != cache_p.end()) {
-				result = i->second;
-			}
-		}
+        return result;
+    }
 
-		return result;
-	}
-
-	void
-	flush() {
-		for (Cache::iterator i = cache_p.begin(); i != cache_p.end(); i++) {
-			delete (i->second);
-		}
-
-		cache_p.clear();
-	}
+    void flush() {
+        cache_p.clear();
+    }
 
 private:
 
-	typedef pair<Double, Int> Key; // (time, spectralWindowId)
-	typedef map <Key, const ChannelSelector *> Cache;
+    typedef pair<Double, Int> Key; // (time, spectralWindowId)
+    typedef map <Key, std::shared_ptr<ChannelSelector>> Cache;
 
-	Cache cache_p;          // the cache iteself
-	Int frameOfReference_p; // cache's frame of reference
-	const uInt maxEntries_p;   // max # of entries to keep in the cache
-	Int msId_p;             // cache's MS ID
+    Cache cache_p;          // the cache itself
+    Int frameOfReference_p; // cache's frame of reference
+    const uInt maxEntries_p;   // max # of entries to keep in the cache
+    Int msId_p;             // cache's MS ID
 
 };
 
@@ -1141,16 +1133,14 @@ VisibilityIteratorImpl2::operator=(const VisibilityIteratorImpl2& vii)
         delete frequencySelections_p;
     frequencySelections_p = vii.frequencySelections_p->clone();
 
-    // copy channelSelectors_p. Owned by channelSelectorCache_p, so don't delete
-    // current values before replacing it
+    // copy channelSelectors_p. 
     channelSelectors_p.clear();
     for (auto chSel : vii.channelSelectors_p)
     {
-        channelSelectors_p.push_back(new ChannelSelector(chSel->timeStamp,
-                                                         chSel->msId,
-                                                         chSel->spectralWindowId,
-                                                         chSel->polarizationId,
-                                                         chSel->getSlicer()));
+        channelSelectors_p.push_back(std::shared_ptr<ChannelSelector>
+            (new ChannelSelector(chSel->timeStamp, chSel->msId, 
+                                 chSel->spectralWindowId, chSel->polarizationId, 
+                                 chSel->getSlicer())));
     }
 
     // get frame of reference for current MS
@@ -1670,7 +1660,7 @@ Vector<Int>
 VisibilityIteratorImpl2::getChannels(Double time, Int /*frameOfReference*/,
                                      Int spectralWindowId, Int msId) const
 {
-	const ChannelSelector * channelSelector =
+	std::shared_ptr<ChannelSelector> channelSelector =
 		determineChannelSelection(time, spectralWindowId, -1, msId);
 
 	return channelSelector->getChannels();
@@ -2279,10 +2269,10 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             // Compute the channel selector for this row so it can be compared
             // with the previous row's channel selector.
 
-            const ChannelSelector * newSelector =
+            std::shared_ptr<ChannelSelector> newSelector =
                     determineChannelSelection(rowTime);
 
-            if (newSelector != channelSelectors_p[0]) {
+            if (newSelector.get() != channelSelectors_p[0].get()) {
 
                 // This row uses different channels than the previous row and so
                 // it cannot be included in this subchunk.  Make the previous
@@ -2382,7 +2372,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             weightScaling_p);
 }
 
-const ChannelSelector *
+std::shared_ptr<ChannelSelector>
 VisibilityIteratorImpl2::determineChannelSelection(
 	Double time,
 	Int spectralWindowId,
@@ -2408,11 +2398,11 @@ VisibilityIteratorImpl2::determineChannelSelection(
 
 	// See if the appropriate channel selector is in the cache.
 
-	const ChannelSelector * cachedSelector =
+	std::shared_ptr<ChannelSelector> cachedSelector =
 		channelSelectorCache_p->find(time, msId, frameOfReference,
 		                             spectralWindowId);
 
-	if (cachedSelector != 0) {
+	if (cachedSelector != nullptr) {
 		return cachedSelector;
 	}
 
@@ -2423,7 +2413,7 @@ VisibilityIteratorImpl2::determineChannelSelection(
 
 	// Find(or create) the appropriate channel selection.
 
-	ChannelSelector * newSelector;
+	std::shared_ptr<ChannelSelector> newSelector;
 
 	if (polarizationId < 0) {
 		polarizationId = getPolarizationId(spectralWindowId, msId);
@@ -2482,7 +2472,7 @@ VisibilityIteratorImpl2::getPolarizationId(Int spectralWindowId, Int msId) const
 }
 
 
-vi::ChannelSelector *
+std::shared_ptr<vi::ChannelSelector>
 VisibilityIteratorImpl2::makeChannelSelectorC(
     const FrequencySelection & selectionIn,
     Double time,
@@ -2555,14 +2545,13 @@ VisibilityIteratorImpl2::makeChannelSelectorC(
     slices.setSubslicer(1, frequencyAxis);
 
     // Package up the result and return it.
-    ChannelSelector *result =
-    new ChannelSelector(time, msId, spectralWindowId, polarizationId,
-                        slices);
+    std::shared_ptr<ChannelSelector> result(new ChannelSelector
+        (time, msId, spectralWindowId, polarizationId, slices));
 
     return result;
 }
 
-ChannelSelector *
+std::shared_ptr<ChannelSelector>
 VisibilityIteratorImpl2::makeChannelSelectorF(
 	const FrequencySelection & selectionIn,
 	Double time, Int msId, Int spectralWindowId,
@@ -2641,9 +2630,8 @@ VisibilityIteratorImpl2::makeChannelSelectorF(
 
 	// Package up result and return it.
 
-	ChannelSelector * result =
-		new ChannelSelector(time, msId, spectralWindowId, polarizationId,
-		                    slices);
+    std::shared_ptr<ChannelSelector> result(new ChannelSelector
+        (time, msId, spectralWindowId, polarizationId, slices));
 
 	return result;
 }
@@ -4038,7 +4026,7 @@ VisibilityIteratorImpl2::getChannelInformationUsingFrequency(Bool now) const
 
 			// Create a channel selector for this window at the buffer's time.
 
-			const ChannelSelector * selector =
+			std::shared_ptr<ChannelSelector> selector =
 				determineChannelSelection(t(0), * window,
 				                          polarizationId(), msId());
 			const ChannelSlicer channelSlicer = selector->getSlicer();

@@ -780,13 +780,13 @@ protected:
 	virtual void
 	configureNewSubchunk();
 
-	const ChannelSelector *
+	std::shared_ptr<vi::ChannelSelector>
 	createDefaultChannelSelector(
 		casacore::Double time,
 		casacore::Int msId,
 		casacore::Int spectralWindowId);
 
-	virtual const vi::ChannelSelector *
+	virtual std::shared_ptr<vi::ChannelSelector>
 	determineChannelSelection(
 		casacore::Double time,
 		casacore::Int spectralWindowId = -1,
@@ -905,7 +905,7 @@ protected:
 	// Creates a channel selection for the current subchunk based on the channel
 	// or frequency selection made by the user.
 
-	vi::ChannelSelector *
+	std::shared_ptr<vi::ChannelSelector>
 	makeChannelSelectorC(
 		const FrequencySelection & selection,
 		casacore::Double time,
@@ -913,7 +913,7 @@ protected:
 		casacore::Int spectralWindowId,
 		casacore::Int polarizationId) const;
 
-	vi::ChannelSelector *
+	std::shared_ptr<vi::ChannelSelector>
 	makeChannelSelectorF(
 		const FrequencySelection & selection,
 		casacore::Double time,
@@ -1210,7 +1210,7 @@ protected:
     // general collection of cached values
     mutable Cache cache_p;
     // [use] current channel selectors for this chunk 
-    std::vector<const ChannelSelector *>  channelSelectors_p;
+    std::vector<std::shared_ptr<ChannelSelector>>  channelSelectors_p;
     // Number of rows in the VisBuffer for which each of the channel selector applies
     std::vector<size_t>  channelSelectorsNrows_p;
     // [own] cache of recently used channel selectors
