@@ -2293,6 +2293,11 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         }
         // Set the number of rows that use this channelSelector
         channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
+
+        rowBounds_p.subchunkNRows_p =
+                rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1;
+        rowBounds_p.subchunkRows_p =
+                RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
     }
     else {
         // All the information is in the subchunk MSIter
@@ -2310,6 +2315,11 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         // and therefore are consecutive.
         rowBounds_p.subchunkBegin_p = 0;
         rowBounds_p.subchunkEnd_p = msIterSubchunk_p->table().nrow() - 1;
+        rowBounds_p.subchunkNRows_p =
+                rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1;
+        rowBounds_p.subchunkRows_p =
+                RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
+
 
         // Under some circumstances, there is only one channel selector per chunk:
         // 1. The selection doesn't depend on time (it is based only on channel number)
@@ -2356,11 +2366,6 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         else // Scope is chunk but the number of rows should refer to the subchunk
             channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
     }
-
-    rowBounds_p.subchunkNRows_p =
-            rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1;
-    rowBounds_p.subchunkRows_p =
-            RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
 
     // Set flags for current subchunk
 
