@@ -23,6 +23,7 @@ casa_add_python ( tools tools_casatestutils_python lib/python${PYTHONV}/casatest
   check.py
   compare.py
   extractcasascript.py
+  restfreqtool.py
   selection_syntax.py
   testhelper.py
   weblog.py

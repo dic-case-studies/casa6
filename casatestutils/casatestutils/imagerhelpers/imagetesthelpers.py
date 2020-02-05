@@ -338,7 +338,7 @@ class TestHelpers:
             _tbt.close()
         pstr = ''
         if len(keys) <= 0:
-            pstr += ('No keywords found ({0})\n'.format(verdict(False)))
+            pstr += ('No keywords found ({0})\n'.format(TestHelpers().verdict(False)))
             return pstr
         # Records that need to be present
         imageinfo = 'imageinfo'
@@ -349,7 +349,7 @@ class TestHelpers:
             mandatory_recs.append(miscinfo)
         for rec in mandatory_recs:
             if rec not in keys:
-                pstr += ('{0} record not found ({1})\n'.format(rec, verdict(False)))
+                pstr += ('{0} record not found ({1})\n'.format(rec, TestHelpers().verdict(False)))
         if len(pstr) > 0:
             return pstr
         mandatory_imageinfo = ['objectname', 'imagetype']
@@ -491,14 +491,14 @@ class TestHelpers:
         if tabcache == True:
             opentabs = _tb.showcache()
             if len(opentabs) > 0:
-                pstr += "["+ testname +"] " + verdict(False) + ": Found open tables after run \n"
+                pstr += "["+ testname +"] " + TestHelpers().verdict(False) + ": Found open tables after run \n"
         return pstr
 
     def check_stopcode(self, stopcode, ret, testname="check_stopcode"):
         pstr = ''
         if stopcode != None:
             if type(stopcode) == int:
-                stopstr = "["+ testname +"] Stopcode is " + str(ret['stopcode']) + " (" + verdict(ret['stopcode'] == stopcode)  +  " : should be " + str(stopcode) + ")\n"
+                stopstr = "["+ testname +"] Stopcode is " + str(ret['stopcode']) + " (" + TestHelpers().verdict(ret['stopcode'] == stopcode)  +  " : should be " + str(stopcode) + ")\n"
                 print(stopstr)
                 pstr += stopstr
         return pstr
@@ -509,7 +509,7 @@ class TestHelpers:
             if type(reffreq) == list:
                 for ii in reffreq:
                     if type(ii) == tuple and len(ii) == 2:
-                        pstr += check_ref_freq(ii[0], ii[1])
+                        pstr += TestHelpers().check_ref_freq(ii[0], ii[1])
         return pstr
 
     def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
@@ -532,13 +532,13 @@ class TestHelpers:
         if ret != None and type(ret) == dict:
             try:
                 if peakres != None:
-                    pstr += check_val(val=get_peak_res(ret), correctval=peakres, valname="peak res")
+                    pstr += TestHelpers().check_val(val=get_peak_res(ret), correctval=peakres, valname="peak res")
                 if modflux != None:
-                    pstr += check_val(val=get_mod_flux(ret), correctval=modflux, valname="mod flux")
+                    pstr += TestHelpers().check_val(val=get_mod_flux(ret), correctval=modflux, valname="mod flux")
                 if iterdone != None:
-                    pstr += check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
+                    pstr += TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
                 if nmajordone != None:
-                    pstr += check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
+                    pstr += TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
             except Exception as e:
                 logging.info(ret)
                 raise
