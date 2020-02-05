@@ -1052,12 +1052,15 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   timeInterval_p(timeInterval),
   vb_p(nullptr),
   weightScaling_p(),
-  writable_p(writable)
+  writable_p(writable),
+  ddIdScope_p(UnknownScope),
+  timeScope_p(UnknownScope)
 {
     // Set the default subchunk iteration sorting scheme, i.e.
     // unique timestamps in each subchunk.
     CountedPtr<BaseCompare> singleTimeCompare(new ObjCompare<Double>());
     subchunkSortColumns_p.addSortingColumn(MS::TIME, singleTimeCompare);
+    timeScope_p = SubchunkScope;
 
     initialize(mss, useMSIter2);
 
@@ -1096,9 +1099,11 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   vb_p(nullptr),
   weightScaling_p(),
   writable_p(isWritable),
+  ddIdScope_p(UnknownScope),
+  timeScope_p(UnknownScope),
   subchunkSortColumns_p(subchunkSortColumns)
 {
-    initialize(mss, false);
+    initialize(mss);
 
     VisBufferOptions options = writable_p ? VbWritable : VbNoOptions;
 
@@ -1175,6 +1180,8 @@ VisibilityIteratorImpl2::operator=(const VisibilityIteratorImpl2& vii)
     timeInterval_p = vii.timeInterval_p;
     weightScaling_p = vii.weightScaling_p;
     writable_p = vii.writable_p;
+    ddIdScope_p = vii.ddIdScope_p;
+    timeScope_p = vii.timeScope_p;
 
     // clone modelDataGenerator_p
     if (modelDataGenerator_p) delete modelDataGenerator_p;
@@ -1266,6 +1273,8 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     timeInterval_p = vii.timeInterval_p;
     weightScaling_p = vii.weightScaling_p;
     writable_p = vii.writable_p;
+    ddIdScope_p = vii.ddIdScope_p;
+    timeScope_p = vii.timeScope_p;
 
     // move modelDataGenerator_p
     if (modelDataGenerator_p) 
@@ -1401,7 +1410,54 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss,
 
     subtableColumns_p = new SubtableColumns(msIter_p);
 
+    // Check whether DDID is unique within each chunk. Otherwise assume
+    // that it can change for every row.
+    ddIdScope_p = RowScope;
+    freqSelScope_p = RowScope;
+    if (sortColumns_p.shouldAddDefaultColumns())
+        ddIdScope_p = ChunkScope;
+    else
+    {
+        for (auto sortCol : sortColumns_p.getColumnIds())
+        {
+            cout << " sort col " << sortCol<<endl;
+            if(sortCol == MS::DATA_DESC_ID)
+                ddIdScope_p = ChunkScope;
+        }
+    }
+    if(ddIdScope_p == ChunkScope && frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel)
+        freqSelScope_p = ChunkScope;
 
+    casacore::AipsrcValue<Bool>::find(
+            autoTileCacheSizing_p,
+            VisibilityIterator2::getAipsRcBase() + ".AutoTileCacheSizing", false);
+}
+
+void
+VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss)
+{
+    cache_p.flush();
+
+    msIndex_p = 0;
+
+    frequencySelections_p = new FrequencySelections();
+
+    Int nMs = mss.nelements();
+    measurementSets_p.resize(nMs);
+    tileCacheIsSet_p->resize(nMs);
+
+    for (Int k = 0; k < nMs; ++k) {
+        measurementSets_p[k] = * mss[k];
+        addDataSelection(measurementSets_p[k]);
+        (*tileCacheIsSet_p)[k] = false;
+    }
+
+    msIter_p = new MSIter(measurementSets_p,
+                sortColumns_p.sortingDefinition());
+
+    subtableColumns_p = new SubtableColumns(msIter_p);
+
+    setMetadataScope();
     // Install default frequency selections.  This will select all
     // channels in all windows.
 
@@ -1437,6 +1493,66 @@ VisibilityIteratorImpl2::clone() const
 			false));
 	*result = *this;
 	return result;
+}
+
+void VisibilityIteratorImpl2::setMetadataScope()
+{
+    // Check if each chunk will receive a unique DDId.
+    // For that it must be a sorting column and comparison function should
+    // be of the type ObjCompare<Int>
+    bool uniqueDDIdInChunk, uniqueDDIdInSubchunk;
+    for(auto& sortDef : sortColumns_p.sortingDefinition())
+        if(sortDef.first == MS::columnName(MS::DATA_DESC_ID) &&
+           dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
+            uniqueDDIdInChunk = true;
+
+    for(auto& sortDef : subchunkSortColumns_p.sortingDefinition())
+        if(sortDef.first == MS::columnName(MS::DATA_DESC_ID) &&
+           dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
+            uniqueDDIdInSubchunk = true;
+
+    if(uniqueDDIdInChunk)
+        ddIdScope_p = ChunkScope;
+    else if(uniqueDDIdInSubchunk)
+        ddIdScope_p = SubchunkScope;
+    else
+        ddIdScope_p = RowScope;
+
+    // Similar for time
+    bool uniqueTimeInChunk, uniqueTimeInSubchunk;
+    for(auto& sortDef : sortColumns_p.sortingDefinition())
+        if(sortDef.first == MS::columnName(MS::TIME) &&
+           dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
+            uniqueTimeInChunk = true;
+
+    for(auto& sortDef : subchunkSortColumns_p.sortingDefinition())
+        if(sortDef.first == MS::columnName(MS::TIME) &&
+           dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
+            uniqueTimeInSubchunk = true;
+
+    if(uniqueTimeInChunk)
+        timeScope_p = ChunkScope;
+    else if(uniqueTimeInSubchunk)
+        timeScope_p = SubchunkScope;
+    else
+        timeScope_p = RowScope;
+
+    // Determine the scope of the frequency/channel selections
+    // Under some circumstances, there is only one channel selector per chunk:
+    // 1. The selection doesn't depend on time (it is based only on channel number)
+    //    and DDId (and consequently SPW, polID) is the same for the whole chunk.
+    // 2. The selection might depend on time but DDid *and* time are the same for
+    //    the whole chunk.
+    if ((ddIdScope_p == ChunkScope && frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel) ||
+        (ddIdScope_p == ChunkScope && timeScope_p == ChunkScope))
+        freqSelScope_p = ChunkScope;
+    // Similarly, frequency/channel selections can be constant for the whole subchunk
+    else if ((ddIdScope_p == SubchunkScope && frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel) ||
+        (ddIdScope_p == SubchunkScope && timeScope_p == SubchunkScope))
+        freqSelScope_p = SubchunkScope;
+    // Otherwise frequency/channel selections change for each row.
+    else
+        freqSelScope_p = RowScope;
 }
 
 VisibilityIteratorImpl2::Cache::Cache()
@@ -1767,18 +1883,35 @@ VisibilityIteratorImpl2::spectralWindow() const
 void
 VisibilityIteratorImpl2::spectralWindows(Vector<Int> & spws) const
 {
-	// Get's the list of spectral windows for each row in the VB window
+    // Get's the list of spectral windows for each row in the VB window
 
-	Vector<Int> ddis;
-	dataDescriptionIds(ddis);
-	spws.resize(ddis.size());
+    Vector<Int> ddis;
+    dataDescriptionIds(ddis);
+    spws.resize(ddis.size());
 
-	for (uInt idx = 0; idx < ddis.size(); idx++) {
-		spws(idx) = subtableColumns_p->dataDescription().spectralWindowId()(
-			ddis(idx));
-	}
+    for (uInt idx = 0; idx < ddis.size(); idx++) {
+        spws(idx) = subtableColumns_p->dataDescription().spectralWindowId()(
+            ddis(idx));
+    }
 
-	return;
+    return;
+}
+
+void
+VisibilityIteratorImpl2::polarizationIds(Vector<Int> & polIds) const
+{
+    // Get's the list of spectral windows for each row in the VB window
+
+    Vector<Int> ddis;
+    dataDescriptionIds(ddis);
+    polIds.resize(ddis.size());
+
+    for (uInt idx = 0; idx < ddis.size(); idx++) {
+        polIds(idx) = subtableColumns_p->dataDescription().polarizationId()(
+            ddis(idx));
+    }
+
+    return;
 }
 
 // Return current Polarization Id
@@ -2129,6 +2262,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         Double previousRowTime =
                 rowBounds_p.times_p(rowBounds_p.subchunkBegin_p);
         channelSelectors_p.clear();
+        channelSelectorsNrows_p.clear();
         channelSelectors_p.push_back(determineChannelSelection(previousRowTime,
             spectralWindow(), polarizationId(), msId()));
 
@@ -2157,6 +2291,8 @@ VisibilityIteratorImpl2::configureNewSubchunk()
                 rowBounds_p.subchunkEnd_p = i - 1;
             }
         }
+        // Set the number of rows that use this channelSelector
+        channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
     }
     else {
         // All the information is in the subchunk MSIter
@@ -2175,9 +2311,50 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         rowBounds_p.subchunkBegin_p = 0;
         rowBounds_p.subchunkEnd_p = msIterSubchunk_p->table().nrow() - 1;
 
-        Double subchunkTime = columns_p.time_p(0);
-        channelSelectors_p.clear();
-        channelSelectors_p.push_back(determineChannelSelection(subchunkTime));
+        // Under some circumstances, there is only one channel selector per chunk:
+        // 1. The selection doesn't depend on time (it is based only on channel number)
+        //    and DDId (and consequently SPW, polID) is the same for the whole subchunk.
+        // 2. The selection might depend on time but DDid *and* time are the same for
+        //    the whole subchunk.
+        if(freqSelScope_p == SubchunkScope)
+        {
+            channelSelectors_p.clear();
+            channelSelectorsNrows_p.clear();
+            double timeStamp = -1;
+            if(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel)
+                timeStamp = msIterSubchunk_p->msColumns().time().asdouble(0);
+            channelSelectors_p.push_back(
+                    determineChannelSelection(timeStamp,
+                                              msIterSubchunk_p->spectralWindowId(),
+                                              msIterSubchunk_p->polarizationId(), msId()));
+            channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
+        }
+        // In all other cases the channel selector needs to be computed
+        // for each row. Each channel selector will then apply to a set
+        // of n consecutive rows (as defined in channelSelectorsNrows_p).
+        else if(freqSelScope_p == RowScope)
+        {
+            channelSelectors_p.clear();
+            channelSelectorsNrows_p.clear();
+            Vector<Int> spws, polIds;
+            spectralWindows(spws);
+            polarizationIds(polIds);
+            for(Int irow = 0 ; irow < rowBounds_p.subchunkNRows_p; ++irow)
+            {
+                auto newChannelSelector = determineChannelSelection(
+                        msIterSubchunk_p->msColumns().time().asdouble(irow),
+                        spws[irow], polIds[irow], msId());
+                if(irow == 0 || newChannelSelector != channelSelectors_p.back())
+                {
+                    channelSelectors_p.push_back(newChannelSelector);
+                    channelSelectorsNrows_p.push_back(1);
+                }
+                else
+                    channelSelectorsNrows_p.front()++;
+            }
+        }
+        else // Scope is chunk but the number of rows should refer to the subchunk
+            channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
     }
 
     rowBounds_p.subchunkNRows_p =
@@ -2682,6 +2859,26 @@ VisibilityIteratorImpl2::configureNewChunk()
                             subchunkSortColumns_p.sortingDefinition()));
         msIterSubchunk_p->origin();
 
+    }
+
+    // Reset channel selectors vector in each chunk
+    channelSelectors_p.clear();
+
+    // If frequency selections are constant for the whole chunk
+    if (freqSelScope_p == ChunkScope)
+    {
+        // If selection does not depend on time, assign a time value of -1.
+        // Since there is only one DDId we can ask for a single SPWId, PolID
+        // in msIter.
+        double timeStamp = -1;
+        if(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel)
+            timeStamp = msIter_p->msColumns().time().asdouble(0);
+        // Note that channelSelectorNRow is not initialized since it should
+        // refer to nunber of subchunk rows. It is properly set in configureNewSubchunk
+        channelSelectors_p.push_back(
+                determineChannelSelection(timeStamp,
+                                          msIter_p->spectralWindowId(),
+                                          msIter_p->polarizationId(), msId()));
     }
 
     setTileCache();

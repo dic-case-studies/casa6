@@ -126,9 +126,9 @@ public:
         casacore::Bool isWritable,
         casacore::Bool useMSIter2=false);
 
-    // This constructor is imilar to previous one but it allows to explicitely
+    // This constructor is similar to previous one but it allows to explicitely
     // define the sorting criteria used for chunk iteration and for subchunk
-    // iteration.
+    // iteration. Also the criteria can be generic functions
     VisibilityIteratorImpl2(
         const casacore::Block<const casacore::MeasurementSet *> & mss,
         const SortColumns & chunkSortColumns,
@@ -150,6 +150,11 @@ public:
 	// Members
 
 	std::unique_ptr<VisibilityIteratorImpl2> clone() const;
+
+    // Set the scope of metadata, i.e., how long a given metadata is valid.
+    // For instance, if ddIDScope = SubchunkScope, the ddId will be unique
+    // within a subchunk.
+    void setMetadataScope();
 
 	// Report the the ViImplementation type
 	//  TBD:  indicate writable?
@@ -399,6 +404,9 @@ public:
 
 	virtual void
 	spectralWindows(casacore::Vector<casacore::Int> & spws) const override;
+
+    virtual void
+    polarizationIds(casacore::Vector<casacore::Int> & polIds) const override;
 
 	// Return current Polarization Id
 	virtual casacore::Int
@@ -882,7 +890,11 @@ protected:
 	virtual void
 	initialize(
 		const casacore::Block<const casacore::MeasurementSet *> & mss,
-		casacore::Bool useMSIter2=false);
+		casacore::Bool useMSIter2);
+
+    // Initialize using only the generic sorting criteria
+    void
+    initialize(const casacore::Block<const casacore::MeasurementSet *> &mss);
 
 	// Returns true if casacore::MS Iterator is currently pointing to a selected
 	// spectral window
@@ -1191,12 +1203,16 @@ protected:
         casacore::Vector<casacore::Double> times_p;
     };
 
+    typedef enum {UnknownScope = 0, ChunkScope = 1, SubchunkScope = 2, RowScope = 3} MetadataScope;
+
     casacore::Bool autoTileCacheSizing_p;
     std::map <VisBufferComponent2, BackWriter *> backWriters_p;
     // general collection of cached values
     mutable Cache cache_p;
     // [use] current channel selectors for this chunk 
     std::vector<const ChannelSelector *>  channelSelectors_p;
+    // Number of rows in the VisBuffer for which each of the channel selector applies
+    std::vector<size_t>  channelSelectorsNrows_p;
     // [own] cache of recently used channel selectors
     ChannelSelectorCache * channelSelectorCache_p;
     // The main columns for the current MS
@@ -1249,6 +1265,14 @@ protected:
     VisBuffer2 * vb_p;
     casacore::CountedPtr<WeightScaling> weightScaling_p;
     casacore::Bool writable_p;
+    // Determine several metadata uniqueness. For each metadata
+    // the valus could be unique in each chunk or subchunk,
+    // or in the worst case for each row.
+    MetadataScope ddIdScope_p;
+    MetadataScope timeScope_p;
+    MetadataScope freqSelScope_p;
+    MetadataScope antenna1Scope_p;
+    MetadataScope antenna2Scope_p;
 
     // Variables for the handling of the subchunk  loop
     std::shared_ptr<casacore::MeasurementSet> msSubchunk_p;
