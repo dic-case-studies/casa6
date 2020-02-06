@@ -1712,6 +1712,9 @@ FlagDataHandler::setChanAverageIter(Vector<Int> chanbin)
     	chanAvgOptions_p.define("chanbin",chanbin);
     }
 
+    // ensure preservation of flags (CAS-12737, CAS-9985)
+    chanAvgOptions_p.define("flagdataFlagPropagation", true);
+
     return;
 }
 
