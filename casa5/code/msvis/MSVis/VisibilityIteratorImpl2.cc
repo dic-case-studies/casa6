@@ -3822,12 +3822,15 @@ VisibilityIteratorImpl2::visibilityShape() const
 
 void
 VisibilityIteratorImpl2::setFrequencySelections(
-	FrequencySelections const& frequencySelections)
+    FrequencySelections const& frequencySelections)
 {
-	pendingChanges_p->setFrequencySelections(frequencySelections.clone());
+    pendingChanges_p->setFrequencySelections(frequencySelections.clone());
 
-	channelSelectorCache_p->flush();
-	spectralWindowChannelsCache_p->flush();
+    channelSelectorCache_p->flush();
+    spectralWindowChannelsCache_p->flush();
+    channelSelectors_p.clear();
+    channelSelectorsNrows_p.clear();
+    setMetadataScope();
 }
 
 void
