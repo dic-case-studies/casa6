@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="casatestutils", # Replace with your own username
-    version="0.1.1",
+    version="0.1.2",
     author="A. Wells",
     author_email="awells@nrao.edu",
     description="Tools for use with casatest and testing",
@@ -20,6 +20,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=[ 'casatools', 'casatasks', 'matplotlib', 'scipy', 'numpy' ],
-    dependency_links=['https://casa-pip.nrao.edu/repository/pypi-group/simple/casatools','https://casa-pip.nrao.edu/repository/pypi-group/simple/casatasks']
+    install_requires=[ 'matplotlib', 'scipy', 'numpy' ]
+
 )
