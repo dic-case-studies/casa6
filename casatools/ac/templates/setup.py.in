@@ -465,8 +465,12 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
-               import casadata
-               ctsys.initialize( __sys.executable, __find_user_data_path( ) + [casadata.datapath] + __find_data_path( ) )
+               _dpath = [ ]
+               try:
+                   import casadata
+                   _dpath = [ casadata.datapath ]
+               except: pass
+               ctsys.initialize( __sys.executable, __find_user_data_path( ) + _dpath + __find_data_path( ) )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -2190,13 +2194,18 @@ class create_makefile(Command):
         do_testing()
         # rsync
         with open("makefile", "a") as mk:
-            import casadata
             mk.write("\n# targets to rsync data repos\n")
             mk.write(".PHONY: " + rsync_data_target + "\n")
-            mk.write(
-                rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
-                + casadata.datapath
-            )
+            try:
+                import casadata
+                mk.write(
+                    rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
+                    + casadata.datapath
+                )
+            except:
+                mk.write(
+                    rsync_data_target + ": \n\t$(error no data repository is available for update)"
+                )
         write_dependency_tracking()
         print(
             "Successfully generated makefile! Now, run 'make [-j<n>]' "
