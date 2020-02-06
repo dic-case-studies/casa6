@@ -465,7 +465,8 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
-               ctsys.initialize( __sys.executable, __find_user_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] + __find_data_path( ) )
+               import casadata
+               ctsys.initialize( __sys.executable, __find_user_data_path( ) + [casadata.datapath] + __find_data_path( ) )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -1181,11 +1182,6 @@ class casa_build_ext(build_ext):
             fd.write("%s\n" % imports)
         """
         generate_casac_init_py()
-
-        try:
-            spawn(["rsync", "-avz", "rsync://casa-rsync.nrao.edu/casa-data", "%s/__data__" % moduledir])
-        except:
-            print("RSYNC OF CASA DATA FROM 'rsync://casa-rsync.nrao.edu/casa-data' FAILED!")
 
         if do_wheel_closure:
             module_path = os.path.join('build', distutils_dir_name('lib'), module_name)
@@ -2194,11 +2190,12 @@ class create_makefile(Command):
         do_testing()
         # rsync
         with open("makefile", "a") as mk:
+            import casadata
             mk.write("\n# targets to rsync data repos\n")
             mk.write(".PHONY: " + rsync_data_target + "\n")
             mk.write(
                 rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
-                + moduledir + "/__data__"
+                + casadata.datapath
             )
         write_dependency_tracking()
         print(
@@ -2461,4 +2458,4 @@ if __name__ == '__main__':
                                    if wheel_build \
                                    else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
            ext_modules=ext,
-           install_requires=[ 'numpy' ] )
+           install_requires=[ 'numpy', 'casadata' ] )
