@@ -4157,6 +4157,176 @@ class test_virtual_col(test_base):
         self.assertEqual(res_virtual, res, 'Flagging using virtual MODEL column differs from normal MODEL column')
 
 
+@unittest.skipIf(True,
+                 "These tests were added in CAS-12737. Not clear what would be the right"
+                 "place for them.")
+class test_flags_propagation_channelavg(test_base):
+
+    def setUp(self):
+        self.setUp_data4preaveraging()
+
+    def tearDown(self):
+        os.system('rm -rf test_preaveraging.ms')
+
+    def run_auto_flag_preavg_propagation(self, chanbin=2, mode='clip', ims='', **kwargs):
+        """
+        Enables channel average and prepares a priori flags in a sparse pattern across
+        channels such that (back)propagation of flags after channel-averaging.
+        One channel is flagged every 'chanbin'
+        With chanbin=2, 50% of channels will be a priori flagged (X 0 X 0 X 0...)
+        With chanbin-3, 33% of channels will be a priori flagged, and so on (X 0 0 X 0 0...)
+        This would maximize the "loss" of flags as seen in CAS-12737
+
+        :param chanbin: chanbin as used in flagdata
+        :param mode: auto-flag mode
+        :param kwargs: Use kwargs to pass mode specific parameters, such as clipminmax for
+        clip, etc.
+        :return: res+apriori_flags+final_flags. res is the flagdata summary dict from the
+        MS after applying flagging with channelavg. apriori_flags is the FLAG column before
+        applying channelavg+autoflag_method. final_flags is the FLAG column after applying
+        channelavg+autoflag_method.
+        """
+        def get_nchan(mst):
+            """
+            This function assumes single-SPW (as is the case in this test) or all SPWs
+            have the same number of channels.
+
+            :return: number of channels in SPW(s)
+            """
+            try:
+                tbt = table()
+                tbt.open(os.path.join(ims, 'SPECTRAL_WINDOW'))
+                chans = tbt.getcol('NUM_CHAN')
+                if len(chans) < 1:
+                    raise RuntimeError('Inconsistency found, NUM_CHAN: {}'.format(chans))
+                if not np.all(chans[0] == chans):
+                    raise RuntimeError('This supports only MSs with all SPWs with the same '
+                                       'number of channels. Got NUM_CHAN: {}'.format(chans))
+                nchan = chans[0]
+            except RuntimeError as exc:
+                raise RuntimeError('Error while trying to figure out the #channels: {}'.
+                                   format(exc))
+            finally:
+                tbt.close()
+
+            return nchan
+
+        flagdata(vis=ims, mode='unflag')
+
+        # Pre-flag channels, for example '*:0,1,2,4,...62'
+        nchan = get_nchan(ims)
+        flag_chans = np.arange(0, nchan, chanbin)
+        flag_spw_str = '*:{}'.format(';'.join(['{}'.format(chan) for chan in flag_chans]))
+        flagdata(vis=ims, mode='manual', spw=flag_spw_str)
+
+        apriori_flags = self.get_flags(self.vis)
+
+        res_avg = flagdata(vis=ims, mode=mode, channelavg=True, chanbin=chanbin, **kwargs)
+
+        res = flagdata(vis=ims, mode='summary')
+
+        final_flags = self.get_flags(self.vis)
+
+        return res, apriori_flags, final_flags
+
+    def get_flags(self, mss):
+        """
+        Returns the flags column of an MS. Use only on tiny MSs as the one used in this
+        test
+
+        :param mss: An MS
+        :return: The FLAG column of the MS
+        """
+        try:
+            tbt = table()
+            tbt.open(mss)
+            flags = tbt.getcol('FLAG')
+            return flags
+        finally:
+            tbt.close()
+
+    def check_flags_preserved(self, flags_before, flags_after):
+        """
+        Check 'flags before' against 'flags after' and ensures that all the flags set
+        'before' are also set 'after'
+        The flags are expected in the same format as returned by tbtool.getcol('FLAG').
+
+        :param before_flags: flags before manipulating/flagging an MS
+        :param after_flags: flags after manipulating/flagging an MS
+        :return: true if all flags set in flags_before are also set in flags_after
+        """
+        flag_cnt_before = np.count_nonzero(flags_before)
+        and_flags = np.logical_and(flags_before, flags_after)
+        flag_cnt_and = np.count_nonzero(and_flags)
+
+        if flag_cnt_and != flag_cnt_before:
+            print(' * Not all the flags set before ({}) are set after ({}). Flags before: '
+                  '{}\n Flags after: {}'.format(flag_cnt_before, flag_cnt_and,
+                                                flags_before, flags_after))
+        return flag_cnt_and == flag_cnt_before
+
+    def test_propagation_clip_chanbin_2(self):
+        """ clip, chanavg, chanbin=2, propagate flags forth and back """
+
+        # Make clip flag something (if no flags are added, the flag cube is not written)
+        res, apriori_flags, final_flags =\
+            self.run_auto_flag_preavg_propagation(chanbin=2, ims=self.vis,
+                                                  clipminmax=[0.0, 0.1])
+
+        self.assertEqual(res['total'], 1024)
+        # Before CAS-12727, there is some 'loss' of flags. This would be: 44
+        # Instead of >= 512 (a priori)
+        self.assertEqual(res['flagged'], 534)
+        self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
+                        'Not all the flags set "before" are set "after"')
+
+    def test_propagation_clip_chanbin_3(self):
+        """ clip, chanavg, chanbin=3, propagate flags forth and back """
+
+        # Make clip flag something (if no flags are added, the flag cube is not written)
+        res, apriori_flags, final_flags =\
+            self.run_auto_flag_preavg_propagation(chanbin=3, ims=self.vis,
+                                                  clipminmax=[0.001, 0.1])
+
+        self.assertEqual(res['total'], 1024)
+        # Before CAS-12727, there is some 'loss' of flags. This would be: 40
+        # Instead of >= 352 (a priori)
+        self.assertEqual(res['flagged'], 368)
+        self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
+                        'Not all the flags set "before" are set "after"')
+
+    def test_propagation_tfcrop_chanbin_4(self):
+        """ tfcrop, chanavg, chanbin=4, propagate flags forth and back """
+
+        # Make rflag flag something (if no flags are added, the flag cube is not written)
+        res, apriori_flags, final_flags =\
+            self.run_auto_flag_preavg_propagation(chanbin=4, ims=self.vis,
+                                                  mode='tfcrop', extendflags=False)
+
+        self.assertEqual(res['total'], 1024)
+        # Before CAS-12727, there is some 'loss' of flags. This would be: 68
+        # Instead of >= 256
+        self.assertEqual(res['flagged'], 307)
+        self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
+                        'Not all the flags set "before" are set "after"')
+
+    def test_propagation_rflag_chanbin_5(self):
+        """ rflag, chanavg, chanbin=2, propagate flags forth and back """
+
+        # Make rflag flag something (if no flags are added, the flag cube is not written)
+        res, apriori_flags, final_flags =\
+            self.run_auto_flag_preavg_propagation(chanbin=5, ims=self.vis,
+                                                  mode='rflag', extendflags=False)
+
+        print('res: {}'.format(res))
+        self.assertEqual(res['total'], 1024)
+        # Before CAS-12727, there is some 'loss' of flags. This would be: 35
+        # Instead of >= 208
+        self.assertEqual(res['flagged'], 236)
+        self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
+                        'Not all the flags set "before" are set "after"')
+
+
 # Cleanup class
 class cleanup(test_base):
 
@@ -4209,6 +4379,7 @@ def suite():
             TestMergeManualTimerange,
             test_preaveraging,
             test_preaveraging_rflag_residual,
+            test_flags_propagation_channelavg,
             test_virtual_col,
             cleanup]
 
