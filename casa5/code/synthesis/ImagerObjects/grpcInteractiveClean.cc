@@ -60,18 +60,44 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 #endif
 	}
 
-    grpcInteractiveCleanState::grpcInteractiveCleanState( ) :
-        Niter(0), CycleNiter(0), InteractiveNiter(0), Threshold(0), InteractiveThreshold(0.0),
-        IsCycleThresholdAuto(true), IsThresholdAuto(false), CycleFactor(1.0), LoopGain(0.1),
-        StopFlag(false), PauseFlag(false), InteractiveMode(false), UpdatedModelFlag(false),
-        IterDone(0), StopCode(0), Nsigma(0.0), MaxPsfSidelobe(0.0), MinPsfFraction(0.05),
-        MaxPsfFraction(0.8), PeakResidual(-1.0),
-        SummaryMinor(casacore::IPosition(2,6,0)), SummaryMajor(casacore::IPosition(1,0)),
-        MinorCyclePeakResidual(0.0), PrevPeakResidual(-1.0), NsigmaThreshold(0.0),
-        PrevMajorCycleCount(0), PeakResidualNoMask(0.0), PrevPeakResidualNoMask(-1.0),
-        MinPeakResidualNoMask(1e+9), MinPeakResidual(1e+9), MaskSum(-1.0), MadRMS(0.0),
-        NSummaryFields(6) {
+    grpcInteractiveCleanState::grpcInteractiveCleanState( ) : SummaryMinor(casacore::IPosition(2,6,0)),
+                                                              SummaryMajor(casacore::IPosition(1,0)) {
 		LogIO os( LogOrigin("grpcInteractiveCleanState",__FUNCTION__,WHERE) );
+        reset( );
+    }
+
+    void grpcInteractiveCleanState::reset( ) {
+        Niter = 0;
+        CycleNiter = 0;
+        InteractiveNiter = 0;
+        Threshold = 0;
+        InteractiveThreshold = 0.0;
+        IsCycleThresholdAuto = true;
+        IsThresholdAuto = false;
+        CycleFactor = 1.0;
+        LoopGain = 0.1;
+        StopFlag = false;
+        PauseFlag = false;
+        InteractiveMode = false;
+        UpdatedModelFlag = false;
+        IterDone = 0;
+        StopCode = 0;
+        Nsigma = 0.0;
+        MaxPsfSidelobe = 0.0;
+        MinPsfFraction = 0.05;
+        MaxPsfFraction = 0.8;
+        PeakResidual = -1.0;
+        MinorCyclePeakResidual = 0.0;
+        PrevPeakResidual = -1.0;
+        NsigmaThreshold = 0.0;
+        PrevMajorCycleCount = 0;
+        PeakResidualNoMask = 0.0;
+        PrevPeakResidualNoMask = -1.0;
+        MinPeakResidualNoMask = 1e+9;
+        MinPeakResidual = 1e+9;
+        MaskSum = -1.0;
+        MadRMS = 0.0;
+        NSummaryFields = 6;
     }
 
 	void grpcInteractiveCleanManager::setControlsFromRecord(const casac::record &iterpars) {
@@ -1361,6 +1387,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     void grpcInteractiveCleanManager::closePanel( ) {
         gui.close_panel(clean_panel_id);
+        clean_panel_id = -1;
+        clean_images.clear( );
+        access( (void*) 0,
+                std::function< void* ( void*, grpcInteractiveCleanState& )>(
+                       [&]( void *dummy, grpcInteractiveCleanState &state ) -> void* {
+                           state.reset( );
+                           return dummy; } ) );
     }
 
 } //# NAMESPACE CASA - END

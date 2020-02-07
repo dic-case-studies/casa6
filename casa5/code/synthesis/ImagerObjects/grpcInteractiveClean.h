@@ -38,6 +38,7 @@ namespace casa {
 
     struct grpcInteractiveCleanState {
         grpcInteractiveCleanState( );
+        void reset( );
 
         int    Niter;
         int    CycleNiter;
