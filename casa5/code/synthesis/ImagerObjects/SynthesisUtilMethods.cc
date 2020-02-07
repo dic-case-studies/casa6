@@ -3115,7 +3115,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
  /////////////////////// Grid/FTMachine Parameters
 
-  SynthesisParamsGrid::SynthesisParamsGrid():SynthesisParams()//,pointingOffsetSigDev()
+  SynthesisParamsGrid::SynthesisParamsGrid():SynthesisParams()
   {
     setDefaults();
   }
@@ -3270,6 +3270,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { err += "The combination of mosaicft gridding with multiple facets is not supported. "
 	  "Please use the awprojectft gridder instead, and set wprojplanes to a value > 1 to trigger AW-Projection. \n"; }
 
+    if( ftmachine=="awprojectft" && usePointing==True && pointingOffsetSigDev.nelements() != 2 )
+      {
+	err += "The pointingoffsetsigdev parameter must be a two-element vector of doubles in order to be used with usepointing=True and the AWProject gridder \n ";
+      }
+
+
+
     // todo: any single-dish specific limitation?
 
     return err;
@@ -3312,8 +3319,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     wbAWP      = true;
     cfCache  = "";
     usePointing = false;
-    pointingOffsetSigDev.resize(2);
-    pointingOffsetSigDev.set(30.0);
+    pointingOffsetSigDev.resize(0);
+    //    pointingOffsetSigDev.set(30.0);
     doPBCorr   = true;
     conjBeams  = true;
     computePAStep=360.0;
