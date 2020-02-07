@@ -107,7 +107,7 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
                              char *&server_string, bool &do_dbus, bool &inital_run,
                              bool &server_startup, bool &daemon,
                              bool &without_gui, bool &persistent, bool &casapy_start,
-                             char *&logfile_path );
+                             char *&logfile_path, bool &do_not_fork );
 static void start_manager_root( const char *origname, int numargs, char **args,
                                 const char *dbusname, bool without_gui, pid_t root_pid );
 static void launch_server( const char *origname, int numargs, char **args,
@@ -254,6 +254,7 @@ int main( int argc, const char *argv[] ) {
 #endif
 
 	bool server_startup = false;
+    bool do_not_fork = false;
     bool daemon = false;
 	bool without_gui = false;
 	bool persistent = false;
@@ -285,7 +286,7 @@ int main( int argc, const char *argv[] ) {
 
 	preprocess_args( argc, argv, numargs, args, server_string, with_dbus,
 	                 initial_run, server_startup, daemon, without_gui,
-                     persistent, casapy_start, logfile_path );
+                     persistent, casapy_start, logfile_path, do_not_fork );
 
 	//
 	// configure datapath for casacore and colormaps...
@@ -385,7 +386,7 @@ int main( int argc, const char *argv[] ) {
 		}
 	}
 
-	if ( (server_startup || without_gui) && initial_run ) {
+	if ( (server_startup || without_gui) && initial_run && ! do_not_fork ) {
         if ( daemon ) {
             launch_server( argv[0], numargs, args, server_string, without_gui,
                            persistent, casapy_start );
@@ -573,7 +574,7 @@ int main( int argc, const char *argv[] ) {
 static void preprocess_args( int argc, const char *argv[], int &numargs, char **&args,
                              char *&server_string, bool &with_dbus, bool &initial_run,
                              bool &server_startup, bool &daemon, bool &without_gui, bool &persistent,
-                             bool &casapy_start, char *&logfile_path ) {
+                             bool &casapy_start, char *&logfile_path, bool &do_not_fork ) {
 
 	without_gui = false;
 	persistent = false;
@@ -598,7 +599,9 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 					server_string = name;
 				}
 			}
-		} else if ( ! strncmp(argv[x],"--server",8) ) {
+		} else if ( ! strcmp(argv[x],"--nofork") ) {
+            do_not_fork = true;
+        } else if ( ! strncmp(argv[x],"--server",8) ) {
 			server_startup = true;
 			if ( argv[x][8] == '=' ) {
 				char *name = strdup( &argv[x][9] );
