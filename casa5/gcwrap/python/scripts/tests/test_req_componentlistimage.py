@@ -64,21 +64,47 @@
 #
 
 ###########################################################################
-import shutil
-import casac
-from tasks import *
-from taskinit import *
 from __main__ import *
-import unittest
 import numpy
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/ia_fromcomponentlist/'
+CASA6 = False
+try:
+    import casatools
+    # from casatasks import imhistory, casalog
+    import sys
+    import os
+    myia = casatools.image()
+    mycl = casatools.componentlist()
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    CASA6 = True
+except ImportError:
+    import sys
+    import os
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    myia = iatool()
+    mycl = cltool()
+
+import unittest
+import shutil
+
+if CASA6:
+    estimates_file = casatools.ctsys.resolve('2gauss_estimates.txt')
+    climage = casatools.ctsys.resolve('simple_cl.image')
+else:
+    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+        estimates_file = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/2gauss_estimates.txt'
+        climage = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/simple_cl.im'
+    else:
+        estimates_file = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/2gauss_estimates.txt'
+        climage = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/simple_cl.im'
 
 class componentlistimage_test(unittest.TestCase):
     
     def setUp(self):
-        self._myia = iatool()
-        self._mycl = cltool()
+        self._myia = myia
+        self._mycl = mycl
     
     def tearDown(self):
         self._myia.done()
@@ -89,9 +115,9 @@ class componentlistimage_test(unittest.TestCase):
         mycl = self._mycl
         myia = self._myia
         flux = [1, 2, 3, 4]
-        dir = ['J2000', '00:00:00.00', '00.00.00.0']
+        direction = ['J2000', '00:00:00.00', '00.00.00.0']
         pt = "point"
-        mycl.addcomponent(flux=flux, dir=dir, shape=pt)
+        mycl.addcomponent(flux=flux, dir=direction, shape=pt)
         
         shape = [5, 5]
         self.assertTrue(myia.fromcomplist("", shape=shape, cl=mycl.torecord()))
@@ -105,16 +131,15 @@ class componentlistimage_test(unittest.TestCase):
         imagename = "1ptsource.im"
         self.assertTrue(myia.fromcomplist(imagename, shape=shape, cl=mycl.torecord()))
         self.assertTrue(myia.open(imagename))
-        myia.done()
         
     def test_vals(self):
         """Test valid pixel values"""
         mycl = self._mycl
         myia = self._myia
         flux = [1, 2, 3, 4]
-        dir = ['J2000', '00:00:00.00', '00.00.00.0']
+        direction = ['J2000', '00:00:00.00', '00.00.00.0']
         pt = "point"
-        mycl.addcomponent(flux=flux, dir=dir, shape=pt)
+        mycl.addcomponent(flux=flux, dir=direction, shape=pt)
         
         shape = [5, 5, 4, 1]
         self.assertTrue(myia.fromcomplist("", shape=shape, cl=mycl.torecord()))
@@ -149,8 +174,6 @@ class componentlistimage_test(unittest.TestCase):
                         expec = 0
                     self.assertEqual(vals[x, y, s, 0], expec)
         myia.done()
-        
-        mycl.done()
         major = "5arcmin"
         minor = "4arcmin"
         pa = "0deg"
@@ -169,8 +192,12 @@ class componentlistimage_test(unittest.TestCase):
         stats = myia.statistics(axes=[0, 1, 3])
         myia.done()
         for i in range(4):
-            self.assertTrue(numpy.isclose(stats['sum'][i], flux[stokestoflux[i]]))
-        
+            got = stats['sum'][i]
+            expec = flux[stokestoflux[i]]
+            self.assertTrue(
+                numpy.isclose(got, expec),
+                'i=' + str(i) + ' got=' + str(got) + ' expec=' + str(expec)
+            )
         mycl.done()
         
     def test_gaussian(self):
@@ -237,11 +264,10 @@ class componentlistimage_test(unittest.TestCase):
             )
         )
         mycl.done()
-        estimates = datapath + "2gauss_estimates.txt"
         k = 0
         atol = 1e-5
         for s in stokes:
-            res = myia.fitcomponents(stokes=s, estimates=estimates)
+            res = myia.fitcomponents(stokes=s, estimates=estimates_file)
             mycl.fromrecord(res['results'])
             self.assertEqual(mycl.length(), 2)
             for i in [0, 1]:
@@ -258,9 +284,6 @@ class componentlistimage_test(unittest.TestCase):
             mycl.done()
             k += 1
         myia.done()
-    
-    def test_mask(self):
-        """Test mask handling"""
         
     def test_history(self):
         """verify history writing"""
@@ -344,16 +367,14 @@ class componentlistimage_test(unittest.TestCase):
     def test_fromimage(self):
         """Test fromimage() supports reading from a componentlist image"""
         myia = self._myia
-        imagename = datapath + "simple_cl.im"
         outfile = "akd.im"
-        self.assertTrue(myia.fromimage(outfile=outfile, infile=imagename))
+        self.assertTrue(myia.fromimage(outfile=outfile, infile=climage))
         bb = myia.getchunk()
         myia.done()
-        myia.open(imagename)
+        myia.open(climage)
         cc = myia.getchunk()
         myia.done()
         self.assertTrue((bb == cc).all())
-        
         
 def suite():
     return [componentlistimage_test]
