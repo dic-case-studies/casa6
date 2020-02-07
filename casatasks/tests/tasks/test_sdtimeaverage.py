@@ -275,24 +275,12 @@ class test_sdtimeaverage(unittest.TestCase):
         
         return self.data 
 
-    # TELESCOP NAME (7-Feb-2020)
-    def set_telescopename(self, msName, telName ):
-        print("------ changing Telscope Name. ")
-        msObservation = msName + '/OBSERVATION'
-        with tbmanager(msObservation, nomodify=False) as tb:
-                tb.putcell('TELESCOPE_NAME',0, telName )
-                # tb.resync()
-        return
-
 ################################
 # Generate Data on FLOAT_DATA
 ################################
     def generate_data( self, msName, stateOption=False ):
         print( "----- Generating MS." )
-        '''
-        # TELESCOP NAME (7-Feb-2020)
-        self.set_telescopename( msName, 'ALMA' )
-        '''
+
         # Test Slope
         offset = 0.0        # if specified non-zero, an Intensive Fail will be activated.
         slope  = 0.0001     # (tunable) 
@@ -750,11 +738,6 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # must be false
 
-###########################################
-## TIMESPAN (additionaly test ALMA option 
-##           in mstranform   )
-###########################################
-
     # ordinary behavior #
     def test_param70(self):
         '''sdtimeaverage::70:: timespan="scan"  '''
@@ -799,23 +782,6 @@ class test_sdtimeaverage(unittest.TestCase):
         self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1 )
 
-    # ALMA specific behavior (cf: test_param72)  #
-    def test_param73ALMA(self):
-        '''sdtimeaverage::73 ALMA SPECIAL:: timespan="scan", internaly  MUST work by "scan,state" '''
-
-        privateOutfile, timebin_str  = self.setOutfile_Timebin(73 , nRow+3 )
-        prm =  {'infile'    : defWorkMs2,
-                'timespan' : 'scan',
-                'outfile' : privateOutfile }
-
-        # change TELESCOP NAME (7-Feb-2020)
-        self.set_telescopename( defWorkMs2, 'NAME-hoge' )  # keyword: 'ALMA' is contained.
-
-        # Run Task and check
-        self.assertTrue(self.run_task( prm )) # 
-        self.check_averaged_result_N1(privateOutfile)
-        self.checkOutputRec(privateOutfile, 1 ) # Must work as 'scan, state' 
-
     # Error in sytax # 
     def test_param74E(self):
         '''sdtimeaverage::74E:: timespan="hoge"  '''
@@ -830,7 +796,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
 """
 5-Feb-2020   editing: reduce the TEST-MS size to shorten execution of mstransform.
-7-Feb-2020   adding : ALMA telescope mode in mstransform.
 
 """
 #### Control ######
