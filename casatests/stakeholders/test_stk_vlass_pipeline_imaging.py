@@ -174,36 +174,13 @@ valcheck = 0  # index of field id 18957
 
 #################################################################
 
+# create baseclass and different setups for each dataset
+
 ## Base Test class with Utility functions
-class TestTcleanBase(unittest.TestCase):
-
-    def setUp(self):
-        self._myia = iatool()
-        self.epsilon = 0.1 # sets epsilon as a percentage (10%)
-#        self.msfile = ""
-        self.img = "tst"
-
-        self.newACU = 'ea01, ea02, ea08, ea14, ea17, ea21' 
-        ##antenna = '0,1,6,12,15,19'  ## new ACU ants for this test dataset.
-        ##antenna = '1,2,7,8,14,16,17,21,27,28' # Full list of ants with new ACUs (Summer 2018)
-        self.oldACU = '!'+self.newACU
-
-        # To use subdir in the output image names in some tests (CAS-10937)
-        self.img_subdir = 'refimager_tst_subdir'
-        self.parallel = False
-        if ParallelTaskHelper.isMPIEnabled():
-            self.parallel = True
-
-    def tearDown(self):
-        ctu.generate_weblog("tclean_VLASS_pipeline",test_dict)
-        self._myia.done()
-        """ don't delete it all """
-#        self.delData()
-
+class test_base(unittest.TestCase):
+   
     # Separate functions here, for special-case tests that need their own MS.
     def prepData(self,msname=""):
-#        if msname != "":
-#             self.msfile=msname
         self.dataset1 = 'vlass1.1_rowtest_6fields.ms' #'PcorrVis_field18954.ms'
         self.fieldname1 = fieldnames['18954']
         self.timerange1two = alltimes['18954']['two']
@@ -211,25 +188,13 @@ class TestTcleanBase(unittest.TestCase):
         self.dataset2 =  'vlass1.1_rowtest_6fields.ms' #'PcorrVis_field18957.ms'
         self.fieldname2 = fieldnames['18957']
 
-
-    def delData(self,msname=""):
-        return
-#        if msname != "":
-#             self.msfile=msname
-#        if (os.path.exists(self.msfile)):
-#             os.popen('rm -rf ' + self.msfile)
-#        os.popen('rm -rf ' + self.img_subdir)
-#        os.popen('rm -rf ' + self.img+'*')
-
     def getNameDoc(self):
-#        print inspect.stack()[1]
+        '''Run this function inside a test case'''
         testname=inspect.stack()[1][3]
         print("Test name  : " + testname)
-#        tname = inspect.getframeinfo(inspect.currentframe()).function
         doc = eval('self.'+testname + '.__doc__')
         print("Doc : " +  doc)
         return testname, doc
-
 
     def image_stats(self,img,suf):
         self._myia.open(img+suf)
@@ -301,8 +266,45 @@ class TestTcleanBase(unittest.TestCase):
 ##############################################
 test_dict = {}
 ####    Tests     ####
-class Test_vlass_1p1_row(TestTcleanBase):
+class Test_vlass_1p1_row(test_base):
 
+    @classmethod
+    def setUpClass(cls):
+        '''A class method called before tests in an individual class run'''
+        # MS used for all tests of this class.
+        cls.msfile = 'vlass1.1_rowtest_6fields.ms'
+        os.symlink(data_path+cls.msfile, cls.msfile)
+
+    def setUp(self):        
+        self.img = 'im_'
+        self._myia = iatool()
+        self.epsilon = 0.1 # sets epsilon as a percentage (10%)
+
+        self.newACU = 'ea01, ea02, ea08, ea14, ea17, ea21' 
+        ##antenna = '0,1,6,12,15,19'  ## new ACU ants for this test dataset.
+        ##antenna = '1,2,7,8,14,16,17,21,27,28' # Full list of ants with new ACUs (Summer 2018)
+        self.oldACU = '!'+self.newACU
+
+        # To use subdir in the output image names in some tests (CAS-10937)
+        self.img_subdir = 'refimager_tst_subdir'
+        self.parallel = False
+        if ParallelTaskHelper.isMPIEnabled():
+            self.parallel = True
+
+    def tearDown(self):
+        ctu.generate_weblog("tclean_VLASS_pipeline",test_dict)
+        self._myia.done()
+        # Delete the images created by each test case
+        # Are they called tst* or im_test*
+        os.system('rm -rf '+self.img+'*')
+        os.system('rm -rf '+self.img_subdir)
+
+    @classmethod
+    def tearDownClass(cls):
+        '''A class method called after tests in an individual class have run''' 
+        # Unlink the MS at the end of the class
+        os.unlink(cls.msfile)
+        
     @ctu.stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr0(self):
         '''
@@ -327,10 +329,11 @@ class Test_vlass_1p1_row(TestTcleanBase):
         #cfcache_oversampling1='CFCACHE_OS1'
 
         for field in fields:
-            file_name = 'im_'+testname+'_'+field
+            file_name = self.img + testname+'_'+field
             img = os.getcwd()+'/'+file_name
             #msname = data_path + 'PcorrVis_field'+field+'.ms'
-            msname = data_path+'vlass1.1_rowtest_6fields.ms'
+#            msname = data_path+'vlass1.1_rowtest_6fields.ms'
+            msname = self.msfile
             
             if do_row==True:
                 os.system('rm -rf '+img+'.*')
@@ -345,7 +348,7 @@ class Test_vlass_1p1_row(TestTcleanBase):
                        pblimit=0.02,psterm=False, conjbeams=True,\
                        wprojplanes=64,niter=niter,datacolumn='data',\
                        mosweight=False, usepointing=False, 
-                       pointingoffsetsigdev=300.0,\
+                       pointingoffsetsigdev=[300.0,300.0],\
                        parallel=self.parallel)
 
             intval, spxval, pbval = self.image_metrics(img=img, loc=[5792,4705,0,0])
@@ -353,7 +356,6 @@ class Test_vlass_1p1_row(TestTcleanBase):
             intvals.append(intval)
             spxvals.append(spxval)
             pbvals.append(pbval)
-
         
         if niter==0:   ## Approximate - initial residual image
             truth_int = 1.19
@@ -410,10 +412,12 @@ class Test_vlass_1p1_row(TestTcleanBase):
         #cfcache_oversampling1='CFCACHE_OS1'
 
         for field in fields:
-            file_name = 'im_'+testname+'_'+field
+            file_name = self.img + testname+'_'+field
             img = os.getcwd()+'/'+file_name
             #msname = data_path + 'PcorrVis_field'+field+'.ms'
-            msname = data_path+'vlass1.1_rowtest_6fields.ms'
+#            msname = data_path+'vlass1.1_rowtest_6fields.ms'
+            msname = self.msfile
+
             
             if do_row==True:
                 os.system('rm -rf '+img+'.*')
@@ -496,10 +500,11 @@ class Test_vlass_1p1_row(TestTcleanBase):
         #cfcache_oversampling1='CFCACHE_OS1'
 
         for field in fields:
-            file_name = 'im_'+testname+'_'+field
+            file_name = self.img + testname+'_'+field
             img = os.getcwd()+'/'+file_name
             #msname = data_path + 'PcorrVis_field'+field+'.ms'
-            msname = data_path+'vlass1.1_rowtest_6fields.ms'
+#            msname = data_path+'vlass1.1_rowtest_6fields.ms'
+            msname = self.msfile
             
             if do_row==True:
                 os.system('rm -rf '+img+'.*')
@@ -578,10 +583,11 @@ class Test_vlass_1p1_row(TestTcleanBase):
         #cfcache_oversampling1='CFCACHE_OS1'
 
         for field in fields:
-            file_name = 'im_'+testname+'_'+field
+            file_name = self.img + testname+'_'+field
             img = os.getcwd()+'/'+file_name
             #msname = data_path + 'PcorrVis_field'+field+'.ms'
-            msname = data_path+'vlass1.1_rowtest_6fields.ms'
+#            msname = data_path+'vlass1.1_rowtest_6fields.ms'
+            msname = self.msfile
             
             if do_row==True:
                 os.system('rm -rf '+img+'.*')
@@ -650,11 +656,13 @@ class Test_vlass_1p1_row(TestTcleanBase):
         '''
         testname, testdoc = self.getNameDoc()
 
-        file_name = 'im_'+testname
+#        file_name = 'im_'+testname
+        file_name = self.img + testname
         self.prepData()
 
         img = os.getcwd()+'/'+file_name
-        msname = data_path+'vlass1.1_rowtest_6fields.ms'
+#        msname = data_path+'vlass1.1_rowtest_6fields.ms'
+        msname = self.msfile
 
         if do_row==True:
             os.system('rm -rf '+img+'.*')
@@ -706,7 +714,7 @@ class Test_vlass_1p1_row(TestTcleanBase):
         self.assertTrue(imh.check_final(pstr = report), msg = report)
 
 def suite():
-     return [Test_vlass_1p1_row, Test_standard] #[Test_tclean_ALMA]
+     return [Test_vlass_1p1_row] #[Test_tclean_ALMA]
 
 # Main #
 if __name__ == '__main__':
