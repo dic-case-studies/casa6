@@ -1415,8 +1415,16 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss,
                 ddIdScope_p = ChunkScope;
         }
     }
-    if(ddIdScope_p == ChunkScope && frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel)
-        freqSelScope_p = ChunkScope;
+
+    freqSelScope_p = ddIdScope_p;
+    // If frequency/channel selection also depends on time (selection based on
+    // frequencies), then the scope can be further limited by timestamp scope
+    if (!(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel))
+    {
+        if(freqSelScope_p == ChunkScope)
+            freqSelScope_p = timeScope_p;
+    }
+
 
     casacore::AipsrcValue<Bool>::find(
             autoTileCacheSizing_p,
@@ -1528,21 +1536,20 @@ void VisibilityIteratorImpl2::setMetadataScope()
         timeScope_p = RowScope;
 
     // Determine the scope of the frequency/channel selections
-    // Under some circumstances, there is only one channel selector per chunk:
-    // 1. The selection doesn't depend on time (it is based only on channel number)
-    //    and DDId (and consequently SPW, polID) is the same for the whole chunk.
-    // 2. The selection might depend on time but DDid *and* time are the same for
-    //    the whole chunk.
-    if ((ddIdScope_p == ChunkScope && frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel) ||
-        (ddIdScope_p == ChunkScope && timeScope_p == ChunkScope))
-        freqSelScope_p = ChunkScope;
-    // Similarly, frequency/channel selections can be constant for the whole subchunk
-    else if ((ddIdScope_p == SubchunkScope && frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel) ||
-        (ddIdScope_p == SubchunkScope && timeScope_p == SubchunkScope))
-        freqSelScope_p = SubchunkScope;
-    // Otherwise frequency/channel selections change for each row.
-    else
-        freqSelScope_p = RowScope;
+    // The scope of the frequency selections is at most the same as the DDID
+    freqSelScope_p = ddIdScope_p;
+    // If frequency/channel selection also depends on time (selection based on
+    // frequencies), then the scope can be further limited by timestamp scope
+    if (!(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel))
+    {
+        if(!(freqSelScope_p == RowScope)) // Only if scope is broader than Row can be further restricted
+        {
+            if(freqSelScope_p == SubchunkScope && timeScope_p == RowScope)
+                freqSelScope_p = RowScope;
+            if(freqSelScope_p == ChunkScope)
+                freqSelScope_p = timeScope_p;
+        }
+    }
 }
 
 VisibilityIteratorImpl2::Cache::Cache()
