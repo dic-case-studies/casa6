@@ -4161,12 +4161,32 @@ class test_virtual_col(test_base):
                  "These tests were added in CAS-12737. Not clear what would be the right"
                  "place for them.")
 class test_flags_propagation_channelavg(test_base):
+    """
+    Tests on the number and positions of flags when using
+       flagdata + channelavg + autoflag_methods AND the dataset is already flagged
+    This is to make sure that flags set before the flagdata command are preserved
+    (CAS-12737). The tests check the expected number of flags from several methods (clip,
+    tfcrop, rflag) and that all the data points originally flagged are still flagged after
+    applying, in the exact same positions.
+
+    Uses the small VLA dataset from "data4preaveraging" which is convenient for visual
+    and/or manual inspection via the browser, table tool, etc.
+
+    To illustrate the potential "loss" of flags before the fix from CAS-12737, the tests
+    use a range of chanbin values (~2...5) with intentionally sparse "a priori" flags like
+    X 0 X 0 X 0 X 0     (wich chanbin=2 could produce a total loss of "a priori" flags)
+    or
+    X 0 0 X 0 0 X 0 0   (wich chanbin=3 could produce a total loss of "a priori" flags)
+    ...
+    There are notes in the comments that give the final number of flags that would be seen
+    before the fix from CAS-12737 (much lower, lower than the original "a priori" flags).
+    """
 
     def setUp(self):
         self.setUp_data4preaveraging()
 
     def tearDown(self):
-        os.system('rm -rf test_preaveraging.ms')
+        shutil.rmtree(self.vis)
 
     def run_auto_flag_preavg_propagation(self, chanbin=2, mode='clip', ims='', **kwargs):
         """
