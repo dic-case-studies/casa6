@@ -60,7 +60,6 @@ def importasdm(
     useversion=None,
     bdfflags=None,
     with_pointing_correction=None,
-    remove_ref_undef=None,
     convert_ephem2geo=None,
     polyephem_tabtimestep=None
     ):
@@ -178,8 +177,6 @@ def importasdm(
        with_pointing_correction -- add (ASDM::Pointing::encoder - ASDM::Pointing::pointingDirection)
                  to the value to be written in MS::Pointing::direction 
                    default: false
-
-       remove_ref_undef -- if set to True then apply fixspwbackport on the resulting MSes.
 
        convert_ephem2geo -- if True, convert any attached ephemerides to the GEO reference frame
 
@@ -342,7 +339,7 @@ def importasdm(
                                       ignore_time, process_syspower, process_caldevice, process_pointing,
                                       process_flags, tbuff, applyflags, savecmds, outfile, flagbackup,
                                       verbose, overwrite, showversion, useversion, bdfflags,
-                                      with_pointing_correction, remove_ref_undef, convert_ephem2geo,
+                                      with_pointing_correction, convert_ephem2geo,
                                       polyephem_tabtimestep )
 
             if exitcode != True:
@@ -375,22 +372,6 @@ def importasdm(
          
         # this is only necessary for CASA5, for CASA6 these steps are handled by the toms method in sdm
         if not is_CASA6:
-            #
-            # Do we apply fixspwbackport
-            if remove_ref_undef :
-                casalog.post('remove_ref_undef=True: fixspwbackport will be applied ...')
-            
-                for myviso in vistoproc:
-                    cmd = 'fixspwbackport ' + myviso
-                    casalog.post('Running fixspwbackport standalone invoked as:')
-                    casalog.post(cmd)
-                    cmdexitcode = os.system(cmd)
-
-                    if cmdexitcode != 0:
-                        casalog.post(cmd
-                                     + ' terminated with exit code '
-                                     + str(cmdexitcode), 'SEVERE')
-                        raise Exception('fixspwbackport error.')
 
             # Binary Flag processing
             if bdfflags:
