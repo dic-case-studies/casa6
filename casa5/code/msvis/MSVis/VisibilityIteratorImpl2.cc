@@ -2322,7 +2322,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             channelSelectorsNrows_p.clear();
             double timeStamp = -1;
             if(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel)
-                timeStamp = msIterSubchunk_p->msColumns().time().asdouble(0);
+                timeStamp = columns_p.time_p.asdouble(0);
             channelSelectors_p.push_back(
                     determineChannelSelection(timeStamp,
                                               msIterSubchunk_p->spectralWindowId(),
@@ -2342,7 +2342,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             for(Int irow = 0 ; irow < rowBounds_p.subchunkNRows_p; ++irow)
             {
                 auto newChannelSelector = determineChannelSelection(
-                        msIterSubchunk_p->msColumns().time().asdouble(irow),
+                        columns_p.time_p.asdouble(irow),
                         spws[irow], polIds[irow], msId());
                 if(irow == 0 || newChannelSelector != channelSelectors_p.back())
                 {
