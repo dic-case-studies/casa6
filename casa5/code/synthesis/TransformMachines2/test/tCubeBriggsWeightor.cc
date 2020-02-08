@@ -103,7 +103,7 @@ Int main(/*int argc, char **argv*/){
     std::vector<String> ftmachines={"GridFT"};
     FTMachine * ftm=nullptr;
     for (uInt k=0; k < ftmachines.size(); ++k){
-     cerr << "########### Test imagingweight" <<  << endl; 
+     cerr << "########### Test imagingweight" <<  endl; 
       im.set(Complex(0.0));
       MPosition loc;
       MeasTable::Observatory(loc, MSColumns(thems).observation().telescopeName()(0));

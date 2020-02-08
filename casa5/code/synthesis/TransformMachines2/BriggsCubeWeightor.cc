@@ -106,12 +106,13 @@ using namespace casa::vi;
     VisImagingWeight vWghtNat("natural");
 	vi.useImagingWeight(vWghtNat);
 	vi::VisBuffer2 *vb=vi.getVisBuffer();
-	std::vector<Int> fieldsToUse;
+	std::vector<pair<Int, Int> > fieldsToUse;
 	if(multiField_p){
 		for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 			for (vi.origin(); vi.more(); vi.next()) {
-				if (std::find(fieldsToUse.begin(), fieldsToUse.end(), vb->fieldId()[0]) == fieldsToUse.end()) {
-					fieldsToUse.push_back(vb->fieldId()[0]);
+				pair<Int, Int> ms_field=make_pair(vb->msId(), vb->fieldId()[0]);
+				if (std::find(fieldsToUse.begin(), fieldsToUse.end(), ms_field) == fieldsToUse.end()) {
+					fieldsToUse.push_back(ms_field);
 				}
 				
 			}
@@ -121,7 +122,8 @@ using namespace casa::vi;
 	makeScratchImagingWeightTable(wgtTab_p);
 	vbrowms2wgtrow_p.clear();
 	if(fieldsToUse.size()==0)
-		fieldsToUse.push_back(-1);
+		fieldsToUse.push_back(make_pair(Int(-1),Int(-1)));
+	cerr << "FIELDs to use " << Vector<pair<Int,Int> >(fieldsToUse) << endl;
 	for (uInt k=0; k < fieldsToUse.size(); ++k){
 		vi.originChunks();
 		vi.origin();
@@ -158,7 +160,7 @@ using namespace casa::vi;
 			for (vi.origin(); vi.more(); vi.next()) {
 	
 	//cerr << "key and index "<< key << "   " << index << "   " << multiFieldMap_p[key] << endl; 
-				if(vb->fieldId()[0] == fieldsToUse[k] || fieldsToUse[k]==-1){
+				if((vb->fieldId()[0] == fieldsToUse[k].second &&  vb->msId()== fieldsToUse[k].first) || fieldsToUse[k].first==-1){
 					ft_p[0]->put(*vb, -1, true, FTMachine::PSF);
 				}
 			
@@ -211,29 +213,30 @@ using namespace casa::vi;
 		}//chan
 		for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 			for (vi.origin(); vi.more(); vi.next()) {
-				Matrix<Float> imweight;	
-				getWeightUniform(griddedWeight, imweight, *vb);
-				Int nRows=vb->nRows();
-				//Int nChans=vb->nChannels();
-				Vector<uInt> msId(nRows, uInt(vb->msId()));
-				Vector<uInt> rowids=vb->rowIds();
-				wgtTab_p->addRow(nRows, False);
-				Int endrow=wgtTab_p->nrow()-1;
-				Int beginrow=endrow-nRows+1;
-				//Slicer sl(IPosition(2,beginrow,0), IPosition(2,endrow,nChans-1), Slicer::endIsLast);
-				ArrayColumn<Float> col(*wgtTab_p, "IMAGING_WEIGHT");
-				//cerr << "sl length " << sl.length() << " array shape " << fakeweight.shape() << " col length " << col.nrow() << endl;
-				//col.putColumnRange(sl, fakeweight);
-				//cerr << "nrows " << nRows << " imweight.shape " << imweight.shape() << endl;
-				for (Int row=0; row < nRows; ++row)
-					col.put(beginrow+row, imweight.column(row));
+				if((vb->fieldId()[0] == fieldsToUse[k].second &&  vb->msId()== fieldsToUse[k].first) || fieldsToUse[k].first==-1){
+					Matrix<Float> imweight;	
+					getWeightUniform(griddedWeight, imweight, *vb);
+					Int nRows=vb->nRows();
+					//Int nChans=vb->nChannels();
+					Vector<uInt> msId(nRows, uInt(vb->msId()));
+					Vector<uInt> rowids=vb->rowIds();
+					wgtTab_p->addRow(nRows, False);
+					Int endrow=wgtTab_p->nrow()-1;
+					Int beginrow=endrow-nRows+1;
+						//Slicer sl(IPosition(2,beginrow,0), IPosition(2,endrow,nChans-1), Slicer::endIsLast);
+					ArrayColumn<Float> col(*wgtTab_p, "IMAGING_WEIGHT");
+						//cerr << "sl length " << sl.length() << " array shape " << fakeweight.shape() << " col length " << col.nrow() << endl;
+					//col.putColumnRange(sl, fakeweight);
+					//cerr << "nrows " << nRows << " imweight.shape " << imweight.shape() << endl;
+					for (Int row=0; row < nRows; ++row)
+						col.put(beginrow+row, imweight.column(row));
 					
-				Slicer sl2(IPosition(1, endrow-nRows+1), IPosition(1, endrow), Slicer::endIsLast);
-				ScalarColumn<uInt> col2(*wgtTab_p,"MSID");
-				col2.putColumnRange(sl2, msId);
-				ScalarColumn<uInt> col3(*wgtTab_p, "ROWID");
-				col3.putColumnRange(sl2, rowids);
-  
+					Slicer sl2(IPosition(1, endrow-nRows+1), IPosition(1, endrow), Slicer::endIsLast);
+					ScalarColumn<uInt> col2(*wgtTab_p,"MSID");
+					col2.putColumnRange(sl2, msId);
+					ScalarColumn<uInt> col3(*wgtTab_p, "ROWID");
+					col3.putColumnRange(sl2, rowids);
+				}
 			}
 		}
 		
