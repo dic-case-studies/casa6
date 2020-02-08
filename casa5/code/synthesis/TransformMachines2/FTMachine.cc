@@ -557,7 +557,7 @@ using namespace casa::vi;
       AlwaysAssert(image, AipsError);
       if(!toRecord(error, rec))
         throw (AipsError("Could not initialize BriggsWeightor")); 
-      briggsWeightor_p->init(vi, *image, rec);
+      briggsWeightor_p->initImgWeightCol(vi, *image, rec);
 
     }
   }
