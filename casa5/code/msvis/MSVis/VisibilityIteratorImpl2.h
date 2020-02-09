@@ -1199,6 +1199,8 @@ protected:
         casacore::Int subchunkNRows_p;
         // subchunk's table row numbers
         casacore::RefRows subchunkRows_p;
+        // List of Row numbers for each subset of the subchunk with equal channel selector
+        std::vector<casacore::RefRows> subchunkEqChanSelRows_p;
         // times for each row in the chunk
         casacore::Vector<casacore::Double> times_p;
     };

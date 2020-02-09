@@ -909,13 +909,13 @@ void
 VisibilityIteratorImpl2::getColumnRows(const ArrayColumn<T> & column,
                                        Array<T> & array) const
 {
-	ColumnSlicer columnSlicer =
-		channelSelectors_p[0]->getSlicer().getColumnSlicer();
+    ColumnSlicer columnSlicer =
+        channelSelectors_p[0]->getSlicer().getColumnSlicer();
 
-	column.getColumnCells(rowBounds_p.subchunkRows_p,
-	                      columnSlicer,
-	                      array,
-	                      true);
+    column.getColumnCells(rowBounds_p.subchunkRows_p,
+                          columnSlicer,
+                          array,
+                          true);
 }
 
 
@@ -2245,6 +2245,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
     // the same value for time unless row blocking is set, in which case we
     // return more rows at once.
 
+    rowBounds_p.subchunkEqChanSelRows_p.clear();
     if (nRowBlocking_p > 0) {
         rowBounds_p.subchunkEnd_p =
                 rowBounds_p.subchunkBegin_p + nRowBlocking_p;
@@ -2295,6 +2296,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
                 rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1;
         rowBounds_p.subchunkRows_p =
                 RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
+        rowBounds_p.subchunkEqChanSelRows_p.push_back(rowBounds_p.subchunkRows_p);
     }
     else {
         // All the information is in the subchunk MSIter
@@ -2328,13 +2330,14 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             channelSelectors_p.clear();
             channelSelectorsNrows_p.clear();
             double timeStamp = -1;
-            if(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel)
+            if(frequencySelections_p->getFrameOfReference() != FrequencySelection::ByChannel)
                 timeStamp = columns_p.time_p.asdouble(0);
             channelSelectors_p.push_back(
                     determineChannelSelection(timeStamp,
                                               msIterSubchunk_p->spectralWindowId(),
                                               msIterSubchunk_p->polarizationId(), msId()));
             channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
+            rowBounds_p.subchunkEqChanSelRows_p.push_back(rowBounds_p.subchunkRows_p);
         }
         // In all other cases the channel selector needs to be computed
         // for each row. Each channel selector will then apply to a set
@@ -2346,10 +2349,13 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             Vector<Int> spws, polIds;
             spectralWindows(spws);
             polarizationIds(polIds);
+            double timeStamp = -1;
             for(Int irow = 0 ; irow < rowBounds_p.subchunkNRows_p; ++irow)
             {
+                if(frequencySelections_p->getFrameOfReference() != FrequencySelection::ByChannel)
+                    timeStamp = columns_p.time_p.asdouble(0);
                 auto newChannelSelector = determineChannelSelection(
-                        columns_p.time_p.asdouble(irow),
+                        timeStamp,
                         spws[irow], polIds[irow], msId());
                 if(irow == 0 || newChannelSelector != channelSelectors_p.back())
                 {
@@ -2357,11 +2363,20 @@ VisibilityIteratorImpl2::configureNewSubchunk()
                     channelSelectorsNrows_p.push_back(1);
                 }
                 else
-                    channelSelectorsNrows_p.front()++;
+                    channelSelectorsNrows_p.back()++;
+            }
+            size_t beginRefRowIdx = rowBounds_p.subchunkBegin_p;
+            for (auto nrows : channelSelectorsNrows_p)
+            {
+                rowBounds_p.subchunkEqChanSelRows_p.push_back(RefRows(beginRefRowIdx, beginRefRowIdx + nrows - 1));
+                beginRefRowIdx += nrows;
             }
         }
-        else // Scope is chunk but the number of rows should refer to the subchunk
+        else
+        {// Scope is chunk but the number of rows should refer to the subchunk
             channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
+            rowBounds_p.subchunkEqChanSelRows_p.push_back(rowBounds_p.subchunkRows_p);
+        }
     }
 
     // Set flags for current subchunk
