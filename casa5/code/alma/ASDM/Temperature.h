@@ -120,7 +120,7 @@ public:
 	 * @param st a reference to a StringTokenizer.
 	 * @return an Temperature.
 	 */
-	static Temperature getTemperature(StringTokenizer &st) throw(NumberFormatException);
+	static Temperature getTemperature(StringTokenizer &st);
 			
 	/**
 	 * Write the binary representation of this to an EndianOSStream .
