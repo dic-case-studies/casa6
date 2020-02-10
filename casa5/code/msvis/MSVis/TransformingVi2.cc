@@ -226,6 +226,12 @@ TransformingVi2::flag (Cube<Bool> & flags)  const
 }
 
 void
+TransformingVi2::flag (Vector<Cube<Bool>> & flags)  const
+{
+     getVii()->flag (flags);
+}
+
+void
 TransformingVi2::flag (Matrix<Bool> & flags)  const
 {
      getVii()->flag (flags);
@@ -251,6 +257,12 @@ TransformingVi2::flagRow (Vector<Bool> & rowflags)  const
 
 void
 TransformingVi2::floatData (Cube<Float> & fcube)  const
+{
+     getVii()->floatData (fcube);
+}
+
+void
+TransformingVi2::floatData (Vector<Cube<Float>> & fcube)  const
 {
      getVii()->floatData (fcube);
 }
@@ -598,9 +610,14 @@ TransformingVi2::setVisBuffer (VisBuffer2 * vb)
     vb_p = vb;
 }
 
-
 void
 TransformingVi2::sigma (Matrix<Float> & sig)  const
+{
+     getVii()->sigma (sig);
+}
+
+void
+TransformingVi2::sigma (Vector<Matrix<Float>> & sig)  const
 {
      getVii()->sigma (sig);
 }
@@ -674,44 +691,44 @@ TransformingVi2::useImagingWeight (const VisImagingWeight & imWgt)
 void
 TransformingVi2::uvw (Matrix<Double> & uvwmat)  const
 {
-     getVii()->uvw (uvwmat);
+    getVii()->uvw (uvwmat);
 }
 
 void
 TransformingVi2::visibilityCorrected (Cube<Complex> & vis)  const
 {
-     getVii()->visibilityCorrected (vis);
+    getVii()->visibilityCorrected (vis);
 }
 
-//void
-//TransformingVi2::visibilityCorrected (Matrix<CStokesVector> & vis)  const
-//{
-//     getVii()->visibilityCorrected (vis);
-//}
+void
+TransformingVi2::visibilityCorrected (Vector<Cube<Complex>> & vis) const
+{
+    getVii()->visibilityCorrected (vis);
+}
 
 void
 TransformingVi2::visibilityModel (Cube<Complex> & vis)  const
 {
-     getVii()->visibilityModel (vis);
+    getVii()->visibilityModel (vis);
 }
 
-//void
-//TransformingVi2::visibilityModel (Matrix<CStokesVector> & vis)  const
-//{
-//     getVii()->visibilityModel (vis);
-//}
+void
+TransformingVi2::visibilityModel (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const
+{
+    getVii()->visibilityModel (vis);
+}
 
 void
 TransformingVi2::visibilityObserved (Cube<Complex> & vis)  const
 {
-     getVii()->visibilityObserved (vis);
+    getVii()->visibilityObserved (vis);
 }
 
-//void
-//TransformingVi2::visibilityObserved (Matrix<CStokesVector> & vis)  const
-//{
-//     getVii()->visibilityObserved (vis);
-//}
+void
+TransformingVi2::visibilityObserved (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const
+{
+    getVii()->visibilityObserved (vis);
+}
 
 IPosition
 TransformingVi2::visibilityShape ()  const
@@ -726,13 +743,31 @@ TransformingVi2::weight (Matrix<Float> & wt)  const
 }
 
 void
+TransformingVi2::weight (Vector<Matrix<Float>> & wt)  const
+{
+     getVii()->weight (wt);
+}
+
+void
 TransformingVi2::weightSpectrum (Cube<Float> & wtsp)  const
 {
      getVii()->weightSpectrum (wtsp);
 }
 
 void
+TransformingVi2::weightSpectrum (Vector<Cube<Float>> & wtsp)  const
+{
+     getVii()->weightSpectrum (wtsp);
+}
+
+void
 TransformingVi2::sigmaSpectrum (Cube<Float> & sigsp)  const
+{
+     getVii()->sigmaSpectrum (sigsp);
+}
+
+void
+TransformingVi2::sigmaSpectrum (Vector<Cube<Float>> & sigsp)  const
 {
      getVii()->sigmaSpectrum (sigsp);
 }

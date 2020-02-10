@@ -239,6 +239,10 @@ public:
 
     virtual void flag (casacore::Cube<casacore::Bool> & flags) const override;
 
+    // Return flag for each polarization, channel and row
+
+    virtual void flag (casacore::Vector<casacore::Cube<casacore::Bool>> & flags) const override;
+
     // Return flag for each channel & row
 
     virtual void flag (casacore::Matrix<casacore::Bool> & flags) const override;
@@ -291,6 +295,7 @@ public:
     // Return sigma
 
     virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const override;
+    virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const override;
 
     // Return current SpectralWindow
 
@@ -321,12 +326,16 @@ public:
     // Return the visibilities as found in the casacore::MS, casacore::Cube (npol,nchan,nrow).
 
     virtual void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const override;
+    virtual void visibilityCorrected (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
     virtual void visibilityModel (casacore::Cube<casacore::Complex> & vis) const override;
+    virtual void visibilityModel (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
     virtual void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const override;
+    virtual void visibilityObserved (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
 
     // Return FLOAT_DATA as a casacore::Cube (npol, nchan, nrow) if found in the MS.
 
     virtual void floatData (casacore::Cube<casacore::Float> & fcube) const override;
+    virtual void floatData (casacore::Vector<casacore::Cube<casacore::Float>> & fcube) const override;
 
     // Return the visibility 4-vector of polarizations for each channel.
     // If the casacore::MS doesn't contain all polarizations, it is assumed it
@@ -343,6 +352,7 @@ public:
     // Return weight
 
     virtual void weight (casacore::Matrix<casacore::Float> & wtmat) const override;
+    virtual void weight (casacore::Vector<casacore::Matrix<casacore::Float>> & wtmat) const override;
 
     // Determine whether WEIGHT_SPECTRUM exists.
 
@@ -352,7 +362,9 @@ public:
     // Return weightspectrum (a weight for each channel)
 
     virtual void weightSpectrum (casacore::Cube<casacore::Float> & wtsp) const override;
+    virtual void weightSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const override;
     virtual void sigmaSpectrum (casacore::Cube<casacore::Float> & sigsp) const override;
+    virtual void sigmaSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & sigsp) const override;
 
     // Return the number of sub-intervals in the current chunk
 
