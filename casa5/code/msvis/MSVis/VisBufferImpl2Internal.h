@@ -32,7 +32,7 @@ namespace vi {
 
 // Possible array shapes of data coming from the main table cells.
 
-typedef enum {NoCheck, Nr, NfNr, NcNr, NcNfNr, NcNfNcatNr, I3Nr, N_ShapePatterns} ShapePattern;
+typedef enum {NoCheck, Nr, NfNr, NcNr, NcNfNr, NsNcNr, NsNcNfNr, NcNfNcatNr, I3Nr, N_ShapePatterns} ShapePattern;
 
 class VisBufferCache;
 
@@ -682,6 +682,7 @@ public:
     VbCacheItemArray <casacore::Vector<casacore::Int> > arrayId_p;
     VbCacheItemArray <casacore::Vector<casacore::SquareMatrix<casacore::Complex, 2> >, true> cjones_p;
     VbCacheItemArray <casacore::Cube<casacore::Complex> > correctedVisCube_p;
+    VbCacheItemArray <casacore::Vector<casacore::Cube<casacore::Complex>>> correctedVisCubes_p;
 //    VbCacheItemArray <casacore::Matrix<CStokesVector> > correctedVisibility_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > corrType_p;
     VbCacheItem <casacore::Int> dataDescriptionId_p;
@@ -696,11 +697,15 @@ public:
     VbCacheItemArray <casacore::Vector<casacore::Int> > fieldId_p;
 //    VbCacheItemArray <casacore::Matrix<casacore::Bool> > flag_p;
     VbCacheItemArray <casacore::Array<casacore::Bool> > flagCategory_p;
+    VbCacheItemArray <casacore::Vector<casacore::Array<casacore::Bool>>> flagCategories_p;
     VbCacheItemArray <casacore::Cube<casacore::Bool> > flagCube_p;
+    VbCacheItemArray <casacore::Vector<casacore::Cube<casacore::Bool>>> flagCubes_p;
     VbCacheItemArray <casacore::Vector<casacore::Bool> > flagRow_p;
     VbCacheItemArray <casacore::Cube<casacore::Float> > floatDataCube_p;
+    VbCacheItemArray <casacore::Vector<casacore::Cube<casacore::Float>>> floatDataCubes_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > imagingWeight_p;
     VbCacheItemArray <casacore::Cube<casacore::Complex> > modelVisCube_p;
+    VbCacheItemArray <casacore::Vector<casacore::Cube<casacore::Complex>>> modelVisCubes_p;
 //    VbCacheItemArray <casacore::Matrix<CStokesVector> > modelVisibility_p;
     VbCacheItem <casacore::Int> nAntennas_p;
     VbCacheItem <casacore::Int> nChannels_p;
@@ -714,6 +719,7 @@ public:
     VbCacheItemArray <casacore::Vector<casacore::uInt> > rowIds_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > scan_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > sigma_p;
+    VbCacheItemArray <casacore::Vector<casacore::Matrix<casacore::Float>>> sigmas_p;
     //VbCacheItemArray <casacore::Matrix<casacore::Float> > sigmaMat_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > spectralWindows_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > stateId_p;
@@ -722,11 +728,15 @@ public:
     VbCacheItemArray <casacore::Vector<casacore::Double> > timeInterval_p;
     VbCacheItemArray <casacore::Matrix<casacore::Double> > uvw_p;
     VbCacheItemArray <casacore::Cube<casacore::Complex> > visCube_p;
+    VbCacheItemArray <casacore::Vector<casacore::Cube<casacore::Complex>>> visCubes_p;
 //    VbCacheItemArray <casacore::Matrix<CStokesVector> > visibility_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > weight_p;
+    VbCacheItemArray <casacore::Vector<casacore::Matrix<casacore::Float>>> weights_p;
     //VbCacheItemArray <casacore::Matrix<casacore::Float> > weightMat_p;
     VbCacheItemArray <casacore::Cube<casacore::Float> > weightSpectrum_p;
+    VbCacheItemArray <casacore::Vector<casacore::Cube<casacore::Float>>> weightSpectra_p;
     VbCacheItemArray <casacore::Cube<casacore::Float> > sigmaSpectrum_p;
+    VbCacheItemArray <casacore::Vector<casacore::Cube<casacore::Float>>> sigmaSpectra_p;
 
     CacheRegistry registry_p;
 

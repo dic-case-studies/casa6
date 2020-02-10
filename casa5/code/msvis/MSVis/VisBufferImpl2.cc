@@ -74,6 +74,9 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
     correctedVisCube_p.initialize (this, vb, &VisBufferImpl2::fillCubeCorrected,
                                    VisBufferComponent2::VisibilityCubeCorrected,
                                    NcNfNr, false);
+    correctedVisCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesCorrected,
+                                    VisBufferComponent2::VisibilityCubeCorrected,
+                                    NsNcNfNr, false);
     corrType_p.initialize (this, vb, &VisBufferImpl2::fillCorrType,
                            VisBufferComponent2::CorrType, NoCheck, false);
     dataDescriptionIds_p.initialize (this, vb, &VisBufferImpl2::fillDataDescriptionIds,
@@ -99,14 +102,20 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
     // required column but not used in casa, make it a nocheck for shape validation
     flagCube_p.initialize (this, vb, &VisBufferImpl2::fillFlagCube,
                            VisBufferComponent2::FlagCube, NcNfNr, false);
+    flagCubes_p.initialize (this, vb, &VisBufferImpl2::fillFlagCubes,
+                           VisBufferComponent2::FlagCube, NsNcNfNr, false);
     flagRow_p.initialize (this, vb, &VisBufferImpl2::fillFlagRow,
                           VisBufferComponent2::FlagRow, Nr, false);
     floatDataCube_p.initialize (this, vb, &VisBufferImpl2::fillFloatData,
                                 VisBufferComponent2::VisibilityCubeFloat, NcNfNr, false);
+    floatDataCubes_p.initialize (this, vb, &VisBufferImpl2::fillFloatCubes,
+                                 VisBufferComponent2::VisibilityCubeFloat, NsNcNfNr, false);
     imagingWeight_p.initialize (this, vb, &VisBufferImpl2::fillImagingWeight,
                                 VisBufferComponent2::ImagingWeight, NoCheck, false);
     modelVisCube_p.initialize (this, vb, &VisBufferImpl2::fillCubeModel,
                                VisBufferComponent2::VisibilityCubeModel, NcNfNr, false);
+    modelVisCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesModel,
+                               VisBufferComponent2::VisibilityCubeModel, NsNcNfNr, false);
     nAntennas_p.initialize (this, vb, &VisBufferImpl2::fillNAntennas,
                             VisBufferComponent2::NAntennas, false);
     nChannels_p.initialize (this, vb, &VisBufferImpl2::fillNChannel,
@@ -131,6 +140,8 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
                        VisBufferComponent2::Scan, Nr, true);
     sigma_p.initialize (this, vb, &VisBufferImpl2::fillSigma,
                         VisBufferComponent2::Sigma, NcNr, false);
+    sigmas_p.initialize (this, vb, &VisBufferImpl2::fillSigmas,
+                         VisBufferComponent2::Sigma, NsNcNr, false);
     spectralWindows_p.initialize (this, vb, &VisBufferImpl2::fillSpectralWindows,
                                   VisBufferComponent2::SpectralWindows, Nr, false);
     stateId_p.initialize (this, vb, &VisBufferImpl2::fillStateId,
@@ -145,14 +156,24 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
                       VisBufferComponent2::Uvw, I3Nr, false);
     visCube_p.initialize (this, vb, &VisBufferImpl2::fillCubeObserved,
                           VisBufferComponent2::VisibilityCubeObserved, NcNfNr, false);
+    visCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesObserved,
+                           VisBufferComponent2::VisibilityCubeObserved, NsNcNfNr, false);
     weight_p.initialize (this, vb, &VisBufferImpl2::fillWeight,
                          VisBufferComponent2::Weight, NcNr, false);
+    weights_p.initialize (this, vb, &VisBufferImpl2::fillWeights,
+                          VisBufferComponent2::Weight, NsNcNr, false);
     weightSpectrum_p.initialize (this, vb, &VisBufferImpl2::fillWeightSpectrum,
                                  VisBufferComponent2::WeightSpectrum,
                                  NcNfNr, false);
+    weightSpectra_p.initialize (this, vb, &VisBufferImpl2::fillWeightSpectra,
+                                 VisBufferComponent2::WeightSpectrum,
+                                 NsNcNfNr, false);
     sigmaSpectrum_p.initialize (this, vb, &VisBufferImpl2::fillSigmaSpectrum,
                                 VisBufferComponent2::SigmaSpectrum,
                                 NcNfNr, false);
+    sigmaSpectra_p.initialize (this, vb, &VisBufferImpl2::fillSigmaSpectra,
+                                VisBufferComponent2::SigmaSpectrum,
+                                NsNcNfNr, false);
 }
 
 void
@@ -1685,10 +1706,28 @@ VisBufferImpl2::setFlagCategory (const Array<Bool>& value)
     cache_p->flagCategory_p.set (value);
 }
 
+const casacore::Vector<casacore::Array<casacore::Bool>> &
+VisBufferImpl2::flagCategories () const
+{
+    return cache_p->flagCategories_p.get();
+}
+
+void
+VisBufferImpl2::setFlagCategories (const casacore::Vector<casacore::Array<casacore::Bool>>& value)
+{
+    cache_p->flagCategories_p.set (value);
+}
+
 const Cube<Bool> &
 VisBufferImpl2::flagCube () const
 {
     return cache_p->flagCube_p.get ();
+}
+
+const Vector<Cube<Bool>> &
+VisBufferImpl2::flagCubes () const
+{
+    return cache_p->flagCubes_p.get ();
 }
 
 Cube<Bool> &
@@ -1697,10 +1736,22 @@ VisBufferImpl2::flagCubeRef ()
     return cache_p->flagCube_p.getRef ();
 }
 
+Vector<Cube<Bool>> &
+VisBufferImpl2::flagCubesRef ()
+{
+    return cache_p->flagCubes_p.getRef ();
+}
+
 void
 VisBufferImpl2::setFlagCube (const Cube<Bool>& value)
 {
     cache_p->flagCube_p.set (value);
+}
+
+void
+VisBufferImpl2::setFlagCubes (const Vector<Cube<Bool>>& value)
+{
+    cache_p->flagCubes_p.set (value);
 }
 
 const Vector<Bool> &
@@ -1830,10 +1881,22 @@ VisBufferImpl2::sigma () const
     return cache_p->sigma_p.get ();
 }
 
-void
-VisBufferImpl2::setSigma (const Matrix<Float> & sigma)
+const Vector<Matrix<Float>> &
+VisBufferImpl2::sigmas () const
 {
-    cache_p->sigma_p.set (sigma);
+    return cache_p->sigmas_p.get ();
+}
+
+void
+VisBufferImpl2::setSigma (const Matrix<Float> & sigmas)
+{
+    cache_p->sigma_p.set (sigmas);
+}
+
+void
+VisBufferImpl2::setSigmas (const Vector<Matrix<Float>> & sigmas)
+{
+    cache_p->sigmas_p.set (sigmas);
 }
 
 //const Matrix<Float> &
@@ -1939,6 +2002,24 @@ VisBufferImpl2::setVisCubeCorrected (const Cube<Complex> & value)
     cache_p->correctedVisCube_p.set (value);
 }
 
+const Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesCorrected () const
+{
+    return cache_p->correctedVisCubes_p.get ();
+}
+
+Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesCorrectedRef ()
+{
+    return cache_p->correctedVisCubes_p.getRef ();
+}
+
+void
+VisBufferImpl2::setVisCubesCorrected (const Vector<Cube<Complex>> & value)
+{
+    cache_p->correctedVisCubes_p.set (value);
+}
+
 //const Matrix<CStokesVector> &
 //VisBufferImpl2::visCorrected () const
 //{
@@ -1963,6 +2044,18 @@ VisBufferImpl2::setVisCubeFloat (const Cube<Float> & value)
     cache_p->floatDataCube_p.set (value);
 }
 
+const Vector<Cube<Float>> &
+VisBufferImpl2::visCubesFloat () const
+{
+    return cache_p->floatDataCubes_p.get ();
+}
+
+void
+VisBufferImpl2::setVisCubesFloat (const Vector<Cube<Float>> & value)
+{
+    cache_p->floatDataCubes_p.set (value);
+}
+
 const Cube<Complex> &
 VisBufferImpl2::visCubeModel () const
 {
@@ -1985,6 +2078,30 @@ void
 VisBufferImpl2::setVisCubeModel (const Cube<Complex> & value)
 {
     cache_p->modelVisCube_p.set (value);
+}
+
+const Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesModel () const
+{
+    return cache_p->modelVisCubes_p.get ();
+}
+
+Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesModelRef ()
+{
+    return cache_p->modelVisCubes_p.getRef ();
+}
+
+void
+VisBufferImpl2::setVisCubesModel (const Vector<Cube<Complex>> & value)
+{
+    cache_p->modelVisCubes_p.set (value);
+}
+
+void
+VisBufferImpl2::setVisCubesModel (const Complex & value)
+{
+//    cache_p->modelVisCubes_p.set (value);
 }
 
 ms::MsRow *
@@ -2094,6 +2211,30 @@ VisBufferImpl2::setVisCube (const Cube<Complex> & value)
     cache_p->visCube_p.set (value);
 }
 
+const Vector<Cube<Complex>> &
+VisBufferImpl2::visCubes () const
+{
+    return cache_p->visCubes_p.get ();
+}
+
+Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesRef ()
+{
+    return cache_p->visCubes_p.getRef ();
+}
+
+//void
+//VisBufferImpl2::setVisCubes (const Complex & value)
+//{
+ //   cache_p->visCube_p.set (value);
+//}
+
+void
+VisBufferImpl2::setVisCubes (const Vector<Cube<Complex>> & value)
+{
+    cache_p->visCubes_p.set (value);
+}
+
 //const Matrix<CStokesVector> &
 //VisBufferImpl2::vis () const
 //{
@@ -2116,6 +2257,18 @@ void
 VisBufferImpl2::setWeight (const Matrix<Float>& value)
 {
     cache_p->weight_p.set (value);
+}
+
+const Vector<Matrix<Float>> &
+VisBufferImpl2::weights () const
+{
+    return cache_p->weights_p.get ();
+}
+
+void
+VisBufferImpl2::setWeights (const Vector<Matrix<Float>>& value)
+{
+    cache_p->weights_p.set (value);
 }
 
 //const Matrix<Float> &
@@ -2149,6 +2302,24 @@ VisBufferImpl2::setWeightSpectrum (const Cube<Float>& value)
     cache_p->weightSpectrum_p.set (value);
 }
 
+const Vector<Cube<Float>> &
+VisBufferImpl2::weightSpectra () const
+{
+    return cache_p->weightSpectra_p.get ();
+}
+
+Vector<Cube<Float>> &
+VisBufferImpl2::weightSpectraRef ()
+{
+    return cache_p->weightSpectra_p.getRef();
+}
+
+void
+VisBufferImpl2::setWeightSpectra (const Vector<Cube<Float>>& value)
+{
+    cache_p->weightSpectra_p.set (value);
+}
+
 const Cube<Float> &
 VisBufferImpl2::sigmaSpectrum () const
 {
@@ -2161,11 +2332,28 @@ VisBufferImpl2::sigmaSpectrumRef ()
     return cache_p->sigmaSpectrum_p.getRef();
 }
 
-
 void
 VisBufferImpl2::setSigmaSpectrum (const Cube<Float>& value)
 {
     cache_p->sigmaSpectrum_p.set (value);
+}
+
+const Vector<Cube<Float>> &
+VisBufferImpl2::sigmaSpectra () const
+{
+    return cache_p->sigmaSpectra_p.get ();
+}
+
+Vector<Cube<Float>> &
+VisBufferImpl2::sigmaSpectraRef ()
+{
+    return cache_p->sigmaSpectra_p.getRef();
+}
+
+void
+VisBufferImpl2::setSigmaSpectra (const Vector<Cube<Float>>& value)
+{
+    cache_p->sigmaSpectra_p.set (value);
 }
 
 
@@ -2219,6 +2407,14 @@ VisBufferImpl2::fillCubeCorrected (Cube <Complex> & value) const
 }
 
 void
+VisBufferImpl2::fillCubesCorrected (Vector<Cube<Complex>> & value) const
+{
+    CheckVisIter ();
+
+    getViiP()->visibilityCorrected (value);
+}
+
+void
 VisBufferImpl2::fillCubeModel (Cube <Complex> & value) const
 {
     CheckVisIter ();
@@ -2226,9 +2422,24 @@ VisBufferImpl2::fillCubeModel (Cube <Complex> & value) const
     getViiP()->visibilityModel(value);
 }
 
+void
+VisBufferImpl2::fillCubesModel (Vector<Cube <Complex>> & value) const
+{
+    CheckVisIter ();
+
+    getViiP()->visibilityModel(value);
+}
 
 void
 VisBufferImpl2::fillCubeObserved (Cube <Complex> & value) const
+{
+    CheckVisIter ();
+
+    getViiP()->visibilityObserved (value);
+}
+
+void
+VisBufferImpl2::fillCubesObserved (Vector<Cube <Complex>> & value) const
 {
     CheckVisIter ();
 
@@ -2455,6 +2666,14 @@ VisBufferImpl2::fillFlagCube (Cube<Bool>& value) const
 }
 
 void
+VisBufferImpl2::fillFlagCubes (Vector<Cube<Bool>>& value) const
+{
+  CheckVisIter ();
+
+  getViiP()->flag (value);
+}
+
+void
 VisBufferImpl2::fillFlagRow (Vector<Bool>& value) const
 {
   CheckVisIter ();
@@ -2464,6 +2683,14 @@ VisBufferImpl2::fillFlagRow (Vector<Bool>& value) const
 
 void
 VisBufferImpl2::fillFloatData (Cube<Float>& value) const
+{
+  CheckVisIter ();
+
+  getViiP()->floatData (value);
+}
+
+void
+VisBufferImpl2::fillFloatCubes (Vector<Cube<Float>>& value) const
 {
   CheckVisIter ();
 
@@ -2641,6 +2868,14 @@ VisBufferImpl2::fillSigma (Matrix<Float>& value) const
   getViiP()->sigma (value);
 }
 
+void
+VisBufferImpl2::fillSigmas (Vector<Matrix<Float>>& value) const
+{
+  CheckVisIter ();
+
+  getViiP()->sigma (value);
+}
+
 //void
 //VisBufferImpl2::fillSigmaMat (Matrix<Float>& value) const
 //{
@@ -2739,6 +2974,13 @@ VisBufferImpl2::fillWeight (Matrix<Float>& value) const
   getViiP()->weight (value);
 }
 
+void
+VisBufferImpl2::fillWeights (Vector<Matrix<Float>>& value) const
+{
+  CheckVisIter ();
+
+  getViiP()->weight (value);
+}
 
 void
 VisBufferImpl2::fillWeightSpectrum (Cube<Float>& value) const
@@ -2786,6 +3028,22 @@ VisBufferImpl2::fillWeightSpectrum (Cube<Float>& value) const
 }
 
 void
+VisBufferImpl2::fillWeightSpectra (Vector<Cube<Float>>& value) const
+{
+    CheckVisIter ();
+
+    if (getViiP()->weightSpectrumExists()){
+
+        getViiP()->weightSpectrum (value);
+    }
+    else{
+
+        throw AipsError ("Not implemented", __FILE__, __LINE__);
+
+    }
+}
+
+void
 VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
 {
     CheckVisIter ();
@@ -2825,6 +3083,21 @@ VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
 
             }
         }
+    }
+}
+
+void
+VisBufferImpl2::fillSigmaSpectra (Vector<Cube<Float>>& value) const
+{
+    CheckVisIter ();
+
+    if (getViiP()->sigmaSpectrumExists()){
+
+        getViiP()->sigmaSpectrum (value);
+    }
+    else{
+
+        throw AipsError ("Not implemented", __FILE__, __LINE__);
     }
 }
 
