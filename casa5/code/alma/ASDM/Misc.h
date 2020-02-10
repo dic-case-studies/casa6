@@ -232,7 +232,7 @@ namespace asdm {
     ASDMUtilsException();
     ASDMUtilsException(const std::string& message);
     
-    const std::string& getMessage();
+    const std::string& getMessage() const;
     
   private:
     std::string message;

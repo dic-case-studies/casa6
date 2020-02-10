@@ -37,7 +37,7 @@ namespace asdm {
     const float Float::MAX_VALUE = 3.4028235e+38f;
     const float Float::MIN_VALUE = 1.4e-45f;
 
-	float Float::parseFloat(const string &s) throw (NumberFormatException) {
+	float Float::parseFloat(const string &s) {
 		istringstream in;
 		in.str(s);
 		float x;

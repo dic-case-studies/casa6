@@ -162,7 +162,7 @@ namespace asdm {
 
   ASDMUtilsException::ASDMUtilsException(const string & message): message("ASDMUtilsException:" + message) {;}   
 
-  const string& ASDMUtilsException::getMessage() { return message; }
+  const string& ASDMUtilsException::getMessage() const { return message; }
 
 #ifndef WITHOUT_BOOST
   ASDMUtils::DotXMLFilter::DotXMLFilter(vector<string>& filenames) {this->filenames = &filenames;}

@@ -302,7 +302,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Station");
 		}
 	}
@@ -430,7 +430,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Station");
 		}
 	}
@@ -465,7 +465,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CStationType::name(type));
+		eoss.writeString(CStationType::name(type));
 			/* eoss.writeInt(type); */
 				
 		

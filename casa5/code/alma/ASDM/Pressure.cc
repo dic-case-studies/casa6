@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Pressure Pressure::getPressure(StringTokenizer &t) throw(NumberFormatException) {
+Pressure Pressure::getPressure(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return Pressure (value);
 }

@@ -120,7 +120,7 @@ public:
 	 * @param st a reference to a StringTokenizer.
 	 * @return an Speed.
 	 */
-	static Speed getSpeed(StringTokenizer &st) throw(NumberFormatException);
+	static Speed getSpeed(StringTokenizer &st);
 			
 	/**
 	 * Write the binary representation of this to an EndianOSStream .
