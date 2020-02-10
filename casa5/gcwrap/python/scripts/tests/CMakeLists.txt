@@ -228,6 +228,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_listsdm.py
   test_req_task_rmfit.py
   test_req_task_rmtables.py
+  test_req_task_sdintimaging.py
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
