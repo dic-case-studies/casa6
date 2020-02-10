@@ -1968,11 +1968,10 @@ class create_makefile(Command):
             open(".built.grpc",'a').close( )
 
     def __generate_casa_makefile(self):
-        rsync_data_target = "rsync_data"
         my_targets = [
             yacc_target, lex_target, cpp_target, c_target,
             fortran_target, libcasatools, swig_target, statics_wrap_target,
-            tool_libs_target, straight_copies_target, rsync_data_target
+            tool_libs_target, straight_copies_target
         ]
         write_makefile_begin(my_targets)
         write_make_cpp()
@@ -2192,20 +2191,6 @@ class create_makefile(Command):
         generate_casac_init_py()
         # testing
         do_testing()
-        # rsync
-        with open("makefile", "a") as mk:
-            mk.write("\n# targets to rsync data repos\n")
-            mk.write(".PHONY: " + rsync_data_target + "\n")
-            try:
-                import casadata
-                mk.write(
-                    rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
-                    + casadata.datapath
-                )
-            except:
-                mk.write(
-                    rsync_data_target + ": \n\t$(error no data repository is available for update)"
-                )
         write_dependency_tracking()
         print(
             "Successfully generated makefile! Now, run 'make [-j<n>]' "
