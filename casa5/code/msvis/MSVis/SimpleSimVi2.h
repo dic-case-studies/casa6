@@ -233,6 +233,7 @@ public:
   virtual casacore::String fieldName () const override;
 
   virtual void flag (casacore::Cube<casacore::Bool> & flags) const override;
+  virtual void flag (casacore::Vector<casacore::Cube<casacore::Bool>> & flags) const override;
   virtual void flag (casacore::Matrix<casacore::Bool> &) const override { SSVi2NotPossible() };
   virtual casacore::Bool flagCategoryExists () const override { return false; };
   virtual void flagCategory (casacore::Array<casacore::Bool> &) const override { SSVi2NotPossible() };
@@ -246,6 +247,7 @@ public:
   virtual void jonesC (casacore::Vector<casacore::SquareMatrix<casacore::Complex, 2> > &) const override { SSVi2NotPossible() };
   virtual casacore::Int polFrame () const override;
   virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const override;
+  virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const override;
   virtual casacore::Int spectralWindow () const override;
   virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const override;
   virtual void polarizationIds (casacore::Vector<casacore::Int> & polIds) const override;
@@ -255,17 +257,24 @@ public:
   virtual void uvw (casacore::Matrix<casacore::Double> & uvwmat) const override;
 
   virtual void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const override;
+  virtual void visibilityCorrected (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
   virtual void visibilityModel (casacore::Cube<casacore::Complex> & vis) const override;
+  virtual void visibilityModel (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
   virtual void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const override;
+  virtual void visibilityObserved (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
   virtual void floatData (casacore::Cube<casacore::Float> & fcube) const override;
+  virtual void floatData (casacore::Vector<casacore::Cube<casacore::Float>> & fcubes) const override;
 
   virtual casacore::IPosition visibilityShape () const override;
 
   virtual void weight (casacore::Matrix<casacore::Float> & wtmat) const override;
+  virtual void weight (casacore::Vector<casacore::Matrix<casacore::Float>> & wtmat) const override;
   virtual casacore::Bool weightSpectrumExists () const override;
   virtual casacore::Bool sigmaSpectrumExists () const override;
   virtual void weightSpectrum (casacore::Cube<casacore::Float> & wtsp) const override;
+  virtual void weightSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const override;
   virtual void sigmaSpectrum (casacore::Cube<casacore::Float> & wtsp) const override;
+  virtual void sigmaSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const override;
 
   virtual void setWeightScaling (casacore::CountedPtr<WeightScaling>) override { SSVi2NotPossible() };
   virtual casacore::Bool hasWeightScaling () const override { return false; };
