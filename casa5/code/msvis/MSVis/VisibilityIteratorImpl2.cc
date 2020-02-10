@@ -564,7 +564,7 @@ class ChannelSelectorCache
 {
 public:
 
-    ChannelSelectorCache(Int maxEntries = 20)
+    ChannelSelectorCache(Int maxEntries = 200)
         : frameOfReference_p(FrequencySelection::Unknown)
         , maxEntries_p(maxEntries)
         , msId_p(-1)
