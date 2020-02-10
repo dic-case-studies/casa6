@@ -918,7 +918,23 @@ VisibilityIteratorImpl2::getColumnRows(const ArrayColumn<T> & column,
                           true);
 }
 
+template <typename T>
+void
+VisibilityIteratorImpl2::getColumnRows(const ArrayColumn<T> & column,
+                                       Vector<Cube<T>> & cubeVector) const
+{
+    cubeVector.resize(channelSelectors_p.size());
+    for (size_t iVector=0; iVector < channelSelectors_p.size(); iVector++)
+    {
+        ColumnSlicer columnSlicer =
+                channelSelectors_p[iVector]->getSlicer().getColumnSlicer();
 
+        column.getColumnCells(rowBounds_p.subchunkEqChanSelRows_p[iVector],
+                columnSlicer,
+                cubeVector[iVector],
+                true);
+    }
+}
 
 template <typename T>
 void
@@ -926,48 +942,97 @@ VisibilityIteratorImpl2::getColumnRowsMatrix(const ArrayColumn<T> & column,
                                              Matrix<T> & array,
                                              Bool correlationSlicing) const
 {
-	if (correlationSlicing) {
+    if (correlationSlicing) {
 
-		// Extract the correlations slices and repackage them for use by
-		// getColumnCells
+        // Extract the correlations slices and repackage them for use by
+        // getColumnCells
 
-		const ChannelSlicer & slicer = channelSelectors_p[0]->getSlicer();
-		// has to be at least one
-		const ChannelSubslicer subslicer = slicer.getSubslicer(0);
+        const ChannelSlicer & slicer = channelSelectors_p[0]->getSlicer();
+        // has to be at least one
+        const ChannelSubslicer subslicer = slicer.getSubslicer(0);
 
-		Vector<Slice> correlationSlices = subslicer.getSlices();
+        Vector<Slice> correlationSlices = subslicer.getSlices();
 
-		Vector<Slicer *> dataSlicers(correlationSlices.size(), 0);
-		Vector<Slicer *> destinationSlicers(correlationSlices.size(), 0);
+        Vector<Slicer *> dataSlicers(correlationSlices.size(), 0);
+        Vector<Slicer *> destinationSlicers(correlationSlices.size(), 0);
 
-		IPosition start(1, 0), length(1, 0), increment(1, 0);
-		uInt sliceStart = 0;
+        IPosition start(1, 0), length(1, 0), increment(1, 0);
+        uInt sliceStart = 0;
 
-		for (uInt i = 0; i < correlationSlices.size(); i++) {
+        for (uInt i = 0; i < correlationSlices.size(); i++) {
 
-			start(0) = correlationSlices(i).start();
-			length(0) = correlationSlices(i).length();
-			increment(0) = correlationSlices(i).inc();
-			dataSlicers(i) = new Slicer(start, length, increment);
+            start(0) = correlationSlices(i).start();
+            length(0) = correlationSlices(i).length();
+            increment(0) = correlationSlices(i).inc();
+            dataSlicers(i) = new Slicer(start, length, increment);
 
-			start(0) = sliceStart;
-			increment(0) = 1;
-			destinationSlicers(i) = new Slicer(start, length, increment);
+            start(0) = sliceStart;
+            increment(0) = 1;
+            destinationSlicers(i) = new Slicer(start, length, increment);
 
-			sliceStart += length(0);
-		}
+            sliceStart += length(0);
+        }
 
-		IPosition shape(1, sliceStart);
+        IPosition shape(1, sliceStart);
 
-		ColumnSlicer columnSlicer(shape, dataSlicers, destinationSlicers);
+        ColumnSlicer columnSlicer(shape, dataSlicers, destinationSlicers);
 
-		column.getColumnCells(rowBounds_p.subchunkRows_p, columnSlicer, array,
-		                      true);
-	}
-	else{
+        column.getColumnCells(rowBounds_p.subchunkRows_p, columnSlicer, array,
+                              true);
+    }
+    else{
 
-		column.getColumnCells(rowBounds_p.subchunkRows_p, array, true);
-	}
+        column.getColumnCells(rowBounds_p.subchunkRows_p, array, true);
+    }
+}
+
+template <typename T>
+void
+VisibilityIteratorImpl2::getColumnRowsMatrix(const ArrayColumn<T> & column,
+                                             Vector<Matrix<T>> & matrixVector) const
+{
+    matrixVector.resize(channelSelectors_p.size());
+    for (size_t iVector=0; iVector < channelSelectors_p.size(); iVector++)
+    {
+
+        // Extract the correlations slices and repackage them for use by
+        // getColumnCells
+
+        const ChannelSlicer & slicer = channelSelectors_p[iVector]->getSlicer();
+        // has to be at least one
+        const ChannelSubslicer subslicer = slicer.getSubslicer(0);
+
+        Vector<Slice> correlationSlices = subslicer.getSlices();
+
+        Vector<Slicer *> dataSlicers(correlationSlices.size(), 0);
+        Vector<Slicer *> destinationSlicers(correlationSlices.size(), 0);
+
+        IPosition start(1, 0), length(1, 0), increment(1, 0);
+        uInt sliceStart = 0;
+
+        for (uInt i = 0; i < correlationSlices.size(); i++) {
+
+            start(0) = correlationSlices(i).start();
+            length(0) = correlationSlices(i).length();
+            increment(0) = correlationSlices(i).inc();
+            dataSlicers(i) = new Slicer(start, length, increment);
+
+            start(0) = sliceStart;
+            increment(0) = 1;
+            destinationSlicers(i) = new Slicer(start, length, increment);
+
+            sliceStart += length(0);
+        }
+
+        IPosition shape(1, sliceStart);
+
+        ColumnSlicer columnSlicer(shape, dataSlicers, destinationSlicers);
+
+        column.getColumnCells(rowBounds_p.subchunkEqChanSelRows_p[iVector],
+                              columnSlicer,
+                              matrixVector[iVector],
+                              true);
+    }
 }
 
 template <typename T>
@@ -3223,7 +3288,13 @@ VisibilityIteratorImpl2::corrType(Vector<Int> & corrTypes) const
 void
 VisibilityIteratorImpl2::flag(Cube<Bool> & flags) const
 {
-	getColumnRows(columns_p.flag_p, flags);
+    getColumnRows(columns_p.flag_p, flags);
+}
+
+void
+VisibilityIteratorImpl2::flag(Vector<Cube<Bool>> & flags) const
+{
+    getColumnRows(columns_p.flag_p, flags);
 }
 
 void
@@ -3350,52 +3421,108 @@ VisibilityIteratorImpl2::visibilityCorrected(Cube<Complex> & vis) const
 {
   if(columns_p.corrVis_p.isNull())
     throw AipsError("Requesting visibilityCorrected but column is null");
-	getColumnRows(columns_p.corrVis_p, vis);
+    getColumnRows(columns_p.corrVis_p, vis);
+}
+
+void
+VisibilityIteratorImpl2::visibilityCorrected(Vector<Cube<Complex>> & vis) const
+{
+  if(columns_p.corrVis_p.isNull())
+    throw AipsError("Requesting visibilityCorrected but column is null");
+    getColumnRows(columns_p.corrVis_p, vis);
 }
 
 void
 VisibilityIteratorImpl2::visibilityModel(Cube<Complex> & vis) const
 {
-	// See if the data can be filled from a virtual model column; if not then
-	// get it from the model column.
+    // See if the data can be filled from a virtual model column; if not then
+    // get it from the model column.
 
-	if (!fillFromVirtualModel(vis)) {
-		getColumnRows(columns_p.modelVis_p, vis);
-	}
+    if (!fillFromVirtualModel(vis)) {
+        getColumnRows(columns_p.modelVis_p, vis);
+    }
+}
+
+void
+VisibilityIteratorImpl2::visibilityModel(Vector<Cube<Complex>> & vis) const
+{
+    (void)vis;
+    throw AipsError("VisibilityIteratorImpl2::visibilityModel(Vector<Cube<Complex>> & vis) not yet implemented");
 }
 
 void
 VisibilityIteratorImpl2::visibilityObserved(Cube<Complex> & vis) const
 {
-	if (floatDataFound_p) {
+    if (floatDataFound_p) {
 
-		// Since there is a floating data column, read that and convert it into
-		// the expected Complex form.
+        // Since there is a floating data column, read that and convert it into
+        // the expected Complex form.
 
-		Cube<Float> dataFloat;
+        Cube<Float> dataFloat;
 
-		getColumnRows(columns_p.floatVis_p, dataFloat);
+        getColumnRows(columns_p.floatVis_p, dataFloat);
 
-		vis.resize(dataFloat.shape());
+        vis.resize(dataFloat.shape());
 
-		convertArray(vis, dataFloat);
-	}
-	else {
-	  if(columns_p.vis_p.isNull())
-	    throw AipsError("Requesting visibilityObserved but column is null");
-		getColumnRows(columns_p.vis_p, vis);
-	}
+        convertArray(vis, dataFloat);
+    }
+    else {
+      if(columns_p.vis_p.isNull())
+        throw AipsError("Requesting visibilityObserved but column is null");
+        getColumnRows(columns_p.vis_p, vis);
+    }
+}
+
+void
+VisibilityIteratorImpl2::visibilityObserved(Vector<Cube<Complex>> & vis) const
+{
+    if (floatDataFound_p) {
+
+        // Since there is a floating data column, read that and convert it into
+        // the expected Complex form.
+
+        Vector<Cube<Float>> dataFloat;
+
+        getColumnRows(columns_p.floatVis_p, dataFloat);
+
+        vis.resize(dataFloat.size());
+
+        size_t iVec = 0;
+        for (iVec= 0; iVec < vis.size(); iVec++)
+        {
+            vis[iVec].resize(dataFloat[iVec].shape());
+
+            convertArray(vis[iVec], dataFloat[iVec]);
+        }
+    }
+    else {
+      if(columns_p.vis_p.isNull())
+        throw AipsError("Requesting visibilityObserved but column is null");
+        getColumnRows(columns_p.vis_p, vis);
+    }
 }
 
 void
 VisibilityIteratorImpl2::floatData(Cube<Float> & fcube) const
 {
-	if (floatDataFound_p) {
-		getColumnRows(columns_p.floatVis_p, fcube);
-	}
-	else{
-		fcube.resize();
-	}
+    if (floatDataFound_p) {
+        getColumnRows(columns_p.floatVis_p, fcube);
+    }
+    else{
+        fcube.resize();
+    }
+}
+
+void
+VisibilityIteratorImpl2::floatData(Vector<Cube<Float>> & fcubes) const
+{
+    if (floatDataFound_p) {
+        getColumnRows(columns_p.floatVis_p, fcubes);
+    }
+    else{
+        fcubes.resize(1);
+        fcubes[0].resize();
+    }
 }
 
 void
@@ -3541,13 +3668,25 @@ VisibilityIteratorImpl2::hourang(Double time) const
 void
 VisibilityIteratorImpl2::sigma(Matrix<Float> & sigma) const
 {
-	getColumnRowsMatrix(columns_p.sigma_p, sigma, true);
+    getColumnRowsMatrix(columns_p.sigma_p, sigma, true);
+}
+
+void
+VisibilityIteratorImpl2::sigma(Vector<Matrix<Float>> & sigma) const
+{
+    getColumnRowsMatrix(columns_p.sigma_p, sigma);
 }
 
 void
 VisibilityIteratorImpl2::weight(Matrix<Float> & wt) const
 {
-	getColumnRowsMatrix(columns_p.weight_p, wt, true);
+    getColumnRowsMatrix(columns_p.weight_p, wt, true);
+}
+
+void
+VisibilityIteratorImpl2::weight(Vector<Matrix<Float>> & wt) const
+{
+    getColumnRowsMatrix(columns_p.weight_p, wt);
 }
 
 Bool
@@ -3576,27 +3715,43 @@ VisibilityIteratorImpl2::sigmaSpectrumExists() const
 void
 VisibilityIteratorImpl2::weightSpectrum(Cube<Float> & spectrum) const
 {
-	if (weightSpectrumExists()) {
+    if (weightSpectrumExists())
+        getColumnRows(columns_p.weightSpectrum_p, spectrum);
+    else
+        spectrum.resize(0, 0, 0);
+}
 
-		getColumnRows(columns_p.weightSpectrum_p, spectrum);
-
-	}
-	else {
-		spectrum.resize(0, 0, 0);
-	}
+void
+VisibilityIteratorImpl2::weightSpectrum(Vector<Cube<Float>> & spectrum) const
+{
+    if (weightSpectrumExists())
+        getColumnRows(columns_p.weightSpectrum_p, spectrum);
+    else
+    {
+        spectrum.resize(1);
+        spectrum[0].resize(0, 0, 0);
+    }
 }
 
 void
 VisibilityIteratorImpl2::sigmaSpectrum(Cube<Float> & spectrum) const
 {
-	if (sigmaSpectrumExists()) {
+    if (sigmaSpectrumExists())
+        getColumnRows(columns_p.sigmaSpectrum_p, spectrum);
+    else
+        spectrum.resize(0, 0, 0);
+}
 
-		getColumnRows(columns_p.sigmaSpectrum_p, spectrum);
-
-	}
-	else {
-		spectrum.resize(0, 0, 0);
-	}
+void
+VisibilityIteratorImpl2::sigmaSpectrum(Vector<Cube<Float>> & spectrum) const
+{
+    if (sigmaSpectrumExists())
+        getColumnRows(columns_p.sigmaSpectrum_p, spectrum);
+    else
+    {
+        spectrum.resize(1);
+        spectrum[0].resize(0, 0, 0);
+    }
 }
 
 void
