@@ -68,6 +68,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     void grpcInteractiveCleanState::reset( ) {
         Niter = 0;
+        MajorDone = 0;
         CycleNiter = 0;
         InteractiveNiter = 0;
         Threshold = 0;
