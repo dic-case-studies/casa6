@@ -45,7 +45,7 @@ namespace casa{
   namespace refim{
     Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
 
-    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(), doPointing_p(false), cachedFieldId_p(-1), vbRow2BLMap_p(), vbRows_p(0), sigmaDev(), cachedCFBPtr_p(), maxCFShape_p(2), timer_p()
+    VB2CFBMap::VB2CFBMap(): vb2CFBMap_p(), cfPhaseGrad_p(), baselineType_p(), vectorPhaseGradCalculator_p(), doPointing_p(false), cachedFieldId_p(-1), vbRow2BLMap_p(), vbRows_p(0), sigmaDev(2), cachedCFBPtr_p(), maxCFShape_p(2), timer_p()
     {
       baselineType_p = new BaselineType();
       needsNewPOPG_p = false;
@@ -267,6 +267,12 @@ namespace casa{
 	  baselineType_p->setCachedAntennaPO(pointingOffsets_p->pullPointingOffsets());
 	}
 
+      else
+	{
+	  sigmaDev[0] = 0;
+	  sigmaDev[1] = 0;
+	}
+      
       for (Int irow=0;irow<nRow;irow++)
 	{
 	  //
