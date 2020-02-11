@@ -123,7 +123,7 @@ using namespace casa::vi;
 	vbrowms2wgtrow_p.clear();
 	if(fieldsToUse.size()==0)
 		fieldsToUse.push_back(make_pair(Int(-1),Int(-1)));
-	cerr << "FIELDs to use " << Vector<pair<Int,Int> >(fieldsToUse) << endl;
+	//cerr << "FIELDs to use " << Vector<pair<Int,Int> >(fieldsToUse) << endl;
 	for (uInt k=0; k < fieldsToUse.size(); ++k){
 		vi.originChunks();
 		vi.origin();
@@ -497,7 +497,7 @@ void BriggsCubeWeightor::readWeightColumn(casacore::Matrix<casacore::Float>& imw
 		for (uInt k=0; k < msids.nelements(); ++k){
 			vbrowms2wgtrow_p[make_pair(msids[k], msrowid[k])]=k;
 		}
-		cerr << "Map size " << vbrowms2wgtrow_p.size() << " max size " << vbrowms2wgtrow_p.max_size() << endl;
+		//cerr << "Map size " << vbrowms2wgtrow_p.size() << " max size " << vbrowms2wgtrow_p.max_size() << endl;
 	}
 	imweight.resize(vb.nChannels(), vb.nRows());
 	uInt msidnow=vb.msId();
