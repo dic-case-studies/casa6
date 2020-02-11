@@ -92,7 +92,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SynthesisDeconvolver::setupDeconvolution(const SynthesisParamsDeconv& decpars)
   {
-    LogIO os( LogOrigin("SynthesisDeconvolver","setupDeconvolution",WHERE) );
+    //LogIO os( LogOrigin("SynthesisDeconvolver","setupDeconvolution",WHERE) );
 
     //Copy this decpars into a private variable that can be used elsewhere
     //there is no proper copy operator (as public casa::Arrays members = operator fails) 
@@ -101,11 +101,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsStartingModelNames = decpars.startModel;
     itsDeconvolverId = decpars.deconvolverId;
     
-    os << "Set Deconvolution Options for [" << itsImageName << "] : " << decpars.algorithm ;
-    if( itsStartingModelNames.nelements()>0 && itsStartingModelNames[0].length() > 0 ) 
+    //os << "Set Deconvolution Options for [" << itsImageName << "] : " << decpars.algorithm ;
+    /*  if( itsStartingModelNames.nelements()>0 && itsStartingModelNames[0].length() > 0 ) 
       os << " , starting from model : " << itsStartingModelNames;
     os << LogIO::POST;
-
+    */
     try
       {
 	if(decpars.algorithm==String("hogbom"))
@@ -378,7 +378,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       returnRecord = itsLoopController.getCycleInitializationRecord();
 
-      itsImages->printImageStats();
+      //      itsImages->printImageStats();
       itsImages->releaseLocks();
 
       os << LogIO::DEBUG2 << "Initialized minor cycle. Returning returnRec" << LogIO::POST;
@@ -453,7 +453,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   
   Record SynthesisDeconvolver::executeMinorCycle(Record& minorCycleControlRec)
   {
-    LogIO os( LogOrigin("SynthesisDeconvolver","executeMinorCycle",WHERE) );
+    // LogIO os( LogOrigin("SynthesisDeconvolver","executeMinorCycle",WHERE) );
     Record returnRecord;
 
     //    itsImages->printImageStats();
@@ -462,7 +462,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if(itsImages->residual()->shape()[3]> 1){
      return  executeCubeMinorCycle(minorCycleControlRec);
     }
-    os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
+    //    os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
 
     SynthesisUtilMethods::getResource("Start Deconvolver");
 
@@ -492,10 +492,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
   Record SynthesisDeconvolver::executeCubeMinorCycle(Record& minorCycleControlRec)
   {
-    LogIO os( LogOrigin("SynthesisDeconvolver","executeCubeMinorCycle",WHERE) );
+    //    LogIO os( LogOrigin("SynthesisDeconvolver","executeCubeMinorCycle",WHERE) );
     Record returnRecord;
 
-    os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
+    // os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
 
     
     SynthesisUtilMethods::getResource("Start Deconvolver");
@@ -547,9 +547,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Vector<Int> chanRange(2);
           Record beamsetRec;
           for (Int k=0; k < numchan; ++k) {
-            os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
+            //os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
             assigned=casa::applicator.nextAvailProcess(*cmc, rank);
-            cerr << "assigned "<< assigned << endl;
+            //cerr << "assigned "<< assigned << endl;
             while(!assigned) {
               //cerr << "SErial ? " << casa::applicator.isSerial() << endl;
               rank = casa::applicator.nextProcessDone(*cmc, allDone);
@@ -563,10 +563,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               casa::applicator.get(retval);
               ///might need to merge these retval
               mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
-              if(retval.nfields())
+              /*if(retval.nfields())
                 cerr << k << "deconv rank " << rank << " successful " << endl;
-              else
+               else
                 cerr << k << "deconv rank " << rank << " failed " << endl;
+              */
               //cerr <<"rank " << rank << " return rec "<< retval << endl;
               assigned = casa::applicator.nextAvailProcess(*cmc, rank);
 	  
@@ -617,12 +618,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                           allDone=true;
           }
 
-        
+          itsLoopController.incrementMinorCycleCount(returnRecord.asInt("iterdone"));
 
 
           
 
-        }///end of if controller
+      }///end of if controller
       /////////////////////////////////////////////////
   
       //scatterModel(); // This is a no-op for the single-node case.
