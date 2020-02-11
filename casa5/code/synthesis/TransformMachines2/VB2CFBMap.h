@@ -104,7 +104,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      int blType_p;
      int vbRows_p;
      /* casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p; */
-     vector<float> sigmaDev ;
+     vector<float> sigmaDev = {0.0,0.0};
      casacore::CountedPtr<CFBuffer> cachedCFBPtr_p;
      Vector<int> maxCFShape_p;
      casacore::Timer timer_p;
