@@ -32,7 +32,7 @@ using namespace std;
 
 namespace asdm {
 
-Frequency Frequency::getFrequency(StringTokenizer &t) throw(NumberFormatException) {
+Frequency Frequency::getFrequency(StringTokenizer &t) {
 	double value = Double::parseDouble(t.nextToken());
 	return Frequency (value);
 }

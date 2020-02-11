@@ -44,7 +44,7 @@ public:
 	 * @return a char 
 	 * @throws NumberFormatException.
 	 */
-	static char parseByte(const std::string &s) throw (NumberFormatException);
+	static char parseByte(const std::string &s);
 
 	/**
 	 * Encode a byte value into its string representation.

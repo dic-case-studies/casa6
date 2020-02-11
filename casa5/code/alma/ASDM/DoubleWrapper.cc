@@ -37,7 +37,7 @@ namespace asdm {
     const double Double::MAX_VALUE = 1.7976931348623157e+308;
     const double Double::MIN_VALUE = 4.9e-324;
 
-	double Double::parseDouble(const string &s) throw (NumberFormatException) {
+	double Double::parseDouble(const string &s) {
 		istringstream in;
 		in.str(s);
 		double x;
