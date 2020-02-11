@@ -29,6 +29,7 @@ import sys
 import unittest
 import shutil
 import numpy as np
+from casatestutils.imagerhelpers import TestHelpers
 
 CASA6 = False
 try: 
@@ -38,7 +39,7 @@ try:
     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
     sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
     #from testhelper_imager import TestHelpers
-    import casaTestHelper as th
+    #import casaTestHelper as th
     #refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
     CASA6 = True
 except ImportError:
@@ -48,8 +49,9 @@ except ImportError:
     from parallel.parallel_task_helper import ParallelTaskHelper
     from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
     #from imagerhelpers.testhelper_imager import TestHelpers
-    import casaTestHelper as th
+    #import casaTestHelper as th
 
+th = TestHelpers()
 
 if CASA6:
     #refdatapath = ctsys.resolve('regression/unittest/sdintimaging')
