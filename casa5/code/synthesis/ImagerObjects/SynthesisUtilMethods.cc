@@ -3213,6 +3213,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	if( ftmachine=="awprojectft" && cfCache=="" )
 	  {cfCache=imageName+".cf"; }
 
+	if( ftmachine=="awprojectft" && 
+	    usePointing==True && 
+	    pointingOffsetSigDev.nelements() != 2 )
+	  {
+	    // Set the default to a large value so that it behaves like CASA 5.6's usepointing=True.
+	    pointingOffsetSigDev.resize(2);
+	    pointingOffsetSigDev[0]=600.0;
+	    pointingOffsetSigDev[1]=600.0;
+	  }
+
 	err += verify();
 	
       }
@@ -3272,7 +3282,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     if( ftmachine=="awprojectft" && usePointing==True && pointingOffsetSigDev.nelements() != 2 )
       {
-	err += "The pointingoffsetsigdev parameter must be a two-element vector of doubles in order to be used with usepointing=True and the AWProject gridder \n ";
+	err += "The pointingoffsetsigdev parameter must be a two-element vector of doubles in order to be used with usepointing=True and the AWProject gridder. Setting it to the default of \n ";
       }
 
 
