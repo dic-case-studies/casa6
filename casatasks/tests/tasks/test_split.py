@@ -2261,6 +2261,11 @@ class splitUpdateFlagCmd(test_base):
         os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outputms)
         os.system('rm -rf list.obs')
+        os.system('rm -rf spwnames.txt')
+        # the asdmname isn't available in the class - recover it from the vis name - everything before ".ms"
+        asdmname = self.vis[:self.vis.index('.ms')]
+        os.system('rm -rf '+ asdmname)
+        os.system('rm -rf '+ asdmname+'_cmd.txt')
         
     def test_updateFlagcmd1(self):
         '''split: Do not update FLAG_CMD table when spw selection in FLAG_CMD is by name'''
@@ -2278,8 +2283,10 @@ class splitOptionalColumnsCopied(test_base):
     def tearDown(self):
         os.system('rm -rf ' + self.vis)
         os.system('rm -rf ' + self.outputms)
-        os.system('rm -rf test_uid___A002_X997a62_X8c-short')
         os.system('rm -rf ' + self.flagfile)
+        # the asdmname isn't available in the class - recover it from the vis name - everything before ".ms"
+        asdmname = self.vis[:self.vis.index('.ms')]
+        os.system('rm -rf ' + asdmname)
 
     def test_optionalColumnsCopied(self):
         '''split: make sure that the expected optional columns in SPECTRAL_WINDOW and PROCESSOR are copied by split'''
