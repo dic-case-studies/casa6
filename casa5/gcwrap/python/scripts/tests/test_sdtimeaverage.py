@@ -43,19 +43,20 @@ defInputMs  = "sdimaging.ms"     # template MS
 defWorkMs   = "sdimaging-t.ms"   # testing MS (modified here)
 defWorkMs2  = "sdimaging-t2.ms"  # testing MS (modified for TimeSpan)
 defOutputMs = "sdave.ms"         # (internal) output MS
-defPrivateMs       = "sdave-*.ms"       # private  output MS form.
-defPrivateMsForm   = 'sdave-{}-{}.ms'
+defPrivateMs       = "sdave-*.ms"       # private  output MS form of each test
+defPrivateMsForm   = 'sdave-{}-{}.ms'   # debug file format of each test
 
-# Test Conditio , Numerical error limit.
-numTune =52                   # must be Even (0 ~ 
-nInScan    =63
+# Test Condition
+numTune    = 0                  # must be in {12,24,36,48}  and 0(=no operation)
+nInScan    = 63
 nReduce    = nInScan*numTune    # nReduce MUST BE even number 
-nRow       = 3843 - nReduce     ## Final Size ## 
+nRow       = 3843 - nReduce     # Final Size  
 
-# Test Spec.  
+# 'scan' and 'state' condition
 numOfState =3                     # test-MS2 (for timespan)
 numOfScan  =int(nRow / nInScan)   # test-MS2 (for timespan) std=61
 
+# Numerical Error Limit
 errLimit  = 5.0e-08   # numerical error Limit of ZeroSum
 errLimit2 = 2.0e-08   # numerical error Limit of Sigma and Weight
 testInterval = 1.0    # fundamental INTERVAL in TEST-MS (tunable)
@@ -136,8 +137,8 @@ class test_sdtimeaverage(unittest.TestCase):
 #
 # Comment Out if you reserve MS.
 #
-###        os.system('rm -rf ' + defWorkMs  )
-###        os.system('rm -rf ' + defWorkMs2 )
+        os.system('rm -rf ' + defWorkMs  )
+        os.system('rm -rf ' + defWorkMs2 )
         os.system('rm -rf ' + defPrivateMs )
 
 ##############
@@ -289,10 +290,12 @@ class test_sdtimeaverage(unittest.TestCase):
         # Table Access (with numPy array operation)
         with tbmanager(msName,nomodify=False) as tb:
             #+
-            # reduce MS row size 
+            # reduce MS row size if reduce size is specified. 
             #-
-            rows =list(range(nReduce) ) 
-            tb.removerows(rows)
+            if nReduce != 0:
+                print ( "----- reducing rows in Test-MS." )
+                rows =list(range(nReduce) ) 
+                tb.removerows(rows)
 
             # Confirm nRow
             NN = nRow
@@ -359,6 +362,11 @@ class test_sdtimeaverage(unittest.TestCase):
         The 2nd. section makes Zero Sum.
         Note: In Test-MS test data is designed by odd functional curve. 
         '''
+        #
+        self.get_main(outMsName)
+        check = (len(self.tm) == 3) 
+        self.assertTrue(check, msg='## Unexpected Result Count  ##\n count={}'.format(len(self.tm)) )  
+                
         # get the result  #
         fData0 = self.get_spectra(outMsName, 0 )        # result on row=0
         fData1 = self.get_spectra(outMsName, 1 )        # row=1
@@ -369,6 +377,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.checkZero( fData1 )              # must be zero
 
         # Ref Time in 3 sections (becomes centre of the section)
+        print( "DBG in check_averaged_result_N3:: nRow = {} ".format(nRow) )
         Tref0 = testInterval * (nRow /3 -1.0)/2
         Tref1 = Tref0 + testInterval * (nRow/3)
         Tref2 = Tref1 + testInterval * (nRow/3)
@@ -387,6 +396,11 @@ class test_sdtimeaverage(unittest.TestCase):
         '''
         This is for TimeSpan (num of state=3)
         '''
+        #
+        self.get_main(outMsName)
+        check = (len(self.tm) == 3)
+        self.assertTrue(check, msg='## Unexpected Result Count  ##\n count={}'.format(len(self.tm)) )
+
         # get the result  #
         fData0 = self.get_spectra(outMsName, 0 )        # result on row=0
         fData1 = self.get_spectra(outMsName, 1 )        # row=1
@@ -610,7 +624,7 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param100(self):
         '''sdtimeaverage::100:: timebin=1282(N=3)  '''
         # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 100, nRow/3 + 1 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 100, nRow/3+ 0.5  )
  
         prm =  {'timebin' : timebin_str,          
                 'infile'  : defWorkMs,
@@ -727,10 +741,9 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertFalse(self.run_task( prm )) # must be false
 
-## TIMESPAN (being revised in progress )###
-
+    # ordinary behavior #
     def test_param70(self):
-        '''sdtimeaverage::60:: timespan="scan"  '''
+        '''sdtimeaverage::70:: timespan="scan"  '''
 
         privateOutfile, timebin_str  = self.setOutfile_Timebin(70 , nRow+3 )
         prm =  {'infile'    : defWorkMs2,
@@ -740,10 +753,11 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # 
         self.check_averaged_result_N3TimeSpan (privateOutfile)
-        self.checkOutputRec(privateOutfile, 3 ) # Averaged by each State={0,1,2} . see generate_data()
+        self.checkOutputRec(privateOutfile, numOfState ) # Averaged by each State={0,1,2} . see generate_data()
 
+    # ordinary behavior #
     def test_param71(self):
-        '''sdtimeaverage::61:: timespan="state"  '''
+        '''sdtimeaverage::71:: timespan="state"  '''
 
         privateOutfile, timebin_str  = self.setOutfile_Timebin( 71, nRow+3 )
         prm =  {'infile'    : defWorkMs2,
@@ -757,8 +771,9 @@ class test_sdtimeaverage(unittest.TestCase):
         self.check_averaged_result_N61(privateOutfile)
         self.checkOutputRec(privateOutfile, numOfScan )
 
+    # ordinary behavior #
     def test_param72(self):
-        '''sdtimeaverage::62:: timespan="scan,state"  '''
+        '''sdtimeaverage::72:: timespan="scan,state"  '''
 
         privateOutfile, timebin_str  = self.setOutfile_Timebin( 72, nRow+3 )
         prm =  {'infile'    : defWorkMs2,
@@ -770,10 +785,11 @@ class test_sdtimeaverage(unittest.TestCase):
         self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1 )
 
-    def test_param63E(self):
-        '''sdtimeaverage::63E:: timespan="hoge"  '''
+    # Error in sytax # 
+    def test_param74E(self):
+        '''sdtimeaverage::74E:: timespan="hoge"  '''
 
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 73, nRow+3 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 74, nRow+3 )
         prm =  {'infile'    : defWorkMs2,
                 'timespan' : 'hoge',
                 'outfile' : privateOutfile }
@@ -783,7 +799,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
 """
 5-Feb-2020   editing: reduce the TEST-MS size to shorten execution of mstransform.
-
 
 """
 #### Control ######

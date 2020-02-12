@@ -43,19 +43,20 @@ defInputMs  = "sdimaging.ms"     # template MS
 defWorkMs   = "sdimaging-t.ms"   # testing MS (modified here)
 defWorkMs2  = "sdimaging-t2.ms"  # testing MS (modified for TimeSpan)
 defOutputMs = "sdave.ms"         # (internal) output MS
-defPrivateMs       = "sdave-*.ms"       # private  output MS form.
-defPrivateMsForm   = 'sdave-{}-{}.ms'
+defPrivateMs       = "sdave-*.ms"       # private  output MS form of each test
+defPrivateMsForm   = 'sdave-{}-{}.ms'   # debug file format of each test
 
-# Test Conditio , Numerical error limit.
-numTune    = 0                 # must be in {12,24,36,48}  and 0(=no operation)
+# Test Condition
+numTune    = 0                  # must be in {12,24,36,48}  and 0(=no operation)
 nInScan    = 63
 nReduce    = nInScan*numTune    # nReduce MUST BE even number 
-nRow       = 3843 - nReduce     ## Final Size ## 
+nRow       = 3843 - nReduce     # Final Size  
 
-# Test Spec.  
+# 'scan' and 'state' condition
 numOfState =3                     # test-MS2 (for timespan)
 numOfScan  =int(nRow / nInScan)   # test-MS2 (for timespan) std=61
 
+# Numerical Error Limit
 errLimit  = 5.0e-08   # numerical error Limit of ZeroSum
 errLimit2 = 2.0e-08   # numerical error Limit of Sigma and Weight
 testInterval = 1.0    # fundamental INTERVAL in TEST-MS (tunable)
@@ -289,10 +290,12 @@ class test_sdtimeaverage(unittest.TestCase):
         # Table Access (with numPy array operation)
         with tbmanager(msName,nomodify=False) as tb:
             #+
-            # reduce MS row size 
+            # reduce MS row size if reduce size is specified. 
             #-
-            rows =list(range(nReduce) ) 
-            tb.removerows(rows)
+            if nReduce != 0:
+                print ( "----- reducing rows in Test-MS." )
+                rows =list(range(nReduce) ) 
+                tb.removerows(rows)
 
             # Confirm nRow
             NN = nRow
