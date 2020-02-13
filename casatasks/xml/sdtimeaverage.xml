@@ -75,7 +75,7 @@ Keyword arguments
 infile -- name of input SD dataset
 datacolumn -- name of data column to be used
         options: 'data', 'float_data', or 'corrected_data'
-        default: 'float_data'
+        default: 'data'
 field -- select data by field IDs and names
         default: '' (use all fields)
         example: field='3C2*' (all names starting with 3C2)
