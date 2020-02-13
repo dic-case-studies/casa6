@@ -21,7 +21,7 @@ def bandpass(vis=None,caltable=None,
              observation=None,msselect=None,
              solint=None,combine=None,refant=None,minblperant=None,
              minsnr=None,solnorm=None,
-             bandtype=None,smodel=None,
+             bandtype=None,smodel=None,corrdepflags=None,
              append=None,fillgaps=None,
              degamp=None,degphase=None,visnorm=None,
              maskcenter=None,maskedge=None,
@@ -65,6 +65,10 @@ def bandpass(vis=None,caltable=None,
                         mycb.selectvis(time='',spw=spw,scan='',field=field,intent=intent,
                                        observation='', baseline='',uvrange='',chanmode='none',
                                        msselect='ANTENNA1!=ANTENNA2');
+
+		# signal use of correlation-dependent flags, if requested
+		if corrdepflags:
+			mycb.setcorrdepflags(True)
 
 
                 # set the model, if specified

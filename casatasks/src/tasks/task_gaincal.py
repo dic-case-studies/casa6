@@ -65,7 +65,7 @@ def gaincal(vis=None,caltable=None,
                            observation='', baseline='', uvrange='',
                            chanmode='none', msselect='ANTENNA1!=ANTENNA2')
 
-        # signal use of correlation-dependent flags, if requested                                                                                                                             
+        # signal use of correlation-dependent flags, if requested
         if corrdepflags:
             mycb.setcorrdepflags(True)
 
