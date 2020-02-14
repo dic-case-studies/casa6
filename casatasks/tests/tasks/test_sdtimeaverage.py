@@ -38,10 +38,16 @@ sdtimeaverage begins
 # local import
 import re       # Regular Expr.
 import time	# Measure used time.
-# MS name for this test
+
+# MS name for basic test
 defInputMs  = "sdimaging.ms"     # template MS
 defWorkMs   = "sdimaging-t.ms"   # testing MS (modified here)
 defWorkMs2  = "sdimaging-t2.ms"  # testing MS (modified for TimeSpan)
+
+# MS name for 'float_data' and 'data'
+defInputMs3 = "Uranus1.cal.Ant0.spw34.ms"
+defWorkMs3  = "Uranus1.cal.Ant0.spw34-t.ms"  # testing MS (using 'data' instead of 'float_data' )
+
 defOutputMs = "sdave.ms"         # (internal) output MS
 defPrivateMs       = "sdave-*.ms"       # private  output MS form of each test
 defPrivateMsForm   = 'sdave-{}-{}.ms'   # debug file format of each test
@@ -93,9 +99,7 @@ class test_sdtimeaverage(unittest.TestCase):
 
             # Copy template and generate Test-MS
             os.system('cp -RL '+ os.path.join(datapath, defInputMs) +' '+ defWorkMs)
-            self. generate_data( defWorkMs, False )
-        else:
-            print( "- TestMS already exists.")
+            self. generate_data( defWorkMs, stateOption=False)
 
         #+
         # create TEST-MS only for the first time.  
@@ -107,10 +111,20 @@ class test_sdtimeaverage(unittest.TestCase):
 
             # Copy template and generate Test-MS
             os.system('cp -RL '+ os.path.join(datapath, defInputMs) +' '+ defWorkMs2)
-            self. generate_data( defWorkMs2, True )
+            self. generate_data( defWorkMs2, stateOption=True )
 
-        else:
-            print( "- TestMS already exists.")
+        #+
+        # create TEST-MS only for the first time.  
+        #  ( using 'data' column, instead of 'float_data' )
+        #-
+        filePath=os.path.join( "./", defWorkMs3)
+        if  not os.path.exists(filePath):
+            print ( "- TestMS(for data/float_data.[{}] being created.".format(filePath)    )
+
+            # Copy template and generate Test-MS
+            os.system('cp -RL '+ os.path.join(datapath, defInputMs3) +' '+ defWorkMs3)
+            # No Data Generation, but set TelescopeName
+            self.set_telescopename(defWorkMs3, "Nobeyama" )
 
     def tearDown(self):
 
@@ -129,7 +143,10 @@ class test_sdtimeaverage(unittest.TestCase):
         print( "setUpClass::deleting existing work-MS.")
         os.system('rm -rf ' + defWorkMs  ) # in case, the MS already exist.
         os.system('rm -rf ' + defWorkMs2 ) # 
+        os.system('rm -rf ' + defWorkMs3 ) #
         os.system('rm -rf ' + defPrivateMs )
+
+        os.system('rm -rf ' + "TEST-*.ms" )
 
     @classmethod
     def tearDownClass(cls):
@@ -282,6 +299,8 @@ class test_sdtimeaverage(unittest.TestCase):
     def generate_data( self, msName, stateOption=False ):
         print( "----- Generating MS." )
 
+        # Column Name
+        dataColumnName = 'FLOAT_DATA'
         # Test Slope
         offset = 0.0        # if specified non-zero, an Intensive Fail will be activated.
         slope  = 0.0001     # (tunable) 
@@ -298,7 +317,8 @@ class test_sdtimeaverage(unittest.TestCase):
                 tb.removerows(rows)
 
             # Confirm nRow
-            NN = nRow
+            NN = tb.nrows()      #### NN MUST BE same as  nRow
+            nRow = NN
             print( "Nrow = {}".format(NN) )
             #-----
 
@@ -307,9 +327,9 @@ class test_sdtimeaverage(unittest.TestCase):
                 print("------ stateOption Active, using three STATE_IDs on the MS. ")
                 arrayState = numpy.mod( numpy.arange(0,NN), numOfState )
                 tb.putcol("STATE_ID",  arrayState )
-
+  
             # get array shape of Spectra data, by getcolshapestring(), returning string like:"[2,1024]" via 'list'. 
-            tk = re.split(",|\[|\]",tb.getcolshapestring('FLOAT_DATA', nrow=1)[0] ) # delimter = [ , ]
+            tk = re.split(",|\[|\]",tb.getcolshapestring(dataColumnName, nrow=1)[0] ) # delimter = [ , ]
             nChan = int(tk[2]) #             separating to :: <zero> [<1st> ,<2nd*> ]<3rd>
             nPol  = int(tk[1]) # (not used ) separating to :: <zero> [<1st*> ,<2nd> ]<3rd> 
 
@@ -331,9 +351,19 @@ class test_sdtimeaverage(unittest.TestCase):
 
             # write to the column at once
             print( "------ Putting Curve."  )
-            tb.putcol("FLOAT_DATA",   arrayData3  )
+            tb.putcol(dataColumnName,   arrayData3  )
         print( "------ Done."  )  
         return True          
+
+    # TELESCOP NAME (7-Feb-2020)
+
+    def set_telescopename(self, msName, telName ):
+        print("------ changing Telscope Name. ")
+        msObservation = msName + '/OBSERVATION'
+        with tbmanager(msObservation, nomodify=False) as tb:
+                tb.putcell('TELESCOPE_NAME',0, telName )
+                # tb.resync()
+        return
 
 ##################################
 # sub function for TEST FIXTURE
@@ -716,30 +746,45 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param50(self):
         '''sdtimeaverage::50:: datacolumn = 'float_data' '''
 
-        prm =  {'datacolumn' : 'float_data'  }
+        prm =  {'infile'     : defInputMs,
+                'outfile'    : "TEST-50.ms",
+                'datacolumn' : 'float_data'  }
         # Run Task and check
         self.assertTrue(self.run_task( prm ))
 
-    def test_param51E(self):
-        '''sdtimeaverage::51E:: datacolumn = 'data' (Error) '''
+    def test_param51(self):
+        '''sdtimeaverage::51:: datacolumn = 'float_data' but no column. alternatively use 'data'  '''
 
-        prm =  {'datacolumn' : 'data' }
+        prm =  {'infile'     : defWorkMs3,
+                'outfile'    : "TEST-51.ms",
+                'datacolumn' : 'float_data'  }
+
         # Run Task and check
-        self.assertFalse(self.run_task( prm )) # must be false
+        self.assertTrue(self.run_task( prm )) # Alternative Use will work.
 
-    def test_param52E(self):
-        '''sdtimeaverage::52E:: datacolumn = 'corrected' (Error) '''
+    def test_param52(self):
+        '''sdtimeaverage::52:: datacolumn = 'data'  '''
 
-        prm =  {'datacolumn' : 'corrected' }
+        prm =  {'infile'     : defWorkMs3,
+                'outfile'    : "TEST-52.ms",
+                'datacolumn' : 'data'  }
+
         # Run Task and check
-        self.assertFalse(self.run_task( prm )) # must be false
+        self.assertTrue(self.run_task( prm )) # must be false
 
-    def test_param53E(self):
-        '''sdtimeaverage::52E:: datacolumn = '' default=data is applied, only in this test,makes Error. '''
+    def test_param53(self):
+        '''sdtimeaverage::53:: datacolumn = ''  '''
 
-        prm =  {'datacolumn' : '' }
+        prm =  {'infile'     : defWorkMs,
+                'outfile'    : "TEST-53.ms",
+               }
+
         # Run Task and check
-        self.assertFalse(self.run_task( prm )) # must be false
+        self.assertTrue(self.run_task( prm )) # must be false
+
+#+
+# TimeSpan
+#-
 
     # ordinary behavior #
     def test_param70(self):
@@ -798,8 +843,8 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task( prm )) # 
 
 """
-5-Feb-2020   editing: reduce the TEST-MS size to shorten execution of mstransform.
-
+5-Feb-2020   built a function to reduce the TEST-MS size to shorten execution of mstransform.
+14-Feb-2020  editing 'data' column switch Test.
 """
 #### Control ######
 

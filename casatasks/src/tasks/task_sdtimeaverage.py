@@ -58,6 +58,17 @@ def sdtimeaverage(
     capTimebin = timebin.upper()
     if (capTimebin == 'ALL') or (capTimebin == ''):
         timebin =  calc_timebin(infile)+'s'
+    #+
+    # datacolumn alternative access 
+    #  In case 'float_data' does not exists, attempt to use 'data'
+    #-
+
+    ex_float_data, ex_data = check_column(infile) 
+    print( "Infile ={}, datacolumn ={} Columns:: float_data ={},  data ={}".format(infile, datacolumn,ex_float_data, ex_data) )
+    if (ex_float_data == False)and(ex_data == True):
+        datacolumn = "data"
+        msg = "DATA column will be used alternatively due to No FLOAT_DATA."
+        print( msg )
 
     #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
@@ -84,6 +95,14 @@ def sdtimeaverage(
         pass
 
     return st
+
+#  Getting Column Names
+def check_column(msName):
+    with open_table(msName) as tb:
+        columnNames = tb.colnames()
+        exist_float_data  = "FLOAT_DATA" in columnNames 
+        exist_data        =  "DATA" in columnNames    
+        return exist_float_data, exist_data
 
 #  Calculation range time in input MS.  
 def calc_timebin(msName):
