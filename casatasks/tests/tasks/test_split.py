@@ -2261,6 +2261,11 @@ class splitUpdateFlagCmd(test_base):
         os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outputms)
         os.system('rm -rf list.obs')
+        os.system('rm -rf spwnames.txt')
+        # the asdmname isn't available in the class - recover it from the vis name - everything before ".ms"
+        asdmname = self.vis[:self.vis.index('.ms')]
+        os.system('rm -rf '+ asdmname)
+        os.system('rm -rf '+ asdmname+'_cmd.txt')
         
     def test_updateFlagcmd1(self):
         '''split: Do not update FLAG_CMD table when spw selection in FLAG_CMD is by name'''
@@ -2268,7 +2273,36 @@ class splitUpdateFlagCmd(test_base):
         split(vis=self.vis, outputvis=self.outputms, spw='1,2', datacolumn='data')
         flagcmd(self.outputms, action='list', savepars=True, outfile='spwnames.txt', useapplied=True)
         self.assertTrue(filecmp.cmp(self.flagfile, 'spwnames.txt',1))
-        
+
+class splitOptionalColumnsCopied(test_base):
+
+    def setUp(self):
+        self.datapath = '.'
+        self.setUp_flags()
+
+    def tearDown(self):
+        os.system('rm -rf ' + self.vis)
+        os.system('rm -rf ' + self.outputms)
+        os.system('rm -rf ' + self.flagfile)
+        # the asdmname isn't available in the class - recover it from the vis name - everything before ".ms"
+        asdmname = self.vis[:self.vis.index('.ms')]
+        os.system('rm -rf ' + asdmname)
+
+    def test_optionalColumnsCopied(self):
+        '''split: make sure that the expected optional columns in SPECTRAL_WINDOW and PROCESSOR are copied by split'''
+        # Note: if optswc.ms was updated the check for the spw columns here might be more appropriate in split_test_optswc
+        self.outputms = 'split_optCols.ms'
+        split(vis=self.vis, outputvis=self.outputms, spw='1,2', datacolumn='data')
+        tblocal.open(self.outputms+"/SPECTRAL_WINDOW")
+        spwCols = tblocal.colnames()
+        tblocal.close()
+        self.assertTrue('SDM_NUM_BIN' in spwCols)
+        self.assertTrue('SDM_WINDOW_FUNCTION' in spwCols)
+        tblocal.close()
+        tblocal.open(self.outputms+"/PROCESSOR")
+        procCols = tblocal.colnames()
+        tblocal.close()
+        self.assertTrue('SDM_CORRELATOR_NAME' in procCols)
 
 # Note: this list of tests is only relevant for CASA5, skipped tests must be indicated by the
 # use of the @unittest.skip decorator as shown above in order for those tests to be skipped in CASA6
@@ -2295,7 +2329,8 @@ def suite():
             splitTests,
             splitSpwPoln,
             splitUnsortedPoln,
-            splitUpdateFlagCmd
+            splitUpdateFlagCmd,
+            splitOptionalColumnsCopied
             ]
 
 if is_CASA6:

@@ -67,6 +67,7 @@ using namespace CalibrationDeviceMod;
 #include <alma/Enumerations/CScanIntent.h>
 #include <alma/Enumerations/CSubscanIntent.h>
 using namespace SubscanIntentMod;
+#include <alma/Enumerations/CCorrelatorName.h>
 #include <alma/Enumerations/CStokesParameter.h>
 
 #include <alma/apps/asdm2MS/Name2Table.h>
@@ -158,11 +159,11 @@ void info (const string& message) {
 }
 
 void warning (const string& message) {
-  LogSink::postGlobally(LogMessage(message, LogOrigin(appName,WHERE), LogMessage::NORMAL));
+  LogSink::postGlobally(LogMessage(message, LogOrigin(appName,WHERE), LogMessage::WARN));
 }
 
 void error(const string& message, int status=1) {
-  LogSink::postGlobally(LogMessage(message, LogOrigin(appName,WHERE), LogMessage::NORMAL));
+  LogSink::postGlobally(LogMessage(message, LogOrigin(appName,WHERE), LogMessage::SEVERE));
   //os << LogIO::POST;
   // cout << message << endl;
   exit(status);
@@ -5574,6 +5575,9 @@ int main(int argc, char *argv[]) {
     ProcessorRow* r = 0;
     int nProcessor = processorT.size();
 
+    CorrelatorModeTable & correlatorModeT = ds->getCorrelatorMode();
+    CorrelatorModeRow* cmrow = 0;
+
     infostream.str("");
     infostream << "The dataset has " << nProcessor << " processor(s)...";
     info(infostream.str());
@@ -5587,12 +5591,30 @@ int main(int argc, char *argv[]) {
       
       string processorType    = CProcessorType::name(r->getProcessorType());
       string processorSubType = CProcessorSubType::name(r->getProcessorSubType());
+
+      // fetch ccorrelator name where appropriate and possib;e
+      // default to an empty string
+      string correlatorName("");
+
+      if (r->getProcessorType() == ProcessorTypeMod::CORRELATOR) {
+          // modeId is a correlator mode id
+          if ((cmrow=correlatorModeT.getRowByKey(r->getModeId())) != 0) {
+              // a row has been found
+              correlatorName = CCorrelatorName::name(cmrow->getCorrelatorName());
+          } else {
+              // a row should have been found but was not, warn
+              infostream.str("");
+              infostream << "Problem while reading the CorrelatorMode table, the row with key = " << r->getModeId() << " does not exist, SDM_CORRELATOR_MODE will remain unset for this PROCESSOR row" << endl;
+              warning(infostream.str());
+          }
+      }
       
       for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
 	   iter != msFillers.end(); ++iter) {
 	iter->second->addProcessor( processorType, processorSubType,
                                     -1,    // Since there is no typeId in the ASDM.
-                                    r->getModeId().getTagValue());
+                                    r->getModeId().getTagValue(),
+                                    correlatorName );
       }  
     }
     if (nProcessor) {
