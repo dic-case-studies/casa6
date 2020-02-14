@@ -47,7 +47,6 @@ th = TestHelpers()
 from casatestutils import generate_weblog
 from casatestutils import add_to_dict
 from casatestutils import stats_dict
-#from distutils.dir_util import copy_tree
 
 
 CASA6 = False
@@ -58,11 +57,7 @@ try:
     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
 
     CASA6 = True
-    _ia = image( )
-#    _vp = vpmanager( )
-#    _cb = calibrater( )
-#    _qa = quanta( )
-#    _me = measures( )
+    _ia = image()
 
 except ImportError:
     from __main__ import default  # reset given task to its default values
@@ -70,12 +65,7 @@ except ImportError:
     from taskinit import *  # Imports all casa tools
     from parallel.parallel_task_helper import ParallelTaskHelper
 
-    _ia = iatool( )
-#    _vp = vptool( )
-#    _cb = cbtool( )
-#    # not local tools
-#    _qa = qa
-#    _me = me
+    _ia = iatool()
 
 # location of data
 data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
@@ -87,7 +77,7 @@ class test_tclean_base(unittest.TestCase):
 
     def setUp(self):
         self._myia = _ia
-#        self.epsilon = 0.01 # sets epsilon as a percentage (1%)
+        self.epsilon = 0.01 # sets epsilon as a percentage (1%)
         self.msfile = ""
 #        self.img = "tst"
         self.img_subdir = 'testdir'
@@ -130,20 +120,23 @@ class test_tclean_base(unittest.TestCase):
                 "runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] \
                 +"]'])"
         casalog.post(pstr,'INFO')
-        if( pstr.count("(Fail") > 0 ):
+        if(pstr.count("(Fail") > 0 ):
              self.fail("\n"+pstr)
 
-    # compares 2 lists and returns if they are equivalent (within error)
     def check_list_vals(self, list1, list2, epsilon=None):
+        """ compares 2 lists and returns if they are equivalent (within error) 
+        """
         if len(list1) == len(list2) and epsilon is None:
-            if list1 == list2:
-                result = True
-            else:
-                result = False
+            i = 0
+            while i < len(list1):
+                result, pstr = th.check_val(list1[i], list2[i], exact=True)
+                if result == False:
+                    break
+                i += 1
         elif len(list1) == len(list2) and epsilon is not None:
             i = 0
             while i < len(list1):
-                result, pstr = th.check_val(list1[i], list2[i], \
+                result, pstr = th.check_val(list1[i], list2[i], exact=False, \
                     epsilon=epsilon)
                 if result == False:
                     break
@@ -153,30 +146,16 @@ class test_tclean_base(unittest.TestCase):
         return result
 
     def getNameDoc(self):
-#        print inspect.stack()[1]
-        testname=inspect.stack()[1][3]
+        testname = inspect.stack()[1][3]
         print("Test name  : " + testname)
-#        tname = inspect.getframeinfo(inspect.currentframe()).function
         doc = eval('self.'+testname + '.__doc__')
         print("Doc : " +  doc)
         return testname, doc
 
-    # function to copy iter0 images to iter1 images
-#    def copy_images(self, file_name):
-#        file_list = glob.glob(file_name+'0*')
-#        os.popen('rm -rf '+file_name+'1*')
-#        for item in file_list:
-#            sp_item = item.split('iter0')
-#            copy_tree(item, sp_item[0]+'iter1'+sp_item[1])
-#        if os.path.isdir(file_name+'1.workdirectory/'):
-#            work0_list = glob.glob(file_name+'0.workdirectory/*')
-#            for item in work0_list:
-#                sp_item = item.split('iter0')
-#                new_item = sp_item[0]+'iter1'+sp_item[1]+'iter1'+sp_item[2]
-#                copy_tree(item, new_item)
-
-    # function to copy iter0 images to iter1 images (taken from pipeline)
     def copy_products(self, old_pname, new_pname, ignore=None):
+        """ function to copy iter0 images to iter1 images
+            (taken from pipeline)
+        """
         imlist = glob.glob('%s.*' % (old_pname))
         imlist = [xx for xx in imlist if ignore is None or ignore not in xx]
         for image_name in imlist:
@@ -184,15 +163,16 @@ class test_tclean_base(unittest.TestCase):
             if image_name == old_pname + '.workdirectory':
                 mkcmd = 'mkdir '+ newname
                 os.system(mkcmd)
-                self.copy_products(os.path.join(image_name, old_pname), os.path.join(newname, new_pname))
+                self.copy_products(os.path.join(image_name, old_pname), \
+                    os.path.join(newname, new_pname))
             else:
                 shutil.copytree(image_name, newname, symlinks=True)
 
-
-    # function to return per-channel beam statistics
-    # will be deprecated and combined into image_stats 
-    # once CASA beam issue is fixed
     def cube_beam_stats(self, img):
+        """ function to return per-channel beam statistics
+            will be deprecated and combined into image_stats 
+            once CASA beam issue is fixed
+        """
         self._myia.open(img)
 
         res_bmin_dict = {}; res_bmaj_dict = {}; res_pa_dict = {}
@@ -207,172 +187,129 @@ class test_tclean_base(unittest.TestCase):
 
         return res_bmin_dict, res_bmaj_dict, res_pa_dict
 
-    # function that takes an image file and returns a statistics dictionary
-    def image_stats(self, img, suf, region_file=None):#, field_regions=None):
-        self._myia.open(img+suf)
+    def image_stats(self, img, region_file=None, field_regions=[]):
+        """ function that takes an image file and returns a statistics
+            dictionary
+        """
+        self._myia.open(img)
+        stats_dict = {}
 
+        statistics = self._myia.statistics()
+        chunk = self._myia.getchunk()
+
+        # stats returned for all images
         im_size = self._myia.boundingbox()['imageShape'].tolist()
-        npts = im_size[0]*im_size[1]*im_size[3]
-        start = float( \
-            self._myia.statistics()['blcf'].split(', ')[3].split('Hz')[0])
-        end = float( \
-            self._myia.statistics()['trcf'].split(', ')[3].split('Hz')[0])
+        stats_dict['npts'] = im_size[0]*im_size[1]*im_size[3]
+        stats_dict['npts_unmasked'] = statistics['npts'][0]
+        stats_dict['npts_real'] = numpy.count_nonzero(~numpy.isnan(chunk))
+        stats_dict['freq_bin'] = self._myia.summary()['incr'][3]
+        stats_dict['start'] = float( \
+            statistics['blcf'].split(', ')[3].split('Hz')[0])
+        stats_dict['end'] = float( \
+            statistics['trcf'].split(', ')[3].split('Hz')[0])
+        stats_dict['nchan'] = im_size[3]
 
-        if '.image' in suf:
-            stats_dict = {'com_bmin': \
-                self._myia.commonbeam()['minor']['value'], 'com_bmaj': \
-                self._myia.commonbeam()['major']['value'], 'com_pa': \
-                self._myia.commonbeam()['pa']['value'], 'npts': npts, \
-                'npts_unmasked': self._myia.statistics()['npts'][0], \
-                'npts_real': numpy.count_nonzero(~numpy.isnan( \
-                self._myia.getchunk())), 'freq_bin': \
-                self._myia.summary()['incr'][3], 'start': start, 'end': end, \
-                'nchan': im_size[3], 'max_val': \
-                self._myia.statistics()['max'][0], 'max_val_pos': \
-                self._myia.statistics()['maxpos'].tolist(), 'min_val': \
-                self._myia.statistics()['min'][0], 'min_val_pos': \
-                self._myia.statistics()['minpos'].tolist(), 'im_rms': \
-                self._myia.statistics()['rms'][0], 'im_sum': \
-                self._myia.statistics()['sum'][0], 'regn_sum': \
-                self._myia.statistics(region=region_file)['sum'][0]}
-            try:
-                fit_dict = self._myia.fitcomponents( \
-                    region=region_file)['results']['component0']
-                stats_dict['im_fit'] = [fit_dict['pixelcoords'].tolist(),\
-                    fit_dict['spectrum']['channel'], \
-                    fit_dict['spectrum']['frequency']['m0']['value'], \
-                    fit_dict['peak']['value'], \
-                    fit_dict['shape']['majoraxis']['value'], \
-                    fit_dict['shape']['minoraxis']['value']]
-            except KeyError:
-                 stats_dict['im_fit'] = [[1.0, 1.0], 1, 1.0, 1.0, 1.0, 1.0]
-            if 'cube' in  img:
+        # stats returned for all images except .mask
+        if not img.endswith('.mask'):
+            stats_dict['max_val'] = statistics['max'][0]
+            stats_dict['max_val_pos'] = statistics['maxpos'].tolist()
+            stats_dict['min_val'] = statistics['min'][0]
+            stats_dict['min_val_pos'] = statistics['minpos'].tolist()
+            stats_dict['im_rms'] = statistics['rms'][0]
+
+        # stats returned if a region file is given
+        if region_file != None:
+            region_stats = self._myia.statistics(region=region_file)
+            stats_dict['regn_sum'] = region_stats['sum'][0]
+
+        # stats returned for .image(.tt0)
+        if img.endswith('.image') or img.endswith('.image.tt0'):
+            commonbeam = self._myia.commonbeam()
+            stats_dict['com_bmin'] = commonbeam['minor']['value']
+            stats_dict['com_bmaj'] = commonbeam['major']['value']
+            stats_dict['com_pa'] = commonbeam['pa']['value']
+            if 'mfs_eph' not in img:
+                try:
+                    fit_dict = self._myia.fitcomponents( \
+                        region=region_file)['results']['component0']
+                    stats_dict['im_fit'] = [fit_dict['peak']['value'], \
+                        fit_dict['shape']['majoraxis']['value'], \
+                        fit_dict['shape']['minoraxis']['value']]
+                    stats_dict['im_fit_loc'] = [ \
+                        fit_dict['spectrum']['channel'], \
+                        fit_dict['spectrum']['frequency']['m0']['value']]
+                    stats_dict['im_fit_pix'] = fit_dict['pixelcoords'].tolist()
+                except KeyError:
+                    stats_dict['im_fit'] = [1.0, 1.0, 1.0]
+                    stats_dict['im_fit_loc'] = [1.0, 1.0]
+                    stats_dict['im_fit_pix'] = [1.0, 1.0]
+            if 'cube' in img:
                 stats_dict['rms_per_chan'] = \
                     self._myia.statistics(axes=[0,1])['rms'].tolist()
-            if 'mosaic' in  img:
-                #field_regions = []
-                stats_dict['rms_per_field'] = 1
+            if 'mosaic' in img:
+                stats_dict['rms_per_field'] = []
+                for region in field_regions:
+                    stats_dict['rms_per_field'].append( \
+                        self._myia.statistics(region=region)['rms'][0])
 
-        if '.mask' in suf:
-            stats_dict = {'npts': npts, 'npts_unmasked': \
-                self._myia.statistics()['npts'][0], 'npts_real': \
-                numpy.count_nonzero(~numpy.isnan(self._myia.getchunk())), \
-                'freq_bin': self._myia.summary()['incr'][3], 'start': start, \
-                'end': end, 'nchan': im_size[3], 'mask_pix': \
-                numpy.count_nonzero(self._myia.getchunk()), 'mask_regns': \
-                scipy.ndimage.label(self._myia.getchunk())[1]}
+        # stats returned if not .pb(.tt0), .sumwt(.tt0), or .mask
+        if ('.pb' not in img and '.sumwt' not in img and not
+                img.endswith('.mask')):
+            stats_dict['im_sum'] = statistics['sum'][0]
 
-        if '.pb' in suf:
-            stats_dict = {'npts': npts, 'npts_unmasked': \
-                self._myia.statistics()['npts'][0], 'npts_real': \
-                numpy.count_nonzero(~numpy.isnan(self._myia.getchunk())), \
-                'freq_bin': self._myia.summary()['incr'][3], 'start': start, \
-                'end': end, 'nchan': im_size[3], 'max_val': \
-                self._myia.statistics()['max'][0], 'max_val_pos': \
-                self._myia.statistics()['maxpos'].tolist(), 'min_val': \
-                self._myia.statistics()['min'][0], 'min_val_pos': \
-                self._myia.statistics()['minpos'].tolist(),'npts_0.2': \
-                numpy.count_nonzero(self._myia.getchunk()>0.2), 'npts_0.5': \
-                numpy.count_nonzero(self._myia.getchunk()>0.5)}
+        if img.endswith('.mask'):
+            stats_dict['mask_pix'] = numpy.count_nonzero(chunk)
+            stats_dict['mask_regns'] = scipy.ndimage.label(chunk)[1]
+
+        if img.endswith('.pb') or img.endswith('.pb.tt0'):
+            stats_dict['npts_0.2'] = numpy.count_nonzero(chunk>0.2)
+            stats_dict['npts_0.5'] = numpy.count_nonzero(chunk>0.5)
             try:
                 fit_dict = self._myia.fitcomponents( \
                     region=region_file)['results']['component0']
-                stats_dict['pb_im_fit'] = \
-                    [fit_dict['pixelcoords'].tolist(), \
-                     fit_dict['spectrum']['channel'], \
-                     fit_dict['spectrum']['frequency']['m0']['value'], \
-                     fit_dict['peak']['value'], \
-                     fit_dict['shape']['majoraxis']['value'], \
-                     fit_dict['shape']['minoraxis']['value']]
+                stats_dict['pb_fit'] = [fit_dict['peak']['value'], \
+                    fit_dict['shape']['majoraxis']['value'], \
+                    fit_dict['shape']['minoraxis']['value']]
+                stats_dict['pb_fit_loc'] = [ \
+                    fit_dict['spectrum']['channel'], \
+                    fit_dict['spectrum']['frequency']['m0']['value']]
+                stats_dict['pb_fit_pix'] = fit_dict['pixelcoords'].tolist()
             except KeyError:
-                stats_dict['pb_im_fit'] = [[1.0, 1.0], 1, 1.0, 1.0, 1.0, 1.0]
+                stats_dict['pb_fit'] = [1.0, 1.0, 1.0]
+                stats_dict['pb_fit_loc'] = [1.0, 1.0]
+                stats_dict['pb_fit_pix'] = [1.0, 1.0]
 
-        if '.psf' in suf:
-            stats_dict = {'npts': npts, 'npts_unmasked': \
-                self._myia.statistics()['npts'][0], 'npts_real': \
-                numpy.count_nonzero(~numpy.isnan(self._myia.getchunk())), \
-                'freq_bin': self._myia.summary()['incr'][3], 'start': start, \
-                'end': end, 'nchan': im_size[3], 'max_val': \
-                self._myia.statistics()['max'][0], 'max_val_pos': \
-                self._myia.statistics()['maxpos'].tolist(), 'min_val': \
-                self._myia.statistics()['min'][0], 'min_val_pos': \
-                self._myia.statistics()['minpos'].tolist(), 'im_rms': \
-                self._myia.statistics()['rms'][0], 'im_sum': \
-                self._myia.statistics()['sum'][0]}
+        if img.endswith('.psf') or img.endswith('.psf.tt0'):
             try:
                 fit_dict = self._myia.fitcomponents( \
                     region=region_file)['results']['component0']
-                stats_dict['cen_im_fit'] = \
-                    [fit_dict['pixelcoords'].tolist(), \
-                     fit_dict['spectrum']['channel'], \
-                     fit_dict['spectrum']['frequency']['m0']['value'], \
-                     fit_dict['peak']['value'], \
-                     fit_dict['shape']['majoraxis']['value'], \
-                     fit_dict['shape']['minoraxis']['value']]
+                stats_dict['psf_fit'] = [fit_dict['peak']['value'], \
+                    fit_dict['shape']['majoraxis']['value'], \
+                    fit_dict['shape']['minoraxis']['value']]
+                stats_dict['psf_fit_loc'] = [ \
+                    fit_dict['spectrum']['channel'], \
+                    fit_dict['spectrum']['frequency']['m0']['value']]
+                stats_dict['psf_fit_pix'] = \
+                    fit_dict['pixelcoords'].tolist()
             except KeyError:
-                stats_dict['cen_im_fit'] = [[1.0, 1.0], 1, 1.0, 1.0, 1.0, 1.0]
+                stats_dict['psf_fit'] = [1.0, 1.0, 1.0]
+                stats_dict['psf_fit_loc'] = [1.0, 1.0]
+                stats_dict['psf_fit_pix'] = [1.0, 1.0]
 
-        if '.residual' in suf:
-            stats_dict = {'npts': npts, 'npts_unmasked': \
-                self._myia.statistics()['npts'][0], 'npts_real': \
-                numpy.count_nonzero(~numpy.isnan(self._myia.getchunk())), \
-                'freq_bin': self._myia.summary()['incr'][3], 'start': start, \
-                'end': end, 'nchan': im_size[3], 'max_val': \
-                self._myia.statistics()['max'][0], 'max_val_pos': \
-                self._myia.statistics()['maxpos'].tolist(), 'min_val': \
-                self._myia.statistics()['min'][0], 'min_val_pos': \
-                self._myia.statistics()['minpos'].tolist(), 'im_rms': \
-                self._myia.statistics()['rms'][0], 'im_sum': \
-                self._myia.statistics()['sum'][0], 'regn_sum': \
-                self._myia.statistics(region=region_file)['sum'][0]}
+        if (img.endswith('.model') or img.endswith('.model.tt0') or
+                img.endswith('.alpha')):
+            stats_dict['mask_non0'] = numpy.count_nonzero(chunk)
 
-        if '.model' in suf:
-            stats_dict = {'npts': npts, 'npts_unmasked': \
-                self._myia.statistics()['npts'][0], 'npts_real': \
-                numpy.count_nonzero(~numpy.isnan(self._myia.getchunk())), \
-                'freq_bin': self._myia.summary()['incr'][3], 'start': start, \
-                'end': end, 'nchan': im_size[3], 'max_val': \
-                self._myia.statistics()['max'][0], 'max_val_pos': \
-                self._myia.statistics()['maxpos'].tolist(), 'min_val': \
-                self._myia.statistics()['min'][0], 'min_val_pos': \
-                self._myia.statistics()['minpos'].tolist(), 'im_rms': \
-                self._myia.statistics()['rms'][0], 'im_sum': \
-                self._myia.statistics()['sum'][0], 'regn_sum': \
-                self._myia.statistics(region=region_file)['sum'][0], \
-                'mask_non0': numpy.count_nonzero(self._myia.getchunk())}
-
-        if '.sumwt' in suf:
-            stats_dict = {'npts': npts, 'npts_unmasked': \
-                self._myia.statistics()['npts'][0], 'npts_real': \
-                numpy.count_nonzero(~numpy.isnan(self._myia.getchunk())), \
-                'freq_bin': self._myia.summary()['incr'][3], 'start': start, \
-                'end': end, 'nchan': im_size[3], 'max_val': \
-                self._myia.statistics()['max'][0], 'max_val_pos': \
-                self._myia.statistics()['maxpos'].tolist(), 'min_val': \
-                self._myia.statistics()['min'][0], 'min_val_pos': \
-                self._myia.statistics()['minpos'].tolist()}
-
-        if '.weight' in suf:
-            stats_dict = {'npts': npts, 'npts_unmasked': \
-                self._myia.statistics()['npts'][0], 'npts_real': \
-                numpy.count_nonzero(~numpy.isnan(self._myia.getchunk())), \
-                'freq_bin': self._myia.summary()['incr'][3], 'start': start, \
-                'end': end, 'nchan': im_size[3], 'max_val': \
-                self._myia.statistics()['max'][0], 'max_val_pos': \
-                self._myia.statistics()['maxpos'].tolist(), 'min_val': \
-                self._myia.statistics()['min'][0], 'min_val_pos': \
-                self._myia.statistics()['minpos'].tolist(), 'im_rms': \
-                self._myia.statistics()['rms'][0], 'im_sum': \
-                self._myia.statistics()['sum'][0], 'npts_0.2': \
-                numpy.count_nonzero(self._myia.getchunk()>0.2), 'npts_0.3': \
-                numpy.count_nonzero(self._myia.getchunk()>0.3)}
+        if img.endswith('.weight') or img.endswith('.weight.tt0'):
+            stats_dict['npts_0.2'] = numpy.count_nonzero(chunk>0.2)
+            stats_dict['npts_0.3'] = numpy.count_nonzero(chunk>0.3)
 
         self._myia.close()
 
         return stats_dict
 
-    # function used to return expected imaging output files
     def image_list(self, img, mode):
+        """ function used to return expected imaging output files """
         standard = [img+'.psf', img+'.residual', img+'.image', \
             img+'.image.pbcor', img+'.mask', img+'.pb', img+'.model', \
             img+'.sumwt']
@@ -396,8 +333,38 @@ class test_tclean_base(unittest.TestCase):
 
         return img_list
 
-    # function that takes and image and turns it into a .png for weblog
+    def stats_compare(self, exp_dict, stats_dict, suffix):
+        """ function to compare expected dictionary with returned
+            dictionary
+        """
+        report = ''
+        for key in exp_dict:
+            if type(exp_dict[key][1]) == list:
+                if exp_dict[key][0] == True:
+                    report += th.check_val( \
+                        self.check_list_vals(stats_dict[key], \
+                        exp_dict[key][1]), True, valname=suffix+' '+key, \
+                        exact=True)[1]
+                else:
+                    report += th.check_val( \
+                        self.check_list_vals(stats_dict[key], \
+                        exp_dict[key][1], epsilon=self.epsilon), True, \
+                        valname=suffix+' '+key, exact=True)[1]
+            else:
+                if exp_dict[key][0] == True:
+                    report += th.check_val(stats_dict[key], \
+                        exp_dict[key][1], valname=suffix+' '+key, exact=True)[1]
+                else:
+                    report += th.check_val(stats_dict[key], \
+                        exp_dict[key][1], valname=suffix+' '+key, exact=False, \
+                        epsilon=self.epsilon)[1]
+
+        return report
+
     def png_creator(self, img, range_list):
+        """ function that takes and image and turns it into a .png for
+            weblog
+        """
         immoments(imagename = img, moments = 8, outfile = img+'.moment8')
         imview(raster={'file': img+'.moment8', 'range': range_list}, \
             out = {'file': img+'.moment8.png'})
@@ -419,6 +386,7 @@ class Test_standard(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'standard_cube.iter'
+        img = file_name+'1'
         self.prepData(data_path+'E2E6.1.00034.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -439,7 +407,7 @@ class Test_standard(test_tclean_base):
             sidelobethreshold=1.25, noisethreshold=5.0, \
             lownoisethreshold=2.0, negativethreshold=0.0, minbeamfrac=0.1, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -469,7 +437,6 @@ class Test_standard(test_tclean_base):
                 parallel=True)
 
             # retrieve per-channel beam statistics (only in parallel)
-            img = file_name+'1'
             res_bmin_dict, res_bmaj_dict, res_pa_dict = \
                 self.cube_beam_stats(img+'.image')
 
@@ -513,591 +480,177 @@ class Test_standard(test_tclean_base):
                 calcres=False, calcpsf=False, savemodel='none', \
                 restoringbeam='common', parallel=False)
 
-            img = file_name+'1'
 
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'standard'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
             data_path+'region_files/standard_cube.image.crtf')
 
-        exp_im_stats = {'com_bmaj': 8.509892605313942,
-            'com_bmin': 5.950050676606115,
-            'com_pa': 72.54607919421503,
-            'npts': 3251200,
-            'npts_unmasked': 1522476.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 0.94608676433563232,
-            'max_val_pos': [38, 36, 0, 254],
-            'min_val': -0.70467984676361084,
-            'min_val_pos': [18, 57, 0, 374],
-            'im_rms': 0.143986095161,
-            'rms_per_chan': [0.12634143789549535, 0.14184103443455054, 0.146980848491423, 0.11560714721775701, 0.16661204089962214, 0.14476185721954618, 0.1316304465304373, 0.11433992978005528, 0.1442336908847237, 0.16543686095641913, 0.11873031602382604, 0.15284339493903618, 0.17195923304927352, 0.15046376352374186, 0.14070242684409134, 0.13744696370230045, 0.11158401597402363, 0.12687194824894843, 0.14295610599459097, 0.16862585818094997, 0.13008023644212954, 0.14186757490541813, 0.1169917541756216, 0.13693402712045005, 0.16194773183534902, 0.13634870573065122, 0.13860445389090703, 0.1309492701136035, 0.14819650092974662, 0.15030436484700252, 0.14931368127692368, 0.11984058396768074, 0.13119726238629406, 0.1278997483823513, 0.15680618961802364, 0.14782343113879803, 0.1452811146145065, 0.14962350388870774, 0.12727392822661138, 0.12403611951801675, 0.13971310504808565, 0.14443747442976043, 0.13947457857066817, 0.14603448593891352, 0.1487357653330162, 0.13728792717834695, 0.12754218448487697, 0.13472363429296094, 0.17318897000268654, 0.15007875971445414, 0.1210452212469422, 0.15977553256440455, 0.13077138200444186, 0.12679151267047647, 0.12091204082027505, 0.1338966333695089, 0.13556991771575277, 0.15456345918134376, 0.12044465611280492, 0.14836982561861023, 0.1349896116866282, 0.15311214064438922, 0.11251497655504887, 0.134867796496014, 0.13574313457554038, 0.14582224580240324, 0.12753531221719416, 0.15335445312643003, 0.13482732612307324, 0.1622050903445585, 0.13260306174268546, 0.1345326608100535, 0.16404765102131583, 0.13449430188802702, 0.14543809289295098, 0.1606584196112734, 0.12484651484486906, 0.16251383851634701, 0.13756025624117688, 0.13165353467440083, 0.1308248320448295, 0.14752778635690292, 0.1274645256107852, 0.16421712463271607, 0.15255317243782812, 0.1497707840063393, 0.11911825364867326, 0.14541033702618353, 0.1659723426787793, 0.1554971226410762, 0.14703675741501698, 0.12325846980328654, 0.15070706791866434, 0.1243073669840061, 0.13646642844468243, 0.1301143392639293, 0.12734602178400867, 0.1553600823593344, 0.15035594210430997, 0.11530605847413075, 0.1611567346343003, 0.12221832384850957, 0.14207389319672978, 0.14522516033398006, 0.1345322788758837, 0.1486176245373929, 0.15765848896613346, 0.1308440759384876, 0.1466820831226493, 0.13598865468593319, 0.15187538855740168, 0.1478468013010444, 0.1383732515889412, 0.1276861625889527, 0.11697230161534232, 0.13739607388184524, 0.11303259344169146, 0.1361001584583741, 0.12857356426667815, 0.1437570752313611, 0.13169397143643052, 0.15326431411050365, 0.12383180315967929, 0.1526310794015497, 0.14746177769245866, 0.15194893390457265, 0.1421630320154613, 0.15662308690272084, 0.12239198421329735, 0.12071542153915982, 0.14268554321174182, 0.13489697242976567, 0.15127855443293006, 0.1542443819690316, 0.15752918577920158, 0.11478434733366248, 0.17298964180575135, 0.13177526480150695, 0.12236732291938952, 0.15625856947990782, 0.13687165189461548, 0.1536631153928859, 0.14669563803395924, 0.1277170908624889, 0.14966567842171496, 0.12823515897560267, 0.13577828413547297, 0.16140169123660877, 0.13133284404676335, 0.14223570583416104, 0.1603292311222728, 0.10759630495294702, 0.15787039978749143, 0.1327200609847152, 0.14655899389809018, 0.14008820956915727, 0.1442107348583108, 0.1317943450568934, 0.12972989243424995, 0.1625036947147829, 0.12241712383574781, 0.14998173521745944, 0.13352731228428555, 0.1741676258276787, 0.15545996482656257, 0.13121844421079562, 0.1389256768353536, 0.1475992903718036, 0.14205849908080379, 0.14975427804440275, 0.1532491403618113, 0.12531915969323904, 0.14153689035122896, 0.16741877503811964, 0.1355536447212321, 0.12548585056941425, 0.16334800417248366, 0.14220841606737944, 0.1376802362928535, 0.1394159389365598, 0.1533008119644231, 0.12568227593323275, 0.14138024496799945, 0.14688836279261966, 0.12037367892758656, 0.12335138886587714, 0.16740640885840646, 0.11756235238942149, 0.13221931449560975, 0.14605469946826174, 0.12287649136200192, 0.13900407591276098, 0.1477935699475207, 0.14723640198504923, 0.12637771862286276, 0.14264989851200444, 0.14188497863070984, 0.1517498748029243, 0.1745550071541481, 0.14693061119966988, 0.12180541963696558, 0.17178472812899895, 0.134842796032342, 0.1587769050427257, 0.16022475326023228, 0.12598385136025822, 0.12173065475536829, 0.1358700032273519, 0.12249230371601251, 0.1320416693266833, 0.1380195667444624, 0.17036819494074398, 0.14449179298441997, 0.1363579047545357, 0.15814587607932587, 0.1387404461979901, 0.13421674959986293, 0.1221729254232071, 0.15007074873391474, 0.1519841002224019, 0.17405910974305452, 0.10810253208919626, 0.14404509620995673, 0.12925102011532486, 0.13284702789448985, 0.16316517507291742, 0.18004246985230368, 0.12352109323053732, 0.13438971701846103, 0.14110722423724795, 0.15240505247738928, 0.16299890474660164, 0.13862726296963718, 0.13653417057201506, 0.15748574227626927, 0.13330507817933285, 0.11630210517195279, 0.14310200319865532, 0.16947649357417122, 0.19276632648628003, 0.1442624172150719, 0.12588748723036136, 0.13766261231222038, 0.15501574319393477, 0.1467664214746981, 0.1437631603776764, 0.13281269178755073, 0.1499498907469051, 0.1547831067839161, 0.1650203851926907, 0.19221241068202002, 0.17354684080024252, 0.1914610395870755, 0.1870175530216679, 0.17581044678251068, 0.1969886211075383, 0.1793297247200161, 0.1650936078172776, 0.14492844003488278, 0.14169417048994912, 0.13913741690930143, 0.15199069574737809, 0.14420138013804454, 0.13427068237336662, 0.14854837369704055, 0.16108337901230768, 0.14392226756737841, 0.17357790177064894, 0.12582205913761169, 0.14917348406521977, 0.14570283814332685, 0.1494709027791571, 0.15333214078415874, 0.13788344445589443, 0.15113305293127033, 0.15910328490835218, 0.1258386682524315, 0.14889037473182778, 0.12206410303883597, 0.14151660747434333, 0.12015317625283857, 0.13619775353885638, 0.1360718460404539, 0.12638979179451687, 0.13793807234055996, 0.11510797437711365, 0.151683286728862, 0.12186947178372404, 0.1334587198282186, 0.1416652191079726, 0.17466019895415022, 0.1378517218379097, 0.11249994464540782, 0.1279851283688596, 0.14018299952556243, 0.14434793746130153, 0.16650070810701043, 0.16748683720689606, 0.11940475115442413, 0.1276077403883665, 0.12359063458201924, 0.1412078454825856, 0.14551852706758697, 0.14986530033150053, 0.1325683624037802, 0.13820026200226213, 0.12812701294141524, 0.12753530671589502, 0.13497760358639382, 0.170481828949963, 0.13917782659135283, 0.14415530157163367, 0.17676595928739716, 0.16642659928559336, 0.1488633024931477, 0.13762287309163865, 0.13173759984975023, 0.13142953909930827, 0.13550297890119667, 0.1378187724239619, 0.13522211241434626, 0.16692597968173054, 0.12681333395848324, 0.14653010389914287, 0.12049158054527685, 0.1394775351353454, 0.1308254468074764, 0.15490863570934446, 0.13846726479055535, 0.12889021958687075, 0.1475440113411787, 0.1317061942800524, 0.13705790461652367, 0.13974036959646274, 0.14395769504564201, 0.16390950740528484, 0.14702614449178092, 0.11790240659365156, 0.15825207098676003, 0.1572387243129431, 0.16049823864649457, 0.15795518128891234, 0.12433544601523717, 0.12148637251440078, 0.17047767727369215, 0.1542909493696503, 0.14083894029456667, 0.1273419049433489, 0.12328954463396018, 0.14383278211432127, 0.16043058197358323, 0.12709149940547382, 0.14015718181807055, 0.13290234816222832, 0.14241483672006272, 0.13977682956445464, 0.19082240791944033, 0.1362551319469732, 0.13878314241029005, 0.13024580725200274, 0.17584969348391408, 0.1585665364841856, 0.1753088252644526, 0.14469549936190076, 0.12561131070797885, 0.1275068394660626, 0.1246509966110453, 0.1353771632037516, 0.14968376152813326, 0.1306367587605417, 0.17509696143235529, 0.12303417070683348, 0.12984385988761357, 0.15655156396975772, 0.15158283415352666, 0.14190571663235674, 0.16013330804491582, 0.15701423529031192, 0.1437377861978616, 0.13178714397605581, 0.14896642830351547, 0.1543110828211962, 0.12729972586137084, 0.13258135641591057, 0.1297547997545033, 0.13623621902113375, 0.16832161541183457, 0.1515993553463645, 0.14230780146154384, 0.15752128344423338, 0.16153801377050137, 0.17727249054646335, 0.17081959421469814, 0.132415345138367, 0.1911207789325767, 0.12167933736058796, 0.16199351646871693, 0.12220003129636688, 0.12276819690997134, 0.1615915263092078, 0.12453980969317847, 0.13583553980995322, 0.15247696319780732, 0.1588409406770753, 0.12523094487161238, 0.14442835547547206, 0.14678401935124402, 0.16646235670431703, 0.13318109022977143, 0.1296318756165084, 0.17474714467039837, 0.14996240468941135, 0.152459961330088, 0.14174866849523865, 0.1531711479592131, 0.13140647178793072, 0.12876054234189516, 0.16073620618951742, 0.1551915897989922, 0.13258798290709237, 0.12079795445447011, 0.17410998739129824, 0.15215648462348455, 0.11414501724048388, 0.1583626102822897, 0.14397582688024274, 0.14206199694234994, 0.1301244502774394, 0.14832273898073517, 0.14965582403580915, 0.11974680479280232, 0.130301576062527, 0.1501180642039695, 0.144040093741809, 0.14644461407160658, 0.16466625212890748, 0.12145879983950111, 0.15515579044778377, 0.11925841619372717, 0.14869156838984582, 0.14241952971976954, 0.14769053467507798, 0.1574041746549612, 0.13729987849339584, 0.13259542009008363, 0.12816033699683535, 0.14196238422903054, 0.14271636018596165, 0.1303221375620509, 0.16261332868157302, 0.16340560251777758, 0.1496448141003338, 0.13870981454297002, 0.12581695569707782, 0.10706545850873779, 0.16477345617357922, 0.13501062540902478, 0.15224041747140973, 0.14304328175572253, 0.1730320818474802, 0.13262178336064356, 0.13626925589130173, 0.19930734468055353, 0.12840465325131772, 0.14565284364647132, 0.14342338225449644, 0.14414011525387105, 0.1314767224882364, 0.14667809040912927, 0.15534831496680646, 0.14770322269613237, 0.18150555408581706, 0.14175110723675505, 0.13126842096913788, 0.1821782599052581, 0.1230212008372949, 0.13879304863372663, 0.1539616899583395, 0.14735461585329224, 0.1103039067487409, 0.1400589610059953, 0.12936178694337058, 0.1185505506087342, 0.15904169231653986, 0.12089109358577753, 0.1479414523691717, 0.13846627238497242, 0.15232750215647736, 0.1318383069114147, 0.13798313113493177, 0.12800661214057107, 0.15270008178936095, 0.12254175320261147, 0.13897505123792747, 0.13607974358604047, 0.15255689754961757, 0.11221218682645963, 0.14990854525350425, 0.15160985722773732, 0.13575646404498873, 0.14576400908648826, 0.15836555616934264, 0.13583817797589506, 0.12589022941650596, 0.15590488932502036, 0.16965183711831752, 0.1483222833838575, 0.14620965767678082],
-            'im_sum': 168.242297979,
-            'regn_sum': 72.3549563158,
-            'npts_real': 3251200,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_im_stats = {'com_bmaj': [False, 8.509892605313942],
+            'com_bmin': [False, 5.950050676606115],
+            'com_pa': [False, 72.54607919421503],
+            'npts': [True, 3251200],
+            'npts_unmasked': [True, 1522476.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 0.94608676433563232],
+            'max_val_pos': [True, [38, 36, 0, 254]],
+            'min_val': [False, -0.70467984676361084],
+            'min_val_pos': [True, [18, 57, 0, 374]],
+            'im_rms': [False, 0.143986095161],
+            'rms_per_chan': [False, [0.12634143789549535, 0.14184103443455054, 0.146980848491423, 0.11560714721775701, 0.16661204089962214, 0.14476185721954618, 0.1316304465304373, 0.11433992978005528, 0.1442336908847237, 0.16543686095641913, 0.11873031602382604, 0.15284339493903618, 0.17195923304927352, 0.15046376352374186, 0.14070242684409134, 0.13744696370230045, 0.11158401597402363, 0.12687194824894843, 0.14295610599459097, 0.16862585818094997, 0.13008023644212954, 0.14186757490541813, 0.1169917541756216, 0.13693402712045005, 0.16194773183534902, 0.13634870573065122, 0.13860445389090703, 0.1309492701136035, 0.14819650092974662, 0.15030436484700252, 0.14931368127692368, 0.11984058396768074, 0.13119726238629406, 0.1278997483823513, 0.15680618961802364, 0.14782343113879803, 0.1452811146145065, 0.14962350388870774, 0.12727392822661138, 0.12403611951801675, 0.13971310504808565, 0.14443747442976043, 0.13947457857066817, 0.14603448593891352, 0.1487357653330162, 0.13728792717834695, 0.12754218448487697, 0.13472363429296094, 0.17318897000268654, 0.15007875971445414, 0.1210452212469422, 0.15977553256440455, 0.13077138200444186, 0.12679151267047647, 0.12091204082027505, 0.1338966333695089, 0.13556991771575277, 0.15456345918134376, 0.12044465611280492, 0.14836982561861023, 0.1349896116866282, 0.15311214064438922, 0.11251497655504887, 0.134867796496014, 0.13574313457554038, 0.14582224580240324, 0.12753531221719416, 0.15335445312643003, 0.13482732612307324, 0.1622050903445585, 0.13260306174268546, 0.1345326608100535, 0.16404765102131583, 0.13449430188802702, 0.14543809289295098, 0.1606584196112734, 0.12484651484486906, 0.16251383851634701, 0.13756025624117688, 0.13165353467440083, 0.1308248320448295, 0.14752778635690292, 0.1274645256107852, 0.16421712463271607, 0.15255317243782812, 0.1497707840063393, 0.11911825364867326, 0.14541033702618353, 0.1659723426787793, 0.1554971226410762, 0.14703675741501698, 0.12325846980328654, 0.15070706791866434, 0.1243073669840061, 0.13646642844468243, 0.1301143392639293, 0.12734602178400867, 0.1553600823593344, 0.15035594210430997, 0.11530605847413075, 0.1611567346343003, 0.12221832384850957, 0.14207389319672978, 0.14522516033398006, 0.1345322788758837, 0.1486176245373929, 0.15765848896613346, 0.1308440759384876, 0.1466820831226493, 0.13598865468593319, 0.15187538855740168, 0.1478468013010444, 0.1383732515889412, 0.1276861625889527, 0.11697230161534232, 0.13739607388184524, 0.11303259344169146, 0.1361001584583741, 0.12857356426667815, 0.1437570752313611, 0.13169397143643052, 0.15326431411050365, 0.12383180315967929, 0.1526310794015497, 0.14746177769245866, 0.15194893390457265, 0.1421630320154613, 0.15662308690272084, 0.12239198421329735, 0.12071542153915982, 0.14268554321174182, 0.13489697242976567, 0.15127855443293006, 0.1542443819690316, 0.15752918577920158, 0.11478434733366248, 0.17298964180575135, 0.13177526480150695, 0.12236732291938952, 0.15625856947990782, 0.13687165189461548, 0.1536631153928859, 0.14669563803395924, 0.1277170908624889, 0.14966567842171496, 0.12823515897560267, 0.13577828413547297, 0.16140169123660877, 0.13133284404676335, 0.14223570583416104, 0.1603292311222728, 0.10759630495294702, 0.15787039978749143, 0.1327200609847152, 0.14655899389809018, 0.14008820956915727, 0.1442107348583108, 0.1317943450568934, 0.12972989243424995, 0.1625036947147829, 0.12241712383574781, 0.14998173521745944, 0.13352731228428555, 0.1741676258276787, 0.15545996482656257, 0.13121844421079562, 0.1389256768353536, 0.1475992903718036, 0.14205849908080379, 0.14975427804440275, 0.1532491403618113, 0.12531915969323904, 0.14153689035122896, 0.16741877503811964, 0.1355536447212321, 0.12548585056941425, 0.16334800417248366, 0.14220841606737944, 0.1376802362928535, 0.1394159389365598, 0.1533008119644231, 0.12568227593323275, 0.14138024496799945, 0.14688836279261966, 0.12037367892758656, 0.12335138886587714, 0.16740640885840646, 0.11756235238942149, 0.13221931449560975, 0.14605469946826174, 0.12287649136200192, 0.13900407591276098, 0.1477935699475207, 0.14723640198504923, 0.12637771862286276, 0.14264989851200444, 0.14188497863070984, 0.1517498748029243, 0.1745550071541481, 0.14693061119966988, 0.12180541963696558, 0.17178472812899895, 0.134842796032342, 0.1587769050427257, 0.16022475326023228, 0.12598385136025822, 0.12173065475536829, 0.1358700032273519, 0.12249230371601251, 0.1320416693266833, 0.1380195667444624, 0.17036819494074398, 0.14449179298441997, 0.1363579047545357, 0.15814587607932587, 0.1387404461979901, 0.13421674959986293, 0.1221729254232071, 0.15007074873391474, 0.1519841002224019, 0.17405910974305452, 0.10810253208919626, 0.14404509620995673, 0.12925102011532486, 0.13284702789448985, 0.16316517507291742, 0.18004246985230368, 0.12352109323053732, 0.13438971701846103, 0.14110722423724795, 0.15240505247738928, 0.16299890474660164, 0.13862726296963718, 0.13653417057201506, 0.15748574227626927, 0.13330507817933285, 0.11630210517195279, 0.14310200319865532, 0.16947649357417122, 0.19276632648628003, 0.1442624172150719, 0.12588748723036136, 0.13766261231222038, 0.15501574319393477, 0.1467664214746981, 0.1437631603776764, 0.13281269178755073, 0.1499498907469051, 0.1547831067839161, 0.1650203851926907, 0.19221241068202002, 0.17354684080024252, 0.1914610395870755, 0.1870175530216679, 0.17581044678251068, 0.1969886211075383, 0.1793297247200161, 0.1650936078172776, 0.14492844003488278, 0.14169417048994912, 0.13913741690930143, 0.15199069574737809, 0.14420138013804454, 0.13427068237336662, 0.14854837369704055, 0.16108337901230768, 0.14392226756737841, 0.17357790177064894, 0.12582205913761169, 0.14917348406521977, 0.14570283814332685, 0.1494709027791571, 0.15333214078415874, 0.13788344445589443, 0.15113305293127033, 0.15910328490835218, 0.1258386682524315, 0.14889037473182778, 0.12206410303883597, 0.14151660747434333, 0.12015317625283857, 0.13619775353885638, 0.1360718460404539, 0.12638979179451687, 0.13793807234055996, 0.11510797437711365, 0.151683286728862, 0.12186947178372404, 0.1334587198282186, 0.1416652191079726, 0.17466019895415022, 0.1378517218379097, 0.11249994464540782, 0.1279851283688596, 0.14018299952556243, 0.14434793746130153, 0.16650070810701043, 0.16748683720689606, 0.11940475115442413, 0.1276077403883665, 0.12359063458201924, 0.1412078454825856, 0.14551852706758697, 0.14986530033150053, 0.1325683624037802, 0.13820026200226213, 0.12812701294141524, 0.12753530671589502, 0.13497760358639382, 0.170481828949963, 0.13917782659135283, 0.14415530157163367, 0.17676595928739716, 0.16642659928559336, 0.1488633024931477, 0.13762287309163865, 0.13173759984975023, 0.13142953909930827, 0.13550297890119667, 0.1378187724239619, 0.13522211241434626, 0.16692597968173054, 0.12681333395848324, 0.14653010389914287, 0.12049158054527685, 0.1394775351353454, 0.1308254468074764, 0.15490863570934446, 0.13846726479055535, 0.12889021958687075, 0.1475440113411787, 0.1317061942800524, 0.13705790461652367, 0.13974036959646274, 0.14395769504564201, 0.16390950740528484, 0.14702614449178092, 0.11790240659365156, 0.15825207098676003, 0.1572387243129431, 0.16049823864649457, 0.15795518128891234, 0.12433544601523717, 0.12148637251440078, 0.17047767727369215, 0.1542909493696503, 0.14083894029456667, 0.1273419049433489, 0.12328954463396018, 0.14383278211432127, 0.16043058197358323, 0.12709149940547382, 0.14015718181807055, 0.13290234816222832, 0.14241483672006272, 0.13977682956445464, 0.19082240791944033, 0.1362551319469732, 0.13878314241029005, 0.13024580725200274, 0.17584969348391408, 0.1585665364841856, 0.1753088252644526, 0.14469549936190076, 0.12561131070797885, 0.1275068394660626, 0.1246509966110453, 0.1353771632037516, 0.14968376152813326, 0.1306367587605417, 0.17509696143235529, 0.12303417070683348, 0.12984385988761357, 0.15655156396975772, 0.15158283415352666, 0.14190571663235674, 0.16013330804491582, 0.15701423529031192, 0.1437377861978616, 0.13178714397605581, 0.14896642830351547, 0.1543110828211962, 0.12729972586137084, 0.13258135641591057, 0.1297547997545033, 0.13623621902113375, 0.16832161541183457, 0.1515993553463645, 0.14230780146154384, 0.15752128344423338, 0.16153801377050137, 0.17727249054646335, 0.17081959421469814, 0.132415345138367, 0.1911207789325767, 0.12167933736058796, 0.16199351646871693, 0.12220003129636688, 0.12276819690997134, 0.1615915263092078, 0.12453980969317847, 0.13583553980995322, 0.15247696319780732, 0.1588409406770753, 0.12523094487161238, 0.14442835547547206, 0.14678401935124402, 0.16646235670431703, 0.13318109022977143, 0.1296318756165084, 0.17474714467039837, 0.14996240468941135, 0.152459961330088, 0.14174866849523865, 0.1531711479592131, 0.13140647178793072, 0.12876054234189516, 0.16073620618951742, 0.1551915897989922, 0.13258798290709237, 0.12079795445447011, 0.17410998739129824, 0.15215648462348455, 0.11414501724048388, 0.1583626102822897, 0.14397582688024274, 0.14206199694234994, 0.1301244502774394, 0.14832273898073517, 0.14965582403580915, 0.11974680479280232, 0.130301576062527, 0.1501180642039695, 0.144040093741809, 0.14644461407160658, 0.16466625212890748, 0.12145879983950111, 0.15515579044778377, 0.11925841619372717, 0.14869156838984582, 0.14241952971976954, 0.14769053467507798, 0.1574041746549612, 0.13729987849339584, 0.13259542009008363, 0.12816033699683535, 0.14196238422903054, 0.14271636018596165, 0.1303221375620509, 0.16261332868157302, 0.16340560251777758, 0.1496448141003338, 0.13870981454297002, 0.12581695569707782, 0.10706545850873779, 0.16477345617357922, 0.13501062540902478, 0.15224041747140973, 0.14304328175572253, 0.1730320818474802, 0.13262178336064356, 0.13626925589130173, 0.19930734468055353, 0.12840465325131772, 0.14565284364647132, 0.14342338225449644, 0.14414011525387105, 0.1314767224882364, 0.14667809040912927, 0.15534831496680646, 0.14770322269613237, 0.18150555408581706, 0.14175110723675505, 0.13126842096913788, 0.1821782599052581, 0.1230212008372949, 0.13879304863372663, 0.1539616899583395, 0.14735461585329224, 0.1103039067487409, 0.1400589610059953, 0.12936178694337058, 0.1185505506087342, 0.15904169231653986, 0.12089109358577753, 0.1479414523691717, 0.13846627238497242, 0.15232750215647736, 0.1318383069114147, 0.13798313113493177, 0.12800661214057107, 0.15270008178936095, 0.12254175320261147, 0.13897505123792747, 0.13607974358604047, 0.15255689754961757, 0.11221218682645963, 0.14990854525350425, 0.15160985722773732, 0.13575646404498873, 0.14576400908648826, 0.15836555616934264, 0.13583817797589506, 0.12589022941650596, 0.15590488932502036, 0.16965183711831752, 0.1483222833838575, 0.14620965767678082]],
+            'im_sum': [False, 168.242297979],
+            'regn_sum': [False, 72.3549563158],
+            'npts_real': [True, 3251200],
+            'im_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'im_fit_loc': [True, [254, 220.31469461816917]],
+            'im_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [40, 70, 0, 0]), \
                 (img+'.image', False, [40, 71, 0, 0]), \
                 (img+'.image', True, [10, 40, 0, 0]), \
                 (img+'.image', False, [9, 40, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( \
-            self.check_list_vals(im_stats_dict['rms_per_chan'], \
-                exp_im_stats['rms_per_chan'], epsilon=0.01), True, \
-            valname='RMS per channel of .image', exact=True)
-        out, report1_u = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_w = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_a1 = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_d1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
+        # .image report
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1 + \
-            report1_d1
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 3251200,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'mask_pix': 437,
-            'mask_regns': 1,
-            'npts_real': 3251200}
+        exp_mask_stats = {'npts': [True, 3251200],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'mask_pix': [True, 437],
+            'mask_regns': [True, 1],
+            'npts_real': [True, 3251200]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/standard_cube.pb.crtf')
 
-        exp_pb_stats = {'npts': 3251200,
-            'npts_unmasked': 1522476.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 1.0,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': 0.200896695256,
-            'min_val_pos':[25, 13, 0, 396],
-            'npts_0.2': 1522476,
-            'npts_0.5': 736092,
-            'npts_real': 3251200,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 3251200],
+            'npts_unmasked': [True, 1522476.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, 0.200896695256],
+            'min_val_pos': [True, [25, 13, 0, 396]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 1522476],
+            'npts_0.5': [True, 736092],
+            'npts_real': [True, 3251200],
+            'pb_fit': [False, [1.0308127949041446, 46.61751391582679, \
+                       46.61253844001269]],
+            'pb_fit_loc': [True, [254, 220.31469461816917]],
+            'pb_fit_pix': [False, [40.00032808200995, 40.00099739969875]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/standard_cube.psf.crtf')
 
-        exp_psf_stats = {'npts': 3251200,
-            'npts_unmasked': 3251200.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 1.0,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': -0.218764916062,
-            'min_val_pos':[1, 16, 0, 503],
-            'im_rms':  0.136036099793,
-            'im_sum': 7472.57665916,
-            'npts': 3251200,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 3251200],
+            'npts_unmasked': [True, 3251200.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, -0.218764916062],
+            'min_val_pos': [True, [1, 16, 0, 503]],
+            'im_rms': [False,  0.136036099793],
+            'im_sum': [False, 7472.57665916],
+            'npts_real': [True, 3251200],
+            'psf_fit': [False, [1.0959863390592945, 7.672871552789668, \
+                        5.141790170376213]],
+            'psf_fit_loc': [True, [254, 220.31469461816917]],
+            'psf_fit_pix': [False, [39.99880225653659, 39.99524870969922]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/standard_cube.residual.crtf')
 
-        exp_resid_stats = {'npts': 3251200,
-            'npts_unmasked': 1522476.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 0.785612404346,
-            'max_val_pos':[42, 43, 0, 256],
-            'min_val': -0.704679846764,
-            'min_val_pos':[18, 57, 0, 374],
-            'im_rms': 0.143918523224,
-            'im_sum': 124.317946204,
-            'npts': 3251200}
+        exp_resid_stats = {'npts': [True, 3251200],
+            'npts_unmasked': [True, 1522476.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 0.785612404346],
+            'max_val_pos': [True, [42, 43, 0, 256]],
+            'min_val': [False, -0.704679846764],
+            'min_val_pos': [True, [18, 57, 0, 374]],
+            'im_rms': [False, 0.143918523224],
+            'im_sum': [False, 124.317946204],
+            'regn_sum': [False, 33.355380173],
+            'npts_real': [True, 3251200]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/standard_cube.model.crtf')
 
-        exp_model_stats = {'npts': 3251200,
-            'npts_unmasked': 3251200.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 0.286023736,
-            'max_val_pos':[38, 36, 0, 254],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.000249846621096,
-            'im_sum': 0.92636379227,
-            'regn_sum': 0.92636379227,
-            'mask_non0': 6,
-            'npts': 3251200}
+        exp_model_stats = {'npts': [True, 3251200],
+            'npts_unmasked': [True, 3251200.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 0.286023736],
+            'max_val_pos': [True, [38, 36, 0, 254]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.000249846621096],
+            'im_sum': [False, 0.92636379227],
+            'regn_sum': [False, 0.92636379227],
+            'mask_non0': [True, 6],
+            'npts_real': [True, 3251200]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 508,
-            'npts_unmasked': 508.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 94.4766769409,
-            'max_val_pos':[0, 0, 0, 17],
-            'min_val': 94.4766464233,
-            'min_val_pos':[0, 0, 0, 449],
-            'npts': 508}
+        exp_sumwt_stats = {'npts': [True, 508],
+            'npts_unmasked': [True, 508.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 94.4766769409],
+            'max_val_pos': [True, [0, 0, 0, 17]],
+            'min_val': [False, 94.4766464233],
+            'min_val_pos': [True, [0, 0, 0, 449]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 508]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7
+            report6 + report7 + report8
 
 
         add_to_dict(self, output = test_dict, dataset = \
@@ -1129,6 +682,7 @@ class Test_standard(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'standard_mfs.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00020.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -1151,7 +705,7 @@ class Test_standard(test_tclean_base):
             sidelobethreshold=1.25, noisethreshold=5.0, \
             lownoisethreshold=2.0, negativethreshold=0.0, minbeamfrac=0.1, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -1178,587 +732,174 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=2.0, negativethreshold=0.0, minbeamfrac=0.1, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
             fastnoise=False, restart=True, calcres=False, calcpsf=False, \
-            savemodel='none', parallel=self.parallel)
+            savemodel='none', parallel=True)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'standard'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
             data_path+'region_files/standard_mfs.image.crtf')
 
-        exp_im_stats = {'com_bmaj': 18.0537223816,
-            'com_bmin': 10.3130550385,
-            'com_pa': 86.4389877319,
-            'npts': 6400,
-            'npts_unmasked': 3793.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.0362096913159,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': -0.00253091799095,
-            'min_val_pos':[51, 36, 0, 0],
-            'im_rms': 0.00317099603729,
-            'im_sum': 1.72629857491,
-            'regn_sum': 1.70481428877,
-            'npts_real': 6400,
-            'im_fit': [[40.2022706573, 40.0784833662],
-                        0, 107.840244976, 0.0368173095435,
-                        17.888484296, 9.90872728645]}
+        exp_im_stats = {'com_bmaj': [False, 18.0537223816],
+            'com_bmin': [False, 10.3130550385],
+            'com_pa': [False, 86.4389877319],
+            'npts': [True, 6400],
+            'npts_unmasked': [True, 3793.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0362096913159],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, -0.00253091799095],
+            'min_val_pos': [True, [51, 36, 0, 0]],
+            'im_rms': [False, 0.00317099603729],
+            'im_sum': [False, 1.72629857491],
+            'regn_sum': [False, 1.70481428877],
+            'npts_real': [True, 6400],
+            'im_fit': [False, [0.0368173095435, 17.888484296, 9.90872728645]],
+            'im_fit_loc': [True, [0, 107.84024497577988]],
+            'im_fit_pix': [False, [40.2022706573, 40.0784833662]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [40, 74, 0, 0]), \
                 (img+'.image', False, [40, 75, 0, 0]), \
                 (img+'.image', True, [6, 40, 0, 0]), \
                 (img+'.image', False, [5, 40, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_w = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_a1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 6400,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'mask_pix': 334,
-            'mask_regns': 1,
-            'npts_real': 6400}
+        exp_mask_stats = {'npts': [True, 6400],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 334],
+            'mask_regns': [True, 1],
+            'npts_real': [True, 6400]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/standard_mfs.pb.crtf')
 
-        exp_pb_stats = {'npts': 6400,
-            'npts_unmasked': 3793.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': 0.200896695256,
-            'min_val_pos':[33, 6, 0, 0],
-            'npts_0.2': 3793,
-            'npts_0.5': 1813,
-            'npts_real': 6400,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 3793.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, 0.200896695256],
+            'min_val_pos': [True, [33, 6, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 3793],
+            'npts_0.5': [True, 1813],
+            'npts_real': [True, 6400],
+            'pb_fit': [False, [1.0467417343495562, 92.30725376920157, \
+                       92.30671415384658]],
+            'pb_fit_loc': [True, [0, 107.84024497577988]],
+            'pb_fit_pix': [False, [39.99973335198128, 40.00036927599604]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/standard_mfs.psf.crtf')
 
-        exp_psf_stats = {'npts': 6400,
-            'npts_unmasked': 6400.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': -0.170877560973,
-            'min_val_pos':[45, 14, 0, 0],
-            'im_rms':  0.11175375188,
-            'im_sum': 13.431971317,
-            'npts_real': 6400,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 6400.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, -0.170877560973],
+            'min_val_pos': [True, [45, 14, 0, 0]],
+            'im_rms': [False,  0.11175375188],
+            'im_sum': [False, 13.431971317],
+            'npts_real': [True, 6400],
+            'psf_fit': [False, [1.097246906267534, 15.626704258596684, \
+                        9.180460042245928]],
+            'psf_fit_loc': [True, [0, 107.84024497577988]],
+            'psf_fit_pix': [False, [40.01095621317507, 39.995429898147734]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/standard_mfs.residual.crtf')
 
-        exp_resid_stats = {'npts': 6400,
-            'npts_unmasked': 3793.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.00680132163689,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': -0.00267858314328,
-            'min_val_pos':[51, 36, 0, 0],
-            'im_rms': 0.00119958583186,
-            'im_sum': 0.167714220393,
-            'npts_real': 6400}
+        exp_resid_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 3793.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.00680132163689],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, -0.00267858314328],
+            'min_val_pos': [True, [51, 36, 0, 0]],
+            'im_rms': [False, 0.00119958583186],
+            'im_sum': [False, 0.167714220393],
+            'regn_sum': [False, 0.26392866314],
+            'npts_real': [True, 6400]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.resid')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/standard_mfs.model.crtf')
 
-        exp_model_stats = {'npts': 6400,
-            'npts_unmasked': 6400.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.0253213103861,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.000320901758782,
-            'im_sum': 0.029550973326,
-            'regn_sum': 0.029550973326,
-            'mask_non0': 2,
-            'npts_real': 6400}
+        exp_model_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 6400.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0253213103861],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.000320901758782],
+            'im_sum': [False, 0.029550973326],
+            'regn_sum': [False, 0.029550973326],
+            'mask_non0': [True, 2],
+            'npts_real': [True, 6400]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 3208318.5,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 3208318.5,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 3208318.5],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 3208318.5],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7
+            report6 + report7 + report8
 
 
         add_to_dict(self, output = test_dict, dataset = \
@@ -1790,6 +931,7 @@ class Test_standard(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'standard_mtmfs.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00020.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -1812,7 +954,7 @@ class Test_standard(test_tclean_base):
             sidelobethreshold=1.25, noisethreshold=5.0, \
             lownoisethreshold=2.0, negativethreshold=0.0, minbeamfrac=0.1, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -1839,589 +981,221 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=2.0, negativethreshold=0.0, minbeamfrac=0.1, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
             fastnoise=False, restart=True, calcres=False, calcpsf=False, \
-            savemodel='none', parallel=self.parallel)
+            savemodel='none', parallel=True)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'mtmfs'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'mtmfs'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image.tt0', region_file = \
+        im_stats_dict = self.image_stats(img+'.image.tt0', region_file = \
             data_path+'region_files/standard_mtmfs.image.tt0.crtf')
 
-        exp_im_stats = {'com_bmaj': 18.0537223816,
-            'com_bmin': 10.3130550385,
-            'com_pa': 86.4389877319,
-            'npts': 6400,
-            'npts_unmasked': 3793.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.0375871881843,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': -0.00482273567468,
-            'min_val_pos':[40, 62, 0, 0],
-            'im_rms': 0.00341863379853,
-            'im_sum': 1.82207681158,
-            'regn_sum': 1.77460362448,
-            'npts_real': 6400,
-            'im_fit': [[40.4007657574, 39.9910814072],
-                        0, 107.840244976, 0.0382050339329,
-                        18.0250373345, 9.89487712402]}
+        exp_im_stats = {'com_bmaj': [False, 18.0537223816],
+            'com_bmin': [False, 10.3130550385],
+            'com_pa': [False, 86.4389877319],
+            'npts': [True, 6400],
+            'npts_unmasked': [True, 3793.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0375871881843],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, -0.00482273567468],
+            'min_val_pos': [True, [40, 62, 0, 0]],
+            'im_rms': [False, 0.00341863379853],
+            'im_sum': [False, 1.82207681158],
+            'regn_sum': [False, 1.77460362448],
+            'npts_real': [True, 6400],
+            'im_fit': [False, [0.03820503393292664, 18.02503733453906, \
+                       9.894877124019276]],
+            'im_fit_loc': [True, [0, 107.84024497577988]],
+            'im_fit_pix': [False, [40.2022706573, 40.0784833662]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image.tt0', True, [40, 74, 0, 0]), \
                 (img+'.image.tt0', False, [40, 75, 0, 0]), \
                 (img+'.image.tt0', True, [6, 40, 0, 0]), \
                 (img+'.image.tt0', False, [5, 40, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_w = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_a1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image.tt0')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 6400,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'mask_pix': 332,
-            'mask_regns': 1,
-            'npts_real': 6400}
+        exp_mask_stats = {'npts': [True, 6400],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 332],
+            'mask_regns': [True, 1],
+            'npts_real': [True, 6400]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb.tt0', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb.tt0', region_file = \
             data_path+'region_files/standard_mtmfs.pb.tt0.crtf')
 
-        exp_pb_stats = {'npts': 6400,
-            'npts_unmasked': 3793.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': 0.200896695256,
-            'min_val_pos':[33, 6, 0, 0],
-            'npts_0.2': 3793,
-            'npts_0.5': 1813,
-            'npts_real': 6400,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 3793.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, 0.200896695256],
+            'min_val_pos': [True, [33, 6, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 3793],
+            'npts_0.5': [True, 1813],
+            'npts_real': [True, 6400],
+            'pb_fit': [False, [1.0467417343495562, 92.30725376920157, \
+                       92.30671415384658]],
+            'pb_fit_loc': [True, [0, 107.84024497577988]],
+            'pb_fit_pix': [False, [39.99973335198128, 40.00036927599604]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb.tt0')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf.tt0', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf.tt0', region_file = \
             data_path+'region_files/standard_mtmfs.psf.tt0.crtf')
 
-        exp_psf_stats = {'npts': 6400,
-            'npts_unmasked': 6400.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': -0.170877560973,
-            'min_val_pos':[45, 14, 0, 0],
-            'im_rms':  0.11175375188,
-            'im_sum': 13.431971317,
-            'npts_real': 6400,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 6400.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, -0.170877560973],
+            'min_val_pos': [True, [45, 14, 0, 0]],
+            'im_rms': [False,  0.11175375188],
+            'im_sum': [False, 13.431971317],
+            'npts_real': [True, 6400],
+            'psf_fit': [False, [1.097246906267534, 15.626704258596684, \
+                        9.180460042245928]],
+            'psf_fit_loc': [True, [0, 107.84024497577988]],
+            'psf_fit_pix': [False, [40.01095621317507, 39.995429898147734]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf.tt0')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual.tt0', \
+        resid_stats_dict = self.image_stats(img+'.residual.tt0', \
             region_file = data_path+
             'region_files/standard_mtmfs.residual.tt0.crtf')
 
-        exp_resid_stats = {'npts': 6400,
-            'npts_unmasked': 3793.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.00681467168033,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': -0.00269496999681,
-            'min_val_pos':[51, 36, 0, 0],
-            'im_rms': 0.00121173798212,
-            'im_sum': 0.146451243258,
-            'npts_real': 6400}
+        exp_resid_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 3793.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.00681467168033],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, -0.00267858314328],
+            'min_val_pos': [True, [51, 36, 0, 0]],
+            'im_rms': [False, 0.00121173798212],
+            'im_sum': [False, 0.146451243258],
+            'regn_sum': [False, 0.279781101763],
+            'npts_real': [True, 6400]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual.tt0')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model.tt0', region_file = \
+        model_stats_dict = self.image_stats(img+'.model.tt0', region_file = \
             data_path+'region_files/standard_mtmfs.model.tt0.crtf')
 
-        exp_model_stats = {'npts': 6400,
-            'npts_unmasked': 6400.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.0257838983089,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.00032823232983,
-            'im_sum': 0.0307542048395,
-            'regn_sum': 0.0307542048395,
-            'mask_non0': 2,
-            'npts_real': 6400}
+        exp_model_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 6400.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0257838983089],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.00032823232983],
+            'im_sum': [False, 0.0307542048395],
+            'regn_sum': [False, 0.0307542048395],
+            'mask_non0': [True, 2],
+            'npts_real': [True, 6400]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model.tt0')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt.tt0')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt.tt0')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 15849921197.895538,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 3208318.5,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 3208318.5,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 3208318.5],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 3208318.5],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt.tt0')
 
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        # .alpha report
+        alpha_stats_dict = self.image_stats(img+'.alpha', region_file = \
+            data_path+'region_files/standard_mtmfs.alpha.crtf')
+
+        exp_alpha_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 82944]}
+
+        report9 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
+            '.alpha')
+
+        # .alpha.error report
+        error_stats_dict = self.image_stats(img+'.alpha.error', region_file = \
+            data_path+'region_files/standard_mtmfs.alpha.error.crtf')
+
+        exp_error_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'npts_real': [True, 82944]}
+
+        report10 = self.stats_compare(exp_error_stats, error_stats_dict, \
+            '.alpha.error')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7
-
+            report6 + report7 + report8 + report9 + report10
 
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
@@ -2452,6 +1226,7 @@ class Test_standard(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'standard_cube_eph.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData([data_path+'2017.1.00750.T_tclean_exe1.ms', 
             data_path+'2017.1.00750.T_tclean_exe2.ms'])
 
@@ -2474,7 +1249,7 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=2.0, negativethreshold=0.0, \
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, savemodel='none', \
-            parallel=self.parallel)
+            parallel=False)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -2500,593 +1275,176 @@ class Test_standard(test_tclean_base):
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, restart=True, \
             calcres=False, calcpsf=False, savemodel='none', \
-            parallel=self.parallel)
+            parallel=False)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'standard'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
             data_path+'region_files/standard_cube_eph.image.crtf')
 
-        exp_im_stats = {'com_bmaj': 4.50223609831,
-            'com_bmin': 3.32703591993,
-            'com_pa': 87.0952374381,
-            'npts': 6400000,
-            'npts_unmasked': 3233000.0,
-            'freq_bin': 122071.64398193359,
-            'start': 3.544453e+11,
-            'end': 3.545672e+11,
-            'nchan': 1000,
-            'max_val': 3.06201076508,
-            'max_val_pos':[46, 41, 0, 491],
-            'min_val': -0.362504482269,
-            'min_val_pos':[59, 39, 0, 494],
-            'im_rms': 0.055973852238,
-            'rms_per_chan': [0.04147284042825574, 0.04254928243180794, 0.046807795799524314, 0.05027397223185615, 0.04726460222419306, 0.041559297830375534, 0.04236561722381218, 0.043036468623728126, 0.04185685692088316, 0.045531459154953734, 0.0502720842227908, 0.046580946962388896, 0.04349004222357965, 0.04088516731949348, 0.04032681058965125, 0.04004370630764985, 0.04282532717338722, 0.04243048499252981, 0.04449161973003974, 0.04324216366829654, 0.04616183427621934, 0.045546850381536906, 0.04568917172164622, 0.04878374160870331, 0.04532779077099853, 0.0437936219389287, 0.04390807637740492, 0.048466189860678285, 0.046529104851415704, 0.04044114715260885, 0.04105299548884187, 0.04718021385024875, 0.048635734842170555, 0.04778352173735742, 0.048864397284943815, 0.04947867522897103, 0.05141910763698068, 0.0512721608744214, 0.0473725195650241, 0.043381703225800525, 0.04474353375743355, 0.04225543218841734, 0.04182061034187776, 0.04143552743108357, 0.03986439693964313, 0.045028854960487516, 0.04438820259973242, 0.042863745521477134, 0.04849035569380246, 0.04884082602653869, 0.044756041531294664, 0.04599423395626361, 0.049482043151084176, 0.0496152044643088, 0.045281948947307755, 0.043645237105021745, 0.04347131672008097, 0.044574875397560484, 0.04510197212386486, 0.0473453186056419, 0.046313552258314065, 0.0472346150744253, 0.043175615839884204, 0.041733352765603186, 0.048210122453321784, 0.04932141826597058, 0.048629347551728284, 0.048537272402429395, 0.047245553989599516, 0.04574888610875129, 0.04270406001206756, 0.046658923904596826, 0.05038738811398297, 0.050753471866074394, 0.05332664694276341, 0.0500212682167146, 0.04005595830599356, 0.04256708608554199, 0.04674317187094298, 0.04220196590717436, 0.042417250547235955, 0.04638325160660877, 0.04977411965178434, 0.048010039596647354, 0.04729628659810954, 0.04552976930765748, 0.045897452383889176, 0.05011848864926129, 0.049265748843579454, 0.044939308431170936, 0.04173942757602199, 0.043309993723027386, 0.04481787437052452, 0.04593964591705647, 0.042168150769080266, 0.043064963635774126, 0.044709873996171136, 0.04705284280702873, 0.0462879042533439, 0.04793783471906006, 0.04795045974722719, 0.043234046665818066, 0.04657259303546827, 0.05060673222029783, 0.04982265694059221, 0.04945810522631542, 0.04718691129436864, 0.04599097717885053, 0.04652832978367185, 0.052507053711751205, 0.051181773441787363, 0.04511396852603947, 0.04586263498786632, 0.040426992884568934, 0.04110525614812427, 0.04356376644251651, 0.04452582713745292, 0.045080577140126664, 0.04593602103694487, 0.044815607997532654, 0.04513071706324825, 0.04809051889261438, 0.05037930616846981, 0.05192179480783372, 0.04521341852721519, 0.03962756432350773, 0.04590142198822248, 0.046515903084460436, 0.04488842262996963, 0.04761712356190545, 0.04794787134003834, 0.045634077003998914, 0.04401564779461644, 0.04075926253790344, 0.046011153342612625, 0.052943227415454486, 0.04586891075704417, 0.041053053549788235, 0.04741848461012887, 0.04760539104537539, 0.04251590135895046, 0.041517475889717256, 0.041530348823189914, 0.04181852835766343, 0.04435229347677239, 0.041494787553196834, 0.04029171963642991, 0.04171074628726203, 0.03944305739155072, 0.03930109753701833, 0.04150470464803849, 0.04361220599575606, 0.04108243710715513, 0.04468045730535825, 0.046349270421574155, 0.04739880380909585, 0.045192504763623735, 0.040344656318779815, 0.04519294126647845, 0.049069650042015946, 0.04867861195647122, 0.05150697532031088, 0.05310825022071752, 0.044183347666423387, 0.04385582347461477, 0.04832622326670505, 0.05039773328491312, 0.04995486556079216, 0.044406026526960116, 0.04224896017060205, 0.04339237711388555, 0.043054962255623365, 0.03815805334382629, 0.039538862002337145, 0.03972032675929341, 0.03983988379595894, 0.04067903646705838, 0.042816131958255746, 0.044500702340071294, 0.046921846157623126, 0.05137318219477987, 0.049149740418630204, 0.043796797416599566, 0.045302958655315764, 0.04174656753685317, 0.04673517759601561, 0.04394365100006975, 0.04337034201775957, 0.03993686958213624, 0.03600549752919795, 0.043866442563853844, 0.04967750426554719, 0.04328006231133492, 0.04429873465092799, 0.04539662341787065, 0.04208124262819621, 0.0419930913030589, 0.043390621818758704, 0.04031071173345182, 0.040404111183998906, 0.045092347850751044, 0.04461721051697477, 0.047339081036115664, 0.04902937369564867, 0.04788705109593518, 0.044187432479277686, 0.04743470609004175, 0.045923903982013736, 0.044487812095947744, 0.04569301579760048, 0.04588298557818862, 0.048879884521756484, 0.042517514688907354, 0.044736166501443096, 0.049966263636027984, 0.05055485639716179, 0.0486507675230859, 0.045900183028439706, 0.04597463115002017, 0.04874118410854506, 0.0492627400756792, 0.04553659078435011, 0.04308247909546547, 0.04661898391374173, 0.046133985226344924, 0.04326784460986761, 0.04608934609263339, 0.04625450203821501, 0.044862609177145935, 0.04011425405357339, 0.041241389971566234, 0.03875820612078441, 0.04402089540797002, 0.04758335721211567, 0.0494907576224672, 0.04651213583236676, 0.04263585154588318, 0.04172307447971044, 0.04349353240515943, 0.04139629311641164, 0.044157035731005885, 0.04641142701759145, 0.04776945914094206, 0.04658322019166245, 0.04808416923554729, 0.04936108762937629, 0.04552844004064125, 0.04525718576147768, 0.050084592913668284, 0.050497649572359075, 0.04819990615260935, 0.043508765026292744, 0.04331538798826631, 0.04182089077294588, 0.04060874225805633, 0.04479726493754151, 0.047444774373354884, 0.04987173103462332, 0.050304956312335815, 0.042820208031155285, 0.046200529213358, 0.049547291267549205, 0.0439794169450193, 0.041240659042780806, 0.043480246063883995, 0.0436023938949218, 0.04327850965717666, 0.04376974285821181, 0.04364660222066811, 0.04336487246668942, 0.04202446629715709, 0.0446809233205639, 0.04429657923257662, 0.04586834962102086, 0.04777632595404274, 0.04711156800879183, 0.04588720887454971, 0.04171637723240844, 0.04258842902985198, 0.043791244321268845, 0.04444364218656609, 0.04703530623267712, 0.046967155407046726, 0.04423379398880278, 0.046597813073495226, 0.04515926828622885, 0.04865114788979305, 0.04959718488366777, 0.04775289058645823, 0.048222751666638024, 0.045807848861385864, 0.04258228402458693, 0.043295652945759516, 0.040739713165586305, 0.04112738264439764, 0.045910299621454445, 0.04599175115680861, 0.044287782495768244, 0.04662480181390475, 0.04529554134253019, 0.046560456501458534, 0.04506625139233557, 0.04502184582085042, 0.042166746741141986, 0.0411152754577657, 0.03926189149501848, 0.039107527777057026, 0.04681587804048637, 0.0467105611576896, 0.046323540451818135, 0.047918802925478454, 0.04657382422156662, 0.04444849776991001, 0.04346268753310575, 0.044898397078793936, 0.046510495726545836, 0.04619833742205952, 0.0443555071018013, 0.04635832632481224, 0.041976743688728786, 0.04197602077685787, 0.04478463724471771, 0.047207294982882224, 0.05136573873750946, 0.04973287522222192, 0.045711977533150296, 0.040456014664830654, 0.03924539842104608, 0.046609134010290224, 0.04733368546103009, 0.04334939035917689, 0.04290796909827518, 0.045276995722941284, 0.046520486617919486, 0.04815054390965692, 0.04350658880383937, 0.04483676528017031, 0.04077733169883272, 0.041984761989770365, 0.040793755345831954, 0.04472020759595963, 0.04204742196256374, 0.04600734863246967, 0.05089399077936206, 0.0476489534013462, 0.0456432877701943, 0.044223470648491386, 0.04530694593376634, 0.04337233068228447, 0.042694682962867124, 0.044726289013241535, 0.043300741131810816, 0.04210560761472504, 0.041739307544568935, 0.04189755601252967, 0.040777149672434856, 0.04220437809752992, 0.04419949695012377, 0.04359320445482362, 0.04527755744850593, 0.046697574147745516, 0.04642331922810677, 0.043483738542462264, 0.04368515330767118, 0.04908300908360263, 0.04250379298118959, 0.04768927918228166, 0.0486006267244303, 0.049653949354931635, 0.04641633776412558, 0.04737868673319071, 0.046764416207862085, 0.04461670467967515, 0.04868254895425987, 0.0476770300145769, 0.04107924608973292, 0.04188106955545214, 0.041590035586901046, 0.04214482902672925, 0.045136435370418934, 0.04573554214962054, 0.043710136784232044, 0.04634140816704903, 0.04404580814065792, 0.038977016608844756, 0.04117627295447821, 0.04243400270559211, 0.04363716717613951, 0.04419958014197212, 0.04782353317334333, 0.04906799379537854, 0.0512348649962232, 0.046385535687935825, 0.0403796970773063, 0.04050700815126366, 0.040063995010656335, 0.04031612066398897, 0.04164336103806869, 0.046497487361936596, 0.04562422571208214, 0.04263755686426088, 0.04483032698151463, 0.04587078156764805, 0.04362771229290711, 0.04381177070732172, 0.04620332641463225, 0.04248238362177694, 0.04620226614206356, 0.04879854913727185, 0.04526347063166013, 0.04465446848896567, 0.049905242523157714, 0.044088661998105946, 0.04208975459552379, 0.04509748114630728, 0.047764989805243976, 0.047269720611939715, 0.04815713354608546, 0.04861013081395479, 0.047923545468142856, 0.043222858729962114, 0.04395516586340558, 0.04633226277208989, 0.04633822508846244, 0.04466181106665416, 0.044429807483860266, 0.043064439123369755, 0.0406185164405471, 0.04336445242364316, 0.04935831428699568, 0.051896146917270104, 0.04800247160267496, 0.0451928435647402, 0.04857713796305899, 0.04545063178306572, 0.04804396178280432, 0.05062919060884726, 0.04786223876583842, 0.04566827171942874, 0.043626694816840776, 0.041250182796215465, 0.04709180830104477, 0.04772551420079806, 0.044386072616289254, 0.03820143940422228, 0.04413829408333633, 0.04230936833406113, 0.04910812334129778, 0.049843192718712584, 0.048737041668602155, 0.04588920688875621, 0.03628094221396932, 0.0371987923390054, 0.04471470429430708, 0.050663574304905326, 0.043588998319089856, 0.04221773793026161, 0.04144727099823885, 0.044023383956817666, 0.04470813033701908, 0.04269963975357676, 0.042875526590775696, 0.04317741059571664, 0.042984637475138296, 0.04319761839249863, 0.042861390095655066, 0.0452468522274471, 0.049152419395045284, 0.0469133600403256, 0.04228455356894668, 0.0390540855759181, 0.04197843679175804, 0.049840238850523244, 0.04706824869796128, 0.042537650152546964, 0.047732161147428794, 0.04341518757549293, 0.0476977950606753, 0.04549419041632738, 0.03875515499440533, 0.042797424424739626, 0.04596345837561548, 0.0438363052201628, 0.04685885716066778, 0.04283950332858225, 0.044488182626806164, 0.05995010602561655, 0.10557374827025408, 0.18872692387137646, 0.28302762974690815, 0.3498003625351968, 0.3672106885356358, 0.33194227396054365, 0.290440560615709, 0.26012873399840286, 0.24803777375051594, 0.24978939300892694, 0.25141736578190277, 0.25421665255928555, 0.26251178802202624, 0.25890228013598743, 0.23200587051623178, 0.18629342623098122, 0.1303196902675577, 0.07996660345798334, 0.04899539873406976, 0.04090759649654674, 0.043628462817536906, 0.05009979123148561, 0.04956125914220415, 0.044080405061950774, 0.04478967661369681, 0.04570876170701758, 0.04409156219707164, 0.04304988904995974, 0.04781018261476629, 0.04835789663918392, 0.04507151460403614, 0.046165905299855176, 0.04519394844018466, 0.04332556952868729, 0.04057131126983464, 0.04298739652919473, 0.04432500568724349, 0.04972848221531476, 0.049019669301815824, 0.04668382236769563, 0.04472111573456095, 0.045103852453247786, 0.046491820979471625, 0.05029817544174287, 0.050276552117727094, 0.04607120553921124, 0.046587396318693006, 0.04654908671975277, 0.0477396384141432, 0.05256856375387284, 0.05309433276083172, 0.04936056085087188, 0.04465264498510182, 0.04066864955986269, 0.038536803593856646, 0.044266520348999756, 0.044096677361870014, 0.04390677053924258, 0.04488540119711562, 0.04541089658069488, 0.04699651590931532, 0.04734119093292678, 0.04514869425580925, 0.04047704621692836, 0.044688492688345544, 0.04221500509145915, 0.04450735469144093, 0.042870304238128605, 0.045817794483138954, 0.04708641472548149, 0.040032566176785585, 0.04085404222004716, 0.04308076248218408, 0.04352225643436645, 0.04455733495127243, 0.04627376965000834, 0.04544360293708542, 0.04476633455817276, 0.04422718765041479, 0.043247403149073264, 0.04420384687399638, 0.04400101820916508, 0.044306358418837066, 0.04445515506908776, 0.04650940955011436, 0.042975867175620554, 0.04506894253575688, 0.04815973017230859, 0.046770673106161904, 0.04723785961435044, 0.04722458534100488, 0.04635888252639177, 0.04754855183877157, 0.04541021786961315, 0.045993677503893035, 0.04879607967477977, 0.043012398343036544, 0.04339187856746779, 0.04716829159128152, 0.044042929942474544, 0.04060802127590302, 0.03933483270377363, 0.0421084592357695, 0.045799139539569794, 0.04728564817775729, 0.048709802287630354, 0.04625098222367802, 0.04142378728333036, 0.04654172737077701, 0.04695454123756478, 0.04254219696670264, 0.04167825362567383, 0.043590015524733454, 0.04517446609996377, 0.04538394511111757, 0.0411803245006179, 0.04162769198992844, 0.04566795976989248, 0.0469352857577231, 0.045475823563583345, 0.04670207165848767, 0.04944871386138451, 0.04261661221332014, 0.04350784548879662, 0.04563064656476053, 0.04645374564617096, 0.047011364136469676, 0.04626821704856244, 0.04601759529369392, 0.04692011789955231, 0.046935547183383414, 0.04811322379382826, 0.05092280831305335, 0.05169333173453074, 0.050615414866423104, 0.04965990304886755, 0.04985520414774309, 0.049556207960304625, 0.045668964894689947, 0.04091929343081231, 0.04134479306355263, 0.04851193747165114, 0.04945249500604705, 0.04719240158553954, 0.04446873081259328, 0.04328173884244462, 0.04263930758124629, 0.04538798376013595, 0.04733862004263131, 0.042818994443588124, 0.03991049287167168, 0.04003339147973695, 0.045131965116429994, 0.044555886972228564, 0.03904228167420214, 0.03964296000593127, 0.0398357586726478, 0.04462944027508994, 0.047207297513162834, 0.04720091701217782, 0.04573250672526995, 0.050619550625776444, 0.05167748038945954, 0.05037746570705263, 0.04136834989720388, 0.0395474086935746, 0.04275837492827358, 0.0439212218316328, 0.0471906556974699, 0.050993019281882726, 0.049124147702145744, 0.048244397599512094, 0.04506197168417649, 0.04568375276302797, 0.04812036783271446, 0.04445936319441292, 0.041293535244715976, 0.043179887675183666, 0.046055289083475205, 0.04706507397502584, 0.04447967606146786, 0.04222015492968105, 0.0439674462328621, 0.043896529077583894, 0.04266544335030779, 0.04266644623124096, 0.04357712294408853, 0.05231398531202364, 0.053370700541464616, 0.04857282762175127, 0.045258380741403106, 0.045303357380300946, 0.04101809933111672, 0.041189074434246936, 0.04633904453435081, 0.049717255912949114, 0.05010614817105909, 0.04393734175641571, 0.03867286537447114, 0.0429230714573404, 0.04488217279877273, 0.04522370048445455, 0.04336725660321416, 0.04356264989657724, 0.04146827380306933, 0.03665312851533432, 0.039980260984851516, 0.04228302535435613, 0.04389068048602057, 0.03997240613607379, 0.04241841231637553, 0.04160034918348827, 0.04520530739905513, 0.04133848236544517, 0.04417032186418197, 0.04732307233198403, 0.046066585583925186, 0.04794749014534085, 0.0430060722593525, 0.04177280157123228, 0.04380811047918848, 0.040779536741100096, 0.044002495409217926, 0.042339960518415154, 0.04284779608368661, 0.04144915330440946, 0.04175329012568266, 0.04468389809649514, 0.04262292048772433, 0.04101753248574084, 0.03833202726106456, 0.041432154426680995, 0.04545721669426245, 0.043500403222287314, 0.04247370233471467, 0.042711987628776316, 0.045197003435745016, 0.046061750636820546, 0.04279507295911485, 0.04239066668592003, 0.04714143730922104, 0.04661255729559933, 0.04238422932818252, 0.04179816251339896, 0.04481205604751281, 0.04862619399232404, 0.04290828113838176, 0.04221396938127627, 0.04242662994290929, 0.04450718119590875, 0.04471420159102595, 0.041561459460195016, 0.04061336003877967, 0.041745476588896754, 0.04286446946892797, 0.04403000667460554, 0.042516346869012976, 0.04391550291853197, 0.04147492526437, 0.044390159913787586, 0.04858618926975879, 0.047057979274585916, 0.044837316309386074, 0.045456397939683736, 0.046873185359702536, 0.04545495694981475, 0.04359060042114437, 0.045989007837274644, 0.049686754595291746, 0.04536022945930599, 0.04770465331936742, 0.0510614831423978, 0.04590996154799734, 0.04601963242407712, 0.04619596080750725, 0.045306980051320944, 0.04432076077286921, 0.038777354135178126, 0.039785511964539784, 0.042794096518758616, 0.044378135486347496, 0.040378706840431426, 0.04270144914894412, 0.04485723781386858, 0.04092189619423321, 0.044567443137470936, 0.046683929341345125, 0.0446591792962899, 0.04663066745026505, 0.04778417013088139, 0.0479986312062676, 0.04691279172857023, 0.04550992586868622, 0.04481415989096017, 0.046264411558386266, 0.04684048149792687, 0.04508317803023017, 0.04418840392406166, 0.04514330368780914, 0.04331853163851515, 0.041418043475806104, 0.044335444134957894, 0.043813612310493855, 0.042237129336115634, 0.04484883967809909, 0.04719279649342131, 0.048484876497386795, 0.04999861337401947, 0.047139021664050894, 0.04624424651115784, 0.04946026305108584, 0.048753425401869756, 0.04795785902297371, 0.04548142114132507, 0.04597234810107064, 0.04578669626370894, 0.044150493323153066, 0.04347549735022207, 0.045012961497875516, 0.042469833670680926, 0.043123635922132565, 0.0444188259911608, 0.044045252309259125, 0.041347516913099874, 0.04423993898811506, 0.04833449411104301, 0.04399536175530263, 0.04193561651797477, 0.047193999173540044, 0.04640949391019046, 0.04377876735567927, 0.04784563639430407, 0.04990155675893534, 0.04705787638590471, 0.04776353982103787, 0.05032860054279513, 0.04713583458148935, 0.041586710934546633, 0.04081836062004791, 0.046730461342141934, 0.04770022113801226, 0.041521491950066124, 0.04322288824535129, 0.03871971212467864, 0.03877418394769848, 0.04189861595321477, 0.04379541870491918, 0.045818379140407366, 0.04553142481385117, 0.04557339175358304, 0.040221668383312335, 0.03847824536287222, 0.04226084888225819, 0.04278014077365339, 0.04682600952614384, 0.048543746308069145, 0.04672005940927673, 0.04372755168922572, 0.043360368499897335, 0.0406401455261877, 0.04106608036483906, 0.03901295012577516, 0.04432469216665788, 0.045229796180029196, 0.043080105650654996, 0.04000644096010989, 0.041872795599633035, 0.04367030740721623, 0.04062843867079192, 0.04046255587943874, 0.04189940339714176, 0.042461327527919236, 0.04502541852078475, 0.04357770467605546, 0.041638598996523384, 0.04244333432938209, 0.04597283261976164, 0.04870528030372, 0.046562672932188146, 0.04048613501112604, 0.043194916055069865, 0.04705216547916007, 0.04707229565946042, 0.04308733577727289, 0.042290353014862815, 0.04191029758476797, 0.043622005420342246, 0.04629853652312584, 0.04812334763810347, 0.0454554723964637, 0.044883953341833926, 0.04616194471799996, 0.04146985976458868, 0.04493084061523062, 0.04648662940955314, 0.03901313717168857, 0.04093255386975347, 0.04531066917587298, 0.04790801736759378, 0.043300807696865916, 0.03795010478256023, 0.03937132546536799, 0.03998005844569648, 0.044712329482512296, 0.04344663738412382, 0.04384624678585034, 0.04189198462079245, 0.0447850884961132, 0.04360860246046017, 0.046212492689080946, 0.04662574746696418, 0.040175151217488075, 0.042548892150321385, 0.04273708134110358, 0.0436652394233731, 0.0446567273402838, 0.041504006631368794, 0.04180817535232774, 0.04180189242542836, 0.04464597692689543, 0.04051048022670634, 0.0402043786014598, 0.044332536061165495, 0.04451349302294642, 0.04721775825825243, 0.05034142046308038, 0.04914557159307879, 0.04305314404299413, 0.04501919188309524, 0.04385981707446499, 0.04026426160488087, 0.043707857906778516, 0.0434888399935484, 0.03994276460009276, 0.040291017821495335, 0.04551819051577132, 0.04785682015877868, 0.048275626437799854, 0.04494963910113805, 0.042300285689887605, 0.045716179659770935, 0.046907677550574234, 0.042150397450181565, 0.0417516956499194, 0.04703357874043769, 0.04323223727854463, 0.048300785507211216, 0.051514165729642306, 0.045485370078021274, 0.03691851661101719, 0.035216417938379464, 0.04073572180872651, 0.03847618248085107, 0.03924093325651294, 0.04169824170116127, 0.041857460173997246, 0.042763224613731665, 0.04363214657035114, 0.04600106990967965, 0.051028150668357815, 0.045746850061159285, 0.04206677455142946, 0.048022086691811045, 0.044914251190311984, 0.042020771247839775, 0.04626404511121505, 0.04497765856342021, 0.04481991912280334, 0.04506179626666786, 0.04985039232547424, 0.05054033486622929, 0.043881117212786314, 0.045088403501057986, 0.041061363556784206, 0.03711119731324331, 0.039768631455522105, 0.0477101845505575, 0.04633349558816296, 0.045643402391453314, 0.04548923525790922, 0.04656460145077493, 0.04989878555412256, 0.05033863381352162, 0.046023336890052224, 0.045066109334492205, 0.04464246708556863, 0.04342978956885089, 0.04410532977158723, 0.04664016435292943, 0.04798874070999172, 0.044607643307464015, 0.043805868432151375, 0.045124615570696955, 0.04565951172721549, 0.046829926257196015, 0.044668867909129516, 0.05062380133045267, 0.051219538639712014, 0.04842948233786371, 0.04432788396188177, 0.04266337961965428, 0.041294265588724774, 0.043132576757287024, 0.044563631847001746, 0.04507019653789561, 0.04458375243067548, 0.04125790045420121, 0.04146933310219249, 0.04236381054760312, 0.04492870140983278, 0.04750546903562345, 0.04511795490590616, 0.04460467237817201],
-            'im_sum': 2249.5560029,
-            'regn_sum': 253.368211955,
-            'npts_real': 6400000,
-            'im_fit': [[45.802306052, 41.1650012396],
-                        491, 354.505209348, 2.89344750697,
-                        6.25839481605, 5.74536585146]}
+        exp_im_stats = {'com_bmaj': [False, 4.49769604687],
+            'com_bmin': [False, 3.3237527868],
+            'com_pa': [False, 87.0964067383],
+            'npts': [True, 6400000],
+            'npts_unmasked': [True, 3233000.0],
+            'freq_bin': [True, 122071.64398193359],
+            'start': [True, 3.544453e+11],
+            'end': [True, 3.545672e+11],
+            'nchan': [True, 1000],
+            'max_val': [False, 3.2168185710906982],
+            'max_val_pos': [True, [46, 41, 0, 489]],
+            'min_val': [False, -0.35654923319816589],
+            'min_val_pos': [True, [58, 39, 0, 490]],
+            'im_rms': [False, 0.0560069684214],
+            'rms_per_chan': [False, [0.04643669957034992, 0.04934490831784589, 0.04896325882011928, 0.045246930831289396, 0.04076479281458919, 0.04066843326216516, 0.043761578500556515, 0.04370275108520549, 0.0445865859431914, 0.04802272981355104, 0.046277171156772115, 0.04421698263536416, 0.04156787733109207, 0.04051142659268897, 0.039050378679608116, 0.04274874247664772, 0.04252468925473175, 0.043598688189381424, 0.04212993795874748, 0.04291563807365895, 0.04663133269893015, 0.044995182687279166, 0.046652174816757166, 0.04680608296946909, 0.04689052908184202, 0.04461073330219135, 0.043414456008460174, 0.04697870918788608, 0.04121882663735321, 0.04252376733369552, 0.04487817651244527, 0.046179300427229446, 0.05082631575222008, 0.05096767735717168, 0.05157594918063651, 0.053087774183373154, 0.04951326648446268, 0.045951663538404505, 0.04496180664310007, 0.04043775122677042, 0.03863681189715942, 0.04198142992416419, 0.046355293794327235, 0.045532964002632854, 0.04173551104543082, 0.04007043615342306, 0.043528066688108526, 0.04885149532839892, 0.050238176414982176, 0.04596874411684181, 0.04195383438441166, 0.04626081402776205, 0.0492666486971535, 0.05150304313267975, 0.04462335509905232, 0.04118038686235944, 0.04780955467331849, 0.04752930157265889, 0.044205684120537145, 0.042692262207786574, 0.04261267884394058, 0.041558523019057145, 0.04598449726235426, 0.05011069650686886, 0.04700991930989118, 0.04754284812449084, 0.04777701297333353, 0.044937587455719685, 0.04545473401615083, 0.045628517495069715, 0.046974171924376536, 0.04791987552049449, 0.051103967401651365, 0.05078302116118002, 0.04916354347812644, 0.045185515685354324, 0.04149383314091068, 0.04252371812661069, 0.04659269834497681, 0.0513482193106561, 0.04888969235184415, 0.04687727401908186, 0.04365857821009889, 0.041131483603749484, 0.043500582322170855, 0.0462475887996055, 0.050947374919630015, 0.04740160325995145, 0.0470193902756731, 0.04820730198011588, 0.044227183958923326, 0.042122827379657904, 0.042941860821600106, 0.041389301431217086, 0.04059296483437863, 0.04341043774321849, 0.0465241236562757, 0.050343051630505134, 0.05028274999938501, 0.04155552969131352, 0.039886981070265566, 0.046645263962396155, 0.051459870958774946, 0.04958652396902705, 0.045265090075850355, 0.04434772609236033, 0.049116532851638736, 0.05221305702489155, 0.04706088732472824, 0.04602886320332381, 0.04613588584535028, 0.04371228016495952, 0.03982330273063204, 0.04193092175965313, 0.049198482375183476, 0.04559050484741412, 0.04460361880216926, 0.04353058920316075, 0.045899887482949125, 0.046768575899857695, 0.04587087214138045, 0.04843732516362743, 0.04694015149126692, 0.04388274962922123, 0.043307500885936795, 0.046105744604161274, 0.050346868624568816, 0.047200642319448524, 0.043589961639616794, 0.04335470016064548, 0.04324714935672587, 0.04454941674749486, 0.04737927686773757, 0.05082163506683548, 0.04848585994107168, 0.0411642812817369, 0.04576066235499968, 0.04473033253026546, 0.04278733014801023, 0.04134775293581778, 0.043486359980697865, 0.046006054192836494, 0.043096775414862926, 0.04208176804672694, 0.04049787676913971, 0.03776413600971469, 0.04096302522240697, 0.04113701125252589, 0.04084318844319109, 0.03993326431649316, 0.04205014226137875, 0.04165528446233006, 0.04743968297025062, 0.0475521877300109, 0.04475605845619125, 0.04401328458943738, 0.041007266936161024, 0.04599262159243273, 0.046865999859658745, 0.04827691420906647, 0.05228095627985328, 0.05380087529459753, 0.045382540014794075, 0.04408051931220572, 0.050880525362058296, 0.04633788067452101, 0.04452905578109357, 0.04791010864887247, 0.04529597872689918, 0.04525854238251303, 0.046747443761763714, 0.03933074371811037, 0.03598068749641659, 0.041265993728334616, 0.0430330960969908, 0.04067461852978585, 0.041035175357556804, 0.045119814280047195, 0.047730924757603155, 0.04759626186493997, 0.04727124180084044, 0.04424468462136652, 0.04251731984028063, 0.04176012565602086, 0.04875414512653576, 0.049819399667323835, 0.04249500530271126, 0.04048631054645446, 0.04019127484662825, 0.04447260323303356, 0.04733720183513169, 0.04759559578370847, 0.046415899414605034, 0.04081800248138881, 0.040835322610187075, 0.04078854436028061, 0.04084601596595794, 0.04280266371654101, 0.04384684014451019, 0.04357951587924562, 0.04493228494689293, 0.044139830914717695, 0.0435869145723245, 0.04764017721689463, 0.048284337537651045, 0.04666980732346283, 0.04733310508129286, 0.044116863618867234, 0.04559536238825363, 0.04448530889797417, 0.04612795674019243, 0.04340643325575028, 0.045288094093386654, 0.04878446017187089, 0.04885753033555586, 0.04941586336470389, 0.046422340562798904, 0.044323117513462226, 0.047708631750805794, 0.04795955693138798, 0.04403887278767426, 0.043242816075875455, 0.04505113360417497, 0.045971733801389685, 0.04692591382520756, 0.04526334465868224, 0.0402667998958263, 0.041599834702646075, 0.04137294130862181, 0.04270784407047202, 0.041988761534425746, 0.04231406077286222, 0.051940796708851544, 0.05046188340262736, 0.04423891883374399, 0.04311071331069119, 0.041819134036779615, 0.04229742503352504, 0.04170398273505288, 0.04562529179144891, 0.04874608112356234, 0.045505038077315624, 0.04507038545756651, 0.04516625412224887, 0.04788075845520247, 0.04825376763517949, 0.04906145926913566, 0.049139822772542675, 0.04557852751238228, 0.04720599191117688, 0.043884980387716814, 0.04140054881324252, 0.04211615786203093, 0.043127698114725284, 0.04911141042084732, 0.05107081928037268, 0.044796984464178013, 0.04495833810462226, 0.04730374501586064, 0.04667756324575635, 0.045159866333060114, 0.04042904164023826, 0.04090576051606706, 0.046863276603866556, 0.04659173239577013, 0.04376744319773422, 0.04522289686498856, 0.04473657323218306, 0.042819092227464356, 0.04113471729537815, 0.04591263892335558, 0.04798013561676214, 0.04731129275067027, 0.04827915688307468, 0.04467434152154626, 0.043046478969549565, 0.042103651285131743, 0.04240517430258763, 0.04373979060557242, 0.045668840553286565, 0.046285137568665945, 0.04211919000123673, 0.043169481337927564, 0.05065536603759789, 0.04964137715560091, 0.04872082434854346, 0.048823130419572945, 0.044647556725311885, 0.04686071279804561, 0.04898506218686401, 0.04248479479575401, 0.041238959229725446, 0.041711815950868036, 0.04448585314572631, 0.045569453998905156, 0.043782848170480226, 0.03714516951598358, 0.041388339824126735, 0.04794368187941998, 0.04774424802037788, 0.04185035411590102, 0.04187212720629191, 0.04061630982271867, 0.04014055898470098, 0.03755902905378686, 0.041731525656284275, 0.04552077472723898, 0.045384557347911, 0.04561425607077976, 0.04396240289328813, 0.04560866514676667, 0.046018010543353076, 0.041758975644607906, 0.044584517396196746, 0.044393563966261325, 0.044515088147448055, 0.048423700561444925, 0.045279573442018585, 0.04361878407496164, 0.0468957317021233, 0.0498702556814145, 0.04923825866076725, 0.04933686700621225, 0.04709859751278079, 0.04167128843031174, 0.04061805103901589, 0.03885135890432584, 0.04321653772782609, 0.044339345524985654, 0.04449007623693989, 0.0480083250328015, 0.04728131076450639, 0.042495683485785384, 0.04335727837754768, 0.042470766390855536, 0.04273025309548049, 0.044332202260225044, 0.042474455866522876, 0.04016055605615106, 0.042300011432415185, 0.04416254354402529, 0.04563914350851595, 0.04686015983173452, 0.04631455813837692, 0.04498015818897669, 0.043175559477057215, 0.04383425133770565, 0.04159113410245179, 0.04489350716614797, 0.04650094370947378, 0.043072941586427806, 0.042205330071801495, 0.039883474726589395, 0.044825203490698275, 0.04528892805777943, 0.04282610154191627, 0.04349512611998853, 0.04247412091291035, 0.04415929041944228, 0.048223187057763434, 0.04726879001889971, 0.04394868050355618, 0.04415635728956364, 0.04501345441129184, 0.04418666629872543, 0.04668576976453467, 0.04556394565391764, 0.04741009982528531, 0.04740140452150073, 0.04583037551978373, 0.046567557496669576, 0.04677469032755722, 0.046169211332555686, 0.043724071095036704, 0.04287974465665924, 0.04304122053501154, 0.04102254270029318, 0.04361672048216947, 0.046468143734660614, 0.04638227729706821, 0.04188419989140981, 0.04141905130776169, 0.04601534424565727, 0.04315761018707787, 0.04178065317591785, 0.04181189318236191, 0.04433161553697957, 0.04835683069281614, 0.05122027651258199, 0.04888875491912803, 0.04709415480984611, 0.03982308750616121, 0.03931970337124684, 0.041135584388753595, 0.04103474060272379, 0.042688688753807644, 0.045098100375485284, 0.044081581919921765, 0.044867634085172664, 0.04376194005125083, 0.04112353809689816, 0.04165256642058881, 0.04113864076272384, 0.04194089691466448, 0.0426357193530805, 0.044169091773530005, 0.044706911723422046, 0.045676954240245315, 0.0475735363640219, 0.045252129087844414, 0.04327843818779502, 0.040787748524881914, 0.04349982070782621, 0.04623701927905451, 0.05003818830094732, 0.0492637202304341, 0.05030172011167053, 0.05041856505148443, 0.04865025938675271, 0.04242114836177711, 0.04332913791842073, 0.04417555276786257, 0.046511419107420855, 0.047855191840534814, 0.0447112493727955, 0.04291434192759193, 0.042000052238535396, 0.047208554560098065, 0.04991329683989256, 0.043522094691402766, 0.04728530679991288, 0.043409909773413066, 0.04413453137291575, 0.04378692865928274, 0.04318986388883555, 0.04768566840485644, 0.0493043820754111, 0.045915063051690456, 0.04372051075206559, 0.04177309296445956, 0.04594702153236263, 0.043136187115026786, 0.03989584010763349, 0.042052831627502514, 0.04395385380777047, 0.044490797911686523, 0.05050721479049005, 0.05280016432973104, 0.045817643009786586, 0.043342516330605346, 0.03668099527899864, 0.037354424964758944, 0.04417339767971324, 0.048705771265993306, 0.04417246001889241, 0.03920079992318, 0.04236443562241198, 0.04569530642633145, 0.04585207146091095, 0.04393512941738649, 0.04442675712801038, 0.04313956775505375, 0.03960015974712282, 0.04595448951857105, 0.046253067292557175, 0.04764265636037589, 0.048664342796493544, 0.044490016511759545, 0.04446073291073993, 0.04325106910170598, 0.04371067608468382, 0.045815516334865726, 0.04364942129237882, 0.040614872275104554, 0.04925116326612862, 0.04622908354230324, 0.04187263674394814, 0.04246865124807005, 0.042407043107492326, 0.04395209375510593, 0.046255182065641, 0.04466090683862347, 0.043865504621226147, 0.042107514869371046, 0.045106163590565594, 0.07187955608053229, 0.1473963504142755, 0.2590806857156774, 0.35083385144133233, 0.372380544172661, 0.3385626044480845, 0.300050027009694, 0.27503491394149054, 0.2542837886157723, 0.2419519658614859, 0.2481632024383586, 0.2588597980725786, 0.2698371638935117, 0.2849747471499766, 0.26991800949889033, 0.20471858845828023, 0.12442205394588181, 0.06371996453205579, 0.04474790491119776, 0.04331778024846207, 0.043425178103955415, 0.04141722416093238, 0.04346704298140081, 0.04842483936808344, 0.04576883917836126, 0.041948629698781825, 0.041139433859260756, 0.041359269306182375, 0.04476797275140064, 0.04730401097466933, 0.04854807973917275, 0.04776793906389466, 0.04695441386976931, 0.04561123621247733, 0.04328810557431784, 0.0421941040364879, 0.04567863392551492, 0.04607553504600313, 0.04745289236281092, 0.050799363620603805, 0.047009742333265186, 0.04197312616246828, 0.045568658799004055, 0.04950290466374596, 0.05047313776113717, 0.04866930525486824, 0.041709352811006434, 0.04346991804565062, 0.04847793967620536, 0.0483407353418824, 0.04893693944483718, 0.04964036128679813, 0.04585043053261588, 0.042137232515707786, 0.04318024712159876, 0.03882668894551708, 0.03992657190878028, 0.04341166932492751, 0.04522723382472872, 0.04602373201322939, 0.043574401205969185, 0.04347286511713428, 0.04389442975326638, 0.046474225185014734, 0.04468946526873493, 0.04521254048699986, 0.045612321205862956, 0.045254081348552126, 0.04373868382604877, 0.044731104709681925, 0.04419661974812566, 0.03971135024435756, 0.040276425161050844, 0.04538473582431024, 0.04695881226018986, 0.04384551885057054, 0.04374323253548989, 0.04378309423401829, 0.042320665449719776, 0.04504178403394185, 0.04346549189106467, 0.04465447999006352, 0.045680549745101176, 0.046689972040828386, 0.04171381599865176, 0.04088252520815791, 0.04502160504474559, 0.047372363873766914, 0.05073673375295184, 0.0470445713112432, 0.04961697023359589, 0.04824373439850615, 0.0400694047756427, 0.04493917216262888, 0.05025685507158057, 0.04784519980053747, 0.045304927551867505, 0.04581202904349647, 0.044853469155612266, 0.04537774246156747, 0.0416293398608068, 0.04012314740565847, 0.039889998035148665, 0.043182397253171426, 0.048325503442644566, 0.0500434886759839, 0.04499255258371695, 0.04305837266895443, 0.041098643216759476, 0.04484789503370013, 0.04943351137544058, 0.042150912815641435, 0.04326682724906145, 0.046785962527478776, 0.042390627529364476, 0.041870969796478384, 0.04575952382122322, 0.04464385769860984, 0.04468575848348887, 0.04600236348234317, 0.04910839704277886, 0.04499056162828212, 0.0440582963307661, 0.04417858953950231, 0.045987527884238946, 0.045880564612362756, 0.04507177207972796, 0.046831333948118364, 0.04785959151143914, 0.04414535812583369, 0.04466612718088915, 0.04749075630750218, 0.04939464543074291, 0.04922078962789247, 0.04975050201601396, 0.04898735973778251, 0.04883496451383182, 0.046957028246326936, 0.04603417847246742, 0.042974412285528056, 0.03734283029861541, 0.04290257841202429, 0.0491248511597453, 0.047062472661873855, 0.04764013621951441, 0.04410154416697243, 0.04301389109429321, 0.044186292324747155, 0.04091910249679947, 0.04155120567845409, 0.04476902014742051, 0.04108120421202448, 0.037906657399788365, 0.043727289913506266, 0.042871601202105925, 0.03900637961843521, 0.036193845297806844, 0.04184542629394857, 0.04701315036410403, 0.04471123658120445, 0.04535258675302806, 0.050623824743081816, 0.05364527249445001, 0.046842276346725456, 0.038842274435487, 0.039585603998699086, 0.04186078559942754, 0.04158055169968772, 0.04788888006918037, 0.04878977348407639, 0.047802142754339305, 0.043335450547719104, 0.04465722940976265, 0.04500927942866699, 0.046016621948327174, 0.045449259413764626, 0.045445092988202714, 0.04273032326669586, 0.043450268414430906, 0.0452201565785205, 0.043983216026702174, 0.042267470283976184, 0.03913285551073241, 0.04535011019030258, 0.047601998718010685, 0.04236531816603007, 0.041294137653438645, 0.04703683659909296, 0.05060791140142113, 0.0490695284000884, 0.04659290053276082, 0.045697348140200045, 0.04077968590537448, 0.042542229405807035, 0.04833345266185202, 0.04694899703990895, 0.04753129321637921, 0.045508370850503334, 0.04245549456493364, 0.03906240157284455, 0.04077469386005198, 0.04569938738853675, 0.04440478762482793, 0.04458027978559779, 0.041291274184566136, 0.040327004579782603, 0.03772530113394665, 0.04083635914799946, 0.04480978869822854, 0.04629559979344282, 0.04138521838261721, 0.04302891111392147, 0.038370248128620034, 0.04209043287611531, 0.046217035613680665, 0.045800208835282394, 0.046851059570329256, 0.04183024348314623, 0.04036128158434568, 0.04154121832239926, 0.0413199319399299, 0.045272944823609315, 0.04445619088339592, 0.043584303677589226, 0.04009361595030041, 0.04333911757881482, 0.04634525839423941, 0.04634810861597266, 0.04732622386379959, 0.04224104408669772, 0.03908553395350114, 0.04176098735093898, 0.04365687872838128, 0.04525577395865094, 0.04636682286835371, 0.042718943926862415, 0.04378330826555344, 0.041424912747139844, 0.04158788349112557, 0.04253349156312666, 0.045348277990678455, 0.0470667024556114, 0.04534775298446029, 0.042046294836338385, 0.0411202805610577, 0.0447037980612116, 0.046461880529271776, 0.042166059117019254, 0.04066365805660356, 0.046661351791754235, 0.04804066024995413, 0.04473367304366499, 0.04118334887302664, 0.03687109983877782, 0.040931664331577064, 0.04099064458130503, 0.04277329900971529, 0.04022544876582107, 0.03842619559805958, 0.03955790365944766, 0.048853977038304616, 0.052350159708389035, 0.043366490118314324, 0.042284043375617086, 0.046783215575199044, 0.045916450282866, 0.04430257999109638, 0.04406340741696814, 0.045304210724048936, 0.04943023454037068, 0.04720492054704553, 0.046689832402328775, 0.04818384407209958, 0.0476481653943768, 0.0453458612262087, 0.040030114060635696, 0.04200276911815852, 0.0425060220901035, 0.040335283679017245, 0.04246410750799881, 0.04210916420131698, 0.040953013589040944, 0.040394321415695204, 0.04003555612982741, 0.044162707889056144, 0.0478552122030664, 0.0446140069212816, 0.04707846756265828, 0.047873583302387744, 0.047578558370327005, 0.04637937855240745, 0.0471908192573982, 0.04821753327034351, 0.04908841396554945, 0.046608834469953696, 0.044578939926042345, 0.04570005131701801, 0.042183998353329234, 0.03986806719065372, 0.041386458533410865, 0.044472471009591064, 0.04641284219986197, 0.04305330530314275, 0.04350602307903746, 0.04826561883855598, 0.04711496736718839, 0.050660924340931085, 0.05049390547388511, 0.04647009178482704, 0.04722936558353204, 0.04483411288299754, 0.04761332083261617, 0.046953461575535954, 0.04567243876512055, 0.04581749461306325, 0.04435481490424548, 0.042242332368740136, 0.04275183069544311, 0.04508095276399907, 0.04254990506220978, 0.040790627358346654, 0.04028581784318738, 0.04422786974798521, 0.04567626616109576, 0.04527964741315845, 0.04446371266660218, 0.04349445071655706, 0.04122914864839567, 0.03986658201593119, 0.042328231176402935, 0.046343793953189175, 0.04838952376368143, 0.04752407407902626, 0.0474961806565066, 0.04921827790106632, 0.0461377516515905, 0.04619995255644665, 0.04544427868597971, 0.041700931095521476, 0.04294287611850517, 0.04766903736560473, 0.04654348486860325, 0.039713977300771586, 0.039356751756926496, 0.03913220192515639, 0.039131362684817775, 0.039753132787580955, 0.042272765954301884, 0.04626841895646131, 0.044354353817838095, 0.041321187216488565, 0.042235087230061676, 0.04553720900537041, 0.04347648632966383, 0.0413496924476828, 0.04656233345688962, 0.04515312599195977, 0.04195368109573263, 0.041978131864340025, 0.04192552913436148, 0.03945625491737432, 0.04396846601436579, 0.043606450770260395, 0.04187681162413345, 0.04173631142978733, 0.04035408491782999, 0.04056327326050339, 0.0395087085528608, 0.040300122224325774, 0.04132111896757895, 0.04192198691810278, 0.04083790031822528, 0.039537336324875376, 0.04390551354786044, 0.04300962686921604, 0.04228082909060399, 0.0417565132505904, 0.0454002603419375, 0.04956280704504699, 0.04799419864665441, 0.045962094381381415, 0.0467473484273944, 0.044792070505431394, 0.04109111560252778, 0.04218760049990035, 0.04299570423703939, 0.040379807727104054, 0.04329150734012735, 0.04625143635561658, 0.04698562949105908, 0.050376418896302615, 0.04631249530889829, 0.04166623484418304, 0.040619462020136686, 0.0415672974517897, 0.04513067594110064, 0.045756965299573, 0.043529754631348574, 0.04340680883579754, 0.04370621525120933, 0.04266492708218574, 0.039113762928348804, 0.0380401026990651, 0.039976651574658253, 0.043445633528437735, 0.04549565098121662, 0.04831654339511471, 0.04572863462146055, 0.03953925284100334, 0.04053883676878803, 0.043876981147326, 0.04141695355051718, 0.041887461127441634, 0.04056677256034229, 0.04186037444981721, 0.04201413302871151, 0.04573851274855546, 0.041440183918970946, 0.03850311313601368, 0.037626510852843485, 0.04094179197839728, 0.04580007732330971, 0.04460738621891311, 0.04675278645179763, 0.0478605348944842, 0.04306252971921845, 0.046171581575171455, 0.05050074884315606, 0.042798874627819575, 0.04156016348168418, 0.044862605539110534, 0.04285813852906759, 0.04032873819014946, 0.0412731534837442, 0.04350566852020168, 0.04225372734410245, 0.04634286632670015, 0.04550365056295158, 0.045465956532854325, 0.05065921696811653, 0.04830588294157991, 0.04330708334672608, 0.04064806228847181, 0.03914909641618058, 0.041654448170194834, 0.04615595205922822, 0.04700632494550399, 0.04765357505656815, 0.04343840127677389, 0.0355150293972138, 0.03858834128735246, 0.038564138772430145, 0.043522168150675826, 0.043839343130339124, 0.03817820557819878, 0.04137383994518887, 0.04412145086969157, 0.04622839892712683, 0.04926430171308205, 0.047914247587726576, 0.04572585602454942, 0.04401998823089076, 0.04404035191781479, 0.04769100526666846, 0.048987866360454185, 0.04317200864218212, 0.042478490338744235, 0.04206542906810126, 0.04202805035461332, 0.04502553794599071, 0.04895049138390894, 0.049372283427571675, 0.04436728410362847, 0.042676705096514625, 0.0388932106584164, 0.03893482966119943, 0.04151332630361281, 0.04524423881588369, 0.04506116503171938, 0.04532681103261335, 0.0466493567116118, 0.048090064899859696, 0.04802299070388316, 0.04980025022656742, 0.04389577911463016, 0.04241263878375371, 0.04724930900263318, 0.04747258403601618, 0.042306567956874014, 0.04638399027666991, 0.04749861770039475, 0.047082672401003424, 0.04362764515742035, 0.04541169690222177, 0.04596341709748536, 0.048390183305535114, 0.04560789490195511, 0.04696830554394434, 0.05086854951618504, 0.04647093018422276, 0.03634809104465572, 0.04124641086518968, 0.04241076035782614, 0.04709708747155942, 0.04778492899706399, 0.04420316303483561, 0.04496193347190997, 0.04466609027599868, 0.04118875739174372, 0.042672531495944965, 0.044356981785933176, 0.04867307382129206, 0.046866106238546514, 0.039972418432447705, 0.04638912575140644]],
+            'im_sum': [False, 2285.0251880029814],
+            'regn_sum': [False, 202.79424607008696],
+            'npts_real': [True, 6400000],
+            'im_fit': [False, [2.3181817983302015, 6.557786339807762, \
+                       5.498814625695614]],
+            'im_fit_loc': [True, [491, 354.50520934823834]],
+            'im_fit_pix': [False, [46.17680391271608, 41.12935673096737]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [40, 72, 0, 0]), \
                 (img+'.image', False, [40, 73, 0, 0]), \
                 (img+'.image', True, [8, 40, 0, 0]), \
                 (img+'.image', False, [7, 40, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( \
-            self.check_list_vals(im_stats_dict['rms_per_chan'], \
-                exp_im_stats['rms_per_chan'], epsilon=0.01), True, \
-            valname='RMS per channel of .image', exact=True)
-        out, report1_u = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_w = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_a1 = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_d1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1 + \
-            report1_d1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 6400000,
-            'freq_bin': 122071.64398193359,
-            'start': 3.544453e+11,
-            'end': 3.545672e+11,
-            'nchan': 1000,
-            'mask_pix': 9932,
-            'mask_regns': 1,
-            'npts_real': 6400000}
+        exp_mask_stats = {'npts': [True, 6400000],
+            'freq_bin': [True, 122071.64398193359],
+            'start': [True, 3.544453e+11],
+            'end': [True, 3.545672e+11],
+            'nchan': [True, 1000],
+            'mask_pix': [True, 9362],
+            'mask_regns': [True, 1],
+            'npts_real': [True, 6400000]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/standard_cube_eph.pb.crtf')
 
-        exp_pb_stats = {'npts': 6400000,
-            'npts_unmasked': 3233000.0,
-            'freq_bin': 122071.64398193359,
-            'start': 3.544453e+11,
-            'end': 3.545672e+11,
-            'nchan': 1000,
-            'max_val': 1.0,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': 0.20036059618,
-            'min_val_pos':[39, 8, 0, 810],
-            'npts_0.2': 3233000,
-            'npts_0.5': 1549000,
-            'npts_real': 6400000,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 6400000],
+            'npts_unmasked': [True, 3233000.0],
+            'freq_bin': [True, 122071.64398193359],
+            'start': [True, 3.544453e+11],
+            'end': [True, 3.545672e+11],
+            'nchan': [True, 1000],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, 0.20036059618],
+            'min_val_pos': [True, [20, 15, 0, 891]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 3233000],
+            'npts_0.5': [True, 1549000],
+            'npts_real': [True, 6400000],
+            'pb_fit': [False, [1.0468474913487789, 28.075184571586952, \
+                       28.075184571520158]],
+            'pb_fit_loc': [True, [491, 354.50520934823834]],
+            'pb_fit_pix': [False, [40.0, 40.0]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/standard_cube_eph.psf.crtf')
 
-        exp_psf_stats = {'npts': 6400000,
-            'npts_unmasked': 6400000.0,
-            'freq_bin': 122071.64398193359,
-            'start': 3.544453e+11,
-            'end': 3.545672e+11,
-            'nchan': 1000,
-            'max_val': 1.0,
-            'max_val_pos':[40, 40, 0, 0],
-            'min_val': -0.164189130068,
-            'min_val_pos':[36, 35, 0, 993],
-            'im_rms':  0.0871161935921,
-            'im_sum': 2742.74484326,
-            'npts_real': 6400000,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 6400000],
+            'npts_unmasked': [True, 6400000.0],
+            'freq_bin': [True, 122071.64398193359],
+            'start': [True, 3.544453e+11],
+            'end': [True, 3.545672e+11],
+            'nchan': [True, 1000],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, -0.164189130068],
+            'min_val_pos': [True, [36, 35, 0, 993]],
+            'im_rms': [False,  0.0871161935921],
+            'im_sum': [False, 2742.74484326],
+            'npts_real': [True, 6400000],
+            'psf_fit': [False, [1.1041899877875863, 3.9440139645863947, \
+                        2.8581115435698514]],
+            'psf_fit_loc': [True, [491, 354.50520934823834]],
+            'psf_fit_pix': [False, [39.99991479119429, 39.99762629804452]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/standard_cube_eph.residual.crtf')
 
-        exp_resid_stats = {'npts': 6400000,
-            'npts_unmasked': 3233000.0,
-            'freq_bin': 122071.64398193359,
-            'start': 3.544453e+11,
-            'end': 3.545672e+11,
-            'nchan': 1000,
-            'max_val': 0.366728395224,
-            'max_val_pos':[39, 68, 0, 502],
-            'min_val': -0.338401287794,
-            'min_val_pos':[32, 47, 0, 493],
-            'im_rms': 0.0469751110358,
-            'im_sum': 242.908819752,
-            'npts_real': 6400000}
+        exp_resid_stats = {'npts': [True, 6400000],
+            'npts_unmasked': [True, 3233000.0],
+            'freq_bin': [True, 122071.64398193359],
+            'start': [True, 3.544453e+11],
+            'end': [True, 3.545672e+11],
+            'nchan': [True, 1000],
+            'max_val': [False, 0.313477724791],
+            'max_val_pos': [True, [59, 65, 0, 492]],
+            'min_val': [False, -0.338401287794],
+            'min_val_pos': [True, [32, 47, 0, 491]],
+            'im_rms': [False, 0.0469751110358],
+            'im_sum': [False, 236.741826246],
+            'regn_sum': [False, 51.1043745019],
+            'npts_real': [True, 6400000]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/standard_cube_eph.model.crtf')
 
-        exp_model_stats = {'npts': 6400000,
-            'npts_unmasked': 6400000.0,
-            'freq_bin': 122071.64398193359,
-            'start': 3.544453e+11,
-            'end': 3.545672e+11,
-            'nchan': 1000,
-            'max_val': 1.27968358994,
-            'max_val_pos':[46, 41, 0, 490],
-            'min_val': -0.0999799370766,
-            'min_val_pos':[58, 39, 0, 494],
-            'im_rms': 0.00170565742213,
-            'im_sum': 51.6511641908,
-            'regn_sum': 5.50620770082,
-            'mask_non0': 417,
-            'npts_real': 6400000}
+        exp_model_stats = {'npts': [True, 6400000],
+            'npts_unmasked': [True, 6400000.0],
+            'freq_bin': [True, 122071.64398193359],
+            'start': [True, 3.544453e+11],
+            'end': [True, 3.545672e+11],
+            'nchan': [True, 1000],
+            'max_val': [False, 1.3696539402],
+            'max_val_pos': [True, [46, 41, 0, 489]],
+            'min_val': [False, -0.0673163980246],
+            'min_val_pos': [True, [58, 39, 0, 490]],
+            'im_rms': [False, 0.00172803556487],
+            'im_sum': [False, 52.6738070883],
+            'regn_sum': [False, 4.03587769717],
+            'mask_non0': [True, 436],
+            'npts_real': [True, 6400000]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 1000,
-            'npts_unmasked': 1000.0,
-            'freq_bin': 122071.64398193359,
-            'start': 3.544453e+11,
-            'end': 3.545672e+11,
-            'nchan': 1000,
-            'max_val': 1009.50134277,
-            'max_val_pos':[0, 0, 0, 980],
-            'min_val': 1007.94287109,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1000}
+        exp_sumwt_stats = {'npts': [True, 1000],
+            'npts_unmasked': [True, 1000.0],
+            'freq_bin': [True, 122071.64398193359],
+            'start': [True, 3.544453e+11],
+            'end': [True, 3.545672e+11],
+            'nchan': [True, 1000],
+            'max_val': [False, 1009.50134277],
+            'max_val_pos': [True, [0, 0, 0, 979]],
+            'min_val': [False, 1007.97528076],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1000]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7
+            report6 + report7 + report8
 
 
         add_to_dict(self, output = test_dict, dataset = \
@@ -3119,6 +1477,7 @@ class Test_standard(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'standard_mfs_eph.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'2018.1.00879.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -3141,7 +1500,7 @@ class Test_standard(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=False)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -3169,587 +1528,171 @@ class Test_standard(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False, \
-            savemodel='none', parallel=self.parallel)
+            savemodel='none', parallel=False)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'standard'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
             data_path+'region_files/standard_mfs_eph.image.crtf')
 
-        exp_im_stats = {'com_bmaj': 0.875921189785,
-            'com_bmin': 0.673674583435,
-            'com_pa': 88.5387649536,
-            'npts': 82944,
-            'npts_unmasked': 47329.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.03113353252,
-            'max_val_pos':[224, 153, 0, 0],
-            'min_val': -1.01794064045,
-            'min_val_pos':[222, 93, 0, 0],
-            'im_rms': 0.359352011299,
-            'im_sum': -1491.198136,
-            'regn_sum': 3362.95355159,
-            'npts_real': 82944,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        0, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_im_stats = {'com_bmaj': [False, 0.875921189785],
+            'com_bmin': [False, 0.673674583435],
+            'com_pa': [False, 88.5387649536],
+            'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.03113353252],
+            'max_val_pos': [True, [224, 153, 0, 0]],
+            'min_val': [False, -1.01794064045],
+            'min_val_pos': [True, [222, 93, 0, 0]],
+            'im_rms': [False, 0.359352011299],
+            'im_sum': [False, -1491.198136],
+            'regn_sum': [False, 3362.95355159],
+            'npts_real': [True, 82944]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [144, 266, 0, 0]), \
                 (img+'.image', False, [144, 267, 0, 0]), \
                 (img+'.image', True, [22, 145, 0, 0]), \
                 (img+'.image', False, [21, 145, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_w = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_a1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 82944,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'mask_pix': 0,
-            'mask_regns': 0,
-            'npts_real': 82944}
+        exp_mask_stats = {'npts': [True, 82944],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 0],
+            'mask_regns': [True, 0],
+            'npts_real': [True, 82944]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/standard_mfs_eph.pb.crtf')
 
-        exp_pb_stats = {'npts': 82944,
-            'npts_unmasked': 47329.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[144, 144, 0, 0],
-            'min_val': 0.200061768293,
-            'min_val_pos':[114, 25, 0, 0],
-            'npts_0.2': 47325,
-            'npts_0.5': 22362,
-            'npts_real': 82944,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        0, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [144, 144, 0, 0]],
+            'min_val': [False, 0.200061768293],
+            'min_val_pos': [True, [114, 25, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 47329],
+            'npts_0.5': [True, 22365],
+            'npts_real': [True, 82944],
+            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'pb_fit_loc': [True, [0, 220.31469461816917]],
+            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/standard_mfs_eph.psf.crtf')
 
-        exp_psf_stats = {'npts': 82944,
-            'npts_unmasked': 82944.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[144, 144, 0, 0],
-            'min_val': -0.0609973333776,
-            'min_val_pos':[140, 137, 0, 0],
-            'im_rms':  0.0198315591613,
-            'im_sum': 16.3422700718,
-            'npts_real': 82944,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        0, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [144, 144, 0, 0]],
+            'min_val': [False, -0.0609973333776],
+            'min_val_pos': [True, [140, 137, 0, 0]],
+            'im_rms': [False,  0.0198315591613],
+            'im_sum': [False, 16.3422700718],
+            'npts_real': [True, 82944],
+            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'pb_fit_loc': [True, [0, 220.31469461816917]],
+            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/standard_mfs_eph.residual.crtf')
 
-        exp_resid_stats = {'npts': 82944,
-            'npts_unmasked': 47329.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.03113353252,
-            'max_val_pos':[224, 93, 0, 0],
-            'min_val': -0.676309525967,
-            'min_val_pos':[54, 126, 0, 0],
-            'im_rms': 0.359352011299,
-            'im_sum': -1491.198136,
-            'npts_real': 82944}
+        exp_resid_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.03113353252],
+            'max_val_pos': [True, [224, 153, 0, 0]],
+            'min_val': [False, -1.01794064045],
+            'min_val_pos': [True, [222, 93, 0, 0]],
+            'im_rms': [False, 0.359352011299],
+            'im_sum': [False, -1491.198136],
+            'regn_sum': [False, 3362.95355159],
+            'npts_real': [True, 82944]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/standard_mfs_eph.model.crtf')
 
-        exp_model_stats = {'npts': 82944,
-            'npts_unmasked': 82944.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 0.0,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.0,
-            'im_sum': 0.0,
-            'regn_sum': 0.0,
-            'mask_non0': 0,
-            'npts_real': 82944}
+        exp_model_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 82944]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 23234590.0,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 23234590.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 23234590.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 23234590.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7
+            report6 + report7 + report8
 
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
@@ -3780,6 +1723,7 @@ class Test_standard(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'standard_mtmfs_eph.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'2018.1.00879.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -3803,7 +1747,7 @@ class Test_standard(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=False)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -3831,633 +1775,217 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
             fastnoise=False, restart=True, calcres=False, calcpsf=False, \
-            savemodel='none', parallel=self.parallel)
+            savemodel='none', parallel=False)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'mtmfs'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'mtmfs'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image.tt0', region_file = \
+        im_stats_dict = self.image_stats(img+'.image.tt0', region_file = \
             data_path+'region_files/standard_mtmfs_eph.image.tt0.crtf')
 
-        exp_im_stats = {'com_bmaj': 0.875921189785,
-            'com_bmin': 0.673674583435,
-            'com_pa': 88.5387649536,
-            'npts': 82944,
-            'npts_unmasked': 47329.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.01515209675,
-            'max_val_pos':[224, 153, 0, 0],
-            'min_val': -1.01363265514,
-            'min_val_pos':[222, 93, 0, 0],
-            'im_rms': 0.361662749039,
-            'im_sum': -1558.29933771,
-            'regn_sum': 3388.57268598,
-            'npts_real': 82944,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        0, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_im_stats = {'com_bmaj': [False, 0.875921189785],
+            'com_bmin': [False, 0.673674583435],
+            'com_pa': [False, 88.5387649536],
+            'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.01515209675],
+            'max_val_pos': [True, [224, 153, 0, 0]],
+            'min_val': [False, -1.01363265514],
+            'min_val_pos': [True, [222, 93, 0, 0]],
+            'im_rms': [False, 0.361662749039],
+            'im_sum': [False, -1558.29933771],
+            'regn_sum': [False, 3388.57268598],
+            'npts_real': [True, 82944]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image.tt0', True, [144, 266, 0, 0]), \
                 (img+'.image.tt0', False, [144, 267, 0, 0]), \
                 (img+'.image.tt0', True, [22, 145, 0, 0]), \
                 (img+'.image.tt0', False, [21, 145, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_w = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_a1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 82944,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'mask_pix': 0,
-            'mask_regns': 0,
-            'npts_real': 82944}
+        exp_mask_stats = {'npts': [True, 82944],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 0],
+            'mask_regns': [True, 0],
+            'npts_real': [True, 82944]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb.tt0', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb.tt0', region_file = \
             data_path+'region_files/standard_mtmfs_eph.pb.tt0.crtf')
 
-        exp_pb_stats = {'npts': 82944,
-            'npts_unmasked': 47329.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[144, 144, 0, 0],
-            'min_val': 0.200061768293,
-            'min_val_pos':[25, 114, 0, 0],
-            'npts_0.2': 47325,
-            'npts_0.5': 22362,
-            'npts_real': 82944,
-            'pb_im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [144, 144, 0, 0]],
+            'min_val': [False, 0.200061768293],
+            'min_val_pos': [True, [25, 114, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 47329],
+            'npts_0.5': [True, 22365],
+            'npts_real': [True, 82944],
+            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'pb_fit_loc': [True, [0, 220.31469461816917]],
+            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report3_r = th.check_val(im_stats_dict['pb_im_fit'][0][0], \
-            exp_im_stats['pb_im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report3_s = th.check_val(im_stats_dict['pb_im_fit'][0][1], \
-            exp_im_stats['pb_im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report3_t = th.check_val( \
-            im_stats_dict['pb_im_fit'][1], exp_im_stats['pb_im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report3_u = th.check_val( \
-            im_stats_dict['pb_im_fit'][2], exp_im_stats['pb_im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report3_v = th.check_val(im_stats_dict['pb_im_fit'][3], \
-            exp_im_stats['pb_im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report3_w = th.check_val(im_stats_dict['pb_im_fit'][4], \
-            exp_im_stats['pb_im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report3_x = th.check_val(im_stats_dict['pb_im_fit'][5], \
-            exp_im_stats['pb_im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q + report3_r + report3_s + \
-            report3_t + report3_u + report3_v + report3_w + report3_x
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf.tt0', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf.tt0', region_file = \
             data_path+'region_files/standard_mtmfs_eph.psf.tt0.crtf')
 
-        exp_psf_stats = {'npts': 82944,
-            'npts_unmasked': 82944.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[144, 144, 0, 0],
-            'min_val': -0.0609973333776,
-            'min_val_pos':[140, 137, 0, 0],
-            'im_rms':  0.0198315591613,
-            'im_sum': 16.3422700718,
-            'npts_real': 82944,
-            'cen_im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [144, 144, 0, 0]],
+            'min_val': [False, -0.0609973333776],
+            'min_val_pos': [True, [140, 137, 0, 0]],
+            'im_rms': [False,  0.0198315591613],
+            'im_sum': [False, 16.3422700718],
+            'npts_real': [True, 82944],
+            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'pb_fit_loc': [True, [0, 220.31469461816917]],
+            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report4_r = th.check_val(im_stats_dict['cen_im_fit'][0][0], \
-            exp_im_stats[cen_'im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report4_s = th.check_val(im_stats_dict['cen_im_fit'][0][1], \
-            exp_im_stats['cen_im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report4_t = th.check_val( \
-            im_stats_dict['cen_im_fit'][1], exp_im_stats['cen_im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report4_u = th.check_val( \
-            im_stats_dict['cen_im_fit'][2], exp_im_stats['cen_im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report4_v = th.check_val(im_stats_dict['cen_im_fit'][3], \
-            exp_im_stats['cen_im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report4_w = th.check_val(im_stats_dict['cen_im_fit'][4], \
-            exp_im_stats['cen_im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report4_x = th.check_val(im_stats_dict['cen_im_fit'][5], \
-            exp_im_stats['cen_im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q + report4_r + report4_s + \
-            report4_t + report4_u + report4_v + report4_w + report4_x
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual.tt0', \
+        resid_stats_dict = self.image_stats(img+'.residual.tt0', \
             region_file = data_path+
             'region_files/standard_mtmfs_eph.residual.tt0.crtf')
 
-        exp_resid_stats = {'npts': 82944,
-            'npts_unmasked': 47329.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.03113353252,
-            'max_val_pos':[224, 153, 0, 0],
-            'min_val': -1.01794064045,
-            'min_val_pos':[222, 93, 0, 0],
-            'im_rms': 0.359352011299,
-            'im_sum': -1491.198136,
-            'npts_real': 82944}
+        exp_resid_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.03113353252],
+            'max_val_pos': [True, [224, 153, 0, 0]],
+            'min_val': [False, -1.01794064045],
+            'min_val_pos': [True, [222, 93, 0, 0]],
+            'im_rms': [False, 0.359352011299],
+            'im_sum': [False, -1491.198136],
+            'regn_sum': [False, 3362.95355159],
+            'npts_real': [True, 82944]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model.tt0', region_file = \
+        model_stats_dict = self.image_stats(img+'.model.tt0', region_file = \
             data_path+'region_files/standard_mtmfs_eph.model.tt0.crtf')
 
-        exp_model_stats = {'npts': 82944,
-            'npts_unmasked': 82944.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 0.0,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.0,
-            'im_sum': 0.0,
-            'regn_sum': 0.0,
-            'mask_non0': 0,
-            'npts_real': 82944}
+        exp_model_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 82944]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt.tt0')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt.tt0')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 16762501225.396851,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 23234590.0,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 23234590.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 23234590.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 23234590.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        # .alpha report
+        alpha_stats_dict = self.image_stats(img+'.alpha', region_file = \
+            data_path+'region_files/standard_mtmfs_eph.alpha.crtf')
+
+        exp_alpha_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 82944]}
+
+        report9 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
+            '.alpha')
+
+        # .alpha.error report
+        error_stats_dict = self.image_stats(img+'.alpha.error', region_file = \
+            data_path+'region_files/standard_mtmfs_eph.alpha.error.crtf')
+
+        exp_error_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'npts_real': [True, 82944]}
+
+        report10 = self.stats_compare(exp_error_stats, error_stats_dict, \
+            '.alpha.error')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7
-
+            report6 + report7 + report8 + report9 + report10
 
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
@@ -4488,6 +2016,7 @@ class Test_standard(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'standard_cal.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00034.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -4508,7 +2037,7 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=2.0, negativethreshold=0.0, \
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, savemodel='none', \
-            parallel=self.parallel)
+            parallel=False)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -4533,587 +2062,174 @@ class Test_standard(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.1, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False, savemodel='none', \
-            parallel=self.parallel)
+            parallel=False)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'standard'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
             data_path+'region_files/standard_cal.image.crtf')
 
-        exp_im_stats = {'com_bmaj': 9.98560905457,
-            'com_bmin': 4.6246509552,
-            'com_pa': -86.3877105713,
-            'npts': 8100,
-            'npts_unmasked': 5041.0,
-            'freq_bin': 125009872.91876221,
-            'start': 2.20301e+11,
-            'end': 2.20301e+11,
-            'nchan': 1,
-            'max_val': 2.40606927872,
-            'max_val_pos':[45, 45, 0, 0],
-            'min_val': -0.0115160318092,
-            'min_val_pos':[50, 16, 0, 0],
-            'im_rms': 0.203888800435,
-            'im_sum': 172.688482511,
-            'regn_sum': 171.572869264,
-            'npts_real': 8100,
-            'im_fit': [[45.000405766, 45.0014155577],
-                        0, 220.300765422, 2.40974849537,
-                        9.96002749264, 4.61946099469]}
+        exp_im_stats = {'com_bmaj': [False, 9.98560905457],
+            'com_bmin': [False, 4.6246509552],
+            'com_pa': [False, -86.3877105713],
+            'npts': [True, 8100],
+            'npts_unmasked': [True, 5041.0],
+            'freq_bin': [True, 125009872.91876221],
+            'start': [True, 2.20301e+11],
+            'end': [True, 2.20301e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 2.40606927872],
+            'max_val_pos': [True, [45, 45, 0, 0]],
+            'min_val': [False, -0.0115160318092],
+            'min_val_pos': [True, [50, 16, 0, 0]],
+            'im_rms': [False, 0.203888800435],
+            'im_sum': [False, 172.688482511],
+            'regn_sum': [False, 171.572869264],
+            'npts_real': [True, 8100],
+            'im_fit': [False, [2.40974849537, 9.96002749264, 4.61946099469]],
+            'im_fit_loc': [True, [0, 220.30076542192973]],
+            'im_fit_pix': [False, [45.000405766, 45.0014155577]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [45, 85, 0, 0]), \
                 (img+'.image', False, [45, 86, 0, 0]), \
                 (img+'.image', True, [5, 45, 0, 0]), \
                 (img+'.image', False, [4, 45, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_w = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_a1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 8100,
-            'freq_bin': 125009872.91876221,
-            'start': 2.20301e+11,
-            'end': 2.20301e+11,
-            'nchan': 1,
-            'mask_pix': 404,
-            'mask_regns': 1,
-            'npts_real': 8100}
+        exp_mask_stats = {'npts': [True, 8100],
+            'freq_bin': [True, 125009872.91876221],
+            'start': [True, 2.20301e+11],
+            'end': [True, 2.20301e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 407],
+            'mask_regns': [True, 1],
+            'npts_real': [True, 8100]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/standard_cal.pb.crtf')
 
-        exp_pb_stats = {'npts': 8100,
-            'npts_unmasked': 5041.0,
-            'freq_bin': 125009872.91876221,
-            'start': 2.20301e+11,
-            'end': 2.20301e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[45, 45, 0, 0],
-            'min_val': 0.200092822313,
-            'min_val_pos':[36, 6, 0, 0],
-            'npts_0.2': 5041,
-            'npts_0.5': 2409,
-            'npts_real': 8100,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 8100],
+            'npts_unmasked': [True, 5041.0],
+            'freq_bin': [True, 125009872.91876221],
+            'start': [True, 2.20301e+11],
+            'end': [True, 2.20301e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [45, 45, 0, 0]],
+            'min_val': [False, 0.200092822313],
+            'min_val_pos': [True, [36, 6, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 5041],
+            'npts_0.5': [True, 2409],
+            'npts_real': [True, 8100],
+            'pb_fit': [False, [1.0468035426303963, 45.181424068122176, \
+                       45.18134398951289]],
+            'pb_fit_loc': [True, [0, 220.30076542192973]],
+            'pb_fit_pix': [False, [45.000270927482546, 45.00030384048325]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/standard_cal.psf.crtf')
 
-        exp_psf_stats = {'npts': 8100,
-            'npts_unmasked': 8100.0,
-            'freq_bin': 125009872.91876221,
-            'start': 2.20301e+11,
-            'end': 2.20301e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[45, 45, 0, 0],
-            'min_val': -0.186672970653,
-            'min_val_pos':[31, 41, 0, 0],
-            'im_rms':  0.125651854223,
-            'im_sum': 40.2140428556,
-            'npts_real': 8100,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 8100],
+            'npts_unmasked': [True, 8100.0],
+            'freq_bin': [True, 125009872.91876221],
+            'start': [True, 2.20301e+11],
+            'end': [True, 2.20301e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [45, 45, 0, 0]],
+            'min_val': [False, -0.186672970653],
+            'min_val_pos': [True, [31, 41, 0, 0]],
+            'im_rms': [False,  0.125651854223],
+            'im_sum': [False, 40.2140428556],
+            'npts_real': [True, 8100],
+            'psf_fit': [False, [1.0640200932648511, 8.801094080240267, \
+                        4.303338569406158]],
+            'psf_fit_loc': [True, [0, 220.30076542192973]],
+            'psf_fit_pix': [False, [44.99810399006913, 44.996587647973605]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/standard_cal.residual.crtf')
 
-        exp_resid_stats = {'npts': 8100,
-            'npts_unmasked': 5041.0,
-            'freq_bin': 125009872.91876221,
-            'start': 2.20301e+11,
-            'end': 2.20301e+11,
-            'nchan': 1,
-            'max_val': 0.0233333036304,
-            'max_val_pos':[45, 45, 0, 0],
-            'min_val': -0.0115160560235,
-            'min_val_pos':[50, 16, 0, 0],
-            'im_rms': 0.00410021113948,
-            'im_sum': 0.122163831366,
-            'npts_real': 8100}
+        exp_resid_stats = {'npts': [True, 8100],
+            'npts_unmasked': [True, 5041.0],
+            'freq_bin': [True, 125009872.91876221],
+            'start': [True, 2.20301e+11],
+            'end': [True, 2.20301e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0233333036304],
+            'max_val_pos': [True, [45, 45, 0, 0]],
+            'min_val': [False, -0.0115160560235],
+            'min_val_pos': [True, [50, 16, 0, 0]],
+            'im_rms': [False, 0.00410021113948],
+            'im_sum': [False, 0.122163831366],
+            'regn_sum': [False, 1.0518577156],
+            'npts_real': [True, 8100]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/standard_cal.model.crtf')
 
-        exp_model_stats = {'npts': 8100,
-            'npts_unmasked': 8100.0,
-            'freq_bin': 125009872.91876221,
-            'start': 2.20301e+11,
-            'end': 2.20301e+11,
-            'nchan': 1,
-            'max_val': 2.38273620605,
-            'max_val_pos':[45, 45, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.0264748467339,
-            'im_sum': 2.38273620605,
-            'regn_sum': 2.38273620605,
-            'mask_non0': 1,
-            'npts_real': 8100}
+        exp_model_stats = {'npts': [True, 8100],
+            'npts_unmasked': [True, 8100.0],
+            'freq_bin': [True, 125009872.91876221],
+            'start': [True, 2.20301e+11],
+            'end': [True, 2.20301e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 2.38273620605],
+            'max_val_pos': [True, [45, 45, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0264748467339],
+            'im_sum': [False, 2.38273620605],
+            'regn_sum': [False, 2.38273620605],
+            'mask_non0': [True, 1],
+            'npts_real': [True, 8100]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 125009872.91876221,
-            'start': 2.20301e+11,
-            'end': 2.20301e+11,
-            'nchan': 1,
-            'max_val': 201537.8125,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 201537.8125,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 125009872.91876221],
+            'start': [True, 2.20301e+11],
+            'end': [True, 2.20301e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 201537.8125],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 201537.8125],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7
+            report6 + report7 + report8
 
 
         add_to_dict(self, output=test_dict, dataset = \
@@ -5150,6 +2266,7 @@ class Test_mosaic(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'mosaic_cube.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00034.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -5170,7 +2287,7 @@ class Test_mosaic(test_tclean_base):
             sidelobethreshold=1.25, noisethreshold=5.0, \
             lownoisethreshold=2.0, negativethreshold=0.0, minbeamfrac=0.1, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -5201,7 +2318,6 @@ class Test_mosaic(test_tclean_base):
                 parallel=True)
 
             # retrieve per-channel beam statistics
-            img = file_name+'1'
             res_bmin_dict, res_bmaj_dict, res_pa_dict = \
                 self.cube_beam_stats(img+'.image')
 
@@ -5246,685 +2362,203 @@ class Test_mosaic(test_tclean_base):
                 savemodel='none', calcres=False, calcpsf=False, \
                 restoringbeam='common', parallel=False)
 
-            img = file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'mosaic'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
-            data_path+'region_files/mosaic_cube.image.crtf')
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
+            data_path+'region_files/mosaic_cube.image.crtf', field_regions = \
+            ['circle[[00:45:54.383559, -73.15.29.41306], 22.45arcsec]',
+             'circle[[00:45:49.435664, -73.15.35.13742], 22.45arcsec]',
+             'circle[[00:45:53.057440, -73.15.50.79016], 22.45arcsec]',
+             'circle[[00:45:50.762696, -73.15.13.76177], 22.45arcsec]',
+             'circle[[00:45:58.006248, -73.15.45.06040], 22.45arcsec]',
+             'circle[[00:45:55.708764, -73.15.08.03543], 22.45arcsec]',
+             'circle[[00:45:59.330540, -73.15.23.68133], 22.45arcsec]'])
 
-        exp_im_stats = {'com_bmaj': 8.79758391563,
-            'com_bmin': 6.10500958355,
-            'com_pa': 64.9303736341,
-            'npts': 5925312,
-            'npts_unmasked': 3338068.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 1.18474924564,
-            'max_val_pos':[44, 38, 0, 252],
-            'min_val': -0.417252391577,
-            'min_val_pos':[24, 31, 0, 498],
-            'im_rms': 0.0878815938952,
-            'rms_per_chan': [0.08352891852269921, 0.08135269305379152, 0.08395260930289478, 0.08279304060774786, 0.08596507857262789, 0.08278415992796316, 0.08377357600543471, 0.08394694956313518, 0.08294962386707326, 0.08607043136961237, 0.07680081900457504, 0.09496464679558769, 0.08214392421353917, 0.0857648739112381, 0.08281633996127867, 0.0894806463001662, 0.081589405081739, 0.07924880491236708, 0.07453379448699567, 0.09379627665607704, 0.08157315058137742, 0.09166424964725516, 0.08450533906882468, 0.08106955380637881, 0.08737684423508374, 0.09073897650010625, 0.09084105654348026, 0.07784857687669093, 0.08502491422043724, 0.08973744200475807, 0.08225747757890416, 0.08302380899013398, 0.0770200580373865, 0.08881158355253989, 0.08865534449297038, 0.09159308234217008, 0.08115203022056021, 0.08341851059515137, 0.08987845777172865, 0.08508065238113408, 0.07778307167083158, 0.086558262984569, 0.08338769817916242, 0.08071653499000843, 0.08865177850010854, 0.08534950297770955, 0.07616257958327323, 0.09190545934190404, 0.08895841881770002, 0.0896694261175686, 0.07893346400403167, 0.07455014243908499, 0.09047688550066521, 0.0869112050227715, 0.09350825779882399, 0.07646177066867972, 0.08249014753514353, 0.09101549816292659, 0.08639556025249603, 0.08038246669695737, 0.08824074457422779, 0.08618380562988853, 0.08205108347689954, 0.07771920892371241, 0.08768241197771068, 0.08334623972314524, 0.08815925813978431, 0.08212951592340229, 0.0823396048959934, 0.08234068229313843, 0.08884264540759013, 0.07862615163124824, 0.08655155235861448, 0.08979383171683271, 0.08809736503013246, 0.07192760633210062, 0.08230751478411082, 0.07857712439720876, 0.07948313531326559, 0.09225583910089932, 0.0827786011949029, 0.08972941404057228, 0.0887804253347499, 0.088568302489554, 0.08542522263383671, 0.08705651177174693, 0.09503784914334118, 0.09211196203585155, 0.09124273060482811, 0.0894655349173044, 0.08578196967967916, 0.08600001037669011, 0.08725679761935697, 0.09250336443228556, 0.09141071794136318, 0.08257340474387778, 0.08489860170832744, 0.09095982550662123, 0.08386307951475633, 0.08245963060222646, 0.08082452670747917, 0.08421465818141162, 0.07716197318352062, 0.08491216770880909, 0.09219997011780534, 0.08999904369748837, 0.08917413213129059, 0.08669554914308757, 0.08478598632777916, 0.08272607334416665, 0.09204243226438258, 0.08766378811832916, 0.0865825253580717, 0.07758524805681824, 0.09085091409160705, 0.08521446839560726, 0.0884995697340635, 0.0884733008608976, 0.08577677843356687, 0.09306189230759793, 0.08612785329237876, 0.08258623029884975, 0.07941031533209075, 0.08826196881912282, 0.09840895220275017, 0.08933425191997195, 0.08745304230772397, 0.08566154826880104, 0.09365349891994729, 0.09053316121385116, 0.08810691082194215, 0.08630703760915545, 0.08753186529189085, 0.0937019174346115, 0.0773479036533113, 0.08029497918496241, 0.08724287089313901, 0.08790671029158231, 0.08773912124792194, 0.08266091420346706, 0.08132362905839345, 0.09216634845393681, 0.08762278965147091, 0.09332173318661345, 0.07778672535312933, 0.08408442636695551, 0.08553415947786376, 0.08232058120295321, 0.07780988703074035, 0.08409905782923954, 0.07296439116382543, 0.08925116729628191, 0.09008277668363449, 0.09520991051126101, 0.08553135515808247, 0.084718775948537, 0.08883634984779534, 0.08643599841065604, 0.08339630810303196, 0.08862968769223899, 0.0784883898433635, 0.08099618435890771, 0.08565713860724568, 0.08556682581312276, 0.09128248240593151, 0.08827156303897946, 0.0880790536420939, 0.08578294204187285, 0.08362128063154757, 0.09123831674563974, 0.08722115387496024, 0.09621944328499646, 0.09149116203081945, 0.09118103925268266, 0.08347804034781846, 0.0855692865777019, 0.0897847427742151, 0.07186203727120243, 0.08802972450167627, 0.08442626094668859, 0.08723051889453723, 0.08159640903835322, 0.07548809021347838, 0.0915760655325942, 0.1000199147822218, 0.09787395465748581, 0.08693633490200812, 0.08442264879607819, 0.08721652263357231, 0.0880380635040301, 0.08729925477779406, 0.08519856552892391, 0.08975256932981747, 0.07958208410639706, 0.0914096789556792, 0.09811570777169866, 0.07949196007023566, 0.09006036869795747, 0.0912952536965593, 0.09805249071833734, 0.0897004902132416, 0.08952989036422254, 0.0790849762337038, 0.09347465569139526, 0.09000611959279463, 0.08239101076565238, 0.08373667485591837, 0.0871320704983511, 0.08767396777909775, 0.0965335008897428, 0.08633964662006433, 0.08735933635150735, 0.09035634185538645, 0.08468159828070221, 0.09116890211273068, 0.08804541661464536, 0.08484392727135703, 0.08203979237254262, 0.0889071541447407, 0.0889633730061124, 0.08339973306782386, 0.08330574319001677, 0.08871583444712416, 0.09420962372690272, 0.08521243909929632, 0.08355595121547242, 0.0933236552392962, 0.08719802034432139, 0.09062561297486302, 0.08535346593907196, 0.08813919625097401, 0.092913551212774, 0.09227103971954637, 0.08161432828410638, 0.09072439427447547, 0.09244590715316298, 0.08709339445075073, 0.09924553460801067, 0.1002690868580879, 0.08840557566191516, 0.08133715093336598, 0.09149908227822648, 0.07670073484069043, 0.09249672315752175, 0.0782222639219109, 0.0990254821246598, 0.09280158172995194, 0.08730248696252146, 0.09456558538062404, 0.10081497167443383, 0.10403855973688014, 0.12877330926044459, 0.1386207992219812, 0.13938585037552162, 0.1235720046054832, 0.12067870584152206, 0.10645742986583119, 0.08552529466321122, 0.08268301454232765, 0.08542822040617518, 0.09335660100821405, 0.08885775208502826, 0.08644558884485783, 0.08440970509099167, 0.091904188949323, 0.09288900294073746, 0.09184545798056735, 0.0978475829246572, 0.09536587471324205, 0.09325738676721759, 0.08191614651111201, 0.09130572131132277, 0.09356730058206153, 0.09150948292317468, 0.08930212344785793, 0.08973008889149876, 0.08468876678845778, 0.09439900459047333, 0.08340248011080888, 0.09426625948231673, 0.0846651688286838, 0.08220153827772422, 0.09338524135684238, 0.08541949594391877, 0.07720477952979755, 0.08539185143996587, 0.09204753294875682, 0.08278104837254098, 0.07886155262558238, 0.08341737313272374, 0.08757850027055837, 0.08360325848864149, 0.09166550957557691, 0.09185533846656913, 0.08026617289995454, 0.09106087061249621, 0.08802259852925379, 0.09053259952518417, 0.08328401754435075, 0.08888144950799276, 0.0810576402470788, 0.08479306981872027, 0.08580610257468782, 0.09179491887497933, 0.08841796481950012, 0.0845148944552744, 0.08053481062011857, 0.08862797798354732, 0.09462089152970354, 0.08582787706368114, 0.08814348149204695, 0.08504514772616785, 0.08371224832082137, 0.08678333110045997, 0.09353126562315753, 0.09129854527725832, 0.08116659030415371, 0.09015138809948552, 0.08710081730619218, 0.09437955706280836, 0.08963858464777974, 0.09313459101197238, 0.08856120416820244, 0.08552675606885124, 0.08351176926318361, 0.08411701581891168, 0.08427020020603929, 0.09163946448881417, 0.0805306218916976, 0.08160963806132211, 0.08804552292687956, 0.09626408912773088, 0.08913709670428199, 0.09096834064650154, 0.0851269228240773, 0.09017277009104614, 0.08476290074193281, 0.07632278322336213, 0.08385737538890878, 0.08700039219503956, 0.08866885268530736, 0.08466059774774966, 0.0845759814329557, 0.0790621930867725, 0.08771807117918605, 0.08893473780006282, 0.09310980223541039, 0.09306479580057536, 0.09147420625138089, 0.08949657274281757, 0.08192815006108203, 0.07905463600626796, 0.09666550899459639, 0.0808647476478242, 0.08495044094490133, 0.0916137566838688, 0.09649894883996268, 0.0920414733457368, 0.08356993363476055, 0.09422414928552236, 0.08778457312089456, 0.08987693020950831, 0.09777964977624237, 0.09060848800058789, 0.09087547326073596, 0.09065288590043372, 0.09815595961513002, 0.08630801892602018, 0.08960594520751539, 0.09100452485239247, 0.09259096682095072, 0.09364434916529175, 0.0853051896352123, 0.08391849112594159, 0.08978397560355508, 0.08356817274105656, 0.08639129387321305, 0.07641054760007339, 0.08566749942250246, 0.09110851912136013, 0.08938769699436465, 0.08943111829547572, 0.08605404789230106, 0.08796239383347541, 0.08454535587717901, 0.0929903335078121, 0.08246802178760436, 0.08817700985492735, 0.0820807551149751, 0.08511665149857307, 0.0914822776922275, 0.08779917531640212, 0.0779155145245507, 0.08062449848958794, 0.09151321230973979, 0.08251138633527932, 0.08314391480095229, 0.09660065726688243, 0.09161786920726972, 0.09195890233721427, 0.09484458463309785, 0.08672723967704118, 0.09056091164304954, 0.08950078278038455, 0.08453380213065807, 0.08621663260330842, 0.0903504892183676, 0.08888219947767556, 0.09691781310403562, 0.0829510997618925, 0.08538905047156051, 0.08536033187251706, 0.09253646586834798, 0.08719827400559628, 0.08741965478896539, 0.0908875936865952, 0.08650855583109175, 0.0911287851112432, 0.0870327992529023, 0.09334187790207615, 0.08691128023529447, 0.0829607319773311, 0.08561452123819384, 0.09416699659894374, 0.09865975100963004, 0.08059372543252491, 0.08162290581093083, 0.07969201254174872, 0.09014664917727015, 0.07748434709443736, 0.09115822285795372, 0.0874199097979386, 0.08331094704142918, 0.08450373137759747, 0.0873987436304484, 0.0792090383862253, 0.08682449919890456, 0.08898017363528224, 0.0891014307981212, 0.08578455417679541, 0.09612343808420232, 0.07718957370637691, 0.08963596680253917, 0.09053358289784386, 0.08104077369182848, 0.08805192318672665, 0.09036158074767288, 0.09733534898340712, 0.08642234534217835, 0.0873180423896324, 0.08509746809331085, 0.0927045997121519, 0.08985111493399206, 0.09486348772674255, 0.09000267315635847, 0.08474935185150062, 0.08247809724159613, 0.08802043461258492, 0.0865126082695781, 0.08138258449164787, 0.08795575893476618, 0.09456070784224847, 0.09680636657810467, 0.08476700362040308, 0.08670105726809373, 0.08636724547506389, 0.08412716463066074, 0.08428810620773179, 0.08964151944607554, 0.08689624513108678, 0.08902965594822292, 0.09221339424501332, 0.08726043474359556, 0.08607641544478577, 0.09100554185059015, 0.08492870794208009, 0.08529837352577493, 0.09521158569562824, 0.08914943856267118, 0.087555731639101, 0.0862048336688618, 0.08984721078423315, 0.08217617292259297, 0.08824966695006062, 0.07486261467473272, 0.08753387468056906, 0.08379545796577004, 0.09274777146757962, 0.09220642715156253, 0.0792962124445207, 0.09090807566463247, 0.08751737767113807, 0.07961706129268199, 0.0941224640615722, 0.0795895706794336, 0.09562104758697967, 0.08020847225726233, 0.09417989583892716, 0.09061167014269772, 0.08898710965217106, 0.0897447948736654, 0.08398102899483291, 0.08684215184345169, 0.096630024031122, 0.08473098919932259, 0.09179580145778438, 0.07887094371255345, 0.08638286938225163],
-            'im_sum': 365.155811516,
-            'regn_sum': 91.3425360965,
-            'npts_real': 5925312,
-            'rms_per_field': 1,
-            'im_fit': [[44.5674514546, 38.386085988],
-                        252, 220.31420627, 1.15058925098,
-                        9.43393089916, 8.09228180871]}
+        exp_im_stats = {'com_bmaj': [False, 8.79758391563],
+            'com_bmin': [False, 6.10500958355],
+            'com_pa': [False, 64.9303736341],
+            'npts': [True, 5925312],
+            'npts_unmasked': [True, 3338068.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 1.18474924564],
+            'max_val_pos': [True, [44, 38, 0, 252]],
+            'min_val': [False, -0.417252391577],
+            'min_val_pos': [True, [24, 31, 0, 498]],
+            'im_rms': [False, 0.0878815938952],
+            'rms_per_chan': [False, [0.08352891852269921, 0.08135269305379152, 0.08395260930289478, 0.08279304060774786, 0.08596507857262789, 0.08278415992796316, 0.08377357600543471, 0.08394694956313518, 0.08294962386707326, 0.08607043136961237, 0.07680081900457504, 0.09496464679558769, 0.08214392421353917, 0.0857648739112381, 0.08281633996127867, 0.0894806463001662, 0.081589405081739, 0.07924880491236708, 0.07453379448699567, 0.09379627665607704, 0.08157315058137742, 0.09166424964725516, 0.08450533906882468, 0.08106955380637881, 0.08737684423508374, 0.09073897650010625, 0.09084105654348026, 0.07784857687669093, 0.08502491422043724, 0.08973744200475807, 0.08225747757890416, 0.08302380899013398, 0.0770200580373865, 0.08881158355253989, 0.08865534449297038, 0.09159308234217008, 0.08115203022056021, 0.08341851059515137, 0.08987845777172865, 0.08508065238113408, 0.07778307167083158, 0.086558262984569, 0.08338769817916242, 0.08071653499000843, 0.08865177850010854, 0.08534950297770955, 0.07616257958327323, 0.09190545934190404, 0.08895841881770002, 0.0896694261175686, 0.07893346400403167, 0.07455014243908499, 0.09047688550066521, 0.0869112050227715, 0.09350825779882399, 0.07646177066867972, 0.08249014753514353, 0.09101549816292659, 0.08639556025249603, 0.08038246669695737, 0.08824074457422779, 0.08618380562988853, 0.08205108347689954, 0.07771920892371241, 0.08768241197771068, 0.08334623972314524, 0.08815925813978431, 0.08212951592340229, 0.0823396048959934, 0.08234068229313843, 0.08884264540759013, 0.07862615163124824, 0.08655155235861448, 0.08979383171683271, 0.08809736503013246, 0.07192760633210062, 0.08230751478411082, 0.07857712439720876, 0.07948313531326559, 0.09225583910089932, 0.0827786011949029, 0.08972941404057228, 0.0887804253347499, 0.088568302489554, 0.08542522263383671, 0.08705651177174693, 0.09503784914334118, 0.09211196203585155, 0.09124273060482811, 0.0894655349173044, 0.08578196967967916, 0.08600001037669011, 0.08725679761935697, 0.09250336443228556, 0.09141071794136318, 0.08257340474387778, 0.08489860170832744, 0.09095982550662123, 0.08386307951475633, 0.08245963060222646, 0.08082452670747917, 0.08421465818141162, 0.07716197318352062, 0.08491216770880909, 0.09219997011780534, 0.08999904369748837, 0.08917413213129059, 0.08669554914308757, 0.08478598632777916, 0.08272607334416665, 0.09204243226438258, 0.08766378811832916, 0.0865825253580717, 0.07758524805681824, 0.09085091409160705, 0.08521446839560726, 0.0884995697340635, 0.0884733008608976, 0.08577677843356687, 0.09306189230759793, 0.08612785329237876, 0.08258623029884975, 0.07941031533209075, 0.08826196881912282, 0.09840895220275017, 0.08933425191997195, 0.08745304230772397, 0.08566154826880104, 0.09365349891994729, 0.09053316121385116, 0.08810691082194215, 0.08630703760915545, 0.08753186529189085, 0.0937019174346115, 0.0773479036533113, 0.08029497918496241, 0.08724287089313901, 0.08790671029158231, 0.08773912124792194, 0.08266091420346706, 0.08132362905839345, 0.09216634845393681, 0.08762278965147091, 0.09332173318661345, 0.07778672535312933, 0.08408442636695551, 0.08553415947786376, 0.08232058120295321, 0.07780988703074035, 0.08409905782923954, 0.07296439116382543, 0.08925116729628191, 0.09008277668363449, 0.09520991051126101, 0.08553135515808247, 0.084718775948537, 0.08883634984779534, 0.08643599841065604, 0.08339630810303196, 0.08862968769223899, 0.0784883898433635, 0.08099618435890771, 0.08565713860724568, 0.08556682581312276, 0.09128248240593151, 0.08827156303897946, 0.0880790536420939, 0.08578294204187285, 0.08362128063154757, 0.09123831674563974, 0.08722115387496024, 0.09621944328499646, 0.09149116203081945, 0.09118103925268266, 0.08347804034781846, 0.0855692865777019, 0.0897847427742151, 0.07186203727120243, 0.08802972450167627, 0.08442626094668859, 0.08723051889453723, 0.08159640903835322, 0.07548809021347838, 0.0915760655325942, 0.1000199147822218, 0.09787395465748581, 0.08693633490200812, 0.08442264879607819, 0.08721652263357231, 0.0880380635040301, 0.08729925477779406, 0.08519856552892391, 0.08975256932981747, 0.07958208410639706, 0.0914096789556792, 0.09811570777169866, 0.07949196007023566, 0.09006036869795747, 0.0912952536965593, 0.09805249071833734, 0.0897004902132416, 0.08952989036422254, 0.0790849762337038, 0.09347465569139526, 0.09000611959279463, 0.08239101076565238, 0.08373667485591837, 0.0871320704983511, 0.08767396777909775, 0.0965335008897428, 0.08633964662006433, 0.08735933635150735, 0.09035634185538645, 0.08468159828070221, 0.09116890211273068, 0.08804541661464536, 0.08484392727135703, 0.08203979237254262, 0.0889071541447407, 0.0889633730061124, 0.08339973306782386, 0.08330574319001677, 0.08871583444712416, 0.09420962372690272, 0.08521243909929632, 0.08355595121547242, 0.0933236552392962, 0.08719802034432139, 0.09062561297486302, 0.08535346593907196, 0.08813919625097401, 0.092913551212774, 0.09227103971954637, 0.08161432828410638, 0.09072439427447547, 0.09244590715316298, 0.08709339445075073, 0.09924553460801067, 0.1002690868580879, 0.08840557566191516, 0.08133715093336598, 0.09149908227822648, 0.07670073484069043, 0.09249672315752175, 0.0782222639219109, 0.0990254821246598, 0.09280158172995194, 0.08730248696252146, 0.09456558538062404, 0.10081497167443383, 0.10403855973688014, 0.12877330926044459, 0.1386207992219812, 0.13938585037552162, 0.1235720046054832, 0.12067870584152206, 0.10645742986583119, 0.08552529466321122, 0.08268301454232765, 0.08542822040617518, 0.09335660100821405, 0.08885775208502826, 0.08644558884485783, 0.08440970509099167, 0.091904188949323, 0.09288900294073746, 0.09184545798056735, 0.0978475829246572, 0.09536587471324205, 0.09325738676721759, 0.08191614651111201, 0.09130572131132277, 0.09356730058206153, 0.09150948292317468, 0.08930212344785793, 0.08973008889149876, 0.08468876678845778, 0.09439900459047333, 0.08340248011080888, 0.09426625948231673, 0.0846651688286838, 0.08220153827772422, 0.09338524135684238, 0.08541949594391877, 0.07720477952979755, 0.08539185143996587, 0.09204753294875682, 0.08278104837254098, 0.07886155262558238, 0.08341737313272374, 0.08757850027055837, 0.08360325848864149, 0.09166550957557691, 0.09185533846656913, 0.08026617289995454, 0.09106087061249621, 0.08802259852925379, 0.09053259952518417, 0.08328401754435075, 0.08888144950799276, 0.0810576402470788, 0.08479306981872027, 0.08580610257468782, 0.09179491887497933, 0.08841796481950012, 0.0845148944552744, 0.08053481062011857, 0.08862797798354732, 0.09462089152970354, 0.08582787706368114, 0.08814348149204695, 0.08504514772616785, 0.08371224832082137, 0.08678333110045997, 0.09353126562315753, 0.09129854527725832, 0.08116659030415371, 0.09015138809948552, 0.08710081730619218, 0.09437955706280836, 0.08963858464777974, 0.09313459101197238, 0.08856120416820244, 0.08552675606885124, 0.08351176926318361, 0.08411701581891168, 0.08427020020603929, 0.09163946448881417, 0.0805306218916976, 0.08160963806132211, 0.08804552292687956, 0.09626408912773088, 0.08913709670428199, 0.09096834064650154, 0.0851269228240773, 0.09017277009104614, 0.08476290074193281, 0.07632278322336213, 0.08385737538890878, 0.08700039219503956, 0.08866885268530736, 0.08466059774774966, 0.0845759814329557, 0.0790621930867725, 0.08771807117918605, 0.08893473780006282, 0.09310980223541039, 0.09306479580057536, 0.09147420625138089, 0.08949657274281757, 0.08192815006108203, 0.07905463600626796, 0.09666550899459639, 0.0808647476478242, 0.08495044094490133, 0.0916137566838688, 0.09649894883996268, 0.0920414733457368, 0.08356993363476055, 0.09422414928552236, 0.08778457312089456, 0.08987693020950831, 0.09777964977624237, 0.09060848800058789, 0.09087547326073596, 0.09065288590043372, 0.09815595961513002, 0.08630801892602018, 0.08960594520751539, 0.09100452485239247, 0.09259096682095072, 0.09364434916529175, 0.0853051896352123, 0.08391849112594159, 0.08978397560355508, 0.08356817274105656, 0.08639129387321305, 0.07641054760007339, 0.08566749942250246, 0.09110851912136013, 0.08938769699436465, 0.08943111829547572, 0.08605404789230106, 0.08796239383347541, 0.08454535587717901, 0.0929903335078121, 0.08246802178760436, 0.08817700985492735, 0.0820807551149751, 0.08511665149857307, 0.0914822776922275, 0.08779917531640212, 0.0779155145245507, 0.08062449848958794, 0.09151321230973979, 0.08251138633527932, 0.08314391480095229, 0.09660065726688243, 0.09161786920726972, 0.09195890233721427, 0.09484458463309785, 0.08672723967704118, 0.09056091164304954, 0.08950078278038455, 0.08453380213065807, 0.08621663260330842, 0.0903504892183676, 0.08888219947767556, 0.09691781310403562, 0.0829510997618925, 0.08538905047156051, 0.08536033187251706, 0.09253646586834798, 0.08719827400559628, 0.08741965478896539, 0.0908875936865952, 0.08650855583109175, 0.0911287851112432, 0.0870327992529023, 0.09334187790207615, 0.08691128023529447, 0.0829607319773311, 0.08561452123819384, 0.09416699659894374, 0.09865975100963004, 0.08059372543252491, 0.08162290581093083, 0.07969201254174872, 0.09014664917727015, 0.07748434709443736, 0.09115822285795372, 0.0874199097979386, 0.08331094704142918, 0.08450373137759747, 0.0873987436304484, 0.0792090383862253, 0.08682449919890456, 0.08898017363528224, 0.0891014307981212, 0.08578455417679541, 0.09612343808420232, 0.07718957370637691, 0.08963596680253917, 0.09053358289784386, 0.08104077369182848, 0.08805192318672665, 0.09036158074767288, 0.09733534898340712, 0.08642234534217835, 0.0873180423896324, 0.08509746809331085, 0.0927045997121519, 0.08985111493399206, 0.09486348772674255, 0.09000267315635847, 0.08474935185150062, 0.08247809724159613, 0.08802043461258492, 0.0865126082695781, 0.08138258449164787, 0.08795575893476618, 0.09456070784224847, 0.09680636657810467, 0.08476700362040308, 0.08670105726809373, 0.08636724547506389, 0.08412716463066074, 0.08428810620773179, 0.08964151944607554, 0.08689624513108678, 0.08902965594822292, 0.09221339424501332, 0.08726043474359556, 0.08607641544478577, 0.09100554185059015, 0.08492870794208009, 0.08529837352577493, 0.09521158569562824, 0.08914943856267118, 0.087555731639101, 0.0862048336688618, 0.08984721078423315, 0.08217617292259297, 0.08824966695006062, 0.07486261467473272, 0.08753387468056906, 0.08379545796577004, 0.09274777146757962, 0.09220642715156253, 0.0792962124445207, 0.09090807566463247, 0.08751737767113807, 0.07961706129268199, 0.0941224640615722, 0.0795895706794336, 0.09562104758697967, 0.08020847225726233, 0.09417989583892716, 0.09061167014269772, 0.08898710965217106, 0.0897447948736654, 0.08398102899483291, 0.08684215184345169, 0.096630024031122, 0.08473098919932259, 0.09179580145778438, 0.07887094371255345, 0.08638286938225163]],
+            'im_sum': [False, 365.155811516],
+            'regn_sum': [False, 91.3425360965],
+            'npts_real': [True, 5925312],
+            'rms_per_field': [False, [0.089055932035104174, 0.087593317854421537, 0.088754854977895078, 0.087673584891401882, 0.088859674046269987, 0.087793556001629414, 0.087858029812576927]],
+            'im_fit': [False, [1.150589250979386, 9.433930899157085, \
+                       8.092281808705982]],
+            'im_fit_loc': [True, [252, 220.3142062699946]],
+            'im_fit_pix': [False, [44.567451454649344, 38.38608598796125]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [51, 99, 0, 0]), \
                       (img+'.image', False, [51, 100, 0, 0]), \
                       (img+'.image', True, [9, 56, 0, 0]), \
                       (img+'.image', False, [8, 56, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( \
-            self.check_list_vals(im_stats_dict['rms_per_chan'], \
-                exp_im_stats['rms_per_chan'], epsilon=0.01), True, \
-            valname='RMS per channel of .image', exact=True)
-        out, report1_u = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_w = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_x = th.check_val( \
-            im_stats_dict['rms_per_field'], exp_im_stats['rms_per_field'], \
-            valname='RMS per field of .image', exact=False, \
-            epsilon=0.01)
-        out, report1_y = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_z = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_a1 = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_b1 = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_d1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_e1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1 + \
-            report1_d1 + report1_e1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 5925312,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'mask_pix': 3929,
-            'mask_regns': 1,
-            'npts_real': 5925312}
+        exp_mask_stats = {'npts': [True, 5925312],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'mask_pix': [True, 3929],
+            'mask_regns': [True, 1],
+            'npts_real': [True, 5925312]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/mosaic_cube.pb.crtf')
 
-        exp_pb_stats = {'npts': 5925312,
-            'npts_unmasked': 3338068.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 1.0,
-            'max_val_pos':[54, 54, 0, 0],
-            'min_val': 0.200047940016,
-            'min_val_pos':[98, 64, 0, 339],
-            'npts_0.2': 3338068,
-            'npts_0.5': 1825336,
-            'npts_real': 5925312,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 5925312],
+            'npts_unmasked': [True, 3338068.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [54, 54, 0, 0]],
+            'min_val': [False, 0.200047940016],
+            'min_val_pos': [True, [98, 64, 0, 339]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 3338068],
+            'npts_0.5': [True, 1825336],
+            'npts_real': [True, 5925312],
+            'pb_fit': [False, [1.081101854419883, 69.22423084266158, \
+                       69.16483065383713]],
+            'pb_fit_loc': [True, [252, 220.3142062699946]],
+            'pb_fit_pix': [False, [54.07005299848095, 54.01350317818875]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/mosaic_cube.psf.crtf')
 
-        exp_psf_stats = {'npts': 5925312,
-            'npts_unmasked': 5925312.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 1.0,
-            'max_val_pos':[54, 54, 0, 0],
-            'min_val': -0.168375626206,
-            'min_val_pos':[63, 54, 0, 12],
-            'im_rms':  0.0604957837605,
-            'im_sum': 67.0230730532,
-            'npts_real': 5925312,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 5925312],
+            'npts_unmasked': [True, 5925312.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [54, 54, 0, 0]],
+            'min_val': [False, -0.168375626206],
+            'min_val_pos': [True, [63, 54, 0, 12]],
+            'im_rms': [False,  0.0604957837605],
+            'im_sum': [False, 67.0230730532],
+            'npts_real': [True, 5925312],
+            'psf_fit': [False, [1.1012741250775981, 7.879923449290915, \
+                        5.24248657397286]],
+            'psf_fit_loc': [True, [252, 220.3142062699946]],
+            'psf_fit_pix': [False, [53.987524754275434, 54.00459088886782]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/mosaic_cube.residual.crtf')
 
-        exp_resid_stats = {'npts': 5925312,
-            'npts_unmasked': 3338068.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 0.490073978901,
-            'max_val_pos':[49, 60, 0, 249],
-            'min_val': -0.417252391577,
-            'min_val_pos':[24, 31, 0, 498],
-            'im_rms': 0.087537475151,
-            'im_sum': 68.1217086753,
-            'npts_real': 5925312}
+        exp_resid_stats = {'npts': [True, 5925312],
+            'npts_unmasked': [True, 3338068.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 0.490073978901],
+            'max_val_pos': [True, [49, 60, 0, 249]],
+            'min_val': [False, -0.417252391577],
+            'min_val_pos': [True, [24, 31, 0, 498]],
+            'im_rms': [False, 0.087537475151],
+            'im_sum': [False, 68.1217086753],
+            'regn_sum': [False, 37.8533693244],
+            'npts_real': [True, 5925312]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/mosaic_cube.model.crtf')
 
-        exp_model_stats = {'npts': 5925312,
-            'npts_unmasked': 5925312.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 0.510256052017,
-            'max_val_pos':[55, 57, 0, 255],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.000534824373949,
-            'im_sum': 5.9057832174,
-            'regn_sum': 1.13614080101,
-            'mask_non0': 32,
-            'npts_real': 5925312}
+        exp_model_stats = {'npts': [True, 5925312],
+            'npts_unmasked': [True, 5925312.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 0.510256052017],
+            'max_val_pos': [True, [55, 57, 0, 255]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.000534824373949],
+            'im_sum': [False, 5.9057832174],
+            'regn_sum': [False, 1.13614080101],
+            'mask_non0': [True, 32],
+            'npts_real': [True, 5925312]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 508,
-            'npts_unmasked': 508.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 120.900192261,
-            'max_val_pos':[0, 0, 0, 447],
-            'min_val': 120.665283203,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 508}
+        exp_sumwt_stats = {'npts': [True, 508],
+            'npts_unmasked': [True, 508.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 120.900192261],
+            'max_val_pos': [True, [0, 0, 0, 447]],
+            'min_val': [False, 120.665283203],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 508]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img, '.weight')
+        wt_stats_dict = self.image_stats(img+'.weight')
 
-        exp_wt_stats = {'npts': 5925312,
-            'npts_unmasked': 5925312.0,
-            'freq_bin': 244174.08728027344,
-            'start': 2.202527e+11,
-            'end': 2.203765e+11,
-            'nchan': 508,
-            'max_val': 0.393758654594,
-            'max_val_pos':[54, 54, 0, 0],
-            'min_val': 7.45326979086e-05,
-            'min_val_pos':[97, 107, 0, 170],
-            'im_rms': 0.140904168376,
-            'im_sum': 506774.321109,
-            'npts_0.2': 1058307,
-            'npts_0.3': 504152,
-            'npts_real': 5925312}
+        exp_wt_stats = {'npts': [True, 5925312],
+            'npts_unmasked': [True, 5925312.0],
+            'freq_bin': [True, 244174.08728027344],
+            'start': [True, 2.202527e+11],
+            'end': [True, 2.203765e+11],
+            'nchan': [True, 508],
+            'max_val': [False, 0.393758654594],
+            'max_val_pos': [True, [54, 54, 0, 0]],
+            'min_val': [False, 7.45326979086e-05],
+            'min_val_pos': [True, [97, 107, 0, 170]],
+            'im_rms': [False, 0.140904168376],
+            'im_sum': [False, 506774.321109],
+            'npts_0.2': [True, 1058307],
+            'npts_0.3': [True, 504152],
+            'npts_real': [True, 5925312]}
 
-        out, report8_a = th.check_val(wt_stats_dict['npts'], \
-            exp_wt_stats['npts'], valname='Number of pixels in .weight', \
-            exact=True)
-        out, report8_b = th.check_val( \
-            wt_stats_dict['npts_unmasked'], \
-            exp_wt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .weight', exact=True)
-        out, report8_c = th.check_val( \
-            wt_stats_dict['freq_bin'], exp_wt_stats['freq_bin'], \
-            valname='Frequency bin of .weight', exact=True)
-        out, report8_d = th.check_val(wt_stats_dict['start'], \
-            exp_wt_stats['start'], valname='Start channel of .weight', \
-            exact=True)
-        out, report8_e = th.check_val(wt_stats_dict['end'], \
-            exp_wt_stats['end'], valname='End channel of .weight', \
-            exact=True)
-        out, report8_f = th.check_val(wt_stats_dict['nchan'], \
-            exp_wt_stats['nchan'], valname='Number of channels of '
-            '.weight', exact=True)
-        out, report8_g = th.check_val( \
-            wt_stats_dict['max_val'], exp_wt_stats['max_val'], \
-            valname='Maximum .weight value', exact=False, epsilon=0.01)
-        out, report8_h = th.check_val( \
-            wt_stats_dict['max_val_pos'][0], \
-            exp_wt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_i = th.check_val( \
-            wt_stats_dict['max_val_pos'][1], \
-            exp_wt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_j = th.check_val( \
-            wt_stats_dict['max_val_pos'][3], \
-            exp_wt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .weight', exact=True)
-        out, report8_k = th.check_val( \
-            wt_stats_dict['min_val'], exp_wt_stats['min_val'], \
-            valname='Minimum .weight value', exact=False, epsilon=0.01)
-        out, report8_l = th.check_val( \
-            wt_stats_dict['min_val_pos'][0], \
-            exp_wt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_m = th.check_val( \
-            wt_stats_dict['min_val_pos'][1], \
-            exp_wt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_n = th.check_val( \
-            wt_stats_dict['min_val_pos'][3], \
-            exp_wt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .weight', exact=True)
-        out, report8_o = th.check_val( \
-            wt_stats_dict['im_rms'], exp_wt_stats['im_rms'], \
-            valname='RMS of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_p = th.check_val( \
-            wt_stats_dict['im_sum'], exp_wt_stats['im_sum'], \
-            valname='Sum of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_q = th.check_val(wt_stats_dict['npts_0.2'], \
-            exp_wt_stats['npts_0.2'], valname='Number of points above .wt '
-            '0.2', exact=False, epsilon=0.01)
-        out, report8_r = th.check_val(wt_stats_dict['npts_0.3'], \
-            exp_wt_stats['npts_0.3'], valname='Number of points above .wt '
-            '0.3', exact=False, epsilon=0.01)
-        out, report8_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report8 = report8_a + report8_b + report8_c + report8_d + \
-            report8_e + report8_f + report8_g + report8_h + report8_i + \
-            report8_j + report8_k + report8_l + report8_m + report8_n + \
-            report8_o + report8_p + report8_q + report8_r + report8_s
+        report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8
+            report6 + report7 + report8 + report9
 
 
         add_to_dict(self, output=test_dict, dataset = \
@@ -5956,6 +2590,7 @@ class Test_mosaic(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'mosaic_mfs.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00020.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -5977,7 +2612,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=1.25, noisethreshold=5.0, \
             lownoisethreshold=2.0, negativethreshold=0.0, minbeamfrac=0.1, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -6005,682 +2640,205 @@ class Test_mosaic(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.1, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, savemodel='none', calcres=False, calcpsf=False, \
-            parallel=self.parallel)
+            parallel=True)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'mosaic'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
-            data_path+'region_files/mosaic_mfs.image.crtf')
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
+            data_path+'region_files/mosaic_mfs.image.crtf', field_regions = \
+            ['circle[[13:56:07.210000, +05.15.17.20000], 45.9arcsec]',
+             'circle[[13:56:06.355525, +05.15.59.74129], 45.9arcsec]',
+             'circle[[13:56:04.316267, +05.15.27.41716], 45.9arcsec]',
+             'circle[[13:56:09.249291, +05.15.49.52355], 45.9arcsec]',
+             'circle[[13:56:05.170768, +05.14.44.87604], 45.9arcsec]',
+             'circle[[13:56:10.103706, +05.15.06.98201], 45.9arcsec]',
+             'circle[[13:56:08.064442, +05.14.34.65864], 45.9arcsec]'])
 
-        exp_im_stats = {'com_bmaj': 17.6737785339,
-            'com_bmin': 10.060172081,
-            'com_pa': 86.6785964966,
-            'npts': 15876,
-            'npts_unmasked': 8454.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.0345157124102,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': -0.00193646573462,
-            'min_val_pos':[91, 52, 0, 0],
-            'im_rms':  0.00202865568675,
-            'im_sum': 1.51296002558,
-            'regn_sum': 1.58850855171,
-            'npts_real': 15876,
-            'rms_per_field': 1,
-            'im_fit': [[62.9942562846, 62.995885097],
-                        0, 107.840245142, 0.0352250058226,
-                        17.4609357952, 9.70983031045]}
+        exp_im_stats = {'com_bmaj': [False, 17.6737785339],
+            'com_bmin': [False, 10.060172081],
+            'com_pa': [False, 86.6785964966],
+            'npts': [True, 15876],
+            'npts_unmasked': [True, 8454.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0345157124102],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, -0.00193646573462],
+            'min_val_pos': [True, [91, 52, 0, 0]],
+            'im_rms': [False,  0.00202865568675],
+            'im_sum': [False, 1.51296002558],
+            'regn_sum': [False, 1.58850855171],
+            'npts_real': [True, 15876],
+            'rms_per_field': [False, [0.0043183333329864697, 0.0035324567542234214, 0.0033643881411162453, 0.0034484378708067886, 0.0035013779149007367, 0.0033359473616749375, 0.0035589233954835845]],
+            'im_fit': [False, [0.03522500582263719, 17.46093579518058, 
+                       9.709830310449933]],
+            'im_fit_loc': [True, [0, 107.8402451422565]],
+            'im_fit_pix': [False, [62.9942562846151, 62.995885097033394]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [64, 114, 0, 0]), \
                       (img+'.image', False, [64, 115, 0, 0]), \
                       (img+'.image', True, [11, 60, 0, 0]), \
                       (img+'.image', False, [10, 60, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_w = th.check_val( \
-            im_stats_dict['rms_per_field'], exp_im_stats['rms_per_field'], \
-            valname='RMS per field of .image', exact=False, \
-            epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_a1 = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_d1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1 + \
-            report1_d1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 15876,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'mask_pix': 360,
-            'mask_regns': 1,
-            'npts_real': 15876}
+        exp_mask_stats = {'npts': [True, 15876],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 360],
+            'mask_regns': [True, 1],
+            'npts_real': [True, 15876]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/mosaic_mfs.pb.crtf')
 
-        exp_pb_stats = {'npts': 15876,
-            'npts_unmasked': 8454.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': 0.200080409646,
-            'min_val_pos':[102, 28, 0, 0],
-            'npts_0.2': 8454,
-            'npts_0.5': 4497,
-            'npts_real': 15876,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 8454.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, 0.200080409646],
+            'min_val_pos': [True, [102, 28, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 8454],
+            'npts_0.5': [True, 4497],
+            'npts_real': [True, 15876],
+            'pb_fit': [False, [1.0693559655652305, 141.80580479462876, \
+                       141.74549135472637]],
+            'pb_fit_loc': [True, [0, 107.8402451422565]],
+            'pb_fit_pix': [False, [62.975154097364715, 62.94725116661756]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/mosaic_mfs.psf.crtf')
 
-        exp_psf_stats = {'npts': 15876,
-            'npts_unmasked': 15876.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': -0.169576942921,
-            'min_val_pos':[61, 57, 0, 0],
-            'im_rms':  0.0501544137568,
-            'im_sum': 0.00266315032371,
-            'npts_real': 15876,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 15876.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, -0.169576942921],
+            'min_val_pos': [True, [61, 57, 0, 0]],
+            'im_rms': [False,  0.0501544137568],
+            'im_sum': [False, 0.00266315032371],
+            'npts_real': [True, 15876],
+            'psf_fit': [False, [1.088207720785799, 15.893701850875548, \
+                        8.795192549423799]],
+            'psf_fit_loc': [True, [0, 107.8402451422565]],
+            'psf_fit_pix': [False, [62.98416058527938, 63.00086190688355]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, \
+            '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/mosaic_mfs.residual.crtf')
 
-        exp_resid_stats = {'npts': 15876,
-            'npts_unmasked': 8454.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.00713972514495,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': -0.00197902694345,
-            'min_val_pos':[72, 58, 0, 0],
-            'im_rms': 0.000868739852256,
-            'im_sum': 0.134135425201,
-            'npts_real': 15876}
+        exp_resid_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 8454.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.00713972514495],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, -0.00197902694345],
+            'min_val_pos': [True, [72, 58, 0, 0]],
+            'im_rms': [False, 0.000868739852256],
+            'im_sum': [False, 0.134135425201],
+            'regn_sum': [False, 0.291504478903],
+            'npts_real': [True, 15876]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/mosaic_mfs.model.crtf')
 
-        exp_model_stats = {'npts': 15876,
-            'npts_unmasked': 15876.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.0273759867996,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.000217269736505,
-            'im_sum': 0.0273759867996,
-            'regn_sum': 0.0273759867996,
-            'mask_non0': 1,
-            'npts_real': 15876}
+        exp_model_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 15876.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0273759867996],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.000217269736505],
+            'im_sum': [False, 0.0273759867996],
+            'regn_sum': [False, 0.0273759867996],
+            'mask_non0': [True, 1],
+            'npts_real': [True, 15876]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 4396210.5,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 4396210.5,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 4396210.5],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 4396210.5],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img, '.weight')
+        wt_stats_dict = self.image_stats(img+'.weight')
 
-        exp_wt_stats = {'npts': 15876,
-            'npts_unmasked': 15876.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.426215529442,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': 4.20721153205e-05,
-            'min_val_pos':[1, 24, 0, 0],
-            'im_rms': 0.144357241177,
-            'im_sum': 1347.62643852,
-            'npts_0.2': 2778,
-            'npts_0.3': 1468,
-            'npts_real': 15876}
+        exp_wt_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 15876.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.426215529442],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, 4.20721153205e-05],
+            'min_val_pos': [True, [1, 24, 0, 0]],
+            'im_rms': [False, 0.144357241177],
+            'im_sum': [False, 1347.62643852],
+            'npts_0.2': [True, 2778],
+            'npts_0.3': [True, 1468],
+            'npts_real': [True, 15876]}
 
-        out, report8_a = th.check_val(wt_stats_dict['npts'], \
-            exp_wt_stats['npts'], valname='Number of pixels in .weight', \
-            exact=True)
-        out, report8_b = th.check_val( \
-            wt_stats_dict['npts_unmasked'], \
-            exp_wt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .weight', exact=True)
-        out, report8_c = th.check_val( \
-            wt_stats_dict['freq_bin'], exp_wt_stats['freq_bin'], \
-            valname='Frequency bin of .weight', exact=True)
-        out, report8_d = th.check_val(wt_stats_dict['start'], \
-            exp_wt_stats['start'], valname='Start channel of .weight', \
-            exact=True)
-        out, report8_e = th.check_val(wt_stats_dict['end'], \
-            exp_wt_stats['end'], valname='End channel of .weight', \
-            exact=True)
-        out, report8_f = th.check_val(wt_stats_dict['nchan'], \
-            exp_wt_stats['nchan'], valname='Number of channels of '
-            '.weight', exact=True)
-        out, report8_g = th.check_val( \
-            wt_stats_dict['max_val'], exp_wt_stats['max_val'], \
-            valname='Maximum .weight value', exact=False, epsilon=0.01)
-        out, report8_h = th.check_val( \
-            wt_stats_dict['max_val_pos'][0], \
-            exp_wt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_i = th.check_val( \
-            wt_stats_dict['max_val_pos'][1], \
-            exp_wt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_j = th.check_val( \
-            wt_stats_dict['max_val_pos'][3], \
-            exp_wt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .weight', exact=True)
-        out, report8_k = th.check_val( \
-            wt_stats_dict['min_val'], exp_wt_stats['min_val'], \
-            valname='Minimum .weight value', exact=False, epsilon=0.01)
-        out, report8_l = th.check_val( \
-            wt_stats_dict['min_val_pos'][0], \
-            exp_wt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_m = th.check_val( \
-            wt_stats_dict['min_val_pos'][1], \
-            exp_wt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_n = th.check_val( \
-            wt_stats_dict['min_val_pos'][3], \
-            exp_wt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .weight', exact=True)
-        out, report8_o = th.check_val( \
-            wt_stats_dict['im_rms'], exp_wt_stats['im_rms'], \
-            valname='RMS of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_p = th.check_val( \
-            wt_stats_dict['im_sum'], exp_wt_stats['im_sum'], \
-            valname='Sum of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_q = th.check_val(wt_stats_dict['npts_0.2'], \
-            exp_wt_stats['npts_0.2'], valname='Number of points above .wt '
-            '0.2', exact=False, epsilon=0.01)
-        out, report8_r = th.check_val(wt_stats_dict['npts_0.3'], \
-            exp_wt_stats['npts_0.3'], valname='Number of points above .wt '
-            '0.3', exact=False, epsilon=0.01)
-        out, report8_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report8 = report8_a + report8_b + report8_c + report8_d + \
-            report8_e + report8_f + report8_g + report8_h + report8_i + \
-            report8_j + report8_k + report8_l + report8_m + report8_n + \
-            report8_o + report8_p + report8_q + report8_r + report8_s
+        report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8
+            report6 + report7 + report8 + report9
 
 
         add_to_dict(self, output=test_dict, dataset = \
@@ -6712,6 +2870,7 @@ class Test_mosaic(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'mosaic_mtmfs.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00020.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -6733,7 +2892,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=1.25, noisethreshold=5.0, \
             lownoisethreshold=2.0, negativethreshold=0.0, minbeamfrac=0.1, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -6760,683 +2919,252 @@ class Test_mosaic(test_tclean_base):
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, restart=True, \
             savemodel='none', calcres=False, calcpsf=False, \
-            parallel=self.parallel)
+            parallel=True)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'mos_mtmfs'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'mos_mtmfs'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image.tt0', region_file = \
-            data_path+'region_files/mosaic_mtmfs.image.tt0.crtf')
+        im_stats_dict = self.image_stats(img+'.image.tt0', region_file = \
+            data_path+'region_files/mosaic_mtmfs.image.tt0.crtf', \
+            field_regions = \
+            ['circle[[13:56:07.210000, +05.15.17.20000], 45.9arcsec]',
+             'circle[[13:56:06.355525, +05.15.59.74129], 45.9arcsec]',
+             'circle[[13:56:04.316267, +05.15.27.41716], 45.9arcsec]',
+             'circle[[13:56:09.249291, +05.15.49.52355], 45.9arcsec]',
+             'circle[[13:56:05.170768, +05.14.44.87604], 45.9arcsec]',
+             'circle[[13:56:10.103706, +05.15.06.98201], 45.9arcsec]',
+             'circle[[13:56:08.064442, +05.14.34.65864], 45.9arcsec]'])
 
-        exp_im_stats = {'com_bmaj': 17.6737785339,
-            'com_bmin': 10.060172081,
-            'com_pa': 86.6785964966,
-            'npts': 15876,
-            'npts_unmasked': 8454.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.0349145904183,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': -0.00258040986955,
-            'min_val_pos':[70, 97, 0, 0],
-            'im_rms':  0.00207815366878,
-            'im_sum': 1.47797238623,
-            'regn_sum': 1.58228412218,
-            'npts_real': 15876,
-            'rms_per_field': 1,
-            'im_fit': [[63.0904967336, 62.9480581202],
-                        0, 107.840245142, 0.0358052067244,
-                        17.191876841, 9.68274896612]}
+        exp_im_stats = {'com_bmaj': [False, 17.6737785339],
+            'com_bmin': [False, 10.060172081],
+            'com_pa': [False, 86.6785964966],
+            'npts': [True, 15876],
+            'npts_unmasked': [True, 8454.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0349145904183],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, -0.00258040986955],
+            'min_val_pos': [True, [70, 97, 0, 0]],
+            'im_rms': [False,  0.00207815366878],
+            'im_sum': [False, 1.47797238623],
+            'regn_sum': [False, 1.58228412218],
+            'npts_real': [True, 15876],
+            'rms_per_field': [False, [0.0043714750541124468, 0.003595955649075896, 0.003430812546940405, 0.0034721618952933994, 0.0035884838221589368, 0.0033594003986614097, 0.0036156061407187608]],
+            'im_fit': [False, [0.03580520672441999, 17.19187684101627, \
+                       9.68274896612347]],
+            'im_fit_loc': [True, [0, 107.8402451422565]],
+            'im_fit_pix': [False, [63.09049673358014, 62.94805812018937]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image.tt0', True, [64, 114, 0, 0]), \
                       (img+'.image.tt0', False, [64, 115, 0, 0]), \
                       (img+'.image.tt0', True, [11, 60, 0, 0]), \
                       (img+'.image.tt0', False, [10, 60, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_w = th.check_val( \
-            im_stats_dict['rms_per_field'], exp_im_stats['rms_per_field'], \
-            valname='RMS per field of .image', exact=False, \
-            epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_a1 = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_d1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1 + \
-            report1_d1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image.tt0')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 15876,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'mask_pix': 360,
-            'mask_regns': 1,
-            'npts_real': 15876}
+        exp_mask_stats = {'npts': [True, 15876],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 360],
+            'mask_regns': [True, 1],
+            'npts_real': [True, 15876]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb.tt0', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb.tt0', region_file = \
             data_path+'region_files/mosaic_mtmfs.pb.tt0.crtf')
 
-        exp_pb_stats = {'npts': 15876,
-            'npts_unmasked': 8454.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': 0.200080409646,
-            'min_val_pos':[102, 28, 0, 0],
-            'npts_0.2': 8454,
-            'npts_0.5': 4497,
-            'npts_real': 15876,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 8454.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, 0.200080409646],
+            'min_val_pos': [True, [102, 28, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 8454],
+            'npts_0.5': [True, 4497],
+            'npts_real': [True, 15876],
+            'pb_fit': [False, [1.0693559655651996, 141.80580479464936, \
+                       141.74549135470988]],
+            'pb_fit_loc': [True, [0, 107.8402451422565]],
+            'pb_fit_pix': [False, [62.975154097364715, 62.94725116661756]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb.tt0')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf.tt0', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf.tt0', region_file = \
             data_path+'region_files/mosaic_mtmfs.psf.tt0.crtf')
 
-        exp_psf_stats = {'npts': 15876,
-            'npts_unmasked': 15876.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': -0.169576942921,
-            'min_val_pos':[61, 57, 0, 0],
-            'im_rms':  0.0501544137568,
-            'im_sum': 0.00266315032371,
-            'npts_real': 15876,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 15876.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, -0.169576942921],
+            'min_val_pos': [True, [61, 57, 0, 0]],
+            'im_rms': [False,  0.0501544137568],
+            'im_sum': [False, 0.00266315032371],
+            'npts_real': [True, 15876],
+            'psf_fit': [False, [1.0781857293103545, 15.898196388608632, \
+                        8.995969894587292]],
+            'psf_fit_loc': [True, [0, 107.8402451422565]],
+            'psf_fit_pix': [False, [62.991298508308404, 63.00339664380328]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf.tt0')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual.tt0', \
+        resid_stats_dict = self.image_stats(img+'.residual.tt0', \
             region_file = data_path+
             'region_files/mosaic_mtmfs.residual.tt0.crtf')
 
-        exp_resid_stats = {'npts': 15876,
-            'npts_unmasked': 8454.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.00713019352406,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': -0.00197783415206,
-            'min_val_pos':[72, 58, 0, 0],
-            'im_rms': 0.000865575412319,
-            'im_sum': 0.130538275658,
-            'npts_real': 15876}
+        exp_resid_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 8454.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.00713019352406],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, -0.00197783415206],
+            'min_val_pos': [True, [72, 58, 0, 0]],
+            'im_rms': [False, 0.000865575412319],
+            'im_sum': [False, 0.130538275658],
+            'regn_sum': [False, 0.283332881119],
+            'npts_real': [True, 15876]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual.tt0')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model.tt0', region_file = \
+        model_stats_dict = self.image_stats(img+'.model.tt0', region_file = \
             data_path+'region_files/mosaic_mtmfs.model.tt0.crtf')
 
-        exp_model_stats = {'npts': 15876,
-            'npts_unmasked': 15876.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.0272394195199,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.000216185869206,
-            'im_sum': 0.0272394195199,
-            'regn_sum': 0.0272394195199,
-            'mask_non0': 1,
-            'npts_real': 15876}
+        exp_model_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 15876.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0272394195199],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.000216185869206],
+            'im_sum': [False, 0.0272394195199],
+            'regn_sum': [False, 0.0272394195199],
+            'mask_non0': [True, 1],
+            'npts_real': [True, 15876]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model.tt0')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt.tt0')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt.tt0')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 4396210.5,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 4396210.5,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 4396210.5],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 4396210.5],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt.tt0')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img, '.weight.tt0')
+        wt_stats_dict = self.image_stats(img+'.weight.tt0')
 
-        exp_wt_stats = {'npts': 15876,
-            'npts_unmasked': 15876.0,
-            'freq_bin': 15849925874.83342,
-            'start': 1.0784e+11,
-            'end': 1.0784e+11,
-            'nchan': 1,
-            'max_val': 0.426215529442,
-            'max_val_pos':[63, 63, 0, 0],
-            'min_val': 4.20721153205e-05,
-            'min_val_pos':[1, 24, 0, 0],
-            'im_rms': 0.144357241177,
-            'im_sum': 1347.62643852,
-            'npts_0.2': 2778,
-            'npts_0.3': 1468,
-            'npts_real': 15876}
+        exp_wt_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 15876.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.426215529442],
+            'max_val_pos': [True, [63, 63, 0, 0]],
+            'min_val': [False, 4.20721153205e-05],
+            'min_val_pos': [True, [1, 24, 0, 0]],
+            'im_rms': [False, 0.144357241177],
+            'im_sum': [False, 1347.62643852],
+            'npts_0.2': [True, 2778],
+            'npts_0.3': [True, 1468],
+            'npts_real': [True, 15876]}
 
-        out, report8_a = th.check_val(wt_stats_dict['npts'], \
-            exp_wt_stats['npts'], valname='Number of pixels in .weight', \
-            exact=True)
-        out, report8_b = th.check_val( \
-            wt_stats_dict['npts_unmasked'], \
-            exp_wt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .weight', exact=True)
-        out, report8_c = th.check_val( \
-            wt_stats_dict['freq_bin'], exp_wt_stats['freq_bin'], \
-            valname='Frequency bin of .weight', exact=True)
-        out, report8_d = th.check_val(wt_stats_dict['start'], \
-            exp_wt_stats['start'], valname='Start channel of .weight', \
-            exact=True)
-        out, report8_e = th.check_val(wt_stats_dict['end'], \
-            exp_wt_stats['end'], valname='End channel of .weight', \
-            exact=True)
-        out, report8_f = th.check_val(wt_stats_dict['nchan'], \
-            exp_wt_stats['nchan'], valname='Number of channels of '
-            '.weight', exact=True)
-        out, report8_g = th.check_val( \
-            wt_stats_dict['max_val'], exp_wt_stats['max_val'], \
-            valname='Maximum .weight value', exact=False, epsilon=0.01)
-        out, report8_h = th.check_val( \
-            wt_stats_dict['max_val_pos'][0], \
-            exp_wt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_i = th.check_val( \
-            wt_stats_dict['max_val_pos'][1], \
-            exp_wt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_j = th.check_val( \
-            wt_stats_dict['max_val_pos'][3], \
-            exp_wt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .weight', exact=True)
-        out, report8_k = th.check_val( \
-            wt_stats_dict['min_val'], exp_wt_stats['min_val'], \
-            valname='Minimum .weight value', exact=False, epsilon=0.01)
-        out, report8_l = th.check_val( \
-            wt_stats_dict['min_val_pos'][0], \
-            exp_wt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_m = th.check_val( \
-            wt_stats_dict['min_val_pos'][1], \
-            exp_wt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_n = th.check_val( \
-            wt_stats_dict['min_val_pos'][3], \
-            exp_wt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .weight', exact=True)
-        out, report8_o = th.check_val( \
-            wt_stats_dict['im_rms'], exp_wt_stats['im_rms'], \
-            valname='RMS of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_p = th.check_val( \
-            wt_stats_dict['im_sum'], exp_wt_stats['im_sum'], \
-            valname='Sum of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_q = th.check_val(wt_stats_dict['npts_0.2'], \
-            exp_wt_stats['npts_0.2'], valname='Number of points above .wt '
-            '0.2', exact=False, epsilon=0.01)
-        out, report8_r = th.check_val(wt_stats_dict['npts_0.3'], \
-            exp_wt_stats['npts_0.3'], valname='Number of points above .wt '
-            '0.3', exact=False, epsilon=0.01)
-        out, report8_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
+        report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, \
+            '.weight.tt0')
 
-        report8 = report8_a + report8_b + report8_c + report8_d + \
-            report8_e + report8_f + report8_g + report8_h + report8_i + \
-            report8_j + report8_k + report8_l + report8_m + report8_n + \
-            report8_o + report8_p + report8_q + report8_r + report8_s
+        # .alpha report
+        alpha_stats_dict = self.image_stats(img+'.alpha', region_file = \
+            data_path+'region_files/mosaic_mtmfs.alpha.crtf')
+
+        exp_alpha_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 82944]}
+
+        report10 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
+            '.alpha')
+
+        # .alpha.error report
+        error_stats_dict = self.image_stats(img+'.alpha.error', region_file = \
+            data_path+'region_files/mosaic_mtmfs.alpha.error.crtf')
+
+        exp_error_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'npts_real': [True, 82944]}
+
+        report11 = self.stats_compare(exp_error_stats, error_stats_dict, \
+            '.alpha.error')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8
+            report6 + report7 + report8 + report9 + report10 + report11
 
 
         add_to_dict(self, output = test_dict, dataset = \
@@ -7467,6 +3195,7 @@ class Test_mosaic(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'mosaic_cube_eph.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'2018.1.00879.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -7487,7 +3216,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=15.0, minbeamfrac=0.3, \
             growiterations=50, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=False)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -7513,687 +3242,206 @@ class Test_mosaic(test_tclean_base):
             negativethreshold=15.0, minbeamfrac=0.3, growiterations=50, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, savemodel='none', calcres=False, calcpsf=False, \
-            parallel=self.parallel)
+            parallel=False)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'mosaic'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
-            data_path+'region_files/mosaic_cube_eph.image.crtf')
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
+            data_path+'region_files/mosaic_cube_eph.image.crtf', \
+            field_regions = \
+            ['circle[[15:57:28.454567, -16.57.49.11051], 11.5arcsec]',
+             'circle[[15:57:28.112222, -16.57.59.87434], 11.5arcsec]',
+             'circle[[15:57:29.051302, -16.58.00.17973], 11.5arcsec]',
+             'circle[[15:57:27.877217, -16.57.49.98258], 11.5arcsec]',
+             'circle[[15:57:29.755349, -16.57.50.59334], 11.5arcsec]',
+             'circle[[15:57:28.581274, -16.57.40.39634], 11.5arcsec]',
+             'circle[[15:57:29.520326, -16.57.40.70171], 11.5arcsec]'])
 
-        exp_im_stats = {'com_bmaj': 0.930861414189,
-            'com_bmin': 0.71932871452,
-            'com_pa': -88.1227929847,
-            'npts': 191116800,
-            'npts_unmasked': 105006865.0,
-            'freq_bin': 244151.1796875,
-            'start': 261764375854.0,
-            'end': 261995831173.0,
-            'nchan': 948,
-            'max_val': 0.116102233529,
-            'max_val_pos':[286, 233, 0, 568],
-            'min_val': -0.0639033019543,
-            'min_val_pos':[211, 186, 0, 592],
-            'im_rms':  0.0106607721423,
-            'rms_per_chan': [0.010544357743534185, 0.012164182832671495, 0.012074626408193847, 0.009608773051277117, 0.010081045610929583, 0.010510081502495537, 0.010527319732380157, 0.012514230024815057, 0.012753066817019756, 0.011681796537235542, 0.010530484090355572, 0.009501404486316086, 0.009490010520613795, 0.011376546145212042, 0.010273170623339859, 0.010443578473712106, 0.01014520940946224, 0.009211688240177103, 0.010328996596638062, 0.008857390893316648, 0.00969819905194494, 0.010097891889316984, 0.010715532081831087, 0.010566538223521662, 0.011550578029757013, 0.011835921152101766, 0.009523790740444496, 0.009610787542876992, 0.00889374579987403, 0.011338637905980761, 0.01160108504073822, 0.010099260357842827, 0.010038389403518005, 0.009466211294483254, 0.009647570939463142, 0.009353805624141558, 0.009747882683864631, 0.010480292978630698, 0.009020740823907015, 0.010563402579460455, 0.00935619375374926, 0.010208074753991778, 0.012220975043057088, 0.01114448147947678, 0.012098410856094012, 0.011752245125698849, 0.011295086034410555, 0.008843893127631184, 0.009017742131154766, 0.009294017517839195, 0.009439753643632231, 0.010298112798281545, 0.00983020859606145, 0.009457164872774293, 0.00912083668936835, 0.00939036093928175, 0.010078765634384814, 0.009624914878293646, 0.010992622185683143, 0.01216552068938102, 0.009417394615374051, 0.009573237173795658, 0.009836088837253487, 0.010043608815207505, 0.010220718217145255, 0.009479141768911016, 0.009419449299275788, 0.009420613091044862, 0.010629038754111685, 0.009649729908379494, 0.00859903466986099, 0.01035027268097479, 0.009671533858829157, 0.009735338494338334, 0.008349141951145837, 0.009526646655757486, 0.010130986474178332, 0.01273518138792606, 0.013225776820163676, 0.01208756113589589, 0.009598698796406378, 0.008617137137373982, 0.009399195723952727, 0.008975335184425445, 0.010881867424952852, 0.010133162330386693, 0.009899938735784194, 0.008983615752536919, 0.00949018251262457, 0.008751000010565207, 0.00911715549919336, 0.01001691482386163, 0.011819454830932457, 0.01109435639469309, 0.009557013726682832, 0.009709700220863355, 0.00985575414918664, 0.00998599406831754, 0.010091692782471956, 0.009572553930785084, 0.009344805379320887, 0.010135569827288124, 0.010056596352430012, 0.010832596842626574, 0.011605177042901175, 0.010443478320509977, 0.011356906939813928, 0.013042351451522865, 0.011139121213493433, 0.011820354361659095, 0.010041036239125105, 0.009512866701197682, 0.008612372264544444, 0.011002754164077793, 0.01053947338995949, 0.009506280721006897, 0.010188693032720478, 0.010354320149696072, 0.008838743955308245, 0.009906391825595074, 0.010290362507151294, 0.009280775710372087, 0.010735599452561117, 0.00835892430872177, 0.009964775347837304, 0.009121537140106377, 0.010162452525963437, 0.009692431760002418, 0.010050320410351348, 0.00907025900862872, 0.008130321688587665, 0.008942863823954227, 0.008146927578559456, 0.008819099589515166, 0.009665321994575399, 0.011361786727881892, 0.010731646979190946, 0.009549049512605124, 0.009248255030069584, 0.008275531984229586, 0.008997829132744339, 0.008966784777533397, 0.009388067977054564, 0.009972295171472296, 0.009735405654831794, 0.008485573682731, 0.009884558661097958, 0.01136664155742694, 0.008559108886390115, 0.009269856861011708, 0.008936470207152974, 0.009895498390789828, 0.009940648833550225, 0.009422436343932283, 0.01035819562040688, 0.01141470440757288, 0.010892989271589057, 0.010986451080061113, 0.01097053729839708, 0.009701094872393484, 0.01187355095514777, 0.012151980932532249, 0.009675848445614829, 0.00958223979015258, 0.008792361818022029, 0.008410285919927433, 0.009153095144803381, 0.008790964318579916, 0.008385975655907417, 0.00851976304347304, 0.009015694116101187, 0.00835006411696345, 0.008642582934538689, 0.00928710258838381, 0.01011067254224128, 0.011346564051039329, 0.010691953731919317, 0.009399566699808988, 0.009405531094879179, 0.010660394515107623, 0.010943244210507325, 0.00981095454240694, 0.009177624842325642, 0.010028030036168279, 0.011925784455447959, 0.009799696329063506, 0.008578421999458309, 0.008813715404176527, 0.009018413653366789, 0.009635099991548523, 0.009328979148105208, 0.008936577895979679, 0.00865068779495704, 0.011714015409683263, 0.009143298376525971, 0.0093722810186909, 0.010313452344660377, 0.008834954958669152, 0.010253318668779522, 0.009394638743027534, 0.010273425578342389, 0.011646966102790951, 0.012083569546386952, 0.012821615929802169, 0.01052987662527084, 0.010668361229993557, 0.008969315179641104, 0.009878504584890173, 0.009083355155260162, 0.009585038959164524, 0.01028527457111657, 0.011225333943569707, 0.009544898534207502, 0.010404987829551536, 0.009053075213135307, 0.009650786360307993, 0.010729754441548991, 0.011605132587502206, 0.009889033707096453, 0.009781390989644614, 0.011094611168044211, 0.012109054097268448, 0.010700499779381503, 0.01003792070939281, 0.011936605596990372, 0.011782773204662209, 0.00902961949098768, 0.010523704170008573, 0.009595105693410697, 0.010549837480142371, 0.010263110511920222, 0.009057636657348751, 0.01003624492957981, 0.011148296021869435, 0.009292331119195234, 0.008568711151010893, 0.009286797026264382, 0.01104598145381877, 0.010708854544863955, 0.010133324959161678, 0.012099744538605444, 0.012550124524717517, 0.008724364514235848, 0.008432250211062139, 0.009543766794389941, 0.009179955842670515, 0.009372585011702034, 0.009984965976952535, 0.008916048975671567, 0.009531643766691949, 0.00973942530515858, 0.01155893736638345, 0.009960265126137914, 0.008745760727547035, 0.009761776201659514, 0.01165928993115887, 0.010717212417944754, 0.011452037184819215, 0.010123049584187018, 0.00993441625515861, 0.009020593800774006, 0.009744067962277569, 0.009045716844558526, 0.010409172682813921, 0.010404044896126233, 0.009443969673974904, 0.01053770196088235, 0.011304803231166756, 0.00891148598331849, 0.0098978355019775, 0.009997024546928806, 0.009529657038869916, 0.009132380264567346, 0.010029448833730532, 0.010382881585698646, 0.009897208722102207, 0.009173659257114417, 0.009951231438726353, 0.01119932254374386, 0.011238295376514357, 0.01019615977334354, 0.009454245320281105, 0.009159666432461626, 0.009516838818912762, 0.008526334557564018, 0.009532637310721296, 0.0100845317703788, 0.010350639749445592, 0.009988597763990931, 0.010297622180831748, 0.01054102173760143, 0.010165435633922918, 0.008824701125215799, 0.00929833359003822, 0.009970561992630996, 0.010441506742680622, 0.008956932734484425, 0.0096514541102629, 0.009914471240254193, 0.010434250188652615, 0.01008036328298848, 0.010190819434328414, 0.009972681972539957, 0.010909137402546235, 0.013307048044779377, 0.01531369837138347, 0.01500782754653681, 0.010933753203318824, 0.00989177816589834, 0.009755611724437025, 0.011861803340913515, 0.009742804396682332, 0.009648183781161846, 0.011273772535601327, 0.011178953294584638, 0.010092910322705055, 0.009742215852868137, 0.009412600922294893, 0.011739646011811268, 0.011447443333342305, 0.010210912752285169, 0.010571829916096837, 0.012608339250828814, 0.013429207981686387, 0.010219208191188569, 0.0102535199365424, 0.011182581218080596, 0.012605602929318725, 0.012178550835134635, 0.010575806669458634, 0.01002954521194429, 0.009673264605422331, 0.010998378306806791, 0.012029893543896105, 0.010413268982625557, 0.010345477969553553, 0.010573977486438197, 0.012546954893696205, 0.011930234015695566, 0.010846313902970462, 0.011028267399350523, 0.010746512656062558, 0.01139699819869516, 0.010072069764373028, 0.009821142143793416, 0.011103098419875952, 0.012001135706067574, 0.011271820179113977, 0.01101392198086214, 0.010070536855658731, 0.010286201247195452, 0.010744364052413354, 0.012280220469572589, 0.011766010900169847, 0.011267844321872443, 0.010700172065778115, 0.00994925423698614, 0.010592208789229089, 0.0107102409232148, 0.010908709803928817, 0.010167156820648308, 0.009894447324525211, 0.010248123990740118, 0.01111849264679597, 0.012685849012986548, 0.011007547190594696, 0.00985806937224629, 0.010179497177305983, 0.01028098465015516, 0.011341065512633674, 0.010680276073247395, 0.009915179056407288, 0.0136551603473631, 0.013949462320439256, 0.010070230603335612, 0.010188485879220622, 0.010130233667421397, 0.009725768026021004, 0.010377466126136131, 0.009900726063704273, 0.009694481054639385, 0.009889371475791948, 0.010348629326478943, 0.011200587311736272, 0.010394943138605752, 0.011211652210645877, 0.010398454260753361, 0.010484057077021847, 0.011841168665806675, 0.009559723149813782, 0.010662785514774637, 0.011022018920913198, 0.010817023627469266, 0.009773502272303091, 0.010080396884424254, 0.01011651082652112, 0.009684927864918041, 0.009740614318067492, 0.010498062520519658, 0.010232104753925952, 0.012726303747665138, 0.009784364506650206, 0.010363682617365616, 0.010402214484748035, 0.011535827951877641, 0.010260452361780402, 0.009539657080016932, 0.009580809579446535, 0.013653094599638642, 0.013736790600000876, 0.011166365637421464, 0.01025133925493026, 0.011469928172074343, 0.01217997501951802, 0.010227602614939019, 0.011038370480602322, 0.011309919147343288, 0.01223123344997119, 0.010501539757993731, 0.011402965590321959, 0.010633220088281636, 0.01022400444841367, 0.009042635684091464, 0.010136158531394041, 0.010445046108694655, 0.010734748421322677, 0.010655949801969078, 0.010856986048873123, 0.01145987627223437, 0.01118386152130654, 0.010432606490126728, 0.010927140525502452, 0.011106983241414145, 0.009580214309081271, 0.011058833941938202, 0.010345010851262552, 0.011329825022648473, 0.011177725691948037, 0.012835355262928456, 0.011562555056677574, 0.010994165533931842, 0.011325552812055372, 0.012615387798011564, 0.013235599589657601, 0.012547479558920332, 0.01125155382236267, 0.011226333781524142, 0.009867099926252274, 0.010150976916901701, 0.00981456892640829, 0.010714013420052564, 0.012100414836000127, 0.013482305562984867, 0.012101608805487574, 0.011406733386446304, 0.011865020706158967, 0.010192404876503065, 0.010379782500127232, 0.010288816861602905, 0.011073875574562582, 0.011720944887620786, 0.011660526270432651, 0.011958079143296477, 0.010372963634161838, 0.010986196217407736, 0.010002087405069806, 0.010538518418827155, 0.009704941123596739, 0.01072720678974811, 0.010712087520487025, 0.011460224410312943, 0.011066250051779282, 0.011052989415309224, 0.011792111340277907, 0.010461854625871915, 0.010940461844210448, 0.010633699307646589, 0.010624022094149118, 0.011272242032483613, 0.010749869822808143, 0.011597062804568674, 0.01110807968738095, 0.010639725479597148, 0.010908395584711409, 0.013349933044667018, 0.0123243550483051, 0.01190271898274429, 0.012490664839553555, 0.012177466069438828, 0.011310780630467789, 0.01140940358525683, 0.010873455550563021, 0.010788849773109501, 0.011220843005138393, 0.011463926910727748, 0.010524467595075394, 0.010552208382105969, 0.011241882980229972, 0.011374143162653274, 0.012908776430391664, 0.01321474049935015, 0.011057229033692072, 0.011967901597247985, 0.010634871974387526, 0.012847393919979678, 0.011640242470566048, 0.011764354794187262, 0.011304207829268558, 0.01102205702407454, 0.011534653134776302, 0.011215772462419877, 0.01135268923219837, 0.013785467940882474, 0.01276952440553062, 0.010324791311942041, 0.011742973970237897, 0.01239586472863265, 0.011820481236013234, 0.011435139644675858, 0.01251611692344489, 0.01181323543372642, 0.010259393448015694, 0.011032029278022465, 0.01138934125996457, 0.011995068459853424, 0.01253808441029633, 0.010578386704919134, 0.01094522258091802, 0.012023277021817103, 0.011983116519653754, 0.010726480423429016, 0.010276658120803209, 0.010088385037851429, 0.010749839256216968, 0.010689062089672774, 0.010843887916758405, 0.011330782706137311, 0.011705587331553243, 0.01078000585040528, 0.010178986357696613, 0.011618165219610762, 0.011328541439778008, 0.010569799899248606, 0.01026219816096713, 0.010753014189736407, 0.010277625362334897, 0.011523218875299335, 0.012303865209747848, 0.013293662800221375, 0.012412719348663672, 0.011435203330629742, 0.01042380482199826, 0.011658856837661085, 0.011710373960274486, 0.012691089005450436, 0.013248739273267862, 0.012153365143317933, 0.010525964427932811, 0.01296496282370707, 0.011463993021550007, 0.011076028570385438, 0.012261069450156316, 0.012477345372605819, 0.01226426795633862, 0.011606690695066016, 0.012143643295226977, 0.011312259757459552, 0.010992315957294285, 0.01532943533106626, 0.011092024194712127, 0.011358704668808766, 0.010694287202125683, 0.010878015428811366, 0.011018691580814973, 0.01155699106864085, 0.011618045609910352, 0.010675703668991806, 0.011333729498651912, 0.011866470967968508, 0.010675876192637095, 0.010828976214518499, 0.011561959603500675, 0.012470936294951428, 0.01245237169975303, 0.011408547219405325, 0.013920173570889711, 0.011122172612362303, 0.011236706234314497, 0.011720912402096465, 0.01191176160235763, 0.013553146389120613, 0.015318038165449256, 0.012672532647506268, 0.011305885443388376, 0.012750520103345639, 0.012389453325464502, 0.013207008246510289, 0.011086890499330761, 0.01098436381363253, 0.011103446616269198, 0.011398117165826218, 0.011732621911866645, 0.013128667659727181, 0.011091147599992579, 0.010766761434001697, 0.01083985050764076, 0.012238486678992926, 0.01094365956136194, 0.010698246509702924, 0.01057389471760903, 0.011229440083161086, 0.011883817906017858, 0.01190745663644984, 0.013542478866497072, 0.011197611080423948, 0.01146965810623239, 0.011649422173178298, 0.010376195634184132, 0.013337478973473264, 0.01197910038576815, 0.012784823664355818, 0.012015337660711407, 0.012304555746398167, 0.012812880568715579, 0.011655837565537766, 0.010859847432719553, 0.010762540627138698, 0.011476999313503817, 0.012024669186394674, 0.010324907533403371, 0.011546371472360498, 0.012115046621070774, 0.01099964975371205, 0.010849575032497491, 0.01114553213835079, 0.009807210731195264, 0.011080608708596127, 0.01201945659989251, 0.011022773830302809, 0.011436605238807905, 0.010857167354394917, 0.010591362626392799, 0.0115255128187247, 0.011692115744482277, 0.011529151340701394, 0.014546531051519426, 0.012343550629432947, 0.012459213299429967, 0.011571824556046613, 0.011685125860296047, 0.01103394931287493, 0.010259184236371994, 0.013641962227648085, 0.010321747947849359, 0.011727616781904605, 0.011250622217955376, 0.01041199616493244, 0.010669919945036114, 0.01258526956270449, 0.011311246370266953, 0.010734114755387245, 0.011639490573190551, 0.011108436929631612, 0.013200806248911713, 0.013496042494565829, 0.01263957078900326, 0.011033512373956906, 0.011465822657641444, 0.010904556041386378, 0.013599431652120868, 0.010494701065814625, 0.009791714244609558, 0.008964002347221375, 0.010294884814437069, 0.01029810507291961, 0.013871652574021487, 0.011472848640171904, 0.010402558630102332, 0.010557678551486387, 0.009852673673925049, 0.012398389293026047, 0.011621507282032663, 0.009967140563868136, 0.01280606309090768, 0.009330114333904703, 0.011560788782769582, 0.01178744196876202, 0.010988048679879849, 0.010201127564532547, 0.01134249736787167, 0.0112425701365602, 0.009867586204808782, 0.011750882025482367, 0.012177731615191933, 0.010404844723897366, 0.010418253188478511, 0.010502939935957061, 0.010729987468609769, 0.011754797421181766, 0.011650378921476334, 0.011996508944877037, 0.010463821794374323, 0.011196107180678032, 0.011977020564712098, 0.011647565795514793, 0.011667368202315304, 0.010968175921477986, 0.011953650960032411, 0.010752291589534856, 0.013116454301674716, 0.013736783965398751, 0.012341451475925004, 0.012270776323448042, 0.010340757877337107, 0.010888267913550308, 0.011224134834619379, 0.009625939319606883, 0.009925185847972355, 0.009482847873369228, 0.010986612600040985, 0.011111298972473446, 0.010908854783352807, 0.010461443328959671, 0.010672619491429456, 0.010430146689624591, 0.01048379433666622, 0.011649538699094615, 0.011147832115376993, 0.012018384032169337, 0.01106759447869807, 0.009612710254814293, 0.011704904587770964, 0.010687630427532768, 0.00977516337390196, 0.009024562841962082, 0.009423225036468887, 0.010119454525294596, 0.010635528565256807, 0.010127006601197426, 0.009939977835643725, 0.009345031850815238, 0.012190187121965084, 0.010505037696602245, 0.010111623680303187, 0.009392067339766443, 0.009598288193694876, 0.010185604002435787, 0.012016813288971662, 0.011440126912197184, 0.01113106520286566, 0.013267667301903222, 0.010274530795273512, 0.00919477747332055, 0.008477021036017681, 0.009880232093632027, 0.010951146029138608, 0.010497290941526653, 0.0101716980211132, 0.009817587320741077, 0.011145982789163423, 0.010386744956456397, 0.010405913581197197, 0.011799570023060412, 0.009959634440018265, 0.010776640330465702, 0.014795886500233542, 0.010412884156670894, 0.00946176633444524, 0.010404398154873385, 0.010569348306726706, 0.01105674783544768, 0.011642019259874332, 0.010869528182031853, 0.00964747204271998, 0.010349378025902125, 0.01166077592649701, 0.009868153806603148, 0.011171345663126206, 0.009778759650023791, 0.00933177560738003, 0.008950225790739364, 0.012115801604401157, 0.01126339538430799, 0.011600988570399887, 0.010382586795258353, 0.009854484795689965, 0.00995869241937479, 0.010101066712418692, 0.009517649770286157, 0.00956091319387346, 0.00995987388676793, 0.01048802924636113, 0.009375408553236436, 0.010436849637018556, 0.009571260898819529, 0.010330123615380856, 0.010231236592148914, 0.009068717732484721, 0.012595809050203199, 0.011709465834549918, 0.010539977695652392, 0.009511595225627547, 0.009840731370430966, 0.009848102777870583, 0.009608981914888091, 0.010055363855187233, 0.010272034031323568, 0.009757275399578366, 0.00883997274911326, 0.01098936713047078, 0.010257393159455496, 0.008866838143674737, 0.009219709731706395, 0.009311583955426563, 0.008674466811696816, 0.0096540493127476, 0.010538075791420543, 0.010042582180017924, 0.009909704620295333, 0.010894836793617874, 0.010087624096615516, 0.009062855774670009, 0.00812474147026903, 0.009976151867812316, 0.010284316215532786, 0.009803365346022868, 0.009042753754190724, 0.008677203077829744, 0.010820179361645397, 0.011956743158821254, 0.011828637976101555, 0.010064940500071068, 0.012140840189519836, 0.011529829256948418, 0.009769740360379742, 0.009798044818356054, 0.011163036229953963, 0.010162791378669255, 0.009562504630899395, 0.01018206270241318, 0.01065164838099367, 0.008050497733057918, 0.010564249500390884, 0.00913150261764931, 0.01189821258736614, 0.010281986565400374, 0.008722411331043001, 0.011243438676865784, 0.01021610726013466, 0.008446091356968478, 0.008802457384278576, 0.008755990819858067, 0.00942145168545389, 0.0103427513442704, 0.009146632808879647, 0.010156712119463762, 0.009226573078603733, 0.008643679346235627, 0.009621798172188535, 0.00945240939004691, 0.007987468625400975, 0.00956493398918754, 0.010967775187150761, 0.010778074787163187, 0.009783134215189442, 0.00849674192273554, 0.008523265892321852, 0.010682347563223654, 0.01103103376005863, 0.012920569032402155, 0.012576980073156378, 0.011663880550671054, 0.010389746148365865, 0.010974010265535003, 0.01027064270445675, 0.00910778953628219, 0.009717706992309581, 0.009204976889737556, 0.008937822399494208, 0.009159958099142034, 0.010185995284263286, 0.01037940029857688, 0.010350445653442427, 0.011018941047741851, 0.009398759692134868, 0.011269752581613057, 0.012120975503486077, 0.010278812005534693, 0.009059875210870283, 0.008017090351726633, 0.008980427560123044, 0.00929248698563944, 0.010446507414092424, 0.008751499674850765, 0.009878823323884735, 0.008833954421548829, 0.009960604179491224, 0.011695771161034712, 0.010756479586952724, 0.008128773838808048, 0.0098897419700091, 0.007881070830252409, 0.00862996356881199, 0.009719473281425455, 0.009495391836243962, 0.009408180456787592, 0.008584712788125356, 0.00850299458181752, 0.008971239806717447, 0.009936199265547629, 0.009180681201659328, 0.009223184334341562, 0.011107303967276301, 0.009883751151564106, 0.007907321565336023, 0.0091262066720501, 0.009216752861686254, 0.009178905103799978, 0.009403308191776394, 0.01218332281191191, 0.011385888752999493, 0.009074419664166824, 0.009246354843707325, 0.0076941547167105094, 0.008952745121255394, 0.00925779245226104, 0.009884907644872749, 0.010255639476036957, 0.008037014749273852, 0.00941973765990461, 0.01002110887152415, 0.008457981115620032, 0.010194642285385696, 0.01281761748930397, 0.011057454468532681, 0.010187400989895463, 0.00863257461266235, 0.009555793520219453, 0.008919144122653173, 0.008304604711662937, 0.008522730427382655, 0.01013926741089452, 0.009828267951840651, 0.010160592946727233, 0.010312307637638811, 0.01043479509090218, 0.009167526409330535, 0.008890760078922063],
-            'im_sum': 7294.44604131,
-            'regn_sum': 28.4447036739,
-            'npts_real': 191116800,
-            'rms_per_field': 1,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_im_stats = {'com_bmaj': [False, 0.9308618284489858],
+            'com_bmin': [False, 0.7193287080871101],
+            'com_pa': [False, -88.12278938107711],
+            'npts': [True, 191116800],
+            'npts_unmasked': [True, 105012873.0],
+            'freq_bin': [True, 244151.1796875],
+            'start': [True, 2.617644e+11],
+            'end': [True, 2.619956e+11],
+            'nchan': [True, 948],
+            'max_val': [False, 0.0846285372972],
+            'max_val_pos': [True, [290, 236, 0, 511]],
+            'min_val': [False, -0.0710834935308],
+            'min_val_pos': [True, [192, 206, 0, 674]],
+            'im_rms': [False, 0.012281671696],
+            'rms_per_chan': [False, [0.015667012104297096, 0.01249556647636659, 0.011119753312996314, 0.011559686287211745, 0.012295549107925172, 0.013497595553035495, 0.013890985018415562, 0.01537521583867029, 0.012560026473467654, 0.01211174756347237, 0.01068202599475987, 0.011446394296400014, 0.013360170834984883, 0.011779590786641968, 0.011813658887463094, 0.01105808607636477, 0.011211227704164385, 0.012672658897254005, 0.009644489317411001, 0.012306186479311533, 0.011820657820002498, 0.012528421200108672, 0.012097912099003863, 0.014149728955396576, 0.013040286513860739, 0.010926749613896915, 0.01135630004195933, 0.011450114870829052, 0.013874579045960853, 0.012713343335685372, 0.012365580200560802, 0.01112892658338281, 0.011735154726597849, 0.010271529404584005, 0.012034388520273378, 0.011825840449510846, 0.01201477612491181, 0.011271561871280695, 0.01263051888325016, 0.010917661123920426, 0.012304591002675239, 0.01382691832578588, 0.012025131483665455, 0.01471038786901529, 0.01268901239406491, 0.012269947721949661, 0.010339439002704098, 0.010588455121686411, 0.010663853975518148, 0.011927246586817075, 0.011971607513601665, 0.011740843559651189, 0.010860788064116878, 0.0113500230752135, 0.011498619788115836, 0.011798959247821511, 0.010929419432007908, 0.014579761324742322, 0.012976422990339583, 0.010218616946376293, 0.011098072571178239, 0.01168771322025399, 0.011600913193876674, 0.011684300942923293, 0.01071321921174995, 0.011492474041242522, 0.012011160150216459, 0.01290685298415816, 0.010431320458890848, 0.010472939825276044, 0.013447112178611359, 0.011687328995254547, 0.010898530945791702, 0.009752776379182097, 0.01164870192026142, 0.012676083477754277, 0.01431102043820875, 0.014295093842479985, 0.012626217708334785, 0.011231466919543581, 0.010535901939971674, 0.01062302128541249, 0.011298369163697381, 0.012502624763702992, 0.011305836954063448, 0.01215581953177045, 0.010607739795551263, 0.01112311151599714, 0.010136484643153825, 0.01128990114770225, 0.012014173589023637, 0.013193805876756995, 0.012330109734653474, 0.010766011891193288, 0.01153437959726003, 0.011978851287972363, 0.011109003021191307, 0.011833746981365703, 0.011880050178226903, 0.009862018971003887, 0.012800148141077113, 0.012007057726628611, 0.012985090676833535, 0.0129505958602198, 0.011696207783179233, 0.013661835268823226, 0.015246672300909788, 0.012047095989451426, 0.014346897791128894, 0.011754599415304922, 0.011009518999420173, 0.011052019581176067, 0.012820563697322922, 0.01167880516927239, 0.010768042038144418, 0.012407448804067968, 0.011258173984772548, 0.010006383872394846, 0.012053714508583965, 0.011282069296445192, 0.01185568667180287, 0.01224398735628035, 0.009954101011210293, 0.01224524095389172, 0.01083068385084185, 0.012042693023557548, 0.010466482413183785, 0.01270824749297588, 0.009858469333879292, 0.009616370018819147, 0.011251488506345967, 0.010944010326885257, 0.009937336043765989, 0.011811563673806756, 0.01374671433132631, 0.011885072616527947, 0.01128936295560062, 0.010745268810504142, 0.010783213461157924, 0.010401671249270496, 0.010546985468598878, 0.011704982925431526, 0.01151082357877418, 0.011389394982234517, 0.009891395767145527, 0.012676962217854196, 0.01239854403608683, 0.01012692292366004, 0.01208213727619496, 0.010426410721875919, 0.011489717695650697, 0.011351311722094469, 0.010788345620860689, 0.012413824258742542, 0.012869284594202364, 0.01254719377424318, 0.012493275011557376, 0.012026588643842862, 0.011444080682226833, 0.014504798148840915, 0.012783237416754493, 0.010978226098473022, 0.011226830327894566, 0.010386044707730815, 0.01179048796956224, 0.010466753647787678, 0.010520561042133916, 0.009806686930384046, 0.009825709113667067, 0.011163605933804482, 0.009898306765781937, 0.010639624156931048, 0.010765250926759881, 0.011871167097798471, 0.012699735217972713, 0.012271717028350141, 0.01011927965625519, 0.01185201591720369, 0.01187934596239281, 0.012860096441123013, 0.01045831490108293, 0.01168302685217849, 0.01231538733094323, 0.013711623609843774, 0.010509256728676152, 0.009725104065778598, 0.010742348970319717, 0.010497654900964383, 0.01226776948490034, 0.009968096362512743, 0.01065210210757194, 0.0113790694870219, 0.013691499504725839, 0.009709697345128918, 0.011668556206361638, 0.01203851403100267, 0.011090927358203469, 0.012322941164683295, 0.010763675962361283, 0.01243680774921738, 0.01273630413642944, 0.014925176287167791, 0.013343151602031603, 0.012184525933592252, 0.011868284483931634, 0.010612397890136424, 0.010925259212727632, 0.010736722739232834, 0.01128555748033192, 0.012106425521907454, 0.012536567241883659, 0.011811387511674406, 0.011410855057029651, 0.010610454803475318, 0.010985570534714531, 0.013420524115250722, 0.01237714866693324, 0.011400339204092964, 0.011530006934858634, 0.013404558644802023, 0.01356996738906636, 0.011809592810750743, 0.012195836458918021, 0.013983595304231499, 0.012723543201613906, 0.011350835725055812, 0.012149584287404331, 0.011272979457253907, 0.012262167105146599, 0.011175511659374244, 0.0102697228260645, 0.01334158429888008, 0.012408056314862907, 0.011491512834255597, 0.00928563088957559, 0.011723585674628282, 0.012562330134652718, 0.012321060378936478, 0.011175930032929103, 0.014444827741007454, 0.013240412166233477, 0.00954358182816961, 0.009886456935597223, 0.011315336508350314, 0.011160043368747817, 0.011084649991455213, 0.011426321774805799, 0.010549594186710465, 0.011211051291167739, 0.01176768646746374, 0.014686912922251879, 0.011246937183158924, 0.009773020704868391, 0.012859597369260864, 0.012513039230848268, 0.013313363039583453, 0.012077863600292971, 0.011426654372094657, 0.011508622055300996, 0.011247566432148776, 0.011623431851054248, 0.011014612057401632, 0.013022506823681756, 0.011485416194269382, 0.01154829448377298, 0.01202691068493326, 0.012642809433009043, 0.010836720661823337, 0.012182321211669447, 0.012349974771377626, 0.01129390722457532, 0.011135976780555478, 0.011531711369332466, 0.012456469996333023, 0.01066628966176333, 0.011106915433366485, 0.012535628404137928, 0.01329621583757732, 0.01309891488346235, 0.011823826809276102, 0.010766426258224856, 0.010769239154148987, 0.0110549819438351, 0.00941967982610333, 0.012016650037610828, 0.011327327654288295, 0.01209848828634942, 0.011506245997467066, 0.011684994479376746, 0.013606364448973455, 0.010446608584558138, 0.01066351605331571, 0.010707363943853028, 0.011928301857376082, 0.01294521124420252, 0.010131421709150719, 0.011849062523828911, 0.011443882324740128, 0.012461616479499914, 0.011076627457455922, 0.012813631803261182, 0.011813942249706206, 0.012869872838703512, 0.016215007268429744, 0.016455835790109574, 0.016195858609782746, 0.010586943752781703, 0.011714040295832838, 0.011002274392087834, 0.013100914878598957, 0.011252873658270539, 0.011303009258586938, 0.012859801115861635, 0.012461620893746536, 0.011357224642469422, 0.011637071400518138, 0.011468136930703879, 0.01411435236184562, 0.01213930177391437, 0.012012513247874964, 0.012399215107416643, 0.017256708026613384, 0.011747981333506227, 0.012212040710131029, 0.011702161891262641, 0.01357489047444866, 0.0142883693783086, 0.013345754616212652, 0.0111940675739781, 0.011675373377606931, 0.011441040364084332, 0.013384698628456768, 0.013142898529307593, 0.01225725868583698, 0.012226995314265549, 0.011976385838259086, 0.014630107009854095, 0.01393710853346633, 0.011607705747133181, 0.013218275149292351, 0.011873190322311846, 0.013747319388144195, 0.010499983139191808, 0.011624206615490757, 0.013225475425745141, 0.013680190321206091, 0.012046704878481942, 0.012471069574344537, 0.010953227174093479, 0.011926261656122828, 0.012459493726885675, 0.014416014101405097, 0.013092512809823969, 0.012391343965965609, 0.012032749220004132, 0.011174480504353115, 0.0128020365473887, 0.012373815528334766, 0.013220253396707947, 0.011397076938533486, 0.011737376857836166, 0.011339198156054645, 0.013683087656476136, 0.014055337259697667, 0.011872209955622893, 0.011489327319776421, 0.011356744920908554, 0.011924222252823101, 0.012924011814257761, 0.01156472654485118, 0.012452508623193576, 0.01615067926057454, 0.014393758763013523, 0.012021023556503968, 0.011686927548314128, 0.012558578572353821, 0.011698219106403014, 0.011850872070781452, 0.011244104935548218, 0.010803851710396785, 0.011326571988274907, 0.012046055166178125, 0.012789254887232475, 0.012054328352918125, 0.012531458975574155, 0.011667295333375608, 0.012715182062018394, 0.01416008745695674, 0.011590350023313635, 0.013280049474709302, 0.012317202369770713, 0.011350237164077244, 0.011468547414280923, 0.011839276627787746, 0.011984505075773167, 0.010498556329113671, 0.011607479477631402, 0.01146628697832332, 0.012454745876293334, 0.015324136554616518, 0.012648464631195741, 0.011476812708577248, 0.012388293945433912, 0.013097915532805426, 0.010844862222727058, 0.010849704992030628, 0.011857198994433613, 0.014369812497106239, 0.01614444176168378, 0.010859408246343039, 0.012355198379138267, 0.013369345496468774, 0.01352324109813424, 0.01249093576911017, 0.011839983100254041, 0.013790424278145797, 0.013615888137811373, 0.012137597782120882, 0.011920659584678292, 0.01198453326792445, 0.011455625248390569, 0.00998759798749584, 0.011907441379145489, 0.011445931803455656, 0.012802399352945356, 0.011807120236149467, 0.01226251626371192, 0.013803196660688412, 0.011396570477306092, 0.011871861677445866, 0.012409145934442605, 0.012190261729970274, 0.011355705245344998, 0.013059478167556213, 0.011340084762450894, 0.014094393707136091, 0.012227696710476979, 0.015109377241227427, 0.012328532759057612, 0.012948495238519125, 0.012448990941930516, 0.014909025593587475, 0.013966538678131317, 0.013951304003408212, 0.012643902341794237, 0.012381886725880696, 0.011608607970324055, 0.011524217824005454, 0.011753643583578194, 0.011909335216658386, 0.01500036992819057, 0.0146564784502679, 0.013039737284216963, 0.013751934845130839, 0.013710006202952523, 0.01146836988848032, 0.011545597482743033, 0.011534520901890178, 0.013313753578876611, 0.012923196186255153, 0.013864645252987274, 0.01291016687946222, 0.012187645424073405, 0.0123954851702774, 0.011090370304889066, 0.012569939183393495, 0.011171977695060169, 0.01193123241184618, 0.012223023550711422, 0.012575288535573641, 0.013397233030543118, 0.012677733376390488, 0.012824707036730977, 0.012077443785414215, 0.011917723071670982, 0.012440011533195431, 0.012737137257114249, 0.013226824784925779, 0.011705373001984695, 0.013236156564942205, 0.012428547205061067, 0.011897634394487568, 0.012340276631541067, 0.016514178673390664, 0.01279768810975663, 0.013295330804538989, 0.013923981704086203, 0.013293372296425762, 0.012807871537395961, 0.01233101894981078, 0.012328987872006852, 0.01163784902034462, 0.013313092897728503, 0.012985108364251114, 0.011142998656392029, 0.012369903540412508, 0.012947299676825685, 0.012653423845945748, 0.01562996207353602, 0.014022980315620364, 0.013079373939625572, 0.013669501711869474, 0.011451239023725265, 0.01387333519961978, 0.013272974615061776, 0.013010075621525907, 0.012057515236229667, 0.013348290271015285, 0.012474986304014272, 0.012822235425304088, 0.013469504747600882, 0.015049934910563677, 0.013108662650721938, 0.01169414937155411, 0.014209631933301799, 0.014029595420562672, 0.01313572956489975, 0.013768070645688276, 0.013669663522466149, 0.012789385397857027, 0.011759854640416133, 0.013381506917531618, 0.01317316470287087, 0.013731014632491167, 0.014096287340039539, 0.011977139109191822, 0.01269262588325782, 0.014216384246730137, 0.012780653296103527, 0.012899528621024064, 0.011032967652830057, 0.012102612001078233, 0.011976078228056453, 0.011883895621375998, 0.012802365574674025, 0.01324801385166456, 0.013229524374842769, 0.012151160553514988, 0.011697133232144788, 0.013819175149287335, 0.012140935480252437, 0.011981813853002501, 0.012084722992447795, 0.012585444087037377, 0.012414152508510147, 0.013316552564554114, 0.013253620957310662, 0.014878797637568952, 0.013615894050495254, 0.012709069629370266, 0.012427103871389584, 0.013255141575299076, 0.012738711652745057, 0.014904432456876815, 0.014210867966534892, 0.013509920011482207, 0.012425165695341685, 0.012533528802502332, 0.014336868162538341, 0.011833811236181477, 0.015193744677447416, 0.01431279129775192, 0.013259559570353551, 0.012994100393289547, 0.013864774950178729, 0.012159929964791984, 0.01419863835690063, 0.014190789497478196, 0.013672387203935446, 0.012055278077236548, 0.012085479493499343, 0.012708973627136714, 0.012057165753153366, 0.012948753136076728, 0.01300072865900603, 0.011737981749916887, 0.013527304652929072, 0.012929913822303431, 0.011886809618695744, 0.012833849789732805, 0.01302949373163326, 0.013895403620873681, 0.013171820320213534, 0.013953961887679132, 0.013734000181833348, 0.01262587625087098, 0.012199103159950037, 0.013643673456292997, 0.013397836614489634, 0.01594172388898437, 0.015573035287868315, 0.013917856223549286, 0.012536353641427949, 0.014860466731552354, 0.013552708900045911, 0.013629466127257123, 0.012378335224334382, 0.013116351705612704, 0.012177988274798253, 0.012805373309334908, 0.013766331009848752, 0.014681878707956165, 0.011926702054932887, 0.012452273266241426, 0.012579633618734222, 0.012271260658847647, 0.013434178141045432, 0.011256170201273603, 0.012241164545083469, 0.012715311381559832, 0.014158217761420192, 0.013710431625047755, 0.015544655166662385, 0.012479494691650066, 0.012794382968093331, 0.013723467058383875, 0.01129790706237436, 0.01386400204442386, 0.013948937970667924, 0.01474167932185738, 0.012394940495298034, 0.014413979480373103, 0.013415306676650376, 0.013015296980135697, 0.012460061661220363, 0.012148683531904852, 0.014565058530881577, 0.013354317640191604, 0.010932991047176424, 0.013472405580926574, 0.014090167896930112, 0.011289132690347727, 0.013030955001855788, 0.011930998072436357, 0.01119650545759846, 0.01336252769201265, 0.013985875731024684, 0.011744402770443252, 0.012987363600946232, 0.012570373512332105, 0.011967267431977555, 0.013963824316748901, 0.013113917131760142, 0.015175164104330932, 0.01327121004907913, 0.01480994279997818, 0.013017833326488197, 0.012590284721083084, 0.013636613698566152, 0.013023427264598512, 0.0118689366333651, 0.014431815130736951, 0.011510423632609004, 0.013751161061425392, 0.011946926261948976, 0.011574213816363992, 0.013103519491424586, 0.01256833652316557, 0.013717201694781961, 0.011799548188880763, 0.014221219755103955, 0.013122869137854539, 0.015681024673163967, 0.013977036504021368, 0.01385158873128627, 0.01192090212998216, 0.013405064782284188, 0.012370543487842847, 0.013543641566948098, 0.012190038354089203, 0.010485951880655316, 0.01065474654892235, 0.011894241281652475, 0.012235290499779875, 0.016341337277583624, 0.011951837129874415, 0.012786343847113055, 0.011700169381836972, 0.0116987237015556, 0.01584129766486376, 0.012934100451129409, 0.012421043404934572, 0.013319782161544239, 0.010822586447971657, 0.013768225063031962, 0.01256900129001914, 0.013155623546818948, 0.011216305081099302, 0.01342997193575067, 0.01202191464374732, 0.010697624321778235, 0.015231405911477284, 0.012707984996807302, 0.011509494099144266, 0.012370090248740612, 0.012333106398064926, 0.012355927978977287, 0.013324826178046834, 0.012937849744614949, 0.013251091849170686, 0.012241393042655245, 0.012809410411935642, 0.013415437736483378, 0.013549261827461793, 0.013063192366571214, 0.012121670719955952, 0.01336030963204456, 0.012030706877818232, 0.01620522326989027, 0.013898156174912801, 0.013845480988651687, 0.013887455990710647, 0.012068390405162546, 0.011755939925068324, 0.013275604498608711, 0.011216611629757777, 0.011677478386439837, 0.010605866598758461, 0.0123599433807257, 0.013049424843940767, 0.011751712640564415, 0.011750132281128709, 0.012538068443295915, 0.01178746192810137, 0.012416680391644138, 0.013967663494309064, 0.011784356183646988, 0.014604214590101753, 0.011833948152033797, 0.011315804095294313, 0.01332743466825628, 0.013053434708846068, 0.011059804195895667, 0.010564587906126596, 0.01102267731863153, 0.011342558989477891, 0.01202689018525376, 0.012453421183126498, 0.011102185306584089, 0.010463866575165995, 0.015269163260545289, 0.011918415549432885, 0.011369128293761672, 0.010371364768147193, 0.011736371996752575, 0.012797487595901094, 0.013259851973223793, 0.012380797309777503, 0.013308425109731127, 0.015320758463204735, 0.010225926749762294, 0.011258787297291056, 0.009966991432626141, 0.011479673309463388, 0.012747496824004115, 0.012375931475739925, 0.011058517478639826, 0.012762924931169286, 0.012477944671249878, 0.01260839664096796, 0.011204724607765226, 0.013902208290096557, 0.010776228597758947, 0.013309499022509929, 0.017424540106428448, 0.011666803285392461, 0.010612250155377485, 0.01225365093143365, 0.012565477652135646, 0.012560022064203515, 0.013311882508317791, 0.012505545505753059, 0.010306455499657464, 0.012676663075725451, 0.012498771477844908, 0.01058998021853162, 0.01405727829447646, 0.011586866156371556, 0.010518281562552243, 0.010731082611461988, 0.013668577521770654, 0.012951237133989603, 0.013297250697740166, 0.011256633699887369, 0.011410614744018555, 0.011920105512413305, 0.010903972882515475, 0.01151646075083865, 0.011652106943818302, 0.011279191661803575, 0.013096542735610034, 0.010571055541644716, 0.0125850059607434, 0.010687465761303071, 0.012287345913328777, 0.011395341842353034, 0.01066365582500683, 0.014598748750369274, 0.012549443442399444, 0.011441826793593216, 0.010884568047403273, 0.01180816627630304, 0.01120499414253317, 0.012397216994592853, 0.011586660529077834, 0.012109595113175883, 0.01012537646617585, 0.010614883001281113, 0.013062279023311165, 0.011156508307384487, 0.011360974428249597, 0.010662569680858604, 0.011096498962291788, 0.010554891464213529, 0.011990213710704774, 0.01199714967099034, 0.011854981439770644, 0.011862683712584867, 0.012802582494057203, 0.011577453698377574, 0.01019052971268619, 0.01019901528332309, 0.012281126786588159, 0.011415812682763855, 0.01105581294331331, 0.01066694467332525, 0.010788622197805227, 0.012827960070295203, 0.014827747643843274, 0.01228615008936392, 0.012695947954523156, 0.01372504743362642, 0.012856030967871494, 0.010597007817762974, 0.012304902393004517, 0.012065110220915125, 0.01195668425986831, 0.01086087593260838, 0.01231769839828131, 0.012128147369877246, 0.010817010237205124, 0.012643034637853885, 0.011662533330489484, 0.01332388398778439, 0.011379239016704942, 0.011338092027712373, 0.013532638696355816, 0.01088929059364428, 0.009833061982280674, 0.01039296581185181, 0.010551371059577607, 0.012800002623802556, 0.011294950650386104, 0.010968921330141941, 0.011815483268140185, 0.010991027109824806, 0.010101876381734976, 0.011413636304184781, 0.01168187248586187, 0.010061068733763744, 0.01197014119071967, 0.012698376660930412, 0.011322714727807322, 0.01090459130971119, 0.009559547835004872, 0.010498329644215184, 0.013744539638296114, 0.01241662294231113, 0.013920642752687732, 0.01423709054803628, 0.012246450050510711, 0.011798522946392928, 0.012688307869426999, 0.011701411381744752, 0.010963335503348588, 0.011647664158072897, 0.010302975974959723, 0.011032126020690486, 0.011010171786400392, 0.012070857382656947, 0.012159491609797332, 0.012081814922729835, 0.01247264839908568, 0.011200668427178526, 0.013522937854091454, 0.013105319145488747, 0.011579740082727632, 0.010161886039664997, 0.010813245667125665, 0.010532288644280609, 0.011266459095452083, 0.012340346869037254, 0.010811434812069995, 0.012335213065123588, 0.00964337831495196, 0.012187168579263661, 0.013251917772334918, 0.011498371091243765, 0.010161965220729475, 0.01181737461439899, 0.009784767253164278, 0.009961151956167761, 0.011528718678809174, 0.010742033001898285, 0.010879391169694889, 0.010316128340493388, 0.010247573903152401, 0.011062856172903247, 0.011417489025016405, 0.01119193099686049, 0.01098276222674334, 0.014026370736078514, 0.01043225916128798, 0.010194459622871846, 0.010815687677297334, 0.011134576557489298, 0.01142961024001326, 0.010585867874587658, 0.015266592121768712, 0.011920413664227218, 0.009755732807066618, 0.012196390497070086, 0.009319626263621858, 0.011464227492400532, 0.01051867055357182, 0.012952488572362067, 0.010904039384865052, 0.009939432112089783, 0.011965844054709109, 0.010384358639967691, 0.010084010975718798, 0.013177624524319486, 0.014828138853365192, 0.011173145152672995, 0.011590247202021274, 0.010687161551733566, 0.011618327067404854, 0.010073717357638476, 0.01029100516208372, 0.010542481107447248, 0.011770135056296347, 0.011999996525704881, 0.011631265879266437, 0.012435408590750038, 0.012434157423771368, 0.010597499708746861, 0.010475004983816016, 0.013007106929861926]],
+            'im_sum': [False, 4159.24976371],
+            'regn_sum': [False, 8.40242256899],
+            'npts_real': [True, 191116800],
+            'rms_per_field': [False, [0.013743433433999516, 0.012734920080011661, 0.012977344646935137, 0.012849700732137936, 0.012869319430463244, 0.012786113424398437, 0.012763233601525502]],
+            'im_fit': [False, [0.0334733812258343, 3.3091253557475184, \
+                       2.9202236206835717]],
+            'im_fit_loc': [True, [568, 261.9030537244612]],
+            'im_fit_pix': [False, [285.9532542526675, 238.49062286149936]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [209, 387, 0, 0]), \
                       (img+'.image', False, [209, 388, 0, 0]), \
                       (img+'.image', True, [20, 204, 0, 0]), \
                       (img+'.image', False, [19, 204, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( \
-            self.check_list_vals(im_stats_dict['rms_per_chan'], \
-                exp_im_stats['rms_per_chan'], epsilon=0.01), True, \
-            valname='RMS per channel of .image', exact=True)
-        out, report1_u = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_w = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_x = th.check_val( \
-            im_stats_dict['rms_per_field'], exp_im_stats['rms_per_field'], \
-            valname='RMS per field of .image', exact=False, \
-            epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_a1 = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_d1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1 + \
-            report1_d1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 191116800,
-            'freq_bin': 244151.1796875,
-            'start': 261764375854.0,
-            'end': 261995831173.0,
-            'nchan': 948,
-            'mask_pix': 156228,
-            'mask_regns': 39,
-            'npts_real': 191116800}
+        exp_mask_stats = {'npts': [True, 191116800],
+            'freq_bin': [True, 244151.1796875],
+            'start': [True, 2.617644e+11],
+            'end': [True, 2.619956e+11],
+            'nchan': [True, 948],
+            'mask_pix': [True, 9091],
+            'mask_regns': [True, 33],
+            'npts_real': [True, 191116800]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/mosaic_cube_eph.pb.crtf')
 
-        exp_pb_stats = {'npts': 191116800,
-            'npts_unmasked': 105006865.0,
-            'freq_bin': 244151.1796875,
-            'start': 261764375854.0,
-            'end': 261995831173.0,
-            'nchan': 948,
-            'max_val': 1.0,
-            'max_val_pos':[211, 203, 0, 0],
-            'min_val': 0.200000017881,
-            'min_val_pos':[56, 302, 0, 567],
-            'npts_0.2': 105006529,
-            'npts_0.5': 60643408,
-            'npts_real': 191116800,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 191116800],
+            'npts_unmasked': [True, 105012873.0],
+            'freq_bin': [True, 244151.1796875],
+            'start': [True, 2.617644e+11],
+            'end': [True, 2.619956e+11],
+            'nchan': [True, 948],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [211, 203, 0, 0]],
+            'min_val': [False, 0.200000017881],
+            'min_val_pos': [True, [380, 278, 0, 194]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 105012873],
+            'npts_0.5': [True, 60644654],
+            'npts_real': [True, 191116800],
+            'pb_fit': [False, [1.1107312860848533, 36.56029006144532, \
+                       36.55082591613064]],
+            'pb_fit_loc': [True, [568, 261.9030537244612]],
+            'pb_fit_pix': [False, [211.17711692047547, 203.28127297020697]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/mosaic_cube_eph.psf.crtf')
 
-        exp_psf_stats = {'npts': 191116800,
-            'npts_unmasked': 191116800.0,
-            'freq_bin': 244151.1796875,
-            'start': 261764375854.0,
-            'end': 261995831173.0,
-            'nchan': 948,
-            'max_val': 1.0,
-            'max_val_pos':[240, 210, 0, 0],
-            'min_val': -0.0456548333168,
-            'min_val_pos':[230, 216, 0, 14],
-            'im_rms':  0.0122779442959,
-            'im_sum': 130.930138815,
-            'npts_real': 191116800,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 191116800],
+            'npts_unmasked': [True, 191116800.0],
+            'freq_bin': [True, 244151.1796875],
+            'start': [True, 2.617644e+11],
+            'end': [True, 2.619956e+11],
+            'nchan': [True, 948],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [240, 210, 0, 0]],
+            'min_val': [False, -0.0456548333168],
+            'min_val_pos': [True, [230, 216, 0, 13]],
+            'im_rms': [False,  0.0122779442959],
+            'im_sum': [False, 130.930138815],
+            'npts_real': [True, 191116800],
+            'psf_fit': [False, [0.8856109995595133, 1.082867148220076, \
+                        0.8509534645745089]],
+            'psf_fit_loc': [True, [568, 261.9030537244612]],
+            'psf_fit_pix': [False, [239.9661891995272, 209.99207815393726]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/mosaic_cube_eph.residual.crtf')
 
-        exp_resid_stats = {'npts': 191116800,
-            'npts_unmasked': 105006865.0,
-            'freq_bin': 244151.1796875,
-            'start': 261764375854.0,
-            'end': 261995831173.0,
-            'nchan': 948,
-            'max_val': 0.0589463338256,
-            'max_val_pos':[269, 264, 0, 765],
-            'min_val': -0.0639033019543,
-            'min_val_pos':[211, 186, 0, 592],
-            'im_rms': 0.0105758073519,
-            'im_sum': 3583.31516361,
-            'npts_real': 191116800}
+        exp_resid_stats = {'npts': [True, 191116800],
+            'npts_unmasked': [True, 105012873.0],
+            'freq_bin': [True, 244151.1796875],
+            'start': [True, 2.617644e+11],
+            'end': [True, 2.619956e+11],
+            'nchan': [True, 948],
+            'max_val': [False, 0.0698681697249],
+            'max_val_pos': [True, [276, 250, 0, 321]],
+            'min_val': [False, -0.0710834935308],
+            'min_val_pos': [True, [192, 206, 0, 674]],
+            'im_rms': [False, 0.0122735658254],
+            'im_sum': [False, 3753.62547857],
+            'regn_sum': [False, 8.40242256899],
+            'npts_real': [True, 191116800]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/mosaic_cube_eph.model.crtf')
 
-        exp_model_stats = {'npts': 191116800,
-            'npts_unmasked': 191116800.0,
-            'freq_bin': 244151.1796875,
-            'start': 261764375854.0,
-            'end': 261995831173.0,
-            'nchan': 948,
-            'max_val': 0.0502305738628,
-            'max_val_pos':[258, 261, 0, 504],
-            'min_val': -0.0168753024191,
-            'min_val_pos':[304, 224, 0, 652],
-            'im_rms': 7.7618298009e-05,
-            'im_sum': 95.9311681981,
-            'regn_sum': 0.698479007697,
-            'mask_non0': 15139,
-            'npts_real': 191116800}
+        exp_model_stats = {'npts': [True, 191116800],
+            'npts_unmasked': [True, 191116800.0],
+            'freq_bin': [True, 244151.1796875],
+            'start': [True, 2.617644e+11],
+            'end': [True, 2.619956e+11],
+            'nchan': [True, 948],
+            'max_val': [False, 0.032535340637],
+            'max_val_pos': [True, [288, 214, 0, 511]],
+            'min_val': [False, -0.00106793956365],
+            'min_val_pos': [True, [295, 238, 0, 589]],
+            'im_rms': [False, 2.52036519684e-05],
+            'im_sum': [False, 10.4785933242],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 1460],
+            'npts_real': [True, 191116800]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 948,
-            'npts_unmasked': 948.0,
-            'freq_bin': 244151.1796875,
-            'start': 261764375854.0,
-            'end': 261995831173.0,
-            'nchan': 948,
-            'max_val': 45510.7695312,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 45195.4453125,
-            'min_val_pos':[0, 0, 0, 594],
-            'npts_real': 948}
+        exp_sumwt_stats = {'npts': [True, 948],
+            'npts_unmasked': [True, 948.0],
+            'freq_bin': [True, 244151.1796875],
+            'start': [True, 2.617644e+11],
+            'end': [True, 2.619956e+11],
+            'nchan': [True, 948],
+            'max_val': [False, 45510.7695312],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 45195.4453125],
+            'min_val_pos': [True, [0, 0, 0, 593]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 948]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img, '.weight')
+        wt_stats_dict = self.image_stats(img+'.weight')
 
-        exp_wt_stats = {'npts': 191116800,
-            'npts_unmasked': 191116800.0,
-            'freq_bin': 244151.1796875,
-            'start': 261764375854.0,
-            'end': 261995831173.0,
-            'nchan': 948,
-            'max_val': 0.317849487066,
-            'max_val_pos':[211, 203, 0, 10],
-            'min_val': 6.55390249449e-05,
-            'min_val_pos':[451, 65, 0, 947],
-            'im_rms': 0.119764405387,
-            'im_sum': 13810530.8091,
-            'npts_0.2': 28707625,
-            'npts_0.3': 6190533,
-            'npts_real': 191116800}
+        exp_wt_stats = {'npts': [True, 191116800],
+            'npts_unmasked': [True, 191116800.0],
+            'freq_bin': [True, 244151.1796875],
+            'start': [True, 2.617644e+11],
+            'end': [True, 2.619956e+11],
+            'nchan': [True, 948],
+            'max_val': [False, 0.317849844694],
+            'max_val_pos': [True, [211, 203, 0, 9]],
+            'min_val': [False, 6.58089556964e-05],
+            'min_val_pos': [True, [451, 65, 0, 945]],
+            'im_rms': [False, 0.119779013697],
+            'im_sum': [False, 13812574.8761],
+            'npts_0.2': [True, 28713033],
+            'npts_0.3': [True, 6200001],
+            'npts_real': [True, 191116800]}
 
-        out, report8_a = th.check_val(wt_stats_dict['npts'], \
-            exp_wt_stats['npts'], valname='Number of pixels in .weight', \
-            exact=True)
-        out, report8_b = th.check_val( \
-            wt_stats_dict['npts_unmasked'], \
-            exp_wt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .weight', exact=True)
-        out, report8_c = th.check_val( \
-            wt_stats_dict['freq_bin'], exp_wt_stats['freq_bin'], \
-            valname='Frequency bin of .weight', exact=True)
-        out, report8_d = th.check_val(wt_stats_dict['start'], \
-            exp_wt_stats['start'], valname='Start channel of .weight', \
-            exact=True)
-        out, report8_e = th.check_val(wt_stats_dict['end'], \
-            exp_wt_stats['end'], valname='End channel of .weight', \
-            exact=True)
-        out, report8_f = th.check_val(wt_stats_dict['nchan'], \
-            exp_wt_stats['nchan'], valname='Number of channels of '
-            '.weight', exact=True)
-        out, report8_g = th.check_val( \
-            wt_stats_dict['max_val'], exp_wt_stats['max_val'], \
-            valname='Maximum .weight value', exact=False, epsilon=0.01)
-        out, report8_h = th.check_val( \
-            wt_stats_dict['max_val_pos'][0], \
-            exp_wt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_i = th.check_val( \
-            wt_stats_dict['max_val_pos'][1], \
-            exp_wt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_j = th.check_val( \
-            wt_stats_dict['max_val_pos'][3], \
-            exp_wt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .weight', exact=True)
-        out, report8_k = th.check_val( \
-            wt_stats_dict['min_val'], exp_wt_stats['min_val'], \
-            valname='Minimum .weight value', exact=False, epsilon=0.01)
-        out, report8_l = th.check_val( \
-            wt_stats_dict['min_val_pos'][0], \
-            exp_wt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_m = th.check_val( \
-            wt_stats_dict['min_val_pos'][1], \
-            exp_wt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_n = th.check_val( \
-            wt_stats_dict['min_val_pos'][3], \
-            exp_wt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .weight', exact=True)
-        out, report8_o = th.check_val( \
-            wt_stats_dict['im_rms'], exp_wt_stats['im_rms'], \
-            valname='RMS of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_p = th.check_val( \
-            wt_stats_dict['im_sum'], exp_wt_stats['im_sum'], \
-            valname='Sum of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_q = th.check_val(wt_stats_dict['npts_0.2'], \
-            exp_wt_stats['npts_0.2'], valname='Number of points above .wt '
-            '0.2', exact=False, epsilon=0.01)
-        out, report8_r = th.check_val(wt_stats_dict['npts_0.3'], \
-            exp_wt_stats['npts_0.3'], valname='Number of points above .wt '
-            '0.3', exact=False, epsilon=0.01)
-        out, report8_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report8 = report8_a + report8_b + report8_c + report8_d + \
-            report8_e + report8_f + report8_g + report8_h + report8_i + \
-            report8_j + report8_k + report8_l + report8_m + report8_n + \
-            report8_o + report8_p + report8_q + report8_r + report8_s
+        report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8
+            report6 + report7 + report8 + report9
 
 
         add_to_dict(self, output = test_dict, dataset = \
@@ -8226,6 +3474,7 @@ class Test_mosaic(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'mosaic_mfs_eph.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'2018.1.00879.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -8248,7 +3497,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=False)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -8276,678 +3525,201 @@ class Test_mosaic(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False, \
-            parallel=self.parallel)
+            parallel=False)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'mosaic'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image', region_file = \
-            data_path+'region_files/mosaic_mfs_eph.image.crtf')
+        im_stats_dict = self.image_stats(img+'.image', region_file = \
+            data_path+'region_files/mosaic_mfs_eph.image.crtf', \
+            field_regions = \
+            ['circle[[15:57:28.454567, -16.57.49.11051], 11.5arcsec]',
+             'circle[[15:57:28.112222, -16.57.59.87434], 11.5arcsec]',
+             'circle[[15:57:29.051302, -16.58.00.17973], 11.5arcsec]',
+             'circle[[15:57:27.877217, -16.57.49.98258], 11.5arcsec]',
+             'circle[[15:57:29.755349, -16.57.50.59334], 11.5arcsec]',
+             'circle[[15:57:28.581274, -16.57.40.39634], 11.5arcsec]',
+             'circle[[15:57:29.520326, -16.57.40.70171], 11.5arcsec]'])
 
-        exp_im_stats = {'com_bmaj': 0.914226949215,
-            'com_bmin': 0.708592534065,
-            'com_pa': -89.3612976074,
-            'npts': 201600,
-            'npts_unmasked': 113589.0,
-            'freq_bin': 16762504556.453735,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 2.06048989296,
-            'max_val_pos':[291, 212, 0, 0],
-            'min_val': -2.1858522892,
-            'min_val_pos':[290, 152, 0, 0],
-            'im_rms':  0.676557465791,
-            'im_sum': 5498.32523989,
-            'regn_sum': 8725.50744967,
-            'npts_real': 201600,
-            'rms_per_field': 1,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_im_stats = {'com_bmaj': [False, 0.914226949215],
+            'com_bmin': [False, 0.708592534065],
+            'com_pa': [False, -89.3612976074],
+            'npts': [True, 201600],
+            'npts_unmasked': [True, 113589.0],
+            'freq_bin': [True, 16762504556.453735],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 2.06048989296],
+            'max_val_pos': [True, [291, 212, 0, 0]],
+            'min_val': [False, -2.1858522892],
+            'min_val_pos': [True, [290, 152, 0, 0]],
+            'im_rms': [False,  0.676557465791],
+            'im_sum': [False, 5498.32523989],
+            'regn_sum': [False, 8725.50744967],
+            'npts_real': [True, 201600],
+            'rms_per_field': [False, [0.93211966613880237, 0.75587343134288443, 0.89153649532739099, 0.78815835277889079, 0.9296910564725368, 0.78753090736250964,  0.81230003610334034]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [211, 390, 0, 0]), \
                       (img+'.image', False, [211, 391, 0, 0]), \
                       (img+'.image', True, [18, 205, 0, 0]), \
                       (img+'.image', False, [17, 205, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_v = th.check_val( \
-            im_stats_dict['rms_per_field'], exp_im_stats['rms_per_field'], \
-            valname='RMS per field of .image', exact=False, \
-            epsilon=0.01)
-        out, report1_w = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_a1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 201600,
-            'freq_bin': 16762504556.453735,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'mask_pix': 0,
-            'mask_regns': 0,
-            'npts_real': 201600}
+        exp_mask_stats = {'npts': [True, 201600],
+            'freq_bin': [True, 16762504556.453735],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 0],
+            'mask_regns': [True, 0],
+            'npts_real': [True, 201600]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb', region_file = \
             data_path+'region_files/mosaic_mfs_eph.pb.crtf')
 
-        exp_pb_stats = {'npts': 201600,
-            'npts_unmasked': 113589.0,
-            'freq_bin': 16762504556.453735,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[211, 203, 0, 0],
-            'min_val': 0.200001135468,
-            'min_val_pos':[81, 343, 0, 0],
-            'npts_0.2': 113589,
-            'npts_0.5': 64549,
-            'npts_real': 201600,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 113589.0],
+            'freq_bin': [True, 16762504556.453735],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [211, 203, 0, 0]],
+            'min_val': [False, 0.200001135468],
+            'min_val_pos': [True, [81, 343, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 113589],
+            'npts_0.5': [True, 64549],
+            'npts_real': [True, 201600],
+            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'pb_fit_loc': [True, [0, 220.31469461816917]],
+            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf', region_file = \
             data_path+'region_files/mosaic_mfs_eph.psf.crtf')
 
-        exp_psf_stats = {'npts': 201600,
-            'npts_unmasked': 201600.0,
-            'freq_bin': 16762504556.453735,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[240, 210, 0, 0],
-            'min_val': -0.0525086708367,
-            'min_val_pos':[230, 216, 0, 0],
-            'im_rms':  0.0111846421981,
-            'im_sum': 0.100949260701,
-            'npts_real': 201600,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 201600.0],
+            'freq_bin': [True, 16762504556.453735],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [240, 210, 0, 0]],
+            'min_val': [False, -0.0525086708367],
+            'min_val_pos': [True, [230, 216, 0, 0]],
+            'im_rms': [False,  0.0111846421981],
+            'im_sum': [False, 0.100949260701],
+            'npts_real': [True, 201600],
+            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'pb_fit_loc': [True, [0, 220.31469461816917]],
+            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual', region_file = \
+        resid_stats_dict = self.image_stats(img+'.residual', region_file = \
             data_path+'region_files/mosaic_mfs_eph.residual.crtf')
 
-        exp_resid_stats = {'npts': 201600,
-            'npts_unmasked': 113589.0,
-            'freq_bin': 16762504556.453735,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 2.06048989296,
-            'max_val_pos':[291, 212, 0, 0],
-            'min_val': -2.1858522892,
-            'min_val_pos':[290, 152, 0, 0],
-            'im_rms': 0.676557465791,
-            'im_sum': 5498.32523989,
-            'npts_real': 201600}
+        exp_resid_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 113589.0],
+            'freq_bin': [True, 16762504556.453735],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 2.06048989296],
+            'max_val_pos': [True, [291, 212, 0, 0]],
+            'min_val': [False, -2.1858522892],
+            'min_val_pos': [True, [290, 152, 0, 0]],
+            'im_rms': [False, 0.676557465791],
+            'im_sum': [False, 5498.32523989],
+            'regn_sum': [False, 8725.50744961],
+            'npts_real': [True, 201600]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model', region_file = \
+        model_stats_dict = self.image_stats(img+'.model', region_file = \
             data_path+'region_files/mosaic_mfs_eph.model.crtf')
 
-        exp_model_stats = {'npts': 201600,
-            'npts_unmasked': 201600.0,
-            'freq_bin': 16762504556.453735,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 0.0,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.0,
-            'im_sum': 0.0,
-            'regn_sum': 0.0,
-            'mask_non0': 0,
-            'npts_real': 201600}
+        exp_model_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 201600.0],
+            'freq_bin': [True, 16762504556.453735],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 201600]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 16762504556.453735,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 30068706.0,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 30068706.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 16762504556.453735],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 30068706.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 30068706.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img, '.weight')
+        wt_stats_dict = self.image_stats(img+'.weight')
 
-        exp_wt_stats = {'npts': 201600,
-            'npts_unmasked': 201600.0,
-            'freq_bin': 16762504556.453735,
-            'start': 2.53574e+11,
-            'end': 2.53574e+11,
-            'nchan': 1,
-            'max_val': 0.333539396524,
-            'max_val_pos':[211, 203, 0, 0],
-            'min_val': 9.39047822612e-05,
-            'min_val_pos':[451, 64, 0, 0],
-            'im_rms': 0.12506836881,
-            'im_sum': 15366.9703442,
-            'npts_0.2': 32025,
-            'npts_0.3': 9855,
-            'npts_real': 201600}
+        exp_wt_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 201600.0],
+            'freq_bin': [True, 16762504556.453735],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.333539396524],
+            'max_val_pos': [True, [211, 203, 0, 0]],
+            'min_val': [False, 9.39047822612e-05],
+            'min_val_pos': [True, [451, 64, 0, 0]],
+            'im_rms': [False, 0.12506836881],
+            'im_sum': [False, 15366.9703442],
+            'npts_0.2': [True, 32025],
+            'npts_0.3': [True, 9855],
+            'npts_real': [True, 201600]}
 
-        out, report8_a = th.check_val(wt_stats_dict['npts'], \
-            exp_wt_stats['npts'], valname='Number of pixels in .weight', \
-            exact=True)
-        out, report8_b = th.check_val( \
-            wt_stats_dict['npts_unmasked'], \
-            exp_wt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .weight', exact=True)
-        out, report8_c = th.check_val( \
-            wt_stats_dict['freq_bin'], exp_wt_stats['freq_bin'], \
-            valname='Frequency bin of .weight', exact=True)
-        out, report8_d = th.check_val(wt_stats_dict['start'], \
-            exp_wt_stats['start'], valname='Start channel of .weight', \
-            exact=True)
-        out, report8_e = th.check_val(wt_stats_dict['end'], \
-            exp_wt_stats['end'], valname='End channel of .weight', \
-            exact=True)
-        out, report8_f = th.check_val(wt_stats_dict['nchan'], \
-            exp_wt_stats['nchan'], valname='Number of channels of '
-            '.weight', exact=True)
-        out, report8_g = th.check_val( \
-            wt_stats_dict['max_val'], exp_wt_stats['max_val'], \
-            valname='Maximum .weight value', exact=False, epsilon=0.01)
-        out, report8_h = th.check_val( \
-            wt_stats_dict['max_val_pos'][0], \
-            exp_wt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_i = th.check_val( \
-            wt_stats_dict['max_val_pos'][1], \
-            exp_wt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_j = th.check_val( \
-            wt_stats_dict['max_val_pos'][3], \
-            exp_wt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .weight', exact=True)
-        out, report8_k = th.check_val( \
-            wt_stats_dict['min_val'], exp_wt_stats['min_val'], \
-            valname='Minimum .weight value', exact=False, epsilon=0.01)
-        out, report8_l = th.check_val( \
-            wt_stats_dict['min_val_pos'][0], \
-            exp_wt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_m = th.check_val( \
-            wt_stats_dict['min_val_pos'][1], \
-            exp_wt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_n = th.check_val( \
-            wt_stats_dict['min_val_pos'][3], \
-            exp_wt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .weight', exact=True)
-        out, report8_o = th.check_val( \
-            wt_stats_dict['im_rms'], exp_wt_stats['im_rms'], \
-            valname='RMS of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_p = th.check_val( \
-            wt_stats_dict['im_sum'], exp_wt_stats['im_sum'], \
-            valname='Sum of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_q = th.check_val(wt_stats_dict['npts_0.2'], \
-            exp_wt_stats['npts_0.2'], valname='Number of points above .wt '
-            '0.2', exact=False, epsilon=0.01)
-        out, report8_r = th.check_val(wt_stats_dict['npts_0.3'], \
-            exp_wt_stats['npts_0.3'], valname='Number of points above .wt '
-            '0.3', exact=False, epsilon=0.01)
-        out, report8_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report8 = report8_a + report8_b + report8_c + report8_d + \
-            report8_e + report8_f + report8_g + report8_h + report8_i + \
-            report8_j + report8_k + report8_l + report8_m + report8_n + \
-            report8_o + report8_p + report8_q + report8_r + report8_s
+        report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8
+            report6 + report7 + report8 + report9
 
 
         add_to_dict(self, output = test_dict, dataset = \
@@ -8979,6 +3751,7 @@ class Test_mosaic(test_tclean_base):
 
         testname, testdoc = self.getNameDoc()
         file_name = 'mosaic_mtmfs_eph.iter'
+        img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'2018.1.00879.S_tclean.ms')
 
         print("\nSTARTING: iter0 routine")
@@ -9002,7 +3775,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel)
+            fastnoise=False, savemodel='none', parallel=False)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -9030,684 +3803,248 @@ class Test_mosaic(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False,  \
-            parallel=self.parallel)
+            parallel=False)
 
-        img = os.getcwd()+'/'+file_name+'1'
-
-        report0 = th.checkall( \
-            imgexist = self.image_list(img, 'mos_mtmfs'))
+        report0 = th.checkall(imgexist = self.image_list(img, 'mos_mtmfs'))
 
         # .image report
-        im_stats_dict = self.image_stats(img, '.image.tt0', region_file = \
-            data_path+'region_files/mosaic_mtmfs_eph.image.tt0.crtf')
+        im_stats_dict = self.image_stats(img+'.image.tt0', region_file = \
+            data_path+'region_files/mosaic_mtmfs_eph.image.tt0.crtf', \
+            field_regions = \
+            ['circle[[15:57:28.454567, -16.57.49.11051], 11.5arcsec]',
+             'circle[[15:57:28.112222, -16.57.59.87434], 11.5arcsec]',
+             'circle[[15:57:29.051302, -16.58.00.17973], 11.5arcsec]',
+             'circle[[15:57:27.877217, -16.57.49.98258], 11.5arcsec]',
+             'circle[[15:57:29.755349, -16.57.50.59334], 11.5arcsec]',
+             'circle[[15:57:28.581274, -16.57.40.39634], 11.5arcsec]',
+             'circle[[15:57:29.520326, -16.57.40.70171], 11.5arcsec]'])
 
-        exp_im_stats = {'com_bmaj': 0.914226949215,
-            'com_bmin': 0.708592534065,
-            'com_pa': -89.3612976074,
-            'npts': 201600,
-            'npts_unmasked': 113589.0,
-            'freq_bin': 16762504556.453705,
-            'start': 0,
-            'end': 0,
-            'nchan': 1,
-            'max_val': 2.05563259125,
-            'max_val_pos':[291, 212, 0, 0],
-            'min_val': -2.19232487679,
-            'min_val_pos':[290, 152, 0, 0],
-            'im_rms':  0.672551533853,
-            'im_sum': 5410.97024339,
-            'regn_sum': 8700.32470433,
-            'npts_real': 201600,
-            'rms_per_field': 1,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_im_stats = {'com_bmaj': [False, 0.914226949215],
+            'com_bmin': [False, 0.708592534065],
+            'com_pa': [False, -89.3612976074],
+            'npts': [True, 201600],
+            'npts_unmasked': [True, 113589.0],
+            'freq_bin': [True, 16762504556.453705],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 2.05563259125],
+            'max_val_pos': [True, [291, 212, 0, 0]],
+            'min_val': [False, -2.19232487679],
+            'min_val_pos': [True, [290, 152, 0, 0]],
+            'im_rms': [False,  0.672551533853],
+            'im_sum': [False, 5410.97024339],
+            'regn_sum': [False, 8700.32470433],
+            'npts_real': [True, 201600],
+            'rms_per_field': [False, [0.92450562082276955, 0.74815259370356468, 0.88345818716087821, 0.78563887415834988, 0.92110354253354942, 0.78525487979592601, 0.80567239544155445]]}
 
-        report1_a = th.checkall( \
+        report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image.tt0', True, [211, 390, 0, 0]), \
                       (img+'.image.tt0', False, [211, 391, 0, 0]), \
                       (img+'.image.tt0', True, [18, 205, 0, 0]), \
                       (img+'.image.tt0', False, [17, 205, 0, 0])])
 
-        out, report1_b = th.check_val(im_stats_dict['com_bmaj'], \
-            exp_im_stats['com_bmaj'], valname='Common beam major axis', \
-            exact=False, epsilon=0.01)
-        out, report1_c = th.check_val(im_stats_dict['com_bmin'], \
-            exp_im_stats['com_bmin'], valname='Common beam minor axis', \
-            exact=False, epsilon=0.01)
-        out, report1_d = th.check_val(im_stats_dict['com_pa'], \
-            exp_im_stats['com_pa'], valname='Common beam position angle', \
-            exact=False, epsilon=0.01)
-        out, report1_e = th.check_val(im_stats_dict['npts'], \
-            exp_im_stats['npts'], valname='Number of pixels in .image', \
-            exact=True)
-        out, report1_f = th.check_val( \
-            im_stats_dict['npts_unmasked'], exp_im_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .image', exact=True)
-        out, report1_g = th.check_val(im_stats_dict['freq_bin'], \
-            exp_im_stats['freq_bin'], valname='Frequency bin of .image', \
-            exact=True)
-        out, report1_h = th.check_val(im_stats_dict['start'], \
-            exp_im_stats['start'], valname='Start channel of .image', \
-            exact=True)
-        out, report1_i = th.check_val(im_stats_dict['end'], \
-            exp_im_stats['end'], valname='End channel of .image', exact=True)
-        out, report1_j = th.check_val(im_stats_dict['nchan'], \
-            exp_im_stats['nchan'], valname='Number of channels of .image', \
-            exact=True)
-        out, report1_k = th.check_val(im_stats_dict['max_val'], \
-            exp_im_stats['max_val'], valname='Peak .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_l = th.check_val( \
-            im_stats_dict['max_val_pos'][0], exp_im_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .image', exact=True)
-        out, report1_m = th.check_val( \
-            im_stats_dict['max_val_pos'][1], exp_im_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .image', exact=True)
-        out, report1_n = th.check_val( \
-            im_stats_dict['max_val_pos'][3], exp_im_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .image', exact=True)
-        out, report1_o = th.check_val(im_stats_dict['min_val'], \
-            exp_im_stats['min_val'], valname='Minimum .image value', \
-            exact=False, epsilon=0.01)
-        out, report1_p = th.check_val( \
-            im_stats_dict['min_val_pos'][0], exp_im_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_q = th.check_val( \
-            im_stats_dict['min_val_pos'][1], exp_im_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .image', \
-            exact=True)
-        out, report1_r = th.check_val( \
-            im_stats_dict['min_val_pos'][3], exp_im_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .image', exact=True)
-        out, report1_s = th.check_val(im_stats_dict['im_rms'], \
-            exp_im_stats['im_rms'], valname='RMS of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_t = th.check_val( im_stats_dict['im_sum'], \
-            exp_im_stats['im_sum'], valname='Sum of the whole .image', \
-            exact=False, epsilon=0.01)
-        out, report1_u = th.check_val(im_stats_dict['regn_sum'], \
-            exp_im_stats['regn_sum'], valname='Sum of a .image region', \
-            exact=False, epsilon=0.01)
-        out, report1_v = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-        out, report1_w = th.check_val( \
-            im_stats_dict['rms_per_field'], exp_im_stats['rms_per_field'], \
-            valname='RMS per field of .image', exact=False, \
-            epsilon=0.01)
-        out, report1_x = th.check_val(im_stats_dict['im_fit'][0][0], \
-            exp_im_stats['im_fit'][0][0], valname='Fit center x coord', \
-            exact=False, epsilon=0.01)
-        out, report1_y = th.check_val(im_stats_dict['im_fit'][0][1], \
-            exp_im_stats['im_fit'][0][1], valname='Fit center y coord', \
-            exact=False, epsilon=0.01)
-        out, report1_z = th.check_val( \
-            im_stats_dict['im_fit'][1], exp_im_stats['im_fit'][1], \
-            valname='Fit channel location', exact=True)
-        out, report1_a1 = th.check_val( \
-            im_stats_dict['im_fit'][2], exp_im_stats['im_fit'][2], \
-            valname='Frequency of fit', exact=True)
-        out, report1_b1 = th.check_val(im_stats_dict['im_fit'][3], \
-            exp_im_stats['im_fit'][3], valname='Peak of the fit', \
-            exact=False, epsilon=0.01)
-        out, report1_c1 = th.check_val(im_stats_dict['im_fit'][4], \
-            exp_im_stats['im_fit'][4], valname='Major axis of fit', \
-            exact=False, epsilon=0.01)
-        out, report1_d1 = th.check_val(im_stats_dict['im_fit'][5], \
-            exp_im_stats['im_fit'][5], valname='Minor axis of fit', \
-            exact=False, epsilon=0.01)
-
-        report1 = report1_a + report1_b + report1_c + report1_d + \
-            report1_e + report1_f + report1_g + report1_h + report1_i + \
-            report1_j + report1_k + report1_l + report1_m + report1_n + \
-            report1_o + report1_p + report1_q + report1_r + report1_s + \
-            report1_t + report1_u + report1_v + report1_w + report1_x + \
-            report1_y + report1_z + report1_a1 + report1_b1 + report1_c1 + \
-            report1_d1
+        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image.tt0')
 
         # .mask report
-        mask_stats_dict = self.image_stats(img, '.mask')
+        mask_stats_dict = self.image_stats(img+'.mask')
 
-        exp_mask_stats = {'npts': 201600,
-            'freq_bin': 16762504556.453705,
-            'start': 0,
-            'end': 0,
-            'nchan': 1,
-            'mask_pix': 0,
-            'mask_regns': 0,
-            'npts_real': 201600}
+        exp_mask_stats = {'npts': [True, 201600],
+            'freq_bin': [True, 16762504556.453705],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 0],
+            'mask_regns': [True, 0],
+            'npts_real': [True, 201600]}
 
-        out, report2_a = th.check_val(mask_stats_dict['npts'], \
-            exp_mask_stats['npts'], valname='Number of pixels in .mask', \
-            exact=True)
-        out, report2_b = th.check_val( \
-            mask_stats_dict['freq_bin'], exp_mask_stats['freq_bin'], \
-            valname='Frequency bin of .mask', exact=True)
-        out, report2_c = th.check_val(mask_stats_dict['start'], \
-            exp_mask_stats['start'], valname='Start channel of .mask', \
-            exact=True)
-        out, report2_d = th.check_val(mask_stats_dict['end'], \
-            exp_mask_stats['end'], valname='End channel of .mask', exact=True)
-        out, report2_e = th.check_val(mask_stats_dict['nchan'], \
-            exp_mask_stats['nchan'], valname='Number of channels in .mask', \
-            exact=True)
-        out, report2_f = th.check_val( \
-            mask_stats_dict['mask_pix'], exp_mask_stats['mask_pix'], \
-            valname='Number of pixels masked', exact=True)
-        out, report2_g = th.check_val( \
-            mask_stats_dict['mask_regns'], exp_mask_stats['mask_regns'], \
-            valname='Number of regions in .mask', exact=True)
-        out, report2_h = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report2 = report2_a + report2_b + report2_c + report2_d + \
-            report2_e + report2_f + report2_g + report2_h
+        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
         # .pb report
-        pb_stats_dict = self.image_stats(img, '.pb.tt0', region_file = \
+        pb_stats_dict = self.image_stats(img+'.pb.tt0', region_file = \
             data_path+'region_files/mosaic_mtmfs_eph.pb.tt0.crtf')
 
-        exp_pb_stats = {'npts': 201600,
-            'npts_unmasked': 113589.0,
-            'freq_bin': 16762504556.453705,
-            'start': 0,
-            'end': 0,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[211, 203, 0, 0],
-            'min_val': 0.200001135468,
-            'min_val_pos':[81, 343, 0, 0],
-            'npts_0.2': 113589,
-            'npts_0.5': 64549,
-            'npts_real': 201600,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_pb_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 113589.0],
+            'freq_bin': [True, 16762504556.453705],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [211, 203, 0, 0]],
+            'min_val': [False, 0.200001135468],
+            'min_val_pos': [True, [81, 343, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_0.2': [True, 113589],
+            'npts_0.5': [True, 64549],
+            'npts_real': [True, 201600],
+            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'pb_fit_loc': [True, [0, 220.31469461816917]],
+            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        out, report3_a = th.check_val(pb_stats_dict['npts'], \
-            exp_pb_stats['npts'], valname='Number of pixels in .pb', \
-            exact=True)
-        out, report3_b = th.check_val( \
-            pb_stats_dict['npts_unmasked'], exp_pb_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .pb', exact=True)
-        out, report3_c = th.check_val(pb_stats_dict['freq_bin'], \
-            exp_pb_stats['freq_bin'], valname='Frequency bin of .pb', \
-            exact=True)
-        out, report3_d = th.check_val(pb_stats_dict['start'], \
-            exp_pb_stats['start'], valname='Start channel of .pb', exact=True)
-        out, report3_e = th.check_val(pb_stats_dict['end'], \
-            exp_pb_stats['end'], valname='End channel of .pb', exact=True)
-        out, report3_f = th.check_val(pb_stats_dict['nchan'], \
-            exp_pb_stats['nchan'], valname='Number of channels of .pb', \
-            exact=True)
-        out, report3_g = th.check_val(pb_stats_dict['max_val'], \
-            exp_pb_stats['max_val'], valname='Maximum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_h = th.check_val( \
-            pb_stats_dict['max_val_pos'][0], exp_pb_stats['max_val_pos'][0], \
-            valname='RA pixel location of peak value of .pb', exact=True)
-        out, report3_i = th.check_val( \
-            pb_stats_dict['max_val_pos'][1], exp_pb_stats['max_val_pos'][1], \
-            valname='Dec pixel location of peak value of .pb', exact=True)
-        out, report3_j = th.check_val( \
-            pb_stats_dict['max_val_pos'][3], exp_pb_stats['max_val_pos'][3], \
-            valname='Channel of peak value of .pb', exact=True)
-        out, report3_k = th.check_val(pb_stats_dict['min_val'], \
-            exp_pb_stats['min_val'], valname='Minimum .pb value', \
-            exact=False, epsilon=0.01)
-        out, report3_l = th.check_val( \
-            pb_stats_dict['min_val_pos'][0], exp_pb_stats['min_val_pos'][0], \
-            valname='RA pixel location of minimum value of .pb', exact=True)
-        out, report3_m = th.check_val( \
-            pb_stats_dict['min_val_pos'][1], exp_pb_stats['min_val_pos'][1], \
-            valname='Dec pixel location of minimum value of .pb', exact=True)
-        out, report3_n = th.check_val( \
-            pb_stats_dict['min_val_pos'][3], exp_pb_stats['min_val_pos'][3], \
-            valname='Channel of minimum value of .pb', exact=True)
-        out, report3_o = th.check_val(pb_stats_dict['npts_0.2'], \
-            exp_pb_stats['npts_0.2'], valname='Number of points above .pb '
-            '0.2', exact=False, epsilon=0.01)
-        out, report3_p = th.check_val(pb_stats_dict['npts_0.5'], \
-            exp_pb_stats['npts_0.5'], valname='Number of points above .pb '
-            '0.5', exact=False, epsilon=0.01)
-        out, report3_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report3 = report3_a + report3_b + report3_c + report3_d + \
-            report3_e + report3_f + report3_g + report3_h + report3_i + \
-            report3_j + report3_k + report3_l + report3_m + report3_n + \
-            report3_o + report3_p + report3_q
+        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb.tt0')
 
         # .psf report
-        psf_stats_dict = self.image_stats(img, '.psf.tt0', region_file = \
+        psf_stats_dict = self.image_stats(img+'.psf.tt0', region_file = \
             data_path+'region_files/mosaic_mtmfs_eph.psf.tt0.crtf')
 
-        exp_psf_stats = {'npts': 201600,
-            'npts_unmasked': 201600.0,
-            'freq_bin': 16762504556.453705,
-            'start': 0,
-            'end': 0,
-            'nchan': 1,
-            'max_val': 1.0,
-            'max_val_pos':[240, 210, 0, 0],
-            'min_val': -0.0525086708367,
-            'min_val_pos':[230, 216, 0, 0],
-            'im_rms':  0.0111846421981,
-            'im_sum': 0.100949260701,
-            'npts_real': 201600,
-            'im_fit': [[38.303527208322556, 37.46382702762046],
-                        254, 220.31469461816917, 0.909677723621573,
-                        13.925317200593012, 7.225723641827008]}
+        exp_psf_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 201600.0],
+            'freq_bin': [True, 16762504556.453705],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [240, 210, 0, 0]],
+            'min_val': [False, -0.0525086708367],
+            'min_val_pos': [True, [230, 216, 0, 0]],
+            'im_rms': [False,  0.0111846421981],
+            'im_sum': [False, 0.100949260701],
+            'npts_real': [True, 201600],
+            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
+                       7.225723641827008]],
+            'pb_fit_loc': [True, [0, 220.31469461816917]],
+            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
 
-        out, report4_a = th.check_val(psf_stats_dict['npts'], \
-            exp_psf_stats['npts'], valname='Number of pixels in .psf', \
-            exact=True)
-        out, report4_b = th.check_val( \
-            psf_stats_dict['npts_unmasked'], exp_psf_stats['npts_unmasked'], \
-            valname='Number of unmasked pixels in .psf', exact=True)
-        out, report4_c = th.check_val( \
-            psf_stats_dict['freq_bin'], exp_psf_stats['freq_bin'], \
-            valname='Frequency bin of .psf', exact=True)
-        out, report4_d = th.check_val(psf_stats_dict['start'], \
-            exp_psf_stats['start'], valname='Start channel of .psf', \
-            exact=True)
-        out, report4_e = th.check_val(psf_stats_dict['end'], \
-            exp_psf_stats['end'], valname='End channel of .psf', exact=True)
-        out, report4_f = th.check_val(psf_stats_dict['nchan'], \
-            exp_psf_stats['nchan'], valname='Number of channels of .psf', \
-            exact=True)
-        out, report4_g = th.check_val(psf_stats_dict['max_val'], \
-            exp_psf_stats['max_val'], valname='Maximum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_h = th.check_val( \
-            psf_stats_dict['max_val_pos'][0], \
-            exp_psf_stats['max_val_pos'][0], valname='RA pixel location of '
-            'peak value of .psf', exact=True)
-        out, report4_i = th.check_val( \
-            psf_stats_dict['max_val_pos'][1], \
-            exp_psf_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .psf', exact=True)
-        out, report4_j = th.check_val( \
-            psf_stats_dict['max_val_pos'][3], \
-            exp_psf_stats['max_val_pos'][3], valname='Channel of peak value'
-            ' of .psf', exact=True)
-        out, report4_k = th.check_val(psf_stats_dict['min_val'], \
-            exp_psf_stats['min_val'], valname='Minimum .psf value', \
-            exact=False, epsilon=0.01)
-        out, report4_l = th.check_val( \
-            psf_stats_dict['min_val_pos'][0], \
-            exp_psf_stats['min_val_pos'][0], valname='RA pixel location of '
-            'minimum value of .psf', exact=True)
-        out, report4_m = th.check_val( \
-            psf_stats_dict['min_val_pos'][1], \
-            exp_psf_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .psf', exact=True)
-        out, report4_n = th.check_val( \
-            psf_stats_dict['min_val_pos'][3], \
-            exp_psf_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .psf', exact=True)
-        out, report4_o = th.check_val(psf_stats_dict['im_rms'], \
-            exp_psf_stats['im_rms'], valname='RMS of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_p = th.check_val(psf_stats_dict['im_sum'], \
-            exp_psf_stats['im_sum'], valname='Sum of the whole .psf', \
-            exact=False, epsilon=0.01)
-        out, report4_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report4 = report4_a + report4_b + report4_c + report4_d + \
-            report4_e + report4_f + report4_g + report4_h + report4_i + \
-            report4_j + report4_k + report4_l + report4_m + report4_n + \
-            report4_o + report4_p + report4_q
+        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf.tt0')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img, '.residual.tt0', \
+        resid_stats_dict = self.image_stats(img+'.residual.tt0', \
             region_file = data_path+
             'region_files/mosaic_mtmfs_eph.residual.tt0.crtf')
 
-        exp_resid_stats = {'npts': 201600,
-            'npts_unmasked': 113589.0,
-            'freq_bin': 16762504556.453705,
-            'start': 0,
-            'end': 0,
-            'nchan': 1,
-            'max_val': 2.06048989296,
-            'max_val_pos':[291, 212, 0, 0],
-            'min_val': -2.1858522892,
-            'min_val_pos':[290, 152, 0, 0],
-            'im_rms': 0.676557465791,
-            'im_sum': 5498.32523989,
-            'npts_real': 201600}
+        exp_resid_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 113589.0],
+            'freq_bin': [True, 16762504556.453705],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 2.06048989296],
+            'max_val_pos': [True, [291, 212, 0, 0]],
+            'min_val': [False, -2.1858522892],
+            'min_val_pos': [True, [290, 152, 0, 0]],
+            'im_rms': [False, 0.676557465791],
+            'im_sum': [False, 5498.32523989],
+            'regn_sum': [False, 8725.50744971],
+            'npts_real': [True, 201600]}
 
-        out, report5_a = th.check_val(resid_stats_dict['npts'], \
-            exp_resid_stats['npts'], valname='Number of pixels in '
-            '.residual', exact=True)
-        out, report5_b = th.check_val( \
-            resid_stats_dict['npts_unmasked'], \
-            exp_resid_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .residual', exact=True)
-        out, report5_c = th.check_val( \
-            resid_stats_dict['freq_bin'], exp_resid_stats['freq_bin'], \
-            valname='Frequency bin of .residual', exact=True)
-        out, report5_d = th.check_val(resid_stats_dict['start'], \
-            exp_resid_stats['start'], valname='Start channel of .residual', \
-            exact=True)
-        out, report5_e = th.check_val(resid_stats_dict['end'], \
-            exp_resid_stats['end'], valname='End channel of .residual', \
-            exact=True)
-        out, report5_f = th.check_val(resid_stats_dict['nchan'], \
-            exp_resid_stats['nchan'], valname='Number of channels of '
-            '.residual', exact=True)
-        out, report5_g = th.check_val( \
-            resid_stats_dict['max_val'], exp_resid_stats['max_val'], \
-            valname='Maximum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_h = th.check_val( \
-            resid_stats_dict['max_val_pos'][0], \
-            exp_resid_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_i = th.check_val( \
-            resid_stats_dict['max_val_pos'][1], \
-            exp_resid_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .residual', exact=True)
-        out, report5_j = th.check_val( \
-            resid_stats_dict['max_val_pos'][3], \
-            exp_resid_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .residual', exact=True)
-        out, report5_k = th.check_val( \
-            resid_stats_dict['min_val'], exp_resid_stats['min_val'], \
-            valname='Minimum .residual value', exact=False, \
-            epsilon=0.01)
-        out, report5_l = th.check_val( \
-            resid_stats_dict['min_val_pos'][0], \
-            exp_resid_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_m = th.check_val( \
-            resid_stats_dict['min_val_pos'][1], \
-            exp_resid_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .residual', exact=True)
-        out, report5_n = th.check_val( \
-            resid_stats_dict['min_val_pos'][3], \
-            exp_resid_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .residual', exact=True)
-        out, report5_o = th.check_val( \
-            resid_stats_dict['im_rms'], exp_resid_stats['im_rms'], \
-            valname='RMS of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_p = th.check_val( \
-            resid_stats_dict['im_sum'], exp_resid_stats['im_sum'], \
-            valname='Sum of the whole .residual', exact=False, epsilon=0.01)
-        out, report5_q = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report5 = report5_a + report5_b + report5_c + report5_d + \
-            report5_e + report5_f + report5_g + report5_h + report5_i + \
-            report5_j + report5_k + report5_l + report5_m + report5_n + \
-            report5_o + report5_p + report5_q
+        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
+            '.residual.tt0')
 
         # .model report
-        model_stats_dict = self.image_stats(img, '.model.tt0', region_file = \
+        model_stats_dict = self.image_stats(img+'.model.tt0', region_file = \
             data_path+'region_files/mosaic_mtmfs_eph.model.tt0.crtf')
 
-        exp_model_stats = {'npts': 201600,
-            'npts_unmasked': 201600.0,
-            'freq_bin': 16762504556.453705,
-            'start': 0,
-            'end': 0,
-            'nchan': 1,
-            'max_val': 0.0,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 0.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'im_rms': 0.0,
-            'im_sum': 0.0,
-            'regn_sum': 0.0,
-            'mask_non0': 0,
-            'npts_real': 201600}
+        exp_model_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 201600.0],
+            'freq_bin': [True, 16762504556.453705],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 201600]}
 
-        out, report6_a = th.check_val(model_stats_dict['npts'], \
-            exp_model_stats['npts'], valname='Number of pixels in .model', \
-            exact=True)
-        out, report6_b = th.check_val( \
-            model_stats_dict['npts_unmasked'], \
-            exp_model_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .model', exact=True)
-        out, report6_c = th.check_val( \
-            model_stats_dict['freq_bin'], exp_model_stats['freq_bin'], \
-            valname='Frequency bin of .model', exact=True)
-        out, report6_d = th.check_val(model_stats_dict['start'], \
-            exp_model_stats['start'], valname='Start channel of .model', \
-            exact=True)
-        out, report6_e = th.check_val(model_stats_dict['end'], \
-            exp_model_stats['end'], valname='End channel of .model', \
-            exact=True)
-        out, report6_f = th.check_val(model_stats_dict['nchan'], \
-            exp_model_stats['nchan'], valname='Number of channels of '
-            '.model', exact=True)
-        out, report6_g = th.check_val( \
-            model_stats_dict['max_val'], exp_model_stats['max_val'], \
-            valname='Maximum .model value', exact=False, epsilon=0.01)
-        out, report6_h = th.check_val( \
-            model_stats_dict['max_val_pos'][0], \
-            exp_model_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_i = th.check_val( \
-            model_stats_dict['max_val_pos'][1], \
-            exp_model_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .model', exact=True)
-        out, report6_j = th.check_val( \
-            model_stats_dict['max_val_pos'][3], \
-            exp_model_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .model', exact=True)
-        out, report6_k = th.check_val( \
-            model_stats_dict['min_val'], exp_model_stats['min_val'], \
-            valname='Minimum .model value', exact=False, epsilon=0.01)
-        out, report6_l = th.check_val( \
-            model_stats_dict['min_val_pos'][0], \
-            exp_model_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_m = th.check_val( \
-            model_stats_dict['min_val_pos'][1], \
-            exp_model_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .model', exact=True)
-        out, report6_n = th.check_val( \
-            model_stats_dict['min_val_pos'][3], \
-            exp_model_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .model', exact=True)
-        out, report6_o = th.check_val( \
-            model_stats_dict['im_rms'], exp_model_stats['im_rms'], \
-            valname='RMS of the whole .model', exact=False, epsilon=0.01)
-        out, report6_p = th.check_val( \
-            model_stats_dict['im_sum'], exp_model_stats['im_sum'], \
-            valname='Sum of the whole .model', exact=False, epsilon=0.01)
-        out, report6_q = th.check_val( \
-            model_stats_dict['regn_sum'], exp_model_stats['regn_sum'], \
-            valname='Sum of a region of .model', exact=False, epsilon=0.01)
-        out, report6_r = th.check_val( \
-            model_stats_dict['mask_non0'], \
-            exp_model_stats['mask_non0'], valname='Non zero values in masked'
-            ' regions of .model', exact=True)
-        out, report6_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report6 = report6_a + report6_b + report6_c + report6_d + \
-            report6_e + report6_f + report6_g + report6_h + report6_i + \
-            report6_j + report6_k + report6_l + report6_m + report6_n + \
-            report6_o + report6_p + report6_q + report6_r + report6_s
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+            '.model.tt0')
 
         # .sumwt report
-        sumwt_stats_dict = self.image_stats(img, '.sumwt.tt0')
+        sumwt_stats_dict = self.image_stats(img+'.sumwt.tt0')
 
-        exp_sumwt_stats = {'npts': 1,
-            'npts_unmasked': 1.0,
-            'freq_bin': 16762504556.453705,
-            'start': 0,
-            'end': 0,
-            'nchan': 1,
-            'max_val': 30068706.0,
-            'max_val_pos':[0, 0, 0, 0],
-            'min_val': 30068706.0,
-            'min_val_pos':[0, 0, 0, 0],
-            'npts_real': 1}
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 16762504556.453705],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 30068706.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 30068706.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False,  0.136036099793],
+            'npts_real': [True, 1]}
 
-        out, report7_a = th.check_val(sumwt_stats_dict['npts'], \
-            exp_sumwt_stats['npts'], valname='Number of pixels in .sumwt', \
-            exact=True)
-        out, report7_b = th.check_val( \
-            sumwt_stats_dict['npts_unmasked'], \
-            exp_sumwt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .sumwt', exact=True)
-        out, report7_c = th.check_val( \
-            sumwt_stats_dict['freq_bin'], exp_sumwt_stats['freq_bin'], \
-            valname='Frequency bin of .sumwt', exact=True)
-        out, report7_d = th.check_val(sumwt_stats_dict['start'], \
-            exp_sumwt_stats['start'], valname='Start channel of .sumwt', \
-            exact=True)
-        out, report7_e = th.check_val(sumwt_stats_dict['end'], \
-            exp_sumwt_stats['end'], valname='End channel of .sumwt', \
-            exact=True)
-        out, report7_f = th.check_val(sumwt_stats_dict['nchan'], \
-            exp_sumwt_stats['nchan'], valname='Number of channels of '
-            '.sumwt', exact=True)
-        out, report7_g = th.check_val( \
-            sumwt_stats_dict['max_val'], exp_sumwt_stats['max_val'], \
-            valname='Maximum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_h = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][0], \
-            exp_sumwt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_i = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][1], \
-            exp_sumwt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .sumwt', exact=True)
-        out, report7_j = th.check_val( \
-            sumwt_stats_dict['max_val_pos'][3], \
-            exp_sumwt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .sumwt', exact=True)
-        out, report7_k = th.check_val( \
-            sumwt_stats_dict['min_val'], exp_sumwt_stats['min_val'], \
-            valname='Minimum .sumwt value', exact=False, epsilon=0.01)
-        out, report7_l = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][0], \
-            exp_sumwt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_m = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][1], \
-            exp_sumwt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .sumwt', exact=True)
-        out, report7_n = th.check_val( \
-            sumwt_stats_dict['min_val_pos'][3], \
-            exp_sumwt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .sumwt', exact=True)
-        out, report7_o = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
-
-        report7 = report7_a + report7_b + report7_c + report7_d + \
-            report7_e + report7_f + report7_g + report7_h + report7_i + \
-            report7_j + report7_k + report7_l + report7_m + report7_n + \
-            report7_o
+        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt.tt0')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img, '.weight.tt0')
+        wt_stats_dict = self.image_stats(img+'.weight.tt0')
 
-        exp_wt_stats = {'npts': 201600,
-            'npts_unmasked': 201600.0,
-            'freq_bin': 16762504556.453705,
-            'start': 0,
-            'end': 0,
-            'nchan': 1,
-            'max_val': 0.333539396524,
-            'max_val_pos':[211, 203, 0, 0],
-            'min_val': 9.39047822612e-05,
-            'min_val_pos':[451, 64, 0, 0],
-            'im_rms': 0.12506836881,
-            'im_sum': 15366.9703442,
-            'npts_0.2': 32025,
-            'npts_0.3': 9855,
-            'npts_real': 201600}
+        exp_wt_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 201600.0],
+            'freq_bin': [True, 16762504556.453705],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.333539396524],
+            'max_val_pos': [True, [211, 203, 0, 0]],
+            'min_val': [False, 9.39047822612e-05],
+            'min_val_pos': [True, [451, 64, 0, 0]],
+            'im_rms': [False, 0.12506836881],
+            'im_sum': [False, 15366.9703442],
+            'npts_0.2': [True, 32025],
+            'npts_0.3': [True, 9855],
+            'npts_real': [True, 201600]}
 
-        out, report8_a = th.check_val(wt_stats_dict['npts'], \
-            exp_wt_stats['npts'], valname='Number of pixels in .weight', \
-            exact=True)
-        out, report8_b = th.check_val( \
-            wt_stats_dict['npts_unmasked'], \
-            exp_wt_stats['npts_unmasked'], valname='Number of unmasked '
-            'pixels in .weight', exact=True)
-        out, report8_c = th.check_val( \
-            wt_stats_dict['freq_bin'], exp_wt_stats['freq_bin'], \
-            valname='Frequency bin of .weight', exact=True)
-        out, report8_d = th.check_val(wt_stats_dict['start'], \
-            exp_wt_stats['start'], valname='Start channel of .weight', \
-            exact=True)
-        out, report8_e = th.check_val(wt_stats_dict['end'], \
-            exp_wt_stats['end'], valname='End channel of .weight', \
-            exact=True)
-        out, report8_f = th.check_val(wt_stats_dict['nchan'], \
-            exp_wt_stats['nchan'], valname='Number of channels of '
-            '.weight', exact=True)
-        out, report8_g = th.check_val( \
-            wt_stats_dict['max_val'], exp_wt_stats['max_val'], \
-            valname='Maximum .weight value', exact=False, epsilon=0.01)
-        out, report8_h = th.check_val( \
-            wt_stats_dict['max_val_pos'][0], \
-            exp_wt_stats['max_val_pos'][0], valname='RA pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_i = th.check_val( \
-            wt_stats_dict['max_val_pos'][1], \
-            exp_wt_stats['max_val_pos'][1], valname='Dec pixel location of'
-            ' peak value of .weight', exact=True)
-        out, report8_j = th.check_val( \
-            wt_stats_dict['max_val_pos'][3], \
-            exp_wt_stats['max_val_pos'][3], valname='Channel of peak '
-            'value of .weight', exact=True)
-        out, report8_k = th.check_val( \
-            wt_stats_dict['min_val'], exp_wt_stats['min_val'], \
-            valname='Minimum .weight value', exact=False, epsilon=0.01)
-        out, report8_l = th.check_val( \
-            wt_stats_dict['min_val_pos'][0], \
-            exp_wt_stats['min_val_pos'][0], valname='RA pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_m = th.check_val( \
-            wt_stats_dict['min_val_pos'][1], \
-            exp_wt_stats['min_val_pos'][1], valname='Dec pixel location of'
-            ' minimum value of .weight', exact=True)
-        out, report8_n = th.check_val( \
-            wt_stats_dict['min_val_pos'][3], \
-            exp_wt_stats['min_val_pos'][3], valname='Channel of minimum '
-            'value of .weight', exact=True)
-        out, report8_o = th.check_val( \
-            wt_stats_dict['im_rms'], exp_wt_stats['im_rms'], \
-            valname='RMS of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_p = th.check_val( \
-            wt_stats_dict['im_sum'], exp_wt_stats['im_sum'], \
-            valname='Sum of the whole .weight', exact=False, epsilon=0.01)
-        out, report8_q = th.check_val(wt_stats_dict['npts_0.2'], \
-            exp_wt_stats['npts_0.2'], valname='Number of points above .wt '
-            '0.2', exact=False, epsilon=0.01)
-        out, report8_r = th.check_val(wt_stats_dict['npts_0.3'], \
-            exp_wt_stats['npts_0.3'], valname='Number of points above .wt '
-            '0.3', exact=False, epsilon=0.01)
-        out, report8_s = th.check_val( \
-            im_stats_dict['npts_real'], exp_im_stats['npts_real'], \
-            valname='Number of real pixels in .image', exact=True)
+        report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, \
+            '.weight.tt0')
 
-        report8 = report8_a + report8_b + report8_c + report8_d + \
-            report8_e + report8_f + report8_g + report8_h + report8_i + \
-            report8_j + report8_k + report8_l + report8_m + report8_n + \
-            report8_o + report8_p + report8_q + report8_r + report8_s
+        # .alpha report
+        alpha_stats_dict = self.image_stats(img+'.alpha', region_file = \
+            data_path+'region_files/mosaic_mtmfs_eph.alpha.crtf')
+
+        exp_alpha_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 82944]}
+
+        report10 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
+            '.alpha')
+
+        # .alpha.error report
+        error_stats_dict = self.image_stats(img+'.alpha.error', region_file = \
+            data_path+'region_files/mosaic_mtmfs_eph.alpha.error.crtf')
+
+        exp_error_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'npts_real': [True, 82944]}
+
+        report11 = self.stats_compare(exp_error_stats, error_stats_dict, \
+            '.alpha.error')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8
-
+            report6 + report7 + report8 + report9 + report10 + report11
 
         add_to_dict(self, output=test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
