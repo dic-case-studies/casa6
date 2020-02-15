@@ -157,11 +157,6 @@ def setup_deconvolver(imagename,pcube,inparams):
     #                              deconvolver=self.deconvolver, scales=self.scales,nterms=self.nterms,
     #                              niter=self.niter,cycleniter=self.cycleniter, threshold=self.threshold,
     #                              mask=self.mask)
-    print ('type(inparams)=', type(inparams))
-    print ("inparams['msname']=", inparams['msname'])
-    print ("inparams['deconvolver']=", inparams['deconvolver'])
-    print ("inparams['specmode']=", inparams['specmode'])
-    print ("inparams['gridder']=", inparams['gridder'])
     inparams['imagename']=imagename
     params = ImagerParameters(**inparams)
     deconvolvertool = setup_imagerObj(inparams['parallel'], pcube, params)
@@ -641,9 +636,6 @@ def sdintimaging(
         if niter>0 :
             isit = deconvolver.hasConverged()
             deconvolver.updateMask()
-
-            check = deconvolver.hasConverged()
-            print("hasConverged check ==",check)
 
             while ( not deconvolver.hasConverged() ):
             ## (SDINT) Start image reconstruction loops

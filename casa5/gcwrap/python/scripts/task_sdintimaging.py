@@ -157,11 +157,6 @@ def setup_deconvolver(imagename,pcube,inparams):
     #                              deconvolver=self.deconvolver, scales=self.scales,nterms=self.nterms,
     #                              niter=self.niter,cycleniter=self.cycleniter, threshold=self.threshold,
     #                              mask=self.mask)
-    print ('type(inparams)=', type(inparams))
-    print ("inparams['msname']=", inparams['msname'])
-    print ("inparams['deconvolver']=", inparams['deconvolver'])
-    print ("inparams['specmode']=", inparams['specmode'])
-    print ("inparams['gridder']=", inparams['gridder'])
     inparams['imagename']=imagename
     params = ImagerParameters(**inparams)
     deconvolvertool = setup_imagerObj(inparams['parallel'], pcube, params)
@@ -642,9 +637,6 @@ def sdintimaging(
             isit = deconvolver.hasConverged()
             deconvolver.updateMask()
 
-            check = deconvolver.hasConverged()
-            print("hasConverged check ==",check)
-
             while ( not deconvolver.hasConverged() ):
             ## (SDINT) Start image reconstruction loops
             ## while ( not self.deconvolvertool.hasConverged() ):
@@ -670,7 +662,7 @@ def sdintimaging(
                     shutil.rmtree(int_cube+'.model',ignore_errors=True)
                     shutil.copytree(joint_cube+'.model', int_cube+'.model')
                     hasfile=os.path.exists(joint_cube+'.model')
-                    print("DEBUG: has joint cube .image===",hasfile)
+                    #print("DEBUG: has joint cube .image===",hasfile)
 
                 if applypb==True:
                     ## Take the int_cube.model to flat sky. 
