@@ -184,7 +184,16 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
         test_simanalyze: The analyze parameter turns on or off the creation of analytical images
         test_simanalyze: The imagename parameter takes the name of an already synthesized image
         '''
-        simanalyze(project='sim', image=False, imagename=imagepath_int, skymodel='', analyze=False, graphics='none', verbose=False, overwrite=False, dryrun=False, logfile=logpath)
+        simanalyze(project=int_project, 
+                   image=False, 
+                   imagename='', 
+                   skymodel='', 
+                   analyze=False, 
+                   graphics='none', 
+                   verbose=False, 
+                   overwrite=False, 
+                   dryrun=False, 
+                   logfile=logpath)
         a = 1 # Observed value
         b = 1 # Expected value
         self.assertEqual(a,b) 
@@ -221,7 +230,24 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
         test_simanalyze: The analyze parameter turns on or off the creation of analytical images
         test_simanalyze:  The showfidelity parameter displays the fidelity image
         '''
-        simanalyze(showfidelity=True)
+        simanalyze(project=int_project, 
+                   image=False, 
+                   imagename=imagepath_int, 
+                   skymodel=int_project+'/'+int_project+".skymodel", 
+                   analyze=True, 
+                   showuv=False,
+                   showpsf=False,
+                   showmodel=False,
+                   showconvolved=False,
+                   showclean=False,
+                   showresidual=False,
+                   showdifference=False,
+                   showfidelity=True,
+                   graphics='none', 
+                   verbose=False, 
+                   overwrite=False, 
+                   dryrun=False, 
+                   logfile=logpath)
 
         # A fidelity image should have been produced
         a = os.path.exists() # Observed value
