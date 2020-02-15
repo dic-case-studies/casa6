@@ -159,7 +159,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ////TESTOO
     //Int CPUID;
 	//MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
-	//cerr  << " SELPARS " << selpars.toRecord()  << endl;
+    //cerr  << " SELPARS " << selpars.toRecord()  << endl;
     if(!selpars.incrmodel && !selpars.usescratch && !selpars.readonly)
       refim::VisModelData::clearModel(thisms, selpars.field, selpars.spw);
 
@@ -1109,6 +1109,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		std::stringstream ss(getenv("OMPI_COMM_WORLD_LOCAL_SIZE"));
 		ss >> nlocal_procs;
 	}
+        //cerr << "NUM_PROC " << nlocal_procs << endl;
 	// assumes all processes need the same amount of memory
 	required_mem *= nlocal_procs;
 	Double usr_memfrac, usr_mem;
@@ -1123,6 +1124,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	}
 	// compute required chanchunks to fit into the available memory
 	nsubcube = (int)std::ceil((Double)required_mem / memory_avail);
+        Int nworkers= applicator.numProcs() < 2 ? 1 : applicator.numProcs()-1;
+        if((nsubcube/nworkers) >1 && nworkers !=1){
+          nsubcube=(Int(std::floor(Float(nsubcube)/Float(nworkers)))+1)*nworkers;
+
+        }
 	if (imshape.nelements() == 4 && imshape[3] < nsubcube) {
 		nsubcube = imshape[3];
               // TODO make chanchunks a divisor of nchannels?
@@ -1143,21 +1149,31 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	}
 	///Avoid an extra chunk with 1 channel as it cause bumps in linear interpolation
 	///See CAS-12625
+        /*
 	while((rem==1) && (chunksize >1)){
 		nsubcube +=1;
 		chunksize=imshape[3]/nsubcube;
 		rem=imshape[3] % nsubcube;
 	}
 	if(rem !=0) ++nsubcube;
-      
+        . */
 	Vector<Int> start(nsubcube,0);
 	Vector<Int> end(nsubcube,chunksize-1);
+        if(rem >0){
+          end(0)+=1;
+          --rem;
+        }
 	for (Int k=1; k < nsubcube; ++k){
 		start(k)=end(k-1)+1;
-		end(k)=((k !=nsubcube-1) || rem==0)? (start(k)+chunksize-1) : (start(k)+rem-1);
+                //	end(k)=((k !=nsubcube-1) || rem==0)? (start(k)+chunksize-1) : (start(k)+rem-1);
+                end(k)=(start(k)+chunksize-1);
+                if(rem > 0){
+                  end(k)+=1;
+                  --rem;
+                }
 	}
 	 
-	 
+	//cerr << "nsubcube " << nsubcube << " start " << start << " end " << end << endl; 
 	return make_tuple(nsubcube, start, end); 
   }
   

@@ -377,6 +377,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       
 
       returnRecord = itsLoopController.getCycleInitializationRecord();
+      //cerr << "INIT record " << returnRecord << endl;
 
       //      itsImages->printImageStats();
       itsImages->releaseLocks();
@@ -462,7 +463,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if(itsImages->residual()->shape()[3]> 1){
      return  executeCubeMinorCycle(minorCycleControlRec);
     }
-    //    os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
+    //  os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
 
     SynthesisUtilMethods::getResource("Start Deconvolver");
 
@@ -492,12 +493,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
   Record SynthesisDeconvolver::executeCubeMinorCycle(Record& minorCycleControlRec)
   {
-    //    LogIO os( LogOrigin("SynthesisDeconvolver","executeCubeMinorCycle",WHERE) );
+        LogIO os( LogOrigin("SynthesisDeconvolver","executeCubeMinorCycle",WHERE) );
     Record returnRecord;
 
-    // os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
 
-    
     SynthesisUtilMethods::getResource("Start Deconvolver");
 
     try {
@@ -510,7 +509,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       char **argv=nullptr;
       applicator.init(argc, argv);
       if(applicator.isController()){
-          
+        os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
+
+        itsImages->printImageStats();
           Int numprocs = applicator.numProcs(); 
           cerr << "Number of procs: " << numprocs << endl;
           
@@ -620,7 +621,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
           itsLoopController.incrementMinorCycleCount(returnRecord.asInt("iterdone"));
 
-
           
 
       }///end of if controller
@@ -680,7 +680,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     outRec.define("summaryminor", summaryminor);
     //cerr << "inRec summ minor " << inRec.asArrayDouble("summaryminor") << endl;
     //cerr << "outRec summ minor " << summaryminor << endl;
-    outRec.define("iterdone", inRec.asInt("iterdone")+ (outRec.isDefined("iterdone") ? outRec.asInt("iterdone"): Int(0)));
+    outRec.define("iterdone", Int(inRec.asInt("iterdone")+ (outRec.isDefined("iterdone") ? outRec.asInt("iterdone"): Int(0))));
     outRec.define("maxcycleiterdone", outRec.isDefined("maxcycleiterdone") ? max(inRec.asInt("maxcycleiterdone"), outRec.asInt("maxcycleiterdone")) :inRec.asInt("maxcycleiterdone")) ;
     
     outRec.define("peakresidual", outRec.isDefined("peakresidual") ? max(inRec.asFloat("peakresidual"), outRec.asFloat("peakresidual")) :inRec.asFloat("peakresidual")) ;

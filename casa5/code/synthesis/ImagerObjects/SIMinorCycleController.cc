@@ -45,6 +45,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                 itsPeakResidual(0),
                                 itsIntegratedFlux(0),
                                 itsMaxPsfSidelobe(0),
+                                itsMinResidual(0),itsMinResidualNoMask(0),
+                                itsPeakResidualNoMask(0), itsNsigma(0),
+                                itsMadRMS(0), itsMaskSum(0),
                                 itsSummaryMinor(IPosition(2,6,0)),
 				itsNSummaryFields(6),
 				itsDeconvolverID(0) 
