@@ -746,7 +746,7 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param50(self):
         '''sdtimeaverage::50:: datacolumn = 'float_data' '''
 
-        prm =  {'infile'     : defInputMs,
+        prm =  {'infile'     : defWorkMs,
                 'outfile'    : "TEST-50.ms",
                 'datacolumn' : 'float_data'  }
         # Run Task and check
