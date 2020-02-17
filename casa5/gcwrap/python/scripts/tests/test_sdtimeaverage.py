@@ -41,12 +41,13 @@ import time	# Measure used time.
 
 # MS name for basic test
 defInputMs  = "sdimaging.ms"     # template MS
-defWorkMs   = "sdimaging-t.ms"   # testing MS (modified here)
-defWorkMs2  = "sdimaging-t2.ms"  # testing MS (modified for TimeSpan)
+defWorkMs   = "sdimaging-t.ms"   # testing MS (set up basic conditions)
+defWorkMs2  = "sdimaging-t2.ms"  # testing MS (modified 'state' for TimeSpan)
 
 # MS name for 'float_data' and 'data'
-defInputMs3 = "Uranus1.cal.Ant0.spw34.ms"
-defWorkMs3  = "Uranus1.cal.Ant0.spw34-t.ms"  # testing MS (using 'data' instead of 'float_data' )
+defInputMs3 = "Uranus1.cal.Ant0.spw34.ms"        # copied original. 
+defWorkMs3  = "Uranus1.cal.Ant0.spw34-nobeyama.ms"   # testing MS (using 'data' instead of 'float_data' ) 
+defWorkMs4  = "Uranus1.cal.Ant0.spw34-ALMA.ms"       # testing MS (using 'data' instead of 'float_data' ) 
 
 defOutputMs = "sdave.ms"         # (internal) output MS
 defPrivateMs       = "sdave-*.ms"       # private  output MS form of each test
@@ -122,9 +123,12 @@ class test_sdtimeaverage(unittest.TestCase):
             print ( "- TestMS(for data/float_data.[{}] being created.".format(filePath)    )
 
             # Copy template and generate Test-MS
-            os.system('cp -RL '+ os.path.join(datapath, defInputMs3) +' '+ defWorkMs3)
+            os.system('cp -RL '+ os.path.join(datapath, defInputMs3) +' '+ defWorkMs3) # ALMA 
+            os.system('cp -RL '+ os.path.join(datapath, defInputMs3) +' '+ defWorkMs4) # nobeyama
+
             # No Data Generation, but set TelescopeName
-            self.set_telescopename(defWorkMs3, "Nobeyama" )
+            self.set_telescopename(defWorkMs3, "Nobeyama" )  # change name
+            self.set_telescopename(defWorkMs4, "ALMAtest" )  # change name
 
     def tearDown(self):
 
@@ -144,6 +148,8 @@ class test_sdtimeaverage(unittest.TestCase):
         os.system('rm -rf ' + defWorkMs  ) # in case, the MS already exist.
         os.system('rm -rf ' + defWorkMs2 ) # 
         os.system('rm -rf ' + defWorkMs3 ) #
+        os.system('rm -rf ' + defWorkMs3 ) #
+
         os.system('rm -rf ' + defPrivateMs )
 
         os.system('rm -rf ' + "TEST-*.ms" )
@@ -741,10 +747,11 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task( prm ))
         self.checkOutputRec(defOutputMs, 1 )
-
-## DATACOLUMN ###
+#+
+# DATACOLUMN (Testing alternative collumn select )
+#-
     def test_param50(self):
-        '''sdtimeaverage::50:: datacolumn = 'float_data' '''
+        '''sdtimeaverage::50:: MS= 'float_data'   arg = 'float_data' (NORMAL)   '''
 
         prm =  {'infile'     : defWorkMs,
                 'outfile'    : "TEST-50.ms",
@@ -753,34 +760,62 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task( prm ))
 
     def test_param51(self):
-        '''sdtimeaverage::51:: datacolumn = 'float_data' but no column. alternatively use 'data'  '''
+        '''sdtimeaverage::51:: MS= 'float_data'    arg = 'data' Column Swich.  '''
 
-        prm =  {'infile'     : defWorkMs3,
+        prm =  {'infile'     : defWorkMs,
                 'outfile'    : "TEST-51.ms",
-                'datacolumn' : 'float_data'  }
+                'datacolumn' : 'data'  }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # Alternative Use will work.
 
     def test_param52(self):
-        '''sdtimeaverage::52:: datacolumn = 'data'  '''
+        '''sdtimeaverage::52:: MS= 'data'    arg = 'float_data' Column Swich '''
 
-        prm =  {'infile'     : defWorkMs3,
+        prm =  {'infile'     : defWorkMs4,
                 'outfile'    : "TEST-52.ms",
-                'datacolumn' : 'data'  }
+                'datacolumn' : 'float_data'  }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # must be false
 
     def test_param53(self):
-        '''sdtimeaverage::53:: datacolumn = ''  '''
+        '''sdtimeaverage::53:: MS= 'data'    arg = 'data'   (NORMAL)  '''
 
-        prm =  {'infile'     : defWorkMs,
+        prm =  {'infile'     : defWorkMs4,
                 'outfile'    : "TEST-53.ms",
-               }
+                'datacolumn' : 'data'  }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # must be false
+
+#+
+# ALMA option in mstransform
+#-
+    def test_param60Nobeyama(self):
+        '''sdtimeaverage::60 Nobeyama:: simply 'scan' is applied  '''
+
+        privateOutfile = "TEST-60-Nobeyama.ms"
+        prm =  {'infile'     : defWorkMs3,
+                'outfile'    : privateOutfile ,
+                'timebin'    : 'all',
+                'timespan'   : 'scan'    }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
+        self.checkOutputRec(privateOutfile, 121 ) # see directly about infile for detail. 
+
+    def test_param60ALMA(self):
+        '''sdtimeaverage::61:: ALMA  'scan, state' is applied. '''
+
+        privateOutfile = "TEST-61-ALMA.ms"
+        prm =  {'infile'     : defWorkMs4,
+                'outfile'    : privateOutfile ,
+                'timebin'    : 'all',
+                'timespan'   : 'scan'    }
+        # Run Task and check
+        self.assertTrue(self.run_task( prm ))
+        self.checkOutputRec(privateOutfile, 1 ) # 'scan, state' is applied. number of result = 1 
+
 
 #+
 # TimeSpan

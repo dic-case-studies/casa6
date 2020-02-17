@@ -40,12 +40,40 @@ def sdtimeaverage(
     capTimebin = timebin.upper()
     if (capTimebin == 'ALL') or (capTimebin == ''):
         timebin =  calc_timebin(infile)+'s'
+    #+
+    # datacolumn alternative access 
+    #  In case 'float_data' does not exists, attempt to use 'data'
+    #-
+
+    # know existence of data-column on specified MS. 
+    ex_float_data, ex_data = check_column(infile)
+
+    # change datacolumn 'data' to 'float_data"
+    if (datacolumn == 'float_data') :
+        if (ex_float_data == False)and(ex_data == True):
+            datacolumn = "data"
+            msg = "No FLOAT_DATA column. DATA column will be used alternatively."
+            casalog.post( msg, "INFO" )
+            print ( msg )
+
+    # change datacolumn 'float_data' to 'data' 
+    if (datacolumn == 'data') :
+        if (ex_float_data == True)and(ex_data == False):
+            datacolumn = "float_data"
+            msg = "No DATA column. FLOAT_DATA column will be used alternatively."
+            casalog.post( msg, "INFO" )
+            print ( msg )
 
     #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
     #-
     if (len(antenna) != 0) and (antenna.find('&') == -1):
         antenna = antenna + '&&&'
+
+    #+
+    # ALMA Warning
+    #- 
+
 
     casalog.origin('sdtimeaverage') 
 
@@ -65,6 +93,16 @@ def sdtimeaverage(
         pass
 
     return st 
+
+#  Getting Column Names
+def check_column(msName):
+    with open_table(msName) as tb:
+        columnNames = tb.colnames()
+        exist_float_data  = "FLOAT_DATA" in columnNames
+        exist_data        =  "DATA" in columnNames
+        return exist_float_data, exist_data
+
+# Get Telescope name
 
 #  Calculation range time in input MS.
 def calc_timebin(msName):
@@ -86,8 +124,6 @@ def calc_timebin(msName):
 def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, timespan, outfile):
     # followings are parameters of mstransform but not used by THIS.
     # just putting default values
-
-    # CAS-12721: Added 'antenna' arg . removed local var. (S.N)
 
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper

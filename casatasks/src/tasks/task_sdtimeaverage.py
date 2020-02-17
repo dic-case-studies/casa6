@@ -91,6 +91,12 @@ def sdtimeaverage(
     #+
     # ALMA Warning
     #- 
+    if is_telescopenameALMA(infile): 
+        msg = "Telescope name in this MS contains ALMA. You might have unexpected result, due to mstransform interpret as 'scan,state' "
+
+        casalog.post( msg, "WARNING" )
+   
+
     casalog.origin('sdtimeaverage')
 
     try:
@@ -119,7 +125,17 @@ def check_column(msName):
         exist_data        =  "DATA" in columnNames    
         return exist_float_data, exist_data
 
-# Get Telescope name
+# TELESCOP NAME (7-Feb-2020)
+def is_telescopenameALMA(msName):
+    msObservation = msName + '/OBSERVATION'
+    with tbmanager(msObservation) as tb:
+        teleName = tb.getcell('TELESCOPE_NAME',0)
+        print( "DEBUG TelescopeName = {} ".format(teleName)  )
+
+        if 'ALMA' in teleName:
+            return True
+        else:
+            return False
 
 #  Calculation range time in input MS.  
 def calc_timebin(msName):
@@ -133,7 +149,7 @@ def calc_timebin(msName):
     time_last =  max(tm)
 
     timebin = time_last - time_first ;
-    timebin += 4.0 * interval   + 1.0  # expand range. 
+    timebin += 4.0 * interval   + 1.5  # ??? expand range. 
 
     return str(timebin)
 
