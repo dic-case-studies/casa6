@@ -741,10 +741,11 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task( prm ))
         self.checkOutputRec(defOutputMs, 1 )
-
-## DATACOLUMN ###
+#+
+# DATACOLUMN (Testing alternative collumn select )
+#-
     def test_param50(self):
-        '''sdtimeaverage::50:: datacolumn = 'float_data' '''
+        '''sdtimeaverage::50:: MS= 'float_data'   arg = 'float_data' (NORMAL)   '''
 
         prm =  {'infile'     : defWorkMs,
                 'outfile'    : "TEST-50.ms",
@@ -753,31 +754,31 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task( prm ))
 
     def test_param51(self):
-        '''sdtimeaverage::51:: datacolumn = 'float_data' but no column. alternatively use 'data'  '''
+        '''sdtimeaverage::51:: MS= 'float_data'    arg = 'data' Column Swich.  '''
 
-        prm =  {'infile'     : defWorkMs3,
+        prm =  {'infile'     : defWorkMs,
                 'outfile'    : "TEST-51.ms",
-                'datacolumn' : 'float_data'  }
+                'datacolumn' : 'data'  }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # Alternative Use will work.
 
     def test_param52(self):
-        '''sdtimeaverage::52:: datacolumn = 'data'  '''
+        '''sdtimeaverage::52:: MS= 'data'    arg = 'float_data' Column Swich '''
 
         prm =  {'infile'     : defWorkMs3,
                 'outfile'    : "TEST-52.ms",
-                'datacolumn' : 'data'  }
+                'datacolumn' : 'float_data'  }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # must be false
 
     def test_param53(self):
-        '''sdtimeaverage::53:: datacolumn = ''  '''
+        '''sdtimeaverage::53:: MS= 'data'    arg = 'data'   (NORMAL)  '''
 
-        prm =  {'infile'     : defWorkMs,
+        prm =  {'infile'     : defWorkMs3,
                 'outfile'    : "TEST-53.ms",
-               }
+                'datacolumn' : 'data'  }
 
         # Run Task and check
         self.assertTrue(self.run_task( prm )) # must be false

@@ -63,12 +63,24 @@ def sdtimeaverage(
     #  In case 'float_data' does not exists, attempt to use 'data'
     #-
 
+    # know existence of data-column on specified MS. 
     ex_float_data, ex_data = check_column(infile) 
-    print( "Infile ={}, datacolumn ={} Columns:: float_data ={},  data ={}".format(infile, datacolumn,ex_float_data, ex_data) )
-    if (ex_float_data == False)and(ex_data == True):
-        datacolumn = "data"
-        msg = "DATA column will be used alternatively due to No FLOAT_DATA."
-        print( msg )
+ 
+    # change datacolumn 'data' to 'float_data"
+    if (datacolumn == 'float_data') :
+        if (ex_float_data == False)and(ex_data == True):
+            datacolumn = "data"
+            msg = "No FLOAT_DATA column. DATA column will be used alternatively."
+            casalog.post( msg, "INFO" )
+            print ( msg )
+
+    # change datacolumn 'float_data' to 'data' 
+    if (datacolumn == 'data') :
+        if (ex_float_data == True)and(ex_data == False):
+            datacolumn = "float_data"
+            msg = "No DATA column. FLOAT_DATA column will be used alternatively."
+            casalog.post( msg, "INFO" )
+            print ( msg )
 
     #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
@@ -76,6 +88,9 @@ def sdtimeaverage(
     if (len(antenna) != 0) and (antenna.find('&') == -1):
         antenna = antenna + '&&&'
 
+    #+
+    # ALMA Warning
+    #- 
     casalog.origin('sdtimeaverage')
 
     try:
@@ -103,6 +118,8 @@ def check_column(msName):
         exist_float_data  = "FLOAT_DATA" in columnNames 
         exist_data        =  "DATA" in columnNames    
         return exist_float_data, exist_data
+
+# Get Telescope name
 
 #  Calculation range time in input MS.  
 def calc_timebin(msName):
