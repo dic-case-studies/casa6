@@ -53,6 +53,7 @@ def sdtimeaverage(
     if (datacolumn == 'float_data') :
         if (ex_float_data == False)and(ex_data == True):
             datacolumn = "data"
+            # Message to User #
             msg = "No FLOAT_DATA column. DATA column will be used alternatively."
             casalog.post( msg, "INFO" )
 
@@ -60,6 +61,7 @@ def sdtimeaverage(
     if (datacolumn == 'data') :
         if (ex_float_data == True)and(ex_data == False):
             datacolumn = "float_data"
+            # Message to User #
             msg = "No DATA column. FLOAT_DATA column will be used alternatively."
             casalog.post( msg, "INFO" )
 
@@ -70,14 +72,14 @@ def sdtimeaverage(
         antenna = antenna + '&&&'
 
     #+
-    # ALMA Warning, caused by mastransform 
-    #-
-    
-    if ('scan' in timespan): 
-        msg = "If the TELESCOPE NAME in specified MS contains 'ALMA', then mstransform automatically changes to: timespan = 'scan,state'."
+    # 'scan,state' Warning 
+    #    (please see CAS-12721 comments)
+    #- 
+    if ('scan' in timespan)and('state' in timespan):
+        msg = "If  timescan contains 'scan' AND 'state'. You may be receiving unexpected result."
 
-        casalog.post( msg, "WARNING" )
-    
+        casalog.post( msg, 'WARN' )
+
     # org part
     casalog.origin('sdtimeaverage')
 

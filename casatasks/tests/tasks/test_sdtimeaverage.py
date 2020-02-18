@@ -858,11 +858,25 @@ class test_sdtimeaverage(unittest.TestCase):
 
     # ordinary behavior #
     def test_param72(self):
-        '''sdtimeaverage::72:: timespan="scan,state"  '''
+        '''sdtimeaverage::72:: timespan="scan,state" (WARN) in NRO '''
 
         privateOutfile, timebin_str  = self.setOutfile_Timebin( 72, nRow+3 )
         prm =  {'infile'    : defWorkMs2,
-                'timespan' : 'scan,state', 
+                'timespan' : 'scan,state',   ## HERE is the point ## 
+                'outfile' : privateOutfile }
+
+        # Run Task and check
+        self.assertTrue(self.run_task( prm )) # 
+        self.check_averaged_result_N1(privateOutfile)
+        self.checkOutputRec(privateOutfile, 1 )
+
+    # ordinary behavior #
+    def test_param73(self):
+        '''sdtimeaverage::73:: timespan="state,scan" (WARN) in NRO '''
+
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 73, nRow+3 )
+        prm =  {'infile'    : defWorkMs2,
+                'timespan' : 'state,scan',   ## HERE is the point ##
                 'outfile' : privateOutfile }
 
         # Run Task and check
@@ -872,9 +886,9 @@ class test_sdtimeaverage(unittest.TestCase):
 
     # Error in sytax # 
     def test_param74E(self):
-        '''sdtimeaverage::74E:: timespan="hoge"  '''
+        '''sdtimeaverage::79E:: timespan="hoge"  '''
 
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 74, nRow+3 )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 79, nRow+3 )
         prm =  {'infile'    : defWorkMs2,
                 'timespan' : 'hoge',
                 'outfile' : privateOutfile }
