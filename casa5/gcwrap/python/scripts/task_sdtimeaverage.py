@@ -34,6 +34,7 @@ def sdtimeaverage(
              timebin,
              timespan,
              outfile):
+
     #+
     #  defaut value (timebin=all) is to be handled.
     #-
@@ -46,15 +47,14 @@ def sdtimeaverage(
     #-
 
     # know existence of data-column on specified MS. 
-    ex_float_data, ex_data = check_column(infile)
-
+    ex_float_data, ex_data = check_column(infile) 
+ 
     # change datacolumn 'data' to 'float_data"
     if (datacolumn == 'float_data') :
         if (ex_float_data == False)and(ex_data == True):
             datacolumn = "data"
             msg = "No FLOAT_DATA column. DATA column will be used alternatively."
             casalog.post( msg, "INFO" )
-            print ( msg )
 
     # change datacolumn 'float_data' to 'data' 
     if (datacolumn == 'data') :
@@ -62,7 +62,6 @@ def sdtimeaverage(
             datacolumn = "float_data"
             msg = "No DATA column. FLOAT_DATA column will be used alternatively."
             casalog.post( msg, "INFO" )
-            print ( msg )
 
     #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
@@ -71,40 +70,44 @@ def sdtimeaverage(
         antenna = antenna + '&&&'
 
     #+
-    # ALMA Warning
-    #- 
+    # ALMA Warning, caused by mastransform 
+    #-
+    
+    if ('scan' in timespan): 
+        msg = "If the TELESCOPE NAME in specified MS contains 'ALMA', then mstransform automatically changes to: timespan = 'scan,state'."
 
-
-    casalog.origin('sdtimeaverage') 
+        casalog.post( msg, "WARNING" )
+    
+    # org part
+    casalog.origin('sdtimeaverage')
 
     try:
         # Select Data and make Average. 
-        st = do_mst(infile=infile, datacolumn=datacolumn,
-                    field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna,
-                    timebin=timebin, timespan=timespan, outfile=outfile)
+        st =do_mst(infile=infile, datacolumn=datacolumn,
+                   field=field, spw=spw, timerange=timerange, scan=scan, antenna=antenna, 
+                   timebin=timebin, timespan=timespan, outfile=outfile)
         # History 
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan,
                     timebin=timebin, timespan=timespan, antenna=antenna, outfile=outfile)
-        
+
     except Exception as e:
         casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
+        return False
     finally:
         pass
 
-    return st 
+    return st
 
 #  Getting Column Names
 def check_column(msName):
     with open_table(msName) as tb:
         columnNames = tb.colnames()
-        exist_float_data  = "FLOAT_DATA" in columnNames
-        exist_data        =  "DATA" in columnNames
+        exist_float_data  = "FLOAT_DATA" in columnNames 
+        exist_data        =  "DATA" in columnNames    
         return exist_float_data, exist_data
 
-# Get Telescope name
-
-#  Calculation range time in input MS.
+#  Calculation range time in input MS.  
 def calc_timebin(msName):
     with open_table(msName) as tb:
         tm    = tb.getcol('TIME')
@@ -116,7 +119,7 @@ def calc_timebin(msName):
     time_last =  max(tm)
 
     timebin = time_last - time_first ;
-    timebin += 4.0 * interval   + 1.0  # expand range. 
+    timebin += 4.0 * interval   + 1.5  # ??? expand range. 
 
     return str(timebin)
 

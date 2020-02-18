@@ -148,7 +148,7 @@ class test_sdtimeaverage(unittest.TestCase):
         os.system('rm -rf ' + defWorkMs  ) # in case, the MS already exist.
         os.system('rm -rf ' + defWorkMs2 ) # 
         os.system('rm -rf ' + defWorkMs3 ) #
-        os.system('rm -rf ' + defWorkMs3 ) #
+        os.system('rm -rf ' + defWorkMs4 ) #
 
         os.system('rm -rf ' + defPrivateMs )
 
@@ -160,9 +160,14 @@ class test_sdtimeaverage(unittest.TestCase):
 #
 # Comment Out if you reserve MS.
 #
-        os.system('rm -rf ' + defWorkMs  )
-        os.system('rm -rf ' + defWorkMs2 )
+        os.system('rm -rf ' + defWorkMs  ) # delete ALL.
+        os.system('rm -rf ' + defWorkMs2 ) # 
+        os.system('rm -rf ' + defWorkMs3 ) #
+        os.system('rm -rf ' + defWorkMs4 ) #
+
         os.system('rm -rf ' + defPrivateMs )
+
+        os.system('rm -rf ' + "TEST-*.ms" )
 
 ##############
 # Run Task

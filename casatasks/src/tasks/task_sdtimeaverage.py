@@ -72,7 +72,6 @@ def sdtimeaverage(
             datacolumn = "data"
             msg = "No FLOAT_DATA column. DATA column will be used alternatively."
             casalog.post( msg, "INFO" )
-            print ( msg )
 
     # change datacolumn 'float_data' to 'data' 
     if (datacolumn == 'data') :
@@ -80,7 +79,6 @@ def sdtimeaverage(
             datacolumn = "float_data"
             msg = "No DATA column. FLOAT_DATA column will be used alternatively."
             casalog.post( msg, "INFO" )
-            print ( msg )
 
     #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
@@ -91,8 +89,8 @@ def sdtimeaverage(
     #+
     # ALMA Warning
     #- 
-    if is_telescopenameALMA(infile): 
-        msg = "Telescope name in this MS contains ALMA. You might have unexpected result, due to mstransform interpret as 'scan,state' "
+    if ('scan' in timespan): 
+        msg = "If the TELESCOPE NAME in specified MS contains ‘ALMA’, then mstransform automatically changes timescan = ’scan, state’ . You may receive unexpected result. "
 
         casalog.post( msg, "WARNING" )
    
@@ -124,18 +122,6 @@ def check_column(msName):
         exist_float_data  = "FLOAT_DATA" in columnNames 
         exist_data        =  "DATA" in columnNames    
         return exist_float_data, exist_data
-
-# TELESCOP NAME (7-Feb-2020)
-def is_telescopenameALMA(msName):
-    msObservation = msName + '/OBSERVATION'
-    with tbmanager(msObservation) as tb:
-        teleName = tb.getcell('TELESCOPE_NAME',0)
-        print( "DEBUG TelescopeName = {} ".format(teleName)  )
-
-        if 'ALMA' in teleName:
-            return True
-        else:
-            return False
 
 #  Calculation range time in input MS.  
 def calc_timebin(msName):
