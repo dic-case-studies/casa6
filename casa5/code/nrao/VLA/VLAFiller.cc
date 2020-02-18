@@ -421,18 +421,6 @@ void VLAFiller::fill(Int verbose){
   scanNumber().rwKeywordSet().define(RecordFieldId("LAST_SCAN"), 
 				     Vector<Int>(itsScan));
  
-  {
-    MSSpWindowColumns msSpW(itsMS.spectralWindow());
-    Int nSpw=itsMS.spectralWindow().nrow();
-    Matrix<Int> selection(2,nSpw);
-    if (nSpw > 0) {
-       selection.row(0)=0; //start
-       selection.row(1)=msSpW.numChan().getColumn();
-    }
-    ArrayColumn<Complex> mcd(itsMS,"MODEL_DATA");
-    mcd.rwKeywordSet().define("CHANNEL_SELECTION",selection);
-  }
-
 #if defined(AIPS_DEBUG)
   LogSink::globalSink().filter(saved);
 #endif
