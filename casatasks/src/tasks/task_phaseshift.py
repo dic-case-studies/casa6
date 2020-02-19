@@ -9,7 +9,8 @@ import math
 from casatasks.private.casa_transition import *
 if is_CASA6:
     from .mstools import write_history
-    from casatools import table, ms, mstransformer, me
+    from casatools import table, ms, mstransformer
+    from casatools import measures as me
     from casatasks import casalog
     from .parallel.parallel_data_helper import ParallelDataHelper
 else:
