@@ -525,6 +525,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           String residualname=itsImages->residual()->name();
           String maskname=itsImages->mask()->name();
           String modelname=itsImages->model()->name();
+          ////Need the pb too as calcrobustrms in SynthesisDeconvolver uses it
+          String pbname="";
+          if(itsImages->hasPB())
+            pbname=itsImages->pb()->name();
           itsImages->releaseLocks();
           ///in lieu of = operator go via record
           // need to create a proper = operator for SynthesisParamsDeconv
@@ -590,7 +594,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             applicator.put(modelname);
             // mask #7
             applicator.put(maskname);
-            // beamset #8
+            //pb #8
+            applicator.put(pbname);
+            // beamset #9
             //need to use local variable for serial case
             beamsetRec=chanBeams[k].toRecord();
             applicator.put(beamsetRec);

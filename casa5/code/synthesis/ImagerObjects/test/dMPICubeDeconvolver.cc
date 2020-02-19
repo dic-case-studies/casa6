@@ -97,6 +97,7 @@ int main(int argc, char **argv)
       String residualname=imstor->residual()->name();
       String maskname=imstor->mask()->name();
       String modelname=imstor->model()->name();
+      String pbname="";
       imstor->psf()->unlock();
       imstor->residual()->unlock();
       //Lets make a simple mask and 0 model
@@ -148,7 +149,9 @@ int main(int argc, char **argv)
 			applicator.put(modelname);
 			// mask #7
 			applicator.put(maskname);
-                        //#8 beamset
+                        // pb #8
+                        applicator.put(pbname);
+                        //#9 beamset
                         //need to use local variable for serial case
                         beamsetRec=chanBeams[k].toRecord();
                         //cerr << "beamsetRec " << beamsetRec << endl;

@@ -57,16 +57,17 @@ public:
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > weight(casacore::uInt term=0);
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > model(casacore::uInt term=0);
 //    virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > image(casacore::uInt term=0);
-//    virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > mask(casacore::uInt term=0);
+    virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > mask(casacore::uInt term=0);
+    virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > pb(casacore::uInt term=0);
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Complex> > forwardGrid(casacore::uInt term=0);
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Complex> > backwardGrid(casacore::uInt term=0);
     
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > sumwt(casacore::uInt term=0);
 	
-	virtual casacore::Bool hasPB(){return doesImageExist(itsImageName+imageExts(PB));}
+	
 
   virtual casacore::Bool hasSensitivity(){return (bool) itsWeight;}
-  //virtual casacore::Bool hasPB(){return (bool) itsPB;}
+  virtual casacore::Bool hasPB(){return (bool) itsPB;}
 
   virtual casacore::Bool hasMask(){return (bool) itsMask; }
   virtual casacore::Bool hasModel() {return (bool) itsModel;}

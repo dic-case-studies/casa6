@@ -2963,6 +2963,7 @@ Array<Double> SIImageStore::calcRobustRMS(Array<Double>& mdns, const Float pbmas
   LogIO os( LogOrigin("SIImageStore","calcRobustRMS",WHERE) );
   Record*  regionPtr=0;
   String LELmask("");
+  LatticeLocker lockres (*(residual()), FileLocker::Read);
   ArrayLattice<Bool> pbmasklat(residual()->shape());
   pbmasklat.set(False);
   LatticeExpr<Bool> pbmask(pbmasklat);

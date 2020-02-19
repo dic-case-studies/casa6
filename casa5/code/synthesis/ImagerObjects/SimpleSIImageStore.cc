@@ -91,6 +91,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		return itsModel;
 		
 	}
+       shared_ptr<ImageInterface<Float> > SimpleSIImageStore::mask(uInt){
+		if(!itsMask)
+			throw(AipsError("Programmer's error: calling for model without setting it"));
+		return itsMask;
+		
+	}
+        shared_ptr<ImageInterface<Float> > SimpleSIImageStore::pb(uInt){
+		if(!itsPB)
+			throw(AipsError("Programmer's error: calling for model without setting it"));
+		return itsPB;
+		
+	}
 	shared_ptr<ImageInterface<Float> > SimpleSIImageStore::sumwt(uInt){
 		if(!itsSumWt)
 			throw(AipsError("Programmer's error: calling for sumweight without setting it"));

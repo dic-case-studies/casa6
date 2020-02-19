@@ -61,7 +61,9 @@ void CubeMinorCycleAlgorithm::get() {
 	applicator.get(modelName_p);
 	//get mask name #7
 	applicator.get(maskName_p);
-        //get beamsetrec #8
+        // get pb name #8
+        applicator.get(pbName_p);
+        //get beamsetrec #9
         applicator.get(beamsetRec_p);
         //get psfsidelobelev #9
         applicator.get(psfSidelobeLevel_p);
@@ -104,6 +106,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
   std::shared_ptr<ImageInterface<Float> >subresid=nullptr;
   std::shared_ptr<ImageInterface<Float> >submodel=nullptr;
   std::shared_ptr<ImageInterface<Float> > submask=nullptr;
+  std::shared_ptr<ImageInterface<Float> > subpb=nullptr;
 	Int chanBeg=0;
 	Int chanEnd=0;
 	chanBeg=chanRange_p[0];
@@ -124,7 +127,13 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
 	PagedImage<Float> mask(maskName_p, TableLock::UserNoReadLocking);
 	submask.reset(SpectralImageUtil::getChannel(mask, chanBeg, chanEnd, true));
 
-	std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, nullptr, nullptr, submask, nullptr, nullptr, nullptr, nullptr));
+        if(!pbName_p.empty()){
+          PagedImage<Float> pb(pbName_p, TableLock::UserNoReadLocking);
+          subpb.reset(SpectralImageUtil::getChannel(pb, chanBeg, chanEnd, false));
+        }
+
+	std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, nullptr, nullptr, submask, nullptr, nullptr, subpb, nullptr));
+        
 	//cerr << "subimagestor TYPE" << subimstor->getType() << endl;
 	return subimstor;
 }
