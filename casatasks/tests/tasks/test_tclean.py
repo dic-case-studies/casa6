@@ -134,7 +134,7 @@ else:
      
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor,test_mosaic_mtmfs,test_mosaic_cube]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor,test_mosaic_mtmfs,test_mosaic_cube] #,test_hetarray_imaging]
 #     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
  
 ## Base Test class with Utility functions
@@ -3212,6 +3212,211 @@ class test_pbcor(testref_base):
           report2=self.th.checkall(imexist=[self.img+'.image', self.img+'.pb'], imval=[(self.img+'.pb',0.7,[256,256,0,0])] , immask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])]  )
 
           self.checkfinal(report1+report2)
+
+
+#####################################################
+#####################################################
+#####################################################
+#####################################################
+### Heterogeneous array imaging
+class test_hetarray_imaging(testref_base):
+     '''
+     Tests for all kinds of heterogeneous imaging.
+
+     Type 1 :  Antennas of different shapes and/or sizes :  gridder='mosaic'.  
+     Type 2 :  Antennas have different pointing offsets (groups of antennas and time-dependence ) :  gridder='awproject'. [ Later, via CAS-11191, for 'mosaic' too ]
+
+     Current Test list : 
+     test_het_pointing_offsets_awproject_cube :  With CAS-12617  :  Test antenna-dependent and time-dependent pointing offset corrections
+     test_het_pointing_offsets_awproject_mtmfs :  With CAS-12617 :  Test antenna-dependent and time-dependent pointing offset correct
+
+     Tests to add later : 
+     test_het_pointing_offsets_mosaic_cube :   With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
+     test_het_pointing_offsets_mosaic_mtmfs :    With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
+     test_het_antenna_mosaic :   Test ALMA 7m+12m dataset with and without cross-baselines.  
+     test_het_antenna_mosaic_simulate :  With CAS-11464 : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
+     '''     
+          
+     def test_het_pointing_offsets_awproject_cube(self):
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy. 
+          '''
+          self.prepData('refim_heterogeneous_pointings.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+          self.baselines  ={'grp1':'0,2,4,6,8,10,12,14,16,18,20,22,24,26', 
+                            'grp2':'1,3,5,7,9,11,13,15,17,19,21,23,25' }
+
+          os.environ['ATerm_OVERSAMPLING'] = '5'
+          os.environ['ATerm_CONVSIZE'] = '512'
+          os.environ['PO_DEBUG'] = '0'
+
+          ## No corrections :  usepointing=False : PB goes to location of MS field phasecenter (middle of the image)
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspF', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=False)
+          report1=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr0_uspF.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspF.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspF.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,2]) ] )
+
+          ## Note : Test for PB location in the following tests. Pick the expected location (for a single PB) and test that the value is 1.0
+
+          ## Average correction : usepointing=True, pointingoffsetsigdev=[2000,2000] :  PB goes to the average location of all antennas, for first timestep. PB[-100,0] 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspT', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,2000.0])
+          report2=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr0_uspT.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspT.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspT.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr0_uspT.pb' ,0.65,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspT.pb' ,0.50,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspT.pb' ,0.35,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr0_uspT.pb' ,1.0,[924,1024,0,0]) ] )   
+
+
+
+          ## Antenna/time correction : usepointing=True, pointingoffsetsigdev=[20,2000], timerange='time1', antenna='grp1' : PB = PB[-100,+100] in the top left corner. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_grp1', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1']+ ' & ' )
+          report3=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.09,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,1.0,[924,1124,0,0]) ] )   
+          
+          
+          ## Cross baselines only : usepointing=True, pointingoffsetsigdev=[20,2000], timerange='time1', antenna='grp1 & grp2' : PB = PB[-100,0].  Note : THIS IS WRONG. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_cross', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1'] + ' & ' + self.baselines['grp2'])
+          report4=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.65,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.50,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.35,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr1_time1_cross.pb' ,1.0,[924,1024,0,0]) ] )   
+          report4 = report4 + "This test checks for cross-baseline PB values that are known to be incorrect. Edit these values/test once the algorithm for cross-baseline PBs is fixed.\n"
+          
+          ## Four corners : usepointing=True, pointingoffsetsigdev=[20,20], timerange='*', antenna='grp1,grp2' : PB = Sum of PB in all 4 corners (with no cross-terms). Flux/alpha are correct. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr2_4corners', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0], antenna=self.baselines['grp1']+' & ; '+self.baselines['grp2']+ ' &')
+          report5=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr2_4corners.image' ,0.77,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr2_4corners.image' ,0.42,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr2_4corners.image' ,0.17,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr2_4corners.pb' ,0.77,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr2_4corners.pb' ,0.42,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr2_4corners.pb' ,0.17,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr2_4corners.pb' ,0.925,[924,1124,0,0]),  
+                                          (self.img+'_pcorr2_4corners.pb' ,1.0,[924,924,0,0]),   
+                                          (self.img+'_pcorr2_4corners.pb' ,0.925,[1124,1124,0,0]),   
+                                          (self.img+'_pcorr2_4corners.pb' ,1.0,[1124,924,0,0]) ] )   
+          report5 = report5 + "This test leaves out cross-baselines. Edit later to include them, once the algorithm for cross-baseline PBs is fixed.\n"
+        
+          #### Note : Add a run with all antennas ONLY after the cross-baselines imaging is correct.  
+          #### grp1 has 14 ants. grp2 has 13.  But, the PBs for grp1 have the peak of 1.0 whereas grp2 has 0.93.  Needs to be understood. But, image and pb values match, so flux is ok. 
+
+          ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
+          os.environ['ATerm_OVERSAMPLING'] = '20'
+          os.environ['ATerm_CONVSIZE'] = '2048'
+
+
+          self.checkfinal(report1+report2+report3+report4+report5)
+
+     ###########################
+
+     def test_het_pointing_offsets_awproject_mtmfs(self):
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True). 
+          '''
+          self.prepData('refim_heterogeneous_pointings.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+
+          self.baselines  ={'grp1':'0,2,4,6,8,10,12,14,16,18,20,22,24,26', 
+                            'grp2':'1,3,5,7,9,11,13,15,17,19,21,23,25' }
+
+          os.environ['ATerm_OVERSAMPLING'] = '5'
+          os.environ['ATerm_CONVSIZE'] = '512'
+          os.environ['PO_DEBUG'] = '0'
+
+          ######################
+          ## Top Left : Grp 1 and Time 1.  
+
+          im_pcorr2 = 'try_mt_pcorr1_grp1_time1'  # Apply antenna grouping corrections and time-dependence corrections
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &' , timerange='<21:40:00.0')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] +' &' , timerange='<21:40:00.0')
+          
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &'  , timerange='<21:40:00.0', calcpsf=False, calcres=False)
+          
+          report1=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr1_grp1_time1.image.tt0' ,0.2,[1024,1024,0,0]), ## Average of 0.4,0.22,0.09 for the 3 chans.
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr1_grp1_time1.pb.tt0' ,0.2,[1024,1024,0,0]), 
+                                          ## Check alpha
+                                          ('try_mt_pcorr1_grp1_time1.alpha' ,0.0,[1024,1024,0,0]) ] )
+
+
+          ######################
+          ## 4 corners : All baselines and both timesteps ( leave out cross baselines for now ).
+          
+          im_pcorr2 = 'try_mt_pcorr2_4corners'  # Apply antenna grouping corrections and time-dependence corrections
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &')
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &')
+         
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &', calcres=False, calcpsf=False)
+          
+          report2=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr2_4corners.image.tt0' ,0.38,[1024,1024,0,0]), ## Average of 0.4,0.22,0.09 for the 3 chans.
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr2_4corners.pb.tt0' ,0.38,[1024,1024,0,0]), 
+                                          ## Check alpha
+                                          ('try_mt_pcorr2_4corners.alpha' ,0.0,[1024,1024,0,0]) ] )
+
+
+          ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
+          os.environ['ATerm_OVERSAMPLING'] = '20'
+          os.environ['ATerm_CONVSIZE'] = '2048'
+
+          self.checkfinal(report1+report2)
+
+     ###########################
 
 #####################################################
 #####################################################

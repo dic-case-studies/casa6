@@ -3242,8 +3242,9 @@ class test_hetarray_imaging(testref_base):
           This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
           Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy. 
           '''
-          #self.prepData('refim_heterogeneous_pointings.ms')
-          msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+          self.prepData('refim_heterogeneous_pointings.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
           self.baselines  ={'grp1':'0,2,4,6,8,10,12,14,16,18,20,22,24,26', 
                             'grp2':'1,3,5,7,9,11,13,15,17,19,21,23,25' }
 
@@ -3333,6 +3334,11 @@ class test_hetarray_imaging(testref_base):
           #### Note : Add a run with all antennas ONLY after the cross-baselines imaging is correct.  
           #### grp1 has 14 ants. grp2 has 13.  But, the PBs for grp1 have the peak of 1.0 whereas grp2 has 0.93.  Needs to be understood. But, image and pb values match, so flux is ok. 
 
+          ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
+          os.environ['ATerm_OVERSAMPLING'] = '20'
+          os.environ['ATerm_CONVSIZE'] = '2048'
+
+
           self.checkfinal(report1+report2+report3+report4+report5)
 
      ###########################
@@ -3342,8 +3348,10 @@ class test_hetarray_imaging(testref_base):
           This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
           MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True). 
           '''
-          #self.prepData('refim_heterogeneous_pointings.ms')
-          msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+          self.prepData('refim_heterogeneous_pointings.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+
           self.baselines  ={'grp1':'0,2,4,6,8,10,12,14,16,18,20,22,24,26', 
                             'grp2':'1,3,5,7,9,11,13,15,17,19,21,23,25' }
 
@@ -3402,6 +3410,9 @@ class test_hetarray_imaging(testref_base):
                                           ('try_mt_pcorr2_4corners.alpha' ,0.0,[1024,1024,0,0]) ] )
 
 
+          ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
+          os.environ['ATerm_OVERSAMPLING'] = '20'
+          os.environ['ATerm_CONVSIZE'] = '2048'
 
           self.checkfinal(report1+report2)
 
