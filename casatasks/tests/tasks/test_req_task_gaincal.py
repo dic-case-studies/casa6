@@ -25,7 +25,7 @@
 CASA6 = False
 try:
     import casatools
-    from casatasks import gaincal, casalog
+    from casatasks import gaincal, casalog, mstransform
     CASA6 = True
     tb = casatools.table()
 
@@ -458,7 +458,7 @@ class gaincal_test(unittest.TestCase):
         
     def test_gainTypeSpline(self):
         '''
-            test_gainTypeK
+            test_gainTypeSpline
             ----------------
             
             Check that the output with gaintype GSPLINE is equal to a reference calibration table
@@ -505,6 +505,130 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(os.path.exists(tempCal))
         
         self.assertTrue(th.compTables(tempCal, merged_refcal3, ['WEIGHT']))
+
+
+    def test_corrDepFlags(self):
+        '''
+            test_corrDepFlags
+            -----------------
+        '''
+
+
+        # This test exercises the corrdepflags parameter 
+        #
+        #  With corrdepflags=False (the default), one (or more) flagged correlations causes
+        #  all correlations (per channel, per baseline) to behave as flagged, thereby
+        #  causing both polarizations to be flagged in the output cal table
+        #
+        #  With corrdepflags=True, unflagged correlations will be used as normal, and
+        #  only the implicated polarization will be flagged in the output cal table
+        #
+        #  NB: when some data are flagged, we expect solutions to change slightly,
+        #      since available data is different.  For now, we are testing only the
+        #      resulting flags.
+
+        cdfdata='testcorrdepflags.ms'
+        # slice out just scan 2
+        mstransform(vis=datacopy,outputvis=cdfdata,scan='2',datacolumn='data')
+
+        # modify flags in interesting corr-dep ways in scan 2 for subset of antennas
+        tb.open(cdfdata,nomodify=False)
+
+        # we modify the flags as follows:
+        #  spw=0:  one antenna, one correlation (YY)
+        #  spw=1:  one antenna, one correlation (XX)
+        #  spw=2:  two antennas, opposite correlations
+        #  spw=3:  one antenna, both cross-hands flagged
+
+        # set flags for spw=0, antenna=3, corr=YY
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==0 && (ANTENNA1==3 || ANTENNA2==3)')
+        fl=st.getcol('FLAG')
+        fl[3,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+
+        # set flags for spw=1, antenna=6, corr=XX
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==1 && (ANTENNA1==6 || ANTENNA2==6)')
+        fl=st.getcol('FLAG')
+        fl[0,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+
+        # set flags for spw=2, antenna=2, corr=XX
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==2 && (ANTENNA1==2 || ANTENNA2==2)')
+        fl=st.getcol('FLAG')
+        fl[0,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+        # set flags for spw=2, antenna=7, corr=YY
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==2 && (ANTENNA1==7 || ANTENNA2==7)')
+        fl=st.getcol('FLAG')
+        fl[3,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+
+        # set flags for spw=3, antenna=8, corr=XY,YX
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==3 && (ANTENNA1==8 || ANTENNA2==8)')
+        fl=st.getcol('FLAG')
+        fl[1:3,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+        
+        tb.close()
+        
+        # Run gaincal on scan 2, solint='inf' with corrdepflags=False
+        #   expect both pols to be flagged for ants with one or more corr flagged
+        cdfF='testcorrdepflagsF.G'
+        gaincal(vis=cdfdata,caltable=cdfF,solint='inf',refant='0',smodel=[1,0,0,0],corrdepflags=False)
+
+        tb.open(cdfF)
+        flF=tb.getcol('FLAG')
+        tb.close()
+
+        # flag count per spw  (both pols in every case)
+        self.assertTrue(np.sum(flF[:,0,0:10])==2)    
+        self.assertTrue(np.sum(flF[:,0,10:20])==2)
+        self.assertTrue(np.sum(flF[:,0,20:30])==4)
+        self.assertTrue(np.sum(flF[:,0,30:40])==2)
+
+        # check flags set for specific antennas, each spw  (both pols each antenna)
+        self.assertTrue(np.all(flF[:,0,0:10][:,3]))        # spw 0
+        self.assertTrue(np.all(flF[:,0,10:20][:,6]))       # spw 1
+        self.assertTrue(np.all(flF[:,0,20:30][:,[2,7]]))   # spw 2
+        self.assertTrue(np.all(flF[:,0,30:40][:,8]))       # spw 3
+
+        # Run gaincal on scan 2, solint='inf' with corrdepflags=True
+        #   expect unflagged solutions for unflagged pol
+        cdfT='testcorrdepflagsT.G'
+        gaincal(vis=cdfdata,caltable=cdfT,solint='inf',refant='0',smodel=[1,0,0,0],corrdepflags=True)
+
+        tb.open(cdfT)
+        flT=tb.getcol('FLAG')
+        tb.close()
+
+        # flag count per spw (one pol per antenna, at most)
+        self.assertTrue(np.sum(flT[:,0,0:10])==1)
+        self.assertTrue(np.sum(flT[:,0,10:20])==1)
+        self.assertTrue(np.sum(flT[:,0,20:30])==2)
+        self.assertTrue(np.sum(flT[:,0,30:40])==0)
+
+        # check flags set for specific antennas, each spw (one pol per antenna, at most)
+        self.assertTrue(flT[1,0,0:10][3])        # spw 0, antenna 3, pol=Y
+        self.assertTrue(flT[0,0,10:20][6])       # spw 1, antenna 6, pol=X
+        self.assertTrue(flT[0,0,20:30][2])       # spw 2, antenna 2, pol=X
+        self.assertTrue(flT[1,0,20:30][7])       # spw 2, antenna 7, pol=Y
+        # (spw 3 tested above)
+
+        # clean up locally-made files
+        shutil.rmtree(cdfdata)
+        shutil.rmtree(cdfF)
+        shutil.rmtree(cdfT)
+
+
+
+
+
+
 
 
 def suite():
