@@ -22,7 +22,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   __init__.py
   test_admit.py
   test_agentflagger.py
-  test_applycal.py
   test_asdmsummary.py
   test_bandpass.py
   test_caltabconvert.py
