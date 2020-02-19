@@ -169,11 +169,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
 
     //// Store current model in this matrix.
+    LatticeLocker lockmod (*(itsImages->model()), FileLocker::Write);
+    LatticeLocker lockresid (*(itsImages->residual()), FileLocker::Write);
     itsImages->model()->get( itsMatDeltaModel, true );
     itsMatModel.assign( itsMatDeltaModel ); // This should make an explicit copy
 
     //// Set model to zero
     itsImages->model()->set( 0.0 );
+    
 
     //// Prepare a single plane mask. For multi-stokes, it still needs a single mask.
     IPosition shp = itsImages->mask()->shape();

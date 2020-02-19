@@ -475,8 +475,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         automaskon=true;
       }
       //itsDeconvolver->deconvolve( itsLoopController, itsImages, itsDeconvolverId, automaskon, itsFastNoise );
-      // include robust stats rec 
+      // include robust stats rec
+      
       itsDeconvolver->deconvolve( itsLoopController, itsImages, itsDeconvolverId, automaskon, itsFastNoise, itsRobustStats );
+      
       returnRecord = itsLoopController.getCycleExecutionRecord();
 
       //scatterModel(); // This is a no-op for the single-node case.
@@ -533,7 +535,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           ///in lieu of = operator go via record
           // need to create a proper = operator for SynthesisParamsDeconv
           SynthesisParamsDeconv decpars;
-          decpars.fromRecord(itsDecPars.toRecord());
+          ///Will have to create a = operator...right now kludging
+          ///from record has a check that has to be bypassed for just the
+          /// usage as a = operator
+          {
+            String tempMaskString= itsDecPars.maskString;
+            itsDecPars.maskString="";
+            decpars.fromRecord(itsDecPars.toRecord());
+            //return itsDecPars back to its original state
+            itsDecPars.maskString=tempMaskString;
+          }
           ///remove starting model as already dealt with in this deconvolver
           decpars.startModel="";
           ///masking is dealt already by this deconvolver so mask image
