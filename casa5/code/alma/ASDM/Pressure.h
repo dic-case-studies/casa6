@@ -120,7 +120,7 @@ public:
 	 * @param st a reference to a StringTokenizer.
 	 * @return an Pressure.
 	 */
-	static Pressure getPressure(StringTokenizer &st) throw(NumberFormatException);
+	static Pressure getPressure(StringTokenizer &st);
 			
 	/**
 	 * Write the binary representation of this to an EndianOSStream .

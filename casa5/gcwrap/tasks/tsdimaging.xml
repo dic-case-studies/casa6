@@ -132,19 +132,34 @@ values. See description below for details of gridfunction available.
             <shortdescription>velocity definition [\'radio\', \'optical\', \'true\' or \'relativistic\'] </shortdescription>
             <description>velocity definition</description>
             <value>radio</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                     <value>radio</value>
                     <value>optical</value>
                     <value>true</value>
                     <value>relativistic</value>
+                    <value>RADIO</value>
+                    <value>OPTICAL</value>
+                    <value>TRUE</value>
+                    <value>RELATIVISTIC</value>
            </allowed>
     </param>
 
-    <param type="string" name="outframe">
+    <param type="string" name="specmode">
+        <shortdescription>Spectral definition mode (cube, cubedata, cubesource)</shortdescription>
+        <description>Spectral definition mode (cube, cubedata, cubesource)</description>
+        <value>cube</value>
+        <allowed kind="enum">
+            <value>cube</value>
+            <value>cubedata</value>
+            <value>cubesource</value>
+        </allowed>
+    </param>
+
+    <param type="string" name="outframe" subparam="true" ignorecase="true">
             <shortdescription>velocity frame of output image [\'lsrk\', \'lsrd\', \'bary\', \'geo\', \'topo\', \'galacto\', \'lgroup\', \'cmb\'] (\'\'=current frame or LSRK for multiple-MS inputs) </shortdescription>
             <description>velocity frame of output image (''=current frame or LSRK for multiple-MS inputs)</description>
             <value></value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                     <value>lsrk</value>
                     <value>lsrd</value>
                     <value>bary</value>
@@ -153,6 +168,14 @@ values. See description below for details of gridfunction available.
                     <value>galacto</value>
                     <value>lgroup</value>
                     <value>cmb</value>
+                    <value>LSRK</value>
+                    <value>LSRD</value>
+                    <value>BARY</value>
+                    <value>GEO</value>
+                    <value>TOPO</value>
+                    <value>GALACTO</value>
+                    <value>LGROUP</value>
+                    <value>CMB</value>
                     <value></value>
            </allowed>
     </param>
@@ -161,12 +184,17 @@ values. See description below for details of gridfunction available.
             <shortdescription>gridding function for imaging [\'BOX\', \'SF\', \'PB\', \'GAUSS\' or \'GJINC\'] (see description in help)</shortdescription>
             <description>gridding function for imaging (see description in help)</description>
             <value>BOX</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value>BOX</value>
                 <value>PB</value>
                 <value>SF</value>
                 <value>GAUSS</value>
                 <value>GJINC</value>
+                <value>box</value>
+                <value>pb</value>
+                <value>sf</value>
+                <value>gauss</value>
+                <value>gjinc</value>
             </allowed>
     </param>
 
@@ -214,11 +242,15 @@ values. See description below for details of gridfunction available.
         <param type="string" name="projection">
             <description>map projection type</description>
             <value>SIN</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value>SIN</value>
                 <value>CAR</value>
                 <value>TAN</value>
                 <value>SFL</value>
+                <value>sin</value>
+                <value>car</value>
+                <value>tan</value>
+                <value>sfl</value>
             </allowed>
         </param>
 
@@ -226,12 +258,17 @@ values. See description below for details of gridfunction available.
             <shortdescription>pointing data column to use [\'direction\', \'target\', \'pointing_offset\', \'source_offset\' or \'encoder\']</shortdescription>
             <description>pointing data column to use</description>
             <value>direction</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value>target</value>
                 <value>pointing_offset</value>
                 <value>source_offset</value>
                 <value>encoder</value>
                 <value>direction</value>
+                <value>TARGET</value>
+                <value>POINTING_OFFSET</value>
+                <value>SOURCE_OFFSET</value>
+                <value>ENCODER</value>
+                <value>DIRECTION</value>
             </allowed>
     </param>
 
@@ -274,7 +311,7 @@ values. See description below for details of gridfunction available.
     <param type="string" name="brightnessunit">
             <description>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</description>
             <value></value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value></value>
                 <value>K</value>
                 <value>Jy/beam</value>
@@ -317,6 +354,13 @@ values. See description below for details of gridfunction available.
                     </default>
                     <default param="veltype"><value type="string">radio</value></default>
                 </equals>
+            </when>
+            <when param="specmode">
+                <equals type="string" value="cube">
+                    <default param="outframe"><value type="string"></value></default>
+                </equals>
+                <equals type="string" value="cubedata"/>
+                <equals type="string" value="cubesource"/>
             </when>
             <when param="gridfunction">
                 <equals type="string" value="BOX"/>
@@ -471,6 +515,35 @@ mode -- spectral gridding type
        veltype -- Velocity definition
            Options: 'radio','optical','true','relativistic'
            default: 'radio'
+specmode -- Spectral definition mode (cube, cubedata, cubesource)
+            default: 'cube'
+            Options: 'cube', 'cubedata', 'cubesource'
+                'cube' : Spectral line imaging with one or more channels
+                         Parameters start, width,and nchan define the spectral
+                         coordinate system and can be specified either in terms
+                         of channel numbers, frequency or velocity in whatever
+                         spectral frame is specified in 'outframe'.
+                         All internal and output images are made with outframe as the
+                         base spectral frame. However imaging code internally uses the fixed
+                         spectral frame, LSRK for automatic internal software
+                         Doppler tracking so that a spectral line observed over an
+                         extended time range will line up appropriately.
+                         Therefore the output images have additional spectral frame conversion
+                         layer in LSRK on the top the base frame.
+                'cubedata' : Spectral line imaging with one or more channels
+                             There is no internal software Doppler tracking so
+                             a spectral line observed over an extended time range
+                             may be smeared out in frequency. There is strictly
+                             no valid spectral frame with which to label the output
+                             images, but they will list the frame defined in the MS                
+                'cubesource': Spectral line imaging while
+                              tracking moving source (near field or solar system
+                              objects). The velocity of the source is accounted
+                              and the frequency reported is in the source frame.
+                              As there is not SOURCE frame defined,
+                              the frame reported will be REST (as it may not be
+                              in the rest frame emission region may be
+                              moving w.r.t the systemic velocity frame)
 outframe -- velocity reference frame of output image
         Options: '','LSRK','LSRD','BARY','GEO','TOPO','GALACTO',
                  'LGROUP','CMB'

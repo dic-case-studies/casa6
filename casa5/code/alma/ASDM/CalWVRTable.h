@@ -97,6 +97,8 @@
 
 	
 
+	
+
 
 
 #include <alma/ASDM/ConversionException.h>
@@ -274,6 +276,16 @@ class CalWVRRow;
  * </TR>
 	
 
+
+ * <TR> <TH BGCOLOR="#CCCCCC"  colspan="4" valign="center"> Value <br> (Optional) </TH></TR>
+	
+ * <TR>
+ * <TD> tauBaseline</TD> 
+ * <TD> float </TD>
+ * <TD>  &nbsp; </TD>
+ * <TD>&nbsp; Constant opacity term (frequency independent). </TD>
+ * </TR>
+	
 
  * </TABLE>
  */
