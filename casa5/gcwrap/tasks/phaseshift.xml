@@ -256,7 +256,7 @@ Multi-MS.
         </allowed>
     </param>
     
-    <param type="string" name="phasecenter" mustexist="true">
+    <param type="string" name="phasecenter">
     	<shortdescription>Sky coordinates of the desired center</shortdescription>
     	<description>Sky coordinates of the desired center, for example 
     	
