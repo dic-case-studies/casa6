@@ -102,16 +102,19 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
                    overwrite=False)
         
         # create reference image > 2.5*PB to use for SD sim
+        imagepath_sd = 'sd_model.image'
         tclean(vis=mspath_sd, 
                imagename='sd_model',
-               imsize=512,
+               specmode='cube',
+               nchan=1,
+               imsize=750,
                cell='20arcsec',
+               # imsize=6000,
+               # cell='2.5arcsec',
                niter=100,
                gridder='wproject', 
                wprojplanes=5,pblimit=-0.1, 
                phasecenter='J2000 19h59m28.449 40d44m01.199')
-
-        imagepath_sd = 'sd_model.image'
 
         # create second reference simulation
         sd_project = 'sim_single_dish'
@@ -138,6 +141,56 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
                    graphics='none',
                    verbose=False, 
                    overwrite=False)
+
+        # create third reference simulation, with both int and sd
+        # using the ALMA PM antennas for the interferometric case
+        both_project = 'sim_both'
+        simobserve(project=both_project, 
+                   skymodel=imagepath_sd, 
+                   complist='', 
+                   setpointings=True, 
+                   direction=[], 
+                   mapsize=['1deg'], 
+                   maptype='square', 
+                   pointingspacing='',
+                   caldirection='',
+                   calflux='1Jy',
+                   obsmode='sd', 
+                   refdate='2020/02/13', 
+                   hourangle='transit', 
+                   totaltime='100s', 
+                   antennalist=configpath_int,
+                   sdantlist=configpath_sd, 
+                   sdant=0,
+                   outframe='LSRK', 
+                   thermalnoise='', 
+                   leakage=0.0, 
+                   graphics='none',
+                   verbose=False, 
+                   overwrite=False)
+        simobserve(project=both_project, 
+                   skymodel=imagepath_sd, 
+                   complist='', 
+                   setpointings=True, 
+                   direction=[], 
+                   mapsize=['1deg'], 
+                   maptype='square', 
+                   pointingspacing='',
+                   caldirection='',
+                   calflux='1Jy',
+                   obsmode='int', 
+                   refdate='2020/02/13', 
+                   hourangle='transit', 
+                   totaltime='100s', 
+                   antennalist=configpath_int,
+                   sdantlist=configpath_sd, 
+                   sdant=0,
+                   outframe='LSRK', 
+                   thermalnoise='', 
+                   leakage=0.0, 
+                   graphics='none',
+                   verbose=False, 
+                   overwrite=False)
   
     def setUp(self):
         '''Method called to prepare the test fixture.  This is called immediately before calling the test method'''
@@ -149,8 +202,13 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
         '''A method called after an individual test in a class has run'''
         try:
             os.remove('simanalyze.last')
-        except FileNotFoundError:
-            pass
+        except OSError as e:
+            if "No such file or directory" in e:
+                pass
+            else:
+                raise(e)
+        # except FileNotFoundError: undefined in python2
+        #     pass
  
     @classmethod
     def tearDownClass(cls):
@@ -170,6 +228,8 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
             shutil.rmtree(imagepath_sd[:-5]+'sumwt')
             # Remove the single dish reference simulation
             shutil.rmtree(sd_project)
+            # Remove the combined (int + sd) reference simulation
+            shutil.rmtree(both_project)
         except OSError as e:
             if "No such file or directory" in e:
                 pass
@@ -198,37 +258,39 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
         test_simanalyze: The imagename parameter takes the name of an already synthesized image
         '''
         # task return without error as Observed value
-        simanalyze(project=int_project, 
-                   image=False, 
-                   vis=visname, 
-                   imagename=imagepath_int, 
-                   # modelimage='', # not the skymodel
-                   # imsize = [],
-                   # imdirection ='',
-                   # cell = '',
-                   # interactive = False, 
-                   # niter = 0,
-                   # threshold = '0.1mJy',
-                   # weighting = 'natural',
-                   # mask = [],
-                   # outertaper = [],
-                   # pbcor = True,
-                   # stokes = 'I', 
-                   # featherimage = '',
-                   analyze=False, 
-                   # showuv=False,
-                   # showpsf=False,
-                   # showmodel=False,
-                   # showconvolved=False,
-                   # showclean=False,
-                   # showresidual=False,
-                   # showdifference=False,
-                   # showfidelity=True,
-                   graphics='none', 
-                   verbose=False, 
-                   overwrite=True, 
-                   dryrun=False, 
-                   logfile=logpath)
+        visname = str(int_project +'/'+ int_project + '.' + 
+                      configpath_int.split('/')[-1][:-3] +'ms')
+        a = simanalyze(project=int_project, 
+                       image=False, 
+                       vis=visname, 
+                       imagename=imagepath_int, 
+                       # modelimage='', # not the skymodel
+                       # imsize = [],
+                       # imdirection ='',
+                       # cell = '',
+                       # interactive = False, 
+                       # niter = 0,
+                       # threshold = '0.1mJy',
+                       # weighting = 'natural',
+                       # mask = [],
+                       # outertaper = [],
+                       # pbcor = True,
+                       # stokes = 'I', 
+                       # featherimage = '',
+                       analyze=False, 
+                       # showuv=False,
+                       # showpsf=False,
+                       # showmodel=False,
+                       # showconvolved=False,
+                       # showclean=False,
+                       # showresidual=False,
+                       # showdifference=False,
+                       # showfidelity=True,
+                       graphics='none', 
+                       verbose=False, 
+                       overwrite=True, 
+                       dryrun=False, 
+                       logfile=logpath)
 
         b = True # Expected value
         self.assertEqual(a,b) 
@@ -299,7 +361,7 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
                    cell = '',
                    interactive = False, 
                    niter = 0,
-                   threshold = '0.0Jy',
+                   threshold = '0.01mJy',
                    weighting = 'natural',
                    mask = [],
                    outertaper = [],
@@ -331,6 +393,39 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
 
     def test_imaging_True_interferometric_and_total_power_analysis_False(self):
         '''test_simanalyze: Requirement'''
+
+        simanalyze(project=both_project, 
+                   image=True, 
+                   vis= 'default', # should grid TP, image IF, feather
+                   # imagename='', 
+                   modelimage='', # not the skymodel
+                   imsize = [1024],
+                   imdirection ='',
+                   cell = '',
+                   interactive = False, 
+                   niter = 0,
+                   threshold = '0.01mJy',
+                   weighting = 'natural',
+                   mask = [],
+                   outertaper = [],
+                   pbcor = False,
+                   stokes = 'I', 
+                   featherimage = '',
+                   analyze=False, 
+                   # showuv=False,
+                   # showpsf=False,
+                   # showmodel=False,
+                   # showconvolved=False,
+                   # showclean=False,
+                   # showresidual=False,
+                   # showdifference=False,
+                   # showfidelity=True,
+                   graphics='none', 
+                   verbose=False, 
+                   overwrite=True, 
+                   dryrun=False, 
+                   logfile=logpath)
+
         # Some Single Test
         a = 1 # Observed value
         b = 1 # Expected value
