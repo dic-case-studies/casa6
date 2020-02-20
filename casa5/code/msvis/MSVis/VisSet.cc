@@ -996,17 +996,6 @@ void VisSet::addScratchCols(MeasurementSet& ms, Bool compress, Bool doModelData)
   // fill in default selection
   selection_p.row(0)=0; //start
   selection_p.row(1)=msSpW.numChan().getColumn(); 
-  if (ms.tableDesc().isColumn("MODEL_DATA")) {
-    TableColumn col(ms,"MODEL_DATA");
-    if (col.keywordSet().isDefined("CHANNEL_SELECTION")) {
-      Matrix<Int> storedSelection;
-      col.keywordSet().get("CHANNEL_SELECTION",storedSelection);
-      if (selection_p.shape()==storedSelection.shape() && 
-	  allEQ(selection_p,storedSelection)) {
-	init=false;
-      } 
-    }
-  }
 
   // Add scratch columns
   if (init) {

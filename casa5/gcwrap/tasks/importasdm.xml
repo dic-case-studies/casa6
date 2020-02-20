@@ -462,16 +462,6 @@ MS::Pointing::direction
       <value>False</value>
     </param>
 
-    <param type="bool" name="remove_ref_undef">
-<shortdescription>If set to True then apply fixspwbackport on the resulting MS(es).</shortdescription>
-<description>If set to True then apply fixspwbackport on the resulting
-MS(es).
-                     Default: False
-                     Options: False|True
-</description>
-      <value>False</value>
-    </param>
-
     <param type="bool" name="convert_ephem2geo">
 <shortdescription>if True, convert any attached ephemerides to the GEO reference frame (time-spacing not changed)</shortdescription>
 <description>if True, convert any attached ephemerides to the GEO

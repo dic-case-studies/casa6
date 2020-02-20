@@ -144,7 +144,18 @@ values. See description below for details of gridfunction available.
            </allowed>
     </param>
 
-    <param type="string" name="outframe">
+    <param type="string" name="specmode">
+        <shortdescription>Spectral definition mode (cube, cubedata, cubesource)</shortdescription>
+        <description>Spectral definition mode (cube, cubedata, cubesource)</description>
+        <value>cube</value>
+        <allowed kind="enum">
+            <value>cube</value>
+            <value>cubedata</value>
+            <value>cubesource</value>
+        </allowed>
+    </param>
+
+    <param type="string" name="outframe" subparam="true" ignorecase="true">
             <shortdescription>velocity frame of output image [\'lsrk\', \'lsrd\', \'bary\', \'geo\', \'topo\', \'galacto\', \'lgroup\', \'cmb\'] (\'\'=current frame or LSRK for multiple-MS inputs) </shortdescription>
             <description>velocity frame of output image (''=current frame or LSRK for multiple-MS inputs)</description>
             <value></value>
@@ -344,6 +355,13 @@ values. See description below for details of gridfunction available.
                     <default param="veltype"><value type="string">radio</value></default>
                 </equals>
             </when>
+            <when param="specmode">
+                <equals type="string" value="cube">
+                    <default param="outframe"><value type="string"></value></default>
+                </equals>
+                <equals type="string" value="cubedata"/>
+                <equals type="string" value="cubesource"/>
+            </when>
             <when param="gridfunction">
                 <equals type="string" value="BOX"/>
                 <equals type="string" value="box"/>
@@ -497,6 +515,35 @@ mode -- spectral gridding type
        veltype -- Velocity definition
            Options: 'radio','optical','true','relativistic'
            default: 'radio'
+specmode -- Spectral definition mode (cube, cubedata, cubesource)
+            default: 'cube'
+            Options: 'cube', 'cubedata', 'cubesource'
+                'cube' : Spectral line imaging with one or more channels
+                         Parameters start, width,and nchan define the spectral
+                         coordinate system and can be specified either in terms
+                         of channel numbers, frequency or velocity in whatever
+                         spectral frame is specified in 'outframe'.
+                         All internal and output images are made with outframe as the
+                         base spectral frame. However imaging code internally uses the fixed
+                         spectral frame, LSRK for automatic internal software
+                         Doppler tracking so that a spectral line observed over an
+                         extended time range will line up appropriately.
+                         Therefore the output images have additional spectral frame conversion
+                         layer in LSRK on the top the base frame.
+                'cubedata' : Spectral line imaging with one or more channels
+                             There is no internal software Doppler tracking so
+                             a spectral line observed over an extended time range
+                             may be smeared out in frequency. There is strictly
+                             no valid spectral frame with which to label the output
+                             images, but they will list the frame defined in the MS                
+                'cubesource': Spectral line imaging while
+                              tracking moving source (near field or solar system
+                              objects). The velocity of the source is accounted
+                              and the frequency reported is in the source frame.
+                              As there is not SOURCE frame defined,
+                              the frame reported will be REST (as it may not be
+                              in the rest frame emission region may be
+                              moving w.r.t the systemic velocity frame)
 outframe -- velocity reference frame of output image
         Options: '','LSRK','LSRD','BARY','GEO','TOPO','GALACTO',
                  'LGROUP','CMB'
