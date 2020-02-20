@@ -75,13 +75,22 @@ Checkout the casa6 source code:
 While CASAtools can be built with Python 2, [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse) requires Python 3 so it is probably best to build with Python 3 from the start. Make sure that ```-bash-4.2$ which python``` returns a path to the Python 3 executable you want to use because [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6browse) builds with this executable.
 
 With the CASA build environment set up, the CASAtools module can be built like:
+
+Linux:
 ```
 -bash-4.2$ cd casa6/casatools
--bash-4.2$ scripts/gcw-pick
+-bash-4.2$ scripts/gcw-pick 
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
 -bash-4.2$ ./setup.py build
 ```
+
+Macos
+```
+cd casa6/casatools
+scripts/gcw-pick && autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && autoconf && ./configure && ./setup.py build
+```
+
 The `gcw-pick` script adjusts the standard CASA source tree for building with `setup.py`, and once CASAtools is integrated with CASA this step will not be necessary. `gcw-pick` may run for quite a while...
 
 A particular version of Python can be selected at configure time like:
