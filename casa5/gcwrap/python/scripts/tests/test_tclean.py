@@ -3253,7 +3253,7 @@ class test_hetarray_imaging(testref_base):
           os.environ['PO_DEBUG'] = '0'
 
           ## No corrections :  usepointing=False : PB goes to location of MS field phasecenter (middle of the image)
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspF', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=False)
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspF', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=False,parallel=self.parallel)
           report1=self.th.checkall(imval=[
                                           ## Check source intensity
                                           (self.img+'_pcorr0_uspF.image' ,0.40,[1024,1024,0,0]), 
@@ -3268,7 +3268,7 @@ class test_hetarray_imaging(testref_base):
           ## Note : Test for PB location in the following tests. Pick the expected location (for a single PB) and test that the value is 1.0
 
           ## Average correction : usepointing=True, pointingoffsetsigdev=[2000,2000] :  PB goes to the average location of all antennas, for first timestep. PB[-100,0] 
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspT', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,2000.0])
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspT', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,2000.0],parallel=self.parallel)
           report2=self.th.checkall(imval=[
                                           ## Check source intensity
                                           (self.img+'_pcorr0_uspT.image' ,0.40,[1024,1024,0,0]), 
@@ -3284,7 +3284,7 @@ class test_hetarray_imaging(testref_base):
 
 
           ## Antenna/time correction : usepointing=True, pointingoffsetsigdev=[20,2000], timerange='time1', antenna='grp1' : PB = PB[-100,+100] in the top left corner. 
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_grp1', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1']+ ' & ' )
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_grp1', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1']+ ' & ' ,parallel=self.parallel)
           report3=self.th.checkall(imval=[
                                           ## Check source intensity
                                           (self.img+'_pcorr1_time1_grp1.image' ,0.40,[1024,1024,0,0]), 
@@ -3299,7 +3299,7 @@ class test_hetarray_imaging(testref_base):
           
           
           ## Cross baselines only : usepointing=True, pointingoffsetsigdev=[20,2000], timerange='time1', antenna='grp1 & grp2' : PB = PB[-100,0].  Note : THIS IS WRONG. 
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_cross', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1'] + ' & ' + self.baselines['grp2'])
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_cross', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1'] + ' & ' + self.baselines['grp2'],parallel=self.parallel)
           report4=self.th.checkall(imval=[
                                           ## Check source intensity
                                           (self.img+'_pcorr1_time1_cross.image' ,0.40,[1024,1024,0,0]), 
@@ -3314,7 +3314,7 @@ class test_hetarray_imaging(testref_base):
           report4 = report4 + "This test checks for cross-baseline PB values that are known to be incorrect. Edit these values/test once the algorithm for cross-baseline PBs is fixed.\n"
           
           ## Four corners : usepointing=True, pointingoffsetsigdev=[20,20], timerange='*', antenna='grp1,grp2' : PB = Sum of PB in all 4 corners (with no cross-terms). Flux/alpha are correct. 
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr2_4corners', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0], antenna=self.baselines['grp1']+' & ; '+self.baselines['grp2']+ ' &')
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr2_4corners', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0], antenna=self.baselines['grp1']+' & ; '+self.baselines['grp2']+ ' &',parallel=self.parallel)
           report5=self.th.checkall(imval=[
                                           ## Check source intensity
                                           (self.img+'_pcorr2_4corners.image' ,0.77,[1024,1024,0,0]), 
@@ -3363,16 +3363,16 @@ class test_hetarray_imaging(testref_base):
           ## Top Left : Grp 1 and Time 1.  
 
           im_pcorr2 = 'try_mt_pcorr1_grp1_time1'  # Apply antenna grouping corrections and time-dependence corrections
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &' , timerange='<21:40:00.0')
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &' , timerange='<21:40:00.0',parallel=self.parallel)
           
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] +' &' , timerange='<21:40:00.0')
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] +' &' , timerange='<21:40:00.0',parallel=self.parallel)
           
           os.system('rm -rf '+im_pcorr2+'.psf*')
           os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
           os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
           os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
           
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &'  , timerange='<21:40:00.0', calcpsf=False, calcres=False)
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &'  , timerange='<21:40:00.0', calcpsf=False, calcres=False,parallel=self.parallel)
           
           report1=self.th.checkall(imval=[
                                           ## Check source intensity
@@ -3389,16 +3389,16 @@ class test_hetarray_imaging(testref_base):
           
           im_pcorr2 = 'try_mt_pcorr2_4corners'  # Apply antenna grouping corrections and time-dependence corrections
          
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &')
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &',parallel=self.parallel)
          
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &')
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &',parallel=self.parallel)
          
           os.system('rm -rf '+im_pcorr2+'.psf*')
           os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
           os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
           os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
           
-          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &', calcres=False, calcpsf=False)
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &', calcres=False, calcpsf=False,parallel=self.parallel)
           
           report2=self.th.checkall(imval=[
                                           ## Check source intensity
