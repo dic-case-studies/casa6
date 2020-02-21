@@ -1692,6 +1692,9 @@ FlagDataHandler::setTimeAverageIter(bool activated)
         timeAvgOptions_p |= vi::AveragingOptions::AverageModel;
         timeAvgOptions_p |= vi::AveragingOptions::ModelFlagWeightAvgFromWEIGHT;
     }
+
+    // ensure preservation of flags (CAS-12737, CAS-12205, CAS-9985)
+    timeAvgOptions_p |= vi::AveragingOptions::flagdataFlagPropagation;
 }
 
 // ----------------------------------------------------------------------------
