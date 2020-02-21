@@ -25,7 +25,7 @@
 CASA6 = False
 try:
     import casatools
-    from casatasks import gaincal, casalog
+    from casatasks import gaincal, mstransform, casalog
     CASA6 = True
     tb = casatools.table()
 
