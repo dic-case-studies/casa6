@@ -41,6 +41,7 @@ import numpy
 import shutil
 import inspect
 import scipy
+import matplotlib.pyplot as pyplot
 
 from casatestutils.imagerhelpers import TestHelpers
 th = TestHelpers()
@@ -123,33 +124,39 @@ class test_tclean_base(unittest.TestCase):
         if(pstr.count("(Fail") > 0 ):
              self.fail("\n"+pstr)
 
-    def check_list_vals(self, list1, list2, epsilon=None):
+    def check_list_vals(self, list1, list2, test, epsilon=None):
         """ compares 2 lists and returns if they are equivalent (within error) 
         """
+        report = ''
         if len(list1) == len(list2) and epsilon is None:
             i = 0
             while i < len(list1):
-                result, pstr = th.check_val(list1[i], list2[i], exact=True)
+                result, pstr = th.check_val(list1[i], list2[i], \
+                    valname=test+' index '+str(i), exact=True)
                 if result == False:
+                    report = pstr
                     break
                 i += 1
         elif len(list1) == len(list2) and epsilon is not None:
             i = 0
             while i < len(list1):
-                result, pstr = th.check_val(list1[i], list2[i], exact=False, \
-                    epsilon=epsilon)
+                result, pstr = th.check_val(list1[i], list2[i], \
+                    valname=test+' index '+str(i), exact=False, epsilon=epsilon)
                 if result == False:
+                    report = pstr
                     break
                 i += 1
         else:
             result = False
-        return result
+
+        return result, report
 
     def getNameDoc(self):
         testname = inspect.stack()[1][3]
         print("Test name  : " + testname)
         doc = eval('self.'+testname + '.__doc__')
         print("Doc : " +  doc)
+
         return testname, doc
 
     def copy_products(self, old_pname, new_pname, ignore=None):
@@ -207,12 +214,16 @@ class test_tclean_base(unittest.TestCase):
             statistics['blcf'].split(', ')[3].split('Hz')[0])
         stats_dict['end'] = float( \
             statistics['trcf'].split(', ')[3].split('Hz')[0])
+        stats_dict['start_delta'] = stats_dict['start']
+        stats_dict['end_delta'] = stats_dict['end']
         stats_dict['nchan'] = im_size[3]
 
         # stats returned for all images except .mask
         if not img.endswith('.mask'):
             stats_dict['max_val'] = statistics['max'][0]
             stats_dict['max_val_pos'] = statistics['maxpos'].tolist()
+            max_loc = [stats_dict['max_val_pos'][0], \
+                stats_dict['max_val_pos'][1]]
             stats_dict['min_val'] = statistics['min'][0]
             stats_dict['min_val_pos'] = statistics['minpos'].tolist()
             stats_dict['im_rms'] = statistics['rms'][0]
@@ -246,6 +257,8 @@ class test_tclean_base(unittest.TestCase):
             if 'cube' in img:
                 stats_dict['rms_per_chan'] = \
                     self._myia.statistics(axes=[0,1])['rms'].tolist()
+                stats_dict['profile'] = self.cube_profile_fit( \
+                    img, max_loc, stats_dict['nchan'])
             if 'mosaic' in img:
                 stats_dict['rms_per_field'] = []
                 for region in field_regions:
@@ -341,17 +354,23 @@ class test_tclean_base(unittest.TestCase):
         for key in exp_dict:
             if type(exp_dict[key][1]) == list:
                 if exp_dict[key][0] == True:
-                    report += th.check_val( \
-                        self.check_list_vals(stats_dict[key], \
-                        exp_dict[key][1]), True, valname=suffix+' '+key, \
-                        exact=True)[1]
-                else:
-                    report += th.check_val( \
-                        self.check_list_vals(stats_dict[key], \
-                        exp_dict[key][1], epsilon=self.epsilon), True, \
+                    result, pstr = self.check_list_vals(stats_dict[key], 
+                        exp_dict[key][1], test=suffix+' '+key)
+                    report += th.check_val(result, True, \
                         valname=suffix+' '+key, exact=True)[1]
+                    report += pstr
+                else:
+                    result, pstr = self.check_list_vals(stats_dict[key], \
+                        exp_dict[key][1], test=suffix+' '+key, \
+                        epsilon=self.epsilon)
+                    report += th.check_val(result, True, \
+                        valname=suffix+' '+key, exact=True)[1]
+                    report += pstr
             else:
                 if exp_dict[key][0] == True:
+                    report += th.check_val(stats_dict[key], \
+                        exp_dict[key][1], valname=suffix+' '+key, exact=True)[1]
+                elif exp_dict[key][0] == False and exp_dict[key][1] == 0.0:
                     report += th.check_val(stats_dict[key], \
                         exp_dict[key][1], valname=suffix+' '+key, exact=True)[1]
                 else:
@@ -361,7 +380,7 @@ class test_tclean_base(unittest.TestCase):
 
         return report
 
-    def png_creator(self, img, range_list):
+    def mom8_creator(self, img, range_list):
         """ function that takes and image and turns it into a .png for
             weblog
         """
@@ -369,6 +388,25 @@ class test_tclean_base(unittest.TestCase):
         imview(raster={'file': img+'.moment8', 'range': range_list}, \
             out = {'file': img+'.moment8.png'})
         os.popen('mogrify -trim '+img+'.moment8.png')
+
+    def cube_profile_fit(self, img, max_loc, nchan):
+        """ function that will retrieve a profile for cubes at the max position
+            and create a png showing the profile plot; must be called with
+            image already opened
+        """
+        pyplot.clf()
+        box = str(max_loc[0])+','+str(max_loc[1])+','+str(max_loc[0])+','+str(max_loc[1])
+        profile = self._myia.fitprofile(box=box)['gs']['amp'][0][0][0][0][0]
+        X = self._myia.getchunk(blc=max_loc, trc=max_loc, axes=[0,1])[0][0][0]
+        pyplot.title('Frequency Profile at Max Value Position')
+        pyplot.xlabel('Channel Number')
+        pyplot.xlim(0,(nchan+1))
+        pyplot.ylabel('Amplitude (Jy/Beam)')
+        pyplot.plot(X)
+        pyplot.savefig(img+'.profile.png')
+        pyplot.clf()
+
+        return profile
 
 
 ##############################################
@@ -397,7 +435,7 @@ class Test_standard(test_tclean_base):
             scan=['8,12,16'], intent='OBSERVE_TARGET#ON_SOURCE', \
             datacolumn='data', cell=['1.1arcsec'], phasecenter='ICRS'
             ' 00:45:54.3836 -073.15.29.413', stokes='I', specmode='cube', \
-            nchan=508, start='220.2526744GHz', width='0.244174087287MHz',  \
+            nchan=508, start='220.2526744GHz', width='0.244174087287MHz', \
             outframe='LSRK', pblimit=0.2, perchanweightdensity=False, \
             gridder='standard', chanchunks=-1, mosweight=False, \
             deconvolver='hogbom', usepointing=False, restoration=False, \
@@ -457,7 +495,7 @@ class Test_standard(test_tclean_base):
                 lownoisethreshold=2.0, negativethreshold=0.0, \
                 minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
                 minpercentchange=1.0, fastnoise=False, restart=True, \
-                calcres=False, calcpsf=False, savemodel='none',  \
+                calcres=False, calcpsf=False, savemodel='none', \
                 parallel=False)
 
         else:
@@ -495,6 +533,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 0.94608676433563232],
             'max_val_pos': [True, [38, 36, 0, 254]],
@@ -505,6 +545,7 @@ class Test_standard(test_tclean_base):
             'im_sum': [False, 168.242297979],
             'regn_sum': [False, 72.3549563158],
             'npts_real': [True, 3251200],
+            'profile': [False, 0.90354546054915941],
             'im_fit': [False, [0.909677723621573, 13.925317200593012, \
                        7.225723641827008]],
             'im_fit_loc': [True, [254, 220.31469461816917]],
@@ -528,6 +569,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'mask_pix': [True, 437],
             'mask_regns': [True, 1],
@@ -544,12 +587,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.200896695256],
             'min_val_pos': [True, [25, 13, 0, 396]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.578238326026],
             'npts_0.2': [True, 1522476],
             'npts_0.5': [True, 736092],
             'npts_real': [True, 3251200],
@@ -569,12 +614,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, -0.218764916062],
             'min_val_pos': [True, [1, 16, 0, 503]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.136036099793],
             'im_sum': [False, 7472.57665916],
             'npts_real': [True, 3251200],
             'psf_fit': [False, [1.0959863390592945, 7.672871552789668, \
@@ -593,6 +640,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 0.785612404346],
             'max_val_pos': [True, [42, 43, 0, 256]],
@@ -615,6 +664,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 0.286023736],
             'max_val_pos': [True, [38, 36, 0, 254]],
@@ -637,12 +688,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 94.4766769409],
             'max_val_pos': [True, [0, 0, 0, 17]],
             'min_val': [False, 94.4766464233],
             'min_val_pos': [True, [0, 0, 0, 449]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 94.476661707],
             'npts_real': [True, 508]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -660,13 +713,15 @@ class Test_standard(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[0.3, 1.0])
-            self.png_creator(img+'.residual', range_list=[0.3, 1.0])
+            self.mom8_creator(img+'.image', range_list=[0.3, 1.0])
+            self.mom8_creator(img+'.residual', range_list=[0.3, 1.0])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png',img+'.residual.moment8.png']
+        test_dict[testname]['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -714,7 +769,7 @@ class Test_standard(test_tclean_base):
         print("STARTING: iter1 routine")
 
         # iter1 (restart)
-        tclean(vis=self.msfile, field='2',  spw=['0:113.893653412~'
+        tclean(vis=self.msfile, field='2', spw=['0:113.893653412~'
             '114.629981537GHz;114.8809581~115.758887787GHz,1:99.90983902'
             '~100.494799957GHz;100.68327652~101.77312027GHz'], \
             antenna=['0,1,2,3,4,5,6,7,8'], scan=['6,9'], \
@@ -740,22 +795,24 @@ class Test_standard(test_tclean_base):
         im_stats_dict = self.image_stats(img+'.image', region_file = \
             data_path+'region_files/standard_mfs.image.crtf')
 
-        exp_im_stats = {'com_bmaj': [False, 18.0537223816],
-            'com_bmin': [False, 10.3130550385],
-            'com_pa': [False, 86.4389877319],
+        exp_im_stats = {'com_bmaj': [False, 18.0536975861],
+            'com_bmin': [False, 10.3130340576],
+            'com_pa': [False, 86.4390563965],
             'npts': [True, 6400],
             'npts_unmasked': [True, 3793.0],
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0362096913159],
+            'max_val': [False, 0.03620968014],
             'max_val_pos': [True, [40, 40, 0, 0]],
-            'min_val': [False, -0.00253091799095],
+            'min_val': [False, -0.0025309077464],
             'min_val_pos': [True, [51, 36, 0, 0]],
-            'im_rms': [False, 0.00317099603729],
-            'im_sum': [False, 1.72629857491],
-            'regn_sum': [False, 1.70481428877],
+            'im_rms': [False, 0.00317099023963],
+            'im_sum': [False, 1.72629247889],
+            'regn_sum': [False, 1.70480877149],
             'npts_real': [True, 6400],
             'im_fit': [False, [0.0368173095435, 17.888484296, 9.90872728645]],
             'im_fit_loc': [True, [0, 107.84024497577988]],
@@ -777,6 +834,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 334],
             'mask_regns': [True, 1],
@@ -793,12 +852,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.200896695256],
             'min_val_pos': [True, [33, 6, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.577629540243],
             'npts_0.2': [True, 3793],
             'npts_0.5': [True, 1813],
             'npts_real': [True, 6400],
@@ -818,13 +879,15 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
-            'min_val': [False, -0.170877560973],
+            'min_val': [False, -0.170876815915],
             'min_val_pos': [True, [45, 14, 0, 0]],
-            'im_rms': [False,  0.11175375188],
-            'im_sum': [False, 13.431971317],
+            'im_rms': [False, 0.111753598174],
+            'im_sum': [False, 13.4319936319],
             'npts_real': [True, 6400],
             'psf_fit': [False, [1.097246906267534, 15.626704258596684, \
                         9.180460042245928]],
@@ -842,14 +905,16 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.00680132163689],
+            'max_val': [False, 0.00680131698027],
             'max_val_pos': [True, [40, 40, 0, 0]],
-            'min_val': [False, -0.00267858314328],
+            'min_val': [False, -0.00267856917344],
             'min_val_pos': [True, [51, 36, 0, 0]],
-            'im_rms': [False, 0.00119958583186],
-            'im_sum': [False, 0.167714220393],
-            'regn_sum': [False, 0.26392866314],
+            'im_rms': [False, 0.00119958416595],
+            'im_sum': [False, 0.167713507041],
+            'regn_sum': [False, 0.263926472682],
             'npts_real': [True, 6400]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -864,14 +929,16 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0253213103861],
+            'max_val': [False, 0.0253213085234],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.000320901758782],
-            'im_sum': [False, 0.029550973326],
-            'regn_sum': [False, 0.029550973326],
+            'im_rms': [False, 0.000320901735817],
+            'im_sum': [False, 0.0295509714633],
+            'regn_sum': [False, 0.0295509714633],
             'mask_non0': [True, 2],
             'npts_real': [True, 6400]}
 
@@ -886,12 +953,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 3208318.5],
+            'max_val': [False, 3208318.25],
             'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 3208318.5],
+            'min_val': [False, 3208318.25],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 3208318.32244],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -909,13 +978,13 @@ class Test_standard(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[-0.003, 0.04])
-            self.png_creator(img+'.residual', range_list=[-0.003, 0.04])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png',img+'.residual.moment8.png']
+            self.mom8_creator(img+'.image', range_list=[-0.003, 0.04])
+            self.mom8_creator(img+'.residual', range_list=[-0.003, 0.04])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -989,22 +1058,24 @@ class Test_standard(test_tclean_base):
         im_stats_dict = self.image_stats(img+'.image.tt0', region_file = \
             data_path+'region_files/standard_mtmfs.image.tt0.crtf')
 
-        exp_im_stats = {'com_bmaj': [False, 18.0537223816],
-            'com_bmin': [False, 10.3130550385],
-            'com_pa': [False, 86.4389877319],
+        exp_im_stats = {'com_bmaj': [False, 18.0536975861],
+            'com_bmin': [False, 10.3130340576],
+            'com_pa': [False, 86.4390563965],
             'npts': [True, 6400],
             'npts_unmasked': [True, 3793.0],
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0375871881843],
+            'max_val': [False, 0.0375871770084],
             'max_val_pos': [True, [40, 40, 0, 0]],
-            'min_val': [False, -0.00482273567468],
+            'min_val': [False, -0.00482273893431],
             'min_val_pos': [True, [40, 62, 0, 0]],
-            'im_rms': [False, 0.00341863379853],
-            'im_sum': [False, 1.82207681158],
-            'regn_sum': [False, 1.77460362448],
+            'im_rms': [False, 0.00341862729159],
+            'im_sum': [False, 1.82207041922],
+            'regn_sum': [False, 1.7745978582],
             'npts_real': [True, 6400],
             'im_fit': [False, [0.03820503393292664, 18.02503733453906, \
                        9.894877124019276]],
@@ -1027,6 +1098,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 332],
             'mask_regns': [True, 1],
@@ -1043,12 +1116,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.200896695256],
             'min_val_pos': [True, [33, 6, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.577629540243],
             'npts_0.2': [True, 3793],
             'npts_0.5': [True, 1813],
             'npts_real': [True, 6400],
@@ -1068,13 +1143,15 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
-            'min_val': [False, -0.170877560973],
+            'min_val': [False, -0.170876815915],
             'min_val_pos': [True, [45, 14, 0, 0]],
-            'im_rms': [False,  0.11175375188],
-            'im_sum': [False, 13.431971317],
+            'im_rms': [False, 0.111753598174],
+            'im_sum': [False, 13.4319936319],
             'npts_real': [True, 6400],
             'psf_fit': [False, [1.097246906267534, 15.626704258596684, \
                         9.180460042245928]],
@@ -1093,14 +1170,16 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.00681467168033],
+            'max_val': [False, 0.00681467074901],
             'max_val_pos': [True, [40, 40, 0, 0]],
-            'min_val': [False, -0.00267858314328],
+            'min_val': [False, -0.00269495742396],
             'min_val_pos': [True, [51, 36, 0, 0]],
-            'im_rms': [False, 0.00121173798212],
-            'im_sum': [False, 0.146451243258],
-            'regn_sum': [False, 0.279781101763],
+            'im_rms': [False, 0.00121173651371],
+            'im_sum': [False, 0.146450882651],
+            'regn_sum': [False, 0.279778897976],
             'npts_real': [True, 6400]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -1115,14 +1194,16 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0257838983089],
+            'max_val': [False, 0.0257838927209],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.00032823232983],
-            'im_sum': [False, 0.0307542048395],
-            'regn_sum': [False, 0.0307542048395],
+            'im_rms': [False, 0.000328232262345],
+            'im_sum': [False, 0.0307541997172],
+            'regn_sum': [False, 0.0307541997172],
             'mask_non0': [True, 2],
             'npts_real': [True, 6400]}
 
@@ -1137,12 +1218,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 3208318.5],
+            'max_val': [False, 3208318.25],
             'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 3208318.5],
+            'min_val': [False, 3208318.25],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 3208318.32244],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -1152,21 +1235,23 @@ class Test_standard(test_tclean_base):
         alpha_stats_dict = self.image_stats(img+'.alpha', region_file = \
             data_path+'region_files/standard_mtmfs.alpha.crtf')
 
-        exp_alpha_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
-            'freq_bin': [True, 16762501225.396851],
-            'start': [True, 2.53574e+11],
-            'end': [True, 2.53574e+11],
+        exp_alpha_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 2009.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0],
-            'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 0.0],
-            'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.0],
-            'im_sum': [False, 0.0],
-            'regn_sum': [False, 0.0],
-            'mask_non0': [True, 0],
-            'npts_real': [True, 82944]}
+            'max_val': [False, 55.2813644409],
+            'max_val_pos': [True, [28, 15, 0, 0]],
+            'min_val': [False, -55.0754890442],
+            'min_val_pos': [True, [58, 63, 0, 0]],
+            'im_rms': [False, 16.165969128],
+            'im_sum': [False, 19177.0033636],
+            'regn_sum': [False, 2.50601291656],
+            'mask_non0': [True, 2009],
+            'npts_real': [True, 6400]}
 
         report9 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
             '.alpha')
@@ -1175,20 +1260,22 @@ class Test_standard(test_tclean_base):
         error_stats_dict = self.image_stats(img+'.alpha.error', region_file = \
             data_path+'region_files/standard_mtmfs.alpha.error.crtf')
 
-        exp_error_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
-            'freq_bin': [True, 16762501225.396851],
-            'start': [True, 2.53574e+11],
-            'end': [True, 2.53574e+11],
+        exp_error_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 2009.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0],
-            'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 0.0],
-            'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.0],
-            'im_sum': [False, 0.0],
-            'regn_sum': [False, 0.0],
-            'npts_real': [True, 82944]}
+            'max_val': [False, 78.1796569824],
+            'max_val_pos': [True, [28, 15, 0, 0]],
+            'min_val': [False, 0.0368266552687],
+            'min_val_pos': [True, [20, 3, 0, 0]],
+            'im_rms': [False, 22.7563186515],
+            'im_sum': [False, 35943.3947913],
+            'regn_sum': [False, 0.745403200388],
+            'npts_real': [True, 6400]}
 
         report10 = self.stats_compare(exp_error_stats, error_stats_dict, \
             '.alpha.error')
@@ -1204,13 +1291,13 @@ class Test_standard(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image.tt0', range_list=[-0.005, 0.04])
-            self.png_creator(img+'.residual.tt0', range_list=[-0.005, 0.04])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png']
+            self.mom8_creator(img+'.image.tt0', range_list=[-0.005, 0.04])
+            self.mom8_creator(img+'.residual.tt0', range_list=[-0.005, 0.04])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -1291,6 +1378,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 122071.64398193359],
             'start': [True, 3.544453e+11],
             'end': [True, 3.545672e+11],
+            'start_delta': [False, 3.544453e+11],
+            'end_delta': [False, 3.545672e+11],
             'nchan': [True, 1000],
             'max_val': [False, 3.2168185710906982],
             'max_val_pos': [True, [46, 41, 0, 489]],
@@ -1301,6 +1390,7 @@ class Test_standard(test_tclean_base):
             'im_sum': [False, 2285.0251880029814],
             'regn_sum': [False, 202.79424607008696],
             'npts_real': [True, 6400000],
+            'profile': [False, 2.73209990935],
             'im_fit': [False, [2.3181817983302015, 6.557786339807762, \
                        5.498814625695614]],
             'im_fit_loc': [True, [491, 354.50520934823834]],
@@ -1322,6 +1412,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 122071.64398193359],
             'start': [True, 3.544453e+11],
             'end': [True, 3.545672e+11],
+            'start_delta': [False, 3.544453e+11],
+            'end_delta': [False, 3.545672e+11],
             'nchan': [True, 1000],
             'mask_pix': [True, 9362],
             'mask_regns': [True, 1],
@@ -1338,12 +1430,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 122071.64398193359],
             'start': [True, 3.544453e+11],
             'end': [True, 3.545672e+11],
+            'start_delta': [False, 3.544453e+11],
+            'end_delta': [False, 3.545672e+11],
             'nchan': [True, 1000],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.20036059618],
             'min_val_pos': [True, [20, 15, 0, 891]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.57684102],
             'npts_0.2': [True, 3233000],
             'npts_0.5': [True, 1549000],
             'npts_real': [True, 6400000],
@@ -1363,12 +1457,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 122071.64398193359],
             'start': [True, 3.544453e+11],
             'end': [True, 3.545672e+11],
+            'start_delta': [False, 3.544453e+11],
+            'end_delta': [False, 3.545672e+11],
             'nchan': [True, 1000],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, -0.164189130068],
             'min_val_pos': [True, [36, 35, 0, 993]],
-            'im_rms': [False,  0.0871161935921],
+            'im_rms': [False, 0.0871161935921],
             'im_sum': [False, 2742.74484326],
             'npts_real': [True, 6400000],
             'psf_fit': [False, [1.1041899877875863, 3.9440139645863947, \
@@ -1387,12 +1483,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 122071.64398193359],
             'start': [True, 3.544453e+11],
             'end': [True, 3.545672e+11],
+            'start_delta': [False, 3.544453e+11],
+            'end_delta': [False, 3.545672e+11],
             'nchan': [True, 1000],
             'max_val': [False, 0.313477724791],
             'max_val_pos': [True, [59, 65, 0, 492]],
-            'min_val': [False, -0.338401287794],
+            'min_val': [False, -0.335443556309],
             'min_val_pos': [True, [32, 47, 0, 491]],
-            'im_rms': [False, 0.0469751110358],
+            'im_rms': [False, 0.0465509555972],
             'im_sum': [False, 236.741826246],
             'regn_sum': [False, 51.1043745019],
             'npts_real': [True, 6400000]}
@@ -1409,6 +1507,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 122071.64398193359],
             'start': [True, 3.544453e+11],
             'end': [True, 3.545672e+11],
+            'start_delta': [False, 3.544453e+11],
+            'end_delta': [False, 3.545672e+11],
             'nchan': [True, 1000],
             'max_val': [False, 1.3696539402],
             'max_val_pos': [True, [46, 41, 0, 489]],
@@ -1431,12 +1531,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 122071.64398193359],
             'start': [True, 3.544453e+11],
             'end': [True, 3.545672e+11],
+            'start_delta': [False, 3.544453e+11],
+            'end_delta': [False, 3.545672e+11],
             'nchan': [True, 1000],
             'max_val': [False, 1009.50134277],
             'max_val_pos': [True, [0, 0, 0, 979]],
             'min_val': [False, 1007.97528076],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 1008.71815136],
             'npts_real': [True, 1000]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -1455,13 +1557,15 @@ class Test_standard(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[0.0, 3.25])
-            self.png_creator(img+'.residual', range_list=[0.0, 3.25])
+            self.mom8_creator(img+'.image', range_list=[0.0, 3.25])
+            self.mom8_creator(img+'.residual', range_list=[0.0, 3.25])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png', img+'.residual.moment8.png']
+        test_dict[testname]['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -1536,14 +1640,16 @@ class Test_standard(test_tclean_base):
         im_stats_dict = self.image_stats(img+'.image', region_file = \
             data_path+'region_files/standard_mfs_eph.image.crtf')
 
-        exp_im_stats = {'com_bmaj': [False, 0.875921189785],
-            'com_bmin': [False, 0.673674583435],
-            'com_pa': [False, 88.5387649536],
+        exp_im_stats = {'com_bmaj': [False, 0.875946879387],
+            'com_bmin': [False, 0.673672378063],
+            'com_pa': [False, 88.5368652344],
             'npts': [True, 82944],
             'npts_unmasked': [True, 47329.0],
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.03113353252],
             'max_val_pos': [True, [224, 153, 0, 0]],
@@ -1570,6 +1676,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 0],
             'mask_regns': [True, 0],
@@ -1586,19 +1694,21 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [144, 144, 0, 0]],
             'min_val': [False, 0.200061768293],
             'min_val_pos': [True, [114, 25, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.569403001285],
             'npts_0.2': [True, 47329],
             'npts_0.5': [True, 22365],
             'npts_real': [True, 82944],
-            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
-                       7.225723641827008]],
-            'pb_fit_loc': [True, [0, 220.31469461816917]],
-            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
+            'pb_fit': [False, [1.0286609217550002, 22.907692916947163, \
+                       22.90769291676479]],
+            'pb_fit_loc': [True, [0, 253.57442221593894]],
+            'pb_fit_pix': [False, [144.0, 144.0]]}
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
@@ -1611,18 +1721,20 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [144, 144, 0, 0]],
-            'min_val': [False, -0.0609973333776],
+            'min_val': [False, -0.0609973631799],
             'min_val_pos': [True, [140, 137, 0, 0]],
-            'im_rms': [False,  0.0198315591613],
-            'im_sum': [False, 16.3422700718],
+            'im_rms': [False, 0.019837926364],
+            'im_sum': [False, 16.3427572285],
             'npts_real': [True, 82944],
-            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
-                       7.225723641827008]],
-            'pb_fit_loc': [True, [0, 220.31469461816917]],
-            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
+            'psf_fit': [False, [0.9200466881631709, 0.9746655722260728, \
+                        0.7626550313652652]],
+            'psf_fit_loc': [True, [0, 253.57442221593894]],
+            'psf_fit_pix': [False, [144.00051463175717, 144.00004766689185]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -1635,6 +1747,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.03113353252],
             'max_val_pos': [True, [224, 153, 0, 0]],
@@ -1657,6 +1771,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 0.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
@@ -1679,12 +1795,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 23234590.0],
+            'max_val': [False, 23234454.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 23234590.0],
+            'min_val': [False, 23234454.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 23234453.7637],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -1701,13 +1819,13 @@ class Test_standard(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[-1.05, 1.05])
-            self.png_creator(img+'.residual', range_list=[-1.05, 1.05])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png',img+'.residual.moment8.png']
+            self.mom8_creator(img+'.image', range_list=[-1.05, 1.05])
+            self.mom8_creator(img+'.residual', range_list=[-1.05, 1.05])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -1783,22 +1901,24 @@ class Test_standard(test_tclean_base):
         im_stats_dict = self.image_stats(img+'.image.tt0', region_file = \
             data_path+'region_files/standard_mtmfs_eph.image.tt0.crtf')
 
-        exp_im_stats = {'com_bmaj': [False, 0.875921189785],
-            'com_bmin': [False, 0.673674583435],
-            'com_pa': [False, 88.5387649536],
+        exp_im_stats = {'com_bmaj': [False, 0.875946879387],
+            'com_bmin': [False, 0.673672378063],
+            'com_pa': [False, 88.5368652344],
             'npts': [True, 82944],
             'npts_unmasked': [True, 47329.0],
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 1.01515209675],
+            'max_val': [False, 1.01515197754],
             'max_val_pos': [True, [224, 153, 0, 0]],
-            'min_val': [False, -1.01363265514],
+            'min_val': [False, -1.01363253593],
             'min_val_pos': [True, [222, 93, 0, 0]],
-            'im_rms': [False, 0.361662749039],
-            'im_sum': [False, -1558.29933771],
-            'regn_sum': [False, 3388.57268598],
+            'im_rms': [False, 0.361662708984],
+            'im_sum': [False, -1558.29916138],
+            'regn_sum': [False, 3388.5723138],
             'npts_real': [True, 82944]}
 
         report1 = th.checkall( \
@@ -1817,6 +1937,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 0],
             'mask_regns': [True, 0],
@@ -1833,19 +1955,21 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [144, 144, 0, 0]],
             'min_val': [False, 0.200061768293],
-            'min_val_pos': [True, [25, 114, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'min_val_pos': [True, [114, 25, 0, 0]],
+            'im_rms': [False, 0.569403001285],
             'npts_0.2': [True, 47329],
             'npts_0.5': [True, 22365],
             'npts_real': [True, 82944],
-            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
-                       7.225723641827008]],
-            'pb_fit_loc': [True, [0, 220.31469461816917]],
-            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
+            'pb_fit': [False, [1.0286609217550002, 22.907692916947163, \
+                       22.90769291676479]],
+            'pb_fit_loc': [True, [0, 253.57442221593894]],
+            'pb_fit_pix': [False, [144.0, 144.0]]}
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
@@ -1858,18 +1982,20 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [144, 144, 0, 0]],
-            'min_val': [False, -0.0609973333776],
+            'min_val': [False, -0.0609973631799],
             'min_val_pos': [True, [140, 137, 0, 0]],
-            'im_rms': [False,  0.0198315591613],
-            'im_sum': [False, 16.3422700718],
+            'im_rms': [False, 0.019837926364],
+            'im_sum': [False, 16.3427572285],
             'npts_real': [True, 82944],
-            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
-                       7.225723641827008]],
-            'pb_fit_loc': [True, [0, 220.31469461816917]],
-            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
+            'psf_fit': [False, [0.9200466881631709, 0.9746655722260728, \
+                        0.7626550313652652]],
+            'psf_fit_loc': [True, [0, 253.57442221593894]],
+            'psf_fit_pix': [False, [144.00051463175717, 144.00004766689185]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -1883,6 +2009,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.03113353252],
             'max_val_pos': [True, [224, 153, 0, 0]],
@@ -1905,6 +2033,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 0.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
@@ -1927,12 +2057,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 23234590.0],
+            'max_val': [False, 23234454.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 23234590.0],
+            'min_val': [False, 23234454.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 23234453.7637],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -1943,19 +2075,21 @@ class Test_standard(test_tclean_base):
             data_path+'region_files/standard_mtmfs_eph.alpha.crtf')
 
         exp_alpha_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
+            'npts_unmasked': [True, 29656.0],
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0],
-            'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 0.0],
-            'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.0],
-            'im_sum': [False, 0.0],
-            'regn_sum': [False, 0.0],
-            'mask_non0': [True, 0],
+            'max_val': [False, 93.7298202515],
+            'max_val_pos': [True, [245, 3, 0, 0]],
+            'min_val': [False, -90.3992004395],
+            'min_val_pos': [True, [42, 48, 0, 0]],
+            'im_rms': [False, 15.9100777789],
+            'im_sum': [False, -60401.9121475],
+            'regn_sum': [False, 2535.505823],
+            'mask_non0': [True, 29656],
             'npts_real': [True, 82944]}
 
         report9 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
@@ -1966,18 +2100,20 @@ class Test_standard(test_tclean_base):
             data_path+'region_files/standard_mtmfs_eph.alpha.error.crtf')
 
         exp_error_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
+            'npts_unmasked': [True, 29656.0],
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0],
-            'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 0.0],
-            'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.0],
-            'im_sum': [False, 0.0],
-            'regn_sum': [False, 0.0],
+            'max_val': [False, 132.553985596],
+            'max_val_pos': [True, [245, 3, 0, 0]],
+            'min_val': [False, 0.0016036973102],
+            'min_val_pos': [True, [2, 146, 0, 0]],
+            'im_rms': [False, 22.5002473865],
+            'im_sum': [False, 472110.530338],
+            'regn_sum': [False, 179381.029198],
             'npts_real': [True, 82944]}
 
         report10 = self.stats_compare(exp_error_stats, error_stats_dict, \
@@ -1994,13 +2130,13 @@ class Test_standard(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image.tt0', range_list=[-1.05, 1.05])
-            self.png_creator(img+'.residual.tt0', range_list=[-1.05, 1.05])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png']
+            self.mom8_creator(img+'.image.tt0', range_list=[-1.05, 1.05])
+            self.mom8_creator(img+'.residual.tt0', range_list=[-1.05, 1.05])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -2025,7 +2161,7 @@ class Test_standard(test_tclean_base):
         tclean(vis=self.msfile, field='0', spw=['0'], \
             antenna=['0,1,2,3,4,5,6,7,8'], scan=['3'], \
             intent='CALIBRATE_BANDPASS#ON_SOURCE', datacolumn='data', \
-            imagename=file_name+'0', imsize=[90, 90], stokes='I',  \
+            imagename=file_name+'0', imsize=[90, 90], stokes='I', \
             cell=['0.85arcsec'], phasecenter='ICRS 22:58:05.9629 '
             '-027.58.21.257', specmode='mfs', nchan=-1, outframe='LSRK', \
             perchanweightdensity=False, gridder='standard', chanchunks=-1, \
@@ -2070,22 +2206,24 @@ class Test_standard(test_tclean_base):
         im_stats_dict = self.image_stats(img+'.image', region_file = \
             data_path+'region_files/standard_cal.image.crtf')
 
-        exp_im_stats = {'com_bmaj': [False, 9.98560905457],
-            'com_bmin': [False, 4.6246509552],
-            'com_pa': [False, -86.3877105713],
+        exp_im_stats = {'com_bmaj': [False, 9.98569583893],
+            'com_bmin': [False, 4.62464284897],
+            'com_pa': [False, -86.3871307373],
             'npts': [True, 8100],
             'npts_unmasked': [True, 5041.0],
             'freq_bin': [True, 125009872.91876221],
             'start': [True, 2.20301e+11],
             'end': [True, 2.20301e+11],
+            'start_delta': [False, 2.20301e+11],
+            'end_delta': [False, 2.20301e+11],
             'nchan': [True, 1],
             'max_val': [False, 2.40606927872],
             'max_val_pos': [True, [45, 45, 0, 0]],
-            'min_val': [False, -0.0115160318092],
+            'min_val': [False, -0.0115236453712],
             'min_val_pos': [True, [50, 16, 0, 0]],
-            'im_rms': [False, 0.203888800435],
-            'im_sum': [False, 172.688482511],
-            'regn_sum': [False, 171.572869264],
+            'im_rms': [False, 0.203889562304],
+            'im_sum': [False, 172.68969442],
+            'regn_sum': [False, 171.573849684],
             'npts_real': [True, 8100],
             'im_fit': [False, [2.40974849537, 9.96002749264, 4.61946099469]],
             'im_fit_loc': [True, [0, 220.30076542192973]],
@@ -2107,6 +2245,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 125009872.91876221],
             'start': [True, 2.20301e+11],
             'end': [True, 2.20301e+11],
+            'start_delta': [False, 2.20301e+11],
+            'end_delta': [False, 2.20301e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 407],
             'mask_regns': [True, 1],
@@ -2123,12 +2263,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 125009872.91876221],
             'start': [True, 2.20301e+11],
             'end': [True, 2.20301e+11],
+            'start_delta': [False, 2.20301e+11],
+            'end_delta': [False, 2.20301e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [45, 45, 0, 0]],
             'min_val': [False, 0.200092822313],
             'min_val_pos': [True, [36, 6, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.577170049921],
             'npts_0.2': [True, 5041],
             'npts_0.5': [True, 2409],
             'npts_real': [True, 8100],
@@ -2148,13 +2290,15 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 125009872.91876221],
             'start': [True, 2.20301e+11],
             'end': [True, 2.20301e+11],
+            'start_delta': [False, 2.20301e+11],
+            'end_delta': [False, 2.20301e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [45, 45, 0, 0]],
-            'min_val': [False, -0.186672970653],
+            'min_val': [False, -0.186668172479],
             'min_val_pos': [True, [31, 41, 0, 0]],
-            'im_rms': [False,  0.125651854223],
-            'im_sum': [False, 40.2140428556],
+            'im_rms': [False, 0.125651062092],
+            'im_sum': [False, 40.2072189807],
             'npts_real': [True, 8100],
             'psf_fit': [False, [1.0640200932648511, 8.801094080240267, \
                         4.303338569406158]],
@@ -2172,13 +2316,15 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 125009872.91876221],
             'start': [True, 2.20301e+11],
             'end': [True, 2.20301e+11],
+            'start_delta': [False, 2.20301e+11],
+            'end_delta': [False, 2.20301e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0233333036304],
+            'max_val': [False, 0.0233334042132],
             'max_val_pos': [True, [45, 45, 0, 0]],
-            'min_val': [False, -0.0115160560235],
+            'min_val': [False, -0.01152363047],
             'min_val_pos': [True, [50, 16, 0, 0]],
-            'im_rms': [False, 0.00410021113948],
-            'im_sum': [False, 0.122163831366],
+            'im_rms': [False, 0.00410389073592],
+            'im_sum': [False, 0.122164499838],
             'regn_sum': [False, 1.0518577156],
             'npts_real': [True, 8100]}
 
@@ -2194,6 +2340,8 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 125009872.91876221],
             'start': [True, 2.20301e+11],
             'end': [True, 2.20301e+11],
+            'start_delta': [False, 2.20301e+11],
+            'end_delta': [False, 2.20301e+11],
             'nchan': [True, 1],
             'max_val': [False, 2.38273620605],
             'max_val_pos': [True, [45, 45, 0, 0]],
@@ -2216,12 +2364,14 @@ class Test_standard(test_tclean_base):
             'freq_bin': [True, 125009872.91876221],
             'start': [True, 2.20301e+11],
             'end': [True, 2.20301e+11],
+            'start_delta': [False, 2.20301e+11],
+            'end_delta': [False, 2.20301e+11],
             'nchan': [True, 1],
-            'max_val': [False, 201537.8125],
+            'max_val': [False, 201522.109375],
             'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 201537.8125],
+            'min_val': [False, 201522.109375],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 201522.108127],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -2239,13 +2389,13 @@ class Test_standard(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[-0.015, 2.5])
-            self.png_creator(img+'.residual', range_list=[-0.015, 2.5])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png',img+'.residual.moment8.png']
+            self.mom8_creator(img+'.image', range_list=[-0.015, 2.5])
+            self.mom8_creator(img+'.residual', range_list=[-0.015, 2.5])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -2375,25 +2525,28 @@ class Test_mosaic(test_tclean_base):
              'circle[[00:45:55.708764, -73.15.08.03543], 22.45arcsec]',
              'circle[[00:45:59.330540, -73.15.23.68133], 22.45arcsec]'])
 
-        exp_im_stats = {'com_bmaj': [False, 8.79758391563],
-            'com_bmin': [False, 6.10500958355],
-            'com_pa': [False, 64.9303736341],
+        exp_im_stats = {'com_bmaj': [False, 8.79758467135],
+            'com_bmin': [False, 6.10500627626],
+            'com_pa': [False, 64.9303836873],
             'npts': [True, 5925312],
             'npts_unmasked': [True, 3338068.0],
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
-            'max_val': [False, 1.18474924564],
+            'max_val': [False, 1.18467354774],
             'max_val_pos': [True, [44, 38, 0, 252]],
             'min_val': [False, -0.417252391577],
             'min_val_pos': [True, [24, 31, 0, 498]],
-            'im_rms': [False, 0.0878815938952],
+            'im_rms': [False, 0.0878779753708],
             'rms_per_chan': [False, [0.08352891852269921, 0.08135269305379152, 0.08395260930289478, 0.08279304060774786, 0.08596507857262789, 0.08278415992796316, 0.08377357600543471, 0.08394694956313518, 0.08294962386707326, 0.08607043136961237, 0.07680081900457504, 0.09496464679558769, 0.08214392421353917, 0.0857648739112381, 0.08281633996127867, 0.0894806463001662, 0.081589405081739, 0.07924880491236708, 0.07453379448699567, 0.09379627665607704, 0.08157315058137742, 0.09166424964725516, 0.08450533906882468, 0.08106955380637881, 0.08737684423508374, 0.09073897650010625, 0.09084105654348026, 0.07784857687669093, 0.08502491422043724, 0.08973744200475807, 0.08225747757890416, 0.08302380899013398, 0.0770200580373865, 0.08881158355253989, 0.08865534449297038, 0.09159308234217008, 0.08115203022056021, 0.08341851059515137, 0.08987845777172865, 0.08508065238113408, 0.07778307167083158, 0.086558262984569, 0.08338769817916242, 0.08071653499000843, 0.08865177850010854, 0.08534950297770955, 0.07616257958327323, 0.09190545934190404, 0.08895841881770002, 0.0896694261175686, 0.07893346400403167, 0.07455014243908499, 0.09047688550066521, 0.0869112050227715, 0.09350825779882399, 0.07646177066867972, 0.08249014753514353, 0.09101549816292659, 0.08639556025249603, 0.08038246669695737, 0.08824074457422779, 0.08618380562988853, 0.08205108347689954, 0.07771920892371241, 0.08768241197771068, 0.08334623972314524, 0.08815925813978431, 0.08212951592340229, 0.0823396048959934, 0.08234068229313843, 0.08884264540759013, 0.07862615163124824, 0.08655155235861448, 0.08979383171683271, 0.08809736503013246, 0.07192760633210062, 0.08230751478411082, 0.07857712439720876, 0.07948313531326559, 0.09225583910089932, 0.0827786011949029, 0.08972941404057228, 0.0887804253347499, 0.088568302489554, 0.08542522263383671, 0.08705651177174693, 0.09503784914334118, 0.09211196203585155, 0.09124273060482811, 0.0894655349173044, 0.08578196967967916, 0.08600001037669011, 0.08725679761935697, 0.09250336443228556, 0.09141071794136318, 0.08257340474387778, 0.08489860170832744, 0.09095982550662123, 0.08386307951475633, 0.08245963060222646, 0.08082452670747917, 0.08421465818141162, 0.07716197318352062, 0.08491216770880909, 0.09219997011780534, 0.08999904369748837, 0.08917413213129059, 0.08669554914308757, 0.08478598632777916, 0.08272607334416665, 0.09204243226438258, 0.08766378811832916, 0.0865825253580717, 0.07758524805681824, 0.09085091409160705, 0.08521446839560726, 0.0884995697340635, 0.0884733008608976, 0.08577677843356687, 0.09306189230759793, 0.08612785329237876, 0.08258623029884975, 0.07941031533209075, 0.08826196881912282, 0.09840895220275017, 0.08933425191997195, 0.08745304230772397, 0.08566154826880104, 0.09365349891994729, 0.09053316121385116, 0.08810691082194215, 0.08630703760915545, 0.08753186529189085, 0.0937019174346115, 0.0773479036533113, 0.08029497918496241, 0.08724287089313901, 0.08790671029158231, 0.08773912124792194, 0.08266091420346706, 0.08132362905839345, 0.09216634845393681, 0.08762278965147091, 0.09332173318661345, 0.07778672535312933, 0.08408442636695551, 0.08553415947786376, 0.08232058120295321, 0.07780988703074035, 0.08409905782923954, 0.07296439116382543, 0.08925116729628191, 0.09008277668363449, 0.09520991051126101, 0.08553135515808247, 0.084718775948537, 0.08883634984779534, 0.08643599841065604, 0.08339630810303196, 0.08862968769223899, 0.0784883898433635, 0.08099618435890771, 0.08565713860724568, 0.08556682581312276, 0.09128248240593151, 0.08827156303897946, 0.0880790536420939, 0.08578294204187285, 0.08362128063154757, 0.09123831674563974, 0.08722115387496024, 0.09621944328499646, 0.09149116203081945, 0.09118103925268266, 0.08347804034781846, 0.0855692865777019, 0.0897847427742151, 0.07186203727120243, 0.08802972450167627, 0.08442626094668859, 0.08723051889453723, 0.08159640903835322, 0.07548809021347838, 0.0915760655325942, 0.1000199147822218, 0.09787395465748581, 0.08693633490200812, 0.08442264879607819, 0.08721652263357231, 0.0880380635040301, 0.08729925477779406, 0.08519856552892391, 0.08975256932981747, 0.07958208410639706, 0.0914096789556792, 0.09811570777169866, 0.07949196007023566, 0.09006036869795747, 0.0912952536965593, 0.09805249071833734, 0.0897004902132416, 0.08952989036422254, 0.0790849762337038, 0.09347465569139526, 0.09000611959279463, 0.08239101076565238, 0.08373667485591837, 0.0871320704983511, 0.08767396777909775, 0.0965335008897428, 0.08633964662006433, 0.08735933635150735, 0.09035634185538645, 0.08468159828070221, 0.09116890211273068, 0.08804541661464536, 0.08484392727135703, 0.08203979237254262, 0.0889071541447407, 0.0889633730061124, 0.08339973306782386, 0.08330574319001677, 0.08871583444712416, 0.09420962372690272, 0.08521243909929632, 0.08355595121547242, 0.0933236552392962, 0.08719802034432139, 0.09062561297486302, 0.08535346593907196, 0.08813919625097401, 0.092913551212774, 0.09227103971954637, 0.08161432828410638, 0.09072439427447547, 0.09244590715316298, 0.08709339445075073, 0.09924553460801067, 0.1002690868580879, 0.08840557566191516, 0.08133715093336598, 0.09149908227822648, 0.07670073484069043, 0.09249672315752175, 0.0782222639219109, 0.0990254821246598, 0.09280158172995194, 0.08730248696252146, 0.09456558538062404, 0.10081497167443383, 0.10403855973688014, 0.12877330926044459, 0.1386207992219812, 0.13938585037552162, 0.1235720046054832, 0.12067870584152206, 0.10645742986583119, 0.08552529466321122, 0.08268301454232765, 0.08542822040617518, 0.09335660100821405, 0.08885775208502826, 0.08644558884485783, 0.08440970509099167, 0.091904188949323, 0.09288900294073746, 0.09184545798056735, 0.0978475829246572, 0.09536587471324205, 0.09325738676721759, 0.08191614651111201, 0.09130572131132277, 0.09356730058206153, 0.09150948292317468, 0.08930212344785793, 0.08973008889149876, 0.08468876678845778, 0.09439900459047333, 0.08340248011080888, 0.09426625948231673, 0.0846651688286838, 0.08220153827772422, 0.09338524135684238, 0.08541949594391877, 0.07720477952979755, 0.08539185143996587, 0.09204753294875682, 0.08278104837254098, 0.07886155262558238, 0.08341737313272374, 0.08757850027055837, 0.08360325848864149, 0.09166550957557691, 0.09185533846656913, 0.08026617289995454, 0.09106087061249621, 0.08802259852925379, 0.09053259952518417, 0.08328401754435075, 0.08888144950799276, 0.0810576402470788, 0.08479306981872027, 0.08580610257468782, 0.09179491887497933, 0.08841796481950012, 0.0845148944552744, 0.08053481062011857, 0.08862797798354732, 0.09462089152970354, 0.08582787706368114, 0.08814348149204695, 0.08504514772616785, 0.08371224832082137, 0.08678333110045997, 0.09353126562315753, 0.09129854527725832, 0.08116659030415371, 0.09015138809948552, 0.08710081730619218, 0.09437955706280836, 0.08963858464777974, 0.09313459101197238, 0.08856120416820244, 0.08552675606885124, 0.08351176926318361, 0.08411701581891168, 0.08427020020603929, 0.09163946448881417, 0.0805306218916976, 0.08160963806132211, 0.08804552292687956, 0.09626408912773088, 0.08913709670428199, 0.09096834064650154, 0.0851269228240773, 0.09017277009104614, 0.08476290074193281, 0.07632278322336213, 0.08385737538890878, 0.08700039219503956, 0.08866885268530736, 0.08466059774774966, 0.0845759814329557, 0.0790621930867725, 0.08771807117918605, 0.08893473780006282, 0.09310980223541039, 0.09306479580057536, 0.09147420625138089, 0.08949657274281757, 0.08192815006108203, 0.07905463600626796, 0.09666550899459639, 0.0808647476478242, 0.08495044094490133, 0.0916137566838688, 0.09649894883996268, 0.0920414733457368, 0.08356993363476055, 0.09422414928552236, 0.08778457312089456, 0.08987693020950831, 0.09777964977624237, 0.09060848800058789, 0.09087547326073596, 0.09065288590043372, 0.09815595961513002, 0.08630801892602018, 0.08960594520751539, 0.09100452485239247, 0.09259096682095072, 0.09364434916529175, 0.0853051896352123, 0.08391849112594159, 0.08978397560355508, 0.08356817274105656, 0.08639129387321305, 0.07641054760007339, 0.08566749942250246, 0.09110851912136013, 0.08938769699436465, 0.08943111829547572, 0.08605404789230106, 0.08796239383347541, 0.08454535587717901, 0.0929903335078121, 0.08246802178760436, 0.08817700985492735, 0.0820807551149751, 0.08511665149857307, 0.0914822776922275, 0.08779917531640212, 0.0779155145245507, 0.08062449848958794, 0.09151321230973979, 0.08251138633527932, 0.08314391480095229, 0.09660065726688243, 0.09161786920726972, 0.09195890233721427, 0.09484458463309785, 0.08672723967704118, 0.09056091164304954, 0.08950078278038455, 0.08453380213065807, 0.08621663260330842, 0.0903504892183676, 0.08888219947767556, 0.09691781310403562, 0.0829510997618925, 0.08538905047156051, 0.08536033187251706, 0.09253646586834798, 0.08719827400559628, 0.08741965478896539, 0.0908875936865952, 0.08650855583109175, 0.0911287851112432, 0.0870327992529023, 0.09334187790207615, 0.08691128023529447, 0.0829607319773311, 0.08561452123819384, 0.09416699659894374, 0.09865975100963004, 0.08059372543252491, 0.08162290581093083, 0.07969201254174872, 0.09014664917727015, 0.07748434709443736, 0.09115822285795372, 0.0874199097979386, 0.08331094704142918, 0.08450373137759747, 0.0873987436304484, 0.0792090383862253, 0.08682449919890456, 0.08898017363528224, 0.0891014307981212, 0.08578455417679541, 0.09612343808420232, 0.07718957370637691, 0.08963596680253917, 0.09053358289784386, 0.08104077369182848, 0.08805192318672665, 0.09036158074767288, 0.09733534898340712, 0.08642234534217835, 0.0873180423896324, 0.08509746809331085, 0.0927045997121519, 0.08985111493399206, 0.09486348772674255, 0.09000267315635847, 0.08474935185150062, 0.08247809724159613, 0.08802043461258492, 0.0865126082695781, 0.08138258449164787, 0.08795575893476618, 0.09456070784224847, 0.09680636657810467, 0.08476700362040308, 0.08670105726809373, 0.08636724547506389, 0.08412716463066074, 0.08428810620773179, 0.08964151944607554, 0.08689624513108678, 0.08902965594822292, 0.09221339424501332, 0.08726043474359556, 0.08607641544478577, 0.09100554185059015, 0.08492870794208009, 0.08529837352577493, 0.09521158569562824, 0.08914943856267118, 0.087555731639101, 0.0862048336688618, 0.08984721078423315, 0.08217617292259297, 0.08824966695006062, 0.07486261467473272, 0.08753387468056906, 0.08379545796577004, 0.09274777146757962, 0.09220642715156253, 0.0792962124445207, 0.09090807566463247, 0.08751737767113807, 0.07961706129268199, 0.0941224640615722, 0.0795895706794336, 0.09562104758697967, 0.08020847225726233, 0.09417989583892716, 0.09061167014269772, 0.08898710965217106, 0.0897447948736654, 0.08398102899483291, 0.08684215184345169, 0.096630024031122, 0.08473098919932259, 0.09179580145778438, 0.07887094371255345, 0.08638286938225163]],
             'im_sum': [False, 365.155811516],
-            'regn_sum': [False, 91.3425360965],
+            'regn_sum': [False, 91.3382614758],
             'npts_real': [True, 5925312],
             'rms_per_field': [False, [0.089055932035104174, 0.087593317854421537, 0.088754854977895078, 0.087673584891401882, 0.088859674046269987, 0.087793556001629414, 0.087858029812576927]],
+            'profile': [False, 1.2198751],
             'im_fit': [False, [1.150589250979386, 9.433930899157085, \
                        8.092281808705982]],
             'im_fit_loc': [True, [252, 220.3142062699946]],
@@ -2415,8 +2568,10 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
-            'mask_pix': [True, 3929],
+            'mask_pix': [True, 3928],
             'mask_regns': [True, 1],
             'npts_real': [True, 5925312]}
 
@@ -2431,12 +2586,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [54, 54, 0, 0]],
-            'min_val': [False, 0.200047940016],
-            'min_val_pos': [True, [98, 64, 0, 339]],
-            'im_rms': [False,  0.136036099793],
+            'min_val': [False, 0.200100466609],
+            'min_val_pos': [True, [43, 99, 0, 447]],
+            'im_rms': [False, 0.615051728939],
             'npts_0.2': [True, 3338068],
             'npts_0.5': [True, 1825336],
             'npts_real': [True, 5925312],
@@ -2456,13 +2613,15 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [54, 54, 0, 0]],
-            'min_val': [False, -0.168375626206],
+            'min_val': [False, -0.168374374509],
             'min_val_pos': [True, [63, 54, 0, 12]],
-            'im_rms': [False,  0.0604957837605],
-            'im_sum': [False, 67.0230730532],
+            'im_rms': [False, 0.0604965318073],
+            'im_sum': [False, 66.9960417559],
             'npts_real': [True, 5925312],
             'psf_fit': [False, [1.1012741250775981, 7.879923449290915, \
                         5.24248657397286]],
@@ -2480,14 +2639,16 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
-            'max_val': [False, 0.490073978901],
+            'max_val': [False, 0.490056365728],
             'max_val_pos': [True, [49, 60, 0, 249]],
             'min_val': [False, -0.417252391577],
             'min_val_pos': [True, [24, 31, 0, 498]],
-            'im_rms': [False, 0.087537475151],
-            'im_sum': [False, 68.1217086753],
-            'regn_sum': [False, 37.8533693244],
+            'im_rms': [False, 0.0875338790102],
+            'im_sum': [False, 68.0894097835],
+            'regn_sum': [False, 37.8514072159],
             'npts_real': [True, 5925312]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -2502,14 +2663,16 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
-            'max_val': [False, 0.510256052017],
+            'max_val': [False, 0.510233163834],
             'max_val_pos': [True, [55, 57, 0, 255]],
             'min_val': [False, 0.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.000534824373949],
-            'im_sum': [False, 5.9057832174],
-            'regn_sum': [False, 1.13614080101],
+            'im_rms': [False, 0.000534801027393],
+            'im_sum': [False, 5.90552844107],
+            'regn_sum': [False, 1.13609256595],
             'mask_non0': [True, 32],
             'npts_real': [True, 5925312]}
 
@@ -2524,12 +2687,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
             'max_val': [False, 120.900192261],
             'max_val_pos': [True, [0, 0, 0, 447]],
             'min_val': [False, 120.665283203],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 120.761758344],
             'npts_real': [True, 508]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -2543,15 +2708,17 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244174.08728027344],
             'start': [True, 2.202527e+11],
             'end': [True, 2.203765e+11],
+            'start_delta': [False, 2.202527e+11],
+            'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
-            'max_val': [False, 0.393758654594],
+            'max_val': [False, 0.39385086298],
             'max_val_pos': [True, [54, 54, 0, 0]],
-            'min_val': [False, 7.45326979086e-05],
-            'min_val_pos': [True, [97, 107, 0, 170]],
-            'im_rms': [False, 0.140904168376],
-            'im_sum': [False, 506774.321109],
-            'npts_0.2': [True, 1058307],
-            'npts_0.3': [True, 504152],
+            'min_val': [False, 7.44352073525e-05],
+            'min_val_pos': [True, [97, 107, 0, 224]],
+            'im_rms': [False, 0.140916352052],
+            'im_sum': [False, 506828.976527],
+            'npts_0.2': [True, 1058348],
+            'npts_0.3': [True, 504298],
             'npts_real': [True, 5925312]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
@@ -2568,13 +2735,15 @@ class Test_mosaic(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[0.15, 1.2])
-            self.png_creator(img+'.residual', range_list=[0.15, 1.2])
+            self.mom8_creator(img+'.image', range_list=[0.15, 1.2])
+            self.mom8_creator(img+'.residual', range_list=[0.15, 1.2])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png',img+'.residual.moment8.png']
+        test_dict[testname]['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -2606,7 +2775,7 @@ class Test_mosaic(test_tclean_base):
             specmode='mfs', nchan=-1, outframe='LSRK', \
             perchanweightdensity=False, gridder='mosaic', chanchunks=-1, \
             mosweight=True, usepointing=False, pblimit=0.2, \
-            deconvolver='hogbom',  restoration=False, restoringbeam='common',\
+            deconvolver='hogbom', restoration=False, restoringbeam='common',\
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
             threshold='0.0mJy', nsigma=0.0, interactive=0, usemask='auto'
             '-multithresh', sidelobethreshold=1.25, noisethreshold=5.0, \
@@ -2663,14 +2832,16 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 0.0345157124102],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, -0.00193646573462],
+            'min_val': [False, -0.0019364656182],
             'min_val_pos': [True, [91, 52, 0, 0]],
-            'im_rms': [False,  0.00202865568675],
-            'im_sum': [False, 1.51296002558],
-            'regn_sum': [False, 1.58850855171],
+            'im_rms': [False, 0.00202865566602],
+            'im_sum': [False, 1.51295999996],
+            'regn_sum': [False, 1.58850853646],
             'npts_real': [True, 15876],
             'rms_per_field': [False, [0.0043183333329864697, 0.0035324567542234214, 0.0033643881411162453, 0.0034484378708067886, 0.0035013779149007367, 0.0033359473616749375, 0.0035589233954835845]],
             'im_fit': [False, [0.03522500582263719, 17.46093579518058, 
@@ -2694,6 +2865,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 360],
             'mask_regns': [True, 1],
@@ -2710,12 +2883,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, 0.200080409646],
+            'min_val': [False, 0.200080364943],
             'min_val_pos': [True, [102, 28, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.604913988836],
             'npts_0.2': [True, 8454],
             'npts_0.5': [True, 4497],
             'npts_real': [True, 15876],
@@ -2735,13 +2910,15 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, -0.169576942921],
             'min_val_pos': [True, [61, 57, 0, 0]],
-            'im_rms': [False,  0.0501544137568],
-            'im_sum': [False, 0.00266315032371],
+            'im_rms': [False, 0.0501544145677],
+            'im_sum': [False, 0.00266324029255],
             'npts_real': [True, 15876],
             'psf_fit': [False, [1.088207720785799, 15.893701850875548, \
                         8.795192549423799]],
@@ -2760,14 +2937,16 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.00713972514495],
+            'max_val': [False, 0.00713972467929],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, -0.00197902694345],
+            'min_val': [False, -0.00197902671061],
             'min_val_pos': [True, [72, 58, 0, 0]],
-            'im_rms': [False, 0.000868739852256],
-            'im_sum': [False, 0.134135425201],
-            'regn_sum': [False, 0.291504478903],
+            'im_rms': [False, 0.000868739833233],
+            'im_sum': [False, 0.134135401952],
+            'regn_sum': [False, 0.291504465893],
             'npts_real': [True, 15876]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -2782,6 +2961,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 0.0273759867996],
             'max_val_pos': [True, [63, 63, 0, 0]],
@@ -2804,12 +2985,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 4396210.5],
             'max_val_pos': [True, [0, 0, 0, 0]],
             'min_val': [False, 4396210.5],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 4396210.53446],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -2823,13 +3006,15 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.426215529442],
+            'max_val': [False, 0.426215469837],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, 4.20721153205e-05],
+            'min_val': [False, 4.20771575591e-05],
             'min_val_pos': [True, [1, 24, 0, 0]],
-            'im_rms': [False, 0.144357241177],
-            'im_sum': [False, 1347.62643852],
+            'im_rms': [False, 0.144357241275],
+            'im_sum': [False, 1347.6264633],
             'npts_0.2': [True, 2778],
             'npts_0.3': [True, 1468],
             'npts_real': [True, 15876]}
@@ -2848,13 +3033,13 @@ class Test_mosaic(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[-0.002, 0.035])
-            self.png_creator(img+'.residual', range_list=[-0.002, 0.035])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png',img+'.residual.moment8.png']
+            self.mom8_creator(img+'.image', range_list=[-0.002, 0.035])
+            self.mom8_creator(img+'.residual', range_list=[-0.002, 0.035])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -2943,14 +3128,16 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0349145904183],
+            'max_val': [False, 0.034914586693],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, -0.00258040986955],
+            'min_val': [False, -0.00258040963672],
             'min_val_pos': [True, [70, 97, 0, 0]],
-            'im_rms': [False,  0.00207815366878],
-            'im_sum': [False, 1.47797238623],
-            'regn_sum': [False, 1.58228412218],
+            'im_rms': [False, 0.00207815358165],
+            'im_sum': [False, 1.47797251044],
+            'regn_sum': [False, 1.58228409861],
             'npts_real': [True, 15876],
             'rms_per_field': [False, [0.0043714750541124468, 0.003595955649075896, 0.003430812546940405, 0.0034721618952933994, 0.0035884838221589368, 0.0033594003986614097, 0.0036156061407187608]],
             'im_fit': [False, [0.03580520672441999, 17.19187684101627, \
@@ -2974,6 +3161,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 360],
             'mask_regns': [True, 1],
@@ -2990,12 +3179,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, 0.200080409646],
+            'min_val': [False, 0.200080364943],
             'min_val_pos': [True, [102, 28, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.604913988836],
             'npts_0.2': [True, 8454],
             'npts_0.5': [True, 4497],
             'npts_real': [True, 15876],
@@ -3015,13 +3206,15 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, -0.169576942921],
             'min_val_pos': [True, [61, 57, 0, 0]],
-            'im_rms': [False,  0.0501544137568],
-            'im_sum': [False, 0.00266315032371],
+            'im_rms': [False, 0.0501544145677],
+            'im_sum': [False, 0.00266324029255],
             'npts_real': [True, 15876],
             'psf_fit': [False, [1.0781857293103545, 15.898196388608632, \
                         8.995969894587292]],
@@ -3040,14 +3233,16 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.00713019352406],
+            'max_val': [False, 0.00713019119576],
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, -0.00197783415206],
             'min_val_pos': [True, [72, 58, 0, 0]],
-            'im_rms': [False, 0.000865575412319],
-            'im_sum': [False, 0.130538275658],
-            'regn_sum': [False, 0.283332881119],
+            'im_rms': [False, 0.000865575345209],
+            'im_sum': [False, 0.130538249029],
+            'regn_sum': [False, 0.283332834988],
             'npts_real': [True, 15876]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -3062,14 +3257,16 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0272394195199],
+            'max_val': [False, 0.0272394213825],
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, 0.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.000216185869206],
-            'im_sum': [False, 0.0272394195199],
-            'regn_sum': [False, 0.0272394195199],
+            'im_rms': [False, 0.000216185883988],
+            'im_sum': [False, 0.0272394213825],
+            'regn_sum': [False, 0.0272394213825],
             'mask_non0': [True, 1],
             'npts_real': [True, 15876]}
 
@@ -3084,12 +3281,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
             'max_val': [False, 4396210.5],
             'max_val_pos': [True, [0, 0, 0, 0]],
             'min_val': [False, 4396210.5],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 4396210.53446],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -3103,13 +3302,15 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.426215529442],
+            'max_val': [False, 0.426215469837],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, 4.20721153205e-05],
+            'min_val': [False, 4.20771575591e-05],
             'min_val_pos': [True, [1, 24, 0, 0]],
-            'im_rms': [False, 0.144357241177],
-            'im_sum': [False, 1347.62643852],
+            'im_rms': [False, 0.144357241275],
+            'im_sum': [False, 1347.6264633],
             'npts_0.2': [True, 2778],
             'npts_0.3': [True, 1468],
             'npts_real': [True, 15876]}
@@ -3121,21 +3322,23 @@ class Test_mosaic(test_tclean_base):
         alpha_stats_dict = self.image_stats(img+'.alpha', region_file = \
             data_path+'region_files/mosaic_mtmfs.alpha.crtf')
 
-        exp_alpha_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
-            'freq_bin': [True, 16762501225.396851],
-            'start': [True, 2.53574e+11],
-            'end': [True, 2.53574e+11],
+        exp_alpha_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 1628.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0],
-            'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 0.0],
-            'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.0],
-            'im_sum': [False, 0.0],
-            'regn_sum': [False, 0.0],
-            'mask_non0': [True, 0],
-            'npts_real': [True, 82944]}
+            'max_val': [False, 39.2035827637],
+            'max_val_pos': [True, [52, 71, 0, 0]],
+            'min_val': [False, -34.6691818237],
+            'min_val_pos': [True, [82, 85, 0, 0]],
+            'im_rms': [False, 11.2641311632],
+            'im_sum': [False, 8782.46312377],
+            'regn_sum': [False, -46.7235065232],
+            'mask_non0': [True, 1628],
+            'npts_real': [True, 15876]}
 
         report10 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
             '.alpha')
@@ -3144,20 +3347,22 @@ class Test_mosaic(test_tclean_base):
         error_stats_dict = self.image_stats(img+'.alpha.error', region_file = \
             data_path+'region_files/mosaic_mtmfs.alpha.error.crtf')
 
-        exp_error_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
-            'freq_bin': [True, 16762501225.396851],
-            'start': [True, 2.53574e+11],
-            'end': [True, 2.53574e+11],
+        exp_error_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 1628.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0],
-            'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 0.0],
-            'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.0],
-            'im_sum': [False, 0.0],
-            'regn_sum': [False, 0.0],
-            'npts_real': [True, 82944]}
+            'max_val': [False, 55.4204788208],
+            'max_val_pos': [True, [52, 71, 0, 0]],
+            'min_val': [False, 0.0116222631186],
+            'min_val_pos': [True, [15, 49, 0, 0]],
+            'im_rms': [False, 15.8834614404],
+            'im_sum': [False, 19545.8077074],
+            'regn_sum': [False, 289.468003012],
+            'npts_real': [True, 15876]}
 
         report11 = self.stats_compare(exp_error_stats, error_stats_dict, \
             '.alpha.error')
@@ -3174,13 +3379,13 @@ class Test_mosaic(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image.tt0', range_list=[-0.003, 0.035])
-            self.png_creator(img+'.residual.tt0', range_list=[-0.003, 0.035])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png']
+            self.mom8_creator(img+'.image.tt0', range_list=[-0.003, 0.035])
+            self.mom8_creator(img+'.residual.tt0', range_list=[-0.003, 0.035])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -3258,29 +3463,32 @@ class Test_mosaic(test_tclean_base):
              'circle[[15:57:28.581274, -16.57.40.39634], 11.5arcsec]',
              'circle[[15:57:29.520326, -16.57.40.70171], 11.5arcsec]'])
 
-        exp_im_stats = {'com_bmaj': [False, 0.9308618284489858],
-            'com_bmin': [False, 0.7193287080871101],
-            'com_pa': [False, -88.12278938107711],
+        exp_im_stats = {'com_bmaj': [False, 0.930861830403],
+            'com_bmin': [False, 0.719328746863],
+            'com_pa': [False, -88.1227870446],
             'npts': [True, 191116800],
-            'npts_unmasked': [True, 105012873.0],
+            'npts_unmasked': [True, 105033551.0],
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
+            'start_delta': [False, 2.617644e+11],
+            'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 0.0846285372972],
+            'max_val': [False, 0.0847059637308],
             'max_val_pos': [True, [290, 236, 0, 511]],
-            'min_val': [False, -0.0710834935308],
+            'min_val': [False, -0.0710606276989],
             'min_val_pos': [True, [192, 206, 0, 674]],
-            'im_rms': [False, 0.012281671696],
+            'im_rms': [False, 0.0122806235373],
             'rms_per_chan': [False, [0.015667012104297096, 0.01249556647636659, 0.011119753312996314, 0.011559686287211745, 0.012295549107925172, 0.013497595553035495, 0.013890985018415562, 0.01537521583867029, 0.012560026473467654, 0.01211174756347237, 0.01068202599475987, 0.011446394296400014, 0.013360170834984883, 0.011779590786641968, 0.011813658887463094, 0.01105808607636477, 0.011211227704164385, 0.012672658897254005, 0.009644489317411001, 0.012306186479311533, 0.011820657820002498, 0.012528421200108672, 0.012097912099003863, 0.014149728955396576, 0.013040286513860739, 0.010926749613896915, 0.01135630004195933, 0.011450114870829052, 0.013874579045960853, 0.012713343335685372, 0.012365580200560802, 0.01112892658338281, 0.011735154726597849, 0.010271529404584005, 0.012034388520273378, 0.011825840449510846, 0.01201477612491181, 0.011271561871280695, 0.01263051888325016, 0.010917661123920426, 0.012304591002675239, 0.01382691832578588, 0.012025131483665455, 0.01471038786901529, 0.01268901239406491, 0.012269947721949661, 0.010339439002704098, 0.010588455121686411, 0.010663853975518148, 0.011927246586817075, 0.011971607513601665, 0.011740843559651189, 0.010860788064116878, 0.0113500230752135, 0.011498619788115836, 0.011798959247821511, 0.010929419432007908, 0.014579761324742322, 0.012976422990339583, 0.010218616946376293, 0.011098072571178239, 0.01168771322025399, 0.011600913193876674, 0.011684300942923293, 0.01071321921174995, 0.011492474041242522, 0.012011160150216459, 0.01290685298415816, 0.010431320458890848, 0.010472939825276044, 0.013447112178611359, 0.011687328995254547, 0.010898530945791702, 0.009752776379182097, 0.01164870192026142, 0.012676083477754277, 0.01431102043820875, 0.014295093842479985, 0.012626217708334785, 0.011231466919543581, 0.010535901939971674, 0.01062302128541249, 0.011298369163697381, 0.012502624763702992, 0.011305836954063448, 0.01215581953177045, 0.010607739795551263, 0.01112311151599714, 0.010136484643153825, 0.01128990114770225, 0.012014173589023637, 0.013193805876756995, 0.012330109734653474, 0.010766011891193288, 0.01153437959726003, 0.011978851287972363, 0.011109003021191307, 0.011833746981365703, 0.011880050178226903, 0.009862018971003887, 0.012800148141077113, 0.012007057726628611, 0.012985090676833535, 0.0129505958602198, 0.011696207783179233, 0.013661835268823226, 0.015246672300909788, 0.012047095989451426, 0.014346897791128894, 0.011754599415304922, 0.011009518999420173, 0.011052019581176067, 0.012820563697322922, 0.01167880516927239, 0.010768042038144418, 0.012407448804067968, 0.011258173984772548, 0.010006383872394846, 0.012053714508583965, 0.011282069296445192, 0.01185568667180287, 0.01224398735628035, 0.009954101011210293, 0.01224524095389172, 0.01083068385084185, 0.012042693023557548, 0.010466482413183785, 0.01270824749297588, 0.009858469333879292, 0.009616370018819147, 0.011251488506345967, 0.010944010326885257, 0.009937336043765989, 0.011811563673806756, 0.01374671433132631, 0.011885072616527947, 0.01128936295560062, 0.010745268810504142, 0.010783213461157924, 0.010401671249270496, 0.010546985468598878, 0.011704982925431526, 0.01151082357877418, 0.011389394982234517, 0.009891395767145527, 0.012676962217854196, 0.01239854403608683, 0.01012692292366004, 0.01208213727619496, 0.010426410721875919, 0.011489717695650697, 0.011351311722094469, 0.010788345620860689, 0.012413824258742542, 0.012869284594202364, 0.01254719377424318, 0.012493275011557376, 0.012026588643842862, 0.011444080682226833, 0.014504798148840915, 0.012783237416754493, 0.010978226098473022, 0.011226830327894566, 0.010386044707730815, 0.01179048796956224, 0.010466753647787678, 0.010520561042133916, 0.009806686930384046, 0.009825709113667067, 0.011163605933804482, 0.009898306765781937, 0.010639624156931048, 0.010765250926759881, 0.011871167097798471, 0.012699735217972713, 0.012271717028350141, 0.01011927965625519, 0.01185201591720369, 0.01187934596239281, 0.012860096441123013, 0.01045831490108293, 0.01168302685217849, 0.01231538733094323, 0.013711623609843774, 0.010509256728676152, 0.009725104065778598, 0.010742348970319717, 0.010497654900964383, 0.01226776948490034, 0.009968096362512743, 0.01065210210757194, 0.0113790694870219, 0.013691499504725839, 0.009709697345128918, 0.011668556206361638, 0.01203851403100267, 0.011090927358203469, 0.012322941164683295, 0.010763675962361283, 0.01243680774921738, 0.01273630413642944, 0.014925176287167791, 0.013343151602031603, 0.012184525933592252, 0.011868284483931634, 0.010612397890136424, 0.010925259212727632, 0.010736722739232834, 0.01128555748033192, 0.012106425521907454, 0.012536567241883659, 0.011811387511674406, 0.011410855057029651, 0.010610454803475318, 0.010985570534714531, 0.013420524115250722, 0.01237714866693324, 0.011400339204092964, 0.011530006934858634, 0.013404558644802023, 0.01356996738906636, 0.011809592810750743, 0.012195836458918021, 0.013983595304231499, 0.012723543201613906, 0.011350835725055812, 0.012149584287404331, 0.011272979457253907, 0.012262167105146599, 0.011175511659374244, 0.0102697228260645, 0.01334158429888008, 0.012408056314862907, 0.011491512834255597, 0.00928563088957559, 0.011723585674628282, 0.012562330134652718, 0.012321060378936478, 0.011175930032929103, 0.014444827741007454, 0.013240412166233477, 0.00954358182816961, 0.009886456935597223, 0.011315336508350314, 0.011160043368747817, 0.011084649991455213, 0.011426321774805799, 0.010549594186710465, 0.011211051291167739, 0.01176768646746374, 0.014686912922251879, 0.011246937183158924, 0.009773020704868391, 0.012859597369260864, 0.012513039230848268, 0.013313363039583453, 0.012077863600292971, 0.011426654372094657, 0.011508622055300996, 0.011247566432148776, 0.011623431851054248, 0.011014612057401632, 0.013022506823681756, 0.011485416194269382, 0.01154829448377298, 0.01202691068493326, 0.012642809433009043, 0.010836720661823337, 0.012182321211669447, 0.012349974771377626, 0.01129390722457532, 0.011135976780555478, 0.011531711369332466, 0.012456469996333023, 0.01066628966176333, 0.011106915433366485, 0.012535628404137928, 0.01329621583757732, 0.01309891488346235, 0.011823826809276102, 0.010766426258224856, 0.010769239154148987, 0.0110549819438351, 0.00941967982610333, 0.012016650037610828, 0.011327327654288295, 0.01209848828634942, 0.011506245997467066, 0.011684994479376746, 0.013606364448973455, 0.010446608584558138, 0.01066351605331571, 0.010707363943853028, 0.011928301857376082, 0.01294521124420252, 0.010131421709150719, 0.011849062523828911, 0.011443882324740128, 0.012461616479499914, 0.011076627457455922, 0.012813631803261182, 0.011813942249706206, 0.012869872838703512, 0.016215007268429744, 0.016455835790109574, 0.016195858609782746, 0.010586943752781703, 0.011714040295832838, 0.011002274392087834, 0.013100914878598957, 0.011252873658270539, 0.011303009258586938, 0.012859801115861635, 0.012461620893746536, 0.011357224642469422, 0.011637071400518138, 0.011468136930703879, 0.01411435236184562, 0.01213930177391437, 0.012012513247874964, 0.012399215107416643, 0.017256708026613384, 0.011747981333506227, 0.012212040710131029, 0.011702161891262641, 0.01357489047444866, 0.0142883693783086, 0.013345754616212652, 0.0111940675739781, 0.011675373377606931, 0.011441040364084332, 0.013384698628456768, 0.013142898529307593, 0.01225725868583698, 0.012226995314265549, 0.011976385838259086, 0.014630107009854095, 0.01393710853346633, 0.011607705747133181, 0.013218275149292351, 0.011873190322311846, 0.013747319388144195, 0.010499983139191808, 0.011624206615490757, 0.013225475425745141, 0.013680190321206091, 0.012046704878481942, 0.012471069574344537, 0.010953227174093479, 0.011926261656122828, 0.012459493726885675, 0.014416014101405097, 0.013092512809823969, 0.012391343965965609, 0.012032749220004132, 0.011174480504353115, 0.0128020365473887, 0.012373815528334766, 0.013220253396707947, 0.011397076938533486, 0.011737376857836166, 0.011339198156054645, 0.013683087656476136, 0.014055337259697667, 0.011872209955622893, 0.011489327319776421, 0.011356744920908554, 0.011924222252823101, 0.012924011814257761, 0.01156472654485118, 0.012452508623193576, 0.01615067926057454, 0.014393758763013523, 0.012021023556503968, 0.011686927548314128, 0.012558578572353821, 0.011698219106403014, 0.011850872070781452, 0.011244104935548218, 0.010803851710396785, 0.011326571988274907, 0.012046055166178125, 0.012789254887232475, 0.012054328352918125, 0.012531458975574155, 0.011667295333375608, 0.012715182062018394, 0.01416008745695674, 0.011590350023313635, 0.013280049474709302, 0.012317202369770713, 0.011350237164077244, 0.011468547414280923, 0.011839276627787746, 0.011984505075773167, 0.010498556329113671, 0.011607479477631402, 0.01146628697832332, 0.012454745876293334, 0.015324136554616518, 0.012648464631195741, 0.011476812708577248, 0.012388293945433912, 0.013097915532805426, 0.010844862222727058, 0.010849704992030628, 0.011857198994433613, 0.014369812497106239, 0.01614444176168378, 0.010859408246343039, 0.012355198379138267, 0.013369345496468774, 0.01352324109813424, 0.01249093576911017, 0.011839983100254041, 0.013790424278145797, 0.013615888137811373, 0.012137597782120882, 0.011920659584678292, 0.01198453326792445, 0.011455625248390569, 0.00998759798749584, 0.011907441379145489, 0.011445931803455656, 0.012802399352945356, 0.011807120236149467, 0.01226251626371192, 0.013803196660688412, 0.011396570477306092, 0.011871861677445866, 0.012409145934442605, 0.012190261729970274, 0.011355705245344998, 0.013059478167556213, 0.011340084762450894, 0.014094393707136091, 0.012227696710476979, 0.015109377241227427, 0.012328532759057612, 0.012948495238519125, 0.012448990941930516, 0.014909025593587475, 0.013966538678131317, 0.013951304003408212, 0.012643902341794237, 0.012381886725880696, 0.011608607970324055, 0.011524217824005454, 0.011753643583578194, 0.011909335216658386, 0.01500036992819057, 0.0146564784502679, 0.013039737284216963, 0.013751934845130839, 0.013710006202952523, 0.01146836988848032, 0.011545597482743033, 0.011534520901890178, 0.013313753578876611, 0.012923196186255153, 0.013864645252987274, 0.01291016687946222, 0.012187645424073405, 0.0123954851702774, 0.011090370304889066, 0.012569939183393495, 0.011171977695060169, 0.01193123241184618, 0.012223023550711422, 0.012575288535573641, 0.013397233030543118, 0.012677733376390488, 0.012824707036730977, 0.012077443785414215, 0.011917723071670982, 0.012440011533195431, 0.012737137257114249, 0.013226824784925779, 0.011705373001984695, 0.013236156564942205, 0.012428547205061067, 0.011897634394487568, 0.012340276631541067, 0.016514178673390664, 0.01279768810975663, 0.013295330804538989, 0.013923981704086203, 0.013293372296425762, 0.012807871537395961, 0.01233101894981078, 0.012328987872006852, 0.01163784902034462, 0.013313092897728503, 0.012985108364251114, 0.011142998656392029, 0.012369903540412508, 0.012947299676825685, 0.012653423845945748, 0.01562996207353602, 0.014022980315620364, 0.013079373939625572, 0.013669501711869474, 0.011451239023725265, 0.01387333519961978, 0.013272974615061776, 0.013010075621525907, 0.012057515236229667, 0.013348290271015285, 0.012474986304014272, 0.012822235425304088, 0.013469504747600882, 0.015049934910563677, 0.013108662650721938, 0.01169414937155411, 0.014209631933301799, 0.014029595420562672, 0.01313572956489975, 0.013768070645688276, 0.013669663522466149, 0.012789385397857027, 0.011759854640416133, 0.013381506917531618, 0.01317316470287087, 0.013731014632491167, 0.014096287340039539, 0.011977139109191822, 0.01269262588325782, 0.014216384246730137, 0.012780653296103527, 0.012899528621024064, 0.011032967652830057, 0.012102612001078233, 0.011976078228056453, 0.011883895621375998, 0.012802365574674025, 0.01324801385166456, 0.013229524374842769, 0.012151160553514988, 0.011697133232144788, 0.013819175149287335, 0.012140935480252437, 0.011981813853002501, 0.012084722992447795, 0.012585444087037377, 0.012414152508510147, 0.013316552564554114, 0.013253620957310662, 0.014878797637568952, 0.013615894050495254, 0.012709069629370266, 0.012427103871389584, 0.013255141575299076, 0.012738711652745057, 0.014904432456876815, 0.014210867966534892, 0.013509920011482207, 0.012425165695341685, 0.012533528802502332, 0.014336868162538341, 0.011833811236181477, 0.015193744677447416, 0.01431279129775192, 0.013259559570353551, 0.012994100393289547, 0.013864774950178729, 0.012159929964791984, 0.01419863835690063, 0.014190789497478196, 0.013672387203935446, 0.012055278077236548, 0.012085479493499343, 0.012708973627136714, 0.012057165753153366, 0.012948753136076728, 0.01300072865900603, 0.011737981749916887, 0.013527304652929072, 0.012929913822303431, 0.011886809618695744, 0.012833849789732805, 0.01302949373163326, 0.013895403620873681, 0.013171820320213534, 0.013953961887679132, 0.013734000181833348, 0.01262587625087098, 0.012199103159950037, 0.013643673456292997, 0.013397836614489634, 0.01594172388898437, 0.015573035287868315, 0.013917856223549286, 0.012536353641427949, 0.014860466731552354, 0.013552708900045911, 0.013629466127257123, 0.012378335224334382, 0.013116351705612704, 0.012177988274798253, 0.012805373309334908, 0.013766331009848752, 0.014681878707956165, 0.011926702054932887, 0.012452273266241426, 0.012579633618734222, 0.012271260658847647, 0.013434178141045432, 0.011256170201273603, 0.012241164545083469, 0.012715311381559832, 0.014158217761420192, 0.013710431625047755, 0.015544655166662385, 0.012479494691650066, 0.012794382968093331, 0.013723467058383875, 0.01129790706237436, 0.01386400204442386, 0.013948937970667924, 0.01474167932185738, 0.012394940495298034, 0.014413979480373103, 0.013415306676650376, 0.013015296980135697, 0.012460061661220363, 0.012148683531904852, 0.014565058530881577, 0.013354317640191604, 0.010932991047176424, 0.013472405580926574, 0.014090167896930112, 0.011289132690347727, 0.013030955001855788, 0.011930998072436357, 0.01119650545759846, 0.01336252769201265, 0.013985875731024684, 0.011744402770443252, 0.012987363600946232, 0.012570373512332105, 0.011967267431977555, 0.013963824316748901, 0.013113917131760142, 0.015175164104330932, 0.01327121004907913, 0.01480994279997818, 0.013017833326488197, 0.012590284721083084, 0.013636613698566152, 0.013023427264598512, 0.0118689366333651, 0.014431815130736951, 0.011510423632609004, 0.013751161061425392, 0.011946926261948976, 0.011574213816363992, 0.013103519491424586, 0.01256833652316557, 0.013717201694781961, 0.011799548188880763, 0.014221219755103955, 0.013122869137854539, 0.015681024673163967, 0.013977036504021368, 0.01385158873128627, 0.01192090212998216, 0.013405064782284188, 0.012370543487842847, 0.013543641566948098, 0.012190038354089203, 0.010485951880655316, 0.01065474654892235, 0.011894241281652475, 0.012235290499779875, 0.016341337277583624, 0.011951837129874415, 0.012786343847113055, 0.011700169381836972, 0.0116987237015556, 0.01584129766486376, 0.012934100451129409, 0.012421043404934572, 0.013319782161544239, 0.010822586447971657, 0.013768225063031962, 0.01256900129001914, 0.013155623546818948, 0.011216305081099302, 0.01342997193575067, 0.01202191464374732, 0.010697624321778235, 0.015231405911477284, 0.012707984996807302, 0.011509494099144266, 0.012370090248740612, 0.012333106398064926, 0.012355927978977287, 0.013324826178046834, 0.012937849744614949, 0.013251091849170686, 0.012241393042655245, 0.012809410411935642, 0.013415437736483378, 0.013549261827461793, 0.013063192366571214, 0.012121670719955952, 0.01336030963204456, 0.012030706877818232, 0.01620522326989027, 0.013898156174912801, 0.013845480988651687, 0.013887455990710647, 0.012068390405162546, 0.011755939925068324, 0.013275604498608711, 0.011216611629757777, 0.011677478386439837, 0.010605866598758461, 0.0123599433807257, 0.013049424843940767, 0.011751712640564415, 0.011750132281128709, 0.012538068443295915, 0.01178746192810137, 0.012416680391644138, 0.013967663494309064, 0.011784356183646988, 0.014604214590101753, 0.011833948152033797, 0.011315804095294313, 0.01332743466825628, 0.013053434708846068, 0.011059804195895667, 0.010564587906126596, 0.01102267731863153, 0.011342558989477891, 0.01202689018525376, 0.012453421183126498, 0.011102185306584089, 0.010463866575165995, 0.015269163260545289, 0.011918415549432885, 0.011369128293761672, 0.010371364768147193, 0.011736371996752575, 0.012797487595901094, 0.013259851973223793, 0.012380797309777503, 0.013308425109731127, 0.015320758463204735, 0.010225926749762294, 0.011258787297291056, 0.009966991432626141, 0.011479673309463388, 0.012747496824004115, 0.012375931475739925, 0.011058517478639826, 0.012762924931169286, 0.012477944671249878, 0.01260839664096796, 0.011204724607765226, 0.013902208290096557, 0.010776228597758947, 0.013309499022509929, 0.017424540106428448, 0.011666803285392461, 0.010612250155377485, 0.01225365093143365, 0.012565477652135646, 0.012560022064203515, 0.013311882508317791, 0.012505545505753059, 0.010306455499657464, 0.012676663075725451, 0.012498771477844908, 0.01058998021853162, 0.01405727829447646, 0.011586866156371556, 0.010518281562552243, 0.010731082611461988, 0.013668577521770654, 0.012951237133989603, 0.013297250697740166, 0.011256633699887369, 0.011410614744018555, 0.011920105512413305, 0.010903972882515475, 0.01151646075083865, 0.011652106943818302, 0.011279191661803575, 0.013096542735610034, 0.010571055541644716, 0.0125850059607434, 0.010687465761303071, 0.012287345913328777, 0.011395341842353034, 0.01066365582500683, 0.014598748750369274, 0.012549443442399444, 0.011441826793593216, 0.010884568047403273, 0.01180816627630304, 0.01120499414253317, 0.012397216994592853, 0.011586660529077834, 0.012109595113175883, 0.01012537646617585, 0.010614883001281113, 0.013062279023311165, 0.011156508307384487, 0.011360974428249597, 0.010662569680858604, 0.011096498962291788, 0.010554891464213529, 0.011990213710704774, 0.01199714967099034, 0.011854981439770644, 0.011862683712584867, 0.012802582494057203, 0.011577453698377574, 0.01019052971268619, 0.01019901528332309, 0.012281126786588159, 0.011415812682763855, 0.01105581294331331, 0.01066694467332525, 0.010788622197805227, 0.012827960070295203, 0.014827747643843274, 0.01228615008936392, 0.012695947954523156, 0.01372504743362642, 0.012856030967871494, 0.010597007817762974, 0.012304902393004517, 0.012065110220915125, 0.01195668425986831, 0.01086087593260838, 0.01231769839828131, 0.012128147369877246, 0.010817010237205124, 0.012643034637853885, 0.011662533330489484, 0.01332388398778439, 0.011379239016704942, 0.011338092027712373, 0.013532638696355816, 0.01088929059364428, 0.009833061982280674, 0.01039296581185181, 0.010551371059577607, 0.012800002623802556, 0.011294950650386104, 0.010968921330141941, 0.011815483268140185, 0.010991027109824806, 0.010101876381734976, 0.011413636304184781, 0.01168187248586187, 0.010061068733763744, 0.01197014119071967, 0.012698376660930412, 0.011322714727807322, 0.01090459130971119, 0.009559547835004872, 0.010498329644215184, 0.013744539638296114, 0.01241662294231113, 0.013920642752687732, 0.01423709054803628, 0.012246450050510711, 0.011798522946392928, 0.012688307869426999, 0.011701411381744752, 0.010963335503348588, 0.011647664158072897, 0.010302975974959723, 0.011032126020690486, 0.011010171786400392, 0.012070857382656947, 0.012159491609797332, 0.012081814922729835, 0.01247264839908568, 0.011200668427178526, 0.013522937854091454, 0.013105319145488747, 0.011579740082727632, 0.010161886039664997, 0.010813245667125665, 0.010532288644280609, 0.011266459095452083, 0.012340346869037254, 0.010811434812069995, 0.012335213065123588, 0.00964337831495196, 0.012187168579263661, 0.013251917772334918, 0.011498371091243765, 0.010161965220729475, 0.01181737461439899, 0.009784767253164278, 0.009961151956167761, 0.011528718678809174, 0.010742033001898285, 0.010879391169694889, 0.010316128340493388, 0.010247573903152401, 0.011062856172903247, 0.011417489025016405, 0.01119193099686049, 0.01098276222674334, 0.014026370736078514, 0.01043225916128798, 0.010194459622871846, 0.010815687677297334, 0.011134576557489298, 0.01142961024001326, 0.010585867874587658, 0.015266592121768712, 0.011920413664227218, 0.009755732807066618, 0.012196390497070086, 0.009319626263621858, 0.011464227492400532, 0.01051867055357182, 0.012952488572362067, 0.010904039384865052, 0.009939432112089783, 0.011965844054709109, 0.010384358639967691, 0.010084010975718798, 0.013177624524319486, 0.014828138853365192, 0.011173145152672995, 0.011590247202021274, 0.010687161551733566, 0.011618327067404854, 0.010073717357638476, 0.01029100516208372, 0.010542481107447248, 0.011770135056296347, 0.011999996525704881, 0.011631265879266437, 0.012435408590750038, 0.012434157423771368, 0.010597499708746861, 0.010475004983816016, 0.013007106929861926]],
-            'im_sum': [False, 4159.24976371],
-            'regn_sum': [False, 8.40242256899],
+            'im_sum': [False, 4153.80461124],
+            'regn_sum': [False, 22.0496815369],
             'npts_real': [True, 191116800],
             'rms_per_field': [False, [0.013743433433999516, 0.012734920080011661, 0.012977344646935137, 0.012849700732137936, 0.012869319430463244, 0.012786113424398437, 0.012763233601525502]],
-            'im_fit': [False, [0.0334733812258343, 3.3091253557475184, \
-                       2.9202236206835717]],
-            'im_fit_loc': [True, [568, 261.9030537244612]],
-            'im_fit_pix': [False, [285.9532542526675, 238.49062286149936]]}
+            'profile': [False, 0.0247435603272],
+            'im_fit': [False, [0.07905756034384644, 12.886359417267892, \
+                       5.310724943044715]],
+            'im_fit_loc': [True, [511, 261.889137107219]],
+            'im_fit_pix': [False, [299.5756533902605, 255.6464223194929]]}
 
         report1 = th.checkall( \
             # checks for image and pb mask movement
@@ -3298,6 +3506,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
+            'start_delta': [False, 2.617644e+11],
+            'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
             'mask_pix': [True, 9091],
             'mask_regns': [True, 33],
@@ -3310,23 +3520,25 @@ class Test_mosaic(test_tclean_base):
             data_path+'region_files/mosaic_cube_eph.pb.crtf')
 
         exp_pb_stats = {'npts': [True, 191116800],
-            'npts_unmasked': [True, 105012873.0],
+            'npts_unmasked': [True, 105033551.0],
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
+            'start_delta': [False, 2.617644e+11],
+            'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [211, 203, 0, 0]],
             'min_val': [False, 0.200000017881],
             'min_val_pos': [True, [380, 278, 0, 194]],
-            'im_rms': [False,  0.136036099793],
-            'npts_0.2': [True, 105012873],
-            'npts_0.5': [True, 60644654],
+            'im_rms': [False, 0.638066212618],
+            'npts_0.2': [True, 105033551],
+            'npts_0.5': [True, 60649291],
             'npts_real': [True, 191116800],
-            'pb_fit': [False, [1.1107312860848533, 36.56029006144532, \
-                       36.55082591613064]],
-            'pb_fit_loc': [True, [568, 261.9030537244612]],
-            'pb_fit_pix': [False, [211.17711692047547, 203.28127297020697]]}
+            'pb_fit': [False, [1.1107636648844048, 36.56192593982793, \
+                       36.54997859671651]],
+            'pb_fit_loc': [True, [511, 261.889137107219]],
+            'pb_fit_pix': [False, [211.18281521819424, 203.29195188890523]]}
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
@@ -3339,18 +3551,20 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
+            'start_delta': [False, 2.617644e+11],
+            'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
-            'min_val': [False, -0.0456548333168],
+            'min_val': [False, -0.045659199357],
             'min_val_pos': [True, [230, 216, 0, 13]],
-            'im_rms': [False,  0.0122779442959],
-            'im_sum': [False, 130.930138815],
+            'im_rms': [False, 0.0122782213796],
+            'im_sum': [False, 130.74164209],
             'npts_real': [True, 191116800],
-            'psf_fit': [False, [0.8856109995595133, 1.082867148220076, \
-                        0.8509534645745089]],
-            'psf_fit_loc': [True, [568, 261.9030537244612]],
-            'psf_fit_pix': [False, [239.9661891995272, 209.99207815393726]]}
+            'psf_fit': [False, [0.8855960185478, 1.0832399168917628, \
+                        0.85106729999774]],
+            'psf_fit_loc': [True, [511, 261.889137107219]],
+            'psf_fit_pix': [False, [239.96614077346965, 209.99207884772346]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -3359,18 +3573,20 @@ class Test_mosaic(test_tclean_base):
             data_path+'region_files/mosaic_cube_eph.residual.crtf')
 
         exp_resid_stats = {'npts': [True, 191116800],
-            'npts_unmasked': [True, 105012873.0],
+            'npts_unmasked': [True, 105033551.0],
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
+            'start_delta': [False, 2.617644e+11],
+            'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 0.0698681697249],
+            'max_val': [False, 0.0698709115386],
             'max_val_pos': [True, [276, 250, 0, 321]],
-            'min_val': [False, -0.0710834935308],
+            'min_val': [False, -0.0710606276989],
             'min_val_pos': [True, [192, 206, 0, 674]],
-            'im_rms': [False, 0.0122735658254],
-            'im_sum': [False, 3753.62547857],
-            'regn_sum': [False, 8.40242256899],
+            'im_rms': [False, 0.012272523599],
+            'im_sum': [False, 3748.45107633],
+            'regn_sum': [False, 5.95724748177],
             'npts_real': [True, 191116800]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -3385,18 +3601,20 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
+            'start_delta': [False, 2.617644e+11],
+            'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 0.032535340637],
+            'max_val': [False, 0.0327642522752],
             'max_val_pos': [True, [288, 214, 0, 511]],
-            'min_val': [False, -0.00106793956365],
+            'min_val': [False, -0.00106700242031],
             'min_val_pos': [True, [295, 238, 0, 589]],
-            'im_rms': [False, 2.52036519684e-05],
-            'im_sum': [False, 10.4785933242],
-            'regn_sum': [False, 0.0],
-            'mask_non0': [True, 1460],
+            'im_rms': [False, 2.51895960856e-05],
+            'im_sum': [False, 10.4715985146],
+            'regn_sum': [False, 0.46631132951],
+            'mask_non0': [True, 1459],
             'npts_real': [True, 191116800]}
 
-        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
+        report7 = self.stats_compare(exp_model_stats, model_stats_dict, 
             '.model')
 
         # .sumwt report
@@ -3407,12 +3625,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
+            'start_delta': [False, 2.617644e+11],
+            'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 45510.7695312],
+            'max_val': [False, 45509.8398438],
             'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 45195.4453125],
+            'min_val': [False, 45195.1835938],
             'min_val_pos': [True, [0, 0, 0, 593]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 45284.18444383],
             'npts_real': [True, 948]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -3426,15 +3646,17 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
+            'start_delta': [False, 2.617644e+11],
+            'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 0.317849844694],
-            'max_val_pos': [True, [211, 203, 0, 9]],
-            'min_val': [False, 6.58089556964e-05],
-            'min_val_pos': [True, [451, 65, 0, 945]],
-            'im_rms': [False, 0.119779013697],
-            'im_sum': [False, 13812574.8761],
-            'npts_0.2': [True, 28713033],
-            'npts_0.3': [True, 6200001],
+            'max_val': [False, 0.3178614676],
+            'max_val_pos': [True, [211, 202, 0, 944]],
+            'min_val': [False, 6.66096239001e-05],
+            'min_val_pos': [True, [451, 65, 0, 947]],
+            'im_rms': [False, 0.119822765111],
+            'im_sum': [False, 13818688.5072],
+            'npts_0.2': [True, 28725785],
+            'npts_0.3': [True, 6228582],
             'npts_real': [True, 191116800]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
@@ -3452,13 +3674,15 @@ class Test_mosaic(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[-0.01, 0.1])
-            self.png_creator(img+'.residual', range_list=[-0.01, 0.1])
+            self.mom8_creator(img+'.image', range_list=[-0.01, 0.1])
+            self.mom8_creator(img+'.residual', range_list=[-0.01, 0.1])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png',img+'.residual.moment8.png']
+        test_dict[testname]['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -3549,16 +3773,18 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453735],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 2.06048989296],
             'max_val_pos': [True, [291, 212, 0, 0]],
             'min_val': [False, -2.1858522892],
             'min_val_pos': [True, [290, 152, 0, 0]],
-            'im_rms': [False,  0.676557465791],
+            'im_rms': [False, 0.676557465791],
             'im_sum': [False, 5498.32523989],
-            'regn_sum': [False, 8725.50744967],
+            'regn_sum': [False, 8725.50744961],
             'npts_real': [True, 201600],
-            'rms_per_field': [False, [0.93211966613880237, 0.75587343134288443, 0.89153649532739099, 0.78815835277889079, 0.9296910564725368, 0.78753090736250964,  0.81230003610334034]]}
+            'rms_per_field': [False, [0.93211966613880237, 0.75587343134288443, 0.89153649532739099, 0.78815835277889079, 0.9296910564725368, 0.78753090736250964, 0.81230003610334034]]}
 
         report1 = th.checkall( \
             # checks for image and pb mask movement
@@ -3576,6 +3802,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453735],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 0],
             'mask_regns': [True, 0],
@@ -3592,19 +3820,21 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453735],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [211, 203, 0, 0]],
             'min_val': [False, 0.200001135468],
             'min_val_pos': [True, [81, 343, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.63128956829],
             'npts_0.2': [True, 113589],
             'npts_0.5': [True, 64549],
             'npts_real': [True, 201600],
-            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
-                       7.225723641827008]],
-            'pb_fit_loc': [True, [0, 220.31469461816917]],
-            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
+            'pb_fit': [False, [1.1028920489851448, 36.87369130938714, \
+                       36.84614469310595]],
+            'pb_fit_loc': [True, [0, 253.5744226264628]],
+            'pb_fit_pix': [False, [211.18238054179585, 203.38210680708025]]}
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
@@ -3617,18 +3847,20 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453735],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, -0.0525086708367],
             'min_val_pos': [True, [230, 216, 0, 0]],
-            'im_rms': [False,  0.0111846421981],
-            'im_sum': [False, 0.100949260701],
+            'im_rms': [False, 0.0111846421981],
+            'im_sum': [False, 0.100949261998],
             'npts_real': [True, 201600],
-            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
-                       7.225723641827008]],
-            'pb_fit_loc': [True, [0, 220.31469461816917]],
-            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
+            'psf_fit': [False, [0.8980212570855989, 1.0458854777504984, \
+                        0.8222593788495552]],
+            'psf_fit_loc': [True, [0, 253.5744226264628]],
+            'psf_fit_pix': [False, [239.96621779301014, 209.99390876796625]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -3641,6 +3873,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453735],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 2.06048989296],
             'max_val_pos': [True, [291, 212, 0, 0]],
@@ -3663,6 +3897,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453735],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 0.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
@@ -3685,12 +3921,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453735],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 30068706.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
             'min_val': [False, 30068706.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 30068705.591],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -3704,6 +3942,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453735],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 0.333539396524],
             'max_val_pos': [True, [211, 203, 0, 0]],
@@ -3729,13 +3969,13 @@ class Test_mosaic(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image', range_list=[-2.2, 2.1])
-            self.png_creator(img+'.residual', range_list=[-2.2, 2.1])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.moment8.png',img+'.residual.moment8.png']
+            self.mom8_creator(img+'.image', range_list=[-2.2, 2.1])
+            self.mom8_creator(img+'.residual', range_list=[-2.2, 2.1])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -3802,7 +4042,7 @@ class Test_mosaic(test_tclean_base):
             noisethreshold=4.25, lownoisethreshold=1.5, \
             negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
-            restart=True, calcres=False, calcpsf=False,  \
+            restart=True, calcres=False, calcpsf=False, \
             parallel=False)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mos_mtmfs'))
@@ -3827,14 +4067,16 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 2.05563259125],
             'max_val_pos': [True, [291, 212, 0, 0]],
             'min_val': [False, -2.19232487679],
             'min_val_pos': [True, [290, 152, 0, 0]],
-            'im_rms': [False,  0.672551533853],
-            'im_sum': [False, 5410.97024339],
-            'regn_sum': [False, 8700.32470433],
+            'im_rms': [False, 0.672551536032],
+            'im_sum': [False, 5410.97026619],
+            'regn_sum': [False, 8700.32473019],
             'npts_real': [True, 201600],
             'rms_per_field': [False, [0.92450562082276955, 0.74815259370356468, 0.88345818716087821, 0.78563887415834988, 0.92110354253354942, 0.78525487979592601, 0.80567239544155445]]}
 
@@ -3854,6 +4096,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'mask_pix': [True, 0],
             'mask_regns': [True, 0],
@@ -3870,19 +4114,21 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [211, 203, 0, 0]],
             'min_val': [False, 0.200001135468],
             'min_val_pos': [True, [81, 343, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 0.63128956829],
             'npts_0.2': [True, 113589],
             'npts_0.5': [True, 64549],
             'npts_real': [True, 201600],
-            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
-                       7.225723641827008]],
-            'pb_fit_loc': [True, [0, 220.31469461816917]],
-            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
+            'pb_fit': [False, [1.1028920489851448, 36.87369130938714, \
+                       36.84614469310595]],
+            'pb_fit_loc': [True, [0, 253.5744226264628]],
+            'pb_fit_pix': [False, [211.18238054179585, 203.38210680708025]]}
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb.tt0')
 
@@ -3895,18 +4141,20 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, -0.0525086708367],
             'min_val_pos': [True, [230, 216, 0, 0]],
-            'im_rms': [False,  0.0111846421981],
-            'im_sum': [False, 0.100949260701],
+            'im_rms': [False, 0.0111846421981],
+            'im_sum': [False, 0.100949258623],
             'npts_real': [True, 201600],
-            'pb_fit': [False, [0.909677723621573, 13.925317200593012, \
-                       7.225723641827008]],
-            'pb_fit_loc': [True, [0, 220.31469461816917]],
-            'pb_fit_pix': [False, [38.303527208322556, 37.46382702762046]]}
+            'psf_fit': [False, [0.8980212570855989, 1.0458854777504984, \
+                        0.8222593788495552]],
+            'psf_fit_loc': [True, [0, 253.5744226264628]],
+            'psf_fit_pix': [False, [239.96621779301014, 209.99390876796625]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf.tt0')
 
@@ -3920,13 +4168,15 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 2.06048989296],
             'max_val_pos': [True, [291, 212, 0, 0]],
             'min_val': [False, -2.1858522892],
             'min_val_pos': [True, [290, 152, 0, 0]],
-            'im_rms': [False, 0.676557465791],
-            'im_sum': [False, 5498.32523989],
+            'im_rms': [False, 0.676557465789],
+            'im_sum': [False, 5498.32524009],
             'regn_sum': [False, 8725.50744971],
             'npts_real': [True, 201600]}
 
@@ -3942,6 +4192,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 0.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
@@ -3964,12 +4216,14 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 30068706.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
             'min_val': [False, 30068706.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False,  0.136036099793],
+            'im_rms': [False, 30068705.591],
             'npts_real': [True, 1]}
 
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
@@ -3983,6 +4237,8 @@ class Test_mosaic(test_tclean_base):
             'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 0.333539396524],
             'max_val_pos': [True, [211, 203, 0, 0]],
@@ -4001,21 +4257,23 @@ class Test_mosaic(test_tclean_base):
         alpha_stats_dict = self.image_stats(img+'.alpha', region_file = \
             data_path+'region_files/mosaic_mtmfs_eph.alpha.crtf')
 
-        exp_alpha_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
-            'freq_bin': [True, 16762501225.396851],
+        exp_alpha_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 49203.0],
+            'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0],
-            'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 0.0],
-            'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.0],
-            'im_sum': [False, 0.0],
-            'regn_sum': [False, 0.0],
-            'mask_non0': [True, 0],
-            'npts_real': [True, 82944]}
+            'max_val': [False, 62.1377220154],
+            'max_val_pos': [True, [173, 232, 0, 0]],
+            'min_val': [False, -58.0292701721],
+            'min_val_pos': [True, [204, 163, 0, 0]],
+            'im_rms': [False, 9.26911023158],
+            'im_sum': [False, 40833.0406524],
+            'regn_sum': [False, 29081.164461],
+            'mask_non0': [True, 49203],
+            'npts_real': [True, 201600]}
 
         report10 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
             '.alpha')
@@ -4024,20 +4282,22 @@ class Test_mosaic(test_tclean_base):
         error_stats_dict = self.image_stats(img+'.alpha.error', region_file = \
             data_path+'region_files/mosaic_mtmfs_eph.alpha.error.crtf')
 
-        exp_error_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
-            'freq_bin': [True, 16762501225.396851],
+        exp_error_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 49203.0],
+            'freq_bin': [True, 16762504556.453705],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.0],
-            'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, 0.0],
-            'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 0.0],
-            'im_sum': [False, 0.0],
-            'regn_sum': [False, 0.0],
-            'npts_real': [True, 82944]}
+            'max_val': [False, 87.8760070801],
+            'max_val_pos': [True, [173, 232, 0, 0]],
+            'min_val': [False, 0.000175367502379],
+            'min_val_pos': [True, [224, 36, 0, 0]],
+            'im_rms': [False, 13.1085011733],
+            'im_sum': [False, 463643.715791],
+            'regn_sum': [False, 105848.469828],
+            'npts_real': [True, 201600]}
 
         report11 = self.stats_compare(exp_error_stats, error_stats_dict, \
             '.alpha.error')
@@ -4053,13 +4313,13 @@ class Test_mosaic(test_tclean_base):
 
         test_dict[testname]['self.parallel'] = self.parallel
         test_dict[testname]['report'] = report
+        test_dict[testname]['images'] = []
 
         if not CASA6:
-            self.png_creator(img+'.image.tt0', range_list=[-2.2, 2.1])
-            self.png_creator(img+'.residual.tt0', range_list=[-2.2, 2.1])
-
-            test_dict[testname]['images'] = \
-                [img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png']
+            self.mom8_creator(img+'.image.tt0', range_list=[-2.2, 2.1])
+            self.mom8_creator(img+'.residual.tt0', range_list=[-2.2, 2.1])
+            test_dict[testname]['images'].extend( \
+                (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
