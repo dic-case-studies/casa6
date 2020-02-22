@@ -455,20 +455,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   Record SynthesisDeconvolver::executeMinorCycle(Record& minorCycleControlRec)
   {
     // LogIO os( LogOrigin("SynthesisDeconvolver","executeMinorCycle",WHERE) );
-    Record returnRecord;
+    
 
     //    itsImages->printImageStats();
-
+    SynthesisUtilMethods::getResource("Start Deconvolver");
     ///if cube execute cube deconvolution...check on residual shape as itsimagestore return 0 shape sometimes
     if(itsImages->residual()->shape()[3]> 1){
      return  executeCubeMinorCycle(minorCycleControlRec);
     }
+     
     //  os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
-
-    SynthesisUtilMethods::getResource("Start Deconvolver");
-
+    return executeCoreMinorCycle(minorCycleControlRec);
+    SynthesisUtilMethods::getResource("End Deconvolver");
+  }
+  Record SynthesisDeconvolver::executeCoreMinorCycle(Record& minorCycleControlRec)
+  {
+   
+    Record returnRecord;
     try {
       //      if ( !itsIsInteractive ) setAutoMask();
+      
       itsLoopController.setCycleControls(minorCycleControlRec);
       bool automaskon (false);
       if (itsAutoMaskAlgorithm=="multithresh") {
@@ -489,7 +495,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       throw( AipsError("Error in running Minor Cycle : "+x.getMesg()) );
     }
 
-    SynthesisUtilMethods::getResource("End Deconvolver");
+   
 
     return returnRecord;
   }
@@ -517,11 +523,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Int numprocs = applicator.numProcs(); 
           cerr << "Number of procs: " << numprocs << endl;
           
-          Int numchan=itsImages->residual()->shape()[3];
+          //Int numchan=itsImages->residual()->shape()[3];
+          Vector<Int> startchans;
+          Vector<Int> endchans;
+          Int numblocks=numblockchans(startchans, endchans); 
           String psfname=itsImages->psf()->name();
-          Vector<ImageBeamSet> chanBeams(numchan);
-          for (Int k =0 ; k <numchan; ++k){
-            chanBeams[k]=itsImages->getChannelBeamSet(k);
+          Vector<ImageBeamSet> chanBeams(numblocks);
+          for (Int k =0 ; k <numblocks; ++k){
+            chanBeams[k]=itsImages->getChannelSliceBeamSet(startchans[k], endchans[k]);;
           }
           Float psfsidelobelevel=itsImages->getPSFSidelobeLevel();
           String residualname=itsImages->residual()->name();
@@ -562,7 +571,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Bool allDone(false);
           Vector<Int> chanRange(2);
           Record beamsetRec;
-          for (Int k=0; k < numchan; ++k) {
+          for (Int k=0; k < numblocks; ++k) {
             //os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
             assigned=casa::applicator.nextAvailProcess(*cmc, rank);
             //cerr << "assigned "<< assigned << endl;
@@ -595,7 +604,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             // put itercontrol  params #2
             applicator.put(minorCycleControlRec);
             // put which channel to process #3
-            chanRange.set(k);
+            chanRange[0]=startchans[k];  chanRange[1]=endchans[k];
             applicator.put(chanRange);
             // psf  #4
             applicator.put(psfname);
@@ -711,7 +720,42 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
   }
-  // Restore Image.
+  // get channel blocks
+  Int SynthesisDeconvolver::numblockchans(Vector<Int>& startchans, Vector<Int>& endchans){
+    Int nchan=itsImages->residual()->shape()[3];
+    //roughly 8e6 pixel to deconvolve per lock/process is a  minimum
+    Int optchan= 8e6/(itsImages->residual()->shape()[0])/(itsImages->residual()->shape()[1]);
+     cerr << "OPTCHAN" << optchan  << endl;
+    if(optchan < 10) optchan=10;
+    Int nproc= applicator.numProcs() < 2 ? 1 : applicator.numProcs()-1;
+    if(nproc==1){
+      startchans.resize(1);
+      endchans.resize(1);
+      startchans[0]=0;
+      endchans[0]=nchan-1;
+      return 1;
+    }
+    Int blksize= nchan/nproc > optchan ? optchan : Int( std::floor(Float(nchan)/Float(nproc)));
+    if(blksize< 1) blksize=1;
+    Int nblk=Int(nchan/blksize);
+    startchans.resize(nblk);
+    endchans.resize(nblk);
+    for (Int k=0; k < nblk; ++k){
+      startchans[k]= k*blksize;
+      endchans[k]=(k+1)*blksize-1;
+    }
+    if(endchans[nblk-1] < (nchan-1)){
+      startchans.resize(nblk+1,True);
+      startchans[nblk]=endchans[nblk-1]+1;
+      endchans.resize(nblk+1,True);
+      endchans[nblk]=nchan-1;
+      ++nblk;
+    }
+    cerr << "nblk " << nblk << " beg " << startchans << " end " << endchans << endl;
+    return nblk;
+  }
+  
+  // pbcor Image.
   void SynthesisDeconvolver::pbcor()
   {
     LogIO os( LogOrigin("SynthesisDeconvolver","pbcor",WHERE) );

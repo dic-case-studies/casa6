@@ -51,6 +51,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	private:
 	  void task();
 	  std::shared_ptr<SIImageStore> subImageStore();
+          void makeTempImage(std::shared_ptr<casacore::ImageInterface<casacore::Float> >& outptr,  const casacore::String& imagename, const casacore::Int chanBeg, const casacore::Int chanEnd, const casacore::Bool writelock=false);
 	  casacore::String myName_p;
 	  SynthesisParamsDeconv decPars_p;
 	  casacore::Record iterBotRec_p;

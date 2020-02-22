@@ -1134,8 +1134,13 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
               // TODO make chanchunks a divisor of nchannels?
 	}
 	nsubcube = nsubcube < 1 ? 1 : nsubcube;
-	 if( (imshape[3] >= (applicator.numProcs()-1)) && (nsubcube < (applicator.numProcs()-1)))
-		 nsubcube=(applicator.numProcs()-1);
+        if( (imshape[3] >= nworkers) && (nsubcube < nworkers)){
+          nsubcube=nworkers;
+          ///TESTOO
+          //if(imshape[3] > 2*nworkers)
+          //  nsubcube=2*nworkers;
+
+        }
 	 else if(imshape[3] < (applicator.numProcs()-1)){
 		nsubcube=imshape[3]; 
 	 }

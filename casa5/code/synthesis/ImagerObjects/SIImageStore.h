@@ -161,6 +161,8 @@ class SIImageStore
   virtual void setBeamSet(const casacore::ImageBeamSet& bs);
   //get the beamSet of a given channel only
   virtual casacore::ImageBeamSet getChannelBeamSet(const casacore::Int chan);
+  //get the beamSet for a range of channel begining and end inclusive
+  virtual casacore::ImageBeamSet getChannelSliceBeamSet(const casacore::Int begChan, const casacore::Int endChan);
   virtual void printBeamSet(casacore::Bool verbose=casacore::False);
   casacore::GaussianBeam findGoodBeam();
   void lineFit(casacore::Vector<casacore::Float> &data, casacore::Vector<casacore::Bool> &flag, casacore::Vector<casacore::Float> &fit, casacore::uInt lim1, casacore::uInt lim2);

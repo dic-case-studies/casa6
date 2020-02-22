@@ -2079,17 +2079,24 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 
   ImageBeamSet SIImageStore::getChannelBeamSet(const Int channel){
 
-    ImageBeamSet bs=getBeamSet();
+    return getChannelSliceBeamSet(channel, channel);
+
+
+  }
+
+  ImageBeamSet SIImageStore::getChannelSliceBeamSet(const Int begChan, const Int endChan){
+     ImageBeamSet bs=getBeamSet();
     if(bs.shape()[0]==1)
       return bs;
-    if(bs.shape()[0] < (channel-1))
-      throw(AipsError("beam of channel "+String::toString(channel)+" does not exist"));
-    IPosition blc(2, channel, 0);
-    IPosition trc(2, channel, bs.shape()[1]-1);
+    if(begChan > endChan || begChan <0)
+      throw(AipsError("Inconsistent slice of beam in channel requested"));
+    if(bs.shape()[0] < (endChan-1))
+      throw(AipsError("beam of channel "+String::toString(endChan)+" does not exist"));
+    IPosition blc(2, begChan, 0);
+    IPosition trc(2, endChan, bs.shape()[1]-1);
     Matrix<GaussianBeam> sliceBeam=bs.getBeams()(blc, trc);
     ImageBeamSet subBeamSet(sliceBeam);
     return subBeamSet;
-
 
   }
   void SIImageStore::setBeamSet(const ImageBeamSet& bs){

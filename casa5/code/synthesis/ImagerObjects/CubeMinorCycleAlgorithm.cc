@@ -93,8 +93,17 @@ void CubeMinorCycleAlgorithm::task(){
         ImageBeamSet bs=ImageBeamSet::fromRecord(beamsetRec_p);
         subimstor->setBeamSet(bs);
         subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
+        LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
 	subDeconv.initMinorCycle(subimstor);
-	returnRec_p=subDeconv.executeMinorCycle(iterBotRec_p);
+	returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
+        PagedImage<Float> model(modelName_p, TableLock::UserLocking);
+        model.lock(FileLocker::Write, 30);
+        SubImage<Float> *tmpptr=nullptr;
+        tmpptr=SpectralImageUtil::getChannel(model, chanRange_p[0], chanRange_p[1], true);
+        tmpptr->copyData(*(subimstor->model()));
+        delete tmpptr;
+        model.unlock();
+	//submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, true));
        	status_p = True;
 }
 String&	CubeMinorCycleAlgorithm::name(){
@@ -114,22 +123,14 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
 	//cerr << "chanBeg " << chanBeg << " chanEnd " << chanEnd << " imId " << imId << endl;
         
 	
-        PagedImage<Float> psf(psfName_p, TableLock::UserNoReadLocking);
-        // darn makeBeamSet wants to write in the psf ! So accessing it writable
-        subpsf.reset(SpectralImageUtil::getChannel(psf, chanBeg, chanEnd, false));
-        
-        
-	PagedImage<Float> resid(residualName_p, TableLock::UserLocking);
-	subresid.reset(SpectralImageUtil::getChannel(resid, chanBeg, chanEnd, true));
-	PagedImage<Float> model(modelName_p, TableLock::UserLocking);
-	submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, true));
-
-	PagedImage<Float> mask(maskName_p, TableLock::UserNoReadLocking);
-	submask.reset(SpectralImageUtil::getChannel(mask, chanBeg, chanEnd, true));
-
+        makeTempImage(subpsf, psfName_p, chanBeg, chanEnd);
+        makeTempImage(subresid, residualName_p, chanBeg, chanEnd);
+        makeTempImage(submodel, modelName_p, chanBeg, chanEnd, True);
+        makeTempImage(submask, maskName_p, chanBeg, chanEnd);
+        //	PagedImage<Float> model(modelName_p, TableLock::UserLocking);
+	//submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, true));
         if(!pbName_p.empty()){
-          PagedImage<Float> pb(pbName_p, TableLock::UserNoReadLocking);
-          subpb.reset(SpectralImageUtil::getChannel(pb, chanBeg, chanEnd, false));
+           makeTempImage(subpb, pbName_p, chanBeg, chanEnd);
         }
 
 	std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, nullptr, nullptr, submask, nullptr, nullptr, subpb, nullptr));
@@ -137,6 +138,24 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
 	//cerr << "subimagestor TYPE" << subimstor->getType() << endl;
 	return subimstor;
 }
+  void CubeMinorCycleAlgorithm::makeTempImage(std::shared_ptr<ImageInterface<Float> >& outptr,  const String& imagename, const Int chanBeg, const Int chanEnd, const Bool writelock){
+    PagedImage<Float> im(imagename, writelock ? TableLock::UserLocking : TableLock::UserNoReadLocking);
+    SubImage<Float> *tmpptr=nullptr;
+    if(writelock)
+              im.lock(FileLocker::Write, 30);
+
+    tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
+    if(tmpptr){  
+      outptr.reset(new TempImage<Float>(tmpptr->shape(), tmpptr->coordinates()));
+      outptr->copyData(*tmpptr);
+      if(tmpptr->isMasked()){
+	  outptr->makeMask ("mask0", true, true, false, true);
+	  outptr->pixelMask().put(tmpptr->getMask());
+      }
+      delete tmpptr;
+    }
+    im.unlock();
+  }
 
 	
 	
