@@ -60,6 +60,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	private:
 		void task();
 		void reset();
+          void writeBackToFullImage(const casacore::String imagename, const casacore::Int chanBeg, const casacore::Int chanEnd, std::shared_ptr<casacore::ImageInterface<casacore::Float> > subimptr);
+          void getSubImage(std::shared_ptr<casacore::ImageInterface<casacore::Float> >& subimptr, const casacore::Int chanBeg, const casacore::Int chanEnd, const casacore::String imagename, const casacore::Bool lock=false); 
 		casacore::CountedPtr<SIImageStore> subImageStore(const int whichImageId=0);
 		casacore::CountedPtr<SIImageStore> multiTermImageStore(const casacore::Int imId);
 		casacore::String myName_p;
@@ -74,6 +76,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		casacore::Record controlRecord_p;
 		casacore::Record weightParams_p;
 		casacore::Vector<casacore::Vector<casacore::String> > startmodel_p;
+          casacore::Vector<casacore::String> residualNames_p;
+          casacore::Vector<casacore::String> psfNames_p;
+          casacore::Vector<casacore::String> sumwtNames_p;
           casacore::String movingSource_p;
 		casacore::Bool status_p;
 		casacore::Int serialBug_p; //have to send a private variable in serial case

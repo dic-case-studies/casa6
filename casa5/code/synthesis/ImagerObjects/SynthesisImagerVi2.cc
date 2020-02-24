@@ -2588,6 +2588,7 @@ void SynthesisImagerVi2::unlockMSs()
 	  imwgt_p=VisImagingWeight(im);
 	}
 	else{
+          ////In memory weight densities is being deprecated...we should get rid of this bit
 	  Int ndensities=1;
 	  if((itsMappers.imageStore(0)->gridwt()->nelements())==5)
 	    ndensities=(itsMappers.imageStore(0)->gridwt())->shape()[4];

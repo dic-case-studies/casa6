@@ -175,21 +175,26 @@ void CubeMajorCycleAlgorithm::task(){
 	}
 	subImgr.setCubeGridding(False);
 	// TO DO get weight param and set weight
-	if(!weightParams_p.isDefined("type") || weightParams_p.asString("type")=="natural")
+	if(!weightParams_p.isDefined("type") || weightParams_p.asString("type")=="natural"){
 		subImgr.weight("natural");
-	else
+        }
+	else{
+          if(controlRecord_p.isDefined("weightdensity")){
+            String densName=controlRecord_p.asString("weightdensity");
+            cerr << "Loading weightdensity " << densName << endl;
+            if(Table::isReadable(densName))
+              subImgr.setWeightDensity(densName);
+          }
+          else{
 		subImgr.weight(weightParams_p);
+          }
+        }
 	///Now do the selection tuning if needed
 	if(imSel_p[0].mode !="cubedata"){
 		//cerr << "IN RETUNING " << endl;
 		subImgr.tuneSelectData();
 	}
-	//set common weightdensity when perchanweightdensity=false
-	if(controlRecord_p.isDefined("weightdensity")){
-		String densName=controlRecord_p.asString("weightdensity");
-		if(Table::isReadable(densName))
-			subImgr.setWeightDensity(densName);
-	}
+
 	if (!dopsf_p){
 		subImgr.executeMajorCycle(controlRecord_p);
 		if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight"))
@@ -369,8 +374,29 @@ void CubeMajorCycleAlgorithm::reset(){
 	
 }
 	
-	
-	
+  void CubeMajorCycleAlgorithm::getSubImage(std::shared_ptr<ImageInterface<Float> >& subimptr, const Int chanBeg, const Int chanEnd, const String imagename, const Bool lock){
+    PagedImage<Float> im(imagename, lock ? TableLock::UserLocking : TableLock::UserNoReadLocking);
+    SubImage<Float> *tmpptr=nullptr;
+    if(lock)
+      im.lock(FileLocker::Write, 30);
+    tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
+    subimptr.reset(new TempImage<Float>(tmpptr->shape(), tmpptr->coordinates()));
+    subimptr->copyData(*tmpptr);
+    im.unlock();
+    delete tmpptr;
+  }
+
+  void CubeMajorCycleAlgorithm::writeBackToFullImage(const String imagename, const Int chanBeg, const Int chanEnd, std::shared_ptr<ImageInterface<Float> > subimptr){
+    PagedImage<Float> im(imagename, TableLock::UserLocking);
+    im.lock(FileLocker::Write, 30);
+    SubImage<Float> *tmpptr=nullptr; 
+    tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, true);
+    tmpptr->copyData(*(subimptr));
+                 
+    im.unlock();
+    delete tmpptr;
+                 
+  }
 	
 	
 	

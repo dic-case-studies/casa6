@@ -96,14 +96,8 @@ void CubeMinorCycleAlgorithm::task(){
         LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
 	subDeconv.initMinorCycle(subimstor);
 	returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
-        PagedImage<Float> model(modelName_p, TableLock::UserLocking);
-        model.lock(FileLocker::Write, 30);
-        SubImage<Float> *tmpptr=nullptr;
-        tmpptr=SpectralImageUtil::getChannel(model, chanRange_p[0], chanRange_p[1], true);
-        tmpptr->copyData(*(subimstor->model()));
-        delete tmpptr;
-        model.unlock();
-	//submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, true));
+        writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
+        
        	status_p = True;
 }
 String&	CubeMinorCycleAlgorithm::name(){
@@ -127,8 +121,8 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
         makeTempImage(subresid, residualName_p, chanBeg, chanEnd);
         makeTempImage(submodel, modelName_p, chanBeg, chanEnd, True);
         makeTempImage(submask, maskName_p, chanBeg, chanEnd);
-        //	PagedImage<Float> model(modelName_p, TableLock::UserLocking);
-	//submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, true));
+        //       PagedImage<Float> model(modelName_p, TableLock::UserLocking);
+        //   submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, true));
         if(!pbName_p.empty()){
            makeTempImage(subpb, pbName_p, chanBeg, chanEnd);
         }
@@ -143,7 +137,12 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     SubImage<Float> *tmpptr=nullptr;
     if(writelock)
               im.lock(FileLocker::Write, 30);
+    ////TESTOO
+    //outptr.reset(SpectralImageUtil::getChannel(im, chanBeg, chanEnd, writelock));
+    
 
+    ///END of TESTOO
+    
     tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
     if(tmpptr){  
       outptr.reset(new TempImage<Float>(tmpptr->shape(), tmpptr->coordinates()));
@@ -154,9 +153,20 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
       }
       delete tmpptr;
     }
+    
     im.unlock();
   }
-
+ void CubeMinorCycleAlgorithm::writeBackToFullImage(const String imagename, const Int chanBeg, const Int chanEnd, std::shared_ptr<ImageInterface<Float> > subimptr){
+    PagedImage<Float> im(imagename, TableLock::UserLocking);
+    im.lock(FileLocker::Write, 30);
+    SubImage<Float> *tmpptr=nullptr; 
+    tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, true);
+    tmpptr->copyData(*(subimptr));
+                 
+    im.unlock();
+    delete tmpptr;
+                 
+  }
 	
 	
 	

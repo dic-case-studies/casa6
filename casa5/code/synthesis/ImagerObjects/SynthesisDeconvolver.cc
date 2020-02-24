@@ -725,7 +725,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int nchan=itsImages->residual()->shape()[3];
     //roughly 8e6 pixel to deconvolve per lock/process is a  minimum
     Int optchan= 8e6/(itsImages->residual()->shape()[0])/(itsImages->residual()->shape()[1]);
-     cerr << "OPTCHAN" << optchan  << endl;
+    // cerr << "OPTCHAN" << optchan  << endl;
     if(optchan < 10) optchan=10;
     Int nproc= applicator.numProcs() < 2 ? 1 : applicator.numProcs()-1;
     if(nproc==1){
@@ -751,7 +751,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       endchans[nblk]=nchan-1;
       ++nblk;
     }
-    cerr << "nblk " << nblk << " beg " << startchans << " end " << endchans << endl;
+    //cerr << "nblk " << nblk << " beg " << startchans << " end " << endchans << endl;
     return nblk;
   }
   
@@ -823,7 +823,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   // Set mask
   Bool SynthesisDeconvolver::setupMask()
   {
+    
     LogIO os( LogOrigin("SynthesisDeconvolver","setupMask",WHERE) );
+    
     Bool maskchanged=False;
     //debug
     if( itsIsMaskLoaded==false ) {

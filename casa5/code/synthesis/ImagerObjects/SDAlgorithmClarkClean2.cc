@@ -70,6 +70,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  {
    itsAlgorithmName=String(clarktype);
    itsMatDeltaModel.resize();
+   itsMatModel.resize();
  }
 
   SDAlgorithmClarkClean2::~SDAlgorithmClarkClean2()
@@ -95,7 +96,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmClarkClean2","initializeDeconvolver",WHERE) );
 
     itsImages->residual()->get( itsMatResidual, true );
-    itsImages->model()->get( itsMatModel, true );
+    
+    //itsImages->model()->get( itsMatModel, true ); not necessary here as it is done in Onestep all over again
     itsImages->psf()->get( itsMatPsf, true );
     itsImages->mask()->get( itsMatMask, true );
 
@@ -124,8 +126,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     */
 
     // Initialize the Delta Image model. Resize if needed.
-    if ( itsMatDeltaModel.shape().nelements() != itsMatModel.shape().nelements() )
-      { itsMatDeltaModel.resize ( itsMatModel.shape() ); }
+    // if ( itsMatDeltaModel.shape().nelements() != itsMatModel.shape().nelements() )
+    //  { itsMatDeltaModel.resize ( itsMatModel.shape() ); }
 
 
     //cout << "Image Shapes : " << itsMatResidual.shape() << endl;
@@ -172,11 +174,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LatticeLocker lockmod (*(itsImages->model()), FileLocker::Write);
     LatticeLocker lockresid (*(itsImages->residual()), FileLocker::Write);
     itsImages->model()->get( itsMatDeltaModel, true );
+    //    cerr << "Orig deltaMod " << max(itsMatDeltaModel) << endl;
+    itsMatModel.resize();
     itsMatModel.assign( itsMatDeltaModel ); // This should make an explicit copy
-
+    //cerr << "Orig Mod " << max(itsMatModel) << endl;
     //// Set model to zero
     itsImages->model()->set( 0.0 );
     
+    // cerr << "max after set " << max(itsImages->model()->get(true)) << endl;
 
     //// Prepare a single plane mask. For multi-stokes, it still needs a single mask.
     IPosition shp = itsImages->mask()->shape();
@@ -225,8 +230,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // Add delta model to old model
     //Bool ret2 = 
     itsImages->model()->get( itsMatDeltaModel, true );
+    //cerr << "deltaModel " << max(itsMatDeltaModel) << endl;
     itsMatModel += itsMatDeltaModel;
-
+    //cerr << "totModel " << max(itsMatModel) << endl;
     //--------------------------------- DECIDE WHICH PEAK RESIDUAL TO USE HERE.....
 
     //////  Find Peak Residual across the whole image
@@ -243,6 +249,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // Find Total Model flux
     modelflux = sum( itsMatModel ); // Performance hog ?
+    //cerr << "tot flux " << modelflux << endl;
     (itsImages->model())->put( itsMatModel );
   }	    
 

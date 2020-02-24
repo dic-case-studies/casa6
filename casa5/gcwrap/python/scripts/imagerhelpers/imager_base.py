@@ -284,12 +284,15 @@ class PySynthesisImager:
     def updateMask(self):
         # Setup mask for each field ( input mask, and automask )
         maskchanged = False
+        time0=time.time()
         for immod in range(0,self.NF):
             maskchanged = maskchanged | self.SDtools[immod].setupmask() 
         
         # Run interactive masking (and threshold/niter editors), if interactive=True
         maskchanged = maskchanged | self.runInteractiveGUI2()
 
+        time1=time.time();
+        casalog.post("Time to update mask "+str(time1-time0)+"s", "INFO3y")
         ## Return a flag to say that the mask has changed or not.
         return maskchanged
 
