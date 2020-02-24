@@ -470,11 +470,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
 
-  VisImagingWeight::VisImagingWeight(ImageInterface<Float>& im) : doFilter_p(false), robust_p(0.0), rmode_p(""), noise_p(Quantity(0.0, "Jy")) {
+  VisImagingWeight::VisImagingWeight(ImageInterface<Float>& im) :  robust_p(0.0), rmode_p(""), noise_p(Quantity(0.0, "Jy")) {
 
       LogIO os(LogOrigin("VisSetUtil", "VisImagingWeight()", WHERE));
 
-
+      doFilter_p=False;
 
       wgtType_p="uniform";
       nx_p=im.shape()(0);
@@ -533,9 +533,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
       activeFieldIndex_p=0;
       gwt_p[0]->get(a_gwt_p);
+      if(rec.isDefined("dofilter")){
+        rec.get("dofilter", doFilter_p);
+        rec.get("rbmaj", rbmaj_p);
+        rec.get("rbmin", rbmin_p);
+        rec.get("cospa", cospa_p);
+        rec.get("sinpa", sinpa_p);
+      }
 
       
- }
+  }
 
   
   VisImagingWeight::~VisImagingWeight(){
@@ -580,6 +587,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	rec.define("val"+String::toString(keycount), iter->second);
       }
       rec.define("multimapsize",keycount);
+      if(doFilter_p){
+        rec.define("dofilter", doFilter_p);
+        rec.define("rbmaj", rbmaj_p);
+        rec.define("rbmin", rbmin_p);
+        rec.define("cospa", cospa_p);
+        rec.define("sinpa", sinpa_p);
+      }
+
+      
       im.setMiscInfo(rec);
 
     }

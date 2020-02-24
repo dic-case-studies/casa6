@@ -181,7 +181,7 @@ void CubeMajorCycleAlgorithm::task(){
 	else{
           if(controlRecord_p.isDefined("weightdensity")){
             String densName=controlRecord_p.asString("weightdensity");
-            cerr << "Loading weightdensity " << densName << endl;
+            //cerr << "Loading weightdensity " << densName << endl;
             if(Table::isReadable(densName))
               subImgr.setWeightDensity(densName);
           }
