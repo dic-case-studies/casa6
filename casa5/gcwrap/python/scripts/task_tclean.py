@@ -392,8 +392,10 @@ def tclean(
             if niter>0 :
 
                 isit = imager.hasConverged()
+                t0=time.time();
                 imager.updateMask()
-
+                t1=time.time();
+                casalog.post("***Time to update mask: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
                 while ( not imager.hasConverged() ):
 
 #                    maskchanged = imager.updateMask()
@@ -409,9 +411,9 @@ def tclean(
                     imager.runMajorCycle()
                     t1=time.time();
                     casalog.post("***Time for major cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-
+                    t2=time.time()
                     imager.updateMask()
-
+                    casalog.post("***Time to update mask: "+"%.2f"%(t2-t1)+" sec", "INFO3", "task_tclean");
                 ## Get summary from iterbot
                 if type(interactive) != bool:
                     retrec=imager.getSummary();
