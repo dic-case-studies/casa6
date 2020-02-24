@@ -138,10 +138,11 @@ except ImportError:
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)
 
-import casatestutils as ctu
-from casatestutils.imagehelpers import TestHelpers
-imh = TestHelpers()
-
+from casatestutils.imagerhelpers import TestHelpers
+th = TestHelpers()
+from casatestutils import generate_weblog
+from casatestutils import add_to_dict
+from casatestutils import stats_dict
 
 # Path to data
 #data_path = '/lustre/rurvashi/StakeholderTests/VLASS/DATA_FOR_CAS12427/'
@@ -210,9 +211,9 @@ class test_base(unittest.TestCase):
 
     def image_metrics(self, img, loc):
         # Read intensity, alpha and PB at source location
-        intval = imh.get_pix(img+'.image.tt0', loc)
-        spxval = imh.get_pix(img+'.alpha', loc)
-        pbval = imh.get_pix(img+'.pb.tt0', loc)
+        intval = th.get_pix(img+'.image.tt0', loc)
+        spxval = th.get_pix(img+'.alpha', loc)
+        pbval = th.get_pix(img+'.pb.tt0', loc)
 
         # PB-correction
         if pbval>0.0:
@@ -292,7 +293,7 @@ class Test_vlass_1p1_row(test_base):
             self.parallel = True
 
     def tearDown(self):
-        ctu.generate_weblog("tclean_VLASS_pipeline",test_dict)
+        generate_weblog("tclean_VLASS_pipeline",test_dict)
         self._myia.done()
         # Delete the images created by each test case
         # Are they called tst* or im_test*
@@ -305,7 +306,7 @@ class Test_vlass_1p1_row(test_base):
         # Unlink the MS at the end of the class
         os.unlink(cls.msfile)
         
-    @ctu.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr0(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -366,9 +367,9 @@ class Test_vlass_1p1_row(test_base):
             truth_spx = -0.78
             truth_pb = 0.92
         
-        out, report1 = imh.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = imh.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
-        out, report3 = imh.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
+        out, report1 = th.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = th.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
+        out, report3 = th.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
         report = report1 + report2 + report3
         report = report + 'Test values for field '+ fields[valcheck] + ' with name ' + fieldnames[fields[valcheck]] + '\n'
 
@@ -380,12 +381,12 @@ class Test_vlass_1p1_row(test_base):
             self.make_rowplot(fields, intvals, spxvals, pbvals, testname+'_rowplot.png')
             test_dict[testname]['Figures'] = [testname+'_rowplot.png']
 
-        ctu.add_to_dict(self, output = test_dict, dataset = msname)
+        add_to_dict(self, output = test_dict, dataset = msname)
         
-        self.assertTrue(imh.check_final(pstr = report), msg = report)
+        self.assertTrue(th.check_final(pstr = report), msg = report)
 
 
-    @ctu.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr1_oneint(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -450,9 +451,9 @@ class Test_vlass_1p1_row(test_base):
             truth_spx = -0.6
             truth_pb = 0.93
         
-        out, report1 = imh.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = imh.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
-        out, report3 = imh.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
+        out, report1 = th.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = th.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
+        out, report3 = th.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
 
         report = report1 + report2 + report3
         report = report + 'Test values for field '+ fields[valcheck] + ' with name ' + fieldnames[fields[valcheck]] + '\n'
@@ -465,13 +466,13 @@ class Test_vlass_1p1_row(test_base):
             self.make_rowplot(fields, intvals, spxvals, pbvals, testname+'_rowplot.png')
             test_dict[testname]['Figures'] = [testname+'_rowplot.png']
 
-        ctu.add_to_dict(self, output = test_dict, dataset = msname)
+        add_to_dict(self, output = test_dict, dataset = msname)
         
-        self.assertTrue(imh.check_final(pstr = report), msg = report)
+        self.assertTrue(th.check_final(pstr = report), msg = report)
 
 
 
-    @ctu.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr1_twoint(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -538,9 +539,9 @@ class Test_vlass_1p1_row(test_base):
             truth_pb = 0.93
 
         
-        out, report1 = imh.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = imh.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
-        out, report3 = imh.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
+        out, report1 = th.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = th.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
+        out, report3 = th.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
         report = report1 + report2 + report3
 
         report = report + 'Test values for field '+ fields[valcheck] + ' with name ' + fieldnames[fields[valcheck]] + '\n'
@@ -553,12 +554,12 @@ class Test_vlass_1p1_row(test_base):
             self.make_rowplot(fields, intvals, spxvals, pbvals, testname+'_rowplot.png')
             test_dict[testname]['Figures'] = [testname+'_rowplot.png']
 
-        ctu.add_to_dict(self, output = test_dict, dataset = msname)
+        add_to_dict(self, output = test_dict, dataset = msname)
         
-        self.assertTrue(imh.check_final(pstr = report), msg = report)
+        self.assertTrue(th.check_final(pstr = report), msg = report)
 
 
-    @ctu.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_vlass_1p1_row_pcorr1and2_twoint(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -621,9 +622,9 @@ class Test_vlass_1p1_row(test_base):
             truth_pb = 0.84
 
         
-        out, report1 = imh.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = imh.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
-        out, report3 = imh.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
+        out, report1 = th.check_val(  intvals[valcheck], truth_int, valname = 'PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = th.check_val(  spxvals[valcheck], truth_spx, valname = 'Spectral Index', epsilon = self.epsilon)
+        out, report3 = th.check_val(  pbvals[valcheck], truth_pb, valname = 'PB gain', epsilon = truth_pb*self.epsilon)
 
         report = report1 + report2 + report3
         report = report + 'Test values for field '+ fields[valcheck] + ' with name ' + fieldnames[fields[valcheck]] + '\n'
@@ -636,11 +637,11 @@ class Test_vlass_1p1_row(test_base):
             self.make_rowplot(fields, intvals, spxvals, pbvals, testname+'_rowplot.png')
             test_dict[testname]['Figures'] = [testname+'_rowplot.png']
 
-        ctu.add_to_dict(self, output = test_dict, dataset = msname)
+        add_to_dict(self, output = test_dict, dataset = msname)
         
-        self.assertTrue(imh.check_final(pstr = report), msg = report)
+        self.assertTrue(th.check_final(pstr = report), msg = report)
 
-    @ctu.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_vlass_1p1_jointmosaic_pcorr1and2(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -693,10 +694,10 @@ class Test_vlass_1p1_row(test_base):
             truth_pb = 0.94
 
        
-        #report0 = imh.check_imexist( self.image_list( img, 'niter0') )
-        out, report1 = imh.check_val(  intval, truth_int, valname = 'allants : PBCor Intensity', epsilon = truth_int*self.epsilon)
-        out, report2 = imh.check_val(  spxval, truth_spx, valname = 'allants : Spectral Index', epsilon = self.epsilon)
-        out, report3 = imh.check_val(  pbval, truth_pb, valname = 'allants : PB gain', epsilon = truth_pb*self.epsilon)
+        #report0 = th.check_imexist( self.image_list( img, 'niter0') )
+        out, report1 = th.check_val(  intval, truth_int, valname = 'allants : PBCor Intensity', epsilon = truth_int*self.epsilon)
+        out, report2 = th.check_val(  spxval, truth_spx, valname = 'allants : Spectral Index', epsilon = self.epsilon)
+        out, report3 = th.check_val(  pbval, truth_pb, valname = 'allants : PB gain', epsilon = truth_pb*self.epsilon)
 
 
         report = report1 + report2 +report3
@@ -709,9 +710,9 @@ class Test_vlass_1p1_row(test_base):
         self.make_png(img+'.pb.tt0', out = img+'.pb.tt0.png')
         test_dict[testname]['Figures'] = [img+'.pb.tt0.png']
 
-        ctu.add_to_dict(self, output = test_dict, dataset = self.dataset1)
+        add_to_dict(self, output = test_dict, dataset = self.dataset1)
 
-        self.assertTrue(imh.check_final(pstr = report), msg = report)
+        self.assertTrue(th.check_final(pstr = report), msg = report)
 
 def suite():
      return [Test_vlass_1p1_row] #[Test_tclean_ALMA]
