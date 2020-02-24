@@ -809,7 +809,7 @@ void ChannelAverageTVI::propagateChanAvgFlags (const Cube<Bool> &transformedFlag
     {
         cubePropagateFlags(transformedFlagCube, propagatedFlagCube, inputOutputChan,
                            [&transformedFlagCube, &propagatedFlagCube]
-                           (size_t row_i, size_t chan_i, size_t corr_i, uInt outChan){
+                           (size_t row_i, size_t chan_i, size_t corr_i, uInt outChan) {
                                if (transformedFlagCube(corr_i, outChan, row_i))
                                    propagatedFlagCube(corr_i, chan_i, row_i) = true;
                            });
@@ -817,8 +817,8 @@ void ChannelAverageTVI::propagateChanAvgFlags (const Cube<Bool> &transformedFlag
     else
     {
         cubePropagateFlags(transformedFlagCube, propagatedFlagCube, inputOutputChan,
-                            [&transformedFlagCube, &propagatedFlagCube]
-                           (size_t row_i, size_t chan_i, size_t corr_i, uInt outChan){
+                           [&transformedFlagCube, &propagatedFlagCube]
+                           (size_t row_i, size_t chan_i, size_t corr_i, uInt outChan) {
                                propagatedFlagCube(corr_i, chan_i, row_i) =
                                    transformedFlagCube(corr_i, outChan, row_i);
                            });
