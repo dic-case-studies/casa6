@@ -81,7 +81,7 @@ Linux:
 Macos
 ```
 cd casa6/casatools
-scripts/gcw-pick && autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && autoconf && ./configure && ./setup.py build
+scripts/gcw-pick && autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && ./setup.py build
 ```
 
 The `gcw-pick` script adjusts the standard CASA source tree for building with `setup.py`, and once CASAtools is integrated with CASA this step will not be necessary. `gcw-pick` may run for quite a while...
