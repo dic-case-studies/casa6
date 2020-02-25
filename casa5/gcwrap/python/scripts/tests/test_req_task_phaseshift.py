@@ -198,7 +198,7 @@ class phaseshift_test(unittest.TestCase):
         
         
     def test_shiftAndCompare(self):
-        ''' Check that changing the phascenter with phaseshift and reverting with tclean results in the correct flux values at selected pixel locations '''
+        ''' Check that changing the phasecenter with phaseshift and reverting with tclean results in the correct flux values at selected pixel locations '''
         ### Run fixvis to shift the MS phasecenter to a new location.
 
         post_vis = ''
