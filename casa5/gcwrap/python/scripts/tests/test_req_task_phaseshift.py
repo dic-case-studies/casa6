@@ -171,7 +171,7 @@ class phaseshift_test(unittest.TestCase):
         self.assertTrue(data_selected == 6270)
         
     def test_keepsMMS(self):
-        ''' Test the the keepmms paramter creates the output as an MMS if the input is one as well '''
+        ''' Test the keepmms paramter creates the output as an MMS if the input is one as well '''
         phaseshift(datacopy_mms, outputvis=output, phasecenter='J2000 05h30m48 13d31m48', keepmms=False)
         ms.open(output)
         is_mms = ms.ismultims()
@@ -180,7 +180,7 @@ class phaseshift_test(unittest.TestCase):
         self.assertFalse(is_mms)
         
     def test_datacolumn(self):
-        ''' Check that that this parameter selects which datacolumns to write to the output MS '''
+        ''' Check that this parameter selects which datacolumns to write to the output MS '''
         model_fail = phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', datacolumn='MODEL')
         data_pass = phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', datacolumn='DATA')
         
@@ -188,7 +188,7 @@ class phaseshift_test(unittest.TestCase):
         self.assertTrue(data_pass)
         
     def test_phasecenter(self):
-        ''' Check that this parmeter sets the sky coordinates of the new phasecenter '''
+        ''' Check that this parameter sets the sky coordinates of the new phasecenter '''
         phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -08d23m35')
         tb.open(output)
         data_mean = numpy.mean(tb.getcol('DATA'))
@@ -197,8 +197,8 @@ class phaseshift_test(unittest.TestCase):
         self.assertTrue(numpy.isclose(data_mean, -0.00968202886279957-0.004072808512879953j))
         
         
-    def test_useCases(self):
-        ''' Use case from script in the plone documentation '''
+    def test_shiftAndCompare(self):
+        ''' Check that changing the phascenter with phaseshift and reverting with tclean results in the correct flux values at selected pixel locations '''
         ### Run fixvis to shift the MS phasecenter to a new location.
 
         post_vis = ''
