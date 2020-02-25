@@ -180,11 +180,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     Bool exists=true;
     Bool sumwtexists=true;
+    Bool modelexists=true;
     for(uInt tix=0;tix<2*itsNTerms-1;tix++) 
       {
 	if( tix<itsNTerms ) {
 	    exists &= ( doesImageExist( itsImageName+String(".residual.tt")+String::toString(tix) ) ||
-			doesImageExist( itsImageName+String(".psf.tt")+String::toString(tix) ) );
+			doesImageExist( itsImageName+String(".psf.tt")+String::toString(tix) )  );
+	    modelexists &= ( doesImageExist( itsImageName+String(".model.tt")+String::toString(tix) ) ||
+			doesImageExist( itsImageName+String(".model.tt")+String::toString(tix) )  );
+	    sumwtexists &= ( doesImageExist( itsImageName+String(".sumwt.tt")+String::toString(tix) ) );
 	  }else {
 	    exists &= ( doesImageExist( itsImageName+String(".psf.tt")+String::toString(tix) ) );
 	    sumwtexists &= ( doesImageExist( itsImageName+String(".sumwt.tt")+String::toString(tix) ) );
@@ -193,22 +197,37 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // The PSF or Residual images must exist. ( or the gridwt image)
     //  All this is just for the shape and coordinate system.
-    if( exists || doesImageExist(itsImageName+String(".gridwt")) )
+    if( exists || modelexists || doesImageExist(itsImageName+String(".gridwt")) )
       {
 	std::shared_ptr<ImageInterface<Float> > imptr;
 	if( doesImageExist(itsImageName+String(".psf.tt0")) )
-	  imptr.reset( new PagedImage<Float> (itsImageName+String(".psf.tt0")) );
+	  {
+	    //cout << "Opening PSF image to read csys" << endl;
+	    imptr.reset( new PagedImage<Float> (itsImageName+String(".psf.tt0")) );
+	  }
 	else if( doesImageExist(itsImageName+String(".residual.tt0")) )
+	  {
+	    //cout << "Opening Residual image to read csys" << endl;
 	  imptr.reset( new PagedImage<Float> (itsImageName+String(".residual.tt0")) );
+	  }
+	else if( doesImageExist(itsImageName+String(".model.tt0")) )
+	  {
+	    //cout << "Opening Model image to read csys" << endl;
+	    imptr.reset( new PagedImage<Float> (itsImageName+String(".model.tt0")) );
+	  }
 	else
+	  {
+	    // How can this be right ?
+	    //cout << "Opening Sumwt image to read csys" << endl;
 	  imptr.reset( new PagedImage<Float> (itsImageName+String(".gridwt")) );
+	  }
 	  
 	itsImageShape = imptr->shape();
 	itsCoordSys = imptr->coordinates();
       }
     else
       {
-	throw( AipsError( "Multi-term PSF or Residual Images do not exist. Please create one of them." ) );
+	throw( AipsError( "Multi-term PSF,  Residual or Model Images do not exist. Please create one of them." ) );
       }
 
     if( doesImageExist(itsImageName+String(".residual.tt0")) || 
