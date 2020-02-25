@@ -106,6 +106,9 @@ class phaseshift_test(unittest.TestCase):
         shutil.rmtree(datacopy_nep)
         shutil.rmtree(datacopy_mms)
         
+        if os.path.exists('post_phaseshift.ms'):
+            shutil.rmtree('post_phaseshift.ms')
+        
         if os.path.exists(output):
             shutil.rmtree(output)
             
