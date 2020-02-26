@@ -255,6 +255,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_polfromgain.py',
                     'src/tasks/task_predictcomp.py',
                     'src/tasks/task_rerefant.py',
+                    'src/scripts/restfreqtool.py',
                     'src/tasks/task_rmfit.py',
                     'src/tasks/task_rmtables.py',
                     'src/scripts/sdutil.py',
@@ -612,10 +613,26 @@ def generate_pyinit(moduledir,tasks):
         fd.write("\n")
         fd.write("def xml_interface_defs( ): return { %s }\n" % ", ".join(task_files_dict))
         fd.write("\n")
-        fd.write("try:\n")
-        fd.write('    casalog.post("CASA Version %s")\n' % casatasks_version)
-        fd.write("except:\n")
-        fd.write('    print("Error: the logfile is not writable")\n')
+        # Check if MPIEnvironment can be imported at all
+        fd.write('mpi_env_found=False\n')
+        fd.write('try:\n')
+        fd.write('    from casampi.MPIEnvironment import MPIEnvironment\n')
+        fd.write('    mpi_env_found=True\n')
+        fd.write('except:\n')
+        fd.write('    mpi_env_found=False\n')
+        # Only the mpi "client" should write the version information (otherwise the logsink will crash)
+        fd.write('if mpi_env_found and MPIEnvironment.is_mpi_enabled:\n')
+        fd.write('    if MPIEnvironment.is_mpi_client:\n')
+        fd.write('        try:\n')
+        fd.write('            casalog.post("CASA Version %s")\n' % casatasks_version)
+        fd.write('            casalog.post("MPI Enabled")\n')
+        fd.write('        except:\n')
+        fd.write('            print("Error: the logfile is not writable")\n')
+        fd.write('else:\n')
+        fd.write('    try:\n')
+        fd.write('        casalog.post("CASA Version %s")\n' % casatasks_version)
+        fd.write('    except:\n')
+        fd.write('        print("Error: the logfile is not writable")\n')  
         fd.write("\n")
         mpi_import_str = '\n'.join((
             "# When in MPI mode, this will put servers into their serve() loop.",
