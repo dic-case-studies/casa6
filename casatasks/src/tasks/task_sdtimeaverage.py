@@ -137,7 +137,7 @@ def calc_timebin(msName):
     time_first = min(tm)
     time_last =  max(tm)
 
-    timebin = time_last - time_first ;
+    timebin = time_last - time_first
     timebin += 4.0 * interval   + 1.5  # ??? expand range. 
 
     return str(timebin)
