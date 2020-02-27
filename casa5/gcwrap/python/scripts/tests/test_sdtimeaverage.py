@@ -89,7 +89,7 @@ class test_sdtimeaverage(unittest.TestCase):
         # default Args (based on R424)
         self.args = {'infile'     :  defInputMs,
                      'outfile'    :  defOutputMs,
-                     'datacolumn' :  'float_data',   # CASR-474 (float ->data) 
+                     'datacolumn' :  'float_data',   # revised CASR-474  
                      'timespan'   :  'scan'
                     }
 
@@ -140,7 +140,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
         os.system('rm -rf ' + self.inpMs )
         os.system('rm -rf ' + defOutputMs )   ## Comment out , for DEBUG ##
-        return
 
 #
 # Class Method
@@ -160,9 +159,9 @@ class test_sdtimeaverage(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         print( "tearDownClass::deleting work-MS.")
-#
-# Comment Out if you reserve MS.
-#
+        #
+        # Comment Out if you reserve MS.
+        #
         os.system('rm -rf ' + defWorkMsBasic  ) # delete ALL.
         os.system('rm -rf ' + defWorkMsTimeSpan ) # 
         os.system('rm -rf ' + defWorkMs3NRO ) #
@@ -196,14 +195,12 @@ class test_sdtimeaverage(unittest.TestCase):
 
         check = numpy.all(numpy.abs(data) < errLimit)
         self.assertTrue(check, msg='## Zero check Failed ##\n{}'.format(data)   )
-        return True;
 
     def checkNonZero(self,data):
         print("-- checking Not Zero --")
 
         check = numpy.all(numpy.abs(data) >= errLimit)
         self.assertTrue(check, msg='## Non Zero check Failed (ref={})  ##\n{}'.format(errLimit,data)   )
-        return True;
 
     def checkZeroSum(self, data1,data2):
         print("-- checking ZeroSum of data1 and data2." )
@@ -211,7 +208,6 @@ class test_sdtimeaverage(unittest.TestCase):
         zSumData = numpy.abs(numpy.array(data1) + numpy.array(data2))
         check = numpy.all(zSumData < errLimit)
         self.assertTrue(check, msg='## Zero Sum check Failed (ref={})\n{}'.format(errLimit,zSumData)   )
-        return True
 
 ######################
 # check time
@@ -367,7 +363,6 @@ class test_sdtimeaverage(unittest.TestCase):
             print( "------ Putting Curve."  )
             tb.putcol(dataColumnName,   arrayData3  )
         print( "------ Done."  )  
-        return True          
 
     # TELESCOP NAME (7-Feb-2020)
 
@@ -377,7 +372,6 @@ class test_sdtimeaverage(unittest.TestCase):
         with tbmanager(msObservation, nomodify=False) as tb:
                 tb.putcell('TELESCOPE_NAME',0, telName )
                 # tb.resync()
-        return
 
 ##################################
 # sub function for TEST FIXTURE
@@ -477,7 +471,6 @@ class test_sdtimeaverage(unittest.TestCase):
             fData_1 = self.get_spectra(outMsName, n )
             fData_2 = self.get_spectra(outMsName, (numOfScan-1)-n )
             self.checkZeroSum( fData_1, fData_2 )
-        return
 
 ##############
 # MISC
@@ -487,7 +480,7 @@ class test_sdtimeaverage(unittest.TestCase):
         
         strTimeBin = '{}s'.format(numRec * testInterval)
         outFile    = defPrivateMsForm.format(testNo, numRec)
-        return outFile, strTimeBin;
+        return outFile, strTimeBin
 
 ############################
 # TEST FIXTURE
