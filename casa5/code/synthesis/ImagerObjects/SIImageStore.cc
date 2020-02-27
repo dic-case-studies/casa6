@@ -225,18 +225,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	if( doesImageExist(itsImageName+String(".psf")) )
 	  {
 	    buildImage( imptr, (itsImageName+String(".psf")) );
-            itsObjectName=imptr->imageInfo().objectName();
-	    itsMiscInfo=imptr->miscInfo();
+	    //            itsObjectName=imptr->imageInfo().objectName();
+	    //	    itsMiscInfo=imptr->miscInfo();
 	  }
 	else if ( doesImageExist(itsImageName+String(".residual")) ){
 	  buildImage( imptr, (itsImageName+String(".residual")) );
-          itsObjectName=imptr->imageInfo().objectName();
-	  itsMiscInfo=imptr->miscInfo();
+	  //          itsObjectName=imptr->imageInfo().objectName();
+	  //	  itsMiscInfo=imptr->miscInfo();
 	}
 	else if ( doesImageExist(itsImageName+String(".model")) ){
 	  buildImage( imptr, (itsImageName+String(".model")) );
-          itsObjectName=imptr->imageInfo().objectName();
-	  itsMiscInfo=imptr->miscInfo();
+	  //          itsObjectName=imptr->imageInfo().objectName();
+	  //	  itsMiscInfo=imptr->miscInfo();
 	}
 	else
 	  {
@@ -244,8 +244,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    buildImage( imptr, (itsImageName+String(".gridwt")) );
 	  }
 
+	itsObjectName=imptr->imageInfo().objectName();
 	itsImageShape=imptr->shape();
 	itsCoordSys = imptr->coordinates();
+	itsMiscInfo=imptr->miscInfo();
 	
       }
     else
@@ -1045,7 +1047,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStore::residual(uInt /*nterm*/)
   {
     accessImage( itsResidual, itsParentResidual, imageExts(RESIDUAL) );
-    //    cout << "read residual : " << itsResidual << endl;
+    //    Record mi = itsResidual->miscInfo(); ostringstream oss;mi.print(oss);cout<<"MiscInfo(res) : " << oss.str() << endl;
     return itsResidual;
   }
   std::shared_ptr<ImageInterface<Float> > SIImageStore::weight(uInt /*nterm*/)

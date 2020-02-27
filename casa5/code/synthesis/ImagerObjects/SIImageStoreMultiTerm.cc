@@ -202,28 +202,36 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	std::shared_ptr<ImageInterface<Float> > imptr;
 	if( doesImageExist(itsImageName+String(".psf.tt0")) )
 	  {
+	    buildImage( imptr, (itsImageName+String(".psf.tt0")) );
+
 	    //cout << "Opening PSF image to read csys" << endl;
-	    imptr.reset( new PagedImage<Float> (itsImageName+String(".psf.tt0")) );
+	    //	    imptr.reset( new PagedImage<Float> (itsImageName+String(".psf.tt0")) );
 	  }
 	else if( doesImageExist(itsImageName+String(".residual.tt0")) )
 	  {
+	    buildImage( imptr, (itsImageName+String(".residual.tt0")) );
 	    //cout << "Opening Residual image to read csys" << endl;
-	  imptr.reset( new PagedImage<Float> (itsImageName+String(".residual.tt0")) );
+	    //	  imptr.reset( new PagedImage<Float> (itsImageName+String(".residual.tt0")) );
 	  }
 	else if( doesImageExist(itsImageName+String(".model.tt0")) )
 	  {
+	    buildImage( imptr, (itsImageName+String(".model.tt0")) );
 	    //cout << "Opening Model image to read csys" << endl;
-	    imptr.reset( new PagedImage<Float> (itsImageName+String(".model.tt0")) );
+	    //	    imptr.reset( new PagedImage<Float> (itsImageName+String(".model.tt0")) );
 	  }
 	else
 	  {
 	    // How can this be right ?
 	    //cout << "Opening Sumwt image to read csys" << endl;
-	  imptr.reset( new PagedImage<Float> (itsImageName+String(".gridwt")) );
+	    buildImage( imptr, (itsImageName+String(".gridwt")) );
+	    //	  imptr.reset( new PagedImage<Float> (itsImageName+String(".gridwt")) );
 	  }
 	  
+	itsObjectName=imptr->imageInfo().objectName();
 	itsImageShape = imptr->shape();
 	itsCoordSys = imptr->coordinates();
+	itsMiscInfo=imptr->miscInfo();
+
       }
     else
       {
@@ -236,7 +244,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( sumwtexists )
       {
 	std::shared_ptr<ImageInterface<Float> > imptr;
-	imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt.tt0")) );
+	//	imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt.tt0")) );
+	buildImage( imptr, (itsImageName+String(".sumwt.tt0")) );
 	itsNFacets = imptr->shape()[0];
 	itsFacetId = 0;
 	itsUseWeight = getUseWeightImage( *imptr );
@@ -615,6 +624,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStoreMultiTerm::residual(uInt term)
   {
     accessImage( itsResiduals[term], itsParentResiduals[term], imageExts(RESIDUAL)+".tt"+String::toString(term) );
+    //    Record mi = itsResiduals[term]->miscInfo(); ostringstream oss;mi.print(oss);cout<<"MiscInfo(res) " << term << " : " << oss.str() << endl;
+
     return itsResiduals[term];
   }
   std::shared_ptr<ImageInterface<Float> > SIImageStoreMultiTerm::weight(uInt term)
