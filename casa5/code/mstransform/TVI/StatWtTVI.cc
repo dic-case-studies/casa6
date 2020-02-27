@@ -873,7 +873,6 @@ void StatWtTVI::initWeightSpectrum (const Cube<Float>& wtspec) {
 }
 
 void StatWtTVI::initSigmaSpectrum (const Cube<Float>& sigspec) {
-    // cout << __func__ << endl;
     // Pass to next layer down
     getVii()->initSigmaSpectrum(sigspec);
 }

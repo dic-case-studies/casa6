@@ -218,7 +218,7 @@ void StatWtFloatingWindowDataAggregator::weightSingleChanBin(
     // this is the row index in the chunk
     auto chunkRowIndex = start->second;
     auto ncorr = wtmat.nrow();
-    for (Int i=0; i<nrows; ++i) {
+    for (Int i=0; i<nrows; ++i, ++chunkRowIndex) {
         if (_combineCorr) {
             wtmat.column(i) = _weights(0, 0, chunkRowIndex);
         }
@@ -245,7 +245,9 @@ void StatWtFloatingWindowDataAggregator::_computeWeights(
     const auto nRows = rowMap.size();
 #ifdef _OPENMP
 #pragma omp parallel for
+    // cout << "DEBUG PARALLEL LOOPING IS OFF" << endl;
 #endif
+
     for (size_t iRow=0; iRow<nRows; ++iRow) {
         IPosition chunkSliceStart(3, 0);
         auto chunkSliceLength = chunkShape;
@@ -461,7 +463,6 @@ void StatWtFloatingWindowDataAggregator::_limits(
             }
             for (uInt i=0; i<nTimes; ++i) {
                 auto mytime = times[i];
-                // cout << "mytime " << mytime << endl;
                 auto loit = std::lower_bound(
                     times.begin(), times.end(), mytime - halfBinWidth
                 );
@@ -475,7 +476,6 @@ void StatWtFloatingWindowDataAggregator::_limits(
                 );
                 p.second = upit == times.end()
                     ? nTimes - 1 : std::distance(times.begin(), upit) - 1;
-               // cout << "i " << i << " p " << p << endl;
                 q = p;
                 idToChunksNeededByIDMap.push_back(p);
                 chunkNeededToIDsThatNeedChunkIDMap.push_back(q);
