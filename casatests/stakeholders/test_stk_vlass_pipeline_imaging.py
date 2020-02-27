@@ -344,7 +344,7 @@ class Test_vlass_1p1_row(test_base):
                        field=fieldnames[field] ,uvrange='<12.0km',\
                        cell='0.3arcsec', imsize=10000, phasecenter="J2000 14:48:31.561 -16.18.56.120", \
                        specmode='mfs',nterms=2, reffreq='3.0GHz',\
-                       deconvolver='mtmfs',weighting='briggs',robust=1.0,\
+                       deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                        gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                        pblimit=0.02,psterm=False, conjbeams=True,\
                        wprojplanes=64,niter=niter,datacolumn='data',\
@@ -428,7 +428,7 @@ class Test_vlass_1p1_row(test_base):
                        field=fieldnames[field] ,uvrange='<12.0km',\
                        cell='0.3arcsec', imsize=10000, phasecenter="J2000 14:48:31.561 -16.18.56.120", \
                        specmode='mfs',nterms=2, reffreq='3.0GHz',\
-                       deconvolver='mtmfs',weighting='briggs',robust=1.0,\
+                       deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                        gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                        pblimit=0.02,psterm=False, conjbeams=True,\
                        wprojplanes=64,niter=niter,datacolumn='data',\
@@ -473,6 +473,7 @@ class Test_vlass_1p1_row(test_base):
 
 
     @stats_dict(test_dict)
+    @unittest.skipIf(True, "Skip the test until partitioning-related differences are removed")
     def test_vlass_1p1_row_pcorr1_twoint(self):
         '''
         ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -515,7 +516,7 @@ class Test_vlass_1p1_row(test_base):
                        field=fieldnames[field] ,uvrange='<12.0km',\
                        cell='0.3arcsec', imsize=10000, phasecenter="J2000 14:48:31.561 -16.18.56.120", \
                        specmode='mfs',nterms=2, reffreq='3.0GHz',\
-                       deconvolver='mtmfs',weighting='briggs',robust=1.0,\
+                       deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                        gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                        pblimit=0.02,psterm=False, conjbeams=True,\
                        wprojplanes=64,niter=niter,datacolumn='data',\
@@ -598,7 +599,7 @@ class Test_vlass_1p1_row(test_base):
                        field=fieldnames[field] ,uvrange='<12.0km',\
                        cell='0.3arcsec', imsize=10000, phasecenter="J2000 14:48:31.561 -16.18.56.120", \
                        specmode='mfs',nterms=2, reffreq='3.0GHz',\
-                       deconvolver='mtmfs',weighting='briggs',robust=1.0,\
+                       deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                        gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                        pblimit=0.02,psterm=False, conjbeams=True,\
                        wprojplanes=64,niter=niter,datacolumn='data',\
@@ -673,7 +674,7 @@ class Test_vlass_1p1_row(test_base):
                    field='1~4' ,uvrange='<12.0km',\
                    cell='0.3arcsec', imsize=10000, phasecenter="J2000 14:48:31.561 -16.18.56.120", \
                    specmode='mfs',nterms=2, reffreq='3.0GHz',\
-                   deconvolver='mtmfs',weighting='briggs',robust=1.0,\
+                   deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                    gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                    pblimit=0.02,psterm=False, conjbeams=True,\
                    wprojplanes=64,niter=niter,datacolumn='data',\
