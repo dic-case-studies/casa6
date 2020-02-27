@@ -3416,12 +3416,41 @@ class test_hetarray_imaging(testref_base):
                                           ('try_mt_pcorr2_4corners.alpha' ,0.0,[1024,1024,0,0]) ] )
 
 
+          ######################
+          ## Apply only time-dependent corrections :  Pick only one group of antennas, and both timesteps
+          ##  The PB should be separate per timestep, but should appear at the average location of all antennas => [-100,100] and [+100,100] locations, 
+          
+          im_pcorr2 = 'try_mt_pcorr1_onlytime'  # Apply only time-dependence corrections
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &',parallel=self.parallel)
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &' ,parallel=self.parallel)
+         
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, cycleniter=15, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &' , calcres=False, calcpsf=False,parallel=self.parallel)
+
+          ## This is a hard-ish case where it's a joint mosaic and the PSF is made very far from the PB peak. It's the problem in CAS-12436. So, put a high tolerance.
+          ## Serial and parallel runs are also different for alpha due to slightly different MS subsets seen by each process.  
+          report3=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr1_onlytime.image.tt0' ,0.28,[1024,1024,0,0]), 
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr1_onlytime.pb.tt0' ,0.28,[1024,1024,0,0]) ])
+
+                                          ## Do not check alpha
+                                          ## ('try_mt_pcorr1_onlytime.alpha' ,0.13,[1024,1024,0,0]) ] ) ## Too much variation between serial and parallel. Eval after 6.1. 
+           
           ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
           if self.parallel==False:
                os.environ['ATerm_OVERSAMPLING'] = '20'
                os.environ['ATerm_CONVSIZE'] = '2048'
 
-          self.checkfinal(report1+report2)
+          self.checkfinal(report1+report2+report3)
 
      ###########################
 
