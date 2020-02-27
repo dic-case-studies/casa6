@@ -38,6 +38,7 @@ sdtimeaverage begins
 # local import
 import re       # Regular Expr.
 import time	# Measure used time.
+import datetime
 
 # MS name for basic test
 defInputMs  = "sdimaging.ms"     # template MS
@@ -54,7 +55,7 @@ defPrivateMs       = "sdave-*.ms"       # private  output MS form of each test
 defPrivateMsForm   = 'sdave-{}-{}.ms'   # debug file format of each test
 
 # Test Condition
-numTune    = 0                  # must be in {12,24,36,48}  and 0(=no operation)
+numTune    = 0                  # must be in {12,24,36...}  and 0(=no operation)
 nInScan    = 63
 nReduce    = nInScan*numTune    # nReduce MUST BE even number 
 nRow       = 3843 - nReduce     # Final Size  
@@ -85,10 +86,11 @@ class test_sdtimeaverage(unittest.TestCase):
         # params
         self.interval = testInterval
 
-        # default Args (minimum)
+        # default Args (based on R424)
         self.args = {'infile'     :  defInputMs,
                      'outfile'    :  defOutputMs,
-                     'datacolumn' :  'float_data'   # CASR-474 (float ->data) 
+                     'datacolumn' :  'float_data',   # CASR-474 (float ->data) 
+                     'timespan'   :  'scan'
                     }
 
         #+
@@ -117,6 +119,7 @@ class test_sdtimeaverage(unittest.TestCase):
         #+
         # create TEST-MS only for the first time.  
         #  ( using 'data' column, instead of 'float_data' )
+        #  ( this MSs are check for ALMA special, in mstransform ) 
         #-
         filePath=os.path.join( "./", defWorkMs3NRO)
         if  not os.path.exists(filePath):
@@ -313,8 +316,8 @@ class test_sdtimeaverage(unittest.TestCase):
         # Column Name
         dataColumnName = 'FLOAT_DATA'
         # Test Slope
-        offset = 0.0        # if specified non-zero, an Intensive Fail will be activated.
-        slope  = 0.0001     # (tunable) 
+        offset = 0.0       # if specified non-zero, an Intensive Fail will be activated.
+        slope  = 0.5     # (tunable, but error threshold subject to be changed.) 
         # (comment)
         baseTime   = 0.0
         # Table Access (with numPy array operation)
@@ -496,8 +499,11 @@ class test_sdtimeaverage(unittest.TestCase):
 
         # set timebin string and private outputMS name.
         privateOutfile, dmy  = self.setOutfile_Timebin( 0, 3844 )
+        # Time string (justify to interval and row counts)
+        td = datetime.timedelta(seconds= testInterval * nRow )
+        timerangeString = '00:00:00~' + str(td) #'01:04:03' =3848 # 
         # Run Task
-        prm =  {'timerange' : '00:00:00~01:04:03',
+        prm =  {'timerange' : timerangeString,    
                 'timebin'   : '',
                 'infile'    : defWorkMsBasic,
                 'outfile'   : privateOutfile    } # Specify Full-Range #
@@ -512,8 +518,11 @@ class test_sdtimeaverage(unittest.TestCase):
 
         # set timebin string and private outputMS name.
         privateOutfile, dmy  = self.setOutfile_Timebin( 1, nRow )
+        # Time string (justify to interval and row counts)
+        td = datetime.timedelta(seconds=  nRow *testInterval/10 )   # relatively very short
+        timerangeString = '00:00:00~' + str(td) 
         # Run Task
-        prm =  {'timerange' : '00:00:00~00:4:00',	## Very Short.
+        prm =  {'timerange' : timerangeString,    #orig set up = '00:00:00~00:4:00', 
                 'timebin'   : '',
                 'infile'    : defWorkMsBasic,
                 'outfile'   : privateOutfile    } # Specify Full-Range #
@@ -665,7 +674,7 @@ class test_sdtimeaverage(unittest.TestCase):
     def test_param100(self):
         '''sdtimeaverage::100:: timebin=1282(N=3)  '''
         # set timebin string and private outputMS name.
-        privateOutfile, timebin_str  = self.setOutfile_Timebin( 100, nRow/3+ 0.5  )
+        privateOutfile, timebin_str  = self.setOutfile_Timebin( 100, nRow/3+ 0.5  )  # if reduced cond. 0.0 is needed #
  
         prm =  {'timebin' : timebin_str,          
                 'infile'  : defWorkMsBasic,
@@ -899,6 +908,7 @@ class test_sdtimeaverage(unittest.TestCase):
 """
 5-Feb-2020   built a function to reduce the TEST-MS size to shorten execution of mstransform.
 14-Feb-2020  editing 'data' column switch Test.
+20-Feb-2020  Pushed. Merged master. Re-Buid.
 """
 #### Control ######
 
