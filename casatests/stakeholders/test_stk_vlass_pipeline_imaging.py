@@ -151,9 +151,11 @@ data_path = ctsys_resolve('stakeholders/vlass/')
 ##############################################################
 ############# Test settings #######################
 ## CFCAche settings. Default oversampling=20. Set to 2 to make the CFCache smaller, at the cost of accuracy
-os.environ['ATerm_CONVSIZE'] = '512'
-os.environ['ATerm_OVERSAMPLING'] = '2'
-cfcache_path  = data_path+'CFCACHE_OS2'
+#os.environ['ATerm_CONVSIZE'] = '512'
+#os.environ['ATerm_OVERSAMPLING'] = '2'
+
+#cfcache_path  = data_path+'CFCACHE_OS2' # Made with above os.environ settings and wprojplanes=64
+cfcache_path  = data_path+'CFCACHE'  # Made with DEFAULT os.environ settings and wprojplanes=16
 
 ## Number of iterations. This will test major and minor cycles and get better numerical results. (About 3 major cycles each)
 #niter=100
@@ -347,7 +349,7 @@ class Test_vlass_1p1_row(test_base):
                        deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                        gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                        pblimit=0.02,psterm=False, conjbeams=True,\
-                       wprojplanes=64,niter=niter,datacolumn='data',\
+                       wprojplanes=16,niter=niter,datacolumn='data',\
                        mosweight=False, usepointing=False, 
                        pointingoffsetsigdev=[300.0,300.0],\
                        parallel=self.parallel)
@@ -431,7 +433,7 @@ class Test_vlass_1p1_row(test_base):
                        deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                        gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                        pblimit=0.02,psterm=False, conjbeams=True,\
-                       wprojplanes=64,niter=niter,datacolumn='data',\
+                       wprojplanes=16,niter=niter,datacolumn='data',\
                        mosweight=False, usepointing=True, 
                        pointingoffsetsigdev=[30.0, 300.0],\
                        parallel=self.parallel)
@@ -519,7 +521,7 @@ class Test_vlass_1p1_row(test_base):
                        deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                        gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                        pblimit=0.02,psterm=False, conjbeams=True,\
-                       wprojplanes=64,niter=niter,datacolumn='data',\
+                       wprojplanes=16,niter=niter,datacolumn='data',\
                        mosweight=False, usepointing=True, 
                        pointingoffsetsigdev=[30.0, 300.0],\
                        parallel=self.parallel)
@@ -602,7 +604,7 @@ class Test_vlass_1p1_row(test_base):
                        deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                        gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                        pblimit=0.02,psterm=False, conjbeams=True,\
-                       wprojplanes=64,niter=niter,datacolumn='data',\
+                       wprojplanes=16,niter=niter,datacolumn='data',\
                        mosweight=False, usepointing=True, 
                        pointingoffsetsigdev=[30.0, 30.0],\
                        parallel=self.parallel)
@@ -677,7 +679,7 @@ class Test_vlass_1p1_row(test_base):
                    deconvolver='mtmfs',weighting='uniform',robust=1.0,\
                    gridder='awproject', cfcache=cfcache_path,wbawp=True,\
                    pblimit=0.02,psterm=False, conjbeams=True,\
-                   wprojplanes=64,niter=niter,datacolumn='data',\
+                   wprojplanes=16,niter=niter,datacolumn='data',\
                    mosweight=False, usepointing=True, 
                    pointingoffsetsigdev=[30.0, 30.0],\
                    parallel=self.parallel)
