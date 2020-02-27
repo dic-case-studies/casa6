@@ -25,8 +25,9 @@
 CASA6 = False
 try:
     import casatools
-    from casatasks import applycal, casalog
+    from casatasks import applycal, mstransform, gaincal, casalog
     CASA6 = True
+    from .callibrary import *
     tb = casatools.table()
     calibrater = casatools.calibrater
     
@@ -34,6 +35,7 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from callibrary import *
     
     calibrater = cbtool
 import sys
@@ -358,6 +360,122 @@ class applycal_test(unittest.TestCase):
         datamean = np.mean(getparam(datacopy, 'CORRECTED_DATA'))
         
         self.assertTrue(np.isclose(datamean, 0.31622877260041754+0.049053979716640904j))
+        
+    def test_callib_field(self):
+        '''
+            test_callib_field
+            -----------------
+            
+            Exercise fldmap-related maneuvers in cal library
+        '''
+
+        clfldmaptest='cl_fldmap_test.ms'
+
+        # slice out just spw=0
+        mstransform(vis=datacopy,outputvis=clfldmaptest,datacolumn='data',spw='0')
+
+        # Create cal tables to apply in different ways below
+        #  solutions from field=0 only
+        Gf0='cl_fldmap_test.Gf0'
+        gaincal(vis=clfldmaptest,caltable=Gf0,field='0',solint='inf',refant='0',smodel=[1,0,0,0])
+        #  solutions from fields 0 & 1
+        Gf01='cl_fldmap_test.Gf01'
+        gaincal(vis=clfldmaptest,caltable=Gf01,field='0,1',solint='inf',refant='0',smodel=[1,0,0,0])
+
+        # a cal library object to use variously below
+        clib=callibrary()
+
+        # traditional apply using field 0 -only table
+        clearcal(vis=clfldmaptest)
+        applycal(vis=clfldmaptest,field='0,1',gaintable=[Gf0],interp=['linear'],flagbackup=False)
+        cdref=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]
+        self.assertTrue(np.isclose(np.abs(np.mean(cdref)),1.00150795))
+
+        # cal library apply using field 0 -only table, no cal selection
+        clearcal(vis=clfldmaptest)
+        clib.clear()
+        f0='callib_f0.txt'
+        clib.add(caltable=Gf0,tinterp='linear')
+        clib.write(f0)
+        applycal(vis=clfldmaptest,field='0,1',docallib=True,callib=f0,flagbackup=False)
+        cd0=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
+        self.assertTrue(np.isclose(np.abs(np.mean(cd0-cdref)),0.0))
+
+        # cal library apply using field 0,1 table, *mapping* field 0 only from cal
+        clearcal(vis=clfldmaptest)
+        clib.clear()
+        f01m0='callib_f01_m0.txt'
+        clib.add(caltable=Gf01,tinterp='linear',fldmap=[0,0])
+        clib.write(f01m0)
+        applycal(vis=clfldmaptest,field='0,1',docallib=True,callib=f01m0,flagbackup=False)
+        cd01m0=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
+        self.assertTrue(np.isclose(np.abs(np.mean(cd01m0-cdref)),0.0))
+
+        # cal library apply using field 0,1 table, *selecting* field 0 only from cal
+        clearcal(vis=clfldmaptest)
+        clib.clear()
+        f01s0='callib_f01_s0.txt'
+        clib.add(caltable=Gf01,tinterp='linear',fldmap='0')
+        clib.write(f01s0)
+        applycal(vis=clfldmaptest,field='0,1',docallib=True,callib=f01s0,flagbackup=False)
+        cd01s0=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
+        self.assertTrue(np.isclose(np.abs(np.mean(cd01s0-cdref)),0.0))
+
+
+        # traditional apply using field 0,1 table
+        clearcal(vis=clfldmaptest)
+        applycal(vis=clfldmaptest,field='0,1',gaintable=[Gf01],interp=['linear'])
+        cdref=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
+        self.assertTrue(np.isclose(np.abs(np.mean(cdref)),1.00463621186))
+
+        # cal library apply using field 0,1 -only table, no cal selection
+        clearcal(vis=clfldmaptest)
+        clib.clear()
+        f01='callib_f01.txt'
+        clib.add(caltable=Gf01,tinterp='linear')
+        clib.write(f01)
+        applycal(vis=clfldmaptest,field='0,1',docallib=True,callib=f01,flagbackup=False)
+        cd01=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
+        self.assertTrue(np.isclose(np.abs(np.mean(cd01-cdref)),0.0))
+
+        # cal library apply using field 0,1 table, *selecting* field 0,1 explicitly
+        clearcal(vis=clfldmaptest)
+        clib.clear()
+        f01s01='callib_f01_s01.txt'
+        clib.add(caltable=Gf01,tinterp='linear',fldmap='0,1')
+        clib.write(f01s01)
+        applycal(vis=clfldmaptest,field='0,1',docallib=True,callib=f01s01,flagbackup=False)
+        cd01s01=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
+        self.assertTrue(np.isclose(np.abs(np.mean(cd01s01-cdref)),0.0))
+
+
+        # traditional apply using field 0,1 table, w/ gainfield='nearest'
+        clearcal(vis=clfldmaptest)
+        applycal(vis=clfldmaptest,field='0,1',gaintable=[Gf01],gainfield=['nearest'],interp=['linear'])
+        cdref=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
+        self.assertTrue(np.isclose(np.abs(np.mean(cdref)),1.00319536))
+
+        # cal library apply using field 0,1 table, *mapping* field 0,1 (self!) only from cal
+        clearcal(vis=clfldmaptest)
+        clib.clear()
+        f01m01='callib_f01_m01.txt'
+        clib.add(caltable=Gf01,tinterp='linear',fldmap=[0,1])
+        clib.write(f01m01)
+        applycal(vis=clfldmaptest,field='0,1',docallib=True,callib=f01m01,flagbackup=False)
+        cd01m01=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
+        self.assertTrue(np.isclose(np.abs(np.mean(cd01m01-cdref)),0.0))
+
+        # clean up files
+        shutil.rmtree(clfldmaptest)
+        shutil.rmtree(Gf0)
+        shutil.rmtree(Gf01)
+        os.system('rm -f '+f0)
+        os.system('rm -f '+f01m0)
+        os.system('rm -f '+f01s0)
+        os.system('rm -f '+f01)
+        os.system('rm -f '+f01s01)
+        os.system('rm -f '+f01m01)
+
         
     def test_gaintable(self):
         '''
