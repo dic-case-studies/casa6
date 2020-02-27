@@ -680,8 +680,8 @@ def build_grpc( prefix, srcdir, collectdir ):
                     xcode_parts = xcodeversion.split(".")
                     xcodeversionmajor = xcode_parts[0];
                     xcodeversionminor = xcode_parts[1]
-                    if int(xcodeversionmajor) >= 11:
-                        print("Xcode version is 11 or greater. Won't treat grpc build warnings as errors ")
+                    if int(xcodeversionmajor) >= 10:
+                        print("Xcode version is 10 or greater. Won't treat grpc build warnings as errors ")
                         s = s.replace('CPPFLAGS += -g -Wall -Wextra -Werror','CPPFLAGS += -g -Wall -Wextra')
 
                 with open(makefile, "w") as fd:
