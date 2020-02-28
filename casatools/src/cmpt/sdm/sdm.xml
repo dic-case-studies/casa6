@@ -322,11 +322,6 @@
           <value>false</value>
         </param>
 
-        <param type="bool" name="remove_ref_undef">
-          <description>if set to true then apply fixspwbackport on the resulting MS(es).</description>
-          <value>false</value>
-        </param>
-
         <param type="bool" name="convert_ephem2geo">
           <description>if true, convert any attached ephemerides to the GEO reference frame (time-spacing not changed)</description>
           <value>true</value>

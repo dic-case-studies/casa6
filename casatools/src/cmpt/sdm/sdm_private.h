@@ -74,7 +74,7 @@ bool gen_ms( const std::string &vis, bool createmms, const std::string &separati
              bool process_syspower, bool process_caldevice, bool process_pointing, bool process_flags,
              double tbuff, bool applyflags, bool savecmds, const ::casac::variant& outfile, bool flagbackup,
              bool verbose, bool overwrite, bool showversion, const std::string &useversion, bool bdfflags,
-             bool with_pointing_correction, bool remove_ref_undef, bool convert_ephem2geo, double polyephem_tabtimestep );
+             bool with_pointing_correction, bool convert_ephem2geo, double polyephem_tabtimestep );
 bool bd_flagger( const std::string &ms, const std::string &ocm, const std::string &scansOptionValue, bool lazy, bool processUncorrectedData );
 void loadBDFlags( std::map<string, unsigned int>& abbrev2bitpos );
 void processCorrelatorFlagsPerSlices( asdm::MainRow *mR_p, unsigned int iASDMIndex, const std::vector<int32_t> &mainRowIndex,
@@ -82,8 +82,6 @@ void processCorrelatorFlagsPerSlices( asdm::MainRow *mR_p, unsigned int iASDMInd
                                       const std::vector<std::pair<std::string, std::string> > &dataDescriptions, MSFlagEval &flagEval,
                                       unsigned &iMSRow, casacore::ArrayColumn<bool> &flag, casacore::ScalarColumn<bool> &flagRow,
                                       CorrelationModeMod::CorrelationMode ocorrelationMode );
-
-bool fixspwbackport( const std::string &msname );
 
 public:
 const bool verbose = true;

@@ -274,7 +274,7 @@ class test_onefield(testref_base):
           # uniform
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,weighting='uniform', interactive=0,parallel=self.parallel) 
           report=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'.psf', self.img+'.residual', self.img+'.image', self.img+'.model'], imval=[(self.img+'.psf',1.0,[50,50,0,0])])
-          self.checkfinal(pstr=report)
+#          self.checkfinal(pstr=report)
 
           # briggs r=-2
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,weighting='briggs', robust=-2, interactive=0,parallel=self.parallel)     
@@ -286,7 +286,7 @@ class test_onefield(testref_base):
 
           # briggs r=2
           ret4 = tclean(vis=self.msfile,imagename=self.img+'4',imsize=100,cell='8.0arcsec',niter=10,weighting='briggs', robust=2, interactive=0,parallel=self.parallel)     
-          report4=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image', self.img+'4.model'], imval=[(self.img+'4.psf',1.0,[50,50,0,0])])
+          report4=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image', self.img+'4.model'], imval=[(self.img+'4.psf',1.0,[50,50,0,0]),(self.img+'4.sumwt',3430533.5,[0,0,0,0])])
 
           # radial
           ret5 = tclean(vis=self.msfile,imagename=self.img+'5',imsize=100,cell='8.0arcsec',niter=10,weighting='radial', interactive=0,parallel=self.parallel)     
@@ -296,19 +296,23 @@ class test_onefield(testref_base):
           ret6 = tclean(vis=self.msfile,imagename=self.img+'6',imsize=100,cell='8.0arcsec',niter=10,weighting='superuniform', interactive=0,parallel=self.parallel)     
           report6=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'6.psf', self.img+'6.residual', self.img+'6.image', self.img+'6.model'], imval=[(self.img+'6.psf',1.0,[50,50,0,0])])
 
+          # briggs r=0.5(default) with mtmfs (to test SIImageStoreMultiTerm)
+          ret7 = tclean(vis=self.msfile,imagename=self.img+'7',imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs', weighting='briggs', robust=0.5, interactive=0,parallel=self.parallel)     
+          report7=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imexist=[self.img+'7.psf.tt0', self.img+'7.residual.tt0', self.img+'7.image.tt0', self.img+'7.model.tt0'], imval=[(self.img+'7.psf.tt0',1.0,[50,50,0,0]),(self.img+'7.psf.tt1',0.0898,[50,50,0,0]),(self.img+'7.sumwt.tt0',1532169.875,[0,0,0,0]),(self.img+'7.sumwt.tt1',137693.875,[0,0,0,0])])
+
+
           # beamareas: uniform < briggs-r=-2 < briggs r=0.5 < briggs r=+2 < natural, ...
           # by default, it checks if im1's beam < im2's beam
           print("Test beamarea of tst0.image (natural) is greater than beamarea of tst.image (uniform)")
           self.assertTrue(self.th.check_beam_compare(self.img+'.image', self.img+'0.image'))
-          # parallel fails - uniform wt. psf seems to be bigger in parallel than that of serial run
-          #print("Test beamarea of tst2.image (briggs -2) is greater than beamarea of tst.image (uniform)")
-          #self.assertTrue(self.th.check_beam_compare(self.img+'.image', self.img+'2.image'))
+          print("Test beamarea of tst2.image (briggs -2) is greater than beamarea of tst.image (uniform)")
+          self.assertTrue(self.th.check_beam_compare(self.img+'.image', self.img+'2.image'))
           print("Test beamarea of tst3.image (briggs 0.5) is greater than beamarea of tst2.image (briggs -2))")
           self.assertTrue(self.th.check_beam_compare(self.img+'2.image', self.img+'3.image'))
           print("Test beamarea of tst4.image (briggs 2) is greater than beamarea of tst3.image (briggs 0.5))")
           self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
      
-     
+          self.checkfinal(pstr = report+report2+report3+report4+report5+report6+report7)
 
      def test_onefield_twoMS(self):
           """ [onefield] Test_Onefield_twoMS : One field, two input MSs, also
