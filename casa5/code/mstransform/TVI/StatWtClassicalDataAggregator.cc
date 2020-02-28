@@ -200,6 +200,7 @@ void StatWtClassicalDataAggregator::_computeVariances(
     auto n = keys.size();
 #ifdef _OPENMP
 #pragma omp parallel for
+    // cout << "WARN OMP PARALLEL LOOPING IS OFF FOR DEBUGGING" << endl;
 #endif
     for (size_t i=0; i<n; ++i) {
         auto blcb = keys[i];
@@ -256,7 +257,6 @@ void StatWtClassicalDataAggregator::weightSpectrumFlags(
                     ? 0 : exposures[i]/variances[corr];
                 slice.setStart(sliceStart);
                 slice.setEnd(sliceEnd);
-                // cout << "wt " << weights[corr] << endl;
                 _updateWtSpFlags(
                     wtsp, flagCube, checkFlags, slice, weights[corr]
                 );

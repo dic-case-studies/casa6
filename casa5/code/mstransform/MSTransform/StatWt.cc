@@ -158,8 +158,8 @@ void StatWt::_constructVi(
     // boundaries in the weights computation.
     // ORDER MATTERS. Columns are sorted in the order they appear in the vector.
     std::vector<Int> scs;
-    scs.push_back(MS::TIME);
     scs.push_back(MS::ARRAY_ID);
+    scs.push_back(MS::DATA_DESC_ID);
     if (! _combine.contains("scan")) {
         scs.push_back(MS::SCAN_NUMBER);
     }
@@ -169,7 +169,7 @@ void StatWt::_constructVi(
     if (! _combine.contains("field")) {
         scs.push_back(MS::FIELD_ID);
     }
-    scs.push_back(MS::DATA_DESC_ID);
+    scs.push_back(MS::TIME);
     Block<int> sort(scs.size());
     uInt i = 0;
     for (const auto& col: scs) {
