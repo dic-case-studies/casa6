@@ -70,8 +70,6 @@ class SDINT_helper:
             _ia.open(tothis)
             _ia.setrestoringbeam(beam = beam, channel = i, polarization = 0);
             _ia.close()
-#        ib.close();
-#        ia.close();	
         
 ################################################
 
@@ -190,11 +188,44 @@ class SDINT_helper:
             self.addmask(inpcube,pbcube,pblimit)
 
 ################################################
-    def addmask(self, inpimage='',pbimage='',pblimit=0.2):
+    def addmask(self, inpimage='',pbimage='',pblimit=0.2, mode='replace'):
+    #def addmask(self, inpimage='',pbimage='',pblimit=0.2, mode='add'):
+    #def addmask(self, inpimage='',pbimage='',pblimit=0.2, mode='old'):
+        """
+        add pb mask: create a new mask called 'pbmask' and set it as a defualt mask 
+        mode: "replace" or "add"
+              relpalce: create a pbmask based on pblimit without account for the exist mask
+              add: create a pbmask based on pblimit and merge with existing default mask 
+        """
         _ia.open(inpimage)
-        _ia.calcmask(mask='"'+pbimage+'"'+'>'+str(pblimit));
+        defaultmaskname=_ia.maskhandler('default')[0]
+        #print("defaultmaskname=",defaultmaskname)
+        if mode=='replace':
+            if defaultmaskname!='' and defaultmaskname!='mask0':
+                _ia.calcmask(mask='"'+pbimage+'"'+'>'+str(pblimit), name=defaultmaskname);
+            elif defaultmaskname=='mask0':
+                if 'pbmask' in allmasknames:
+                    _ia.maskhandler('delete','pbmask')
+                _ia.calcmask(mask='"'+pbimage+'"'+'>'+str(pblimit), name='pbmask');
+
+        #elif mode=='add':
+        # After deleting a pixel mask it sometimes leaves it in cache 
+        #  
+        #    _ia.open(inpimage)
+        #    if defaultmaskname=='pbmask':
+        #        _ia.maskhandler('delete',defaultmaskname)
+        #        _ia.close()
+        #        _ia.open(inpimage)
+
+        #    _ia.calcmask(mask='mask("'+inpimage+'")||'+'"'+pbimage+'"'+'>'+str(pblimit), name='pbmask');
+        elif mode=='old':
+            # this one create a new mask every time this function is called!
+            #_ia.open(inpimage)
+            _ia.calcmask(mask='mask("'+inpimage+'")||'+'"'+pbimage+'"'+'>'+str(pblimit));
+        else:
+            raise Exception("Unrecongnized value for mode: ",mode)
         _ia.close()
-        
+        _ia.done() 
 
 ################################################
     def cube_to_taylor_sum(self, cubename='', mtname='',reffreq='1.5GHz',nterms=2,dopsf=False):

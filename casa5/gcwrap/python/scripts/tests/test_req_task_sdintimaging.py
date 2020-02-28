@@ -14,7 +14,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# [Add the link to the JIRA ticket here once it exists]
+# Parent ticket for sdintiamging task implementation
+# https://open-jira.nrao.edu/browse/CAS-12613 
+# Ticket for the test generation
+# https://open-jira.nrao.edu/browse/CAS-12898
 #
 # Based on the requirements listed in plone found here (TBD):
 # https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_sdintimaging/about
@@ -99,8 +102,10 @@ class testref_base(unittest.TestCase):
  
 
     def tearDown(self):
-        """ don't delete it all """
-        self.delData()
+        # delete all (input and output data)
+        #self.delData()
+        # leave for input and output (e.g. for debugging)
+        self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -140,13 +145,24 @@ class testref_base(unittest.TestCase):
                     else:
                         shutil.copytree(origmask, self.mask)
 
-    def delData(self,msname=""):
-        if msname != "":
-            self.msfile=msname
-        if (os.path.exists(self.msfile)):
-            os.system('rm -rf ' + self.msfile)
-        #os.system('rm -rf ' + self.img_subdir)
-        os.system('rm -rf ' + self.img+'*')
+    def delData(self,delinput=True, deloutput=True):
+        ''' delete input and output data or some '''
+        #if msname != "":
+        #    self.msfile=msname
+        #if (os.path.exists(self.msfile)):
+        #    os.system('rm -rf ' + self.msfile)
+        #os.system('rm -rf ' + self.img_subdi)
+        if delinput:
+            if self.msfile!='':
+                os.system('rm -rf ' + self.msfile)
+            if self.sdimage!='':
+                os.system('rm -rf ' + self.sdimage)
+            if self.sdpsf!='':
+                os.system('rm -rf ' + self.sdpsf)
+            if self.mask!='':
+                os.system('rm -rf ' + self.mask)
+        if deloutput:
+            os.system('rm -rf ' + self.img+'*')
 
 ### functional tests for sdintimaging start here ####
 

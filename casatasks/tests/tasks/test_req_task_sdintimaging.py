@@ -98,8 +98,10 @@ class testref_base(unittest.TestCase):
  
 
     def tearDown(self):
-        """ don't delete it all """
-        self.delData()
+        # delete all (input and output data)
+        #self.delData()
+        # leave for input and output (e.g. for debugging)
+        self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -139,13 +141,26 @@ class testref_base(unittest.TestCase):
                     else:
                         shutil.copytree(origmask, self.mask)
 
-    def delData(self,msname=""):
-        if msname != "":
-            self.msfile=msname
-        if (os.path.exists(self.msfile)):
-            os.system('rm -rf ' + self.msfile)
-        #os.system('rm -rf ' + self.img_subdir)
-        os.system('rm -rf ' + self.img+'*')
+    def delData(self,delinput=True, deloutput=True):
+        ''' delete input and output data or some '''
+        #if msname != "":
+        #    self.msfile=msname
+        #if (os.path.exists(self.msfile)):
+        #    os.system('rm -rf ' + self.msfile)
+        #os.system('rm -rf ' + self.img_subdi)
+        if delinput:
+            if self.msfile!='':
+                os.system('rm -rf ' + self.msfile)
+            if self.sdimage!='':
+                os.system('rm -rf ' + self.sdimage)
+            if self.sdpsf!='':
+                os.system('rm -rf ' + self.sdpsf)
+            if self.mask!='':
+               os.system('rm -rf ' + self.mask)
+        if deloutput:
+            os.system('rm -rf ' + self.img+'*')
+
+
 
 ### functional tests for sdintimaging start here ####
 
