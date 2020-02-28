@@ -199,6 +199,7 @@ class SDINT_helper:
         """
         _ia.open(inpimage)
         defaultmaskname=_ia.maskhandler('default')[0]
+        allmasknames = _ia.maskhandler('get')
         #print("defaultmaskname=",defaultmaskname)
         if mode=='replace':
             if defaultmaskname!='' and defaultmaskname!='mask0':
