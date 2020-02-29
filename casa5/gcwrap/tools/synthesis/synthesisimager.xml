@@ -95,7 +95,20 @@ This is used to construct {\tt synthesisimager} tool.
 </method>
 
 <!-- ===================================== -->
+  <method type="function" name="normalizerinfo">
+   <shortdescription>pass normalizer info for C++ normalization in lieu of python based normalization</shortdescription>
 
+<description>
+</description>
+<input>
+     <param type="record" name="normpars">
+     <description>Normalization parameters in a record</description>
+     <value type="record"></value>
+     </param> 
+
+</input>
+<returns type="bool"/>
+</method>
 
 <!-- ===================================== -->
  

@@ -224,6 +224,9 @@ class SynthesisImager
   ///set and get if using cube gridding
   virtual void setCubeGridding(const casacore::Bool val){doingCubeGridding_p=val;};
   virtual casacore::Bool getCubeGridding(){return doingCubeGridding_p;};
+  //this set the normalizer info record so as we can construct
+  //a SynthesisNormalizer in C++ rather than run it from python
+  void normalizerinfo(const casacore::Record& normpars);
 
   virtual bool unlockImages();
 protected:
@@ -433,7 +436,8 @@ protected:
   SynthesisParamsImage impars_p;
   String movingSource_p;
   casacore::Bool doingCubeGridding_p;
-
+  
+  casacore::Record normpars_p;
 };
 
 

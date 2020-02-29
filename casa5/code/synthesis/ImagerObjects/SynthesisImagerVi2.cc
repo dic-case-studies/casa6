@@ -1523,8 +1523,9 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		}
 		controlRecord.define("weightnames", weightnames);
         // Tell the child processes not to do the dividebyweight process as this is done
-		// right now in imager_base.py runMajorCycle
-		controlRecord.define("dividebyweight",  False);
+		// tell each child to do the normars stuff
+		controlRecord.define("dividebyweight",  True);
+                controlRecord.defineRecord("normpars", normpars_p); 
 		///Let's see if no per chan weight density was chosen
 		String weightdensityimage=getWeightDensity();
 		if(weightdensityimage != "")
@@ -1559,20 +1560,29 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         for(Int k=0; k < itsMappers.nMappers(); ++k){
 			if(dopsf){
 				for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
+                                  ///TESTOO
+                                  //(itsMappers.imageStore(k))->psf(j)->set(0.0);
+                                  /////////
 					(itsMappers.imageStore(k))->psf(j)->unlock();
 				}
 			}
 			else{
 				for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(false)); ++j){
+                                  /////////TESTOO
+                                  //(itsMappers.imageStore(k))->residual(j)->set(0.0);
+                                    ///////
 					(itsMappers.imageStore(k))->residual(j)->unlock();
 				}
 			}
 			for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
 			//cerr << k << " type " << (itsMappers.imageStore(k))->sumwt(j)->imageType() << " name " << (itsMappers.imageStore(k))->sumwt(j)->name() << endl;
 				
-				/////////////////////TESTOO
+			       
 				Path namewgt( (itsMappers.imageStore(k))->sumwt(j)->name());
 				workingdir=namewgt.dirName();
+                                ///TESTOO
+                                //(itsMappers.imageStore(k))->sumwt(j)->set(0.0);
+                                ////
 				(itsMappers.imageStore(k))->sumwt(j)->unlock();
 				(itsMappers.imageStore(k))->releaseLocks();
 			}
@@ -2586,6 +2596,7 @@ void SynthesisImagerVi2::unlockMSs()
 	  Table::isReadable(weightimagename, True);
 	  PagedImage<Float> im(weightimagename);
 	  imwgt_p=VisImagingWeight(im);
+          im.unlock();
 	}
 	else{
           ////In memory weight densities is being deprecated...we should get rid of this bit

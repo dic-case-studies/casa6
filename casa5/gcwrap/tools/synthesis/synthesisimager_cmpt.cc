@@ -422,6 +422,29 @@ synthesisimager::setimage(const std::string& imagename,
   return rstat;
 }
 
+bool synthesisimager::normalizerinfo(const casac::record& normpars)
+{
+  Bool rstat(false);
+  *itsLog << casacore::LogOrigin("synthesisimager", __func__);
+  try 
+    {
+    
+    //if( ! itsImager ) itsImager = new SynthesisImager();
+    itsImager = makeSI();
+    std::unique_ptr<casacore::Record> normrecpars(toRecord( normpars ));
+      
+   
+    itsImager->normalizerinfo( *normrecpars );
+    
+    rstat=true;
+    
+  
+
+  } catch  (AipsError x) {
+    RETHROW(x);
+  }
+  return rstat;
+}
 
 
 bool synthesisimager::setweighting(const std::string& type,

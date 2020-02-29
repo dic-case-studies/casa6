@@ -92,7 +92,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SynthesisDeconvolver::setupDeconvolution(const SynthesisParamsDeconv& decpars)
   {
-    //LogIO os( LogOrigin("SynthesisDeconvolver","setupDeconvolution",WHERE) );
+    LogIO os( LogOrigin("SynthesisDeconvolver","setupDeconvolution",WHERE) );
 
     //Copy this decpars into a private variable that can be used elsewhere
     //there is no proper copy operator (as public casa::Arrays members = operator fails) 
@@ -101,11 +101,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsStartingModelNames = decpars.startModel;
     itsDeconvolverId = decpars.deconvolverId;
     
-    //os << "Set Deconvolution Options for [" << itsImageName << "] : " << decpars.algorithm ;
-    /*  if( itsStartingModelNames.nelements()>0 && itsStartingModelNames[0].length() > 0 ) 
+    os << "Set Deconvolution Options for [" << itsImageName << "] : " << decpars.algorithm ;
+      if( itsStartingModelNames.nelements()>0 && itsStartingModelNames[0].length() > 0 ) 
       os << " , starting from model : " << itsStartingModelNames;
     os << LogIO::POST;
-    */
+    
     try
       {
 	if(decpars.algorithm==String("hogbom"))
@@ -241,7 +241,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SynthesisDeconvolver","initMinorCycle",WHERE) );
     Record returnRecord;
     Timer timer;
-
+    Timer tim;
+    tim.mark();
     try {
       
       //os << "---------------------------------------------------- Init (?) Minor Cycles ---------------------------------------------" << LogIO::POST;
@@ -265,13 +266,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  itsImages->mask()->unlock();
 	}
       Bool validMask = ( masksum > 0 );
+         os << LogIO::NORMAL3 << "****INITMINOR Masksum stuff "<< tim.real() << LogIO::POST;
+      tim.mark();
 
       // Calculate Peak Residual and Max Psf Sidelobe, and fill into SubIterBot.
       Float peakresnomask = itsImages->getPeakResidual();
+      os << LogIO::NORMAL3 << "****INITMINOR residual peak "<< tim.real() << LogIO::POST;
+      tim.mark();
       itsLoopController.setPeakResidual( validMask ? itsImages->getPeakResidualWithinMask() : peakresnomask );
+      os << LogIO::NORMAL3 << "****INITMINOR OTHER residual peak "<< tim.real() << LogIO::POST;
+      tim.mark();
       itsLoopController.setPeakResidualNoMask( peakresnomask );
       itsLoopController.setMaxPsfSidelobe( itsImages->getPSFSidelobeLevel() );
 
+      
       //re-calculate current nsigma threhold
       //os<<"Calling calcRobustRMS ....syndeconv."<<LogIO::POST;
       Float nsigmathresh = 0.0;
@@ -316,7 +324,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           catch(AipsError &x) { 
             throw( AipsError("Error in storing the robust image statistics") );
           }
-        }
+       }
  
         /***
         Array<Double> robustrms =kitsImages->calcRobustRMS(medians, itsPBMask, itsFastNoise);
@@ -343,6 +351,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         }
         os << "Current nsigma threshold (maximum along spectral channels ) ="<<nsigmathresh<< msg <<LogIO::POST;
       }
+   
       itsLoopController.setNsigmaThreshold(nsigmathresh);
       itsLoopController.setPBMask(itsPBMask);
 
@@ -375,7 +384,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  itsLoopController.setMaskSum( -1.0 );
 	}
       
-
+      os << LogIO::NORMAL3 << "****INITMINOR remainder "<< tim.real() << LogIO::POST;
       returnRecord = itsLoopController.getCycleInitializationRecord();
       //cerr << "INIT record " << returnRecord << endl;
 
@@ -518,8 +527,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       applicator.init(argc, argv);
       if(applicator.isController()){
         os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
-
-        itsImages->printImageStats();
+        Timer tim;
+        tim.mark();
+        //itsImages->printImageStats();
           Int numprocs = applicator.numProcs(); 
           cerr << "Number of procs: " << numprocs << endl;
           
@@ -571,6 +581,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Bool allDone(false);
           Vector<Int> chanRange(2);
           Record beamsetRec;
+          os <<LogIO::NORMAL3<< "**Time to setting up deconvolver " << tim.real() << LogIO::POST ;
           for (Int k=0; k < numblocks; ++k) {
             //os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
             assigned=casa::applicator.nextAvailProcess(*cmc, rank);

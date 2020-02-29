@@ -61,9 +61,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		void task();
 		void reset();
           void writeBackToFullImage(const casacore::String imagename, const casacore::Int chanBeg, const casacore::Int chanEnd, std::shared_ptr<casacore::ImageInterface<casacore::Float> > subimptr);
-          void getSubImage(std::shared_ptr<casacore::ImageInterface<casacore::Float> >& subimptr, const casacore::Int chanBeg, const casacore::Int chanEnd, const casacore::String imagename, const casacore::Bool lock=false); 
-		casacore::CountedPtr<SIImageStore> subImageStore(const int whichImageId=0);
-		casacore::CountedPtr<SIImageStore> multiTermImageStore(const casacore::Int imId);
+          void getSubImage(std::shared_ptr<casacore::ImageInterface<casacore::Float> >& subimptr, const casacore::Int chanBeg, const casacore::Int chanEnd, const casacore::String imagename, const casacore::Bool lock=false);
+          void divideModelByWeight(std::shared_ptr<casacore::ImageInterface<casacore::Float> >&submodel, const casacore::Int startchan, const casacore::Int endchan, const casacore::String weightname);
+          std::shared_ptr<SIImageStore> subImageStore(const int whichImageId=0);
+          std::shared_ptr<SIImageStore> multiTermImageStore(const casacore::Int imId);
 		casacore::String myName_p;
 		casacore::Vector<SynthesisParamsSelect> dataSel_p;
 		casacore::Vector<SynthesisParamsImage> imSel_p;
@@ -82,6 +83,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           casacore::String movingSource_p;
 		casacore::Bool status_p;
 		casacore::Int serialBug_p; //have to send a private variable in serial case
+          casacore::Vector<casacore::Int> nterms_p;
 	};
 	
 	

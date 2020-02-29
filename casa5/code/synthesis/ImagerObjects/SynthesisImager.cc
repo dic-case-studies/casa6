@@ -2907,5 +2907,8 @@ bool SynthesisImager::unlockImages()
     return retval;
 
   }
+  void SynthesisImager::normalizerinfo(const Record& normpars){
+    normpars_p=normpars;
+  }
 } //# NAMESPACE CASA - END
 

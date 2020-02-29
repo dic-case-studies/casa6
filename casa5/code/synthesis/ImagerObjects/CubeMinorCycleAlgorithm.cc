@@ -43,7 +43,7 @@ CubeMinorCycleAlgorithm::~CubeMinorCycleAlgorithm() {
 }
 	
 void CubeMinorCycleAlgorithm::get() {
-
+  reset();
 	//cerr << "in get for child process " << applicator.isWorker() << endl;
 	Record decParsRec;
      
@@ -167,7 +167,23 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     delete tmpptr;
                  
   }
+void CubeMinorCycleAlgorithm::reset(){
+		
+  iterBotRec_p=Record();
+  modelName_p="";
+  residualName_p="";
+  psfName_p="";
+  maskName_p="";
+  pbName_p="";
+  chanRange_p.resize();
+  returnRec_p=Record();
+  beamsetRec_p=Record();
+  //psfSidelobeLevel_p;
+  status_p=False;
+                
 	
+	
+}	
 	
 	
 } //# NAMESPACE CASA - END

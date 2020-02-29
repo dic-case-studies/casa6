@@ -303,6 +303,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     LogIO os( LogOrigin("SynthesisNormalizer", "dividePSFByWeight",WHERE) );
     {
+     
       LatticeLocker lock1 (*(itsImages->psf()), FileLocker::Write);
     
       if( itsNFacets==1) {
@@ -392,7 +393,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsImages.reset( imstore );
   }
 
-
+  void SynthesisNormalizer::setImageStore( std::shared_ptr<SIImageStore>& imstore )
+  {
+    LogIO os( LogOrigin("SynthesisNormalizer", "setImageStore", WHERE) );
+    itsImages= imstore ;
+    
+  }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////    Internal Functions start here.  These are not visible to the tool layer.
