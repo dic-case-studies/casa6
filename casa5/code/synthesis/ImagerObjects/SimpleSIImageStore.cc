@@ -40,14 +40,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	       const shared_ptr<ImageInterface<Float> > &maskim,const shared_ptr<ImageInterface<Float> > &sumwtim,
 	       const shared_ptr<ImageInterface<Float> > &gridwtim, const shared_ptr<ImageInterface<Float> > &pbim,
 	       const shared_ptr<ImageInterface<Float> > &restoredpbcorim,const Bool useweightimage) : SIImageStore() {
-			if(!psfim && !residim)  {
+			if(!psfim && !residim && !modelim)  {
 				throw(AipsError("SimpleSIImagestore has to have a valid residual or psf image"));
 			}
 			else{
-				shared_ptr<ImageInterface<Float> > theim= psfim ? psfim : residim;
-				itsCoordSys=theim->coordinates();
-				itsImageShape=theim->shape();
-				itsParentImageShape=itsImageShape; //validate looks for that
+                          shared_ptr<ImageInterface<Float> >theim=psfim ? psfim : residim;
+                          ///this is constructed for divide/mult modelbyweight
+                          if(!theim)
+                            theim=modelim;
+                          itsCoordSys=theim->coordinates();
+                          itsImageShape=theim->shape();
+                          itsParentImageShape=itsImageShape; //validate looks for that
 			}
 			if(useweightimage && !weightim)
 				throw(AipsError("SimpleSIImagestore has to have a valid weightimage for this kind of weighting scheme"));
