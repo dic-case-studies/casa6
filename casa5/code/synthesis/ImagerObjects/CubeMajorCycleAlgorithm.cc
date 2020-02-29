@@ -369,6 +369,10 @@ String&	CubeMajorCycleAlgorithm::name(){
         Vector<String> weightnames(controlRecord_p.asArrayString("weightnames"));
         if(imId >= int(weightnames.nelements()))
           throw(AipsError("Number of weight images does not match number of image fields defined"));
+        if(Table::isReadable(workingdir+weightnames[imId])){
+		weightnames[imId]=workingdir+weightnames[imId];
+	}
+
 	if(dopsf_p){
           //PagedImage<Float> psf(psfname, TableLock::UserNoReadLocking);
           //subpsf.reset(SpectralImageUtil::getChannel(psf, chanBeg, chanEnd, true));
@@ -414,9 +418,6 @@ String&	CubeMajorCycleAlgorithm::name(){
 	}
 	
 	
-	if(Table::isReadable(workingdir+weightnames[imId])){
-		weightnames[imId]=workingdir+weightnames[imId];
-	}
 	if(Table::isReadable(weightnames[imId])){
 		PagedImage<Float> weight(weightnames[imId], TableLock::UserNoReadLocking);
 		subweight.reset(SpectralImageUtil::getChannel(weight, chanBeg, chanEnd, true));
