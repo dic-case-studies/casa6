@@ -64,9 +64,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
   SDAlgorithmMSClean::SDAlgorithmMSClean( Vector<Float> scalesizes, 
-					  Float smallscalebias, 
-					  // Int stoplargenegatives, 
-					  Int stoppointmode ):
+            Float smallscalebias, 
+            // Int stoplargenegatives, 
+            Int stoppointmode ):
     SDAlgorithmBase(),
     itsMatPsf(), itsMatResidual(), itsMatModel(),
     itsCleaner(),
@@ -75,15 +75,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //    itsStopLargeNegatives(stoplargenegatives),
     itsStopPointMode(stoppointmode),
     itsMCsetup(false)
- {
-   itsAlgorithmName=String("multiscale");
-   if( itsScaleSizes.nelements()==0 ){ itsScaleSizes.resize(1); itsScaleSizes[0]=0.0; }
- }
+  {
+    itsAlgorithmName=String("multiscale");
+    if( itsScaleSizes.nelements()==0 )
+    { 
+      itsScaleSizes.resize(1); 
+      itsScaleSizes[0]=0.0; 
+    }
+  }
 
   SDAlgorithmMSClean::~SDAlgorithmMSClean()
- {
+  {
    
- }
+  }
 
   Long SDAlgorithmMSClean::estimateRAM(const vector<int>& imsize){
     Long mem=0;
@@ -124,38 +128,37 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //// Initialize the MatrixCleaner.
     ///  ----------- do once ----------
     if( itsMCsetup == false)
+    {
+      itsCleaner.defineScales( itsScaleSizes );
+      
+      if(itsSmallScaleBias > 1)
       {
-	itsCleaner.defineScales( itsScaleSizes );
-	
-	if(itsSmallScaleBias > 1)
-	{
-	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to 1." << LogIO::POST; 
-	  itsSmallScaleBias = 1;
-	}
-	
-	if(itsSmallScaleBias < -1)
-	{
-	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to -1." << LogIO::POST; 
-	  itsSmallScaleBias = -1;
-	}
-	
-	
-	itsCleaner.setSmallScaleBias( itsSmallScaleBias );
-	//itsCleaner.stopAtLargeScaleNegative( itsStopLargeNegatives );// In MFMSCleanImageSkyModel.cc, this is only for the first two major cycles...
-	itsCleaner.stopPointMode( itsStopPointMode );
-	itsCleaner.ignoreCenterBox( true ); // Clean full image
-
-	Matrix<Float> tempMat;
-	tempMat.reference( itsMatPsf );
-	itsCleaner.setPsf(  tempMat );
-	itsCleaner.makePsfScales();
-
-	itsMCsetup=true;
+        os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to 1." << LogIO::POST; 
+        itsSmallScaleBias = 1;
       }
+      
+      if(itsSmallScaleBias < -1)
+      {
+        os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to -1." << LogIO::POST; 
+        itsSmallScaleBias = -1;
+      } 
+      
+      itsCleaner.setSmallScaleBias( itsSmallScaleBias );
+      //itsCleaner.stopAtLargeScaleNegative( itsStopLargeNegatives );// In MFMSCleanImageSkyModel.cc, this is only for the first two major cycles...
+      itsCleaner.stopPointMode( itsStopPointMode );
+      itsCleaner.ignoreCenterBox( true ); // Clean full image
+
+      Matrix<Float> tempMat;
+      tempMat.reference( itsMatPsf );
+      itsCleaner.setPsf(  tempMat );
+      itsCleaner.makePsfScales();
+
+      itsMCsetup=true;
+    }
     /// -----------------------------------------
 
     /*
-    /// Find initial max vals..
+    /// Find initial max vals..   
     findMaxAbsMask( itsMatResidual, itsMatMask, itsPeakResidual, itsMaxPos );
     itsModelFlux = sum( itsMatModel );
 
@@ -213,7 +216,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // account for mask as well
     peakresidual = max(abs(residual*itsMatMask));
     modelflux = sum( itsMatModel ); // Performance hog ?
-  }	    
+  }     
 
   void SDAlgorithmMSClean::finalizeDeconvolver()
   {

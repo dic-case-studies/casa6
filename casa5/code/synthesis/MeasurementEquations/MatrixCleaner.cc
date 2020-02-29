@@ -55,6 +55,7 @@
 #include <casa/Logging/LogMessage.h>
 
 #include <synthesis/MeasurementEquations/MatrixCleaner.h>
+#include <synthesis/TransformMachines/StokesImageUtil.h>
 #include <coordinates/Coordinates/TabularCoordinate.h>
 #ifdef _OPENMP
 #include <omp.h>
@@ -73,7 +74,7 @@ Bool MatrixCleaner::validatePsf(const Matrix<Float> & psf)
   itsPositionPeakPsf=IPosition(psf.shape().nelements(), 0);
   //findMaxAbs(psf, maxPsf, itsPositionPeakPsf);
   Int psfSupport = findBeamPatch(0.0, psf.shape()(0), psf.shape()(1), 
-				 4.0, 20.0);
+         4.0, 20.0);
   findPSFMaxAbs(psf, maxPsf, itsPositionPeakPsf, psfSupport);
   os << "Peak of PSF = " << maxPsf << " at " << itsPositionPeakPsf
      << LogIO::POST;
@@ -110,12 +111,14 @@ MatrixCleaner::MatrixCleaner():
   itsScalesValid = false;
   itsStartingIter = 0;
   itsFracThreshold=Quantity(0.0, "%");
+  itsInitScales.resize(0);
+  itsInitScaleXfrs.resize(0);
 }
 
  
 
 MatrixCleaner::MatrixCleaner(const Matrix<Float> & psf,
-				  const Matrix<Float> &dirty):
+          const Matrix<Float> &dirty):
   itsMask( ),
   itsSmallScaleBias(0.0),
   itsScaleSizes(0),
@@ -137,7 +140,7 @@ MatrixCleaner::MatrixCleaner(const Matrix<Float> & psf,
   // Check that everything is the same dimension and that none of the
   // dimensions is zero length.
   AlwaysAssert(psf.shape().nelements() == dirty.shape().nelements(),
-	       AipsError);
+         AipsError);
   AlwaysAssert(dirty.shape().product() != 0, AipsError);
   // looks OK so make the convolver
   
@@ -160,6 +163,8 @@ MatrixCleaner::MatrixCleaner(const Matrix<Float> & psf,
   itsScalesValid = false;
   itsStartingIter = 0;
   itsFracThreshold=Quantity(0.0, "%");
+  itsInitScales.resize(0);
+  itsInitScaleXfrs.resize(0);
 }
 
 
@@ -187,6 +192,8 @@ MatrixCleaner & MatrixCleaner::operator=(const MatrixCleaner & other) {
     itsDirty = other.itsDirty;
     itsScales = other.itsScales;
     itsScaleXfrs = other.itsScaleXfrs;
+    itsInitScales = other.itsInitScales;
+    itsInitScaleXfrs = other.itsInitScaleXfrs;
     itsPsfConvScales = other.itsPsfConvScales;
     itsDirtyConvScales = other.itsDirtyConvScales;
     itsScaleMasks = other.itsScaleMasks;
@@ -211,7 +218,8 @@ MatrixCleaner & MatrixCleaner::operator=(const MatrixCleaner & other) {
 MatrixCleaner::~MatrixCleaner()
 {
   destroyScales();
-  if(!itsMask.null()) itsMask=0;
+  if(!itsMask.null()) 
+    itsMask=0;
 }
 
 
@@ -278,8 +286,6 @@ void MatrixCleaner::setMask(Matrix<Float> & mask, const Float& maskThreshold)
   itsMask->assign(mask);
   noClean_p=(max(*itsMask) < itsMaskThreshold) ? true : false;
 
-
-
   if (itsScalesValid) {
     makeScaleMasks();
   }
@@ -287,19 +293,19 @@ void MatrixCleaner::setMask(Matrix<Float> & mask, const Float& maskThreshold)
 }
 
 Bool MatrixCleaner::setcontrol(CleanEnums::CleanType cleanType,
-				   const Int niter,
-				   const Float gain,
-				   const Quantity& threshold)
+           const Int niter,
+           const Float gain,
+           const Quantity& threshold)
 {
   return setcontrol(cleanType, niter, gain, threshold, Quantity(0.0, "%"));
 }
 
 // Set up the control parameters
 Bool MatrixCleaner::setcontrol(CleanEnums::CleanType cleanType,
-				   const Int niter,
-				   const Float gain,
-				   const Quantity& aThreshold,
-				   const Quantity& fThreshold)
+           const Int niter,
+           const Float gain,
+           const Quantity& aThreshold,
+           const Quantity& fThreshold)
 {
   itsCleanType=cleanType;
   itsMaxNiter=niter;
@@ -314,8 +320,7 @@ void MatrixCleaner::speedup(const Float nDouble)
 {
   itsDoSpeedup=true;
   itsNDouble = nDouble;
-};
-
+}
 
 
 // Do the clean as set up
@@ -334,12 +339,10 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     nScalesToClean=1;
   }
   else if (itsCleanType==CleanEnums::MULTISCALE) {
-    if (nScalesToClean==1) {
+    if (nScalesToClean==1)
       os << LogIO::NORMAL1 << "Multi-scale clean with only one scale" << LogIO::POST;
-    }
-    else {
+    else 
       os << LogIO::NORMAL1 << "Multi-scale clean algorithm" << LogIO::POST;
-    }
   }
 
   Int scale;
@@ -347,10 +350,11 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
   if (nScalesToClean > 1) {
     for (scale=0;scale<nScalesToClean;scale++) {
       scaleBias(scale) = 1 - itsSmallScaleBias *
-	itsScaleSizes(scale)/itsScaleSizes(nScalesToClean-1);
-	os << "scale " << scale+1 << " = " << itsScaleSizes(scale) << " pixels with bias = " << scaleBias(scale) << LogIO::POST;
+  itsScaleSizes(scale)/itsScaleSizes(nScalesToClean-1);
+      os << "scale " << scale+1 << " = " << itsScaleSizes(scale) << " pixels with bias = " << scaleBias(scale) << LogIO::POST;
     }
-  } else {
+  } 
+  else {
     scaleBias(0) = 1.0;
   }
 
@@ -361,7 +365,7 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
   
     nth=min(nth, omp_get_max_threads());
  
- #endif 
+#endif 
   // Find the peaks of the convolved Psfs
   Vector<Float> maxPsfConvScales(nScalesToClean);
   Int naxes=model.shape().nelements();
@@ -372,44 +376,48 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
       IPosition positionPeakPsfConvScales(naxes, 0);
       
       findMaxAbs(itsPsfConvScales[scale], maxPsfConvScales(scale),
-			positionPeakPsfConvScales);
+      positionPeakPsfConvScales);
  
       //   cout  << "MAX  " << scale << "    " << positionPeakPsfConvScales
-      //	    << "  " << maxPsfConvScales(scale) << "\n"
-      //	    << endl;
+      //      << "  " << maxPsfConvScales(scale) << "\n"
+      //      << endl;
      }
   } //End pragma parallel
   for (scale=0;scale<nScalesToClean;scale++) {
-     if ( maxPsfConvScales(scale) < 0.0) {
+    if ( maxPsfConvScales(scale) < 0.0) {
       os << "As Peak of PSF is negative, you should setscales again with a smaller scale size" 
-	 << LogIO::SEVERE;
+   << LogIO::SEVERE;
       return -1;
-     }
+    }
   }
 
   // Define a subregion for the inner quarter
   IPosition blcDirty(model.shape().nelements(), 0);
   IPosition trcDirty(model.shape()-1);
 
-  if(!itsMask.null()){
+  if(!itsMask.null()) 
+  {
     os << "Cleaning using given mask" << LogIO::POST;
-    if (itsMaskThreshold<0) {
+    if (itsMaskThreshold<0) 
+    {
         os << LogIO::NORMAL
            << "Mask thresholding is not used, values are interpreted as weights"
            <<LogIO::POST;
-    } else {
+    } 
+    else 
+    {
       // a mask that does not allow for clean was sent
       if(noClean_p)
-	return 0;
-        os << LogIO::NORMAL
-           << "Cleaning pixels with mask values above " << itsMaskThreshold
-           << LogIO::POST;
+        return 0;
+        
+      os << LogIO::NORMAL
+         << "Cleaning pixels with mask values above " << itsMaskThreshold
+         << LogIO::POST;
     }
 
     
     Int nx=model.shape()(0);
     Int ny=model.shape()(1);
-    
     
     AlwaysAssert(itsMask->shape()(0)==nx, AipsError);
     AlwaysAssert(itsMask->shape()(1)==ny, AipsError);    
@@ -417,25 +425,31 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     Int ybeg=ny-1;
     Int xend=0;
     Int yend=0;
-    for (Int iy=0;iy<ny;iy++) {
-      for (Int ix=0;ix<nx;ix++) {
-	if((*itsMask)(ix,iy)>0.000001) {
-	  xbeg=min(xbeg,ix);
-	  ybeg=min(ybeg,iy);
-	  xend=max(xend,ix);
-	  yend=max(yend,iy);
-	}
+    for (Int iy=0;iy<ny;iy++) 
+    {
+      for (Int ix=0;ix<nx;ix++) 
+      {
+        if((*itsMask)(ix,iy)>0.000001) 
+        {
+          xbeg=min(xbeg,ix);
+          ybeg=min(ybeg,iy);
+          xend=max(xend,ix);
+          yend=max(yend,iy);
+        }
       }
     }
     
-    if (!itsIgnoreCenterBox) {
-      if((xend - xbeg)>nx/2) {
-	xbeg=nx/4-1; //if larger than quarter take inner of mask
-	os << LogIO::WARN << "Mask span over more than half the x-axis: Considering inner half of the x-axis"  << LogIO::POST;
+    if (!itsIgnoreCenterBox) 
+    {
+      if((xend - xbeg)>nx/2) 
+      {
+        xbeg=nx/4-1; //if larger than quarter take inner of mask
+        os << LogIO::WARN << "Mask span over more than half the x-axis: Considering inner half of the x-axis"  << LogIO::POST;
       } 
-      if((yend - ybeg)>ny/2) { 
-	ybeg=ny/4-1;
-	os << LogIO::WARN << "Mask span over more than half the y-axis: Considering inner half of the y-axis" << LogIO::POST;
+      if((yend - ybeg)>ny/2) 
+      { 
+        ybeg=ny/4-1;
+        os << LogIO::WARN << "Mask span over more than half the y-axis: Considering inner half of the y-axis" << LogIO::POST;
       }  
       xend=min(xend,xbeg+nx/2-1);
       yend=min(yend,ybeg+ny/2-1);
@@ -455,10 +469,12 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     }
     else {
       os << "Cleaning inner quarter of the image" << LogIO::POST;
-      for (Int i=0;i<Int(model.shape().nelements());i++) {
-	blcDirty(i)=model.shape()(i)/4;
-	trcDirty(i)=blcDirty(i)+model.shape()(i)/2-1;
-	if(trcDirty(i)<0) trcDirty(i)=1;
+      for (Int i=0;i<Int(model.shape().nelements());i++) 
+      {
+        blcDirty(i)=model.shape()(i)/4;
+        trcDirty(i)=blcDirty(i)+model.shape()(i)/2-1;
+        if(trcDirty(i)<0) 
+          trcDirty(i)=1;
       }
     }
   }
@@ -494,7 +510,7 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
   
   for(Int i=0;i<nScalesToClean;i++) 
    {
-	  vecWork_p[i].resize(gip);
+    vecWork_p[i].resize(gip);
    }
   //
 
@@ -509,31 +525,31 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     {
 #pragma omp  for 
       for (scale=0; scale<nScalesToClean; ++scale) {
-	// Find absolute maximum for the dirty image
-	//	cout << "in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirtyConvScales.nelements() << endl;
+  // Find absolute maximum for the dirty image
+  //  cout << "in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirtyConvScales.nelements() << endl;
         Matrix<Float> work = (vecWork_p[scale])(blcDirty,trcDirty);   
-	work = 0.0;
-	work = work + (itsDirtyConvScales[scale])(blcDirty,trcDirty);
-	maxima(scale)=0;
-	posMaximum[scale]=IPosition(model.shape().nelements(), 0);
-	
-	if (!itsMask.null()) {
-	  findMaxAbsMask(vecWork_p[scale], itsScaleMasks[scale],
-				maxima(scale), posMaximum[scale]);
-	} else {
-	  findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
-	}
-	
-	// Remember to adjust the position for the window and for 
-	// the flux scale
-	//cout << "scale " << scale << " maxPsfconvscale " << maxPsfConvScales(scale) << endl;
-	//cout << "posmax " << posMaximum[scale] << " blcdir " << blcDirty << endl;
-	maxima(scale)/=maxPsfConvScales(scale);
-	maxima(scale) *= scaleBias(scale);
-	maxima(scale) *= (itsDirtyConvScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in itsStrengthOptimum for loop (next for loop).
-	
-	//posMaximum[scale]+=blcDirty;
-	
+  work = 0.0;
+  work = work + (itsDirtyConvScales[scale])(blcDirty,trcDirty);
+  maxima(scale)=0;
+  posMaximum[scale]=IPosition(model.shape().nelements(), 0);
+  
+  if (!itsMask.null()) {
+    findMaxAbsMask(vecWork_p[scale], itsScaleMasks[scale],
+        maxima(scale), posMaximum[scale]);
+  } else {
+    findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
+  }
+  
+  // Remember to adjust the position for the window and for 
+  // the flux scale
+  //cout << "scale " << scale << " maxPsfconvscale " << maxPsfConvScales(scale) << endl;
+  //cout << "posmax " << posMaximum[scale] << " blcdir " << blcDirty << endl;
+  maxima(scale)/=maxPsfConvScales(scale);
+  maxima(scale) *= scaleBias(scale);
+  maxima(scale) *= (itsDirtyConvScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in itsStrengthOptimum for loop (next for loop).
+  
+  //posMaximum[scale]+=blcDirty;
+  
       }
     }//End parallel section
     for (scale=0; scale<nScalesToClean; scale++) {
@@ -573,26 +589,28 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     }
     //    2. negatives on largest scale?
     if ((nScalesToClean > 1) && itsStopAtLargeScaleNegative  && 
-	optimumScale == (nScalesToClean-1) && 
-	itsStrengthOptimum < 0.0) {
+        optimumScale == (nScalesToClean-1) && 
+        itsStrengthOptimum < 0.0) 
+    {
       os << "Reached negative on largest scale" << LogIO::POST;
       converged = -2;
       break;
     }
     //  3. stop point mode at work
-    if (itsStopPointMode > 0) {
-      if (optimumScale == 0) {
-	stopPointModeCounter++;
-      } else {
-	stopPointModeCounter = 0;
-      }
+    if (itsStopPointMode > 0) 
+    {
+      if (optimumScale == 0) 
+        stopPointModeCounter++;     
+      else 
+        stopPointModeCounter = 0;
+      
       if (stopPointModeCounter >= itsStopPointMode) {
-	os << "Cleaned " << stopPointModeCounter << 
-	  " consecutive components from the smallest scale, stopping prematurely"
-	   << LogIO::POST;
-	itsDidStopPointMode = true;
-	converged = -1;
-	break;
+        os << "Cleaned " << stopPointModeCounter << 
+          " consecutive components from the smallest scale, stopping prematurely"
+           << LogIO::POST;
+        itsDidStopPointMode = true;
+        converged = -1;
+        break;
       }
     }
     //4. Diverging large scale
@@ -600,7 +618,7 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     if(((abs(itsStrengthOptimum)-abs(tmpMaximumResidual)) > (abs(tmpMaximumResidual)/2.0)) 
        && !(itsStopAtLargeScaleNegative)){
       os << "Diverging due to large scale?"
-	 << LogIO::POST;
+   << LogIO::POST;
        //clean is diverging most probably due to the large scale 
       converged=-2;
       break;
@@ -617,20 +635,20 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     /*
     if(progress) {
       progress->info(false, itsIteration, itsMaxNiter, maxima,
-		     posMaximum, itsStrengthOptimum,
-		     optimumScale, positionOptimum,
-		     totalFlux, totalFluxScale,
-		     itsJustStarting );
+         posMaximum, itsStrengthOptimum,
+         optimumScale, positionOptimum,
+         totalFlux, totalFluxScale,
+         itsJustStarting );
       itsJustStarting = false;
       } else*/ {
       if (itsIteration == itsStartingIter + 1) {
           os << "iteration    MaximumResidual   CleanedFlux" << LogIO::POST;
       }
       if ((itsIteration % (itsMaxNiter/10 > 0 ? itsMaxNiter/10 : 1)) == 0) {
-	//Good place to re-up the fiducial maximum residual
-	//tmpMaximumResidual=abs(itsStrengthOptimum);
-	os << itsIteration <<"      "<<itsStrengthOptimum<<"      "
-	   << totalFlux <<LogIO::POST;
+  //Good place to re-up the fiducial maximum residual
+  //tmpMaximumResidual=abs(itsStrengthOptimum);
+  os << itsIteration <<"      "<<itsStrengthOptimum<<"      "
+     << totalFlux <<LogIO::POST;
       }
     }
 
@@ -650,9 +668,9 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     //support(0)=min(Int(support(0)), Int(trcDirty(0)-blcDirty(0)));
     //support(1)=min(Int(support(1)), Int(trcDirty(1)-blcDirty(1)));
     // support(0)=min(Int(support(0)), (trcDirty(0)-blcDirty(0)+
-    //				Int(2*abs(positionOptimum(0)-blcDirty(0)/2.0-trcDirty(0)/2.0))));
+    //        Int(2*abs(positionOptimum(0)-blcDirty(0)/2.0-trcDirty(0)/2.0))));
     //support(1)=min(Int(support(1)), (trcDirty(1)-blcDirty(1)+
-    //				Int(2*abs(positionOptimum(1)-blcDirty(1)/2.0-trcDirty(1)/2.0))));
+    //        Int(2*abs(positionOptimum(1)-blcDirty(1)/2.0-trcDirty(1)/2.0))));
 
     IPosition blc(positionOptimum-support/2);
     IPosition trc(positionOptimum+support/2-1);
@@ -678,14 +696,14 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
 
     #pragma omp parallel default(shared) private(scale) num_threads(nth)
     {
-      #pragma omp  for 			
+      #pragma omp  for      
       for (scale=0;scale<nScalesToClean; ++scale) {
       
-	Matrix<Float> dirtySub=(itsDirtyConvScales[scale])(blc,trc);
-	//AlwaysAssert(itsPsfConvScales[index(scale,optimumScale)], AipsError);
-	Matrix<Float> psfSub=(itsPsfConvScales[index(scale,optimumScale)])(blcPsf, trcPsf);
-	dirtySub -= scaleFactor*psfSub;
-	    
+  Matrix<Float> dirtySub=(itsDirtyConvScales[scale])(blc,trc);
+  //AlwaysAssert(itsPsfConvScales[index(scale,optimumScale)], AipsError);
+  Matrix<Float> psfSub=(itsPsfConvScales[index(scale,optimumScale)])(blcPsf, trcPsf);
+  dirtySub -= scaleFactor*psfSub;
+      
       }
     }//End parallel
     
@@ -703,9 +721,9 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
   /*
   if(progress) {
     progress->info(true, itsIteration, itsMaxNiter, maxima, posMaximum,
-		   itsStrengthOptimum,
-		   optimumScale, positionOptimum,
-		   totalFlux, totalFluxScale);
+       itsStrengthOptimum,
+       optimumScale, positionOptimum,
+       totalFlux, totalFluxScale);
   }
   */
 
@@ -717,9 +735,9 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
 }
 
   Bool MatrixCleaner::findPSFMaxAbs(const Matrix<Float>& lattice,
-				    Float& maxAbs,
-				    IPosition& posMaxAbs,
-				    const Int& supportSize)
+            Float& maxAbs,
+            IPosition& posMaxAbs,
+            const Int& supportSize)
   {
     LogIO os(LogOrigin("MatrixCleaner", "findPSFMaxAbs()", WHERE));
     posMaxAbs = IPosition(lattice.shape().nelements(), 0);
@@ -738,19 +756,19 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     // cerr << "Max of lattice " << max(lattice) << " min " << min(lattice) << endl; 
     for (Int j=blc1; j < trc1; ++j)
       for (Int i=blc0 ; i < trc0; ++i)
-	if ((maxAbs = abs(lattice(i,j))) > maxVal)
-	  {
-	    maxVal = maxAbs;
-	    posMaxAbs(0)=i; posMaxAbs(1)=j;
-	  }
+  if ((maxAbs = abs(lattice(i,j))) > maxVal)
+    {
+      maxVal = maxAbs;
+      posMaxAbs(0)=i; posMaxAbs(1)=j;
+    }
     maxAbs=maxVal;
     //cerr << "######## " << posMaxAbs << " " << maxVal << endl;
     return true;
   }
 
 Bool MatrixCleaner::findMaxAbs(const Matrix<Float>& lattice,
-					  Float& maxAbs,
-					  IPosition& posMaxAbs)
+            Float& maxAbs,
+            IPosition& posMaxAbs)
 {
 
   posMaxAbs = IPosition(lattice.shape().nelements(), 0);
@@ -772,9 +790,9 @@ Bool MatrixCleaner::findMaxAbs(const Matrix<Float>& lattice,
 
 
 Bool MatrixCleaner::findMaxAbsMask(const Matrix<Float>& lattice,
-					      const Matrix<Float>& mask,
-					      Float& maxAbs,
-					      IPosition& posMaxAbs)
+                const Matrix<Float>& mask,
+                Float& maxAbs,
+                IPosition& posMaxAbs)
 {
 
   posMaxAbs = IPosition(lattice.shape().nelements(), 0);
@@ -826,8 +844,6 @@ void MatrixCleaner::setDirty(const Matrix<Float>& dirty){
   itsDirty=new Matrix<Float>(dirty.shape());
   itsDirty->assign(dirty);
   
-  
-
 } 
 
 //Define the scales without doing anything else
@@ -881,7 +897,7 @@ void MatrixCleaner::makePsfScales(){
     for (Int otherscale=scale;otherscale<itsNscales;otherscale++) {
       
       AlwaysAssert(index(scale, otherscale)<Int(itsPsfConvScales.nelements()),
-		   AipsError);
+       AipsError);
       
       // PSF *  scale * otherscale
       itsPsfConvScales[index(scale,otherscale)] =Matrix<Float>(psfShape_p);
@@ -991,7 +1007,7 @@ Bool MatrixCleaner::setscales(const Vector<Float>& scaleSizes)
     for (Int otherscale=scale;otherscale<itsNscales;otherscale++) {
       
       AlwaysAssert(index(scale, otherscale)<Int(itsPsfConvScales.nelements()),
-		   AipsError);
+       AipsError);
       
       // PSF *  scale * otherscale
        itsPsfConvScales[index(scale,otherscale)] =Matrix<Float>(itsDirty->shape());
@@ -1041,18 +1057,18 @@ void MatrixCleaner::makeScale(Matrix<Float>& iscale, const Float& scaleSize)
     for (Int j=minj;j<=maxj;j++) {
       ypart = square( (refj - (Double)(j)) / scaleSize );
       for (Int i=mini;i<=maxi;i++) {
-	rad2 =  ypart + square( (refi - (Double)(i)) / scaleSize );
-	if (rad2 < 1.0) {
-	  if (rad2 <= 0.0) {
-	    rad = 0.0;
-	  } else {
-	    rad = sqrt(rad2);
-	  }
-	  iscale(i,j) = (1.0 - rad2) * spheroidal(rad);
-	  volume += iscale(i,j);
-	} else {
-	  iscale(i,j) = 0.0;
-	}
+        rad2 =  ypart + square( (refi - (Double)(i)) / scaleSize );
+        if (rad2 < 1.0) {
+          if (rad2 <= 0.0) {
+            rad = 0.0;
+          } else {
+            rad = sqrt(rad2);
+          }
+          iscale(i,j) = (1.0 - rad2) * spheroidal(rad);
+          volume += iscale(i,j);
+        } else {
+          iscale(i,j) = 0.0;
+        }
       }
     }
     iscale/=volume;
@@ -1148,11 +1164,20 @@ Bool MatrixCleaner::destroyScales()
     //if(itsPsfConvScales[scale]) delete itsPsfConvScales[scale];
     itsPsfConvScales[scale].resize();
   }
+  for(uInt scale=0; scale<itsInitScales.nelements();scale++)
+    itsInitScales[scale].resize();
+  for(uInt scale=0; scale<itsInitScaleXfrs.nelements();scale++)
+    itsInitScaleXfrs[scale].resize();
+  
   destroyMasks();
   itsScales.resize(0, true);
-  itsDirtyConvScales.resize(0,true);
+  itsScaleXfrs.resize(0, true);
+  itsDirtyConvScales.resize(0, true);
   itsPsfConvScales.resize(0, true);
   itsScalesValid=false;
+  itsInitScales.resize(0, true);
+  itsInitScaleXfrs.resize(0, true);
+
   return true;
 }
 
@@ -1222,15 +1247,15 @@ Bool MatrixCleaner::makeScaleMasks()
     fft.flip(itsScaleMasks[scale], false, false);
     for (Int j=0 ; j < (itsMask->shape())(1); ++j){
       for (Int k =0 ; k < (itsMask->shape())(0); ++k){
-	if(itsMaskThreshold > 0){
-	  (itsScaleMasks[scale])(k,j) =  (itsScaleMasks[scale])(k,j) > itsMaskThreshold ? 1.0 : 0.0;
-	}
+  if(itsMaskThreshold > 0){
+    (itsScaleMasks[scale])(k,j) =  (itsScaleMasks[scale])(k,j) > itsMaskThreshold ? 1.0 : 0.0;
+  }
       }
     }
     Float mysum = sum(itsScaleMasks[scale] );
     if (mysum <= 0.1) {
       os << LogIO::WARN << "Ignoring scale " << scale << 
-	" since it is too large to fit within the mask" << LogIO::POST;
+  " since it is too large to fit within the mask" << LogIO::POST;
     }
     
   }
@@ -1293,12 +1318,12 @@ Float MatrixCleaner::threshold() const
 {
   if (! itsDoSpeedup) {
     return max(itsFracThreshold.get("%").getValue() * itsMaximumResidual /100.0,
-	       itsThreshold.get("Jy").getValue());
+         itsThreshold.get("Jy").getValue());
   } else {
     const Float factor = exp( (Float)( itsIteration - itsStartingIter )/ itsNDouble )
       / 2.7182818;
     return factor * max(itsFracThreshold.get("%").getValue() * itsMaximumResidual /100.0,
-		       itsThreshold.get("Jy").getValue());
+           itsThreshold.get("Jy").getValue());
   }
 }
 
@@ -1336,7 +1361,7 @@ void MatrixCleaner::makeBoxesSameSize(IPosition& blc1, IPosition& trc1,
 }
 
 Int MatrixCleaner::findBeamPatch(const Float maxScaleSize, const Int& nx, const Int& ny,
-				 const Float psfBeam, const Float nBeams)
+         const Float psfBeam, const Float nBeams)
 {
   Int psupport = (Int) ( sqrt( psfBeam*psfBeam + maxScaleSize*maxScaleSize ) * nBeams  );
 
@@ -1350,6 +1375,94 @@ Int MatrixCleaner::findBeamPatch(const Float maxScaleSize, const Int& nx, const 
   if (psupport%2 != 0) psupport -= 1;
 
   return psupport;
+}
+
+float MatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
+{
+  GaussianBeam beam;
+  try
+  {
+      StokesImageUtil::FitGaussianPSF(psf, beam);
+  }
+  catch(AipsError &x)
+  {
+    LogIO os( LogOrigin("MatrixCleaner","getPsfGaussianWidth",WHERE) );
+    os << "Error in fitting a Gaussian to the PSF : " << x.getMesg() << LogIO::POST;
+    throw( AipsError("Error in fitting a Gaussian to the PSF" + x.getMesg()) );
+  }
+
+  CoordinateSystem cs = psf.coordinates();
+  String dirunit = cs.worldAxisUnits()(0);
+  Vector<String> unitas=cs.worldAxisUnits();
+  unitas(0)="arcsec";
+  unitas(1)="arcsec";
+  cs.setWorldAxisUnits(unitas);
+
+  cout << "major width " << beam.getMajor("arcsec") << " in " << cs.worldAxisUnits()(0) << endl;
+  cout << "minor width " << beam.getMinor("arcsec") << endl;
+  cout << " pixel sizes are " << abs(cs.increment()(0)) << " and ";
+  cout << abs(cs.increment()(1)) << endl;  
+  const auto xpixels = beam.getMajor("arcsec") / abs(cs.increment()(0));
+  const auto ypixels = beam.getMinor("arcsec") / abs(cs.increment()(1));
+  cout << "xpixels " << xpixels << " ypixels " << ypixels << endl;
+  cout << "init width " << float(ceil((xpixels + ypixels)/2)) << endl;
+  
+  return float(ceil((xpixels + ypixels)/2));
+}
+
+void MatrixCleaner::setInitScaleXfrs(const Array<Float> arrpsf, const float width)
+{
+  if(itsScales.nelements() > 0) 
+    destroyScales();
+
+  Matrix<Float> tempMat;
+  tempMat.reference(arrpsf);
+  psfShape_p.resize(0, false);
+  psfShape_p = tempMat.shape(); 
+
+  // try 1width, 5width and 10width
+  const vector<Float> itsInitScaleSizes = {1*width, 5*width, 10*width};
+  itsInitScales.resize(3, true);
+  itsInitScaleXfrs.resize(3, true);
+  FFTServer<Float,Complex> fft(psfShape_p);
+  for (unsigned int scale = 0; scale < 3; scale++) 
+  {
+    itsInitScales[scale] = Matrix<Float>(psfShape_p);
+    makeScale(itsInitScales[scale], itsInitScaleSizes[scale]);
+    cout << "made itsInitScales[" << scale << "] = " << itsInitScaleSizes[scale] << endl; 
+    itsInitScaleXfrs[scale] = Matrix<Complex> ();
+    fft.fft0(itsInitScaleXfrs[scale], itsInitScales[scale]);
+  }
+}
+
+void MatrixCleaner::getActiveSetAspen()
+{
+  cout << "work in progress " << endl;
+  LogIO os(LogOrigin("MatrixCleaner", "getActiveSetAspen()", WHERE));
+
+  if(int(itsInitScaleXfrs.nelements()) == 0)
+    throw(AipsError("Initial scales are not defined"));
+
+  /*Matrix<Complex> dirtyFT;
+  FFTServer<Float,Complex> fft(itsDirty->shape());
+  fft.fft0(dirtyFT, *itsDirty);
+  itsDirtyConvScales.resize(itsNscales, true);
+  Int scale=0;
+ 
+  
+  // Dirty*scale
+  for (scale=0; scale<itsNscales; scale++) 
+  {
+    Matrix<Complex> cWork;
+    // Dirty * scale
+    //      cout << "scale " << scale << " itsScaleptr " << &(itsScaleXfrs[scale]) << "\n"<< endl;
+    
+    itsDirtyConvScales[scale]=Matrix<Float>(itsDirty->shape());
+    cWork=((dirtyFT)*(itsScaleXfrs[scale]));
+    fft.fft0((itsDirtyConvScales[scale]), cWork, false);
+    fft.flip((itsDirtyConvScales[scale]), false, false);
+  }*/
+  
 }
 
 

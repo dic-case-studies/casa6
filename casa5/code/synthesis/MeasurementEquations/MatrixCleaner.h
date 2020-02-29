@@ -37,6 +37,7 @@
 #include <casa/Arrays/Vector.h>
 #include <casa/Containers/Block.h>
 #include <lattices/LatticeMath/LatticeCleaner.h>
+#include <images/Images/ImageInterface.h>
 
 namespace casacore{
 
@@ -257,6 +258,13 @@ public:
   // Helper function to optimize adding
   //static void addTo(casacore::Matrix<casacore::Float>& to, const casacore::Matrix<casacore::Float> & add);
 
+  // helper functions for ASP
+  float getPsfGaussianWidth(casacore::ImageInterface<casacore::Float>& psf);
+
+  void setInitScaleXfrs(const casacore::Array<casacore::Float> arrpsf, const float width);
+
+  void getActiveSetAspen();
+
 protected:
   friend class MatrixNACleaner;
   // Make sure that the peak of the Psf is within the image
@@ -267,6 +275,7 @@ protected:
   
   // Make Spheroidal function for scale images
   casacore::Float spheroidal(casacore::Float nu);
+
   
   // Find the Peak of the matrix
   static casacore::Bool findMaxAbs(const casacore::Matrix<casacore::Float>& lattice,
@@ -303,6 +312,7 @@ protected:
   casacore::Bool itsScalesValid;
   casacore::Int itsNscales;
   casacore::Float itsMaskThreshold;
+  casacore::Block<casacore::Matrix<casacore::Complex> > itsInitScaleXfrs; //for Asp
 private:
 
   //# The following functions are used in various places in the code and are
@@ -318,6 +328,7 @@ private:
   casacore::Vector<casacore::Float> itsScaleSizes;
 
   casacore::Block<casacore::Matrix<casacore::Float> > itsScales;
+  casacore::Block<casacore::Matrix<casacore::Float> > itsInitScales; //for Asp
   casacore::Block<casacore::Matrix<casacore::Float> > itsPsfConvScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvScales;
 

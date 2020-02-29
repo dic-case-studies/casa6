@@ -136,7 +136,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  } 
 	else if (decpars.algorithm==String("aasp"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmAAspClean());
+	    itsDeconvolver.reset(new SDAlgorithmAAspClean(decpars.scales));
 	  }
 	else
 	  {

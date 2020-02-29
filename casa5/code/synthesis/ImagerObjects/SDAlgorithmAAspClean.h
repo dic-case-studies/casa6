@@ -40,7 +40,7 @@
 #include <casa/System/PGPlotter.h>
 
 #include<synthesis/ImagerObjects/SDAlgorithmBase.h>
-#include<synthesis/ImagerObjects/SDAlgorithmHogbomClean.h>
+#include <synthesis/MeasurementEquations/MatrixCleaner.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -53,21 +53,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   public:
     
     // Empty constructor
-    SDAlgorithmAAspClean();
+    SDAlgorithmAAspClean(casacore::Vector<casacore::Float> scalesizes,
+               casacore::Int stoppointmode=-1);
     virtual  ~SDAlgorithmAAspClean();
     
   protected:
     
     // Local functions to be overloaded by various algorithm deconvolvers.
     virtual void takeOneStep( casacore::Float loopgain, casacore::Int cycleNiter, casacore::Float cycleThreshold, casacore::Float &peakresidual, casacore::Float &modelflux, casacore::Int &iterdone );
-    //    virtual void initializeDeconvolver( casacore::Float &peakresidual, casacore::Float &modelflux );
     virtual void initializeDeconvolver();
     virtual void finalizeDeconvolver();
 
-    SDAlgorithmHogbomClean hogbom_p;
-
-    ///    virtual void queryDesiredShape(casacore::Bool &onechan, casacore::Bool &onepol); // , nImageFacets.
-    //    virtual void restorePlane();
 
     /*
     void findNextComponent( casacore::Float loopgain );
@@ -81,15 +77,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     */
     //casacore::SubImage<casacore::Float> itsResidual, itsPsf, itsModel, itsImage;
 
-    casacore::Array<casacore::Float> itsMatResidual, itsMatModel, itsMatPsf, itsMatMask;
+    casacore::Array<casacore::Float> itsMatPsf, itsMatResidual, itsMatModel;
+    casacore::Array<casacore::Float> itsMatMask;  // Make an array if we eventually use multi-term masks...
+    
+    MatrixCleaner itsCleaner;
+    casacore::Vector<casacore::Float> itsScaleSizes;
+    casacore::Int itsStopPointMode;
 
     /*
     casacore::IPosition itsMaxPos;
     casacore::Float itsPeakResidual;
     casacore::Float itsModelFlux;
-
-    casacore::Matrix<casacore::Float> itsMatMask;
     */
+    private:
+    casacore::Bool itsMCsetup;
 
   };
 

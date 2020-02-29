@@ -62,8 +62,6 @@ using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 
-
-
   SDAlgorithmMSMFS::SDAlgorithmMSMFS( uInt nTaylorTerms, Vector<Float> scalesizes, Float smallscalebias):
     SDAlgorithmBase(),
     //    itsImages(),
@@ -73,15 +71,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsSmallScaleBias(smallscalebias),
     itsMTCleaner(),
     itsMTCsetup(false)
- {
-   itsAlgorithmName=String("mtmfs");
-   if( itsScaleSizes.nelements()==0 ){ itsScaleSizes.resize(1); itsScaleSizes[0]=0.0; }
- }
+  {
+    itsAlgorithmName=String("mtmfs");
+    if( itsScaleSizes.nelements()==0 ){ itsScaleSizes.resize(1); itsScaleSizes[0]=0.0; }
+  }
 
   SDAlgorithmMSMFS::~SDAlgorithmMSMFS()
- {
+  {
    
- }
+  }
 
  
   //  void SDAlgorithmMSMFS::initializeDeconvolver( Float &peakresidual, Float &modelflux )
@@ -98,14 +96,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     ////  Why is this needed ?  I hope this is by reference.
     for(uInt tix=0; tix<2*itsNTerms-1; tix++)
-      {
-	if(tix<itsNTerms)
-	  {
-	    (itsImages->residual(tix))->get( itsMatResiduals[tix], true );
-	    (itsImages->model(tix))->get( itsMatModels[tix], true );
-	  }
-	(itsImages->psf(tix))->get( itsMatPsfs[tix], true );
-      }
+    {
+    	if(tix<itsNTerms)
+    	{
+    	  (itsImages->residual(tix))->get( itsMatResiduals[tix], true );
+    	  (itsImages->model(tix))->get( itsMatModels[tix], true );
+    	}
+    	(itsImages->psf(tix))->get( itsMatPsfs[tix], true );
+    }
 
     itsImages->mask()->get( itsMatMask, true );
 
@@ -113,37 +111,37 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     ///  ----------- do once ----------
     if( itsMTCsetup == false)
-      {
-	//cout << "Setting up the MT Cleaner once" << endl;
-	//Vector<Float> scalesizes(1); scalesizes[0]=0.0;
-	itsMTCleaner.setscales( itsScaleSizes );
-	
-	if(itsSmallScaleBias > 1)
-	{
-	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to 1." << LogIO::POST; 
-	  itsSmallScaleBias = 1;
-	}
-	
-	if(itsSmallScaleBias < -1)
-	{
-	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to -1." << LogIO::POST; 
-	  itsSmallScaleBias = -1;
-	}
-	
-	
-	itsMTCleaner.setSmallScaleBias(itsSmallScaleBias);
-	itsMTCleaner.setntaylorterms( itsNTerms );
-	itsMTCleaner.initialise( itsImages->getShape()[0], itsImages->getShape()[1] );
-	
-	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
-	  {
-	    Matrix<Float> tempMat;
-	    tempMat.reference( itsMatPsfs[tix] );
-	    itsMTCleaner.setpsf( tix, tempMat );
-	    ///	itsMTCleaner.setpsf( tix, itsMatPsfs[tix] );
-	  }
-	itsMTCsetup=true;
-      }
+    {
+    	//cout << "Setting up the MT Cleaner once" << endl;
+    	//Vector<Float> scalesizes(1); scalesizes[0]=0.0;
+    	itsMTCleaner.setscales( itsScaleSizes );
+    	
+    	if(itsSmallScaleBias > 1)
+    	{
+    	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to 1." << LogIO::POST; 
+    	  itsSmallScaleBias = 1;
+    	}
+    	
+    	if(itsSmallScaleBias < -1)
+    	{
+    	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to -1." << LogIO::POST; 
+    	  itsSmallScaleBias = -1;
+    	}
+    	
+    	
+    	itsMTCleaner.setSmallScaleBias(itsSmallScaleBias);
+    	itsMTCleaner.setntaylorterms( itsNTerms );
+    	itsMTCleaner.initialise( itsImages->getShape()[0], itsImages->getShape()[1] );
+    	
+    	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
+    	{
+        Matrix<Float> tempMat;
+        tempMat.reference( itsMatPsfs[tix] );
+        itsMTCleaner.setpsf( tix, tempMat );
+        ///	itsMTCleaner.setpsf( tix, itsMatPsfs[tix] );
+    	}
+    	itsMTCsetup=true;
+    }
     /// -----------------------------------------
 
     /*
@@ -161,19 +159,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsMTCleaner.setmask( tempmask );
 
     for(uInt tix=0; tix<itsNTerms; tix++)
-      {
-	Matrix<Float> tempMat;
-	tempMat.reference( itsMatResiduals[tix] );
-	itsMTCleaner.setresidual( tix, tempMat );
-	//	itsMTCleaner.setresidual( tix, itsMatResiduals[tix] );
+    {
+    	Matrix<Float> tempMat;
+    	tempMat.reference( itsMatResiduals[tix] );
+    	itsMTCleaner.setresidual( tix, tempMat );
+    	//	itsMTCleaner.setresidual( tix, itsMatResiduals[tix] );
 
-	Matrix<Float> tempMat2;
-	tempMat2.reference( itsMatModels[tix] );
-	itsMTCleaner.setmodel( tix, tempMat2 );
-	//	itsMTCleaner.setmodel( tix, itsMatModels[tix] );
-      }
-
-
+    	Matrix<Float> tempMat2;
+    	tempMat2.reference( itsMatModels[tix] );
+    	itsMTCleaner.setmodel( tix, tempMat2 );
+    	//	itsMTCleaner.setmodel( tix, itsMatModels[tix] );
+    }
   }
 
   Long SDAlgorithmMSMFS::estimateRAM(const vector<int>& imsize){
@@ -207,6 +203,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     return mem;
   }
+
   void SDAlgorithmMSMFS::takeOneStep( Float loopgain, Int cycleNiter, Float cycleThreshold, Float &peakresidual, Float &modelflux, Int &iterdone)
   {
 
@@ -216,12 +213,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( iterdone==-2 ) throw(AipsError("MT-Cleaner error : Non-invertible Hessian. Please check if the multi-frequency data selection is appropriate for a polynomial fit of the desired order."));
 
     for(uInt tix=0; tix<itsNTerms; tix++)
-      {
-	Matrix<Float> tempMat;
-	tempMat.reference( itsMatModels[tix] );
+    {
+    	Matrix<Float> tempMat;
+    	tempMat.reference( itsMatModels[tix] );
 
-	itsMTCleaner.getmodel( tix, tempMat ); //itsMatModels[tix] );
-      }
+    	itsMTCleaner.getmodel( tix, tempMat ); //itsMatModels[tix] );
+    }
  
     /////////////////
     //findMaxAbs( itsMatResiduals[0], itsPeakResidual, itsMaxPos );
@@ -239,16 +236,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // Why is this needed ?  If the matrices are by reference, then why do we need this ? 
     for(uInt tix=0; tix<itsNTerms; tix++)
-      {
-	(itsImages->residual(tix))->put( itsMatResiduals[tix] );
-	(itsImages->model(tix))->put( itsMatModels[tix] );
-      }
-
+    {
+    	(itsImages->residual(tix))->put( itsMatResiduals[tix] );
+    	(itsImages->model(tix))->put( itsMatModels[tix] );
+    }
   }
-
-
   
-   void SDAlgorithmMSMFS::restore(std::shared_ptr<SIImageStore> imagestore )
+  void SDAlgorithmMSMFS::restore(std::shared_ptr<SIImageStore> imagestore )
   {
 
     LogIO os( LogOrigin("SDAlgorithmMSMFS","restore",WHERE) );
@@ -262,76 +256,73 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int nSubChans, nSubPols;
     queryDesiredShape(nSubChans, nSubPols, imagestore->getShape());
     for( Int chanid=0; chanid<nSubChans;chanid++) // redundant since only 1 chan
+    {
+      for( Int polid=0; polid<nSubPols;polid++) // one pol plane at a time
       {
-	for( Int polid=0; polid<nSubPols;polid++) // one pol plane at a time
-      {
-	    itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
+    	  itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
 
-    ///  ----------- do once if trying to 'only restore' without model ----------
-    if( itsMTCsetup == false)
-      {
+        ///  ----------- do once if trying to 'only restore' without model ----------
+        if( itsMTCsetup == false)
+        {
+        	itsMatPsfs.resize( 2*itsNTerms-1 );
+        	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
+        	{
+        	  (itsImages->psf(tix))->get( itsMatPsfs[tix], True );
+        	}
 
-	itsMatPsfs.resize( 2*itsNTerms-1 );
-	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
-	  {
-	    (itsImages->psf(tix))->get( itsMatPsfs[tix], True );
-	  }
-
-	//cout << "Setting up the MT Cleaner once" << endl;
-	//Vector<Float> scalesizes(1); scalesizes[0]=0.0;
-	itsMTCleaner.setscales( itsScaleSizes );
-	itsMTCleaner.setntaylorterms( itsNTerms );
-	itsMTCleaner.initialise( itsImages->getShape()[0], itsImages->getShape()[1] );
-	
-	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
-	  {
-	    Matrix<Float> tempMat;
-	    tempMat.reference( itsMatPsfs[tix] );
-	    itsMTCleaner.setpsf( tix, tempMat );
-	    ///	itsMTCleaner.setpsf( tix, itsMatPsfs[tix] );
-	  }
-	itsMTCsetup=true;
-      }
-    /// -----------------------------------------
+        	//cout << "Setting up the MT Cleaner once" << endl;
+        	//Vector<Float> scalesizes(1); scalesizes[0]=0.0;
+        	itsMTCleaner.setscales( itsScaleSizes );
+        	itsMTCleaner.setntaylorterms( itsNTerms );
+        	itsMTCleaner.initialise( itsImages->getShape()[0], itsImages->getShape()[1] );
+        	
+        	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
+          {
+            Matrix<Float> tempMat;
+            tempMat.reference( itsMatPsfs[tix] );
+            itsMTCleaner.setpsf( tix, tempMat );
+            ///	itsMTCleaner.setpsf( tix, itsMatPsfs[tix] );
+          }
+        	itsMTCsetup=true;
+        }
+        /// -----------------------------------------
 
 
-    Vector<TempImage<Float> > tempResOrig(itsNTerms);
+        Vector<TempImage<Float> > tempResOrig(itsNTerms);
 
-    // Set residual images into mtcleaner
-    for(uInt tix=0; tix<itsNTerms; tix++)
-      {
-	Array<Float> tempArr;
-	(itsImages->residual(tix))->get( tempArr, True );	
-	Matrix<Float> tempMat;
-	tempMat.reference( tempArr );
-	itsMTCleaner.setresidual( tix, tempMat );
+        // Set residual images into mtcleaner
+        for(uInt tix=0; tix<itsNTerms; tix++)
+        {
+        	Array<Float> tempArr;
+        	(itsImages->residual(tix))->get( tempArr, True );	
+        	Matrix<Float> tempMat;
+        	tempMat.reference( tempArr );
+        	itsMTCleaner.setresidual( tix, tempMat );
 
-	// Also save them temporarily (copies)
-	tempResOrig[tix] = TempImage<Float>(itsImages->getShape(), itsImages->residual(tix)->coordinates()); 
-	tempResOrig[tix].copyData( LatticeExpr<Float>(* ( itsImages->residual(tix) ) ) );
-      }
+        	// Also save them temporarily (copies)
+        	tempResOrig[tix] = TempImage<Float>(itsImages->getShape(), itsImages->residual(tix)->coordinates()); 
+        	tempResOrig[tix].copyData( LatticeExpr<Float>(* ( itsImages->residual(tix) ) ) );
+        }
 
-    // Modify the original in place
-    itsMTCleaner.computeprincipalsolution();
+        // Modify the original in place
+        itsMTCleaner.computeprincipalsolution();
 
-    for(uInt tix=0; tix<itsNTerms; tix++)
-      {
-	Matrix<Float> tempRes;
-	itsMTCleaner.getresidual(tix,tempRes);
-	(itsImages->residual(tix))->put( tempRes );
-      }
-    
-    // Calculate restored image and alpha using modified residuals
-    SDAlgorithmBase::restore( itsImages );
+        for(uInt tix=0; tix<itsNTerms; tix++)
+        {
+        	Matrix<Float> tempRes;
+        	itsMTCleaner.getresidual(tix,tempRes);
+        	(itsImages->residual(tix))->put( tempRes );
+        }
+        
+        // Calculate restored image and alpha using modified residuals
+        SDAlgorithmBase::restore( itsImages );
 
-    // Put back original unmodified residuals.o
-    for(uInt tix=0; tix<itsNTerms; tix++)
-      {
-	(itsImages->residual(tix))->copyData( LatticeExpr<Float>( tempResOrig(tix) ) );
-      }
-
+        // Put back original unmodified residuals.o
+        for(uInt tix=0; tix<itsNTerms; tix++)
+    	    (itsImages->residual(tix))->copyData( LatticeExpr<Float>( tempResOrig(tix) ) );
+        
       } // for polid loop
-      }// for chanid loop
+    }// for chanid loop
 
   }// ::restore
 
