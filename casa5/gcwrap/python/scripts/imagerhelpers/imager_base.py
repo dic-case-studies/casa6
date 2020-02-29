@@ -296,7 +296,7 @@ class PySynthesisImager:
         maskchanged = maskchanged | self.runInteractiveGUI2()
 
         time1=time.time();
-        casalog.post("Time to update mask "+str(time1-time0)+"s", "INFO3y")
+        casalog.post("Time to update mask "+str(time1-time0)+"s", "INFO3")
         ## Return a flag to say that the mask has changed or not.
         return maskchanged
 

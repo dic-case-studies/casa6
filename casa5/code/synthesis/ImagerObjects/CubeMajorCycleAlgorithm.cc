@@ -133,8 +133,8 @@ void CubeMajorCycleAlgorithm::put() {
 	
 void CubeMajorCycleAlgorithm::task(){
 	status_p = False;
-        Timer tim;
-        tim.mark();
+        //Timer tim;
+        //tim.mark();
 	//SynthesisImagerVi2 imgr;
 	//imgr.selectData(dataSel_p);
 	// We do not use chanchunking in this model
@@ -155,8 +155,8 @@ void CubeMajorCycleAlgorithm::task(){
                 dataSel_p[k].freqbeg="";
 		subImgr.selectData(dataSel_p[k]);
 	}
-        cerr <<"***Time for select data " << tim.real() << endl;
-        tim.mark();
+        //cerr <<"***Time for select data " << tim.real() << endl;
+        //tim.mark();
         subImgr.setMovingSource(movingSource_p);
 	Vector<CountedPtr<SIImageStore> > subImStor(imSel_p.nelements());
         //copy as shared_ptr as we mix the usage of countedptr and sharedptr
@@ -207,8 +207,8 @@ void CubeMajorCycleAlgorithm::task(){
           subImgr.tuneSelectData();
 	}
 
-        cerr << "***Time for all other setting " << tim.real() << endl;
-        tim.mark();
+        //cerr << "***Time for all other setting " << tim.real() << endl;
+        //tim.mark();
 	if (!dopsf_p){
 		subImgr.executeMajorCycle(controlRecord_p);
 	
@@ -218,8 +218,12 @@ void CubeMajorCycleAlgorithm::task(){
                       if(controlRecord_p.isDefined("normpars")){
                         Record normpars=controlRecord_p.asRecord("normpars");
                         SynthesisNormalizer norm;
-                        if(nterms_p[k] > 0)
-                          normpars.define("nterms", uInt(nterms_p[k]));
+                         if(nterms_p[k] > 0){
+                           if(!normpars.isDefined("nterms"))
+                             normpars.define("nterms", uInt(nterms_p[k]));
+                          normpars.define("deconvolver", "mtmfs");
+                        }
+                       
                         norm.setupNormalizer(normpars);
                         norm.setImageStore(subImStorShared[k]);
                         norm.divideResidualByWeight();
@@ -260,8 +264,12 @@ void CubeMajorCycleAlgorithm::task(){
 		{
                   if(controlRecord_p.isDefined("normpars")){
                         Record normpars=controlRecord_p.asRecord("normpars");
-                        if(nterms_p[k] > 0)
-                          normpars.define("nterms", uInt(nterms_p[k]));
+                        if(nterms_p[k] > 0){
+                          if(!normpars.isDefined("nterms"))
+                             normpars.define("nterms", uInt(nterms_p[k]));
+                          normpars.define("deconvolver", "mtmfs");
+                        }
+                        //                        cerr  << k << " " << nterms_p[k] <<" NORMPARS " << normpars << endl;
                         SynthesisNormalizer norm;
                         norm.setupNormalizer(normpars);
                         norm.setImageStore(subImStorShared[k]);
@@ -291,7 +299,7 @@ void CubeMajorCycleAlgorithm::task(){
                 
 		}
 	}
-	cerr << "***Time gridding/ffting " << tim.real() << endl;
+	//cerr << "***Time gridding/ffting " << tim.real() << endl;
 	status_p = True;
 }
 String&	CubeMajorCycleAlgorithm::name(){

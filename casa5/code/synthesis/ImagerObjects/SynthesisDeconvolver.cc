@@ -63,8 +63,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   
   SynthesisDeconvolver::SynthesisDeconvolver() : 
-				       itsDeconvolver( ), 
-				       itsMaskHandler( ),
+				       itsDeconvolver(nullptr), 
+				       itsMaskHandler(nullptr ),
+                                       itsImages(nullptr),
                                        itsImageName(""),
 				       //                                       itsPartImageNames(Vector<String>(0)),
 				       itsBeam(0.0),
@@ -234,7 +235,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return mem;
   }
   Record SynthesisDeconvolver::initMinorCycle(){
-    return initMinorCycle(makeImageStore(itsImageName));
+    if(!itsImages)
+      itsImages=makeImageStore(itsImageName);
+    return initMinorCycle(itsImages);
   }
   Record SynthesisDeconvolver::initMinorCycle(std::shared_ptr<SIImageStore> imstor )
   { 
@@ -266,16 +269,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  itsImages->mask()->unlock();
 	}
       Bool validMask = ( masksum > 0 );
-         os << LogIO::NORMAL3 << "****INITMINOR Masksum stuff "<< tim.real() << LogIO::POST;
-      tim.mark();
+      //    os << LogIO::NORMAL3 << "****INITMINOR Masksum stuff "<< tim.real() << LogIO::POST;
+      // tim.mark();
 
       // Calculate Peak Residual and Max Psf Sidelobe, and fill into SubIterBot.
       Float peakresnomask = itsImages->getPeakResidual();
-      os << LogIO::NORMAL3 << "****INITMINOR residual peak "<< tim.real() << LogIO::POST;
-      tim.mark();
+      //os << LogIO::NORMAL3 << "****INITMINOR residual peak "<< tim.real() << LogIO::POST;
+      //tim.mark();
       itsLoopController.setPeakResidual( validMask ? itsImages->getPeakResidualWithinMask() : peakresnomask );
-      os << LogIO::NORMAL3 << "****INITMINOR OTHER residual peak "<< tim.real() << LogIO::POST;
-      tim.mark();
+      //os << LogIO::NORMAL3 << "****INITMINOR OTHER residual peak "<< tim.real() << LogIO::POST;
+      //tim.mark();
       itsLoopController.setPeakResidualNoMask( peakresnomask );
       itsLoopController.setMaxPsfSidelobe( itsImages->getPSFSidelobeLevel() );
 
@@ -693,7 +696,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   }
 
-  void SynthesisDeconvolver::mergeReturnRecord(const::Record& inRec, Record& outRec, const Int chan){
+  void SynthesisDeconvolver::mergeReturnRecord(const Record& inRec, Record& outRec, const Int chan){
 
     ///Something has to be done about what is done in SIIterBot_state::mergeMinorCycleSummary if it is needed
     Matrix<Double> summaryminor;

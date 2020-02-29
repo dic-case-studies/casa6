@@ -119,7 +119,10 @@ class PySynthesisImager:
         for fld in range(0,self.NF):
             #print("self.allimpars=",self.allimpars,"\n")
             self.SItool.defineimage( self.allimpars[str(fld)] , self.allgridpars[str(fld)] )
-    
+
+        ###for cases when synthesisnormalizer is setup in c++ send the normalizer info
+        ###all images have the same normtype etc..so first one is good enough 
+        self.SItool.normalizerinfo(self.allnormpars['0'])
         ###commenting this out so that tuneSelect is done after weighting
         ###CAS-11687
         # For cube imaging:  align the data selections and image setup
@@ -236,6 +239,7 @@ class PySynthesisImager:
 
     def hasConverged(self):
         # Merge peak-res info from all fields to decide iteration parameters
+         time0=time.time()
          self.IBtool.resetminorcycleinfo() 
          for immod in range(0,self.NF):
               initrec =  self.SDtools[immod].initminorcycle() 
@@ -277,19 +281,22 @@ class PySynthesisImager:
                           else: 
                               shutil.move(prevmask,self.allimpars[str(immod)]['imagename']+'.mask')
                           casalog.post("[" + str(self.allimpars[str(immod)]['imagename']) + "] : Reverting output mask to one that was last used ", "INFO")
-
+         casalog.post("***Time taken in checking hasConverged "+str(time.time()-time0), "INFO3")
          return (stopflag>0)
 
 #############################################
     def updateMask(self):
         # Setup mask for each field ( input mask, and automask )
         maskchanged = False
+        time0=time.time()
         for immod in range(0,self.NF):
             maskchanged = maskchanged | self.SDtools[immod].setupmask() 
         
         # Run interactive masking (and threshold/niter editors), if interactive=True
         maskchanged = maskchanged | self.runInteractiveGUI2()
 
+        time1=time.time();
+        casalog.post("Time to update mask "+str(time1-time0)+"s", "INFO3")
         ## Return a flag to say that the mask has changed or not.
         return maskchanged
 
@@ -329,11 +336,13 @@ class PySynthesisImager:
     def makePSF(self):
 
         self.makePSFCore()
-
+        divideInPython=self.allimpars['0']['specmode'] == 'mfs' or self.allimpars['0']['deconvolver'] == 'mtmfs'
         ### Gather PSFs (if needed) and normalize by weight
         for immod in range(0,self.NF):
-            self.PStools[immod].gatherpsfweight() 
-            self.PStools[immod].dividepsfbyweight()
+            #for cube normalization is done in C++
+            if divideInPython :
+                self.PStools[immod].gatherpsfweight() 
+                self.PStools[immod].dividepsfbyweight()
             if self.SDtools != []:
                 if immod <= len(self.SDtools) - 1:
                     self.SDtools[immod].checkrestoringbeam()
@@ -348,14 +357,23 @@ class PySynthesisImager:
 #############################################
 
     def runMajorCycle(self):
-        for immod in range(0,self.NF):
-            self.PStools[immod].dividemodelbyweight()
-            self.PStools[immod].scattermodel() 
-
+        
         if self.IBtool != None:
             lastcycle = (self.IBtool.cleanComplete(lastcyclecheck=True) > 0)
         else:
             lastcycle = True
+        divideInPython=self.allimpars['0']['specmode'] == 'mfs' or self.allimpars['0']['deconvolver'] == 'mtmfs'
+        ##norm is done in C++ for cubes
+        if not divideInPython :
+            self.runMajorCycleCore(lastcycle)
+            if self.IBtool != None:
+                self.IBtool.endmajorcycle()
+        
+            return
+       
+        for immod in range(0,self.NF):
+            self.PStools[immod].dividemodelbyweight()
+            self.PStools[immod].scattermodel() 
         self.runMajorCycleCore(lastcycle)
 
         if self.IBtool != None:
