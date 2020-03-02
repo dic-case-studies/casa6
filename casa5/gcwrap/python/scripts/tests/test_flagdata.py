@@ -4217,7 +4217,7 @@ class test_flags_propagation_base(test_base):
         return flag_cnt_and == flag_cnt_before
 
 
-@unittest.skipIf(True,
+@unittest.skipIf(False,
                  "These tests were added in CAS-12737. Not clear what would be the right"
                  "place for them.")
 class test_flags_propagation_channelavg(test_flags_propagation_base):
@@ -4386,7 +4386,7 @@ class test_flags_propagation_channelavg(test_flags_propagation_base):
                         'Not all the flags set "before" are set "after"')
 
 
-@unittest.skipIf(True,
+@unittest.skipIf(False,
                  "These tests were added in CAS-12737. Not clear what would be the right"
                  "place for them.")
 class test_flags_propagation_timeavg(test_flags_propagation_base):
