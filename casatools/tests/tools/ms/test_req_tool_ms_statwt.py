@@ -8,12 +8,6 @@ import numpy as np
 import numpy.ma as ma
 import numbers
 
-"""
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-"""
-
-# for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th
 
@@ -21,8 +15,12 @@ subdir = 'visibilities/vla/'
 if th.is_casa6():
     from casatools import ctsys, table, ms
     datadir = ctsys.resolve(subdir)
+    myms = ms()
+    mytb = table()
 else:
     from taskinit import *
+    myms = mstool()
+    mytb = tbtool()
     datadir = (
         os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/' + subdir
     )
@@ -117,7 +115,6 @@ def variance(data, flags, exposures):
 
 
 def _get_dst_cols(dst, other="", dodata=True):
-    mytb = table()
     mytb.open(dst)
     wt = mytb.getcol("WEIGHT")
     wtsp = mytb.getcol("WEIGHT_SPECTRUM")
@@ -149,6 +146,10 @@ def _get_table_cols(mytb):
     return [times, wt, wtsp, flag, frow, data, sigma, sisp]
 
 class statwt_test(unittest.TestCase):
+    
+    def tearDown(self):
+        myms.done()
+        mytb.done()
     
     def _check_weights(
         self, msname, row_to_rows, data_column, chan_flags, combine_corr,
@@ -235,7 +236,6 @@ class statwt_test(unittest.TestCase):
                         )
 
     def compare(self, dst, ref):
-        mytb = table()
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
         [
             gtimes, gwt, gwtsp, gflag, gfrow, gdata, gsigma, gsisp
@@ -262,11 +262,9 @@ class statwt_test(unittest.TestCase):
 
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
-        mytb = table()
         dst = "ngc5921.split.ms"
         cflags = np.array(63 * [False])
         cflags[10:21] = True
-        myms = ms()
         """
         row_to_rows = []
         for row in range(60):
@@ -274,11 +272,14 @@ class statwt_test(unittest.TestCase):
         """
         for combine in ["", "corr"]:
             c = 0
-            for fitspw in ["","0:0~9;21~62",  "0:10~20"]:
-                self.assertTrue(
-                    shutil.copytree(ctsys.resolve(src), dst),
-                    "Unable to copy " + src + " to " + dst
-                )
+            for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
+                if th.is_casa6():
+                    self.assertTrue(
+                        shutil.copytree(src, dst),
+                        "Unable to copy " + src + " to " + dst
+                    )
+                else:
+                    shutil.copytree(src, dst)
                 excludechans = c == 2
                 myms.open(dst, nomodify=False)
                 myms.statwt(
@@ -307,7 +308,6 @@ class statwt_test(unittest.TestCase):
         combine = "corr"
         for timebin in ["300s", 10]:
             shutil.copytree(src, dst) 
-            myms = ms()
             myms.open(dst, nomodify=False)
             myms.statwt(timebin=timebin, combine=combine)
             myms.done()
@@ -325,7 +325,6 @@ class statwt_test(unittest.TestCase):
             [0, 8], [8, 16], [16, 24], [24, 32], [32, 40], [40, 48],
             [48, 56], [56,63]
         ]
-        myms = ms()
         for combine in ["", "corr"]:
             for i in [0, 2]:
                 for chanbin in ["195.312kHz", 8]:
@@ -340,7 +339,6 @@ class statwt_test(unittest.TestCase):
                     elif i == 2:
                         # check WEIGHT_SPECTRUM is created, only check once,
                         # this test is long as it is
-                        mytb = table()
                         mytb.open(dst, nomodify=False)
                         x = mytb.ncols()
                         self.assertTrue(
@@ -365,8 +363,7 @@ class statwt_test(unittest.TestCase):
         combine = "corr"
         trow = 12
         for minsamp in [60, 80]:
-            shutil.copytree(ctsys.resolve(src), dst)
-            myms = ms()
+            shutil.copytree(src, dst)
             myms.open(dst, nomodify=False)
             myms.statwt(minsamp=minsamp, combine=combine)
             myms.done()
@@ -425,7 +422,6 @@ class statwt_test(unittest.TestCase):
             row_to_rows.append([38, 56])
         for i in range(56, 60):
             row_to_rows.append([56, 60])
-        myms = ms()
         for combine in ["corr", "corr,field"]:
             shutil.copytree(src, dst)
             myms.open(dst, nomodify=False)
@@ -441,8 +437,7 @@ class statwt_test(unittest.TestCase):
         # ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_bounds.ms')
         ref = 'ngc5921_statwt_ref_test_no_scan_bounds.ms'
         combine = "corr, scan"
-        shutil.copytree(ctsys.resolve(src), dst)
-        myms = ms()
+        shutil.copytree(src, dst)
         myms.open(dst, nomodify=False)
         myms.statwt(timebin=timebin, combine=combine)
         myms.done()
@@ -457,7 +452,6 @@ class statwt_test(unittest.TestCase):
         ref = 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms'
         for combine in ["corr,scan,field", "corr,field,scan"]:
             shutil.copytree(src, dst)
-            myms = ms()
             myms.open(dst, nomodify=False)
             myms.statwt(timebin=timebin, combine=combine)
             myms.done()
@@ -469,8 +463,7 @@ class statwt_test(unittest.TestCase):
         # just testing inputs
         dst = "ngc5921.split.statalg.ms"
         for statalg in ["cl", "ch", "h", "f", "bogus"]:
-            shutil.copytree(ctsys.resolve(src), dst)
-            myms = ms( )
+            shutil.copytree(src, dst)
             myms.open(dst, nomodify=False)
             if statalg == "cl":
                 self.assertTrue(myms.statwt(statalg=statalg))
@@ -527,7 +520,6 @@ class statwt_test(unittest.TestCase):
         for i in range(4):
             row_to_rows.append([56, 60])
         """
-        myms = ms()
         for i in [0, 1]:
             shutil.copytree(src, dst) 
             myms.open(dst, nomodify=False)
@@ -547,8 +539,7 @@ class statwt_test(unittest.TestCase):
         timebin = "300s"
         wtrange = [1, 2]
         preview = True
-        shutil.copytree(ctsys.resolve(src), dst)
-        myms = ms( )
+        shutil.copytree(src, dst)
         myms.open(dst, nomodify=False)
         myms.statwt(
             timebin=timebin, combine=combine, wtrange=wtrange, preview=preview
@@ -572,7 +563,6 @@ class statwt_test(unittest.TestCase):
         combine = "corr"
         timebin = 1
         data = "data"
-        mytb = table()
         """
         row_to_rows = []
         for i in range(60):
@@ -583,7 +573,6 @@ class statwt_test(unittest.TestCase):
         self.assertTrue(mytb.removecols("DATA"))
         self.assertTrue(mytb.renamecol("CORRECTED_DATA", "DATA"))
         mytb.done()
-        myms = ms()
         myms.open(dst, nomodify=False)
         myms.statwt(timebin=timebin, combine=combine, datacolumn=data)
         myms.done()
@@ -660,7 +649,6 @@ class statwt_test(unittest.TestCase):
         row_to_rows.append([56, 60])
         """
         shutil.copytree(src, dst)
-        myms = ms()
         myms.open(dst, nomodify=False)
         myms.statwt(timebin=timebin, slidetimebin=True)
         myms.done()
@@ -813,7 +801,6 @@ class statwt_test(unittest.TestCase):
         row_to_rows.append([56, 60])
         """
 
-        myms = ms()
         for timebin in [5, 6]:
             ref = 'ngc5921_statwt_ref_test_sliding_time_window_' + str(timebin) + '.ms'
             shutil.copytree(src, dst)
@@ -834,7 +821,6 @@ class statwt_test(unittest.TestCase):
         # row_to_rows = []
         # for i in range(60):
         #    row_to_rows.append([i, i+1])
-        myms = ms()
         shutil.copytree(src, dst)
         myms.open(dst, nomodify=False)
         myms.statwt(datacolumn=data)
@@ -850,8 +836,6 @@ class statwt_test(unittest.TestCase):
         dst = "ngc5921.split.residualwoutmodel.ms"
         ref = 'ngc5921_statwt_ref_test_residual_no_model.ms'
         data = "residual"
-        myms = ms()
-        mytb = table()
         shutil.copytree(src, dst)
         self.assertTrue(mytb.open(dst, nomodify=False))
         self.assertTrue(mytb.removecols("MODEL_DATA"))
@@ -870,7 +854,6 @@ class statwt_test(unittest.TestCase):
         dst = "ngc5921.split.residualdatawmodel.ms"
         ref = 'ngc5921_statwt_ref_test_residual_data.ms'
         data = "residual_data"
-        myms = ms()
         # row_to_rows = []
         # for i in range(60):
         #     row_to_rows.append([i, i+1])
@@ -889,15 +872,10 @@ class statwt_test(unittest.TestCase):
         dst = "ngc5921.split.residualdatawoutmodel.ms"
         ref = 'ngc5921_statwt_ref_test_residual_data_no_model.ms'
         data = "residual_data"
-        mytb = table()
-        myms = ms()
         # row_to_rows = []
         # for i in range(60):
         #     row_to_rows.append([i, i+1])
-        self.assertTrue(
-            shutil.copytree(src, dst),
-            "unable to copy " + src + " to " + dst
-        )
+        shutil.copytree(src, dst)
         self.assertTrue(mytb.open(
             dst, nomodify=False), "unable to open table " + dst
         )
@@ -917,7 +895,6 @@ class statwt_test(unittest.TestCase):
     def test_returned_stats(self):
         """Test returned stats, CAS-10881"""
         dst = "ngc5921.split.statstest.ms"
-        myms = ms()
         shutil.copytree(src, dst)
         myms.open(dst, nomodify=False)
         res = myms.statwt()
