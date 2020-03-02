@@ -4172,7 +4172,7 @@ class test_virtual_col(test_base):
 
 class test_flags_propagation_base(test_base):
     """
-    Common methods and infrastructures used in test_flags_propagation_channelavg and
+    Common methods and infrastructure used in test_flags_propagation_channelavg and
     test_flags_propagation_timeavg.
     """
 
@@ -4198,8 +4198,9 @@ class test_flags_propagation_base(test_base):
     def check_flags_preserved(self, flags_before, flags_after):
         """
         Check 'flags before' against 'flags after' and ensures that all the flags set
-        'before' are also set 'after'
+        'before' are also set 'after'.
         The flags are expected in the same format as returned by tbtool.getcol('FLAG').
+        This is to ensure the desired behavior from CAS-12737 (never lose flags).
 
         :param before_flags: flags before manipulating/flagging an MS
         :param after_flags: flags after manipulating/flagging an MS
@@ -4216,7 +4217,7 @@ class test_flags_propagation_base(test_base):
         return flag_cnt_and == flag_cnt_before
 
 
-@unittest.skipIf(True,
+@unittest.skipIf(False,
                  "These tests were added in CAS-12737. Not clear what would be the right"
                  "place for them.")
 class test_flags_propagation_channelavg(test_flags_propagation_base):
@@ -4340,7 +4341,7 @@ class test_flags_propagation_channelavg(test_flags_propagation_base):
     def test_propagation_tfcrop_chanbin_4(self):
         """ tfcrop, chanavg, chanbin=4, propagate flags forth and back """
 
-        # Make rflag flag something (if no flags are added, the flag cube is not written)
+        # Make tfcrop flag something (if no flags are added, the flag cube is not written)
         res, apriori_flags, final_flags =\
             self.run_auto_flag_preavg_propagation(chanbin=4, ims=self.vis,
                                                   mode='tfcrop', extendflags=False)
@@ -4367,8 +4368,25 @@ class test_flags_propagation_channelavg(test_flags_propagation_base):
         self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
                         'Not all the flags set "before" are set "after"')
 
+    def test_propagation_clip_chanbin_64(self):
+        """ clip, chanavg, chanbin=64 (all), propagate flags forth and back """
 
-@unittest.skipIf(True,
+        # Make clip flag something (if no flags are added, the flag cube is not written)
+        # Use min=0.0025 to flag very little but still something
+        res, apriori_flags, final_flags =\
+            self.run_auto_flag_preavg_propagation(chanbin=64, ims=self.vis,
+                                                  clipminmax=[0.004, 0.1])
+
+        self.assertEqual(res['total'], 1024)
+        # Before CAS-12727, there is some 'loss' of flags. This would be: 196
+        # (the total is >= 16 a priori, but losing some of the initial flags which would
+        # be overwritten as False).
+        self.assertEqual(res['flagged'], 205)
+        self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
+                        'Not all the flags set "before" are set "after"')
+
+
+@unittest.skipIf(False,
                  "These tests were added in CAS-12737. Not clear what would be the right"
                  "place for them.")
 class test_flags_propagation_timeavg(test_flags_propagation_base):
