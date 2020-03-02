@@ -163,6 +163,10 @@ def _variance2(dr, di, flag, corr, row):
 
 class statwt_test(unittest.TestCase):
     
+    def tearDown(self):
+        mytb.done()
+        myms.done()
+    
     def _check_weights(
         self, msname, row_to_rows, data_column, chan_flags, combine_corr,
         chanbins, wtrange
@@ -499,7 +503,12 @@ class statwt_test(unittest.TestCase):
                     lside=False)
                 )
             elif statalg == "bogus":
-                self.assertFalse(statwt(vis=dst, statalg=statalg))
+                if th.is_casa6():
+                    self.assertRaises(
+                        Exception, statwt, vis=dst, statalg=statalg
+                    )
+                else:
+                    self.assertFalse(statwt(vis=dst, statalg=statalg))
             shutil.rmtree(dst)
                 
     def test_wtrange(self):
