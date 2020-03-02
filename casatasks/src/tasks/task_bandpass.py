@@ -66,10 +66,9 @@ def bandpass(vis=None,caltable=None,
                                        observation='', baseline='',uvrange='',chanmode='none',
                                        msselect='ANTENNA1!=ANTENNA2');
 
-		# signal use of correlation-dependent flags, if requested
-		if corrdepflags:
-			mycb.setcorrdepflags(True)
-
+                # signal use of correlation-dependent flags, if requested
+                if corrdepflags:
+                        mycb.setcorrdepflags(True)
 
                 # set the model, if specified
                 if (len(smodel)>0):
@@ -77,7 +76,6 @@ def bandpass(vis=None,caltable=None,
                 
 
                 # Arrange applies....
-
                 if docallib:
                         # by cal library from file
                         mycallib=callibrary()
