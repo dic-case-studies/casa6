@@ -2603,7 +2603,7 @@ typedef std::map< Int, std::map <Int, std::map< Int, uInt> >  > SPWAntsIndexMap;
 template <typename Functor>
 void cubePropagateFlags(const Vector<Bool> &flagRow,
                         Vector<Bool> &flagMapped,
-                        Cube<Bool> flagCubeMapped,
+                        Cube<Bool> &flagCubeMapped,
                         const SPWAntsIndexMap &spwAnt1Ant2IndexMap,
                         const Vector<Int> &orgAnt1,
                         const Vector<Int> &orgAnt2,
