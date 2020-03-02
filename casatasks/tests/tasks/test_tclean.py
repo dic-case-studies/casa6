@@ -112,7 +112,7 @@ if is_CASA6:
      _qa = quanta( )
      _me = measures( )
      
-     refdatapath = ctsys.resolve('regression/unittest/clean/refimager')
+     refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
 else:
@@ -130,7 +130,7 @@ else:
      _qa = qa
      _me = me
 
-     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager'
+     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
      
