@@ -30,6 +30,7 @@ else:
         )
 
 src = datadir + 'ngc5921_small.statwt.ms'
+vlass = os.path.join(datadir, 'test_vlass_subset.ms')
 if not os.path.exists(src):
     raise Exception('Cannot find ' + src)
 
@@ -135,14 +136,16 @@ def _get_dst_cols(dst, other="", dodata=True):
 def _get_table_cols(mytb):
     times = mytb.getcol("TIME")
     wt = mytb.getcol("WEIGHT")
-    wtsp = mytb.getcol("WEIGHT_SPECTRUM")
+    wtsp = None if mytb.colnames().count('WEIGHT_SPECTRUM') == 0 \
+        else mytb.getcol("WEIGHT_SPECTRUM")
     flag = mytb.getcol("FLAG")
     frow = mytb.getcol("FLAG_ROW")
     data_col_name = 'CORRECTED_DATA' \
         if mytb.colnames().count('CORRECTED_DATA') > 0 else 'DATA'
     data = mytb.getcol(data_col_name)
     sigma = mytb.getcol("SIGMA")
-    sisp = mytb.getcol("SIGMA_SPECTRUM")
+    sisp = None if mytb.colnames().count('SIGMA_SPECTRUM') == 0 \
+        else mytb.getcol("SIGMA_SPECTRUM")
     return [times, wt, wtsp, flag, frow, data, sigma, sisp]
 
 class statwt_test(unittest.TestCase):
@@ -248,17 +251,19 @@ class statwt_test(unittest.TestCase):
         ] = _get_table_cols(mytb)
         mytb.done()
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
-        self.assertTrue(
-            np.allclose(gwtsp, ewtsp), 'WEIGHT_SPECTRUM comparison failed'
-        )
+        if type(gwtsp) != type(None) and type(ewtsp) != type(None):
+            self.assertTrue(
+                np.allclose(gwtsp, ewtsp), 'WEIGHT_SPECTRUM comparison failed'
+            )
         self.assertTrue((gflag == eflag).all(), 'FLAG comparison failed')
         self.assertTrue((gfrow == efrow).all(), 'FLAG_ROW comparison failed')
         # all flags must be True where wtsp = 0
         self.assertTrue(np.extract(gwtsp == 0, gflag).all())
         self.assertTrue(np.allclose(gsigma, esigma), 'SIGMA comparison failed')
-        self.assertTrue(np.allclose(
-            gsisp, esisp), 'SIGMA_SPECTRUM comparison failed'
-        )
+        if type(gsisp) != type(None) and type(esisp) != type(None):
+            self.assertTrue(np.allclose(
+                gsisp, esisp), 'SIGMA_SPECTRUM comparison failed'
+            )
 
     def test_algorithm(self):
         """ Test the algorithm, includes excludechans tests"""
@@ -908,6 +913,22 @@ class statwt_test(unittest.TestCase):
             "variance is incorrect"
         )
         shutil.rmtree(dst)
+        
+    def test_multi_spw_no_spectrum_columns(self):
+        "Test multi spw with no sigma nor weight spectrum columns works"
+        for tb in [1, "5s"]:
+            dst = "statwt_test_vlass_timebin" + str(tb) + ".ms"
+            shutil.copytree(vlass, dst)
+            myms.open(dst, nomodify=False)
+            res = myms.statwt(
+                combine='scan,field,state', timebin=tb,
+                datacolumn='residual_data'
+            )
+            myms.done()
+            ref = 'test_vlass_timebin' + str(tb) + '.ms'
+            self.compare(dst, ref)
+            shutil.rmtree(dst)
+
 
 def suite():
     return [statwt_test]
