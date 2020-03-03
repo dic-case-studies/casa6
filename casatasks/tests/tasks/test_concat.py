@@ -1886,6 +1886,130 @@ class test_concat(unittest.TestCase):
 
         self.assertTrue(retValue['success'])
 
+    def test19(self):
+        '''Concat 19: two MSs with different antenna table in full polarization (CAS-12872)'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
+        
+        self.res = concat(vis=['n08c1_swap1.ms','n08c1_swap2_swapped.ms'],concatvis=msname)
+        self.assertEqual(self.res,True)
+        
+        print(myname, ": Now checking output ...")
+        mscomponents = set(["table.dat",
+                            "table.f1",
+                            "table.f2",
+                            "table.f3",
+                            "table.f4",
+                            "table.f5",
+                            "table.f6",
+                            "table.f7",
+                            "table.f8",
+                            "ANTENNA/table.dat",
+                            "DATA_DESCRIPTION/table.dat",
+                            "FEED/table.dat",
+                            "FIELD/table.dat",
+                            "FLAG_CMD/table.dat",
+                            "HISTORY/table.dat",
+                            "OBSERVATION/table.dat",
+                            "POINTING/table.dat",
+                            "POLARIZATION/table.dat",
+                            "PROCESSOR/table.dat",
+                            "SPECTRAL_WINDOW/table.dat",
+                            "STATE/table.dat",
+                            "ANTENNA/table.f0",
+                            "DATA_DESCRIPTION/table.f0",
+                            "FEED/table.f0",
+                            "FIELD/table.f0",
+                            "FLAG_CMD/table.f0",
+                            "HISTORY/table.f0",
+                            "OBSERVATION/table.f0",
+                            "POINTING/table.f0",
+                            "POLARIZATION/table.f0",
+                            "PROCESSOR/table.f0",
+                            "SPECTRAL_WINDOW/table.f0",
+                            "STATE/table.f0"
+                            ])
+        for name in mscomponents:
+            if not os.access(msname+"/"+name, os.F_OK):
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
+            else:
+                print(myname, ": ", name, "present.")
+                
+        self.assertTrue(retValue['success'])
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
+        try:
+            ms.open(msname)
+        except:
+            print(myname, ": Error  Cannot open MS table", tablename)
+            retValue['success']=False
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+        else:
+            ms.close()
+            tb.close()
+            if 'test19.ms' in glob.glob("*.ms"):
+                shutil.rmtree('test19.ms',ignore_errors=True)
+            shutil.copytree(msname,'test19.ms')
+            print(myname, ": OK. Checking tables in detail ...")
+            retValue['success']=True
+
+            # check Main table
+            nrows = 12
+            msnrows = []
+            for myms in ['n08c1_swap1.ms','n08c1_swap2_swapped.ms']:
+                tb.open(myms)
+                msnrows.append(tb.nrows())
+                tb.close()
+            tb.open('n08c1_swap2.ms')
+            olddata = tb.getcol('DATA', 0, nrows)
+            oldflag = tb.getcol('FLAG', 0, nrows)
+            oldweight = tb.getcol('WEIGHT', 0, nrows)
+            oldwtspec = tb.getcol('WEIGHT_SPECTRUM', 0, nrows)
+            oldsigma = tb.getcol('SIGMA', 0, nrows)
+            oldsgspec = tb.getcol('SIGMA_SPECTRUM', 0, nrows)
+            olduvw = tb.getcol('UVW', 0, nrows)
+            tb.close()
+
+            ms.open('test19.ms',nomodify=False)
+            ms.sort(columns=['TIME','ANTENNA1','ANTENNA2'])
+            ms.done()
+            tb.open('test19.ms')
+            newdata = tb.getcol('DATA', msnrows[0], nrows)
+            newflag = tb.getcol('FLAG', msnrows[0], nrows)
+            newweight = tb.getcol('WEIGHT', msnrows[0], nrows)
+            newwtspec = tb.getcol('WEIGHT_SPECTRUM', msnrows[0], nrows)
+            newsigma = tb.getcol('SIGMA', msnrows[0], nrows)
+            newsgspec = tb.getcol('SIGMA_SPECTRUM', msnrows[0], nrows)
+            newuvw = tb.getcol('UVW', msnrows[0], nrows)
+            tb.close()
+            result = True
+            if not (olddata == newdata).all():
+                print('Mismatch in DATA column')
+                result = False
+            if not (oldflag == newflag).all():
+                print('Mismatch in FLAG column')
+                result = False
+            if not (oldweight == newweight).all():
+                print('Mismatch in WEIGHT column')
+                result = False
+            if not (oldwtspec == newwtspec).all():
+                print('Mismatch in WEIGHT_SPECTRUM column')
+                result = False
+            if not (oldsigma == newsigma).all():
+                print('Mismatch in SIGMA column')
+                result = False
+            if not (oldsgspec == newsgspec).all():
+                print('Mismatch in SIGMA_SPECTRUM column')
+                result = False
+            if not (olduvw == newuvw).all():
+                print('Mismatch in UVW column')
+                result = False
+
+            if not result:
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+'Check of MAIN table failed'
+
+        self.assertTrue(retValue['success'])
 
 
 class concat_cleanup(unittest.TestCase):           
