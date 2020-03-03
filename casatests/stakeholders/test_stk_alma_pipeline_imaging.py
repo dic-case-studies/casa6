@@ -1,9 +1,23 @@
 ##########################################################################
-##########################################################################
-# test_tclean_ALMA_pipeline
+# test_stk_alma_pipeline_imaging.py
 #
-# Author: Shawn Thomas Booth
-
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [https://open-jira.nrao.edu/browse/CAS-12428]
+#
+#
+##########################################################################
 
 '''
 Datasets (MOUS)
@@ -32,9 +46,7 @@ Test list
 
 # Imports #
 import os
-import subprocess
 import glob
-import time
 import sys
 import unittest
 import numpy
@@ -59,6 +71,7 @@ try:
 
     CASA6 = True
     _ia = image()
+    ctsys_resolve = ctsys.resolve
 
 except ImportError:
     from __main__ import default  # reset given task to its default values
@@ -66,11 +79,15 @@ except ImportError:
     from taskinit import *  # Imports all casa tools
     from parallel.parallel_task_helper import ParallelTaskHelper
 
-    _ia = iatool()
+    _ia = iatool()    
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casa-data-req/')
+        return os.path.join(dataPath,apath)
+    
 
 # location of data
-data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
-#data_path = os.environ.get('CASAPATH').split()[0] + '/casa-data-vt/vlass/'
+#data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
+data_path = ctsys_resolve('stakeholders/alma/')
 
 
 ## Base Test class with Utility functions
@@ -4331,5 +4348,4 @@ def suite():
 # Main #
 if __name__ == '__main__':
     unittest.main()
-
 
