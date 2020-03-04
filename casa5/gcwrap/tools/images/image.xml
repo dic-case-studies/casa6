@@ -4122,7 +4122,7 @@ ia.close()
 </method>
 
 
-   <method type="function" name="fft">
+   <method type="function" name="fft" typecheck="true">
    <shortdescription>FFT the image</shortdescription>
 
 <input>
