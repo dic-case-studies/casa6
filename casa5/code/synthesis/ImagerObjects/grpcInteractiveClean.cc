@@ -24,6 +24,8 @@
 #include "img.grpc.pb.h"
 #include "ping.grpc.pb.h"
 
+#include <stdcasa/StdCasa/CasacSupport.h>
+
 using namespace casacore;
 
 // https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
@@ -71,6 +73,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         CycleNiter = 0;
         InteractiveNiter = 0;
         Threshold = 0;
+        CycleThreshold = 0;
         InteractiveThreshold = 0.0;
         IsCycleThresholdAuto = true;
         IsThresholdAuto = false;
@@ -86,7 +89,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         MaxPsfSidelobe = 0.0;
         MinPsfFraction = 0.05;
         MaxPsfFraction = 0.8;
-        PeakResidual = -1.0;
+        PeakResidual = 0.0;
         MinorCyclePeakResidual = 0.0;
         PrevPeakResidual = -1.0;
         NsigmaThreshold = 0.0;
@@ -100,6 +103,31 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         NSummaryFields = 6;
     }
 
+    void grpcInteractiveCleanManager::setControls( int niter, int ncycle, float threshold ) {
+        LogIO os( LogOrigin("grpcInteractiveCleanManager", __FUNCTION__, WHERE) );
+        static const auto debug = getenv("GRPC_DEBUG");
+        if ( debug ) std::cerr << "setting clean controls:";
+        access( (void*) 0,
+                std::function< void* ( void*, grpcInteractiveCleanState& )>(
+                       [&]( void *dummy, grpcInteractiveCleanState &state ) -> void* {
+
+			   state.Niter = niter;
+			   if ( debug ) std::cerr << " niter=" << state.Niter;
+			   state.CycleNiter = ncycle;
+			   if ( debug ) std::cerr << " cycleniter=" << state.CycleNiter;
+			   state.Threshold = threshold;
+			   if ( debug ) std::cerr << " threshold=" << state.Threshold;
+                           return dummy;
+
+                       } ) );
+
+        if ( debug ) {
+            std::cerr << " (process " << getpid( ) << ", thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+
+    }
 	void grpcInteractiveCleanManager::setControlsFromRecord(const casac::record &iterpars) {
 		LogIO os( LogOrigin("grpcInteractiveCleanManager", __FUNCTION__, WHERE) );
         static const auto debug = getenv("GRPC_DEBUG");
@@ -159,6 +187,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                    std::cerr << " cyclethreshold=" << state.CycleThreshold;
                                    std::cerr << " iscyclethresholdauto=" <<
                                        (state.IsCycleThresholdAuto ? "true" : "false");
+				   fflush(stderr);
                                }
                            }
 
@@ -261,8 +290,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                         auto img_name = oneimg.find("imagename");
                         auto img_multiterm = oneimg.find("multiterm");
                         if ( img_name != oneimg.end( ) && img_multiterm != oneimg.end( ) ) {
-                            clean_images.push_back( std::pair<std::string,bool>(img_name->second.getString(),
-                                                                                img_multiterm->second.toBool( )) );
+                            clean_images.push_back( std::make_tuple( img_name->second.getString(),
+                                                                     img_multiterm->second.toBool( ), false) );
                         }
                     }
                 } else {
@@ -276,7 +305,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                     std::cerr << "clean images specified: ";
                     for ( auto it = clean_images.begin( ); it != clean_images.end( ); ++it ) {
                         if ( it != clean_images.begin( ) ) std::cerr << ", ";
-                        std::cerr << it->first << " [" << (it->second ? "true" : "false") << "]";
+                        std::cerr << std::get<0>(*it) << " [" << (std::get<1>(*it) ? "true" : "false") << "]";
                     }
                     std::cerr << " (process " << getpid( ) << ", thread " << 
                         std::this_thread::get_id() << ")" << std::endl;
@@ -333,6 +362,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
                            rec.define( RecordFieldId("threshold"),  state.Threshold );
                            rec.define( RecordFieldId("nsigma"),  state.Nsigma );
+
                            if( state.IsCycleThresholdAuto == true ) updateCycleThreshold(state);
                            state.IsCycleThresholdAuto = true;        // Reset this, for the next round
 
@@ -628,6 +658,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
                            if ( state.PrevPeakResidual == -1.0 ) state.PrevPeakResidual = state.PeakResidual;
                            if ( state.PrevPeakResidualNoMask == -1.0 ) state.PrevPeakResidualNoMask = state.PeakResidualNoMask;
+                           if( state.IsCycleThresholdAuto == true ) updateCycleThreshold(state);
+
                            return dummy; } ) );
 	}
 
@@ -787,10 +819,31 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         static const auto debug = getenv("GRPC_DEBUG");
         if ( viewer_started == false ) {
             // start the viewer process if it is not already running...
+            if ( debug ) {
+                std::cerr << "spawning viewer process" <<
+                    " (process " << getpid( ) << ", thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
             return spawn_viewer( );
         } else {
-            if ( alive( ) ) return true;
-            else return launch( );
+	    if ( alive( ) ) {
+	      if ( debug ) {
+                std::cerr << "viewer process available" <<
+                    " (process " << getpid( ) << ", thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+	      }
+	      return true;
+	    } else {
+	      if ( debug ) {
+                std::cerr << "re-spawning viewer process" <<
+                    " (process " << getpid( ) << ", thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+	      }
+	      return launch( );
+	    }
         }
         return false;
     }
@@ -818,7 +871,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         }
     }
 
-    int grpcInteractiveCleanGui::open_panel( std::list<std::pair<std::string,bool>> images ) {
+    int grpcInteractiveCleanGui::open_panel( std::list<std::tuple<std::string,bool,bool>> images ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if ( viewer_started == false ) {
             if ( launch( ) == false ) return -1;
@@ -1012,14 +1065,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             fflush(stderr);
         }
 
-
-        std::cout << "---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----" << std::endl;
-        std::cout << "        action: " << imresult.action( ) << std::endl;
-        std::cout << "         panel: " << imresult.state( ).panel( ).id( ) << std::endl;
-        std::cout << "         niter: " << imresult.state( ).niter( ) << std::endl;
-        std::cout << "    cycleniter: " << imresult.state( ).cycleniter( ) << std::endl;
-        std::cout << "cyclethreshold: " << imresult.state( ).cyclethreshold( ) << std::endl;
-        std::cout << "---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----" << std::endl;
+        niter = imresult.state( ).niter( );
+        cycleniter = imresult.state( ).cycleniter( );
+        thresh = imresult.state( ).threshold( );
+        cyclethresh = imresult.state( ).cyclethreshold( );
 
         int result = 1;
         std::string action = imresult.action( );
@@ -1030,11 +1079,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             os << "ill-formed action result (" << action << ")" << LogIO::WARN << LogIO::POST;
             return 0;
         }
-
-        niter = imresult.state( ).niter( );
-        cycleniter = imresult.state( ).cycleniter( );
-        thresh = imresult.state( ).threshold( );
-        cyclethresh = imresult.state( ).threshold( );
 
         state->second.prev_image_id = state->second.image_id;
         state->second.prev_mask_id = state->second.mask_id;
@@ -1340,25 +1384,29 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         casacore::Vector<int> itsActionCodes(clean_images.size( ));
         itsActionCodes = 1.0;
 
-        int ind = 0;
+        unsigned ind = 0;
         for ( auto it = clean_images.begin( ); it != clean_images.end( ); ++it, ++ind ) {
+            if ( std::get<2>(*it) ) continue;
             if ( fabs(itsActionCodes[ind]) == 1.0 ) {
-                std::string imageName = it->first + ".residual" + ( it->second ? ".tt0" : "" );
-                std::string maskName = it->first + ".mask";
+                std::string imageName = std::get<0>(*it) + ".residual" + ( std::get<1>(*it) ? ".tt0" : "" );
+                std::string maskName = std::get<0>(*it) + ".mask";
                 itsActionCodes[ind] = gui.interactivemask( clean_panel_id, imageName, maskName, iterleft,
                                                            cycleniter, strthresh, strcycthresh );
-                if( itsActionCodes[ind] < 0 ) os << "[" << it->first <<"] Mask changed interactively." << LogIO::POST;
-			}
+                if( itsActionCodes[ind] < 0 ) os << "[" << std::get<0>(*it) <<"] Mask changed interactively." << LogIO::POST;
+                std::get<2>(*it) = (fabs(itsActionCodes[ind])==3);
+            }
         }
 
-		  Quantity qa;
-		  casacore::Quantity::read(qa,strthresh);
-		  threshold = qa.getValue(Unit("Jy"));
+
+        Quantity qa;
+        casacore::Quantity::read(qa,strthresh);
+        threshold = qa.getValue(Unit("Jy"));
 
 
-		  float oldcyclethreshold = cyclethreshold;
-		  casacore::Quantity::read(qa,strcycthresh);
-		  cyclethreshold = qa.getValue(Unit("Jy"));
+	float oldcyclethreshold = cyclethreshold;
+	Quantity qb;
+	casacore::Quantity::read(qb,strcycthresh);
+	cyclethreshold = qb.getValue(Unit("Jy"));
 
         access( (void*) 0,
                 std::function< void* ( void*, grpcInteractiveCleanState& )>(
@@ -1366,15 +1414,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                            state.Niter = iterdone+iterleft;
                            state.CycleNiter = cycleniter;
                            state.Threshold = threshold;
-                           if ( fabs( cyclethreshold - oldcyclethreshold ) > 1e-06 )
+
+                           if ( fabs(cyclethreshold) > 0 && fabs(oldcyclethreshold) > 0 &&
+				fabs( cyclethreshold - oldcyclethreshold ) > 1e-06 )
                                state.CycleThreshold = cyclethreshold;
                            return dummy;
                        } ) );
 
 		  Bool alldone=true;
-		  for ( ind = 0; ind < clean_images.size( ); ind++ ) {
+		  for ( ind = 0; ind < clean_images.size( ); ++ind ) {
 		      alldone = alldone & ( fabs(itsActionCodes[ind])==3 );
-          }
+		  }
 		  if( alldone==true ) changeStopFlag( true );
 
           Record returnRec;
