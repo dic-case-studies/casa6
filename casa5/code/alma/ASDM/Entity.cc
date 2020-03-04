@@ -110,7 +110,7 @@ namespace asdm {
       Entity e;
       e.setFromXML(s);
       return e;
-    } catch (OutOfBoundsException err) {
+    } catch (const OutOfBoundsException &err) {
       throw InvalidArgumentException("Unexpected end-of-string!");
     }
   }

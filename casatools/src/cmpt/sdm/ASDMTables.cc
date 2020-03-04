@@ -1204,6 +1204,8 @@ using namespace WVRMethodMod;
 		
 			
 		
+			
+		
 	 
 #include <alma/ASDM/ConfigDescriptionTable.h>
 #include <alma/ASDM/ConfigDescriptionRow.h>
@@ -3053,6 +3055,8 @@ namespace asdm {
   		
       tableDesc_.addColumn(ScalarColumnDesc<String>("calReductionId", "blabla"));
   		
+      tableDesc_.addColumn(ScalarColumnDesc<String>("spectralWindowId", "blabla"));
+  		
   		
       tableDesc_.addColumn(ScalarColumnDesc<double>("startValidTime", "blabla"));
   		
@@ -3107,6 +3111,8 @@ namespace asdm {
   		
         ScalarColumn<String> calReductionId(*table_p_, "calReductionId");             
   		
+        ScalarColumn<String> spectralWindowId(*table_p_, "spectralWindowId");             
+  		
   		
         ScalarColumn<double> startValidTime(*table_p_, "startValidTime");             
   		
@@ -3160,6 +3166,10 @@ namespace asdm {
 
 	
 	    calReductionId.put(rowIndex, rows.at(i)->getCalReductionId().toString());
+	
+
+	
+	    spectralWindowId.put(rowIndex, rows.at(i)->getSpectralWindowId().toString());
 	
 
 		    
@@ -7270,6 +7280,8 @@ namespace asdm {
   		
       tableDesc_.addColumn(ScalarColumnDesc<double>("water", "blabla"));
   		
+  		
+      tableDesc_.addColumn(ScalarColumnDesc<float>("tauBaseline", "blabla"));
   		  		
     }
 
@@ -7322,6 +7334,8 @@ namespace asdm {
   		
         ScalarColumn<double> water(*table_p_, "water");             
   		
+  		
+        ScalarColumn<float> tauBaseline(*table_p_, "tauBaseline");             
   		  	
 
 	    for (unsigned int i = 0; i < rows.size(); i++) {
@@ -7400,6 +7414,11 @@ namespace asdm {
 	
 
 		    
+	
+	    if (rows.at(i)->isTauBaselineExists())
+		    tauBaseline.put(rowIndex, rows.at(i)->getTauBaseline());
+	
+
 		    rowIndex++;		
 	    }
 	    table_p_->flush();
