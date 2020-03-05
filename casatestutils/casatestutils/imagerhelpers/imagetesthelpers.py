@@ -415,7 +415,7 @@ class TestHelpers:
 
     def check_pixmask(self, imname, theval=True, thepos=[0, 0, 0, 0], testname="check_pixmask"):
         pstr = ''
-        readval = get_pixmask(imname, thepos)
+        readval = TestHelpers().get_pixmask(imname, thepos)
         res = True
         if readval == None:
             res = False
