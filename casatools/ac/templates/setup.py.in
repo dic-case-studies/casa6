@@ -465,7 +465,12 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
-               ctsys.initialize( __sys.executable, __find_user_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] + __find_data_path( ) )
+               _dpath = [ ]
+               try:
+                   import casadata
+                   _dpath = [ casadata.datapath ]
+               except: pass
+               ctsys.initialize( __sys.executable, __find_user_data_path( ) + _dpath + __find_data_path( ) )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -672,8 +677,17 @@ def build_grpc( prefix, srcdir, collectdir ):
                     s = s.replace('CXXFLAGS += -stdlib=libc++','')
                     ### it could be that replacing DEFAULT_CXX should be done in all cases
                     s = s.replace('$(DEFAULT_CXX)',props['build.compiler.cxx'])
-                if sysconfig.get_platform() == 'macosx-10.15-x86_64':
-                    s = s.replace('CPPFLAGS += -g -Wall -Wextra -Werror','CPPFLAGS += -g -Wall -Wextra')
+                if sys.platform =='darwin':
+                    proc = Popen( [ "/usr/bin/xcodebuild -version | grep Xcode" ], stdout=PIPE, stderr=PIPE, shell=True )
+                    out,err = pipe_decode(proc.communicate( ))
+                    print("Xcode version: " + out)
+                    xcodeversion = out.split(" ")[1].strip()
+                    xcode_parts = xcodeversion.split(".")
+                    xcodeversionmajor = xcode_parts[0];
+                    xcodeversionminor = xcode_parts[1]
+                    if int(xcodeversionmajor) >= 10:
+                        print("Xcode version is 10 or greater. Won't treat grpc build warnings as errors ")
+                        s = s.replace('CPPFLAGS += -g -Wall -Wextra -Werror','CPPFLAGS += -g -Wall -Wextra')
 
                 with open(makefile, "w") as fd:
                     fd.write(s)
@@ -1181,11 +1195,6 @@ class casa_build_ext(build_ext):
             fd.write("%s\n" % imports)
         """
         generate_casac_init_py()
-
-        try:
-            spawn(["rsync", "-avz", "rsync://casa-rsync.nrao.edu/casa-data", "%s/__data__" % moduledir])
-        except:
-            print("RSYNC OF CASA DATA FROM 'rsync://casa-rsync.nrao.edu/casa-data' FAILED!")
 
         if do_wheel_closure:
             module_path = os.path.join('build', distutils_dir_name('lib'), module_name)
@@ -1968,11 +1977,10 @@ class create_makefile(Command):
             open(".built.grpc",'a').close( )
 
     def __generate_casa_makefile(self):
-        rsync_data_target = "rsync_data"
         my_targets = [
             yacc_target, lex_target, cpp_target, c_target,
             fortran_target, libcasatools, swig_target, statics_wrap_target,
-            tool_libs_target, straight_copies_target, rsync_data_target
+            tool_libs_target, straight_copies_target
         ]
         write_makefile_begin(my_targets)
         write_make_cpp()
@@ -2192,14 +2200,6 @@ class create_makefile(Command):
         generate_casac_init_py()
         # testing
         do_testing()
-        # rsync
-        with open("makefile", "a") as mk:
-            mk.write("\n# targets to rsync data repos\n")
-            mk.write(".PHONY: " + rsync_data_target + "\n")
-            mk.write(
-                rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
-                + moduledir + "/__data__"
-            )
         write_dependency_tracking()
         print(
             "Successfully generated makefile! Now, run 'make [-j<n>]' "
@@ -2461,4 +2461,4 @@ if __name__ == '__main__':
                                    if wheel_build \
                                    else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
            ext_modules=ext,
-           install_requires=[ 'numpy' ] )
+           install_requires=[ 'numpy', 'casadata' ] )

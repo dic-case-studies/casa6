@@ -25,13 +25,17 @@
 CASA6 = False
 try:
     import casatools
-    from casatasks import applycal
+    from casatasks import applycal, casalog
     CASA6 = True
     tb = casatools.table()
+    calibrater = casatools.calibrater
+    
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    
+    calibrater = cbtool
 import sys
 import os
 import unittest
@@ -47,6 +51,11 @@ if CASA6:
     altdata = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms/')
     altCal = casatools.ctsys.resolve('caltables/ngc5921.ref1a.gcal')
     callibfile = casatools.ctsys.resolve('text/refcallib.txt')
+    #Data from merged task test 
+    mmspath = casatools.ctsys.resolve('visibilities/vla/ngc5921.applycal.mms')
+    mmsbcalpath = casatools.ctsys.resolve('caltables/ngc5921.bcal')
+    mmsgcalpath = casatools.ctsys.resolve('caltables/ngc5921.gcal')
+    mmsfluxpath = casatools.ctsys.resolve('caltables/ngc5921.fluxscale')
     
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
@@ -57,6 +66,11 @@ else:
         altdata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms/'
         altCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref1a.gcal/'
         callibfile = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/refcallib.txt'
+        #Data from merged task test
+        mmspath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.applycal.mms'
+        mmsbcalpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.bcal'
+        mmsgcalpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.gcal'
+        mmsfluxpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.fluxscale'
         
     else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/gaincaltest2.ms/'
@@ -66,6 +80,12 @@ else:
         altdata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
         altCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref1a.gcal/'
         callibfile = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/refcallib.txt'
+        #Data from merged task test
+        mmspath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.applycal.mms'
+        mmsbcalpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.bcal'
+        mmsgcalpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.gcal'
+        mmsfluxpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.fluxscale'
+        
     
 def getparam(caltable, colname='CPARAM'):
     ''' Open a caltable and get the provided column '''
@@ -121,11 +141,25 @@ def tableComp(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
         truths = [[x, np.all(truthDict[x] == True)] for x in cols]
 
     return np.array(truths)
+    
+def change_perms(path):
+    os.chmod(path, 0o777)
+    for root, dirs, files in os.walk(path):
+        for d in dirs:
+            os.chmod(os.path.join(root,d), 0o777)
+        for f in files:
+            os.chmod(os.path.join(root,f), 0o777)
+
 
 datacopy = 'applycalcopy.ms'
 dataref = 'referencedata.ms'
 altcopy = 'altcopy.ms'
 temptcal = 'temptcal.T0'
+
+mmscopy = 'mmsapplycalcopy.mms'
+mmsbcalcopy = 'mmsbcalcopy.cal'
+mmsgcalcopy = 'mmsgcalcopy.cal'
+mmsfluxcopy = 'mmsfluxcopy.cal'
 
 class applycal_test(unittest.TestCase):
     
@@ -136,6 +170,15 @@ class applycal_test(unittest.TestCase):
     def setUp(self):
         shutil.copytree(datapath, datacopy)
         shutil.copytree(datapath, dataref)
+        shutil.copytree(mmspath, mmscopy)
+        
+        shutil.copytree(mmsbcalpath, mmsbcalcopy)
+        shutil.copytree(mmsgcalpath, mmsgcalcopy)
+        shutil.copytree(mmsfluxpath, mmsfluxcopy)
+        
+        change_perms(mmsbcalcopy)
+        change_perms(mmsgcalcopy)
+        change_perms(mmsfluxcopy)
     
     def tearDown(self):
         shutil.rmtree(datacopy)
@@ -156,6 +199,18 @@ class applycal_test(unittest.TestCase):
             
         if os.path.exists(temptcal):
             shutil.rmtree(temptcal)
+            
+        if os.path.exists(mmscopy):
+            shutil.rmtree(mmscopy)
+            
+        if os.path.exists(mmsbcalcopy):
+            shutil.rmtree(mmsbcalcopy)
+            
+        if os.path.exists(mmsgcalcopy):
+            shutil.rmtree(mmsgcalcopy)
+            
+        if os.path.exists(mmsfluxcopy):
+            shutil.rmtree(mmsfluxcopy)
 
         
     @classmethod
@@ -496,6 +551,34 @@ class applycal_test(unittest.TestCase):
         result = any('flags.applycal' in i for i in files)
         
         self.assertTrue(result)
+        
+    ### Merged Test 
+    
+    def test1_applycal_fluxscale_gcal_bcal(self):
+        """Test: Apply calibration using fluxscal gcal and bcal tables. Create flagbackup for an MMS"""
+        
+        aux = [mmsbcalcopy, mmsgcalcopy, mmsfluxcopy]
+        
+        # Repository caltables are pre-v4.1, and we
+        # must update them _before_ applycal to avoid contention
+        casalog.post("Updating pre-v4.1 caltables: %s" % str(aux),"WARN","test1_applycal_fluxscale_gcal_bcal")
+        cblocal = calibrater()
+        for oldct in aux:
+            cblocal.updatecaltable(oldct)
+        casalog.post("Pre-v4.1 caltables updated","INFO","test1_applycal_fluxscale_gcal_bcal")
+                
+        # Run applycal in MMS mode. Verify that the flagbackup is correctly created for the top-level MMS only
+        applycal(vis=mmscopy,field='',spw='',selectdata=False,gaintable=aux,
+                 gainfield=['nearest','nearest','0'],
+                 interp=['linear', 'linear','nearest'],spwmap=[], flagbackup=True)
+                
+        # Verify that flagbackup works
+        self.assertTrue(os.path.exists(mmscopy+'.flagversions'), 'Backup of flags was not created') 
+        files = os.listdir(mmscopy+'/SUBMSS')
+        print(files)
+        for ff in files:
+            self.assertFalse(ff.__contains__('flagversions'))
+        
     
 def suite():
     return[applycal_test]
