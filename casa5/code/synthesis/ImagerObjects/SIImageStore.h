@@ -80,6 +80,7 @@ class SIImageStore
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &gridwtim,
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &pbim,
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &restoredpbcorim,
+               const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &tempworkim,
 	       const casacore::CoordinateSystem &csys,
 	       const casacore::IPosition &imshape,
 	       const casacore::String &imagename,
@@ -120,6 +121,8 @@ class SIImageStore
   virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > gridwt(casacore::IPosition newshape=casacore::IPosition(0));
   virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > pb(casacore::uInt term=0);
   virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > imagepbcor(casacore::uInt term=0);
+  ///This returns a temporary image of same size/coordinates ...it stays alive as long as this object stays up
+  virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > tempworkimage(casacore::uInt term=0);
 
   virtual void setModelImageOne( casacore::String modelname, casacore::Int nterm=-1 );
   virtual void setModelImage( casacore::Vector<casacore::String> modelnames );
@@ -317,7 +320,7 @@ private:
   virtual void initMetaInfo(std::shared_ptr<casacore::ImageInterface<casacore::Float> > &imptr,
                             const casacore::String name);
 
-  std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB;
+  std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB, itsTempWorkIm;
   std::shared_ptr<casacore::ImageInterface<casacore::Complex> > itsForwardGrid, itsBackwardGrid;
 
   std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsParentPsf, itsParentModel, itsParentResidual, itsParentWeight, itsParentImage, itsParentSumWt, itsParentGridWt, itsParentPB, itsParentImagePBcor;

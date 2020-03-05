@@ -35,7 +35,7 @@ using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 extern Applicator applicator;
 
-CubeMinorCycleAlgorithm::CubeMinorCycleAlgorithm() : myName_p("CubeMinorCycleAlgorithm"), status_p(False){
+  CubeMinorCycleAlgorithm::CubeMinorCycleAlgorithm() : myName_p("CubeMinorCycleAlgorithm"), autoMaskOn_p(False),status_p(False){
 	
 }
 CubeMinorCycleAlgorithm::~CubeMinorCycleAlgorithm() {
@@ -43,6 +43,7 @@ CubeMinorCycleAlgorithm::~CubeMinorCycleAlgorithm() {
 }
 	
 void CubeMinorCycleAlgorithm::get() {
+  ///New instructions reset previous state
   reset();
 	//cerr << "in get for child process " << applicator.isWorker() << endl;
 	Record decParsRec;
@@ -65,7 +66,7 @@ void CubeMinorCycleAlgorithm::get() {
         applicator.get(pbName_p);
         //get beamsetrec #9
         applicator.get(beamsetRec_p);
-        //get psfsidelobelev #9
+        //get psfsidelobelev #10
         applicator.get(psfSidelobeLevel_p);
        
 	//cerr <<"GET chanRange " << chanRange_p << endl;
@@ -95,9 +96,18 @@ void CubeMinorCycleAlgorithm::task(){
         subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
         LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
 	subDeconv.initMinorCycle(subimstor);
+        if(autoMaskOn_p){
+          subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
+          subDeconv.setPosMask(subimstor->tempworkimage());
+          subDeconv.setAutoMask();
+        }
+        //subDeconv.setupMask();
 	returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
         writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
-        
+        if(autoMaskOn_p){
+          writeBackToFullImage(posMaskName_p, chanRange_p[0], chanRange_p[1], (subimstor->tempworkimage()));
+          writeBackToFullImage(maskName_p, chanRange_p[0], chanRange_p[1], (subimstor->mask()));
+        }
        	status_p = True;
 }
 String&	CubeMinorCycleAlgorithm::name(){
@@ -110,6 +120,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
   std::shared_ptr<ImageInterface<Float> >submodel=nullptr;
   std::shared_ptr<ImageInterface<Float> > submask=nullptr;
   std::shared_ptr<ImageInterface<Float> > subpb=nullptr;
+  std::shared_ptr<ImageInterface<Float> > subposmask=nullptr;
 	Int chanBeg=0;
 	Int chanEnd=0;
 	chanBeg=chanRange_p[0];
@@ -120,14 +131,22 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
         makeTempImage(subpsf, psfName_p, chanBeg, chanEnd);
         makeTempImage(subresid, residualName_p, chanBeg, chanEnd);
         makeTempImage(submodel, modelName_p, chanBeg, chanEnd, True);
-        makeTempImage(submask, maskName_p, chanBeg, chanEnd);
+        makeTempImage(submask, maskName_p, chanBeg, chanEnd, True);
         //       PagedImage<Float> model(modelName_p, TableLock::UserLocking);
         //   submodel.reset(SpectralImageUtil::getChannel(model, chanBeg, chanEnd, true));
         if(!pbName_p.empty()){
            makeTempImage(subpb, pbName_p, chanBeg, chanEnd);
         }
+        if(iterBotRec_p.isDefined("posmaskname") ){
+            iterBotRec_p.get("posmaskname", posMaskName_p);
+            if(Table::isReadable(posMaskName_p)){
+                makeTempImage(subposmask, posMaskName_p, chanBeg, chanEnd, True);
+                if(subposmask)
+                  autoMaskOn_p=True;
+              }
+          }
 
-	std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, nullptr, nullptr, submask, nullptr, nullptr, subpb, nullptr));
+            std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, nullptr, nullptr, submask, nullptr, nullptr, subpb, nullptr, subposmask));
         
 	//cerr << "subimagestor TYPE" << subimstor->getType() << endl;
 	return subimstor;
@@ -151,6 +170,8 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
 	  outptr->makeMask ("mask0", true, true, false, true);
 	  outptr->pixelMask().put(tmpptr->getMask());
       }
+      ImageInfo iinfo=tmpptr->imageInfo();
+      outptr->setImageInfo(iinfo);
       delete tmpptr;
     }
     
@@ -175,10 +196,12 @@ void CubeMinorCycleAlgorithm::reset(){
   psfName_p="";
   maskName_p="";
   pbName_p="";
+  posMaskName_p="";
   chanRange_p.resize();
   returnRec_p=Record();
   beamsetRec_p=Record();
   //psfSidelobeLevel_p;
+  autoMaskOn_p=False;
   status_p=False;
                 
 	

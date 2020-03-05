@@ -62,10 +62,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  casacore::String psfName_p;
 	  casacore::String maskName_p;
           casacore::String pbName_p;
+          casacore::String posMaskName_p;
 	  casacore::Vector<casacore::Int> chanRange_p;
 	  casacore::Record returnRec_p;
           casacore::Record beamsetRec_p;
           casacore::Float psfSidelobeLevel_p;
+          casacore::Bool autoMaskOn_p;
 	  casacore::Bool status_p;
 	};
 	

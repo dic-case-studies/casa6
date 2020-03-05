@@ -104,6 +104,10 @@ class SynthesisDeconvolver
   casacore::Bool setupMask();
   void setAutoMask();
   void checkRestoringBeam();
+  ///in case one wants this deconvolver object to start from where another deconvolver left.
+  void setIterDone(const casacore::Int iterdone);
+  ////set the posmask image that is used in automasking...needed for restarting deconvolver
+  void setPosMask(std::shared_ptr<casacore::ImageInterface<casacore::Float> > posmaskim);
   ////return estimate of memory usage in kB
   casacore::Long estimateRAM(const std::vector<int>& imsize);
 protected:
@@ -189,7 +193,7 @@ protected:
   casacore::Vector<casacore::Bool> itsChanFlag;
   casacore::Record itsRobustStats;
   casacore::Bool initializeChanMaskFlag; 
-  casacore::TempImage<casacore::Float> itsPosMask;
+  std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPosMask;
   
   casacore::Bool itsIsMaskLoaded; // Try to get rid of this state variable ! 
   casacore::Bool itsIsInteractive;

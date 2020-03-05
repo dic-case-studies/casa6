@@ -116,6 +116,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsGridWt.reset( );
     itsPB.reset( );
     itsImagePBcor.reset();
+    itsTempWorkIm.reset();
 
     itsSumWt.reset( );
     itsOverWrite=False;
@@ -161,6 +162,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsGridWt.reset( );
     itsPB.reset( );
     itsImagePBcor.reset( );
+    itsTempWorkIm.reset();
 
     itsSumWt.reset( );
     itsOverWrite=False; // Hard Coding this. See CAS-6937. overwrite;
@@ -199,6 +201,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsGridWt.reset( );
     itsPB.reset( );
     itsImagePBcor.reset( );
+    itsTempWorkIm.reset();
     itsMiscInfo=Record();
 
     itsSumWt.reset( );
@@ -299,6 +302,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			     const std::shared_ptr<ImageInterface<Float> > &gridwtim,
 			     const std::shared_ptr<ImageInterface<Float> > &pbim,
 			     const std::shared_ptr<ImageInterface<Float> > &restoredpbcorim,
+                             const std::shared_ptr<ImageInterface<Float> > & tempworkimage,
 			     const CoordinateSystem &csys,
 			     const IPosition &imshape,
 			     const String &imagename,
@@ -326,6 +330,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsGridWt=gridwtim;
     itsPB=pbim;
     itsImagePBcor=restoredpbcorim;
+    itsTempWorkIm=tempworkimage;
 
     itsPBScaleFactor=1.0;// No need to set properly here as it will be computed in makePSF.
 
@@ -430,7 +435,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 							  const Int pol, const Int npolchunks)
   {
    
-    return std::make_shared<SIImageStore>(itsModel, itsResidual, itsPsf, itsWeight, itsImage, itsMask, itsSumWt, itsGridWt, itsPB, itsImagePBcor, itsCoordSys, itsImageShape, itsImageName, itsObjectName, itsMiscInfo, facet, nfacets, chan, nchanchunks, pol, npolchunks, itsUseWeight);
+    return std::make_shared<SIImageStore>(itsModel, itsResidual, itsPsf, itsWeight, itsImage, itsMask, itsSumWt, itsGridWt, itsPB, itsImagePBcor, itsTempWorkIm, itsCoordSys, itsImageShape, itsImageName, itsObjectName, itsMiscInfo, facet, nfacets, chan, nchanchunks, pol, npolchunks, itsUseWeight);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1145,6 +1150,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     /// change the coordinate system here, to uv.
     return itsGridWt;
   }
+
+  std::shared_ptr<ImageInterface<Float> > SIImageStore::tempworkimage(uInt /*term*/){
+    if(itsTempWorkIm) return itsTempWorkIm;
+    itsTempWorkIm.reset(new PagedImage<Float>(itsImageShape, itsCoordSys, itsImageName+ ".work.temp"));
+    static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->table().markForDelete();
+    return itsTempWorkIm;
+  }
+  
   std::shared_ptr<ImageInterface<Float> > SIImageStore::pb(uInt /*nterm*/)
   {
     accessImage( itsPB, itsParentPB, imageExts(PB) );
@@ -2830,7 +2843,7 @@ Float SIImageStore::getPeakResidual()
     ArrayLattice<Bool> pixelmask(residual()->getMask());
     LatticeExpr<Float> resd(iif(pixelmask,abs(*residual()),0));
     //LatticeExprNode pres( max(abs( *residual() ) ));
-    LatticeExprNode pres( max(abs(resd) ));
+    LatticeExprNode pres( max(resd) );
     Float maxresidual = pres.getFloat();
 
 
@@ -2843,11 +2856,13 @@ Float SIImageStore::getPeakResidualWithinMask()
         Float minresmask, maxresmask, minres, maxres;
     //findMinMax( residual()->get(), mask()->get(), minres, maxres, minresmask, maxresmask );
 
-    ArrayLattice<Bool> pixelmask(residual()->getMask());
-    findMinMaxLattice(*residual(), *mask() , pixelmask, maxres,maxresmask, minres, minresmask);
-    
+    //ArrayLattice<Bool> pixelmask(residual()->getMask());
+    //findMinMaxLattice(*residual(), *mask() , pixelmask, maxres,maxresmask, minres, minresmask);
+        LatticeExpr<Float> resd(iif((*mask()) > 0,abs((*residual())),0));
+    LatticeExprNode pres( max(resd) );
     //return maxresmask;
-    return max( abs(maxresmask), abs(minresmask) );
+    //return max( abs(maxresmask), abs(minresmask) );
+    return pres.getFloat();
   }
 
   // Calculate the total model flux
@@ -2878,7 +2893,7 @@ void SIImageStore::setPSFSidelobeLevel(const Float level){
   Float SIImageStore::getPSFSidelobeLevel()
   {
     LogIO os( LogOrigin("SIImageStore","getPSFSidelobeLevel",WHERE) );
-
+    cerr << "*****PSF sidelobe "<< itsPSFSideLobeLevel << endl;
     /// Calculate only once, store and return for all subsequent calls.
     if( itsPSFSideLobeLevel == 0.0 )
       {
