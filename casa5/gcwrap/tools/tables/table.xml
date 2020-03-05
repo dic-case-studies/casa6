@@ -1929,7 +1929,7 @@ The new rows are empty.
 </method>
 
  
-   <method type="function" name="removerows" typecheck="true">
+   <method type="function" name="removerows">
    <shortdescription>remove the specified rows</shortdescription>
    
 <description>

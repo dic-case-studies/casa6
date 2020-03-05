@@ -921,7 +921,7 @@ to use.
 
 
  
-<method type="function" name="setdata" typecheck="true">
+<method type="function" name="setdata">
   <shortdescription>Set the data parameters selection for subsequent processing</shortdescription>
   
   <description>
