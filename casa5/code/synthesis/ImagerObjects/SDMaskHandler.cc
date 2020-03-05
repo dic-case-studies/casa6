@@ -983,7 +983,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
   void SDMaskHandler::autoMask(std::shared_ptr<SIImageStore> imstore, 
-                               TempImage<Float>& posmask,
+                               ImageInterface<Float>& posmask,
                                const Int iterdone,
                                Vector<Bool>& chanflag,
                                Record& robuststatsrec,
@@ -2183,7 +2183,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   // *** auto-multithresh  ***
   // for implemtation of Amanda's algorithm
   void SDMaskHandler::autoMaskByMultiThreshold(ImageInterface<Float>& mask,
-                                          TempImage<Float>& posmask,
+                                          ImageInterface<Float>& posmask,
                                           const ImageInterface<Float>& res, 
                                           const ImageInterface<Float>& psf, 
                                           const Record& stats, 
@@ -4125,7 +4125,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
  
   void SDMaskHandler::autoMaskWithinPB(std::shared_ptr<SIImageStore> imstore, 
-                                       TempImage<Float>& posmask,
+                                       ImageInterface<Float>& posmask,
                                        const Int iterdone,
                                        Vector<Bool>& chanflag,
                                        Record& robuststatsrec,

@@ -133,7 +133,7 @@ public:
   // @param[in] pblimit Primary beam cut off level
   //
   void autoMask(std::shared_ptr<SIImageStore> imstore, 
-                casacore::TempImage<casacore::Float>& posmask,
+                casacore::ImageInterface<casacore::Float>& posmask,
                 const casacore::Int iterdone,
                 casacore::Vector<casacore::Bool>& chanflag,
                 casacore::Record& robuststatsrec,
@@ -186,7 +186,7 @@ public:
 
   // implementation of Amanda's automasking algorithm using multiple thresholds
   void autoMaskByMultiThreshold(casacore::ImageInterface<float>& mask,
-                                          casacore::TempImage<casacore::Float>& posmask,
+                                          casacore::ImageInterface<casacore::Float>& posmask,
                                           const casacore::ImageInterface<casacore::Float>& res, 
                                           const casacore::ImageInterface<casacore::Float>& psf, 
                                           const casacore::Record& stats, 
@@ -278,7 +278,7 @@ public:
   void makePBMask(std::shared_ptr<SIImageStore> imstore, casacore::Float pblimit=0.1, casacore::Bool combinemask=false);
 
   void autoMaskWithinPB(std::shared_ptr<SIImageStore> imstore, 
-                        casacore::TempImage<casacore::Float>& posmask,
+                        casacore::ImageInterface<casacore::Float>& posmask,
                         const casacore::Int iterdone,
                         casacore::Vector<casacore::Bool>& chanflag,
                         casacore::Record& robuststatsrec,

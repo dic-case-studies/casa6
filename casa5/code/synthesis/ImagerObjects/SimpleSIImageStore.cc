@@ -39,7 +39,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	       const shared_ptr<ImageInterface<Float> > &weightim,const shared_ptr<ImageInterface<Float> > &restoredim,
 	       const shared_ptr<ImageInterface<Float> > &maskim,const shared_ptr<ImageInterface<Float> > &sumwtim,
 	       const shared_ptr<ImageInterface<Float> > &gridwtim, const shared_ptr<ImageInterface<Float> > &pbim,
-	       const shared_ptr<ImageInterface<Float> > &restoredpbcorim,const Bool useweightimage) : SIImageStore() {
+               const shared_ptr<ImageInterface<Float> > &restoredpbcorim,
+               const  shared_ptr<ImageInterface<Float> > & tempworkimage, const Bool useweightimage) : SIImageStore() {
 			if(!psfim && !residim && !modelim)  {
 				throw(AipsError("SimpleSIImagestore has to have a valid residual or psf image"));
 			}
@@ -62,6 +63,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			itsSumWt=sumwtim;
 			itsMask=maskim;
 			itsImagePBcor=restoredpbcorim;
+                        itsTempWorkIm=tempworkimage;
 			itsPB=pbim;
                         itsGridWt=gridwtim;
 			itsUseWeight=useweightimage;
@@ -102,8 +104,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
         shared_ptr<ImageInterface<Float> > SimpleSIImageStore::pb(uInt){
 		if(!itsPB)
-			throw(AipsError("Programmer's error: calling for model without setting it"));
+			throw(AipsError("Programmer's error: calling for pb without setting it"));
 		return itsPB;
+		
+	}
+  shared_ptr<ImageInterface<Float> > SimpleSIImageStore::tempworkimage(uInt){
+		if(!itsTempWorkIm)
+			throw(AipsError("Programmer's error: calling for temporary image without setting it"));
+		return itsTempWorkIm;
 		
 	}
 	shared_ptr<ImageInterface<Float> > SimpleSIImageStore::sumwt(uInt){
@@ -159,7 +167,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		
 	}
 	shared_ptr<SIImageStore> SimpleSIImageStore::getSubImageStore(const Int facet, const Int nfacets, const Int chan, const Int nchanchunks, const Int pol, const Int npolchunks){
-		vector<shared_ptr<ImageInterface<Float> > >myImages={itsModel, itsResidual, itsPsf, itsWeight, itsImage, itsMask, itsSumWt, itsGridWt, itsPB, itsImagePBcor};
+          vector<shared_ptr<ImageInterface<Float> > >myImages={itsModel, itsResidual, itsPsf, itsWeight, itsImage, itsMask, itsSumWt, itsGridWt, itsPB, itsImagePBcor, itsTempWorkIm};
 		if(itsSumWt){
 			setUseWeightImage(*itsSumWt, itsUseWeight);
 		}
@@ -168,7 +176,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			if((*it))
 				subimPtrs[it-myImages.begin()]=makeSubImage(facet, nfacets, chan, nchanchunks, pol, npolchunks, *(*it));
 		}
-		shared_ptr<SIImageStore> retval(new SimpleSIImageStore(subimPtrs[0], subimPtrs[1], subimPtrs[2], subimPtrs[3], subimPtrs[4], subimPtrs[5], subimPtrs[6], subimPtrs[7], subimPtrs[8], subimPtrs[9], itsUseWeight));
+		shared_ptr<SIImageStore> retval(new SimpleSIImageStore(subimPtrs[0], subimPtrs[1], subimPtrs[2], subimPtrs[3], subimPtrs[4], subimPtrs[5], subimPtrs[6], subimPtrs[7], subimPtrs[8], subimPtrs[9], subimPtrs[10], itsUseWeight));
 		
 		
 		return retval;

@@ -426,7 +426,7 @@ String&	CubeMajorCycleAlgorithm::name(){
         //	subsumwt.reset(SpectralImageUtil::getChannel(sumwt, chanBeg, chanEnd, true));
         getSubImage(subsumwt, chanBeg, chanEnd, sumwgtname, False);
 	bool useweightimage=(subweight) ? true : false;
-        shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, subweight, nullptr, nullptr, subsumwt, nullptr, nullptr, nullptr, useweightimage));
+        shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, subweight, nullptr, nullptr, subsumwt, nullptr, nullptr, nullptr, nullptr, useweightimage));
 	if(polRep_p[imId]< 0)
 		throw(AipsError("data polarization type is not defined"));
 	StokesImageUtil::PolRep polrep=(StokesImageUtil::PolRep)polRep_p[imId];
@@ -467,7 +467,7 @@ String&	CubeMajorCycleAlgorithm::name(){
                         norm.setupNormalizer(normpars);
                         shared_ptr<ImageInterface<Float> > subweight=nullptr;
                         getSubImage(subweight, startchan, endchan, weightname, True);
-                        std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, nullptr, nullptr, subweight, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, True));
+                        std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, nullptr, nullptr, subweight, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, True));
                         norm.setImageStore(subimstor);
                         norm.divideModelByWeight();
                         

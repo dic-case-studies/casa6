@@ -48,6 +48,7 @@ public:
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &gridwtim,
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &pbim,
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &restoredpbcorim,
+                    const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &tempworkimage=nullptr,       
 		   const casacore::Bool useweightimage=false);
 	
 	virtual casacore::String getType(){return "SimpleSIImageStore";};
@@ -59,6 +60,7 @@ public:
 //    virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > image(casacore::uInt term=0);
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > mask(casacore::uInt term=0);
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > pb(casacore::uInt term=0);
+  virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > tempworkimage(casacore::uInt term=0);
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Complex> > forwardGrid(casacore::uInt term=0);
     virtual std::shared_ptr<casacore::ImageInterface<casacore::Complex> > backwardGrid(casacore::uInt term=0);
     
@@ -84,7 +86,7 @@ public:
   virtual casacore::Bool releaseLocks();
 
 private:
-  	std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB;
+  std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB, itsTempWorkIm;
   	std::shared_ptr<casacore::ImageInterface<casacore::Complex> > itsForwardGrid, itsBackwardGrid;
 
 

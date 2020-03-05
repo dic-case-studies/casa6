@@ -78,6 +78,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                        itsChanFlag(Vector<Bool>(False)),
                                        itsRobustStats(Record()),
                                        initializeChanMaskFlag(false),
+                                       itsPosMask(nullptr),
 				       itsIsMaskLoaded(false),
 				       itsMaskSum(-1e+9)
   {
@@ -235,6 +236,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return mem;
   }
   Record SynthesisDeconvolver::initMinorCycle(){
+    /////IMPORTANT initMinorCycle has to be called before setupMask...that order has to be kept !
+
+    
     if(!itsImages)
       itsImages=makeImageStore(itsImageName);
     return initMinorCycle(itsImages);
@@ -364,9 +368,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         Int nchan = maskshp(3);
         itsChanFlag=Vector<Bool>(nchan,False);
         initializeChanMaskFlag=True;
-        // also initialize posmask, which tracks only positive (emission) 
-        itsPosMask = TempImage<Float> (maskshp, itsImages->mask()->coordinates(),SDMaskHandler::memoryToUse());
-        itsPosMask.set(0);
+        // also initialize posmask, which tracks only positive (emission)
+        if(!itsPosMask){
+          //itsPosMask = TempImage<Float> (maskshp, itsImages->mask()->coordinates(),SDMaskHandler::memoryToUse());
+          itsPosMask=itsImages->tempworkimage();
+          itsPosMask->set(0);
+          itsPosMask->unlock();
+        }
       }
       os<<LogIO::DEBUG1<<"itsChanFlag.shape="<<itsChanFlag.shape()<<LogIO::POST;
 
@@ -530,9 +538,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       applicator.init(argc, argv);
       if(applicator.isController()){
         os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
+        {///TO BE REMOVED
+          LatticeExprNode le( sum( *(itsImages->mask()) ) );
+          os << LogIO::WARN << "#####Sum of mask BEFORE minor cycle " << le.getFloat() << endl;
+            }
         Timer tim;
         tim.mark();
         //itsImages->printImageStats();
+        // Add itsIterdone to be sent to child processes ...needed for automask
+        minorCycleControlRec.define("iterdone", itsIterDone);
+        if(itsPosMask){
+          minorCycleControlRec.define("posmaskname", itsPosMask->name());
+        }
           Int numprocs = applicator.numProcs(); 
           cerr << "Number of procs: " << numprocs << endl;
           
@@ -664,7 +681,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
           itsLoopController.incrementMinorCycleCount(returnRecord.asInt("iterdone"));
 
-          
+          {///TO BE REMOVED
+          LatticeExprNode le( sum( *(itsImages->mask()) ) );
+          os << LogIO::WARN << "#####Sum of mask AFTER minor cycle " << le.getFloat() << endl;
+            } 
 
       }///end of if controller
       /////////////////////////////////////////////////
@@ -840,7 +860,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   // Set mask
   Bool SynthesisDeconvolver::setupMask()
   {
-    
+
+    ////Remembet this has to be called only after initMinorCycle
     LogIO os( LogOrigin("SynthesisDeconvolver","setupMask",WHERE) );
     
     Bool maskchanged=False;
@@ -851,8 +872,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // Skip automask for non-interactive mode. 
         if ( itsAutoMaskAlgorithm != "") { // && itsIsInteractive) {
 	  os << "[" << itsImages->getName() << "] Setting up an auto-mask"<<  ((itsPBMask>0.0)?" within PB mask limit ":"") << LogIO::POST;
-
-          setAutoMask();
+          ////For Cubes this is done in CubeMinorCycle
+          if(itsImages->residual()->shape()[3] ==1)
+            setAutoMask();
           /***
           if ( itsPBMask > 0.0 ) {
             itsMaskHandler->autoMaskWithinPB( itsImages, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsPBMask);
@@ -932,22 +954,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      //modify mask using automask otherwise no-op
      if ( itsAutoMaskAlgorithm != "" )  {
        itsIterDone += itsLoopController.getIterDone();
-
+       
+      
+       
        Bool isThresholdReached = itsLoopController.isThresholdReached();
 
        LogIO os( LogOrigin("SynthesisDeconvolver","setAutoMask",WHERE) );
        os << "Generating AutoMask" << LogIO::POST;
+       os << LogIO::WARN << "#####ItsIterDone value " << itsIterDone << endl;
+       
        //os << "itsMinPercentChnage = " << itsMinPercentChange<< LogIO::POST;
 
        if ( itsPBMask > 0.0 ) {
          //itsMaskHandler->autoMaskWithinPB( itsImages, itsPosMask, itsIterDone, itsChanFlag, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust,  itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold,itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached, itsPBMask);
          //pass robust stats
-         itsMaskHandler->autoMaskWithinPB( itsImages, itsPosMask, itsIterDone, itsChanFlag, itsRobustStats, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust,  itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold,itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached, itsPBMask);
+         itsMaskHandler->autoMaskWithinPB( itsImages, *itsPosMask, itsIterDone, itsChanFlag, itsRobustStats, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust,  itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold,itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached, itsPBMask);
        }
        else {
          //itsMaskHandler->autoMask( itsImages, itsPosMask, itsIterDone, itsChanFlag,itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust, itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold, itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached );
         // pass robust stats 
-        itsMaskHandler->autoMask( itsImages, itsPosMask, itsIterDone, itsChanFlag, itsRobustStats, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust, itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold, itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached );
+        itsMaskHandler->autoMask( itsImages, *itsPosMask, itsIterDone, itsChanFlag, itsRobustStats, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust, itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold, itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached );
        }
      }
   }
@@ -992,6 +1018,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // Here we will just pass in the new names
     // Copy the input mask to the local main image mask
   }
-
+  void SynthesisDeconvolver::setIterDone(const Int iterdone){
+    itsLoopController.incrementMinorCycleCount(iterdone);
+  }
+  void SynthesisDeconvolver::setPosMask(std::shared_ptr<ImageInterface<Float> > posmask){
+    itsPosMask=posmask;
+  }
+  
 } //# NAMESPACE CASA - END
 
