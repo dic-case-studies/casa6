@@ -538,6 +538,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       applicator.init(argc, argv);
       if(applicator.isController()){
         os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
+        {///TO BE REMOVED
+          LatticeExprNode le( sum( *(itsImages->mask()) ) );
+          os << LogIO::WARN << "#####Sum of mask BEFORE minor cycle " << le.getFloat() << endl;
+            }
         Timer tim;
         tim.mark();
         //itsImages->printImageStats();
@@ -677,7 +681,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
           itsLoopController.incrementMinorCycleCount(returnRecord.asInt("iterdone"));
 
-          
+          {///TO BE REMOVED
+          LatticeExprNode le( sum( *(itsImages->mask()) ) );
+          os << LogIO::WARN << "#####Sum of mask AFTER minor cycle " << le.getFloat() << endl;
+            } 
 
       }///end of if controller
       /////////////////////////////////////////////////
@@ -947,11 +954,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      //modify mask using automask otherwise no-op
      if ( itsAutoMaskAlgorithm != "" )  {
        itsIterDone += itsLoopController.getIterDone();
-
+       
+      
+       
        Bool isThresholdReached = itsLoopController.isThresholdReached();
 
        LogIO os( LogOrigin("SynthesisDeconvolver","setAutoMask",WHERE) );
        os << "Generating AutoMask" << LogIO::POST;
+       os << LogIO::WARN << "#####ItsIterDone value " << itsIterDone << endl;
+       
        //os << "itsMinPercentChnage = " << itsMinPercentChange<< LogIO::POST;
 
        if ( itsPBMask > 0.0 ) {
