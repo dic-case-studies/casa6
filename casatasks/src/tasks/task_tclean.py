@@ -13,7 +13,6 @@ import shutil
 import numpy
 import copy
 import time
-
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
 if is_CASA6:
@@ -44,7 +43,7 @@ try:
     mpi_available = True
 except ImportError:
     mpi_available = False
-import pdb
+
 def tclean(
     ####### Data Selection
     vis,#='', 
@@ -279,7 +278,7 @@ def tclean(
          imagerInst=PySynthesisImager
     elif parallel==True:
          imager = PyParallelContSynthesisImager(params=paramList)
-         imagerInst=PyParallelContSynthesisImager
+         imagerInst=PySynthesisImager
     elif pcube==True:
          imager = PyParallelCubeSynthesisImager(params=paramList)
          imagerInst=PyParallelCubeSynthesisImager
@@ -330,7 +329,7 @@ def tclean(
         if calcpsf==True:
             t0=time.time();
              
-            imager.makePSF()            
+            imager.makePSF()
             if((psfphasecenter != '') and ('mosaic' in gridder)):
                 ###for some reason imager keeps the psf open delete it and recreate it afterwards
                 imager.deleteTools()

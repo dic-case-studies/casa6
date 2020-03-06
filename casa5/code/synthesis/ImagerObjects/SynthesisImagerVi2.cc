@@ -1224,7 +1224,18 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     	if(!dopsf)itsMappers.initializeDegrid(*vb);
     	itsMappers.initializeGrid(*vi_p,dopsf);
 	SynthesisUtilMethods::getResource("After initGrid for all mappers");
-
+        ////Under some peculiar selection criterion and low channel ms  vb2 seems to return more channels than in spw
+        {
+          vi_p->originChunks();
+          vi_p->origin();
+          Int nchannow=vb->nChannels();
+          Int spwnow=vb->spectralWindows()[0];
+          Int nchaninms=MSColumns(vb->ms()).spectralWindow().numChan()(spwnow);
+          cerr << "chans " << nchaninms << "   " << nchannow << endl;
+          if (nchaninms < nchannow)
+            throw(AipsError("A nasty Visbuffer2 error occured...wait for CNGI"));
+        }
+          //////
     	for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
     	{
 
@@ -1474,8 +1485,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		std::tie(numchunks, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
 		////TESTOO
 		//numchunks=2;
-		//startchan.resize(2);startchan[0]=0; startchan[1]=10;
-		//endchan.resize(2); endchan[0]=9; endchan[1]=19;
+		//startchan.resize(2);startchan[0]=0; startchan[1]=2;
+		//endchan.resize(2); endchan[0]=1; endchan[1]=2;
 		
 		/////END TESTOO
 		//cerr << "NUMCHUNKS " << numchunks << " start " <<  startchan << " end " << endchan << endl;
@@ -1937,7 +1948,8 @@ void SynthesisImagerVi2::makeComplexCubeImage(const String& cimage, const refim:
             fudge_factor = 9;
         }
         std::tie(numchunks, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
-		
+      
+        
 		Int imageType=Int(imtype);
 		Int rank(0);
 		Bool assigned; 

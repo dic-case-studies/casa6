@@ -82,7 +82,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           casacore::Vector<casacore::String> sumwtNames_p;
           casacore::String movingSource_p;
 		casacore::Bool status_p;
-		casacore::Int serialBug_p; //have to send a private variable in serial case
+		casacore::Bool retuning_p; 
           casacore::Vector<casacore::Int> nterms_p;
 	};
 	

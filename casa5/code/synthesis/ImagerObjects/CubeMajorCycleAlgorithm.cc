@@ -37,7 +37,7 @@ using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 extern Applicator applicator;
 
-  CubeMajorCycleAlgorithm::CubeMajorCycleAlgorithm() : myName_p("CubeMajorCycleAlgorithm"),  ftmRec_p(0), iftmRec_p(0), polRep_p(0),startmodel_p(0), residualNames_p(0), psfNames_p(0), sumwtNames_p(0), movingSource_p(""),status_p(False), nterms_p(0){
+  CubeMajorCycleAlgorithm::CubeMajorCycleAlgorithm() : myName_p("CubeMajorCycleAlgorithm"),  ftmRec_p(0), iftmRec_p(0), polRep_p(0),startmodel_p(0), residualNames_p(0), psfNames_p(0), sumwtNames_p(0), movingSource_p(""),status_p(False), retuning_p(True), nterms_p(0){
 	
 }
 CubeMajorCycleAlgorithm::~CubeMajorCycleAlgorithm() {
@@ -121,11 +121,11 @@ void CubeMajorCycleAlgorithm::get() {
 }
 void CubeMajorCycleAlgorithm::put() {
 	
-	if(applicator.isSerial()){
-		serialBug_p=Applicator::DONE;
+  //if(applicator.isSerial()){
+  //		serialBug_p=Applicator::DONE;
 		//applicator.put(serialBug_p);
 		
-	}
+  //	}
 	//cerr << "in put " << status_p << endl;
 	applicator.put(status_p);	
 	
@@ -204,7 +204,8 @@ void CubeMajorCycleAlgorithm::task(){
 	///Now do the selection tuning if needed
 	if(imSel_p[0].mode !="cubedata"){
 		//cerr << "IN RETUNING " << endl;
-          subImgr.tuneSelectData();
+          if(retuning_p)
+            subImgr.tuneSelectData();
 	}
 
         //cerr << "***Time for all other setting " << tim.real() << endl;
@@ -352,6 +353,12 @@ String&	CubeMajorCycleAlgorithm::name(){
           psfNames_p[imId]=psfname;
         }
         Int nchannels=sumwt.shape()[3];
+
+        ////For some small channel ms's retuning trigger a vi2/vb2 bug in nChannels
+        ///avoid retuning for small images
+        if(nchannels < 10 && imId==0){
+          retuning_p=False;
+        }
 	//Should be partitioning for main image only
 	//chanRange
 	Int chanBeg=0;
@@ -494,7 +501,10 @@ void CubeMajorCycleAlgorithm::reset(){
 		status_p=False;
                 residualNames_p.resize();
                 psfNames_p.resize();
-                sumwtNames_p.resize(); 
+                sumwtNames_p.resize();
+                movingSource_p="";
+                retuning_p=True;
+                nterms_p.resize();
                 
 	
 	

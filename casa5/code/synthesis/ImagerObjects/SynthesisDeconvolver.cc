@@ -1,5 +1,5 @@
 //# SynthesisDeconvolver.cc: Implementation of Imager.h
-//# Copyright (C) 1997-2008
+//# Copyright (C) 1997-2020
 //# Associated Universities, Inc. Washington DC, USA.
 //#
 //# This program is free software; you can redistribute it and/or modify it
@@ -292,6 +292,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Float nsigmathresh = 0.0;
       Bool useautomask = ( itsAutoMaskAlgorithm=="multithresh" ? true : false);
       Int iterdone = itsLoopController.getIterDone();
+  
       if ( itsNsigma >0.0 ) { 
         itsMaskHandler->setPBMaskLevel(itsPBMask);
         Array<Double> medians, robustrms;
@@ -299,7 +300,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // 1. automask has run and so the image statistics record has filled
         // or
         // 2. no automask but for the first cycle but already initial calcRMS has ran to avoid duplicate
-        // 
+        //
         if ((useautomask && itsRobustStats.nfields()) || 
             (!useautomask && iterdone==0 && itsRobustStats.nfields()) ) {
            os <<LogIO::DEBUG1<<"automask on: check the current stats"<<LogIO::POST;
@@ -395,7 +396,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  itsLoopController.setMaskSum( -1.0 );
 	}
       
-      os << LogIO::NORMAL3 << "****INITMINOR remainder "<< tim.real() << LogIO::POST;
+  
       returnRecord = itsLoopController.getCycleInitializationRecord();
       //cerr << "INIT record " << returnRecord << endl;
 
@@ -538,14 +539,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       applicator.init(argc, argv);
       if(applicator.isController()){
         os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
-        {///TO BE REMOVED
+        /*{///TO BE REMOVED
           LatticeExprNode le( sum( *(itsImages->mask()) ) );
           os << LogIO::WARN << "#####Sum of mask BEFORE minor cycle " << le.getFloat() << endl;
             }
+        */
         Timer tim;
         tim.mark();
         //itsImages->printImageStats();
         // Add itsIterdone to be sent to child processes ...needed for automask
+        //cerr << "before record " << itsIterDone << " loopcontroller " << itsLoopController.getIterDone() << endl;
         minorCycleControlRec.define("iterdone", itsIterDone);
         if(itsPosMask){
           minorCycleControlRec.define("posmaskname", itsPosMask->name());
@@ -604,7 +607,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Bool allDone(false);
           Vector<Int> chanRange(2);
           //Record beamsetRec;
-          os <<LogIO::NORMAL3<< "**Time to setting up deconvolver " << tim.real() << LogIO::POST ;
+
           for (Int k=0; k < numblocks; ++k) {
             //os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
             assigned=casa::applicator.nextAvailProcess(*cmc, rank);
@@ -680,11 +683,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           }
 
           itsLoopController.incrementMinorCycleCount(returnRecord.asInt("iterdone"));
-
-          {///TO BE REMOVED
+          itsIterDone+=returnRecord.asInt("iterdone");
+          /*{///TO BE REMOVED
           LatticeExprNode le( sum( *(itsImages->mask()) ) );
-          os << LogIO::WARN << "#####Sum of mask AFTER minor cycle " << le.getFloat() << endl;
-            } 
+          os << LogIO::WARN << "#####Sum of mask AFTER minor cycle " << le.getFloat()  << "loopcontroller iterdeconv " << itsLoopController.getIterDone() << endl;
+          }*/ 
 
       }///end of if controller
       /////////////////////////////////////////////////
@@ -1019,7 +1022,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // Copy the input mask to the local main image mask
   }
   void SynthesisDeconvolver::setIterDone(const Int iterdone){
-    itsLoopController.incrementMinorCycleCount(iterdone);
+    //cerr << "SETITERDONE iterdone " << iterdone << endl;
+    ///this get lost in initMinorCycle
+    //itsLoopController.incrementMinorCycleCount(iterdone);
+    itsIterDone=iterdone;
+    
   }
   void SynthesisDeconvolver::setPosMask(std::shared_ptr<ImageInterface<Float> > posmask){
     itsPosMask=posmask;
