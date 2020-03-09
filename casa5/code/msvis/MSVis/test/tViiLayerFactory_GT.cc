@@ -667,3 +667,166 @@ TEST_F(SubtableChangerTest, CheckSubtables)
   checkSubtables();
 }
 
+/*
+ * Gtest fixture used to test defining sorting in a full generic way
+ * for both the outer (chunk) and inner (subchunk) loops.
+ * This class will create a synthetic MS in a temporary directory.
+ */
+class FullSortingDefinitionTest : public MsFactoryTVITester
+{
+public:
+
+  /*
+   * Constructor: create the temporary dir and the MsFactory used later on
+   * to create the MS.
+   */
+  FullSortingDefinitionTest() :
+    MsFactoryTVITester("tViiLayerFactory","FullSortingDefinitionTest"),
+    sortDefinitions_p(false), iparSet_p(false)
+  {
+  }
+
+  /*
+   * Set the sortign functions for both the outer loop (chunk) 
+   * and inner loop (subchunk)
+   */
+  void setSortingDefinition(SortColumns& sortColumnsChunk,
+                            SortColumns& sortColumnsSubchunk)
+  {
+    sortColumnsChunk_p = sortColumnsChunk;
+    sortColumnsSubchunk_p = sortColumnsSubchunk;
+  }
+
+  /*
+   * Create the synthetic MS and the TVI stack, which only contains
+   * the disk layer VI,  to access it.
+   */
+  void createTVIs()
+  {
+    // Set the number of antennas and SPWs for the MS generated on disk
+    size_t nAntennas = 10;
+    nSPWs_p = 10;
+
+    msf_p->addAntennas(nAntennas);
+    msf_p->addSpectralWindows(nSPWs_p);
+
+    // Create synthethic MS using the msf_p factory
+    createMS();
+
+    // Create a disk layer type VI Factory
+    std::auto_ptr<VisIterImpl2LayerFactory> diskItFac;
+    diskItFac.reset(new VisIterImpl2LayerFactory (ms_p.get(),sortColumnsChunk_p, 
+                                                  sortColumnsSubchunk_p,false));
+
+    // Create a layered factory with all the layers of factories
+    size_t nFac = 1;
+    std::vector<ViiLayerFactory*> facts(nFac);
+    facts[0]=diskItFac.get();
+
+    // Finally create the top VI
+    instantiateVI(facts);
+  }
+
+  // Sorting definitions for both inner and outer loop
+  SortColumns sortColumnsChunk_p;
+  SortColumns sortColumnsSubchunk_p;
+
+  // The number of SPWs originally created
+  size_t nSPWs_p;
+};
+ 
+/*
+ * Comparison function that groups DDIds in "bins" 
+ */
+class DDIdGroupCompare : public BaseCompare
+{
+public:
+  explicit DDIdGroupCompare(size_t groupBin, bool ascending = true) : groupBin_p(groupBin), orderFactor_p(2*ascending-1) {}
+  virtual ~DDIdGroupCompare() {}
+  virtual int comp(const void * obj1, const void * obj2) const;
+private:
+  size_t groupBin_p;
+  int orderFactor_p;
+};
+ 
+int DDIdGroupCompare::comp(const void * obj1, const void * obj2) const
+{
+  Int v1 = *(const Int*)obj1;
+  Int v2 = *(const Int*)obj2;
+
+  // The DDIds are binned in bins with a width of groupBin_p.
+  // Simple integer division gives you that.
+  Int t1 = v1 / groupBin_p;
+  Int t2 = v2 / groupBin_p;
+
+  // orderFactor_p is 1 or -1 depending on whether it has been requested
+  // ascending or descending order.
+  return (t1==t2 ? 0 : (t1<t2 ? -1*orderFactor_p : 1*orderFactor_p));
+}
+
+TEST_F(FullSortingDefinitionTest, GroupSPWs)
+{
+  // Create sorting functions for the chunk (grouping DDiD/SPWs)
+  // and the subchunk (nothing).
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+  size_t spwBin = 2;
+  CountedPtr<DDIdGroupCompare> cmpFunc(new DDIdGroupCompare(spwBin));
+  sortColumnsChunk.addSortingColumn(MS::DATA_DESC_ID, cmpFunc);
+
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  Int spwGroup = 0;
+  visitIterator([&]() -> void {
+    // Get all SPWs for all rows of the VisBuffer and retain only the unique ones
+    std::list<Int> spws (vb_p->spectralWindows().begin(), vb_p->spectralWindows().end());
+    spws.sort();
+    spws.unique();
+    // The unique SPWs is equal the "bin" size. Note that the total
+    // SPWs in this case is proportional to the bin size.
+    ASSERT_EQ(spws.size(), spwBin);
+    int i = 0;
+    for(auto spw : spws)
+    {
+      // Check that for each "bin" of SPWs the id is as expected.
+      ASSERT_EQ(Int(spwGroup * spwBin + i), spw);
+      ++i;
+    }
+    spwGroup++;
+    });
+
+}
+
+TEST_F(FullSortingDefinitionTest, GroupSPWsDescending)
+{
+  // Create sorting functions for the chunk (grouping DDiD/SPWs 
+  // in descending order) and the subchunk (nothing).
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+  size_t spwBin = 2;
+  CountedPtr<DDIdGroupCompare> cmpFunc(new DDIdGroupCompare(spwBin, false));
+  sortColumnsChunk.addSortingColumn(MS::DATA_DESC_ID, cmpFunc);
+
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  // The first subchunk will have the largest SPWs Ids.
+  Int spwGroup = nSPWs_p / spwBin - 1;
+  visitIterator([&]() -> void {
+    std::list<Int> spws (vb_p->spectralWindows().begin(), vb_p->spectralWindows().end());
+    spws.sort();
+    spws.unique();
+    ASSERT_EQ(spws.size(), spwBin);
+    int i = 0;
+    for(auto spw : spws)
+    {
+      ASSERT_EQ(Int(spwGroup * spwBin + i), spw);
+      ++i;
+    }
+    spwGroup--;
+    });
+
+}
