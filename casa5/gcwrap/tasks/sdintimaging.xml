@@ -1092,6 +1092,7 @@ HPX HEALPix grid.  -->
       <value type="bool">True</value>
     </param>
 
+<!--
     <param type="bool" name="conjbeams" subparam="true">
            <shortdescription>Use conjugate frequency for wideband A-terms</shortdescription>
 <description>Use conjugate frequency for wideband A-terms
@@ -1114,7 +1115,7 @@ HPX HEALPix grid.  -->
 </description>
       <value type="bool">False</value>
     </param>
-
+-->
     <param type="string" name="cfcache" subparam="true">
            <shortdescription>Convolution function cache directory name</shortdescription>
 <description>Convolution function cache directory name
@@ -1216,6 +1217,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.2</value>
     </param>
 
+<!--
     <param type="string" name="normtype" subparam="true">
      <shortdescription>Normalization type (flatnoise, flatsky,pbsquare)</shortdescription>
 <description>Normalization type (flatnoise, flatsky, pbsquare)
@@ -1246,6 +1248,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="string">flatnoise</value>
     </param>
 
+-->
 
 <!--============================================== -->
 <!--                            Deconvolution Parameters                                            -->
@@ -2696,25 +2699,25 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="pblimit"><value>0.2</value></default>
        </equals>
        <equals type="string" value="mosaic">
-         <default param="normtype"><value>"flatnoise"</value></default>
+<!--         <default param="normtype"><value>"flatnoise"</value></default> -->
          <default param="vptable"><value>""</value></default>
          <default param="usepointing"><value>False</value></default> 
          <default param="mosweight"><value>True</value></default>
          <default param="pblimit"><value>0.2</value></default>
-         <default param="conjbeams"><value>False</value></default>
+<!--         <default param="conjbeams"><value>False</value></default> -->
          <default param="psfphasecenter"><value>""</value></default>
        </equals>
        <equals type="string" value="mosaicft">
-         <default param="normtype"><value>"flatnoise"</value></default>
+<!--          <default param="normtype"><value>"flatnoise"</value></default> -->
          <default param="vptable"><value>""</value></default>
          <default param="usepointing"><value>False</value></default>
          <default param="doweight"><value>True</value></default>
          <default param="pblimit"><value>0.2</value></default>
-         <default param="conjbeams"><value>False</value></default>
+<!--          <default param="conjbeams"><value>False</value></default> -->
          <default param="psfphasecenter"><value>""</value></default>
        </equals>
        <equals type="string" value="ftmosaic">
-         <default param="normtype"><value>"flatnoise"</value></default>
+<!--         <default param="normtype"><value>"flatnoise"</value></default> -->
          <default param="vptable"><value>""</value></default>
          <default param="usepointing"><value>False</value></default>
          <default param="mosweight"><value>True</value></default>
@@ -2722,13 +2725,13 @@ to use the correct direction in which the antenna is pointing with respect to th
        </equals>
        <equals type="string" value="imagemosaic">
          <default param="wprojplanes"><value>1</value></default>
-         <default param="normtype"><value>"flatnoise"</value></default>
+<!--          <default param="normtype"><value>"flatnoise"</value></default> -->
          <default param="vptable"><value>""</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
        <equals type="string" value="awproject">
 	 <default param="wprojplanes"><value>1</value></default>
-	 <default param="normtype"><value>"flatnoise"</value></default>
+<!--	 <default param="normtype"><value>"flatnoise"</value></default> -->
 	 <default param="psterm"><value>False</value></default>
 	 <default param="aterm"><value>True</value></default>
 	 <default param="cfcache"><value>""</value></default>
@@ -2739,13 +2742,13 @@ to use the correct direction in which the antenna is pointing with respect to th
 	 <default param="mosweight"><value>False</value></default>
 <!--	 <default param="vptable"><value>""</value></default> -->
 	 <default param="pblimit"><value>0.2</value></default>
-	 <default param="conjbeams"><value>False</value></default>
+<!-- 	 <default param="conjbeams"><value>False</value></default> -->
 	 <default param="mosweight"><value>False</value></default>
 	 <default param="usepointing"><value>False</value></default>
        </equals>
        <equals type="string" value="awprojectft">
 	 <default param="wprojplanes"><value>1</value></default>
-	 <default param="normtype"><value>"flatnoise"</value></default>
+<!--	 <default param="normtype"><value>"flatnoise"</value></default> -->
 	 <default param="psterm"><value>False</value></default>
 	 <default param="aterm"><value>True</value></default>
 	 <default param="cfcache"><value>""</value></default>
@@ -2756,7 +2759,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 	 <default param="mosweight"><value>False</value></default>
 <!--	 <default param="vptable"><value>""</value></default> -->
 	 <default param="pblimit"><value>0.2</value></default>
-	 <default param="conjbeams"><value>False</value></default>
+<!-- 	 <default param="conjbeams"><value>False</value></default> -->
 	 <default param="usepointing"><value>False</value></default>
        </equals>
      </when>

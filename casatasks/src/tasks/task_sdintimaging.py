@@ -37,7 +37,7 @@ else:
 sdintlib = SDINT_helper()
 
 # setup functions
-def setup_imagerObj(parallel, pcube, paramList=None):
+def setup_imagerObj(parallel, paramList=None):
     """
     setup imaging parameters
     """
@@ -47,28 +47,14 @@ def setup_imagerObj(parallel, pcube, paramList=None):
             raise RuntimeError("Internal Error: invalid paramList")
     else:
        defaultconstructor = True
- 
-    if parallel==False and pcube==False:
-        if defaultconstructor:
-            return PySynthesisImager
-        else:
-            return PySynthesisImager(params=paramList)
-           
-    elif parallel==True:
-        if defaultconstructor:
-            return  PyParallelContSynthesisImager
-        else:
-            return PyParallelContSynthesisImager(params=paramList)
-    elif pcube==True:
-        if defaultconstructor:
-            return PyParallelCubeSynthesisImager
-        else: 
-            return PyParallelCubeSynthesisImager(params=paramList)
+       
+    if defaultconstructor:
+        return PySynthesisImager
     else:
-        raise RuntimeError("Unsupported parallel and specmode combination")
+        return PySynthesisImager(params=paramList)
 
 
-def setup_imager(imagename,pcube,calcres,calpsf,inparams):
+def setup_imager(imagename,parallel, specmode,calcres,calpsf,inparams):
     """
      Setup cube imaging for major cycles.
      - Do initialization
@@ -97,8 +83,8 @@ def setup_imager(imagename,pcube,calcres,calpsf,inparams):
     #                              deconvolver='hogbom', niter=0,
     #                              wbawp=True)
 
-    imagertool = setup_imagerObj(locparams['parallel'], pcube, params)
-    imagerInst = setup_imagerObj(locparams['parallel'], pcube)
+    ## Major cycle is either PySynthesisImager or PyParallelCubeSynthesisImager
+    imagertool = setup_imagerObj(locparams['parallel'], params)
 
     #self.imagertool = PySynthesisImager(params=params)
     imagertool.initializeImagers()
@@ -108,6 +94,12 @@ def setup_imager(imagename,pcube,calcres,calpsf,inparams):
         psfphasecenter = locparams['psfphasecenter']
     else:
         psfphasecenter = ''
+
+    ## Extra one for psfphasecenter...
+    imagerInst=None
+    if((psfphasecenter != '') and (gridder=='mosaic')):
+        imagerInst = setup_imagerObj(locparams['parallel'])
+
   
     gridder = locparams['gridder']
 
@@ -142,7 +134,7 @@ def setup_imager(imagename,pcube,calcres,calpsf,inparams):
     sdintlib.copy_restoringbeam(fromthis=imagename+'.psf', tothis=imagename+'.residual')
     return imagertool
 
-def setup_deconvolver(imagename,pcube,inparams):
+def setup_deconvolver(imagename,parallel,specmode,inparams):
     """
     Cube or MFS minor cycles. 
     """
@@ -159,7 +151,7 @@ def setup_deconvolver(imagename,pcube,inparams):
     #                              mask=self.mask)
     inparams['imagename']=imagename
     params = ImagerParameters(**inparams)
-    deconvolvertool = setup_imagerObj(inparams['parallel'], pcube, params)
+    deconvolvertool = setup_imagerObj(inparams['parallel'], params)
 
     ## Why are we initializing these ? 
     deconvolvertool.initializeImagers()
@@ -321,7 +313,7 @@ def sdintimaging(
     aterm,#=True,
     psterm,#=True,
     wbawp ,#= True,
-    conjbeams ,#= True,
+#    conjbeams ,#= True,
     cfcache ,#= "",
     usepointing, #=false
     computepastep ,#=360.0,
@@ -329,7 +321,7 @@ def sdintimaging(
     pointingoffsetsigdev ,#=0.0,
 
     pblimit,#=0.01,
-    normtype,#='flatnoise',
+#    normtype,#='flatnoise',
 
     ####### Deconvolution parameters
     deconvolver,#='hogbom',
@@ -448,11 +440,10 @@ def sdintimaging(
 
     # from sdint
     # automatically decide if pb need to be applied
-    applypb = pbcor
     if gridder=='mosaic' or gridder=='awproject':
        applypb = True
-    # else:
-    #     applypb = False
+    else:
+       applypb = False
    
     if (deconvolver=="mtmfs") and (specmode!='mfs') and (specmode!='cube' or nterms!=1) and (specmode!='cubedata' or nterms!=1):
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_sdintimaging" )
@@ -466,6 +457,10 @@ def sdintimaging(
     if specmode=='mfs' or specmode=='cont':
         if nchan>100:
             casalog.post("For wideband continuum imaging, it may be possible to reduce the number of channels in the grid step to (say) one per spectral window instead of the chosen nchan of "+str(nchan)+". This will reduce compute time used for feathering each plane separately.", "WARN", "task_sdintimaging")
+
+    if parallel==True:
+        casalog.post("Cube parallelization (all major cycles) is currently not supported via task_sdintimaging. This will be enabled after a cube parallelization rework.")
+        return;
 
     #####################################################
     #### Construct ImagerParameters object
@@ -492,6 +487,10 @@ def sdintimaging(
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
         bparm['mosweight']=False
 
+    ## Two options have been removed from the interface. Hard-code them here.
+    bparm['normtype'] = 'flatnoise'  ## Hard-code this since the pbcor steps assume it.
+    bparm['conjbeams']=False
+
     #paramList=ImagerParameters(**bparm)
 
     #paramList.printParameters()
@@ -499,14 +498,15 @@ def sdintimaging(
 #    if pointingoffsetsigdev!=[] and usepointing==False:
 #        casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
 
-    pcube=False
+#    pcube=False
     concattype=''
     if parallel==True and specmode!='mfs':
-        pcube=True
-        parallel=False
+        concattype='copyvirtual'
+#        pcube=True
+#        parallel=False
 
     # catch non operational case (parallel cube tclean with interative=T)
-    if pcube and interactive:
+    if parallel==True and specmode!='mfs' and interactive:
         casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
         return False
    
@@ -529,8 +529,6 @@ def sdintimaging(
     ##     print('Invalid parallel combination in doClean.')
     ##     return False
 
-    if pcube==True:
-         concattype='copyvirtual'
         
     
     retrec={}
@@ -541,7 +539,7 @@ def sdintimaging(
         ### debug (remove it later) 
         casalog.post("INT cube setup ....")
         t0=time.time();
-        imager=setup_imager(int_cube, pcube, calcres, calcpsf, bparm) 
+        imager=setup_imager(int_cube, parallel, specmode, calcres, calcpsf, bparm) 
 
 
         ##imager.initializeImagers()
@@ -556,7 +554,7 @@ def sdintimaging(
             ### debug (remove it later) 
             casalog.post("Combined image setup ....")
             t0=time.time();
-            deconvolver=setup_deconvolver(decname, pcube, bparm )
+            deconvolver=setup_deconvolver(decname, parallel, specmode, bparm )
             #imager.initializeDeconvolvers()
             t1=time.time();
             #casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
@@ -756,7 +754,7 @@ def sdintimaging(
         imager.deleteTools()
         deconvolver.deleteTools()
    
-        if (pcube):
+        if parallel==True and not (specmode =='mfs' or specmode=='cont'):
             print("running concatImages ...")
             casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
             #imager.concatImages(type=concattype)
