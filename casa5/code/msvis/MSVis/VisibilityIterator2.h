@@ -232,6 +232,8 @@ public:
 
     explicit SortColumns (const casacore::Block<casacore::Int> & columnIds = casacore::Block<casacore::Int> (), casacore::Bool addDefaultColumns = true);
 
+    explicit SortColumns (casacore::Bool usingDefaultSortingFunctions);
+
     // Constructor from a list of (column Ids, comparison function)
     // The column Ids are actually MSMainEnums enums.
     explicit SortColumns (const std::vector<std::pair<casacore::MS::PredefinedColumns, casacore::CountedPtr<casacore::BaseCompare>>> sortingDefinition);

@@ -1045,6 +1045,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   pendingChanges_p(new PendingChanges()),
   reportingFrame_p(VisBuffer2::FrameNotSpecified),
   sortColumns_p(sortColumns),
+  subchunkSortColumns_p(false),
   spectralWindowChannelsCache_p(new SpectralWindowChannelsCache()),
   subtableColumns_p(nullptr),
   tileCacheModMtx_p(new std::mutex()),
