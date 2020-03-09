@@ -883,15 +883,15 @@ class test_multifield(testref_base):
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nimagename='+self.img+'2\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:48.895 +40.55.58.543\n')
           retpar = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",outlierfile=self.img+'.out.txt',niter=10,deconvolver='hogbom',interactive=0,specmode='cube',nchan=2,interpolation='nearest',parallel=self.parallel)
           ret={}
-          if self.parallel:
-            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
-            if self.nnode < 2:
-              iterdone_expected=42  # single server case = serial
-            else:
-              iterdone_expected=46
-          else:
-            iterdone_expected=42
-            ret=retpar 
+          #if self.parallel:
+            #ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
+            #if self.nnode < 2:
+            #  iterdone_expected=42  # single server case = serial
+            #else:
+            #  iterdone_expected=46
+          #else:
+          iterdone_expected=42
+          ret=retpar 
           report=self.th.checkall(ret=ret, 
                         #iterdone=42,
                         iterdone=iterdone_expected,

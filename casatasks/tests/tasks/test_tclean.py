@@ -883,15 +883,15 @@ class test_multifield(testref_base):
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nimagename='+self.img+'2\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:48.895 +40.55.58.543\n')
           retpar = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",outlierfile=self.img+'.out.txt',niter=10,deconvolver='hogbom',interactive=0,specmode='cube',nchan=2,interpolation='nearest',parallel=self.parallel)
           ret={}
-          if self.parallel:
-            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
-            if self.nnode < 2:
-              iterdone_expected=42  # single server case = serial
-            else:
-              iterdone_expected=46
-          else:
-            iterdone_expected=42
-            ret=retpar 
+          #if self.parallel:
+            #ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
+            #if self.nnode < 2:
+            #  iterdone_expected=42  # single server case = serial
+            #else:
+            #  iterdone_expected=46
+          #else:
+          iterdone_expected=42
+          ret=retpar 
           report=self.th.checkall(ret=ret, 
                         #iterdone=42,
                         iterdone=iterdone_expected,
@@ -2787,10 +2787,11 @@ class test_widefield(testref_base):
           test_mosaicft_newpsfphasecenter : different phasecenter for psf
           """
           self.prepData("refim_mawproject.ms")
-          ret=tclean(vis="refim_mawproject.ms",field="*",spw="1",datacolumn="corrected",imagename=self.img,imsize=512,cell="10.0arcsec",phasecenter="J2000 19:59:28.500 +40.44.01.50",stokes="I",specmode="mfs",gridder="mosaic",psfphasecenter="J2000 19:59:28.520 +40.44.01.51",vptable="",pblimit=0.3,normtype="flatnoise",deconvolver="hogbom",restoration=True,weighting="natural", niter=30,gain=0.1, usemask="user",mask="",restart=True,savemodel="none",calcres=True,calcpsf=True, parallel=self.parallel )
+          ret=tclean(vis="refim_mawproject.ms",field="*",spw="1",datacolumn="corrected",imagename=self.img,imsize=512,cell="10.0arcsec",phasecenter="J2000 19:59:28.500 +40.44.01.50",stokes="I",specmode="mfs",gridder="mosaic",psfphasecenter="J2000 19:59:28.520 +40.44.01.51",vptable="",pblimit=0.3,normtype="flatnoise",deconvolver="hogbom",restoration=True,weighting="natural", niter=30,gain=0.1, usemask="user",mask="",restart=True,savemodel="none",calcres=True,calcpsf=True, parallel=self.parallel)
 
           # need to add check of the actual coordinates of the peak of psf. That would match with psfphasecenter value...
           report=self.th.checkall(imexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imval=[(self.img+'.image',0.96,[256,256,0,0]), (self.img+'.psf',1.0,[256,256,0,0])])
+
           self.checkfinal(report)
 
      def test_mosaicft_newpsfphasecenter_cube(self):
@@ -2801,7 +2802,6 @@ class test_widefield(testref_base):
           ret=tclean(vis="refim_mawproject.ms",field="*",spw="*",datacolumn="corrected",imagename=self.img,imsize=512,cell="10.0arcsec",phasecenter="J2000 19:59:28.500 +40.44.01.50",stokes="I",specmode="cube",gridder="mosaic",psfphasecenter="J2000 19:59:28.520 +40.44.01.51",vptable="",pblimit=0.3,normtype="flatnoise",deconvolver="hogbom",restoration=True,weighting="natural", niter=30,gain=0.1, usemask="user",mask="",restart=True,savemodel="none",calcres=True,calcpsf=True, parallel=self.parallel)
           report=self.th.checkall(imexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'], imval=[(self.img+'.image',0.99,[256,256,0,0]), (self.img+'.psf',1.0,[256,256,0,0])])
           self.checkfinal(report)
-
 
 
      

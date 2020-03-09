@@ -83,16 +83,20 @@ using namespace casacore;
 	  const Int numchan=10;
 	  MakeMS::makems(msname, thedir, 1.0e9, 1e8, numchan, 20);
 	  //MakeMS::makems(msname, thedir, 1.5e9, 1e6, numchan, 20);
-	  MeasurementSet thems(msname, Table::Update);
-	  thems.markForDelete();
-	  MSColumns(thems).data().fillColumn(Matrix<Complex>(4,numchan, Complex(6.66e-2)));
-	  MSColumns(thems).correctedData().fillColumn(Matrix<Complex>(4,numchan, Complex(6.66e-2)));
-	  thems.flush();
+          
+          MeasurementSet thems(msname, TableLock::UserNoReadLocking, Table::Update);
+          thems.markForDelete();
+          thems.lock(True);
+          MSColumns(thems).data().fillColumn(Matrix<Complex>(4,numchan, Complex(6.66e-2)));
+          MSColumns(thems).correctedData().fillColumn(Matrix<Complex>(4,numchan, Complex(6.66e-2)));
+          thems.flush();
+          
 	  SynthesisImager* imgr = new SynthesisImagerVi2();
 	  imgr->selectData(msname, /*spw=*/"0",/*freqBeg*/"", /*freqEnd*/"", /*freqFrame*/MFrequency::LSRK, 
 			   /*field=*/"0",  /*antenna=*/"",  /*timestr*/"", /*scan*/"", /*obs*/"", /*state*/"",/*uvdist*/"", 
 			   /*taql*/"", /*usescratch*/false, /*readonly*/false);
 	  cout <<"--Imager created for MeasurementSet object. " << endl;
+          thems.unlock();
 	  MeasurementSet tab(msname);
 	  MDirection phasecenter=MSFieldColumns(tab.field()).phaseDirMeas(0,0.0);
 	  Quantity freqBeg=MSSpWindowColumns(tab.spectralWindow()).chanFreqQuant()(0)(IPosition(1,0));

@@ -151,7 +151,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     readOnly_p = selpars.readonly;
     //    cout << "**************** usescr : " << useScratch_p << "     readonly : " << readOnly_p << endl;
     //if you want to use scratch col...make sure they are there
-	lockMS(thisms);
+    lockMS(thisms);
     if(selpars.usescratch && !selpars.readonly){
       VisSetUtil::addScrCols(thisms, true, false, true, false);
       refim::VisModelData::clearModel(thisms);
@@ -315,16 +315,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           //cerr << "begin " << lowfreq << "  " << topfreq << endl; 
 	      //vi::VisibilityIterator2 tmpvi(mss_p, vi::SortColumns(), false); 
 	      //VisBufferUtil::getFreqRangeFromRange(lowfreq, topfreq,  freqFrame, lowfreq,  topfreq, tmpvi, selFreqFrame_p);
-		  if(MSUtil::getFreqRangeInSpw( lowfreq,
+              if(MSUtil::getFreqRangeInSpw( lowfreq,
 				  topfreq, Vector<Int>(1,chanlist(k,0)), Vector<Int>(1,chanlist(k,1)),
 				  Vector<Int>(1, chanlist(k,2)-chanlist(k,1)+1),
 				 *mss_p[mss_p.nelements()-1] , 
 				  selFreqFrame_p,
 						 fieldList, False))
-		    {
-		      selectionValid=True;
-		      thisSpwSelValid=True;
-		    }
+                {
+                  selectionValid=True;
+                  thisSpwSelValid=True;
+                }
 		    
 		    
 	    }
@@ -568,7 +568,6 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 
 	os << "Define image coordinates for [" << impars.imageName << "] : " << LogIO::POST;
 
-	
 	csys = impars_p.buildCoordinateSystem( *vi_p, channelSelections_p, mss_p );
 	//use the location defined for coordinates frame;
 	mLocation_p=impars_p.obslocation;
@@ -1231,7 +1230,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
           Int nchannow=vb->nChannels();
           Int spwnow=vb->spectralWindows()[0];
           Int nchaninms=MSColumns(vb->ms()).spectralWindow().numChan()(spwnow);
-          cerr << "chans " << nchaninms << "   " << nchannow << endl;
+          //cerr << "chans " << nchaninms << "   " << nchannow << endl;
           if (nchaninms < nchannow)
             throw(AipsError("A nasty Visbuffer2 error occured...wait for CNGI"));
         }
@@ -1963,10 +1962,11 @@ void SynthesisImagerVi2::makeComplexCubeImage(const String& cimage, const refim:
                 //cerr << "while rank " << rank << endl;
                 Bool status;
                 casa::applicator.get ( status );
-                if ( status )
-                    cerr << k << " rank " << rank << " successful " << endl;
+                /*if ( status )
+                  cerr << k << " rank " << rank << " successful " << endl;
                 else
                     cerr << k << " rank " << rank << " failed " << endl;
+                */
                 assigned = casa::applicator.nextAvailProcess ( *cmi, rank );
 
             }
@@ -1992,10 +1992,12 @@ void SynthesisImagerVi2::makeComplexCubeImage(const String& cimage, const refim:
         while (!allDone) {
             Bool status;
             casa::applicator.get(status);
+            /*
             if(status)
                 cerr << "remainder rank " << rank << " successful " << endl;
             else
                 cerr << "remainder rank " << rank << " failed " << endl;
+            */
             rank = casa::applicator.nextProcessDone(*cmi, allDone);
 			if(casa::applicator.isSerial())
 				allDone=true;
@@ -2039,7 +2041,7 @@ CountedPtr<SIMapper> SynthesisImagerVi2::createSIMapper(String mappertype,
   }
   
 void SynthesisImagerVi2::lockMS(MeasurementSet& thisms){
-	thisms.lock(!readOnly_p);
+  thisms.lock(!readOnly_p);
     thisms.antenna().lock(false);
 	thisms.dataDescription().lock(false);
     thisms.feed().lock(false);
