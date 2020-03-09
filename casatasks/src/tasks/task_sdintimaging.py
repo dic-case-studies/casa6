@@ -22,7 +22,7 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
-    from casatasks import imregrid
+    #from casatasks import imregrid
     from .sdint_helper import *
 else:
     from taskinit import *
@@ -207,7 +207,6 @@ def setup_sdimaging(template='',output='', inparms=None, sdparms=None):
     ## Regrid the input SD image and PSF cubes to the target coordinate system. 
     #imregrid(imagename=sdpsf, template=template+'.psf',
     #         output=output+'.psf',overwrite=True,axes=[0,1])
-
     sdintlib.regridimage(imagename=sdpsf, template=template+'.psf', outfile=output+'.psf')
     #imregrid(imagename=sdimage, template=template+'.residual',
     #         output=output+'.residual',overwrite=True,axes=[0,1])
@@ -243,12 +242,17 @@ def feather_residual(int_cube, sd_cube, joint_cube, applypb, inparm):
                                 usedata=inparm['usedata'])
 
     if applypb==True:
-       ## Multiply new JOINT dirty image by a common PB to get the effect of conjbeams. 
-       sdintlib.modify_with_pb(inpcube=joint_cube+'.residual',
+        if inparm['specmode'].count('cube')>0:
+            ## Multiply the new JOINT dirty image by the frequency-dependent PB. 
+            fdep_pb = True
+        else:
+            ## Multiply new JOINT dirty image by a common PB to get the effect of conjbeams. 
+            fdep_pb = False
+        sdintlib.modify_with_pb(inpcube=joint_cube+'.residual',
                                 pbcube=int_cube+'.pb',
                                 action='mult',
                                 pblimit=inparm['pblimit'],
-                                freqdep=False)
+                                freqdep=fdep_pb)
 
 def deleteTmpFiles():
     if os.path.exists('tmp_intplane'):
@@ -339,7 +343,7 @@ def sdintimaging(
     pbcor,
 
     ##### Outliers
-    outlierfile,#='',
+#    outlierfile,#='',    ### RESTRICTION : No support for outlier fields for joint SD-INT imaging. 
 
     ##### Weighting
     weighting,#='natural',
@@ -451,12 +455,17 @@ def sdintimaging(
     #     applypb = False
    
     if (deconvolver=="mtmfs") and (specmode!='mfs') and (specmode!='cube' or nterms!=1) and (specmode!='cubedata' or nterms!=1):
-        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_tclean" )
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_sdintimaging" )
         return
       
     if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 and parallel==True):
-        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_tclean" )
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_sdintimaging" )
         return
+
+
+    if specmode=='mfs' or specmode=='cont':
+        if nchan>100:
+            casalog.post("For wideband continuum imaging, it may be possible to reduce the number of channels in the grid step to (say) one per spectral window instead of the chosen nchan of "+str(nchan)+". This will reduce compute time used for feathering each plane separately.", "WARN", "task_sdintimaging")
 
     #####################################################
     #### Construct ImagerParameters object
@@ -487,8 +496,8 @@ def sdintimaging(
 
     #paramList.printParameters()
     
-    if pointingoffsetsigdev!=0.0 and usepointing==False:
-        casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
+#    if pointingoffsetsigdev!=[] and usepointing==False:
+#        casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
 
     pcube=False
     concattype=''
@@ -557,6 +566,7 @@ def sdintimaging(
             ### debug (remove it later) 
             casalog.post("SD cube setup ....")
             setup_sdimaging(template=int_cube, output=sd_cube, inparms=bparm, sdparms=sdparms ) 
+            
 
         ####now is the time to check estimated memory
         # need to move to somewhere below???
@@ -620,6 +630,14 @@ def sdintimaging(
                                 dishdia=dishdia,
                                 usedata=usedata)
 
+        ###############
+        ##### Placeholder code for PSF renormalization if needed
+        #####  Note : If this is enabled, we'll need to restrict the use of 'faceting' as .sumwt shape changes.
+        #sdintlib.calc_renorm(intname=int_cube, jointname=joint_cube)
+        #sdintlib.apply_renorm(imname=joint_cube+'.psf', sumwtname=joint_cube+'.sumwt')
+        #sdintlib.apply_renorm(imname=joint_cube+'.residual', sumwtname=joint_cube+'.sumwt')
+        ###############
+
         #print("feather_int_sd DONE")
  
         if specmode=='mfs':
@@ -638,13 +656,7 @@ def sdintimaging(
             deconvolver.updateMask()
 
             while ( not deconvolver.hasConverged() ):
-            ## (SDINT) Start image reconstruction loops
-            ## while ( not self.deconvolvertool.hasConverged() ):
-
-#                    maskchanged = imager.updateMask()
-#                    if maskchanged and imager.hasConverged() :
-#                        break;
-
+ 
                 t0=time.time();
                 deconvolver.runMinorCycle()
                 t1=time.time();
@@ -662,7 +674,7 @@ def sdintimaging(
                     shutil.rmtree(int_cube+'.model',ignore_errors=True)
                     shutil.copytree(joint_cube+'.model', int_cube+'.model')
                     hasfile=os.path.exists(joint_cube+'.model')
-                    print("DEBUG: has joint cube .image===",hasfile)
+                    #print("DEBUG: has joint cube .image===",hasfile)
 
                 if applypb==True:
                     ## Take the int_cube.model to flat sky. 
@@ -696,6 +708,10 @@ def sdintimaging(
 
                     ## Feather the residuals
                     feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams )
+                    ###############
+                    ##### Placeholder code for PSF renormalization if needed
+                    #sdintlib.apply_renorm(imname=joint_cube+'.residual', sumwtname=joint_cube+'.sumwt')
+                    ###############
 
                 if specmode=='mfs':
                     ## Calculate Spectral Taylor Residuals
@@ -723,7 +739,8 @@ def sdintimaging(
                 if applypb==True:
                     t0=time.time();
                     if specmode=='mfs':
-                        sdintlib.pbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0', cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
+                        #impbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , mode='divide', cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
+                        sdintlib.pbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
                     else:
                         sdintlib.modify_with_pb(inpcube=joint_cube+'.image',
                                         pbcube=int_cube+'.pb',

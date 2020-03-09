@@ -79,7 +79,7 @@ class SDINT_helper:
         Run the feather task to combine the SD and INT Cubes. 
         
         There's a bug in feather for cubes. Hence, do each channel separately.
-        FIX feather and then change this....
+        FIX feather and then change this. CAS-5883 is the JIRA ticket that contains a fix for this issue.... 
 
         TODO : Add the effdishdia  usage to get freq-indep feathering.
 
@@ -140,6 +140,62 @@ class SDINT_helper:
             os.system('cp -r ' + intcube + ' ' + jointcube)
 
 ################################################
+    def calc_renorm(self, intname='', jointname=''):
+        """
+        Calculate a new .sumwt spectrum containing the peak of the feathered PSF.
+        The PSF and each residual image calculation will be re-normalized by this.
+        This will keep the PSFs in all channels at a peak of 1.
+        """
+        psfname = jointname+'.psf'
+        os.system('cp -r '+intname+'.sumwt ' + jointname + '.sumwt')
+        _ia.open(jointname+'.sumwt')
+        vals = _ia.getchunk()
+        shp = _ia.shape()
+        _ia.close()
+
+        if shp[0]>1:
+            print("WARNING : Cannot use this task with faceting")
+
+        _ia.open(jointname+'.psf')
+        for i in range(0, shp[3]):
+            onepsf = _ia.getchunk(blc=[0,0,0,i],trc=[shp[0],shp[1],0,i])
+            vals[0,0,0,i] = np.max(onepsf)
+        _ia.close()
+
+        _ia.open(jointname+'.sumwt')
+        _ia.putchunk(vals)
+        _ia.close()
+
+        print("********************Re-norm with "+str(vals))
+
+
+################################################
+
+    def apply_renorm(self, imname='', sumwtname=''):
+        """
+        Divide each plane of the input image by the sumwt value for that channel
+        """
+        _ia.open(sumwtname)
+        shp = _ia.shape()
+        vals = _ia.getchunk()   ## This is one pixel per channel.
+        _ia.close()
+        
+        print("********************Re-norm with "+str(vals))
+
+        _ia.open(imname)
+        for i in range(0, shp[3]):
+            oneplane = _ia.getchunk(blc=[0,0,0,i],trc=[shp[0],shp[1],0,i])
+            if vals[0,0,0,i]>0.0:
+                normplane = oneplane/vals[0,0,0,i]
+            else:
+                normplane = oneplane.copy()
+                normplane.fill(0.0)
+            _ia.putchunk( normplane , blc=[0,0,0,i] )
+        _ia.close()
+        
+
+
+################################################
 
     def modify_with_pb(self, inpcube='', pbcube='', action='mult',pblimit=0.2, freqdep=True):
         """
@@ -155,17 +211,29 @@ class SDINT_helper:
         shp=_ia.shape()
         _ia.close()
 
-        midchan = int(len(freqlist)/2)
+        #midchan = int(len(freqlist)/2)
+        #refchan = len(freqlist)-1   ## This assumes ascending frequency ordering in chans.
+        refchan=0
         _ia.open(pbcube)
-        pbplane = _ia.getchunk(blc=[0,0,0,midchan],trc=[shp[0],shp[1],0,midchan])
+        pbplane = _ia.getchunk(blc=[0,0,0,refchan],trc=[shp[0],shp[1],0,refchan])
         _ia.close()
 
+        ## Special-case for setting the PBmask to be same for all freqs
+        if freqdep==False:
+            shutil.copytree(pbcube, pbcube+'_tmpcopy')
 
         for i in range(len(freqlist)):
 
+            ## Read the pb per plane
             if freqdep==True:
                 _ia.open(pbcube)
                 pbplane = _ia.getchunk(blc=[0,0,0,i],trc=[shp[0],shp[1],0,i])
+                _ia.close()
+
+            ## Make a tmp pbcube with the same pb in all planes. This is for the mask.
+            if freqdep==False:
+                _ia.open(pbcube+'_tmpcopy')
+                _ia.putchunk(pbplane, blc=[0,0,0,i])
                 _ia.close()
 
             _ia.open(inpcube)
@@ -185,7 +253,14 @@ class SDINT_helper:
             _ia.putchunk(outplane, blc=[0,0,0,i])
             _ia.close()
 
+        if freqdep==True:
+            ## Set a mask based on frequency-dependent PB
             self.addmask(inpcube,pbcube,pblimit)
+        else:
+            ## Set a mask based on the PB in refchan
+            self.addmask(inpcube,pbcube+'_tmpcopy',pblimit)
+            shutil.rmtree(pbcube+'_tmpcopy')
+            
 
 ################################################
     def addmask(self, inpimage='',pbimage='',pblimit=0.2, mode='replace'):
@@ -204,6 +279,7 @@ class SDINT_helper:
         if mode=='replace':
             if defaultmaskname!='' and defaultmaskname!='mask0':
                 _ia.calcmask(mask='"'+pbimage+'"'+'>'+str(pblimit), name=defaultmaskname);
+
             elif defaultmaskname=='mask0':
                 if 'pbmask' in allmasknames:
                     _ia.maskhandler('delete','pbmask')

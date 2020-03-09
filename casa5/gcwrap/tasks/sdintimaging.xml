@@ -1508,7 +1508,9 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 <!--============================================== -->
 <!--                            Outlier Parameters  (files with any of the above)               -->
+<!-- DISABLE for sdintimaging -->
 <!--============================================== -->
+<!--
     <param type="string" name="outlierfile">
      <shortdescription>Name of outlier-field image definitions</shortdescription>
 <description>Name of outlier-field image definitions
@@ -1563,7 +1565,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 </description>
       <value type="string"></value>
     </param>
-
+-->
 
 <!--============================================== -->
 <!--                            Weighting Parameters                                            -->

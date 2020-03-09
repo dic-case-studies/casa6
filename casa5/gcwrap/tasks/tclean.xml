@@ -672,8 +672,9 @@ HPX HEALPix grid.  -->
                          (the default, True)
                          or a common weight density for all of the selected
                          data. This parameter has no
-                         meaning for continuum (specmode='mfs')
-                         imaging but for cube imaging
+                         meaning for continuum (specmode='mfs') imaging
+                         or for natural and radial weighting schemes.
+                         For cube imaging
                          perchanweightdensity=True is a recommended
                          option that provides more uniform
                          sensitivity per channel for cubes, but with
