@@ -235,7 +235,10 @@ class TestHelpers:
             else:
                 if abs(correctval - val)/abs(correctval) > epsilon:
                     out=False
-        pstr = "[ {} ] {} is {} ( {} : should be {}, Epsilon: {})\n".format(testname, valname, str(val), TestHelpers().verdict(out), str(correctval), str(epsilon) )
+        if exact == True:
+            pstr = "[ {} ] {} is {} ( {} : should be {}, Exact: True )\n".format(testname, valname, str(val), TestHelpers().verdict(out), str(correctval) )
+        else:
+            pstr = "[ {} ] {} is {} ( {} : should be {}, Epsilon: {})\n".format(testname, valname, str(val), TestHelpers().verdict(out), str(correctval), str(epsilon) )
         logging.info(pstr)
         return out, pstr
 
