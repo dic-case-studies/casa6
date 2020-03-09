@@ -90,12 +90,20 @@ def checktable(thename, theexpectation, multims=False):
 # beginning of actual test 
 
 class test_concat(unittest.TestCase):
-
-    def setUp(self):
+#     @classmethod
+#     def setUpClass(cls):
+#         '''A class method called before tests in an individual class run'''
+#         # MS used for all tests of this class.
+#         cls.msfile = 'vlass1.1_rowtest_6fields.ms'
+#         os.symlink(data_path+cls.msfile, cls.msfile)
+        
+    @classmethod
+    def setUpClass(cls):
+        '''Copy input files only once'''
         global testmms
         res = None
 
-        datapath=ctsys_resolve('regression/unittest/concat/input')
+        datapath=ctsys_resolve('regression/unittest/concat/input/')
         datapathmms = ''
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
@@ -135,6 +143,7 @@ class test_concat(unittest.TestCase):
         else:
             os.chdir(datapath)
             myinputmslist = sorted(glob.glob("*.ms"))
+            print(myinputmslist)
             os.chdir(cpath)
             for mymsname in myinputmslist:
                 if not mymsname in filespresent:
@@ -180,6 +189,8 @@ class test_concat(unittest.TestCase):
             ms.addephemeris(1,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
                             'Jupiter_54708-55437dUTC', 0)
             ms.close()
+            myinputmslist.append('xy1.ms')
+            myinputmslist.append('xy1-noephem.ms')
 
         if not 'xy2.ms' in filespresent:
             split(vis='part1.ms', outputvis='xy2.ms', scan="58~65", datacolumn='data')
@@ -208,6 +219,7 @@ class test_concat(unittest.TestCase):
             ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
                             'Uranus_54708-55437dUTC', '1908-201')
             ms.close()
+            myinputmslist.append('xy2.ms')
 
         if not 'xy2late.ms' in filespresent:
             split(vis='part1.ms', outputvis='xy2late.ms', scan="58~65", datacolumn='data')
@@ -236,22 +248,200 @@ class test_concat(unittest.TestCase):
             ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
                             'Uranus_55437-56293dUTC', '1908-201')
             ms.close()
+            myinputmslist.append('xy2late.ms')
 
         if not 'xy2-jup-ur.ms' in filespresent:
             split(vis='xy2.ms', outputvis='xy2-jup-ur.ms', field = 'jupiter, 1908-201', datacolumn='data')
+            myinputmslist.append('xy2-jup-ur.ms')
 
         if not 'xya.ms' in filespresent:
             split(vis='xy1.ms', outputvis='xya.ms', spw='0:0~63', datacolumn='data')
+            myinputmslist.append('xya.ms')
             
         if not 'xyb.ms' in filespresent:
             split(vis='xy1.ms', outputvis='xyb.ms', spw='0:64~127', datacolumn='data')
+            myinputmslist.append('xyb.ms')
+
+        cls.listoffiles = myinputmslist
 
         if not is_CASA6:
             default(concat)
         return True
+
+
+#     def setUp(self):
+#         global testmms
+#         res = None
+# 
+#         datapath=ctsys_resolve('regression/unittest/concat/input/')
+#         datapathmms = ''
+#         # Pick up alternative data directory to run tests on MMSs
+#         testmms = False
+#         if 'TEST_DATADIR' in os.environ:
+#             testmms = True
+#             DATADIR = str(os.environ.get('TEST_DATADIR'))
+#             if os.path.isdir(DATADIR):
+#                 datapathmms = DATADIR+'/concat/input/'
+# 
+# 
+#         cpath = os.path.abspath(os.curdir)
+#         filespresent = sorted(glob.glob("*.ms"))
+#         if(datapathmms!=''): 
+#             print("\nTesting on MMSs ...\n")
+# 
+#             nonmmsinput = ['A2256LC2_4.5s-1.ms', 'part1.ms', 'part2-mod2.ms', 'shortpart1.ms', 'sim7.ms', 
+#                            'uid___A002_Xab8dc1_X95a-shrunk.ms', 'uid___A002_Xab8dc1_Xf13-shrunk.ms',
+#                            'nep1-shrunk.ms', 'nep2-shrunk.ms', 'nep3-shrunk.ms']
+#             os.chdir(datapathmms)
+#             myinputmslist = sorted(glob.glob("*.ms"))
+#             os.chdir(cpath)
+# 
+#             for mymsname in myinputmslist:
+#                 if not ((mymsname in filespresent) or (mymsname in nonmmsinput)):
+#                     print("Copying MMS", mymsname)
+#                     rval = os.system('cp -R '+datapathmms+'/'+mymsname+' .')
+#                     if rval!=0:
+#                         raise Exception('Error while copying input data.')
+# 
+#             for mymsname in nonmmsinput:
+#                 if not mymsname in filespresent:
+#                     print("Copying non-MMS ", mymsname)
+#                     rval = os.system('cp -R '+datapath+'/'+mymsname+' .')
+#                     if rval!=0:
+#                         raise Exception('Error while copying input data.')
+#                     
+#         else:
+#             os.chdir(datapath)
+#             myinputmslist = sorted(glob.glob("*.ms"))
+#             print(myinputmslist)
+#             os.chdir(cpath)
+#             for mymsname in myinputmslist:
+#                 if not mymsname in filespresent:
+#                     print("Copying ", mymsname)
+#                     rval = os.system('cp -R '+os.path.join(datapath,mymsname)+' .')
+#                     if rval!=0:
+#                         raise Exception('Error while copying input data.')
+# 
+#         os.chdir(cpath)
+#         self.listoffiles = myinputmslist
+# 
+#         # create MSs with ephemeris use
+#         
+#         if not 'xy1.ms' in filespresent:
+#             print("Creating MSs with ephemeris table use ...")
+# 
+#             split(vis='part1.ms', outputvis='xy1.ms', scan="1~30", datacolumn='data')
+# 
+#             tb.open('xy1.ms', nomodify=False)
+#             a = tb.getcol('TIME')
+#             delta = (54709.*86400-a[0])
+#             a = a + delta
+#             tb.putcol('TIME', a)
+#             a = tb.getcol('TIME_CENTROID')
+#             a = a + delta
+#             tb.putcol('TIME_CENTROID', a)
+#             tb.close()
+#             tb.open('xy1.ms/FIELD', nomodify=False)
+#             a = tb.getcol('TIME')
+#             a = a + delta
+#             tb.putcol('TIME', a)
+#             tb.close()
+#             tb.open('xy1.ms/OBSERVATION', nomodify=False)
+#             a = tb.getcol('TIME_RANGE')
+#             a = a + delta
+#             tb.putcol('TIME_RANGE', a)
+#             tb.close()
+# 
+#             shutil.copytree('xy1.ms', 'xy1-noephem.ms')
+# 
+#             ms.open('xy1.ms', nomodify=False)
+#             ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+#                             'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
+#             ms.addephemeris(1,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+#                             'Jupiter_54708-55437dUTC', 0)
+#             ms.close()
+# 
+#         if not 'xy2.ms' in filespresent:
+#             split(vis='part1.ms', outputvis='xy2.ms', scan="58~65", datacolumn='data')
+# 
+#             tb.open('xy2.ms', nomodify=False)
+#             a = tb.getcol('TIME')
+#             delta = (54719.*86400-a[0]) # ten days later than xy1.ms !
+#             a = a + delta
+#             tb.putcol('TIME', a)
+#             a = tb.getcol('TIME_CENTROID')
+#             a = a + delta
+#             tb.putcol('TIME_CENTROID', a)
+#             tb.close()
+#             tb.open('xy2.ms/FIELD', nomodify=False)
+#             a = tb.getcol('TIME')
+#             a = a + delta
+#             tb.putcol('TIME', a)
+#             tb.close()
+#             tb.open('xy2.ms/OBSERVATION', nomodify=False)
+#             a = tb.getcol('TIME_RANGE')
+#             a = a + delta
+#             tb.putcol('TIME_RANGE', a)
+#             tb.close()
+# 
+#             ms.open('xy2.ms', nomodify=False)
+#             ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+#                             'Uranus_54708-55437dUTC', '1908-201')
+#             ms.close()
+# 
+#         if not 'xy2late.ms' in filespresent:
+#             split(vis='part1.ms', outputvis='xy2late.ms', scan="58~65", datacolumn='data')
+# 
+#             tb.open('xy2late.ms', nomodify=False)
+#             a = tb.getcol('TIME')
+#             delta = (55438.*86400-a[0]) # much later than xy1.ms, beyond the end of Uranus_54708-55437dUTC.tab !
+#             a = a + delta
+#             tb.putcol('TIME', a)
+#             a = tb.getcol('TIME_CENTROID')
+#             a = a + delta
+#             tb.putcol('TIME_CENTROID', a)
+#             tb.close()
+#             tb.open('xy2late.ms/FIELD', nomodify=False)
+#             a = tb.getcol('TIME')
+#             a = a + delta
+#             tb.putcol('TIME', a)
+#             tb.close()
+#             tb.open('xy2late.ms/OBSERVATION', nomodify=False)
+#             a = tb.getcol('TIME_RANGE')
+#             a = a + delta
+#             tb.putcol('TIME_RANGE', a)
+#             tb.close()
+# 
+#             ms.open('xy2late.ms', nomodify=False)
+#             ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
+#                             'Uranus_55437-56293dUTC', '1908-201')
+#             ms.close()
+# 
+#         if not 'xy2-jup-ur.ms' in filespresent:
+#             split(vis='xy2.ms', outputvis='xy2-jup-ur.ms', field = 'jupiter, 1908-201', datacolumn='data')
+# 
+#         if not 'xya.ms' in filespresent:
+#             split(vis='xy1.ms', outputvis='xya.ms', spw='0:0~63', datacolumn='data')
+#             
+#         if not 'xyb.ms' in filespresent:
+#             split(vis='xy1.ms', outputvis='xyb.ms', spw='0:64~127', datacolumn='data')
+# 
+#         if not is_CASA6:
+#             default(concat)
+#         return True
         
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        '''A class method called after tests in an individual class have run'''
+        # remove all the generated data
+        for ifile in cls.listoffiles:
+            print(ifile)
+            os.system('rm -rf '+ifile)
+            shutil.rmtree(ifile,ignore_errors=True)
+        #os.system('rm -rf st_*')
 
     def test1(self):
         '''Concat 1: 4 parts, same sources but different spws'''
@@ -314,9 +504,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test1.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test1.ms',ignore_errors=True)
-            shutil.copytree(msname,'test1.ms')
+#             if 'test1.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test1.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test1.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -405,9 +595,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test2.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test2.ms',ignore_errors=True)
-            shutil.copytree(msname,'test2.ms')
+#             if 'test2.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test2.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test2.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -543,9 +733,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test3.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test3.ms',ignore_errors=True)
-            shutil.copytree(msname,'test3.ms')
+#             if 'test3.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test3.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test3.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -636,9 +826,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test4.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test4.ms',ignore_errors=True)
-            shutil.copytree(msname,'test4.ms')
+#             if 'test4.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test4.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test4.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
         
@@ -767,9 +957,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test5.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test5.ms',ignore_errors=True)
-            shutil.copytree(msname,'test5.ms')
+#             if 'test5.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test5.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test5.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
@@ -851,9 +1041,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test6.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test6.ms',ignore_errors=True)
-            shutil.copytree(msname,'test6.ms')
+#             if 'test6.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test6.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test6.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
@@ -936,14 +1126,15 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test7.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test7.ms',ignore_errors=True)
-            shutil.copytree(msname,'test7.ms')
+#             if 'test7.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test7.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test7.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
             # check Main table
-            tb.open('test7.ms')
+#            tb.open('test7.ms')
+            tb.open(msname)
             ant1 = tb.getcol('ANTENNA1')
             ant2 = tb.getcol('ANTENNA2')
             tb.close()
@@ -1023,15 +1214,16 @@ class test_concat(unittest.TestCase):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
-            if 'test8.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test8.ms',ignore_errors=True)
-            shutil.copytree(msname,'test8.ms')
+            ms.close()                
+#             if 'test8.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test8.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test8.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
             # check Main table
-            tb.open('test8.ms')
+#            tb.open('test8.ms')
+            tb.open(msname)
             ant1 = tb.getcol('ANTENNA1')
             ant2 = tb.getcol('ANTENNA2')
             tb.close()
@@ -1046,7 +1238,7 @@ class test_concat(unittest.TestCase):
             if not result:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
-                
+
         self.assertTrue(retValue['success'])
 
 
@@ -1066,6 +1258,7 @@ class test_concat(unittest.TestCase):
             print("Expecting an Error ... ")
 
         self.res = concat(vis=['part1.ms','part2-mod2-wscratch.ms','part3.ms'],concatvis=msname)
+        shutil.rmtree('part2-mod2-wscratch.ms',ignore_errors=True)
 
         if not testmms:
 
@@ -1125,9 +1318,9 @@ class test_concat(unittest.TestCase):
                 retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
             else:
                 ms.close()
-                if 'test9.ms' in glob.glob("*.ms"):
-                    shutil.rmtree('test9.ms',ignore_errors=True)
-                shutil.copytree(msname,'test9.ms')
+#                 if 'test9.ms' in glob.glob("*.ms"):
+#                     shutil.rmtree('test9.ms',ignore_errors=True)
+#                 shutil.copytree(msname,'test9.ms')
                 print(myname, ": OK. Checking tables in detail ...")
                 retValue['success']=True
 
@@ -1170,6 +1363,7 @@ class test_concat(unittest.TestCase):
             cb.close()
 
             self.res = concat(vis=['part1-wscratch.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
+            shutil.rmtree('part1-wscratch.ms',ignore_errors=True)
             self.assertEqual(self.res,True)
 
             print(myname, ": Now checking output ...")
@@ -1226,9 +1420,9 @@ class test_concat(unittest.TestCase):
                 retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
             else:
                 ms.close()
-                if 'test10.ms' in glob.glob("*.ms"):
-                    shutil.rmtree('test10.ms',ignore_errors=True)
-                shutil.copytree(msname,'test10.ms')
+#                 if 'test10.ms' in glob.glob("*.ms"):
+#                     shutil.rmtree('test10.ms',ignore_errors=True)
+#                 shutil.copytree(msname,'test10.ms')
                 print(myname, ": OK. Checking tables in detail ...")
                 retValue['success']=True
 
@@ -1320,11 +1514,12 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test11.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test11.ms',ignore_errors=True)
-            shutil.copytree(msname,'test11.ms')
+#             if 'test11.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test11.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test11.ms')
             print(myname, ": OK. Checking tables in detail ...")
-            tb.open('test11.ms/FIELD')
+#            tb.open('test11.ms/FIELD')
+            tb.open(msname+'/FIELD')
             a = list(tb.getcol('NAME'))
             tb.close()
             tb.open('xy1.ms/FIELD')
@@ -1416,9 +1611,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test12.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test12.ms',ignore_errors=True)
-            shutil.copytree(msname,'test12.ms')
+#             if 'test12.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test12.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test12.ms')
             #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -1487,9 +1682,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test13.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test13.ms',ignore_errors=True)
-            shutil.copytree(msname,'test13.ms')
+#             if 'test13.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test13.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test13.ms')
             #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -1558,11 +1753,12 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test14.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test14.ms',ignore_errors=True)
-            shutil.copytree(msname,'test14.ms')
+#             if 'test14.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test14.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test14.ms')
             print(myname, ": OK. Checking tables in detail ...")
-            tb.open('test14.ms/FIELD')
+#            tb.open('test14.ms/FIELD')
+            tb.open(msname+'/FIELD')
             a = list(tb.getcol('NAME'))
             tb.close()
             tb.open('xy1.ms/FIELD')
@@ -1643,11 +1839,12 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test15.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test15.ms',ignore_errors=True)
-            shutil.copytree(msname,'test15.ms')
+#             if 'test15.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test15.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test15.ms')
             print(myname, ": OK. Checking tables in detail ...")
-            tb.open('test15.ms/FIELD')
+#            tb.open('test15.ms/FIELD')
+            tb.open(msname+'/FIELD')
             a = list(tb.getcol('NAME'))
             tb.close()
             tb.open('xy1.ms/FIELD')
@@ -1718,13 +1915,14 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test16.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test16.ms',ignore_errors=True)
-            shutil.copytree(msname,'test16.ms')
+#             if 'test16.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test16.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test16.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
-            tb.open('test16.ms')
+#            tb.open('test16.ms')
+            tb.open(msname)
             a = tb.getcol('SCAN_NUMBER')
             tb.close()
             if not (a[0]==3 and a[59]==3 and a[60]==4 and a[len(a)-1]==4):
@@ -1796,9 +1994,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test17.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test17.ms',ignore_errors=True)
-            shutil.copytree(msname,'test17.ms')
+#             if 'test17.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test17.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test17.ms')
             #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -1878,9 +2076,9 @@ class test_concat(unittest.TestCase):
         else:
             ms.close()
             tb.close()
-            if 'test18.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test18.ms',ignore_errors=True)
-            shutil.copytree(msname,'test18.ms')
+#             if 'test18.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test18.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test18.ms')
             #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -2009,6 +2207,7 @@ class test_concat(unittest.TestCase):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of MAIN table failed'
 
+        shutil.rmtree('test19.ms',ignore_errors=True)
         self.assertTrue(retValue['success'])
 
 
