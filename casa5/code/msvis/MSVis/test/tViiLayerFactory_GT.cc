@@ -755,12 +755,12 @@ int DDIdGroupCompare::comp(const void * obj1, const void * obj2) const
 
   // The DDIds are binned in bins with a width of groupBin_p.
   // Simple integer division gives you that.
-  Int t1 = v1 / groupBin_p;
-  Int t2 = v2 / groupBin_p;
+  Int bin1 = v1 / groupBin_p;
+  Int bin2 = v2 / groupBin_p;
 
   // orderFactor_p is 1 or -1 depending on whether it has been requested
   // ascending or descending order.
-  return (t1==t2 ? 0 : (t1<t2 ? -1*orderFactor_p : 1*orderFactor_p));
+  return (bin1==bin2 ? 0 : (bin1<bin2 ? -1*orderFactor_p : 1*orderFactor_p));
 }
 
 TEST_F(FullSortingDefinitionTest, GroupSPWs)
@@ -829,3 +829,33 @@ TEST_F(FullSortingDefinitionTest, GroupSPWsDescending)
     });
 
 }
+
+TEST_F(FullSortingDefinitionTest, DDIdSortingBothInnerOuterLoop)
+{
+  // This test will create a sorting function for DDId and an empty
+  // one. With loop=0 the DDId sorting function is applied to the chunks,
+  // while with loop=1 it is applied to the subchunks. Both cases should
+  // give the same results
+  for (int loop = 0; loop < 1; loop++)
+  {
+    SortColumns sortColumns1(false);
+    SortColumns sortColumns2(false);
+    CountedPtr<ObjCompare<Int>> cmpFunc(new ObjCompare<Int>());
+    sortColumns1.addSortingColumn(MS::DATA_DESC_ID, cmpFunc);
+
+    if (loop==0)
+      setSortingDefinition(sortColumns1, sortColumns2);
+    else 
+      setSortingDefinition(sortColumns2, sortColumns1);
+
+    createTVIs();
+
+    visitIterator([&]() -> void {
+      std::list<Int> spws (vb_p->spectralWindows().begin(), vb_p->spectralWindows().end());
+      spws.sort();
+      spws.unique();
+      ASSERT_EQ(spws.size(), 1);
+      });
+  }
+}
+
