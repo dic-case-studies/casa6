@@ -854,8 +854,48 @@ TEST_F(FullSortingDefinitionTest, DDIdSortingBothInnerOuterLoop)
       std::list<Int> spws (vb_p->spectralWindows().begin(), vb_p->spectralWindows().end());
       spws.sort();
       spws.unique();
-      ASSERT_EQ(spws.size(), 1);
+      ASSERT_EQ(spws.size(), (size_t)1);
       });
   }
 }
 
+/*
+ * Comparison function that groups DDIds in "bins"
+ */
+class TimeDescendingCompare : public BaseCompare
+{
+public:
+  explicit TimeDescendingCompare() {}
+  virtual ~TimeDescendingCompare() {}
+  virtual int comp(const void * obj1, const void * obj2) const;
+};
+
+int TimeDescendingCompare::comp(const void * obj1, const void * obj2) const
+{
+  return (*(const Double*)obj1  > *(const Double*)obj2  ?  -1 :
+    (*(const Double*)obj1 == *(const Double*)obj2  ?  0 : 1));
+}
+
+TEST_F(FullSortingDefinitionTest, InnerLoopGroupingTimeChunksDescending)
+{
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+  CountedPtr<TimeDescendingCompare> cmpFunc(new TimeDescendingCompare());
+  sortColumnsSubchunk.addSortingColumn(MS::TIME, cmpFunc);
+
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  Double prevTime = -1;
+  visitIterator([&]() -> void {
+    std::list<Int> times (vb_p->time().begin(), vb_p->time().end());
+    times.sort();
+    times.unique();
+    ASSERT_EQ(times.size(), 1);
+    if(prevTime != -1.)
+      ASSERT_LT(times.front(), prevTime);
+    prevTime = times.front();
+    });
+
+}
