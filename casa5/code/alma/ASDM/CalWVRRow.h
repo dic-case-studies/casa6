@@ -104,6 +104,8 @@
 
 	
 
+	
+
 
 
 #include <alma/ASDM/ConversionException.h>
@@ -645,6 +647,47 @@ public:
 	
 
 
+	
+	// ===> Attribute tauBaseline, which is optional
+	
+	
+	
+	/**
+	 * The attribute tauBaseline is optional. Return true if this attribute exists.
+	 * @return true if and only if the tauBaseline attribute exists. 
+	 */
+	bool isTauBaselineExists() const;
+	
+
+	
+ 	/**
+ 	 * Get tauBaseline, which is optional.
+ 	 * @return tauBaseline as float
+ 	 * @throws IllegalAccessException If tauBaseline does not exist.
+ 	 */
+ 	float getTauBaseline() const;
+	
+ 
+ 	
+ 	
+ 	/**
+ 	 * Set tauBaseline with the specified float.
+ 	 * @param tauBaseline The float value to which tauBaseline is to be set.
+ 	 
+ 		
+ 	 */
+ 	void setTauBaseline (float tauBaseline);
+		
+	
+	
+	
+	/**
+	 * Mark tauBaseline, which is an optional field, as non-existent.
+	 */
+	void clearTauBaseline ();
+	
+
+
 	////////////////////////////////
 	// Extrinsic Table Attributes //
 	////////////////////////////////
@@ -909,7 +952,8 @@ void wetPathFromBin( EndianIStream& eis);
 void dryPathFromBin( EndianIStream& eis);
 void waterFromBin( EndianIStream& eis);
 
-	
+void tauBaselineFromBin( EndianIStream& eis);
+
 
 	 /**
 	  * Deserialize a stream of bytes read from an EndianIStream to build a PointingRow.
@@ -1152,6 +1196,19 @@ private:
 	
  	
 
+	
+	// ===> Attribute tauBaseline, which is optional
+	
+	
+	bool tauBaselineExists;
+	
+
+	float tauBaseline;
+
+	
+	
+ 	
+
 	////////////////////////////////
 	// Extrinsic Table Attributes //
 	////////////////////////////////
@@ -1221,7 +1278,8 @@ void wetPathFromBin( EndianIStream& eis);
 void dryPathFromBin( EndianIStream& eis);
 void waterFromBin( EndianIStream& eis);
 
-	
+void tauBaselineFromBin( EndianIStream& eis);
+
 */
 	
 	///////////////////////////////////
@@ -1283,7 +1341,10 @@ void dryPathFromText (const std::string & s);
 void waterFromText (const std::string & s);
 	
 
-		
+	
+void tauBaselineFromText (const std::string & s);
+	
+	
 	
 	/**
 	 * Serialize this into a stream of bytes written to an EndianOSStream.

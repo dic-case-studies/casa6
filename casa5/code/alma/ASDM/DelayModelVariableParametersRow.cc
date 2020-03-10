@@ -631,7 +631,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"DelayModelVariableParameters");
 		}
 	}
@@ -931,7 +931,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"DelayModelVariableParameters");
 		}
 	}
@@ -975,7 +975,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDifferenceType::name(timeType));
+		eoss.writeString(CDifferenceType::name(timeType));
 			/* eoss.writeInt(timeType); */
 				
 		
@@ -1014,7 +1014,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDifferenceType::name(polarOffsetsType));
+		eoss.writeString(CDifferenceType::name(polarOffsetsType));
 			/* eoss.writeInt(polarOffsetsType); */
 				
 		

@@ -464,7 +464,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Receiver");
 		}
 	}
@@ -662,7 +662,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Receiver");
 		}
 	}
@@ -715,7 +715,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverBand::name(frequencyBand));
+		eoss.writeString(CReceiverBand::name(frequencyBand));
 			/* eoss.writeInt(frequencyBand); */
 				
 		
@@ -732,7 +732,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverSideband::name(receiverSideband));
+		eoss.writeString(CReceiverSideband::name(receiverSideband));
 			/* eoss.writeInt(receiverSideband); */
 				
 		

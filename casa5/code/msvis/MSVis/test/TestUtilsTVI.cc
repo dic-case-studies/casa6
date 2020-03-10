@@ -31,6 +31,10 @@
 #include <msvis/MSVis/VisBuffer.h>
 #include <msvis/MSVis/TransformingVi2.h>
 
+namespace casacore {
+	inline casacore::uInt abs(casacore::uInt Val) {return Val;}
+}
+
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 

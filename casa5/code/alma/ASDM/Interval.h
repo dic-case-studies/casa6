@@ -63,7 +63,7 @@ namespace asdm {
   public:
     static int64_t fromString(const std::string&);
     static std::string toString(int64_t);
-    static Interval getInterval(StringTokenizer &t) throw(NumberFormatException);
+    static Interval getInterval(StringTokenizer &t);
 
     Interval();                              		// default constructor
     Interval(const Interval &);						// X const X& constructor

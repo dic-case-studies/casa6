@@ -535,7 +535,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"FocusModel");
 		}
 	}
@@ -755,7 +755,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"FocusModel");
 		}
 	}
@@ -783,7 +783,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CPolarizationType::name(polarizationType));
+		eoss.writeString(CPolarizationType::name(polarizationType));
 			/* eoss.writeInt(polarizationType); */
 				
 		
@@ -793,7 +793,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverBand::name(receiverBand));
+		eoss.writeString(CReceiverBand::name(receiverBand));
 			/* eoss.writeInt(receiverBand); */
 				
 		

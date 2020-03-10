@@ -97,7 +97,7 @@ namespace asdm {
     try {
       *this = Tag::parseTag(string(x.type_value));
     }
-    catch (TagFormatException e) {
+    catch (const TagFormatException &e) {
       // Let's ignore this exception.
     }
   }
@@ -191,7 +191,7 @@ namespace asdm {
     try {
       value = Integer::parseInt(svalue);
     }
-    catch (NumberFormatException e) {
+    catch (const NumberFormatException &e) {
       throw TagFormatException("Error: \"" + s + "\" has an invalid value part\"" + svalue); 
     }	
     return Tag(value, type);

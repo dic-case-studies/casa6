@@ -7,7 +7,6 @@
 # Do not include the suffix .py
 
 test_agentflagger               scastro@eso.org
-test_applycal                   scastro@eso.org
 test_bandpass                   gmoellen@aoc.nrao.edu
 test_calanalysis                gmoellen@aoc.nrao.edu
 test_caltabconvert              gmoellen@aoc.nrao.edu
@@ -31,7 +30,6 @@ test_flaghelper                 scastro@eso.org
 test_flagmanager                scastro@eso.org
 test_fluxscale                  ttsutsum@nrao.edu
 test_fringefit			kettenis@jive.eu
-test_gaincal                    gmoellen@aoc.nrao.edu
 test_gencal                     ttsutsum@nrao.edu
 test_getchunk                   dmehring@nrao.edu
 test_hanningsmooth              scastro@eso.org
@@ -91,7 +89,6 @@ test_imsmooth                   dmehring@nrao.edu
 test_imstat                     dmehring@nrao.edu
 test_imtrans                    dmehring@nrao.edu
 test_imval                      dmehring@nrao.edu
-test_listhistory                scastro@eso.org
 test_listobs                    dmehring@nrao.edu
 test_listvis                    scastro@eso.org
 test_listpartition              scastro@eso.org
@@ -158,6 +155,7 @@ test_vishead                    jkern@nrao.edu
 test_visstat                    jkern@nrao.edu
 test_vpmanager                  dpetry@eso.org
 test_wvrgcal                    dpetry@eso.org
+test_req_task_listcal           fpouzols@eso.org
 test_req_task_listobs           nschweig@nrao.edu
 test_req_task_listobs           nschweig@nrao.edu
 test_req_task_listhistory       nschweig@nrao.edu
@@ -170,6 +168,7 @@ test_req_task_visstat           nschweig@nrao.edu
 test_req_task_delmod            nschweig@nrao.edu
 test_req_task_feather           nschweig@nrao.edu
 test_req_task_imrebin           nschweig@nrao.edu
+test_req_task_imhistory         nschweig@nrao.edu
 test_req_task_uvmodelfit        nschweig@nrao.edu
 test_req_task_imreframe         nschweig@nrao.edu
 test_req_task_accor             nschweig@nrao.edu
