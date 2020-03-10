@@ -272,6 +272,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_tsdimaging.py',
                     'src/tasks/task_nrobeamaverage.py',
                     'src/tasks/task_sdpolaverage.py',
+                    'src/tasks/task_sdsidebandsplit.py',
                     'src/scripts/simutil.py',
                     'src/tasks/task_simalma.py',
                     'src/tasks/task_simobserve.py',
@@ -402,6 +403,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/fringefit.xml': 'xml/fringefit.xml',
               'casa-source/gcwrap/tasks/plotbandpass.xml': 'xml/plotbandpass.xml',
               'casa-source/gcwrap/tasks/sdpolaverage.xml': 'xml/sdpolaverage.xml',
+              'casa-source/gcwrap/tasks/sdsidebandsplit.xml': 'xml/sdsidebandsplit.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -512,6 +514,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/fringefit.xml',
               'xml/plotbandpass.xml',
               'xml/sdpolaverage.xml',
+              'xml/sdsidebandsplit.xml',
 ]
 
 if pyversion < 3:
