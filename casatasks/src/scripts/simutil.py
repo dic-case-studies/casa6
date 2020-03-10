@@ -119,7 +119,7 @@ class simutil:
     To use these, create a simutil instance e.g.
      CASA> from casatasks.private import simutil
      CASA> u=simutil.simutil()
-     CASA> x,y,z,d,padnames,telescope,posobs = u.readantenna("myconfig.cfg")
+     CASA> x,y,z,d,padnames,antnames,telescope,posobs = u.readantenna("myconfig.cfg")
     """
     def __init__(self, direction="",
                  centerfreq=qa.quantity("245GHz"),
