@@ -428,7 +428,7 @@ def sdpolaverage(
 
     # Write history to output MS, not the input ms.
     try:
-        param_names = sdpolaverage.func_code.co_varnames[:sdpolaverage.func_code.co_argcount]
+        param_names = sdpolaverage.__code__.co_varnames[:sdpolaverage.__code__.co_argcount]
         param_vals = [eval(p) for p in param_names]
         write_history(mslocal, outfile, 'sdpolaverage', param_names,
                       param_vals, casalog)
