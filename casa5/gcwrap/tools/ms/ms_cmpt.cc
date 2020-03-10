@@ -6338,7 +6338,22 @@ record* ms::statwt(
             return nullptr;
         }
         StatWtColConfig statwtColConfig(
-            itsOriginalMS, preview, datacolumn, chanbin
+            itsOriginalMS, itsMS, preview, datacolumn, chanbin
+        );
+        ThrowIf(
+            (
+                itsOriginalMS->tableDesc().isColumn("WEIGHT_SPECTRUM")
+                && ! itsMS->tableDesc().isColumn("WEIGHT_SPECTRUM")
+            )
+            || (
+                itsOriginalMS->tableDesc().isColumn("SIGMA_SPECTRUM")
+                && ! itsMS->tableDesc().isColumn("SIGMA_SPECTRUM")
+            ),
+            "The appropriate _WEIGHT columns could not be constructed on the "
+            "fly for the in-memory MS with the selection applied. They have, "
+            "however, now been created in the original MS, so it should now "
+            "just be a matter of running statwt again specifying the same "
+            "selection criteria."
         );
         StatWt statwt(itsMS, &statwtColConfig);
         const auto tbtype = timebin.type();

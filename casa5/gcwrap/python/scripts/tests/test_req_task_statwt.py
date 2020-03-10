@@ -253,19 +253,23 @@ class statwt_test(unittest.TestCase):
                             + '\nbaseline ' + str([ant1, ant2]) + '\nrow '
                             + str(row)
                         )
-                        
-    def compare(self, dst, ref):
+              
+    def  compare(self, dst, ref):
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
+        mytb1 = table() if th.is_casa6() else tbtool()
+        ref = os.path.join(datadir, ref)
+        self.assertTrue(mytb1.open(ref), "Table open failed for " + ref)
+        self.compareTables(mytb, mytb1)
+        mytb.done()
+        mytb1.done()
+                        
+    def compareTables(self, dst, ref):
         [
             gtimes, gwt, gwtsp, gflag, gfrow, gdata, gsigma, gsisp
         ] = _get_table_cols(mytb)
-        mytb.done()
-        ref = os.path.join(datadir, ref)
-        self.assertTrue(mytb.open(ref), "Table open failed for " + ref)
         [
             etimes, ewt, ewtsp, eflag, efrow, edata, esigma, esisp
         ] = _get_table_cols(mytb)
-        mytb.done()
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
         if type(ewtsp) != type(None) or type(gwtsp) != type(None):
             self.assertTrue(
@@ -1005,6 +1009,20 @@ class statwt_test(unittest.TestCase):
             ref = 'test_vlass_timebin' + str(tb) + '.ms'
             self.compare(dst, ref)
             shutil.rmtree(dst)
+
+    def test_chanbin_multi_spw_no_spectrum_columns(self):
+        """
+        Test specifying chanbin when multi spw with no sigma nor weight
+        spectrum columns works
+        """
+        for spw in ["", "0"]:
+            dst = "statwt_test_vlass_spw_select_" + str(spw) + ".ms"
+            shutil.copytree(vlass, dst)
+            res = statwt(
+                vis=dst, combine='scan,field,state', chanbin=1, timebin='1yr',
+                datacolumn='residual_data', selectdata=True, spw=spw
+            )
+            
 
 def suite():
     return [statwt_test]

@@ -34,9 +34,9 @@ using namespace casac;
 namespace casa { 
 
 StatWtColConfig::StatWtColConfig(
-    casacore::MeasurementSet* ms, Bool preview,
+    casacore::MeasurementSet* ms, casacore::MeasurementSet* selMS, Bool preview,
     const String& dataColumn, const variant& chanbin
-) : _ms(ms), _preview(preview), _dataColumn(dataColumn) {
+) : _ms(ms), _selMS(selMS), _preview(preview), _dataColumn(dataColumn) {
     ThrowIf(_dataColumn.empty(), "data column cannot be empty");
     _dataColumn.downcase();
     ThrowIf (
@@ -162,24 +162,38 @@ void StatWtColConfig::_initSpecColsIfNecessary() {
     }
     vi::SortColumns sc(sort, False);
     vi::IteratingParameters ipar;
-    vi::VisIterImpl2LayerFactory mydata(_ms, ipar, True);
-    Vector<vi::ViiLayerFactory*> facts(1);
-    facts[0] = &mydata;
-    vi::VisibilityIterator2 vi(facts);
-    vi::VisBuffer2 *vb = vi.getVisBuffer();
-    for (vi.originChunks(); vi.moreChunks(); vi.nextChunk()) {
-        for (vi.origin(); vi.more(); vi.next()) {
-            auto nrow = vb->nRows();
-            auto nchan = vb->nChannels();
-            auto ncor = vb->nCorrelations();
-            Cube<Float> newsp(ncor, nchan, nrow, 0);
-            if (_mustInitWtSp) {
-                vb->initWeightSpectrum(newsp);
+    for (uInt i=0; i<2; ++i) {
+        if (i == 1 && _ms == _selMS) {
+            break;
+        }
+        // FIXME, in some cases, this still doesn't add the needed columns
+        // to _selMS
+        MeasurementSet* ms = i == 0 ? _ms : _selMS;
+        vi::VisIterImpl2LayerFactory mydata(ms, ipar, True);
+        Vector<vi::ViiLayerFactory*> facts(1);
+        facts[0] = &mydata;
+        vi::VisibilityIterator2 vi(facts);
+        vi::VisBuffer2 *vb = vi.getVisBuffer();
+        for (vi.originChunks(); vi.moreChunks(); vi.nextChunk()) {
+            for (vi.origin(); vi.more(); vi.next()) {
+                auto nrow = vb->nRows();
+                auto nchan = vb->nChannels();
+                auto ncor = vb->nCorrelations();
+                Cube<Float> newsp(ncor, nchan, nrow, 0);
+                if (_mustInitWtSp) {
+                    vb->initWeightSpectrum(newsp);
+                }
+                if (_mustInitSigSp) {
+                    vb->initSigmaSpectrum(newsp);
+                }
+                vb->writeChangesBack();
+                if (_mustInitWtSp) {
+                    AlwaysAssert(vb->weightSpectrum().size() > 0, AipsError);
+                }
+                if (_mustInitSigSp) {
+                    AlwaysAssert(vb->sigmaSpectrum().size() > 0, AipsError);
+                }
             }
-            if (_mustInitSigSp) {
-                vb->initSigmaSpectrum(newsp);
-            }
-            vb->writeChangesBack();
         }
     }
 }
