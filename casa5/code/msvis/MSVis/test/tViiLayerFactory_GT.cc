@@ -681,13 +681,12 @@ public:
    * to create the MS.
    */
   FullSortingDefinitionTest() :
-    MsFactoryTVITester("tViiLayerFactory","FullSortingDefinitionTest"),
-    sortDefinitions_p(false), iparSet_p(false)
+    MsFactoryTVITester("tViiLayerFactory","FullSortingDefinitionTest")
   {
   }
 
   /*
-   * Set the sortign functions for both the outer loop (chunk) 
+   * Set the sortign functions for both the outer loop (chunk)
    * and inner loop (subchunk)
    */
   void setSortingDefinition(SortColumns& sortColumnsChunk,
@@ -748,7 +747,7 @@ private:
   size_t groupBin_p;
   int orderFactor_p;
 };
- 
+
 int DDIdGroupCompare::comp(const void * obj1, const void * obj2) const
 {
   Int v1 = *(const Int*)obj1;
