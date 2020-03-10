@@ -121,7 +121,7 @@ def parse_figsize(figsize):
 def parse_numpanels(numpanels):
     parsed = (-1, -1)
     if isinstance(numpanels, str) and len(numpanels) > 0:
-        n = map(int, numpanels.split(','))
+        n = list(map(int, numpanels.split(',')))
         if len(n) == 1:
             parsed = (n[0], n[0])
         else:
@@ -424,17 +424,17 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
     MaxPanel = 8
     num_panel = min(max(x_max - x_min + 1, y_max - y_min + 1), MaxPanel)
     STEP = int((max(x_max - x_min + 1, y_max - y_min + 1) - 1) / num_panel) + 1
-    NH = (x_max - x_min) / STEP + 1
-    NV = (y_max - y_min) / STEP + 1
+    NH = (x_max - x_min) // STEP + 1
+    NV = (y_max - y_min) // STEP + 1
     xSTEP = STEP
     ySTEP = STEP
 
     if nx > 0:
         NH = nx
-        xSTEP = image.nx / NH + (1 if image.nx % NH > 0 else 0)
+        xSTEP = image.nx // NH + (1 if image.nx % NH > 0 else 0)
     if ny > 0:
         NV = ny
-        ySTEP = image.ny / NV + (1 if image.ny % NV > 0 else 0)
+        ySTEP = image.ny // NV + (1 if image.ny % NV > 0 else 0)
 
     casalog.post('num_panel=%s, xSTEP=%s, ySTEP=%s, NH=%s, NV=%s' % (num_panel, xSTEP, ySTEP, NH, NV))
 
@@ -657,8 +657,8 @@ class SDProfileMapPlotter(object):
         casalog.post('ListMin=%s' % (list(ListMin)))
         if len(ListMax) == 0:
             return False
-        global_ymax = numpy.sort(ListMax)[len(ListMax) - len(ListMax) / 10 - 1]
-        global_ymin = numpy.sort(ListMin)[len(ListMin) / 10]
+        global_ymax = numpy.sort(ListMax)[len(ListMax) - len(ListMax) // 10 - 1]
+        global_ymin = numpy.sort(ListMin)[len(ListMin) // 10]
         global_ymax = global_ymax + (global_ymax - global_ymin) * 0.2
         global_ymin = global_ymin - (global_ymax - global_ymin) * 0.1
         del ListMax, ListMin
@@ -773,7 +773,7 @@ class SpectralImage(object):
             key = lambda x: '*%s' % (x + 1)
             ra_min = bottom[key(self.id_direction[0])]
             ra_max = top[key(self.id_direction[0])]
-            if ra_min > ra_max:
+            if qa.gt(ra_min, ra_max):
                 ra_min, ra_max = ra_max, ra_min
             self.ra_min = ra_min
             self.ra_max = ra_max
