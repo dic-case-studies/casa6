@@ -33,19 +33,29 @@ elif os.name == 'nt':                   # Contributed by Jeff Bauer
         else:
             home = os.environ['HOMEPATH']
 
+configrc = os.path.join(home, ".casa/config.py")
 toolrc = os.path.join(home, ".casa/toolrc.py")
 try:
     from casatoolrc import *
 except:
     try:
-        f = open(toolrc)
+        f = open(configrc)
     except IOError:
-        pass
+        try:
+            f = open(toolrc)
+        except IOError:
+            pass
+        else:
+            f.close()
+            try:
+                exec(open(toolrc).read( ))
+            except:
+                import sys
+                sys.stderr.write("error: evaluation of %s failed\n" % toolrc)
     else:
         f.close()
         try:
-            exec(open(toolrc).read( ))
+            exec(open(configrc).read( ))
         except:
             import sys
-            sys.stderr.write("error: evaluation of %s failed\n" % toolrc)
-
+            sys.stderr.write("error: evaluation of %s failed\n" % configrc)
