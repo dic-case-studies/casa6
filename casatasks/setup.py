@@ -647,6 +647,15 @@ def generate_pyinit(moduledir,tasks):
             "except ImportError:",
             "    pass\n"))
         fd.write(mpi_import_str)
+        fd.write("telemetry_enable=True\n")
+        fd.write("try:\n")
+        fd.write("  import casatelemetry\n")
+        fd.write("  from datetime import datetime as _time\n")
+        fd.write("  telemetrylogger = casatelemetry.casatelemetry.telemetry()\n")
+        fd.write("  telemetrylogger.logger.info(str(_time.now()) + ' CASA Start')\n")
+        fd.write("  telemetry_enabled=True\n")
+        fd.write("except:\n")
+        fd.write("  pass\n")
 
 class BuildCasa(build):
     description = "Description of the command"
