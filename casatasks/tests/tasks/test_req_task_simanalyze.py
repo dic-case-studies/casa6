@@ -35,8 +35,8 @@ except ImportError:
     is_CASA6 = False
 
 if is_CASA6:
-    import casatools # not a good idea inside the casashell...
-    import casatasks # perhaps os.path.exists(casatools.__file__) instead
+    import casatools # not a good idea inside the casashell...perhaps os.path.exists(casatools.__file__) instead
+    from casatasks import tclean, simobserve, simanalyze 
     from casatasks import casalog
 else:
     from __main__ import default
