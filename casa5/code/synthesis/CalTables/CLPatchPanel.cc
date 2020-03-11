@@ -983,6 +983,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	  clTres_[iclTres]=CLPPResult(nPar_,nFPar_,nChanIn_[thisCTspw],nMSElem_);
 	  
 	  NewCalTable antselCT(spwselCT);
+    uInt refMSant = reqMSant.nelements();
 	  for (uInt iMSant=0;iMSant<reqMSant.nelements();++iMSant) {
 	    Int& thisMSant=reqMSant(iMSant);
 	    Int thisCTant=cls.antmap(thisMSant);
@@ -1000,6 +1001,9 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	      // Step to next antenna
 	      continue;
 	    }
+      if (refMSant == reqMSant.nelements()) {
+        refMSant = iMSant;
+      }
 
 	    // Make the Cal Interpolator (icls is the CL slice index):
 	    CTCalPatchKey ici0(icls,thisCTobs,thisCTfld,thisCTspw,thisCTant);  // all CT indices
@@ -1037,7 +1041,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 		  
 		  // Link these obs,fld,ant,spw to the correct results object
 		  //  (as a group over antennas; should move this out of ant loop, really)
-		  if (iMSant==0) {
+      if (iMSant == refMSant) {
 		    MSCalPatchKey imsgroup(thisMSobs,thisMSfld,thisMSint,thisMSspw,-1);
 		    msTres_[imsgroup]=clTres_[iclTres];
 		    msFres_[imsgroup]=CLPPResult(); // this will be resized on-demand
@@ -1073,7 +1077,7 @@ void CLPatchPanel::recordBadMSIndices(const Vector<Int>& obs, const Vector<Int>&
 	  MSCalPatchKey ims(obs[iobs],fld[ifld],ent[ient],spw[ispw],-1);  // All ants
 	  if (badmsciname_.count(ims)<1) {
 	    badmsciname_[ims]=ims.print();
-	    //cout << "   Bad MS indices: " << ims.print() << endl;
+	    cout << "   Bad MS indices: " << ims.print() << endl;
 	  }
 	}
       }
