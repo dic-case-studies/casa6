@@ -178,7 +178,10 @@ public:
 	virtual void
 	setRowBlocking(casacore::Int nRows = 0) override;
 
-	virtual casacore::Bool
+	virtual casacore::Int
+	getRowBlocking() const override;
+
+        virtual casacore::Bool
 	existsColumn(VisBufferComponent2 id) const override;
 
 	// Return false if no more data (in current chunk)

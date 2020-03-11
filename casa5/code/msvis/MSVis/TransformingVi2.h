@@ -164,6 +164,7 @@ public:
     // set, up to nRows can be returned in one go. The chunk
     // size determines the actual maximum.
 
+    casacore::Int getRowBlocking() const;
     virtual void setRowBlocking (casacore::Int nRows) override;
 
     virtual casacore::Bool existsColumn (VisBufferComponent2 id) const override;

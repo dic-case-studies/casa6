@@ -1690,6 +1690,12 @@ VisibilityIteratorImpl2::setRowBlocking(Int nRow)
 	pendingChanges_p->setNRowBlocking(nRow);
 }
 
+Int
+VisibilityIteratorImpl2::getRowBlocking() const
+{
+	return nRowBlocking_p;
+}
+
 const MDirection &
 VisibilityIteratorImpl2::phaseCenter() const
 {
