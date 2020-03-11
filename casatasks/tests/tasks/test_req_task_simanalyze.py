@@ -1,5 +1,4 @@
-##########################################################################
-# test_req_task_simanalyze.py
+#test_req_task_simanalyze.py
 #
 # Copyright (C) 2020
 # Associated Universities, Inc. Washington DC, USA.
@@ -87,6 +86,7 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
                    mapsize='', maptype='square', pointingspacing='',caldirection='',calflux='1Jy',obsmode='sd', refdate='2020/02/13',
                    hourangle='transit', totaltime='100s', antennalist=configpath_sd,sdantlist=configpath_sd, sdant=0,outframe='LSRK', 
                    thermalnoise='', leakage=0.0, graphics='none',verbose=False, overwrite=False)
+
     def setUp(self):
         if not is_CASA6:
             default(simanalyze)
@@ -94,17 +94,13 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
     def test_imaging_True_single_dish_analysis_False(self):
         '''test_imaging_True_single_dish_analysis_False:
         ------------------------------------------------
-
         Not all of the output files will be generated depending on parameter selections
-
         The image parameter determines if an image is produced (False for no .image file)
-
         The analyze parameter turns on or off the creation of analytical images
-
         The vis parameter can accept one or more MSs that can be interferometric or single dish data
-        
         Modelimage will not be used if the MS is in total power
         '''
+
         visname_sd = str(sd_project +'/'+ sd_project + '.' + configpath_sd.split('/')[-1][:-3] +'sd.ms')
 
         simanalyze(project=sd_project, image=True, vis=visname_sd, modelimage='', imsize = [],
@@ -124,13 +120,9 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
     def test_imaging_False_single_dish_analysis_True_showfidelity_True(self):
         '''test_imaging_False_single_dish_analysis_True_showfidelity_True:
         ------------------------------------------------------------------
-
         Not all of the output files will be generated depending on parameter selections
-        
         The image parameter determines if an image is produced (False for no .image file)
-        
         The analyze parameter turns on or off the creation of analytical images
-        
         The showfidelity parameter displays the fidelity image
         '''
 
@@ -168,13 +160,9 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
     def test_imaging_False_analysis_False(self):
         '''test_imaging_False_analysis_False: 
         -------------------------------------
-
         Not all of the output files will be generated depending on parameter selections
-        
         The image parameter determines if an image is produced (False for no .image file)
-        
         The analyze parameter turns on or off the creation of analytical images
-        
         The imagename parameter takes the name of an already synthesized image
         '''
 
@@ -189,11 +177,8 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
     def test_imaging_True_interferometric_analysis_False(self):
         '''test_imaging_True_interferometric_analysis_False:
         ----------------------------------------------------
-        
         Not all of the output files will be generated depending on parameter selections
-        
         The image parameter determines if an image is produced (False for no .image file)
-        
         The analyze parameter turns on or off the creation of analytical images
         '''
 
@@ -210,13 +195,9 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
     def test_imaging_False_interferometric_analysis_True_showfidelity_True(self):
         '''test_imaging_False_interferometric_analysis_True_showfidelity_True:
         ----------------------------------------------------------------------
-        
         Not all of the output files will be generated depending on parameter selections
-        
         The image parameter determines if an image is produced (False for no .image file)
-        
         The analyze parameter turns on or off the creation of analytical images
-        
         The showfidelity parameter displays the fidelity image
         '''
 
@@ -296,15 +277,10 @@ class simanalyze_main_usage_modes_test_both(unittest.TestCase):
     def test_imaging_True_interferometric_and_single_dish_analysis_False(self):
         '''test_imaging_True_interferometric_and_single_dish_analysis_False:
         --------------------------------------------------------------------
-
         Not all of the output files will be generated depending on parameter selections
-
         The image parameter determines if an image is produced (False for no .image file)
-        
         The analyze parameter turns on or off the creation of analytical images
-        
-        The vis parameter can accept one or more MSs that can be interferometric or single dish data
-        
+        The vis parameter can accept one or more MSs that can be interferometric or single dish data        
         Modelimage will not be used if the MS is in total power
         '''
 
