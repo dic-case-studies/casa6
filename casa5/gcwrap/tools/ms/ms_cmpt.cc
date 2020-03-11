@@ -6349,11 +6349,17 @@ record* ms::statwt(
                 itsOriginalMS->tableDesc().isColumn("SIGMA_SPECTRUM")
                 && ! itsMS->tableDesc().isColumn("SIGMA_SPECTRUM")
             ),
-            "The appropriate _WEIGHT columns could not be constructed on the "
-            "fly for the in-memory MS with the selection applied. They have, "
-            "however, now been created in the original MS, so it should now "
-            "just be a matter of running statwt again specifying the same "
-            "selection criteria."
+            "The WEIGHT_SPECTRUM and/or SIGMA_SPECTRUM columnS did not exist "
+            "in this MS but it/they has now been created and initialized. "
+            "However, due to a known issue in the code, statwt cannot "
+            "correctly construct and write back these columns for the subset "
+            "of the MS specified by data selection. A work-around is to simply "
+            "re-run statwt again (on the MS that now contains a properly "
+            "initialized columns), specifying the same selection criteria. If "
+            "you are using the tool method, first close the ms tool, then "
+            "reopen it using the same data set, apply the same selection, and "
+            "then run ms.statwt(). If you are using the task, simply rerunning "
+            "it with the same inputs should be sufficient"
         );
         StatWt statwt(itsMS, &statwtColConfig);
         const auto tbtype = timebin.type();

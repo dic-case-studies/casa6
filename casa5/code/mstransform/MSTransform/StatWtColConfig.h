@@ -52,6 +52,7 @@ public:
     // ms represents the entire MS, and is not an MS that has had
     // a selection applied to it. The full MS is specified by the ms parameter,
     // the selected MS is specified by the selMS parameter.
+    // The caller is responsible for pointer management.
 	StatWtColConfig(
 	    casacore::MeasurementSet* ms, casacore::MeasurementSet* selMS,
 	    casacore::Bool preview, const casacore::String& dataColumn,

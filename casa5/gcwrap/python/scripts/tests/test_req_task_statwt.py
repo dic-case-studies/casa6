@@ -254,7 +254,7 @@ class statwt_test(unittest.TestCase):
                             + str(row)
                         )
               
-    def  compare(self, dst, ref):
+    def compare(self, dst, ref):
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
         mytb1 = table() if th.is_casa6() else tbtool()
         ref = os.path.join(datadir, ref)
@@ -264,12 +264,13 @@ class statwt_test(unittest.TestCase):
         mytb1.done()
                         
     def compareTables(self, dst, ref):
+        self.assertEqual(dst.nrows(), ref.nrows(), 'number of rows differ')
         [
             gtimes, gwt, gwtsp, gflag, gfrow, gdata, gsigma, gsisp
-        ] = _get_table_cols(mytb)
+        ] = _get_table_cols(dst)
         [
             etimes, ewt, ewtsp, eflag, efrow, edata, esigma, esisp
-        ] = _get_table_cols(mytb)
+        ] = _get_table_cols(ref)
         self.assertTrue(np.allclose(gwt, ewt), 'WEIGHT comparison failed')
         if type(ewtsp) != type(None) or type(gwtsp) != type(None):
             self.assertTrue(
@@ -1015,6 +1016,7 @@ class statwt_test(unittest.TestCase):
         Test specifying chanbin when multi spw with no sigma nor weight
         spectrum columns works
         """
+        ref = datadir + 'ref_vlass_wtsp_creation.ms'
         for spw in ["", "0"]:
             dst = "statwt_test_vlass_spw_select_" + str(spw) + ".ms"
             shutil.copytree(vlass, dst)
@@ -1022,7 +1024,25 @@ class statwt_test(unittest.TestCase):
                 vis=dst, combine='scan,field,state', chanbin=1, timebin='1yr',
                 datacolumn='residual_data', selectdata=True, spw=spw
             )
-            
+            if spw == '':
+                self.compare(dst, ref)
+            else:
+                # Currently there is a bug which requires statwt to be run twice
+                res = statwt(
+                    vis=dst, combine='scan,field,state', chanbin=1,
+                    timebin='1yr', datacolumn='residual_data', selectdata=True, 
+                    spw=spw
+                )
+                mytb.open(ref)
+                reftab = mytb.query("DATA_DESC_ID == 0")
+                mytb.done()
+                mytb.open(dst)
+                dsttab = mytb.query("DATA_DESC_ID == 0")
+                mytb.done()
+                self.compareTables(dsttab, reftab)
+                reftab.done()
+                dsttab.done()
+            shutil.rmtree(dst)
 
 def suite():
     return [statwt_test]
