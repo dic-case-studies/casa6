@@ -28,27 +28,28 @@
 import os
 import unittest
 import shutil
- 
-CASA6 = False
- 
+
 try:
+    from casatasks.private.casa_transition import is_CASA6
+except ImportError:
+    is_CASA6 = False
+
+if is_CASA6:
     import casatools # not a good idea inside the casashell...
     import casatasks # perhaps os.path.exists(casatools.__file__) instead
     from casatasks import casalog
-    CASA6 = True
-except ImportError:
+else:
     from __main__ import default
     from tasks import *
     from taskinit import *
  
 # DATA #
-if CASA6:
+if is_CASA6:
     dataroot = casatools.ctsys.resolve()
     configpath_int  = casatools.ctsys.resolve((os.path.join(dataroot, 'alma/simmos/vla.a.cfg')))
     imagepath_int   = casatools.ctsys.resolve((os.path.join(dataroot, 'nrao/VLA/CalModels/3C286_Q.im/')))
     configpath_sd   = casatools.ctsys.resolve((os.path.join(dataroot, 'alma/simmos/aca.tp.cfg')))
     mspath_sd       = casatools.ctsys.resolve((os.path.join(dataroot, 'regression/unittest/clean/refimager/refim_twopoints_twochan.ms')))
-
 else:
     dataroot = os.environ.get('CASAPATH').split()[0]
     configpath_int  = os.path.join(dataroot, 'data/alma/simmos/vla.a.cfg')
@@ -68,7 +69,7 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not CASA6:
+        if not is_CASA6:
             default(simobserve)
             default(tclean)
 
@@ -87,7 +88,7 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
                    hourangle='transit', totaltime='100s', antennalist=configpath_sd,sdantlist=configpath_sd, sdant=0,outframe='LSRK', 
                    thermalnoise='', leakage=0.0, graphics='none',verbose=False, overwrite=False)
     def setUp(self):
-        if not CASA6:
+        if not is_CASA6:
             default(simanalyze)
 
     def test_imaging_True_single_dish_analysis_False(self):
@@ -144,7 +145,7 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not CASA6:
+        if not is_CASA6:
             default(simobserve)
             default(tclean)
 
@@ -161,7 +162,7 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
         os.system("rm -rf *.last")
 
     def setUp(self):
-        if not CASA6:
+        if not is_CASA6:
             default(simanalyze)
 
     def test_imaging_False_analysis_False(self):
@@ -231,7 +232,7 @@ class simanalyze_main_usage_modes_test(unittest.TestCase):
 class simanalyze_main_usage_modes_test_both(unittest.TestCase):
     # TODO
     def setUp(self):
-        if not CASA6:
+        if not is_CASA6:
             default(simobserve)
             default(tclean)
 
