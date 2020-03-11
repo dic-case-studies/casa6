@@ -27,7 +27,7 @@ try:
     import casatools
     from casatasks import applycal, mstransform, gaincal, casalog
     CASA6 = True
-    from .callibrary import *
+    from casatasks.private.callibrary import callibrary
     tb = casatools.table()
     calibrater = casatools.calibrater
     
@@ -35,7 +35,7 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-    from callibrary import *
+    from callibrary import callibrary
     
     calibrater = cbtool
 import sys
