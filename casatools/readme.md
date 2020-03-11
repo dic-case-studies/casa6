@@ -55,13 +55,6 @@ sudo port select --set pip pip36
 sudo port select --set pip3 pip36
 sudo port select --set python python36
 ```
-
-You can then build casatools using the same steps as described in the Linux section. Note that the casatools build path will differ on Macos. f.e.:
-
-```
-PYTHON_VERSION=3.6 PYTHONPATH=`pwd`/../casatools/build/lib.macosx-10.14-x86_64-3.6/:$PYTHON_PATH python setup.py build
-```
-
 #### Checkout
 
 Checkout the casa6 source code:
@@ -88,7 +81,7 @@ Linux:
 Macos
 ```
 cd casa6/casatools
-scripts/gcw-pick && autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && autoconf && ./configure && ./setup.py build
+scripts/gcw-pick && autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && ./setup.py build
 ```
 
 The `gcw-pick` script adjusts the standard CASA source tree for building with `setup.py`, and once CASAtools is integrated with CASA this step will not be necessary. `gcw-pick` may run for quite a while...
