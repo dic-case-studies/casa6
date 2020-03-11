@@ -99,7 +99,7 @@ class test_concat(unittest.TestCase):
         
     @classmethod
     def setUpClass(cls):
-        '''Copy input files only once'''
+        '''Copy input files only once for the class'''
         global testmms
         res = None
 
@@ -268,167 +268,6 @@ class test_concat(unittest.TestCase):
             default(concat)
         return True
 
-
-#     def setUp(self):
-#         global testmms
-#         res = None
-# 
-#         datapath=ctsys_resolve('regression/unittest/concat/input/')
-#         datapathmms = ''
-#         # Pick up alternative data directory to run tests on MMSs
-#         testmms = False
-#         if 'TEST_DATADIR' in os.environ:
-#             testmms = True
-#             DATADIR = str(os.environ.get('TEST_DATADIR'))
-#             if os.path.isdir(DATADIR):
-#                 datapathmms = DATADIR+'/concat/input/'
-# 
-# 
-#         cpath = os.path.abspath(os.curdir)
-#         filespresent = sorted(glob.glob("*.ms"))
-#         if(datapathmms!=''): 
-#             print("\nTesting on MMSs ...\n")
-# 
-#             nonmmsinput = ['A2256LC2_4.5s-1.ms', 'part1.ms', 'part2-mod2.ms', 'shortpart1.ms', 'sim7.ms', 
-#                            'uid___A002_Xab8dc1_X95a-shrunk.ms', 'uid___A002_Xab8dc1_Xf13-shrunk.ms',
-#                            'nep1-shrunk.ms', 'nep2-shrunk.ms', 'nep3-shrunk.ms']
-#             os.chdir(datapathmms)
-#             myinputmslist = sorted(glob.glob("*.ms"))
-#             os.chdir(cpath)
-# 
-#             for mymsname in myinputmslist:
-#                 if not ((mymsname in filespresent) or (mymsname in nonmmsinput)):
-#                     print("Copying MMS", mymsname)
-#                     rval = os.system('cp -R '+datapathmms+'/'+mymsname+' .')
-#                     if rval!=0:
-#                         raise Exception('Error while copying input data.')
-# 
-#             for mymsname in nonmmsinput:
-#                 if not mymsname in filespresent:
-#                     print("Copying non-MMS ", mymsname)
-#                     rval = os.system('cp -R '+datapath+'/'+mymsname+' .')
-#                     if rval!=0:
-#                         raise Exception('Error while copying input data.')
-#                     
-#         else:
-#             os.chdir(datapath)
-#             myinputmslist = sorted(glob.glob("*.ms"))
-#             print(myinputmslist)
-#             os.chdir(cpath)
-#             for mymsname in myinputmslist:
-#                 if not mymsname in filespresent:
-#                     print("Copying ", mymsname)
-#                     rval = os.system('cp -R '+os.path.join(datapath,mymsname)+' .')
-#                     if rval!=0:
-#                         raise Exception('Error while copying input data.')
-# 
-#         os.chdir(cpath)
-#         self.listoffiles = myinputmslist
-# 
-#         # create MSs with ephemeris use
-#         
-#         if not 'xy1.ms' in filespresent:
-#             print("Creating MSs with ephemeris table use ...")
-# 
-#             split(vis='part1.ms', outputvis='xy1.ms', scan="1~30", datacolumn='data')
-# 
-#             tb.open('xy1.ms', nomodify=False)
-#             a = tb.getcol('TIME')
-#             delta = (54709.*86400-a[0])
-#             a = a + delta
-#             tb.putcol('TIME', a)
-#             a = tb.getcol('TIME_CENTROID')
-#             a = a + delta
-#             tb.putcol('TIME_CENTROID', a)
-#             tb.close()
-#             tb.open('xy1.ms/FIELD', nomodify=False)
-#             a = tb.getcol('TIME')
-#             a = a + delta
-#             tb.putcol('TIME', a)
-#             tb.close()
-#             tb.open('xy1.ms/OBSERVATION', nomodify=False)
-#             a = tb.getcol('TIME_RANGE')
-#             a = a + delta
-#             tb.putcol('TIME_RANGE', a)
-#             tb.close()
-# 
-#             shutil.copytree('xy1.ms', 'xy1-noephem.ms')
-# 
-#             ms.open('xy1.ms', nomodify=False)
-#             ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-#                             'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
-#             ms.addephemeris(1,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
-#                             'Jupiter_54708-55437dUTC', 0)
-#             ms.close()
-# 
-#         if not 'xy2.ms' in filespresent:
-#             split(vis='part1.ms', outputvis='xy2.ms', scan="58~65", datacolumn='data')
-# 
-#             tb.open('xy2.ms', nomodify=False)
-#             a = tb.getcol('TIME')
-#             delta = (54719.*86400-a[0]) # ten days later than xy1.ms !
-#             a = a + delta
-#             tb.putcol('TIME', a)
-#             a = tb.getcol('TIME_CENTROID')
-#             a = a + delta
-#             tb.putcol('TIME_CENTROID', a)
-#             tb.close()
-#             tb.open('xy2.ms/FIELD', nomodify=False)
-#             a = tb.getcol('TIME')
-#             a = a + delta
-#             tb.putcol('TIME', a)
-#             tb.close()
-#             tb.open('xy2.ms/OBSERVATION', nomodify=False)
-#             a = tb.getcol('TIME_RANGE')
-#             a = a + delta
-#             tb.putcol('TIME_RANGE', a)
-#             tb.close()
-# 
-#             ms.open('xy2.ms', nomodify=False)
-#             ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-#                             'Uranus_54708-55437dUTC', '1908-201')
-#             ms.close()
-# 
-#         if not 'xy2late.ms' in filespresent:
-#             split(vis='part1.ms', outputvis='xy2late.ms', scan="58~65", datacolumn='data')
-# 
-#             tb.open('xy2late.ms', nomodify=False)
-#             a = tb.getcol('TIME')
-#             delta = (55438.*86400-a[0]) # much later than xy1.ms, beyond the end of Uranus_54708-55437dUTC.tab !
-#             a = a + delta
-#             tb.putcol('TIME', a)
-#             a = tb.getcol('TIME_CENTROID')
-#             a = a + delta
-#             tb.putcol('TIME_CENTROID', a)
-#             tb.close()
-#             tb.open('xy2late.ms/FIELD', nomodify=False)
-#             a = tb.getcol('TIME')
-#             a = a + delta
-#             tb.putcol('TIME', a)
-#             tb.close()
-#             tb.open('xy2late.ms/OBSERVATION', nomodify=False)
-#             a = tb.getcol('TIME_RANGE')
-#             a = a + delta
-#             tb.putcol('TIME_RANGE', a)
-#             tb.close()
-# 
-#             ms.open('xy2late.ms', nomodify=False)
-#             ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
-#                             'Uranus_55437-56293dUTC', '1908-201')
-#             ms.close()
-# 
-#         if not 'xy2-jup-ur.ms' in filespresent:
-#             split(vis='xy2.ms', outputvis='xy2-jup-ur.ms', field = 'jupiter, 1908-201', datacolumn='data')
-# 
-#         if not 'xya.ms' in filespresent:
-#             split(vis='xy1.ms', outputvis='xya.ms', spw='0:0~63', datacolumn='data')
-#             
-#         if not 'xyb.ms' in filespresent:
-#             split(vis='xy1.ms', outputvis='xyb.ms', spw='0:64~127', datacolumn='data')
-# 
-#         if not is_CASA6:
-#             default(concat)
-#         return True
         
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
@@ -441,7 +280,6 @@ class test_concat(unittest.TestCase):
             print(ifile)
             os.system('rm -rf '+ifile)
             shutil.rmtree(ifile,ignore_errors=True)
-        #os.system('rm -rf st_*')
 
     def test1(self):
         '''Concat 1: 4 parts, same sources but different spws'''
