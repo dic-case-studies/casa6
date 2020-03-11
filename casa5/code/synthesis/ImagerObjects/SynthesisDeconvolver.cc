@@ -561,13 +561,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Vector<Int> endchans;
           Int numblocks=numblockchans(startchans, endchans); 
           String psfname=itsImages->psf()->name();
-          Vector<ImageBeamSet> chanBeams(numblocks);
-          Vector<Record> chanBeamsRec(numblocks);
-          for (Int k =0 ; k <numblocks; ++k){
-            //cerr << k <<" START chans " << startchans[k] << " endchans " << endchans[k] << endl;
-            chanBeams[k]=itsImages->getChannelSliceBeamSet(startchans[k], endchans[k]);
-            chanBeamsRec[k]=chanBeams[k].toRecord();
-          }
+          
           Float psfsidelobelevel=itsImages->getPSFSidelobeLevel();
           String residualname=itsImages->residual()->name();
           String maskname=itsImages->mask()->name();
@@ -607,7 +601,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Bool allDone(false);
           Vector<Int> chanRange(2);
           //Record beamsetRec;
-
+          Vector<Bool> retvals(numblocks, False);
+          Int indexofretval=0;
           for (Int k=0; k < numblocks; ++k) {
             //os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
             assigned=casa::applicator.nextAvailProcess(*cmc, rank);
@@ -623,6 +618,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               //#2
               Record retval;
               casa::applicator.get(retval);
+              retvals(indexofretval)=(retval.nfields() > 0);
+              ++indexofretval;
               ///might need to merge these retval
               mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
               /*if(retval.nfields())
@@ -653,11 +650,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             applicator.put(maskname);
             //pb #8
             applicator.put(pbname);
-            // beamset #9
-            //need to use local variable for serial case
-            //beamsetRec=chanBeams[k].toRecord();
-            applicator.put(chanBeamsRec[k]);
-            //#10 psf side lobe
+            //#9 psf side lobe
             applicator.put(psfsidelobelevel);
             /// Tell worker to process it
             applicator.apply(*cmc);
@@ -671,6 +664,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             casa::applicator.get(chanRangeProcessed);
             Record retval;
             casa::applicator.get(retval);
+            retvals(indexofretval)=(retval.nfields() > 0);
+            ++indexofretval;
             mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
             if(retval.nfields() >0)
               cerr << "deconv remainder rank " << rank << " successful " << endl;
@@ -682,6 +677,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                           allDone=true;
           }
 
+          if(anyEQ(retvals, False))
+            throw(AipsError("one of more section of the cube failed in deconvolution"));
           itsLoopController.incrementMinorCycleCount(returnRecord.asInt("iterdone"));
           itsIterDone+=returnRecord.asInt("iterdone");
           /*{///TO BE REMOVED
@@ -768,13 +765,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // cerr << "OPTCHAN" << optchan  << endl;
     if(optchan < 10) optchan=10;
     Int nproc= applicator.numProcs() < 2 ? 1 : applicator.numProcs()-1;
-    /*if(nproc==1){
+    if(nproc==1){
       startchans.resize(1);
       endchans.resize(1);
       startchans[0]=0;
       endchans[0]=nchan-1;
       return 1;
-      }*/
+    }
     Int blksize= nchan/nproc > optchan ? optchan : Int( std::floor(Float(nchan)/Float(nproc)));
     if(blksize< 1) blksize=1;
     Int nblk=Int(nchan/blksize);
@@ -791,7 +788,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       endchans[nblk]=nchan-1;
       ++nblk;
     }
-    //cerr << "nblk " << nblk << " beg " << startchans << " end " << endchans << endl;
+    cerr << "nblk " << nblk << " beg " << startchans << " end " << endchans << endl;
     return nblk;
   }
   
@@ -964,7 +961,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
        LogIO os( LogOrigin("SynthesisDeconvolver","setAutoMask",WHERE) );
        os << "Generating AutoMask" << LogIO::POST;
-       os << LogIO::WARN << "#####ItsIterDone value " << itsIterDone << endl;
+       //os << LogIO::WARN << "#####ItsIterDone value " << itsIterDone << endl;
        
        //os << "itsMinPercentChnage = " << itsMinPercentChange<< LogIO::POST;
 

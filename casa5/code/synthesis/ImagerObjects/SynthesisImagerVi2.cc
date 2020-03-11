@@ -1608,6 +1608,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         Int rank ( 0 );
         Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
         Bool allDone ( false );
+        Vector<Bool> retvals(numchunks, False);
+        Int indexofretval=0;
         for ( Int k=0; k < numchunks; ++k ) {
             assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
             //cerr << "assigned "<< assigned << endl;
@@ -1616,6 +1618,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                 //cerr << "while rank " << rank << endl;
                 Bool status;
                 casa::applicator.get ( status );
+                retvals(indexofretval)=status;
+                ++indexofretval;
                 if ( status )
                     cerr << k << " rank " << rank << " successful " << endl;
                 else
@@ -1650,6 +1654,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         while ( !allDone ) {
             Bool status;
             casa::applicator.get ( status );
+            retvals(indexofretval)=status;
+            ++indexofretval;
             if ( status )
                 cerr << "remainder rank " << rank << " successful " << endl;
             else
@@ -1659,9 +1665,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			if(casa::applicator.isSerial())
 				allDone=true;
         }
-
+        if(anyEQ(retvals, False))
+          throw(AipsError("One or more  of the cube section failed in de/gridding"));  
         
         }
+       
 	  
 	  
   
