@@ -43,7 +43,7 @@ def gauss_fit(x, y):
     # initial guess
     o = y.mean()
     a = numpy.abs(y - o).max()
-    c = x[numpy.where(numpy.abs(y - o) == a)[0]]
+    c = x[numpy.where(numpy.abs(y - o) == a)[0]][0]
     w = numpy.abs(y - o).sum() / a
     #print("initial guess: (%f, %f, %f, %f)" % (a,c,w,o))
     return curve_fit(gauss_func, x, y, p0=(a, c, w, o))
