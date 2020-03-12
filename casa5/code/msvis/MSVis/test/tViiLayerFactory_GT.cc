@@ -714,7 +714,7 @@ public:
 
     // Create a disk layer type VI Factory
     std::auto_ptr<VisIterImpl2LayerFactory> diskItFac;
-    diskItFac.reset(new VisIterImpl2LayerFactory (ms_p.get(),sortColumnsChunk_p, 
+    diskItFac.reset(new VisIterImpl2LayerFactory (ms_p.get(),sortColumnsChunk_p,
                                                   sortColumnsSubchunk_p,false));
 
     // Create a layered factory with all the layers of factories
@@ -733,9 +733,9 @@ public:
   // The number of SPWs originally created
   size_t nSPWs_p;
 };
- 
+
 /*
- * Comparison function that groups DDIds in "bins" 
+ * Comparison function that groups DDIds in "bins"
  */
 class DDIdGroupCompare : public BaseCompare
 {
@@ -878,6 +878,9 @@ int TimeDescendingCompare::comp(const void * obj1, const void * obj2) const
 
 TEST_F(FullSortingDefinitionTest, InnerLoopGroupingTimeChunksDescending)
 {
+  // This tests how to get subchunks in descending order.
+  // The test indirectly demonstrates that time sorting in subchunk is
+  // guaranteed (contrary to implementation before to CAS-12879)
   SortColumns sortColumnsChunk(false);
   SortColumns sortColumnsSubchunk(false);
   CountedPtr<TimeDescendingCompare> cmpFunc(new TimeDescendingCompare());
@@ -892,10 +895,86 @@ TEST_F(FullSortingDefinitionTest, InnerLoopGroupingTimeChunksDescending)
     std::list<Int> times (vb_p->time().begin(), vb_p->time().end());
     times.sort();
     times.unique();
-    ASSERT_EQ(times.size(), 1);
+    // A single timestamp per subchunk
+    ASSERT_EQ(times.size(), (size_t)1);
+    // Timestamp is lower than previous one.
     if(prevTime != -1.)
       ASSERT_LT(times.front(), prevTime);
     prevTime = times.front();
     });
 
+}
+
+// Comparison function that allows resetting the start of interval
+class CompareTimeInterval : public BaseCompare
+{
+public:
+  // Construct from the given interval values.
+  CompareTimeInterval(Double interval, Double start) :
+    itsInterval(interval), itsStart(start)
+  {}
+  
+  virtual ~CompareTimeInterval() {};
+  
+  // Compare the interval the left and right value belong to.
+  virtual int comp(const void * obj1, const void * obj2) const
+  {
+    Double v1 = *static_cast<const Double*>(obj1);
+    Double v2 = *static_cast<const Double*>(obj2);
+    // Shortcut if values are equal.
+    if (v1 == v2) return 0;
+    // The times are binned in bins with a width of interval_p.
+    Double t1 = std::floor((v1 - itsStart) / itsInterval);
+    Double t2 = std::floor((v2 - itsStart) / itsInterval);
+    return (t1==t2  ?  0 : (t1<t2 ? -1 : 1));
+  }
+
+  void setStart(Double newStart) { 
+  itsStart = newStart;}
+
+private: 
+  Double itsInterval;
+  Double itsStart;
+};
+
+TEST_F(FullSortingDefinitionTest, ResetTimeStartInnerLoop)
+{
+  // This test demonstrates how to modify the sorting function 
+  // before the subchunk loop.
+  // A use case for that is time chunking resetting the bin 
+  // at the beginning of each chunk.
+  // This test uses a timeInterval of 1.1 in the inner loop and sets
+  // the starting of interval to 0.55. That way a single timestamp 
+  // will be included in each subchunk (time bin is 1 second) 
+  // Without further support, the 5th interval from 4.95s to 6.05s 
+  // will contain 2 timestamps. However, in this test, after the second chunk
+  // (in 5 seconds interval), the starting of interval is reset so that
+  // the fith interval is now 4.45 - 5.55 and contains again one single timestamp
+  
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+  Double timeIntervalSubchunk = 1.1, timeStartSubchunk = -timeIntervalSubchunk/2;
+  Double timeIntervalChunk = 5, timeStartChunk = 0;
+  CountedPtr<CompareTimeInterval> cmpFuncSubchunk(new CompareTimeInterval(timeIntervalSubchunk, timeStartSubchunk));
+  CountedPtr<CompareTimeInterval> cmpFuncChunk(new CompareTimeInterval(timeIntervalChunk, timeStartChunk));
+  sortColumnsSubchunk.addSortingColumn(MS::TIME, cmpFuncSubchunk);
+  sortColumnsChunk.addSortingColumn(MS::TIME, cmpFuncChunk);
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  for (vi_p->originChunks (); vi_p->moreChunks(); vi_p->nextChunk())
+  {
+    // Here is where the interval start is reset before subchunk loop starts.
+    cmpFuncSubchunk->setStart(timeStartSubchunk);
+    timeStartSubchunk += timeIntervalChunk;
+    for (vi_p->origin(); vi_p->more (); vi_p->next())
+    {
+      std::list<Int> times (vb_p->time().begin(), vb_p->time().end());
+      times.sort();
+      times.unique();
+      // A single timestamp per subchunk
+      ASSERT_EQ(times.size(), (size_t)1);
+    }
+  }
 }
