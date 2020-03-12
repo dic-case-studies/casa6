@@ -87,8 +87,8 @@ except ImportError:
         return os.path.join(dataPath,apath)
 
 # location of data
-data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
-#data_path = ctsys_resolve('stakeholders/alma/')
+#data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
+data_path = ctsys_resolve('stakeholders/alma/')
 
 ## Base Test class with Utility functions
 class test_tclean_base(unittest.TestCase):
