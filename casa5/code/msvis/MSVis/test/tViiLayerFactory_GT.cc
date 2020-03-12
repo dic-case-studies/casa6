@@ -978,3 +978,19 @@ TEST_F(FullSortingDefinitionTest, ResetTimeStartInnerLoop)
     }
   }
 }
+
+TEST_F(FullSortingDefinitionTest, NoSortingFuncAtAll)
+{
+  // If no sorting functions are defined all rows are 
+  // collected in a single subchunk
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  size_t totalSubchunks = 0;
+  visitIterator([&]() -> void {totalSubchunks++;});
+  ASSERT_EQ(totalSubchunks, (size_t)1);
+}
