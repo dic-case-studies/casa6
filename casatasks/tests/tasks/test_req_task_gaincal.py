@@ -219,6 +219,12 @@ class gaincal_test(unittest.TestCase):
             
         if os.path.exists(tempCal2):
             shutil.rmtree(tempCal2)
+        if os.path.exists('testcorrdepflags.ms'):
+            shutil.rmtree('testcorrdepflags.ms')
+        if os.path.exists('testcorrdepflagsF.G'):
+            shutil.rmtree('testcorrdepflagsF.G')
+        if os.path.exists('testcorrdepflagsT.G'):
+            shutil.rmtree('testcorrdepflagsT.G')
 
     @classmethod
     def tearDownClass(cls):
@@ -619,10 +625,6 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(flT[1,0,20:30][7])       # spw 2, antenna 7, pol=Y
         # (spw 3 tested above)
 
-        # clean up locally-made files
-        shutil.rmtree(cdfdata)
-        shutil.rmtree(cdfF)
-        shutil.rmtree(cdfT)
 
 
 
