@@ -654,6 +654,7 @@ def generate_pyinit(moduledir,tasks):
         fd.write("  telemetrylogger = casatelemetry.casatelemetry.telemetry()\n")
         fd.write("  telemetrylogger.logger.info(str(_time.now()) + ' CASA Start')\n")
         fd.write("  telemetry_enabled=True\n")
+        fd.write("  casatelemetry.CrashReporter.init(config.logfile)\n")
         fd.write("except:\n")
         fd.write("  pass\n")
 
