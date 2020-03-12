@@ -25,7 +25,7 @@
 CASA6 = False
 try:
     import casatools
-    from casatasks import applycal, mstransform, gaincal, casalog
+    from casatasks import applycal, mstransform, gaincal, casalog, clearcal
     CASA6 = True
     from casatasks.private.callibrary import callibrary
     tb = casatools.table()
