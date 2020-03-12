@@ -42,6 +42,7 @@ Test list
 - Mosaic ephemeris MFS - 2018.1.00879.S
 - Mosaic ephemeris mtmfs - 2018.1.00879.S
 '''
+
 ##########################################################################
 ##########################################################################
 
@@ -86,8 +87,8 @@ except ImportError:
         return os.path.join(dataPath,apath)
 
 # location of data
-#data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
-data_path = ctsys_resolve('stakeholders/alma/')
+data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
+#data_path = ctsys_resolve('stakeholders/alma/')
 
 ## Base Test class with Utility functions
 class test_tclean_base(unittest.TestCase):
@@ -201,7 +202,7 @@ class test_tclean_base(unittest.TestCase):
 
         return bmin_dict, bmaj_dict, pa_dict
 
-    def image_stats(self, img, fit_region=None, field_regions=[]):
+    def image_stats(self, img, fit_region=None, field_regions=None, masks=None):
         """ function that takes an image file and returns a statistics
             dictionary
         """
@@ -209,7 +210,8 @@ class test_tclean_base(unittest.TestCase):
         stats_dict = {}
 
         statistics = self._myia.statistics()
-        chunk = self._myia.getchunk()
+        # Return data chunk; transpose to make channel selection easier
+        chunk = numpy.transpose(self._myia.getchunk(dropdeg=True))
 
         # stats returned for all images
         im_size = self._myia.boundingbox()['imageShape'].tolist()
@@ -239,9 +241,37 @@ class test_tclean_base(unittest.TestCase):
         # stats returned if a region file is given
         if fit_region != None:
             if 'cube' in img:
-                if 'pb' in img or 'psf' in img:
+                if 'pb' in img:
                     fit_region = fit_region + ', range=[%schan,%schan]'\
                         % (int(im_size[3]/2), int(im_size[3]/2))
+                elif 'psf' in img:
+                    # using chan 1 as first because ia.fitcomponents fits
+                    # every channel if chan=0
+                    fit_region = [(fit_region + ', range=[%schan,%schan]' \
+                                   % (1, 1)), \
+                                  (fit_region + ', range=[%schan,%schan]' \
+                                   % (int(im_size[3]/2), int(im_size[3]/2))), \
+                                  (fit_region + ', range=[%schan,%schan]' \
+                                   % ((im_size[3]-1), (im_size[3]-1)))]
+                    i = 0
+                    for region in fit_region:
+                        try:
+                            fit_dict = self._myia.fitcomponents( \
+                                region=region)['results']['component0']
+                            stats_dict['fit_'+str(i)] = [ \
+                                fit_dict['peak']['value'], \
+                                fit_dict['shape']['majoraxis']['value'], \
+                                fit_dict['shape']['minoraxis']['value']]
+                            stats_dict['fit_loc_'+str(i)] = [ \
+                                fit_dict['spectrum']['channel'], \
+                                fit_dict['spectrum']['frequency']['m0']['value']]
+                            stats_dict['fit_pix_'+str(i)] = \
+                                fit_dict['pixelcoords'].tolist()
+                        except KeyError:
+                            stats_dict['fit_'+str(i)] = [1.0, 1.0, 1.0]
+                            stats_dict['fit_loc_'+str(i)] = [1.0, 1.0]
+                            stats_dict['fit_pix_'+str(i)] = [1.0, 1.0]
+                        i += 1
                 elif 'model' in img:
                     fit_region = fit_region
                 else:
@@ -249,9 +279,13 @@ class test_tclean_base(unittest.TestCase):
                     fit_region = fit_region + ', range=[%schan,%schan]' \
                         % (stats_dict['max_val_pos'][3], \
                         stats_dict['max_val_pos'][3])
-            region_stats = self._myia.statistics(region=fit_region)
-            stats_dict['regn_sum'] = region_stats['sum'][0]
-            if 'image' in img or 'pb' in img or 'psf' in img:
+            if 'psf' in img and 'cube' in img:
+                stats_dict['regn_sum'] = self._myia.statistics( \
+                    region=fit_region[1])['sum'][0]
+            else:
+                stats_dict['regn_sum'] = self._myia.statistics( \
+                    region=fit_region)['sum'][0]
+            if ('image' in img and 'mosaic_cube_eph' not in img) or 'pb' in img or ('psf' in img and 'cube' not in img):
                 try:
                     fit_dict = self._myia.fitcomponents( \
                         region=fit_region)['results']['component0']
@@ -291,17 +325,31 @@ class test_tclean_base(unittest.TestCase):
         if img.endswith('.mask'):
             stats_dict['mask_pix'] = numpy.count_nonzero(chunk)
             stats_dict['mask_regns'] = scipy.ndimage.label(chunk)[1]
+            stats_dict['mask'] = ~numpy.array(chunk, dtype=bool)
 
         if 'pb' in img:
-            stats_dict['npts_0.2'] = numpy.count_nonzero(chunk>0.2)
-            stats_dict['npts_0.5'] = numpy.count_nonzero(chunk>0.5)
+            pb_mask_02 = chunk>0.2
+            pb_mask_05 = chunk>0.5
+            if 'cube' in img:
+                pb_chans = [1, int(im_size[3]/2), int(im_size[3]-1)]
+                for chan in pb_chans:
+                    stats_dict['npts_0.2_'+str(pb_chans.index(chan))] = \
+                        numpy.count_nonzero(pb_mask_02[chan])
+                    stats_dict['npts_0.5_'+str(pb_chans.index(chan))] = \
+                        numpy.count_nonzero(pb_mask_05[chan])
+            else:
+                stats_dict['npts_0.2'] = numpy.count_nonzero(pb_mask_02)
+                stats_dict['npts_0.5'] = numpy.count_nonzero(pb_mask_05)
+            if 'mosaic' in img:
+                stats_dict['pb_mask_0.2'] = pb_mask_02
+                stats_dict['pb_mask_0.5'] = pb_mask_05
 
         if 'model' in img or img.endswith('.alpha'):
-            stats_dict['mask_non0'] = numpy.count_nonzero(chunk)
+            stats_dict['mask_non0'] = numpy.count_nonzero(chunk*masks)
 
         if 'weight' in img:
-            stats_dict['npts_0.2'] = numpy.count_nonzero(chunk>0.2)
-            stats_dict['npts_0.3'] = numpy.count_nonzero(chunk>0.3)
+            stats_dict['npts_0.2'] = numpy.count_nonzero(chunk*masks[0])
+            stats_dict['npts_0.5'] = numpy.count_nonzero(chunk*masks[1])
 
         self._myia.close()
 
@@ -546,7 +594,6 @@ class Test_standard(test_tclean_base):
         # .image report
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
-
         # .mask report
         mask_stats_dict = self.image_stats(img+'.mask')
 
@@ -580,8 +627,12 @@ class Test_standard(test_tclean_base):
             'min_val': [False, 0.200896695256],
             'min_val_pos': [True, [25, 13, 0, 396]],
             'im_rms': [False, 0.578238326026],
-            'npts_0.2': [True, 1522476],
-            'npts_0.5': [True, 736092],
+            'npts_0.2_0': [True, 2997],
+            'npts_0.5_0': [True, 1449],
+            'npts_0.2_1': [True, 2997],
+            'npts_0.5_1': [True, 1449],
+            'npts_0.2_2': [True, 2997],
+            'npts_0.5_2': [True, 1449],
             'npts_real': [True, 3251200],
             'fit': [False, [1.0308127949041446, 46.61751391582679, \
                        46.61253844001269]],
@@ -609,10 +660,18 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 0.136036099793],
             'im_sum': [False, 7472.57665916],
             'npts_real': [True, 3251200],
-            'fit': [False, [1.0959863390592945, 7.672871552789668, \
-                        5.141790170376213]],
-            'fit_loc': [True, [254, 220.31469461816917]],
-            'fit_pix': [False, [39.99880225653659, 39.99524870969922]]}
+            'fit_0': [False, [1.0959520385253885, 7.675969776744627, \
+                      5.143545685744538]],
+            'fit_loc_0': [True, [1, 220.25291857408726]],
+            'fit_pix_0': [False, [39.998799449215596, 39.99523672953224]],
+            'fit_1': [False, [1.0959863390592945, 7.672871552789668, \
+                      5.141790170376213]],
+            'fit_loc_1': [True, [254, 220.31469461816917]],
+            'fit_pix_1': [False, [39.99880225653659, 39.99524870969922]],
+            'fit_2': [False, [1.0960422882714267, 7.669928861314425, \
+                      5.140004109591353]],
+            'fit_loc_2': [True, [507, 220.37647066225108]],
+            'fit_pix_2': [False, [39.9988051116427, 39.995258207738075]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -642,7 +701,7 @@ class Test_standard(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse[[11.47881897deg, -73.25881015deg], [9.0414arcsec, 8.4854arcsec], 90.00000000deg]')
+            'ellipse[[11.47881897deg, -73.25881015deg], [9.0414arcsec, 8.4854arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 3251200],
             'npts_unmasked': [True, 3251200.0],
@@ -659,7 +718,7 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 0.000249846621096],
             'im_sum': [False, 0.92636379227],
             'regn_sum': [False, 0.92636379227],
-            'mask_non0': [True, 6],
+            'mask_non0': [True, 0],
             'npts_real': [True, 3251200]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
@@ -907,7 +966,7 @@ class Test_standard(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse [[209.02974119deg, 5.25476301deg], [2.7621arcsec, 1.8750arcsec], 90.00000000deg]')
+            'ellipse [[209.02974119deg, 5.25476301deg], [2.7621arcsec, 1.8750arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 6400],
             'npts_unmasked': [True, 6400.0],
@@ -924,7 +983,7 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 0.000320901735817],
             'im_sum': [False, 0.0295509714633],
             'regn_sum': [False, 0.0295509714633],
-            'mask_non0': [True, 2],
+            'mask_non0': [True, 0],
             'npts_real': [True, 6400]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
@@ -1171,7 +1230,7 @@ class Test_standard(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model.tt0', fit_region = \
-            'ellipse[[209.02974119deg, 5.25476301deg], [2.7621arcsec, 1.8750arcsec], 90.00000000deg]')
+            'ellipse[[209.02974119deg, 5.25476301deg], [2.7621arcsec, 1.8750arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 6400],
             'npts_unmasked': [True, 6400.0],
@@ -1188,7 +1247,7 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 0.000328232262345],
             'im_sum': [False, 0.0307541997172],
             'regn_sum': [False, 0.0307541997172],
-            'mask_non0': [True, 2],
+            'mask_non0': [True, 0],
             'npts_real': [True, 6400]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
@@ -1217,7 +1276,7 @@ class Test_standard(test_tclean_base):
 
         # .alpha report
         alpha_stats_dict = self.image_stats(img+'.alpha', fit_region = \
-            'ellipse[[209.02974119deg, 5.25476301deg], [2.7621arcsec, 1.8750arcsec], 90.00000000deg]')
+            'ellipse[[209.02974119deg, 5.25476301deg], [2.7621arcsec, 1.8750arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_alpha_stats = {'npts': [True, 6400],
             'npts_unmasked': [True, 2009.0],
@@ -1234,7 +1293,7 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 16.165969128],
             'im_sum': [False, 19177.0033636],
             'regn_sum': [False, 2.50601291656],
-            'mask_non0': [True, 2009],
+            'mask_non0': [True, 1816],
             'npts_real': [True, 6400]}
 
         report9 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
@@ -1254,7 +1313,7 @@ class Test_standard(test_tclean_base):
             'nchan': [True, 1],
             'max_val': [False, 78.1796569824],
             'max_val_pos': [True, [28, 15, 0, 0]],
-            'min_val': [False, 0.0368266552687],
+            'min_val': [False, 0.0372391715646],
             'min_val_pos': [True, [20, 3, 0, 0]],
             'im_rms': [False, 22.7563186515],
             'im_sum': [False, 35943.3947913],
@@ -1422,8 +1481,12 @@ class Test_standard(test_tclean_base):
             'min_val': [False, 0.20036059618],
             'min_val_pos': [True, [20, 15, 0, 891]],
             'im_rms': [False, 0.57684102],
-            'npts_0.2': [True, 3233000],
-            'npts_0.5': [True, 1549000],
+            'npts_0.2_0': [True, 3233],
+            'npts_0.5_0': [True, 1549],
+            'npts_0.2_1': [True, 3233],
+            'npts_0.5_1': [True, 1549],
+            'npts_0.2_2': [True, 3233],
+            'npts_0.5_2': [True, 1549],
             'npts_real': [True, 6400000],
             'fit': [False, [1.046847676114786, 28.075049566294457, \
                     28.075184571520158]],
@@ -1451,10 +1514,18 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 0.0871161935921],
             'im_sum': [False, 2742.74484326],
             'npts_real': [True, 6400000],
-            'fit': [False, [1.1041897949047454, 3.943995482479015, \
-                    2.858120721885849]],
-            'fit_loc': [True, [500, 354.5063079930342]],
-            'fit_pix': [False, [39.999914819825086, 39.997626281193952]]}
+            'fit_0': [False, [1.1041815481079804, 3.942786862512436, \
+                      2.861422654767207]],
+            'fit_loc_0': [True, [1, 354.4453942426872]],
+            'fit_pix_0': [False, [39.99991697297065, 39.997612723971876]],
+            'fit_1': [False, [1.1041897949047454, 3.943995482479015, \
+                      2.858120721885849]],
+            'fit_loc_1': [True, [500, 354.5063079930342]],
+            'fit_pix_1': [False, [39.999914819825086, 39.997626281193952]],
+            'fit_2': [False, [1.1041648382099558, 3.946029935006709, \
+                      2.8548012968092817]],
+            'fit_loc_2': [True, [999, 354.5672217433812]],
+            'fit_pix_2': [False, [39.99991098336098, 39.99764268795339]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -1484,7 +1555,7 @@ class Test_standard(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse[[93.23955772deg, 22.57243258deg], [6.2806arcsec, 5.4290arcsec], 0.00000000deg]')
+            'ellipse[[93.23955772deg, 22.57243258deg], [6.2806arcsec, 5.4290arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 6400000],
             'npts_unmasked': [True, 6400000.0],
@@ -1501,7 +1572,7 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 0.00172803556487],
             'im_sum': [False, 52.6738070883],
             'regn_sum': [False, 53.3284724131],
-            'mask_non0': [True, 436],
+            'mask_non0': [True, 0],
             'npts_real': [True, 6400000]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
@@ -1748,7 +1819,7 @@ class Test_standard(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
+            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 82944],
             'npts_unmasked': [True, 82944.0],
@@ -2009,7 +2080,7 @@ class Test_standard(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model.tt0', fit_region = \
-            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
+            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 82944],
             'npts_unmasked': [True, 82944.0],
@@ -2055,7 +2126,7 @@ class Test_standard(test_tclean_base):
 
         # .alpha report
         alpha_stats_dict = self.image_stats(img+'.alpha', fit_region = \
-            'ellipse [[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
+            'ellipse [[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_alpha_stats = {'npts': [True, 82944],
             'npts_unmasked': [True, 29656.0],
@@ -2316,7 +2387,7 @@ class Test_standard(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse[[344.52480945deg, -27.97253944deg], [12.1076arcsec, 6.2463arcsec], 90.00000000deg]')
+            'ellipse[[344.52480945deg, -27.97253944deg], [12.1076arcsec, 6.2463arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 8100],
             'npts_unmasked': [True, 8100.0],
@@ -2333,7 +2404,7 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 0.0264748467339],
             'im_sum': [False, 2.38273620605],
             'regn_sum': [False, 2.38273620605],
-            'mask_non0': [True, 1],
+            'mask_non0': [True, 0],
             'npts_real': [True, 8100]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
@@ -2554,7 +2625,7 @@ class Test_mosaic(test_tclean_base):
             'start_delta': [False, 2.202527e+11],
             'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
-            'mask_pix': [True, 3928],
+            'mask_pix': [True, 3929],
             'mask_regns': [True, 1],
             'npts_real': [True, 5925312]}
 
@@ -2575,10 +2646,14 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [54, 54, 0, 0]],
             'min_val': [False, 0.200100466609],
-            'min_val_pos': [True, [43, 99, 0, 447]],
+            'min_val_pos': [True, [98, 64, 0, 339]],
             'im_rms': [False, 0.615051728939],
-            'npts_0.2': [True, 3338068],
-            'npts_0.5': [True, 1825336],
+            'npts_0.2_0': [True, 6571],
+            'npts_0.5_0': [True, 3593],
+            'npts_0.2_1': [True, 6571],
+            'npts_0.5_1': [True, 3593],
+            'npts_0.2_2': [True, 6571],
+            'npts_0.5_2': [True, 3594],
             'npts_real': [True, 5925312],
             'fit': [False, [1.0810930483564398, 69.22608257076189, \
                     69.16658859812452]],
@@ -2606,10 +2681,18 @@ class Test_mosaic(test_tclean_base):
             'im_rms': [False, 0.0604965318073],
             'im_sum': [False, 66.9960417559],
             'npts_real': [True, 5925312],
-            'fit': [False, [1.1012785744622782, 7.879844016452006, \
-                    5.242454867627971]],
-            'fit_loc': [True, [254, 220.31469461816917]],
-            'fit_pix': [False, [53.987518610964671, 54.004592842286243]]}
+            'fit_0': [False, [1.1012023947984113, 7.881990108924573, \
+                      5.249591565272608]],
+            'fit_loc_0': [True, [1, 220.25291857408726]],
+            'fit_pix_0': [False, [53.9877555807218, 54.00478115211167]],
+            'fit_1': [False, [1.1012785744622782, 7.879844016452006, \
+                      5.242454867627971]],
+            'fit_loc_1': [True, [254, 220.31469461816917]],
+            'fit_pix_1': [False, [53.987518610964671, 54.004592842286243]],
+            'fit_2': [False, [1.1012668735944595, 7.881043827878078, \
+                      5.23808759170775]],
+            'fit_loc_2': [True, [507, 220.37647066225108]],
+            'fit_pix_2': [False, [53.987317744517256, 54.004239429673945]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -2639,7 +2722,7 @@ class Test_mosaic(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse[[11.48109199deg, -73.25974151deg], [18.9246arcsec, 17.1916arcsec], 0.00000000deg]')
+            'ellipse[[11.48109199deg, -73.25974151deg], [18.9246arcsec, 17.1916arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 5925312],
             'npts_unmasked': [True, 5925312.0],
@@ -2656,7 +2739,7 @@ class Test_mosaic(test_tclean_base):
             'im_rms': [False, 0.000534801027393],
             'im_sum': [False, 5.90552844107],
             'regn_sum': [False, 5.90552844107],
-            'mask_non0': [True, 32],
+            'mask_non0': [True, 0],
             'npts_real': [True, 5925312]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
@@ -2684,7 +2767,8 @@ class Test_mosaic(test_tclean_base):
             '.sumwt')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img+'.weight')
+        wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
+            pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         exp_wt_stats = {'npts': [True, 5925312],
             'npts_unmasked': [True, 5925312.0],
@@ -2694,14 +2778,14 @@ class Test_mosaic(test_tclean_base):
             'start_delta': [False, 2.202527e+11],
             'end_delta': [False, 2.203765e+11],
             'nchan': [True, 508],
-            'max_val': [False, 0.39385086298],
+            'max_val': [False, 0.393758654594],
             'max_val_pos': [True, [54, 54, 0, 0]],
-            'min_val': [False, 7.44352073525e-05],
-            'min_val_pos': [True, [97, 107, 0, 224]],
-            'im_rms': [False, 0.140916352052],
+            'min_val': [False, 7.45326979086e-05],
+            'min_val_pos': [True, [97, 107, 0, 170]],
+            'im_rms': [False, 0.140904168376],
             'im_sum': [False, 506828.976527],
-            'npts_0.2': [True, 1058348],
-            'npts_0.3': [True, 504298],
+            'npts_0.2': [True, 3338068],
+            'npts_0.5': [True, 1825336],
             'npts_real': [True, 5925312]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
@@ -2937,7 +3021,7 @@ class Test_mosaic(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse[[209.02978056deg, 5.25471484deg], [18.8386arcsec, 9.9356arcsec], 90.00000000deg]')
+            'ellipse[[209.02978056deg, 5.25471484deg], [18.8386arcsec, 9.9356arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 15876],
             'npts_unmasked': [True, 15876.0],
@@ -2954,7 +3038,7 @@ class Test_mosaic(test_tclean_base):
             'im_rms': [False, 0.000217269736505],
             'im_sum': [False, 0.0273759867996],
             'regn_sum': [False, 0.0273759867996],
-            'mask_non0': [True, 1],
+            'mask_non0': [True, 0],
             'npts_real': [True, 15876]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
@@ -2982,7 +3066,8 @@ class Test_mosaic(test_tclean_base):
             '.sumwt')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img+'.weight')
+        wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
+            pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         exp_wt_stats = {'npts': [True, 15876],
             'npts_unmasked': [True, 15876.0],
@@ -2998,8 +3083,8 @@ class Test_mosaic(test_tclean_base):
             'min_val_pos': [True, [1, 24, 0, 0]],
             'im_rms': [False, 0.144357241275],
             'im_sum': [False, 1347.6264633],
-            'npts_0.2': [True, 2778],
-            'npts_0.3': [True, 1468],
+            'npts_0.2': [True, 8454],
+            'npts_0.5': [True, 4497],
             'npts_real': [True, 15876]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
@@ -3232,7 +3317,7 @@ class Test_mosaic(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model.tt0', fit_region = \
-            'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]')
+            'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 15876],
             'npts_unmasked': [True, 15876.0],
@@ -3249,7 +3334,7 @@ class Test_mosaic(test_tclean_base):
             'im_rms': [False, 0.000216185883988],
             'im_sum': [False, 0.0272394213825],
             'regn_sum': [False, 0.0272394213825],
-            'mask_non0': [True, 1],
+            'mask_non0': [True, 0],
             'npts_real': [True, 15876]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
@@ -3277,7 +3362,8 @@ class Test_mosaic(test_tclean_base):
             '.sumwt.tt0')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img+'.weight.tt0')
+        wt_stats_dict = self.image_stats(img+'.weight.tt0', masks=[ \
+            pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         exp_wt_stats = {'npts': [True, 15876],
             'npts_unmasked': [True, 15876.0],
@@ -3293,8 +3379,8 @@ class Test_mosaic(test_tclean_base):
             'min_val_pos': [True, [1, 24, 0, 0]],
             'im_rms': [False, 0.144357241275],
             'im_sum': [False, 1347.6264633],
-            'npts_0.2': [True, 2778],
-            'npts_0.3': [True, 1468],
+            'npts_0.2': [True, 8454],
+            'npts_0.5': [True, 4497],
             'npts_real': [True, 15876]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, \
@@ -3302,7 +3388,7 @@ class Test_mosaic(test_tclean_base):
 
         # .alpha report
         alpha_stats_dict = self.image_stats(img+'.alpha', fit_region = \
-            'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]')
+            'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_alpha_stats = {'npts': [True, 15876],
             'npts_unmasked': [True, 1628.0],
@@ -3319,7 +3405,7 @@ class Test_mosaic(test_tclean_base):
             'im_rms': [False, 11.2641311632],
             'im_sum': [False, 8782.46312377],
             'regn_sum': [False, -46.7235065232],
-            'mask_non0': [True, 1628],
+            'mask_non0': [True, 1481],
             'npts_real': [True, 15876]}
 
         report10 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
@@ -3445,39 +3531,35 @@ class Test_mosaic(test_tclean_base):
              'circle[[15:57:28.581274, -16.57.40.39634], 11.5arcsec]',
              'circle[[15:57:29.520326, -16.57.40.70171], 11.5arcsec]'])
 
-        exp_im_stats = {'com_bmaj': [False, 0.930861830403],
-            'com_bmin': [False, 0.719328746863],
-            'com_pa': [False, -88.1227870446],
+        exp_im_stats = {'com_bmaj': [False, 0.9347811147697555],
+            'com_bmin': [False, 0.7185930247591006],
+            'com_pa': [False, -88.16793752979638],
             'npts': [True, 191116800],
-            'npts_unmasked': [True, 105033551.0],
+            'npts_unmasked': [True, 104998085.0],
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
             'start_delta': [False, 2.617644e+11],
             'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 0.0847059637308],
-            'max_val_pos': [True, [290, 236, 0, 511]],
-            'min_val': [False, -0.0710606276989],
-            'min_val_pos': [True, [192, 206, 0, 674]],
-            'im_rms': [False, 0.0122806235373],
-            'rms_per_chan': [False, [0.015667012104297096, 0.01249556647636659, 0.011119753312996314, 0.011559686287211745, 0.012295549107925172, 0.013497595553035495, 0.013890985018415562, 0.01537521583867029, 0.012560026473467654, 0.01211174756347237, 0.01068202599475987, 0.011446394296400014, 0.013360170834984883, 0.011779590786641968, 0.011813658887463094, 0.01105808607636477, 0.011211227704164385, 0.012672658897254005, 0.009644489317411001, 0.012306186479311533, 0.011820657820002498, 0.012528421200108672, 0.012097912099003863, 0.014149728955396576, 0.013040286513860739, 0.010926749613896915, 0.01135630004195933, 0.011450114870829052, 0.013874579045960853, 0.012713343335685372, 0.012365580200560802, 0.01112892658338281, 0.011735154726597849, 0.010271529404584005, 0.012034388520273378, 0.011825840449510846, 0.01201477612491181, 0.011271561871280695, 0.01263051888325016, 0.010917661123920426, 0.012304591002675239, 0.01382691832578588, 0.012025131483665455, 0.01471038786901529, 0.01268901239406491, 0.012269947721949661, 0.010339439002704098, 0.010588455121686411, 0.010663853975518148, 0.011927246586817075, 0.011971607513601665, 0.011740843559651189, 0.010860788064116878, 0.0113500230752135, 0.011498619788115836, 0.011798959247821511, 0.010929419432007908, 0.014579761324742322, 0.012976422990339583, 0.010218616946376293, 0.011098072571178239, 0.01168771322025399, 0.011600913193876674, 0.011684300942923293, 0.01071321921174995, 0.011492474041242522, 0.012011160150216459, 0.01290685298415816, 0.010431320458890848, 0.010472939825276044, 0.013447112178611359, 0.011687328995254547, 0.010898530945791702, 0.009752776379182097, 0.01164870192026142, 0.012676083477754277, 0.01431102043820875, 0.014295093842479985, 0.012626217708334785, 0.011231466919543581, 0.010535901939971674, 0.01062302128541249, 0.011298369163697381, 0.012502624763702992, 0.011305836954063448, 0.01215581953177045, 0.010607739795551263, 0.01112311151599714, 0.010136484643153825, 0.01128990114770225, 0.012014173589023637, 0.013193805876756995, 0.012330109734653474, 0.010766011891193288, 0.01153437959726003, 0.011978851287972363, 0.011109003021191307, 0.011833746981365703, 0.011880050178226903, 0.009862018971003887, 0.012800148141077113, 0.012007057726628611, 0.012985090676833535, 0.0129505958602198, 0.011696207783179233, 0.013661835268823226, 0.015246672300909788, 0.012047095989451426, 0.014346897791128894, 0.011754599415304922, 0.011009518999420173, 0.011052019581176067, 0.012820563697322922, 0.01167880516927239, 0.010768042038144418, 0.012407448804067968, 0.011258173984772548, 0.010006383872394846, 0.012053714508583965, 0.011282069296445192, 0.01185568667180287, 0.01224398735628035, 0.009954101011210293, 0.01224524095389172, 0.01083068385084185, 0.012042693023557548, 0.010466482413183785, 0.01270824749297588, 0.009858469333879292, 0.009616370018819147, 0.011251488506345967, 0.010944010326885257, 0.009937336043765989, 0.011811563673806756, 0.01374671433132631, 0.011885072616527947, 0.01128936295560062, 0.010745268810504142, 0.010783213461157924, 0.010401671249270496, 0.010546985468598878, 0.011704982925431526, 0.01151082357877418, 0.011389394982234517, 0.009891395767145527, 0.012676962217854196, 0.01239854403608683, 0.01012692292366004, 0.01208213727619496, 0.010426410721875919, 0.011489717695650697, 0.011351311722094469, 0.010788345620860689, 0.012413824258742542, 0.012869284594202364, 0.01254719377424318, 0.012493275011557376, 0.012026588643842862, 0.011444080682226833, 0.014504798148840915, 0.012783237416754493, 0.010978226098473022, 0.011226830327894566, 0.010386044707730815, 0.01179048796956224, 0.010466753647787678, 0.010520561042133916, 0.009806686930384046, 0.009825709113667067, 0.011163605933804482, 0.009898306765781937, 0.010639624156931048, 0.010765250926759881, 0.011871167097798471, 0.012699735217972713, 0.012271717028350141, 0.01011927965625519, 0.01185201591720369, 0.01187934596239281, 0.012860096441123013, 0.01045831490108293, 0.01168302685217849, 0.01231538733094323, 0.013711623609843774, 0.010509256728676152, 0.009725104065778598, 0.010742348970319717, 0.010497654900964383, 0.01226776948490034, 0.009968096362512743, 0.01065210210757194, 0.0113790694870219, 0.013691499504725839, 0.009709697345128918, 0.011668556206361638, 0.01203851403100267, 0.011090927358203469, 0.012322941164683295, 0.010763675962361283, 0.01243680774921738, 0.01273630413642944, 0.014925176287167791, 0.013343151602031603, 0.012184525933592252, 0.011868284483931634, 0.010612397890136424, 0.010925259212727632, 0.010736722739232834, 0.01128555748033192, 0.012106425521907454, 0.012536567241883659, 0.011811387511674406, 0.011410855057029651, 0.010610454803475318, 0.010985570534714531, 0.013420524115250722, 0.01237714866693324, 0.011400339204092964, 0.011530006934858634, 0.013404558644802023, 0.01356996738906636, 0.011809592810750743, 0.012195836458918021, 0.013983595304231499, 0.012723543201613906, 0.011350835725055812, 0.012149584287404331, 0.011272979457253907, 0.012262167105146599, 0.011175511659374244, 0.0102697228260645, 0.01334158429888008, 0.012408056314862907, 0.011491512834255597, 0.00928563088957559, 0.011723585674628282, 0.012562330134652718, 0.012321060378936478, 0.011175930032929103, 0.014444827741007454, 0.013240412166233477, 0.00954358182816961, 0.009886456935597223, 0.011315336508350314, 0.011160043368747817, 0.011084649991455213, 0.011426321774805799, 0.010549594186710465, 0.011211051291167739, 0.01176768646746374, 0.014686912922251879, 0.011246937183158924, 0.009773020704868391, 0.012859597369260864, 0.012513039230848268, 0.013313363039583453, 0.012077863600292971, 0.011426654372094657, 0.011508622055300996, 0.011247566432148776, 0.011623431851054248, 0.011014612057401632, 0.013022506823681756, 0.011485416194269382, 0.01154829448377298, 0.01202691068493326, 0.012642809433009043, 0.010836720661823337, 0.012182321211669447, 0.012349974771377626, 0.01129390722457532, 0.011135976780555478, 0.011531711369332466, 0.012456469996333023, 0.01066628966176333, 0.011106915433366485, 0.012535628404137928, 0.01329621583757732, 0.01309891488346235, 0.011823826809276102, 0.010766426258224856, 0.010769239154148987, 0.0110549819438351, 0.00941967982610333, 0.012016650037610828, 0.011327327654288295, 0.01209848828634942, 0.011506245997467066, 0.011684994479376746, 0.013606364448973455, 0.010446608584558138, 0.01066351605331571, 0.010707363943853028, 0.011928301857376082, 0.01294521124420252, 0.010131421709150719, 0.011849062523828911, 0.011443882324740128, 0.012461616479499914, 0.011076627457455922, 0.012813631803261182, 0.011813942249706206, 0.012869872838703512, 0.016215007268429744, 0.016455835790109574, 0.016195858609782746, 0.010586943752781703, 0.011714040295832838, 0.011002274392087834, 0.013100914878598957, 0.011252873658270539, 0.011303009258586938, 0.012859801115861635, 0.012461620893746536, 0.011357224642469422, 0.011637071400518138, 0.011468136930703879, 0.01411435236184562, 0.01213930177391437, 0.012012513247874964, 0.012399215107416643, 0.017256708026613384, 0.011747981333506227, 0.012212040710131029, 0.011702161891262641, 0.01357489047444866, 0.0142883693783086, 0.013345754616212652, 0.0111940675739781, 0.011675373377606931, 0.011441040364084332, 0.013384698628456768, 0.013142898529307593, 0.01225725868583698, 0.012226995314265549, 0.011976385838259086, 0.014630107009854095, 0.01393710853346633, 0.011607705747133181, 0.013218275149292351, 0.011873190322311846, 0.013747319388144195, 0.010499983139191808, 0.011624206615490757, 0.013225475425745141, 0.013680190321206091, 0.012046704878481942, 0.012471069574344537, 0.010953227174093479, 0.011926261656122828, 0.012459493726885675, 0.014416014101405097, 0.013092512809823969, 0.012391343965965609, 0.012032749220004132, 0.011174480504353115, 0.0128020365473887, 0.012373815528334766, 0.013220253396707947, 0.011397076938533486, 0.011737376857836166, 0.011339198156054645, 0.013683087656476136, 0.014055337259697667, 0.011872209955622893, 0.011489327319776421, 0.011356744920908554, 0.011924222252823101, 0.012924011814257761, 0.01156472654485118, 0.012452508623193576, 0.01615067926057454, 0.014393758763013523, 0.012021023556503968, 0.011686927548314128, 0.012558578572353821, 0.011698219106403014, 0.011850872070781452, 0.011244104935548218, 0.010803851710396785, 0.011326571988274907, 0.012046055166178125, 0.012789254887232475, 0.012054328352918125, 0.012531458975574155, 0.011667295333375608, 0.012715182062018394, 0.01416008745695674, 0.011590350023313635, 0.013280049474709302, 0.012317202369770713, 0.011350237164077244, 0.011468547414280923, 0.011839276627787746, 0.011984505075773167, 0.010498556329113671, 0.011607479477631402, 0.01146628697832332, 0.012454745876293334, 0.015324136554616518, 0.012648464631195741, 0.011476812708577248, 0.012388293945433912, 0.013097915532805426, 0.010844862222727058, 0.010849704992030628, 0.011857198994433613, 0.014369812497106239, 0.01614444176168378, 0.010859408246343039, 0.012355198379138267, 0.013369345496468774, 0.01352324109813424, 0.01249093576911017, 0.011839983100254041, 0.013790424278145797, 0.013615888137811373, 0.012137597782120882, 0.011920659584678292, 0.01198453326792445, 0.011455625248390569, 0.00998759798749584, 0.011907441379145489, 0.011445931803455656, 0.012802399352945356, 0.011807120236149467, 0.01226251626371192, 0.013803196660688412, 0.011396570477306092, 0.011871861677445866, 0.012409145934442605, 0.012190261729970274, 0.011355705245344998, 0.013059478167556213, 0.011340084762450894, 0.014094393707136091, 0.012227696710476979, 0.015109377241227427, 0.012328532759057612, 0.012948495238519125, 0.012448990941930516, 0.014909025593587475, 0.013966538678131317, 0.013951304003408212, 0.012643902341794237, 0.012381886725880696, 0.011608607970324055, 0.011524217824005454, 0.011753643583578194, 0.011909335216658386, 0.01500036992819057, 0.0146564784502679, 0.013039737284216963, 0.013751934845130839, 0.013710006202952523, 0.01146836988848032, 0.011545597482743033, 0.011534520901890178, 0.013313753578876611, 0.012923196186255153, 0.013864645252987274, 0.01291016687946222, 0.012187645424073405, 0.0123954851702774, 0.011090370304889066, 0.012569939183393495, 0.011171977695060169, 0.01193123241184618, 0.012223023550711422, 0.012575288535573641, 0.013397233030543118, 0.012677733376390488, 0.012824707036730977, 0.012077443785414215, 0.011917723071670982, 0.012440011533195431, 0.012737137257114249, 0.013226824784925779, 0.011705373001984695, 0.013236156564942205, 0.012428547205061067, 0.011897634394487568, 0.012340276631541067, 0.016514178673390664, 0.01279768810975663, 0.013295330804538989, 0.013923981704086203, 0.013293372296425762, 0.012807871537395961, 0.01233101894981078, 0.012328987872006852, 0.01163784902034462, 0.013313092897728503, 0.012985108364251114, 0.011142998656392029, 0.012369903540412508, 0.012947299676825685, 0.012653423845945748, 0.01562996207353602, 0.014022980315620364, 0.013079373939625572, 0.013669501711869474, 0.011451239023725265, 0.01387333519961978, 0.013272974615061776, 0.013010075621525907, 0.012057515236229667, 0.013348290271015285, 0.012474986304014272, 0.012822235425304088, 0.013469504747600882, 0.015049934910563677, 0.013108662650721938, 0.01169414937155411, 0.014209631933301799, 0.014029595420562672, 0.01313572956489975, 0.013768070645688276, 0.013669663522466149, 0.012789385397857027, 0.011759854640416133, 0.013381506917531618, 0.01317316470287087, 0.013731014632491167, 0.014096287340039539, 0.011977139109191822, 0.01269262588325782, 0.014216384246730137, 0.012780653296103527, 0.012899528621024064, 0.011032967652830057, 0.012102612001078233, 0.011976078228056453, 0.011883895621375998, 0.012802365574674025, 0.01324801385166456, 0.013229524374842769, 0.012151160553514988, 0.011697133232144788, 0.013819175149287335, 0.012140935480252437, 0.011981813853002501, 0.012084722992447795, 0.012585444087037377, 0.012414152508510147, 0.013316552564554114, 0.013253620957310662, 0.014878797637568952, 0.013615894050495254, 0.012709069629370266, 0.012427103871389584, 0.013255141575299076, 0.012738711652745057, 0.014904432456876815, 0.014210867966534892, 0.013509920011482207, 0.012425165695341685, 0.012533528802502332, 0.014336868162538341, 0.011833811236181477, 0.015193744677447416, 0.01431279129775192, 0.013259559570353551, 0.012994100393289547, 0.013864774950178729, 0.012159929964791984, 0.01419863835690063, 0.014190789497478196, 0.013672387203935446, 0.012055278077236548, 0.012085479493499343, 0.012708973627136714, 0.012057165753153366, 0.012948753136076728, 0.01300072865900603, 0.011737981749916887, 0.013527304652929072, 0.012929913822303431, 0.011886809618695744, 0.012833849789732805, 0.01302949373163326, 0.013895403620873681, 0.013171820320213534, 0.013953961887679132, 0.013734000181833348, 0.01262587625087098, 0.012199103159950037, 0.013643673456292997, 0.013397836614489634, 0.01594172388898437, 0.015573035287868315, 0.013917856223549286, 0.012536353641427949, 0.014860466731552354, 0.013552708900045911, 0.013629466127257123, 0.012378335224334382, 0.013116351705612704, 0.012177988274798253, 0.012805373309334908, 0.013766331009848752, 0.014681878707956165, 0.011926702054932887, 0.012452273266241426, 0.012579633618734222, 0.012271260658847647, 0.013434178141045432, 0.011256170201273603, 0.012241164545083469, 0.012715311381559832, 0.014158217761420192, 0.013710431625047755, 0.015544655166662385, 0.012479494691650066, 0.012794382968093331, 0.013723467058383875, 0.01129790706237436, 0.01386400204442386, 0.013948937970667924, 0.01474167932185738, 0.012394940495298034, 0.014413979480373103, 0.013415306676650376, 0.013015296980135697, 0.012460061661220363, 0.012148683531904852, 0.014565058530881577, 0.013354317640191604, 0.010932991047176424, 0.013472405580926574, 0.014090167896930112, 0.011289132690347727, 0.013030955001855788, 0.011930998072436357, 0.01119650545759846, 0.01336252769201265, 0.013985875731024684, 0.011744402770443252, 0.012987363600946232, 0.012570373512332105, 0.011967267431977555, 0.013963824316748901, 0.013113917131760142, 0.015175164104330932, 0.01327121004907913, 0.01480994279997818, 0.013017833326488197, 0.012590284721083084, 0.013636613698566152, 0.013023427264598512, 0.0118689366333651, 0.014431815130736951, 0.011510423632609004, 0.013751161061425392, 0.011946926261948976, 0.011574213816363992, 0.013103519491424586, 0.01256833652316557, 0.013717201694781961, 0.011799548188880763, 0.014221219755103955, 0.013122869137854539, 0.015681024673163967, 0.013977036504021368, 0.01385158873128627, 0.01192090212998216, 0.013405064782284188, 0.012370543487842847, 0.013543641566948098, 0.012190038354089203, 0.010485951880655316, 0.01065474654892235, 0.011894241281652475, 0.012235290499779875, 0.016341337277583624, 0.011951837129874415, 0.012786343847113055, 0.011700169381836972, 0.0116987237015556, 0.01584129766486376, 0.012934100451129409, 0.012421043404934572, 0.013319782161544239, 0.010822586447971657, 0.013768225063031962, 0.01256900129001914, 0.013155623546818948, 0.011216305081099302, 0.01342997193575067, 0.01202191464374732, 0.010697624321778235, 0.015231405911477284, 0.012707984996807302, 0.011509494099144266, 0.012370090248740612, 0.012333106398064926, 0.012355927978977287, 0.013324826178046834, 0.012937849744614949, 0.013251091849170686, 0.012241393042655245, 0.012809410411935642, 0.013415437736483378, 0.013549261827461793, 0.013063192366571214, 0.012121670719955952, 0.01336030963204456, 0.012030706877818232, 0.01620522326989027, 0.013898156174912801, 0.013845480988651687, 0.013887455990710647, 0.012068390405162546, 0.011755939925068324, 0.013275604498608711, 0.011216611629757777, 0.011677478386439837, 0.010605866598758461, 0.0123599433807257, 0.013049424843940767, 0.011751712640564415, 0.011750132281128709, 0.012538068443295915, 0.01178746192810137, 0.012416680391644138, 0.013967663494309064, 0.011784356183646988, 0.014604214590101753, 0.011833948152033797, 0.011315804095294313, 0.01332743466825628, 0.013053434708846068, 0.011059804195895667, 0.010564587906126596, 0.01102267731863153, 0.011342558989477891, 0.01202689018525376, 0.012453421183126498, 0.011102185306584089, 0.010463866575165995, 0.015269163260545289, 0.011918415549432885, 0.011369128293761672, 0.010371364768147193, 0.011736371996752575, 0.012797487595901094, 0.013259851973223793, 0.012380797309777503, 0.013308425109731127, 0.015320758463204735, 0.010225926749762294, 0.011258787297291056, 0.009966991432626141, 0.011479673309463388, 0.012747496824004115, 0.012375931475739925, 0.011058517478639826, 0.012762924931169286, 0.012477944671249878, 0.01260839664096796, 0.011204724607765226, 0.013902208290096557, 0.010776228597758947, 0.013309499022509929, 0.017424540106428448, 0.011666803285392461, 0.010612250155377485, 0.01225365093143365, 0.012565477652135646, 0.012560022064203515, 0.013311882508317791, 0.012505545505753059, 0.010306455499657464, 0.012676663075725451, 0.012498771477844908, 0.01058998021853162, 0.01405727829447646, 0.011586866156371556, 0.010518281562552243, 0.010731082611461988, 0.013668577521770654, 0.012951237133989603, 0.013297250697740166, 0.011256633699887369, 0.011410614744018555, 0.011920105512413305, 0.010903972882515475, 0.01151646075083865, 0.011652106943818302, 0.011279191661803575, 0.013096542735610034, 0.010571055541644716, 0.0125850059607434, 0.010687465761303071, 0.012287345913328777, 0.011395341842353034, 0.01066365582500683, 0.014598748750369274, 0.012549443442399444, 0.011441826793593216, 0.010884568047403273, 0.01180816627630304, 0.01120499414253317, 0.012397216994592853, 0.011586660529077834, 0.012109595113175883, 0.01012537646617585, 0.010614883001281113, 0.013062279023311165, 0.011156508307384487, 0.011360974428249597, 0.010662569680858604, 0.011096498962291788, 0.010554891464213529, 0.011990213710704774, 0.01199714967099034, 0.011854981439770644, 0.011862683712584867, 0.012802582494057203, 0.011577453698377574, 0.01019052971268619, 0.01019901528332309, 0.012281126786588159, 0.011415812682763855, 0.01105581294331331, 0.01066694467332525, 0.010788622197805227, 0.012827960070295203, 0.014827747643843274, 0.01228615008936392, 0.012695947954523156, 0.01372504743362642, 0.012856030967871494, 0.010597007817762974, 0.012304902393004517, 0.012065110220915125, 0.01195668425986831, 0.01086087593260838, 0.01231769839828131, 0.012128147369877246, 0.010817010237205124, 0.012643034637853885, 0.011662533330489484, 0.01332388398778439, 0.011379239016704942, 0.011338092027712373, 0.013532638696355816, 0.01088929059364428, 0.009833061982280674, 0.01039296581185181, 0.010551371059577607, 0.012800002623802556, 0.011294950650386104, 0.010968921330141941, 0.011815483268140185, 0.010991027109824806, 0.010101876381734976, 0.011413636304184781, 0.01168187248586187, 0.010061068733763744, 0.01197014119071967, 0.012698376660930412, 0.011322714727807322, 0.01090459130971119, 0.009559547835004872, 0.010498329644215184, 0.013744539638296114, 0.01241662294231113, 0.013920642752687732, 0.01423709054803628, 0.012246450050510711, 0.011798522946392928, 0.012688307869426999, 0.011701411381744752, 0.010963335503348588, 0.011647664158072897, 0.010302975974959723, 0.011032126020690486, 0.011010171786400392, 0.012070857382656947, 0.012159491609797332, 0.012081814922729835, 0.01247264839908568, 0.011200668427178526, 0.013522937854091454, 0.013105319145488747, 0.011579740082727632, 0.010161886039664997, 0.010813245667125665, 0.010532288644280609, 0.011266459095452083, 0.012340346869037254, 0.010811434812069995, 0.012335213065123588, 0.00964337831495196, 0.012187168579263661, 0.013251917772334918, 0.011498371091243765, 0.010161965220729475, 0.01181737461439899, 0.009784767253164278, 0.009961151956167761, 0.011528718678809174, 0.010742033001898285, 0.010879391169694889, 0.010316128340493388, 0.010247573903152401, 0.011062856172903247, 0.011417489025016405, 0.01119193099686049, 0.01098276222674334, 0.014026370736078514, 0.01043225916128798, 0.010194459622871846, 0.010815687677297334, 0.011134576557489298, 0.01142961024001326, 0.010585867874587658, 0.015266592121768712, 0.011920413664227218, 0.009755732807066618, 0.012196390497070086, 0.009319626263621858, 0.011464227492400532, 0.01051867055357182, 0.012952488572362067, 0.010904039384865052, 0.009939432112089783, 0.011965844054709109, 0.010384358639967691, 0.010084010975718798, 0.013177624524319486, 0.014828138853365192, 0.011173145152672995, 0.011590247202021274, 0.010687161551733566, 0.011618327067404854, 0.010073717357638476, 0.01029100516208372, 0.010542481107447248, 0.011770135056296347, 0.011999996525704881, 0.011631265879266437, 0.012435408590750038, 0.012434157423771368, 0.010597499708746861, 0.010475004983816016, 0.013007106929861926]],
-            'im_sum': [False, 4153.80461124],
-            'regn_sum': [False, 95.814434405584961],
+            'max_val': [False, 0.086364768445491791],
+            'max_val_pos': [True, [318, 243, 0, 511]],
+            'min_val': [False, -0.070862673223018646,],
+            'min_val_pos': [True, [222, 212, 0, 674]],
+            'im_rms': [False, 0.012281882598118963],
+            'rms_per_chan': [False, [0.01566755765592744, 0.012499771976912814, 0.011123979147164407, 0.011561886220609966, 0.012292568630946268, 0.013503738082575103, 0.013895709096621548, 0.015371602081183504, 0.012571966053954607, 0.012110657886905454, 0.010681959860783033, 0.011448528933751815, 0.013363157615506101, 0.01177851095735433, 0.011819999220451467, 0.011063128145379053, 0.011211424009495315, 0.012675826502373685, 0.00964365231187898, 0.01230416428699256, 0.011816948425841614, 0.012524610132431753, 0.012091583554529339, 0.01415517292636185, 0.013038519870781123, 0.010927180475068366, 0.011348376416636784, 0.011452376144559037, 0.013880464215687604, 0.01271421858369905, 0.012365348078626935, 0.011134439502267753, 0.01173999969262898, 0.010275262798856601, 0.012024637616711497, 0.011827779313317115, 0.012005719677964755, 0.01126998085149768, 0.01263100142352357, 0.010919404120788623, 0.01230292923375664, 0.013824000423944424, 0.012030441249337255, 0.01471235121764837, 0.012690250219699167, 0.012264732434797237, 0.010338113974845756, 0.010588074612506274, 0.010658916275604544, 0.01192531675206317, 0.011963523090655131, 0.011739554348224612, 0.010864559965038227, 0.01135082917289156, 0.011495290472285927, 0.011805507617290682, 0.010933831622378246, 0.014576785073645402, 0.01297711633387727, 0.010222489107261269, 0.0110984415724654, 0.011692109085082973, 0.011605118458967478, 0.011686408270450569, 0.010719138244995948, 0.011490010832745277, 0.012016309876685964, 0.012905508417480243, 0.010424679511378012, 0.010476580776329382, 0.013555509132609708, 0.01168612606268359, 0.01089950574737809, 0.009744535896916217, 0.011655046195014002, 0.012674198608575759, 0.014310946665162668, 0.014293294641270153, 0.012638247297143402, 0.011225312863067707, 0.010533579687603354, 0.010619978615716235, 0.01130230533155928, 0.012504854882493843, 0.011302020261357171, 0.012161798863089938, 0.010608102908705218, 0.011122188031292404, 0.010132879137328434, 0.011293949972102117, 0.012010374392817949, 0.013191568018758376, 0.01233135069689494, 0.010769746462901904, 0.01153549017814873, 0.011979399621333483, 0.011111746944971652, 0.011843988636800718, 0.011876601129763641, 0.00985833760297452, 0.012805113173417818, 0.012001866506178401, 0.012972732329926176, 0.012947046238817135, 0.01169227386437645, 0.013660834492575508, 0.015240297428641192, 0.012045506099515298, 0.014349189506965473, 0.011753680556779432, 0.011011732485486841, 0.011048193549742145, 0.012814236743542255, 0.011674542313321304, 0.010770073501250303, 0.012405362003451131, 0.011262904273749614, 0.010016645329827439, 0.012059229625014212, 0.01128781720269892, 0.011844913248897927, 0.012245345012809291, 0.009952101453716862, 0.012237226805610778, 0.010830186561964461, 0.012038505819334888, 0.010469212178041205, 0.012712147168754424, 0.009858813880899741, 0.009618511420097878, 0.011251630406509621, 0.01094736018021904, 0.009938750246980809, 0.011806500650862979, 0.013746618610294636, 0.011890591602572501, 0.011285353902870112, 0.010746148131018936, 0.010780721254182541, 0.010400367901096838, 0.010548644745226116, 0.011701519719661485, 0.011515444299289019, 0.01137979009080972, 0.009897580126157974, 0.012679387512909252, 0.012393749358995263, 0.010126541811740334, 0.012078757530494299, 0.010422834662425521, 0.011491611179879445, 0.011350002754119041, 0.010786499538647526, 0.01241069099315559, 0.01287288681929542, 0.012544796642462093, 0.012486480230120337, 0.012027122098965512, 0.011436187647136224, 0.014507824634016918, 0.012781326055012877, 0.010971035372093395, 0.011222652982616295, 0.010381402164033299, 0.011789211848634065, 0.010467460759016958, 0.010519913231344411, 0.009804241543959213, 0.009826802489597598, 0.011168128286266319, 0.009898755834256175, 0.010638546697493598, 0.01075904603518445, 0.01186190395476391, 0.012698873200736769, 0.012275066865331018, 0.010120998522019762, 0.011856430473088262, 0.01187640156331042, 0.012858360146453808, 0.010458450314412523, 0.011686631685348224, 0.012324510594898344, 0.013706507117441952, 0.010507073125858515, 0.009727999262257602, 0.010749737212657888, 0.010496316622257333, 0.012266025310015635, 0.009968887987260507, 0.010656267754294232, 0.01137826346655607, 0.013691020253483116, 0.009712315969605423, 0.0116765832200688, 0.01204200794054857, 0.011085824144059132, 0.012319945895455337, 0.010766015294335025, 0.012434827540397717, 0.012730633406142734, 0.014922472720576237, 0.013340994079356561, 0.012184668987628627, 0.011860251479407752, 0.010611453465531486, 0.010927075341466757, 0.010737943994644793, 0.011284903658799174, 0.012101560213749602, 0.01253847688484235, 0.011820390980633899, 0.01141402994073023, 0.01060976878040442, 0.010983370981323954, 0.013427371951491312, 0.012374725410784092, 0.011400378106504076, 0.011527234422091191, 0.01340962759016125, 0.013570332253931302, 0.011804029668992844, 0.012197974733541946, 0.013983623168953468, 0.012725763762714332, 0.011354745750571254, 0.012145679916283425, 0.01126874546535086, 0.012261492463656863, 0.011178855897759667, 0.010264367951585555, 0.013345043592089396, 0.012409363114615287, 0.011495934975609993, 0.009277679225470462, 0.011720945646776957, 0.012561715975156802, 0.012325900140530158, 0.011173759164206036, 0.01444252189374611, 0.013235686426999993, 0.009545194033680014, 0.00989282465604266, 0.011317913505981915, 0.011172814496764794, 0.011097429969483154, 0.011431240017029451, 0.010546755637817182, 0.011214435474509551, 0.011763583664075946, 0.014689109193649632, 0.011251056734311256, 0.009776300805049154, 0.012860933158710076, 0.012509654758086465, 0.013307995464813777, 0.012069070120183812, 0.011422201031864795, 0.011512246169509426, 0.011243380202117025, 0.011621384685604818, 0.011008804779668683, 0.013029468912847373, 0.011484166233438071, 0.01154715840745958, 0.012030983875891486, 0.012644418892294014, 0.010840072063581964, 0.01217667528470696, 0.012348270662399291, 0.011295167588599378, 0.011131983820484052, 0.011525183914729311, 0.01245079346986009, 0.010668667918574357, 0.011110716151104136, 0.012536736404100099, 0.013297691638473148, 0.013088181650764244, 0.011822130327201136, 0.010774771031200035, 0.010775807119122434, 0.01105586988033813, 0.009420738313971375, 0.012013742695805617, 0.011326747652322514, 0.012096904239732881, 0.01150806457510923, 0.011675274227450103, 0.0135991855834598, 0.01044590308467654, 0.01066146998192241, 0.010712518291299183, 0.01193296299641928, 0.012947758061995076, 0.010130158406514036, 0.011855179848796187, 0.011440889779476115, 0.012458460329640899, 0.011076297729893039, 0.012814778866789587, 0.011811606075871006, 0.012867705357363268, 0.01621962105427537, 0.016465436698466954, 0.016201295070531984, 0.01058752407190847, 0.011716930684685505, 0.011008111220908223, 0.01309686038666478, 0.011249739924392245, 0.011298808361717275, 0.01286619495044334, 0.012457597012475598, 0.011357408247558936, 0.011635136666110633, 0.01147265786957545, 0.01411270947674405, 0.012138457217748517, 0.012013161207475307, 0.012399897890804487, 0.017261754698869394, 0.011751036356983229, 0.01220773352984818, 0.01169628539620397, 0.013572907681349047, 0.014279084224693019, 0.013350071117589353, 0.01119955478052971, 0.011678178134442125, 0.01143788295713284, 0.01338236323998995, 0.013148991760974126, 0.012261293827211488, 0.012230033568364952, 0.011982727185002299, 0.014628741472584738, 0.013936276355000195, 0.011606244163871274, 0.013217927391198507, 0.011877296698841999, 0.013751323956061321, 0.010502431019977986, 0.011623558011397342, 0.013225657353801752, 0.013687394057886515, 0.012047896602847821, 0.01247678361440421, 0.010956367674752512, 0.011928249343126845, 0.012456739592702704, 0.014412803794511948, 0.013091054766212506, 0.012391320075065916, 0.012041284843754036, 0.011175660150719864, 0.012796161329318703, 0.012376600001200107, 0.013213434092613835, 0.011391999754128477, 0.011735911173241135, 0.011338817659054366, 0.013685494524633305, 0.01405734652024605, 0.011873232352346962, 0.011492726398798213, 0.011357899840429751, 0.011924626623408293, 0.01292314975466112, 0.011568890237960018, 0.012450768675985815, 0.01615561678574021, 0.014389883701947508, 0.012020341777831386, 0.011691722848726802, 0.012565949873863497, 0.011694804496294954, 0.011846565903593035, 0.011247492738346963, 0.010809808599760048, 0.011330103597179153, 0.012046098499893751, 0.012792309821515609, 0.012055452071571462, 0.012529809308170823, 0.01166776384371269, 0.01271547225436619, 0.014155919212706156, 0.011590774944224877, 0.013272175555436434, 0.01230731481769422, 0.01134847189287814, 0.011467954772903752, 0.01184115575454566, 0.011988620387346051, 0.010501901957914332, 0.011616509715974813, 0.011471135705227897, 0.012451191281457752, 0.015319504006822212, 0.012649022813805498, 0.011475752166486771, 0.012390712505079823, 0.013092398166506612, 0.0108425779557803, 0.010850393792933026, 0.011858723037825333, 0.014367570168849372, 0.016151613939500507, 0.010857278233794036, 0.012348584717685072, 0.013369893472750983, 0.013520298224929771, 0.012490511233733568, 0.011838067139252433, 0.01379337132839034, 0.013615981503194808, 0.01213329972068078, 0.011926986383721444, 0.011989638160863852, 0.011459946102237622, 0.00998617556766575, 0.011909475646001892, 0.01144107317570622, 0.012796872801637271, 0.011812967842105799, 0.01226189488300729, 0.013800981007306753, 0.011403886599520798, 0.011873516666846865, 0.012409987676322875, 0.012188938970018453, 0.011353880208547378, 0.013058666569184637, 0.011338981854502068, 0.01409796019586988, 0.012231139093670572, 0.015107895235161905, 0.012326810087808738, 0.012946694516644243, 0.012447550801307723, 0.014909071523596254, 0.01397117897114995, 0.013954030858987044, 0.012642975889461814, 0.012387518693283873, 0.011610200546359207, 0.011526268526938685, 0.011758827798373622, 0.011908680699262349, 0.015003488394504251, 0.014659137370125483, 0.01303276571543743, 0.013752408592063675, 0.013708881194186243, 0.01147231577101178, 0.011546435459926428, 0.011541811993355754, 0.013315481649931753, 0.012924077797838931, 0.013861771686590075, 0.012908741618203564, 0.012185556034842455, 0.0123901699294395, 0.011089612618787055, 0.012565991045585109, 0.011172521028748187, 0.011930136297848918, 0.012217995900935783, 0.012567934765036304, 0.013402949630010139, 0.012677891119972322, 0.012831082643587562, 0.012077587392213665, 0.01192202179044923, 0.012437303467243326, 0.012739158128205348, 0.013229922671982922, 0.011707021012177004, 0.013242901791918983, 0.012429029653969133, 0.011897651409429517, 0.012333981656159804, 0.01652056933731621, 0.012803033285199423, 0.013291710033149702, 0.013915563269442936, 0.013293192094911472, 0.012809923485290182, 0.012329480430228985, 0.012327561250559955, 0.011635712112230329, 0.013309364248632287, 0.01298532449779078, 0.011141245068791102, 0.0123662111290416, 0.012952937497979091, 0.012652571307871136, 0.015633401429410065, 0.014029079448528728, 0.013085527098929505, 0.013671367699869673, 0.011449641495798529, 0.013870108540867539, 0.013267219241966837, 0.013009671745599366, 0.012061924878367703, 0.013344180204315093, 0.012472386713589599, 0.012819448624406097, 0.013468487050066785, 0.015061287987425221, 0.013101479251036413, 0.011695612693457496, 0.014215627129265261, 0.014030414081014604, 0.013144534677081394, 0.013769631498326561, 0.013665079857862566, 0.01278869825702419, 0.011758045653360501, 0.013379677594574436, 0.013176320438872265, 0.013726863311133137, 0.014093922857692474, 0.011978594418837533, 0.012688741742419463, 0.014213190054434053, 0.012778188415525355, 0.012893566603547115, 0.011031522915526809, 0.012099967208788644, 0.01197488835353761, 0.011886891227553936, 0.012806477665845199, 0.013276830507854871, 0.013241164133079063, 0.012154967597401761, 0.011697698448488806, 0.0138159512574303, 0.012144528154314117, 0.011982896302520097, 0.012088015079846063, 0.01258443418498413, 0.012417041503252886, 0.013316302302718812, 0.013253698599679495, 0.014875163789523499, 0.013611399587966033, 0.01270670566020336, 0.012428452848201328, 0.013258866017540937, 0.012735738693151316, 0.014906643094604965, 0.014207002883168778, 0.01351154568809692, 0.012428703834641097, 0.012531695617773475, 0.014339355016753071, 0.011835752014891681, 0.015198065031029119, 0.01430821328282015, 0.013257734215508951, 0.012994339259791049, 0.013865856665286771, 0.012158304848082375, 0.014198843802734912, 0.01419354016501019, 0.013678418586819103, 0.012056908737372238, 0.012088134020138442, 0.012708550023920906, 0.012056042831971507, 0.012944165533598666, 0.012998439619323971, 0.011738401817877483, 0.013534728428647752, 0.012933197018222002, 0.011888680423975263, 0.012833718856536632, 0.013026329306504825, 0.01389771764379911, 0.013170374270730664, 0.01394810209074441, 0.013726597650998646, 0.012620621703300312, 0.012195206631413907, 0.013644885542175174, 0.01339675796598244, 0.015953133266745596, 0.015572165751410377, 0.013918610648959726, 0.012539523963263447, 0.014863648164363799, 0.013557760935362215, 0.013767615205969776, 0.012387780847253898, 0.013111551187613596, 0.012178574316034968, 0.012804589291833082, 0.013764797217935443, 0.014682794411092211, 0.011923563140996867, 0.012457566642369073, 0.012577155733152602, 0.012268408936443286, 0.013433767866486363, 0.011254144886535153, 0.012239416835082412, 0.012719204139179307, 0.014153628502136058, 0.013714206504685713, 0.01555664321990409, 0.012482696827891392, 0.012798094219294787, 0.013725222959993684, 0.011297342405230785, 0.013866245776811888, 0.013948944319164524, 0.014752096346863636, 0.012392843752160694, 0.014416608533154353, 0.013416960727895713, 0.013014075062578258, 0.012457948814251782, 0.01214561019554649, 0.014573596703768801, 0.013355931500995009, 0.010935442745219525, 0.013474856369494768, 0.014093982151433494, 0.011282427815945854, 0.013022998498462857, 0.011932228038133832, 0.011193973084211214, 0.013372017260001274, 0.013994297538831645, 0.011742113041326014, 0.012987909251690535, 0.012569010525416004, 0.011966315747010852, 0.013958876937310783, 0.013110867016705616, 0.015176327530987377, 0.013271913419261386, 0.014815021510858065, 0.013019719016438232, 0.012593706022601611, 0.013636464785719227, 0.013024015052417843, 0.011867287358548854, 0.014432494354300884, 0.011513467360750092, 0.013751315885178503, 0.011944914326008424, 0.011579770223979212, 0.013104138863451702, 0.012572035675858769, 0.013719589991898679, 0.011799423913740791, 0.014222826331815612, 0.013130190236718657, 0.015687333785054065, 0.013977869745415655, 0.013856666637965972, 0.0119206019645679, 0.01340210329202167, 0.01236780694175228, 0.013548894032861069, 0.012186169719114176, 0.01048406598287907, 0.010655269577945959, 0.011891505227937497, 0.012232046724993523, 0.016338504257622802, 0.011951257476223706, 0.012787444872754723, 0.011710212821400005, 0.011695865895061741, 0.015838707904307876, 0.012939755683705046, 0.012477587036156625, 0.013330358565129482, 0.01082528855224014, 0.013773287643131382, 0.012570171555245143, 0.013162359160576995, 0.011218965550597317, 0.01342890868237659, 0.01202182099406552, 0.010697138162887927, 0.015232948941257044, 0.012711001004850505, 0.011506289930999608, 0.012369850055536856, 0.01233361532935207, 0.012360627932656498, 0.013326575850585057, 0.012934710498929827, 0.013248039695274097, 0.012226203594835677, 0.012818113815664448, 0.01341051851094283, 0.013541762993268074, 0.013056711886632514, 0.012115662158377625, 0.013357590759015063, 0.012032645498305006, 0.016207947768265084, 0.01389311652405909, 0.013847679128406589, 0.013886386730554553, 0.012067502182802831, 0.011753272427404053, 0.013279048057631762, 0.011214754296383541, 0.011683816996863522, 0.010609551860508486, 0.012357120345452005, 0.013050369382881564, 0.01174704009897493, 0.011743154945937362, 0.012531199758011487, 0.011798725028591634, 0.012419735337445137, 0.013975728513221264, 0.011781109647231187, 0.014598054146810256, 0.011754504071338916, 0.011305854302102692, 0.013318945027316854, 0.013042196249451354, 0.011052738741563284, 0.010558225013410463, 0.011020779774382213, 0.011340319330782552, 0.012033592610864789, 0.012455257536242884, 0.01110139391512171, 0.01046562816674095, 0.015266557792594495, 0.011918313536064278, 0.011360562910751727, 0.010365874108060247, 0.011737890229192168, 0.012793643279848948, 0.013256120317317155, 0.012383560012815365, 0.013301087661143126, 0.01531080427533124, 0.010224017979386747, 0.011257686276499953, 0.009965303526327884, 0.011481057685759922, 0.01274428412077991, 0.01237779048897638, 0.011054791139194602, 0.012765273103949742, 0.012472945953336118, 0.012608159036016397, 0.011204550231481033, 0.013905107233033231, 0.010773937005630393, 0.013310027013851727, 0.017420680889573912, 0.011673620547153839, 0.010614208861963346, 0.012253262631090077, 0.012560836225969919, 0.012560372974566972, 0.013315953743992456, 0.01250495576610427, 0.010300621736575054, 0.0126743669068127, 0.012497189500451297, 0.01058986672748917, 0.0140554647719132, 0.011586323266949704, 0.01051084444510618, 0.010723172131198219, 0.013670881790176151, 0.01294181100319149, 0.01329464895892603, 0.011257304758166548, 0.011406076857722271, 0.01192400994821658, 0.01090031653434306, 0.011516503202529208, 0.01164722421363161, 0.011278034900260045, 0.013101497734367626, 0.010571820551740189, 0.01258494483689583, 0.010690018512359867, 0.012288203401799393, 0.011394189183191222, 0.010661795126849621, 0.014600444436046287, 0.012545075612095091, 0.011433423838627848, 0.0108797962059277, 0.01179905039017321, 0.011201593386431653, 0.012398023234344002, 0.011585602038687984, 0.012105760854189395, 0.01012363568557298, 0.010608758997456596, 0.013055946950589595, 0.01115366731042303, 0.011356175896159434, 0.010664413285359914, 0.011095187626260742, 0.01055909008819056, 0.01199264964050027, 0.01198885985504728, 0.011856295143569895, 0.011865458906234921, 0.012803395900220201, 0.011576869098809376, 0.010189936253659717, 0.010195412935336356, 0.012280457502570626, 0.011418747542118402, 0.011054267711398783, 0.010663172535730193, 0.010788394178560413, 0.012825843175935922, 0.014830488452138243, 0.012284354036472657, 0.012694714212578187, 0.013724353996911465, 0.012851827129972288, 0.010592820880735418, 0.012302591864876384, 0.012065809850599015, 0.011956358889472574, 0.010872197413464683, 0.012323221424305216, 0.012123107304017921, 0.010815605182278264, 0.012638711922615793, 0.011655868729735695, 0.013318117884136317, 0.011374335257623935, 0.011336547412403876, 0.013538061509343441, 0.010884298085465788, 0.00983147858074236, 0.010395424381769653, 0.010546991873577608, 0.012797725536117008, 0.011287668516950705, 0.010972896319568352, 0.011817914808157692, 0.010995529479193617, 0.01009639486723553, 0.01141833937111661, 0.011690435639595306, 0.010061766319288705, 0.011971105561760871, 0.012700043131615801, 0.011318883390568383, 0.010909315349852766, 0.00955009744793359, 0.010498572864691814, 0.013751363636934978, 0.012414462975548525, 0.013914888435336918, 0.014227696895603312, 0.012244996318125041, 0.01179968071369893, 0.01269311294414022, 0.011707870106088975, 0.010958813990455807, 0.011651043993684336, 0.01030137511322718, 0.011034955595029074, 0.011010590344592711, 0.012071622334637981, 0.012156945636578436, 0.01207776327788143, 0.012467860244637925, 0.011202073492240526, 0.013522425017327757, 0.013101403096011953, 0.011576541797128533, 0.010161447675978133, 0.010808172743640786, 0.01053092595610692, 0.011264161352788734, 0.01233589290036475, 0.010814458779802489, 0.012333845855799757, 0.009642890958343297, 0.012173492497045947, 0.013243881943014759, 0.011496651178443193, 0.01015960484422759, 0.01181458373889043, 0.009783393881506904, 0.00995620066577112, 0.011522308540852155, 0.010744486398458035, 0.010880760248384722, 0.0103126533049451, 0.010249354156011579, 0.011065664705266258, 0.01142653024289266, 0.01119440735004512, 0.01097503503562323, 0.014023046074535458, 0.010432042532047749, 0.010194842729529698, 0.010817754756984273, 0.011134926202450978, 0.011429007186568798, 0.010583381706566801, 0.015263726359132578, 0.011921804488613408, 0.009753228291247933, 0.012196147705148373, 0.009316733907216289, 0.01146380450784002, 0.010523188985348219, 0.012950242966562036, 0.010905274766360632, 0.009936978616187102, 0.011966920815569286, 0.010385478642918732, 0.010089607608523066, 0.01317787233691099, 0.01482152961916169, 0.011166319039339316, 0.01158412070404005, 0.010686371837829486, 0.011619838402650143, 0.010062419209719961, 0.010294116467679117, 0.01054194871478958, 0.011768968106377857, 0.012003013751281379, 0.011635692550686211, 0.012427950542111656, 0.012436753739762036, 0.010597044719259695, 0.01047844931079727, 0.01300316381280212]],
+            'im_sum': [False, 4241.3850895847481],
+            'regn_sum': [False, 34.376076006740732],
             'npts_real': [True, 191116800],
-            'rms_per_field': [False, [0.013743433433999516, 0.012734920080011661, 0.012977344646935137, 0.012849700732137936, 0.012869319430463244, 0.012786113424398437, 0.012763233601525502]],
-            'profile': [False, 0.0247435603272],
-            'fit': [False, [0.06386455660450947, 9.503062248887705, \
-                    4.015361713896123]],
-            'fit_loc': [True, [511, 261.889137107219]],
-            'fit_pix': [False, [286.75156697832574, 233.94670197773027]]}
+            'rms_per_field': [False, [0.013727427598497976, 0.01265603739684268, 0.012647516154896329, 0.013363016802334838, 0.012374606023989609, 0.013129803882930785, 0.01267018256172788]],
+            'profile': [False, 0.025674302295194625]}
 
         report1 = th.checkall( \
             # checks for image and pb mask movement
-            imgmask = [(img+'.image', True, [209, 387, 0, 0]), \
-                      (img+'.image', False, [209, 388, 0, 0]), \
-                      (img+'.image', True, [20, 204, 0, 0]), \
-                      (img+'.image', False, [19, 204, 0, 0])])
+            imgmask = [(img+'.image', True, [240, 393, 0, 0]), \
+                      (img+'.image', False, [240, 394, 0, 0]), \
+                      (img+'.image', True, [49, 209, 0, 0]), \
+                      (img+'.image', False, [48, 209, 0, 0])])
 
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
@@ -3491,8 +3573,8 @@ class Test_mosaic(test_tclean_base):
             'start_delta': [False, 2.617644e+11],
             'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'mask_pix': [True, 9091],
-            'mask_regns': [True, 33],
+            'mask_pix': [True, 8519],
+            'mask_regns': [True, 31],
             'npts_real': [True, 191116800]}
 
         report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
@@ -3502,7 +3584,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse [[239.37091637deg, -16.96407526deg], [28.1142arcsec, 27.0960arcsec], 90.00000000deg]')
 
         exp_pb_stats = {'npts': [True, 191116800],
-            'npts_unmasked': [True, 105033551.0],
+            'npts_unmasked': [True, 104998085.0],
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
@@ -3510,17 +3592,21 @@ class Test_mosaic(test_tclean_base):
             'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
             'max_val': [False, 1.0],
-            'max_val_pos': [True, [211, 203, 0, 0]],
+            'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, 0.200000017881],
-            'min_val_pos': [True, [380, 278, 0, 194]],
-            'im_rms': [False, 0.638066212618],
-            'npts_0.2': [True, 105033551],
-            'npts_0.5': [True, 60649291],
+            'min_val_pos': [True, [88, 106, 0, 596]],
+            'im_rms': [False, 0.638163448188254],
+            'npts_0.2_0': [True, 110768],
+            'npts_0.5_0': [True, 63987],
+            'npts_0.2_1': [True, 110747],
+            'npts_0.5_1': [True, 63976],
+            'npts_0.2_2': [True, 110732],
+            'npts_0.5_2': [True, 63948],
             'npts_real': [True, 191116800],
-            'fit': [False, [1.1106342257872044, 36.56563556204728, \
-                    36.5561003399449]],
+            'fit': [False, [1.1057529783407027, 36.994958712675974, \
+                    36.71800149173757]],
             'fit_loc': [True, [474, 261.8801035135706]],
-            'fit_pix': [False, [211.18223685471813, 203.29374258085994]]}
+            'fit_pix': [False, [240.80157119155351, 209.98069221787847]]}
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
@@ -3538,15 +3624,23 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 948],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
-            'min_val': [False, -0.045659199357],
-            'min_val_pos': [True, [230, 216, 0, 13]],
-            'im_rms': [False, 0.0122782213796],
-            'im_sum': [False, 130.74164209],
+            'min_val': [False, -0.044496592134237289],
+            'min_val_pos': [True, [250, 204, 0, 13]],
+            'im_rms': [False, 0.012118826675730165],
+            'im_sum': [False, 203.0061296436524],
             'npts_real': [True, 191116800],
-            'fit': [False, [0.8855601515490675, 1.0833246653826742, \
-                    0.8510940656955308]],
-            'fit_loc': [True, [474, 261.8801035135706]],
-            'fit_pix': [False, [239.96614158332466, 209.99207827032774]]}
+            'fit_0': [False, [0.8853663419051631, 1.0831964982105018, \
+                      0.8486568935446293]],
+            'fit_loc_0': [True, [1, 261.76462000557837]],
+            'fit_pix_0': [False, [239.96619358406645, 209.9923811349359]],
+            'fit_1': [False, [0.8855601515490675, 1.0833246653826742, \
+                      0.8510940656955308]],
+            'fit_loc_1': [True, [474, 261.8801035135706]],
+            'fit_pix_1': [False, [239.96614158332466, 209.99207827032774]],
+            'fit_2': [False, [0.8851418403402185, 1.0806791592573344, \
+                      0.8488399641404538]],
+            'fit_loc_2': [True, [947, 261.99558702156276]],
+            'fit_pix_2': [False, [239.96629893524417, 209.9920584854601]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -3555,20 +3649,20 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[239.36796846deg, -16.96307757deg], [5.3756arcsec, 3.3987arcsec], 0.00000000deg]')
 
         exp_resid_stats = {'npts': [True, 191116800],
-            'npts_unmasked': [True, 105033551.0],
+            'npts_unmasked': [True, 104998085.0],
             'freq_bin': [True, 244151.1796875],
             'start': [True, 2.617644e+11],
             'end': [True, 2.619956e+11],
             'start_delta': [False, 2.617644e+11],
             'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 0.0698709115386],
-            'max_val_pos': [True, [276, 250, 0, 321]],
-            'min_val': [False, -0.0710606276989],
-            'min_val_pos': [True, [192, 206, 0, 674]],
-            'im_rms': [False, 0.012272523599],
-            'im_sum': [False, 3748.45107633],
-            'regn_sum': [False, 47.4112813189],
+            'max_val': [False, 0.070553310215473175],
+            'max_val_pos': [True, [304, 256, 0, 321]],
+            'min_val': [False, -0.07086267322301865],
+            'min_val_pos': [True, [222, 212, 0, 674]],
+            'im_rms': [False, 0.012274356404197695],
+            'im_sum': [False, 3864.4951676249366],
+            'regn_sum': [False, 37.53474615866071],
             'npts_real': [True, 191116800]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -3576,7 +3670,7 @@ class Test_mosaic(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse[[239.36796846deg, -16.96307757deg], [5.3756arcsec, 3.3987arcsec], 0.00000000deg]')
+            'ellipse[[239.36796846deg, -16.96307757deg], [5.3756arcsec, 3.3987arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 191116800],
             'npts_unmasked': [True, 191116800.0],
@@ -3586,14 +3680,14 @@ class Test_mosaic(test_tclean_base):
             'start_delta': [False, 2.617644e+11],
             'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 0.0327642522752],
-            'max_val_pos': [True, [288, 214, 0, 511]],
-            'min_val': [False, -0.00106700242031],
-            'min_val_pos': [True, [295, 238, 0, 589]],
-            'im_rms': [False, 2.51895960856e-05],
-            'im_sum': [False, 10.4715985146],
-            'regn_sum': [False, 4.43233040196],
-            'mask_non0': [True, 1459],
+            'max_val': [False, 0.03622784838080406],
+            'max_val_pos': [True, [315, 229, 0, 511]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 2.4667777528231367e-05],
+            'im_sum': [False, 9.705396932782605],
+            'regn_sum': [False, 0.8115214343415573],
+            'mask_non0': [True, 0],
             'npts_real': [True, 191116800]}
 
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, 
@@ -3621,7 +3715,8 @@ class Test_mosaic(test_tclean_base):
             '.sumwt')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img+'.weight')
+        wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
+            pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         exp_wt_stats = {'npts': [True, 191116800],
             'npts_unmasked': [True, 191116800.0],
@@ -3631,14 +3726,14 @@ class Test_mosaic(test_tclean_base):
             'start_delta': [False, 2.617644e+11],
             'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'max_val': [False, 0.3178614676],
-            'max_val_pos': [True, [211, 202, 0, 944]],
-            'min_val': [False, 6.66096239001e-05],
-            'min_val_pos': [True, [451, 65, 0, 947]],
+            'max_val': [False, 0.3178490698337555],
+            'max_val_pos': [True, [240, 210, 0, 9]],
+            'min_val': [False, 6.582064816029742e-05],
+            'min_val_pos': [True, [0, 71, 0, 947]],
             'im_rms': [False, 0.119822765111],
             'im_sum': [False, 13818688.5072],
-            'npts_0.2': [True, 28725785],
-            'npts_0.3': [True, 6228582],
+            'npts_0.2': [True, 104998085],
+            'npts_0.5': [True, 60648516],
             'npts_real': [True, 191116800]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
@@ -3747,33 +3842,33 @@ class Test_mosaic(test_tclean_base):
              'circle[[15:57:28.581274, -16.57.40.39634], 11.5arcsec]',
              'circle[[15:57:29.520326, -16.57.40.70171], 11.5arcsec]'])
 
-        exp_im_stats = {'com_bmaj': [False, 0.914226949215],
-            'com_bmin': [False, 0.708592534065],
-            'com_pa': [False, -89.3612976074],
+        exp_im_stats = {'com_bmaj': [False, 0.914250373840332],
+            'com_bmin': [False, 0.708504319190979],
+            'com_pa': [False, -89.3270263671875],
             'npts': [True, 201600],
             'npts_unmasked': [True, 113589.0],
-            'freq_bin': [True, 16762504556.453735],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 2.06048989296],
-            'max_val_pos': [True, [291, 212, 0, 0]],
-            'min_val': [False, -2.1858522892],
-            'min_val_pos': [True, [290, 152, 0, 0]],
+            'max_val': [False, 2.057927370071411],
+            'max_val_pos': [True, [320, 219, 0, 0]],
+            'min_val': [False, -2.188678741455078],
+            'min_val_pos': [True, [319, 159, 0, 0]],
             'im_rms': [False, 0.676557465791],
             'im_sum': [False, 5498.32523989],
-            'regn_sum': [False, 8725.50744961],
+            'regn_sum': [False, 1404.0369635481302],
             'npts_real': [True, 201600],
-            'rms_per_field': [False, [0.93211966613880237, 0.75587343134288443, 0.89153649532739099, 0.78815835277889079, 0.9296910564725368, 0.78753090736250964, 0.81230003610334034]]}
+            'rms_per_field': [False, [0.956495428743, 0.812393759263, 0.850127531746, 0.857228981072, 0.826569686485, 0.855403274215, 0.791376139627]]}
 
         report1 = th.checkall( \
             # checks for image and pb mask movement
-            imgmask = [(img+'.image', True, [211, 390, 0, 0]), \
-                      (img+'.image', False, [211, 391, 0, 0]), \
-                      (img+'.image', True, [18, 205, 0, 0]), \
-                      (img+'.image', False, [17, 205, 0, 0])])
+            imgmask = [(img+'.image', True, [239, 396, 0, 0]), \
+                      (img+'.image', False, [239, 397, 0, 0]), \
+                      (img+'.image', True, [47, 210, 0, 0]), \
+                      (img+'.image', False, [46, 210, 0, 0])])
 
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
@@ -3781,7 +3876,7 @@ class Test_mosaic(test_tclean_base):
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 201600],
-            'freq_bin': [True, 16762504556.453735],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
@@ -3799,24 +3894,24 @@ class Test_mosaic(test_tclean_base):
 
         exp_pb_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 113589.0],
-            'freq_bin': [True, 16762504556.453735],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
-            'max_val_pos': [True, [211, 203, 0, 0]],
-            'min_val': [False, 0.200001135468],
-            'min_val_pos': [True, [81, 343, 0, 0]],
-            'im_rms': [False, 0.63128956829],
+            'max_val_pos': [True, [240, 210, 0, 0]],
+            'min_val': [False, 0.20000052452087402],
+            'min_val_pos': [True, [426, 253, 0, 0]],
+            'im_rms': [False, 0.6312907916397755],
             'npts_0.2': [True, 113589],
-            'npts_0.5': [True, 64549],
+            'npts_0.5': [True, 64574],
             'npts_real': [True, 201600],
-            'fit': [False, [1.1028920489851448, 36.87369130938714, \
-                       36.84614469310595]],
-            'fit_loc': [True, [0, 253.5744226264628]],
-            'fit_pix': [False, [211.18238054179585, 203.38210680708025]]}
+            'fit': [False, [1.0977556311256869, 37.34956230416832, \
+                    36.99775156676905]],
+            'fit_loc': [True, [0, 253.57442262646273]],
+            'fit_pix': [False, [240.86482317132828, 210.08148532276593]]}
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
@@ -3826,7 +3921,7 @@ class Test_mosaic(test_tclean_base):
 
         exp_psf_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 201600.0],
-            'freq_bin': [True, 16762504556.453735],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
@@ -3834,15 +3929,15 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
-            'min_val': [False, -0.0525086708367],
-            'min_val_pos': [True, [230, 216, 0, 0]],
-            'im_rms': [False, 0.0111846421981],
-            'im_sum': [False, 0.100949261998],
+            'min_val': [False, -0.05114944279193878],
+            'min_val_pos': [True, [250, 204, 0, 0]],
+            'im_rms': [False, 0.011101956781551448],
+            'im_sum': [False, 0.17176903218875061],
             'npts_real': [True, 201600],
-            'fit': [False, [0.8980212570855989, 1.0458854777504984, \
-                        0.8222593788495552]],
-            'fit_loc': [True, [0, 253.5744226264628]],
-            'fit_pix': [False, [239.96621779301014, 209.99390876796625]]}
+            'fit': [False, [0.8980171961947707, 1.0457922779210116, \
+                    0.8221985921765811]],
+            'fit_loc': [True, [0, 253.57442262646273]],
+            'fit_pix': [False, [239.99681799687036, 209.99815643954449]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
@@ -3852,19 +3947,19 @@ class Test_mosaic(test_tclean_base):
 
         exp_resid_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 113589.0],
-            'freq_bin': [True, 16762504556.453735],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 2.06048989296],
-            'max_val_pos': [True, [291, 212, 0, 0]],
-            'min_val': [False, -2.1858522892],
-            'min_val_pos': [True, [290, 152, 0, 0]],
-            'im_rms': [False, 0.676557465791],
-            'im_sum': [False, 5498.32523989],
-            'regn_sum': [False, 8725.50744961],
+            'max_val': [False, 2.057927370071411],
+            'max_val_pos': [True, [320, 219, 0, 0]],
+            'min_val': [False, -2.188678741455078],
+            'min_val_pos': [True, [319, 159, 0, 0]],
+            'im_rms': [False, 0.6765198782434925],
+            'im_sum': [False, 5498.612235217561],
+            'regn_sum': [False, 1404.0369635481302],
             'npts_real': [True, 201600]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -3872,11 +3967,11 @@ class Test_mosaic(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
-            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
+            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 201600.0],
-            'freq_bin': [True, 16762504556.453735],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
@@ -3900,7 +3995,7 @@ class Test_mosaic(test_tclean_base):
 
         exp_sumwt_stats = {'npts': [True, 1],
             'npts_unmasked': [True, 1.0],
-            'freq_bin': [True, 16762504556.453735],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
@@ -3917,24 +4012,25 @@ class Test_mosaic(test_tclean_base):
             '.sumwt')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img+'.weight')
+        wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
+            pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         exp_wt_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 201600.0],
-            'freq_bin': [True, 16762504556.453735],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.333539396524],
-            'max_val_pos': [True, [211, 203, 0, 0]],
-            'min_val': [False, 9.39047822612e-05],
-            'min_val_pos': [True, [451, 64, 0, 0]],
+            'max_val': [False, 0.3335382044315338],
+            'max_val_pos': [True, [240, 210, 0, 0]],
+            'min_val': [False, 9.392295760335401e-05],
+            'min_val_pos': [True, [0, 70, 0, 0]],
             'im_rms': [False, 0.12506836881],
             'im_sum': [False, 15366.9703442],
-            'npts_0.2': [True, 32025],
-            'npts_0.3': [True, 9855],
+            'npts_0.2': [True, 113589],
+            'npts_0.5': [True, 64574],
             'npts_real': [True, 201600]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
@@ -4046,28 +4142,28 @@ class Test_mosaic(test_tclean_base):
             'com_pa': [False, -89.3612976074],
             'npts': [True, 201600],
             'npts_unmasked': [True, 113589.0],
-            'freq_bin': [True, 16762504556.453705],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 2.05563259125],
-            'max_val_pos': [True, [291, 212, 0, 0]],
-            'min_val': [False, -2.19232487679],
-            'min_val_pos': [True, [290, 152, 0, 0]],
-            'im_rms': [False, 0.672551536032],
-            'im_sum': [False, 5410.97026619],
-            'regn_sum': [False, 8700.32473019],
+            'max_val': [False, 2.054377794265747],
+            'max_val_pos': [True, [320, 218, 0, 0]],
+            'min_val': [False, -2.195145845413208],
+            'min_val_pos': [True, [319, 159, 0, 0]],
+            'im_rms': [False, 0.6725999217209672],
+            'im_sum': [False, 5402.754884014255],
+            'regn_sum': [False, 1406.6249240019824],
             'npts_real': [True, 201600],
-            'rms_per_field': [False, [0.92450562082276955, 0.74815259370356468, 0.88345818716087821, 0.78563887415834988, 0.92110354253354942, 0.78525487979592601, 0.80567239544155445]]}
+            'rms_per_field': [False, [0.948501720585, 0.806080633033, 0.843574363826, 0.852078553708, 0.821227271327, 0.850437711204, 0.784834956688]]}
 
         report1 = th.checkall( \
             # checks for image and pb mask movement
-            imgmask = [(img+'.image.tt0', True, [211, 390, 0, 0]), \
-                      (img+'.image.tt0', False, [211, 391, 0, 0]), \
-                      (img+'.image.tt0', True, [18, 205, 0, 0]), \
-                      (img+'.image.tt0', False, [17, 205, 0, 0])])
+            imgmask = [(img+'.image.tt0', True, [239, 396, 0, 0]), \
+                      (img+'.image.tt0', False, [239, 397, 0, 0]), \
+                      (img+'.image.tt0', True, [47, 210, 0, 0]), \
+                      (img+'.image.tt0', False, [46, 210, 0, 0])])
 
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image.tt0')
 
@@ -4075,7 +4171,7 @@ class Test_mosaic(test_tclean_base):
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 201600],
-            'freq_bin': [True, 16762504556.453705],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
@@ -4093,24 +4189,24 @@ class Test_mosaic(test_tclean_base):
 
         exp_pb_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 113589.0],
-            'freq_bin': [True, 16762504556.453705],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
             'max_val': [False, 1.0],
-            'max_val_pos': [True, [211, 203, 0, 0]],
-            'min_val': [False, 0.200001135468],
-            'min_val_pos': [True, [81, 343, 0, 0]],
-            'im_rms': [False, 0.63128956829],
+            'max_val_pos': [True, [240, 210, 0, 0]],
+            'min_val': [False, 0.20000052452087402],
+            'min_val_pos': [True, [426, 253, 0, 0]],
+            'im_rms': [False, 0.6312907916397755],
             'npts_0.2': [True, 113589],
-            'npts_0.5': [True, 64549],
+            'npts_0.5': [True, 64574],
             'npts_real': [True, 201600],
-            'fit': [False, [1.1028920489851448, 36.87369130938714, \
-                       36.84614469310595]],
-            'fit_loc': [True, [0, 253.5744226264628]],
-            'fit_pix': [False, [211.18238054179585, 203.38210680708025]]}
+            'fit': [False, [1.0977556311256869, 37.34956230416832, \
+                    36.99775156676905]],
+            'fit_loc': [True, [0, 253.57442262646273]],
+            'fit_pix': [False, [240.86482317132828, 210.08148532276593]]}
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb.tt0')
 
@@ -4120,7 +4216,7 @@ class Test_mosaic(test_tclean_base):
 
         exp_psf_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 201600.0],
-            'freq_bin': [True, 16762504556.453705],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
@@ -4128,37 +4224,37 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 1],
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
-            'min_val': [False, -0.0525086708367],
-            'min_val_pos': [True, [230, 216, 0, 0]],
-            'im_rms': [False, 0.0111846421981],
-            'im_sum': [False, 0.100949258623],
+            'min_val': [False, -0.05114944279193878],
+            'min_val_pos': [True, [250, 204, 0, 0]],
+            'im_rms': [False, 0.011101956781551448],
+            'im_sum': [False, 0.17176903218875061],
             'npts_real': [True, 201600],
             'fit': [False, [0.8980212570855989, 1.0458854777504984, \
                         0.8222593788495552]],
-            'fit_loc': [True, [0, 253.5744226264628]],
+            'fit_loc': [True, [0, 253.57442262646273]],
             'fit_pix': [False, [239.96621779301014, 209.99390876796625]]}
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf.tt0')
 
         # .residual report
-        resid_stats_dict = self.image_stats(img+'.residual.tt0', \
+        resid_stats_dict = self.image_stats(img+'.residual.tt0', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
 
         exp_resid_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 113589.0],
-            'freq_bin': [True, 16762504556.453705],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 2.06048989296],
-            'max_val_pos': [True, [291, 212, 0, 0]],
-            'min_val': [False, -2.1858522892],
-            'min_val_pos': [True, [290, 152, 0, 0]],
-            'im_rms': [False, 0.676557465789],
-            'im_sum': [False, 5498.32524009],
-            'regn_sum': [False, 8725.50744971],
+            'max_val': [False, 2.057927370071411],
+            'max_val_pos': [True, [320, 219, 0, 0]],
+            'min_val': [False, -2.188678741455078],
+            'min_val_pos': [True, [319, 159, 0, 0]],
+            'im_rms': [False, 0.6765198782434925],
+            'im_sum': [False, 5498.612235217561],
+            'regn_sum': [False, 1404.0369635481302],
             'npts_real': [True, 201600]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
@@ -4166,11 +4262,11 @@ class Test_mosaic(test_tclean_base):
 
         # .model report
         model_stats_dict = self.image_stats(img+'.model.tt0', fit_region = \
-            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
+            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 201600.0],
-            'freq_bin': [True, 16762504556.453705],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
@@ -4194,7 +4290,7 @@ class Test_mosaic(test_tclean_base):
 
         exp_sumwt_stats = {'npts': [True, 1],
             'npts_unmasked': [True, 1.0],
-            'freq_bin': [True, 16762504556.453705],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
@@ -4211,24 +4307,25 @@ class Test_mosaic(test_tclean_base):
             '.sumwt.tt0')
 
         # .weight report
-        wt_stats_dict = self.image_stats(img+'.weight.tt0')
+        wt_stats_dict = self.image_stats(img+'.weight.tt0', masks=[ \
+            pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         exp_wt_stats = {'npts': [True, 201600],
             'npts_unmasked': [True, 201600.0],
-            'freq_bin': [True, 16762504556.453705],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 0.333539396524],
-            'max_val_pos': [True, [211, 203, 0, 0]],
-            'min_val': [False, 9.39047822612e-05],
-            'min_val_pos': [True, [451, 64, 0, 0]],
-            'im_rms': [False, 0.12506836881],
-            'im_sum': [False, 15366.9703442],
-            'npts_0.2': [True, 32025],
-            'npts_0.3': [True, 9855],
+            'max_val': [False, 0.3335382044315338],
+            'max_val_pos': [True, [240, 210, 0, 0]],
+            'min_val': [False, 9.392295760335401e-05],
+            'min_val_pos': [True, [0, 70, 0, 0]],
+            'im_rms': [False, 0.12506831619046738],
+            'im_sum': [False, 15366.970359400737],
+            'npts_0.2': [True, 113589],
+            'npts_0.5': [True, 64574],
             'npts_real': [True, 201600]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, \
@@ -4236,24 +4333,24 @@ class Test_mosaic(test_tclean_base):
 
         # .alpha report
         alpha_stats_dict = self.image_stats(img+'.alpha', fit_region = \
-            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
+            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_alpha_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 49203.0],
-            'freq_bin': [True, 16762504556.453705],
+            'npts_unmasked': [True, 49207.0],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 62.1377220154],
-            'max_val_pos': [True, [173, 232, 0, 0]],
-            'min_val': [False, -58.0292701721],
-            'min_val_pos': [True, [204, 163, 0, 0]],
-            'im_rms': [False, 9.26911023158],
-            'im_sum': [False, 40833.0406524],
-            'regn_sum': [False, 29081.164461],
-            'mask_non0': [True, 49203],
+            'max_val': [False, 65.00823211669922],
+            'max_val_pos': [True, [201, 237, 0, 0]],
+            'min_val': [False, -55.99877166748047],
+            'min_val_pos': [True, [232, 170, 0, 0]],
+            'im_rms': [False, 9.27355715823191],
+            'im_sum': [False, 39123.43190668049],
+            'regn_sum': [False, 26540.856317418948],
+            'mask_non0': [True, 49207],
             'npts_real': [True, 201600]}
 
         report10 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
@@ -4264,20 +4361,20 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
 
         exp_error_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 49203.0],
-            'freq_bin': [True, 16762504556.453705],
+            'npts_unmasked': [True, 49207.0],
+            'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 87.8760070801],
-            'max_val_pos': [True, [173, 232, 0, 0]],
-            'min_val': [False, 0.000175367502379],
-            'min_val_pos': [True, [224, 36, 0, 0]],
-            'im_rms': [False, 13.1085011733],
-            'im_sum': [False, 463643.715791],
-            'regn_sum': [False, 105848.469828],
+            'max_val': [False, 91.9355239868164],
+            'max_val_pos': [True, [201, 237, 0, 0]],
+            'min_val': [False, 0.0002615251869428903],
+            'min_val_pos': [True, [232, 153, 0, 0]],
+            'im_rms': [False, 13.114790081803282],
+            'im_sum': [False, 463815.73462760146],
+            'regn_sum': [False, 90791.376510456],
             'npts_real': [True, 201600]}
 
         report11 = self.stats_compare(exp_error_stats, error_stats_dict, \
