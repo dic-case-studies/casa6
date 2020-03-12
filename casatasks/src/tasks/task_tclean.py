@@ -199,6 +199,7 @@ def tclean(
     if (deconvolver=="mtmfs") and  (specmode=='cube' or specmode=='cubedata'):
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') can only be used with specmode='mfs' not specmode='cube' or specmode='cubedata'.", "WARN", "task_tclean" )
         return False
+      
 
     #####################################################
     #### Construct ImagerParameters object
@@ -448,6 +449,10 @@ def tclean(
 
     except Exception as e:
         #print 'Exception : ' + str(e)
+        if(cppparallel):
+            ###release workers back to python mpi control
+            si=synthesisimager()
+            si.releasempi()
         casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
         if imager != None:
             imager.deleteTools()

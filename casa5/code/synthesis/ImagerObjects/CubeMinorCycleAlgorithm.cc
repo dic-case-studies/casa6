@@ -81,6 +81,20 @@ void CubeMinorCycleAlgorithm::put() {
   applicator.put(chanRange_p);
 	//cerr << "in put " << status_p << endl;
   ///#2 return record of deconvolver
+  ////TESTOOO
+
+  // cerr << "nfield " << returnRec_p.nfields() << endl;
+  // Array<Double> lala(returnRec_p.asArrayDouble("summaryminor"));
+  // applicator.put(lala);
+  //returnRec_p.removeField("summaryminor");
+  ////TESTOO
+  cerr << "nfield " << returnRec_p.nfields() << endl;
+  for (uInt k =0; k <  returnRec_p.nfields() ; ++k){
+    cerr << " name " << returnRec_p.name(k) << endl;
+
+  }
+
+  //Record laloo;
   applicator.put(returnRec_p);	
 	
 }
@@ -110,9 +124,15 @@ void CubeMinorCycleAlgorithm::task(){
             writeBackToFullImage(maskName_p, chanRange_p[0], chanRange_p[1], (subimstor->mask()));
           }
         }
-        catch(...){
+        catch (AipsError x) {
+          cerr << "Exception: " << x.getMesg() << endl;
           returnRec_p=Record();
         }
+        catch(...){
+          cerr << "Unknown exception" << endl;
+          returnRec_p=Record();
+        }
+        
        	status_p = True;
 }
 String&	CubeMinorCycleAlgorithm::name(){

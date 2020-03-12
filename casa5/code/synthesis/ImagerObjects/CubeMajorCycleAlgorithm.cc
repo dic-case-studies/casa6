@@ -132,7 +132,7 @@ void CubeMajorCycleAlgorithm::put() {
 }
 	
 void CubeMajorCycleAlgorithm::task(){
-	status_p = False;
+	status_p = True;
         try{
           //Timer tim;
           //tim.mark();
@@ -304,7 +304,12 @@ void CubeMajorCycleAlgorithm::task(){
 	//cerr << "***Time gridding/ffting " << tim.real() << endl;
           status_p = True;
         }
+        catch (AipsError x) {
+          cerr << "Exception: " << x.getMesg() << endl;
+          status_p=false;
+        }
         catch(...){
+          cerr << "Unknown exception "  << endl;
           status_p=False;
         }
 }
@@ -517,6 +522,7 @@ void CubeMajorCycleAlgorithm::reset(){
 	
   void CubeMajorCycleAlgorithm::getSubImage(std::shared_ptr<ImageInterface<Float> >& subimptr, const Int chanBeg, const Int chanEnd, const String imagename, const Bool copy){
     PagedImage<Float> im(imagename, TableLock::UserNoReadLocking);
+    im.lock(FileLocker::Read, 30);
     SubImage<Float> *tmpptr=nullptr;
     tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
     subimptr.reset(new TempImage<Float>(tmpptr->shape(), tmpptr->coordinates()));

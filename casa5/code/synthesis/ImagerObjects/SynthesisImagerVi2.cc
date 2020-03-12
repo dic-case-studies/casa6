@@ -1463,16 +1463,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		//casa::applicator.defineAlgorithm(cmc);
 		//Initialize everything to get the setup as serial
 		{
-			vi::VisBuffer2* vb=vi_p->getVisBuffer();
+                
 			vi_p->originChunks();
 			vi_p->origin();
-			if(!dopsf)itsMappers.initializeDegrid(*vb);
-			//do we need to do the BriggsWeightor here or not ?
-			itsMappers.initializeGrid(*vi_p,dopsf);
+		
 		}
 		///Break things into chunks for parallelization or memory availabbility
 		Vector<Int> startchan;
-		Vector<Int> endchan;
+		Vector<Int> endchan; 
 		Int numchunks;
 		Int fudge_factor = 15;
 		if ((itsMappers.getFTM2(0))->name()=="MosaicFTNew") {
@@ -1665,9 +1663,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			if(casa::applicator.isSerial())
 				allDone=true;
         }
-        if(anyEQ(retvals, False))
+        if(anyEQ(retvals, False)){
+          //cerr << retvals << endl;
           throw(AipsError("One or more  of the cube section failed in de/gridding"));  
-        
+        }      
         }
        
 	  

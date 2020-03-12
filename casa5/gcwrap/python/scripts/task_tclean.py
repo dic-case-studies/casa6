@@ -449,6 +449,10 @@ def tclean(
 
     except Exception as e:
         #print 'Exception : ' + str(e)
+        if(cppparallel):
+            ###release workers back to python mpi control
+            si=synthesisimager()
+            si.releasempi()
         casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
         if imager != None:
             imager.deleteTools()
