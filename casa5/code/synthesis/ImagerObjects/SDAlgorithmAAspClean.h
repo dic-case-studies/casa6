@@ -30,7 +30,6 @@
 #define SYNTHESIS_SDALGORITHMAASPCLEAN_H
 
 #include <ms/MeasurementSets/MeasurementSet.h>
-//#include <synthesis/MeasurementComponents/SkyModel.h>
 #include <casa/Arrays/Matrix.h>
 #include <images/Images/ImageInterface.h>
 #include <images/Images/PagedImage.h>
@@ -39,7 +38,7 @@
 #include <casa/Logging/LogSink.h>
 #include <casa/System/PGPlotter.h>
 
-#include<synthesis/ImagerObjects/SDAlgorithmBase.h>
+#include <synthesis/ImagerObjects/SDAlgorithmBase.h>
 #include <synthesis/MeasurementEquations/MatrixCleaner.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN

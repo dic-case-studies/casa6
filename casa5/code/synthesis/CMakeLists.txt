@@ -22,7 +22,9 @@
 BISON_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.yy ${CMAKE_CURRENT_BINARY_DIR}/CalLibraryGram.ycc COMPILE_FLAGS "-y -p CalLibraryGram --output-file=CalLibraryGram.ycc")
 FLEX_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.ll ${CMAKE_CURRENT_BINARY_DIR}/CalLibraryGram.lcc COMPILE_FLAGS "-PCalLibraryGram")
 
-include_directories (${CMAKE_CURRENT_BINARY_DIR})
+include_directories (${CMAKE_CURRENT_BINARY_DIR}
+                     "/usr/include/eigen3"
+                     "/export/home/genie-rhel/mhsieh/work/dev/lbfgspp/include")
 
 casa_add_library( synthesis
  TransformMachines2/Utils.cc
@@ -30,14 +32,14 @@ casa_add_library( synthesis
   TransformMachines2/BriggsCubeWeightor.cc
   TransformMachines2/ComponentFTMachine.cc
  TransformMachines2/VLAIlluminationConvFunc.cc
-  TransformMachines2/GridFT.cc	
+  TransformMachines2/GridFT.cc
   TransformMachines2/HetArrayConvFunc.cc
   TransformMachines2/FTMachine.cc
   TransformMachines2/MosaicFT.cc
   TransformMachines2/MosaicFTNew.cc
   TransformMachines2/MultiTermFTNew.cc
   TransformMachines2/SetJyGridFT.cc
-  TransformMachines2/SimplePBConvFunc.cc	
+  TransformMachines2/SimplePBConvFunc.cc
   TransformMachines2/SimpleComponentFTMachine.cc
   TransformMachines2/SkyJones.cc
   TransformMachines2/VisModelData.cc
@@ -99,9 +101,9 @@ casa_add_library( synthesis
   TransformMachines/HetArrayConvFunc.cc
   TransformMachines/MosaicFT.cc
   TransformMachines/MosaicFTNew.cc
-  TransformMachines/MultiTermFT.cc	
-  TransformMachines/MultiTermFTNew.cc	
-  TransformMachines/NewMultiTermFT.cc	
+  TransformMachines/MultiTermFT.cc
+  TransformMachines/MultiTermFTNew.cc
+  TransformMachines/NewMultiTermFT.cc
   TransformMachines/PBMath1DAiry.cc
   TransformMachines/PBMath1D.cc
   TransformMachines/PBMath1DCosPoly.cc
@@ -130,7 +132,7 @@ casa_add_library( synthesis
   TransformMachines/ATerm.cc
   TransformMachines/EVLAAperture.cc
   TransformMachines/AzElAperture.cc
-  fortran/fgridft.f		
+  fortran/fgridft.f
   fortran/fmosaic.f
   fortran/wprojgrid.f
   fortran/faccumulateToGrid.f
@@ -321,7 +323,7 @@ casa_add_library( synthesis
  MeasurementEquations/Imager2.cc
  MeasurementEquations/ImagerMultiMS.cc
  MeasurementEquations/ImageMSCleaner.cc
- MeasurementEquations/ImageNACleaner.cc	
+ MeasurementEquations/ImageNACleaner.cc
  MeasurementEquations/IncCEMemModel.cc
  MeasurementEquations/IncEntropy.cc
  MeasurementEquations/IPLatConvEquation.cc
@@ -345,13 +347,13 @@ casa_add_library( synthesis
  Parallel/MPITransport.cc
  Parallel/PabloIO.cc
  Parallel/SerialTransport.cc
- Utilities/AppRC.cc		
- Utilities/FFT2D.cc	
+ Utilities/AppRC.cc
+ Utilities/FFT2D.cc
  Utilities/FixVis.cc
  Utilities/SigHandler.cc
  Utilities/ThreadCoordinator.cc
- fortran/fpbmos.f	
- fortran/fpbwproj.f	
+ fortran/fpbmos.f
+ fortran/fpbwproj.f
  fortran/leakantso.f
  ImagerObjects/SynthesisImager.cc
  ImagerObjects/SynthesisImagerVi2.cc
@@ -605,6 +607,7 @@ install (FILES
 	MeasurementEquations/Iterate.h
 	MeasurementEquations/LatConvEquation.h
 	MeasurementEquations/LatticeModel.h
+  MeasurementEquations/lbfgsAsp.h
 	MeasurementEquations/LinearEquation.h
 	MeasurementEquations/LinearModel.h
 	MeasurementEquations/LinearMosaic.h
@@ -683,7 +686,7 @@ install (FILES
 	Parallel/PabloIO.h
 	DESTINATION include/casacode/synthesis/Parallel
 	)
-install (FILES 
+install (FILES
 	TransformMachines2/ATerm.h
 #	TransformMachines2/AWConvFuncEPJones.h
 	TransformMachines2/AWConvFunc.h
@@ -710,14 +713,14 @@ install (FILES
 	TransformMachines2/IlluminationConvFunc.h
 	TransformMachines2/FTMachine.h
 	TransformMachines2/MosaicFT.h
-	TransformMachines2/MosaicFTNew.h	
+	TransformMachines2/MosaicFTNew.h
         TransformMachines2/MultiTermFTNew.h
 	TransformMachines2/NoOpATerm.h
 	TransformMachines2/PolOuterProduct.h
 	TransformMachines2/PointingOffsets.h
 	TransformMachines2/PhaseGrad.h
 	TransformMachines2/PSTerm.h
-	TransformMachines2/SetJyGridFT.h	
+	TransformMachines2/SetJyGridFT.h
 	TransformMachines2/SimpleComponentFTMachine.h
 	TransformMachines2/SimplePBConvFunc.h
 	TransformMachines2/SkyJones.h
@@ -816,7 +819,7 @@ install (FILES
 	Utilities/AppRC.h
         Utilities/FFT2D.h
 	Utilities/FixVis.h
-	Utilities/SigHandler.h 
+	Utilities/SigHandler.h
 	Utilities/ThreadCoordinator.h
 	Utilities/PointingDirectionCalculator.h
 	Utilities/PointingDirectionProjector.h
@@ -876,15 +879,15 @@ casa_add_assay( synthesis CalTables/test/tCTGenericFill.cc )
 
 
 casa_add_test( synthesis CalLibrary/test/tCalLibraryParse.cc )
-casa_add_unit_test( MODULES synthesis SOURCES MeasurementEquations/test/tAntennaResponses.cc ) 
-casa_add_unit_test( MODULES synthesis SOURCES MeasurementEquations/test/tPredictComp.cc TransformMachines2/test/MakeMS.cc ) 
-casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tAWPFTM.cc TransformMachines2/test/MakeMS.cc ) 
-casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tFTMachine.cc TransformMachines2/test/MakeMS.cc ) 
+casa_add_unit_test( MODULES synthesis SOURCES MeasurementEquations/test/tAntennaResponses.cc )
+casa_add_unit_test( MODULES synthesis SOURCES MeasurementEquations/test/tPredictComp.cc TransformMachines2/test/MakeMS.cc )
+casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tAWPFTM.cc TransformMachines2/test/MakeMS.cc )
+casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tFTMachine.cc TransformMachines2/test/MakeMS.cc )
 casa_add_unit_test( MODULES synthesis SOURCES TransformMachines/test/tGridFT.cc TransformMachines2/test/MakeMS.cc )
-casa_add_unit_test( MODULES synthesis SOURCES TransformMachines/test/tPBMath1DEVLA.cc  ) 
+casa_add_unit_test( MODULES synthesis SOURCES TransformMachines/test/tPBMath1DEVLA.cc  )
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tSynthesisImager.cc  TransformMachines2/test/MakeMS.cc )
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tSynthesisImagerVi2.cc  TransformMachines2/test/MakeMS.cc )
-casa_add_unit_test( MODULES synthesis SOURCES Utilities/test/tFFT2D.cc  ) 
+casa_add_unit_test( MODULES synthesis SOURCES Utilities/test/tFFT2D.cc  )
 casa_add_unit_test( MODULES synthesis SOURCES CalTables/test/tCTPatchedInterp.cc )
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tLabelandFindRegions.cc )
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tLabelandFindRegionsFullCube.cc )

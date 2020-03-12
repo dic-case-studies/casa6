@@ -58,7 +58,6 @@
 #include <casa/System/Choice.h>
 #include <msvis/MSVis/StokesVector.h>
 
-
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -71,14 +70,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsStopPointMode(stoppointmode),
     itsMCsetup(false)
   {
-    itsAlgorithmName = String("aasp");   
+    itsAlgorithmName = String("aasp");
   }
 
   SDAlgorithmAAspClean::~SDAlgorithmAAspClean()
   {
-    
+
   }
-  
+
   void SDAlgorithmAAspClean::initializeDeconvolver()
   {
     LogIO os(LogOrigin("SDAlgorithmAAspClean", "initializeDeconvolver", WHERE));
@@ -93,15 +92,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ///  ----------- do once ----------
     if( itsMCsetup == false)
     {
-      const float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
+      const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
       itsCleaner.setInitScaleXfrs(itsMatPsf, width);
       itsCleaner.defineScales( itsScaleSizes ); // genie, this goes away
 
-      // genie this is only done once 
+      // genie this is only done once
       // FFT of 1R, 5R, 10R of psf is unchanged and only needs to be
-      // computed once. This calls getPsfGaussianWidth 
+      // computed once. This calls getPsfGaussianWidth
       // and sets the new itsInitScaleXfrs
-      //itsCleaner.setInitScaleXfrs(); 
+      //itsCleaner.setInitScaleXfrs();
 
       itsCleaner.stopPointMode( itsStopPointMode );
       itsCleaner.ignoreCenterBox( true ); // Clean full image
@@ -123,7 +122,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // by itsScaleSizes = getActiveSetAspen which convolve
     // cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
     // and then find the peak, scale, and optimes the obj function
-    // Convolve psf with the active set (using the above 4) and do the following 
+    // Convolve psf with the active set (using the above 4) and do the following
 
     Matrix<Float> tempmask(itsMatMask);
     itsCleaner.setMask( tempmask );
@@ -131,21 +130,23 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Matrix<Float> tempMat1;
     tempMat1.reference( itsMatResidual );
     itsCleaner.setDirty( tempMat1 );
+    itsCleaner.getActiveSetAspen();
+
     itsCleaner.makeDirtyScales();
   }
 
 
-  void SDAlgorithmAAspClean::takeOneStep( Float loopgain, 
-					  Int cycleNiter, 
-					  Float cycleThreshold, 
-					  Float &peakresidual, 
-					  Float &modelflux, 
+  void SDAlgorithmAAspClean::takeOneStep( Float loopgain,
+					  Int cycleNiter,
+					  Float cycleThreshold,
+					  Float &peakresidual,
+					  Float &modelflux,
 					  Int &iterdone)
   {
     LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
-    itsCleaner.setcontrol(CleanEnums::MULTISCALE, cycleNiter, loopgain, thresh); 
+    itsCleaner.setcontrol(CleanEnums::MULTISCALE, cycleNiter, loopgain, thresh);
 
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
@@ -159,7 +160,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //  1 = converged
     //  0 = not converged but behaving normally
     // -1 = not converged and stopped on cleaning consecutive smallest scale
-    // -2 = not converged and either large scale hit negative or diverging 
+    // -2 = not converged and either large scale hit negative or diverging
     // -3 = clean is diverging rather than converging
     itsCleaner.startingIteration( 0 );
     Int retval = itsCleaner.clean( tempModel );
@@ -173,8 +174,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
     // account for mask as well
     peakresidual = max(abs(residual*itsMatMask));
-    modelflux = sum( itsMatModel ); 
-  }	    
+    modelflux = sum( itsMatModel );
+  }
 
   void SDAlgorithmAAspClean::finalizeDeconvolver()
   {
@@ -183,4 +184,3 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
 } //# NAMESPACE CASA - END
-

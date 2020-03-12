@@ -261,8 +261,10 @@ public:
   // helper functions for ASP
   float getPsfGaussianWidth(casacore::ImageInterface<casacore::Float>& psf);
 
-  void setInitScaleXfrs(const casacore::Array<casacore::Float> arrpsf, const float width);
+  void setInitScaleXfrs(const casacore::Array<casacore::Float> arrpsf, const casacore::Float width);
 
+  void maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, casacore::IPosition& positionOptimum);
+  
   void getActiveSetAspen();
 
 protected:
@@ -275,7 +277,6 @@ protected:
   
   // Make Spheroidal function for scale images
   casacore::Float spheroidal(casacore::Float nu);
-
   
   // Find the Peak of the matrix
   static casacore::Bool findMaxAbs(const casacore::Matrix<casacore::Float>& lattice,
@@ -331,6 +332,7 @@ private:
   casacore::Block<casacore::Matrix<casacore::Float> > itsInitScales; //for Asp
   casacore::Block<casacore::Matrix<casacore::Float> > itsPsfConvScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvScales;
+  casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvInitScales; // for Asp
 
 
   casacore::Int itsIteration;	// what iteration did we get to?
@@ -376,6 +378,8 @@ private:
 
   casacore::IPosition psfShape_p;
   casacore::Bool noClean_p;
+
+  std::vector<casacore::Float> itsInitScaleSizes; //for Asp
 
 };
 
