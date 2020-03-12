@@ -446,116 +446,116 @@ class SubtableChangerTVI : public TransformingVi2
 {
 public:
 
-    //Constructor
-    SubtableChangerTVI(ViImplementation2 * inputVii) :
-        TransformingVi2 (inputVii)
-    {
-        setVisBuffer(createAttachedVisBuffer (VbRekeyable));
-        resetSubtables();
-    }
+  //Constructor
+  SubtableChangerTVI(ViImplementation2 * inputVii) :
+    TransformingVi2 (inputVii)
+  {
+    setVisBuffer(createAttachedVisBuffer (VbRekeyable));
+    resetSubtables();
+  }
 
-    void origin()
-    {
-        // Drive underlying ViImplementation2
-        getVii()->origin();
+  void origin()
+  {
+    // Drive underlying ViImplementation2
+    getVii()->origin();
 
-        // Synchronize own VisBuffer
-        configureNewSubchunk();
-    }
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+  }
 
-    void next()
-    {
-        // Drive underlying ViImplementation2
-        getVii()->next();
+  void next()
+  {
+    // Drive underlying ViImplementation2
+    getVii()->next();
 
-        // Synchronize own VisBuffer
-        configureNewSubchunk();
-    }
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+  }
 
-    void
-    originChunks(Bool forceRewind) override
-    {
-        // Drive underlying ViImplementation2
-        getVii()->originChunks(forceRewind);
+  void
+  originChunks(Bool forceRewind) override
+  {
+    // Drive underlying ViImplementation2
+    getVii()->originChunks(forceRewind);
 
-        // Potentially the new chunk can be from a different MS
-        resetSubtables();
-    }
+    // Potentially the new chunk can be from a different MS
+    resetSubtables();
+  }
 
-    void
-    nextChunk() override
-    {
-        // Drive underlying ViImplementation2
-        getVii()->nextChunk();
+  void
+  nextChunk() override
+  {
+    // Drive underlying ViImplementation2
+    getVii()->nextChunk();
 
-        // Potentially the new chunk can be from a different MS
-        resetSubtables();
-    }
+    // Potentially the new chunk can be from a different MS
+    resetSubtables();
+  }
 
-    void resetSubtables()
-    {
-        // Note that the creation of a new subtables is done using a
-        // copy of the original subtables. However, to access these we
-        // need to use the method table() of a given column (e. g. name() )
-        // It would be better if the MSAntennaColumns object had
-        // an getter to the MSAntenna object.
-        // The same applies to the other subtables
+  void resetSubtables()
+  {
+    // Note that the creation of a new subtables is done using a
+    // copy of the original subtables. However, to access these we
+    // need to use the method table() of a given column (e. g. name() )
+    // It would be better if the MSAntennaColumns object had
+    // an getter to the MSAntenna object.
+    // The same applies to the other subtables
 
-        // Create antenna subtable
-        auto& underlyingAntennaSubtablecols = getVii()->antennaSubtablecols();
-        auto underlyingAntennaSubtable = underlyingAntennaSubtablecols.name().table();
-        newAntennaSubtable_p = underlyingAntennaSubtable.copyToMemoryTable("SubtableChangerAntennaSubtable");
-        newAntennaSubtablecols_p.reset(new MSAntennaColumns(newAntennaSubtable_p));
-        // Add one antenna
-        newAntennaSubtable_p.addRow();
+    // Create antenna subtable
+    auto& underlyingAntennaSubtablecols = getVii()->antennaSubtablecols();
+    auto underlyingAntennaSubtable = underlyingAntennaSubtablecols.name().table();
+    newAntennaSubtable_p = underlyingAntennaSubtable.copyToMemoryTable("SubtableChangerAntennaSubtable");
+    newAntennaSubtablecols_p.reset(new MSAntennaColumns(newAntennaSubtable_p));
+    // Add one antenna
+    newAntennaSubtable_p.addRow();
 
-        // Create DD subtable
-        auto& underlyingDDSubtablecols = getVii()->dataDescriptionSubtablecols();
-        auto underlyingDDSubtable = underlyingDDSubtablecols.spectralWindowId().table();
-        newDDSubtable_p = underlyingDDSubtable.copyToMemoryTable("SubtableChangerDDSubtable");
-        newDDSubtablecols_p.reset(new MSDataDescColumns(newDDSubtable_p));
-        // Double the rows
-        auto nrowDD = newDDSubtable_p.nrow();
-        for(size_t irow = 0 ; irow < nrowDD; irow++)
-            newDDSubtable_p.addRow();
+    // Create DD subtable
+    auto& underlyingDDSubtablecols = getVii()->dataDescriptionSubtablecols();
+    auto underlyingDDSubtable = underlyingDDSubtablecols.spectralWindowId().table();
+    newDDSubtable_p = underlyingDDSubtable.copyToMemoryTable("SubtableChangerDDSubtable");
+    newDDSubtablecols_p.reset(new MSDataDescColumns(newDDSubtable_p));
+    // Double the rows
+    auto nrowDD = newDDSubtable_p.nrow();
+    for(size_t irow = 0 ; irow < nrowDD; irow++)
+      newDDSubtable_p.addRow();
 
-        // Create spw subtable
-        auto& underlyingSPWSubtablecols = getVii()->spectralWindowSubtablecols();
-        auto underlyingSPWSubtable = underlyingSPWSubtablecols.name().table();
-        newSPWSubtable_p = underlyingSPWSubtable.copyToMemoryTable("SubtableChangerSPWSubtable");
-        newSPWSubtablecols_p.reset(new MSSpWindowColumns(newSPWSubtable_p));
-        // Double the rows
-        auto nrowSPW = newSPWSubtable_p.nrow();
-        for(size_t irow = 0 ; irow < nrowSPW; irow++)
-            newSPWSubtable_p.addRow();
-    }
+    // Create spw subtable
+    auto& underlyingSPWSubtablecols = getVii()->spectralWindowSubtablecols();
+    auto underlyingSPWSubtable = underlyingSPWSubtablecols.name().table();
+    newSPWSubtable_p = underlyingSPWSubtable.copyToMemoryTable("SubtableChangerSPWSubtable");
+    newSPWSubtablecols_p.reset(new MSSpWindowColumns(newSPWSubtable_p));
+    // Double the rows
+    auto nrowSPW = newSPWSubtable_p.nrow();
+    for(size_t irow = 0 ; irow < nrowSPW; irow++)
+      newSPWSubtable_p.addRow();
+  }
 
 
-    const casacore::MSAntennaColumns& antennaSubtablecols() const override
-    {
-        return *newAntennaSubtablecols_p;
-    }
+  const casacore::MSAntennaColumns& antennaSubtablecols() const override
+  {
+    return *newAntennaSubtablecols_p;
+  }
 
-    const casacore::MSDataDescColumns& dataDescriptionSubtablecols() const override
-    {
-        return *newDDSubtablecols_p;
-    }
+  const casacore::MSDataDescColumns& dataDescriptionSubtablecols() const override
+  {
+    return *newDDSubtablecols_p;
+  }
 
-    const casacore::MSSpWindowColumns& spectralWindowSubtablecols() const override
-    {
-        return *newSPWSubtablecols_p;
-    }
+  const casacore::MSSpWindowColumns& spectralWindowSubtablecols() const override
+  {
+    return *newSPWSubtablecols_p;
+  }
 
 private:
 
-    casacore::MSAntenna newAntennaSubtable_p;
-    std::unique_ptr<casacore::MSAntennaColumns> newAntennaSubtablecols_p;
+  casacore::MSAntenna newAntennaSubtable_p;
+  std::unique_ptr<casacore::MSAntennaColumns> newAntennaSubtablecols_p;
 
-    casacore::MSSpectralWindow newSPWSubtable_p;
-    std::unique_ptr<casacore::MSSpWindowColumns> newSPWSubtablecols_p;
+  casacore::MSSpectralWindow newSPWSubtable_p;
+  std::unique_ptr<casacore::MSSpWindowColumns> newSPWSubtablecols_p;
 
-    casacore::MSDataDescription newDDSubtable_p;
-    std::unique_ptr<casacore::MSDataDescColumns> newDDSubtablecols_p;
+  casacore::MSDataDescription newDDSubtable_p;
+  std::unique_ptr<casacore::MSDataDescColumns> newDDSubtablecols_p;
 
 };
 
@@ -568,7 +568,7 @@ class SubtableChangerTVILayerFactory : public ViiLayerFactory
 
 public:
 
-    SubtableChangerTVILayerFactory()
+  SubtableChangerTVILayerFactory()
   {
   }
 
@@ -595,63 +595,63 @@ class SubtableChangerTest : public MsFactoryTVITester
 {
 public:
 
-    /*
-     * Constructor: create the temporary dir and the MsFactory used later on
-     * to create the MS.
-     */
-    SubtableChangerTest() : 
-        MsFactoryTVITester("tViiLayerFactory","SubtableChangerTest")
-    {
-    }
+  /*
+   * Constructor: create the temporary dir and the MsFactory used later on
+   * to create the MS.
+   */
+  SubtableChangerTest() : 
+    MsFactoryTVITester("tViiLayerFactory","SubtableChangerTest")
+  {
+  }
 
-    /*
-     * Create the synthetic MS and the TVI stack to access it.
-     */
-    void createTVIs()
-    {
-        // Set the number of antennas and SPWs for the MS generated on disk
-        nAntennas = 10;
-        nSPWs = 10;
+  /*
+   * Create the synthetic MS and the TVI stack to access it.
+   */
+  void createTVIs()
+  {
+    // Set the number of antennas and SPWs for the MS generated on disk
+    nAntennas = 10;
+    nSPWs = 10;
 
-        msf_p->addAntennas(nAntennas);
-        msf_p->addSpectralWindows(nSPWs);
+    msf_p->addAntennas(nAntennas);
+    msf_p->addSpectralWindows(nSPWs);
 
-        // Create synthethic MS using the msf_p factory
-        createMS();
+    // Create synthethic MS using the msf_p factory
+    createMS();
 
-        // Create a disk layer type VI Factory
-        IteratingParameters ipar;
-        VisIterImpl2LayerFactory diskItFac(ms_p.get(),ipar,false);
+    // Create a disk layer type VI Factory
+    IteratingParameters ipar;
+    VisIterImpl2LayerFactory diskItFac(ms_p.get(),ipar,false);
 
-        // Create a SubtableChangerTVI Factory
-        SubtableChangerTVILayerFactory subtableChangerFac;
+    // Create a SubtableChangerTVI Factory
+    SubtableChangerTVILayerFactory subtableChangerFac;
 
-        // Create a layered factory with all the layers of factories
-        size_t nFac = 2;
-        std::vector<ViiLayerFactory*> facts(nFac);
-        facts[0]=&diskItFac;
-        facts[1]= &subtableChangerFac;
+    // Create a layered factory with all the layers of factories
+    size_t nFac = 2;
+    std::vector<ViiLayerFactory*> facts(nFac);
+    facts[0]=&diskItFac;
+    facts[1]= &subtableChangerFac;
 
-        // Finally create the top VI
-        instantiateVI(facts);
-    }
+    // Finally create the top VI
+    instantiateVI(facts);
+  }
 
-    void checkSubtables()
-    {
-        // Check the antenna tables size (the TVI has added one antenna)
-        EXPECT_EQ(nAntennas + 1, vi_p->antennaSubtablecols().nrow());
+  void checkSubtables()
+  {
+    // Check the antenna tables size (the TVI has added one antenna)
+    EXPECT_EQ(nAntennas + 1, vi_p->antennaSubtablecols().nrow());
 
-        // Check the SPW tables size (the TVI has doubled the number)
-        EXPECT_EQ(nSPWs * 2, vi_p->spectralWindowSubtablecols().nrow());
+    // Check the SPW tables size (the TVI has doubled the number)
+    EXPECT_EQ(nSPWs * 2, vi_p->spectralWindowSubtablecols().nrow());
 
-        // Check the DD tables size (the TVI has doubled the number)
-        EXPECT_EQ(nSPWs * 2, vi_p->dataDescriptionSubtablecols().nrow());
-    }
+    // Check the DD tables size (the TVI has doubled the number)
+    EXPECT_EQ(nSPWs * 2, vi_p->dataDescriptionSubtablecols().nrow());
+  }
 
-    // The number of antennas originally created
-    size_t nAntennas;
-    // The number of SPWs originally created
-    size_t nSPWs;
+  // The number of antennas originally created
+  size_t nAntennas;
+  // The number of SPWs originally created
+  size_t nSPWs;
 };
 
 
