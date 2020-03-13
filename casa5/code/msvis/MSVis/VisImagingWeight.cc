@@ -567,7 +567,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	im.putSlice(a_gwt_p, where);
 
       }
-      Record rec;
+      Record rec(im.miscInfo());
       rec.define("d2", d2_p);
       rec.define("f2", f2_p);
       rec.define("numfield", Int(multiFieldMap_p.size()));
