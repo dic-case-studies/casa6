@@ -179,11 +179,14 @@ void StatWtColConfig::_initSpecColsIfNecessary() {
                 auto nrow = vb->nRows();
                 auto nchan = vb->nChannels();
                 auto ncor = vb->nCorrelations();
-                Cube<Float> newsp(ncor, nchan, nrow, 0);
                 if (_mustInitWtSp) {
+                    Cube<Float> newsp(ncor, nchan, nrow, 0);
+                    _setEqual(newsp, vb->weight());
                     vb->initWeightSpectrum(newsp);
                 }
                 if (_mustInitSigSp) {
+                    Cube<Float> newsp(ncor, nchan, nrow, 0);
+                    _setEqual(newsp, vb->sigma());
                     vb->initSigmaSpectrum(newsp);
                 }
                 vb->writeChangesBack();
@@ -194,6 +197,23 @@ void StatWtColConfig::_initSpecColsIfNecessary() {
                     AlwaysAssert(vb->sigmaSpectrum().size() > 0, AipsError);
                 }
             }
+        }
+    }
+}
+
+void StatWtColConfig::_setEqual(
+    Cube<Float>& newsp, const Matrix<Float>& col
+) {
+    IPosition start(3, 0);
+    auto shape = newsp.shape();
+    auto end = shape - 1;
+    for (Int corr=0; corr<shape[0]; ++corr) {
+        for (Int row=0; row<shape[2]; ++row) {
+            start[0] = corr;
+            end[0] = corr;
+            start[2] = row;
+            end[2] = row;
+            newsp(start, end) = col(corr, row);
         }
     }
 }

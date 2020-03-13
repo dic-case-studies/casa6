@@ -98,6 +98,10 @@ private:
 
     void _initSpecColsIfNecessary();
 
+    static void _setEqual(
+        casacore::Cube<casacore::Float>& newsp, 
+        const casacore::Matrix<casacore::Float>& col
+    );
 };
 
 }
