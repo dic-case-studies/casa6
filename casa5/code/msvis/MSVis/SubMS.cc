@@ -8106,6 +8106,7 @@ Bool SubMS::copyGenericSubtables(){
   {  
     const MSProcessor& oldProc = mssel_p.processor();
     MSProcessor& newProc = msOut_p.processor();
+
     TableCopy::copyRows(newProc, oldProc);
     //W TableCopy::deepCopy(newProc, oldProc, false);
     
