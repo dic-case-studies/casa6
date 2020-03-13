@@ -1910,6 +1910,7 @@ class asdm_import7(test_base):
         shutil.rmtree("reference.ms",ignore_errors=True)
         shutil.rmtree("reference.ms.flagversions",ignore_errors=True)
         shutil.rmtree("uid___A002_X997a62_X8c-short.interp.ms",ignore_errors=True)
+        shutil.rmtree("uid___A002_X71e4ae_X317_short.split.ms",ignore_errors=True)
                
     def test7_lazy1(self):
         '''Asdm-import: Test good 12 m ASDM with mixed pol/channelisation input with default filler in lazy mode'''
@@ -2114,8 +2115,25 @@ class asdm_import7(test_base):
                 except:
                     retValue['success'] = False
                     print("ERROR checking the value of the SDM_CORRELATOR_NAME column in the PROCESSOR table.")
-                        
 
+                try:
+                    # split this ms to check that SDM_CORRELATOR_NAME is carried over into the new ms
+                    mslocal.open(themsname)
+                    splitname = myasdmname + ".split.ms"
+                    mslocal.split(splitname,spw='1,3,5,7')
+                    mslocal.close()
+                    splitOK = tblocal.open(splitname+'/PROCESSOR')
+                    if  splitOK:
+                        corrNameCol = tblocal.getcol('SDM_CORRELATOR_NAME')
+                        tblocal.close()
+                        splitOK = (len(corrNameCol)==3) and (corrNameCol[0]=='ALMA_BASELINE') and (corrNameCol[1]=='') and (corrNameCol[2]==corrNameCol[0])
+                    retValue['success'] = splitOK and retValue['success']
+                    if not splitOK:
+                        print("SDM_CORRELATOR_NAME column in the PROCESSOR table after the split is missing or has incorrect values")
+                except:
+                    retValue['success'] = False
+                    print("ERROR checking the value of the SDM_CORRELATOR_NAME column in the PROCESSOR table after a split.")
+                        
         os.system("mv moved_"+myasdmname+" "+myasdmname)
                 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
