@@ -1020,19 +1020,35 @@ class statwt_test(unittest.TestCase):
         for spw in ["", "0"]:
             dst = "statwt_test_vlass_spw_select_" + str(spw) + ".ms"
             shutil.copytree(vlass, dst)
-            res = statwt(
-                vis=dst, combine='scan,field,state', chanbin=1, timebin='1yr',
-                datacolumn='residual_data', selectdata=True, spw=spw
-            )
             if spw == '':
+                res = statwt(
+                    vis=dst, combine='scan,field,state', chanbin=1,
+                    timebin='1yr', datacolumn='residual_data',
+                    selectdata=True, spw=spw
+                )
+                self.assertTrue(res)
                 self.compare(dst, ref)
             else:
                 # Currently there is a bug which requires statwt to be run twice
+                if th.is_casa6():
+                    self.assertRaises(
+                        Exception, statwt, vis=dst, combine='scan,field,state',
+                        chanbin=1, timebin='1yr', datacolumn='residual_data',
+                        selectdata=True, spw=spw
+                    )
+                else:
+                    res = statwt(
+                        vis=dst, combine='scan,field,state', chanbin=1,
+                        timebin='1yr', datacolumn='residual_data', selectdata=True, 
+                        spw=spw
+                    )
+                    self.assertFalse(res)
                 res = statwt(
                     vis=dst, combine='scan,field,state', chanbin=1,
-                    timebin='1yr', datacolumn='residual_data', selectdata=True, 
-                    spw=spw
+                    timebin='1yr', datacolumn='residual_data',
+                    selectdata=True, spw=spw
                 )
+                self.assertTrue(res)
                 mytb.open(ref)
                 reftab = mytb.query("DATA_DESC_ID == 0")
                 mytb.done()
