@@ -145,7 +145,6 @@ namespace casac {
         casacore::MSMainColumns  *itsMSCol;
         casacore::ScalarColumn<casacore::String> *itsWinFuncCol;
         casacore::ScalarColumn<casacore::Int> *itsNumBinCol;
-        casacore::ScalarColumn<casacore::String> *itsCorrNameCol;
         casacore::String     itsMSPath;
         casacore::uInt     itsMSMainRow;
         /*casacore::TiledDataStManAccessor itsImWgtAcc;*/
@@ -355,8 +354,7 @@ namespace casac {
         void addProcessor( std::string& type_,
                            std::string& sub_type_,
                            int  type_id_,
-                           int  mode_id_,
-                           std::string& correlator_name_ );
+                           int  mode_id_);
 
         void addSource( int             source_id_,
                         double          time_,

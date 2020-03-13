@@ -5592,19 +5592,20 @@ int main(int argc, char *argv[]) {
       string processorType    = CProcessorType::name(r->getProcessorType());
       string processorSubType = CProcessorSubType::name(r->getProcessorSubType());
 
-      // fetch ccorrelator name where appropriate and possib;e
-      // default to an empty string
-      string correlatorName("");
+      // fetch ccorrelator name where appropriate and possible
+      // note that this replaces processorSubType in this case
 
       if (r->getProcessorType() == ProcessorTypeMod::CORRELATOR) {
+          // default to an empty string
+          processorSubType = "";
           // modeId is a correlator mode id
           if ((cmrow=correlatorModeT.getRowByKey(r->getModeId())) != 0) {
               // a row has been found
-              correlatorName = CCorrelatorName::name(cmrow->getCorrelatorName());
+              processorSubType = CCorrelatorName::name(cmrow->getCorrelatorName());
           } else {
               // a row should have been found but was not, warn
               infostream.str("");
-              infostream << "Problem while reading the CorrelatorMode table, the row with key = " << r->getModeId() << " does not exist, SDM_CORRELATOR_MODE will remain unset for this PROCESSOR row" << endl;
+              infostream << "Problem while reading the CorrelatorMode table, the row with key = " << r->getModeId() << " does not exist, SUB_TYPE will remain unset for this PROCESSOR row" << endl;
               warning(infostream.str());
           }
       }
@@ -5613,8 +5614,7 @@ int main(int argc, char *argv[]) {
 	   iter != msFillers.end(); ++iter) {
 	iter->second->addProcessor( processorType, processorSubType,
                                     -1,    // Since there is no typeId in the ASDM.
-                                    r->getModeId().getTagValue(),
-                                    correlatorName );
+                                    r->getModeId().getTagValue());
       }  
     }
     if (nProcessor) {

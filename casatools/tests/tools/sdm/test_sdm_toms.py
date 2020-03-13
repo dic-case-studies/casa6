@@ -488,8 +488,7 @@ class asdm_import1(test_base):
                          ['MODE_ID',             0, 0, 0],
                          ['TYPE',                0, 'CORRELATOR', 0],
                          ['TYPE_ID',             0, -1, 0],
-                         ['SUB_TYPE',            0, 'ALMA_CORRELATOR_MODE', 0],
-                         ['SDM_CORRELATOR_NAME', 0, 'ALMA_BASELINE', 0]
+                         ['SUB_TYPE',            0, 'ALMA_BASELINE', 0]
                        ]
             results = checktable(name, expected)
             if not results:
@@ -669,8 +668,7 @@ class asdm_import2(test_base):
                          ['MODE_ID',             0, 0, 0],
                          ['TYPE',                0, 'CORRELATOR', 0],
                          ['TYPE_ID',             0, -1, 0],
-                         ['SUB_TYPE',            0, 'ALMA_CORRELATOR_MODE', 0],
-                         ['SDM_CORRELATOR_NAME', 0, 'ALMA_BASELINE', 0]
+                         ['SUB_TYPE',            0, 'ALMA_BASELINE', 0]
                        ]
             results = checktable(name, expected)
             if not results:

@@ -8106,13 +8106,6 @@ Bool SubMS::copyGenericSubtables(){
   {  
     const MSProcessor& oldProc = mssel_p.processor();
     MSProcessor& newProc = msOut_p.processor();
-
-    LogIO os(LogOrigin("SubMS", __FUNCTION__));
-
-    // Add optional columns if present in oldProc
-    uInt nAddedCols = addOptionalColumns(oldProc, newProc, true);
-    os << LogIO::DEBUG1 << "PROCESSOR has " << nAddedCols << " optional columns." << LogIO::POST;
-
     TableCopy::copyRows(newProc, oldProc);
     //W TableCopy::deepCopy(newProc, oldProc, false);
     

@@ -415,8 +415,7 @@ class asdm_import1(test_base):
                          ['MODE_ID',             0, 0, 0],
                          ['TYPE',                0, 'CORRELATOR', 0],
                          ['TYPE_ID',             0, -1, 0],
-                         ['SUB_TYPE',            0, 'ALMA_CORRELATOR_MODE', 0],
-                         ['SDM_CORRELATOR_NAME', 0, 'ALMA_BASELINE', 0]
+                         ['SUB_TYPE',            0, 'ALMA_BASELINE', 0]
                        ]
             results = checktable(msname, name, expected)
             if not results:
@@ -600,8 +599,7 @@ class asdm_import2(test_base):
                          ['MODE_ID',             0, 0, 0],
                          ['TYPE',                0, 'CORRELATOR', 0],
                          ['TYPE_ID',             0, -1, 0],
-                         ['SUB_TYPE',            0, 'ALMA_CORRELATOR_MODE', 0],
-                         ['SDM_CORRELATOR_NAME', 0, 'ALMA_BASELINE', 0]
+                         ['SUB_TYPE',            0, 'ALMA_BASELINE', 0]
                        ]
             results = checktable(msname, name, expected)
             if not results:
@@ -921,8 +919,7 @@ class asdm_import3(test_base):
                          ['MODE_ID',             0, 0, 0],
                          ['TYPE',                0, 'CORRELATOR', 0],
                          ['TYPE_ID',             0, -1, 0],
-                         ['SUB_TYPE',            0, 'ALMA_CORRELATOR_MODE', 0],
-                         ['SDM_CORRELATOR_NAME', 0, 'NRAO_WIDAR', 0]
+                         ['SUB_TYPE',            0, 'NRAO_WIDAR', 0]
                        ]
             results = checktable(msname, name, expected)
             if not results:
@@ -2102,37 +2099,37 @@ class asdm_import7(test_base):
                     print("ERROR checking the value of the SDM_NUM_BIN column in the SPECTRAL_WINDOW table.")
 
                 try:
-                    # test that the PROCESSOR table SDM_CORRELATOR_NAME has the expected values
-                    corrNameOK = tblocal.open(themsname+'/PROCESSOR')
-                    if corrNameOK:
-                        corrNameCol = tblocal.getcol('SDM_CORRELATOR_NAME')
+                    # test that the PROCESSOR table SUB_TYPE has the expected values
+                    subTypeOK = tblocal.open(themsname+'/PROCESSOR')
+                    if subTypeOK:
+                        subTypeCol = tblocal.getcol('SUB_TYPE')
                         tblocal.close()
-                        corrNameOK = (len(corrNameCol)==3) and (corrNameCol[0]=='ALMA_BASELINE') and (corrNameCol[1]=='') and (corrNameCol[2]==corrNameCol[0])
+                        subTypeOK = (len(subTypeCol)==3) and (subTypeCol[0]=='ALMA_BASELINE') and (subTypeCol[1]=='') and (subTypeCol[2]==subTypeCol[0])
 
-                    retValue['success'] = corrNameOK and retValue['success']
-                    if not corrNameOK:
-                        print("SDM_CORRELATOR_NAME column in the PROCESSOR table is missing or has incorrect values")
+                    retValue['success'] = subTypeOK and retValue['success']
+                    if not subTypeOK:
+                        print("SUB_TYPE column in the PROCESSOR table is missing or has incorrect values")
                 except:
                     retValue['success'] = False
-                    print("ERROR checking the value of the SDM_CORRELATOR_NAME column in the PROCESSOR table.")
+                    print("ERROR checking the value of the SUB_TYPE column in the PROCESSOR table.")
 
                 try:
-                    # split this ms to check that SDM_CORRELATOR_NAME is carried over into the new ms
+                    # split this ms to check that SUB_TYPE is carried over correctly into the new ms
                     mslocal.open(themsname)
                     splitname = myasdmname + ".split.ms"
                     mslocal.split(splitname,spw='1,3,5,7')
                     mslocal.close()
                     splitOK = tblocal.open(splitname+'/PROCESSOR')
                     if  splitOK:
-                        corrNameCol = tblocal.getcol('SDM_CORRELATOR_NAME')
+                        subTypeCol = tblocal.getcol('SUB_TYPE')
                         tblocal.close()
-                        splitOK = (len(corrNameCol)==3) and (corrNameCol[0]=='ALMA_BASELINE') and (corrNameCol[1]=='') and (corrNameCol[2]==corrNameCol[0])
+                        splitOK = (len(subTypeCol)==3) and (subTypeCol[0]=='ALMA_BASELINE') and (subTypeCol[1]=='') and (subTypeCol[2]==subTypeCol[0])
                     retValue['success'] = splitOK and retValue['success']
                     if not splitOK:
-                        print("SDM_CORRELATOR_NAME column in the PROCESSOR table after the split is missing or has incorrect values")
+                        print("SUB_TYPE column in the PROCESSOR table after the split has incorrect values")
                 except:
                     retValue['success'] = False
-                    print("ERROR checking the value of the SDM_CORRELATOR_NAME column in the PROCESSOR table after a split.")
+                    print("ERROR checking the value of the SUB_TYPE column in the PROCESSOR table after a split.")
                         
         os.system("mv moved_"+myasdmname+" "+myasdmname)
                 
