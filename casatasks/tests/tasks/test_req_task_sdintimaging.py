@@ -70,11 +70,11 @@
 #
 #11. Cube Imaging: interferometer only (INT-only)
 #specmode=‘cube’,  deconvolver=‘multiscale’, gridder=‘mosaic’, usedata=‘int’
-#testname: test_mosaic_cube_int
+#testname: test_mosaic_cube_intonly
 #
 #12. Cube Imaging: single dish (SD-only)
 # specmode=‘cube’,  deconvolver=‘multiscale’, gridder=‘mosaic’, usedata=‘sd’
-#testname: test_mosaic_cube_sd
+#testname: test_mosaic_cube_sdonly
 ###########################################################################
 
 ####    Imports     ####
@@ -352,7 +352,6 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 1.0, [400,400,0,0]),
-              t `1
                     (outimg+'.image.tt0', 7.91, [350,433,0,0]),    # point source with alpha=-1
                                    (outimg+'.image.tt0', 15.3, [300,400,0,0]),        # extended emission with alpha=0
                                    (outimg+'.alpha', -0.13, [350,433,0,0]),    # point source with alpha=-1
