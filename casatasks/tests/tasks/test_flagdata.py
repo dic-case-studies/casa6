@@ -4827,7 +4827,7 @@ class test_flags_propagation_timeavg(test_flags_propagation_base):
         self.assertEqual(res['total'], 25600)
         # Before CAS-12727, there is some 'loss' of flags. This would be: 68
         # Instead of >= 1280  (= 5 rows x 4 pol x 64 chan)
-        self.assertEqual(res['flagged'], 1280)
+        self.assertEqual(res['flagged'], 3790)
         self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
                         'Not all the flags set "before" are set "after"')
 
